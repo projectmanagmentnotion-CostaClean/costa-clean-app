@@ -1,0 +1,81 @@
+﻿import type { DomainEntityDefinition } from '../types/domain'
+
+export const domainEntities: DomainEntityDefinition[] = [
+  {
+    key: 'users',
+    label: 'Usuarios',
+    description: 'Usuarios internos que acceden a la aplicación.',
+    phase: 'v1',
+    module: 'auth',
+  },
+  {
+    key: 'leads',
+    label: 'Leads',
+    description: 'Solicitudes entrantes y oportunidades comerciales.',
+    phase: 'v1',
+    module: 'leads',
+  },
+  {
+    key: 'clients',
+    label: 'Clientes',
+    description: 'Base maestra de clientes convertidos o activos.',
+    phase: 'v1',
+    module: 'clients',
+  },
+  {
+    key: 'properties',
+    label: 'Inmuebles',
+    description: 'Ubicaciones donde se prestan los servicios.',
+    phase: 'v1',
+    module: 'properties',
+  },
+  {
+    key: 'quotes',
+    label: 'Presupuestos',
+    description: 'Cabecera comercial de propuestas enviadas al cliente.',
+    phase: 'v1',
+    module: 'quotes',
+  },
+  {
+    key: 'quote_lines',
+    label: 'Líneas de presupuesto',
+    description: 'Detalle interno de conceptos y precios del presupuesto.',
+    phase: 'v1',
+    module: 'quotes',
+  },
+  {
+    key: 'jobs',
+    label: 'Servicios',
+    description: 'Trabajos programados, ejecutados o cerrados.',
+    phase: 'v1',
+    module: 'jobs',
+  },
+  {
+    key: 'invoices',
+    label: 'Facturas',
+    description: 'Facturas emitidas a partir de servicios o presupuestos.',
+    phase: 'v2',
+    module: 'invoices',
+  },
+  {
+    key: 'payments',
+    label: 'Cobros',
+    description: 'Pagos recibidos y seguimiento de facturas pendientes.',
+    phase: 'v2',
+    module: 'payments',
+  },
+  {
+    key: 'settings',
+    label: 'Ajustes',
+    description: 'Configuración global, datos de empresa y parámetros.',
+    phase: 'v1',
+    module: 'settings',
+  },
+  {
+    key: 'kpi_snapshots',
+    label: 'KPIs y cierres',
+    description: 'Resumen de métricas, cierres mensuales y trimestrales.',
+    phase: 'v2',
+    module: 'kpis',
+  },
+]

@@ -1,1 +1,1 @@
-﻿export type AppView = 'dashboard' | 'leads'
+﻿export type AppView = 'dashboard' | 'leads' | 'clients'

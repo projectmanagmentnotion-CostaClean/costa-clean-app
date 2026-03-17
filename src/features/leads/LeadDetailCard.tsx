@@ -1,9 +1,11 @@
-﻿import { useEffect, useState, type FormEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { LeadListItem } from './types'
 
 interface LeadDetailCardProps {
   lead: LeadListItem | null
+  alreadyConverted: boolean
   onLeadUpdated: () => Promise<void>
+  onLeadConverted: () => Promise<void>
 }
 
 interface EditFormState {
@@ -13,7 +15,14 @@ interface EditFormState {
   status: string
 }
 
-export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
+export function LeadDetailCard({
+  lead,
+  alreadyConverted,
+  onLeadUpdated,
+  onLeadConverted,
+}: LeadDetailCardProps) {
+  const previousLeadIdRef = useRef<string | null>(null)
+
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -26,6 +35,10 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
   })
 
   useEffect(() => {
+    const currentLeadId = lead?.id ?? null
+    const leadChanged = previousLeadIdRef.current !== currentLeadId
+    previousLeadIdRef.current = currentLeadId
+
     if (!lead) {
       setIsEditing(false)
       setSaveError(null)
@@ -41,7 +54,11 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
 
     setIsEditing(false)
     setSaveError(null)
-    setSuccessMessage(null)
+
+    if (leadChanged) {
+      setSuccessMessage(null)
+    }
+
     setForm({
       full_name: lead.full_name,
       phone: lead.phone,
@@ -139,6 +156,151 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
     )
   }
 
+  async function handleConvertToClient() {
+    if (!lead) {
+      return
+    }
+
+    if (alreadyConverted || lead.status === 'won') {
+      setSaveError(null)
+      setSuccessMessage('Este lead ya fue convertido previamente a client.')
+      return
+    }
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setSaveError('Faltan las variables de entorno de Supabase.')
+        return
+      }
+
+      const existingClientResponse = await fetch(
+        `${supabaseUrl}/rest/v1/clients?select=id,full_name,source_lead_id&source_lead_id=eq.${encodeURIComponent(lead.id)}&limit=1`,
+        {
+          method: 'GET',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+        },
+      )
+
+      if (!existingClientResponse.ok) {
+        const errorText = await existingClientResponse.text()
+        setSaveError(`REST ${existingClientResponse.status}: ${errorText || existingClientResponse.statusText}`)
+        return
+      }
+
+      const existingClients = (await existingClientResponse.json()) as Array<{
+        id: string
+        full_name: string
+        source_lead_id: string | null
+      }>
+
+      if (existingClients.length > 0) {
+        const leadResponse = await fetch(
+          `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
+          {
+            method: 'PATCH',
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'won',
+            }),
+          },
+        )
+
+        if (!leadResponse.ok) {
+          const errorText = await leadResponse.text()
+          setSaveError(`REST ${leadResponse.status}: ${errorText || leadResponse.statusText}`)
+          return
+        }
+
+        await onLeadConverted()
+        setSuccessMessage('Este lead ya tenía un client asociado. Se sincronizó como convertido.')
+        setIsEditing(false)
+        return
+      }
+
+      const clientId =
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? `CLIENT-${crypto.randomUUID()}`
+          : `CLIENT-${Date.now()}`
+
+      const clientResponse = await fetch(`${supabaseUrl}/rest/v1/clients`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          id: clientId,
+          full_name: lead.full_name,
+          phone: lead.phone,
+          email: lead.email,
+          status: 'active',
+          source_lead_id: lead.id,
+        }),
+      })
+
+      if (!clientResponse.ok) {
+        const errorText = await clientResponse.text()
+        setSaveError(`REST ${clientResponse.status}: ${errorText || clientResponse.statusText}`)
+        return
+      }
+
+      const leadResponse = await fetch(
+        `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'won',
+          }),
+        },
+      )
+
+      if (!leadResponse.ok) {
+        const errorText = await leadResponse.text()
+        setSaveError(`REST ${leadResponse.status}: ${errorText || leadResponse.statusText}`)
+        return
+      }
+
+      await onLeadConverted()
+      setSuccessMessage('Lead convertido a client correctamente.')
+      setIsEditing(false)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido convirtiendo el lead.'
+
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const convertDisabled =
+    isSaving || lead?.archived_at !== null || alreadyConverted || lead?.status === 'won'
+
+  const convertLabel =
+    alreadyConverted || lead?.status === 'won'
+      ? 'Ya convertido'
+      : 'Convertir a client'
+
   return (
     <section className="data-section">
       <div className="section-header page-header-actions">
@@ -165,6 +327,15 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
               }}
             >
               {isEditing ? 'Cancelar edición' : 'Editar lead'}
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void handleConvertToClient()}
+              disabled={convertDisabled}
+            >
+              {convertLabel}
             </button>
 
             <button
@@ -274,6 +445,11 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
               </div>
 
               <div className="detail-row">
+                <span className="detail-label">Email</span>
+                <strong>{lead.email ?? 'Sin email'}</strong>
+              </div>
+
+              <div className="detail-row">
                 <span className="detail-label">Ciudad</span>
                 <strong>{lead.city ?? 'Sin ciudad'}</strong>
               </div>
@@ -297,7 +473,7 @@ export function LeadDetailCard({ lead, onLeadUpdated }: LeadDetailCardProps) {
 
           {!isEditing && saveError ? (
             <div className="empty-state">
-              <strong>No se pudo actualizar el lead</strong>
+              <strong>No se pudo completar la operación</strong>
               <p>{saveError}</p>
             </div>
           ) : null}

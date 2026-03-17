@@ -3,16 +3,25 @@ import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
 import type { LeadListItem } from '../features/leads/types'
+import type { ClientListItem } from '../features/clients/types'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
+  clients: ClientListItem[]
   error: string | null
   onLeadCreated: () => Promise<void>
+  onLeadConverted: () => Promise<void>
 }
 
 type LeadStatusFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
 
-export function LeadsPage({ leads, error, onLeadCreated }: LeadsPageProps) {
+export function LeadsPage({
+  leads,
+  clients,
+  error,
+  onLeadCreated,
+  onLeadConverted,
+}: LeadsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,6 +52,7 @@ export function LeadsPage({ leads, error, onLeadCreated }: LeadsPageProps) {
       const searchableText = [
         lead.full_name,
         lead.phone,
+        lead.email ?? '',
         lead.city ?? '',
         lead.id,
         lead.status,
@@ -72,6 +82,18 @@ export function LeadsPage({ leads, error, onLeadCreated }: LeadsPageProps) {
 
   const selectedLead =
     filteredLeads.find((lead) => lead.id === selectedLeadId) ?? null
+
+  const convertedLeadIds = useMemo(() => {
+    return new Set(
+      clients
+        .map((client) => client.source_lead_id)
+        .filter((value): value is string => Boolean(value)),
+    )
+  }, [clients])
+
+  const selectedLeadAlreadyConverted = selectedLead
+    ? convertedLeadIds.has(selectedLead.id)
+    : false
 
   return (
     <section className="page-section">
@@ -156,7 +178,12 @@ export function LeadsPage({ leads, error, onLeadCreated }: LeadsPageProps) {
         </div>
       </section>
 
-      <LeadDetailCard lead={selectedLead} onLeadUpdated={onLeadCreated} />
+      <LeadDetailCard
+        lead={selectedLead}
+        alreadyConverted={selectedLeadAlreadyConverted}
+        onLeadUpdated={onLeadCreated}
+        onLeadConverted={onLeadConverted}
+      />
 
       <LeadsList
         leads={filteredLeads}

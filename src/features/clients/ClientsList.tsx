@@ -3,9 +3,16 @@
 interface ClientsListProps {
   clients: ClientListItem[]
   error: string | null
+  selectedClientId: string | null
+  onSelectClient: (client: ClientListItem) => void
 }
 
-export function ClientsList({ clients, error }: ClientsListProps) {
+export function ClientsList({
+  clients,
+  error,
+  selectedClientId,
+  onSelectClient,
+}: ClientsListProps) {
   return (
     <section className="data-section">
       <div className="section-header">
@@ -25,18 +32,31 @@ export function ClientsList({ clients, error }: ClientsListProps) {
         </div>
       ) : (
         <div className="lead-list">
-          {clients.map((client) => (
-            <article key={client.id} className="lead-item">
-              <div className="lead-item-top">
-                <strong>{client.full_name}</strong>
-                <span className="lead-badge">{client.status}</span>
-              </div>
+          {clients.map((client) => {
+            const isSelected = client.id === selectedClientId
 
-              <p>ID: {client.id}</p>
-              <p>Teléfono: {client.phone ?? 'Sin teléfono'}</p>
-              <p>Email: {client.email ?? 'Sin email'}</p>
-            </article>
-          ))}
+            return (
+              <button
+                key={client.id}
+                type="button"
+                className={
+                  isSelected
+                    ? 'lead-item lead-item-button selected'
+                    : 'lead-item lead-item-button'
+                }
+                onClick={() => onSelectClient(client)}
+              >
+                <div className="lead-item-top">
+                  <strong>{client.full_name}</strong>
+                  <span className="lead-badge">{client.status}</span>
+                </div>
+
+                <p>ID: {client.id}</p>
+                <p>Teléfono: {client.phone ?? 'Sin teléfono'}</p>
+                <p>Email: {client.email ?? 'Sin email'}</p>
+              </button>
+            )
+          })}
         </div>
       )}
     </section>

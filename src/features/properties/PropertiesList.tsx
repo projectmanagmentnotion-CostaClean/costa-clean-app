@@ -51,8 +51,8 @@ export function PropertiesList({
                   <span className="lead-badge">{property.property_type}</span>
                 </div>
 
-                <p>ID: {property.id}</p>
-                <p>Client ID: {property.client_id}</p>
+                <p>Código: {property.display_code ?? property.id}</p>
+                <p>Client: {property.client_display_code ?? property.client_id}</p>
                 <p>Ciudad: {property.city ?? 'Sin ciudad'}</p>
               </button>
             )

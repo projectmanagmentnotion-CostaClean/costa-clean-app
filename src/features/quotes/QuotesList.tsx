@@ -1,0 +1,64 @@
+﻿import type { QuoteListItem } from './types'
+
+interface QuotesListProps {
+  quotes: QuoteListItem[]
+  error: string | null
+  selectedQuoteId: string | null
+  onSelectQuote: (quote: QuoteListItem) => void
+}
+
+export function QuotesList({
+  quotes,
+  error,
+  selectedQuoteId,
+  onSelectQuote,
+}: QuotesListProps) {
+  return (
+    <section className="data-section">
+      <div className="section-header">
+        <h2>Quotes reales</h2>
+        <p>Primer listado conectado a Supabase.</p>
+      </div>
+
+      {error ? (
+        <div className="empty-state">
+          <strong>Error cargando quotes</strong>
+          <p>{error}</p>
+        </div>
+      ) : quotes.length === 0 ? (
+        <div className="empty-state">
+          <strong>No hay quotes</strong>
+          <p>Todavía no existen registros en la tabla quotes.</p>
+        </div>
+      ) : (
+        <div className="lead-list">
+          {quotes.map((quote) => {
+            const isSelected = quote.id === selectedQuoteId
+
+            return (
+              <button
+                key={quote.id}
+                type="button"
+                className={
+                  isSelected
+                    ? 'lead-item lead-item-button selected'
+                    : 'lead-item lead-item-button'
+                }
+                onClick={() => onSelectQuote(quote)}
+              >
+                <div className="lead-item-top">
+                  <strong>{quote.display_code ?? quote.id}</strong>
+                  <span className="lead-badge">{quote.status}</span>
+                </div>
+
+                <p>Client: {quote.client_display_code ?? quote.client_id}</p>
+                <p>Property: {quote.property_display_code ?? quote.property_id ?? 'Sin property'}</p>
+                <p>Total: {quote.total}</p>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </section>
+  )
+}

@@ -35,6 +35,20 @@ export function AppNav({ currentView, onChangeView }: AppNavProps) {
       >
         Properties
       </button>
+
+      <button
+        className={currentView === 'quotes' ? 'nav-button active' : 'nav-button'}
+        onClick={() => onChangeView('quotes')}
+      >
+        Quotes
+      </button>
+
+      <button
+        className={currentView === 'jobs' ? 'nav-button active' : 'nav-button'}
+        onClick={() => onChangeView('jobs')}
+      >
+        Jobs
+      </button>
     </nav>
   )
 }

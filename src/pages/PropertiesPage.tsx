@@ -60,7 +60,10 @@ export function PropertiesPage({
         <PropertyCreateForm clients={clients} onCreated={onPropertyCreated} />
       ) : null}
 
-      <PropertyDetailCard property={selectedProperty} />
+      <PropertyDetailCard
+        property={selectedProperty}
+        onPropertyUpdated={onPropertyCreated}
+      />
 
       <PropertiesList
         properties={properties}

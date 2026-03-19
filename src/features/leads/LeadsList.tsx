@@ -28,13 +28,12 @@ export function LeadsList({
       ) : leads.length === 0 ? (
         <div className="empty-state">
           <strong>No hay leads</strong>
-          <p>No existen registros para los filtros actuales.</p>
+          <p>Todavía no existen registros en la tabla leads.</p>
         </div>
       ) : (
         <div className="lead-list">
           {leads.map((lead) => {
             const isSelected = lead.id === selectedLeadId
-            const isArchived = Boolean(lead.archived_at)
 
             return (
               <button
@@ -49,17 +48,10 @@ export function LeadsList({
               >
                 <div className="lead-item-top">
                   <strong>{lead.full_name}</strong>
-                  <div className="lead-item-badges">
-                    <span className="lead-badge">{lead.status}</span>
-                    {isArchived ? (
-                      <span className="lead-badge lead-badge-archived">
-                        archived
-                      </span>
-                    ) : null}
-                  </div>
+                  <span className="lead-badge">{lead.status}</span>
                 </div>
 
-                <p>ID: {lead.id}</p>
+                <p>Código: {lead.display_code ?? lead.id}</p>
                 <p>Teléfono: {lead.phone}</p>
                 <p>Ciudad: {lead.city ?? 'Sin ciudad'}</p>
               </button>

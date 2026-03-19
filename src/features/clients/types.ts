@@ -1,5 +1,6 @@
 ﻿export interface ClientListItem {
   id: string
+  display_code: string | null
   full_name: string
   phone: string | null
   email: string | null

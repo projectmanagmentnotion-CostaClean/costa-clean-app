@@ -355,7 +355,7 @@ export function LeadDetailCard({
           <div className="lead-detail-header">
             <div>
               <h3>{lead.full_name}</h3>
-              <p>{lead.id}</p>
+              <p>{lead.display_code ?? lead.id}</p>
             </div>
 
             <div className="lead-item-badges">
@@ -434,6 +434,11 @@ export function LeadDetailCard({
             </form>
           ) : (
             <div className="lead-detail-grid">
+              <div className="detail-row">
+                <span className="detail-label">Código</span>
+                <strong>{lead.display_code ?? lead.id}</strong>
+              </div>
+
               <div className="detail-row">
                 <span className="detail-label">Nombre</span>
                 <strong>{lead.full_name}</strong>

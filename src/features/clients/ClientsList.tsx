@@ -51,7 +51,7 @@ export function ClientsList({
                   <span className="lead-badge">{client.status}</span>
                 </div>
 
-                <p>ID: {client.id}</p>
+                <p>Código: {client.display_code ?? client.id}</p>
                 <p>Teléfono: {client.phone ?? 'Sin teléfono'}</p>
                 <p>Email: {client.email ?? 'Sin email'}</p>
               </button>

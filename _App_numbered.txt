@@ -1,0 +1,8 @@
+﻿   1: import './App.css'
+   2: import { AppShell } from './app/AppShell'
+   3: 
+   4: function App() {
+   5:   return <AppShell />
+   6: }
+   7: 
+   8: export default App

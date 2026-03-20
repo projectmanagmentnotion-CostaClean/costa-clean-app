@@ -1,0 +1,180 @@
+﻿================ .\src\features\invoices\InvoiceDocumentPreview.tsx ================
+   1: import { businessRules } from '../../app/businessRules'
+   2: import type { InvoiceListItem } from './types'
+   3: 
+   4: interface InvoiceDocumentPreviewProps {
+   5:   invoice: InvoiceListItem | null
+   6: }
+   7: 
+   8: function formatDate(value: string): string {
+   9:   if (!value) return 'Sin fecha'
+  10: 
+  11:   const date = new Date(`${value}T00:00:00`)
+  12:   if (Number.isNaN(date.getTime())) {
+  13:     return value
+  14:   }
+  15: 
+  16:   return new Intl.DateTimeFormat('es-ES', {
+  17:     day: '2-digit',
+  18:     month: '2-digit',
+  19:     year: 'numeric',
+  20:   }).format(date)
+  21: }
+  22: 
+  23: function formatCurrency(value: number): string {
+  24:   return new Intl.NumberFormat('es-ES', {
+  25:     style: 'currency',
+  26:     currency: businessRules.currency,
+  27:   }).format(value)
+  28: }
+  29: 
+  30: export function InvoiceDocumentPreview({
+  31:   invoice,
+  32: }: InvoiceDocumentPreviewProps) {
+  33:   if (!invoice) {
+  34:     return (
+  35:       <section className="data-section">
+  36:         <div className="section-header">
+  37:           <h2>Plantilla de factura</h2>
+  38:           <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+  39:         </div>
+  40: 
+  41:         <div className="empty-state">
+  42:           <strong>No hay factura para previsualizar</strong>
+  43:           <p>Selecciona una factura en el listado para ver la plantilla documental.</p>
+  44:         </div>
+  45:       </section>
+  46:     )
+  47:   }
+  48: 
+  49:   return (
+  50:     <section className="data-section">
+  51:       <div className="section-header">
+  52:         <h2>Plantilla de factura</h2>
+  53:         <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+  54:       </div>
+  55: 
+  56:       <article className="cc-invoice-preview">
+  57:         <header className="cc-invoice-preview__topbar">
+  58:           <span className="cc-invoice-preview__pill">CostaClean</span>
+  59: 
+  60:           <img
+  61:             src="/branding/logo-costa-clean-web.png"
+  62:             alt="CostaClean"
+  63:             className="cc-invoice-preview__logo"
+  64:           />
+  65:         </header>
+  66: 
+  67:         <section className="cc-invoice-preview__header">
+  68:           <div className="cc-invoice-preview__issuer-box">
+  69:             <span className="cc-invoice-preview__label">Datos del emisor</span>
+  70:             <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+  71:             <p>NIF: 60356434H</p>
+  72:             <p>C/Raval 35, 2-2</p>
+  73:             <p>08370 Barcelona</p>
+  74:           </div>
+  75: 
+  76:           <div className="cc-invoice-preview__doc-box">
+  77:             <span className="cc-invoice-preview__pill cc-invoice-preview__pill--light">
+  78:               Factura
+  79:             </span>
+  80: 
+  81:             <h3>FACTURA</h3>
+  82: 
+  83:             <div className="cc-invoice-preview__doc-meta">
+  84:               <div>
+  85:                 <span className="cc-invoice-preview__label">Número</span>
+  86:                 <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+  87:               </div>
+  88: 
+  89:               <div>
+  90:                 <span className="cc-invoice-preview__label">Código interno</span>
+  91:                 <strong>{invoice.display_code ?? invoice.id}</strong>
+  92:               </div>
+  93: 
+  94:               <div>
+  95:                 <span className="cc-invoice-preview__label">Fecha de emisión</span>
+  96:                 <strong>{formatDate(invoice.issue_date)}</strong>
+  97:               </div>
+  98: 
+  99:               <div>
+ 100:                 <span className="cc-invoice-preview__label">Estado</span>
+ 101:                 <strong>{invoice.status}</strong>
+ 102:               </div>
+ 103:             </div>
+ 104:           </div>
+ 105:         </section>
+ 106: 
+ 107:         <section className="cc-invoice-preview__meta-grid">
+ 108:           <div className="cc-invoice-preview__card">
+ 109:             <span className="cc-invoice-preview__label">Cliente</span>
+ 110:             <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
+ 111:             <p>Cliente vinculado en CostaClean CRM</p>
+ 112:             <p>Datos fiscales ampliables en siguientes fases</p>
+ 113:           </div>
+ 114: 
+ 115:           <div className="cc-invoice-preview__card">
+ 116:             <span className="cc-invoice-preview__label">Servicio / referencia</span>
+ 117:             <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+ 118:             <p>Factura generada desde servicio ejecutado</p>
+ 119:           </div>
+ 120:         </section>
+ 121: 
+ 122:         <section className="cc-invoice-preview__table">
+ 123:           <div className="cc-invoice-preview__table-head">
+ 124:             <span>Concepto</span>
+ 125:             <span>Cantidad</span>
+ 126:             <span>Precio</span>
+ 127:             <span>Subtotal</span>
+ 128:           </div>
+ 129: 
+ 130:           <div className="cc-invoice-preview__table-row">
+ 131:             <span>Servicio de limpieza / trabajo facturado</span>
+ 132:             <span>1</span>
+ 133:             <span>{formatCurrency(invoice.subtotal)}</span>
+ 134:             <strong>{formatCurrency(invoice.subtotal)}</strong>
+ 135:           </div>
+ 136:         </section>
+ 137: 
+ 138:         <section className="cc-invoice-preview__bottom">
+ 139:           <div className="cc-invoice-preview__notes-stack">
+ 140:             <div className="cc-invoice-preview__card">
+ 141:               <span className="cc-invoice-preview__label">Forma de pago</span>
+ 142:               <p>Pago por transferencia a: IBAN ES32 0049 0183 6124 1084 6130</p>
+ 143:             </div>
+ 144: 
+ 145:             <div className="cc-invoice-preview__card">
+ 146:               <span className="cc-invoice-preview__label">Observaciones</span>
+ 147:               <p>{invoice.notes ?? 'Sin observaciones adicionales.'}</p>
+ 148:             </div>
+ 149: 
+ 150:             <div className="cc-invoice-preview__card">
+ 151:               <span className="cc-invoice-preview__label">Nota legal</span>
+ 152:               <p>{businessRules.defaultInvoiceLegalNote}</p>
+ 153:             </div>
+ 154:           </div>
+ 155: 
+ 156:           <div className="cc-invoice-preview__totals">
+ 157:             <div className="cc-invoice-preview__total-row">
+ 158:               <span>Base imponible</span>
+ 159:               <strong>{formatCurrency(invoice.subtotal)}</strong>
+ 160:             </div>
+ 161: 
+ 162:             <div className="cc-invoice-preview__total-row">
+ 163:               <span>IVA (21%)</span>
+ 164:               <strong>{formatCurrency(invoice.tax_amount)}</strong>
+ 165:             </div>
+ 166: 
+ 167:             <div className="cc-invoice-preview__total-row cc-invoice-preview__total-row--grand">
+ 168:               <span>Total</span>
+ 169:               <strong>{formatCurrency(invoice.total)}</strong>
+ 170:             </div>
+ 171:           </div>
+ 172:         </section>
+ 173:       </article>
+ 174:     </section>
+ 175:   )
+ 176: }
+ 177: 
+
+

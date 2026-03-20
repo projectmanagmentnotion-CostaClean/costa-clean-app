@@ -1,0 +1,8 @@
+﻿================ USAGES InvoiceDocumentScreen ================
+C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:8: interface InvoiceDocumentScreenProps {
+C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:13: export function InvoiceDocumentScreen({
+C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:16: }: InvoiceDocumentScreenProps) {
+C:\Users\USUARIO\costa-clean-app\src\pages\InvoicesPage.tsx:4: import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
+C:\Users\USUARIO\costa-clean-app\src\pages\InvoicesPage.tsx:95:         <InvoiceDocumentScreen
+
+

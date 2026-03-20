@@ -1,0 +1,620 @@
+﻿================ InvoiceDocumentPreview.tsx ================
+import { businessRules } from '../../app/businessRules'
+import type { InvoiceListItem } from './types'
+
+interface InvoiceDocumentPreviewProps {
+  invoice: InvoiceListItem | null
+}
+
+function formatDate(value: string): string {
+  if (!value) return 'Sin fecha'
+
+  const date = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date)
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: businessRules.currency,
+  }).format(value)
+}
+
+export function InvoiceDocumentPreview({
+  invoice,
+}: InvoiceDocumentPreviewProps) {
+  if (!invoice) {
+    return (
+      <section className="data-section">
+        <div className="section-header">
+          <h2>Plantilla de factura</h2>
+          <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+        </div>
+
+        <div className="empty-state">
+          <strong>No hay factura para previsualizar</strong>
+          <p>Selecciona una factura en el listado para ver la plantilla documental.</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="data-section">
+      <div className="section-header">
+        <h2>Plantilla de factura</h2>
+        <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+      </div>
+
+      <article className="invoice-document invoice-document-premium branded-premium">
+        <img
+          src="/branding/wave-bg.png"
+          alt=""
+          className="invoice-document-watermark"
+        />
+
+        <header className="invoice-document-header premium-header">
+          <div className="premium-brand-left">
+            <div className="premium-kicker-wrap">
+              <span className="invoice-kicker">CostaClean</span>
+            </div>
+
+            <div className="premium-issuer-block">
+              <span className="invoice-meta-label">Datos del emisor</span>
+              <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+              <p className="invoice-document-muted">NIF: 60356434H</p>
+              <p className="invoice-document-muted">C/Raval 35, 2-2</p>
+              <p className="invoice-document-muted">08370 Barcelona</p>
+            </div>
+          </div>
+
+          <div className="premium-brand-right">
+            <img
+              src="/branding/logo-costa-clean-web.png"
+              alt="CostaClean"
+              className="premium-brand-logo"
+            />
+
+            <div className="premium-doc-box">
+              <span className="invoice-kicker invoice-kicker-light">Factura</span>
+              <h3>FACTURA</h3>
+              <div className="premium-doc-meta">
+                <div>
+                  <span className="invoice-meta-label">Número</span>
+                  <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+                </div>
+
+                <div>
+                  <span className="invoice-meta-label">Código interno</span>
+                  <strong>{invoice.display_code ?? invoice.id}</strong>
+                </div>
+
+                <div>
+                  <span className="invoice-meta-label">Fecha de emisión</span>
+                  <strong>{formatDate(invoice.issue_date)}</strong>
+                </div>
+
+                <div>
+                  <span className="invoice-meta-label">Estado</span>
+                  <strong>{invoice.status}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <section className="invoice-document-grid premium-client-grid">
+          <div className="invoice-box premium-box">
+            <span className="invoice-meta-label">Cliente</span>
+            <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
+            <p className="invoice-document-muted">Cliente vinculado en CostaClean CRM</p>
+            <p className="invoice-document-muted">Datos fiscales ampliables en siguientes fases</p>
+          </div>
+
+          <div className="invoice-box premium-box">
+            <span className="invoice-meta-label">Servicio / referencia</span>
+            <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+            <p className="invoice-document-muted">Factura generada desde servicio ejecutado</p>
+          </div>
+        </section>
+
+        <section className="invoice-lines premium-lines">
+          <div className="invoice-lines-head">
+            <span>Concepto</span>
+            <span>Cantidad</span>
+            <span>Precio</span>
+            <span>Subtotal</span>
+          </div>
+
+          <div className="invoice-lines-row premium-lines-row-4">
+            <span>Servicio de limpieza / trabajo facturado</span>
+            <span>1</span>
+            <span>{formatCurrency(invoice.subtotal)}</span>
+            <strong>{formatCurrency(invoice.subtotal)}</strong>
+          </div>
+        </section>
+
+        <section className="invoice-premium-bottom">
+          <div className="invoice-premium-left">
+            <div className="invoice-box premium-box">
+              <span className="invoice-meta-label">Forma de pago</span>
+              <p className="invoice-document-muted">
+                Pago por transferencia a: IBAN ES32 0049 0183 6124 1084 6130
+              </p>
+            </div>
+
+            <div className="invoice-box premium-box">
+              <span className="invoice-meta-label">Observaciones</span>
+              <p className="invoice-document-muted">
+                {invoice.notes ?? 'Sin observaciones adicionales.'}
+              </p>
+            </div>
+
+            <div className="invoice-box premium-box">
+              <span className="invoice-meta-label">Nota legal</span>
+              <p className="invoice-document-muted">
+                {businessRules.defaultLegalNote}
+              </p>
+            </div>
+          </div>
+
+          <div className="invoice-totals premium-totals">
+            <div className="invoice-total-row">
+              <span>Base imponible</span>
+              <strong>{formatCurrency(invoice.subtotal)}</strong>
+            </div>
+
+            <div className="invoice-total-row">
+              <span>IVA (21%)</span>
+              <strong>{formatCurrency(invoice.tax_amount)}</strong>
+            </div>
+
+            <div className="invoice-total-row invoice-total-row-grand">
+              <span>Total</span>
+              <strong>{formatCurrency(invoice.total)}</strong>
+            </div>
+          </div>
+        </section>
+      </article>
+    </section>
+  )
+}
+
+================ App.css :: invoice blocks only ================
+  C:\Users\USUARIO\costa-clean-app\src\App.css:468:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:469:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:470:.invoice-document {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:471:  margin-top: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:472:  border-radius: 24px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:473:  border: 1px solid rgba(148, 163, 184, 0.18);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:474:  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.82));
+  C:\Users\USUARIO\costa-clean-app\src\App.css:475:  padding: 28px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:476:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:477:  gap: 20px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:478:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:479:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:480:.invoice-document-header {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:481:  display: flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:482:  justify-content: space-between;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:483:  gap: 24px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:484:  align-items: flex-start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:485:  flex-wrap: wrap;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:486:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:487:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:488:.invoice-document-header h3 {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:489:  margin: 6px 0 8px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:490:  font-size: 32px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:491:  line-height: 1;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:492:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:493:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:494:.invoice-kicker {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:495:  display: inline-flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:496:  align-items: center;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:497:  padding: 6px 12px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:498:  border-radius: 999px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:499:  background: var(--accent-soft);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:500:  color: var(--accent);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:501:  font-size: 12px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:502:  font-weight: 700;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:505:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:506:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:507:.invoice-document-meta {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:508:  min-width: 280px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:509:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:510:  gap: 14px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:511:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:512:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:513:.invoice-document-grid {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:514:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:515:  grid-template-columns: repeat(2, minmax(0, 1fr));
+  C:\Users\USUARIO\costa-clean-app\src\App.css:516:  gap: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:517:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:518:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:519:.invoice-box {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:520:  padding: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:521:  border-radius: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:522:  border: 1px solid var(--card-border);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:523:  background: rgba(255, 255, 255, 0.02);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:524:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:525:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:526:.invoice-meta-label {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:527:  display: block;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:528:  margin-bottom: 8px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:529:  color: var(--muted);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:530:  font-size: 12px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:531:  text-transform: uppercase;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:532:  letter-spacing: 0.08em;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:533:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:534:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:535:.invoice-document-muted {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:536:  margin: 6px 0 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:537:  color: var(--muted);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:538:  line-height: 1.5;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:539:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:540:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:541:.invoice-lines {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:542:  border-radius: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:543:  border: 1px solid var(--card-border);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:544:  overflow: hidden;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:545:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:546:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:547:.invoice-lines-head,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:548:.invoice-lines-row {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:549:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:550:  grid-template-columns: 2fr 1.3fr 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:551:  gap: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:552:  align-items: center;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:553:  padding: 16px 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:554:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:555:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:556:.invoice-lines-head {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:557:  background: rgba(255, 255, 255, 0.04);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:558:  color: var(--muted);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:559:  font-size: 12px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:560:  font-weight: 700;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:561:  text-transform: uppercase;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:562:  letter-spacing: 0.08em;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:563:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:564:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:565:.invoice-lines-row {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:566:  background: rgba(255, 255, 255, 0.02);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:567:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:568:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:569:.invoice-totals {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:570:  margin-left: auto;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:571:  width: min(100%, 360px);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:572:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:573:  gap: 10px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:574:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:575:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:576:.invoice-total-row {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:577:  display: flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:578:  justify-content: space-between;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:579:  gap: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:580:  padding: 14px 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:581:  border-radius: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:582:  border: 1px solid var(--card-border);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:583:  background: rgba(255, 255, 255, 0.02);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:584:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:585:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:586:.invoice-total-row-grand {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:587:  background: rgba(96, 165, 250, 0.08);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:588:  border-color: rgba(96, 165, 250, 0.25);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:589:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:590:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:591:.invoice-document-footer {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:592:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:593:  grid-template-columns: repeat(2, minmax(0, 1fr));
+  C:\Users\USUARIO\costa-clean-app\src\App.css:594:  gap: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:595:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:596:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:597:@media (max-width: 900px) {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:598:  .invoice-document-grid,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:599:  .invoice-document-footer {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:600:    grid-template-columns: 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:601:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:602:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:603:  .invoice-lines-head,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:604:  .invoice-lines-row {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:605:    grid-template-columns: 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:606:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:607:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:608:  .invoice-totals {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:609:    width: 100%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:610:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:611:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:612:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:613:.invoice-sheet {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:614:  margin-top: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:615:  background: #ffffff;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:616:  color: #0f172a;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:617:  border-radius: 20px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:618:  padding: 32px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:619:  border: 1px solid rgba(148, 163, 184, 0.18);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:620:  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:621:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:623:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:624:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:625:.invoice-sheet-header {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:626:  display: flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:627:  justify-content: space-between;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:628:  gap: 24px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:629:  align-items: flex-start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:630:  border-bottom: 2px solid rgba(15, 23, 42, 0.08);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:631:  padding-bottom: 20px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:632:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:633:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:778:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:779:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:780:.invoice-totals-panel {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:781:  border: 1px solid rgba(148, 163, 184, 0.25);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:782:  border-radius: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:783:  overflow: hidden;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:784:  background: #ffffff;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:785:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:786:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:787:.invoice-total-line {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:788:  display: flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:805:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:806:@media (max-width: 900px) {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:807:  .invoice-sheet-header,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:808:  .invoice-top-meta-grid,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:809:  .invoice-bottom-grid {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:810:    grid-template-columns: 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:811:    display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:812:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:813:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:814:  .invoice-doc-title-box {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:815:    text-align: left;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:823:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:824:@media print {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:825:  .invoice-sheet {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:826:    box-shadow: none;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:827:    border: 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:828:    border-radius: 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:829:    padding: 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:830:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:831:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:832:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:833:.invoice-sheet-branded {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:834:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:835:  overflow: hidden;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:836:  background: #ffffff;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:837:  color: #000000;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:838:  border-radius: 8px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:839:  padding: 44px 44px 36px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:840:  border: 1px solid rgba(15, 23, 42, 0.08);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:841:  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:842:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:843:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:844:.invoice-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:845:  position: absolute;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:846:  inset: auto auto 140px 50%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:847:  transform: translateX(-50%);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:848:  width: 72%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:849:  max-width: 620px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:850:  opacity: 0.09;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:851:  pointer-events: none;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:852:  z-index: 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:853:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:854:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:855:.invoice-sheet-branded > * {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:856:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:857:  z-index: 1;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:858:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:859:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:860:.invoice-sheet-header-branded {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:861:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:862:  grid-template-columns: 1fr 260px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:863:  gap: 28px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:864:  align-items: start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:865:  padding-bottom: 26px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:866:  border-bottom: 0;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:867:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:868:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:869:.invoice-sheet-left-meta {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:870:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:871:  gap: 8px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:872:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:873:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:874:.invoice-mini-meta {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:875:  font-size: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:876:  color: #000000;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:877:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1005:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1006:@media (max-width: 900px) {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1007:  .invoice-sheet-header-branded,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1008:  .invoice-party-grid,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1009:  .invoice-summary-block {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1010:    grid-template-columns: 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1011:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1012:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1013:  .invoice-logo-wrap {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1014:    justify-content: flex-start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1015:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1031:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1032:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1033:  .invoice-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1034:    width: 95%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1035:    bottom: 180px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1036:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1037:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1038:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1039:.invoice-document-premium {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1040:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1041:  overflow: hidden;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1042:  background: #ffffff;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1043:  color: #0f172a;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1044:  border-radius: 24px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1045:  padding: 30px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1046:  border: 1px solid rgba(148, 163, 184, 0.18);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1047:  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1050:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1051:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1052:.invoice-document-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1053:  position: absolute;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1054:  top: 50%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1055:  left: 50%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1056:  transform: translate(-50%, -50%);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1057:  width: 72%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1058:  max-width: 640px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1059:  opacity: 0.06;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1060:  pointer-events: none;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1062:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1063:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1064:.invoice-document-premium > * {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1065:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1066:  z-index: 1;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1067:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1068:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1069:.premium-header {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1070:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1071:  grid-template-columns: 1.1fr 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1072:  gap: 28px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1073:  align-items: start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1074:  padding-bottom: 8px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1075:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1076:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1077:.premium-brand-left,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1078:.premium-brand-right {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1079:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1080:  gap: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1081:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1082:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1083:.premium-kicker-wrap {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1084:  display: flex;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1085:  justify-content: flex-start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1086:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1087:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1088:.invoice-kicker-light {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1089:  background: rgba(15, 23, 42, 0.08);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1090:  color: #0f172a;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1091:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1092:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1093:.premium-issuer-block {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1094:  padding: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1095:  border-radius: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1096:  border: 1px solid rgba(148, 163, 184, 0.25);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1099:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1100:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1101:.premium-brand-logo {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1102:  width: 220px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1103:  max-width: 100%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1104:  height: auto;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1105:  justify-self: end;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1106:  object-fit: contain;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1107:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1108:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1109:.premium-doc-box {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1110:  padding: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1111:  border-radius: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1112:  border: 1px solid rgba(148, 163, 184, 0.25);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1113:  background: rgba(255, 255, 255, 0.88);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1114:  backdrop-filter: blur(6px);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1115:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1116:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1117:.premium-doc-box h3 {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1118:  margin: 10px 0 14px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1119:  font-size: 34px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1120:  line-height: 1;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1121:  color: #0f172a;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1122:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1123:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1124:.premium-doc-meta {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1125:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1126:  gap: 14px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1127:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1128:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1129:.premium-client-grid {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1130:  grid-template-columns: repeat(2, minmax(0, 1fr));
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1131:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1132:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1136:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1137:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1138:.premium-lines .invoice-lines-head {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1139:  grid-template-columns: 2fr 0.8fr 1fr 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1140:  background: #f8fafc;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1141:  color: #475569;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1142:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1143:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1144:.premium-lines-row-4 {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1145:  grid-template-columns: 2fr 0.8fr 1fr 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1146:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1147:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1148:.invoice-premium-bottom {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1149:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1150:  grid-template-columns: 1.2fr 0.85fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1151:  gap: 18px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1152:  align-items: start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1153:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1154:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1155:.invoice-premium-left {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1156:  display: grid;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1157:  gap: 16px;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1158:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1159:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1160:.premium-totals {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1161:  width: 100%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1162:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1163:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1164:@media (max-width: 900px) {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1165:  .premium-header,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1166:  .premium-client-grid,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1167:  .invoice-premium-bottom,
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1168:  .premium-lines .invoice-lines-head,
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1169:  .premium-lines-row-4 {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1170:    grid-template-columns: 1fr;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1171:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1172:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1173:  .premium-brand-logo {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1174:    justify-self: start;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1175:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1176:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1177:  .invoice-document-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1178:    width: 92%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1179:    max-width: none;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1180:    top: 50%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1181:    left: 50%;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1182:    transform: translate(-50%, -50%);
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1183:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1184:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1185:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1187:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1188:/* OVERRIDE FINAL WATERMARK */
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1189:.invoice-document-premium.branded-premium {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1190:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1191:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1192:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1193:.invoice-document-premium.branded-premium .invoice-document-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1194:  position: absolute !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1195:  top: 54% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1196:  left: 50% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1197:  transform: translate(-50%, -50%) !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1198:  width: 70% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1199:  max-width: 620px !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1200:  opacity: 0.05 !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1201:  pointer-events: none !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1203:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1204:
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1205:.invoice-document-premium.branded-premium > *:not(.invoice-document-watermark) {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1206:  position: relative;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1207:  z-index: 1;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1208:}
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1209:
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1210:@media (max-width: 900px) {
+> C:\Users\USUARIO\costa-clean-app\src\App.css:1211:  .invoice-document-premium.branded-premium .invoice-document-watermark {
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1212:    top: 55% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1213:    left: 50% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1214:    transform: translate(-50%, -50%) !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1215:    width: 88% !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1216:    max-width: none !important;
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1217:  }
+  C:\Users\USUARIO\costa-clean-app\src\App.css:1218:}

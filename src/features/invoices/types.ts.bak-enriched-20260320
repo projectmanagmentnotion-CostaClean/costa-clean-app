@@ -12,17 +12,4 @@
   tax_amount: number
   total: number
   notes?: string | null
-
-  client_name?: string | null
-  client_phone?: string | null
-  client_email?: string | null
-
-  property_id?: string | null
-  property_display_code?: string | null
-  property_name?: string | null
-  property_address_line?: string | null
-
-  quote_id?: string | null
-  service_reference?: string | null
-  service_description?: string | null
 }

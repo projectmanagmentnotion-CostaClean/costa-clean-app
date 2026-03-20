@@ -35,7 +35,7 @@ export function InvoiceDocumentPreview({
       <section className="data-section">
         <div className="section-header">
           <h2>Plantilla de factura</h2>
-          <p>Vista documental HTML/CSS de la factura seleccionada.</p>
+          <p>Vista documental HTML/CSS alineada con tu branding real.</p>
         </div>
 
         <div className="empty-state">
@@ -50,110 +50,128 @@ export function InvoiceDocumentPreview({
     <section className="data-section">
       <div className="section-header">
         <h2>Plantilla de factura</h2>
-        <p>Vista documental HTML/CSS de la factura seleccionada.</p>
+        <p>Vista documental HTML/CSS alineada con tu branding real.</p>
       </div>
 
-      <article className="invoice-document">
-        <header className="invoice-document-header">
-          <div>
-            <span className="invoice-kicker">CostaClean</span>
-            <h3>Factura</h3>
-            <p className="invoice-document-muted">
-              Documento comercial generado desde el CRM.
-            </p>
-          </div>
+      <article className="cc-invoice-preview">
+        <header className="cc-invoice-preview__topbar">
+          <span className="cc-invoice-preview__pill">CostaClean</span>
 
-          <div className="invoice-document-meta">
-            <div>
-              <span className="invoice-meta-label">Número</span>
-              <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
-            </div>
-
-            <div>
-              <span className="invoice-meta-label">Código interno</span>
-              <strong>{invoice.display_code ?? invoice.id}</strong>
-            </div>
-
-            <div>
-              <span className="invoice-meta-label">Fecha de emisión</span>
-              <strong>{formatDate(invoice.issue_date)}</strong>
-            </div>
-
-            <div>
-              <span className="invoice-meta-label">Estado</span>
-              <strong>{invoice.status}</strong>
-            </div>
-          </div>
+          <img
+            src="/branding/logo-costa-clean-web.png"
+            alt="CostaClean"
+            className="cc-invoice-preview__logo"
+          />
         </header>
 
-        <section className="invoice-document-grid">
-          <div className="invoice-box">
-            <span className="invoice-meta-label">Emisor</span>
-            <strong>CostaClean</strong>
-            <p className="invoice-document-muted">
-              Servicios de limpieza profesionales
-            </p>
-            <p className="invoice-document-muted">
-              Barcelona, España
-            </p>
+        <section className="cc-invoice-preview__header">
+          <div className="cc-invoice-preview__issuer-box">
+            <span className="cc-invoice-preview__label">Datos del emisor</span>
+            <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+            <p>NIF: 60356434H</p>
+            <p>C/Raval 35, 2-2</p>
+            <p>08370 Barcelona</p>
           </div>
 
-          <div className="invoice-box">
-            <span className="invoice-meta-label">Cliente</span>
+          <div className="cc-invoice-preview__doc-box">
+            <span className="cc-invoice-preview__pill cc-invoice-preview__pill--light">
+              Factura
+            </span>
+
+            <h3>FACTURA</h3>
+
+            <div className="cc-invoice-preview__doc-meta">
+              <div>
+                <span className="cc-invoice-preview__label">Número</span>
+                <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+              </div>
+
+              <div>
+                <span className="cc-invoice-preview__label">Código interno</span>
+                <strong>{invoice.display_code ?? invoice.id}</strong>
+              </div>
+
+              <div>
+                <span className="cc-invoice-preview__label">Fecha de emisión</span>
+                <strong>{formatDate(invoice.issue_date)}</strong>
+              </div>
+
+              <div>
+                <span className="cc-invoice-preview__label">Estado</span>
+                <strong>{invoice.status}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="cc-invoice-preview__meta-grid">
+          <div className="cc-invoice-preview__card">
+            <span className="cc-invoice-preview__label">Cliente</span>
             <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
-            <p className="invoice-document-muted">
-              Referencia cliente vinculada en el CRM
-            </p>
+            <p>Cliente vinculado en CostaClean CRM</p>
+            <p>Datos fiscales ampliables en siguientes fases</p>
+          </div>
+
+          <div className="cc-invoice-preview__card">
+            <span className="cc-invoice-preview__label">Servicio / referencia</span>
+            <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+            <p>Factura generada desde servicio ejecutado</p>
           </div>
         </section>
 
-        <section className="invoice-lines">
-          <div className="invoice-lines-head">
+        <section className="cc-invoice-preview__table">
+          <div className="cc-invoice-preview__table-head">
             <span>Concepto</span>
-            <span>Referencia</span>
-            <span>Importe</span>
-          </div>
-
-          <div className="invoice-lines-row">
-            <span>Servicio facturado</span>
-            <span>{invoice.job_display_code ?? invoice.job_id}</span>
-            <strong>{formatCurrency(invoice.subtotal)}</strong>
-          </div>
-        </section>
-
-        <section className="invoice-totals">
-          <div className="invoice-total-row">
+            <span>Cantidad</span>
+            <span>Precio</span>
             <span>Subtotal</span>
+          </div>
+
+          <div className="cc-invoice-preview__table-row">
+            <span>Servicio de limpieza / trabajo facturado</span>
+            <span>1</span>
+            <span>{formatCurrency(invoice.subtotal)}</span>
             <strong>{formatCurrency(invoice.subtotal)}</strong>
-          </div>
-
-          <div className="invoice-total-row">
-            <span>IVA</span>
-            <strong>{formatCurrency(invoice.tax_amount)}</strong>
-          </div>
-
-          <div className="invoice-total-row invoice-total-row-grand">
-            <span>Total</span>
-            <strong>{formatCurrency(invoice.total)}</strong>
           </div>
         </section>
 
-        <footer className="invoice-document-footer">
-          <div className="invoice-box">
-            <span className="invoice-meta-label">Observaciones</span>
-            <p className="invoice-document-muted">
-              {invoice.notes ?? 'Sin observaciones adicionales.'}
-            </p>
+        <section className="cc-invoice-preview__bottom">
+          <div className="cc-invoice-preview__notes-stack">
+            <div className="cc-invoice-preview__card">
+              <span className="cc-invoice-preview__label">Forma de pago</span>
+              <p>Pago por transferencia a: IBAN ES32 0049 0183 6124 1084 6130</p>
+            </div>
+
+            <div className="cc-invoice-preview__card">
+              <span className="cc-invoice-preview__label">Observaciones</span>
+              <p>{invoice.notes ?? 'Sin observaciones adicionales.'}</p>
+            </div>
+
+            <div className="cc-invoice-preview__card">
+              <span className="cc-invoice-preview__label">Nota legal</span>
+              <p>{businessRules.defaultInvoiceLegalNote}</p>
+            </div>
           </div>
 
-          <div className="invoice-box">
-            <span className="invoice-meta-label">Nota legal</span>
-            <p className="invoice-document-muted">
-              {businessRules.defaultLegalNote}
-            </p>
+          <div className="cc-invoice-preview__totals">
+            <div className="cc-invoice-preview__total-row">
+              <span>Base imponible</span>
+              <strong>{formatCurrency(invoice.subtotal)}</strong>
+            </div>
+
+            <div className="cc-invoice-preview__total-row">
+              <span>IVA (21%)</span>
+              <strong>{formatCurrency(invoice.tax_amount)}</strong>
+            </div>
+
+            <div className="cc-invoice-preview__total-row cc-invoice-preview__total-row--grand">
+              <span>Total</span>
+              <strong>{formatCurrency(invoice.total)}</strong>
+            </div>
           </div>
-        </footer>
+        </section>
       </article>
     </section>
   )
 }
+

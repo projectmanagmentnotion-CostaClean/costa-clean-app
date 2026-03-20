@@ -4,13 +4,13 @@ import type { InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
 import { InvoiceDocumentPreview } from './InvoiceDocumentPreview'
+import { openInvoicePrintWindow } from './openInvoicePrintWindow'
 
 interface InvoiceDetailCardProps {
   invoice: InvoiceListItem | null
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   onInvoiceUpdated: () => Promise<void>
-  onOpenDocument: () => void
 }
 
 interface EditFormState {
@@ -39,7 +39,6 @@ export function InvoiceDetailCard({
   jobs,
   quotes,
   onInvoiceUpdated,
-  onOpenDocument,
 }: InvoiceDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -265,9 +264,17 @@ export function InvoiceDetailCard({
               <button
                 type="button"
                 className="primary-button"
-                onClick={onOpenDocument}
+                onClick={() => openInvoicePrintWindow(invoice, 'print')}
               >
-                Abrir documento
+                Imprimir factura
+              </button>
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => openInvoicePrintWindow(invoice, 'pdf')}
+              >
+                Guardar PDF
               </button>
 
               <button

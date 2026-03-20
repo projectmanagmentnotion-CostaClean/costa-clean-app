@@ -17,47 +17,6 @@ import type { JobListItem } from '../features/jobs/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 
-function buildPropertyAddressLine(property: PropertyListItem | undefined): string | null {
-  if (!property) return null
-
-  const parts = [
-    property.address?.trim(),
-    property.postal_code?.trim(),
-    property.city?.trim(),
-  ].filter(Boolean)
-
-  return parts.length > 0 ? parts.join(', ') : null
-}
-
-function buildServiceReference(
-  invoice: InvoiceListItem,
-  job: JobListItem | undefined,
-  property: PropertyListItem | undefined,
-): string | null {
-  const parts = [
-    invoice.job_display_code ?? job?.display_code ?? invoice.job_id,
-    property?.display_code ?? null,
-    property?.name ?? null,
-  ].filter(Boolean)
-
-  return parts.length > 0 ? parts.join(' · ') : null
-}
-
-function buildServiceDescription(
-  job: JobListItem | undefined,
-  property: PropertyListItem | undefined,
-): string | null {
-  const serviceType = job?.service_type?.trim() || 'Servicio de limpieza'
-  const propertyName = property?.name?.trim()
-  const propertyType = property?.property_type?.trim()
-  const city = property?.city?.trim()
-
-  const locationBits = [propertyName, propertyType, city].filter(Boolean)
-  return locationBits.length > 0
-    ? `${serviceType} en ${locationBits.join(' · ')}`
-    : serviceType
-}
-
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [leads, setLeads] = useState<LeadListItem[]>([])
@@ -245,13 +204,9 @@ export function AppShell() {
   }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadPayments])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
-  const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
   const propertyCodeById = useMemo(() => new Map(properties.map((property) => [property.id, property.display_code ?? property.id])), [properties])
-  const propertyById = useMemo(() => new Map(properties.map((property) => [property.id, property])), [properties])
   const quoteCodeById = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote.display_code ?? quote.id])), [quotes])
-  const quoteById = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote])), [quotes])
   const jobCodeById = useMemo(() => new Map(jobs.map((job) => [job.id, job.display_code ?? job.id])), [jobs])
-  const jobById = useMemo(() => new Map(jobs.map((job) => [job.id, job])), [jobs])
   const invoiceById = useMemo(() => new Map(invoices.map((invoice) => [invoice.id, invoice])), [invoices])
 
   const propertiesWithCodes = useMemo(
@@ -279,32 +234,12 @@ export function AppShell() {
   )
 
   const invoicesWithCodes = useMemo(
-    () => invoices.map((invoice) => {
-      const client = clientById.get(invoice.client_id)
-      const job = jobById.get(invoice.job_id)
-      const property = job?.property_id ? propertyById.get(job.property_id) : undefined
-      const quote = job?.quote_id ? quoteById.get(job.quote_id) : undefined
-
-      return {
-        ...invoice,
-        client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
-        job_display_code: jobCodeById.get(invoice.job_id) ?? invoice.job_id,
-
-        client_name: client?.full_name ?? null,
-        client_phone: client?.phone ?? null,
-        client_email: client?.email ?? null,
-
-        property_id: property?.id ?? job?.property_id ?? quote?.property_id ?? null,
-        property_display_code: property?.display_code ?? (job?.property_id ? propertyCodeById.get(job.property_id) ?? job.property_id : null),
-        property_name: property?.name ?? null,
-        property_address_line: buildPropertyAddressLine(property),
-
-        quote_id: job?.quote_id ?? null,
-        service_reference: buildServiceReference(invoice, job, property),
-        service_description: buildServiceDescription(job, property),
-      }
-    }),
-    [invoices, clientById, clientCodeById, jobById, jobCodeById, propertyById, propertyCodeById, quoteById],
+    () => invoices.map((invoice) => ({
+      ...invoice,
+      client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
+      job_display_code: jobCodeById.get(invoice.job_id) ?? invoice.job_id,
+    })),
+    [invoices, clientCodeById, jobCodeById],
   )
 
   const paymentsWithCodes = useMemo(

@@ -7,7 +7,8 @@
   quotesIncludeTaxByDefault: boolean
   airbnbLinenSurchargePerRoom: number
   defaultQuoteValidityDays: number
-  defaultLegalNote: string
+  defaultQuoteLegalNote: string
+  defaultInvoiceLegalNote: string
 }
 
 export const businessRules: BusinessRules = {
@@ -19,5 +20,6 @@ export const businessRules: BusinessRules = {
   quotesIncludeTaxByDefault: false,
   airbnbLinenSurchargePerRoom: 15,
   defaultQuoteValidityDays: 15,
-  defaultLegalNote: 'Los precios indicados no incluyen IVA.',
+  defaultQuoteLegalNote: 'Los precios indicados no incluyen IVA.',
+  defaultInvoiceLegalNote: 'Factura emitida conforme a los datos fiscales y condiciones acordadas.',
 }

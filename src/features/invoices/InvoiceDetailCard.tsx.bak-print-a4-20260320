@@ -10,7 +10,6 @@ interface InvoiceDetailCardProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   onInvoiceUpdated: () => Promise<void>
-  onOpenDocument: () => void
 }
 
 interface EditFormState {
@@ -39,7 +38,6 @@ export function InvoiceDetailCard({
   jobs,
   quotes,
   onInvoiceUpdated,
-  onOpenDocument,
 }: InvoiceDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -254,44 +252,27 @@ export function InvoiceDetailCard({
           </div>
 
           {invoice ? (
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
-                justifyContent: 'flex-end',
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setIsEditing((current) => !current)
+                setSaveError(null)
+                setSuccessMessage(null)
+                setForm({
+                  job_id: invoice.job_id,
+                  client_id: invoice.client_id,
+                  issue_date: invoice.issue_date,
+                  status: invoice.status,
+                  subtotal: String(invoice.subtotal),
+                  tax_amount: String(invoice.tax_amount),
+                  total: String(invoice.total),
+                  notes: invoice.notes ?? '',
+                })
               }}
             >
-              <button
-                type="button"
-                className="primary-button"
-                onClick={onOpenDocument}
-              >
-                Abrir documento
-              </button>
-
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setIsEditing((current) => !current)
-                  setSaveError(null)
-                  setSuccessMessage(null)
-                  setForm({
-                    job_id: invoice.job_id,
-                    client_id: invoice.client_id,
-                    issue_date: invoice.issue_date,
-                    status: invoice.status,
-                    subtotal: String(invoice.subtotal),
-                    tax_amount: String(invoice.tax_amount),
-                    total: String(invoice.total),
-                    notes: invoice.notes ?? '',
-                  })
-                }}
-              >
-                {isEditing ? 'Cancelar edición' : 'Editar factura'}
-              </button>
-            </div>
+              {isEditing ? 'Cancelar edición' : 'Editar factura'}
+            </button>
           ) : null}
         </div>
 

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -23,10 +24,12 @@ export function InvoicesPage({
 }: InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showDocumentScreen, setShowDocumentScreen] = useState(false)
 
   useEffect(() => {
     if (invoices.length === 0) {
       setSelectedInvoiceId(null)
+      setShowDocumentScreen(false)
       return
     }
 
@@ -36,6 +39,7 @@ export function InvoicesPage({
 
     if (!selectedStillExists) {
       setSelectedInvoiceId(invoices[0].id)
+      setShowDocumentScreen(false)
     }
   }, [invoices, selectedInvoiceId])
 
@@ -43,43 +47,56 @@ export function InvoicesPage({
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
-        <div>
-          <h1>Invoices</h1>
-          <p>Vista inicial del módulo Invoices conectada a Supabase.</p>
+    <>
+      <section className="page-section">
+        <div className="section-header page-header-actions">
+          <div>
+            <h1>Invoices</h1>
+            <p>Vista inicial del módulo Invoices conectada a Supabase.</p>
+          </div>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowCreateForm((current) => !current)}
+          >
+            {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
-        >
-          {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
-        </button>
-      </div>
+        {showCreateForm ? (
+          <InvoiceCreateForm
+            jobs={jobs}
+            quotes={quotes}
+            onCreated={onInvoiceCreated}
+          />
+        ) : null}
 
-      {showCreateForm ? (
-        <InvoiceCreateForm
+        <InvoiceDetailCard
+          invoice={selectedInvoice}
           jobs={jobs}
           quotes={quotes}
-          onCreated={onInvoiceCreated}
+          onInvoiceUpdated={onInvoiceCreated}
+          onOpenDocument={() => setShowDocumentScreen(true)}
+        />
+
+        <InvoicesList
+          invoices={invoices}
+          error={error}
+          selectedInvoiceId={selectedInvoiceId}
+          onSelectInvoice={(invoice) => {
+            setSelectedInvoiceId(invoice.id)
+            setShowDocumentScreen(false)
+          }}
+        />
+      </section>
+
+      {showDocumentScreen && selectedInvoice ? (
+        <InvoiceDocumentScreen
+          invoice={selectedInvoice}
+          onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
-
-      <InvoiceDetailCard
-        invoice={selectedInvoice}
-        jobs={jobs}
-        quotes={quotes}
-        onInvoiceUpdated={onInvoiceCreated}
-      />
-
-      <InvoicesList
-        invoices={invoices}
-        error={error}
-        selectedInvoiceId={selectedInvoiceId}
-        onSelectInvoice={(invoice) => setSelectedInvoiceId(invoice.id)}
-      />
-    </section>
+    </>
   )
 }

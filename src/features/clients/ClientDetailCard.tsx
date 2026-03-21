@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
+import { getDisplayStatusLabel } from '../../app/displayFormat'
 import type { ClientListItem } from './types'
 
 interface ClientDetailCardProps {
@@ -108,11 +109,11 @@ export function ClientDetailCard({
       }
 
       await onClientUpdated()
-      setSuccessMessage('Client actualizado correctamente.')
+      setSuccessMessage('Cliente actualizado correctamente.')
       setIsEditing(false)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido actualizando el client.'
+        err instanceof Error ? err.message : 'Error desconocido actualizando el cliente.'
 
       setSaveError(message)
     } finally {
@@ -124,8 +125,8 @@ export function ClientDetailCard({
     <section className="data-section">
       <div className="section-header page-header-actions">
         <div>
-          <h2>Detalle del client</h2>
-          <p>Vista inicial de detalle del client seleccionado.</p>
+          <h2>Detalle del cliente</h2>
+          <p>Vista inicial de detalle del cliente seleccionado.</p>
         </div>
 
         {client ? (
@@ -144,7 +145,7 @@ export function ClientDetailCard({
               })
             }}
           >
-            {isEditing ? 'Cancelar edición' : 'Editar client'}
+            {isEditing ? 'Cancelar edición' : 'Editar cliente'}
           </button>
         ) : null}
       </div>
@@ -157,7 +158,7 @@ export function ClientDetailCard({
               <p>{client.display_code ?? client.id}</p>
             </div>
 
-            <span className="lead-badge">{client.status}</span>
+            <span className="lead-badge">{getDisplayStatusLabel(client.status)}</span>
           </div>
 
           {isEditing ? (
@@ -211,7 +212,7 @@ export function ClientDetailCard({
 
               {saveError ? (
                 <div className="empty-state">
-                  <strong>No se pudo actualizar el client</strong>
+                  <strong>No se pudo actualizar el cliente</strong>
                   <p>{saveError}</p>
                 </div>
               ) : null}
@@ -247,7 +248,7 @@ export function ClientDetailCard({
 
               <div className="detail-row">
                 <span className="detail-label">Estado</span>
-                <strong>{client.status}</strong>
+                <strong>{getDisplayStatusLabel(client.status)}</strong>
               </div>
 
               <div className="detail-row">
@@ -259,7 +260,7 @@ export function ClientDetailCard({
 
           {!isEditing && saveError ? (
             <div className="empty-state">
-              <strong>No se pudo actualizar el client</strong>
+              <strong>No se pudo actualizar el cliente</strong>
               <p>{saveError}</p>
             </div>
           ) : null}
@@ -273,7 +274,7 @@ export function ClientDetailCard({
         </div>
       ) : (
         <div className="empty-state">
-          <strong>Ningún client seleccionado</strong>
+          <strong>Ningún cliente seleccionado</strong>
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}

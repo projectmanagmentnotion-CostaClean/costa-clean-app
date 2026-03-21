@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
+import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 
@@ -213,7 +214,7 @@ export function PaymentDetailCard({
                 >
                   {invoices.map((invoice) => (
                     <option key={invoice.id} value={invoice.id}>
-                      {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {invoice.total}
+                      {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {formatCurrency(invoice.total)}
                     </option>
                   ))}
                 </select>
@@ -296,15 +297,15 @@ export function PaymentDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha de cobro</span>
-                <strong>{payment.payment_date}</strong>
+                <strong>{formatDateEs(payment.payment_date)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Importe</span>
-                <strong>{payment.amount}</strong>
+                <strong>{formatCurrency(payment.amount)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Método</span>
-                <strong>{payment.payment_method ?? 'Sin método'}</strong>
+                <strong>{getPaymentMethodLabel(payment.payment_method)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Notas</span>

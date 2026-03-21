@@ -1,0 +1,57 @@
+﻿================ .\src\features\invoices\openInvoicePrintWindow.tsx ================
+   1: import { renderToStaticMarkup } from 'react-dom/server'
+   2: import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
+   3: import { invoicePrintStyles } from './invoicePrintStyles'
+   4: import type { InvoiceListItem } from './types'
+   5: 
+   6: type InvoiceOutputIntent = 'print' | 'pdf'
+   7: 
+   8: function getDocumentTitle(invoice: InvoiceListItem, intent: InvoiceOutputIntent): string {
+   9:   const invoiceRef = invoice.invoice_number ?? invoice.display_code ?? invoice.id
+  10:   return intent === 'pdf'
+  11:     ? `Factura ${invoiceRef} - Guardar PDF`
+  12:     : `Factura ${invoiceRef} - Imprimir`
+  13: }
+  14: 
+  15: export function openInvoicePrintWindow(
+  16:   invoice: InvoiceListItem,
+  17:   intent: InvoiceOutputIntent = 'print',
+  18: ) {
+  19:   const printWindow = window.open('', '_blank', 'width=1100,height=1400')
+  20: 
+  21:   if (!printWindow) {
+  22:     window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+  23:     return
+  24:   }
+  25: 
+  26:   const documentTitle = getDocumentTitle(invoice, intent)
+  27:   const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} />)
+  28: 
+  29:   const html = `<!doctype html>
+  30: <html lang="es">
+  31:   <head>
+  32:     <meta charset="UTF-8" />
+  33:     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  34:     <title>${documentTitle}</title>
+  35:     <style>${invoicePrintStyles}</style>
+  36:   </head>
+  37:   <body>
+  38:     <div class="cc-print-root">${markup}</div>
+  39: 
+  40:     <script>
+  41:       window.addEventListener('load', function () {
+  42:         setTimeout(function () {
+  43:           window.focus();
+  44:           window.print();
+  45:         }, 250);
+  46:       });
+  47:     </script>
+  48:   </body>
+  49: </html>`
+  50: 
+  51:   printWindow.document.open()
+  52:   printWindow.document.write(html)
+  53:   printWindow.document.close()
+  54: }
+
+

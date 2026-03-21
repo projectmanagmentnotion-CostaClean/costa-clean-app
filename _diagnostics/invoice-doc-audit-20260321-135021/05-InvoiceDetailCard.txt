@@ -1,0 +1,464 @@
+﻿================ .\src\features\invoices\InvoiceDetailCard.tsx ================
+   1: import { useEffect, useMemo, useState, type FormEvent } from 'react'
+   2: import { businessRules } from '../../app/businessRules'
+   3: import type { InvoiceListItem } from './types'
+   4: import type { JobListItem } from '../jobs/types'
+   5: import type { QuoteListItem } from '../quotes/types'
+   6: import { InvoiceDocumentPreview } from './InvoiceDocumentPreview'
+   7: 
+   8: interface InvoiceDetailCardProps {
+   9:   invoice: InvoiceListItem | null
+  10:   jobs: JobListItem[]
+  11:   quotes: QuoteListItem[]
+  12:   onInvoiceUpdated: () => Promise<void>
+  13:   onOpenDocument: () => void
+  14: }
+  15: 
+  16: interface EditFormState {
+  17:   job_id: string
+  18:   client_id: string
+  19:   issue_date: string
+  20:   status: string
+  21:   subtotal: string
+  22:   tax_amount: string
+  23:   total: string
+  24:   notes: string
+  25: }
+  26: 
+  27: function parseDecimalInput(value: string): number {
+  28:   const normalized = value.trim().replace(',', '.')
+  29:   const parsed = Number(normalized)
+  30:   return Number.isFinite(parsed) ? parsed : Number.NaN
+  31: }
+  32: 
+  33: function formatMoneyInput(value: number): string {
+  34:   return value.toFixed(2)
+  35: }
+  36: 
+  37: export function InvoiceDetailCard({
+  38:   invoice,
+  39:   jobs,
+  40:   quotes,
+  41:   onInvoiceUpdated,
+  42:   onOpenDocument,
+  43: }: InvoiceDetailCardProps) {
+  44:   const [isEditing, setIsEditing] = useState(false)
+  45:   const [isSaving, setIsSaving] = useState(false)
+  46:   const [saveError, setSaveError] = useState<string | null>(null)
+  47:   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  48:   const [form, setForm] = useState<EditFormState>({
+  49:     job_id: '',
+  50:     client_id: '',
+  51:     issue_date: '',
+  52:     status: 'draft',
+  53:     subtotal: '0.00',
+  54:     tax_amount: '0.00',
+  55:     total: '0.00',
+  56:     notes: '',
+  57:   })
+  58: 
+  59:   const selectedJob = useMemo(
+  60:     () => jobs.find((job) => job.id === form.job_id) ?? null,
+  61:     [jobs, form.job_id],
+  62:   )
+  63: 
+  64:   const linkedQuote = useMemo(() => {
+  65:     if (!selectedJob?.quote_id) {
+  66:       return null
+  67:     }
+  68:     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
+  69:   }, [quotes, selectedJob])
+  70: 
+  71:   useEffect(() => {
+  72:     if (!invoice) {
+  73:       setIsEditing(false)
+  74:       setSaveError(null)
+  75:       setSuccessMessage(null)
+  76:       setForm({
+  77:         job_id: '',
+  78:         client_id: '',
+  79:         issue_date: '',
+  80:         status: 'draft',
+  81:         subtotal: '0.00',
+  82:         tax_amount: '0.00',
+  83:         total: '0.00',
+  84:         notes: '',
+  85:       })
+  86:       return
+  87:     }
+  88: 
+  89:     setIsEditing(false)
+  90:     setSaveError(null)
+  91:     setSuccessMessage(null)
+  92:     setForm({
+  93:       job_id: invoice.job_id,
+  94:       client_id: invoice.client_id,
+  95:       issue_date: invoice.issue_date,
+  96:       status: invoice.status,
+  97:       subtotal: String(invoice.subtotal),
+  98:       tax_amount: String(invoice.tax_amount),
+  99:       total: String(invoice.total),
+ 100:       notes: invoice.notes ?? '',
+ 101:     })
+ 102:   }, [invoice])
+ 103: 
+ 104:   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
+ 105:     setForm((current) => ({
+ 106:       ...current,
+ 107:       [field]: value,
+ 108:     }))
+ 109:   }
+ 110: 
+ 111:   function recalculateFromSubtotal(value: string) {
+ 112:     const subtotal = parseDecimalInput(value)
+ 113: 
+ 114:     if (Number.isNaN(subtotal)) {
+ 115:       setForm((current) => ({
+ 116:         ...current,
+ 117:         subtotal: value,
+ 118:         tax_amount: '',
+ 119:         total: '',
+ 120:       }))
+ 121:       return
+ 122:     }
+ 123: 
+ 124:     const taxAmount = subtotal * businessRules.defaultTaxRate
+ 125:     const total = subtotal + taxAmount
+ 126: 
+ 127:     setForm((current) => ({
+ 128:       ...current,
+ 129:       subtotal: value,
+ 130:       tax_amount: formatMoneyInput(taxAmount),
+ 131:       total: formatMoneyInput(total),
+ 132:     }))
+ 133:   }
+ 134: 
+ 135:   function syncFromJobQuote() {
+ 136:     if (!selectedJob) {
+ 137:       return
+ 138:     }
+ 139: 
+ 140:     if (linkedQuote) {
+ 141:       setForm((current) => ({
+ 142:         ...current,
+ 143:         client_id: selectedJob.client_id,
+ 144:         subtotal: formatMoneyInput(Number(linkedQuote.subtotal)),
+ 145:         tax_amount: formatMoneyInput(Number(linkedQuote.tax_amount ?? 0)),
+ 146:         total: formatMoneyInput(Number(linkedQuote.total)),
+ 147:         notes: current.notes.trim() ? current.notes : linkedQuote.notes ?? '',
+ 148:       }))
+ 149:       return
+ 150:     }
+ 151: 
+ 152:     setForm((current) => ({
+ 153:       ...current,
+ 154:       client_id: selectedJob.client_id,
+ 155:     }))
+ 156:   }
+ 157: 
+ 158:   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+ 159:     event.preventDefault()
+ 160: 
+ 161:     if (!invoice) {
+ 162:       return
+ 163:     }
+ 164: 
+ 165:     setSaveError(null)
+ 166:     setSuccessMessage(null)
+ 167:     setIsSaving(true)
+ 168: 
+ 169:     try {
+ 170:       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+ 171:       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+ 172: 
+ 173:       if (!supabaseUrl || !supabaseAnonKey) {
+ 174:         setSaveError('Faltan las variables de entorno de Supabase.')
+ 175:         return
+ 176:       }
+ 177: 
+ 178:       if (!form.job_id) {
+ 179:         setSaveError('Debes seleccionar un job.')
+ 180:         return
+ 181:       }
+ 182: 
+ 183:       if (!form.client_id) {
+ 184:         setSaveError('No se pudo resolver el client del job.')
+ 185:         return
+ 186:       }
+ 187: 
+ 188:       if (!form.issue_date) {
+ 189:         setSaveError('Debes indicar la fecha de emisión.')
+ 190:         return
+ 191:       }
+ 192: 
+ 193:       const subtotal = parseDecimalInput(form.subtotal)
+ 194:       const taxAmount = parseDecimalInput(form.tax_amount)
+ 195:       const total = parseDecimalInput(form.total)
+ 196: 
+ 197:       if (
+ 198:         Number.isNaN(subtotal) ||
+ 199:         Number.isNaN(taxAmount) ||
+ 200:         Number.isNaN(total)
+ 201:       ) {
+ 202:         setSaveError('Subtotal, IVA y total deben ser números válidos.')
+ 203:         return
+ 204:       }
+ 205: 
+ 206:       const response = await fetch(
+ 207:         `${supabaseUrl}/rest/v1/invoices?id=eq.${encodeURIComponent(invoice.id)}`,
+ 208:         {
+ 209:           method: 'PATCH',
+ 210:           headers: {
+ 211:             apikey: supabaseAnonKey,
+ 212:             Authorization: `Bearer ${supabaseAnonKey}`,
+ 213:             'Content-Type': 'application/json',
+ 214:           },
+ 215:           body: JSON.stringify({
+ 216:             job_id: form.job_id,
+ 217:             client_id: form.client_id,
+ 218:             issue_date: form.issue_date,
+ 219:             status: form.status,
+ 220:             subtotal: Number(formatMoneyInput(subtotal)),
+ 221:             tax_amount: Number(formatMoneyInput(taxAmount)),
+ 222:             total: Number(formatMoneyInput(total)),
+ 223:             notes: form.notes.trim() || null,
+ 224:           }),
+ 225:         },
+ 226:       )
+ 227: 
+ 228:       if (!response.ok) {
+ 229:         const errorText = await response.text()
+ 230:         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+ 231:         return
+ 232:       }
+ 233: 
+ 234:       await onInvoiceUpdated()
+ 235:       setSuccessMessage('Factura actualizada correctamente.')
+ 236:       setIsEditing(false)
+ 237:     } catch (err) {
+ 238:       const message =
+ 239:         err instanceof Error ? err.message : 'Error desconocido actualizando la factura.'
+ 240: 
+ 241:       setSaveError(message)
+ 242:     } finally {
+ 243:       setIsSaving(false)
+ 244:     }
+ 245:   }
+ 246: 
+ 247:   return (
+ 248:     <>
+ 249:       <section className="data-section">
+ 250:         <div className="section-header page-header-actions">
+ 251:           <div>
+ 252:             <h2>Detalle de la factura</h2>
+ 253:             <p>Vista inicial de detalle de la factura seleccionada.</p>
+ 254:           </div>
+ 255: 
+ 256:           {invoice ? (
+ 257:             <div
+ 258:               style={{
+ 259:                 display: 'flex',
+ 260:                 gap: '0.75rem',
+ 261:                 flexWrap: 'wrap',
+ 262:                 justifyContent: 'flex-end',
+ 263:               }}
+ 264:             >
+ 265:               <button
+ 266:                 type="button"
+ 267:                 className="primary-button"
+ 268:                 onClick={onOpenDocument}
+ 269:               >
+ 270:                 Abrir documento
+ 271:               </button>
+ 272: 
+ 273:               <button
+ 274:                 type="button"
+ 275:                 className="secondary-button"
+ 276:                 onClick={() => {
+ 277:                   setIsEditing((current) => !current)
+ 278:                   setSaveError(null)
+ 279:                   setSuccessMessage(null)
+ 280:                   setForm({
+ 281:                     job_id: invoice.job_id,
+ 282:                     client_id: invoice.client_id,
+ 283:                     issue_date: invoice.issue_date,
+ 284:                     status: invoice.status,
+ 285:                     subtotal: String(invoice.subtotal),
+ 286:                     tax_amount: String(invoice.tax_amount),
+ 287:                     total: String(invoice.total),
+ 288:                     notes: invoice.notes ?? '',
+ 289:                   })
+ 290:                 }}
+ 291:               >
+ 292:                 {isEditing ? 'Cancelar edición' : 'Editar factura'}
+ 293:               </button>
+ 294:             </div>
+ 295:           ) : null}
+ 296:         </div>
+ 297: 
+ 298:         {invoice ? (
+ 299:           <div className="lead-detail-card">
+ 300:             <div className="lead-detail-header">
+ 301:               <div>
+ 302:                 <h3>{invoice.display_code ?? invoice.id}</h3>
+ 303:                 <p>{invoice.invoice_number ?? 'Sin número'}</p>
+ 304:               </div>
+ 305:               <span className="lead-badge">{invoice.status}</span>
+ 306:             </div>
+ 307: 
+ 308:             {isEditing ? (
+ 309:               <form className="lead-form" onSubmit={handleSubmit}>
+ 310:                 <label className="form-field">
+ 311:                   <span>Job *</span>
+ 312:                   <select
+ 313:                     value={form.job_id}
+ 314:                     onChange={(event) => updateField('job_id', event.target.value)}
+ 315:                   >
+ 316:                     {jobs.map((job) => (
+ 317:                       <option key={job.id} value={job.id}>
+ 318:                         {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+ 319:                       </option>
+ 320:                     ))}
+ 321:                   </select>
+ 322:                 </label>
+ 323: 
+ 324:                 <label className="form-field">
+ 325:                   <span>Fecha de emisión *</span>
+ 326:                   <input
+ 327:                     type="date"
+ 328:                     value={form.issue_date}
+ 329:                     onChange={(event) => updateField('issue_date', event.target.value)}
+ 330:                     required
+ 331:                   />
+ 332:                 </label>
+ 333: 
+ 334:                 <label className="form-field">
+ 335:                   <span>Estado</span>
+ 336:                   <select
+ 337:                     value={form.status}
+ 338:                     onChange={(event) => updateField('status', event.target.value)}
+ 339:                   >
+ 340:                     <option value="draft">draft</option>
+ 341:                     <option value="issued">issued</option>
+ 342:                     <option value="paid">paid</option>
+ 343:                     <option value="cancelled">cancelled</option>
+ 344:                   </select>
+ 345:                 </label>
+ 346: 
+ 347:                 <label className="form-field">
+ 348:                   <span>Subtotal *</span>
+ 349:                   <input
+ 350:                     value={form.subtotal}
+ 351:                     onChange={(event) => recalculateFromSubtotal(event.target.value)}
+ 352:                     required
+ 353:                   />
+ 354:                 </label>
+ 355: 
+ 356:                 <label className="form-field">
+ 357:                   <span>IVA</span>
+ 358:                   <input value={form.tax_amount} readOnly />
+ 359:                 </label>
+ 360: 
+ 361:                 <label className="form-field">
+ 362:                   <span>Total</span>
+ 363:                   <input value={form.total} readOnly />
+ 364:                 </label>
+ 365: 
+ 366:                 <label className="form-field form-field-full">
+ 367:                   <span>Notas</span>
+ 368:                   <textarea
+ 369:                     value={form.notes}
+ 370:                     onChange={(event) => updateField('notes', event.target.value)}
+ 371:                     rows={4}
+ 372:                   />
+ 373:                 </label>
+ 374: 
+ 375:                 <div className="form-actions">
+ 376:                   <button type="button" className="secondary-button" onClick={syncFromJobQuote}>
+ 377:                     Traer datos del job/quote
+ 378:                   </button>
+ 379: 
+ 380:                   <button type="submit" className="primary-button" disabled={isSaving}>
+ 381:                     {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+ 382:                   </button>
+ 383:                 </div>
+ 384: 
+ 385:                 {saveError ? (
+ 386:                   <div className="empty-state">
+ 387:                     <strong>No se pudo actualizar la factura</strong>
+ 388:                     <p>{saveError}</p>
+ 389:                   </div>
+ 390:                 ) : null}
+ 391: 
+ 392:                 {successMessage ? (
+ 393:                   <div className="empty-state">
+ 394:                     <strong>Operación correcta</strong>
+ 395:                     <p>{successMessage}</p>
+ 396:                   </div>
+ 397:                 ) : null}
+ 398:               </form>
+ 399:             ) : (
+ 400:               <div className="lead-detail-grid">
+ 401:                 <div className="detail-row">
+ 402:                   <span className="detail-label">Código</span>
+ 403:                   <strong>{invoice.display_code ?? invoice.id}</strong>
+ 404:                 </div>
+ 405:                 <div className="detail-row">
+ 406:                   <span className="detail-label">Número factura</span>
+ 407:                   <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+ 408:                 </div>
+ 409:                 <div className="detail-row">
+ 410:                   <span className="detail-label">Job</span>
+ 411:                   <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+ 412:                 </div>
+ 413:                 <div className="detail-row">
+ 414:                   <span className="detail-label">Client</span>
+ 415:                   <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
+ 416:                 </div>
+ 417:                 <div className="detail-row">
+ 418:                   <span className="detail-label">Fecha emisión</span>
+ 419:                   <strong>{invoice.issue_date}</strong>
+ 420:                 </div>
+ 421:                 <div className="detail-row">
+ 422:                   <span className="detail-label">Subtotal</span>
+ 423:                   <strong>{invoice.subtotal}</strong>
+ 424:                 </div>
+ 425:                 <div className="detail-row">
+ 426:                   <span className="detail-label">IVA</span>
+ 427:                   <strong>{invoice.tax_amount}</strong>
+ 428:                 </div>
+ 429:                 <div className="detail-row">
+ 430:                   <span className="detail-label">Total</span>
+ 431:                   <strong>{invoice.total}</strong>
+ 432:                 </div>
+ 433:               </div>
+ 434:             )}
+ 435: 
+ 436:             {!isEditing && saveError ? (
+ 437:               <div className="empty-state">
+ 438:                 <strong>No se pudo actualizar la factura</strong>
+ 439:                 <p>{saveError}</p>
+ 440:               </div>
+ 441:             ) : null}
+ 442: 
+ 443:             {!isEditing && successMessage ? (
+ 444:               <div className="empty-state">
+ 445:                 <strong>Operación correcta</strong>
+ 446:                 <p>{successMessage}</p>
+ 447:               </div>
+ 448:             ) : null}
+ 449:           </div>
+ 450:         ) : (
+ 451:           <div className="empty-state">
+ 452:             <strong>Ninguna factura seleccionada</strong>
+ 453:             <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
+ 454:           </div>
+ 455:         )}
+ 456:       </section>
+ 457: 
+ 458:       <InvoiceDocumentPreview invoice={invoice} />
+ 459:     </>
+ 460:   )
+ 461: }
+
+

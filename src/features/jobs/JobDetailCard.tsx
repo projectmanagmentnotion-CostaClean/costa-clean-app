@@ -1,4 +1,5 @@
 ﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -130,12 +131,12 @@ export function JobDetailCard({
       }
 
       if (!form.client_id) {
-        setSaveError('Debes seleccionar un client.')
+        setSaveError('Debes seleccionar un cliente.')
         return
       }
 
       if (!form.property_id) {
-        setSaveError('Debes seleccionar una property.')
+        setSaveError('Debes seleccionar una propiedad.')
         return
       }
 
@@ -172,11 +173,11 @@ export function JobDetailCard({
       }
 
       await onJobUpdated()
-      setSuccessMessage('Job actualizado correctamente.')
+      setSuccessMessage('Servicio actualizado correctamente.')
       setIsEditing(false)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido actualizando el job.'
+        err instanceof Error ? err.message : 'Error desconocido actualizando el servicio.'
 
       setSaveError(message)
     } finally {
@@ -188,7 +189,7 @@ export function JobDetailCard({
     <section className="data-section">
       <div className="section-header page-header-actions">
         <div>
-          <h2>Detalle del job</h2>
+          <h2>Detalle del servicio</h2>
           <p>Vista inicial de detalle del servicio seleccionado.</p>
         </div>
 
@@ -211,7 +212,7 @@ export function JobDetailCard({
               })
             }}
           >
-            {isEditing ? 'Cancelar edición' : 'Editar job'}
+            {isEditing ? 'Cancelar edición' : 'Editar servicio'}
           </button>
         ) : null}
       </div>
@@ -223,13 +224,13 @@ export function JobDetailCard({
               <h3>{job.display_code ?? job.id}</h3>
             </div>
 
-            <span className="lead-badge">{job.status}</span>
+            <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
           </div>
 
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
               <label className="form-field">
-                <span>Client *</span>
+                <span>Cliente *</span>
                 <select
                   value={form.client_id}
                   onChange={(event) => updateField('client_id', event.target.value)}
@@ -243,12 +244,12 @@ export function JobDetailCard({
               </label>
 
               <label className="form-field">
-                <span>Property *</span>
+                <span>Propiedad *</span>
                 <select
                   value={form.property_id}
                   onChange={(event) => updateField('property_id', event.target.value)}
                 >
-                  <option value="">Selecciona una property</option>
+                  <option value="">Selecciona una propiedad</option>
                   {availableProperties.map((property) => (
                     <option key={property.id} value={property.id}>
                       {property.name} · {property.display_code ?? property.id}
@@ -258,12 +259,12 @@ export function JobDetailCard({
               </label>
 
               <label className="form-field">
-                <span>Quote</span>
+                <span>Presupuesto</span>
                 <select
                   value={form.quote_id}
                   onChange={(event) => updateField('quote_id', event.target.value)}
                 >
-                  <option value="">Sin quote</option>
+                  <option value="">Sin presupuesto</option>
                   {availableQuotes.map((quote) => (
                     <option key={quote.id} value={quote.id}>
                       {quote.display_code ?? quote.id}
@@ -327,7 +328,7 @@ export function JobDetailCard({
 
               {saveError ? (
                 <div className="empty-state">
-                  <strong>No se pudo actualizar el job</strong>
+                  <strong>No se pudo actualizar el servicio</strong>
                   <p>{saveError}</p>
                 </div>
               ) : null}
@@ -347,33 +348,33 @@ export function JobDetailCard({
               </div>
 
               <div className="detail-row">
-                <span className="detail-label">Client</span>
+                <span className="detail-label">Cliente</span>
                 <strong>{job.client_display_code ?? job.client_id}</strong>
               </div>
 
               <div className="detail-row">
-                <span className="detail-label">Property</span>
+                <span className="detail-label">Propiedad</span>
                 <strong>{job.property_display_code ?? job.property_id}</strong>
               </div>
 
               <div className="detail-row">
-                <span className="detail-label">Quote</span>
-                <strong>{job.quote_display_code ?? job.quote_id ?? 'Sin quote'}</strong>
+                <span className="detail-label">Presupuesto</span>
+                <strong>{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</strong>
               </div>
 
               <div className="detail-row">
                 <span className="detail-label">Fecha programada</span>
-                <strong>{job.scheduled_date}</strong>
+                <strong>{formatDateEs(job.scheduled_date)}</strong>
               </div>
 
               <div className="detail-row">
                 <span className="detail-label">Estado</span>
-                <strong>{job.status}</strong>
+                <strong>{getDisplayStatusLabel(job.status)}</strong>
               </div>
 
               <div className="detail-row">
                 <span className="detail-label">Tipo de servicio</span>
-                <strong>{job.service_type}</strong>
+                <strong>{getServiceTypeLabel(job.service_type)}</strong>
               </div>
 
               <div className="detail-row">
@@ -385,7 +386,7 @@ export function JobDetailCard({
 
           {!isEditing && saveError ? (
             <div className="empty-state">
-              <strong>No se pudo actualizar el job</strong>
+              <strong>No se pudo actualizar el servicio</strong>
               <p>{saveError}</p>
             </div>
           ) : null}
@@ -399,7 +400,7 @@ export function JobDetailCard({
         </div>
       ) : (
         <div className="empty-state">
-          <strong>Ningún job seleccionado</strong>
+          <strong>Ningún servicio seleccionado</strong>
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}

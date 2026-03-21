@@ -3,7 +3,11 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import { invoicePrintStyles } from './invoicePrintStyles'
-import { openInvoicePrintWindow } from './openInvoicePrintWindow'
+import {
+  getInvoiceDocumentTitle,
+  openInvoicePrintWindow,
+} from './openInvoicePrintWindow'
+import { shareDocumentSummary } from '../documents/utils'
 
 interface InvoiceDocumentScreenProps {
   invoice: InvoiceListItem
@@ -16,22 +20,24 @@ export function InvoiceDocumentScreen({
 }: InvoiceDocumentScreenProps) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null)
 
+  const documentTitle = useMemo(() => getInvoiceDocumentTitle(invoice), [invoice])
+
   const documentHtml = useMemo(() => {
-    const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} />)
+    const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
 
     return `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Factura ${invoice.invoice_number ?? invoice.display_code ?? invoice.id}</title>
+    <title>${documentTitle}</title>
     <style>${invoicePrintStyles}</style>
   </head>
   <body>
     <div class="cc-print-root">${markup}</div>
   </body>
 </html>`
-  }, [invoice])
+  }, [invoice, documentTitle])
 
   useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
@@ -46,18 +52,39 @@ export function InvoiceDocumentScreen({
 
   function handlePrint() {
     const iframeWindow = iframeRef.current?.contentWindow
+    const previousTitle = document.title
+
+    document.title = documentTitle
 
     if (iframeWindow) {
       iframeWindow.focus()
       iframeWindow.print()
+
+      window.setTimeout(() => {
+        document.title = previousTitle
+      }, 1500)
+
       return
     }
+
+    window.setTimeout(() => {
+      document.title = previousTitle
+    }, 1500)
 
     openInvoicePrintWindow(invoice, 'print')
   }
 
-  function handleOpenExternal() {
-    openInvoicePrintWindow(invoice, 'print')
+  function handleSavePdf() {
+    openInvoicePrintWindow(invoice, 'pdf')
+  }
+
+  async function handleShare() {
+    await shareDocumentSummary(
+      documentTitle,
+      [`Total: ${invoice.total}`, `Estado: ${invoice.status}`],
+      'Resumen de la factura copiado al portapapeles.',
+      'Compartir no está disponible en este dispositivo.',
+    )
   }
 
   return (
@@ -104,28 +131,20 @@ export function InvoiceDocumentScreen({
             justifyContent: 'flex-end',
           }}
         >
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={onClose}
-          >
+          <button type="button" className="secondary-button" onClick={onClose}>
             Volver
           </button>
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleOpenExternal}
-          >
-            Abrir ventana externa
+          <button type="button" className="secondary-button" onClick={handleShare}>
+            Compartir
           </button>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={handlePrint}
-          >
-            Imprimir / Guardar PDF
+          <button type="button" className="secondary-button" onClick={handlePrint}>
+            Imprimir
+          </button>
+
+          <button type="button" className="primary-button" onClick={handleSavePdf}>
+            Guardar PDF
           </button>
         </div>
       </div>

@@ -1,0 +1,26 @@
+﻿
+   1: export interface BusinessRules {
+   2:   currency: 'EUR'
+   3:   timezone: string
+   4:   defaultHourlyRate: number
+   5:   defaultMinimumHours: number
+   6:   defaultTaxRate: number
+   7:   quotesIncludeTaxByDefault: boolean
+   8:   airbnbLinenSurchargePerRoom: number
+   9:   defaultQuoteValidityDays: number
+  10:   defaultQuoteLegalNote: string
+  11:   defaultInvoiceLegalNote: string
+  12: }
+  13: 
+  14: export const businessRules: BusinessRules = {
+  15:   currency: 'EUR',
+  16:   timezone: 'Europe/Madrid',
+  17:   defaultHourlyRate: 20,
+  18:   defaultMinimumHours: 3,
+  19:   defaultTaxRate: 0.21,
+  20:   quotesIncludeTaxByDefault: false,
+  21:   airbnbLinenSurchargePerRoom: 15,
+  22:   defaultQuoteValidityDays: 15,
+  23:   defaultQuoteLegalNote: 'Los precios indicados no incluyen IVA.',
+  24:   defaultInvoiceLegalNote: 'Factura emitida conforme a los datos fiscales y condiciones acordadas.',
+  25: }

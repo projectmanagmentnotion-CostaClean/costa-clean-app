@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
+import { getPropertyTypeLabel } from '../../app/displayFormat'
 import type { PropertyListItem } from './types'
 
 interface PropertyDetailCardProps {
@@ -118,11 +119,11 @@ export function PropertyDetailCard({
       }
 
       await onPropertyUpdated()
-      setSuccessMessage('Property actualizado correctamente.')
+      setSuccessMessage('Propiedad actualizada correctamente.')
       setIsEditing(false)
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido actualizando el property.'
+        err instanceof Error ? err.message : 'Error desconocido actualizando la propiedad.'
 
       setSaveError(message)
     } finally {
@@ -134,7 +135,7 @@ export function PropertyDetailCard({
     <section className="data-section">
       <div className="section-header page-header-actions">
         <div>
-          <h2>Detalle del property</h2>
+          <h2>Detalle de la propiedad</h2>
           <p>Vista inicial de detalle del inmueble seleccionado.</p>
         </div>
 
@@ -156,7 +157,7 @@ export function PropertyDetailCard({
               })
             }}
           >
-            {isEditing ? 'Cancelar edición' : 'Editar property'}
+            {isEditing ? 'Cancelar edición' : 'Editar propiedad'}
           </button>
         ) : null}
       </div>
@@ -169,7 +170,7 @@ export function PropertyDetailCard({
               <p>{property.display_code ?? property.id}</p>
             </div>
 
-            <span className="lead-badge">{property.property_type}</span>
+            <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
           </div>
 
           {isEditing ? (
@@ -241,7 +242,7 @@ export function PropertyDetailCard({
 
               {saveError ? (
                 <div className="empty-state">
-                  <strong>No se pudo actualizar el property</strong>
+                  <strong>No se pudo actualizar la propiedad</strong>
                   <p>{saveError}</p>
                 </div>
               ) : null}
@@ -267,7 +268,7 @@ export function PropertyDetailCard({
 
               <div className="detail-row">
                 <span className="detail-label">Tipo</span>
-                <strong>{property.property_type}</strong>
+                <strong>{getPropertyTypeLabel(property.property_type)}</strong>
               </div>
 
               <div className="detail-row">
@@ -286,7 +287,7 @@ export function PropertyDetailCard({
               </div>
 
               <div className="detail-row">
-                <span className="detail-label">Client</span>
+                <span className="detail-label">Cliente</span>
                 <strong>{property.client_display_code ?? property.client_id}</strong>
               </div>
 
@@ -299,7 +300,7 @@ export function PropertyDetailCard({
 
           {!isEditing && saveError ? (
             <div className="empty-state">
-              <strong>No se pudo actualizar el property</strong>
+              <strong>No se pudo actualizar la propiedad</strong>
               <p>{saveError}</p>
             </div>
           ) : null}
@@ -313,7 +314,7 @@ export function PropertyDetailCard({
         </div>
       ) : (
         <div className="empty-state">
-          <strong>Ningún property seleccionado</strong>
+          <strong>Ninguna propiedad seleccionada</strong>
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}

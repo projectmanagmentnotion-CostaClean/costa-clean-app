@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import type { LeadListItem } from './types'
 
 interface LeadDetailCardProps {
@@ -163,7 +164,7 @@ export function LeadDetailCard({
 
     if (alreadyConverted || lead.status === 'won') {
       setSaveError(null)
-      setSuccessMessage('Este lead ya fue convertido previamente a client.')
+      setSuccessMessage('Este lead ya fue convertido previamente a cliente.')
       return
     }
 
@@ -226,7 +227,7 @@ export function LeadDetailCard({
         }
 
         await onLeadConverted()
-        setSuccessMessage('Este lead ya tenía un client asociado. Se sincronizó como convertido.')
+        setSuccessMessage('Este lead ya tenía un cliente asociado. Se sincronizó como convertido.')
         setIsEditing(false)
         return
       }
@@ -281,7 +282,7 @@ export function LeadDetailCard({
       }
 
       await onLeadConverted()
-      setSuccessMessage('Lead convertido a client correctamente.')
+      setSuccessMessage('Lead convertido a cliente correctamente.')
       setIsEditing(false)
     } catch (err) {
       const message =
@@ -299,7 +300,7 @@ export function LeadDetailCard({
   const convertLabel =
     alreadyConverted || lead?.status === 'won'
       ? 'Ya convertido'
-      : 'Convertir a client'
+      : 'Convertir a cliente'
 
   return (
     <section className="data-section">
@@ -359,9 +360,9 @@ export function LeadDetailCard({
             </div>
 
             <div className="lead-item-badges">
-              <span className="lead-badge">{lead.status}</span>
+              <span className="lead-badge">{getDisplayStatusLabel(lead.status)}</span>
               {lead.archived_at ? (
-                <span className="lead-badge lead-badge-archived">archived</span>
+                <span className="lead-badge lead-badge-archived">Archivado</span>
               ) : null}
             </div>
           </div>
@@ -461,7 +462,7 @@ export function LeadDetailCard({
 
               <div className="detail-row">
                 <span className="detail-label">Estado</span>
-                <strong>{lead.status}</strong>
+                <strong>{getDisplayStatusLabel(lead.status)}</strong>
               </div>
 
               <div className="detail-row">
@@ -471,7 +472,7 @@ export function LeadDetailCard({
 
               <div className="detail-row">
                 <span className="detail-label">Fecha de archivado</span>
-                <strong>{lead.archived_at ?? 'No archivado'}</strong>
+                <strong>{lead.archived_at ? formatDateEs(lead.archived_at) : 'No archivado'}</strong>
               </div>
             </div>
           )}

@@ -1,4 +1,7 @@
-﻿import type { ClientListItem } from './types'
+﻿import { useMemo, useState } from 'react'
+import { SearchBar } from '../../components/SearchBar'
+import { matchesSearchQuery } from '../documents/search'
+import type { ClientListItem } from './types'
 
 interface ClientsListProps {
   clients: ClientListItem[]
@@ -13,12 +16,36 @@ export function ClientsList({
   selectedClientId,
   onSelectClient,
 }: ClientsListProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredClients = useMemo(() => {
+    return clients.filter((client) =>
+      matchesSearchQuery(searchQuery, [
+        client.full_name,
+        client.display_code,
+        client.id,
+        client.phone,
+        client.email,
+        client.status,
+      ]),
+    )
+  }, [clients, searchQuery])
+
   return (
     <section className="data-section">
       <div className="section-header">
         <h2>Clientes reales</h2>
         <p>Primer listado conectado a Supabase.</p>
       </div>
+
+      <SearchBar
+        label="Buscar cliente"
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Nombre, código, teléfono, email o estado"
+        resultCount={filteredClients.length}
+        totalCount={clients.length}
+      />
 
       {error ? (
         <div className="empty-state">
@@ -30,9 +57,14 @@ export function ClientsList({
           <strong>No hay clientes</strong>
           <p>Todavía no existen registros en la tabla clients.</p>
         </div>
+      ) : filteredClients.length === 0 ? (
+        <div className="empty-state">
+          <strong>Sin resultados</strong>
+          <p>No encontramos clientes que coincidan con tu búsqueda.</p>
+        </div>
       ) : (
         <div className="lead-list">
-          {clients.map((client) => {
+          {filteredClients.map((client) => {
             const isSelected = client.id === selectedClientId
 
             return (

@@ -1,8 +1,10 @@
-﻿import { businessRules } from '../../app/businessRules'
+﻿import './invoiceDocument.css'
+import { businessRules } from '../../app/businessRules'
 import type { InvoiceListItem } from './types'
 
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
+  variant?: 'document' | 'embedded' | 'print'
 }
 
 function formatDate(value: string): string {
@@ -28,11 +30,7 @@ function formatCurrency(value: number): string {
 }
 
 function buildClientTitle(invoice: InvoiceListItem): string {
-  return (
-    invoice.client_name?.trim() ||
-    invoice.client_display_code ||
-    invoice.client_id
-  )
+  return invoice.client_name?.trim() || invoice.client_display_code || invoice.client_id
 }
 
 function buildClientMeta(invoice: InvoiceListItem): string[] {
@@ -40,25 +38,28 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return (
-    invoice.service_reference ||
-    invoice.job_display_code ||
-    invoice.job_id
-  )
+  return invoice.service_reference || invoice.job_display_code || invoice.job_id
 }
 
 function buildConcept(invoice: InvoiceListItem): string {
-  return (
-    invoice.service_description ||
-    'Servicio de limpieza'
-  )
+  return invoice.service_description || 'Servicio de limpieza'
 }
 
-export function InvoiceDocumentA4({ invoice }: InvoiceDocumentA4Props) {
+export function InvoiceDocumentA4({
+  invoice,
+  variant = 'document',
+}: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
 
+  const articleClassName =
+    variant === 'embedded'
+      ? 'cc-invoice-a4 cc-invoice-a4--embedded'
+      : variant === 'print'
+        ? 'cc-invoice-a4 cc-invoice-a4--print'
+        : 'cc-invoice-a4'
+
   return (
-    <article className="cc-invoice-a4">
+    <article className={articleClassName}>
       <header className="cc-invoice-a4__header">
         <div className="cc-invoice-a4__brand">
           <img

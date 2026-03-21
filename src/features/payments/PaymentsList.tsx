@@ -1,4 +1,8 @@
-﻿import type { PaymentListItem } from './types'
+﻿import { useMemo, useState } from 'react'
+import { SearchBar } from '../../components/SearchBar'
+import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
+import { matchesSearchQuery } from '../documents/search'
+import type { PaymentListItem } from './types'
 
 interface PaymentsListProps {
   payments: PaymentListItem[]
@@ -13,12 +17,40 @@ export function PaymentsList({
   selectedPaymentId,
   onSelectPayment,
 }: PaymentsListProps) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredPayments = useMemo(() => {
+    return payments.filter((payment) =>
+      matchesSearchQuery(searchQuery, [
+        payment.display_code,
+        payment.id,
+        payment.invoice_number,
+        payment.invoice_display_code,
+        payment.invoice_id,
+        payment.payment_date,
+        payment.payment_method,
+        getPaymentMethodLabel(payment.payment_method),
+        payment.amount,
+        payment.notes,
+      ]),
+    )
+  }, [payments, searchQuery])
+
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Pagos reales</h2>
-        <p>Primer listado conectado a Supabase.</p>
+        <h2>Pagos</h2>
+        <p>Listado conectado a Supabase.</p>
       </div>
+
+      <SearchBar
+        label="Buscar pago"
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Código, factura, fecha, método, importe o nota"
+        resultCount={filteredPayments.length}
+        totalCount={payments.length}
+      />
 
       {error ? (
         <div className="empty-state">
@@ -30,9 +62,14 @@ export function PaymentsList({
           <strong>No hay pagos</strong>
           <p>Todavía no existen registros en la tabla payments.</p>
         </div>
+      ) : filteredPayments.length === 0 ? (
+        <div className="empty-state">
+          <strong>Sin resultados</strong>
+          <p>No encontramos pagos que coincidan con tu búsqueda.</p>
+        </div>
       ) : (
         <div className="lead-list">
-          {payments.map((payment) => {
+          {filteredPayments.map((payment) => {
             const isSelected = payment.id === selectedPaymentId
 
             return (
@@ -47,8 +84,9 @@ export function PaymentsList({
                 </div>
 
                 <p>Factura: {payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</p>
-                <p>Fecha: {payment.payment_date}</p>
-                <p>Importe: {payment.amount}</p>
+                <p>Fecha: {formatDateEs(payment.payment_date)}</p>
+                <p>Importe: {formatCurrency(payment.amount)}</p>
+                <p>Método: {getPaymentMethodLabel(payment.payment_method)}</p>
               </button>
             )
           })}

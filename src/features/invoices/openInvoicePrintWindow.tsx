@@ -2,14 +2,28 @@
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import { invoicePrintStyles } from './invoicePrintStyles'
 import type { InvoiceListItem } from './types'
+import {
+  buildBrandedDocumentTitle,
+  sanitizeFilenamePart,
+} from '../documents/utils'
 
-type InvoiceOutputIntent = 'print' | 'pdf'
+export type InvoiceOutputIntent = 'print' | 'pdf'
 
-function getDocumentTitle(invoice: InvoiceListItem, intent: InvoiceOutputIntent): string {
-  const invoiceRef = invoice.invoice_number ?? invoice.display_code ?? invoice.id
-  return intent === 'pdf'
-    ? `Factura ${invoiceRef} - Guardar PDF`
-    : `Factura ${invoiceRef} - Imprimir`
+function getClientName(invoice: InvoiceListItem): string {
+  return (
+    invoice.client_name?.trim() ||
+    invoice.client_display_code ||
+    invoice.client_id ||
+    'Cliente'
+  )
+}
+
+function getInvoiceRef(invoice: InvoiceListItem): string {
+  return sanitizeFilenamePart(invoice.invoice_number ?? invoice.display_code ?? invoice.id)
+}
+
+export function getInvoiceDocumentTitle(invoice: InvoiceListItem): string {
+  return buildBrandedDocumentTitle('Factura', getInvoiceRef(invoice), getClientName(invoice))
 }
 
 export function openInvoicePrintWindow(
@@ -23,8 +37,8 @@ export function openInvoicePrintWindow(
     return
   }
 
-  const documentTitle = getDocumentTitle(invoice, intent)
-  const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} />)
+  const documentTitle = getInvoiceDocumentTitle(invoice)
+  const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
 
   const html = `<!doctype html>
 <html lang="es">
@@ -40,9 +54,10 @@ export function openInvoicePrintWindow(
     <script>
       window.addEventListener('load', function () {
         setTimeout(function () {
+          document.title = ${JSON.stringify(documentTitle)};
           window.focus();
           window.print();
-        }, 250);
+        }, ${intent === 'pdf' ? 300 : 250});
       });
     </script>
   </body>

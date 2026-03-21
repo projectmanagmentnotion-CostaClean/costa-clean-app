@@ -1,0 +1,96 @@
+﻿import { renderToStaticMarkup } from 'react-dom/server'
+import type { QuoteListItem } from './types'
+import type { ClientListItem } from '../clients/types'
+import type { PropertyListItem } from '../properties/types'
+import { QuoteDocumentA4 } from './QuoteDocumentA4'
+import { invoicePrintStyles } from '../invoices/invoicePrintStyles'
+
+type QuoteOutputIntent = 'print' | 'pdf'
+
+function sanitizeFilenamePart(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+}
+
+function getClientName(quote: QuoteListItem, clients: ClientListItem[]): string {
+  const client = clients.find((item) => item.id === quote.client_id)
+
+  return sanitizeFilenamePart(
+    client?.full_name?.trim() ||
+      quote.client_display_code ||
+      quote.client_id ||
+      'Cliente'
+  )
+}
+
+function getQuoteRef(quote: QuoteListItem): string {
+  return sanitizeFilenamePart(quote.display_code ?? quote.id)
+}
+
+function getDocumentTitle(
+  quote: QuoteListItem,
+  clients: ClientListItem[],
+  intent: QuoteOutputIntent,
+): string {
+  const quoteRef = getQuoteRef(quote)
+  const clientName = getClientName(quote, clients)
+
+  return intent === 'pdf'
+    ? `Presupuesto ${quoteRef} - ${clientName} - CostaClean`
+    : `Presupuesto ${quoteRef} - ${clientName} - CostaClean`
+}
+
+export function openQuotePrintWindow(
+  quote: QuoteListItem,
+  clients: ClientListItem[],
+  properties: PropertyListItem[],
+  intent: QuoteOutputIntent = 'print',
+) {
+  const printWindow = window.open('', '_blank', 'width=1100,height=1400')
+
+  if (!printWindow) {
+    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+    return
+  }
+
+  const documentTitle = getDocumentTitle(quote, clients, intent)
+  const markup = renderToStaticMarkup(
+    <QuoteDocumentA4
+      quote={quote}
+      clients={clients}
+      properties={properties}
+      variant="print"
+    />,
+  )
+
+  const html = `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${documentTitle}</title>
+    <style>${invoicePrintStyles}</style>
+  </head>
+  <body>
+    <div class="cc-print-root">${markup}</div>
+
+    <script>
+      window.addEventListener('load', function () {
+        setTimeout(function () {
+          document.title = ${JSON.stringify(documentTitle)};
+          window.focus();
+          window.print();
+        }, 250);
+      });
+    </script>
+  </body>
+</html>`
+
+  printWindow.document.open()
+  printWindow.document.write(html)
+  printWindow.document.close()
+}

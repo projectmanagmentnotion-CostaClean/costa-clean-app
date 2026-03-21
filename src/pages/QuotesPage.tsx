@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
+import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
@@ -23,10 +24,12 @@ export function QuotesPage({
 }: QuotesPageProps) {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showDocumentScreen, setShowDocumentScreen] = useState(false)
 
   useEffect(() => {
     if (quotes.length === 0) {
       setSelectedQuoteId(null)
+      setShowDocumentScreen(false)
       return
     }
 
@@ -36,6 +39,7 @@ export function QuotesPage({
 
     if (!selectedStillExists) {
       setSelectedQuoteId(quotes[0].id)
+      setShowDocumentScreen(false)
     }
   }, [quotes, selectedQuoteId])
 
@@ -43,43 +47,58 @@ export function QuotesPage({
     quotes.find((quote) => quote.id === selectedQuoteId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
-        <div>
-          <h1>Quotes</h1>
-          <p>Vista inicial del módulo Quotes conectada a Supabase.</p>
+    <>
+      <section className="page-section">
+        <div className="section-header page-header-actions">
+          <div>
+            <h1>Quotes</h1>
+            <p>Vista inicial del módulo Quotes conectada a Supabase.</p>
+          </div>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowCreateForm((current) => !current)}
+          >
+            {showCreateForm ? 'Cerrar formulario' : 'Nuevo quote'}
+          </button>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
-        >
-          {showCreateForm ? 'Cerrar formulario' : 'Nuevo quote'}
-        </button>
-      </div>
+        {showCreateForm ? (
+          <QuoteCreateForm
+            clients={clients}
+            properties={properties}
+            onCreated={onQuoteCreated}
+          />
+        ) : null}
 
-      {showCreateForm ? (
-        <QuoteCreateForm
+        <QuoteDetailCard
+          quote={selectedQuote}
           clients={clients}
           properties={properties}
-          onCreated={onQuoteCreated}
+          onQuoteUpdated={onQuoteCreated}
+          onOpenDocument={() => setShowDocumentScreen(true)}
+        />
+
+        <QuotesList
+          quotes={quotes}
+          error={error}
+          selectedQuoteId={selectedQuoteId}
+          onSelectQuote={(quote) => {
+            setSelectedQuoteId(quote.id)
+            setShowDocumentScreen(false)
+          }}
+        />
+      </section>
+
+      {showDocumentScreen && selectedQuote ? (
+        <QuoteDocumentScreen
+          quote={selectedQuote}
+          clients={clients}
+          properties={properties}
+          onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
-
-      <QuoteDetailCard
-        quote={selectedQuote}
-        clients={clients}
-        properties={properties}
-        onQuoteUpdated={onQuoteCreated}
-      />
-
-      <QuotesList
-        quotes={quotes}
-        error={error}
-        selectedQuoteId={selectedQuoteId}
-        onSelectQuote={(quote) => setSelectedQuoteId(quote.id)}
-      />
-    </section>
+    </>
   )
 }

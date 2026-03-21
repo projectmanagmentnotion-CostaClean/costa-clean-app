@@ -1,0 +1,221 @@
+﻿   1: import { useEffect, useMemo, useRef } from 'react'
+   2: import { renderToStaticMarkup } from 'react-dom/server'
+   3: import type { QuoteListItem } from './types'
+   4: import type { ClientListItem } from '../clients/types'
+   5: import type { PropertyListItem } from '../properties/types'
+   6: import { QuoteDocumentA4 } from './QuoteDocumentA4'
+   7: import { invoicePrintStyles } from '../invoices/invoicePrintStyles'
+   8: import { openQuotePrintWindow } from './openQuotePrintWindow'
+   9: 
+  10: interface QuoteDocumentScreenProps {
+  11:   quote: QuoteListItem
+  12:   clients: ClientListItem[]
+  13:   properties: PropertyListItem[]
+  14:   onClose: () => void
+  15: }
+  16: 
+  17: function sanitizeFilenamePart(value: string): string {
+  18:   return value
+  19:     .normalize('NFD')
+  20:     .replace(/[\u0300-\u036f]/g, '')
+  21:     .replace(/[^\w\s-]/g, '')
+  22:     .trim()
+  23:     .replace(/\s+/g, ' ')
+  24: }
+  25: 
+  26: function getDocumentTitle(quote: QuoteListItem, clients: ClientListItem[]): string {
+  27:   const quoteRef = sanitizeFilenamePart(quote.display_code ?? quote.id)
+  28:   const client = clients.find((item) => item.id === quote.client_id)
+  29: 
+  30:   const clientName = sanitizeFilenamePart(
+  31:     client?.full_name?.trim() ||
+  32:     quote.client_display_code ||
+  33:     quote.client_id ||
+  34:     'Cliente'
+  35:   )
+  36: 
+  37:   return `Presupuesto ${quoteRef} - ${clientName} - CostaClean`
+  38: }
+  39: 
+  40: export function QuoteDocumentScreen({
+  41:   quote,
+  42:   clients,
+  43:   properties,
+  44:   onClose,
+  45: }: QuoteDocumentScreenProps) {
+  46:   const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  47: 
+  48:   const documentTitle = useMemo(() => getDocumentTitle(quote, clients), [quote, clients])
+  49: 
+  50:   const documentHtml = useMemo(() => {
+  51:     const markup = renderToStaticMarkup(
+  52:       <QuoteDocumentA4
+  53:         quote={quote}
+  54:         clients={clients}
+  55:         properties={properties}
+  56:         variant="print"
+  57:       />,
+  58:     )
+  59: 
+  60:     return `<!doctype html>
+  61: <html lang="es">
+  62:   <head>
+  63:     <meta charset="UTF-8" />
+  64:     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  65:     <title>${documentTitle}</title>
+  66:     <style>${invoicePrintStyles}</style>
+  67:   </head>
+  68:   <body>
+  69:     <div class="cc-print-root">${markup}</div>
+  70:   </body>
+  71: </html>`
+  72:   }, [quote, clients, properties, documentTitle])
+  73: 
+  74:   useEffect(() => {
+  75:     function handleKeydown(event: KeyboardEvent) {
+  76:       if (event.key === 'Escape') {
+  77:         onClose()
+  78:       }
+  79:     }
+  80: 
+  81:     window.addEventListener('keydown', handleKeydown)
+  82:     return () => window.removeEventListener('keydown', handleKeydown)
+  83:   }, [onClose])
+  84: 
+  85:   function handlePrint() {
+  86:     const iframeWindow = iframeRef.current?.contentWindow
+  87:     const previousTitle = document.title
+  88: 
+  89:     document.title = documentTitle
+  90: 
+  91:     if (iframeWindow) {
+  92:       iframeWindow.focus()
+  93:       iframeWindow.print()
+  94: 
+  95:       window.setTimeout(() => {
+  96:         document.title = previousTitle
+  97:       }, 1500)
+  98: 
+  99:       return
+ 100:     }
+ 101: 
+ 102:     window.setTimeout(() => {
+ 103:       document.title = previousTitle
+ 104:     }, 1500)
+ 105: 
+ 106:     openQuotePrintWindow(quote, clients, properties, 'print')
+ 107:   }
+ 108: 
+ 109:   function handleSavePdf() {
+ 110:     openQuotePrintWindow(quote, clients, properties, 'pdf')
+ 111:   }
+ 112: 
+ 113:   async function handleShare() {
+ 114:     const shareText = `${documentTitle}\nTotal: ${quote.total}\nEstado: ${quote.status}`
+ 115: 
+ 116:     if (navigator.share) {
+ 117:       try {
+ 118:         await navigator.share({
+ 119:           title: documentTitle,
+ 120:           text: shareText,
+ 121:         })
+ 122:         return
+ 123:       } catch {
+ 124:         return
+ 125:       }
+ 126:     }
+ 127: 
+ 128:     try {
+ 129:       await navigator.clipboard.writeText(shareText)
+ 130:       window.alert('Resumen del presupuesto copiado al portapapeles.')
+ 131:     } catch {
+ 132:       window.alert('Compartir no está disponible en este dispositivo.')
+ 133:     }
+ 134:   }
+ 135: 
+ 136:   return (
+ 137:     <div
+ 138:       style={{
+ 139:         position: 'fixed',
+ 140:         inset: 0,
+ 141:         zIndex: 3000,
+ 142:         background: '#e9eef5',
+ 143:         display: 'flex',
+ 144:         flexDirection: 'column',
+ 145:       }}
+ 146:     >
+ 147:       <div
+ 148:         style={{
+ 149:           position: 'sticky',
+ 150:           top: 0,
+ 151:           zIndex: 1,
+ 152:           display: 'flex',
+ 153:           gap: '0.75rem',
+ 154:           flexWrap: 'wrap',
+ 155:           alignItems: 'center',
+ 156:           justifyContent: 'space-between',
+ 157:           padding: '1rem',
+ 158:           background: 'rgba(255,255,255,0.92)',
+ 159:           borderBottom: '1px solid #dbe3ee',
+ 160:           backdropFilter: 'blur(12px)',
+ 161:         }}
+ 162:       >
+ 163:         <div>
+ 164:           <strong style={{ display: 'block', fontSize: '1rem', color: '#0f172a' }}>
+ 165:             Documento de presupuesto
+ 166:           </strong>
+ 167:           <span style={{ fontSize: '0.92rem', color: '#475569' }}>
+ 168:             {quote.display_code ?? quote.id}
+ 169:           </span>
+ 170:         </div>
+ 171: 
+ 172:         <div
+ 173:           style={{
+ 174:             display: 'flex',
+ 175:             gap: '0.75rem',
+ 176:             flexWrap: 'wrap',
+ 177:             justifyContent: 'flex-end',
+ 178:           }}
+ 179:         >
+ 180:           <button type="button" className="secondary-button" onClick={onClose}>
+ 181:             Volver
+ 182:           </button>
+ 183: 
+ 184:           <button type="button" className="secondary-button" onClick={handleShare}>
+ 185:             Compartir
+ 186:           </button>
+ 187: 
+ 188:           <button type="button" className="secondary-button" onClick={handlePrint}>
+ 189:             Imprimir
+ 190:           </button>
+ 191: 
+ 192:           <button type="button" className="primary-button" onClick={handleSavePdf}>
+ 193:             Guardar PDF
+ 194:           </button>
+ 195:         </div>
+ 196:       </div>
+ 197: 
+ 198:       <div
+ 199:         style={{
+ 200:           flex: 1,
+ 201:           minHeight: 0,
+ 202:           padding: '1rem',
+ 203:         }}
+ 204:       >
+ 205:         <iframe
+ 206:           ref={iframeRef}
+ 207:           title={`Presupuesto ${quote.display_code ?? quote.id}`}
+ 208:           srcDoc={documentHtml}
+ 209:           style={{
+ 210:             width: '100%',
+ 211:             height: '100%',
+ 212:             border: 'none',
+ 213:             borderRadius: '24px',
+ 214:             background: '#e9eef5',
+ 215:             boxShadow: '0 18px 50px rgba(15, 23, 42, 0.10)',
+ 216:           }}
+ 217:         />
+ 218:       </div>
+ 219:     </div>
+ 220:   )
+ 221: }

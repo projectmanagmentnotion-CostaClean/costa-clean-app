@@ -1,0 +1,78 @@
+﻿   1: import { renderToStaticMarkup } from 'react-dom/server'
+   2: import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
+   3: import { invoicePrintStyles } from './invoicePrintStyles'
+   4: import type { InvoiceListItem } from './types'
+   5: 
+   6: type InvoiceOutputIntent = 'print' | 'pdf'
+   7: 
+   8: function sanitizeFilenamePart(value: string): string {
+   9:   return value
+  10:     .normalize('NFD')
+  11:     .replace(/[\u0300-\u036f]/g, '')
+  12:     .replace(/[^\w\s-]/g, '')
+  13:     .trim()
+  14:     .replace(/\s+/g, ' ')
+  15: }
+  16: 
+  17: function getClientName(invoice: InvoiceListItem): string {
+  18:   return sanitizeFilenamePart(
+  19:     invoice.client_name?.trim() ||
+  20:       invoice.client_display_code ||
+  21:       invoice.client_id ||
+  22:       'Cliente'
+  23:   )
+  24: }
+  25: 
+  26: function getInvoiceRef(invoice: InvoiceListItem): string {
+  27:   return sanitizeFilenamePart(invoice.invoice_number ?? invoice.display_code ?? invoice.id)
+  28: }
+  29: 
+  30: function getDocumentTitle(invoice: InvoiceListItem, intent: InvoiceOutputIntent): string {
+  31:   const invoiceRef = getInvoiceRef(invoice)
+  32:   const clientName = getClientName(invoice)
+  33:   return intent === 'pdf'
+  34:     ? `Factura ${invoiceRef} - ${clientName} - CostaClean`
+  35:     : `Factura ${invoiceRef} - ${clientName} - CostaClean`
+  36: }
+  37: 
+  38: export function openInvoicePrintWindow(
+  39:   invoice: InvoiceListItem,
+  40:   intent: InvoiceOutputIntent = 'print',
+  41: ) {
+  42:   const printWindow = window.open('', '_blank', 'width=1100,height=1400')
+  43: 
+  44:   if (!printWindow) {
+  45:     window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+  46:     return
+  47:   }
+  48: 
+  49:   const documentTitle = getDocumentTitle(invoice, intent)
+  50:   const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
+  51: 
+  52:   const html = `<!doctype html>
+  53: <html lang="es">
+  54:   <head>
+  55:     <meta charset="UTF-8" />
+  56:     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  57:     <title>${documentTitle}</title>
+  58:     <style>${invoicePrintStyles}</style>
+  59:   </head>
+  60:   <body>
+  61:     <div class="cc-print-root">${markup}</div>
+  62: 
+  63:     <script>
+  64:       window.addEventListener('load', function () {
+  65:         setTimeout(function () {
+  66:           document.title = ${JSON.stringify(documentTitle)};
+  67:           window.focus();
+  68:           window.print();
+  69:         }, 250);
+  70:       });
+  71:     </script>
+  72:   </body>
+  73: </html>`
+  74: 
+  75:   printWindow.document.open()
+  76:   printWindow.document.write(html)
+  77:   printWindow.document.close()
+  78: }

@@ -1,0 +1,105 @@
+﻿================ .\src\pages\InvoicesPage.tsx ================
+   1: import { useEffect, useState } from 'react'
+   2: import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
+   3: import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+   4: import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
+   5: import { InvoicesList } from '../features/invoices/InvoicesList'
+   6: import type { InvoiceListItem } from '../features/invoices/types'
+   7: import type { JobListItem } from '../features/jobs/types'
+   8: import type { QuoteListItem } from '../features/quotes/types'
+   9: 
+  10: interface InvoicesPageProps {
+  11:   invoices: InvoiceListItem[]
+  12:   jobs: JobListItem[]
+  13:   quotes: QuoteListItem[]
+  14:   error: string | null
+  15:   onInvoiceCreated: () => Promise<void>
+  16: }
+  17: 
+  18: export function InvoicesPage({
+  19:   invoices,
+  20:   jobs,
+  21:   quotes,
+  22:   error,
+  23:   onInvoiceCreated,
+  24: }: InvoicesPageProps) {
+  25:   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  26:   const [showCreateForm, setShowCreateForm] = useState(false)
+  27:   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  28: 
+  29:   useEffect(() => {
+  30:     if (invoices.length === 0) {
+  31:       setSelectedInvoiceId(null)
+  32:       setShowDocumentScreen(false)
+  33:       return
+  34:     }
+  35: 
+  36:     const selectedStillExists = invoices.some(
+  37:       (invoice) => invoice.id === selectedInvoiceId,
+  38:     )
+  39: 
+  40:     if (!selectedStillExists) {
+  41:       setSelectedInvoiceId(invoices[0].id)
+  42:       setShowDocumentScreen(false)
+  43:     }
+  44:   }, [invoices, selectedInvoiceId])
+  45: 
+  46:   const selectedInvoice =
+  47:     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
+  48: 
+  49:   return (
+  50:     <>
+  51:       <section className="page-section">
+  52:         <div className="section-header page-header-actions">
+  53:           <div>
+  54:             <h1>Invoices</h1>
+  55:             <p>Vista inicial del módulo Invoices conectada a Supabase.</p>
+  56:           </div>
+  57: 
+  58:           <button
+  59:             type="button"
+  60:             className="primary-button"
+  61:             onClick={() => setShowCreateForm((current) => !current)}
+  62:           >
+  63:             {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
+  64:           </button>
+  65:         </div>
+  66: 
+  67:         {showCreateForm ? (
+  68:           <InvoiceCreateForm
+  69:             jobs={jobs}
+  70:             quotes={quotes}
+  71:             onCreated={onInvoiceCreated}
+  72:           />
+  73:         ) : null}
+  74: 
+  75:         <InvoiceDetailCard
+  76:           invoice={selectedInvoice}
+  77:           jobs={jobs}
+  78:           quotes={quotes}
+  79:           onInvoiceUpdated={onInvoiceCreated}
+  80:           onOpenDocument={() => setShowDocumentScreen(true)}
+  81:         />
+  82: 
+  83:         <InvoicesList
+  84:           invoices={invoices}
+  85:           error={error}
+  86:           selectedInvoiceId={selectedInvoiceId}
+  87:           onSelectInvoice={(invoice) => {
+  88:             setSelectedInvoiceId(invoice.id)
+  89:             setShowDocumentScreen(false)
+  90:           }}
+  91:         />
+  92:       </section>
+  93: 
+  94:       {showDocumentScreen && selectedInvoice ? (
+  95:         <InvoiceDocumentScreen
+  96:           invoice={selectedInvoice}
+  97:           onClose={() => setShowDocumentScreen(false)}
+  98:         />
+  99:       ) : null}
+ 100:     </>
+ 101:   )
+ 102: }
+
+

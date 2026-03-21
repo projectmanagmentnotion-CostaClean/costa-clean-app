@@ -1,0 +1,196 @@
+﻿================ .\src\features\invoices\InvoiceDocumentA4.tsx ================
+   1: import { businessRules } from '../../app/businessRules'
+   2: import type { InvoiceListItem } from './types'
+   3: 
+   4: interface InvoiceDocumentA4Props {
+   5:   invoice: InvoiceListItem
+   6: }
+   7: 
+   8: function formatDate(value: string): string {
+   9:   if (!value) return 'Sin fecha'
+  10: 
+  11:   const date = new Date(`${value}T00:00:00`)
+  12:   if (Number.isNaN(date.getTime())) {
+  13:     return value
+  14:   }
+  15: 
+  16:   return new Intl.DateTimeFormat('es-ES', {
+  17:     day: '2-digit',
+  18:     month: '2-digit',
+  19:     year: 'numeric',
+  20:   }).format(date)
+  21: }
+  22: 
+  23: function formatCurrency(value: number): string {
+  24:   return new Intl.NumberFormat('es-ES', {
+  25:     style: 'currency',
+  26:     currency: businessRules.currency,
+  27:   }).format(value)
+  28: }
+  29: 
+  30: function buildClientTitle(invoice: InvoiceListItem): string {
+  31:   return (
+  32:     invoice.client_name?.trim() ||
+  33:     invoice.client_display_code ||
+  34:     invoice.client_id
+  35:   )
+  36: }
+  37: 
+  38: function buildClientMeta(invoice: InvoiceListItem): string[] {
+  39:   return [invoice.client_phone, invoice.client_email].filter(Boolean) as string[]
+  40: }
+  41: 
+  42: function buildReferenceTitle(invoice: InvoiceListItem): string {
+  43:   return (
+  44:     invoice.service_reference ||
+  45:     invoice.job_display_code ||
+  46:     invoice.job_id
+  47:   )
+  48: }
+  49: 
+  50: function buildConcept(invoice: InvoiceListItem): string {
+  51:   return (
+  52:     invoice.service_description ||
+  53:     'Servicio de limpieza'
+  54:   )
+  55: }
+  56: 
+  57: export function InvoiceDocumentA4({ invoice }: InvoiceDocumentA4Props) {
+  58:   const clientMeta = buildClientMeta(invoice)
+  59: 
+  60:   return (
+  61:     <article className="cc-invoice-a4">
+  62:       <header className="cc-invoice-a4__header">
+  63:         <div className="cc-invoice-a4__brand">
+  64:           <img
+  65:             src="/branding/logo-costa-clean-web.png"
+  66:             alt="CostaClean"
+  67:             className="cc-invoice-a4__logo"
+  68:           />
+  69: 
+  70:           <div className="cc-invoice-a4__brand-copy">
+  71:             <span className="cc-invoice-a4__eyebrow">CostaClean BCN</span>
+  72:             <h1>FACTURA</h1>
+  73:             <p>Documento fiscal emitido conforme a las condiciones acordadas.</p>
+  74:           </div>
+  75:         </div>
+  76: 
+  77:         <div className="cc-invoice-a4__doc-box">
+  78:           <div className="cc-invoice-a4__doc-row">
+  79:             <span>Número</span>
+  80:             <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+  81:           </div>
+  82:           <div className="cc-invoice-a4__doc-row">
+  83:             <span>Código interno</span>
+  84:             <strong>{invoice.display_code ?? invoice.id}</strong>
+  85:           </div>
+  86:           <div className="cc-invoice-a4__doc-row">
+  87:             <span>Fecha de emisión</span>
+  88:             <strong>{formatDate(invoice.issue_date)}</strong>
+  89:           </div>
+  90:           <div className="cc-invoice-a4__doc-row">
+  91:             <span>Estado</span>
+  92:             <strong>{invoice.status}</strong>
+  93:           </div>
+  94:         </div>
+  95:       </header>
+  96: 
+  97:       <section className="cc-invoice-a4__parties">
+  98:         <div className="cc-invoice-a4__panel">
+  99:           <span className="cc-invoice-a4__label">Emisor</span>
+ 100:           <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+ 101:           <p>NIF: 60356434H</p>
+ 102:           <p>C/Raval 35, 2-2</p>
+ 103:           <p>08370 Barcelona</p>
+ 104:         </div>
+ 105: 
+ 106:         <div className="cc-invoice-a4__panel">
+ 107:           <span className="cc-invoice-a4__label">Cliente</span>
+ 108:           <strong>{buildClientTitle(invoice)}</strong>
+ 109: 
+ 110:           {clientMeta.map((line) => (
+ 111:             <p key={line}>{line}</p>
+ 112:           ))}
+ 113: 
+ 114:           {invoice.client_name && invoice.client_display_code ? (
+ 115:             <p>Ref. CRM: {invoice.client_display_code}</p>
+ 116:           ) : null}
+ 117:         </div>
+ 118:       </section>
+ 119: 
+ 120:       <section className="cc-invoice-a4__references">
+ 121:         <div className="cc-invoice-a4__reference-card">
+ 122:           <span className="cc-invoice-a4__label">Servicio / referencia</span>
+ 123:           <strong>{buildReferenceTitle(invoice)}</strong>
+ 124:           <p>{buildConcept(invoice)}</p>
+ 125:         </div>
+ 126: 
+ 127:         <div className="cc-invoice-a4__reference-card">
+ 128:           <span className="cc-invoice-a4__label">Propiedad / ubicación</span>
+ 129:           <strong>{invoice.property_name ?? invoice.property_display_code ?? 'Sin propiedad vinculada'}</strong>
+ 130:           <p>{invoice.property_address_line ?? 'Dirección ampliable en siguientes fases'}</p>
+ 131:         </div>
+ 132:       </section>
+ 133: 
+ 134:       <section className="cc-invoice-a4__table-wrap">
+ 135:         <table className="cc-invoice-a4__table">
+ 136:           <thead>
+ 137:             <tr>
+ 138:               <th>Concepto</th>
+ 139:               <th>Cantidad</th>
+ 140:               <th>Precio unitario</th>
+ 141:               <th>Importe</th>
+ 142:             </tr>
+ 143:           </thead>
+ 144:           <tbody>
+ 145:             <tr>
+ 146:               <td>{buildConcept(invoice)}</td>
+ 147:               <td>1</td>
+ 148:               <td>{formatCurrency(invoice.subtotal)}</td>
+ 149:               <td>{formatCurrency(invoice.subtotal)}</td>
+ 150:             </tr>
+ 151:           </tbody>
+ 152:         </table>
+ 153:       </section>
+ 154: 
+ 155:       <section className="cc-invoice-a4__footer-grid">
+ 156:         <div className="cc-invoice-a4__notes">
+ 157:           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+ 158:             <span className="cc-invoice-a4__label">Forma de pago</span>
+ 159:             <p>Transferencia bancaria</p>
+ 160:             <p>IBAN ES32 0049 0183 6124 1084 6130</p>
+ 161:           </div>
+ 162: 
+ 163:           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+ 164:             <span className="cc-invoice-a4__label">Observaciones</span>
+ 165:             <p>{invoice.notes?.trim() ? invoice.notes : 'Sin observaciones adicionales.'}</p>
+ 166:           </div>
+ 167: 
+ 168:           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+ 169:             <span className="cc-invoice-a4__label">Nota legal</span>
+ 170:             <p>{businessRules.defaultInvoiceLegalNote}</p>
+ 171:           </div>
+ 172:         </div>
+ 173: 
+ 174:         <aside className="cc-invoice-a4__totals">
+ 175:           <div className="cc-invoice-a4__total-row">
+ 176:             <span>Base imponible</span>
+ 177:             <strong>{formatCurrency(invoice.subtotal)}</strong>
+ 178:           </div>
+ 179: 
+ 180:           <div className="cc-invoice-a4__total-row">
+ 181:             <span>IVA (21%)</span>
+ 182:             <strong>{formatCurrency(invoice.tax_amount)}</strong>
+ 183:           </div>
+ 184: 
+ 185:           <div className="cc-invoice-a4__total-row cc-invoice-a4__total-row--grand">
+ 186:             <span>Total</span>
+ 187:             <strong>{formatCurrency(invoice.total)}</strong>
+ 188:           </div>
+ 189:         </aside>
+ 190:       </section>
+ 191:     </article>
+ 192:   )
+ 193: }
+
+

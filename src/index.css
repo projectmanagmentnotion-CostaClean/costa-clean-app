@@ -1,23 +1,38 @@
 ﻿:root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #e8ecf3;
-  background: #0b1020;
+  color: #eff6ff;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.30), transparent 22%),
+    radial-gradient(circle at 20% 20%, rgba(59,130,246,0.22), transparent 26%),
+    radial-gradient(circle at 80% 0%, rgba(168,85,247,0.18), transparent 24%),
+    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --bg: #0b1020;
-  --bg-soft: #121a2f;
-  --card: rgba(18, 26, 47, 0.92);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --text: #e8ecf3;
-  --muted: #9aa4b2;
-  --accent: #60a5fa;
-  --accent-soft: rgba(96, 165, 250, 0.14);
-  --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --bg: rgba(7, 14, 28, 0.78);
+  --bg-soft: rgba(11, 22, 40, 0.58);
+  --card: rgba(255, 255, 255, 0.10);
+  --card-border: rgba(255, 255, 255, 0.16);
+  --card-border-strong: rgba(255, 255, 255, 0.24);
+  --text: #eff6ff;
+  --muted: rgba(226, 232, 240, 0.74);
+  --accent: #8ec5ff;
+  --accent-strong: #60a5fa;
+  --accent-soft: rgba(147, 197, 253, 0.18);
+  --success-soft: rgba(52, 211, 153, 0.18);
+  --warning-soft: rgba(250, 204, 21, 0.18);
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+  --glass-blur: blur(24px);
 }
 
 * {
@@ -33,7 +48,9 @@ body,
 
 body {
   background:
-    radial-gradient(circle at top, rgba(96, 165, 250, 0.18), transparent 30%),
-    linear-gradient(180deg, #0b1020 0%, #0f172a 100%);
+    radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 16%),
+    radial-gradient(circle at left top, rgba(59,130,246,0.18), transparent 24%),
+    radial-gradient(circle at right top, rgba(168,85,247,0.14), transparent 24%),
+    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
   color: var(--text);
 }

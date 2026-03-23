@@ -1,4 +1,4 @@
-﻿# Logs
+# Logs
 logs
 *.log
 npm-debug.log*
@@ -36,3 +36,6 @@ _*.txt
 *.bak_*
 *.tmp
 *.temp
+
+# Local dump scripts
+_dump_*.ps1

@@ -1,5 +1,6 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppNav } from './AppNav'
+import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
 import { HomePage } from '../pages/HomePage'
 import { LeadsPage } from '../pages/LeadsPage'
@@ -254,6 +255,29 @@ export function AppShell() {
   const jobById = useMemo(() => new Map(jobs.map((job) => [job.id, job])), [jobs])
   const invoiceById = useMemo(() => new Map(invoices.map((invoice) => [invoice.id, invoice])), [invoices])
 
+  const dashboardMetrics = useMemo(() => {
+    const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
+    const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
+    const pendingInvoicesCount = invoices.filter((invoice) => invoice.status !== 'paid').length
+    const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
+    const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+
+    return {
+      leadsCount: leads.length,
+      clientsCount: clients.length,
+      propertiesCount: properties.length,
+      quotesCount: quotes.length,
+      jobsCount: jobs.length,
+      invoicesCount: invoices.length,
+      paymentsCount: payments.length,
+      openQuotesCount,
+      scheduledJobsCount,
+      pendingInvoicesCount,
+      totalInvoiced,
+      totalCollected,
+    }
+  }, [leads, clients, properties, quotes, jobs, invoices, payments])
+
   const propertiesWithCodes = useMemo(
     () => properties.map((property) => ({ ...property, client_display_code: clientCodeById.get(property.client_id) ?? property.client_id })),
     [properties, clientCodeById],
@@ -289,16 +313,13 @@ export function AppShell() {
         ...invoice,
         client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
         job_display_code: jobCodeById.get(invoice.job_id) ?? invoice.job_id,
-
         client_name: client?.full_name ?? null,
         client_phone: client?.phone ?? null,
         client_email: client?.email ?? null,
-
         property_id: property?.id ?? job?.property_id ?? quote?.property_id ?? null,
         property_display_code: property?.display_code ?? (job?.property_id ? propertyCodeById.get(job.property_id) ?? job.property_id : null),
         property_name: property?.name ?? null,
         property_address_line: buildPropertyAddressLine(property),
-
         quote_id: job?.quote_id ?? null,
         service_reference: buildServiceReference(invoice, job, property),
         service_description: buildServiceDescription(job, property),
@@ -321,11 +342,11 @@ export function AppShell() {
 
   return (
     <main className="app-shell">
-      <section className="hero-card">
+      <section className="hero-card cc-shell">
         <AppNav currentView={currentView} onChangeView={setCurrentView} />
 
         {currentView === 'dashboard' ? (
-          <HomePage leads={leads} />
+          <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} />
         ) : currentView === 'leads' ? (
           <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
         ) : currentView === 'clients' ? (

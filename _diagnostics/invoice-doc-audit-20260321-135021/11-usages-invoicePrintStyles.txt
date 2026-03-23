@@ -1,8 +1,0 @@
-﻿================ USAGES invoicePrintStyles ================
-C:\Users\Anderson S\projects\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:5: import { invoicePrintStyles } from './invoicePrintStyles'
-C:\Users\Anderson S\projects\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:28:     <style>${invoicePrintStyles}</style>
-C:\Users\Anderson S\projects\costa-clean-app\src\features\invoices\invoicePrintStyles.ts:1: export const invoicePrintStyles = `
-C:\Users\Anderson S\projects\costa-clean-app\src\features\invoices\openInvoicePrintWindow.tsx:3: import { invoicePrintStyles } from './invoicePrintStyles'
-C:\Users\Anderson S\projects\costa-clean-app\src\features\invoices\openInvoicePrintWindow.tsx:35:     <style>${invoicePrintStyles}</style>
-
-

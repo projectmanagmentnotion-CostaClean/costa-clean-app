@@ -1,7 +1,0 @@
-﻿================ USAGES openInvoicePrintWindow ================
-C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:6: import { openInvoicePrintWindow } from './openInvoicePrintWindow'
-C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:56:     openInvoicePrintWindow(invoice, 'print')
-C:\Users\USUARIO\costa-clean-app\src\features\invoices\InvoiceDocumentScreen.tsx:60:     openInvoicePrintWindow(invoice, 'print')
-C:\Users\USUARIO\costa-clean-app\src\features\invoices\openInvoicePrintWindow.tsx:15: export function openInvoicePrintWindow(
-
-

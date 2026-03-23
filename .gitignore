@@ -1,4 +1,4 @@
-# Logs
+﻿# Logs
 logs
 *.log
 npm-debug.log*
@@ -7,9 +7,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies / build
 node_modules
 dist
 dist-ssr
+
+# Env
+.env.local
+.env.*.local
 *.local
 
 # Editor directories and files
@@ -22,3 +27,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Diagnostics / temporary working files
+_diagnostics/
+_*.txt
+*.bak
+*.bak-*
+*.bak_*
+*.tmp
+*.temp

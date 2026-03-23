@@ -345,23 +345,25 @@ export function AppShell() {
       <section className="hero-card cc-shell">
         <AppNav currentView={currentView} onChangeView={setCurrentView} />
 
-        {currentView === 'dashboard' ? (
-          <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} />
-        ) : currentView === 'leads' ? (
-          <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
-        ) : currentView === 'clients' ? (
-          <ClientsPage clients={clients} error={clientError} onClientCreated={loadClients} />
-        ) : currentView === 'properties' ? (
-          <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={loadProperties} />
-        ) : currentView === 'quotes' ? (
-          <QuotesPage quotes={quotesWithCodes} clients={clients} properties={properties} error={quoteError} onQuoteCreated={loadQuotes} />
-        ) : currentView === 'jobs' ? (
-          <JobsPage jobs={jobsWithCodes} clients={clients} properties={properties} quotes={quotes} error={jobError} onJobCreated={loadJobs} />
-        ) : currentView === 'invoices' ? (
-          <InvoicesPage invoices={invoicesWithCodes} jobs={jobsWithCodes} quotes={quotesWithCodes} error={invoiceError} onInvoiceCreated={loadInvoices} />
-        ) : (
-          <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={loadPayments} />
-        )}
+        <div className="cc-shell-content">
+          {currentView === 'dashboard' ? (
+            <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} />
+          ) : currentView === 'leads' ? (
+            <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
+          ) : currentView === 'clients' ? (
+            <ClientsPage clients={clients} error={clientError} onClientCreated={loadClients} />
+          ) : currentView === 'properties' ? (
+            <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={loadProperties} />
+          ) : currentView === 'quotes' ? (
+            <QuotesPage quotes={quotesWithCodes} clients={clients} properties={properties} error={quoteError} onQuoteCreated={loadQuotes} />
+          ) : currentView === 'jobs' ? (
+            <JobsPage jobs={jobsWithCodes} clients={clients} properties={properties} quotes={quotes} error={jobError} onJobCreated={loadJobs} />
+          ) : currentView === 'invoices' ? (
+            <InvoicesPage invoices={invoicesWithCodes} jobs={jobsWithCodes} quotes={quotesWithCodes} error={invoiceError} onInvoiceCreated={loadInvoices} />
+          ) : (
+            <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={loadPayments} />
+          )}
+        </div>
       </section>
     </main>
   )

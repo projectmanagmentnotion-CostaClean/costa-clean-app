@@ -1,4 +1,4 @@
-﻿import type { AppView } from './navigation'
+import type { AppView } from './navigation'
 
 const appViewLabels: Record<AppView, string> = {
   dashboard: 'Inicio',
@@ -8,6 +8,7 @@ const appViewLabels: Record<AppView, string> = {
   quotes: 'Presupuestos',
   jobs: 'Servicios',
   invoices: 'Facturas',
+  expenses: 'Gastos',
   payments: 'Pagos',
 }
 

@@ -1,4 +1,4 @@
-﻿import type { AppModuleDefinition } from '../types/app'
+import type { AppModuleDefinition } from '../types/app'
 
 export const appModules: AppModuleDefinition[] = [
   {
@@ -47,6 +47,13 @@ export const appModules: AppModuleDefinition[] = [
     key: 'invoices',
     label: 'Facturas',
     description: 'Emisión, control y estado de facturación.',
+    enabled: true,
+    phase: 'v2',
+  },
+  {
+    key: 'expenses',
+    label: 'Gastos',
+    description: 'Gastos deducibles, justificantes y control fiscal operativo.',
     enabled: true,
     phase: 'v2',
   },

@@ -1,1 +1,10 @@
-﻿export type AppView = 'dashboard' | 'leads' | 'clients' | 'properties' | 'quotes' | 'jobs' | 'invoices' | 'payments'
+export type AppView =
+  | 'dashboard'
+  | 'leads'
+  | 'clients'
+  | 'properties'
+  | 'quotes'
+  | 'jobs'
+  | 'invoices'
+  | 'expenses'
+  | 'payments'

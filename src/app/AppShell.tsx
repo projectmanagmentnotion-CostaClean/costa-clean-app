@@ -9,6 +9,7 @@ import { PropertiesPage } from '../pages/PropertiesPage'
 import { QuotesPage } from '../pages/QuotesPage'
 import { JobsPage } from '../pages/JobsPage'
 import { InvoicesPage } from '../pages/InvoicesPage'
+import { ExpensesPage } from '../pages/ExpensesPage'
 import { PaymentsPage } from '../pages/PaymentsPage'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
@@ -16,6 +17,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { ExpenseListItem } from '../features/expenses/types'
 import type { PaymentListItem } from '../features/payments/types'
 
 function buildPropertyAddressLine(property: PropertyListItem | undefined): string | null {
@@ -67,6 +69,7 @@ export function AppShell() {
   const [quotes, setQuotes] = useState<QuoteListItem[]>([])
   const [jobs, setJobs] = useState<JobListItem[]>([])
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
+  const [expenses, setExpenses] = useState<ExpenseListItem[]>([])
   const [payments, setPayments] = useState<PaymentListItem[]>([])
   const [leadError, setLeadError] = useState<string | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
@@ -74,6 +77,7 @@ export function AppShell() {
   const [quoteError, setQuoteError] = useState<string | null>(null)
   const [jobError, setJobError] = useState<string | null>(null)
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
+  const [expenseError, setExpenseError] = useState<string | null>(null)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const loadLeads = useCallback(async () => {
@@ -214,6 +218,29 @@ export function AppShell() {
     }
   }, [])
 
+  const loadExpenses = useCallback(async () => {
+    try {
+      setExpenseError(null)
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setExpenseError('Faltan las variables de entorno de Supabase.')
+        return
+      }
+      const response = await fetch(`${supabaseUrl}/rest/v1/expenses?select=id,display_code,expense_date,category,supplier,concept,amount,tax_amount,total,is_deductible,receipt_status,notes&order=expense_date.desc,created_at.desc`, {
+        method: 'GET',
+        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
+      })
+      if (!response.ok) {
+        setExpenseError(`REST ${response.status}: ${response.statusText}`)
+        return
+      }
+      setExpenses(((await response.json()) as ExpenseListItem[]) ?? [])
+    } catch (err) {
+      setExpenseError(err instanceof Error ? err.message : 'Error desconocido cargando expenses.')
+    }
+  }, [])
+
   const loadPayments = useCallback(async () => {
     try {
       setPaymentError(null)
@@ -242,8 +269,17 @@ export function AppShell() {
   }, [loadLeads, loadClients])
 
   useEffect(() => {
-    void Promise.all([loadLeads(), loadClients(), loadProperties(), loadQuotes(), loadJobs(), loadInvoices(), loadPayments()])
-  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadPayments])
+    void Promise.all([
+      loadLeads(),
+      loadClients(),
+      loadProperties(),
+      loadQuotes(),
+      loadJobs(),
+      loadInvoices(),
+      loadExpenses(),
+      loadPayments(),
+    ])
+  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
@@ -360,6 +396,8 @@ export function AppShell() {
             <JobsPage jobs={jobsWithCodes} clients={clients} properties={properties} quotes={quotes} error={jobError} onJobCreated={loadJobs} />
           ) : currentView === 'invoices' ? (
             <InvoicesPage invoices={invoicesWithCodes} jobs={jobsWithCodes} quotes={quotesWithCodes} error={invoiceError} onInvoiceCreated={loadInvoices} />
+          ) : currentView === 'expenses' ? (
+            <ExpensesPage expenses={expenses} error={expenseError} onExpenseCreated={loadExpenses} />
           ) : (
             <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={loadPayments} />
           )}

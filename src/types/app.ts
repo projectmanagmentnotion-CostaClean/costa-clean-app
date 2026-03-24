@@ -1,4 +1,4 @@
-﻿export type AppEnvironment = 'local' | 'development' | 'staging' | 'production'
+export type AppEnvironment = 'local' | 'development' | 'staging' | 'production'
 
 export interface AppConfig {
   appName: string
@@ -14,6 +14,7 @@ export type AppModuleKey =
   | 'quotes'
   | 'jobs'
   | 'invoices'
+  | 'expenses'
   | 'payments'
   | 'kpis'
   | 'settings'

@@ -72,3 +72,6 @@ Flujo recomendado:
 
 - levantar módulo Clients base conectado a Supabase
 - después preparar conversión lead -> client
+
+
+Redeploy after Vercel env fix

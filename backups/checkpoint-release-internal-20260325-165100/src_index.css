@@ -1,0 +1,128 @@
+﻿:root {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #eff6ff;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.30), transparent 22%),
+    radial-gradient(circle at 20% 20%, rgba(59,130,246,0.22), transparent 26%),
+    radial-gradient(circle at 80% 0%, rgba(168,85,247,0.18), transparent 24%),
+    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --bg: rgba(7, 14, 28, 0.78);
+  --bg-soft: rgba(11, 22, 40, 0.58);
+  --card: rgba(255, 255, 255, 0.10);
+  --card-border: rgba(255, 255, 255, 0.16);
+  --card-border-strong: rgba(255, 255, 255, 0.24);
+
+  --text: #eff6ff;
+  --muted: rgba(226, 232, 240, 0.74);
+  --muted-strong: rgba(226, 232, 240, 0.88);
+
+  --accent: #8ec5ff;
+  --accent-strong: #60a5fa;
+  --accent-soft: rgba(147, 197, 253, 0.18);
+
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.18);
+  --warning: #facc15;
+  --warning-soft: rgba(250, 204, 21, 0.18);
+  --danger: #fb7185;
+  --danger-soft: rgba(251, 113, 133, 0.16);
+
+  --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+  --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.20);
+  --glass-blur: blur(24px);
+
+  --radius-xs: 12px;
+  --radius-sm: 16px;
+  --radius-md: 20px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 40px;
+
+  --control-height-sm: 42px;
+  --control-height-md: 46px;
+  --control-height-lg: 52px;
+
+  --container-max: 1380px;
+  --content-max: 1180px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100vh;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 16%),
+    radial-gradient(circle at left top, rgba(59,130,246,0.18), transparent 24%),
+    radial-gradient(circle at right top, rgba(168,85,247,0.14), transparent 24%),
+    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+::selection {
+  background: rgba(147, 197, 253, 0.28);
+}
+
+@media (max-width: 900px) {
+  :root {
+    --space-6: 20px;
+    --space-7: 24px;
+    --space-8: 28px;
+    --space-9: 32px;
+    --radius-lg: 22px;
+    --radius-xl: 24px;
+    --radius-2xl: 28px;
+  }
+}

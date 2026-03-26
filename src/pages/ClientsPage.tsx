@@ -55,20 +55,20 @@ export function ClientsPage({
 
       {showCreateForm ? <ClientCreateForm onCreated={onClientCreated} /> : null}
 
-      <div className="cc-master-layout">
-        <div className="cc-master-layout__detail">
-          <ClientDetailCard
-            client={selectedClient}
-            onClientUpdated={onClientCreated}
-          />
-        </div>
-
+      <div className="cc-master-layout cc-master-layout--list-first">
         <div className="cc-master-layout__list">
           <ClientsList
             clients={clients}
             error={error}
             selectedClientId={selectedClientId}
             onSelectClient={(client) => setSelectedClientId(client.id)}
+          />
+        </div>
+
+        <div className="cc-master-layout__detail">
+          <ClientDetailCard
+            client={selectedClient}
+            onClientUpdated={onClientCreated}
           />
         </div>
       </div>

@@ -65,21 +65,21 @@ export function PaymentsPage({
         />
       ) : null}
 
-      <div className="cc-master-layout">
-        <div className="cc-master-layout__detail">
-          <PaymentDetailCard
-            payment={selectedPayment}
-            invoices={invoices}
-            onPaymentUpdated={onPaymentCreated}
-          />
-        </div>
-
+      <div className="cc-master-layout cc-master-layout--list-first">
         <div className="cc-master-layout__list">
           <PaymentsList
             payments={payments}
             error={error}
             selectedPaymentId={selectedPaymentId}
             onSelectPayment={(payment) => setSelectedPaymentId(payment.id)}
+          />
+        </div>
+
+        <div className="cc-master-layout__detail">
+          <PaymentDetailCard
+            payment={selectedPayment}
+            invoices={invoices}
+            onPaymentUpdated={onPaymentCreated}
           />
         </div>
       </div>

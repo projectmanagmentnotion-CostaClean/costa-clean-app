@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -74,17 +75,7 @@ export function InvoicesPage({
           />
         ) : null}
 
-        <div className="cc-master-layout">
-          <div className="cc-master-layout__detail">
-            <InvoiceDetailCard
-              invoice={selectedInvoice}
-              jobs={jobs}
-              quotes={quotes}
-              onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => setShowDocumentScreen(true)}
-            />
-          </div>
-
+        <div className="cc-master-layout cc-master-layout--list-first">
           <div className="cc-master-layout__list">
             <InvoicesList
               invoices={invoices}
@@ -96,6 +87,20 @@ export function InvoicesPage({
               }}
             />
           </div>
+
+          <div className="cc-master-layout__detail">
+            <InvoiceDetailCard
+              invoice={selectedInvoice}
+              jobs={jobs}
+              quotes={quotes}
+              onInvoiceUpdated={onInvoiceCreated}
+              onOpenDocument={() => setShowDocumentScreen(true)}
+            />
+          </div>
+        </div>
+
+        <div className="cc-doc-preview-panel">
+          <InvoiceDocumentPreview invoice={selectedInvoice} />
         </div>
       </section>
 

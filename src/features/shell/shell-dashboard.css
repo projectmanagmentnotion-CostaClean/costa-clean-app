@@ -2115,3 +2115,43 @@
     font-size: 0.78rem;
   }
 }
+
+/* =========================================================
+   Clients / invoices / payments list-first + invoice preview
+   ========================================================= */
+
+.cc-doc-preview-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.cc-doc-preview-panel .data-section {
+  overflow-x: auto;
+}
+
+.cc-doc-preview-panel .section-header {
+  margin-bottom: 10px;
+}
+
+@media (max-width: 900px) {
+  .cc-doc-preview-panel .data-section {
+    padding: 14px;
+    border-radius: 20px;
+  }
+
+  .cc-doc-preview-panel .section-header h2 {
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .cc-doc-preview-panel .section-header p {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel .data-section {
+    padding: 12px;
+  }
+}

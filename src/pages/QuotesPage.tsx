@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
+import { QuoteDocumentPreview } from '../features/quotes/QuoteDocumentPreview'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
@@ -96,6 +97,14 @@ export function QuotesPage({
               onOpenDocument={() => setShowDocumentScreen(true)}
             />
           </div>
+        </div>
+
+        <div className="cc-doc-preview-panel">
+          <QuoteDocumentPreview
+            quote={selectedQuote}
+            clients={clients}
+            properties={properties}
+          />
         </div>
       </section>
 

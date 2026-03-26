@@ -1748,3 +1748,56 @@
     font-size: 0.74rem;
   }
 }
+
+/* =========================================================
+   Safe bottom nav icon refinement
+   ========================================================= */
+
+.cc-bottom-dock__scroll {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cc-bottom-dock__button {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4px;
+}
+
+.cc-bottom-dock__icon {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  color: currentColor;
+}
+
+.cc-bottom-dock__icon svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.cc-bottom-dock__label {
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .cc-bottom-dock__button {
+    gap: 3px;
+  }
+
+  .cc-bottom-dock__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cc-bottom-dock__icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .cc-bottom-dock__label {
+    font-size: 0.64rem;
+  }
+}

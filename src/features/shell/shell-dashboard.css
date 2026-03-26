@@ -1801,3 +1801,141 @@
     font-size: 0.64rem;
   }
 }
+
+/* =========================================================
+   Phase master-detail safe refinement
+   ========================================================= */
+
+.cc-master-page {
+  display: grid;
+  gap: 16px;
+}
+
+.cc-master-layout {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.cc-master-layout__detail,
+.cc-master-layout__list {
+  min-width: 0;
+}
+
+@media (min-width: 1100px) {
+  .cc-master-layout {
+    grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.82fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .cc-shell-nav {
+    display: none !important;
+  }
+
+  .cc-dashboard-page {
+    gap: 14px;
+  }
+
+  .cc-dashboard-page .cc-dashboard-block:first-of-type,
+  .cc-dashboard-page .cc-dashboard-overview:first-of-type {
+    margin-top: 0;
+  }
+
+  .cc-quick-actions {
+    margin-top: 0;
+  }
+
+  .cc-master-page,
+  .cc-doc-page {
+    gap: 14px;
+  }
+
+  .cc-master-page .data-section,
+  .cc-doc-page .data-section {
+    margin-top: 0;
+    padding: 15px;
+    border-radius: 20px;
+  }
+
+  .cc-master-page .page-header-actions h1,
+  .cc-doc-page .page-header-actions h1 {
+    font-size: clamp(1.55rem, 7vw, 2rem);
+    line-height: 0.98;
+    letter-spacing: -0.04em;
+  }
+
+  .cc-master-page .section-header p,
+  .cc-doc-page .section-header p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .cc-master-page .primary-button,
+  .cc-master-page .secondary-button,
+  .cc-doc-page .primary-button,
+  .cc-doc-page .secondary-button {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 0.92rem;
+  }
+
+  .cc-master-page .lead-item,
+  .cc-doc-page .lead-item {
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .cc-master-page .lead-item p,
+  .cc-doc-page .lead-item p {
+    font-size: 0.84rem;
+    line-height: 1.45;
+  }
+
+  .cc-master-page .lead-item-top strong,
+  .cc-doc-page .lead-item-top strong {
+    font-size: 0.92rem;
+  }
+
+  .cc-master-page .lead-detail-card,
+  .cc-doc-page .lead-detail-card {
+    gap: 14px;
+  }
+
+  .cc-master-page .lead-detail-grid,
+  .cc-doc-page .lead-detail-grid {
+    gap: 10px;
+  }
+
+  .cc-master-page .detail-row,
+  .cc-doc-page .detail-row {
+    padding: 14px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-master-page .data-section,
+  .cc-doc-page .data-section {
+    padding: 14px;
+  }
+
+  .cc-master-page .lead-item,
+  .cc-doc-page .lead-item {
+    padding: 13px;
+    border-radius: 16px;
+  }
+
+  .cc-master-page .detail-row,
+  .cc-doc-page .detail-row {
+    padding: 13px;
+  }
+
+  .cc-page-topline__title {
+    font-size: clamp(1.85rem, 9vw, 2.35rem);
+  }
+
+  .cc-page-topline__text {
+    font-size: 0.9rem;
+  }
+}

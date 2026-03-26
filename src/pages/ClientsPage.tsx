@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientDetailCard } from '../features/clients/ClientDetailCard'
 import { ClientsList } from '../features/clients/ClientsList'
@@ -37,11 +37,11 @@ export function ClientsPage({
     clients.find((client) => client.id === selectedClientId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
+    <section className="page-section cc-master-page">
+      <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Clientes</h1>
-          <p>Gestiona la base de clientes y sus datos principales de contacto.</p>
+          <p>Gestiona la base de clientes con una lectura más clara y directa en móvil.</p>
         </div>
 
         <button
@@ -55,17 +55,23 @@ export function ClientsPage({
 
       {showCreateForm ? <ClientCreateForm onCreated={onClientCreated} /> : null}
 
-      <ClientDetailCard
-        client={selectedClient}
-        onClientUpdated={onClientCreated}
-      />
+      <div className="cc-master-layout">
+        <div className="cc-master-layout__detail">
+          <ClientDetailCard
+            client={selectedClient}
+            onClientUpdated={onClientCreated}
+          />
+        </div>
 
-      <ClientsList
-        clients={clients}
-        error={error}
-        selectedClientId={selectedClientId}
-        onSelectClient={(client) => setSelectedClientId(client.id)}
-      />
+        <div className="cc-master-layout__list">
+          <ClientsList
+            clients={clients}
+            error={error}
+            selectedClientId={selectedClientId}
+            onSelectClient={(client) => setSelectedClientId(client.id)}
+          />
+        </div>
+      </div>
     </section>
   )
 }

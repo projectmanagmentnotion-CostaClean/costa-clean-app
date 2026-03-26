@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
@@ -48,13 +48,12 @@ export function InvoicesPage({
 
   return (
     <>
-      <section className="page-section">
-        <div className="section-header page-header-actions">
+      <section className="page-section cc-master-page cc-doc-page">
+        <div className="section-header page-header-actions cc-master-page__hero">
           <div>
             <h1>Facturas</h1>
             <p>
-              Gestiona documentos de cobro, revisa importes y abre la factura
-              seleccionada en formato documental.
+              Gestiona documentos de cobro con una estructura más clara y compacta en iPhone.
             </p>
           </div>
 
@@ -75,23 +74,29 @@ export function InvoicesPage({
           />
         ) : null}
 
-        <InvoiceDetailCard
-          invoice={selectedInvoice}
-          jobs={jobs}
-          quotes={quotes}
-          onInvoiceUpdated={onInvoiceCreated}
-          onOpenDocument={() => setShowDocumentScreen(true)}
-        />
+        <div className="cc-master-layout">
+          <div className="cc-master-layout__detail">
+            <InvoiceDetailCard
+              invoice={selectedInvoice}
+              jobs={jobs}
+              quotes={quotes}
+              onInvoiceUpdated={onInvoiceCreated}
+              onOpenDocument={() => setShowDocumentScreen(true)}
+            />
+          </div>
 
-        <InvoicesList
-          invoices={invoices}
-          error={error}
-          selectedInvoiceId={selectedInvoiceId}
-          onSelectInvoice={(invoice) => {
-            setSelectedInvoiceId(invoice.id)
-            setShowDocumentScreen(false)
-          }}
-        />
+          <div className="cc-master-layout__list">
+            <InvoicesList
+              invoices={invoices}
+              error={error}
+              selectedInvoiceId={selectedInvoiceId}
+              onSelectInvoice={(invoice) => {
+                setSelectedInvoiceId(invoice.id)
+                setShowDocumentScreen(false)
+              }}
+            />
+          </div>
+        </div>
       </section>
 
       {showDocumentScreen && selectedInvoice ? (

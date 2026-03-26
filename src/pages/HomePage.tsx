@@ -1,4 +1,4 @@
-﻿import type { AppView } from '../app/navigation'
+import type { AppView } from '../app/navigation'
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
@@ -40,9 +40,9 @@ export function HomePage({ metrics, onOpenView }: HomePageProps) {
         </p>
       </div>
 
+      <DashboardQuickActions onOpenView={onOpenView} />
       <DashboardOverview metrics={metrics} />
       <DashboardKpis metrics={metrics} />
-      <DashboardQuickActions onOpenView={onOpenView} />
     </section>
   )
 }

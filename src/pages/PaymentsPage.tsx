@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PaymentCreateForm } from '../features/payments/PaymentCreateForm'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
@@ -40,13 +40,12 @@ export function PaymentsPage({
     payments.find((payment) => payment.id === selectedPaymentId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
+    <section className="page-section cc-master-page">
+      <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Pagos</h1>
           <p>
-            Registra cobros vinculados a facturas, revisa importes y consulta el
-            historial de pagos del sistema.
+            Registra y consulta cobros con un patrón de lista y detalle más limpio.
           </p>
         </div>
 
@@ -66,18 +65,24 @@ export function PaymentsPage({
         />
       ) : null}
 
-      <PaymentDetailCard
-        payment={selectedPayment}
-        invoices={invoices}
-        onPaymentUpdated={onPaymentCreated}
-      />
+      <div className="cc-master-layout">
+        <div className="cc-master-layout__detail">
+          <PaymentDetailCard
+            payment={selectedPayment}
+            invoices={invoices}
+            onPaymentUpdated={onPaymentCreated}
+          />
+        </div>
 
-      <PaymentsList
-        payments={payments}
-        error={error}
-        selectedPaymentId={selectedPaymentId}
-        onSelectPayment={(payment) => setSelectedPaymentId(payment.id)}
-      />
+        <div className="cc-master-layout__list">
+          <PaymentsList
+            payments={payments}
+            error={error}
+            selectedPaymentId={selectedPaymentId}
+            onSelectPayment={(payment) => setSelectedPaymentId(payment.id)}
+          />
+        </div>
+      </div>
     </section>
   )
 }

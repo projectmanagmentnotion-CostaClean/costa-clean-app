@@ -1,13 +1,11 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import {
   getExpenseCategoryLabel,
   getExpenseDocumentSupportStatusLabel,
-  getExpenseDocumentTypeLabel,
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
-  getExpensePaymentStatusLabel,
   type ExpenseListItem,
 } from './types'
 
@@ -54,38 +52,30 @@ export function ExpensesList({
         expense.category,
         getExpenseCategoryLabel(expense.category),
         expense.description,
-        expense.document_type,
-        getExpenseDocumentTypeLabel(expense.document_type),
-        expense.payment_status,
-        getExpensePaymentStatusLabel(expense.payment_status),
         expense.document_support_status,
         getExpenseDocumentSupportStatusLabel(expense.document_support_status),
         expense.fiscal_review_status,
         getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status),
         expense.fiscal_risk_level,
         getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level),
-        expense.manager_note,
-        expense.subtotal,
-        expense.tax_amount,
         expense.total,
-        expense.is_deductible ? 'deducible' : 'no deducible',
         expense.notes,
       ]),
     )
   }, [expenses, searchQuery])
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-expenses-list-section">
       <div className="section-header">
-        <h2>Gastos</h2>
-        <p>Listado operativo de gastos con control fiscal y documental base.</p>
+        <h2>Explorar gastos</h2>
+        <p>Selecciona un registro para ver su detalle, documento y estado fiscal.</p>
       </div>
 
       <SearchBar
         label="Buscar gasto"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Código, proveedor, descripción, categoría, revisión o riesgo"
+        placeholder="Código, proveedor, descripción, categoría o riesgo"
         resultCount={filteredExpenses.length}
         totalCount={expenses.length}
       />
@@ -106,7 +96,7 @@ export function ExpensesList({
           <p>No encontramos gastos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="cc-expenses-list">
           {filteredExpenses.map((expense) => {
             const isSelected = expense.id === selectedExpenseId
 
@@ -116,22 +106,41 @@ export function ExpensesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'cc-expense-item is-selected'
+                    : 'cc-expense-item'
                 }
                 onClick={() => onSelectExpense(expense)}
               >
-                <div className="lead-item-top">
-                  <strong>{expense.display_code ?? expense.id}</strong>
+                <div className="cc-expense-item__top">
+                  <strong className="cc-expense-item__code">
+                    {expense.display_code ?? expense.id}
+                  </strong>
+                  <span className="cc-expense-item__amount">
+                    {formatCurrency(expense.total)}
+                  </span>
                 </div>
 
-                <p>Descripción: {expense.description}</p>
-                <p>Proveedor: {expense.supplier_name}</p>
-                <p>Fecha: {formatDateEs(expense.expense_date)}</p>
-                <p>Total: {formatCurrency(expense.total)}</p>
-                <p>Documento: {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</p>
-                <p>Revisión: {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</p>
-                <p>Riesgo: {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}</p>
+                <p className="cc-expense-item__description">{expense.description}</p>
+
+                <div className="cc-expense-item__meta">
+                  <span>{expense.supplier_name}</span>
+                  <span>{formatDateEs(expense.expense_date)}</span>
+                </div>
+
+                <div className="cc-expense-item__chips">
+                  <span className="cc-expense-chip">
+                    {getExpenseCategoryLabel(expense.category)}
+                  </span>
+                  <span className="cc-expense-chip">
+                    {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                  </span>
+                  <span className="cc-expense-chip">
+                    {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+                  </span>
+                  <span className="cc-expense-chip cc-expense-chip--risk">
+                    Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
+                  </span>
+                </div>
               </button>
             )
           })}

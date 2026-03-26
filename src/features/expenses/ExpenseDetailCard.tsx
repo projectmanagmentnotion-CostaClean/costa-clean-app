@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { updateExpense, updateExpenseAttachment } from './expenseApi'
 import {
   createExpenseReceiptSignedUrl,
@@ -183,7 +183,7 @@ export function ExpenseDetailCard({
       return
     }
 
-    const taxAmount = Number(formatMoneyInput(subtotal * taxRate / 100))
+    const taxAmount = Number(formatMoneyInput((subtotal * taxRate) / 100))
     const total = Number(formatMoneyInput(subtotal + taxAmount))
 
     updateField('tax_amount', formatMoneyInput(taxAmount))
@@ -346,11 +346,11 @@ export function ExpenseDetailCard({
   }
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-expense-detail">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del gasto</h2>
-          <p>Vista del gasto alineada con la estructura fiscal real.</p>
+          <p>Lectura compacta del gasto con foco financiero, fiscal y documental.</p>
         </div>
 
         {expense ? (
@@ -369,76 +369,42 @@ export function ExpenseDetailCard({
       </div>
 
       {expense ? (
-        <div className="lead-detail-card">
-          <div className="lead-detail-header">
-            <div>
-              <h3>{expense.display_code ?? expense.id}</h3>
-              <p>{expense.description}</p>
-            </div>
-          </div>
-
-          <div className="data-section" style={{ marginTop: 16 }}>
-            <div className="section-header">
-              <h3>Documento adjunto</h3>
-              <p>Sube el ticket o factura del gasto para dejarlo documentado.</p>
+        <div className="cc-expense-detail-card">
+          <header className="cc-expense-detail__hero">
+            <div className="cc-expense-detail__hero-copy">
+              <span className="cc-expense-detail__eyebrow">
+                {expense.display_code ?? expense.id}
+              </span>
+              <h3 className="cc-expense-detail__title">{expense.description}</h3>
+              <p className="cc-expense-detail__subtitle">
+                {expense.supplier_name} · {formatDateEs(expense.expense_date)}
+              </p>
             </div>
 
-            <div className="lead-detail-grid">
-              <div className="detail-row">
-                <span className="detail-label">Estado</span>
-                <strong>
-                  {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
-                </strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Tipo</span>
-                <strong>{getFileTypeLabel(expense.receipt_file_path)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Adjuntos</span>
-                <strong>{expense.attachment_count ?? 0}</strong>
-              </div>
+            <div className="cc-expense-detail__total-card">
+              <span className="cc-expense-detail__total-label">Total</span>
+              <strong className="cc-expense-detail__total-value">
+                {formatCurrency(expense.total)}
+              </strong>
             </div>
+          </header>
 
-            <input
-              ref={receiptInputRef}
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-              style={{ display: 'none' }}
-              onChange={handleReceiptSelected}
-            />
-
-            <div className="form-actions" style={{ marginTop: 14 }}>
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => receiptInputRef.current?.click()}
-                disabled={isUploadingReceipt}
-              >
-                {isUploadingReceipt ? 'Subiendo documento...' : 'Subir ticket / factura'}
-              </button>
-
-              {expense.receipt_file_path ? (
-                <>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={handleOpenReceipt}
-                  >
-                    Ver documento
-                  </button>
-
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={handleDeleteReceipt}
-                    disabled={isDeletingReceipt}
-                  >
-                    {isDeletingReceipt ? 'Eliminando...' : 'Eliminar documento'}
-                  </button>
-                </>
-              ) : null}
-            </div>
+          <div className="cc-expense-detail__status-row">
+            <span className="cc-expense-chip">
+              {getExpenseCategoryLabel(expense.category)}
+            </span>
+            <span className="cc-expense-chip">
+              {getExpensePaymentStatusLabel(expense.payment_status)}
+            </span>
+            <span className="cc-expense-chip">
+              {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+            </span>
+            <span className="cc-expense-chip">
+              {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+            </span>
+            <span className="cc-expense-chip cc-expense-chip--risk">
+              Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
+            </span>
           </div>
 
           {isEditing ? (
@@ -646,89 +612,174 @@ export function ExpenseDetailCard({
           ) : (
             <>
               {saveError ? (
-                <div className="cc-alert cc-alert--error" style={{ marginTop: 14 }}>
+                <div className="cc-alert cc-alert--error">
                   <strong>No se pudo completar la operación</strong>
                   <p>{saveError}</p>
                 </div>
               ) : null}
 
               {successMessage ? (
-                <div className="cc-alert cc-alert--success" style={{ marginTop: 14 }}>
+                <div className="cc-alert cc-alert--success">
                   <strong>Operación correcta</strong>
                   <p>{successMessage}</p>
                 </div>
               ) : null}
 
-              <div className="lead-detail-grid" style={{ marginTop: 14 }}>
-                <div className="detail-row">
-                  <span className="detail-label">Código</span>
-                  <strong>{expense.display_code ?? expense.id}</strong>
+              <section className="cc-expense-detail__section">
+                <div className="cc-expense-detail__section-head">
+                  <h3>Resumen financiero</h3>
+                  <p>Importes y tipo de documento del gasto seleccionado.</p>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Fecha</span>
-                  <strong>{formatDateEs(expense.expense_date)}</strong>
+
+                <div className="cc-expense-detail__metrics">
+                  <article className="cc-expense-metric">
+                    <span className="cc-expense-metric__label">Base imponible</span>
+                    <strong className="cc-expense-metric__value">
+                      {formatCurrency(expense.subtotal)}
+                    </strong>
+                  </article>
+                  <article className="cc-expense-metric">
+                    <span className="cc-expense-metric__label">IVA</span>
+                    <strong className="cc-expense-metric__value">
+                      {formatCurrency(expense.tax_amount)}
+                    </strong>
+                  </article>
+                  <article className="cc-expense-metric">
+                    <span className="cc-expense-metric__label">IVA %</span>
+                    <strong className="cc-expense-metric__value">
+                      {formatMoneyInput(expense.tax_rate)}%
+                    </strong>
+                  </article>
+                  <article className="cc-expense-metric">
+                    <span className="cc-expense-metric__label">Tipo documento</span>
+                    <strong className="cc-expense-metric__value">
+                      {getExpenseDocumentTypeLabel(expense.document_type)}
+                    </strong>
+                  </article>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Proveedor</span>
-                  <strong>{expense.supplier_name}</strong>
+              </section>
+
+              <section className="cc-expense-detail__section">
+                <div className="cc-expense-detail__section-head">
+                  <h3>Documento adjunto</h3>
+                  <p>Control del ticket o factura vinculada a este gasto.</p>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Categoría</span>
-                  <strong>{getExpenseCategoryLabel(expense.category)}</strong>
+
+                <div className="cc-expense-detail__doc-grid">
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Estado</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
+                    </strong>
+                  </div>
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Tipo</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {getFileTypeLabel(expense.receipt_file_path)}
+                    </strong>
+                  </div>
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Adjuntos</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {expense.attachment_count ?? 0}
+                    </strong>
+                  </div>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Tipo documento</span>
-                  <strong>{getExpenseDocumentTypeLabel(expense.document_type)}</strong>
+
+                <input
+                  ref={receiptInputRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                  onChange={handleReceiptSelected}
+                />
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => receiptInputRef.current?.click()}
+                    disabled={isUploadingReceipt}
+                  >
+                    {isUploadingReceipt ? 'Subiendo documento...' : 'Subir ticket / factura'}
+                  </button>
+
+                  {expense.receipt_file_path ? (
+                    <>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={handleOpenReceipt}
+                      >
+                        Ver documento
+                      </button>
+
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={handleDeleteReceipt}
+                        disabled={isDeletingReceipt}
+                      >
+                        {isDeletingReceipt ? 'Eliminando...' : 'Eliminar documento'}
+                      </button>
+                    </>
+                  ) : null}
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Descripción</span>
-                  <strong>{expense.description}</strong>
+              </section>
+
+              <section className="cc-expense-detail__section">
+                <div className="cc-expense-detail__section-head">
+                  <h3>Control fiscal</h3>
+                  <p>Datos clave para revisión, cierre y deducibilidad.</p>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">Base imponible</span>
-                  <strong>{formatCurrency(expense.subtotal)}</strong>
+
+                <div className="cc-expense-detail__info-grid">
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Código</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {expense.display_code ?? expense.id}
+                    </strong>
+                  </div>
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Fecha</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {formatDateEs(expense.expense_date)}
+                    </strong>
+                  </div>
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Proveedor</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {expense.supplier_name}
+                    </strong>
+                  </div>
+                  <div className="cc-expense-detail__info-card">
+                    <span className="cc-expense-detail__info-label">Deducible</span>
+                    <strong className="cc-expense-detail__info-value">
+                      {expense.is_deductible ? 'Sí' : 'No'}
+                    </strong>
+                  </div>
                 </div>
-                <div className="detail-row">
-                  <span className="detail-label">IVA %</span>
-                  <strong>{formatMoneyInput(expense.tax_rate)}%</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">IVA €</span>
-                  <strong>{formatCurrency(expense.tax_amount)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Total</span>
-                  <strong>{formatCurrency(expense.total)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Estado de pago</span>
-                  <strong>{getExpensePaymentStatusLabel(expense.payment_status)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Estado documental</span>
-                  <strong>{getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Revisión fiscal</span>
-                  <strong>{getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Riesgo fiscal</span>
-                  <strong>{getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Deducible</span>
-                  <strong>{expense.is_deductible ? 'Sí' : 'No'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Nota gestoría</span>
-                  <strong>{expense.manager_note ?? 'Sin nota'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Notas internas</span>
-                  <strong>{expense.notes ?? 'Sin notas'}</strong>
-                </div>
-              </div>
+              </section>
+
+              {(expense.manager_note || expense.notes) ? (
+                <section className="cc-expense-detail__section">
+                  <div className="cc-expense-detail__section-head">
+                    <h3>Notas</h3>
+                    <p>Observaciones operativas e indicaciones para gestoría.</p>
+                  </div>
+
+                  <div className="cc-expense-detail__notes">
+                    <article className="cc-expense-detail__note-card">
+                      <span className="cc-expense-detail__info-label">Nota gestoría</span>
+                      <p>{expense.manager_note ?? 'Sin nota'}</p>
+                    </article>
+                    <article className="cc-expense-detail__note-card">
+                      <span className="cc-expense-detail__info-label">Notas internas</span>
+                      <p>{expense.notes ?? 'Sin notas'}</p>
+                    </article>
+                  </div>
+                </section>
+              ) : null}
             </>
           )}
         </div>

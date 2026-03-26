@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
@@ -48,13 +48,12 @@ export function QuotesPage({
 
   return (
     <>
-      <section className="page-section">
-        <div className="section-header page-header-actions">
+      <section className="page-section cc-master-page cc-doc-page">
+        <div className="section-header page-header-actions cc-master-page__hero">
           <div>
             <h1>Presupuestos</h1>
             <p>
-              Gestiona propuestas comerciales, revisa importes y abre el documento
-              del presupuesto seleccionado.
+              Gestiona propuestas comerciales y abre el documento del presupuesto seleccionado.
             </p>
           </div>
 
@@ -75,23 +74,29 @@ export function QuotesPage({
           />
         ) : null}
 
-        <QuoteDetailCard
-          quote={selectedQuote}
-          clients={clients}
-          properties={properties}
-          onQuoteUpdated={onQuoteCreated}
-          onOpenDocument={() => setShowDocumentScreen(true)}
-        />
+        <div className="cc-master-layout cc-master-layout--list-first">
+          <div className="cc-master-layout__list">
+            <QuotesList
+              quotes={quotes}
+              error={error}
+              selectedQuoteId={selectedQuoteId}
+              onSelectQuote={(quote) => {
+                setSelectedQuoteId(quote.id)
+                setShowDocumentScreen(false)
+              }}
+            />
+          </div>
 
-        <QuotesList
-          quotes={quotes}
-          error={error}
-          selectedQuoteId={selectedQuoteId}
-          onSelectQuote={(quote) => {
-            setSelectedQuoteId(quote.id)
-            setShowDocumentScreen(false)
-          }}
-        />
+          <div className="cc-master-layout__detail">
+            <QuoteDetailCard
+              quote={selectedQuote}
+              clients={clients}
+              properties={properties}
+              onQuoteUpdated={onQuoteCreated}
+              onOpenDocument={() => setShowDocumentScreen(true)}
+            />
+          </div>
+        </div>
       </section>
 
       {showDocumentScreen && selectedQuote ? (

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
@@ -90,8 +90,8 @@ export function LeadsPage({
     : false
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
+    <section className="page-section cc-master-page">
+      <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Leads</h1>
           <p>Gestiona oportunidades comerciales, seguimiento y conversión a cliente.</p>
@@ -172,19 +172,25 @@ export function LeadsPage({
         </div>
       </section>
 
-      <LeadDetailCard
-        lead={selectedLead}
-        alreadyConverted={selectedLeadAlreadyConverted}
-        onLeadUpdated={onLeadCreated}
-        onLeadConverted={onLeadConverted}
-      />
+      <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-master-layout__list">
+          <LeadsList
+            leads={filteredLeads}
+            error={error}
+            selectedLeadId={selectedLeadId}
+            onSelectLead={(lead) => setSelectedLeadId(lead.id)}
+          />
+        </div>
 
-      <LeadsList
-        leads={filteredLeads}
-        error={error}
-        selectedLeadId={selectedLeadId}
-        onSelectLead={(lead) => setSelectedLeadId(lead.id)}
-      />
+        <div className="cc-master-layout__detail">
+          <LeadDetailCard
+            lead={selectedLead}
+            alreadyConverted={selectedLeadAlreadyConverted}
+            onLeadUpdated={onLeadCreated}
+            onLeadConverted={onLeadConverted}
+          />
+        </div>
+      </div>
     </section>
   )
 }

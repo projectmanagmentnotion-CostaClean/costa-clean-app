@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { JobCreateForm } from '../features/jobs/JobCreateForm'
 import { JobDetailCard } from '../features/jobs/JobDetailCard'
 import { JobsList } from '../features/jobs/JobsList'
@@ -46,11 +46,11 @@ export function JobsPage({
     jobs.find((job) => job.id === selectedJobId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
+    <section className="page-section cc-master-page">
+      <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Servicios</h1>
-          <p>Gestiona trabajos programados, estado operativo y relación con cliente, propiedad o presupuesto.</p>
+          <p>Gestiona trabajos programados, estado operativo y relación con cliente o propiedad.</p>
         </div>
 
         <button
@@ -71,20 +71,26 @@ export function JobsPage({
         />
       ) : null}
 
-      <JobDetailCard
-        job={selectedJob}
-        clients={clients}
-        properties={properties}
-        quotes={quotes}
-        onJobUpdated={onJobCreated}
-      />
+      <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-master-layout__list">
+          <JobsList
+            jobs={jobs}
+            error={error}
+            selectedJobId={selectedJobId}
+            onSelectJob={(job) => setSelectedJobId(job.id)}
+          />
+        </div>
 
-      <JobsList
-        jobs={jobs}
-        error={error}
-        selectedJobId={selectedJobId}
-        onSelectJob={(job) => setSelectedJobId(job.id)}
-      />
+        <div className="cc-master-layout__detail">
+          <JobDetailCard
+            job={selectedJob}
+            clients={clients}
+            properties={properties}
+            quotes={quotes}
+            onJobUpdated={onJobCreated}
+          />
+        </div>
+      </div>
     </section>
   )
 }

@@ -66,8 +66,8 @@ export function ExpensesPage({
   }, [expenses])
 
   return (
-    <section className="page-section cc-expenses-page">
-      <div className="section-header page-header-actions cc-expenses-hero">
+    <section className="page-section cc-master-page cc-expenses-page">
+      <div className="section-header page-header-actions cc-master-page__hero cc-expenses-hero">
         <div>
           <h1>Gastos</h1>
           <p>Control operativo, fiscal y documental con lectura rápida en móvil.</p>
@@ -119,20 +119,20 @@ export function ExpensesPage({
         </section>
       ) : null}
 
-      <div className="cc-expenses-layout">
-        <div className="cc-expenses-layout__detail">
-          <ExpenseDetailCard
-            expense={selectedExpense}
-            onExpenseUpdated={onExpenseCreated}
-          />
-        </div>
-
-        <div className="cc-expenses-layout__list">
+      <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-master-layout__list">
           <ExpensesList
             expenses={expenses}
             error={error}
             selectedExpenseId={selectedExpenseId}
             onSelectExpense={(expense) => setSelectedExpenseId(expense.id)}
+          />
+        </div>
+
+        <div className="cc-master-layout__detail">
+          <ExpenseDetailCard
+            expense={selectedExpense}
+            onExpenseUpdated={onExpenseCreated}
           />
         </div>
       </div>

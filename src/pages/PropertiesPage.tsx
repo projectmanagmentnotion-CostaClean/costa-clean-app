@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PropertyCreateForm } from '../features/properties/PropertyCreateForm'
 import { PropertyDetailCard } from '../features/properties/PropertyDetailCard'
 import { PropertiesList } from '../features/properties/PropertiesList'
@@ -40,8 +40,8 @@ export function PropertiesPage({
     properties.find((property) => property.id === selectedPropertyId) ?? null
 
   return (
-    <section className="page-section">
-      <div className="section-header page-header-actions">
+    <section className="page-section cc-master-page">
+      <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Propiedades</h1>
           <p>Gestiona inmuebles, direcciones y datos operativos vinculados a clientes.</p>
@@ -60,17 +60,23 @@ export function PropertiesPage({
         <PropertyCreateForm clients={clients} onCreated={onPropertyCreated} />
       ) : null}
 
-      <PropertyDetailCard
-        property={selectedProperty}
-        onPropertyUpdated={onPropertyCreated}
-      />
+      <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-master-layout__list">
+          <PropertiesList
+            properties={properties}
+            error={error}
+            selectedPropertyId={selectedPropertyId}
+            onSelectProperty={(property) => setSelectedPropertyId(property.id)}
+          />
+        </div>
 
-      <PropertiesList
-        properties={properties}
-        error={error}
-        selectedPropertyId={selectedPropertyId}
-        onSelectProperty={(property) => setSelectedPropertyId(property.id)}
-      />
+        <div className="cc-master-layout__detail">
+          <PropertyDetailCard
+            property={selectedProperty}
+            onPropertyUpdated={onPropertyCreated}
+          />
+        </div>
+      </div>
     </section>
   )
 }

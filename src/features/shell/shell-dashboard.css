@@ -2772,3 +2772,50 @@
     margin-right: auto !important;
   }
 }
+
+/* =========================================================
+   Final iPhone thumbnail layout for embedded documents
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 10px !important;
+  }
+
+  .cc-doc-preview-panel__viewport {
+    width: 100% !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    aspect-ratio: 210 / 297 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    margin: 0 auto !important;
+    line-height: normal !important;
+    font-size: initial !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) scale(0.355) !important;
+    transform-origin: top center !important;
+    margin: 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    zoom: 1 !important;
+    display: block !important;
+    vertical-align: top !important;
+  }
+}

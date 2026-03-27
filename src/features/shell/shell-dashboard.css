@@ -2431,3 +2431,13 @@
     vertical-align: top !important;
   }
 }
+
+/* =========================================================
+   Tiny extra bottom room for iPhone A4 thumbnail
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 312 !important;
+  }
+}

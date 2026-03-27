@@ -1,4 +1,4 @@
-﻿import type { InvoiceListItem } from './types'
+import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 
 interface InvoiceDocumentPreviewProps {
@@ -10,28 +10,32 @@ export function InvoiceDocumentPreview({
 }: InvoiceDocumentPreviewProps) {
   if (!invoice) {
     return (
-      <section className="data-section">
+      <section className="data-section cc-doc-preview-panel">
         <div className="section-header">
-          <h2>Plantilla de factura</h2>
-          <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+          <h2>Vista previa de factura</h2>
+          <p>Previsualización documental adaptada para revisión rápida en móvil.</p>
         </div>
 
         <div className="empty-state">
           <strong>No hay factura para previsualizar</strong>
-          <p>Selecciona una factura en el listado para ver la plantilla documental.</p>
+          <p>Selecciona una factura en el listado para ver el documento.</p>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-doc-preview-panel">
       <div className="section-header">
-        <h2>Plantilla de factura</h2>
-        <p>Vista documental HTML/CSS alineada con tu branding real.</p>
+        <h2>Vista previa de factura</h2>
+        <p>Documento fiscal presentado en una vista optimizada para móvil.</p>
       </div>
 
-      <InvoiceDocumentA4 invoice={invoice} variant="embedded" />
+      <div className="cc-doc-preview-panel__viewport">
+        <div className="cc-doc-preview-panel__canvas">
+          <InvoiceDocumentA4 invoice={invoice} variant="embedded" />
+        </div>
+      </div>
     </section>
   )
 }

@@ -2197,3 +2197,91 @@
     padding: 10px;
   }
 }
+
+/* =========================================================
+   Premium mobile document preview refinement
+   ========================================================= */
+
+.cc-doc-preview-panel {
+  width: 100%;
+  min-width: 0;
+}
+
+.cc-doc-preview-panel .section-header h2 {
+  letter-spacing: -0.03em;
+}
+
+.cc-doc-preview-panel .section-header p {
+  max-width: 52ch;
+}
+
+.cc-doc-preview-panel__viewport {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.cc-doc-preview-panel__canvas {
+  width: max-content;
+  min-width: 100%;
+  margin: 0 auto;
+}
+
+.cc-doc-preview-panel .cc-invoice-a4--embedded {
+  margin: 0 auto;
+  box-shadow:
+    0 18px 48px rgba(2, 6, 23, 0.18),
+    0 2px 0 rgba(255,255,255,0.32);
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__header,
+.cc-doc-preview-panel .cc-invoice-a4__table thead tr,
+.cc-doc-preview-panel .cc-invoice-a4__table thead th {
+  background: linear-gradient(180deg, #0b2a66, #0f3c8a) !important;
+  color: #ffffff !important;
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__eyebrow {
+  color: #6b7f9f !important;
+}
+
+@media (max-width: 900px) {
+  .cc-doc-preview-panel {
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel .section-header {
+    margin-bottom: 10px;
+  }
+
+  .cc-doc-preview-panel .section-header h2 {
+    font-size: 1rem;
+  }
+
+  .cc-doc-preview-panel .section-header p {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+
+  .cc-doc-preview-panel__viewport {
+    margin-left: -2px;
+    margin-right: -2px;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 12px;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    min-width: 720px;
+  }
+}

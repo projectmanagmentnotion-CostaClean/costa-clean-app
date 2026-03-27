@@ -2285,3 +2285,71 @@
     min-width: 720px;
   }
 }
+
+/* =========================================================
+   Final mobile document preview polish
+   ========================================================= */
+
+.cc-doc-preview-panel .cc-invoice-a4__header {
+  background: #ffffff !important;
+  color: inherit !important;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__brand-copy h1,
+.cc-doc-preview-panel .cc-invoice-a4__brand-copy p,
+.cc-doc-preview-panel .cc-invoice-a4__doc-row,
+.cc-doc-preview-panel .cc-invoice-a4__doc-row span,
+.cc-doc-preview-panel .cc-invoice-a4__doc-row strong {
+  color: inherit !important;
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__table thead tr,
+.cc-doc-preview-panel .cc-invoice-a4__table thead th {
+  background: linear-gradient(180deg, #0f3c8a, #0b2a66) !important;
+  color: #ffffff !important;
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__total-row--grand {
+  background: linear-gradient(180deg, #0f3c8a, #0b2a66) !important;
+  border-radius: 16px;
+  padding: 14px 16px;
+}
+
+.cc-doc-preview-panel .cc-invoice-a4__total-row--grand,
+.cc-doc-preview-panel .cc-invoice-a4__total-row--grand span,
+.cc-doc-preview-panel .cc-invoice-a4__total-row--grand strong {
+  color: #ffffff !important;
+}
+
+.cc-doc-preview-panel__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cc-doc-preview-panel__canvas {
+  display: flex;
+  justify-content: center;
+  min-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: scale(0.88);
+    transform-origin: top center;
+    width: 113.64%;
+    margin-left: -6.82%;
+    margin-right: -6.82%;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: scale(0.78);
+    transform-origin: top center;
+    width: 128.21%;
+    margin-left: -14.1%;
+    margin-right: -14.1%;
+  }
+}

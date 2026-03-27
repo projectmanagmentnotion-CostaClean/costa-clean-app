@@ -2651,3 +2651,46 @@
     display: block;
   }
 }
+
+/* =========================================================
+   Remove extra white space under iPhone document thumbnails
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__viewport {
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    height: 440px;
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    display: block;
+  }
+}
+
+/* =========================================================
+   iPhone thumbnail natural height fix
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__viewport {
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    display: block;
+    margin-bottom: -340px;
+  }
+}

@@ -2461,3 +2461,23 @@
     vertical-align: top !important;
   }
 }
+
+/* =========================================================
+   Make iPhone embedded A4 thumbnail use panel width
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__canvas {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 auto !important;
+  }
+}

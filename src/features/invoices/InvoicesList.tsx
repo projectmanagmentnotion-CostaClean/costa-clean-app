@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -44,10 +44,8 @@ export function InvoicesList({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Listado de facturas</h2>
-        <p>
-          Consulta facturas emitidas, estado, servicio vinculado e importes principales.
-        </p>
+        <h2>Facturas</h2>
+        <p>Consulta estado, servicio vinculado e importes principales.</p>
       </div>
 
       <SearchBar
@@ -92,14 +90,16 @@ export function InvoicesList({
               >
                 <div className="lead-item-top">
                   <strong>{invoice.display_code ?? invoice.id}</strong>
+                  <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
                 </div>
 
-                <p>Número: {invoice.invoice_number ?? 'Sin número'}</p>
-                <p>Servicio: {invoice.job_display_code ?? invoice.job_id}</p>
-                <p>Cliente: {invoice.client_display_code ?? invoice.client_id}</p>
-                <p>Estado: {getStatusLabel(invoice.status)}</p>
-                <p>Fecha: {invoice.issue_date}</p>
-                <p>Total: {formatCurrency(invoice.total)}</p>
+                <div className="cc-list-meta">
+                  <span>{invoice.invoice_number ?? 'Sin número'}</span>
+                  <span>{invoice.issue_date}</span>
+                </div>
+
+                <p>Cliente {invoice.client_display_code ?? invoice.client_id}</p>
+                <p>Total {formatCurrency(invoice.total)}</p>
               </button>
             )
           })}

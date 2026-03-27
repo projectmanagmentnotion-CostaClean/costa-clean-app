@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -42,10 +42,8 @@ export function QuotesList({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Listado de presupuestos</h2>
-        <p>
-          Consulta propuestas comerciales, estado, importes y relación con cliente o propiedad.
-        </p>
+        <h2>Presupuestos</h2>
+        <p>Consulta propuestas, estado, importes y relación con cliente o propiedad.</p>
       </div>
 
       <SearchBar
@@ -90,13 +88,16 @@ export function QuotesList({
               >
                 <div className="lead-item-top">
                   <strong>{quote.display_code ?? quote.id}</strong>
+                  <span className="lead-badge">{getStatusLabel(quote.status)}</span>
                 </div>
 
-                <p>Cliente: {quote.client_display_code ?? quote.client_id}</p>
-                <p>Propiedad: {quote.property_display_code ?? quote.property_id ?? 'Sin propiedad'}</p>
-                <p>Estado: {getStatusLabel(quote.status)}</p>
-                <p>Subtotal: {formatCurrency(quote.subtotal)}</p>
-                <p>Total: {formatCurrency(quote.total)}</p>
+                <div className="cc-list-meta">
+                  <span>{quote.client_display_code ?? quote.client_id}</span>
+                  <span>{quote.property_display_code ?? quote.property_id ?? 'Sin propiedad'}</span>
+                </div>
+
+                <p>Subtotal {formatCurrency(quote.subtotal)}</p>
+                <p>Total {formatCurrency(quote.total)}</p>
               </button>
             )
           })}

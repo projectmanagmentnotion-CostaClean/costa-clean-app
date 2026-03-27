@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
@@ -34,8 +34,8 @@ export function ClientsList({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Clientes reales</h2>
-        <p>Primer listado conectado a Supabase.</p>
+        <h2>Clientes</h2>
+        <p>Base de clientes activa conectada a Supabase.</p>
       </div>
 
       <SearchBar
@@ -83,9 +83,12 @@ export function ClientsList({
                   <span className="lead-badge">{client.status}</span>
                 </div>
 
-                <p>Código: {client.display_code ?? client.id}</p>
-                <p>Teléfono: {client.phone ?? 'Sin teléfono'}</p>
-                <p>Email: {client.email ?? 'Sin email'}</p>
+                <div className="cc-list-meta">
+                  <span>Código {client.display_code ?? client.id}</span>
+                  <span>{client.phone ?? 'Sin teléfono'}</span>
+                </div>
+
+                <p>{client.email ?? 'Sin email registrado'}</p>
               </button>
             )
           })}

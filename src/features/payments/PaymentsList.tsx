@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
@@ -39,10 +39,8 @@ export function PaymentsList({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Listado de pagos</h2>
-        <p>
-          Consulta cobros registrados, factura vinculada, fecha, importe y método de pago.
-        </p>
+        <h2>Pagos</h2>
+        <p>Consulta cobros, factura vinculada, fecha e importe.</p>
       </div>
 
       <SearchBar
@@ -87,12 +85,15 @@ export function PaymentsList({
               >
                 <div className="lead-item-top">
                   <strong>{payment.display_code ?? payment.id}</strong>
+                  <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>
                 </div>
 
-                <p>Factura: {payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</p>
-                <p>Fecha: {formatDateEs(payment.payment_date)}</p>
-                <p>Importe: {formatCurrency(payment.amount)}</p>
-                <p>Método: {getPaymentMethodLabel(payment.payment_method)}</p>
+                <div className="cc-list-meta">
+                  <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
+                  <span>{formatDateEs(payment.payment_date)}</span>
+                </div>
+
+                <p>Importe {formatCurrency(payment.amount)}</p>
               </button>
             )
           })}

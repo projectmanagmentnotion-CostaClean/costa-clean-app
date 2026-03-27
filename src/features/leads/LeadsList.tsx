@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { LeadListItem } from './types'
@@ -35,8 +35,8 @@ export function LeadsList({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Leads reales</h2>
-        <p>Listado conectado a Supabase.</p>
+        <h2>Leads</h2>
+        <p>Listado comercial conectado a Supabase.</p>
       </div>
 
       <SearchBar
@@ -84,9 +84,12 @@ export function LeadsList({
                   <span className="lead-badge">{lead.status}</span>
                 </div>
 
-                <p>Código: {lead.display_code ?? lead.id}</p>
-                <p>Teléfono: {lead.phone}</p>
-                <p>Ciudad: {lead.city ?? 'Sin ciudad'}</p>
+                <div className="cc-list-meta">
+                  <span>{lead.display_code ?? lead.id}</span>
+                  <span>{lead.phone}</span>
+                </div>
+
+                <p>{lead.city ?? 'Sin ciudad registrada'}</p>
               </button>
             )
           })}

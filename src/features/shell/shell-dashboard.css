@@ -2157,48 +2157,6 @@
 }
 
 /* =========================================================
-   Safe document preview mobile containment
-   ========================================================= */
-
-.cc-doc-preview-panel {
-  width: 100%;
-  min-width: 0;
-}
-
-.cc-doc-preview-panel > .data-section {
-  overflow-x: auto;
-  overflow-y: hidden;
-  -webkit-overflow-scrolling: touch;
-}
-
-.cc-doc-preview-panel .section-header {
-  margin-bottom: 10px;
-}
-
-@media (max-width: 900px) {
-  .cc-doc-preview-panel > .data-section {
-    padding: 12px;
-    border-radius: 20px;
-  }
-
-  .cc-doc-preview-panel .section-header h2 {
-    font-size: 1rem;
-    letter-spacing: -0.02em;
-  }
-
-  .cc-doc-preview-panel .section-header p {
-    font-size: 0.86rem;
-    line-height: 1.45;
-  }
-}
-
-@media (max-width: 640px) {
-  .cc-doc-preview-panel > .data-section {
-    padding: 10px;
-  }
-}
-
-/* =========================================================
    Premium consolidation layer
    ========================================================= */
 
@@ -2386,46 +2344,53 @@
 }
 
 /* =========================================================
-   Remove extra white space under iPhone document thumbnails
+   Single source of truth for embedded document preview
    ========================================================= */
 
-@media (max-width: 640px) {
-  .cc-doc-preview-panel__viewport {
-    overflow: hidden !important;
-  }
-
-  .cc-doc-preview-panel__canvas {
-    height: 440px;
-    overflow: hidden;
-  }
-
-  .cc-doc-preview-panel .cc-invoice-a4--embedded {
-    display: block;
-  }
+.cc-doc-preview-panel {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 12px;
 }
 
-/* =========================================================
-   Remove extra white space under iPhone document thumbnails
-   ========================================================= */
-
-@media (max-width: 640px) {
-  .cc-doc-preview-panel__viewport {
-    overflow: hidden !important;
-  }
-
-  .cc-doc-preview-panel__canvas {
-    height: 440px;
-    overflow: hidden;
-  }
-
-  .cc-doc-preview-panel .cc-invoice-a4--embedded {
-    display: block;
-  }
+.cc-doc-preview-panel > .data-section,
+.cc-doc-preview-panel.data-section {
+  overflow: hidden;
 }
 
-/* =========================================================
-   Single source of truth for iPhone embedded document preview
-   ========================================================= */
+.cc-doc-preview-panel .section-header {
+  margin-bottom: 10px;
+}
+
+.cc-doc-preview-panel__viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.cc-doc-preview-panel__canvas {
+  width: 100%;
+  min-width: 0;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .cc-doc-preview-panel .section-header h2 {
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+  }
+
+  .cc-doc-preview-panel .section-header p {
+    font-size: 0.86rem;
+    line-height: 1.45;
+  }
+}
 
 @media (max-width: 640px) {
   .cc-doc-preview-panel > .data-section,
@@ -2441,43 +2406,28 @@
   }
 
   .cc-doc-preview-panel__canvas {
+    position: relative !important;
     width: 100% !important;
     min-width: 0 !important;
-    display: block !important;
-    margin: 0 !important;
+    aspect-ratio: 210 / 297 !important;
     height: auto !important;
     min-height: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    margin: 0 auto !important;
   }
 
   .cc-doc-preview-panel .cc-invoice-a4--embedded {
-    position: static !important;
-    display: block !important;
-    width: 100% !important;
-    max-width: 100% !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 50% !important;
+    width: 280% !important;
+    max-width: none !important;
     min-width: 0 !important;
     margin: 0 !important;
-    transform: none !important;
+    transform: translateX(-50%) scale(0.357142857) !important;
+    transform-origin: top center !important;
     zoom: 1 !important;
     vertical-align: top !important;
-  }
-}
-
-/* =========================================================
-   Make iPhone embedded A4 thumbnail use panel width
-   ========================================================= */
-
-@media (max-width: 640px) {
-  .cc-doc-preview-panel__canvas {
-    width: 100% !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-  }
-
-  .cc-doc-preview-panel .cc-invoice-a4--embedded {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    margin: 0 auto !important;
   }
 }

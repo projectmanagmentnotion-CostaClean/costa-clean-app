@@ -2413,3 +2413,35 @@
     margin-right: -36.21%;
   }
 }
+
+/* =========================================================
+   iPhone full-width thumbnail fit
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel {
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel__viewport {
+    overflow: hidden !important;
+    width: 100%;
+    padding: 0;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: scale(0.46);
+    transform-origin: top center;
+    width: 217.4%;
+    margin-left: -58.7%;
+    margin-right: -58.7%;
+  }
+}

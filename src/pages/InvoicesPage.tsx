@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -96,6 +97,10 @@ export function InvoicesPage({
               onOpenDocument={() => setShowDocumentScreen(true)}
             />
           </div>
+        </div>
+
+        <div className="cc-doc-preview-panel">
+          <InvoiceDocumentPreview invoice={selectedInvoice} />
         </div>
       </section>
 

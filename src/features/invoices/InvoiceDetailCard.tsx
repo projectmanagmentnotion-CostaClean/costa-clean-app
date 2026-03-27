@@ -1,11 +1,10 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import type { InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
-import { InvoiceDocumentPreview } from './InvoiceDocumentPreview'
 
 interface InvoiceDetailCardProps {
   invoice: InvoiceListItem | null
@@ -247,221 +246,217 @@ export function InvoiceDetailCard({
   }
 
   return (
-    <>
-      <section className="data-section">
-        <div className="section-header page-header-actions">
-          <div>
-            <h2>Detalle de la factura</h2>
-            <p>Consulta la factura seleccionada, edítala o abre su documento.</p>
-          </div>
-
-          {invoice ? (
-            <div
-              style={{
-                display: 'flex',
-                gap: '0.75rem',
-                flexWrap: 'wrap',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <button
-                type="button"
-                className="primary-button"
-                onClick={onOpenDocument}
-              >
-                Abrir documento
-              </button>
-
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setIsEditing((current) => !current)
-                  setSaveError(null)
-                  setSuccessMessage(null)
-                  setForm({
-                    job_id: invoice.job_id,
-                    client_id: invoice.client_id,
-                    issue_date: invoice.issue_date,
-                    status: invoice.status,
-                    subtotal: String(invoice.subtotal),
-                    tax_amount: String(invoice.tax_amount),
-                    total: String(invoice.total),
-                    notes: invoice.notes ?? '',
-                  })
-                }}
-              >
-                {isEditing ? 'Cancelar edición' : 'Editar factura'}
-              </button>
-            </div>
-          ) : null}
+    <section className="data-section">
+      <div className="section-header page-header-actions">
+        <div>
+          <h2>Detalle de la factura</h2>
+          <p>Consulta la factura seleccionada, edítala o abre su documento.</p>
         </div>
 
         {invoice ? (
-          <div className="lead-detail-card">
-            <div className="lead-detail-header">
-              <div>
-                <h3>{invoice.display_code ?? invoice.id}</h3>
-                <p>{invoice.invoice_number ?? 'Sin número asignado'}</p>
-              </div>
-              <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.75rem',
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <button
+              type="button"
+              className="primary-button"
+              onClick={onOpenDocument}
+            >
+              Abrir documento
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setIsEditing((current) => !current)
+                setSaveError(null)
+                setSuccessMessage(null)
+                setForm({
+                  job_id: invoice.job_id,
+                  client_id: invoice.client_id,
+                  issue_date: invoice.issue_date,
+                  status: invoice.status,
+                  subtotal: String(invoice.subtotal),
+                  tax_amount: String(invoice.tax_amount),
+                  total: String(invoice.total),
+                  notes: invoice.notes ?? '',
+                })
+              }}
+            >
+              {isEditing ? 'Cancelar edición' : 'Editar factura'}
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      {invoice ? (
+        <div className="lead-detail-card">
+          <div className="lead-detail-header">
+            <div>
+              <h3>{invoice.display_code ?? invoice.id}</h3>
+              <p>{invoice.invoice_number ?? 'Sin número asignado'}</p>
             </div>
-
-            {isEditing ? (
-              <form className="lead-form" onSubmit={handleSubmit}>
-                <label className="form-field">
-                  <span>Servicio *</span>
-                  <select
-                    value={form.job_id}
-                    onChange={(event) => updateField('job_id', event.target.value)}
-                  >
-                    {jobs.map((job) => (
-                      <option key={job.id} value={job.id}>
-                        {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-
-                <label className="form-field">
-                  <span>Fecha de emisión *</span>
-                  <input
-                    type="date"
-                    value={form.issue_date}
-                    onChange={(event) => updateField('issue_date', event.target.value)}
-                    required
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>Estado</span>
-                  <select
-                    value={form.status}
-                    onChange={(event) => updateField('status', event.target.value)}
-                  >
-                    <option value="draft">{getStatusLabel('draft')}</option>
-                    <option value="issued">{getStatusLabel('issued')}</option>
-                    <option value="paid">{getStatusLabel('paid')}</option>
-                    <option value="cancelled">{getStatusLabel('cancelled')}</option>
-                  </select>
-                </label>
-
-                <label className="form-field">
-                  <span>Subtotal *</span>
-                  <input
-                    value={form.subtotal}
-                    onChange={(event) => recalculateFromSubtotal(event.target.value)}
-                    required
-                  />
-                </label>
-
-                <label className="form-field">
-                  <span>IVA</span>
-                  <input value={form.tax_amount} readOnly />
-                </label>
-
-                <label className="form-field">
-                  <span>Total</span>
-                  <input value={form.total} readOnly />
-                </label>
-
-                <label className="form-field form-field-full">
-                  <span>Notas</span>
-                  <textarea
-                    value={form.notes}
-                    onChange={(event) => updateField('notes', event.target.value)}
-                    rows={4}
-                  />
-                </label>
-
-                <div className="form-actions">
-                  <button type="button" className="secondary-button" onClick={syncFromJobQuote}>
-                    Traer datos del servicio/presupuesto
-                  </button>
-
-                  <button type="submit" className="primary-button" disabled={isSaving}>
-                    {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-                  </button>
-                </div>
-
-                {saveError ? (
-                  <div className="cc-alert cc-alert--error">
-                    <strong>No se pudo actualizar la factura</strong>
-                    <p>{saveError}</p>
-                  </div>
-                ) : null}
-
-                {successMessage ? (
-                  <div className="cc-alert cc-alert--success">
-                    <strong>Operación correcta</strong>
-                    <p>{successMessage}</p>
-                  </div>
-                ) : null}
-              </form>
-            ) : (
-              <div className="lead-detail-grid">
-                <div className="detail-row">
-                  <span className="detail-label">Código</span>
-                  <strong>{invoice.display_code ?? invoice.id}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Número factura</span>
-                  <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Servicio</span>
-                  <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Cliente</span>
-                  <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Fecha de emisión</span>
-                  <strong>{invoice.issue_date}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Subtotal</span>
-                  <strong>{formatCurrency(invoice.subtotal)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">IVA</span>
-                  <strong>{formatCurrency(invoice.tax_amount)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Total</span>
-                  <strong>{formatCurrency(invoice.total)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Notas</span>
-                  <strong>{invoice.notes ?? 'Sin notas'}</strong>
-                </div>
-              </div>
-            )}
-
-            {!isEditing && saveError ? (
-              <div className="cc-alert cc-alert--error">
-                <strong>No se pudo actualizar la factura</strong>
-                <p>{saveError}</p>
-              </div>
-            ) : null}
-
-            {!isEditing && successMessage ? (
-              <div className="cc-alert cc-alert--success">
-                <strong>Operación correcta</strong>
-                <p>{successMessage}</p>
-              </div>
-            ) : null}
+            <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
           </div>
-        ) : (
-          <div className="empty-state">
-            <strong>Ninguna factura seleccionada</strong>
-            <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
-          </div>
-        )}
-      </section>
 
-      <InvoiceDocumentPreview invoice={invoice} />
-    </>
+          {isEditing ? (
+            <form className="lead-form" onSubmit={handleSubmit}>
+              <label className="form-field">
+                <span>Servicio *</span>
+                <select
+                  value={form.job_id}
+                  onChange={(event) => updateField('job_id', event.target.value)}
+                >
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="form-field">
+                <span>Fecha de emisión *</span>
+                <input
+                  type="date"
+                  value={form.issue_date}
+                  onChange={(event) => updateField('issue_date', event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="form-field">
+                <span>Estado</span>
+                <select
+                  value={form.status}
+                  onChange={(event) => updateField('status', event.target.value)}
+                >
+                  <option value="draft">{getStatusLabel('draft')}</option>
+                  <option value="issued">{getStatusLabel('issued')}</option>
+                  <option value="paid">{getStatusLabel('paid')}</option>
+                  <option value="cancelled">{getStatusLabel('cancelled')}</option>
+                </select>
+              </label>
+
+              <label className="form-field">
+                <span>Subtotal *</span>
+                <input
+                  value={form.subtotal}
+                  onChange={(event) => recalculateFromSubtotal(event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="form-field">
+                <span>IVA</span>
+                <input value={form.tax_amount} readOnly />
+              </label>
+
+              <label className="form-field">
+                <span>Total</span>
+                <input value={form.total} readOnly />
+              </label>
+
+              <label className="form-field form-field-full">
+                <span>Notas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  rows={4}
+                />
+              </label>
+
+              <div className="form-actions">
+                <button type="button" className="secondary-button" onClick={syncFromJobQuote}>
+                  Traer datos del servicio/presupuesto
+                </button>
+
+                <button type="submit" className="primary-button" disabled={isSaving}>
+                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+                </button>
+              </div>
+
+              {saveError ? (
+                <div className="cc-alert cc-alert--error">
+                  <strong>No se pudo actualizar la factura</strong>
+                  <p>{saveError}</p>
+                </div>
+              ) : null}
+
+              {successMessage ? (
+                <div className="cc-alert cc-alert--success">
+                  <strong>Operación correcta</strong>
+                  <p>{successMessage}</p>
+                </div>
+              ) : null}
+            </form>
+          ) : (
+            <div className="lead-detail-grid">
+              <div className="detail-row">
+                <span className="detail-label">Código</span>
+                <strong>{invoice.display_code ?? invoice.id}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Número factura</span>
+                <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Servicio</span>
+                <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Cliente</span>
+                <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Fecha de emisión</span>
+                <strong>{invoice.issue_date}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Subtotal</span>
+                <strong>{formatCurrency(invoice.subtotal)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">IVA</span>
+                <strong>{formatCurrency(invoice.tax_amount)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Total</span>
+                <strong>{formatCurrency(invoice.total)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Notas</span>
+                <strong>{invoice.notes ?? 'Sin notas'}</strong>
+              </div>
+            </div>
+          )}
+
+          {!isEditing && saveError ? (
+            <div className="cc-alert cc-alert--error">
+              <strong>No se pudo actualizar la factura</strong>
+              <p>{saveError}</p>
+            </div>
+          ) : null}
+
+          {!isEditing && successMessage ? (
+            <div className="cc-alert cc-alert--success">
+              <strong>Operación correcta</strong>
+              <p>{successMessage}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <strong>Ninguna factura seleccionada</strong>
+          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
+        </div>
+      )}
+    </section>
   )
 }

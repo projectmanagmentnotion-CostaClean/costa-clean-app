@@ -2819,3 +2819,22 @@
     vertical-align: top !important;
   }
 }
+
+/* =========================================================
+   Widen iPhone embedded document thumbnail
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 10px !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 297 !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: translateX(-50%) scale(0.44) !important;
+  }
+}

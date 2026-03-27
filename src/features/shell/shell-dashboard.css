@@ -2632,3 +2632,22 @@
     font-size: 0.8rem;
   }
 }
+
+/* =========================================================
+   Remove extra white space under iPhone document thumbnails
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__viewport {
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    height: 440px;
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    display: block;
+  }
+}

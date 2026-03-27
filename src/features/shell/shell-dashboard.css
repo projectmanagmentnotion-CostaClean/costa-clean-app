@@ -2711,3 +2711,39 @@
     margin-bottom: -8px !important;
   }
 }
+
+/* =========================================================
+   Force-collapse thumbnail bottom gap on iPhone
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel,
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel__viewport,
+  .cc-doc-preview-panel__canvas {
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel__viewport {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    line-height: 0 !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    line-height: 0 !important;
+    font-size: 0 !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    display: block !important;
+    margin: 0 auto -14px !important;
+    vertical-align: top !important;
+  }
+}

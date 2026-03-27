@@ -2747,3 +2747,28 @@
     vertical-align: top !important;
   }
 }
+
+/* =========================================================
+   Center iPhone document thumbnail inside preview panel
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__viewport {
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel__canvas {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    margin: 0 auto !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+}

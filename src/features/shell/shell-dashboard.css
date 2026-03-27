@@ -2694,3 +2694,20 @@
     margin-bottom: -340px;
   }
 }
+
+/* =========================================================
+   Remove tiny white gap under thumbnail
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel__viewport,
+  .cc-doc-preview-panel__canvas {
+    line-height: 0 !important;
+    font-size: 0 !important;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    vertical-align: top;
+    margin-bottom: -8px !important;
+  }
+}

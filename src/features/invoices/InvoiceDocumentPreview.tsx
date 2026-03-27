@@ -10,7 +10,7 @@ export function InvoiceDocumentPreview({
 }: InvoiceDocumentPreviewProps) {
   if (!invoice) {
     return (
-      <section className="data-section cc-doc-preview-panel">
+      <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--invoice">
         <div className="section-header">
           <h2>Vista previa de factura</h2>
           <p>Previsualización documental adaptada para revisión rápida en móvil.</p>
@@ -25,7 +25,7 @@ export function InvoiceDocumentPreview({
   }
 
   return (
-    <section className="data-section cc-doc-preview-panel">
+    <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--invoice">
       <div className="section-header">
         <h2>Vista previa de factura</h2>
         <p>Documento fiscal presentado en una vista optimizada para móvil.</p>

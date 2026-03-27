@@ -16,7 +16,7 @@ export function QuoteDocumentPreview({
 }: QuoteDocumentPreviewProps) {
   if (!quote) {
     return (
-      <section className="data-section cc-doc-preview-panel">
+      <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote">
         <div className="section-header">
           <h2>Vista previa de presupuesto</h2>
           <p>Previsualización comercial adaptada para revisión rápida en móvil.</p>
@@ -31,7 +31,7 @@ export function QuoteDocumentPreview({
   }
 
   return (
-    <section className="data-section cc-doc-preview-panel">
+    <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote">
       <div className="section-header">
         <h2>Vista previa de presupuesto</h2>
         <p>Documento comercial presentado en una vista optimizada para móvil.</p>

@@ -2451,3 +2451,17 @@
     aspect-ratio: 210 / 322 !important;
   }
 }
+
+/* =========================================================
+   Separate iPhone A4 thumbnail height for invoice vs quote
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 322 !important;
+  }
+
+  .cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 336 !important;
+  }
+}

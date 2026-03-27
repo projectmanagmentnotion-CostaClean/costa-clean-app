@@ -2353,3 +2353,63 @@
     margin-right: -14.1%;
   }
 }
+
+/* =========================================================
+   iPhone thumbnail mode for embedded documents
+   ========================================================= */
+
+.cc-doc-preview-panel__viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cc-doc-preview-panel__canvas {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .cc-doc-preview-panel {
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 12px;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: scale(0.72);
+    transform-origin: top center;
+    width: 138.89%;
+    margin-left: -19.445%;
+    margin-right: -19.445%;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section {
+    padding: 10px;
+  }
+
+  .cc-doc-preview-panel .section-header h2 {
+    font-size: 0.98rem;
+  }
+
+  .cc-doc-preview-panel .section-header p {
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .cc-doc-preview-panel .cc-invoice-a4--embedded {
+    transform: scale(0.58);
+    transform-origin: top center;
+    width: 172.42%;
+    margin-left: -36.21%;
+    margin-right: -36.21%;
+  }
+}

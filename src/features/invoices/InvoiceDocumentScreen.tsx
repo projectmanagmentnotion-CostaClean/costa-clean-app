@@ -1,9 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { renderToStaticMarkup } from 'react-dom/server'
 import type { CSSProperties } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
-import { invoicePrintStyles } from './invoicePrintStyles'
 import {
   getInvoiceDocumentTitle,
   openInvoicePrintWindow,
@@ -64,96 +62,45 @@ const actionsStyle: CSSProperties = {
   justifyContent: 'flex-end',
 }
 
-const frameWrapStyle: CSSProperties = {
+const contentStyle: CSSProperties = {
   flex: 1,
   minHeight: 0,
+  overflow: 'auto',
   padding: '0.9rem',
-  display: 'flex',
 }
 
-const frameCardStyle: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
+const panelStyle: CSSProperties = {
+  width: '100%',
+  maxWidth: '980px',
+  margin: '0 auto',
+  display: 'grid',
+  gap: '0.9rem',
+}
+
+const viewerCardStyle: CSSProperties = {
   borderRadius: '24px',
   overflow: 'hidden',
   border: '1px solid rgba(148, 163, 184, 0.14)',
   background: 'linear-gradient(180deg, #0f1c2f 0%, #0b1626 100%)',
   boxShadow: '0 24px 64px rgba(2, 6, 23, 0.42)',
+  padding: '0.9rem',
 }
 
-const iframeStyle: CSSProperties = {
-  width: '100%',
-  height: '100%',
-  border: 'none',
-  background: '#0b1626',
+const noteCardStyle: CSSProperties = {
+  borderRadius: '18px',
+  border: '1px solid rgba(148, 163, 184, 0.12)',
+  background: 'rgba(15, 23, 42, 0.42)',
+  padding: '0.85rem 0.95rem',
+  color: '#94a3b8',
+  fontSize: '0.88rem',
+  lineHeight: 1.5,
 }
-
-const viewerScreenStyles = `
-  html, body {
-    margin: 0;
-    padding: 0;
-    background: #0b1626;
-  }
-
-  body {
-    min-height: 100vh;
-    overflow: auto;
-  }
-
-  .cc-print-root {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    padding: 24px 20px 40px;
-    box-sizing: border-box;
-  }
-
-  @media (max-width: 900px) {
-    .cc-print-root {
-      padding: 16px 14px 28px;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .cc-print-root {
-      justify-content: flex-start;
-      padding: 12px 12px 24px;
-      overflow: auto;
-    }
-
-    .cc-invoice-a4--print {
-      width: 210mm;
-      min-width: 210mm;
-      transform-origin: top left;
-      zoom: 0.84;
-    }
-  }
-`
 
 export function InvoiceDocumentScreen({
   invoice,
   onClose,
 }: InvoiceDocumentScreenProps) {
-  const iframeRef = useRef<HTMLIFrameElement | null>(null)
-
   const documentTitle = useMemo(() => getInvoiceDocumentTitle(invoice), [invoice])
-
-  const documentHtml = useMemo(() => {
-    const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
-
-    return `<!doctype html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${documentTitle}</title>
-    <style>${invoicePrintStyles}\n${viewerScreenStyles}</style>
-  </head>
-  <body>
-    <div class="cc-print-root">${markup}</div>
-  </body>
-</html>`
-  }, [invoice, documentTitle])
 
   useEffect(() => {
     function handleKeydown(event: KeyboardEvent) {
@@ -167,26 +114,6 @@ export function InvoiceDocumentScreen({
   }, [onClose])
 
   function handlePrint() {
-    const iframeWindow = iframeRef.current?.contentWindow
-    const previousTitle = document.title
-
-    document.title = documentTitle
-
-    if (iframeWindow) {
-      iframeWindow.focus()
-      iframeWindow.print()
-
-      window.setTimeout(() => {
-        document.title = previousTitle
-      }, 1500)
-
-      return
-    }
-
-    window.setTimeout(() => {
-      document.title = previousTitle
-    }, 1500)
-
     openInvoicePrintWindow(invoice, 'print')
   }
 
@@ -232,14 +159,26 @@ export function InvoiceDocumentScreen({
         </div>
       </div>
 
-      <div style={frameWrapStyle}>
-        <div style={frameCardStyle}>
-          <iframe
-            ref={iframeRef}
-            title={`Factura ${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}
-            srcDoc={documentHtml}
-            style={iframeStyle}
-          />
+      <div style={contentStyle}>
+        <div style={panelStyle}>
+          <div style={viewerCardStyle}>
+            <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--invoice">
+              <div className="section-header">
+                <h2>Vista previa de factura</h2>
+                <p>Previsualización rápida. Para verla a tamaño completo usa imprimir o guardar PDF.</p>
+              </div>
+
+              <div className="cc-doc-preview-panel__viewport">
+                <div className="cc-doc-preview-panel__canvas">
+                  <InvoiceDocumentA4 invoice={invoice} variant="embedded" />
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div style={noteCardStyle}>
+            Esta vista está optimizada para revisión rápida. Para lectura detallada o exportación, usa los botones de imprimir o guardar PDF.
+          </div>
         </div>
       </div>
     </div>

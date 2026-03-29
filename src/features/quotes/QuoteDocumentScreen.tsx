@@ -17,6 +17,62 @@ interface QuoteDocumentScreenProps {
   onClose: () => void
 }
 
+function ArrowLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M15 18l-6-6 6-6"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function ShareIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M16 8a3 3 0 1 0-2.8-4H13a3 3 0 0 0 .2 1.1L8.9 7.4a3 3 0 0 0-1.9-.7 3 3 0 1 0 1.9 5.3l4.3 2.3A3 3 0 0 0 13 15a3 3 0 1 0 .2 1.1h.2a3 3 0 0 0-.2-1.1l-4.3-2.3a3 3 0 0 0 0-1.4l4.3-2.3A3 3 0 0 0 16 8Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
+
+function PrintIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M7 8V4h10v4M7 17H5a2 2 0 0 1-2-2v-4a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v4a2 2 0 0 1-2 2h-2M7 14h10v6H7v-6Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function DownloadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const overlayStyle: CSSProperties = {
   position: 'fixed',
   inset: 0,
@@ -27,14 +83,15 @@ const overlayStyle: CSSProperties = {
 }
 
 const topbarStyle: CSSProperties = {
-  position: 'relative',
+  position: 'sticky',
+  top: 0,
   zIndex: 2,
   display: 'flex',
-  gap: '0.9rem',
+  gap: '0.75rem',
   flexWrap: 'wrap',
   alignItems: 'center',
   justifyContent: 'space-between',
-  padding: '0.9rem 1rem',
+  padding: '0.85rem 1rem',
   background: 'rgba(8, 15, 28, 0.88)',
   borderBottom: '1px solid rgba(148, 163, 184, 0.16)',
   backdropFilter: 'blur(16px)',
@@ -42,7 +99,7 @@ const topbarStyle: CSSProperties = {
 
 const titleWrapStyle: CSSProperties = {
   display: 'grid',
-  gap: '0.2rem',
+  gap: '0.12rem',
   minWidth: 0,
 }
 
@@ -86,9 +143,15 @@ const viewerCardStyle: CSSProperties = {
   border: '1px solid rgba(148, 163, 184, 0.14)',
   background: 'linear-gradient(180deg, #0f1c2f 0%, #0b1626 100%)',
   boxShadow: '0 24px 64px rgba(2, 6, 23, 0.42)',
-  padding: '0.75rem',
+  padding: '0.55rem',
 }
 
+const iconLabelStyle: CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.45rem',
+}
 
 export function QuoteDocumentScreen({
   quote,
@@ -137,13 +200,33 @@ export function QuoteDocumentScreen({
         </div>
 
         <div className="cc-document-screen__actions" style={actionsStyle}>
-          <button type="button" className="secondary-button" onClick={onClose}> Volver</button>
+          <button type="button" className="secondary-button" onClick={onClose}>
+            <span style={iconLabelStyle}>
+              <ArrowLeftIcon />
+              Volver
+            </span>
+          </button>
 
-          <button type="button" className="secondary-button" onClick={handleShare}> Compartir</button>
+          <button type="button" className="secondary-button" onClick={handleShare}>
+            <span style={iconLabelStyle}>
+              <ShareIcon />
+              Compartir
+            </span>
+          </button>
 
-          <button type="button" className="secondary-button" onClick={handlePrint}> Imprimir</button>
+          <button type="button" className="secondary-button" onClick={handlePrint}>
+            <span style={iconLabelStyle}>
+              <PrintIcon />
+              Imprimir
+            </span>
+          </button>
 
-          <button type="button" className="primary-button" onClick={handleSavePdf}> Guardar PDF</button>
+          <button type="button" className="primary-button" onClick={handleSavePdf}>
+            <span style={iconLabelStyle}>
+              <DownloadIcon />
+              Guardar PDF
+            </span>
+          </button>
         </div>
       </div>
 
@@ -153,7 +236,6 @@ export function QuoteDocumentScreen({
             <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote cc-doc-preview-panel--screen">
               <div className="section-header">
                 <h2>Vista previa de presupuesto</h2>
-                <p>Previsualización rápida. Para verla a tamaño completo usa imprimir o guardar PDF.</p>
               </div>
 
               <div className="cc-doc-preview-panel__viewport">
@@ -168,7 +250,7 @@ export function QuoteDocumentScreen({
               </div>
             </section>
           </div>
-</div>
+        </div>
       </div>
     </div>
   )

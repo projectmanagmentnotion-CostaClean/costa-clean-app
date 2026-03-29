@@ -27,8 +27,7 @@ const overlayStyle: CSSProperties = {
 }
 
 const topbarStyle: CSSProperties = {
-  position: 'sticky',
-  top: 0,
+  position: 'relative',
   zIndex: 2,
   display: 'flex',
   gap: '0.9rem',
@@ -67,10 +66,10 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: 1,
+  flex: '0 0 auto',
   minHeight: 0,
-  overflow: 'auto',
-  padding: '0.75rem 0.9rem 0.9rem',
+  overflow: 'visible',
+  padding: '0.55rem 0.9rem 0',
 }
 
 const panelStyle: CSSProperties = {
@@ -139,21 +138,13 @@ export function QuoteDocumentScreen({
         </div>
 
         <div className="cc-document-screen__actions" style={actionsStyle}>
-          <button type="button" className="secondary-button" onClick={onClose}>
-            Volver
-          </button>
+          <button type="button" className="secondary-button" onClick={onClose}> Volver</button>
 
-          <button type="button" className="secondary-button" onClick={handleShare}>
-            Compartir
-          </button>
+          <button type="button" className="secondary-button" onClick={handleShare}> Compartir</button>
 
-          <button type="button" className="secondary-button" onClick={handlePrint}>
-            Imprimir
-          </button>
+          <button type="button" className="secondary-button" onClick={handlePrint}> Imprimir</button>
 
-          <button type="button" className="primary-button" onClick={handleSavePdf}>
-            Guardar PDF
-          </button>
+          <button type="button" className="primary-button" onClick={handleSavePdf}> Guardar PDF</button>
         </div>
       </div>
 

@@ -2592,3 +2592,47 @@
     aspect-ratio: 210 / 358 !important;
   }
 }
+
+/* =========================================================
+   Document screen final mobile placement
+   ========================================================= */
+
+.cc-document-screen {
+  overflow: auto;
+}
+
+.cc-document-screen__topbar {
+  position: relative !important;
+  top: auto !important;
+}
+
+.cc-document-screen__content {
+  flex: 0 0 auto !important;
+  overflow: visible !important;
+}
+
+.cc-document-screen__panel {
+  align-content: start !important;
+}
+
+@media (max-width: 640px) {
+  .cc-document-screen__content {
+    padding: 0.45rem 0.75rem 0 !important;
+  }
+
+  .cc-document-screen__panel {
+    gap: 0.45rem !important;
+  }
+
+  .cc-document-screen__viewer {
+    padding: 0.5rem !important;
+  }
+
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 346 !important;
+  }
+
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 368 !important;
+  }
+}

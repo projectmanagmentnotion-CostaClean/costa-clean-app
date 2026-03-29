@@ -67,10 +67,10 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: 1,
+  flex: '0 0 auto',
   minHeight: 0,
-  overflow: 'auto',
-  padding: '0.75rem 0.9rem 0.9rem',
+  overflow: 'visible',
+  padding: '0.75rem 0.9rem 0',
 }
 
 const panelStyle: CSSProperties = {

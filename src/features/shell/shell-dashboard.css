@@ -2505,3 +2505,30 @@
     aspect-ratio: 210 / 354 !important;
   }
 }
+
+/* =========================================================
+   Final document screen shrink-wrap + full thumbnail fit
+   ========================================================= */
+
+.cc-doc-preview-panel--screen {
+  gap: 4px !important;
+  margin-top: 0 !important;
+}
+
+.cc-doc-preview-panel--screen .section-header {
+  margin-bottom: 4px !important;
+}
+
+.cc-doc-preview-panel--screen .section-header p {
+  margin: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 342 !important;
+  }
+
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 362 !important;
+  }
+}

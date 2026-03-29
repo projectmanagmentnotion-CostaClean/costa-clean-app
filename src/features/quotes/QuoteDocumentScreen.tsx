@@ -67,10 +67,10 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: '0 0 auto',
+  flex: 1,
   minHeight: 0,
-  overflow: 'visible',
-  padding: '0.75rem 0.9rem 0',
+  overflow: 'auto',
+  padding: '0.75rem 0.9rem 0.9rem',
 }
 
 const panelStyle: CSSProperties = {
@@ -78,7 +78,7 @@ const panelStyle: CSSProperties = {
   maxWidth: '980px',
   margin: '0 auto',
   display: 'grid',
-  gap: '0',
+  gap: '0.75rem',
   alignContent: 'start',
 }
 
@@ -129,8 +129,8 @@ export function QuoteDocumentScreen({
   }
 
   return (
-    <div style={overlayStyle}>
-      <div style={topbarStyle}>
+    <div className="cc-document-screen" style={overlayStyle}>
+      <div className="cc-document-screen__topbar" style={topbarStyle}>
         <div style={titleWrapStyle}>
           <strong style={titleStyle}>Vista de presupuesto</strong>
           <span style={subtitleStyle}>
@@ -138,7 +138,7 @@ export function QuoteDocumentScreen({
           </span>
         </div>
 
-        <div style={actionsStyle}>
+        <div className="cc-document-screen__actions" style={actionsStyle}>
           <button type="button" className="secondary-button" onClick={onClose}>
             Volver
           </button>
@@ -157,9 +157,9 @@ export function QuoteDocumentScreen({
         </div>
       </div>
 
-      <div style={contentStyle}>
-        <div style={panelStyle}>
-          <div style={viewerCardStyle}>
+      <div className="cc-document-screen__content" style={contentStyle}>
+        <div className="cc-document-screen__panel" style={panelStyle}>
+          <div className="cc-document-screen__viewer" style={viewerCardStyle}>
             <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote cc-doc-preview-panel--screen">
               <div className="section-header">
                 <h2>Vista previa de presupuesto</h2>

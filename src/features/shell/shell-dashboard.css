@@ -2491,3 +2491,17 @@
     aspect-ratio: 210 / 344 !important;
   }
 }
+
+/* =========================================================
+   Slightly taller document screen thumbnails
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 338 !important;
+  }
+
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 354 !important;
+  }
+}

@@ -22,8 +22,8 @@ const overlayStyle: CSSProperties = {
   inset: 0,
   zIndex: 3000,
   background: 'linear-gradient(180deg, #06111f 0%, #0b1728 100%)',
-  display: 'flex',
-  flexDirection: 'column',
+  overflowY: 'auto',
+  overflowX: 'hidden',
 }
 
 const topbarStyle: CSSProperties = {
@@ -66,10 +66,9 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: '0 0 auto',
   minHeight: 0,
   overflow: 'visible',
-  padding: '0.55rem 0.9rem 0',
+  padding: '0.55rem 0.75rem 0.75rem',
 }
 
 const panelStyle: CSSProperties = {
@@ -77,7 +76,7 @@ const panelStyle: CSSProperties = {
   maxWidth: '980px',
   margin: '0 auto',
   display: 'grid',
-  gap: '0.75rem',
+  gap: '0.5rem',
   alignContent: 'start',
 }
 

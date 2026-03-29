@@ -17,14 +17,14 @@ interface QuoteDocumentScreenProps {
   onClose: () => void
 }
 
-function ArrowLeftIcon() {
+function BackChevronIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
       <path
-        d="M15 18l-6-6 6-6"
+        d="M14.5 5.5 8 12l6.5 6.5"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -32,12 +32,24 @@ function ArrowLeftIcon() {
   )
 }
 
-function ShareIcon() {
+function IosShareIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
       <path
-        d="M16 8a3 3 0 1 0-2.8-4H13a3 3 0 0 0 .2 1.1L8.9 7.4a3 3 0 0 0-1.9-.7 3 3 0 1 0 1.9 5.3l4.3 2.3A3 3 0 0 0 13 15a3 3 0 1 0 .2 1.1h.2a3 3 0 0 0-.2-1.1l-4.3-2.3a3 3 0 0 0 0-1.4l4.3-2.3A3 3 0 0 0 16 8Z"
-        fill="currentColor"
+        d="M12 15V4m0 0-3.5 3.5M12 4l3.5 3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M7 10.5H6a2 2 0 0 0-2 2V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5.5a2 2 0 0 0-2-2h-1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   )
@@ -78,8 +90,9 @@ const overlayStyle: CSSProperties = {
   inset: 0,
   zIndex: 3000,
   background: 'linear-gradient(180deg, #06111f 0%, #0b1728 100%)',
-  overflowY: 'auto',
-  overflowX: 'hidden',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
 }
 
 const topbarStyle: CSSProperties = {
@@ -123,8 +136,11 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
+  flex: 1,
   minHeight: 0,
-  overflow: 'visible',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  WebkitOverflowScrolling: 'touch',
   padding: '0.55rem 0.75rem 0.75rem',
 }
 
@@ -168,8 +184,17 @@ export function QuoteDocumentScreen({
       }
     }
 
+    const previousBodyOverflow = document.body.style.overflow
+    const previousHtmlOverflow = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+
     window.addEventListener('keydown', handleKeydown)
-    return () => window.removeEventListener('keydown', handleKeydown)
+    return () => {
+      window.removeEventListener('keydown', handleKeydown)
+      document.body.style.overflow = previousBodyOverflow
+      document.documentElement.style.overflow = previousHtmlOverflow
+    }
   }, [onClose])
 
   function handlePrint() {
@@ -202,14 +227,14 @@ export function QuoteDocumentScreen({
         <div className="cc-document-screen__actions" style={actionsStyle}>
           <button type="button" className="secondary-button" onClick={onClose}>
             <span style={iconLabelStyle}>
-              <ArrowLeftIcon />
+              <BackChevronIcon />
               Volver
             </span>
           </button>
 
           <button type="button" className="secondary-button" onClick={handleShare}>
             <span style={iconLabelStyle}>
-              <ShareIcon />
+              <IosShareIcon />
               Compartir
             </span>
           </button>

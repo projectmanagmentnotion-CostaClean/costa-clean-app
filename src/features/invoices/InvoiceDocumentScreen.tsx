@@ -66,7 +66,7 @@ const contentStyle: CSSProperties = {
   flex: 1,
   minHeight: 0,
   overflow: 'auto',
-  padding: '0.9rem',
+  padding: '0.75rem 0.9rem 0.9rem',
 }
 
 const panelStyle: CSSProperties = {
@@ -74,7 +74,8 @@ const panelStyle: CSSProperties = {
   maxWidth: '980px',
   margin: '0 auto',
   display: 'grid',
-  gap: '0.9rem',
+  gap: '0',
+  alignContent: 'start',
 }
 
 const viewerCardStyle: CSSProperties = {
@@ -83,18 +84,9 @@ const viewerCardStyle: CSSProperties = {
   border: '1px solid rgba(148, 163, 184, 0.14)',
   background: 'linear-gradient(180deg, #0f1c2f 0%, #0b1626 100%)',
   boxShadow: '0 24px 64px rgba(2, 6, 23, 0.42)',
-  padding: '0.9rem',
+  padding: '0.75rem',
 }
 
-const noteCardStyle: CSSProperties = {
-  borderRadius: '18px',
-  border: '1px solid rgba(148, 163, 184, 0.12)',
-  background: 'rgba(15, 23, 42, 0.42)',
-  padding: '0.85rem 0.95rem',
-  color: '#94a3b8',
-  fontSize: '0.88rem',
-  lineHeight: 1.5,
-}
 
 export function InvoiceDocumentScreen({
   invoice,
@@ -175,11 +167,7 @@ export function InvoiceDocumentScreen({
               </div>
             </section>
           </div>
-
-          <div style={noteCardStyle}>
-            Esta vista está optimizada para revisión rápida. Para lectura detallada o exportación, usa los botones de imprimir o guardar PDF.
-          </div>
-        </div>
+</div>
       </div>
     </div>
   )

@@ -2465,3 +2465,29 @@
     aspect-ratio: 210 / 336 !important;
   }
 }
+
+/* =========================================================
+   Document screen thumbnail final fit
+   ========================================================= */
+
+.cc-doc-preview-panel--screen {
+  gap: 8px !important;
+}
+
+.cc-doc-preview-panel--screen .section-header {
+  margin-bottom: 6px !important;
+}
+
+.cc-doc-preview-panel--screen .section-header p {
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 330 !important;
+  }
+
+  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
+    aspect-ratio: 210 / 344 !important;
+  }
+}

@@ -168,7 +168,7 @@ export function QuoteDocumentScreen({
       <div style={contentStyle}>
         <div style={panelStyle}>
           <div style={viewerCardStyle}>
-            <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote">
+            <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote cc-doc-preview-panel--screen">
               <div className="section-header">
                 <h2>Vista previa de presupuesto</h2>
                 <p>Previsualización rápida. Para verla a tamaño completo usa imprimir o guardar PDF.</p>

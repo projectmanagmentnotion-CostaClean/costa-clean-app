@@ -1,4 +1,4 @@
-/* =========================================================
+﻿/* =========================================================
    CostaClean CRM
    Shell / Dashboard Glass UI
    Native iPhone / iPad inspired
@@ -2270,26 +2270,28 @@
   inset: 0 !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
-  overscroll-behavior: contain !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 .cc-document-screen__topbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
   flex: 0 0 auto !important;
 }
 
 .cc-document-screen__content {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: contain !important;
-  touch-action: pan-y !important;
+  flex: 0 0 auto !important;
+  min-height: auto !important;
+  overflow: visible !important;
+  padding-bottom: 1rem !important;
 }
 
 .cc-document-screen__panel {
-  min-height: max-content !important;
+  min-height: auto !important;
+  align-content: start !important;
 }
 
 .cc-document-screen__viewer {
@@ -2297,6 +2299,10 @@
 }
 
 @media (max-width: 640px) {
+  .cc-document-screen {
+    align-items: stretch !important;
+  }
+
   .cc-document-screen__content {
     padding: 0.5rem 0.75rem 1rem !important;
   }

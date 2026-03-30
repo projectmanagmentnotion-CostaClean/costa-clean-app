@@ -22,9 +22,15 @@ export function AppNav({ currentView, onChangeView }: AppNavProps) {
   return (
     <nav className="cc-shell-nav cc-shell-nav--top-only" aria-label="Navegación principal">
       <div className="cc-shell-nav__topline">
-        <div className="cc-shell-nav__brand-copy">
-          <span className="cc-shell-nav__title">CostaClean CRM</span>
-          <span className="cc-shell-nav__subtitle">Operaciones internas</span>
+        <div className="cc-shell-nav__brand">
+          <div className="cc-shell-nav__brand-mark" aria-hidden="true">
+            <span>CC</span>
+          </div>
+
+          <div className="cc-shell-nav__brand-copy">
+            <span className="cc-shell-nav__title">CostaClean CRM</span>
+            <span className="cc-shell-nav__subtitle">Control operativo · limpieza premium</span>
+          </div>
         </div>
 
         <div className="cc-shell-nav__actions">

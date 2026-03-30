@@ -1,4 +1,4 @@
-﻿:root {
+:root {
   font-family:
     Inter,
     system-ui,
@@ -10,10 +10,10 @@
   font-weight: 400;
   color: #eff6ff;
   background:
-    radial-gradient(circle at top, rgba(255,255,255,0.30), transparent 22%),
-    radial-gradient(circle at 20% 20%, rgba(59,130,246,0.22), transparent 26%),
-    radial-gradient(circle at 80% 0%, rgba(168,85,247,0.18), transparent 24%),
-    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
+    radial-gradient(circle at top, rgba(255,255,255,0.22), transparent 20%),
+    radial-gradient(circle at 18% 18%, rgba(34,211,238,0.18), transparent 24%),
+    radial-gradient(circle at 82% 0%, rgba(56,189,248,0.16), transparent 24%),
+    linear-gradient(180deg, #06101d 0%, #081523 44%, #0a1b2b 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -29,9 +29,14 @@
   --muted: rgba(226, 232, 240, 0.74);
   --muted-strong: rgba(226, 232, 240, 0.88);
 
-  --accent: #8ec5ff;
-  --accent-strong: #60a5fa;
-  --accent-soft: rgba(147, 197, 253, 0.18);
+  --accent: #7dd3fc;
+  --accent-strong: #38bdf8;
+  --accent-soft: rgba(34, 211, 238, 0.18);
+  --brand-primary: #38bdf8;
+  --brand-secondary: #22d3ee;
+  --brand-deep: #0f3c8a;
+  --brand-ink: #07111f;
+  --brand-glow: rgba(34, 211, 238, 0.18);
 
   --success: #34d399;
   --success-soft: rgba(52, 211, 153, 0.18);
@@ -87,10 +92,10 @@ html {
 
 body {
   background:
-    radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 16%),
-    radial-gradient(circle at left top, rgba(59,130,246,0.18), transparent 24%),
-    radial-gradient(circle at right top, rgba(168,85,247,0.14), transparent 24%),
-    linear-gradient(180deg, #081120 0%, #0b1324 45%, #0d1528 100%);
+    radial-gradient(circle at top, rgba(255,255,255,0.12), transparent 14%),
+    radial-gradient(circle at left top, rgba(34,211,238,0.16), transparent 22%),
+    radial-gradient(circle at right top, rgba(56,189,248,0.14), transparent 24%),
+    linear-gradient(180deg, #06101d 0%, #081523 44%, #0a1b2b 100%);
   color: var(--text);
   overflow-x: hidden;
 }

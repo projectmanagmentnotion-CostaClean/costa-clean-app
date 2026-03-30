@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+﻿import type { CSSProperties } from 'react'
 import { useEffect, useMemo } from 'react'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
@@ -94,8 +94,7 @@ const overlayStyle: CSSProperties = {
 }
 
 const topbarStyle: CSSProperties = {
-  position: 'sticky',
-  top: 0,
+  position: 'relative',
   zIndex: 2,
   display: 'flex',
   gap: '0.75rem',
@@ -134,9 +133,13 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: '0 0 auto',
-  minHeight: 'auto',
-  overflow: 'visible',
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'scroll',
+  overflowX: 'hidden',
+  WebkitOverflowScrolling: 'touch',
+  overscrollBehavior: 'contain',
+  touchAction: 'pan-y',
   padding: '0.55rem 0.75rem 1rem',
 }
 
@@ -270,3 +273,5 @@ export function InvoiceDocumentScreen({
     </div>
   )
 }
+
+

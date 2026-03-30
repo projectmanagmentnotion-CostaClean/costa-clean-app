@@ -188,16 +188,9 @@ export function QuoteDocumentScreen({
       }
     }
 
-    const previousBodyOverflow = document.body.style.overflow
-    const previousHtmlOverflow = document.documentElement.style.overflow
-    document.body.style.overflow = 'hidden'
-    document.documentElement.style.overflow = 'hidden'
-
     window.addEventListener('keydown', handleKeydown)
     return () => {
       window.removeEventListener('keydown', handleKeydown)
-      document.body.style.overflow = previousBodyOverflow
-      document.documentElement.style.overflow = previousHtmlOverflow
     }
   }, [onClose])
 
@@ -284,5 +277,8 @@ export function QuoteDocumentScreen({
     </div>
   )
 }
+
+
+
 
 

@@ -39,3 +39,5 @@ _*.txt
 
 # Local dump scripts
 _dump_*.ps1
+.vercel
+.env*.local

@@ -92,7 +92,9 @@ const overlayStyle: CSSProperties = {
   background: 'linear-gradient(180deg, #06111f 0%, #0b1728 100%)',
   display: 'flex',
   flexDirection: 'column',
-  overflow: 'hidden',
+  overflowY: 'auto',
+  overflowX: 'hidden',
+  WebkitOverflowScrolling: 'touch',
 }
 
 const topbarStyle: CSSProperties = {
@@ -136,12 +138,10 @@ const actionsStyle: CSSProperties = {
 }
 
 const contentStyle: CSSProperties = {
-  flex: 1,
-  minHeight: 0,
-  overflowY: 'auto',
-  overflowX: 'hidden',
-  WebkitOverflowScrolling: 'touch',
-  padding: '0.55rem 0.75rem 0.75rem',
+  flex: '0 0 auto',
+  minHeight: 'auto',
+  overflow: 'visible',
+  padding: '0.55rem 0.75rem 1rem',
 }
 
 const panelStyle: CSSProperties = {
@@ -150,12 +150,13 @@ const panelStyle: CSSProperties = {
   margin: '0 auto',
   display: 'grid',
   gap: '0.5rem',
+  minHeight: 'auto',
   alignContent: 'start',
 }
 
 const viewerCardStyle: CSSProperties = {
   borderRadius: '24px',
-  overflow: 'hidden',
+  overflow: 'visible',
   border: '1px solid rgba(148, 163, 184, 0.14)',
   background: 'linear-gradient(180deg, #0f1c2f 0%, #0b1626 100%)',
   boxShadow: '0 24px 64px rgba(2, 6, 23, 0.42)',

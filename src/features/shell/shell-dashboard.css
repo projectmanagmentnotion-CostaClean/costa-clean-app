@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    CostaClean CRM
    Shell / Dashboard Glass UI
    Native iPhone / iPad inspired
@@ -1960,43 +1960,49 @@
    Document screen mobile controls + layout
    ========================================================= */
 
-.cc-document-screen__actions .primary-button,
-.cc-document-screen__actions .secondary-button {
-  width: auto !important;
-  flex: 0 0 auto;
+.cc-document-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 3000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+
+.cc-document-screen__topbar {
+  position: relative !important;
+  top: auto !important;
+  flex: 0 0 auto !important;
 }
 
 .cc-document-screen__content {
-  min-height: 0;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  touch-action: pan-y !important;
+  padding: 0.55rem 0.75rem 1rem !important;
 }
 
 .cc-document-screen__panel {
-  align-content: start;
+  width: 100% !important;
+  max-width: 980px !important;
+  margin: 0 auto !important;
+  display: grid !important;
+  gap: 0.5rem !important;
+  align-content: start !important;
+  min-height: max-content !important;
+}
+
+.cc-document-screen__viewer {
+  overflow: visible !important;
 }
 
 @media (max-width: 640px) {
-  .cc-document-screen__topbar {
-    gap: 0.75rem !important;
-    padding: 0.8rem 0.9rem !important;
-  }
-
-  .cc-document-screen__actions {
-    width: 100%;
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.65rem !important;
-  }
-
-  .cc-document-screen__actions .primary-button,
-  .cc-document-screen__actions .secondary-button {
-    width: 100% !important;
-    min-height: 42px !important;
-    padding: 0 12px !important;
-    margin: 0 !important;
-  }
-
   .cc-document-screen__content {
-    padding: 0.55rem 0.75rem 0.75rem !important;
+    padding: 0.5rem 0.75rem 1rem !important;
   }
 
   .cc-document-screen__panel {
@@ -2004,97 +2010,7 @@
   }
 
   .cc-document-screen__viewer {
-    padding: 0.55rem !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 338 !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 358 !important;
-  }
-}
-
-/* =========================================================
-   Document screen final mobile placement
-   ========================================================= */
-
-.cc-document-screen {
-  overflow: auto;
-}
-
-.cc-document-screen__topbar {
-  position: relative !important;
-  top: auto !important;
-}
-
-.cc-document-screen__content {
-  flex: 0 0 auto !important;
-  overflow: visible !important;
-}
-
-.cc-document-screen__panel {
-  align-content: start !important;
-}
-
-@media (max-width: 640px) {
-  .cc-document-screen__content {
-    padding: 0.45rem 0.75rem 0 !important;
-  }
-
-  .cc-document-screen__panel {
-    gap: 0.45rem !important;
-  }
-
-  .cc-document-screen__viewer {
     padding: 0.5rem !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 346 !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 368 !important;
-  }
-}
-
-/* =========================================================
-   Final document screen bottom trim
-   ========================================================= */
-
-.cc-document-screen__content {
-  padding-bottom: 0 !important;
-}
-
-.cc-document-screen__panel {
-  gap: 0.25rem !important;
-}
-
-.cc-document-screen__viewer {
-  margin-bottom: 0 !important;
-}
-
-@media (max-width: 640px) {
-  .cc-document-screen__content {
-    padding: 0.35rem 0.75rem 0 !important;
-  }
-
-  .cc-document-screen__panel {
-    gap: 0.2rem !important;
-  }
-
-  .cc-document-screen__viewer {
-    padding: 0.45rem !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--quote .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 350 !important;
-  }
-
-  .cc-doc-preview-panel--screen.cc-doc-preview-panel--invoice .cc-doc-preview-panel__canvas {
-    aspect-ratio: 210 / 372 !important;
   }
 }
 

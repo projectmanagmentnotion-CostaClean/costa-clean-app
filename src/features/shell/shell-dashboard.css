@@ -2217,3 +2217,95 @@
     font-size: 0.74rem;
   }
 }
+
+/* =========================================================
+   Post-refactor hotfix: dashboard hero + document screen mobile
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .cc-dashboard-overview__hero {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: 14px !important;
+  }
+
+  .cc-dashboard-overview__copy,
+  .cc-dashboard-overview__spotlight {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .cc-dashboard-overview__title {
+    margin: 0 !important;
+    font-size: clamp(2rem, 10vw, 3rem) !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.05em !important;
+    max-width: 9ch !important;
+  }
+
+  .cc-dashboard-overview__text {
+    margin-top: 10px !important;
+    max-width: none !important;
+  }
+
+  .cc-dashboard-overview__spotlight {
+    display: grid !important;
+    gap: 10px !important;
+  }
+
+  .cc-dashboard-chip {
+    align-self: start !important;
+  }
+
+  .cc-dashboard-panel--spotlight {
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 16px !important;
+  }
+}
+
+.cc-document-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+}
+
+.cc-document-screen__topbar {
+  flex: 0 0 auto !important;
+}
+
+.cc-document-screen__content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
+  touch-action: pan-y !important;
+}
+
+.cc-document-screen__panel {
+  min-height: max-content !important;
+}
+
+.cc-document-screen__viewer {
+  overflow: visible !important;
+}
+
+@media (max-width: 640px) {
+  .cc-document-screen__content {
+    padding: 0.5rem 0.75rem 1rem !important;
+  }
+
+  .cc-document-screen__panel {
+    gap: 0.5rem !important;
+  }
+
+  .cc-document-screen__viewer {
+    padding: 0.5rem !important;
+  }
+}

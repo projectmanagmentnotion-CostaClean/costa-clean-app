@@ -1,4 +1,4 @@
-import type { AppView } from './navigation'
+﻿import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
 
 interface AppNavProps {
@@ -17,6 +17,30 @@ const allViews: AppView[] = [
   'expenses',
   'payments',
 ]
+
+const viewShortLabel: Record<AppView, string> = {
+  dashboard: 'Home',
+  leads: 'Leads',
+  clients: 'Clientes',
+  properties: 'Propiedades',
+  quotes: 'Presupuestos',
+  jobs: 'Servicios',
+  invoices: 'Facturas',
+  expenses: 'Gastos',
+  payments: 'Cobros',
+}
+
+const viewGlyph: Record<AppView, string> = {
+  dashboard: '◉',
+  leads: '◌',
+  clients: '◎',
+  properties: '▣',
+  quotes: '◈',
+  jobs: '✦',
+  invoices: '▤',
+  expenses: '◍',
+  payments: '●',
+}
 
 export function AppNav({ currentView, onChangeView }: AppNavProps) {
   return (
@@ -65,7 +89,12 @@ export function AppNav({ currentView, onChangeView }: AppNavProps) {
             }
             onClick={() => onChangeView(view)}
           >
-            {view === 'dashboard' ? 'Home' : getAppViewLabel(view)}
+            <span className="cc-shell-subnav__glyph" aria-hidden="true">
+              {viewGlyph[view]}
+            </span>
+            <span className="cc-shell-subnav__text">
+              {viewShortLabel[view]}
+            </span>
           </button>
         ))}
       </div>

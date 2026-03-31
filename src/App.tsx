@@ -12,6 +12,8 @@ function App() {
 
   useEffect(() => {
     let isMounted = true
+    let bootTimer: number | null = null
+    let authCleanup: (() => void) | undefined
 
     async function bootstrapAuth() {
       try {
@@ -39,19 +41,25 @@ function App() {
           return
         }
 
-        if (isMounted) {
-          setSession(currentSession)
-          setIsBooting(false)
-        }
-
         const {
           data: { subscription },
         } = client.auth.onAuthStateChange((_event, nextSession) => {
-          setSession(nextSession)
+          if (isMounted) {
+            setSession(nextSession)
+          }
         })
 
-        return () => {
+        authCleanup = () => {
           subscription.unsubscribe()
+        }
+
+        if (isMounted) {
+          setSession(currentSession)
+          bootTimer = window.setTimeout(() => {
+            if (isMounted) {
+              setIsBooting(false)
+            }
+          }, 850)
         }
       } catch (err) {
         if (isMounted) {
@@ -61,24 +69,42 @@ function App() {
       }
     }
 
-    const cleanupPromise = bootstrapAuth()
+    void bootstrapAuth()
 
     return () => {
       isMounted = false
-      Promise.resolve(cleanupPromise).then((cleanup) => {
-        if (typeof cleanup === 'function') cleanup()
-      })
+      if (bootTimer !== null) {
+        window.clearTimeout(bootTimer)
+      }
+      if (authCleanup) {
+        authCleanup()
+      }
     }
   }, [])
 
   if (isBooting) {
     return (
-      <main className="auth-page">
-        <section className="auth-card">
-          <div className="auth-header">
-            <p className="auth-kicker">CostaClean CRM</p>
-            <h1>Iniciando</h1>
-            <p>Comprobando sesión y preparando el acceso seguro.</p>
+      <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
+        <div className="cc-boot-screen__glow cc-boot-screen__glow--one" />
+        <div className="cc-boot-screen__glow cc-boot-screen__glow--two" />
+
+        <section className="cc-boot-card">
+          <div className="cc-boot-card__mark" aria-hidden="true">
+            <span>CC</span>
+          </div>
+
+          <div className="cc-boot-card__copy">
+            <p className="cc-boot-card__kicker">CostaClean CRM</p>
+            <h1>Preparando tu centro de control</h1>
+            <p>
+              Cargando sesión, entorno seguro y experiencia operativa.
+            </p>
+          </div>
+
+          <div className="cc-boot-card__loader" aria-hidden="true">
+            <span />
+            <span />
+            <span />
           </div>
         </section>
       </main>
@@ -103,7 +129,11 @@ function App() {
     return <AuthPage onSignedIn={() => undefined} />
   }
 
-  return <AppShell />
+  return (
+    <div className="cc-app-shell-enter">
+      <AppShell />
+    </div>
+  )
 }
 
 export default App

@@ -2482,3 +2482,31 @@
     display: none;
   }
 }
+
+/* =========================================================
+   Hide shell chrome on full document views
+   ========================================================= */
+
+.app-shell--nav-hidden {
+  padding-top: 0 !important;
+}
+
+.cc-shell--nav-hidden {
+  padding-top: 0 !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  overflow: visible !important;
+}
+
+.cc-shell--nav-hidden::before {
+  display: none !important;
+}
+
+.cc-shell--nav-hidden > .cc-shell-content {
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+

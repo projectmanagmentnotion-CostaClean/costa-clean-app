@@ -53,6 +53,17 @@
   overflow: hidden;
 }
 
+.auth-page__wave {
+  position: absolute;
+  inset: auto 0 0;
+  height: 34%;
+  pointer-events: none;
+  opacity: 0.14;
+  background:
+    url('/branding/wave-bg.png') center bottom / contain no-repeat;
+  z-index: 0;
+}
+
 .auth-card::before {
   content: "";
   position: absolute;
@@ -98,13 +109,19 @@
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.16),
     0 14px 30px rgba(8, 21, 35, 0.24);
+  overflow: hidden;
 }
 
-.auth-brand__mark span {
-  color: #ffffff;
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
+.auth-brand__mark-image {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}
+
+.auth-brand__logo {
+  width: min(100%, 220px);
+  height: auto;
+  object-fit: contain;
 }
 
 .auth-brand__copy {
@@ -310,8 +327,13 @@
     border-radius: 16px;
   }
 
+  .auth-brand__logo {
+    width: min(100%, 190px);
+  }
+
   .auth-submit,
   .auth-field input {
     min-height: 52px;
   }
 }
+

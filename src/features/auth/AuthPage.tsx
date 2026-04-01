@@ -49,14 +49,24 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
       <div className="auth-page__ambient auth-page__ambient--two" aria-hidden="true" />
 
       <section className="auth-card">
+        <div className="auth-page__wave" aria-hidden="true" />
         <div className="auth-card__topbar">
           <div className="auth-brand">
             <div className="auth-brand__mark" aria-hidden="true">
-              <span>CC</span>
+              <img
+                src="/branding/Costa_Clean-LOGO.png"
+                alt=""
+                className="auth-brand__mark-image"
+              />
             </div>
 
             <div className="auth-brand__copy">
               <p className="auth-kicker">CostaClean CRM</p>
+              <img
+                src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+                alt="CostaClean"
+                className="auth-brand__logo"
+              />
               <span className="auth-brand__subtitle">Control operativo · limpieza premium</span>
             </div>
           </div>
@@ -112,3 +122,4 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
     </main>
   )
 }
+

@@ -1,4 +1,4 @@
-﻿import type { AppView } from './navigation'
+import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
 
 interface AppNavProps {
@@ -48,7 +48,11 @@ export function AppNav({ currentView, onChangeView }: AppNavProps) {
       <div className="cc-shell-nav__topline">
         <div className="cc-shell-nav__brand">
           <div className="cc-shell-nav__brand-mark" aria-hidden="true">
-            <span>CC</span>
+            <img
+              src="/branding/Costa_Clean-LOGO.png"
+              alt=""
+              className="cc-shell-nav__brand-mark-image"
+            />
           </div>
 
           <div className="cc-shell-nav__brand-copy">
@@ -101,3 +105,4 @@ export function AppNav({ currentView, onChangeView }: AppNavProps) {
     </nav>
   )
 }
+

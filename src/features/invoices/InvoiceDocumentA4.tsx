@@ -192,3 +192,4 @@ export function InvoiceDocumentA4({
     </article>
   )
 }
+

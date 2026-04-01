@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import './App.css'
 import { AppShell } from './app/AppShell'
@@ -85,12 +85,17 @@ function App() {
   if (isBooting) {
     return (
       <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
+        <div className="cc-boot-screen__wave" aria-hidden="true" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--one" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--two" />
 
         <section className="cc-boot-card">
-          <div className="cc-boot-card__mark" aria-hidden="true">
-            <span>CC</span>
+          <div className="cc-boot-card__brand" aria-hidden="true">
+            <img
+              src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+              alt=""
+              className="cc-boot-card__logo"
+            />
           </div>
 
           <div className="cc-boot-card__copy">
@@ -137,3 +142,4 @@ function App() {
 }
 
 export default App
+

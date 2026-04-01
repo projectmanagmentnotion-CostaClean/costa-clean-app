@@ -2509,4 +2509,12 @@
   max-width: 100% !important;
   margin: 0 !important;
 }
+.cc-shell-nav__brand-mark {
+  overflow: hidden;
+}
 
+.cc-shell-nav__brand-mark-image {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+}

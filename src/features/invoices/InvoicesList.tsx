@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -45,7 +45,6 @@ export function InvoicesList({
     <section className="data-section">
       <div className="section-header">
         <h2>Facturas</h2>
-        <p>Consulta estado, servicio vinculado e importes principales.</p>
       </div>
 
       <SearchBar

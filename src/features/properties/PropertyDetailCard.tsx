@@ -145,7 +145,6 @@ export function PropertyDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle de la propiedad</h2>
-          <p>Consulta el inmueble seleccionado y actualiza sus datos principales.</p>
         </div>
 
         {property ? (
@@ -323,3 +322,4 @@ export function PropertyDetailCard({
     </section>
   )
 }
+

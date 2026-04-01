@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import {
@@ -68,7 +68,6 @@ export function ExpensesList({
     <section className="data-section cc-expenses-list-section">
       <div className="section-header">
         <h2>Explorar gastos</h2>
-        <p>Selecciona un registro para ver su detalle, documento y estado fiscal.</p>
       </div>
 
       <SearchBar

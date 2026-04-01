@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
@@ -250,7 +250,6 @@ export function InvoiceDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle de la factura</h2>
-          <p>Consulta la factura seleccionada, edítala o abre su documento.</p>
         </div>
 
         {invoice ? (

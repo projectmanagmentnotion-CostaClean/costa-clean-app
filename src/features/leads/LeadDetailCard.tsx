@@ -294,7 +294,6 @@ export function LeadDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del lead</h2>
-          <p>Consulta la oportunidad seleccionada y actualiza sus datos o estado comercial.</p>
         </div>
 
         {lead ? (
@@ -480,3 +479,4 @@ export function LeadDetailCard({
     </section>
   )
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { updateExpense, updateExpenseAttachment } from './expenseApi'
 import {
   createExpenseReceiptSignedUrl,
@@ -350,7 +350,6 @@ export function ExpenseDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del gasto</h2>
-          <p>Lectura compacta del gasto con foco financiero, fiscal y documental.</p>
         </div>
 
         {expense ? (

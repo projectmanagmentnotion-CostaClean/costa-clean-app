@@ -180,7 +180,6 @@ export function PaymentDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del pago</h2>
-          <p>Consulta el cobro seleccionado y actualiza su factura, fecha, importe o método.</p>
         </div>
 
         {payment ? (
@@ -347,3 +346,4 @@ export function PaymentDetailCard({
     </section>
   )
 }
+

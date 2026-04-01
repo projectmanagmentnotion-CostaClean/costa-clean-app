@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -212,7 +212,6 @@ export function QuoteDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del presupuesto</h2>
-          <p>Consulta el presupuesto seleccionado, edítalo o abre su documento.</p>
         </div>
 
         {quote ? (

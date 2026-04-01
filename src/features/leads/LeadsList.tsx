@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { LeadListItem } from './types'
@@ -36,7 +36,6 @@ export function LeadsList({
     <section className="data-section">
       <div className="section-header">
         <h2>Leads</h2>
-        <p>Listado comercial conectado a Supabase.</p>
       </div>
 
       <SearchBar

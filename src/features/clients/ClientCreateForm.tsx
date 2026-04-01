@@ -1,4 +1,5 @@
 ﻿import { useState, type FormEvent } from 'react'
+import { getStatusLabel } from '../../app/displayText'
 
 interface ClientCreateFormProps {
   onCreated: () => Promise<void>
@@ -76,10 +77,10 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
 
       await onCreated()
       setForm(initialFormState)
-      setSuccessMessage('Client creado correctamente.')
+      setSuccessMessage('Cliente creado correctamente.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido creando el client.'
+        err instanceof Error ? err.message : 'Error desconocido creando el cliente.'
 
       setSubmitError(message)
     } finally {
@@ -90,8 +91,7 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nuevo client</h2>
-        <p>Formulario mínimo inicial conectado a Supabase.</p>
+        <h2>Nuevo cliente</h2>
       </div>
 
       <form className="lead-form" onSubmit={handleSubmit}>
@@ -130,20 +130,20 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
             value={form.status}
             onChange={(event) => updateField('status', event.target.value)}
           >
-            <option value="active">active</option>
-            <option value="inactive">inactive</option>
+            <option value="active">{getStatusLabel('active')}</option>
+            <option value="inactive">{getStatusLabel('inactive')}</option>
           </select>
         </label>
 
         <div className="form-actions">
           <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Guardar client'}
+            {isSubmitting ? 'Guardando...' : 'Guardar cliente'}
           </button>
         </div>
 
         {submitError ? (
           <div className="empty-state">
-            <strong>No se pudo crear el client</strong>
+            <strong>No se pudo crear el cliente</strong>
             <p>{submitError}</p>
           </div>
         ) : null}
@@ -158,3 +158,5 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
     </section>
   )
 }
+
+

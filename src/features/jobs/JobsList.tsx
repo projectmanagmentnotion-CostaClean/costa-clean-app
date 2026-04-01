@@ -44,7 +44,6 @@ export function JobsList({
     <section className="data-section">
       <div className="section-header">
         <h2>Servicios</h2>
-        <p>Listado conectado a Supabase.</p>
       </div>
 
       <SearchBar
@@ -104,3 +103,4 @@ export function JobsList({
     </section>
   )
 }
+

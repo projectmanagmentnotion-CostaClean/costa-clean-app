@@ -1,6 +1,31 @@
 ﻿import { useState, type FormEvent } from 'react'
 import { getSupabaseClient } from '../../lib/supabase'
 
+function getServiceTypeLabel(value: string): string {
+  switch (value) {
+    case 'standard_cleaning': return 'Limpieza estándar'
+    case 'deep_cleaning': return 'Limpieza profunda'
+    case 'post_construction': return 'Limpieza fin de obra'
+    case 'check_out_cleaning': return 'Limpieza check-out'
+    case 'airbnb_turnover': return 'Cambio Airbnb'
+    case 'glass_cleaning': return 'Limpieza de cristales'
+    default: return value
+  }
+}
+
+function getPropertyTypeLabel(value: string): string {
+  switch (value) {
+    case 'apartment': return 'Apartamento'
+    case 'house': return 'Casa'
+    case 'office': return 'Oficina'
+    case 'local': return 'Local'
+    case 'tourist_apartment': return 'Piso turístico'
+    case 'community': return 'Comunidad'
+    case 'construction_site': return 'Obra'
+    default: return value
+  }
+}
+
 interface LeadCreateFormProps {
   onCreated: () => Promise<void>
 }
@@ -96,7 +121,6 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
     <section className="data-section">
       <div className="section-header">
         <h2>Nuevo lead</h2>
-        <p>Formulario mínimo inicial conectado a Supabase.</p>
       </div>
 
       <form className="lead-form" onSubmit={handleSubmit}>
@@ -136,12 +160,12 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
             value={form.service_type}
             onChange={(event) => updateField('service_type', event.target.value)}
           >
-            <option value="standard_cleaning">standard_cleaning</option>
-            <option value="deep_cleaning">deep_cleaning</option>
-            <option value="post_construction">post_construction</option>
-            <option value="check_out_cleaning">check_out_cleaning</option>
-            <option value="airbnb_turnover">airbnb_turnover</option>
-            <option value="glass_cleaning">glass_cleaning</option>
+            <option value="standard_cleaning">{getServiceTypeLabel('standard_cleaning')}</option>
+            <option value="deep_cleaning">{getServiceTypeLabel('deep_cleaning')}</option>
+            <option value="post_construction">{getServiceTypeLabel('post_construction')}</option>
+            <option value="check_out_cleaning">{getServiceTypeLabel('check_out_cleaning')}</option>
+            <option value="airbnb_turnover">{getServiceTypeLabel('airbnb_turnover')}</option>
+            <option value="glass_cleaning">{getServiceTypeLabel('glass_cleaning')}</option>
           </select>
         </label>
 
@@ -151,13 +175,13 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
             value={form.property_type}
             onChange={(event) => updateField('property_type', event.target.value)}
           >
-            <option value="apartment">apartment</option>
-            <option value="house">house</option>
-            <option value="office">office</option>
-            <option value="local">local</option>
-            <option value="tourist_apartment">tourist_apartment</option>
-            <option value="community">community</option>
-            <option value="construction_site">construction_site</option>
+            <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
+            <option value="house">{getPropertyTypeLabel('house')}</option>
+            <option value="office">{getPropertyTypeLabel('office')}</option>
+            <option value="local">{getPropertyTypeLabel('local')}</option>
+            <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
+            <option value="community">{getPropertyTypeLabel('community')}</option>
+            <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
           </select>
         </label>
 
@@ -212,3 +236,5 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
     </section>
   )
 }
+
+

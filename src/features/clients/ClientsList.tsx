@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
@@ -35,7 +35,6 @@ export function ClientsList({
     <section className="data-section">
       <div className="section-header">
         <h2>Clientes</h2>
-        <p>Base de clientes activa conectada a Supabase.</p>
       </div>
 
       <SearchBar

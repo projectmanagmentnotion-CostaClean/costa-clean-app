@@ -123,7 +123,6 @@ export function ClientDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del cliente</h2>
-          <p>Consulta el cliente seleccionado y actualiza sus datos principales.</p>
         </div>
 
         {client ? (
@@ -273,3 +272,4 @@ export function ClientDetailCard({
     </section>
   )
 }
+

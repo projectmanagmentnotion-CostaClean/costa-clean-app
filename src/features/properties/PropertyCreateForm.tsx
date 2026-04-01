@@ -16,6 +16,19 @@ interface FormState {
   notes: string
 }
 
+function getPropertyTypeLabel(value: string): string {
+  switch (value) {
+    case 'apartment': return 'Apartamento'
+    case 'house': return 'Casa'
+    case 'office': return 'Oficina'
+    case 'local': return 'Local'
+    case 'tourist_apartment': return 'Piso turístico'
+    case 'community': return 'Comunidad'
+    case 'construction_site': return 'Obra'
+    default: return value
+  }
+}
+
 export function PropertyCreateForm({
   clients,
   onCreated,
@@ -56,7 +69,7 @@ export function PropertyCreateForm({
       }
 
       if (!form.client_id) {
-        setSubmitError('Debes seleccionar un client.')
+        setSubmitError('Debes seleccionar un cliente.')
         return
       }
 
@@ -100,10 +113,10 @@ export function PropertyCreateForm({
         postal_code: '',
         notes: '',
       })
-      setSuccessMessage('Property creado correctamente.')
+      setSuccessMessage('Propiedad creada correctamente.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido creando el property.'
+        err instanceof Error ? err.message : 'Error desconocido creando la propiedad.'
 
       setSubmitError(message)
     } finally {
@@ -114,26 +127,25 @@ export function PropertyCreateForm({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nuevo property</h2>
-        <p>Formulario mínimo inicial conectado a Supabase.</p>
+        <h2>Nueva propiedad</h2>
       </div>
 
       {clients.length === 0 ? (
         <div className="empty-state">
-          <strong>No hay clients disponibles</strong>
-          <p>Primero debes crear al menos un client para poder crear un property.</p>
+          <strong>No hay clientes disponibles</strong>
+          <p>Primero debes crear al menos un cliente para poder registrar una propiedad.</p>
         </div>
       ) : (
         <form className="lead-form" onSubmit={handleSubmit}>
           <label className="form-field">
-            <span>Client *</span>
+            <span>Cliente *</span>
             <select
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
             >
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
-                  {client.full_name} · {client.id}
+                  {client.full_name} · {client.display_code ?? client.id}
                 </option>
               ))}
             </select>
@@ -155,13 +167,13 @@ export function PropertyCreateForm({
               value={form.property_type}
               onChange={(event) => updateField('property_type', event.target.value)}
             >
-              <option value="apartment">apartment</option>
-              <option value="house">house</option>
-              <option value="office">office</option>
-              <option value="local">local</option>
-              <option value="tourist_apartment">tourist_apartment</option>
-              <option value="community">community</option>
-              <option value="construction_site">construction_site</option>
+              <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
+              <option value="house">{getPropertyTypeLabel('house')}</option>
+              <option value="office">{getPropertyTypeLabel('office')}</option>
+              <option value="local">{getPropertyTypeLabel('local')}</option>
+              <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
+              <option value="community">{getPropertyTypeLabel('community')}</option>
+              <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
             </select>
           </label>
 
@@ -205,13 +217,13 @@ export function PropertyCreateForm({
 
           <div className="form-actions">
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar property'}
+              {isSubmitting ? 'Guardando...' : 'Guardar propiedad'}
             </button>
           </div>
 
           {submitError ? (
             <div className="empty-state">
-              <strong>No se pudo crear el property</strong>
+              <strong>No se pudo crear la propiedad</strong>
               <p>{submitError}</p>
             </div>
           ) : null}
@@ -227,3 +239,5 @@ export function PropertyCreateForm({
     </section>
   )
 }
+
+

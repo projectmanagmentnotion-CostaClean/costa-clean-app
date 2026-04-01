@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
@@ -40,7 +40,6 @@ export function PaymentsList({
     <section className="data-section">
       <div className="section-header">
         <h2>Pagos</h2>
-        <p>Consulta cobros, factura vinculada, fecha e importe.</p>
       </div>
 
       <SearchBar

@@ -193,7 +193,6 @@ export function JobDetailCard({
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del servicio</h2>
-          <p>Consulta el servicio seleccionado y actualiza sus datos operativos.</p>
         </div>
 
         {job ? (
@@ -403,3 +402,4 @@ export function JobDetailCard({
     </section>
   )
 }
+

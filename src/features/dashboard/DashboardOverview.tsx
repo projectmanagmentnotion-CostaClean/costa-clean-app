@@ -1,4 +1,4 @@
-﻿function formatCurrency(value: number): string {
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
@@ -50,14 +50,29 @@ export function DashboardOverview({ metrics }: DashboardOverviewProps) {
 
         <div className="cc-dashboard-overview__spotlight">
           <span className="cc-dashboard-chip">Vista financiera</span>
+
           <div className="cc-dashboard-panel cc-dashboard-panel--spotlight">
-            <span className="cc-dashboard-panel__label">Resultado estimado</span>
-            <strong className="cc-dashboard-panel__value">
-              {formatCurrency(estimatedNet)}
-            </strong>
-            <p className="cc-dashboard-panel__text">
-              Cobrado: {formatCurrency(metrics.totalCollected)} · Gastos: {formatCurrency(metrics.totalExpenses)}
-            </p>
+            <div className="cc-dashboard-panel__meta">
+              <span className="cc-dashboard-panel__label">Resultado estimado</span>
+              <strong className="cc-dashboard-panel__value">
+                {formatCurrency(estimatedNet)}
+              </strong>
+            </div>
+
+            <div className="cc-dashboard-spotlight__rows">
+              <div className="cc-dashboard-spotlight__row">
+                <span>Cobrado</span>
+                <strong>{formatCurrency(metrics.totalCollected)}</strong>
+              </div>
+              <div className="cc-dashboard-spotlight__row">
+                <span>Gastos</span>
+                <strong>{formatCurrency(metrics.totalExpenses)}</strong>
+              </div>
+              <div className="cc-dashboard-spotlight__row">
+                <span>Por cobrar</span>
+                <strong>{formatCurrency(estimatedBalance)}</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>

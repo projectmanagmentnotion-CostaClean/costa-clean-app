@@ -405,14 +405,10 @@ export function AppShell() {
     [payments, invoiceById],
   )
 
-  const shellNavHidden = currentView === 'quotes' || currentView === 'invoices'
-
   return (
-    <main className={shellNavHidden ? 'app-shell app-shell--nav-hidden' : 'app-shell'}>
-      <section className={shellNavHidden ? 'hero-card cc-shell cc-shell--nav-hidden' : 'hero-card cc-shell'}>
-        {!shellNavHidden ? (
-          <AppNav currentView={currentView} onChangeView={setCurrentView} />
-        ) : null}
+    <main className="app-shell">
+      <section className="hero-card cc-shell">
+        <AppNav currentView={currentView} onChangeView={setCurrentView} />
         <div className="cc-shell-content">
           {currentView === 'dashboard' ? (
             <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} />
@@ -438,6 +434,8 @@ export function AppShell() {
     </main>
   )
 }
+
+
 
 
 

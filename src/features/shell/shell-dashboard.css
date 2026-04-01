@@ -3358,3 +3358,56 @@
     font-size: 0.78rem;
   }
 }
+
+/* =========================================================
+   Quick actions horizontal pill fix
+   ========================================================= */
+
+.cc-quick-actions--launcher {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-quick-action--launcher {
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.cc-quick-action--launcher .cc-quick-action__icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 12px;
+  margin-bottom: 0;
+}
+
+.cc-quick-action--launcher .cc-quick-action__title {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  font-size: 0.96rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 900px) {
+  .cc-quick-actions--launcher {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-quick-action--launcher {
+    min-height: 60px;
+    padding: 13px 14px;
+    gap: 10px;
+  }
+
+  .cc-quick-action--launcher .cc-quick-action__icon {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+}

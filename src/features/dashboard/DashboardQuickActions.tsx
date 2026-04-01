@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+﻿import type { ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
 
 interface DashboardQuickActionsProps {
@@ -158,7 +158,6 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
       <div className="cc-dashboard-block__header">
         <div>
           <h2>Acciones rápidas</h2>
-          <p>Accesos directos a los flujos clave del CRM.</p>
         </div>
       </div>
 
@@ -188,3 +187,4 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
     </section>
   )
 }
+

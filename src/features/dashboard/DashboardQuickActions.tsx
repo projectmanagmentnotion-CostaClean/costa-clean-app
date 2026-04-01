@@ -115,45 +115,38 @@ function PaymentIcon() {
 
 const quickActions: Array<{
   title: string
-  text: string
   view: AppView
   primary?: boolean
   Icon: () => ReactElement
 }> = [
   {
     title: 'Nuevo gasto',
-    text: 'Registra compras, tickets y movimientos deducibles del negocio.',
     view: 'expenses',
     primary: true,
     Icon: ExpenseIcon,
   },
   {
     title: 'Nuevo presupuesto',
-    text: 'Crea una propuesta comercial para un cliente o inmueble.',
     view: 'quotes',
     Icon: QuoteIcon,
   },
   {
     title: 'Nueva factura',
-    text: 'Accede a facturación y emite o revisa documentos de cobro.',
     view: 'invoices',
     Icon: InvoiceIcon,
   },
   {
     title: 'Nuevo cliente',
-    text: 'Abre la base de clientes para registrar una nueva ficha.',
     view: 'clients',
     Icon: ClientIcon,
   },
   {
     title: 'Abrir gastos',
-    text: 'Consulta listado, detalle, adjuntos y control documental.',
     view: 'expenses',
     Icon: FolderIcon,
   },
   {
     title: 'Revisar cobros',
-    text: 'Consulta pagos registrados y facturas pendientes de cobro.',
     view: 'payments',
     Icon: PaymentIcon,
   },
@@ -165,11 +158,11 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
       <div className="cc-dashboard-block__header">
         <div>
           <h2>Acciones rápidas</h2>
-          <p>Atajos elegantes para entrar de inmediato a los flujos más usados.</p>
+          <p>Accesos directos a los flujos clave del CRM.</p>
         </div>
       </div>
 
-      <div className="cc-quick-actions">
+      <div className="cc-quick-actions cc-quick-actions--launcher">
         {quickActions.map((action) => {
           const Icon = action.Icon
 
@@ -179,8 +172,8 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
               type="button"
               className={
                 action.primary
-                  ? 'cc-quick-action cc-quick-action--primary'
-                  : 'cc-quick-action'
+                  ? 'cc-quick-action cc-quick-action--launcher cc-quick-action--primary'
+                  : 'cc-quick-action cc-quick-action--launcher'
               }
               onClick={() => onOpenView(action.view)}
             >
@@ -188,7 +181,6 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
                 <Icon />
               </span>
               <span className="cc-quick-action__title">{action.title}</span>
-              <span className="cc-quick-action__text">{action.text}</span>
             </button>
           )
         })}
@@ -196,4 +188,3 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
     </section>
   )
 }
-

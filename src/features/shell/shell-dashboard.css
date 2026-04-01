@@ -3411,3 +3411,61 @@
     flex-basis: 34px;
   }
 }
+
+/* =========================================================
+   Fix mobile hero actions clipping on CRUD pages
+   ========================================================= */
+
+.cc-master-page__hero,
+.cc-expenses-hero,
+.cc-doc-page .cc-master-page__hero {
+  min-width: 0;
+}
+
+.cc-master-page__hero > div,
+.cc-expenses-hero > div,
+.cc-doc-page .cc-master-page__hero > div {
+  min-width: 0;
+}
+
+.cc-master-page__hero .primary-button,
+.cc-master-page__hero .secondary-button,
+.cc-expenses-hero .primary-button,
+.cc-expenses-hero .secondary-button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .cc-master-page__hero,
+  .cc-expenses-hero,
+  .cc-doc-page .cc-master-page__hero,
+  .page-header-actions {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+  }
+
+  .cc-master-page__hero .primary-button,
+  .cc-master-page__hero .secondary-button,
+  .cc-expenses-hero .primary-button,
+  .cc-expenses-hero .secondary-button,
+  .page-header-actions .primary-button,
+  .page-header-actions .secondary-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  .cc-master-page__hero h1,
+  .cc-expenses-hero h1,
+  .cc-doc-page .cc-master-page__hero h1 {
+    margin-bottom: 8px;
+  }
+
+  .cc-master-page__hero p,
+  .cc-expenses-hero p,
+  .cc-doc-page .cc-master-page__hero p {
+    max-width: none !important;
+  }
+}

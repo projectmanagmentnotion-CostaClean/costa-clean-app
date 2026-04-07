@@ -200,7 +200,7 @@ export function AppShell() {
         setJobError('Faltan las variables de entorno de Supabase.')
         return
       }
-      const response = await fetch(`${supabaseUrl}/rest/v1/jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,notes&order=created_at.desc`, {
+      const response = await fetch(`${supabaseUrl}/rest/v1/jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc`, {
         method: 'GET',
         headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
       })
@@ -388,6 +388,10 @@ export function AppShell() {
         quote_id: job?.quote_id ?? null,
         service_reference: buildServiceReference(invoice, job, property),
         service_description: buildServiceDescription(job, property),
+        billing_concept: invoice.billing_concept ?? job?.billing_concept ?? null,
+        billing_quantity: invoice.billing_quantity ?? job?.billing_quantity ?? null,
+        billing_unit: invoice.billing_unit ?? job?.billing_unit ?? null,
+        billing_unit_price: invoice.billing_unit_price ?? job?.billing_unit_price ?? null,
       }
     }),
     [invoices, clientById, clientCodeById, jobById, jobCodeById, propertyById, propertyCodeById, quoteById],

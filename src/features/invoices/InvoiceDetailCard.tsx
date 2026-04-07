@@ -35,6 +35,29 @@ function formatMoneyInput(value: number): string {
   return value.toFixed(2)
 }
 
+function getJobBillingDraft(job: JobListItem | null): { subtotal: number, notes: string } | null {
+  if (!job) {
+    return null
+  }
+
+  const quantity = Number(job.billing_quantity)
+  const unitPrice = Number(job.billing_unit_price)
+
+  if (
+    !Number.isFinite(quantity) ||
+    !Number.isFinite(unitPrice) ||
+    quantity <= 0 ||
+    unitPrice < 0
+  ) {
+    return null
+  }
+
+  return {
+    subtotal: quantity * unitPrice,
+    notes: job.billing_concept?.trim() ?? '',
+  }
+}
+
 export function InvoiceDetailCard({
   invoice,
   jobs,
@@ -135,6 +158,21 @@ export function InvoiceDetailCard({
 
   function syncFromJobQuote() {
     if (!selectedJob) {
+      return
+    }
+
+    const jobBillingDraft = getJobBillingDraft(selectedJob)
+
+    if (jobBillingDraft) {
+      const taxAmount = jobBillingDraft.subtotal * businessRules.defaultTaxRate
+      setForm((current) => ({
+        ...current,
+        client_id: selectedJob.client_id,
+        subtotal: formatMoneyInput(jobBillingDraft.subtotal),
+        tax_amount: formatMoneyInput(taxAmount),
+        total: formatMoneyInput(jobBillingDraft.subtotal + taxAmount),
+        notes: current.notes.trim() ? current.notes : jobBillingDraft.notes,
+      }))
       return
     }
 

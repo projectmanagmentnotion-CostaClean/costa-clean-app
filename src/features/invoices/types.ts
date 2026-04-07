@@ -25,4 +25,8 @@
   quote_id?: string | null
   service_reference?: string | null
   service_description?: string | null
+  billing_concept?: string | null
+  billing_quantity?: number | null
+  billing_unit?: string | null
+  billing_unit_price?: number | null
 }

@@ -10,5 +10,9 @@
   scheduled_date: string
   status: string
   service_type: string
+  billing_concept?: string | null
+  billing_quantity?: number | null
+  billing_unit?: string | null
+  billing_unit_price?: number | null
   notes?: string | null
 }

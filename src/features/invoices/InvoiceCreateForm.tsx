@@ -39,6 +39,29 @@ function formatMoneyInput(value: number): string {
   return value.toFixed(2)
 }
 
+function getJobBillingDraft(job: JobListItem | null): { subtotal: number, notes: string } | null {
+  if (!job) {
+    return null
+  }
+
+  const quantity = Number(job.billing_quantity)
+  const unitPrice = Number(job.billing_unit_price)
+
+  if (
+    !Number.isFinite(quantity) ||
+    !Number.isFinite(unitPrice) ||
+    quantity <= 0 ||
+    unitPrice < 0
+  ) {
+    return null
+  }
+
+  return {
+    subtotal: quantity * unitPrice,
+    notes: job.billing_concept?.trim() ?? '',
+  }
+}
+
 export function InvoiceCreateForm({
   jobs,
   quotes,
@@ -80,8 +103,17 @@ export function InvoiceCreateForm({
       let taxAmount = current.tax_amount
       let total = current.total
       let notes = current.notes
+      const jobBillingDraft = getJobBillingDraft(selectedJob)
 
-      if (linkedQuote) {
+      if (jobBillingDraft) {
+        const tax = jobBillingDraft.subtotal * businessRules.defaultTaxRate
+        subtotal = formatMoneyInput(jobBillingDraft.subtotal)
+        taxAmount = formatMoneyInput(tax)
+        total = formatMoneyInput(jobBillingDraft.subtotal + tax)
+        if (!current.notes.trim()) {
+          notes = jobBillingDraft.notes
+        }
+      } else if (linkedQuote) {
         subtotal = formatMoneyInput(Number(linkedQuote.subtotal))
         taxAmount = formatMoneyInput(Number(linkedQuote.tax_amount ?? 0))
         total = formatMoneyInput(Number(linkedQuote.total))

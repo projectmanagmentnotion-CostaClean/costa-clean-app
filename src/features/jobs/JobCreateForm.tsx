@@ -17,7 +17,29 @@ interface FormState {
   scheduled_date: string
   status: string
   service_type: string
+  billing_concept: string
+  billing_quantity: string
+  billing_unit: string
+  billing_unit_price: string
   notes: string
+}
+
+function getServiceTypeOptionLabel(value: string): string {
+  switch (value) {
+    case 'standard_cleaning': return 'Limpieza estándar'
+    case 'deep_cleaning': return 'Limpieza profunda'
+    case 'post_construction': return 'Limpieza fin de obra'
+    case 'check_out_cleaning': return 'Limpieza check-out'
+    case 'airbnb_turnover': return 'Cambio Airbnb'
+    case 'glass_cleaning': return 'Limpieza de cristales'
+    default: return value
+  }
+}
+
+function parseDecimalInput(value: string): number {
+  const normalized = value.trim().replace(',', '.')
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
 export function JobCreateForm({
@@ -33,6 +55,10 @@ export function JobCreateForm({
     scheduled_date: '',
     status: 'scheduled',
     service_type: 'standard_cleaning',
+    billing_concept: getServiceTypeOptionLabel('standard_cleaning'),
+    billing_quantity: '1',
+    billing_unit: 'servicio',
+    billing_unit_price: '',
     notes: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -67,6 +93,14 @@ export function JobCreateForm({
         next.quote_id = ''
       }
 
+      if (field === 'service_type') {
+        const currentConcept = current.billing_concept.trim()
+        const previousServiceConcept = getServiceTypeOptionLabel(current.service_type)
+        if (!currentConcept || currentConcept === previousServiceConcept) {
+          next.billing_concept = getServiceTypeOptionLabel(String(value))
+        }
+      }
+
       return next
     })
   }
@@ -87,17 +121,32 @@ export function JobCreateForm({
       }
 
       if (!form.client_id) {
-        setSubmitError('Debes seleccionar un client.')
+        setSubmitError('Debes seleccionar un cliente.')
         return
       }
 
       if (!form.property_id) {
-        setSubmitError('Debes seleccionar una property.')
+        setSubmitError('Debes seleccionar una propiedad.')
         return
       }
 
       if (!form.scheduled_date) {
         setSubmitError('Debes indicar la fecha programada.')
+        return
+      }
+
+      const billingQuantity = parseDecimalInput(form.billing_quantity)
+      const billingUnitPrice = form.billing_unit_price.trim()
+        ? parseDecimalInput(form.billing_unit_price)
+        : null
+
+      if (Number.isNaN(billingQuantity) || billingQuantity <= 0) {
+        setSubmitError('La cantidad de facturación debe ser mayor que 0.')
+        return
+      }
+
+      if (billingUnitPrice !== null && (Number.isNaN(billingUnitPrice) || billingUnitPrice < 0)) {
+        setSubmitError('El precio unitario debe estar vacío o ser mayor o igual que 0.')
         return
       }
 
@@ -121,6 +170,10 @@ export function JobCreateForm({
           scheduled_date: form.scheduled_date,
           status: form.status,
           service_type: form.service_type,
+          billing_concept: form.billing_concept.trim() || null,
+          billing_quantity: billingQuantity,
+          billing_unit: form.billing_unit.trim() || 'servicio',
+          billing_unit_price: billingUnitPrice,
           notes: form.notes.trim() || null,
         }),
       })
@@ -139,12 +192,16 @@ export function JobCreateForm({
         scheduled_date: '',
         status: 'scheduled',
         service_type: 'standard_cleaning',
+        billing_concept: getServiceTypeOptionLabel('standard_cleaning'),
+        billing_quantity: '1',
+        billing_unit: 'servicio',
+        billing_unit_price: '',
         notes: '',
       })
-      setSuccessMessage('Job creado correctamente.')
+      setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido creando el job.'
+        err instanceof Error ? err.message : 'Error desconocido creando el servicio.'
 
       setSubmitError(message)
     } finally {
@@ -155,19 +212,19 @@ export function JobCreateForm({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nuevo job</h2>
+        <h2>Nuevo servicio</h2>
         <p>Formulario mínimo inicial conectado a Supabase.</p>
       </div>
 
       {clients.length === 0 ? (
         <div className="empty-state">
-          <strong>No hay clients disponibles</strong>
-          <p>Primero debes crear al menos un client para poder crear un job.</p>
+          <strong>No hay clientes disponibles</strong>
+          <p>Primero debes crear al menos un cliente para poder crear un servicio.</p>
         </div>
       ) : (
         <form className="lead-form" onSubmit={handleSubmit}>
           <label className="form-field">
-            <span>Client *</span>
+            <span>Cliente *</span>
             <select
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
@@ -181,12 +238,12 @@ export function JobCreateForm({
           </label>
 
           <label className="form-field">
-            <span>Property *</span>
+            <span>Propiedad *</span>
             <select
               value={form.property_id}
               onChange={(event) => updateField('property_id', event.target.value)}
             >
-              <option value="">Selecciona una property</option>
+              <option value="">Selecciona una propiedad</option>
               {availableProperties.map((property) => (
                 <option key={property.id} value={property.id}>
                   {property.name} · {property.display_code ?? property.id}
@@ -196,12 +253,12 @@ export function JobCreateForm({
           </label>
 
           <label className="form-field">
-            <span>Quote</span>
+            <span>Presupuesto</span>
             <select
               value={form.quote_id}
               onChange={(event) => updateField('quote_id', event.target.value)}
             >
-              <option value="">Sin quote</option>
+              <option value="">Sin presupuesto</option>
               {availableQuotes.map((quote) => (
                 <option key={quote.id} value={quote.id}>
                   {quote.display_code ?? quote.id}
@@ -249,24 +306,61 @@ export function JobCreateForm({
           </label>
 
           <label className="form-field form-field-full">
+            <span>Concepto de facturación</span>
+            <input
+              value={form.billing_concept}
+              onChange={(event) => updateField('billing_concept', event.target.value)}
+              placeholder="Descripción profesional que se mostrará en factura"
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Cantidad de facturación *</span>
+            <input
+              value={form.billing_quantity}
+              onChange={(event) => updateField('billing_quantity', event.target.value)}
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Unidad de facturación *</span>
+            <input
+              value={form.billing_unit}
+              onChange={(event) => updateField('billing_unit', event.target.value)}
+              placeholder="servicio, hora, m²..."
+              required
+            />
+          </label>
+
+          <label className="form-field">
+            <span>Precio unitario</span>
+            <input
+              value={form.billing_unit_price}
+              onChange={(event) => updateField('billing_unit_price', event.target.value)}
+              placeholder="Opcional"
+            />
+          </label>
+
+          <label className="form-field form-field-full">
             <span>Notas</span>
             <textarea
               value={form.notes}
               onChange={(event) => updateField('notes', event.target.value)}
-              placeholder="Notas operativas del job"
+              placeholder="Notas operativas del servicio"
               rows={4}
             />
           </label>
 
           <div className="form-actions">
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar job'}
+              {isSubmitting ? 'Guardando...' : 'Guardar servicio'}
             </button>
           </div>
 
           {submitError ? (
             <div className="empty-state">
-              <strong>No se pudo crear el job</strong>
+              <strong>No se pudo crear el servicio</strong>
               <p>{submitError}</p>
             </div>
           ) : null}

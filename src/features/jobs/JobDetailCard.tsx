@@ -21,6 +21,10 @@ interface EditFormState {
   scheduled_date: string
   status: string
   service_type: string
+  billing_concept: string
+  billing_quantity: string
+  billing_unit: string
+  billing_unit_price: string
   notes: string
 }
 
@@ -34,6 +38,16 @@ function getServiceTypeOptionLabel(value: string): string {
     case 'glass_cleaning': return 'Limpieza de cristales'
     default: return value
   }
+}
+
+function parseDecimalInput(value: string): number {
+  const normalized = value.trim().replace(',', '.')
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
+
+function normalizeBillingUnit(value: string | null | undefined): string {
+  return value === 'service' ? 'servicio' : value ?? 'servicio'
 }
 
 export function JobDetailCard({
@@ -54,6 +68,10 @@ export function JobDetailCard({
     scheduled_date: '',
     status: 'scheduled',
     service_type: 'standard_cleaning',
+    billing_concept: '',
+    billing_quantity: '1',
+    billing_unit: 'servicio',
+    billing_unit_price: '',
     notes: '',
   })
 
@@ -69,6 +87,10 @@ export function JobDetailCard({
         scheduled_date: '',
         status: 'scheduled',
         service_type: 'standard_cleaning',
+        billing_concept: '',
+        billing_quantity: '1',
+        billing_unit: 'servicio',
+        billing_unit_price: '',
         notes: '',
       })
       return
@@ -84,6 +106,12 @@ export function JobDetailCard({
       scheduled_date: job.scheduled_date,
       status: job.status,
       service_type: job.service_type,
+      billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
+      billing_quantity: String(job.billing_quantity ?? 1),
+      billing_unit: normalizeBillingUnit(job.billing_unit),
+      billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
+        ? ''
+        : String(job.billing_unit_price),
       notes: job.notes ?? '',
     })
   }, [job])
@@ -111,6 +139,14 @@ export function JobDetailCard({
       if (field === 'client_id') {
         next.property_id = ''
         next.quote_id = ''
+      }
+
+      if (field === 'service_type') {
+        const currentConcept = current.billing_concept.trim()
+        const previousServiceConcept = getServiceTypeOptionLabel(current.service_type)
+        if (!currentConcept || currentConcept === previousServiceConcept) {
+          next.billing_concept = getServiceTypeOptionLabel(String(value))
+        }
       }
 
       return next
@@ -149,6 +185,21 @@ export function JobDetailCard({
         return
       }
 
+      const billingQuantity = parseDecimalInput(form.billing_quantity)
+      const billingUnitPrice = form.billing_unit_price.trim()
+        ? parseDecimalInput(form.billing_unit_price)
+        : null
+
+      if (Number.isNaN(billingQuantity) || billingQuantity <= 0) {
+        setSaveError('La cantidad de facturación debe ser mayor que 0.')
+        return
+      }
+
+      if (billingUnitPrice !== null && (Number.isNaN(billingUnitPrice) || billingUnitPrice < 0)) {
+        setSaveError('El precio unitario debe estar vacío o ser mayor o igual que 0.')
+        return
+      }
+
       const response = await fetch(
         `${supabaseUrl}/rest/v1/jobs?id=eq.${encodeURIComponent(job.id)}`,
         {
@@ -165,6 +216,10 @@ export function JobDetailCard({
             scheduled_date: form.scheduled_date,
             status: form.status,
             service_type: form.service_type,
+            billing_concept: form.billing_concept.trim() || null,
+            billing_quantity: billingQuantity,
+            billing_unit: form.billing_unit.trim() || 'servicio',
+            billing_unit_price: billingUnitPrice,
             notes: form.notes.trim() || null,
           }),
         },
@@ -210,6 +265,12 @@ export function JobDetailCard({
                 scheduled_date: job.scheduled_date,
                 status: job.status,
                 service_type: job.service_type,
+                billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
+                billing_quantity: String(job.billing_quantity ?? 1),
+                billing_unit: normalizeBillingUnit(job.billing_unit),
+                billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
+                  ? ''
+                  : String(job.billing_unit_price),
                 notes: job.notes ?? '',
               })
             }}
@@ -314,6 +375,43 @@ export function JobDetailCard({
               </label>
 
               <label className="form-field form-field-full">
+                <span>Concepto de facturación</span>
+                <input
+                  value={form.billing_concept}
+                  onChange={(event) => updateField('billing_concept', event.target.value)}
+                  placeholder="Descripción profesional que se mostrará en factura"
+                />
+              </label>
+
+              <label className="form-field">
+                <span>Cantidad de facturación *</span>
+                <input
+                  value={form.billing_quantity}
+                  onChange={(event) => updateField('billing_quantity', event.target.value)}
+                  required
+                />
+              </label>
+
+              <label className="form-field">
+                <span>Unidad de facturación *</span>
+                <input
+                  value={form.billing_unit}
+                  onChange={(event) => updateField('billing_unit', event.target.value)}
+                  placeholder="servicio, hora, m²..."
+                  required
+                />
+              </label>
+
+              <label className="form-field">
+                <span>Precio unitario</span>
+                <input
+                  value={form.billing_unit_price}
+                  onChange={(event) => updateField('billing_unit_price', event.target.value)}
+                  placeholder="Opcional"
+                />
+              </label>
+
+              <label className="form-field form-field-full">
                 <span>Notas</span>
                 <textarea
                   value={form.notes}
@@ -371,6 +469,22 @@ export function JobDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Tipo de servicio</span>
                 <strong>{getServiceTypeLabel(job.service_type)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Concepto de facturación</span>
+                <strong>{job.billing_concept ?? getServiceTypeLabel(job.service_type)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Cantidad de facturación</span>
+                <strong>{job.billing_quantity ?? 1}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Unidad de facturación</span>
+                <strong>{normalizeBillingUnit(job.billing_unit)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Precio unitario</span>
+                <strong>{job.billing_unit_price ?? 'Sin precio definido'}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Notas</span>

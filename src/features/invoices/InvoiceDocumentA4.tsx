@@ -42,7 +42,31 @@ function buildReferenceTitle(invoice: InvoiceListItem): string {
 }
 
 function buildConcept(invoice: InvoiceListItem): string {
-  return invoice.service_description || 'Servicio de limpieza'
+  return invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza'
+}
+
+function getBillingQuantity(invoice: InvoiceListItem): number {
+  const quantity = Number(invoice.billing_quantity)
+  return Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+}
+
+function getBillingUnitPrice(invoice: InvoiceListItem, quantity: number): number {
+  const unitPrice = Number(invoice.billing_unit_price)
+  if (Number.isFinite(unitPrice) && unitPrice >= 0) {
+    return unitPrice
+  }
+
+  return quantity > 0 ? invoice.subtotal / quantity : invoice.subtotal
+}
+
+function formatQuantity(invoice: InvoiceListItem, quantity: number): string {
+  const formattedQuantity = new Intl.NumberFormat('es-ES', {
+    maximumFractionDigits: 2,
+  }).format(quantity)
+  const rawUnit = invoice.billing_unit?.trim()
+  const unit = rawUnit === 'service' ? 'servicio' : rawUnit
+
+  return unit ? `${formattedQuantity} ${unit}` : formattedQuantity
 }
 
 export function InvoiceDocumentA4({
@@ -50,6 +74,8 @@ export function InvoiceDocumentA4({
   variant = 'document',
 }: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
+  const billingQuantity = getBillingQuantity(invoice)
+  const billingUnitPrice = getBillingUnitPrice(invoice, billingQuantity)
 
   const articleClassName =
     variant === 'embedded'
@@ -145,8 +171,8 @@ export function InvoiceDocumentA4({
           <tbody>
             <tr>
               <td>{buildConcept(invoice)}</td>
-              <td>1</td>
-              <td>{formatCurrency(invoice.subtotal)}</td>
+              <td>{formatQuantity(invoice, billingQuantity)}</td>
+              <td>{formatCurrency(billingUnitPrice)}</td>
               <td>{formatCurrency(invoice.subtotal)}</td>
             </tr>
           </tbody>

@@ -41,7 +41,7 @@ export function ClientsList({
         label="Buscar cliente"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Nombre, código, teléfono, email o estado"
+        placeholder="Nombre, código interno, teléfono, email o estado"
         resultCount={filteredClients.length}
         totalCount={clients.length}
       />
@@ -83,7 +83,7 @@ export function ClientsList({
                 </div>
 
                 <div className="cc-list-meta">
-                  <span>Código {client.display_code ?? client.id}</span>
+                  <span>Interno {client.display_code ?? client.id}</span>
                   <span>{client.phone ?? 'Sin teléfono'}</span>
                 </div>
 

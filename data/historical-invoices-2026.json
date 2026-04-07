@@ -1,0 +1,742 @@
+{
+  "schema_version": 1,
+  "notes": [],
+  "invoices": [
+    {
+      "invoice_number": "2026-001",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "ALCAPA SPORT SL",
+      "client_tax_id": "B55211379",
+      "client_address": "Avenida de la Estación, 70, nave 10",
+      "client_postal_code": "17300",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · ALCAPA SPORT SL",
+        "address": "Avenida de la Estación, 70, nave 10",
+        "city": "Blanes",
+        "postal_code": "17300"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de todas las instalaciones, incluye cristales, estructuras metálicas y máquinas.",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-002",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "GILFIT SPORTS SLU",
+      "client_tax_id": "B67102970",
+      "client_address": "C/ del Carme, 17",
+      "client_postal_code": "08380",
+      "client_city": "Malgrat de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GILFIT SPORTS SLU",
+        "address": "C/ del Carme, 17",
+        "city": "Malgrat de Mar",
+        "postal_code": "08380"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de todas las instalaciones, incluye cristales, estructuras metálicas y máquinas.",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-003",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "FLEXICAR INTERNACIONAL SL",
+      "client_tax_id": "B09758327",
+      "client_address": "Carretera d'Accés Costa Brava s/n",
+      "client_postal_code": "08024",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FLEXICAR INTERNACIONAL SL",
+        "address": "Carretera d'Accés Costa Brava s/n",
+        "city": "Blanes",
+        "postal_code": "08024"
+      },
+      "explicit_subtotal": "380.00",
+      "explicit_tax_amount": "79.80",
+      "explicit_total": "459.80",
+      "lines": [
+        {
+          "concept": "Limpieza general de las instalaciones del concesionario",
+          "quantity": "19.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-004",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "GURI, TEIXIDÓ I ASSOCIATS SL",
+      "client_tax_id": "B08966095",
+      "client_address": "Església 73-77",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GURI, TEIXIDÓ I ASSOCIATS SL",
+        "address": "Església 73-77",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "140.00",
+      "explicit_tax_amount": "29.40",
+      "explicit_total": "169.40",
+      "lines": [
+        {
+          "concept": "Limpieza general de cristales",
+          "quantity": "7.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-005",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "FUNDACIÓN PRIVADA GENTIS",
+      "client_tax_id": "G17679267",
+      "client_address": "Carrer Concili de Trento, 42, local 1",
+      "client_postal_code": "08018",
+      "client_city": "Barcelona",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUNDACIÓN PRIVADA GENTIS",
+        "address": "Carrer Concili de Trento, 42, local 1",
+        "city": "Barcelona",
+        "postal_code": "08018"
+      },
+      "explicit_subtotal": "640.00",
+      "explicit_tax_amount": "134.40",
+      "explicit_total": "774.40",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "40.00",
+          "unit": "horas",
+          "unit_price": "16.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-006",
+      "issue_date": "2026-01-31",
+      "paid_date": "2026-01-31",
+      "client_name": "FUSTERIA PINEDA MAR SL",
+      "client_tax_id": "J63973721",
+      "client_address": "Carrer Jacinto Benavente, 41",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUSTERIA PINEDA MAR SL",
+        "address": "Carrer Jacinto Benavente, 41",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "342.00",
+      "explicit_tax_amount": "71.82",
+      "explicit_total": "413.82",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "12.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento de taller",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento general de cristales interiores",
+          "quantity": "3.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-007",
+      "issue_date": "2026-02-06",
+      "paid_date": "2026-02-06",
+      "client_name": "MOTORWAGEN SPAIL SL",
+      "client_tax_id": "B97767495",
+      "client_address": "C ARAGON 18",
+      "client_postal_code": "08490",
+      "client_city": "Tordera",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · MOTORWAGEN SPAIL SL",
+        "address": "C ARAGON 18",
+        "city": "Tordera",
+        "postal_code": "08490"
+      },
+      "explicit_subtotal": "176.00",
+      "explicit_tax_amount": "36.96",
+      "explicit_total": "212.96",
+      "lines": [
+        {
+          "concept": "limpieza general y mantenimiento de vivienda",
+          "quantity": "11.00",
+          "unit": "horas",
+          "unit_price": "16.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-008",
+      "issue_date": "2026-02-12",
+      "paid_date": "2026-02-12",
+      "client_name": "ESTRUCTURAS PINEDA S.L.",
+      "client_tax_id": "B61378675",
+      "client_address": "CRISTOFOL COLOM Nº54",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · ESTRUCTURAS PINEDA S.L.",
+        "address": "CRISTOFOL COLOM Nº54",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "315.00",
+      "explicit_tax_amount": "66.15",
+      "explicit_total": "381.15",
+      "lines": [
+        {
+          "concept": "LIMPIEZA INTEGRAL",
+          "quantity": "15.75",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-009",
+      "issue_date": "2026-02-18",
+      "paid_date": "2026-02-18",
+      "client_name": "JOSEFA LLAS GRANOT",
+      "client_tax_id": "38696030W",
+      "client_address": "C/COLON, 12, 1-D, Playa Arinaga",
+      "client_postal_code": "35118",
+      "client_city": "Gran Canaria",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · JOSEFA LLAS GRANOT",
+        "address": "C/COLON, 12, 1-D, Playa Arinaga",
+        "city": "Gran Canaria",
+        "postal_code": "35118"
+      },
+      "explicit_subtotal": "72.00",
+      "explicit_tax_amount": "15.12",
+      "explicit_total": "87.12",
+      "lines": [
+        {
+          "concept": "limpieza general y mantenimiento de vivienda",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-010",
+      "issue_date": "2026-02-18",
+      "paid_date": "2026-02-18",
+      "client_name": "Comercial Basic",
+      "client_tax_id": "B59327296",
+      "client_address": "Carrer de l'Església, 115",
+      "client_postal_code": "08370",
+      "client_city": "Calella",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · Comercial Basic",
+        "address": "Carrer de l'Església, 115",
+        "city": "Calella",
+        "postal_code": "08370"
+      },
+      "explicit_subtotal": "60.00",
+      "explicit_tax_amount": "12.60",
+      "explicit_total": "72.60",
+      "lines": [
+        {
+          "concept": "Limpieza de cristales, fachada del local",
+          "quantity": "3.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-011",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "FUSTERIA PINEDA MAR SL",
+      "client_tax_id": "J63973721",
+      "client_address": "Carrer Jacinto Benavente, 41",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUSTERIA PINEDA MAR SL",
+        "address": "Carrer Jacinto Benavente, 41",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "369.00",
+      "explicit_tax_amount": "77.49",
+      "explicit_total": "446.49",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "12.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento de taller",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento general de cristales exteriores",
+          "quantity": "4.50",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-012",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "FLEXICAR INTERNACIONAL SL",
+      "client_tax_id": "B09758327",
+      "client_address": "Carretera d'Accés Costa Brava s/n",
+      "client_postal_code": "08024",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FLEXICAR INTERNACIONAL SL",
+        "address": "Carretera d'Accés Costa Brava s/n",
+        "city": "Blanes",
+        "postal_code": "08024"
+      },
+      "explicit_subtotal": "320.00",
+      "explicit_tax_amount": "67.20",
+      "explicit_total": "387.20",
+      "lines": [
+        {
+          "concept": "Limpieza general de las instalaciones del concesionario",
+          "quantity": "16.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-013",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "GILFIT SPORTS SLU",
+      "client_tax_id": "B67102970",
+      "client_address": "C/ del Carme, 17",
+      "client_postal_code": "08380",
+      "client_city": "Malgrat de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GILFIT SPORTS SLU",
+        "address": "C/ del Carme, 17",
+        "city": "Malgrat de Mar",
+        "postal_code": "08380"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-014",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "ALCAPA SPORT SL",
+      "client_tax_id": "B55211379",
+      "client_address": "Avenida de la Estación, 70, nave 10",
+      "client_postal_code": "17300",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · ALCAPA SPORT SL",
+        "address": "Avenida de la Estación, 70, nave 10",
+        "city": "Blanes",
+        "postal_code": "17300"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-015",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "GURI, TEIXIDÓ I ASSOCIATS SL",
+      "client_tax_id": "B08966095",
+      "client_address": "Església 73-77",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GURI, TEIXIDÓ I ASSOCIATS SL",
+        "address": "Església 73-77",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "60.00",
+      "explicit_tax_amount": "12.60",
+      "explicit_total": "72.60",
+      "lines": [
+        {
+          "concept": "Limpieza general de cristales",
+          "quantity": "3.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-016",
+      "issue_date": "2026-02-28",
+      "paid_date": "2026-02-28",
+      "client_name": "FUNDACIÓN PRIVADA GENTIS",
+      "client_tax_id": "G17679267",
+      "client_address": "Carrer Concili de Trento, 42, local 1",
+      "client_postal_code": "08018",
+      "client_city": "Barcelona",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUNDACIÓN PRIVADA GENTIS",
+        "address": "Carrer Concili de Trento, 42, local 1",
+        "city": "Barcelona",
+        "postal_code": "08018"
+      },
+      "explicit_subtotal": "640.00",
+      "explicit_tax_amount": "134.40",
+      "explicit_total": "774.40",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "40.00",
+          "unit": "horas",
+          "unit_price": "16.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-017",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "FLEXICAR INTERNACIONAL SL",
+      "client_tax_id": "B09758327",
+      "client_address": "Carretera d'Accés Costa Brava s/n",
+      "client_postal_code": "08024",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FLEXICAR INTERNACIONAL SL",
+        "address": "Carretera d'Accés Costa Brava s/n",
+        "city": "Blanes",
+        "postal_code": "08024"
+      },
+      "explicit_subtotal": "360.00",
+      "explicit_tax_amount": "75.60",
+      "explicit_total": "435.60",
+      "lines": [
+        {
+          "concept": "Limpieza general de las instalaciones del concesionario",
+          "quantity": "18.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-018",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "FUNDACIÓN PRIVADA GENTIS",
+      "client_tax_id": "G17679267",
+      "client_address": "Carrer Concili de Trento, 42, local 1",
+      "client_postal_code": "08018",
+      "client_city": "Barcelona",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUNDACIÓN PRIVADA GENTIS",
+        "address": "Carrer Concili de Trento, 42, local 1",
+        "city": "Barcelona",
+        "postal_code": "08018"
+      },
+      "explicit_subtotal": "704.00",
+      "explicit_tax_amount": "147.84",
+      "explicit_total": "851.84",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "44.00",
+          "unit": "horas",
+          "unit_price": "16.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-019",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "FUSTERIA PINEDA MAR SL",
+      "client_tax_id": "J63973721",
+      "client_address": "Carrer Jacinto Benavente, 41",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · FUSTERIA PINEDA MAR SL",
+        "address": "Carrer Jacinto Benavente, 41",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "216.00",
+      "explicit_tax_amount": "45.36",
+      "explicit_total": "261.36",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento de taller",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        },
+        {
+          "concept": "Limpieza y mantenimiento general de cristales interiores",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-020",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "GURI, TEIXIDÓ I ASSOCIATS SL",
+      "client_tax_id": "B08966095",
+      "client_address": "Església 73-77",
+      "client_postal_code": "08397",
+      "client_city": "Pineda de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GURI, TEIXIDÓ I ASSOCIATS SL",
+        "address": "Església 73-77",
+        "city": "Pineda de Mar",
+        "postal_code": "08397"
+      },
+      "explicit_subtotal": "60.00",
+      "explicit_tax_amount": "12.60",
+      "explicit_total": "72.60",
+      "lines": [
+        {
+          "concept": "Limpieza general de cristales",
+          "quantity": "3.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-021",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "ALCAPA SPORT SL",
+      "client_tax_id": "B55211379",
+      "client_address": "Avenida de la Estación, 70, nave 10",
+      "client_postal_code": "17300",
+      "client_city": "Blanes",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · ALCAPA SPORT SL",
+        "address": "Avenida de la Estación, 70, nave 10",
+        "city": "Blanes",
+        "postal_code": "17300"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-022",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "GILFIT SPORTS SLU",
+      "client_tax_id": "B67102970",
+      "client_address": "C/ del Carme, 17",
+      "client_postal_code": "08380",
+      "client_city": "Malgrat de Mar",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · GILFIT SPORTS SLU",
+        "address": "C/ del Carme, 17",
+        "city": "Malgrat de Mar",
+        "postal_code": "08380"
+      },
+      "explicit_subtotal": "1030.25",
+      "explicit_tax_amount": "216.35",
+      "explicit_total": "1246.60",
+      "lines": [
+        {
+          "concept": "Limpieza y mantenimiento general de oficinas Pineda De Mar",
+          "quantity": "65.00",
+          "unit": "horas",
+          "unit_price": "15.85"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-023",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "JOSEFA LLAS GRANOT",
+      "client_tax_id": "38696030W",
+      "client_address": "C/COLON, 12, 1-D,Playa Arinaga",
+      "client_postal_code": "35118",
+      "client_city": "Gran Canaria",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · JOSEFA LLAS GRANOT",
+        "address": "C/COLON, 12, 1-D,Playa Arinaga",
+        "city": "Gran Canaria",
+        "postal_code": "35118"
+      },
+      "explicit_subtotal": "72.00",
+      "explicit_tax_amount": "15.12",
+      "explicit_total": "87.12",
+      "lines": [
+        {
+          "concept": "limpieza general y mantenimiento de vivienda",
+          "quantity": "4.00",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-024",
+      "issue_date": "2026-03-31",
+      "paid_date": "2026-03-31",
+      "client_name": "CARLOS ENRIQUE MARQUEZ RIDAO",
+      "client_tax_id": "Y7108903P",
+      "client_address": "Carrer Puigmal 2",
+      "client_postal_code": "17300",
+      "client_city": "Blanes - Gerona",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · CARLOS ENRIQUE MARQUEZ RIDAO",
+        "address": "Carrer Puigmal 2",
+        "city": "Blanes - Gerona",
+        "postal_code": "17300"
+      },
+      "explicit_subtotal": "400.00",
+      "explicit_tax_amount": "84.00",
+      "explicit_total": "484.00",
+      "lines": [
+        {
+          "concept": "limpieza general y mantenimiento de locales",
+          "quantity": "20.00",
+          "unit": "horas",
+          "unit_price": "20.00"
+        }
+      ]
+    },
+    {
+      "invoice_number": "2026-025",
+      "issue_date": "2026-04-01",
+      "paid_date": "2026-04-01",
+      "client_name": "D. DAVID MOLINA BOZA",
+      "client_tax_id": "46134579Y",
+      "client_address": "C/ IDUMEA 6, PL 10, PT 06",
+      "client_postal_code": "08035",
+      "client_city": "Barcelona",
+      "payment_method": "transfer",
+      "property": {
+        "name": "Histórico · D. DAVID MOLINA BOZA",
+        "address": "C/ IDUMEA 6, PL 10, PT 06",
+        "city": "Barcelona",
+        "postal_code": "08035"
+      },
+      "explicit_subtotal": "189.00",
+      "explicit_tax_amount": "39.69",
+      "explicit_total": "228.69",
+      "lines": [
+        {
+          "concept": "limpieza general post obra en local Travessera de Dalt 34, entresol 2a, 08024 Barcelona",
+          "quantity": "10.50",
+          "unit": "horas",
+          "unit_price": "18.00"
+        }
+      ]
+    }
+  ]
+}

@@ -50,6 +50,18 @@ function normalizeBillingUnit(value: string | null | undefined): string {
   return value === 'service' ? 'servicio' : value ?? 'servicio'
 }
 
+function getJobPrimaryReference(job: JobListItem): string {
+  return job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)
+}
+
+function getJobSecondaryReference(job: JobListItem): string {
+  return [
+    job.client_display_code ?? job.client_id,
+    job.property_display_code ?? job.property_id,
+    formatDateEs(job.scheduled_date),
+  ].join(' · ')
+}
+
 export function JobDetailCard({
   job,
   clients,
@@ -284,7 +296,8 @@ export function JobDetailCard({
         <div className="lead-detail-card">
           <div className="lead-detail-header">
             <div>
-              <h3>{job.display_code ?? job.id}</h3>
+              <h3>{getJobPrimaryReference(job)}</h3>
+              <p>{getJobSecondaryReference(job)}</p>
             </div>
 
             <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
@@ -443,8 +456,8 @@ export function JobDetailCard({
           ) : (
             <div className="lead-detail-grid">
               <div className="detail-row">
-                <span className="detail-label">Código</span>
-                <strong>{job.display_code ?? job.id}</strong>
+                <span className="detail-label">Referencia</span>
+                <strong>{getJobPrimaryReference(job)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
@@ -461,6 +474,10 @@ export function JobDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Fecha programada</span>
                 <strong>{formatDateEs(job.scheduled_date)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Código interno</span>
+                <strong>{job.display_code ?? job.id}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Estado</span>

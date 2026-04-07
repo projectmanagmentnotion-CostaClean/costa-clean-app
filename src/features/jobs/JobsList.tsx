@@ -11,6 +11,10 @@ interface JobsListProps {
   onSelectJob: (job: JobListItem) => void
 }
 
+function getJobPrimaryReference(job: JobListItem): string {
+  return job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)
+}
+
 export function JobsList({
   jobs,
   error,
@@ -32,6 +36,7 @@ export function JobsList({
         job.quote_id,
         job.service_type,
         getServiceTypeLabel(job.service_type),
+        job.billing_concept,
         job.status,
         getDisplayStatusLabel(job.status),
         job.scheduled_date,
@@ -50,7 +55,7 @@ export function JobsList({
         label="Buscar servicio"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Código, cliente, propiedad, presupuesto, tipo, estado o fecha"
+        placeholder="Servicio, cliente, propiedad, código interno, estado o fecha"
         resultCount={filteredJobs.length}
         totalCount={jobs.length}
       />
@@ -87,14 +92,16 @@ export function JobsList({
                 onClick={() => onSelectJob(job)}
               >
                 <div className="lead-item-top">
-                  <strong>{job.display_code ?? job.id}</strong>
+                  <strong>{getJobPrimaryReference(job)}</strong>
                   <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
                 </div>
 
                 <p>Cliente: {job.client_display_code ?? job.client_id}</p>
                 <p>Propiedad: {job.property_display_code ?? job.property_id}</p>
-                <p>Fecha: {formatDateEs(job.scheduled_date)}</p>
-                <p>Tipo: {getServiceTypeLabel(job.service_type)}</p>
+                <div className="cc-list-meta">
+                  <span>{formatDateEs(job.scheduled_date)}</span>
+                  <span>Interno {job.display_code ?? job.id}</span>
+                </div>
               </button>
             )
           })}

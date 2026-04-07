@@ -47,7 +47,7 @@ export function PropertiesList({
         label="Buscar propiedad"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Nombre, código, cliente, tipo, dirección, ciudad o nota"
+        placeholder="Nombre, dirección, código interno, cliente, tipo, ciudad o nota"
         resultCount={filteredProperties.length}
         totalCount={properties.length}
       />
@@ -88,9 +88,12 @@ export function PropertiesList({
                   <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
                 </div>
 
-                <p>Código: {property.display_code ?? property.id}</p>
+                <p>{property.address}</p>
                 <p>Cliente: {property.client_display_code ?? property.client_id}</p>
-                <p>Ciudad: {property.city ?? 'Sin ciudad'}</p>
+                <div className="cc-list-meta">
+                  <span>Interno {property.display_code ?? property.id}</span>
+                  <span>{property.city ?? 'Sin ciudad'}</span>
+                </div>
               </button>
             )
           })}

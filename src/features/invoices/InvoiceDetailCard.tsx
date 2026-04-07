@@ -171,6 +171,21 @@ function formatLineSubtotalDisplay(line: LineFormState): string {
   return Number.isNaN(lineSubtotal) ? 'Importe no válido' : formatCurrency(lineSubtotal)
 }
 
+function getInvoicePrimaryReference(invoice: InvoiceListItem): string {
+  return invoice.invoice_number ?? invoice.display_code ?? invoice.id
+}
+
+function getInvoiceInternalReference(invoice: InvoiceListItem): string {
+  return invoice.display_code ?? invoice.id
+}
+
+function getInvoiceServiceReference(invoice: InvoiceListItem): string {
+  return invoice.service_reference
+    ?? invoice.service_description
+    ?? invoice.job_display_code
+    ?? invoice.job_id
+}
+
 function calculateSubtotal(lines: LineFormState[]): number {
   return roundMoney(lines.reduce((sum, line) => {
     const lineSubtotal = calculateLineSubtotal(line)
@@ -485,8 +500,8 @@ export function InvoiceDetailCard({
         <div className="lead-detail-card">
           <div className="lead-detail-header">
             <div>
-              <h3>{invoice.display_code ?? invoice.id}</h3>
-              <p>{invoice.invoice_number ?? 'Sin número asignado'}</p>
+              <h3>{getInvoicePrimaryReference(invoice)}</h3>
+              <p>Interno {getInvoiceInternalReference(invoice)}</p>
             </div>
             <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
           </div>
@@ -649,20 +664,20 @@ export function InvoiceDetailCard({
           ) : (
             <div className="lead-detail-grid">
               <div className="detail-row">
-                <span className="detail-label">Código</span>
-                <strong>{invoice.display_code ?? invoice.id}</strong>
-              </div>
-              <div className="detail-row">
                 <span className="detail-label">Número factura</span>
                 <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
               </div>
               <div className="detail-row">
+                <span className="detail-label">Código interno</span>
+                <strong>{getInvoiceInternalReference(invoice)}</strong>
+              </div>
+              <div className="detail-row">
                 <span className="detail-label">Servicio</span>
-                <strong>{invoice.job_display_code ?? invoice.job_id}</strong>
+                <strong>{getInvoiceServiceReference(invoice)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
-                <strong>{invoice.client_display_code ?? invoice.client_id}</strong>
+                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha de emisión</span>

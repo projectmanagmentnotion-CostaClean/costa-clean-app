@@ -51,7 +51,7 @@ export function InvoicesList({
         label="Buscar factura"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Código, número, servicio, cliente, estado o importe"
+        placeholder="Número, código interno, servicio, cliente, estado o importe"
         resultCount={filteredInvoices.length}
         totalCount={invoices.length}
       />
@@ -88,16 +88,16 @@ export function InvoicesList({
                 onClick={() => onSelectInvoice(invoice)}
               >
                 <div className="lead-item-top">
-                  <strong>{invoice.display_code ?? invoice.id}</strong>
+                  <strong>{invoice.invoice_number ?? invoice.display_code ?? invoice.id}</strong>
                   <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
                 </div>
 
                 <div className="cc-list-meta">
-                  <span>{invoice.invoice_number ?? 'Sin número'}</span>
+                  <span>Interno {invoice.display_code ?? invoice.id}</span>
                   <span>{invoice.issue_date}</span>
                 </div>
 
-                <p>Cliente {invoice.client_display_code ?? invoice.client_id}</p>
+                <p>Cliente {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</p>
                 <p>Total {formatCurrency(invoice.total)}</p>
               </button>
             )

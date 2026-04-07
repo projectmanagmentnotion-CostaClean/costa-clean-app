@@ -151,7 +151,7 @@ export function ClientDetailCard({
           <div className="lead-detail-header">
             <div>
               <h3>{client.full_name}</h3>
-              <p>{client.display_code ?? client.id}</p>
+              <p>Interno {client.display_code ?? client.id}</p>
             </div>
 
             <span className="lead-badge">{getDisplayStatusLabel(client.status)}</span>
@@ -223,12 +223,12 @@ export function ClientDetailCard({
           ) : (
             <div className="lead-detail-grid">
               <div className="detail-row">
-                <span className="detail-label">Código</span>
-                <strong>{client.display_code ?? client.id}</strong>
-              </div>
-              <div className="detail-row">
                 <span className="detail-label">Nombre</span>
                 <strong>{client.full_name}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Código interno</span>
+                <strong>{client.display_code ?? client.id}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Teléfono</span>

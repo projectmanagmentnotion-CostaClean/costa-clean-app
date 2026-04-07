@@ -175,7 +175,7 @@ export function PropertyDetailCard({
           <div className="lead-detail-header">
             <div>
               <h3>{property.name}</h3>
-              <p>{property.display_code ?? property.id}</p>
+              <p>{property.address}</p>
             </div>
 
             <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
@@ -265,20 +265,16 @@ export function PropertyDetailCard({
           ) : (
             <div className="lead-detail-grid">
               <div className="detail-row">
-                <span className="detail-label">Código</span>
-                <strong>{property.display_code ?? property.id}</strong>
-              </div>
-              <div className="detail-row">
                 <span className="detail-label">Nombre</span>
                 <strong>{property.name}</strong>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Tipo</span>
-                <strong>{getPropertyTypeLabel(property.property_type)}</strong>
-              </div>
-              <div className="detail-row">
                 <span className="detail-label">Dirección</span>
                 <strong>{property.address}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Tipo</span>
+                <strong>{getPropertyTypeLabel(property.property_type)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Ciudad</span>
@@ -291,6 +287,10 @@ export function PropertyDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
                 <strong>{property.client_display_code ?? property.client_id}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Código interno</span>
+                <strong>{property.display_code ?? property.id}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Notas</span>

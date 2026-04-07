@@ -22,9 +22,25 @@ import { listExpenses } from '../features/expenses/expenseApi'
 import type { PaymentListItem } from '../features/payments/types'
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
-  return [...(invoice.invoice_lines ?? [])].sort(
+  return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
     (left, right) => Number(left.sort_order) - Number(right.sort_order),
   )
+}
+
+function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
+  const linesByInvoiceId = new Map<string, NonNullable<InvoiceListItem['lines']>>()
+
+  for (const line of lines) {
+    const currentLines = linesByInvoiceId.get(line.invoice_id) ?? []
+    currentLines.push(line)
+    linesByInvoiceId.set(line.invoice_id, currentLines)
+  }
+
+  for (const invoiceLines of linesByInvoiceId.values()) {
+    invoiceLines.sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
+  }
+
+  return linesByInvoiceId
 }
 
 function buildPropertyAddressLine(property: PropertyListItem | undefined): string | null {
@@ -229,7 +245,7 @@ export function AppShell() {
         setInvoiceError('Faltan las variables de entorno de Supabase.')
         return
       }
-      const response = await fetch(`${supabaseUrl}/rest/v1/invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes,invoice_lines(id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at)&order=created_at.desc`, {
+      const response = await fetch(`${supabaseUrl}/rest/v1/invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc`, {
         method: 'GET',
         headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
       })
@@ -237,7 +253,22 @@ export function AppShell() {
         setInvoiceError(`REST ${response.status}: ${response.statusText}`)
         return
       }
-      setInvoices(((await response.json()) as InvoiceListItem[]) ?? [])
+      const loadedInvoices = ((await response.json()) as InvoiceListItem[]) ?? []
+
+      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/invoice_lines?select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`, {
+        method: 'GET',
+        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
+      })
+      if (!linesResponse.ok) {
+        setInvoiceError(`REST ${linesResponse.status}: ${linesResponse.statusText}`)
+        return
+      }
+
+      const linesByInvoiceId = groupInvoiceLines(((await linesResponse.json()) as NonNullable<InvoiceListItem['lines']>) ?? [])
+      setInvoices(loadedInvoices.map((invoice) => ({
+        ...invoice,
+        lines: linesByInvoiceId.get(invoice.id) ?? [],
+      })))
     } catch (err) {
       setInvoiceError(err instanceof Error ? err.message : 'Error desconocido cargando invoices.')
     }

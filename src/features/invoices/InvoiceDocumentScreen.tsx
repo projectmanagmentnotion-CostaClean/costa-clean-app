@@ -7,6 +7,7 @@ import {
 } from './openInvoicePrintWindow'
 import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
+import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
 
 interface InvoiceDocumentScreenProps {
   invoice: InvoiceListItem
@@ -17,20 +18,29 @@ export function InvoiceDocumentScreen({
   invoice,
   onClose,
 }: InvoiceDocumentScreenProps) {
-  const documentTitle = useMemo(() => getInvoiceDocumentTitle(invoice), [invoice])
+  const {
+    invoice: hydratedInvoice,
+    isLoadingLines,
+    linesError,
+  } = useInvoiceDocumentLines(invoice)
+  const documentTitle = useMemo(() => getInvoiceDocumentTitle(hydratedInvoice), [hydratedInvoice])
 
   function handlePrint() {
-    openInvoicePrintWindow(invoice, 'print')
+    if (!isLoadingLines && !linesError) {
+      openInvoicePrintWindow(hydratedInvoice, 'print')
+    }
   }
 
   function handleSavePdf() {
-    openInvoicePrintWindow(invoice, 'pdf')
+    if (!isLoadingLines && !linesError) {
+      openInvoicePrintWindow(hydratedInvoice, 'pdf')
+    }
   }
 
   async function handleShare() {
     await shareDocumentSummary(
       documentTitle,
-      [`Total: ${invoice.total}`, `Estado: ${invoice.status}`],
+      [`Total: ${hydratedInvoice.total}`, `Estado: ${hydratedInvoice.status}`],
       'Resumen de la factura copiado al portapapeles.',
       'Compartir no está disponible en este dispositivo.',
     )
@@ -47,7 +57,19 @@ export function InvoiceDocumentScreen({
       onPrint={handlePrint}
       onSavePdf={handleSavePdf}
     >
-      <InvoiceDocumentA4 invoice={invoice} variant="embedded" />
+      {isLoadingLines ? (
+        <div className="empty-state">
+          <strong>Cargando líneas de factura</strong>
+          <p>Preparando la vista previa con los conceptos reales.</p>
+        </div>
+      ) : linesError ? (
+        <div className="empty-state">
+          <strong>No se pudieron cargar las líneas</strong>
+          <p>{linesError}</p>
+        </div>
+      ) : (
+        <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
+      )}
     </DocumentScreenFrame>
   )
 }

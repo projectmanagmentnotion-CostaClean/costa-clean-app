@@ -1,5 +1,6 @@
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
+import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
 
 interface InvoiceDocumentPreviewProps {
   invoice: InvoiceListItem | null
@@ -24,6 +25,20 @@ export function InvoiceDocumentPreview({
     )
   }
 
+  return <InvoiceDocumentPreviewContent invoice={invoice} />
+}
+
+function InvoiceDocumentPreviewContent({
+  invoice,
+}: {
+  invoice: InvoiceListItem
+}) {
+  const {
+    invoice: hydratedInvoice,
+    isLoadingLines,
+    linesError,
+  } = useInvoiceDocumentLines(invoice)
+
   return (
     <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--invoice">
       <div className="section-header">
@@ -33,7 +48,19 @@ export function InvoiceDocumentPreview({
 
       <div className="cc-doc-preview-panel__viewport">
         <div className="cc-doc-preview-panel__canvas">
-          <InvoiceDocumentA4 invoice={invoice} variant="embedded" />
+          {isLoadingLines ? (
+            <div className="empty-state">
+              <strong>Cargando líneas de factura</strong>
+              <p>Preparando la vista previa con los conceptos reales.</p>
+            </div>
+          ) : linesError ? (
+            <div className="empty-state">
+              <strong>No se pudieron cargar las líneas</strong>
+              <p>{linesError}</p>
+            </div>
+          ) : (
+            <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
+          )}
         </div>
       </div>
     </section>

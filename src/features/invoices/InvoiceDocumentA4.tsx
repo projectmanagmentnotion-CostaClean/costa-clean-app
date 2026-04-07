@@ -1,10 +1,19 @@
-﻿import './invoiceDocument.css'
+import './invoiceDocument.css'
 import { businessRules } from '../../app/businessRules'
-import type { InvoiceListItem } from './types'
+import type { InvoiceLineItem, InvoiceListItem } from './types'
 
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
   variant?: 'document' | 'embedded' | 'print'
+}
+
+interface DocumentLine {
+  id: string
+  concept: string
+  quantity: number
+  unit: string | null
+  unit_price: number
+  line_subtotal: number
 }
 
 function formatDate(value: string): string {
@@ -41,8 +50,10 @@ function buildReferenceTitle(invoice: InvoiceListItem): string {
   return invoice.service_reference || invoice.job_display_code || invoice.job_id
 }
 
-function buildConcept(invoice: InvoiceListItem): string {
-  return invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza'
+function normalizeUnit(value: string | null | undefined): string | null {
+  const rawUnit = value?.trim()
+  if (!rawUnit) return null
+  return rawUnit === 'service' ? 'servicio' : rawUnit
 }
 
 function getBillingQuantity(invoice: InvoiceListItem): number {
@@ -59,14 +70,56 @@ function getBillingUnitPrice(invoice: InvoiceListItem, quantity: number): number
   return quantity > 0 ? invoice.subtotal / quantity : invoice.subtotal
 }
 
-function formatQuantity(invoice: InvoiceListItem, quantity: number): string {
+function getPersistedDocumentLines(invoice: InvoiceListItem): DocumentLine[] {
+  const lines = invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []
+
+  return [...lines]
+    .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
+    .map((line: InvoiceLineItem) => ({
+      id: line.id,
+      concept: line.concept?.trim() || 'Servicio de limpieza',
+      quantity: Number(line.quantity),
+      unit: normalizeUnit(line.unit),
+      unit_price: Number(line.unit_price),
+      line_subtotal: Number(line.line_subtotal),
+    }))
+    .filter((line) => (
+      Number.isFinite(line.quantity) &&
+      line.quantity > 0 &&
+      Number.isFinite(line.unit_price) &&
+      Number.isFinite(line.line_subtotal)
+    ))
+}
+
+function getDocumentLines(invoice: InvoiceListItem): DocumentLine[] {
+  const persistedLines = getPersistedDocumentLines(invoice)
+  if (persistedLines.length > 0) {
+    return persistedLines
+  }
+
+  const quantity = getBillingQuantity(invoice)
+  const unitPrice = getBillingUnitPrice(invoice, quantity)
+
+  return [{
+    id: `${invoice.id}-fallback-line`,
+    concept: invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza',
+    quantity,
+    unit: normalizeUnit(invoice.billing_unit),
+    unit_price: unitPrice,
+    line_subtotal: invoice.subtotal,
+  }]
+}
+
+function buildConcept(invoice: InvoiceListItem): string {
+  return getDocumentLines(invoice)[0]?.concept || 'Servicio de limpieza'
+}
+
+function formatQuantity(line: DocumentLine): string {
   const formattedQuantity = new Intl.NumberFormat('es-ES', {
     maximumFractionDigits: 2,
-  }).format(quantity)
-  const rawUnit = invoice.billing_unit?.trim()
-  const unit = rawUnit === 'service' ? 'servicio' : rawUnit
+  }).format(line.quantity)
 
-  return unit ? `${formattedQuantity} ${unit}` : formattedQuantity
+  return line.unit ? `${formattedQuantity} ${line.unit}` : formattedQuantity
 }
 
 export function InvoiceDocumentA4({
@@ -74,8 +127,7 @@ export function InvoiceDocumentA4({
   variant = 'document',
 }: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
-  const billingQuantity = getBillingQuantity(invoice)
-  const billingUnitPrice = getBillingUnitPrice(invoice, billingQuantity)
+  const documentLines = getDocumentLines(invoice)
 
   const articleClassName =
     variant === 'embedded'
@@ -169,12 +221,14 @@ export function InvoiceDocumentA4({
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{buildConcept(invoice)}</td>
-              <td>{formatQuantity(invoice, billingQuantity)}</td>
-              <td>{formatCurrency(billingUnitPrice)}</td>
-              <td>{formatCurrency(invoice.subtotal)}</td>
-            </tr>
+            {documentLines.map((line) => (
+              <tr key={line.id}>
+                <td>{line.concept}</td>
+                <td>{formatQuantity(line)}</td>
+                <td>{formatCurrency(line.unit_price)}</td>
+                <td>{formatCurrency(line.line_subtotal)}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </section>
@@ -218,4 +272,3 @@ export function InvoiceDocumentA4({
     </article>
   )
 }
-

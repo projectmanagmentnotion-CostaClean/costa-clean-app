@@ -21,6 +21,12 @@ import type { ExpenseListItem } from '../features/expenses/types'
 import { listExpenses } from '../features/expenses/expenseApi'
 import type { PaymentListItem } from '../features/payments/types'
 
+function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
+  return [...(invoice.invoice_lines ?? [])].sort(
+    (left, right) => Number(left.sort_order) - Number(right.sort_order),
+  )
+}
+
 function buildPropertyAddressLine(property: PropertyListItem | undefined): string | null {
   if (!property) return null
 
@@ -223,7 +229,7 @@ export function AppShell() {
         setInvoiceError('Faltan las variables de entorno de Supabase.')
         return
       }
-      const response = await fetch(`${supabaseUrl}/rest/v1/invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc`, {
+      const response = await fetch(`${supabaseUrl}/rest/v1/invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes,invoice_lines(id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at)&order=created_at.desc`, {
         method: 'GET',
         headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
       })
@@ -392,6 +398,7 @@ export function AppShell() {
         billing_quantity: invoice.billing_quantity ?? job?.billing_quantity ?? null,
         billing_unit: invoice.billing_unit ?? job?.billing_unit ?? null,
         billing_unit_price: invoice.billing_unit_price ?? job?.billing_unit_price ?? null,
+        lines: normalizeInvoiceLines(invoice),
       }
     }),
     [invoices, clientById, clientCodeById, jobById, jobCodeById, propertyById, propertyCodeById, quoteById],

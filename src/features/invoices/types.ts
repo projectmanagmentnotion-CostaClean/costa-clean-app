@@ -29,4 +29,18 @@
   billing_quantity?: number | null
   billing_unit?: string | null
   billing_unit_price?: number | null
+  invoice_lines?: InvoiceLineItem[]
+  lines?: InvoiceLineItem[]
+}
+
+export interface InvoiceLineItem {
+  id: string
+  invoice_id: string
+  sort_order: number
+  concept: string
+  quantity: number
+  unit: string
+  unit_price: number
+  line_subtotal: number
+  created_at?: string
 }

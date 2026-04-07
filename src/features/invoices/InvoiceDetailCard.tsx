@@ -1,8 +1,8 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatCurrency } from '../../app/displayFormat'
+import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
-import type { InvoiceListItem } from './types'
+import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
 
@@ -19,10 +19,34 @@ interface EditFormState {
   client_id: string
   issue_date: string
   status: string
-  subtotal: string
-  tax_amount: string
-  total: string
   notes: string
+}
+
+interface LineFormState {
+  local_id: string
+  concept: string
+  quantity: string
+  unit: string
+  unit_price: string
+}
+
+interface LinePayload {
+  id: string
+  invoice_id: string
+  sort_order: number
+  concept: string
+  quantity: number
+  unit: string
+  unit_price: number
+  line_subtotal: number
+}
+
+function createLocalId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return `${prefix}-${crypto.randomUUID()}`
+  }
+
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
 
 function parseDecimalInput(value: string): number {
@@ -31,14 +55,68 @@ function parseDecimalInput(value: string): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-function formatMoneyInput(value: number): string {
-  return value.toFixed(2)
+function roundMoney(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100
 }
 
-function getJobBillingDraft(job: JobListItem | null): { subtotal: number, notes: string } | null {
-  if (!job) {
-    return null
+function formatMoneyInput(value: number): string {
+  return roundMoney(value).toFixed(2)
+}
+
+function formatQuantityInput(value: number): string {
+  return roundMoney(value).toFixed(2)
+}
+
+function createBlankLine(): LineFormState {
+  return {
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: '',
+    quantity: '1.00',
+    unit: 'servicio',
+    unit_price: '0.00',
   }
+}
+
+function lineItemToFormLine(line: InvoiceLineItem): LineFormState {
+  return {
+    local_id: line.id || createLocalId('LINE-DRAFT'),
+    concept: line.concept,
+    quantity: formatQuantityInput(Number(line.quantity)),
+    unit: line.unit || 'servicio',
+    unit_price: formatMoneyInput(Number(line.unit_price)),
+  }
+}
+
+function getFallbackLineFromInvoice(invoice: InvoiceListItem): LineFormState {
+  const quantity = Number(invoice.billing_quantity)
+  const safeQuantity = Number.isFinite(quantity) && quantity > 0 ? quantity : 1
+  const unitPrice = Number(invoice.billing_unit_price)
+  const safeUnitPrice = Number.isFinite(unitPrice) && unitPrice >= 0
+    ? unitPrice
+    : Number(invoice.subtotal) / safeQuantity
+
+  return {
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza',
+    quantity: formatQuantityInput(safeQuantity),
+    unit: invoice.billing_unit?.trim() || 'servicio',
+    unit_price: formatMoneyInput(safeUnitPrice),
+  }
+}
+
+function getFormLinesFromInvoice(invoice: InvoiceListItem): LineFormState[] {
+  const persistedLines = invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []
+  if (persistedLines.length > 0) {
+    return [...persistedLines]
+      .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
+      .map(lineItemToFormLine)
+  }
+
+  return [getFallbackLineFromInvoice(invoice)]
+}
+
+function getJobBillingLine(job: JobListItem | null): LineFormState | null {
+  if (!job) return null
 
   const quantity = Number(job.billing_quantity)
   const unitPrice = Number(job.billing_unit_price)
@@ -53,9 +131,79 @@ function getJobBillingDraft(job: JobListItem | null): { subtotal: number, notes:
   }
 
   return {
-    subtotal: quantity * unitPrice,
-    notes: job.billing_concept?.trim() ?? '',
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: job.billing_concept?.trim() || getServiceTypeLabel(job.service_type),
+    quantity: formatQuantityInput(quantity),
+    unit: job.billing_unit?.trim() || 'servicio',
+    unit_price: formatMoneyInput(unitPrice),
   }
+}
+
+function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
+  if (!quote) return null
+
+  const subtotal = Number(quote.subtotal)
+  if (!Number.isFinite(subtotal) || subtotal < 0) return null
+
+  return {
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: quote.notes?.trim() || `Servicio según presupuesto ${quote.display_code ?? quote.id}`,
+    quantity: '1.00',
+    unit: 'servicio',
+    unit_price: formatMoneyInput(subtotal),
+  }
+}
+
+function calculateLineSubtotal(line: LineFormState): number {
+  const quantity = parseDecimalInput(line.quantity)
+  const unitPrice = parseDecimalInput(line.unit_price)
+  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return Number.NaN
+  return roundMoney(quantity * unitPrice)
+}
+
+function formatLineSubtotalInput(line: LineFormState): string {
+  const lineSubtotal = calculateLineSubtotal(line)
+  return Number.isNaN(lineSubtotal) ? '' : formatMoneyInput(lineSubtotal)
+}
+
+function formatLineSubtotalDisplay(line: LineFormState): string {
+  const lineSubtotal = calculateLineSubtotal(line)
+  return Number.isNaN(lineSubtotal) ? 'Importe no válido' : formatCurrency(lineSubtotal)
+}
+
+function calculateSubtotal(lines: LineFormState[]): number {
+  return roundMoney(lines.reduce((sum, line) => {
+    const lineSubtotal = calculateLineSubtotal(line)
+    return Number.isNaN(lineSubtotal) ? sum : sum + lineSubtotal
+  }, 0))
+}
+
+function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePayload[] | null {
+  const payloads: LinePayload[] = []
+
+  for (const [index, line] of lines.entries()) {
+    const concept = line.concept.trim()
+    const quantity = parseDecimalInput(line.quantity)
+    const unitPrice = parseDecimalInput(line.unit_price)
+    const lineSubtotal = calculateLineSubtotal(line)
+
+    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0 || !Number.isFinite(lineSubtotal) || lineSubtotal < 0) {
+      return null
+    }
+
+    payloads.push({
+      id: createLocalId('INVOICE-LINE'),
+      invoice_id: invoiceId,
+      sort_order: index + 1,
+      concept,
+      quantity: roundMoney(quantity),
+      unit: line.unit.trim() || 'servicio',
+      unit_price: roundMoney(unitPrice),
+      line_subtotal: lineSubtotal,
+    })
+  }
+
+  return payloads
 }
 
 export function InvoiceDetailCard({
@@ -74,11 +222,9 @@ export function InvoiceDetailCard({
     client_id: '',
     issue_date: '',
     status: 'draft',
-    subtotal: '0.00',
-    tax_amount: '0.00',
-    total: '0.00',
     notes: '',
   })
+  const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === form.job_id) ?? null,
@@ -86,11 +232,24 @@ export function InvoiceDetailCard({
   )
 
   const linkedQuote = useMemo(() => {
-    if (!selectedJob?.quote_id) {
-      return null
-    }
+    if (!selectedJob?.quote_id) return null
     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
   }, [quotes, selectedJob])
+
+  const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
+  const taxAmountValue = useMemo(
+    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
+    [subtotalValue],
+  )
+  const totalValue = useMemo(
+    () => roundMoney(subtotalValue + taxAmountValue),
+    [subtotalValue, taxAmountValue],
+  )
+
+  const displayLines = useMemo(() => {
+    if (!invoice) return []
+    return getFormLinesFromInvoice(invoice)
+  }, [invoice])
 
   useEffect(() => {
     if (!invoice) {
@@ -102,11 +261,9 @@ export function InvoiceDetailCard({
         client_id: '',
         issue_date: '',
         status: 'draft',
-        subtotal: '0.00',
-        tax_amount: '0.00',
-        total: '0.00',
         notes: '',
       })
+      setLines([createBlankLine()])
       return
     }
 
@@ -118,11 +275,9 @@ export function InvoiceDetailCard({
       client_id: invoice.client_id,
       issue_date: invoice.issue_date,
       status: invoice.status,
-      subtotal: String(invoice.subtotal),
-      tax_amount: String(invoice.tax_amount),
-      total: String(invoice.total),
       notes: invoice.notes ?? '',
     })
+    setLines(getFormLinesFromInvoice(invoice))
   }, [invoice])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
@@ -132,74 +287,50 @@ export function InvoiceDetailCard({
     }))
   }
 
-  function recalculateFromSubtotal(value: string) {
-    const subtotal = parseDecimalInput(value)
+  function updateLine<K extends keyof LineFormState>(
+    localId: string,
+    field: K,
+    value: LineFormState[K],
+  ) {
+    setLines((current) => current.map((line) => (
+      line.local_id === localId ? { ...line, [field]: value } : line
+    )))
+  }
 
-    if (Number.isNaN(subtotal)) {
-      setForm((current) => ({
-        ...current,
-        subtotal: value,
-        tax_amount: '',
-        total: '',
-      }))
-      return
-    }
+  function removeLine(localId: string) {
+    setLines((current) => (
+      current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
+    ))
+  }
 
-    const taxAmount = subtotal * businessRules.defaultTaxRate
-    const total = subtotal + taxAmount
+  function resetFormFromInvoice() {
+    if (!invoice) return
 
-    setForm((current) => ({
-      ...current,
-      subtotal: value,
-      tax_amount: formatMoneyInput(taxAmount),
-      total: formatMoneyInput(total),
-    }))
+    setForm({
+      job_id: invoice.job_id,
+      client_id: invoice.client_id,
+      issue_date: invoice.issue_date,
+      status: invoice.status,
+      notes: invoice.notes ?? '',
+    })
+    setLines(getFormLinesFromInvoice(invoice))
   }
 
   function syncFromJobQuote() {
-    if (!selectedJob) {
-      return
-    }
-
-    const jobBillingDraft = getJobBillingDraft(selectedJob)
-
-    if (jobBillingDraft) {
-      const taxAmount = jobBillingDraft.subtotal * businessRules.defaultTaxRate
-      setForm((current) => ({
-        ...current,
-        client_id: selectedJob.client_id,
-        subtotal: formatMoneyInput(jobBillingDraft.subtotal),
-        tax_amount: formatMoneyInput(taxAmount),
-        total: formatMoneyInput(jobBillingDraft.subtotal + taxAmount),
-        notes: current.notes.trim() ? current.notes : jobBillingDraft.notes,
-      }))
-      return
-    }
-
-    if (linkedQuote) {
-      setForm((current) => ({
-        ...current,
-        client_id: selectedJob.client_id,
-        subtotal: formatMoneyInput(Number(linkedQuote.subtotal)),
-        tax_amount: formatMoneyInput(Number(linkedQuote.tax_amount ?? 0)),
-        total: formatMoneyInput(Number(linkedQuote.total)),
-        notes: current.notes.trim() ? current.notes : linkedQuote.notes ?? '',
-      }))
-      return
-    }
+    if (!selectedJob) return
 
     setForm((current) => ({
       ...current,
       client_id: selectedJob.client_id,
+      notes: current.notes.trim() ? current.notes : linkedQuote?.notes ?? '',
     }))
+    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    if (!invoice) {
-      return
-    }
+    if (!invoice) return
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -229,16 +360,10 @@ export function InvoiceDetailCard({
         return
       }
 
-      const subtotal = parseDecimalInput(form.subtotal)
-      const taxAmount = parseDecimalInput(form.tax_amount)
-      const total = parseDecimalInput(form.total)
+      const linePayloads = buildLinePayloads(lines, invoice.id)
 
-      if (
-        Number.isNaN(subtotal) ||
-        Number.isNaN(taxAmount) ||
-        Number.isNaN(total)
-      ) {
-        setSaveError('Subtotal, IVA y total deben ser números válidos.')
+      if (!linePayloads || linePayloads.length === 0) {
+        setSaveError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
         return
       }
 
@@ -256,9 +381,9 @@ export function InvoiceDetailCard({
             client_id: form.client_id,
             issue_date: form.issue_date,
             status: form.status,
-            subtotal: Number(formatMoneyInput(subtotal)),
-            tax_amount: Number(formatMoneyInput(taxAmount)),
-            total: Number(formatMoneyInput(total)),
+            subtotal: subtotalValue,
+            tax_amount: taxAmountValue,
+            total: totalValue,
             notes: form.notes.trim() || null,
           }),
         },
@@ -267,6 +392,39 @@ export function InvoiceDetailCard({
       if (!response.ok) {
         const errorText = await response.text()
         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        return
+      }
+
+      const deleteLinesResponse = await fetch(
+        `${supabaseUrl}/rest/v1/invoice_lines?invoice_id=eq.${encodeURIComponent(invoice.id)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+        },
+      )
+
+      if (!deleteLinesResponse.ok) {
+        const errorText = await deleteLinesResponse.text()
+        setSaveError(`Factura actualizada, pero no se pudieron reemplazar las líneas. REST ${deleteLinesResponse.status}: ${errorText || deleteLinesResponse.statusText}`)
+        return
+      }
+
+      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/invoice_lines`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(linePayloads),
+      })
+
+      if (!linesResponse.ok) {
+        const errorText = await linesResponse.text()
+        setSaveError(`Factura actualizada, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
         return
       }
 
@@ -314,16 +472,7 @@ export function InvoiceDetailCard({
                 setIsEditing((current) => !current)
                 setSaveError(null)
                 setSuccessMessage(null)
-                setForm({
-                  job_id: invoice.job_id,
-                  client_id: invoice.client_id,
-                  issue_date: invoice.issue_date,
-                  status: invoice.status,
-                  subtotal: String(invoice.subtotal),
-                  tax_amount: String(invoice.tax_amount),
-                  total: String(invoice.total),
-                  notes: invoice.notes ?? '',
-                })
+                resetFormFromInvoice()
               }}
             >
               {isEditing ? 'Cancelar edición' : 'Editar factura'}
@@ -381,23 +530,87 @@ export function InvoiceDetailCard({
                 </select>
               </label>
 
+              <div className="form-field form-field-full">
+                <span>Líneas de factura *</span>
+                {lines.map((line, index) => (
+                  <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
+                    <label className="form-field form-field-full">
+                      <span>Concepto {index + 1}</span>
+                      <input
+                        value={line.concept}
+                        onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Cantidad</span>
+                      <input
+                        value={line.quantity}
+                        onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Unidad</span>
+                      <input
+                        value={line.unit}
+                        onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Precio unitario</span>
+                      <input
+                        value={line.unit_price}
+                        onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Importe</span>
+                      <input value={formatLineSubtotalInput(line)} readOnly />
+                    </label>
+
+                    <div className="form-actions form-field-full">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => removeLine(line.local_id)}
+                        disabled={lines.length === 1}
+                      >
+                        Quitar línea
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setLines((current) => [...current, createBlankLine()])}
+                  style={{ marginTop: '0.75rem' }}
+                >
+                  Añadir línea
+                </button>
+              </div>
+
               <label className="form-field">
-                <span>Subtotal *</span>
-                <input
-                  value={form.subtotal}
-                  onChange={(event) => recalculateFromSubtotal(event.target.value)}
-                  required
-                />
+                <span>Subtotal</span>
+                <input value={formatMoneyInput(subtotalValue)} readOnly />
               </label>
 
               <label className="form-field">
                 <span>IVA</span>
-                <input value={form.tax_amount} readOnly />
+                <input value={formatMoneyInput(taxAmountValue)} readOnly />
               </label>
 
               <label className="form-field">
                 <span>Total</span>
-                <input value={form.total} readOnly />
+                <input value={formatMoneyInput(totalValue)} readOnly />
               </label>
 
               <label className="form-field form-field-full">
@@ -454,6 +667,12 @@ export function InvoiceDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Fecha de emisión</span>
                 <strong>{invoice.issue_date}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Líneas</span>
+                <strong>
+                  {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
+                </strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Subtotal</span>

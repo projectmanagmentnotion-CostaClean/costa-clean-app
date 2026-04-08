@@ -9,6 +9,7 @@ import {
 } from './openQuotePrintWindow'
 import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
+import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 
 interface QuoteDocumentScreenProps {
   quote: QuoteListItem
@@ -23,20 +24,29 @@ export function QuoteDocumentScreen({
   properties,
   onClose,
 }: QuoteDocumentScreenProps) {
-  const documentTitle = useMemo(() => getQuoteDocumentTitle(quote, clients), [quote, clients])
+  const {
+    quote: hydratedQuote,
+    isLoadingLines,
+    linesError,
+  } = useQuoteDocumentLines(quote)
+  const documentTitle = useMemo(() => getQuoteDocumentTitle(hydratedQuote, clients), [hydratedQuote, clients])
 
   function handlePrint() {
-    openQuotePrintWindow(quote, clients, properties, 'print')
+    if (!isLoadingLines && !linesError) {
+      openQuotePrintWindow(hydratedQuote, clients, properties, 'print')
+    }
   }
 
   function handleSavePdf() {
-    openQuotePrintWindow(quote, clients, properties, 'pdf')
+    if (!isLoadingLines && !linesError) {
+      openQuotePrintWindow(hydratedQuote, clients, properties, 'pdf')
+    }
   }
 
   async function handleShare() {
     await shareDocumentSummary(
       documentTitle,
-      [`Total: ${quote.total}`, `Estado: ${quote.status}`],
+      [`Total: ${hydratedQuote.total}`, `Estado: ${hydratedQuote.status}`],
       'Resumen del presupuesto copiado al portapapeles.',
       'Compartir no está disponible en este dispositivo.',
     )
@@ -53,12 +63,24 @@ export function QuoteDocumentScreen({
       onPrint={handlePrint}
       onSavePdf={handleSavePdf}
     >
-      <QuoteDocumentA4
-        quote={quote}
-        clients={clients}
-        properties={properties}
-        variant="embedded"
-      />
+      {isLoadingLines ? (
+        <div className="empty-state">
+          <strong>Cargando líneas de presupuesto</strong>
+          <p>Preparando la vista previa con los conceptos reales.</p>
+        </div>
+      ) : linesError ? (
+        <div className="empty-state">
+          <strong>No se pudieron cargar las líneas</strong>
+          <p>{linesError}</p>
+        </div>
+      ) : (
+        <QuoteDocumentA4
+          quote={hydratedQuote}
+          clients={clients}
+          properties={properties}
+          variant="embedded"
+        />
+      )}
     </DocumentScreenFrame>
   )
 }

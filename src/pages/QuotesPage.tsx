@@ -79,6 +79,8 @@ export function QuotesPage({
           <div className="cc-master-layout__list">
             <QuotesList
               quotes={quotes}
+              clients={clients}
+              properties={properties}
               error={error}
               selectedQuoteId={selectedQuoteId}
               onSelectQuote={(quote) => {

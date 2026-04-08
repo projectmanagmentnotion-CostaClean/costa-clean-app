@@ -1,19 +1,37 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
+import type { ClientListItem } from '../clients/types'
+import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
   error: string | null
   selectedQuoteId: string | null
   onSelectQuote: (quote: QuoteListItem) => void
 }
 
+function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
+  const client = clients.find((item) => item.id === quote.client_id)
+  return client?.full_name?.trim() || quote.client_display_code || quote.client_id
+}
+
+function buildPropertyLabel(quote: QuoteListItem, properties: PropertyListItem[]): string {
+  if (!quote.property_id) return 'Sin propiedad'
+
+  const property = properties.find((item) => item.id === quote.property_id)
+  return property?.name?.trim() || quote.property_display_code || quote.property_id
+}
+
 export function QuotesList({
   quotes,
+  clients,
+  properties,
   error,
   selectedQuoteId,
   onSelectQuote,
@@ -24,11 +42,10 @@ export function QuotesList({
     return quotes.filter((quote) =>
       matchesSearchQuery(searchQuery, [
         quote.display_code,
-        quote.id,
+        buildClientLabel(quote, clients),
         quote.client_display_code,
-        quote.client_id,
+        buildPropertyLabel(quote, properties),
         quote.property_display_code,
-        quote.property_id,
         quote.status,
         getStatusLabel(quote.status),
         quote.subtotal,
@@ -37,7 +54,7 @@ export function QuotesList({
         quote.notes,
       ]),
     )
-  }, [quotes, searchQuery])
+  }, [clients, properties, quotes, searchQuery])
 
   return (
     <section className="data-section">
@@ -49,7 +66,7 @@ export function QuotesList({
         label="Buscar presupuesto"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Código, cliente, propiedad, estado o importe"
+        placeholder="Referencia, cliente, propiedad, estado o importe"
         resultCount={filteredQuotes.length}
         totalCount={quotes.length}
       />
@@ -73,6 +90,8 @@ export function QuotesList({
         <div className="lead-list">
           {filteredQuotes.map((quote) => {
             const isSelected = quote.id === selectedQuoteId
+            const clientLabel = buildClientLabel(quote, clients)
+            const propertyLabel = buildPropertyLabel(quote, properties)
 
             return (
               <button
@@ -91,11 +110,11 @@ export function QuotesList({
                 </div>
 
                 <div className="cc-list-meta">
-                  <span>{quote.client_display_code ?? quote.client_id}</span>
-                  <span>{quote.property_display_code ?? quote.property_id ?? 'Sin propiedad'}</span>
+                  <span>{clientLabel}</span>
+                  <span>{propertyLabel}</span>
                 </div>
 
-                <p>Subtotal {formatCurrency(quote.subtotal)}</p>
+                <p>Base {formatCurrency(quote.subtotal)}</p>
                 <p>Total {formatCurrency(quote.total)}</p>
               </button>
             )

@@ -1,4 +1,4 @@
-﻿.cc-invoice-a4 {
+.cc-invoice-a4 {
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
@@ -10,6 +10,20 @@
   gap: 8mm;
   box-sizing: border-box;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+}
+
+.cc-invoice-a4--quote {
+  position: relative;
+}
+
+.cc-invoice-a4--quote::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 10mm;
+  border-radius: 24px 24px 0 0;
+  background: linear-gradient(90deg, rgba(14, 116, 144, 0.12), rgba(15, 23, 42, 0));
+  pointer-events: none;
 }
 
 .cc-invoice-a4--embedded {
@@ -26,6 +40,11 @@
   padding: 10mm 10mm 9mm;
   gap: 5mm;
   box-shadow: none;
+}
+
+.cc-invoice-a4--print.cc-invoice-a4--quote::before {
+  height: 6mm;
+  border-radius: 10px 10px 0 0;
 }
 
 .cc-invoice-a4__header {
@@ -216,6 +235,19 @@
 
 .cc-invoice-a4__panel--soft {
   background: #f8fafc;
+}
+
+.cc-invoice-a4--quote .cc-invoice-a4__doc-box,
+.cc-invoice-a4--quote .cc-invoice-a4__totals {
+  background: linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
+}
+
+.cc-invoice-a4--quote .cc-invoice-a4__table th {
+  background: #0f3a4b;
+}
+
+.cc-invoice-a4--quote .cc-invoice-a4__total-row--grand {
+  border-top-color: #94a3b8;
 }
 
 .cc-invoice-a4__label {

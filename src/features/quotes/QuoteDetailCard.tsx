@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -31,6 +31,18 @@ function parseDecimalInput(value: string): number {
 
 function formatMoneyInput(value: number): string {
   return value.toFixed(2)
+}
+
+function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
+  const client = clients.find((item) => item.id === quote.client_id)
+  return client?.full_name?.trim() || quote.client_display_code || quote.client_id
+}
+
+function buildPropertyLabel(quote: QuoteListItem, properties: PropertyListItem[]): string {
+  if (!quote.property_id) return 'Sin propiedad'
+
+  const property = properties.find((item) => item.id === quote.property_id)
+  return property?.name?.trim() || quote.property_display_code || quote.property_id
 }
 
 export function QuoteDetailCard({
@@ -207,6 +219,9 @@ export function QuoteDetailCard({
     }
   }
 
+  const clientLabel = quote ? buildClientLabel(quote, clients) : 'Sin cliente'
+  const propertyLabel = quote ? buildPropertyLabel(quote, properties) : 'Sin propiedad'
+
   return (
     <section className="data-section">
       <div className="section-header page-header-actions">
@@ -258,6 +273,7 @@ export function QuoteDetailCard({
           <div className="lead-detail-header">
             <div>
               <h3>{quote.display_code ?? quote.id}</h3>
+              <p>{clientLabel}</p>
             </div>
 
             <span className="lead-badge">{getStatusLabel(quote.status)}</span>
@@ -359,18 +375,28 @@ export function QuoteDetailCard({
           ) : (
             <div className="lead-detail-grid">
               <div className="detail-row">
-                <span className="detail-label">Código</span>
+                <span className="detail-label">Referencia</span>
                 <strong>{quote.display_code ?? quote.id}</strong>
               </div>
 
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
-                <strong>{quote.client_display_code ?? quote.client_id}</strong>
+                <strong>{clientLabel}</strong>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Ref. CRM cliente</span>
+                <strong>{quote.client_display_code ?? 'Sin referencia CRM'}</strong>
               </div>
 
               <div className="detail-row">
                 <span className="detail-label">Propiedad</span>
-                <strong>{quote.property_display_code ?? quote.property_id ?? 'Sin propiedad'}</strong>
+                <strong>{propertyLabel}</strong>
+              </div>
+
+              <div className="detail-row">
+                <span className="detail-label">Ref. CRM propiedad</span>
+                <strong>{quote.property_display_code ?? 'Sin referencia CRM'}</strong>
               </div>
 
               <div className="detail-row">

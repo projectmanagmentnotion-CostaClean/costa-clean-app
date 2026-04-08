@@ -1,8 +1,18 @@
-﻿import { useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
+import {
+  buildQuoteLinePayloads,
+  calculateQuoteSubtotal,
+  createBlankQuoteLine,
+  createLocalId,
+  formatMoneyInput,
+  formatQuoteLineSubtotalInput,
+  roundMoney,
+} from './quoteLineUtils'
+import type { QuoteLineFormState } from './quoteLineUtils'
 
 interface QuoteCreateFormProps {
   clients: ClientListItem[]
@@ -14,19 +24,7 @@ interface FormState {
   client_id: string
   property_id: string
   status: string
-  subtotal: string
   notes: string
-}
-
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function formatMoneyInput(value: number): string {
-  return value.toFixed(2)
 }
 
 export function QuoteCreateForm({
@@ -38,9 +36,9 @@ export function QuoteCreateForm({
     client_id: clients[0]?.id ?? '',
     property_id: '',
     status: 'draft',
-    subtotal: '0',
     notes: '',
   })
+  const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -53,33 +51,15 @@ export function QuoteCreateForm({
     return properties.filter((property) => property.client_id === form.client_id)
   }, [properties, form.client_id])
 
-  const subtotalValue = useMemo(() => {
-    return parseDecimalInput(form.subtotal)
-  }, [form.subtotal])
-
-  const taxAmountValue = useMemo(() => {
-    if (Number.isNaN(subtotalValue)) {
-      return Number.NaN
-    }
-
-    return subtotalValue * businessRules.defaultTaxRate
-  }, [subtotalValue])
-
-  const totalValue = useMemo(() => {
-    if (Number.isNaN(subtotalValue) || Number.isNaN(taxAmountValue)) {
-      return Number.NaN
-    }
-
-    return subtotalValue + taxAmountValue
-  }, [subtotalValue, taxAmountValue])
-
-  const taxAmountDisplay = Number.isNaN(taxAmountValue)
-    ? ''
-    : formatMoneyInput(taxAmountValue)
-
-  const totalDisplay = Number.isNaN(totalValue)
-    ? ''
-    : formatMoneyInput(totalValue)
+  const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const taxAmountValue = useMemo(
+    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
+    [subtotalValue],
+  )
+  const totalValue = useMemo(
+    () => roundMoney(subtotalValue + taxAmountValue),
+    [subtotalValue, taxAmountValue],
+  )
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => {
@@ -94,6 +74,22 @@ export function QuoteCreateForm({
 
       return next
     })
+  }
+
+  function updateLine<K extends keyof QuoteLineFormState>(
+    localId: string,
+    field: K,
+    value: QuoteLineFormState[K],
+  ) {
+    setLines((current) => current.map((line) => (
+      line.local_id === localId ? { ...line, [field]: value } : line
+    )))
+  }
+
+  function removeLine(localId: string) {
+    setLines((current) => (
+      current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
+    ))
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -116,19 +112,13 @@ export function QuoteCreateForm({
         return
       }
 
-      if (
-        Number.isNaN(subtotalValue) ||
-        Number.isNaN(taxAmountValue) ||
-        Number.isNaN(totalValue)
-      ) {
-        setSubmitError('El subtotal debe ser un número válido.')
+      const quoteId = createLocalId('QUOTE')
+      const linePayloads = buildQuoteLinePayloads(lines, quoteId)
+
+      if (!linePayloads || linePayloads.length === 0) {
+        setSubmitError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
         return
       }
-
-      const quoteId =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? `QUOTE-${crypto.randomUUID()}`
-          : `QUOTE-${Date.now()}`
 
       const response = await fetch(`${supabaseUrl}/rest/v1/quotes`, {
         method: 'POST',
@@ -142,9 +132,9 @@ export function QuoteCreateForm({
           client_id: form.client_id,
           property_id: form.property_id || null,
           status: form.status,
-          subtotal: Number(formatMoneyInput(subtotalValue)),
-          tax_amount: Number(formatMoneyInput(taxAmountValue)),
-          total: Number(formatMoneyInput(totalValue)),
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
           notes: form.notes.trim() || null,
         }),
       })
@@ -155,14 +145,30 @@ export function QuoteCreateForm({
         return
       }
 
+      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/quote_lines`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(linePayloads),
+      })
+
+      if (!linesResponse.ok) {
+        const errorText = await linesResponse.text()
+        setSubmitError(`Presupuesto creado, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
+        return
+      }
+
       await onCreated()
       setForm({
         client_id: clients[0]?.id ?? '',
         property_id: '',
         status: 'draft',
-        subtotal: '0',
         notes: '',
       })
+      setLines([createBlankQuoteLine()])
       setSuccessMessage('Presupuesto creado correctamente.')
     } catch (err) {
       const message =
@@ -179,7 +185,7 @@ export function QuoteCreateForm({
       <div className="section-header">
         <h2>Nuevo presupuesto</h2>
         <p>
-          Crea una propuesta comercial con IVA automático del {businessRules.defaultTaxRate * 100}%.
+          Crea una propuesta comercial con líneas detalladas e IVA automático del {businessRules.defaultTaxRate * 100}%.
         </p>
       </div>
 
@@ -233,32 +239,87 @@ export function QuoteCreateForm({
             </select>
           </label>
 
+          <div className="form-field form-field-full">
+            <span>Líneas de presupuesto *</span>
+            {lines.map((line, index) => (
+              <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
+                <label className="form-field form-field-full">
+                  <span>Concepto {index + 1}</span>
+                  <input
+                    value={line.concept}
+                    onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Cantidad</span>
+                  <input
+                    value={line.quantity}
+                    onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Unidad</span>
+                  <input
+                    value={line.unit}
+                    onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Precio unitario</span>
+                  <input
+                    value={line.unit_price}
+                    onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="form-field">
+                  <span>Importe</span>
+                  <input value={formatQuoteLineSubtotalInput(line)} readOnly />
+                </label>
+
+                <div className="form-actions form-field-full">
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => removeLine(line.local_id)}
+                    disabled={lines.length === 1}
+                  >
+                    Quitar línea
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
+              style={{ marginTop: '0.75rem' }}
+            >
+              Añadir línea
+            </button>
+          </div>
+
           <label className="form-field">
-            <span>Subtotal *</span>
-            <input
-              value={form.subtotal}
-              onChange={(event) => updateField('subtotal', event.target.value)}
-              placeholder="Ej. 120"
-              required
-            />
+            <span>Subtotal</span>
+            <input value={formatMoneyInput(subtotalValue)} readOnly />
           </label>
 
           <label className="form-field">
             <span>IVA (automático)</span>
-            <input
-              value={taxAmountDisplay}
-              placeholder="Calculado automáticamente"
-              readOnly
-            />
+            <input value={formatMoneyInput(taxAmountValue)} readOnly />
           </label>
 
           <label className="form-field">
             <span>Total (automático)</span>
-            <input
-              value={totalDisplay}
-              placeholder="Calculado automáticamente"
-              readOnly
-            />
+            <input value={formatMoneyInput(totalValue)} readOnly />
           </label>
 
           <label className="form-field form-field-full">

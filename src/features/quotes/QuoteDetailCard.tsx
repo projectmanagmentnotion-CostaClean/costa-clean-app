@@ -5,6 +5,18 @@ import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
+import { useQuoteDocumentLines } from './useQuoteDocumentLines'
+import {
+  buildQuoteLinePayloads,
+  calculateQuoteSubtotal,
+  createBlankQuoteLine,
+  formatMoneyInput,
+  formatQuoteLineSubtotalDisplay,
+  formatQuoteLineSubtotalInput,
+  getFormLinesFromQuote,
+  roundMoney,
+} from './quoteLineUtils'
+import type { QuoteLineFormState } from './quoteLineUtils'
 
 interface QuoteDetailCardProps {
   quote: QuoteListItem | null
@@ -18,19 +30,7 @@ interface EditFormState {
   client_id: string
   property_id: string
   status: string
-  subtotal: string
   notes: string
-}
-
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function formatMoneyInput(value: number): string {
-  return value.toFixed(2)
 }
 
 function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
@@ -52,6 +52,52 @@ export function QuoteDetailCard({
   onQuoteUpdated,
   onOpenDocument,
 }: QuoteDetailCardProps) {
+  if (!quote) {
+    return (
+      <section className="data-section">
+        <div className="section-header page-header-actions">
+          <div>
+            <h2>Detalle del presupuesto</h2>
+          </div>
+        </div>
+
+        <div className="empty-state">
+          <strong>Ningún presupuesto seleccionado</strong>
+          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <QuoteDetailCardContent
+      quote={quote}
+      clients={clients}
+      properties={properties}
+      onQuoteUpdated={onQuoteUpdated}
+      onOpenDocument={onOpenDocument}
+    />
+  )
+}
+
+function QuoteDetailCardContent({
+  quote,
+  clients,
+  properties,
+  onQuoteUpdated,
+  onOpenDocument,
+}: {
+  quote: QuoteListItem
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
+  onQuoteUpdated: () => Promise<void>
+  onOpenDocument: () => void
+}) {
+  const {
+    quote: hydratedQuote,
+    isLoadingLines,
+    linesError,
+  } = useQuoteDocumentLines(quote)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -60,36 +106,22 @@ export function QuoteDetailCard({
     client_id: '',
     property_id: '',
     status: 'draft',
-    subtotal: '0',
     notes: '',
   })
+  const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
 
   useEffect(() => {
-    if (!quote) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setForm({
-        client_id: '',
-        property_id: '',
-        status: 'draft',
-        subtotal: '0',
-        notes: '',
-      })
-      return
-    }
-
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
     setForm({
-      client_id: quote.client_id,
-      property_id: quote.property_id ?? '',
-      status: quote.status,
-      subtotal: String(quote.subtotal),
-      notes: quote.notes ?? '',
+      client_id: hydratedQuote.client_id,
+      property_id: hydratedQuote.property_id ?? '',
+      status: hydratedQuote.status,
+      notes: hydratedQuote.notes ?? '',
     })
-  }, [quote])
+    setLines(getFormLinesFromQuote(hydratedQuote, properties))
+  }, [hydratedQuote, properties])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -99,33 +131,20 @@ export function QuoteDetailCard({
     return properties.filter((property) => property.client_id === form.client_id)
   }, [properties, form.client_id])
 
-  const subtotalValue = useMemo(() => {
-    return parseDecimalInput(form.subtotal)
-  }, [form.subtotal])
+  const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const taxAmountValue = useMemo(
+    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
+    [subtotalValue],
+  )
+  const totalValue = useMemo(
+    () => roundMoney(subtotalValue + taxAmountValue),
+    [subtotalValue, taxAmountValue],
+  )
 
-  const taxAmountValue = useMemo(() => {
-    if (Number.isNaN(subtotalValue)) {
-      return Number.NaN
-    }
-
-    return subtotalValue * businessRules.defaultTaxRate
-  }, [subtotalValue])
-
-  const totalValue = useMemo(() => {
-    if (Number.isNaN(subtotalValue) || Number.isNaN(taxAmountValue)) {
-      return Number.NaN
-    }
-
-    return subtotalValue + taxAmountValue
-  }, [subtotalValue, taxAmountValue])
-
-  const taxAmountDisplay = Number.isNaN(taxAmountValue)
-    ? ''
-    : formatMoneyInput(taxAmountValue)
-
-  const totalDisplay = Number.isNaN(totalValue)
-    ? ''
-    : formatMoneyInput(totalValue)
+  const displayLines = useMemo(
+    () => getFormLinesFromQuote(hydratedQuote, properties),
+    [hydratedQuote, properties],
+  )
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -145,12 +164,34 @@ export function QuoteDetailCard({
     })
   }
 
+  function updateLine<K extends keyof QuoteLineFormState>(
+    localId: string,
+    field: K,
+    value: QuoteLineFormState[K],
+  ) {
+    setLines((current) => current.map((line) => (
+      line.local_id === localId ? { ...line, [field]: value } : line
+    )))
+  }
+
+  function removeLine(localId: string) {
+    setLines((current) => (
+      current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
+    ))
+  }
+
+  function resetFormFromQuote() {
+    setForm({
+      client_id: hydratedQuote.client_id,
+      property_id: hydratedQuote.property_id ?? '',
+      status: hydratedQuote.status,
+      notes: hydratedQuote.notes ?? '',
+    })
+    setLines(getFormLinesFromQuote(hydratedQuote, properties))
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-
-    if (!quote) {
-      return
-    }
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -170,17 +211,15 @@ export function QuoteDetailCard({
         return
       }
 
-      if (
-        Number.isNaN(subtotalValue) ||
-        Number.isNaN(taxAmountValue) ||
-        Number.isNaN(totalValue)
-      ) {
-        setSaveError('El subtotal debe ser un número válido.')
+      const linePayloads = buildQuoteLinePayloads(lines, hydratedQuote.id)
+
+      if (!linePayloads || linePayloads.length === 0) {
+        setSaveError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
         return
       }
 
       const response = await fetch(
-        `${supabaseUrl}/rest/v1/quotes?id=eq.${encodeURIComponent(quote.id)}`,
+        `${supabaseUrl}/rest/v1/quotes?id=eq.${encodeURIComponent(hydratedQuote.id)}`,
         {
           method: 'PATCH',
           headers: {
@@ -192,9 +231,9 @@ export function QuoteDetailCard({
             client_id: form.client_id,
             property_id: form.property_id || null,
             status: form.status,
-            subtotal: Number(formatMoneyInput(subtotalValue)),
-            tax_amount: Number(formatMoneyInput(taxAmountValue)),
-            total: Number(formatMoneyInput(totalValue)),
+            subtotal: subtotalValue,
+            tax_amount: taxAmountValue,
+            total: totalValue,
             notes: form.notes.trim() || null,
           }),
         },
@@ -203,6 +242,39 @@ export function QuoteDetailCard({
       if (!response.ok) {
         const errorText = await response.text()
         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        return
+      }
+
+      const deleteLinesResponse = await fetch(
+        `${supabaseUrl}/rest/v1/quote_lines?quote_id=eq.${encodeURIComponent(hydratedQuote.id)}`,
+        {
+          method: 'DELETE',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+          },
+        },
+      )
+
+      if (!deleteLinesResponse.ok) {
+        const errorText = await deleteLinesResponse.text()
+        setSaveError(`Presupuesto actualizado, pero no se pudieron reemplazar las líneas. REST ${deleteLinesResponse.status}: ${errorText || deleteLinesResponse.statusText}`)
+        return
+      }
+
+      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/quote_lines`, {
+        method: 'POST',
+        headers: {
+          apikey: supabaseAnonKey,
+          Authorization: `Bearer ${supabaseAnonKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(linePayloads),
+      })
+
+      if (!linesResponse.ok) {
+        const errorText = await linesResponse.text()
+        setSaveError(`Presupuesto actualizado, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
         return
       }
 
@@ -219,8 +291,8 @@ export function QuoteDetailCard({
     }
   }
 
-  const clientLabel = quote ? buildClientLabel(quote, clients) : 'Sin cliente'
-  const propertyLabel = quote ? buildPropertyLabel(quote, properties) : 'Sin propiedad'
+  const clientLabel = buildClientLabel(hydratedQuote, clients)
+  const propertyLabel = buildPropertyLabel(hydratedQuote, properties)
 
   return (
     <section className="data-section">
@@ -229,223 +301,290 @@ export function QuoteDetailCard({
           <h2>Detalle del presupuesto</h2>
         </div>
 
-        {quote ? (
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.75rem',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.75rem',
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <button
+            type="button"
+            className="primary-button"
+            onClick={onOpenDocument}
           >
-            <button
-              type="button"
-              className="primary-button"
-              onClick={onOpenDocument}
-            >
-              Abrir documento
-            </button>
+            Abrir documento
+          </button>
 
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                setIsEditing((current) => !current)
-                setSaveError(null)
-                setSuccessMessage(null)
-                setForm({
-                  client_id: quote.client_id,
-                  property_id: quote.property_id ?? '',
-                  status: quote.status,
-                  subtotal: String(quote.subtotal),
-                  notes: quote.notes ?? '',
-                })
-              }}
-            >
-              {isEditing ? 'Cancelar edición' : 'Editar presupuesto'}
-            </button>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setIsEditing((current) => !current)
+              setSaveError(null)
+              setSuccessMessage(null)
+              resetFormFromQuote()
+            }}
+            disabled={isLoadingLines || Boolean(linesError)}
+          >
+            {isEditing ? 'Cancelar edición' : 'Editar presupuesto'}
+          </button>
+        </div>
+      </div>
+
+      <div className="lead-detail-card">
+        <div className="lead-detail-header">
+          <div>
+            <h3>{hydratedQuote.display_code ?? hydratedQuote.id}</h3>
+            <p>{clientLabel}</p>
+          </div>
+
+          <span className="lead-badge">{getStatusLabel(hydratedQuote.status)}</span>
+        </div>
+
+        {isLoadingLines ? (
+          <div className="empty-state">
+            <strong>Cargando líneas de presupuesto</strong>
+            <p>Preparando el detalle editable con los conceptos reales.</p>
+          </div>
+        ) : linesError ? (
+          <div className="empty-state">
+            <strong>No se pudieron cargar las líneas</strong>
+            <p>{linesError}</p>
+          </div>
+        ) : isEditing ? (
+          <form className="lead-form" onSubmit={handleSubmit}>
+            <label className="form-field">
+              <span>Cliente *</span>
+              <select
+                value={form.client_id}
+                onChange={(event) => updateField('client_id', event.target.value)}
+              >
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.full_name} · {client.display_code ?? client.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Propiedad</span>
+              <select
+                value={form.property_id}
+                onChange={(event) => updateField('property_id', event.target.value)}
+              >
+                <option value="">Sin propiedad</option>
+                {availableProperties.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {property.name} · {property.display_code ?? property.id}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Estado</span>
+              <select
+                value={form.status}
+                onChange={(event) => updateField('status', event.target.value)}
+              >
+                <option value="draft">{getStatusLabel('draft')}</option>
+                <option value="sent">{getStatusLabel('sent')}</option>
+                <option value="accepted">{getStatusLabel('accepted')}</option>
+                <option value="rejected">{getStatusLabel('rejected')}</option>
+                <option value="expired">{getStatusLabel('expired')}</option>
+              </select>
+            </label>
+
+            <div className="form-field form-field-full">
+              <span>Líneas de presupuesto *</span>
+              {lines.map((line, index) => (
+                <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
+                  <label className="form-field form-field-full">
+                    <span>Concepto {index + 1}</span>
+                    <input
+                      value={line.concept}
+                      onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Cantidad</span>
+                    <input
+                      value={line.quantity}
+                      onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Unidad</span>
+                    <input
+                      value={line.unit}
+                      onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Precio unitario</span>
+                    <input
+                      value={line.unit_price}
+                      onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Importe</span>
+                    <input value={formatQuoteLineSubtotalInput(line)} readOnly />
+                  </label>
+
+                  <div className="form-actions form-field-full">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => removeLine(line.local_id)}
+                      disabled={lines.length === 1}
+                    >
+                      Quitar línea
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
+                style={{ marginTop: '0.75rem' }}
+              >
+                Añadir línea
+              </button>
+            </div>
+
+            <label className="form-field">
+              <span>Subtotal</span>
+              <input value={formatMoneyInput(subtotalValue)} readOnly />
+            </label>
+
+            <label className="form-field">
+              <span>IVA (automático)</span>
+              <input value={formatMoneyInput(taxAmountValue)} readOnly />
+            </label>
+
+            <label className="form-field">
+              <span>Total (automático)</span>
+              <input value={formatMoneyInput(totalValue)} readOnly />
+            </label>
+
+            <label className="form-field form-field-full">
+              <span>Notas</span>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                rows={4}
+              />
+            </label>
+
+            <div className="form-actions">
+              <button type="submit" className="primary-button" disabled={isSaving}>
+                {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+              </button>
+            </div>
+
+            {saveError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo actualizar el presupuesto</strong>
+                <p>{saveError}</p>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className="cc-alert cc-alert--success">
+                <strong>Operación correcta</strong>
+                <p>{successMessage}</p>
+              </div>
+            ) : null}
+          </form>
+        ) : (
+          <div className="lead-detail-grid">
+            <div className="detail-row">
+              <span className="detail-label">Referencia</span>
+              <strong>{hydratedQuote.display_code ?? hydratedQuote.id}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Cliente</span>
+              <strong>{clientLabel}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Ref. CRM cliente</span>
+              <strong>{hydratedQuote.client_display_code ?? 'Sin referencia CRM'}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Propiedad</span>
+              <strong>{propertyLabel}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Ref. CRM propiedad</span>
+              <strong>{hydratedQuote.property_display_code ?? 'Sin referencia CRM'}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Estado</span>
+              <strong>{getStatusLabel(hydratedQuote.status)}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Líneas</span>
+              <strong>
+                {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatQuoteLineSubtotalDisplay(line)}`).join(' | ')}
+              </strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Subtotal</span>
+              <strong>{formatCurrency(hydratedQuote.subtotal)}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">IVA</span>
+              <strong>{formatCurrency(hydratedQuote.tax_amount ?? 0)}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Total</span>
+              <strong>{formatCurrency(hydratedQuote.total)}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Notas</span>
+              <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
+            </div>
+          </div>
+        )}
+
+        {!isEditing && saveError ? (
+          <div className="cc-alert cc-alert--error">
+            <strong>No se pudo actualizar el presupuesto</strong>
+            <p>{saveError}</p>
+          </div>
+        ) : null}
+
+        {!isEditing && successMessage ? (
+          <div className="cc-alert cc-alert--success">
+            <strong>Operación correcta</strong>
+            <p>{successMessage}</p>
           </div>
         ) : null}
       </div>
-
-      {quote ? (
-        <div className="lead-detail-card">
-          <div className="lead-detail-header">
-            <div>
-              <h3>{quote.display_code ?? quote.id}</h3>
-              <p>{clientLabel}</p>
-            </div>
-
-            <span className="lead-badge">{getStatusLabel(quote.status)}</span>
-          </div>
-
-          {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
-              <label className="form-field">
-                <span>Cliente *</span>
-                <select
-                  value={form.client_id}
-                  onChange={(event) => updateField('client_id', event.target.value)}
-                >
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.full_name} · {client.display_code ?? client.id}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Propiedad</span>
-                <select
-                  value={form.property_id}
-                  onChange={(event) => updateField('property_id', event.target.value)}
-                >
-                  <option value="">Sin propiedad</option>
-                  {availableProperties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {property.name} · {property.display_code ?? property.id}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Estado</span>
-                <select
-                  value={form.status}
-                  onChange={(event) => updateField('status', event.target.value)}
-                >
-                  <option value="draft">{getStatusLabel('draft')}</option>
-                  <option value="sent">{getStatusLabel('sent')}</option>
-                  <option value="accepted">{getStatusLabel('accepted')}</option>
-                  <option value="rejected">{getStatusLabel('rejected')}</option>
-                  <option value="expired">{getStatusLabel('expired')}</option>
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Subtotal *</span>
-                <input
-                  value={form.subtotal}
-                  onChange={(event) => updateField('subtotal', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>IVA (automático)</span>
-                <input value={taxAmountDisplay} readOnly />
-              </label>
-
-              <label className="form-field">
-                <span>Total (automático)</span>
-                <input value={totalDisplay} readOnly />
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Notas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  rows={4}
-                />
-              </label>
-
-              <div className="form-actions">
-                <button type="submit" className="primary-button" disabled={isSaving}>
-                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-                </button>
-              </div>
-
-              {saveError ? (
-                <div className="cc-alert cc-alert--error">
-                  <strong>No se pudo actualizar el presupuesto</strong>
-                  <p>{saveError}</p>
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
-                  <p>{successMessage}</p>
-                </div>
-              ) : null}
-            </form>
-          ) : (
-            <div className="lead-detail-grid">
-              <div className="detail-row">
-                <span className="detail-label">Referencia</span>
-                <strong>{quote.display_code ?? quote.id}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Cliente</span>
-                <strong>{clientLabel}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Ref. CRM cliente</span>
-                <strong>{quote.client_display_code ?? 'Sin referencia CRM'}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Propiedad</span>
-                <strong>{propertyLabel}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Ref. CRM propiedad</span>
-                <strong>{quote.property_display_code ?? 'Sin referencia CRM'}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Estado</span>
-                <strong>{getStatusLabel(quote.status)}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Subtotal</span>
-                <strong>{formatCurrency(quote.subtotal)}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">IVA</span>
-                <strong>{formatCurrency(quote.tax_amount ?? 0)}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Total</span>
-                <strong>{formatCurrency(quote.total)}</strong>
-              </div>
-
-              <div className="detail-row">
-                <span className="detail-label">Notas</span>
-                <strong>{quote.notes ?? 'Sin notas'}</strong>
-              </div>
-            </div>
-          )}
-
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo actualizar el presupuesto</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
-
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div className="empty-state">
-          <strong>Ningún presupuesto seleccionado</strong>
-          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
-        </div>
-      )}
     </section>
   )
 }

@@ -166,6 +166,8 @@ function isOlderThanDays(dateValue: string, days: number): boolean {
 
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
+  const [showScrollTop, setShowScrollTop] = useState(false)
+  const [compactMobileNav, setCompactMobileNav] = useState(false)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
@@ -392,6 +394,21 @@ export function AppShell() {
       loadPayments(),
     ])
   }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY || window.pageYOffset || 0
+      setShowScrollTop(scrollY > 360)
+      setCompactMobileNav(scrollY > 96)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
@@ -642,10 +659,18 @@ export function AppShell() {
     }))
   }, [])
 
+  const handleScrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [])
+
   return (
-    <main className="app-shell">
+    <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
       <section className="hero-card cc-shell">
-        <AppNav currentView={currentView} onChangeView={setCurrentView} />
+        <AppNav
+          currentView={currentView}
+          onChangeView={setCurrentView}
+          compactMobile={compactMobileNav}
+        />
         <div className="cc-shell-content">
           {currentView === 'dashboard' ? (
             <HomePage
@@ -717,6 +742,14 @@ export function AppShell() {
           )}
         </div>
       </section>
+      <button
+        type="button"
+        className={showScrollTop ? 'cc-scroll-top is-visible' : 'cc-scroll-top'}
+        onClick={handleScrollToTop}
+        aria-label="Volver arriba"
+      >
+        <span aria-hidden="true">↑</span>
+      </button>
     </main>
   )
 }

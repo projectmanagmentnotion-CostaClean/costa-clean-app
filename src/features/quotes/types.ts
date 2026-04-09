@@ -6,6 +6,7 @@ export interface QuoteListItem {
   property_id: string | null
   property_display_code?: string | null
   status: string
+  job_id?: string | null
   subtotal: number
   tax_amount: number | null
   total: number

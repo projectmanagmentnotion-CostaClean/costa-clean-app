@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { PaymentCreateForm } from '../features/payments/PaymentCreateForm'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
@@ -10,6 +11,8 @@ interface PaymentsPageProps {
   invoices: InvoiceListItem[]
   error: string | null
   onPaymentCreated: () => Promise<void>
+  activeFilterLabel: string | null
+  onClearFilter: () => void
 }
 
 export function PaymentsPage({
@@ -17,6 +20,8 @@ export function PaymentsPage({
   invoices,
   error,
   onPaymentCreated,
+  activeFilterLabel,
+  onClearFilter,
 }: PaymentsPageProps) {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -63,6 +68,10 @@ export function PaymentsPage({
           invoices={invoices}
           onCreated={onPaymentCreated}
         />
+      ) : null}
+
+      {activeFilterLabel ? (
+        <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
       ) : null}
 
       <div className="cc-master-layout cc-master-layout--list-first">

@@ -21,6 +21,11 @@ interface DashboardOverviewProps {
     openQuotesCount: number
     scheduledJobsCount: number
     pendingInvoicesCount: number
+    invoicedThisMonthTotal: number
+    collectedThisMonthTotal: number
+    outstandingReceivablesTotal: number
+    completedJobsWithoutInvoiceCount: number
+    acceptedQuotesWithoutJobCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number
@@ -34,7 +39,7 @@ interface DashboardOverviewProps {
 }
 
 export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverviewProps) {
-  const estimatedBalance = metrics.totalInvoiced - metrics.totalCollected
+  const estimatedBalance = metrics.outstandingReceivablesTotal
   const estimatedNet = metrics.totalCollected - metrics.totalExpenses
   const overviewCards: Array<{
     label: string
@@ -56,8 +61,9 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
       actionId: 'scheduled_jobs',
     },
     {
-      label: 'Pendiente por cobrar',
+      label: 'Pendiente de cobro',
       value: formatCurrency(estimatedBalance),
+      actionId: 'outstanding_invoices',
     },
   ]
 
@@ -87,15 +93,15 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
 
             <div className="cc-dashboard-spotlight__rows">
               <div className="cc-dashboard-spotlight__row">
-                <span>Cobrado</span>
-                <strong>{formatCurrency(metrics.totalCollected)}</strong>
+                <span>Facturado del mes</span>
+                <strong>{formatCurrency(metrics.invoicedThisMonthTotal)}</strong>
               </div>
               <div className="cc-dashboard-spotlight__row">
-                <span>Gastos</span>
-                <strong>{formatCurrency(metrics.totalExpenses)}</strong>
+                <span>Cobrado del mes</span>
+                <strong>{formatCurrency(metrics.collectedThisMonthTotal)}</strong>
               </div>
               <div className="cc-dashboard-spotlight__row">
-                <span>Por cobrar</span>
+                <span>Pendiente de cobro</span>
                 <strong>{formatCurrency(estimatedBalance)}</strong>
               </div>
             </div>

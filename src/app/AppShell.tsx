@@ -6,11 +6,13 @@ import {
   applyExpenseFilter,
   applyInvoiceFilter,
   applyJobFilter,
+  applyPaymentFilter,
   applyQuoteFilter,
   emptyModuleFilterState,
   getExpenseFilterLabel,
   getInvoiceFilterLabel,
   getJobFilterLabel,
+  getPaymentFilterLabel,
   getQuoteFilterLabel,
   type ModuleFilterState,
 } from './moduleFilters'
@@ -119,6 +121,15 @@ function getExpenseQuarterKey(dateValue: string): string | null {
   const year = date.getFullYear()
   const quarter = Math.floor(date.getMonth() / 3) + 1
   return `${year}-Q${quarter}`
+}
+
+function getMonthKey(dateValue: string): string | null {
+  if (!dateValue) return null
+  const date = new Date(`${dateValue}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}`
 }
 
 export function AppShell() {
@@ -361,9 +372,19 @@ export function AppShell() {
   const invoiceById = useMemo(() => new Map(invoices.map((invoice) => [invoice.id, invoice])), [invoices])
 
   const dashboardMetrics = useMemo(() => {
+    const invoicePaidById = new Map<string, number>()
+    for (const payment of payments) {
+      const currentPaid = invoicePaidById.get(payment.invoice_id) ?? 0
+      invoicePaidById.set(payment.invoice_id, currentPaid + Number(payment.amount || 0))
+    }
+
+    const invoiceIdsWithLinks = new Set(invoices.map((invoice) => invoice.job_id))
+    const quoteIdsWithJobs = new Set(jobs.map((job) => job.quote_id).filter(Boolean))
     const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
     const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
     const pendingInvoicesCount = invoices.filter((invoice) => invoice.status !== 'paid').length
+    const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
+    const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
@@ -374,6 +395,22 @@ export function AppShell() {
     const now = new Date()
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     const currentQuarterKey = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`
+    const invoicedThisMonthTotal = invoices
+      .filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
+      .reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
+    const collectedThisMonthTotal = payments
+      .filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
+      .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+    const outstandingReceivablesTotal = invoices.reduce((sum, invoice) => {
+      if (invoice.status === 'paid') {
+        return sum
+      }
+
+      const invoiceTotal = Number(invoice.total || 0)
+      const paidAmount = invoicePaidById.get(invoice.id) ?? 0
+      const remainingAmount = Math.max(invoiceTotal - paidAmount, 0)
+      return sum + remainingAmount
+    }, 0)
 
     const expensesThisMonthTotal = expenses
       .filter((expense) => getExpenseMonthKey(expense.expense_date) === currentMonthKey)
@@ -395,6 +432,11 @@ export function AppShell() {
       openQuotesCount,
       scheduledJobsCount,
       pendingInvoicesCount,
+      invoicedThisMonthTotal,
+      collectedThisMonthTotal,
+      outstandingReceivablesTotal,
+      completedJobsWithoutInvoiceCount,
+      acceptedQuotesWithoutJobCount,
       totalInvoiced,
       totalCollected,
       totalExpenses,
@@ -416,8 +458,9 @@ export function AppShell() {
       ...quote,
       client_display_code: clientCodeById.get(quote.client_id) ?? quote.client_id,
       property_display_code: quote.property_id ? propertyCodeById.get(quote.property_id) ?? quote.property_id : null,
+      job_id: jobs.find((job) => job.quote_id === quote.id)?.id ?? null,
     })),
-    [quotes, clientCodeById, propertyCodeById],
+    [quotes, jobs, clientCodeById, propertyCodeById],
   )
 
   const jobsWithCodes = useMemo(
@@ -426,8 +469,9 @@ export function AppShell() {
       client_display_code: clientCodeById.get(job.client_id) ?? job.client_id,
       property_display_code: propertyCodeById.get(job.property_id) ?? job.property_id,
       quote_display_code: job.quote_id ? quoteCodeById.get(job.quote_id) ?? job.quote_id : null,
+      invoice_id: invoices.find((invoice) => invoice.job_id === job.id)?.id ?? null,
     })),
-    [jobs, clientCodeById, propertyCodeById, quoteCodeById],
+    [jobs, invoices, clientCodeById, propertyCodeById, quoteCodeById],
   )
 
   const invoicesWithCodes = useMemo(
@@ -491,6 +535,11 @@ export function AppShell() {
   const filteredExpenses = useMemo(
     () => applyExpenseFilter(expenses, moduleFilters.expenses),
     [expenses, moduleFilters.expenses],
+  )
+
+  const filteredPayments = useMemo(
+    () => applyPaymentFilter(paymentsWithCodes, moduleFilters.payments),
+    [paymentsWithCodes, moduleFilters.payments],
   )
 
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
@@ -585,7 +634,14 @@ export function AppShell() {
               onClearFilter={() => clearModuleFilter('expenses')}
             />
           ) : (
-            <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={reloadInvoicesAndPayments} />
+            <PaymentsPage
+              payments={filteredPayments}
+              invoices={invoicesWithCodes}
+              error={paymentError}
+              onPaymentCreated={reloadInvoicesAndPayments}
+              activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
+              onClearFilter={() => clearModuleFilter('payments')}
+            />
           )}
         </div>
       </section>

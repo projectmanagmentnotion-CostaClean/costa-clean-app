@@ -9,6 +9,7 @@
   quote_display_code?: string | null
   scheduled_date: string
   status: string
+  invoice_id?: string | null
   service_type: string
   billing_concept?: string | null
   billing_quantity?: number | null

@@ -17,6 +17,11 @@ interface HomePageProps {
     openQuotesCount: number
     scheduledJobsCount: number
     pendingInvoicesCount: number
+    invoicedThisMonthTotal: number
+    collectedThisMonthTotal: number
+    outstandingReceivablesTotal: number
+    completedJobsWithoutInvoiceCount: number
+    acceptedQuotesWithoutJobCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number

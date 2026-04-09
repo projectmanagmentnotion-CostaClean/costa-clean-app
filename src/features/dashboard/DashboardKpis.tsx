@@ -21,6 +21,11 @@ interface DashboardKpisProps {
     openQuotesCount: number
     scheduledJobsCount: number
     pendingInvoicesCount: number
+    invoicedThisMonthTotal: number
+    collectedThisMonthTotal: number
+    outstandingReceivablesTotal: number
+    completedJobsWithoutInvoiceCount: number
+    acceptedQuotesWithoutJobCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number
@@ -90,13 +95,44 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
     actionId?: DashboardKpiActionId
   }> = [
     {
-      label: 'Gastos totales',
-      value: formatCurrency(metrics.totalExpenses),
+      label: 'Facturado del mes',
+      value: formatCurrency(metrics.invoicedThisMonthTotal),
       accent: 'finance',
+      actionId: 'invoiced_this_month',
+    },
+    {
+      label: 'Cobrado del mes',
+      value: formatCurrency(metrics.collectedThisMonthTotal),
+      accent: 'success',
+      actionId: 'collected_this_month',
+    },
+    {
+      label: 'Pendiente de cobro',
+      value: formatCurrency(metrics.outstandingReceivablesTotal),
+      accent: 'warning',
+      actionId: 'outstanding_invoices',
+    },
+    {
+      label: 'Trabajos completados sin factura',
+      value: String(metrics.completedJobsWithoutInvoiceCount),
+      accent: 'warning',
+      actionId: 'completed_jobs_without_invoice',
+    },
+    {
+      label: 'Presupuestos aceptados sin trabajo',
+      value: String(metrics.acceptedQuotesWithoutJobCount),
+      accent: 'warning',
+      actionId: 'accepted_quotes_without_job',
     },
     {
       label: 'Gastos del mes',
       value: formatCurrency(metrics.expensesThisMonthTotal),
+      accent: 'finance',
+      actionId: 'expenses_this_month',
+    },
+    {
+      label: 'Gastos totales',
+      value: formatCurrency(metrics.totalExpenses),
       accent: 'finance',
     },
     {
@@ -125,11 +161,7 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
       value: String(metrics.deductibleExpensesCount),
       accent: 'finance',
     },
-    {
-      label: 'Cobrado',
-      value: formatCurrency(metrics.totalCollected),
-      accent: 'default',
-    },
+    { label: 'Cobrado', value: formatCurrency(metrics.totalCollected), accent: 'default' },
   ]
 
   return (

@@ -4,10 +4,17 @@ import type {
   InvoiceModuleFilter,
   JobModuleFilter,
   ModuleFilterState,
+  PaymentModuleFilter,
   QuoteModuleFilter,
 } from '../../app/moduleFilters'
 
 export type DashboardKpiActionId =
+  | 'invoiced_this_month'
+  | 'collected_this_month'
+  | 'outstanding_invoices'
+  | 'completed_jobs_without_invoice'
+  | 'accepted_quotes_without_job'
+  | 'expenses_this_month'
   | 'pending_invoices'
   | 'open_quotes'
   | 'scheduled_jobs'
@@ -17,10 +24,46 @@ interface DashboardKpiActionConfig {
   id: DashboardKpiActionId
   view: AppView
   filterKey: keyof ModuleFilterState
-  filterValue: InvoiceModuleFilter | QuoteModuleFilter | JobModuleFilter | ExpenseModuleFilter
+  filterValue: InvoiceModuleFilter | QuoteModuleFilter | JobModuleFilter | ExpenseModuleFilter | PaymentModuleFilter
 }
 
 export const dashboardKpiActionConfig: Record<DashboardKpiActionId, DashboardKpiActionConfig> = {
+  invoiced_this_month: {
+    id: 'invoiced_this_month',
+    view: 'invoices',
+    filterKey: 'invoices',
+    filterValue: 'current_month',
+  },
+  collected_this_month: {
+    id: 'collected_this_month',
+    view: 'payments',
+    filterKey: 'payments',
+    filterValue: 'current_month',
+  },
+  outstanding_invoices: {
+    id: 'outstanding_invoices',
+    view: 'invoices',
+    filterKey: 'invoices',
+    filterValue: 'pending',
+  },
+  completed_jobs_without_invoice: {
+    id: 'completed_jobs_without_invoice',
+    view: 'jobs',
+    filterKey: 'jobs',
+    filterValue: 'completed_without_invoice',
+  },
+  accepted_quotes_without_job: {
+    id: 'accepted_quotes_without_job',
+    view: 'quotes',
+    filterKey: 'quotes',
+    filterValue: 'accepted_without_job',
+  },
+  expenses_this_month: {
+    id: 'expenses_this_month',
+    view: 'expenses',
+    filterKey: 'expenses',
+    filterValue: 'current_month',
+  },
   pending_invoices: {
     id: 'pending_invoices',
     view: 'invoices',

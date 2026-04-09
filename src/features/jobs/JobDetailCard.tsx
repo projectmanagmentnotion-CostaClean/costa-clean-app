@@ -13,6 +13,7 @@ interface JobDetailCardProps {
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
   onJobUpdated: () => Promise<void>
+  onCreateInvoiceFromJob: (job: JobListItem) => void
 }
 
 interface EditFormState {
@@ -69,6 +70,7 @@ export function JobDetailCard({
   properties,
   quotes,
   onJobUpdated,
+  onCreateInvoiceFromJob,
 }: JobDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -311,32 +313,42 @@ export function JobDetailCard({
         </div>
 
         {job ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-              setForm({
-                client_id: job.client_id,
-                property_id: job.property_id,
-                quote_id: job.quote_id ?? '',
-                scheduled_date: job.scheduled_date,
-                status: job.status,
-                service_type: job.service_type,
-                billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
-                billing_quantity: String(job.billing_quantity ?? 1),
-                billing_unit: normalizeBillingUnit(job.billing_unit),
-                billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
-                  ? ''
-                  : String(job.billing_unit_price),
-                notes: job.notes ?? '',
-              })
-            }}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar servicio'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => onCreateInvoiceFromJob(job)}
+            >
+              Crear factura desde servicio
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setIsEditing((current) => !current)
+                setSaveError(null)
+                setSuccessMessage(null)
+                setForm({
+                  client_id: job.client_id,
+                  property_id: job.property_id,
+                  quote_id: job.quote_id ?? '',
+                  scheduled_date: job.scheduled_date,
+                  status: job.status,
+                  service_type: job.service_type,
+                  billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
+                  billing_quantity: String(job.billing_quantity ?? 1),
+                  billing_unit: normalizeBillingUnit(job.billing_unit),
+                  billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
+                    ? ''
+                    : String(job.billing_unit_price),
+                  notes: job.notes ?? '',
+                })
+              }}
+            >
+              {isEditing ? 'Cancelar edición' : 'Editar servicio'}
+            </button>
+          </div>
         ) : null}
       </div>
 

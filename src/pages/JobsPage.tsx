@@ -16,6 +16,7 @@ interface JobsPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onJobCreated: () => Promise<void>
+  onCreateInvoiceFromJob: (job: JobListItem) => void
   createPrefill: JobCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
@@ -29,6 +30,7 @@ export function JobsPage({
   quotes,
   error,
   onJobCreated,
+  onCreateInvoiceFromJob,
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
@@ -127,6 +129,7 @@ export function JobsPage({
             properties={properties}
             quotes={quotes}
             onJobUpdated={onJobCreated}
+            onCreateInvoiceFromJob={onCreateInvoiceFromJob}
           />
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
+import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
@@ -15,6 +16,8 @@ interface InvoicesPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onInvoiceCreated: () => Promise<void>
+  createPrefill: InvoiceCreatePrefill | null
+  onPrefillConsumed: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
 }
@@ -25,12 +28,25 @@ export function InvoicesPage({
   quotes,
   error,
   onInvoiceCreated,
+  createPrefill,
+  onPrefillConsumed,
   activeFilterLabel,
   onClearFilter,
 }: InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [activeCreatePrefill, setActiveCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
+
+  useEffect(() => {
+    if (!createPrefill) {
+      return
+    }
+
+    setActiveCreatePrefill(createPrefill)
+    setShowCreateForm(true)
+    onPrefillConsumed()
+  }, [createPrefill, onPrefillConsumed])
 
   useEffect(() => {
     if (invoices.length === 0) {
@@ -52,6 +68,11 @@ export function InvoicesPage({
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
 
+  async function handleInvoiceCreated() {
+    await onInvoiceCreated()
+    setActiveCreatePrefill(null)
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -66,7 +87,15 @@ export function InvoicesPage({
           <button
             type="button"
             className="primary-button"
-            onClick={() => setShowCreateForm((current) => !current)}
+            onClick={() => {
+              setShowCreateForm((current) => {
+                const nextValue = !current
+                if (!nextValue) {
+                  setActiveCreatePrefill(null)
+                }
+                return nextValue
+              })
+            }}
           >
             {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
           </button>
@@ -76,7 +105,8 @@ export function InvoicesPage({
           <InvoiceCreateForm
             jobs={jobs}
             quotes={quotes}
-            onCreated={onInvoiceCreated}
+            onCreated={handleInvoiceCreated}
+            prefill={activeCreatePrefill}
           />
         ) : null}
 

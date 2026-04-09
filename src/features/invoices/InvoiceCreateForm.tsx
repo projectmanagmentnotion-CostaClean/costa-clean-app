@@ -4,11 +4,13 @@ import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
+import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 
 interface InvoiceCreateFormProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
+  prefill?: InvoiceCreatePrefill | null
 }
 
 interface FormState {
@@ -82,6 +84,16 @@ function createBlankLine(): LineFormState {
   }
 }
 
+function createDefaultFormState(jobs: JobListItem[]): FormState {
+  return {
+    job_id: jobs[0]?.id ?? '',
+    client_id: jobs[0]?.client_id ?? '',
+    issue_date: todayLocalDate(),
+    status: 'draft',
+    notes: '',
+  }
+}
+
 function getJobBillingLine(job: JobListItem | null): LineFormState | null {
   if (!job) return null
 
@@ -118,6 +130,35 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
     quantity: '1.00',
     unit: 'servicio',
     unit_price: formatMoneyInput(subtotal),
+  }
+}
+
+function buildLinesForJob(job: JobListItem | null, quote: QuoteListItem | null): LineFormState[] {
+  return [getJobBillingLine(job) ?? getQuoteBillingLine(quote) ?? createBlankLine()]
+}
+
+function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
+  if (prefill.lines.length === 0) {
+    return [createBlankLine()]
+  }
+
+  return prefill.lines.map((line) => ({
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: line.concept,
+    quantity: line.quantity,
+    unit: line.unit,
+    unit_price: line.unit_price,
+  }))
+}
+
+function applyPrefillToForm(prefill: InvoiceCreatePrefill, jobs: JobListItem[]): FormState {
+  const defaultState = createDefaultFormState(jobs)
+
+  return {
+    ...defaultState,
+    job_id: prefill.job_id,
+    client_id: prefill.client_id,
+    notes: prefill.notes,
   }
 }
 
@@ -172,18 +213,18 @@ export function InvoiceCreateForm({
   jobs,
   quotes,
   onCreated,
+  prefill = null,
 }: InvoiceCreateFormProps) {
-  const [form, setForm] = useState<FormState>({
-    job_id: jobs[0]?.id ?? '',
-    client_id: jobs[0]?.client_id ?? '',
-    issue_date: todayLocalDate(),
-    status: 'draft',
-    notes: '',
-  })
-  const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
+  const [form, setForm] = useState<FormState>(() => (
+    prefill ? applyPrefillToForm(prefill, jobs) : createDefaultFormState(jobs)
+  ))
+  const [lines, setLines] = useState<LineFormState[]>(() => (
+    prefill ? buildLinesFromPrefill(prefill) : [createBlankLine()]
+  ))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === form.job_id) ?? null,
@@ -214,8 +255,20 @@ export function InvoiceCreateForm({
       notes: current.notes.trim() ? current.notes : linkedQuote?.notes ?? '',
     }))
 
-    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
+    setLines(buildLinesForJob(selectedJob, linkedQuote))
   }, [selectedJob, linkedQuote])
+
+  useEffect(() => {
+    if (!prefill || prefill.request_id === lastAppliedPrefillId) {
+      return
+    }
+
+    setForm(applyPrefillToForm(prefill, jobs))
+    setLines(buildLinesFromPrefill(prefill))
+    setSubmitError(null)
+    setSuccessMessage(null)
+    setLastAppliedPrefillId(prefill.request_id)
+  }, [jobs, lastAppliedPrefillId, prefill])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({
@@ -324,14 +377,8 @@ export function InvoiceCreateForm({
 
       const firstJob = jobs[0] ?? null
       const firstQuote = firstJob?.quote_id ? quotes.find((quote) => quote.id === firstJob.quote_id) ?? null : null
-      setForm({
-        job_id: firstJob?.id ?? '',
-        client_id: firstJob?.client_id ?? '',
-        issue_date: todayLocalDate(),
-        status: 'draft',
-        notes: '',
-      })
-      setLines([getJobBillingLine(firstJob) ?? getQuoteBillingLine(firstQuote) ?? createBlankLine()])
+      setForm(createDefaultFormState(jobs))
+      setLines(buildLinesForJob(firstJob, firstQuote))
       setSuccessMessage('Factura creada correctamente.')
     } catch (err) {
       const message =

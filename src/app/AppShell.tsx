@@ -29,6 +29,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { buildJobCreatePrefillFromQuote, type JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
+import { buildInvoiceCreatePrefillFromJob, type InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import { listExpenses } from '../features/expenses/expenseApi'
@@ -124,6 +125,7 @@ export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
+  const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
   const [leads, setLeads] = useState<LeadListItem[]>([])
   const [clients, setClients] = useState<ClientListItem[]>([])
   const [properties, setProperties] = useState<PropertyListItem[]>([])
@@ -507,6 +509,16 @@ export function AppShell() {
     setCurrentView('jobs')
   }, [])
 
+  const handleCreateInvoiceFromJob = useCallback((job: JobListItem) => {
+    const prefill = buildInvoiceCreatePrefillFromJob(job)
+    if (!prefill) {
+      return
+    }
+
+    setInvoiceCreatePrefill(prefill)
+    setCurrentView('invoices')
+  }, [])
+
   const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
     setModuleFilters((current) => ({
       ...current,
@@ -546,6 +558,7 @@ export function AppShell() {
               quotes={quotes}
               error={jobError}
               onJobCreated={loadJobs}
+              onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
               createPrefill={jobCreatePrefill}
               onPrefillConsumed={() => setJobCreatePrefill(null)}
               activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
@@ -558,6 +571,8 @@ export function AppShell() {
               quotes={quotesWithCodes}
               error={invoiceError}
               onInvoiceCreated={loadInvoices}
+              createPrefill={invoiceCreatePrefill}
+              onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
               activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
               onClearFilter={() => clearModuleFilter('invoices')}
             />

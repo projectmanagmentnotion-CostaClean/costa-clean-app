@@ -240,8 +240,8 @@ export function QuoteCreateForm({
           <div className="form-field form-field-full">
             <span>Líneas de presupuesto *</span>
             {lines.map((line, index) => (
-              <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
-                <label className="form-field form-field-full">
+              <div key={line.local_id} className="lead-form cc-line-editor-row" style={{ marginTop: '0.75rem' }}>
+                <label className="form-field form-field-full cc-line-editor-row__concept">
                   <span>Concepto {index + 1}</span>
                   <input
                     value={line.concept}
@@ -250,7 +250,7 @@ export function QuoteCreateForm({
                   />
                 </label>
 
-                <label className="form-field">
+                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--quantity">
                   <span>Cantidad</span>
                   <input
                     value={line.quantity}
@@ -259,7 +259,7 @@ export function QuoteCreateForm({
                   />
                 </label>
 
-                <label className="form-field">
+                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--unit">
                   <span>Unidad</span>
                   <input
                     value={line.unit}
@@ -268,7 +268,7 @@ export function QuoteCreateForm({
                   />
                 </label>
 
-                <label className="form-field">
+                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--price">
                   <span>Precio unitario</span>
                   <input
                     value={line.unit_price}
@@ -277,15 +277,15 @@ export function QuoteCreateForm({
                   />
                 </label>
 
-                <label className="form-field">
+                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--amount">
                   <span>Importe</span>
                   <input value={formatQuoteLineSubtotalInput(line)} readOnly />
                 </label>
 
-                <div className="form-actions form-field-full">
+                <div className="form-actions form-field-full cc-line-editor-row__actions">
                   <button
                     type="button"
-                    className="secondary-button"
+                    className="secondary-button cc-line-editor-row__remove"
                     onClick={() => removeLine(line.local_id)}
                     disabled={lines.length === 1}
                   >

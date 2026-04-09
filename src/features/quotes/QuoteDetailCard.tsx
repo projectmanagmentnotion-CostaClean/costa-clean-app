@@ -4,6 +4,7 @@ import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
+import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { formatCurrency } from '../../app/displayFormat'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
@@ -188,6 +189,54 @@ function QuoteDetailCardContent({
       notes: hydratedQuote.notes ?? '',
     })
     setLines(getFormLinesFromQuote(hydratedQuote, properties))
+  }
+
+  async function updateQuoteStatus(nextStatus: string) {
+    if (hydratedQuote.status === nextStatus) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setSaveError('Faltan las variables de entorno de Supabase.')
+        return
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/quotes?id=eq.${encodeURIComponent(hydratedQuote.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: nextStatus }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        return
+      }
+
+      await onQuoteUpdated()
+      setSuccessMessage(`Estado del presupuesto actualizado a ${getStatusLabel(nextStatus)}.`)
+      setIsEditing(false)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido actualizando el estado del presupuesto.'
+
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -390,11 +439,9 @@ function QuoteDetailCardContent({
                 value={form.status}
                 onChange={(event) => updateField('status', event.target.value)}
               >
-                <option value="draft">{getStatusLabel('draft')}</option>
-                <option value="sent">{getStatusLabel('sent')}</option>
-                <option value="accepted">{getStatusLabel('accepted')}</option>
-                <option value="rejected">{getStatusLabel('rejected')}</option>
-                <option value="expired">{getStatusLabel('expired')}</option>
+                {quoteStatusOptions.map((status) => (
+                  <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                ))}
               </select>
             </label>
 
@@ -511,6 +558,21 @@ function QuoteDetailCardContent({
             ) : null}
           </form>
         ) : (
+          <>
+            <div className="form-actions" style={{ marginBottom: '1rem' }}>
+              {quoteStatusOptions.map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  className={status === hydratedQuote.status ? 'primary-button' : 'secondary-button'}
+                  onClick={() => void updateQuoteStatus(status)}
+                  disabled={isSaving || status === hydratedQuote.status || isLoadingLines || Boolean(linesError)}
+                >
+                  {getStatusOptionLabel(status)}
+                </button>
+              ))}
+            </div>
+
           <div className="lead-detail-grid">
             <div className="detail-row">
               <span className="detail-label">Referencia</span>
@@ -569,6 +631,7 @@ function QuoteDetailCardContent({
               <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
             </div>
           </div>
+          </>
         )}
 
         {!isEditing && saveError ? (

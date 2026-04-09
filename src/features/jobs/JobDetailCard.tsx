@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -255,6 +256,53 @@ export function JobDetailCard({
     }
   }
 
+  async function updateJobStatus(nextStatus: string) {
+    if (!job || job.status === nextStatus) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setSaveError('Faltan las variables de entorno de Supabase.')
+        return
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/jobs?id=eq.${encodeURIComponent(job.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: nextStatus }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        return
+      }
+
+      await onJobUpdated()
+      setSuccessMessage(`Estado del servicio actualizado a ${getStatusLabel(nextStatus)}.`)
+      setIsEditing(false)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido actualizando el estado del servicio.'
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <section className="data-section">
       <div className="section-header page-header-actions">
@@ -365,10 +413,9 @@ export function JobDetailCard({
                   value={form.status}
                   onChange={(event) => updateField('status', event.target.value)}
                 >
-                  <option value="scheduled">{getStatusLabel('scheduled')}</option>
-                  <option value="in_progress">{getStatusLabel('in_progress')}</option>
-                  <option value="completed">{getStatusLabel('completed')}</option>
-                  <option value="cancelled">{getStatusLabel('cancelled')}</option>
+                  {jobStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
                 </select>
               </label>
 
@@ -454,6 +501,21 @@ export function JobDetailCard({
               ) : null}
             </form>
           ) : (
+            <>
+              <div className="form-actions" style={{ marginBottom: '1rem' }}>
+                {jobStatusOptions.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    className={status === job.status ? 'primary-button' : 'secondary-button'}
+                    onClick={() => void updateJobStatus(status)}
+                    disabled={isSaving || status === job.status}
+                  >
+                    {getStatusOptionLabel(status)}
+                  </button>
+                ))}
+              </div>
+
             <div className="lead-detail-grid">
               <div className="detail-row">
                 <span className="detail-label">Referencia</span>
@@ -508,6 +570,7 @@ export function JobDetailCard({
                 <strong>{job.notes ?? 'Sin notas'}</strong>
               </div>
             </div>
+            </>
           )}
 
           {!isEditing && saveError ? (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -342,6 +343,52 @@ export function InvoiceDetailCard({
     setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
   }
 
+  async function updateInvoiceStatus(nextStatus: string) {
+    if (!invoice || invoice.status === nextStatus) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseAnonKey) {
+        setSaveError('Faltan las variables de entorno de Supabase.')
+        return
+      }
+
+      const response = await fetch(
+        `${supabaseUrl}/rest/v1/invoices?id=eq.${encodeURIComponent(invoice.id)}`,
+        {
+          method: 'PATCH',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: nextStatus }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        return
+      }
+
+      await onInvoiceUpdated()
+      setSuccessMessage(`Estado de la factura actualizado a ${getStatusLabel(nextStatus)}.`)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido actualizando el estado de la factura.'
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -538,10 +585,9 @@ export function InvoiceDetailCard({
                   value={form.status}
                   onChange={(event) => updateField('status', event.target.value)}
                 >
-                  <option value="draft">{getStatusLabel('draft')}</option>
-                  <option value="issued">{getStatusLabel('issued')}</option>
-                  <option value="paid">{getStatusLabel('paid')}</option>
-                  <option value="cancelled">{getStatusLabel('cancelled')}</option>
+                  {invoiceStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
                 </select>
               </label>
 
@@ -662,6 +708,21 @@ export function InvoiceDetailCard({
               ) : null}
             </form>
           ) : (
+            <>
+              <div className="form-actions" style={{ marginBottom: '1rem' }}>
+                {invoiceStatusOptions.map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    className={status === invoice.status ? 'primary-button' : 'secondary-button'}
+                    onClick={() => void updateInvoiceStatus(status)}
+                    disabled={isSaving || status === invoice.status}
+                  >
+                    {getStatusOptionLabel(status)}
+                  </button>
+                ))}
+              </div>
+
             <div className="lead-detail-grid">
               <div className="detail-row">
                 <span className="detail-label">Número factura</span>
@@ -706,6 +767,7 @@ export function InvoiceDetailCard({
                 <strong>{invoice.notes ?? 'Sin notas'}</strong>
               </div>
             </div>
+            </>
           )}
 
           {!isEditing && saveError ? (

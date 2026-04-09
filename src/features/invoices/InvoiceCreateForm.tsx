@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
-import { getStatusLabel } from '../../app/displayText'
+import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
 
@@ -389,10 +389,9 @@ export function InvoiceCreateForm({
               value={form.status}
               onChange={(event) => updateField('status', event.target.value)}
             >
-              <option value="draft">{getStatusLabel('draft')}</option>
-              <option value="issued">{getStatusLabel('issued')}</option>
-              <option value="paid">{getStatusLabel('paid')}</option>
-              <option value="cancelled">{getStatusLabel('cancelled')}</option>
+              {invoiceStatusOptions.map((status) => (
+                <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+              ))}
             </select>
           </label>
 

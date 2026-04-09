@@ -2,6 +2,7 @@
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
+import { syncInvoicePaidStatus } from './paymentInvoiceStatus'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -160,6 +161,12 @@ export function PaymentDetailCard({
         const errorText = await response.text()
         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
         return
+      }
+
+      const previousInvoiceId = payment.invoice_id
+      await syncInvoicePaidStatus(previousInvoiceId)
+      if (form.invoice_id !== previousInvoiceId) {
+        await syncInvoicePaidStatus(form.invoice_id)
       }
 
       await onPaymentUpdated()

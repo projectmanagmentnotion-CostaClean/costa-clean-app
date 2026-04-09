@@ -2,7 +2,7 @@ import { useMemo, useState, type FormEvent } from 'react'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
-import { getStatusLabel } from '../../app/displayText'
+import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
@@ -231,11 +231,9 @@ export function QuoteCreateForm({
               value={form.status}
               onChange={(event) => updateField('status', event.target.value)}
             >
-              <option value="draft">{getStatusLabel('draft')}</option>
-              <option value="sent">{getStatusLabel('sent')}</option>
-              <option value="accepted">{getStatusLabel('accepted')}</option>
-              <option value="rejected">{getStatusLabel('rejected')}</option>
-              <option value="expired">{getStatusLabel('expired')}</option>
+              {quoteStatusOptions.map((status) => (
+                <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+              ))}
             </select>
           </label>
 

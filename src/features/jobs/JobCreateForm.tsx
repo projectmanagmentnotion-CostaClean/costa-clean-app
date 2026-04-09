@@ -2,6 +2,7 @@
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 
 interface JobCreateFormProps {
   clients: ClientListItem[]
@@ -283,10 +284,9 @@ export function JobCreateForm({
               value={form.status}
               onChange={(event) => updateField('status', event.target.value)}
             >
-              <option value="scheduled">scheduled</option>
-              <option value="in_progress">in_progress</option>
-              <option value="completed">completed</option>
-              <option value="cancelled">cancelled</option>
+              {jobStatusOptions.map((status) => (
+                <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+              ))}
             </select>
           </label>
 

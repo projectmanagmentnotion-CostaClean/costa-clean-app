@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { InvoiceListItem } from '../invoices/types'
+import { syncInvoicePaidStatus } from './paymentInvoiceStatus'
 
 interface PaymentCreateFormProps {
   invoices: InvoiceListItem[]
@@ -140,6 +141,7 @@ export function PaymentCreateForm({
         return
       }
 
+      await syncInvoicePaidStatus(form.invoice_id)
       await onCreated()
 
       setForm({

@@ -307,6 +307,10 @@ export function AppShell() {
     }
   }, [])
 
+  const reloadInvoicesAndPayments = useCallback(async () => {
+    await Promise.all([loadInvoices(), loadPayments()])
+  }, [loadInvoices, loadPayments])
+
   const reloadLeadsAndClients = useCallback(async () => {
     await Promise.all([loadLeads(), loadClients()])
   }, [loadLeads, loadClients])
@@ -469,7 +473,7 @@ export function AppShell() {
           ) : currentView === 'expenses' ? (
             <ExpensesPage expenses={expenses} error={expenseError} onExpenseCreated={loadExpenses} />
           ) : (
-            <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={loadPayments} />
+            <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={reloadInvoicesAndPayments} />
           )}
         </div>
       </section>

@@ -51,19 +51,40 @@ interface HomePageProps {
 export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction }: HomePageProps) {
   return (
     <section className="cc-dashboard-page">
-      <div className="cc-page-topline">
-        <span className="cc-page-topline__eyebrow">CostaClean CRM</span>
-        <h1 className="cc-page-topline__title">Panel de control</h1>
-        <p className="cc-page-topline__text">
-          Operación, ventas y finanzas en una sola vista.
-        </p>
-      </div>
+      <header className="cc-dashboard-header">
+        <div className="cc-dashboard-header__copy">
+          <span className="cc-page-topline__eyebrow">CostaClean CRM</span>
+          <h1 className="cc-page-topline__title">Centro de control</h1>
+          <p className="cc-page-topline__text">
+            Finanzas, seguimiento operativo y atencion comercial en una vista mas clara y ejecutiva.
+          </p>
+        </div>
 
-      <DashboardQuickActions onOpenView={onOpenView} />
-      <DashboardAlerts metrics={metrics} onRunKpiAction={onRunKpiAction} />
-      <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
-      <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
-      <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <div className="cc-dashboard-header__meta">
+          <div className="cc-dashboard-header__meta-card">
+            <span className="cc-dashboard-header__meta-label">Cobrado del mes</span>
+            <strong className="cc-dashboard-header__meta-value">
+              {new Intl.NumberFormat('es-ES', {
+                style: 'currency',
+                currency: 'EUR',
+                maximumFractionDigits: 0,
+              }).format(metrics.collectedThisMonthTotal)}
+            </strong>
+          </div>
+          <div className="cc-dashboard-header__meta-card">
+            <span className="cc-dashboard-header__meta-label">Servicios hoy</span>
+            <strong className="cc-dashboard-header__meta-value">{metrics.jobsScheduledTodayCount}</strong>
+          </div>
+        </div>
+      </header>
+
+      <div className="cc-dashboard-stack">
+        <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardAlerts metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
+        <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardQuickActions onOpenView={onOpenView} />
+      </div>
     </section>
   )
 }

@@ -14,43 +14,48 @@ interface DashboardAlertsProps {
 export function DashboardAlerts({ metrics, onRunKpiAction }: DashboardAlertsProps) {
   const alerts = [
     {
-      label: 'Facturas pendientes > 7 días',
+      label: 'Facturas pendientes > 7 dias',
       value: String(metrics.unpaidInvoicesOlderThan7DaysCount),
-      detail: 'Facturas emitidas hace más de una semana y todavía sin pagar.',
+      detail: 'Seguimiento de cobro que ya requiere accion.',
       actionId: 'unpaid_invoices_older_7d' as const,
+      tone: 'warning',
     },
     {
-      label: 'Presupuestos enviados > 5 días',
+      label: 'Presupuestos enviados > 5 dias',
       value: String(metrics.sentQuotesOlderThan5DaysCount),
-      detail: 'Presupuestos enviados que conviene revisar o seguir.',
+      detail: 'Presupuestos enviados con riesgo de enfriarse.',
       actionId: 'sent_quotes_older_5d' as const,
+      tone: 'warning',
     },
     {
-      label: 'Servicios completados sin factura > 2 días',
+      label: 'Completados sin factura > 2 dias',
       value: String(metrics.completedJobsWithoutInvoiceOlderThan2DaysCount),
-      detail: 'Servicios cerrados operativamente pendientes de facturación.',
+      detail: 'Trabajo terminado pendiente de pasar a ingresos.',
       actionId: 'completed_jobs_without_invoice_older_2d' as const,
+      tone: 'warning',
     },
     {
       label: 'Servicios para hoy',
       value: String(metrics.jobsScheduledTodayCount),
-      detail: 'Agenda operativa prevista para hoy.',
+      detail: 'Carga operativa inmediata de la jornada.',
       actionId: 'jobs_today' as const,
+      tone: 'default',
     },
     {
-      label: 'Servicios para mañana',
+      label: 'Servicios para manana',
       value: String(metrics.jobsScheduledTomorrowCount),
-      detail: 'Próxima carga operativa inmediata.',
+      detail: 'Prevision corta para planificacion del siguiente dia.',
       actionId: 'jobs_tomorrow' as const,
+      tone: 'default',
     },
   ]
 
   return (
-    <section className="cc-dashboard-block">
-      <div className="cc-dashboard-block__header">
+    <section className="cc-dashboard-block cc-dashboard-block--alerts">
+      <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
         <div>
-          <h2>Alertas operativas</h2>
-          <p>Seguimiento diario sin ruido visual ni cambios de flujo.</p>
+          <h2>Atencion necesaria</h2>
+          <p>Señales compactas para decidir seguimiento comercial, facturacion y agenda inmediata.</p>
         </div>
       </div>
 
@@ -59,13 +64,15 @@ export function DashboardAlerts({ metrics, onRunKpiAction }: DashboardAlertsProp
           <button
             key={alert.label}
             type="button"
-            className="cc-dashboard-alert"
+            className={`cc-dashboard-alert cc-dashboard-alert--${alert.tone}`}
             onClick={() => onRunKpiAction(alert.actionId)}
           >
-            <span className="cc-dashboard-alert__label">{alert.label}</span>
+            <div className="cc-dashboard-alert__top">
+              <span className="cc-dashboard-alert__label">{alert.label}</span>
+              <span className="cc-dashboard-alert__cta">Abrir</span>
+            </div>
             <strong className="cc-dashboard-alert__value">{alert.value}</strong>
             <p className="cc-dashboard-alert__text">{alert.detail}</p>
-            <span className="cc-dashboard-alert__hint">Abrir lista</span>
           </button>
         ))}
       </div>

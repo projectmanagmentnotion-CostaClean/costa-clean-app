@@ -11,14 +11,19 @@ interface DashboardAgendaProps {
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
-function renderJobMeta(job: JobListItem): string {
+function buildPrimaryLabel(job: JobListItem): string {
+  return job.billing_concept?.trim() || job.display_code || job.id
+}
+
+function buildSecondaryLabel(job: JobListItem): string {
   const client = job.client_name?.trim() || job.client_display_code || job.client_id
   const property = job.property_name?.trim() || job.property_display_code || job.property_id
   return `${client} · ${property}`
 }
 
-function AgendaList({
+function AgendaColumn({
   title,
+  subtitle,
   jobs,
   emptyText,
   actionId,
@@ -26,6 +31,7 @@ function AgendaList({
   onRunKpiAction,
 }: {
   title: string
+  subtitle: string
   jobs: JobListItem[]
   emptyText: string
   actionId: DashboardKpiActionId
@@ -37,12 +43,12 @@ function AgendaList({
       <div className="cc-agenda-card__header">
         <div>
           <h3>{title}</h3>
-          <p>{jobs.length} servicio{jobs.length === 1 ? '' : 's'}</p>
+          <p>{subtitle}</p>
         </div>
 
         <button
           type="button"
-          className="secondary-button"
+          className="cc-agenda-card__link"
           onClick={() => onRunKpiAction(actionId)}
         >
           {actionLabel}
@@ -51,7 +57,7 @@ function AgendaList({
 
       {jobs.length === 0 ? (
         <div className="empty-state">
-          <strong>Sin registros</strong>
+          <strong>Sin servicios</strong>
           <p>{emptyText}</p>
         </div>
       ) : (
@@ -64,13 +70,17 @@ function AgendaList({
               onClick={() => onRunKpiAction(actionId)}
             >
               <div className="cc-agenda-item__top">
-                <strong>{job.billing_concept?.trim() || job.display_code || job.id}</strong>
+                <div className="cc-agenda-item__title-group">
+                  <strong>{buildPrimaryLabel(job)}</strong>
+                  <span className="cc-agenda-item__code">{job.display_code || job.id}</span>
+                </div>
                 <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
               </div>
-              <p>{renderJobMeta(job)}</p>
-              <div className="cc-list-meta">
+
+              <p>{buildSecondaryLabel(job)}</p>
+
+              <div className="cc-agenda-item__meta">
                 <span>{formatDateEs(job.scheduled_date)}</span>
-                <span>{job.display_code ?? job.id}</span>
               </div>
             </button>
           ))}
@@ -82,37 +92,40 @@ function AgendaList({
 
 export function DashboardAgenda({ agenda, onRunKpiAction }: DashboardAgendaProps) {
   return (
-    <section className="cc-dashboard-block">
-      <div className="cc-dashboard-block__header">
+    <section className="cc-dashboard-block cc-dashboard-block--agenda">
+      <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
         <div>
           <h2>Agenda operativa</h2>
-          <p>Vista rápida de hoy, mañana y próximos servicios programados.</p>
+          <p>Servicios de hoy, manana y siguientes compromisos en una sola lectura.</p>
         </div>
       </div>
 
       <div className="cc-dashboard-agenda">
-        <AgendaList
+        <AgendaColumn
           title="Hoy"
+          subtitle={`${agenda.todayJobs.length} servicio${agenda.todayJobs.length === 1 ? '' : 's'} programado${agenda.todayJobs.length === 1 ? '' : 's'}`}
           jobs={agenda.todayJobs}
           emptyText="No hay servicios programados para hoy."
           actionId="jobs_today"
-          actionLabel="Abrir hoy"
+          actionLabel="Ver hoy"
           onRunKpiAction={onRunKpiAction}
         />
-        <AgendaList
-          title="Mañana"
+        <AgendaColumn
+          title="Manana"
+          subtitle={`${agenda.tomorrowJobs.length} servicio${agenda.tomorrowJobs.length === 1 ? '' : 's'} previstos`}
           jobs={agenda.tomorrowJobs}
-          emptyText="No hay servicios programados para mañana."
+          emptyText="No hay servicios programados para manana."
           actionId="jobs_tomorrow"
-          actionLabel="Abrir mañana"
+          actionLabel="Ver manana"
           onRunKpiAction={onRunKpiAction}
         />
-        <AgendaList
-          title="Próximos servicios"
+        <AgendaColumn
+          title="Proximos"
+          subtitle={`${agenda.upcomingJobs.length} servicio${agenda.upcomingJobs.length === 1 ? '' : 's'} siguientes`}
           jobs={agenda.upcomingJobs}
-          emptyText="No hay más servicios próximos en agenda."
+          emptyText="No hay mas servicios proximos en agenda."
           actionId="jobs_upcoming"
-          actionLabel="Abrir agenda"
+          actionLabel="Ver agenda"
           onRunKpiAction={onRunKpiAction}
         />
       </div>

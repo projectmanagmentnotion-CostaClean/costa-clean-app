@@ -10,38 +10,57 @@ function formatCurrency(value: number): string {
 
 interface DashboardOverviewProps {
   metrics: {
-    leadsCount: number
     clientsCount: number
-    propertiesCount: number
-    quotesCount: number
-    jobsCount: number
-    invoicesCount: number
-    paymentsCount: number
-    expensesCount: number
     openQuotesCount: number
     scheduledJobsCount: number
-    pendingInvoicesCount: number
     invoicedThisMonthTotal: number
     collectedThisMonthTotal: number
     outstandingReceivablesTotal: number
-    completedJobsWithoutInvoiceCount: number
-    acceptedQuotesWithoutJobCount: number
-    totalInvoiced: number
-    totalCollected: number
     totalExpenses: number
-    expensesThisMonthTotal: number
-    expensesThisQuarterTotal: number
-    expensesWithReceiptCount: number
-    expensesWithoutReceiptCount: number
-    deductibleExpensesCount: number
   }
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
 export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverviewProps) {
-  const estimatedBalance = metrics.outstandingReceivablesTotal
-  const estimatedNet = metrics.totalCollected - metrics.totalExpenses
-  const overviewCards: Array<{
+  const estimatedNet = metrics.collectedThisMonthTotal - metrics.totalExpenses
+
+  const strategicCards: Array<{
+    label: string
+    value: string
+    detail: string
+    tone: 'finance' | 'success' | 'warning' | 'muted'
+    actionId?: DashboardKpiActionId
+  }> = [
+    {
+      label: 'Facturado del mes',
+      value: formatCurrency(metrics.invoicedThisMonthTotal),
+      detail: 'Emision registrada en el mes actual.',
+      tone: 'finance',
+      actionId: 'invoiced_this_month',
+    },
+    {
+      label: 'Cobrado del mes',
+      value: formatCurrency(metrics.collectedThisMonthTotal),
+      detail: 'Cobros confirmados en el mes actual.',
+      tone: 'success',
+      actionId: 'collected_this_month',
+    },
+    {
+      label: 'Pendiente de cobro',
+      value: formatCurrency(metrics.outstandingReceivablesTotal),
+      detail: 'Importe pendiente en facturas no pagadas.',
+      tone: 'warning',
+      actionId: 'outstanding_invoices',
+    },
+    {
+      label: 'Resultado mensual',
+      value: formatCurrency(estimatedNet),
+      detail: 'Cobrado del mes menos gastos acumulados.',
+      tone: 'muted',
+    },
+  ]
+
+  const secondaryStats: Array<{
     label: string
     value: string
     actionId?: DashboardKpiActionId
@@ -61,71 +80,94 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
       actionId: 'scheduled_jobs',
     },
     {
-      label: 'Pendiente de cobro',
-      value: formatCurrency(estimatedBalance),
-      actionId: 'outstanding_invoices',
+      label: 'Gasto acumulado',
+      value: formatCurrency(metrics.totalExpenses),
+      actionId: 'expenses_this_month',
     },
   ]
 
   return (
-    <section className="cc-dashboard-overview">
-      <div className="cc-dashboard-overview__hero">
-        <div className="cc-dashboard-overview__copy">
-          <span className="cc-dashboard-overview__eyebrow">Resumen</span>
-          <h2 className="cc-dashboard-overview__title">
-            Visión clara del negocio
-          </h2>
+    <section className="cc-dashboard-overview cc-dashboard-overview--executive">
+      <div className="cc-dashboard-exec">
+        <div className="cc-dashboard-exec__intro">
+          <span className="cc-dashboard-overview__eyebrow">Executive View</span>
+          <h2 className="cc-dashboard-overview__title">Control financiero y operativo diario</h2>
           <p className="cc-dashboard-overview__text">
-            Estado operativo y financiero en tiempo real.
+            Lectura priorizada para caja, seguimiento comercial y carga operativa sin salir del dashboard.
           </p>
+
+          <div className="cc-dashboard-exec__tags">
+            <span className="cc-dashboard-chip">Finanzas del mes</span>
+            <span className="cc-dashboard-chip">Seguimiento comercial</span>
+            <span className="cc-dashboard-chip">Operacion activa</span>
+          </div>
         </div>
 
-        <div className="cc-dashboard-overview__spotlight">
-          <span className="cc-dashboard-chip">Vista financiera</span>
-
-          <div className="cc-dashboard-panel cc-dashboard-panel--spotlight">
-            <div className="cc-dashboard-panel__meta">
-              <span className="cc-dashboard-panel__label">Resultado estimado</span>
-              <strong className="cc-dashboard-panel__value">
-                {formatCurrency(estimatedNet)}
-              </strong>
-            </div>
-
-            <div className="cc-dashboard-spotlight__rows">
-              <div className="cc-dashboard-spotlight__row">
-                <span>Facturado del mes</span>
-                <strong>{formatCurrency(metrics.invoicedThisMonthTotal)}</strong>
-              </div>
-              <div className="cc-dashboard-spotlight__row">
+        <div className="cc-dashboard-exec__summary">
+          <article className="cc-dashboard-summary-card">
+            <span className="cc-dashboard-summary-card__label">Resumen ejecutivo</span>
+            <strong className="cc-dashboard-summary-card__value">{formatCurrency(estimatedNet)}</strong>
+            <div className="cc-dashboard-summary-card__rows">
+              <div className="cc-dashboard-summary-card__row">
                 <span>Cobrado del mes</span>
                 <strong>{formatCurrency(metrics.collectedThisMonthTotal)}</strong>
               </div>
-              <div className="cc-dashboard-spotlight__row">
+              <div className="cc-dashboard-summary-card__row">
                 <span>Pendiente de cobro</span>
-                <strong>{formatCurrency(estimatedBalance)}</strong>
+                <strong>{formatCurrency(metrics.outstandingReceivablesTotal)}</strong>
+              </div>
+              <div className="cc-dashboard-summary-card__row">
+                <span>Servicios en curso</span>
+                <strong>{metrics.scheduledJobsCount}</strong>
               </div>
             </div>
-          </div>
+          </article>
         </div>
       </div>
 
-      <div className="cc-dashboard-overview__grid">
-        {overviewCards.map((card) => (
+      <div className="cc-dashboard-strategic-grid">
+        {strategicCards.map((card) => (
           card.actionId ? (
             <button
               key={card.label}
               type="button"
-              className="cc-dashboard-panel cc-dashboard-panel--actionable"
+              className={`cc-kpi-card cc-kpi-card--executive cc-kpi-card--actionable cc-kpi-card--${card.tone}`}
               onClick={() => onRunKpiAction(card.actionId!)}
             >
-              <span className="cc-dashboard-panel__label">{card.label}</span>
-              <strong className="cc-dashboard-panel__value">{card.value}</strong>
-              <span className="cc-dashboard-panel__hint">Abrir lista</span>
+              <span className="cc-kpi-card__label">{card.label}</span>
+              <strong className="cc-kpi-card__value">{card.value}</strong>
+              <p className="cc-kpi-card__detail">{card.detail}</p>
+              <span className="cc-kpi-card__hint">Abrir lista</span>
             </button>
           ) : (
-            <article key={card.label} className="cc-dashboard-panel">
-              <span className="cc-dashboard-panel__label">{card.label}</span>
-              <strong className="cc-dashboard-panel__value">{card.value}</strong>
+            <article
+              key={card.label}
+              className={`cc-kpi-card cc-kpi-card--executive cc-kpi-card--${card.tone}`}
+            >
+              <span className="cc-kpi-card__label">{card.label}</span>
+              <strong className="cc-kpi-card__value">{card.value}</strong>
+              <p className="cc-kpi-card__detail">{card.detail}</p>
+            </article>
+          )
+        ))}
+      </div>
+
+      <div className="cc-dashboard-stat-strip">
+        {secondaryStats.map((stat) => (
+          stat.actionId ? (
+            <button
+              key={stat.label}
+              type="button"
+              className="cc-dashboard-stat"
+              onClick={() => onRunKpiAction(stat.actionId!)}
+            >
+              <span className="cc-dashboard-stat__label">{stat.label}</span>
+              <strong className="cc-dashboard-stat__value">{stat.value}</strong>
+            </button>
+          ) : (
+            <article key={stat.label} className="cc-dashboard-stat">
+              <span className="cc-dashboard-stat__label">{stat.label}</span>
+              <strong className="cc-dashboard-stat__value">{stat.value}</strong>
             </article>
           )
         ))}

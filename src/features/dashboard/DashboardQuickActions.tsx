@@ -1,4 +1,4 @@
-﻿import type { ReactElement } from 'react'
+import type { ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
 
 interface DashboardQuickActionsProps {
@@ -115,38 +115,45 @@ function PaymentIcon() {
 
 const quickActions: Array<{
   title: string
+  subtitle: string
   view: AppView
   primary?: boolean
   Icon: () => ReactElement
 }> = [
   {
     title: 'Nuevo gasto',
+    subtitle: 'Registrar soporte o ticket',
     view: 'expenses',
     primary: true,
     Icon: ExpenseIcon,
   },
   {
     title: 'Nuevo presupuesto',
+    subtitle: 'Abrir propuesta comercial',
     view: 'quotes',
     Icon: QuoteIcon,
   },
   {
     title: 'Nueva factura',
+    subtitle: 'Emitir cobro vinculado',
     view: 'invoices',
     Icon: InvoiceIcon,
   },
   {
     title: 'Nuevo cliente',
+    subtitle: 'Alta rapida de cartera',
     view: 'clients',
     Icon: ClientIcon,
   },
   {
     title: 'Abrir gastos',
+    subtitle: 'Revisar documentacion',
     view: 'expenses',
     Icon: FolderIcon,
   },
   {
     title: 'Revisar cobros',
+    subtitle: 'Seguimiento de pagos',
     view: 'payments',
     Icon: PaymentIcon,
   },
@@ -154,14 +161,15 @@ const quickActions: Array<{
 
 export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps) {
   return (
-    <section className="cc-dashboard-block">
-      <div className="cc-dashboard-block__header">
+    <section className="cc-dashboard-block cc-dashboard-block--utility">
+      <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
         <div>
-          <h2>Acciones rápidas</h2>
+          <h2>Acciones rapidas</h2>
+          <p>Utilidades directas para crear o revisar movimientos sin romper el foco del panel.</p>
         </div>
       </div>
 
-      <div className="cc-quick-actions cc-quick-actions--launcher">
+      <div className="cc-quick-actions cc-quick-actions--dashboard">
         {quickActions.map((action) => {
           const Icon = action.Icon
 
@@ -171,15 +179,18 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
               type="button"
               className={
                 action.primary
-                  ? 'cc-quick-action cc-quick-action--launcher cc-quick-action--primary'
-                  : 'cc-quick-action cc-quick-action--launcher'
+                  ? 'cc-quick-action cc-quick-action--dashboard cc-quick-action--primary'
+                  : 'cc-quick-action cc-quick-action--dashboard'
               }
               onClick={() => onOpenView(action.view)}
             >
               <span className="cc-quick-action__icon" aria-hidden="true">
                 <Icon />
               </span>
-              <span className="cc-quick-action__title">{action.title}</span>
+              <span className="cc-quick-action__content">
+                <span className="cc-quick-action__title">{action.title}</span>
+                <span className="cc-quick-action__text">{action.subtitle}</span>
+              </span>
             </button>
           )
         })}
@@ -187,4 +198,3 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
     </section>
   )
 }
-

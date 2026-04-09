@@ -132,6 +132,38 @@ function getMonthKey(dateValue: string): string | null {
   return `${year}-${month}`
 }
 
+function getDateKey(dateValue: string): string | null {
+  if (!dateValue) return null
+  const normalizedValue = dateValue.length > 10 ? dateValue : `${dateValue}T00:00:00`
+  const date = new Date(normalizedValue)
+  if (Number.isNaN(date.getTime())) return null
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function createDayKey(offsetDays = 0): string {
+  const date = new Date()
+  date.setHours(0, 0, 0, 0)
+  date.setDate(date.getDate() + offsetDays)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function isOlderThanDays(dateValue: string, days: number): boolean {
+  if (!dateValue) return false
+  const normalizedValue = dateValue.length > 10 ? dateValue : `${dateValue}T00:00:00`
+  const date = new Date(normalizedValue)
+  if (Number.isNaN(date.getTime())) return false
+  const threshold = new Date()
+  threshold.setHours(0, 0, 0, 0)
+  threshold.setDate(threshold.getDate() - days)
+  return date < threshold
+}
+
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
@@ -232,7 +264,7 @@ export function AppShell() {
         setQuoteError('Faltan las variables de entorno de Supabase.')
         return
       }
-      const response = await fetch(`${supabaseUrl}/rest/v1/quotes?select=id,display_code,client_id,property_id,status,subtotal,tax_amount,total,notes&order=created_at.desc`, {
+      const response = await fetch(`${supabaseUrl}/rest/v1/quotes?select=id,display_code,client_id,property_id,status,subtotal,tax_amount,total,notes,created_at&order=created_at.desc`, {
         method: 'GET',
         headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
       })
@@ -385,6 +417,9 @@ export function AppShell() {
     const pendingInvoicesCount = invoices.filter((invoice) => invoice.status !== 'paid').length
     const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
     const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
+    const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => invoice.status !== 'paid' && isOlderThanDays(invoice.issue_date, 7)).length
+    const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
+    const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
@@ -395,6 +430,8 @@ export function AppShell() {
     const now = new Date()
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     const currentQuarterKey = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`
+    const todayKey = createDayKey(0)
+    const tomorrowKey = createDayKey(1)
     const invoicedThisMonthTotal = invoices
       .filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
       .reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
@@ -420,6 +457,9 @@ export function AppShell() {
       .filter((expense) => getExpenseQuarterKey(expense.expense_date) === currentQuarterKey)
       .reduce((sum, expense) => sum + Number(expense.total || 0), 0)
 
+    const jobsScheduledTodayCount = jobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && job.status !== 'cancelled').length
+    const jobsScheduledTomorrowCount = jobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && job.status !== 'cancelled').length
+
     return {
       leadsCount: leads.length,
       clientsCount: clients.length,
@@ -437,6 +477,11 @@ export function AppShell() {
       outstandingReceivablesTotal,
       completedJobsWithoutInvoiceCount,
       acceptedQuotesWithoutJobCount,
+      unpaidInvoicesOlderThan7DaysCount,
+      sentQuotesOlderThan5DaysCount,
+      completedJobsWithoutInvoiceOlderThan2DaysCount,
+      jobsScheduledTodayCount,
+      jobsScheduledTomorrowCount,
       totalInvoiced,
       totalCollected,
       totalExpenses,
@@ -467,12 +512,34 @@ export function AppShell() {
     () => jobs.map((job) => ({
       ...job,
       client_display_code: clientCodeById.get(job.client_id) ?? job.client_id,
+      client_name: clientById.get(job.client_id)?.full_name ?? null,
       property_display_code: propertyCodeById.get(job.property_id) ?? job.property_id,
+      property_name: propertyById.get(job.property_id)?.name ?? null,
       quote_display_code: job.quote_id ? quoteCodeById.get(job.quote_id) ?? job.quote_id : null,
       invoice_id: invoices.find((invoice) => invoice.job_id === job.id)?.id ?? null,
     })),
-    [jobs, invoices, clientCodeById, propertyCodeById, quoteCodeById],
+    [jobs, invoices, clientById, clientCodeById, propertyById, propertyCodeById, quoteCodeById],
   )
+
+  const dashboardAgenda = useMemo(() => {
+    const todayKey = createDayKey(0)
+    const tomorrowKey = createDayKey(1)
+
+    const activeJobs = [...jobsWithCodes]
+      .filter((job) => job.status !== 'cancelled')
+      .sort((left, right) => left.scheduled_date.localeCompare(right.scheduled_date))
+
+    return {
+      todayJobs: activeJobs.filter((job) => getDateKey(job.scheduled_date) === todayKey),
+      tomorrowJobs: activeJobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey),
+      upcomingJobs: activeJobs
+        .filter((job) => {
+          const dateKey = getDateKey(job.scheduled_date)
+          return Boolean(dateKey) && dateKey! > tomorrowKey && job.status !== 'completed'
+        })
+        .slice(0, 5),
+    }
+  }, [jobsWithCodes])
 
   const invoicesWithCodes = useMemo(
     () => invoices.map((invoice) => {
@@ -581,7 +648,12 @@ export function AppShell() {
         <AppNav currentView={currentView} onChangeView={setCurrentView} />
         <div className="cc-shell-content">
           {currentView === 'dashboard' ? (
-            <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} onRunKpiAction={handleDashboardKpiAction} />
+            <HomePage
+              metrics={dashboardMetrics}
+              agenda={dashboardAgenda}
+              onOpenView={setCurrentView}
+              onRunKpiAction={handleDashboardKpiAction}
+            />
           ) : currentView === 'leads' ? (
             <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
           ) : currentView === 'clients' ? (

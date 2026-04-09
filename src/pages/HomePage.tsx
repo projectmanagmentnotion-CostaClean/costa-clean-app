@@ -1,8 +1,11 @@
-﻿import type { AppView } from '../app/navigation'
+import type { AppView } from '../app/navigation'
+import { DashboardAgenda } from '../features/dashboard/DashboardAgenda'
+import { DashboardAlerts } from '../features/dashboard/DashboardAlerts'
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
+import type { JobListItem } from '../features/jobs/types'
 
 interface HomePageProps {
   metrics: {
@@ -22,6 +25,11 @@ interface HomePageProps {
     outstandingReceivablesTotal: number
     completedJobsWithoutInvoiceCount: number
     acceptedQuotesWithoutJobCount: number
+    unpaidInvoicesOlderThan7DaysCount: number
+    sentQuotesOlderThan5DaysCount: number
+    completedJobsWithoutInvoiceOlderThan2DaysCount: number
+    jobsScheduledTodayCount: number
+    jobsScheduledTomorrowCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number
@@ -31,11 +39,16 @@ interface HomePageProps {
     expensesWithoutReceiptCount: number
     deductibleExpensesCount: number
   }
+  agenda: {
+    todayJobs: JobListItem[]
+    tomorrowJobs: JobListItem[]
+    upcomingJobs: JobListItem[]
+  }
   onOpenView: (view: AppView) => void
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
-export function HomePage({ metrics, onOpenView, onRunKpiAction }: HomePageProps) {
+export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction }: HomePageProps) {
   return (
     <section className="cc-dashboard-page">
       <div className="cc-page-topline">
@@ -47,10 +60,10 @@ export function HomePage({ metrics, onOpenView, onRunKpiAction }: HomePageProps)
       </div>
 
       <DashboardQuickActions onOpenView={onOpenView} />
+      <DashboardAlerts metrics={metrics} onRunKpiAction={onRunKpiAction} />
+      <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
       <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
       <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
     </section>
   )
 }
-
-

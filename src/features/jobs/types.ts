@@ -3,8 +3,10 @@
   display_code: string | null
   client_id: string
   client_display_code?: string | null
+  client_name?: string | null
   property_id: string
   property_display_code?: string | null
+  property_name?: string | null
   quote_id: string | null
   quote_display_code?: string | null
   scheduled_date: string

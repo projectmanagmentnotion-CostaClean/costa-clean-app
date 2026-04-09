@@ -9,6 +9,12 @@ import type {
 } from '../../app/moduleFilters'
 
 export type DashboardKpiActionId =
+  | 'unpaid_invoices_older_7d'
+  | 'sent_quotes_older_5d'
+  | 'completed_jobs_without_invoice_older_2d'
+  | 'jobs_today'
+  | 'jobs_tomorrow'
+  | 'jobs_upcoming'
   | 'invoiced_this_month'
   | 'collected_this_month'
   | 'outstanding_invoices'
@@ -28,6 +34,42 @@ interface DashboardKpiActionConfig {
 }
 
 export const dashboardKpiActionConfig: Record<DashboardKpiActionId, DashboardKpiActionConfig> = {
+  unpaid_invoices_older_7d: {
+    id: 'unpaid_invoices_older_7d',
+    view: 'invoices',
+    filterKey: 'invoices',
+    filterValue: 'unpaid_older_7d',
+  },
+  sent_quotes_older_5d: {
+    id: 'sent_quotes_older_5d',
+    view: 'quotes',
+    filterKey: 'quotes',
+    filterValue: 'sent_older_5d',
+  },
+  completed_jobs_without_invoice_older_2d: {
+    id: 'completed_jobs_without_invoice_older_2d',
+    view: 'jobs',
+    filterKey: 'jobs',
+    filterValue: 'completed_without_invoice_2d',
+  },
+  jobs_today: {
+    id: 'jobs_today',
+    view: 'jobs',
+    filterKey: 'jobs',
+    filterValue: 'today',
+  },
+  jobs_tomorrow: {
+    id: 'jobs_tomorrow',
+    view: 'jobs',
+    filterKey: 'jobs',
+    filterValue: 'tomorrow',
+  },
+  jobs_upcoming: {
+    id: 'jobs_upcoming',
+    view: 'jobs',
+    filterKey: 'jobs',
+    filterValue: 'upcoming',
+  },
   invoiced_this_month: {
     id: 'invoiced_this_month',
     view: 'invoices',

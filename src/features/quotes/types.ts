@@ -11,6 +11,7 @@ export interface QuoteListItem {
   tax_amount: number | null
   total: number
   notes?: string | null
+  created_at?: string
   quote_lines?: QuoteLineItem[]
   lines?: QuoteLineItem[]
 }

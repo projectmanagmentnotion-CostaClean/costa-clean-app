@@ -665,7 +665,7 @@ export function AppShell() {
 
   return (
     <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
-      <section className="hero-card cc-shell">
+      <section className="hero-card cc-shell cc-shell-frame">
         <AppNav
           currentView={currentView}
           onChangeView={setCurrentView}

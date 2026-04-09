@@ -2,34 +2,37 @@
   width: 210mm;
   min-height: 297mm;
   margin: 0 auto;
-  padding: 14mm 14mm 12mm;
+  padding: 15mm 15mm 12.5mm;
   background: #ffffff;
   color: #0f172a;
   display: flex;
   flex-direction: column;
-  gap: 8mm;
+  gap: 8.5mm;
   box-sizing: border-box;
-  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+  font-variant-numeric: tabular-nums;
 }
 
 .cc-invoice-a4--quote {
   position: relative;
+  background:
+    linear-gradient(180deg, #f9fbfd 0%, #ffffff 22%);
 }
 
 .cc-invoice-a4--quote::before {
   content: '';
   position: absolute;
   inset: 0 0 auto;
-  height: 10mm;
+  height: 12mm;
   border-radius: 24px 24px 0 0;
-  background: linear-gradient(90deg, rgba(14, 116, 144, 0.12), rgba(15, 23, 42, 0));
+  background: linear-gradient(90deg, rgba(14, 116, 144, 0.14), rgba(15, 23, 42, 0));
   pointer-events: none;
 }
 
 .cc-invoice-a4--embedded {
   width: 100%;
   min-height: auto;
-  padding: 1.5rem;
+  padding: 1.65rem;
   border-radius: 24px;
   box-shadow: none;
 }
@@ -50,8 +53,9 @@
 .cc-invoice-a4__header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 72mm;
-  gap: 8mm;
+  gap: 9mm;
   align-items: start;
+  padding-bottom: 1mm;
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__header {
@@ -66,8 +70,8 @@
 
 .cc-invoice-a4__brand {
   display: flex;
-  gap: 5mm;
-  align-items: center;
+  gap: 6mm;
+  align-items: flex-start;
   min-width: 0;
 }
 
@@ -96,13 +100,14 @@
 
 .cc-invoice-a4__brand-copy {
   min-width: 0;
+  padding-top: 1mm;
 }
 
 .cc-invoice-a4__eyebrow {
   display: inline-block;
-  margin-bottom: 2mm;
-  font-size: 10pt;
-  letter-spacing: 0.08em;
+  margin-bottom: 2.2mm;
+  font-size: 9.5pt;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #64748b;
   font-weight: 700;
@@ -115,9 +120,9 @@
 
 .cc-invoice-a4__brand-copy h1 {
   margin: 0;
-  font-size: 24pt;
-  line-height: 1;
-  letter-spacing: 0.02em;
+  font-size: 25pt;
+  line-height: 0.96;
+  letter-spacing: -0.03em;
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__brand-copy h1 {
@@ -129,9 +134,10 @@
 }
 
 .cc-invoice-a4__brand-copy p {
-  margin: 2.5mm 0 0;
-  font-size: 10.5pt;
-  line-height: 1.45;
+  margin: 3mm 0 0;
+  max-width: 58ch;
+  font-size: 10.2pt;
+  line-height: 1.5;
   color: #475569;
 }
 
@@ -145,15 +151,16 @@
 .cc-invoice-a4__panel,
 .cc-invoice-a4__reference-card,
 .cc-invoice-a4__totals {
-  border: 1px solid #dbe3ee;
-  border-radius: 16px;
-  background: #ffffff;
+  border: 1px solid #dde5ef;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfd 100%);
 }
 
 .cc-invoice-a4__doc-box {
-  padding: 5mm;
+  padding: 5.5mm;
   display: grid;
-  gap: 3mm;
+  gap: 3.2mm;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__doc-box,
@@ -186,15 +193,24 @@
   justify-content: space-between;
   gap: 4mm;
   align-items: baseline;
-  font-size: 10.5pt;
+  font-size: 10.1pt;
+  padding-bottom: 1.8mm;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.cc-invoice-a4__doc-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
 .cc-invoice-a4__doc-row span {
   color: #64748b;
+  letter-spacing: 0.03em;
 }
 
 .cc-invoice-a4__doc-row strong {
   text-align: right;
+  font-weight: 700;
 }
 
 .cc-invoice-a4--print .cc-invoice-a4__doc-row {
@@ -205,7 +221,7 @@
 .cc-invoice-a4__references {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6mm;
+  gap: 6.5mm;
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__parties,
@@ -220,7 +236,7 @@
 
 .cc-invoice-a4__panel,
 .cc-invoice-a4__reference-card {
-  padding: 5mm;
+  padding: 5.25mm;
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__panel,
@@ -234,29 +250,34 @@
 }
 
 .cc-invoice-a4__panel--soft {
-  background: #f8fafc;
+  background: linear-gradient(180deg, #fbfcfd 0%, #f7f9fc 100%);
 }
 
 .cc-invoice-a4--quote .cc-invoice-a4__doc-box,
 .cc-invoice-a4--quote .cc-invoice-a4__totals {
-  background: linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
+  background: linear-gradient(180deg, #f7fbfd 0%, #ffffff 100%);
 }
 
 .cc-invoice-a4--quote .cc-invoice-a4__table th {
-  background: #0f3a4b;
+  background: #123f52;
 }
 
 .cc-invoice-a4--quote .cc-invoice-a4__total-row--grand {
   border-top-color: #94a3b8;
 }
 
+.cc-invoice-a4--quote .cc-invoice-a4__panel,
+.cc-invoice-a4--quote .cc-invoice-a4__reference-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfe 100%);
+}
+
 .cc-invoice-a4__label {
   display: inline-block;
-  margin-bottom: 2.5mm;
-  font-size: 9.5pt;
+  margin-bottom: 2.6mm;
+  font-size: 8.8pt;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   color: #64748b;
 }
 
@@ -269,15 +290,16 @@
 .cc-invoice-a4__reference-card strong {
   display: block;
   margin: 0;
-  font-size: 11.5pt;
-  line-height: 1.35;
+  font-size: 11.4pt;
+  line-height: 1.32;
+  letter-spacing: -0.01em;
 }
 
 .cc-invoice-a4__panel p,
 .cc-invoice-a4__reference-card p {
-  margin: 1.5mm 0 0;
-  font-size: 10.5pt;
-  line-height: 1.45;
+  margin: 1.7mm 0 0;
+  font-size: 10pt;
+  line-height: 1.46;
   color: #334155;
 }
 
@@ -296,9 +318,10 @@
 
 .cc-invoice-a4__table-wrap {
   border: 1px solid #dbe3ee;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
 }
 
 .cc-invoice-a4__table {
@@ -309,17 +332,20 @@
 .cc-invoice-a4__table th {
   background: #0f172a;
   color: #ffffff;
-  font-size: 10pt;
+  font-size: 9.4pt;
   text-align: left;
-  padding: 4mm 4.5mm;
+  padding: 4.2mm 4.5mm;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .cc-invoice-a4__table td {
-  padding: 4.5mm;
-  font-size: 10.5pt;
+  padding: 4.4mm 4.5mm;
+  font-size: 10pt;
   border-top: 1px solid #e5e7eb;
   vertical-align: top;
+  line-height: 1.45;
 }
 
 .cc-invoice-a4--print .cc-invoice-a4__table th {
@@ -342,10 +368,14 @@
   white-space: nowrap;
 }
 
+.cc-invoice-a4__table td:first-child {
+  font-weight: 600;
+}
+
 .cc-invoice-a4__footer-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 68mm;
-  gap: 6mm;
+  gap: 6.5mm;
   align-items: start;
 }
 
@@ -360,7 +390,7 @@
 
 .cc-invoice-a4__notes {
   display: grid;
-  gap: 6mm;
+  gap: 5.2mm;
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__notes {
@@ -372,10 +402,11 @@
 }
 
 .cc-invoice-a4__totals {
-  padding: 5mm;
+  padding: 5.5mm;
   display: grid;
-  gap: 2.5mm;
+  gap: 2.8mm;
   align-self: start;
+  background: linear-gradient(180deg, #fcfdff 0%, #f8fafc 100%);
 }
 
 .cc-invoice-a4--embedded .cc-invoice-a4__totals {
@@ -391,12 +422,16 @@
   display: flex;
   justify-content: space-between;
   gap: 4mm;
-  font-size: 10.5pt;
+  font-size: 10pt;
   line-height: 1.4;
 }
 
 .cc-invoice-a4__total-row span {
   color: #475569;
+}
+
+.cc-invoice-a4__total-row strong {
+  font-weight: 700;
 }
 
 .cc-invoice-a4--print .cc-invoice-a4__total-row {
@@ -406,9 +441,9 @@
 
 .cc-invoice-a4__total-row--grand {
   margin-top: 2mm;
-  padding-top: 3mm;
+  padding-top: 3.2mm;
   border-top: 1px solid #cbd5e1;
-  font-size: 12.5pt;
+  font-size: 12.8pt;
   font-weight: 800;
 }
 
@@ -431,7 +466,23 @@
     grid-template-columns: 1fr;
   }
 
+  .cc-invoice-a4--embedded {
+    padding: 1.2rem;
+    gap: 1rem;
+  }
+
+  .cc-invoice-a4--embedded .cc-invoice-a4__doc-box,
+  .cc-invoice-a4--embedded .cc-invoice-a4__panel,
+  .cc-invoice-a4--embedded .cc-invoice-a4__reference-card,
+  .cc-invoice-a4--embedded .cc-invoice-a4__totals {
+    border-radius: 16px;
+  }
+
   .cc-invoice-a4--embedded .cc-invoice-a4__logo {
     width: min(180px, 42vw);
+  }
+
+  .cc-invoice-a4--embedded .cc-invoice-a4__table-wrap {
+    overflow-x: auto;
   }
 }

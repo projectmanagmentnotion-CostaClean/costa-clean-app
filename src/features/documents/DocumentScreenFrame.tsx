@@ -196,35 +196,35 @@ export function DocumentScreenFrame({
   return (
     <div className="cc-document-screen" style={overlayStyle}>
       <div className="cc-document-screen__topbar" style={topbarStyle}>
-        <div style={titleWrapStyle}>
-          <strong style={titleStyle}>{title}</strong>
-          <span style={subtitleStyle}>{subtitle}</span>
+        <div className="cc-document-screen__title-wrap" style={titleWrapStyle}>
+          <strong className="cc-document-screen__title" style={titleStyle}>{title}</strong>
+          <span className="cc-document-screen__subtitle" style={subtitleStyle}>{subtitle}</span>
         </div>
 
         <div className="cc-document-screen__actions" style={actionsStyle}>
           <button type="button" className="secondary-button" onClick={onClose}>
-            <span style={iconLabelStyle}>
+            <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <BackChevronIcon />
               Volver
             </span>
           </button>
 
           <button type="button" className="secondary-button" onClick={onShare}>
-            <span style={iconLabelStyle}>
+            <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <IosShareIcon />
               Compartir
             </span>
           </button>
 
           <button type="button" className="secondary-button" onClick={onPrint}>
-            <span style={iconLabelStyle}>
+            <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <PrintIcon />
               Imprimir
             </span>
           </button>
 
           <button type="button" className="primary-button" onClick={onSavePdf}>
-            <span style={iconLabelStyle}>
+            <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <DownloadIcon />
               Guardar PDF
             </span>
@@ -241,7 +241,7 @@ export function DocumentScreenFrame({
               </div>
 
               <div className="cc-doc-preview-panel__viewport">
-                <div className="cc-doc-preview-panel__canvas">
+                <div className="cc-doc-preview-panel__canvas cc-doc-preview-panel__canvas--document">
                   {children}
                 </div>
               </div>

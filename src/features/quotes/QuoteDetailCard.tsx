@@ -6,6 +6,7 @@ import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { formatCurrency } from '../../app/displayFormat'
+import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
@@ -25,6 +26,7 @@ interface QuoteDetailCardProps {
   properties: PropertyListItem[]
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
+  onCreateJobFromQuote: (quote: QuoteListItem) => void
 }
 
 interface EditFormState {
@@ -52,6 +54,7 @@ export function QuoteDetailCard({
   properties,
   onQuoteUpdated,
   onOpenDocument,
+  onCreateJobFromQuote,
 }: QuoteDetailCardProps) {
   if (!quote) {
     return (
@@ -77,6 +80,7 @@ export function QuoteDetailCard({
       properties={properties}
       onQuoteUpdated={onQuoteUpdated}
       onOpenDocument={onOpenDocument}
+      onCreateJobFromQuote={onCreateJobFromQuote}
     />
   )
 }
@@ -87,12 +91,14 @@ function QuoteDetailCardContent({
   properties,
   onQuoteUpdated,
   onOpenDocument,
+  onCreateJobFromQuote,
 }: {
   quote: QuoteListItem
   clients: ClientListItem[]
   properties: PropertyListItem[]
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
+  onCreateJobFromQuote: (quote: QuoteListItem) => void
 }) {
   const {
     quote: hydratedQuote,
@@ -189,6 +195,19 @@ function QuoteDetailCardContent({
       notes: hydratedQuote.notes ?? '',
     })
     setLines(getFormLinesFromQuote(hydratedQuote, properties))
+  }
+
+  function handleCreateJobFromQuote() {
+    setSaveError(null)
+    setSuccessMessage(null)
+
+    const prefill = buildJobCreatePrefillFromQuote(hydratedQuote)
+    if (!prefill) {
+      setSaveError('El presupuesto necesita cliente y propiedad para poder crear un trabajo.')
+      return
+    }
+
+    onCreateJobFromQuote(hydratedQuote)
   }
 
   async function updateQuoteStatus(nextStatus: string) {
@@ -364,6 +383,14 @@ function QuoteDetailCardContent({
             onClick={onOpenDocument}
           >
             Abrir documento
+          </button>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={handleCreateJobFromQuote}
+          >
+            Crear trabajo desde presupuesto
           </button>
 
           <button

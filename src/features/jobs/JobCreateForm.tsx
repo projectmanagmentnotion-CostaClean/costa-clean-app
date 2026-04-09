@@ -1,14 +1,16 @@
-﻿import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
+import type { JobCreatePrefill } from './jobCreatePrefill'
 
 interface JobCreateFormProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
+  prefill?: JobCreatePrefill | null
 }
 
 interface FormState {
@@ -43,13 +45,8 @@ function parseDecimalInput(value: string): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-export function JobCreateForm({
-  clients,
-  properties,
-  quotes,
-  onCreated,
-}: JobCreateFormProps) {
-  const [form, setForm] = useState<FormState>({
+function createDefaultFormState(clients: ClientListItem[]): FormState {
+  return {
     client_id: clients[0]?.id ?? '',
     property_id: '',
     quote_id: '',
@@ -61,10 +58,36 @@ export function JobCreateForm({
     billing_unit: 'servicio',
     billing_unit_price: '',
     notes: '',
-  })
+  }
+}
+
+function applyPrefillToForm(prefill: JobCreatePrefill, clients: ClientListItem[]): FormState {
+  const defaultState = createDefaultFormState(clients)
+
+  return {
+    ...defaultState,
+    client_id: prefill.client_id,
+    property_id: prefill.property_id,
+    quote_id: prefill.quote_id,
+    billing_concept: prefill.billing_concept || defaultState.billing_concept,
+    notes: prefill.notes,
+  }
+}
+
+export function JobCreateForm({
+  clients,
+  properties,
+  quotes,
+  onCreated,
+  prefill = null,
+}: JobCreateFormProps) {
+  const [form, setForm] = useState<FormState>(() => (
+    prefill ? applyPrefillToForm(prefill, clients) : createDefaultFormState(clients)
+  ))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -81,6 +104,17 @@ export function JobCreateForm({
 
     return quotes.filter((quote) => quote.client_id === form.client_id)
   }, [quotes, form.client_id])
+
+  useEffect(() => {
+    if (!prefill || prefill.request_id === lastAppliedPrefillId) {
+      return
+    }
+
+    setForm(applyPrefillToForm(prefill, clients))
+    setSubmitError(null)
+    setSuccessMessage(null)
+    setLastAppliedPrefillId(prefill.request_id)
+  }, [clients, lastAppliedPrefillId, prefill])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => {
@@ -186,19 +220,7 @@ export function JobCreateForm({
       }
 
       await onCreated()
-      setForm({
-        client_id: clients[0]?.id ?? '',
-        property_id: '',
-        quote_id: '',
-        scheduled_date: '',
-        status: 'scheduled',
-        service_type: 'standard_cleaning',
-        billing_concept: getServiceTypeOptionLabel('standard_cleaning'),
-        billing_quantity: '1',
-        billing_unit: 'servicio',
-        billing_unit_price: '',
-        notes: '',
-      })
+      setForm(createDefaultFormState(clients))
       setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
       const message =

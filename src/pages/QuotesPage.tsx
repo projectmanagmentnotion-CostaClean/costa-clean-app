@@ -15,6 +15,7 @@ interface QuotesPageProps {
   properties: PropertyListItem[]
   error: string | null
   onQuoteCreated: () => Promise<void>
+  onCreateJobFromQuote: (quote: QuoteListItem) => void
   activeFilterLabel: string | null
   onClearFilter: () => void
 }
@@ -25,6 +26,7 @@ export function QuotesPage({
   properties,
   error,
   onQuoteCreated,
+  onCreateJobFromQuote,
   activeFilterLabel,
   onClearFilter,
 }: QuotesPageProps) {
@@ -106,6 +108,7 @@ export function QuotesPage({
               properties={properties}
               onQuoteUpdated={onQuoteCreated}
               onOpenDocument={() => setShowDocumentScreen(true)}
+              onCreateJobFromQuote={onCreateJobFromQuote}
             />
           </div>
         </div>

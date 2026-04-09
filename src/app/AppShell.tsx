@@ -26,6 +26,7 @@ import { PaymentsPage } from '../pages/PaymentsPage'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
+import { buildJobCreatePrefillFromQuote, type JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -122,6 +123,7 @@ function getExpenseQuarterKey(dateValue: string): string | null {
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
+  const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [leads, setLeads] = useState<LeadListItem[]>([])
   const [clients, setClients] = useState<ClientListItem[]>([])
   const [properties, setProperties] = useState<PropertyListItem[]>([])
@@ -495,6 +497,16 @@ export function AppShell() {
     setCurrentView(action.view)
   }, [])
 
+  const handleCreateJobFromQuote = useCallback((quote: QuoteListItem) => {
+    const prefill = buildJobCreatePrefillFromQuote(quote)
+    if (!prefill) {
+      return
+    }
+
+    setJobCreatePrefill(prefill)
+    setCurrentView('jobs')
+  }, [])
+
   const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
     setModuleFilters((current) => ({
       ...current,
@@ -522,6 +534,7 @@ export function AppShell() {
               properties={properties}
               error={quoteError}
               onQuoteCreated={loadQuotes}
+              onCreateJobFromQuote={handleCreateJobFromQuote}
               activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
               onClearFilter={() => clearModuleFilter('quotes')}
             />
@@ -533,6 +546,8 @@ export function AppShell() {
               quotes={quotes}
               error={jobError}
               onJobCreated={loadJobs}
+              createPrefill={jobCreatePrefill}
+              onPrefillConsumed={() => setJobCreatePrefill(null)}
               activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
               onClearFilter={() => clearModuleFilter('jobs')}
             />

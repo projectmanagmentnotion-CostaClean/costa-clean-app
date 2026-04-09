@@ -3,6 +3,7 @@ import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { JobCreateForm } from '../features/jobs/JobCreateForm'
 import { JobDetailCard } from '../features/jobs/JobDetailCard'
 import { JobsList } from '../features/jobs/JobsList'
+import type { JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
 import type { JobListItem } from '../features/jobs/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -15,6 +16,8 @@ interface JobsPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onJobCreated: () => Promise<void>
+  createPrefill: JobCreatePrefill | null
+  onPrefillConsumed: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
 }
@@ -26,11 +29,24 @@ export function JobsPage({
   quotes,
   error,
   onJobCreated,
+  createPrefill,
+  onPrefillConsumed,
   activeFilterLabel,
   onClearFilter,
 }: JobsPageProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [activeCreatePrefill, setActiveCreatePrefill] = useState<JobCreatePrefill | null>(null)
+
+  useEffect(() => {
+    if (!createPrefill) {
+      return
+    }
+
+    setActiveCreatePrefill(createPrefill)
+    setShowCreateForm(true)
+    onPrefillConsumed()
+  }, [createPrefill, onPrefillConsumed])
 
   useEffect(() => {
     if (jobs.length === 0) {
@@ -50,6 +66,11 @@ export function JobsPage({
   const selectedJob =
     jobs.find((job) => job.id === selectedJobId) ?? null
 
+  async function handleJobCreated() {
+    await onJobCreated()
+    setActiveCreatePrefill(null)
+  }
+
   return (
     <section className="page-section cc-master-page">
       <div className="section-header page-header-actions cc-master-page__hero">
@@ -61,7 +82,15 @@ export function JobsPage({
         <button
           type="button"
           className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
+          onClick={() => {
+            setShowCreateForm((current) => {
+              const nextValue = !current
+              if (!nextValue) {
+                setActiveCreatePrefill(null)
+              }
+              return nextValue
+            })
+          }}
         >
           {showCreateForm ? 'Cerrar formulario' : 'Nuevo servicio'}
         </button>
@@ -72,7 +101,8 @@ export function JobsPage({
           clients={clients}
           properties={properties}
           quotes={quotes}
-          onCreated={onJobCreated}
+          onCreated={handleJobCreated}
+          prefill={activeCreatePrefill}
         />
       ) : null}
 

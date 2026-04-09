@@ -76,7 +76,7 @@ export function InvoicesList({
           <p>No encontramos facturas que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
 

@@ -65,7 +65,7 @@ export function ClientsList({
           <p>No encontramos clientes que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredClients.map((client) => {
             const isSelected = client.id === selectedClientId
 

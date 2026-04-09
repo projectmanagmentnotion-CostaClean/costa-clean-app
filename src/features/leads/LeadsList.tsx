@@ -63,7 +63,7 @@ export function LeadsList({
           <p>No encontramos leads que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-bounded-list">
           {filteredLeads.map((lead) => {
             const isSelected = lead.id === selectedLeadId
 

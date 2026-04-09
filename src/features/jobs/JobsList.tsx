@@ -81,7 +81,7 @@ export function JobsList({
           <p>No encontramos servicios que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredJobs.map((job) => {
             const isSelected = job.id === selectedJobId
 

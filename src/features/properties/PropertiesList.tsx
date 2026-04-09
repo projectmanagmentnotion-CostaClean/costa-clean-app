@@ -71,7 +71,7 @@ export function PropertiesList({
           <p>No encontramos propiedades que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredProperties.map((property) => {
             const isSelected = property.id === selectedPropertyId
 

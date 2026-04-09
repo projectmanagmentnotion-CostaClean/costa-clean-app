@@ -98,7 +98,7 @@ export function ExpensesList({
           <p>No encontramos gastos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="cc-expenses-list cc-record-list">
+        <div className="cc-expenses-list cc-record-list cc-bounded-list">
           {filteredExpenses.map((expense) => {
             const isSelected = expense.id === selectedExpenseId
 

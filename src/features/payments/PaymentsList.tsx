@@ -70,7 +70,7 @@ export function PaymentsList({
           <p>No encontramos pagos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredPayments.map((payment) => {
             const isSelected = payment.id === selectedPaymentId
 

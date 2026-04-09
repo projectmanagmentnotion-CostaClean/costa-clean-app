@@ -90,7 +90,7 @@ export function QuotesList({
           <p>No encontramos presupuestos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list">
+        <div className="lead-list cc-record-list cc-bounded-list">
           {filteredQuotes.map((quote) => {
             const isSelected = quote.id === selectedQuoteId
             const clientLabel = buildClientLabel(quote, clients)

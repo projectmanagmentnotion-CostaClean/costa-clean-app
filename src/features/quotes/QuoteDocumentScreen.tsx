@@ -64,7 +64,7 @@ export function QuoteDocumentScreen({
       onSavePdf={handleSavePdf}
     >
       {isLoadingLines ? (
-        <div className="empty-state">
+        <div className="empty-state cc-state-card cc-state-card--loading">
           <strong>Cargando líneas de presupuesto</strong>
           <p>Preparando la vista previa con los conceptos reales.</p>
         </div>

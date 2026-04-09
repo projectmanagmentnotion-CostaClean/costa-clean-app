@@ -164,10 +164,58 @@ function isOlderThanDays(dateValue: string, days: number): boolean {
   return date < threshold
 }
 
+function ShellLoadingState({ currentView }: { currentView: AppView }) {
+  const titleByView: Record<AppView, string> = {
+    dashboard: 'Preparando panel de control',
+    leads: 'Cargando leads',
+    clients: 'Cargando clientes',
+    properties: 'Cargando propiedades',
+    quotes: 'Cargando presupuestos',
+    jobs: 'Cargando servicios',
+    invoices: 'Cargando facturas',
+    expenses: 'Cargando gastos',
+    payments: 'Cargando cobros',
+  }
+
+  return (
+    <section className="cc-shell-loading" aria-live="polite" aria-busy="true">
+      <div className="cc-shell-loading__hero">
+        <div className="cc-shell-loading__eyebrow" />
+        <div className="cc-shell-loading__title" />
+        <div className="cc-shell-loading__text" />
+      </div>
+
+      <div className="cc-shell-loading__grid">
+        <article className="cc-shell-loading__card">
+          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
+        </article>
+        <article className="cc-shell-loading__card">
+          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--medium" />
+        </article>
+        <article className="cc-shell-loading__card">
+          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
+          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
+        </article>
+      </div>
+
+      <div className="empty-state cc-state-card cc-state-card--loading">
+        <strong>{titleByView[currentView]}</strong>
+        <p>Sincronizando datos y preparando la vista operativa.</p>
+      </div>
+    </section>
+  )
+}
+
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
+  const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
@@ -383,6 +431,8 @@ export function AppShell() {
   }, [loadLeads, loadClients])
 
   useEffect(() => {
+    let isMounted = true
+
     void Promise.all([
       loadLeads(),
       loadClients(),
@@ -392,7 +442,15 @@ export function AppShell() {
       loadInvoices(),
       loadExpenses(),
       loadPayments(),
-    ])
+    ]).finally(() => {
+      if (isMounted) {
+        setIsInitialDataLoading(false)
+      }
+    })
+
+    return () => {
+      isMounted = false
+    }
   }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments])
 
   useEffect(() => {
@@ -672,7 +730,9 @@ export function AppShell() {
           compactMobile={compactMobileNav}
         />
         <div className="cc-shell-content">
-          {currentView === 'dashboard' ? (
+          {isInitialDataLoading ? (
+            <ShellLoadingState currentView={currentView} />
+          ) : currentView === 'dashboard' ? (
             <HomePage
               metrics={dashboardMetrics}
               agenda={dashboardAgenda}

@@ -49,7 +49,7 @@ function InvoiceDocumentPreviewContent({
       <div className="cc-doc-preview-panel__viewport">
         <div className="cc-doc-preview-panel__canvas">
           {isLoadingLines ? (
-            <div className="empty-state">
+            <div className="empty-state cc-state-card cc-state-card--loading">
               <strong>Cargando líneas de factura</strong>
               <p>Preparando la vista previa con los conceptos reales.</p>
             </div>

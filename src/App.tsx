@@ -59,7 +59,7 @@ function App() {
             if (isMounted) {
               setIsBooting(false)
             }
-          }, 850)
+          }, 560)
         }
       } catch (err) {
         if (isMounted) {

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { matchesSearchQuery } from '../documents/search'
@@ -28,8 +28,10 @@ export function JobsList({
       matchesSearchQuery(searchQuery, [
         job.display_code,
         job.id,
+        job.client_name,
         job.client_display_code,
         job.client_id,
+        job.property_name,
         job.property_display_code,
         job.property_id,
         job.quote_display_code,
@@ -46,9 +48,12 @@ export function JobsList({
   }, [jobs, searchQuery])
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Servicios</h2>
+    <section className="data-section cc-module-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Servicios</h2>
+          <p>Planificacion operativa, ejecucion y facturacion vinculada.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -76,7 +81,7 @@ export function JobsList({
           <p>No encontramos servicios que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-record-list">
           {filteredJobs.map((job) => {
             const isSelected = job.id === selectedJobId
 
@@ -86,21 +91,30 @@ export function JobsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--job'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--job'
                 }
                 onClick={() => onSelectJob(job)}
               >
-                <div className="lead-item-top">
-                  <strong>{getJobPrimaryReference(job)}</strong>
-                  <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">{getJobPrimaryReference(job)}</strong>
+                    <span className="cc-record-card__subref">Interno {job.display_code ?? job.id}</span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
+                    <strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>
+                  </div>
                 </div>
 
-                <p>Cliente: {job.client_display_code ?? job.client_id}</p>
-                <p>Propiedad: {job.property_display_code ?? job.property_id}</p>
-                <div className="cc-list-meta">
-                  <span>{formatDateEs(job.scheduled_date)}</span>
-                  <span>Interno {job.display_code ?? job.id}</span>
+                <p className="cc-record-card__summary">
+                  {(job.client_name ?? job.client_display_code ?? job.client_id)} · {(job.property_name ?? job.property_display_code ?? job.property_id)}
+                </p>
+
+                <div className="cc-list-meta cc-record-card__meta">
+                  <span>{getServiceTypeLabel(job.service_type)}</span>
+                  <span>{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
                 </div>
               </button>
             )
@@ -110,4 +124,3 @@ export function JobsList({
     </section>
   )
 }
-

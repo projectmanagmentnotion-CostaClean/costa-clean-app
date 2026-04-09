@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import {
@@ -65,9 +65,12 @@ export function ExpensesList({
   }, [expenses, searchQuery])
 
   return (
-    <section className="data-section cc-expenses-list-section">
-      <div className="section-header">
-        <h2>Explorar gastos</h2>
+    <section className="data-section cc-module-list-section cc-expenses-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Explorar gastos</h2>
+          <p>Proveedor, soporte fiscal y control documental en una sola lista.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -95,7 +98,7 @@ export function ExpensesList({
           <p>No encontramos gastos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="cc-expenses-list">
+        <div className="cc-expenses-list cc-record-list">
           {filteredExpenses.map((expense) => {
             const isSelected = expense.id === selectedExpenseId
 
@@ -105,38 +108,33 @@ export function ExpensesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'cc-expense-item is-selected'
-                    : 'cc-expense-item'
+                    ? 'cc-expense-item cc-record-card cc-record-card--expense is-selected'
+                    : 'cc-expense-item cc-record-card cc-record-card--expense'
                 }
                 onClick={() => onSelectExpense(expense)}
               >
-                <div className="cc-expense-item__top">
-                  <strong className="cc-expense-item__code">
-                    {expense.display_code ?? expense.id}
-                  </strong>
-                  <span className="cc-expense-item__amount">
-                    {formatCurrency(expense.total)}
-                  </span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">{expense.supplier_name}</strong>
+                    <span className="cc-record-card__subref">{expense.display_code ?? expense.id}</span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{getExpenseCategoryLabel(expense.category)}</span>
+                    <strong className="cc-record-card__amount">{formatCurrency(expense.total)}</strong>
+                  </div>
                 </div>
 
-                <p className="cc-expense-item__description">{expense.description}</p>
+                <p className="cc-record-card__summary">{expense.description}</p>
 
-                <div className="cc-expense-item__meta">
-                  <span>{expense.supplier_name}</span>
+                <div className="cc-list-meta cc-record-card__meta">
                   <span>{formatDateEs(expense.expense_date)}</span>
+                  <span>{getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</span>
+                  <span>{getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</span>
                 </div>
 
                 <div className="cc-expense-item__chips">
                   <span className="cc-expense-chip">
-                    {getExpenseCategoryLabel(expense.category)}
-                  </span>
-                  <span className="cc-expense-chip">
-                    {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                  </span>
-                  <span className="cc-expense-chip">
-                    {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
-                  </span>
-                  <span className="cc-expense-chip cc-expense-chip--risk">
                     Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
                   </span>
                 </div>

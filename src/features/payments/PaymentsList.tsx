@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
@@ -37,9 +37,12 @@ export function PaymentsList({
   }, [payments, searchQuery])
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Pagos</h2>
+    <section className="data-section cc-module-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Pagos</h2>
+          <p>Cobros registrados y trazabilidad de factura asociada.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -67,7 +70,7 @@ export function PaymentsList({
           <p>No encontramos pagos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-record-list">
           {filteredPayments.map((payment) => {
             const isSelected = payment.id === selectedPaymentId
 
@@ -77,22 +80,31 @@ export function PaymentsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--payment'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--payment'
                 }
                 onClick={() => onSelectPayment(payment)}
               >
-                <div className="lead-item-top">
-                  <strong>{payment.display_code ?? payment.id}</strong>
-                  <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">
+                      {payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}
+                    </strong>
+                    <span className="cc-record-card__subref">Pago {payment.display_code ?? payment.id}</span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>
+                    <strong className="cc-record-card__amount">{formatCurrency(payment.amount)}</strong>
+                  </div>
                 </div>
 
-                <div className="cc-list-meta">
-                  <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
-                  <span>{formatDateEs(payment.payment_date)}</span>
-                </div>
+                <p className="cc-record-card__summary">{formatDateEs(payment.payment_date)}</p>
 
-                <p>Importe {formatCurrency(payment.amount)}</p>
+                <div className="cc-list-meta cc-record-card__meta">
+                  <span>{getPaymentMethodLabel(payment.payment_method)}</span>
+                  <span>{payment.notes?.trim() || 'Sin notas'}</span>
+                </div>
               </button>
             )
           })}

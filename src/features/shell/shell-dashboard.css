@@ -4403,3 +4403,268 @@
     padding: 16px;
   }
 }
+
+/* =========================================================
+   Phase 1 list / card system
+   ========================================================= */
+
+.cc-master-page__hero,
+.cc-expenses-hero,
+.cc-doc-page .cc-master-page__hero {
+  background:
+    linear-gradient(180deg, rgba(19, 29, 45, 0.94), rgba(13, 21, 33, 0.9));
+  border-color: rgba(255,255,255,0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 18px 34px rgba(1, 6, 16, 0.18);
+}
+
+.page-header-actions h1,
+.page-header-actions h2 {
+  letter-spacing: -0.045em;
+}
+
+.page-header-actions p {
+  color: rgba(177, 189, 204, 0.72);
+  max-width: 58ch;
+}
+
+.cc-module-filter-bar {
+  border: 1px solid rgba(255,255,255,0.05);
+  background:
+    linear-gradient(180deg, rgba(20, 31, 48, 0.88), rgba(14, 22, 35, 0.82));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 10px 24px rgba(1, 6, 16, 0.12);
+}
+
+.cc-module-filter-bar__label {
+  font-size: 0.92rem;
+  color: var(--cc-text-primary);
+}
+
+.cc-module-filter-bar .secondary-button {
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+.cc-module-list-section {
+  gap: 0;
+}
+
+.cc-list-section__header {
+  margin-bottom: 14px;
+}
+
+.cc-list-section__header h2 {
+  font-size: 1.08rem;
+  letter-spacing: -0.035em;
+}
+
+.cc-list-section__header p {
+  font-size: 0.84rem;
+  color: var(--cc-text-secondary);
+}
+
+.cc-record-list,
+.cc-expenses-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lead-item,
+.cc-expense-item {
+  border: 1px solid rgba(255,255,255,0.04);
+  background:
+    linear-gradient(180deg, rgba(18, 28, 43, 0.96), rgba(13, 21, 34, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.02),
+    0 10px 22px rgba(1, 6, 16, 0.14);
+}
+
+.lead-item:hover,
+.cc-expense-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(173, 191, 213, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.03),
+    0 16px 28px rgba(1, 6, 16, 0.18);
+}
+
+.lead-item.selected,
+.cc-expense-item.is-selected {
+  border-color: rgba(173, 191, 213, 0.16);
+  background:
+    linear-gradient(180deg, rgba(22, 34, 50, 0.98), rgba(15, 24, 38, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 18px 32px rgba(1, 6, 16, 0.2);
+}
+
+.cc-record-card {
+  display: grid;
+  gap: 10px;
+  padding: 15px 16px;
+  text-align: left;
+}
+
+.cc-record-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cc-record-card__identity {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cc-record-card__title {
+  display: block;
+  color: var(--cc-text-primary);
+  font-size: 0.98rem;
+  line-height: 1.18;
+  font-weight: 760;
+  letter-spacing: -0.03em;
+  word-break: break-word;
+}
+
+.cc-record-card__subref {
+  color: var(--cc-text-tertiary);
+  font-size: 0.77rem;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.cc-record-card__aside {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cc-record-card__amount,
+.cc-record-card__meta-emphasis {
+  color: var(--cc-text-primary);
+  font-size: 0.92rem;
+  font-weight: 720;
+  letter-spacing: -0.02em;
+}
+
+.cc-record-card__summary,
+.cc-expense-item__description {
+  margin: 0;
+  color: var(--cc-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.cc-record-card__meta,
+.cc-expense-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-list-meta span,
+.cc-record-card__meta span,
+.cc-expense-item__meta span,
+.cc-agenda-item__meta span {
+  min-height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.025);
+  color: rgba(215, 224, 235, 0.72);
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.lead-badge,
+.cc-expense-chip {
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.03);
+  color: rgba(236, 241, 247, 0.84);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.cc-record-card--invoice .cc-record-card__title,
+.cc-record-card--quote .cc-record-card__title {
+  font-size: 1rem;
+}
+
+.cc-record-card--client .cc-record-card__title,
+.cc-record-card--property .cc-record-card__title {
+  font-size: 1rem;
+}
+
+.cc-record-card--payment .cc-record-card__title {
+  font-size: 0.94rem;
+}
+
+.cc-record-card--expense .cc-record-card__title {
+  font-size: 0.94rem;
+}
+
+.cc-expense-item__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-expense-chip--risk {
+  background: rgba(169, 147, 111, 0.10);
+}
+
+.cc-expenses-summary .cc-kpi-card {
+  min-height: 134px;
+  padding: 18px;
+}
+
+.cc-kpi-label {
+  color: var(--cc-text-tertiary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-kpi-value {
+  color: var(--cc-text-primary);
+  font-size: 1.2rem;
+  letter-spacing: -0.03em;
+}
+
+.cc-kpi-footnote {
+  margin: 0;
+  color: var(--cc-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 900px) {
+  .cc-record-card {
+    padding: 14px;
+  }
+
+  .cc-record-card__head {
+    gap: 10px;
+  }
+
+  .cc-record-card__title {
+    font-size: 0.94rem;
+  }
+
+  .cc-record-card__summary,
+  .cc-expense-item__description {
+    font-size: 0.8rem;
+  }
+}

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
@@ -32,9 +32,12 @@ export function ClientsList({
   }, [clients, searchQuery])
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Clientes</h2>
+    <section className="data-section cc-module-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Clientes</h2>
+          <p>Cartera activa, contacto y referencia interna.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -62,7 +65,7 @@ export function ClientsList({
           <p>No encontramos clientes que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-record-list">
           {filteredClients.map((client) => {
             const isSelected = client.id === selectedClientId
 
@@ -72,22 +75,28 @@ export function ClientsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--client'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--client'
                 }
                 onClick={() => onSelectClient(client)}
               >
-                <div className="lead-item-top">
-                  <strong>{client.full_name}</strong>
-                  <span className="lead-badge">{client.status}</span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">{client.full_name}</strong>
+                    <span className="cc-record-card__subref">Interno {client.display_code ?? client.id}</span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{client.status}</span>
+                  </div>
                 </div>
 
-                <div className="cc-list-meta">
-                  <span>Interno {client.display_code ?? client.id}</span>
+                <p className="cc-record-card__summary">{client.email ?? 'Sin email registrado'}</p>
+
+                <div className="cc-list-meta cc-record-card__meta">
                   <span>{client.phone ?? 'Sin teléfono'}</span>
+                  <span>{client.source_lead_id ? `Lead ${client.source_lead_id}` : 'Alta directa'}</span>
                 </div>
-
-                <p>{client.email ?? 'Sin email registrado'}</p>
               </button>
             )
           })}

@@ -57,9 +57,12 @@ export function QuotesList({
   }, [clients, properties, quotes, searchQuery])
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Presupuestos</h2>
+    <section className="data-section cc-module-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Presupuestos</h2>
+          <p>Seguimiento comercial y conversion operativa.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -87,7 +90,7 @@ export function QuotesList({
           <p>No encontramos presupuestos que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-record-list">
           {filteredQuotes.map((quote) => {
             const isSelected = quote.id === selectedQuoteId
             const clientLabel = buildClientLabel(quote, clients)
@@ -99,23 +102,29 @@ export function QuotesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--quote'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--quote'
                 }
                 onClick={() => onSelectQuote(quote)}
               >
-                <div className="lead-item-top">
-                  <strong>{quote.display_code ?? quote.id}</strong>
-                  <span className="lead-badge">{getStatusLabel(quote.status)}</span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">{quote.display_code ?? quote.id}</strong>
+                    <span className="cc-record-card__subref">{propertyLabel}</span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{getStatusLabel(quote.status)}</span>
+                    <strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>
+                  </div>
                 </div>
 
-                <div className="cc-list-meta">
-                  <span>{clientLabel}</span>
-                  <span>{propertyLabel}</span>
-                </div>
+                <p className="cc-record-card__summary">{clientLabel}</p>
 
-                <p>Base {formatCurrency(quote.subtotal)}</p>
-                <p>Total {formatCurrency(quote.total)}</p>
+                <div className="cc-list-meta cc-record-card__meta">
+                  <span>Base {formatCurrency(quote.subtotal)}</span>
+                  <span>Total {formatCurrency(quote.total)}</span>
+                </div>
               </button>
             )
           })}

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -30,6 +30,7 @@ export function InvoicesList({
         invoice.job_id,
         invoice.client_display_code,
         invoice.client_id,
+        invoice.client_name,
         invoice.status,
         getStatusLabel(invoice.status),
         invoice.issue_date,
@@ -42,9 +43,12 @@ export function InvoicesList({
   }, [invoices, searchQuery])
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Facturas</h2>
+    <section className="data-section cc-module-list-section">
+      <div className="section-header cc-list-section__header">
+        <div>
+          <h2>Facturas</h2>
+          <p>Emision, cobro y trazabilidad documental.</p>
+        </div>
       </div>
 
       <SearchBar
@@ -72,7 +76,7 @@ export function InvoicesList({
           <p>No encontramos facturas que coincidan con tu búsqueda.</p>
         </div>
       ) : (
-        <div className="lead-list">
+        <div className="lead-list cc-record-list">
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
 
@@ -82,23 +86,35 @@ export function InvoicesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected'
-                    : 'lead-item lead-item-button'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--invoice'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--invoice'
                 }
                 onClick={() => onSelectInvoice(invoice)}
               >
-                <div className="lead-item-top">
-                  <strong>{invoice.invoice_number ?? invoice.display_code ?? invoice.id}</strong>
-                  <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+                <div className="cc-record-card__head">
+                  <div className="cc-record-card__identity">
+                    <strong className="cc-record-card__title">
+                      {invoice.invoice_number ?? invoice.display_code ?? invoice.id}
+                    </strong>
+                    <span className="cc-record-card__subref">
+                      Interno {invoice.display_code ?? invoice.id}
+                    </span>
+                  </div>
+
+                  <div className="cc-record-card__aside">
+                    <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+                    <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
+                  </div>
                 </div>
 
-                <div className="cc-list-meta">
-                  <span>Interno {invoice.display_code ?? invoice.id}</span>
+                <p className="cc-record-card__summary">
+                  {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}
+                </p>
+
+                <div className="cc-list-meta cc-record-card__meta">
                   <span>{invoice.issue_date}</span>
+                  <span>Servicio {invoice.job_display_code ?? invoice.job_id}</span>
                 </div>
-
-                <p>Cliente {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</p>
-                <p>Total {formatCurrency(invoice.total)}</p>
               </button>
             )
           })}

@@ -2,6 +2,7 @@
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
+import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 
 interface HomePageProps {
   metrics: {
@@ -26,9 +27,10 @@ interface HomePageProps {
     deductibleExpensesCount: number
   }
   onOpenView: (view: AppView) => void
+  onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
-export function HomePage({ metrics, onOpenView }: HomePageProps) {
+export function HomePage({ metrics, onOpenView, onRunKpiAction }: HomePageProps) {
   return (
     <section className="cc-dashboard-page">
       <div className="cc-page-topline">
@@ -40,8 +42,8 @@ export function HomePage({ metrics, onOpenView }: HomePageProps) {
       </div>
 
       <DashboardQuickActions onOpenView={onOpenView} />
-      <DashboardOverview metrics={metrics} />
-      <DashboardKpis metrics={metrics} />
+      <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
+      <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
     </section>
   )
 }

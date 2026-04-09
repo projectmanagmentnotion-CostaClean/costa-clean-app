@@ -1,4 +1,6 @@
-﻿function formatCurrency(value: number): string {
+import type { DashboardKpiActionId } from './kpiActions'
+
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
@@ -28,11 +30,36 @@ interface DashboardOverviewProps {
     expensesWithoutReceiptCount: number
     deductibleExpensesCount: number
   }
+  onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
-export function DashboardOverview({ metrics }: DashboardOverviewProps) {
+export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverviewProps) {
   const estimatedBalance = metrics.totalInvoiced - metrics.totalCollected
   const estimatedNet = metrics.totalCollected - metrics.totalExpenses
+  const overviewCards: Array<{
+    label: string
+    value: string
+    actionId?: DashboardKpiActionId
+  }> = [
+    {
+      label: 'Clientes activos',
+      value: String(metrics.clientsCount),
+    },
+    {
+      label: 'Presupuestos abiertos',
+      value: String(metrics.openQuotesCount),
+      actionId: 'open_quotes',
+    },
+    {
+      label: 'Servicios en curso',
+      value: String(metrics.scheduledJobsCount),
+      actionId: 'scheduled_jobs',
+    },
+    {
+      label: 'Pendiente por cobrar',
+      value: formatCurrency(estimatedBalance),
+    },
+  ]
 
   return (
     <section className="cc-dashboard-overview">
@@ -77,32 +104,26 @@ export function DashboardOverview({ metrics }: DashboardOverviewProps) {
       </div>
 
       <div className="cc-dashboard-overview__grid">
-        <article className="cc-dashboard-panel">
-          <span className="cc-dashboard-panel__label">Clientes activos</span>
-          <strong className="cc-dashboard-panel__value">{metrics.clientsCount}</strong>
-
-        </article>
-
-        <article className="cc-dashboard-panel">
-          <span className="cc-dashboard-panel__label">Presupuestos abiertos</span>
-          <strong className="cc-dashboard-panel__value">{metrics.openQuotesCount}</strong>
-
-        </article>
-
-        <article className="cc-dashboard-panel">
-          <span className="cc-dashboard-panel__label">Servicios en curso</span>
-          <strong className="cc-dashboard-panel__value">{metrics.scheduledJobsCount}</strong>
-
-        </article>
-
-        <article className="cc-dashboard-panel">
-          <span className="cc-dashboard-panel__label">Pendiente por cobrar</span>
-          <strong className="cc-dashboard-panel__value">{formatCurrency(estimatedBalance)}</strong>
-
-        </article>
+        {overviewCards.map((card) => (
+          card.actionId ? (
+            <button
+              key={card.label}
+              type="button"
+              className="cc-dashboard-panel cc-dashboard-panel--actionable"
+              onClick={() => onRunKpiAction(card.actionId!)}
+            >
+              <span className="cc-dashboard-panel__label">{card.label}</span>
+              <strong className="cc-dashboard-panel__value">{card.value}</strong>
+              <span className="cc-dashboard-panel__hint">Abrir lista</span>
+            </button>
+          ) : (
+            <article key={card.label} className="cc-dashboard-panel">
+              <span className="cc-dashboard-panel__label">{card.label}</span>
+              <strong className="cc-dashboard-panel__value">{card.value}</strong>
+            </article>
+          )
+        ))}
       </div>
     </section>
   )
 }
-
-

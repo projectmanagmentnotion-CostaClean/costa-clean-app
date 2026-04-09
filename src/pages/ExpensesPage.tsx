@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ExpenseCreateForm } from '../features/expenses/ExpenseCreateForm'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
@@ -8,6 +9,8 @@ interface ExpensesPageProps {
   expenses: ExpenseListItem[]
   error: string | null
   onExpenseCreated: () => Promise<void>
+  activeFilterLabel: string | null
+  onClearFilter: () => void
 }
 
 function formatCurrency(value: number): string {
@@ -21,6 +24,8 @@ export function ExpensesPage({
   expenses,
   error,
   onExpenseCreated,
+  activeFilterLabel,
+  onClearFilter,
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -117,6 +122,10 @@ export function ExpensesPage({
 
           <ExpenseCreateForm onCreated={onExpenseCreated} />
         </section>
+      ) : null}
+
+      {activeFilterLabel ? (
+        <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
       ) : null}
 
       <div className="cc-master-layout cc-master-layout--list-first">

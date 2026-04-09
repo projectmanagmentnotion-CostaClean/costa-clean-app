@@ -1,4 +1,6 @@
-﻿function formatCurrency(value: number): string {
+import type { DashboardKpiActionId } from './kpiActions'
+
+function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
@@ -28,10 +30,16 @@ interface DashboardKpisProps {
     expensesWithoutReceiptCount: number
     deductibleExpensesCount: number
   }
+  onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
 
-export function DashboardKpis({ metrics }: DashboardKpisProps) {
-  const globalCards = [
+export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
+  const globalCards: Array<{
+    label: string
+    value: string
+    accent: string
+    actionId?: DashboardKpiActionId
+  }> = [
     {
       label: 'Leads',
       value: String(metrics.leadsCount),
@@ -68,13 +76,19 @@ export function DashboardKpis({ metrics }: DashboardKpisProps) {
       accent: 'default',
     },
     {
-      label: 'Pendientes',
+      label: 'Facturas pendientes',
       value: String(metrics.pendingInvoicesCount),
       accent: 'warning',
+      actionId: 'pending_invoices',
     },
   ]
 
-  const financialCards = [
+  const financialCards: Array<{
+    label: string
+    value: string
+    accent: string
+    actionId?: DashboardKpiActionId
+  }> = [
     {
       label: 'Gastos totales',
       value: formatCurrency(metrics.totalExpenses),
@@ -104,6 +118,7 @@ export function DashboardKpis({ metrics }: DashboardKpisProps) {
       label: 'Sin documento',
       value: String(metrics.expensesWithoutReceiptCount),
       accent: 'warning',
+      actionId: 'expenses_without_receipt',
     },
     {
       label: 'Deducibles marcados',
@@ -129,14 +144,26 @@ export function DashboardKpis({ metrics }: DashboardKpisProps) {
 
         <div className="cc-kpi-grid">
           {globalCards.map((card) => (
-            <article
-              key={card.label}
-              className={`cc-kpi-card${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
-            >
-              <span className="cc-kpi-card__label">{card.label}</span>
-              <strong className="cc-kpi-card__value">{card.value}</strong>
-
-            </article>
+            card.actionId ? (
+              <button
+                key={card.label}
+                type="button"
+                className={`cc-kpi-card cc-kpi-card--actionable${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
+                onClick={() => onRunKpiAction(card.actionId!)}
+              >
+                <span className="cc-kpi-card__label">{card.label}</span>
+                <strong className="cc-kpi-card__value">{card.value}</strong>
+                <span className="cc-kpi-card__hint">Abrir lista</span>
+              </button>
+            ) : (
+              <article
+                key={card.label}
+                className={`cc-kpi-card${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
+              >
+                <span className="cc-kpi-card__label">{card.label}</span>
+                <strong className="cc-kpi-card__value">{card.value}</strong>
+              </article>
+            )
           ))}
         </div>
       </section>
@@ -151,18 +178,29 @@ export function DashboardKpis({ metrics }: DashboardKpisProps) {
 
         <div className="cc-kpi-grid">
           {financialCards.map((card) => (
-            <article
-              key={card.label}
-              className={`cc-kpi-card${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
-            >
-              <span className="cc-kpi-card__label">{card.label}</span>
-              <strong className="cc-kpi-card__value">{card.value}</strong>
-
-            </article>
+            card.actionId ? (
+              <button
+                key={card.label}
+                type="button"
+                className={`cc-kpi-card cc-kpi-card--actionable${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
+                onClick={() => onRunKpiAction(card.actionId!)}
+              >
+                <span className="cc-kpi-card__label">{card.label}</span>
+                <strong className="cc-kpi-card__value">{card.value}</strong>
+                <span className="cc-kpi-card__hint">Abrir lista</span>
+              </button>
+            ) : (
+              <article
+                key={card.label}
+                className={`cc-kpi-card${card.accent ? ` cc-kpi-card--${card.accent}` : ''}`}
+              >
+                <span className="cc-kpi-card__label">{card.label}</span>
+                <strong className="cc-kpi-card__value">{card.value}</strong>
+              </article>
+            )
           ))}
         </div>
       </section>
     </>
   )
 }
-

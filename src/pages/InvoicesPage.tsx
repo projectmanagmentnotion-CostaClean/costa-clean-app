@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
@@ -14,6 +15,8 @@ interface InvoicesPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onInvoiceCreated: () => Promise<void>
+  activeFilterLabel: string | null
+  onClearFilter: () => void
 }
 
 export function InvoicesPage({
@@ -22,6 +25,8 @@ export function InvoicesPage({
   quotes,
   error,
   onInvoiceCreated,
+  activeFilterLabel,
+  onClearFilter,
 }: InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -73,6 +78,10 @@ export function InvoicesPage({
             quotes={quotes}
             onCreated={onInvoiceCreated}
           />
+        ) : null}
+
+        {activeFilterLabel ? (
+          <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
         <div className="cc-master-layout cc-master-layout--list-first">

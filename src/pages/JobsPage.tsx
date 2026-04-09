@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { JobCreateForm } from '../features/jobs/JobCreateForm'
 import { JobDetailCard } from '../features/jobs/JobDetailCard'
 import { JobsList } from '../features/jobs/JobsList'
@@ -14,6 +15,8 @@ interface JobsPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onJobCreated: () => Promise<void>
+  activeFilterLabel: string | null
+  onClearFilter: () => void
 }
 
 export function JobsPage({
@@ -23,6 +26,8 @@ export function JobsPage({
   quotes,
   error,
   onJobCreated,
+  activeFilterLabel,
+  onClearFilter,
 }: JobsPageProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -69,6 +74,10 @@ export function JobsPage({
           quotes={quotes}
           onCreated={onJobCreated}
         />
+      ) : null}
+
+      {activeFilterLabel ? (
+        <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
       ) : null}
 
       <div className="cc-master-layout cc-master-layout--list-first">

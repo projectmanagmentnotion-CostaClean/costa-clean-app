@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentPreview } from '../features/quotes/QuoteDocumentPreview'
@@ -14,6 +15,8 @@ interface QuotesPageProps {
   properties: PropertyListItem[]
   error: string | null
   onQuoteCreated: () => Promise<void>
+  activeFilterLabel: string | null
+  onClearFilter: () => void
 }
 
 export function QuotesPage({
@@ -22,6 +25,8 @@ export function QuotesPage({
   properties,
   error,
   onQuoteCreated,
+  activeFilterLabel,
+  onClearFilter,
 }: QuotesPageProps) {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -73,6 +78,10 @@ export function QuotesPage({
             properties={properties}
             onCreated={onQuoteCreated}
           />
+        ) : null}
+
+        {activeFilterLabel ? (
+          <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
         <div className="cc-master-layout cc-master-layout--list-first">

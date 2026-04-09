@@ -2,6 +2,18 @@
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
+import {
+  applyExpenseFilter,
+  applyInvoiceFilter,
+  applyJobFilter,
+  applyQuoteFilter,
+  emptyModuleFilterState,
+  getExpenseFilterLabel,
+  getInvoiceFilterLabel,
+  getJobFilterLabel,
+  getQuoteFilterLabel,
+  type ModuleFilterState,
+} from './moduleFilters'
 import { HomePage } from '../pages/HomePage'
 import { LeadsPage } from '../pages/LeadsPage'
 import { ClientsPage } from '../pages/ClientsPage'
@@ -20,6 +32,11 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import { listExpenses } from '../features/expenses/expenseApi'
 import type { PaymentListItem } from '../features/payments/types'
+import {
+  applyDashboardKpiAction,
+  dashboardKpiActionConfig,
+  type DashboardKpiActionId,
+} from '../features/dashboard/kpiActions'
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -104,6 +121,7 @@ function getExpenseQuarterKey(dateValue: string): string | null {
 
 export function AppShell() {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
+  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [leads, setLeads] = useState<LeadListItem[]>([])
   const [clients, setClients] = useState<ClientListItem[]>([])
   const [properties, setProperties] = useState<PropertyListItem[]>([])
@@ -451,13 +469,46 @@ export function AppShell() {
     [payments, invoiceById],
   )
 
+  const filteredQuotes = useMemo(
+    () => applyQuoteFilter(quotesWithCodes, moduleFilters.quotes),
+    [quotesWithCodes, moduleFilters.quotes],
+  )
+
+  const filteredJobs = useMemo(
+    () => applyJobFilter(jobsWithCodes, moduleFilters.jobs),
+    [jobsWithCodes, moduleFilters.jobs],
+  )
+
+  const filteredInvoices = useMemo(
+    () => applyInvoiceFilter(invoicesWithCodes, moduleFilters.invoices),
+    [invoicesWithCodes, moduleFilters.invoices],
+  )
+
+  const filteredExpenses = useMemo(
+    () => applyExpenseFilter(expenses, moduleFilters.expenses),
+    [expenses, moduleFilters.expenses],
+  )
+
+  const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
+    const action = dashboardKpiActionConfig[actionId]
+    setModuleFilters((current) => applyDashboardKpiAction(current, actionId))
+    setCurrentView(action.view)
+  }, [])
+
+  const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
+    setModuleFilters((current) => ({
+      ...current,
+      [filterKey]: null,
+    }))
+  }, [])
+
   return (
     <main className="app-shell">
       <section className="hero-card cc-shell">
         <AppNav currentView={currentView} onChangeView={setCurrentView} />
         <div className="cc-shell-content">
           {currentView === 'dashboard' ? (
-            <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} />
+            <HomePage metrics={dashboardMetrics} onOpenView={setCurrentView} onRunKpiAction={handleDashboardKpiAction} />
           ) : currentView === 'leads' ? (
             <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
           ) : currentView === 'clients' ? (
@@ -465,13 +516,44 @@ export function AppShell() {
           ) : currentView === 'properties' ? (
             <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={loadProperties} />
           ) : currentView === 'quotes' ? (
-            <QuotesPage quotes={quotesWithCodes} clients={clients} properties={properties} error={quoteError} onQuoteCreated={loadQuotes} />
+            <QuotesPage
+              quotes={filteredQuotes}
+              clients={clients}
+              properties={properties}
+              error={quoteError}
+              onQuoteCreated={loadQuotes}
+              activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
+              onClearFilter={() => clearModuleFilter('quotes')}
+            />
           ) : currentView === 'jobs' ? (
-            <JobsPage jobs={jobsWithCodes} clients={clients} properties={properties} quotes={quotes} error={jobError} onJobCreated={loadJobs} />
+            <JobsPage
+              jobs={filteredJobs}
+              clients={clients}
+              properties={properties}
+              quotes={quotes}
+              error={jobError}
+              onJobCreated={loadJobs}
+              activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
+              onClearFilter={() => clearModuleFilter('jobs')}
+            />
           ) : currentView === 'invoices' ? (
-            <InvoicesPage invoices={invoicesWithCodes} jobs={jobsWithCodes} quotes={quotesWithCodes} error={invoiceError} onInvoiceCreated={loadInvoices} />
+            <InvoicesPage
+              invoices={filteredInvoices}
+              jobs={jobsWithCodes}
+              quotes={quotesWithCodes}
+              error={invoiceError}
+              onInvoiceCreated={loadInvoices}
+              activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
+              onClearFilter={() => clearModuleFilter('invoices')}
+            />
           ) : currentView === 'expenses' ? (
-            <ExpensesPage expenses={expenses} error={expenseError} onExpenseCreated={loadExpenses} />
+            <ExpensesPage
+              expenses={filteredExpenses}
+              error={expenseError}
+              onExpenseCreated={loadExpenses}
+              activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
+              onClearFilter={() => clearModuleFilter('expenses')}
+            />
           ) : (
             <PaymentsPage payments={paymentsWithCodes} invoices={invoicesWithCodes} error={paymentError} onPaymentCreated={reloadInvoicesAndPayments} />
           )}

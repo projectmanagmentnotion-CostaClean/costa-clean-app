@@ -253,6 +253,8 @@ const viewIcon: Record<AppView, () => ReactElement> = {
 }
 
 export function AppNav({ currentView, onChangeView, compactMobile = false }: AppNavProps) {
+  const currentViewLabel = currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)
+
   return (
     <>
       <nav
@@ -261,7 +263,7 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
             ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--mobile-compact'
             : 'cc-shell-nav cc-shell-nav--top-only'
         }
-        aria-label="Navegación principal"
+        aria-label="Navegacion principal"
       >
         <div className="cc-shell-nav__topline">
           <div className="cc-shell-nav__brand">
@@ -275,7 +277,7 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
 
             <div className="cc-shell-nav__brand-copy">
               <span className="cc-shell-nav__title">CostaClean CRM</span>
-              <span className="cc-shell-nav__subtitle">Control operativo · limpieza premium</span>
+              <span className="cc-shell-nav__subtitle">Control operativo | limpieza premium</span>
             </div>
           </div>
 
@@ -286,20 +288,18 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
                 className="cc-shell-nav__back"
                 onClick={() => onChangeView('dashboard')}
               >
-                ← Volver
+                Ir al inicio
               </button>
             ) : null}
 
             <div className="cc-shell-nav__current">
-              <span className="cc-shell-nav__current-label">Vista actual</span>
-              <strong className="cc-shell-nav__current-value">
-                {currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)}
-              </strong>
+              <span className="cc-shell-nav__current-label">Modulo activo</span>
+              <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
             </div>
           </div>
         </div>
 
-        <div className="cc-shell-subnav cc-shell-subnav--top" aria-label="Módulos">
+        <div className="cc-shell-subnav cc-shell-subnav--top" aria-label="Modulos">
           {allViews.map((view) => {
             const Icon = viewIcon[view]
 
@@ -313,6 +313,7 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
                     : 'cc-shell-subnav__button'
                 }
                 onClick={() => onChangeView(view)}
+                aria-current={currentView === view ? 'page' : undefined}
               >
                 <span className="cc-shell-subnav__glyph" aria-hidden="true">
                   <Icon />
@@ -330,7 +331,7 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
             ? 'cc-bottom-dock cc-bottom-dock--mobile cc-bottom-dock--compact'
             : 'cc-bottom-dock cc-bottom-dock--mobile'
         }
-        aria-label="Navegación rápida"
+        aria-label="Navegacion rapida"
       >
         <div className="cc-bottom-dock__scroll">
           {allViews.map((view) => {

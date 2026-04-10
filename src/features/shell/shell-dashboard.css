@@ -6309,10 +6309,77 @@
   margin-top: auto;
 }
 
+.cc-quarterly-workspace-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.cc-quarterly-workspace-switcher .secondary-button.is-active {
+  border-color: rgba(173, 191, 213, 0.2);
+  background:
+    linear-gradient(180deg, rgba(173,191,213,0.16), rgba(255,255,255,0.04));
+  color: #ffffff;
+}
+
+.cc-quarterly-pack-header,
+.cc-quarterly-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cc-quarterly-dossier-table {
+  display: grid;
+  gap: 10px;
+}
+
+.cc-quarterly-dossier-table__head,
+.cc-quarterly-dossier-table__row {
+  display: grid;
+  grid-template-columns: 1.15fr 0.8fr 1.2fr 0.8fr 0.9fr 1.1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.cc-quarterly-dossier-table__head {
+  padding: 0 6px 6px;
+  color: rgba(168, 181, 198, 0.74);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-quarterly-dossier-table__row {
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  color: rgba(236, 242, 249, 0.92);
+  font-size: 0.92rem;
+}
+
+.cc-quarterly-dossier-table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 @media (max-width: 1180px) {
   .cc-quarterly-checklist,
-  .cc-quarterly-persistence {
+  .cc-quarterly-persistence,
+  .cc-quarterly-pack-header,
+  .cc-quarterly-pack-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cc-quarterly-dossier-table__head,
+  .cc-quarterly-dossier-table__row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -6325,5 +6392,24 @@
   .cc-quarterly-persistence__card {
     padding: 16px;
     border-radius: 18px;
+  }
+
+  .cc-quarterly-workspace-switcher {
+    flex-direction: column;
+  }
+
+  .cc-quarterly-dossier-table__head {
+    display: none;
+  }
+
+  .cc-quarterly-dossier-table__row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .cc-quarterly-dossier-table__actions {
+    justify-content: stretch;
   }
 }

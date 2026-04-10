@@ -922,6 +922,9 @@ export function AppShell() {
               defaultFiscalQuarter={currentFiscalQuarter}
               summaryByPeriod={quarterlyClosingSummaryByPeriod}
               closings={quarterlyClosings}
+              invoices={invoicesWithCodes}
+              payments={paymentsWithCodes}
+              expenses={expenses}
               error={quarterlyClosingError}
               onNavigateToIncidence={handleQuarterlyClosingNavigation}
               onSaveClosing={handleSaveQuarterlyClosing}

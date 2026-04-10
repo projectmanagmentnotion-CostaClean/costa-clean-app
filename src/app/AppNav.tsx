@@ -10,6 +10,7 @@ interface AppNavProps {
 
 const allViews: AppView[] = [
   'dashboard',
+  'quarterly_closing',
   'leads',
   'clients',
   'properties',
@@ -22,6 +23,7 @@ const allViews: AppView[] = [
 
 const viewShortLabel: Record<AppView, string> = {
   dashboard: 'Home',
+  quarterly_closing: 'Cierre T',
   leads: 'Leads',
   clients: 'Clientes',
   properties: 'Propiedades',
@@ -52,6 +54,27 @@ function LeadsIcon() {
       <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.9" />
       <path
         d="M4.5 18a4.5 4.5 0 0 1 9 0M16.5 8.5h4M18.5 6.5v4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function QuarterlyClosingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M6 5.5h12A1.5 1.5 0 0 1 19.5 7v10A1.5 1.5 0 0 1 18 18.5H6A1.5 1.5 0 0 1 4.5 17V7A1.5 1.5 0 0 1 6 5.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 10.5h8M8 14h5M8 5.5v-2M16 5.5v-2"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.9"
@@ -194,6 +217,7 @@ function PaymentsIcon() {
 
 const viewIcon: Record<AppView, () => ReactElement> = {
   dashboard: DashboardIcon,
+  quarterly_closing: QuarterlyClosingIcon,
   leads: LeadsIcon,
   clients: ClientsIcon,
   properties: PropertiesIcon,

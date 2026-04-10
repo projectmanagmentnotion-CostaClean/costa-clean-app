@@ -25,6 +25,7 @@ import { JobsPage } from '../pages/JobsPage'
 import { InvoicesPage } from '../pages/InvoicesPage'
 import { ExpensesPage } from '../pages/ExpensesPage'
 import { PaymentsPage } from '../pages/PaymentsPage'
+import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -41,6 +42,9 @@ import {
   dashboardKpiActionConfig,
   type DashboardKpiActionId,
 } from '../features/dashboard/kpiActions'
+import { listQuarterlyClosings, saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
+import { buildQuarterlyClosingSnapshot, buildQuarterlyClosingSummary } from '../features/quarterlyClosing/quarterlyClosingSummary'
+import type { QuarterlyClosingIncidence, QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -167,6 +171,7 @@ function isOlderThanDays(dateValue: string, days: number): boolean {
 function ShellLoadingState({ currentView }: { currentView: AppView }) {
   const titleByView: Record<AppView, string> = {
     dashboard: 'Preparando panel de control',
+    quarterly_closing: 'Preparando cierre trimestral',
     leads: 'Cargando leads',
     clients: 'Cargando clientes',
     properties: 'Cargando propiedades',
@@ -227,6 +232,7 @@ export function AppShell() {
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [expenses, setExpenses] = useState<ExpenseListItem[]>([])
   const [payments, setPayments] = useState<PaymentListItem[]>([])
+  const [quarterlyClosings, setQuarterlyClosings] = useState<QuarterlyClosingRecord[]>([])
   const [leadError, setLeadError] = useState<string | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [propertyError, setPropertyError] = useState<string | null>(null)
@@ -235,6 +241,7 @@ export function AppShell() {
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
   const [expenseError, setExpenseError] = useState<string | null>(null)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
 
   const loadLeads = useCallback(async () => {
     try {
@@ -422,6 +429,16 @@ export function AppShell() {
     }
   }, [])
 
+  const loadQuarterlyClosings = useCallback(async () => {
+    try {
+      setQuarterlyClosingError(null)
+      const data = await listQuarterlyClosings()
+      setQuarterlyClosings(data)
+    } catch (err) {
+      setQuarterlyClosingError(err instanceof Error ? err.message : 'Error desconocido cargando cierres trimestrales.')
+    }
+  }, [])
+
   const reloadInvoicesAndPayments = useCallback(async () => {
     await Promise.all([loadInvoices(), loadPayments()])
   }, [loadInvoices, loadPayments])
@@ -442,6 +459,7 @@ export function AppShell() {
       loadInvoices(),
       loadExpenses(),
       loadPayments(),
+      loadQuarterlyClosings(),
     ]).finally(() => {
       if (isMounted) {
         setIsInitialDataLoading(false)
@@ -451,7 +469,7 @@ export function AppShell() {
     return () => {
       isMounted = false
     }
-  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments])
+  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments, loadQuarterlyClosings])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -659,6 +677,81 @@ export function AppShell() {
     [payments, invoiceById],
   )
 
+  const quarterlyClosingSummaryByPeriod = useMemo(() => {
+    const periodKeys = new Set<string>()
+
+    for (const invoice of invoicesWithCodes) {
+      const date = new Date(`${invoice.issue_date}T00:00:00`)
+      if (!Number.isNaN(date.getTime())) {
+        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
+      }
+    }
+
+    for (const payment of paymentsWithCodes) {
+      const date = new Date(`${payment.payment_date}T00:00:00`)
+      if (!Number.isNaN(date.getTime())) {
+        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
+      }
+    }
+
+    for (const expense of expenses) {
+      const fiscalYear = expense.fiscal_year
+      const fiscalQuarter = expense.fiscal_quarter
+
+      if (fiscalYear && fiscalQuarter) {
+        periodKeys.add(`${fiscalYear}-Q${fiscalQuarter}`)
+        continue
+      }
+
+      const date = new Date(`${expense.expense_date}T00:00:00`)
+      if (!Number.isNaN(date.getTime())) {
+        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
+      }
+    }
+
+    for (const closing of quarterlyClosings) {
+      periodKeys.add(`${closing.fiscal_year}-Q${closing.fiscal_quarter}`)
+    }
+
+    const now = new Date()
+    periodKeys.add(`${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`)
+
+    const summaryEntries = [...periodKeys]
+      .sort((left, right) => right.localeCompare(left))
+      .map((periodKey) => {
+        const [yearPart, quarterPart] = periodKey.split('-Q')
+        const fiscalYear = Number(yearPart)
+        const fiscalQuarter = Number(quarterPart)
+
+        return [
+          periodKey,
+          buildQuarterlyClosingSummary(
+            invoicesWithCodes,
+            paymentsWithCodes,
+            expenses,
+            fiscalYear,
+            fiscalQuarter,
+          ),
+        ] as const
+      })
+
+    return new Map(summaryEntries)
+  }, [expenses, invoicesWithCodes, paymentsWithCodes, quarterlyClosings])
+
+  const availableClosingYears = useMemo(() => {
+    const years = new Set<number>()
+
+    for (const periodKey of quarterlyClosingSummaryByPeriod.keys()) {
+      years.add(Number(periodKey.split('-Q')[0]))
+    }
+
+    years.add(new Date().getFullYear())
+    return [...years].sort((left, right) => right - left)
+  }, [quarterlyClosingSummaryByPeriod])
+
+  const currentFiscalYear = new Date().getFullYear()
+  const currentFiscalQuarter = Math.floor(new Date().getMonth() / 3) + 1
+
   const filteredQuotes = useMemo(
     () => applyQuoteFilter(quotesWithCodes, moduleFilters.quotes),
     [quotesWithCodes, moduleFilters.quotes],
@@ -689,6 +782,96 @@ export function AppShell() {
     setModuleFilters((current) => applyDashboardKpiAction(current, actionId))
     setCurrentView(action.view)
   }, [])
+
+  const handleQuarterlyClosingNavigation = useCallback((
+    view: AppView,
+    scope: QuarterlyClosingIncidence['scope'],
+    fiscalYear: number,
+    fiscalQuarter: number,
+  ) => {
+    setModuleFilters((current) => {
+      if (scope === 'invoice_quarter_all') {
+        return {
+          ...current,
+          invoices: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
+        }
+      }
+
+      if (scope === 'invoice_quarter_pending') {
+        return {
+          ...current,
+          invoices: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'pending' },
+        }
+      }
+
+      if (scope === 'payment_quarter_all') {
+        return {
+          ...current,
+          payments: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
+        }
+      }
+
+      if (scope === 'expense_quarter_all') {
+        return {
+          ...current,
+          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
+        }
+      }
+
+      if (scope === 'expense_quarter_closure') {
+        return {
+          ...current,
+          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'closure' },
+        }
+      }
+
+      if (scope === 'expense_quarter_missing_support') {
+        return {
+          ...current,
+          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'missing_support' },
+        }
+      }
+
+      if (scope === 'expense_quarter_pending_review') {
+        return {
+          ...current,
+          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'pending_review' },
+        }
+      }
+
+      return {
+        ...current,
+        expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'risk' },
+      }
+    })
+    setCurrentView(view)
+  }, [])
+
+  const handleSaveQuarterlyClosing = useCallback(async ({
+    fiscalYear,
+    fiscalQuarter,
+    notes,
+  }: {
+    fiscalYear: number
+    fiscalQuarter: number
+    notes: string | null
+  }) => {
+    const summary = quarterlyClosingSummaryByPeriod.get(`${fiscalYear}-Q${fiscalQuarter}`)
+
+    if (!summary) {
+      throw new Error('No se pudo construir el resumen del trimestre seleccionado.')
+    }
+
+    await saveQuarterlyClosing({
+      fiscalYear,
+      fiscalQuarter,
+      status: summary.readiness === 'issues' ? 'issues' : 'prepared',
+      notes,
+      snapshot: buildQuarterlyClosingSnapshot(summary),
+    })
+
+    await loadQuarterlyClosings()
+  }, [loadQuarterlyClosings, quarterlyClosingSummaryByPeriod])
 
   const handleCreateJobFromQuote = useCallback((quote: QuoteListItem) => {
     const prefill = buildJobCreatePrefillFromQuote(quote)
@@ -732,6 +915,17 @@ export function AppShell() {
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
             <ShellLoadingState currentView={currentView} />
+          ) : currentView === 'quarterly_closing' ? (
+            <QuarterlyClosingPage
+              availableYears={availableClosingYears}
+              defaultFiscalYear={currentFiscalYear}
+              defaultFiscalQuarter={currentFiscalQuarter}
+              summaryByPeriod={quarterlyClosingSummaryByPeriod}
+              closings={quarterlyClosings}
+              error={quarterlyClosingError}
+              onNavigateToIncidence={handleQuarterlyClosingNavigation}
+              onSaveClosing={handleSaveQuarterlyClosing}
+            />
           ) : currentView === 'dashboard' ? (
             <HomePage
               metrics={dashboardMetrics}

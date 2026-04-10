@@ -65,6 +65,13 @@ export const domainEntities: DomainEntityDefinition[] = [
     module: 'payments',
   },
   {
+    key: 'quarterly_closings',
+    label: 'Cierres trimestrales',
+    description: 'Snapshots persistidos del cierre trimestral operativo y fiscal.',
+    phase: 'v2',
+    module: 'kpis',
+  },
+  {
     key: 'settings',
     label: 'Ajustes',
     description: 'Configuración global, datos de empresa y parámetros.',

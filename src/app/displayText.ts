@@ -2,6 +2,7 @@
 
 const appViewLabels: Record<AppView, string> = {
   dashboard: 'Inicio',
+  quarterly_closing: 'Cierre trimestral',
   leads: 'Leads',
   clients: 'Clientes',
   properties: 'Propiedades',
@@ -9,7 +10,7 @@ const appViewLabels: Record<AppView, string> = {
   jobs: 'Servicios',
   invoices: 'Facturas',
   expenses: 'Gastos',
-  payments: 'Pagos',
+  payments: 'Cobros',
 }
 
 const statusLabels: Record<string, string> = {

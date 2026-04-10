@@ -8,6 +8,7 @@
   | 'jobs'
   | 'invoices'
   | 'payments'
+  | 'quarterly_closings'
   | 'settings'
   | 'kpi_snapshots'
 

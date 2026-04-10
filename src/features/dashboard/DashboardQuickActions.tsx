@@ -84,26 +84,33 @@ function ClientIcon() {
   )
 }
 
-function FolderIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
-      <path
-        d="M4.5 7.5A1.5 1.5 0 0 1 6 6h4l1.5 2H18A1.5 1.5 0 0 1 19.5 9.5v8A1.5 1.5 0 0 1 18 19H6a1.5 1.5 0 0 1-1.5-1.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
 function PaymentIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
       <rect x="4" y="6" width="16" height="12" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.9" />
       <path
         d="M4 10h16M8 14.5h3.5M15.5 14.5h.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function ClosingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M6 5.5h12A1.5 1.5 0 0 1 19.5 7v10A1.5 1.5 0 0 1 18 18.5H6A1.5 1.5 0 0 1 4.5 17V7A1.5 1.5 0 0 1 6 5.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 10.5h8M8 14h5M8 5.5v-2M16 5.5v-2"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.9"
@@ -146,10 +153,10 @@ const quickActions: Array<{
     Icon: ClientIcon,
   },
   {
-    title: 'Abrir gastos',
-    subtitle: 'Revisar documentacion',
-    view: 'expenses',
-    Icon: FolderIcon,
+    title: 'Cierre trimestral',
+    subtitle: 'Preparar snapshot fiscal',
+    view: 'quarterly_closing',
+    Icon: ClosingIcon,
   },
   {
     title: 'Revisar cobros',

@@ -27,6 +27,7 @@ import { ExpensesPage } from '../pages/ExpensesPage'
 import { PaymentsPage } from '../pages/PaymentsPage'
 import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
 import { AnnualClosingPage } from '../pages/AnnualClosingPage'
+import { AlertsCenterPage } from '../pages/AlertsCenterPage'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -49,6 +50,10 @@ import type { QuarterlyClosingIncidence, QuarterlyClosingRecord } from '../featu
 import { listAnnualClosings, saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
 import { buildAnnualClosingSnapshot, buildAnnualClosingSummary } from '../features/annualClosing/annualClosingSummary'
 import type { AnnualClosingIncidence, AnnualClosingRecord } from '../features/annualClosing/types'
+import { buildAutomationAlerts } from '../features/automation/alertRules'
+import type { AutomationAlertItem } from '../features/automation/types'
+
+const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -175,6 +180,7 @@ function isOlderThanDays(dateValue: string, days: number): boolean {
 function ShellLoadingState({ currentView }: { currentView: AppView }) {
   const titleByView: Record<AppView, string> = {
     dashboard: 'Preparando panel de control',
+    alerts: 'Preparando centro de alertas',
     quarterly_closing: 'Preparando cierre trimestral',
     annual_closing: 'Preparando cierre anual',
     leads: 'Cargando leads',
@@ -250,6 +256,18 @@ export function AppShell() {
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
+  const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+
+    try {
+      const storedValue = window.localStorage.getItem(reviewedAlertsStorageKey)
+      if (!storedValue) return []
+      const parsedValue = JSON.parse(storedValue)
+      return Array.isArray(parsedValue) ? parsedValue.filter((value): value is string => typeof value === 'string') : []
+    } catch {
+      return []
+    }
+  })
 
   const loadLeads = useCallback(async () => {
     try {
@@ -504,6 +522,14 @@ export function AppShell() {
       window.removeEventListener('scroll', handleScroll)
     }
   }, [])
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(reviewedAlertsStorageKey, JSON.stringify(reviewedAlertIds))
+    } catch {
+      // Keep alert review state best-effort and local-only.
+    }
+  }, [reviewedAlertIds])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
@@ -796,6 +822,24 @@ export function AppShell() {
   const currentFiscalYear = new Date().getFullYear()
   const currentFiscalQuarter = Math.floor(new Date().getMonth() / 3) + 1
 
+  const automationAlerts = useMemo(
+    () =>
+      buildAutomationAlerts({
+        invoices: invoicesWithCodes,
+        jobs: jobsWithCodes,
+        quotes: quotesWithCodes,
+        expenses,
+        payments: paymentsWithCodes,
+        quarterlyClosings,
+      }),
+    [expenses, invoicesWithCodes, jobsWithCodes, paymentsWithCodes, quarterlyClosings, quotesWithCodes],
+  )
+
+  useEffect(() => {
+    const activeIds = new Set(automationAlerts.map((alert) => alert.id))
+    setReviewedAlertIds((current) => current.filter((id) => activeIds.has(id)))
+  }, [automationAlerts])
+
   const filteredQuotes = useMemo(
     () => applyQuoteFilter(quotesWithCodes, moduleFilters.quotes),
     [quotesWithCodes, moduleFilters.quotes],
@@ -825,6 +869,33 @@ export function AppShell() {
     const action = dashboardKpiActionConfig[actionId]
     setModuleFilters((current) => applyDashboardKpiAction(current, actionId))
     setCurrentView(action.view)
+  }, [])
+
+  const handleOpenAutomationAlert = useCallback((alert: AutomationAlertItem) => {
+    const routing = alert.routing
+
+    if (routing.kind === 'quarterly_closing') {
+      setQuarterlyClosingFocus({
+        fiscalYear: routing.fiscalYear,
+        fiscalQuarter: routing.fiscalQuarter,
+      })
+      setCurrentView('quarterly_closing')
+      return
+    }
+
+    setModuleFilters((current) => ({
+      ...current,
+      [routing.filterKey]: routing.filterValue,
+    }))
+    setCurrentView(routing.view)
+  }, [])
+
+  const handleToggleReviewedAlert = useCallback((alertId: string) => {
+    setReviewedAlertIds((current) =>
+      current.includes(alertId)
+        ? current.filter((value) => value !== alertId)
+        : [...current, alertId],
+    )
   }, [])
 
   const handleQuarterlyClosingNavigation = useCallback((
@@ -1050,6 +1121,13 @@ export function AppShell() {
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
             <ShellLoadingState currentView={currentView} />
+          ) : currentView === 'alerts' ? (
+            <AlertsCenterPage
+              alerts={automationAlerts}
+              reviewedAlertIds={reviewedAlertIds}
+              onToggleReviewed={handleToggleReviewedAlert}
+              onOpenAlert={handleOpenAutomationAlert}
+            />
           ) : currentView === 'annual_closing' ? (
             <AnnualClosingPage
               availableYears={availableAnnualClosingYears}
@@ -1084,6 +1162,8 @@ export function AppShell() {
               agenda={dashboardAgenda}
               onOpenView={setCurrentView}
               onRunKpiAction={handleDashboardKpiAction}
+              alerts={automationAlerts}
+              onOpenAlert={handleOpenAutomationAlert}
             />
           ) : currentView === 'leads' ? (
             <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />

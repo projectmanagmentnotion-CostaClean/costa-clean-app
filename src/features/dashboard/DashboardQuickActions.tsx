@@ -141,6 +141,27 @@ function AnnualClosingIcon() {
   )
 }
 
+function AlertsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M12 4.5a4.5 4.5 0 0 1 4.5 4.5v2.3c0 .9.28 1.78.8 2.51l1.12 1.56A1 1 0 0 1 17.61 17H6.39a1 1 0 0 1-.81-1.63l1.12-1.56c.52-.73.8-1.61.8-2.51V9A4.5 4.5 0 0 1 12 4.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 19a2 2 0 0 0 4 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const quickActions: Array<{
   title: string
   subtitle: string
@@ -184,6 +205,12 @@ const quickActions: Array<{
     subtitle: 'Consolidar ejercicio fiscal',
     view: 'annual_closing',
     Icon: AnnualClosingIcon,
+  },
+  {
+    title: 'Centro de alertas',
+    subtitle: 'Seguimiento operativo y fiscal',
+    view: 'alerts',
+    Icon: AlertsIcon,
   },
   {
     title: 'Revisar cobros',

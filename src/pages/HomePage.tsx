@@ -1,6 +1,7 @@
 import type { AppView } from '../app/navigation'
 import { DashboardAgenda } from '../features/dashboard/DashboardAgenda'
 import { DashboardAlerts } from '../features/dashboard/DashboardAlerts'
+import type { AutomationAlertItem } from '../features/automation/types'
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
@@ -46,9 +47,11 @@ interface HomePageProps {
   }
   onOpenView: (view: AppView) => void
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
+  alerts: AutomationAlertItem[]
+  onOpenAlert: (alert: AutomationAlertItem) => void
 }
 
-export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction }: HomePageProps) {
+export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, onOpenAlert }: HomePageProps) {
   return (
     <section className="cc-dashboard-page">
       <header className="cc-dashboard-header">
@@ -80,7 +83,7 @@ export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction }: HomePa
 
       <div className="cc-dashboard-stack">
         <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
-        <DashboardAlerts metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
         <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
         <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
         <DashboardQuickActions onOpenView={onOpenView} />

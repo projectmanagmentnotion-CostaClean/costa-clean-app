@@ -1,3 +1,4 @@
+import { automationRuleThresholds } from '../features/automation/ruleConfig'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -20,7 +21,11 @@ export type InvoiceModuleFilter =
       scope: 'all' | 'pending'
     }
 
-export type QuoteModuleFilter = 'open' | 'accepted_without_job' | 'sent_older_5d'
+export type QuoteModuleFilter =
+  | 'open'
+  | 'accepted_without_job'
+  | 'accepted_without_job_3d'
+  | 'sent_older_5d'
 
 export type JobModuleFilter =
   | 'scheduled'
@@ -32,6 +37,7 @@ export type JobModuleFilter =
 
 export type ExpenseModuleFilter =
   | 'missing_receipt'
+  | 'pending_review'
   | 'current_month'
   | {
       type: 'quarter'
@@ -174,6 +180,9 @@ export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): strin
 export function getQuoteFilterLabel(filter: QuoteModuleFilter | null): string | null {
   if (filter === 'open') return 'Presupuestos abiertos'
   if (filter === 'accepted_without_job') return 'Presupuestos aceptados sin trabajo'
+  if (filter === 'accepted_without_job_3d') {
+    return `Presupuestos aceptados sin trabajo con más de ${automationRuleThresholds.acceptedQuotesWithoutJobOlderThanDays} días`
+  }
   if (filter === 'sent_older_5d') return 'Presupuestos enviados con más de 5 días'
   return null
 }
@@ -190,6 +199,7 @@ export function getJobFilterLabel(filter: JobModuleFilter | null): string | null
 
 export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): string | null {
   if (filter === 'missing_receipt') return 'Sin ticket o factura adjunta'
+  if (filter === 'pending_review') return 'Gastos pendientes de revisión fiscal'
   if (filter === 'current_month') return 'Gastos del mes'
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Gastos de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'closure') return `Gastos que afectan al cierre en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
@@ -261,6 +271,15 @@ export function applyQuoteFilter(quotes: QuoteListItem[], filter: QuoteModuleFil
     return quotes.filter((quote) => quote.status === 'accepted' && !quote.job_id)
   }
 
+  if (filter === 'accepted_without_job_3d') {
+    return quotes.filter(
+      (quote) =>
+        quote.status === 'accepted' &&
+        !quote.job_id &&
+        isOlderThanDays(quote.created_at ?? '', automationRuleThresholds.acceptedQuotesWithoutJobOlderThanDays),
+    )
+  }
+
   if (filter === 'sent_older_5d') {
     return quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5))
   }
@@ -307,6 +326,10 @@ export function applyJobFilter(jobs: JobListItem[], filter: JobModuleFilter | nu
 export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseModuleFilter | null): ExpenseListItem[] {
   if (filter === 'missing_receipt') {
     return expenses.filter((expense) => !expense.receipt_file_path || expense.document_support_status === 'missing')
+  }
+
+  if (filter === 'pending_review') {
+    return expenses.filter((expense) => expense.fiscal_review_status === 'pending')
   }
 
   if (filter === 'current_month') {

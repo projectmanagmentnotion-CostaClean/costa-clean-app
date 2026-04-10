@@ -26,21 +26,14 @@ export function getInvoiceDocumentTitle(invoice: InvoiceListItem): string {
   return buildBrandedDocumentTitle('Factura', getInvoiceRef(invoice), getClientName(invoice))
 }
 
-export function openInvoicePrintWindow(
+export function buildInvoicePrintDocumentHtml(
   invoice: InvoiceListItem,
   intent: InvoiceOutputIntent = 'print',
 ) {
-  const printWindow = window.open('', '_blank', 'width=1100,height=1400')
-
-  if (!printWindow) {
-    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
-    return
-  }
-
   const documentTitle = getInvoiceDocumentTitle(invoice)
   const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
 
-  const html = `<!doctype html>
+  return `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -62,6 +55,20 @@ export function openInvoicePrintWindow(
     </script>
   </body>
 </html>`
+}
+
+export function openInvoicePrintWindow(
+  invoice: InvoiceListItem,
+  intent: InvoiceOutputIntent = 'print',
+) {
+  const printWindow = window.open('', '_blank', 'width=1100,height=1400')
+
+  if (!printWindow) {
+    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+    return
+  }
+
+  const html = buildInvoicePrintDocumentHtml(invoice, intent)
 
   printWindow.document.open()
   printWindow.document.write(html)

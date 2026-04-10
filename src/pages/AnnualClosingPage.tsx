@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
+import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
 import {
   getExpenseDocumentSupportStatusLabel,
   getExpenseFiscalRiskLevelLabel,
@@ -117,6 +118,9 @@ export function AnnualClosingPage({
   const [workspace, setWorkspace] = useState<AnnualClosingWorkspace>('operations')
   const [documentActionError, setDocumentActionError] = useState<string | null>(null)
   const [openingExpenseId, setOpeningExpenseId] = useState<string | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
+  const [exportResult, setExportResult] = useState<ManagerExportPackageResult | null>(null)
+  const [exportError, setExportError] = useState<string | null>(null)
 
   useEffect(() => {
     setSelectedYear(defaultFiscalYear)
@@ -145,6 +149,8 @@ export function AnnualClosingPage({
     setSaveMessage(null)
     setSaveError(null)
     setDocumentActionError(null)
+    setExportResult(null)
+    setExportError(null)
 
     if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
       setWorkspace('operations')
@@ -289,6 +295,7 @@ export function AnnualClosingPage({
     )
   }
 
+  const activeSummary = summary
   const uiStatus = getUiStatus(summary, closing)
   const savedSnapshot = closing?.snapshot_json?.metrics ?? null
 
@@ -323,6 +330,58 @@ export function AnnualClosingPage({
       setDocumentActionError(err instanceof Error ? err.message : 'No se pudo abrir el documento del gasto.')
     } finally {
       setOpeningExpenseId(null)
+    }
+  }
+
+  async function handleDownloadExportPackage() {
+    if (!closing) return
+
+    setIsExporting(true)
+    setExportResult(null)
+    setExportError(null)
+
+    try {
+      const summaryMetrics = savedSnapshot
+        ? {
+            invoice_count: savedSnapshot.invoice_count,
+            payment_count: savedSnapshot.payment_count,
+            expense_count: savedSnapshot.expense_count,
+            pending_invoice_count: savedSnapshot.pending_invoice_count,
+            unresolved_incidence_count: savedSnapshot.unresolved_incidence_count,
+            invoiced_total: savedSnapshot.invoiced_total,
+            collected_total: savedSnapshot.collected_total,
+            outstanding_total: savedSnapshot.outstanding_total,
+            expenses_total: savedSnapshot.expenses_total,
+          }
+        : {
+            invoice_count: activeSummary.invoiceCount,
+            payment_count: activeSummary.paymentCount,
+            expense_count: activeSummary.expenseCount,
+            pending_invoice_count: activeSummary.pendingInvoiceCount,
+            unresolved_incidence_count: activeSummary.unresolvedIncidenceCount,
+            invoiced_total: activeSummary.invoicedTotal,
+            collected_total: activeSummary.collectedTotal,
+            outstanding_total: activeSummary.outstandingTotal,
+            expenses_total: activeSummary.expensesTotal,
+          }
+
+      const result = await downloadManagerExportPackage({
+        scope: 'annual',
+        label: `Cierre anual ${selectedYear}`,
+        folderName: `CostaClean_Cierre_Anual_${selectedYear}`,
+        closingSavedAt: closing.closed_at,
+        closingNotes: closing.notes,
+        summaryMetrics,
+        invoices: yearInvoices,
+        payments: yearPayments,
+        expenses: yearExpenses,
+        incidences: activeSummary.incidences,
+      })
+      setExportResult(result)
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'No se pudo generar el paquete de exportación anual.')
+    } finally {
+      setIsExporting(false)
     }
   }
 
@@ -961,7 +1020,29 @@ export function AnnualClosingPage({
                 <h2>Carpeta gestor anual</h2>
                 <p>Estructura anual preparada para envío a gestoría y diseñada como base segura para una futura exportación ZIP.</p>
               </div>
+              <button type="button" className="primary-button" onClick={handleDownloadExportPackage} disabled={isExporting}>
+                {isExporting ? 'Generando ZIP...' : 'Descargar paquete ZIP'}
+              </button>
             </div>
+
+            {exportError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo generar el paquete</strong>
+                <p>{exportError}</p>
+              </div>
+            ) : null}
+
+            {exportResult ? (
+              <div className="cc-alert cc-alert--success">
+                <strong>Paquete descargado</strong>
+                <p>
+                  {exportResult.fileName} · {exportResult.includedFiles} archivo(s) incluidos · {exportResult.missingDocuments} soporte(s) faltante(s).
+                </p>
+                {exportResult.warnings.length > 0 ? (
+                  <p>{exportResult.warnings.join(' ')}</p>
+                ) : null}
+              </div>
+            ) : null}
 
             <div className="cc-export-folder-grid">
               <article className="cc-quarterly-persistence__card">

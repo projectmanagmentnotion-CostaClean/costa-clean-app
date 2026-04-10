@@ -13,7 +13,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord, QuarterlyClosingSummary } from '../features/quarterlyClosing/types'
 
-type QuarterlyClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'internal_study'
+type QuarterlyClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study'
 
 interface QuarterlyClosingPageProps {
   availableYears: number[]
@@ -426,6 +426,14 @@ export function QuarterlyClosingPage({
             disabled={!closing}
           >
             Abrir dossier documental
+          </button>
+          <button
+            type="button"
+            className={workspace === 'export_folder' ? 'secondary-button is-active' : 'secondary-button'}
+            onClick={() => setWorkspace('export_folder')}
+            disabled={!closing}
+          >
+            Carpeta gestor
           </button>
           <button
             type="button"
@@ -949,6 +957,257 @@ export function QuarterlyClosingPage({
                         selectedQuarter,
                       )
                     }
+                  >
+                    <div className="cc-quarterly-checklist__copy">
+                      <strong>{incidence.label}</strong>
+                      <p>{incidence.detail}</p>
+                    </div>
+                    <div className="cc-quarterly-checklist__meta">
+                      <span>{incidence.count}</span>
+                      <small>Resolver</small>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {workspace === 'export_folder' && closing ? (
+        <>
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Carpeta gestor trimestral</h2>
+                <p>Estructura lista para enviar al gestor, basada en el cierre guardado y preparada para una futura exportación ZIP.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-grid">
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">01 · Resumen</span>
+                <strong className="cc-dashboard-panel__value">{getQuarterLabel(selectedYear, selectedQuarter)}</strong>
+                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Notas: {closing.notes?.trim() || 'Sin notas de cierre.'}</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">02 · Facturas emitidas</span>
+                <strong className="cc-dashboard-panel__value">{quarterInvoices.length}</strong>
+                <p className="cc-dashboard-panel__text">Facturado: {formatCurrency(summary.invoicedTotal)}</p>
+                <p className="cc-dashboard-panel__text">Con acceso directo al PDF/documento de factura.</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">03 · Cobros</span>
+                <strong className="cc-dashboard-panel__value">{quarterPayments.length}</strong>
+                <p className="cc-dashboard-panel__text">Cobrado: {formatCurrency(quarterPaymentsTotal)}</p>
+                <p className="cc-dashboard-panel__text">Movimientos listos para revisión rápida por gestoría.</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">04 · Gastos y soportes</span>
+                <strong className="cc-dashboard-panel__value">{quarterExpenseDocumentsPresentCount}/{quarterExpenses.length}</strong>
+                <p className="cc-dashboard-panel__text">Adjuntos accesibles: {quarterExpenseDocumentsPresentCount}</p>
+                <p className="cc-dashboard-panel__text">Sin soporte: {quarterExpenseMissingDocuments.length}</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">05 · Incidencias</span>
+                <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
+                <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales/documentales.</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Estructura preparada para exportación</h2>
+                <p>Nomenclatura y agrupación documental pensadas para una carpeta real de gestoría.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list">
+              <article className="cc-export-folder-item">
+                <strong>01_resumen_trimestral</strong>
+                <p>{`resumen_${selectedYear}_T${selectedQuarter}.json / pack gestor / snapshot del cierre guardado`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>02_facturas_emitidas</strong>
+                <p>{`${quarterInvoices.length} factura(s) con acceso a PDF y referencia documental existente`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>03_cobros</strong>
+                <p>{`${quarterPayments.length} cobro(s) con fecha, factura vinculada, importe y método`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>04_gastos_y_soportes</strong>
+                <p>{`${quarterExpenses.length} gasto(s) con soporte documental y estado de revisión`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>05_incidencias_pendientes</strong>
+                <p>{`${summary.unresolvedIncidenceCount} incidencia(s) abiertas para completar antes del envío final`}</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Facturas emitidas para gestor</h2>
+                <p>Listado orientado a exportación con naming claro y acceso al flujo PDF actual.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Fecha</span>
+                <span>Cliente</span>
+                <span>Total</span>
+                <span>Estado</span>
+                <span>Acciones</span>
+              </div>
+
+              {quarterInvoices.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin facturas para exportar</strong>
+                  <p>No hay facturas emitidas en este trimestre.</p>
+                </div>
+              ) : (
+                quarterInvoices.map((invoice) => (
+                  <div key={invoice.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`factura_${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
+                    <span>{formatDateEs(invoice.issue_date)}</span>
+                    <span>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</span>
+                    <span>{formatCurrency(invoice.total)}</span>
+                    <span>{getDisplayStatusLabel(invoice.status)}</span>
+                    <div className="cc-quarterly-dossier-table__actions">
+                      <button type="button" className="secondary-button" onClick={() => openInvoicePrintWindow(invoice, 'pdf')}>
+                        PDF
+                      </button>
+                      <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('invoices', 'invoice_quarter_all', selectedYear, selectedQuarter)}>
+                        Abrir módulo
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Cobros para gestor</h2>
+                <p>Base compacta de revisión para la carpeta de cierre trimestral.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Fecha</span>
+                <span>Factura</span>
+                <span>Importe</span>
+                <span>Método</span>
+                <span>Observación</span>
+              </div>
+
+              {quarterPayments.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin cobros para exportar</strong>
+                  <p>No hay cobros registrados en este trimestre.</p>
+                </div>
+              ) : (
+                quarterPayments.map((payment) => (
+                  <div key={payment.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`cobro_${payment.display_code ?? payment.id}`}</span>
+                    <span>{formatDateEs(payment.payment_date)}</span>
+                    <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
+                    <span>{formatCurrency(payment.amount)}</span>
+                    <span>{getPaymentMethodLabel(payment.payment_method)}</span>
+                    <span>{payment.notes?.trim() || 'Sin notas'}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Gastos y soportes para gestor</h2>
+                <p>Tabla export-ready con naming, soporte documental y acceso directo al adjunto.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Proveedor</span>
+                <span>Total</span>
+                <span>Soporte</span>
+                <span>Revisión</span>
+                <span>Acciones</span>
+              </div>
+
+              {quarterExpenses.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin gastos para exportar</strong>
+                  <p>No hay gastos registrados en este trimestre.</p>
+                </div>
+              ) : (
+                quarterExpenses.map((expense) => (
+                  <div key={expense.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`gasto_${expense.display_code ?? expense.id}`}</span>
+                    <span>{expense.supplier_name}</span>
+                    <span>{formatCurrency(expense.total)}</span>
+                    <span>
+                      {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                    </span>
+                    <span>
+                      {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+                      {' · '}
+                      riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
+                    </span>
+                    <div className="cc-quarterly-dossier-table__actions">
+                      {expense.receipt_file_path ? (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => handleOpenExpenseDocument(expense)}
+                          disabled={openingExpenseId === expense.id}
+                        >
+                          {openingExpenseId === expense.id ? 'Abriendo...' : 'Ver soporte'}
+                        </button>
+                      ) : (
+                        <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('expenses', 'expense_quarter_missing_support', selectedYear, selectedQuarter)}>
+                          Revisar incidencia
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Incidencias y faltas de documentación</h2>
+                <p>Último bloque antes de una futura generación binaria del pack de gestoría.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-checklist">
+              {summary.incidences
+                .filter((incidence) => incidence.count > 0)
+                .map((incidence) => (
+                  <button
+                    key={incidence.id}
+                    type="button"
+                    className={`cc-quarterly-checklist__item ${getIncidenceToneClass(incidence.tone)}`.trim()}
+                    onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selectedYear, selectedQuarter)}
                   >
                     <div className="cc-quarterly-checklist__copy">
                       <strong>{incidence.label}</strong>

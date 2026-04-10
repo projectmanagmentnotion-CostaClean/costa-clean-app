@@ -6330,6 +6330,37 @@
   gap: 14px;
 }
 
+.cc-export-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cc-export-folder-list {
+  display: grid;
+  gap: 10px;
+}
+
+.cc-export-folder-item {
+  padding: 16px 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02));
+}
+
+.cc-export-folder-item strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #f3f7fb;
+}
+
+.cc-export-folder-item p {
+  margin: 0;
+  color: rgba(218, 227, 238, 0.78);
+  font-size: 0.92rem;
+}
+
 .cc-quarterly-dossier-table {
   display: grid;
   gap: 10px;
@@ -6393,7 +6424,8 @@
   .cc-quarterly-checklist,
   .cc-quarterly-persistence,
   .cc-quarterly-pack-header,
-  .cc-quarterly-pack-grid {
+  .cc-quarterly-pack-grid,
+  .cc-export-folder-grid {
     grid-template-columns: 1fr;
   }
 

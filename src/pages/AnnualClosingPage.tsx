@@ -13,7 +13,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { AnnualClosingIncidence, AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
 
-type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'internal_study'
+type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study'
 
 interface AnnualClosingPageProps {
   availableYears: number[]
@@ -385,6 +385,14 @@ export function AnnualClosingPage({
             disabled={!closing}
           >
             Abrir dossier documental
+          </button>
+          <button
+            type="button"
+            className={workspace === 'export_folder' ? 'secondary-button is-active' : 'secondary-button'}
+            onClick={() => setWorkspace('export_folder')}
+            disabled={!closing}
+          >
+            Carpeta gestor
           </button>
           <button
             type="button"
@@ -923,6 +931,257 @@ export function AnnualClosingPage({
                   incidence.id === 'expense_year_risk' ||
                   incidence.id === 'invoice_year_pending',
                 )
+                .map((incidence) => (
+                  <button
+                    key={incidence.id}
+                    type="button"
+                    className={`cc-quarterly-checklist__item ${getIncidenceToneClass(incidence.tone)}`.trim()}
+                    onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selectedYear)}
+                  >
+                    <div className="cc-quarterly-checklist__copy">
+                      <strong>{incidence.label}</strong>
+                      <p>{incidence.detail}</p>
+                    </div>
+                    <div className="cc-quarterly-checklist__meta">
+                      <span>{incidence.count}</span>
+                      <small>Resolver</small>
+                    </div>
+                  </button>
+                ))}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {workspace === 'export_folder' && closing ? (
+        <>
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Carpeta gestor anual</h2>
+                <p>Estructura anual preparada para envío a gestoría y diseñada como base segura para una futura exportación ZIP.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-grid">
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">01 · Resumen anual</span>
+                <strong className="cc-dashboard-panel__value">{selectedYear}</strong>
+                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Notas: {closing.notes?.trim() || 'Sin notas de cierre.'}</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">02 · Facturas</span>
+                <strong className="cc-dashboard-panel__value">{yearInvoices.length}</strong>
+                <p className="cc-dashboard-panel__text">Facturado anual: {formatCurrency(summary.invoicedTotal)}</p>
+                <p className="cc-dashboard-panel__text">Acceso al flujo PDF/documental ya existente.</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">03 · Cobros</span>
+                <strong className="cc-dashboard-panel__value">{yearPayments.length}</strong>
+                <p className="cc-dashboard-panel__text">Cobrado anual: {formatCurrency(yearPaymentsTotal)}</p>
+                <p className="cc-dashboard-panel__text">Listado listo para revisión y futura descarga.</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">04 · Gastos y soportes</span>
+                <strong className="cc-dashboard-panel__value">{yearExpenseDocumentsPresentCount}/{yearExpenses.length}</strong>
+                <p className="cc-dashboard-panel__text">Adjuntos accesibles: {yearExpenseDocumentsPresentCount}</p>
+                <p className="cc-dashboard-panel__text">Sin soporte: {yearExpenseMissingDocuments.length}</p>
+              </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">05 · Incidencias</span>
+                <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
+                <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales/documentales del año.</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Estructura preparada para exportación</h2>
+                <p>Patrón anual alineado con la carpeta trimestral y escalable a export binario posterior.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list">
+              <article className="cc-export-folder-item">
+                <strong>01_resumen_anual</strong>
+                <p>{`resumen_${selectedYear}.json / pack gestor anual / snapshot persistido del cierre`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>02_facturas_emitidas</strong>
+                <p>{`${yearInvoices.length} factura(s) del ejercicio con acceso al PDF/documento actual`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>03_cobros</strong>
+                <p>{`${yearPayments.length} cobro(s) con factura vinculada, importe y método`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>04_gastos_y_soportes</strong>
+                <p>{`${yearExpenses.length} gasto(s) con soporte documental y estado de revisión`}</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>05_incidencias_pendientes</strong>
+                <p>{`${summary.unresolvedIncidenceCount} incidencia(s) abiertas antes del envío final`}</p>
+              </article>
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Facturas anuales para gestor</h2>
+                <p>Listado orientado a exportación con naming claro y acceso al PDF de factura.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Fecha</span>
+                <span>Cliente</span>
+                <span>Total</span>
+                <span>Estado</span>
+                <span>Acciones</span>
+              </div>
+
+              {yearInvoices.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin facturas para exportar</strong>
+                  <p>No hay facturas emitidas en este ejercicio.</p>
+                </div>
+              ) : (
+                yearInvoices.map((invoice) => (
+                  <div key={invoice.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`factura_${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
+                    <span>{formatDateEs(invoice.issue_date)}</span>
+                    <span>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</span>
+                    <span>{formatCurrency(invoice.total)}</span>
+                    <span>{getDisplayStatusLabel(invoice.status)}</span>
+                    <div className="cc-quarterly-dossier-table__actions">
+                      <button type="button" className="secondary-button" onClick={() => openInvoicePrintWindow(invoice, 'pdf')}>
+                        PDF
+                      </button>
+                      <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('invoices', 'invoice_year_all', selectedYear)}>
+                        Abrir módulo
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Cobros anuales para gestor</h2>
+                <p>Base compacta de revisión para la carpeta anual de cierre.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Fecha</span>
+                <span>Factura</span>
+                <span>Importe</span>
+                <span>Método</span>
+                <span>Observación</span>
+              </div>
+
+              {yearPayments.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin cobros para exportar</strong>
+                  <p>No hay cobros registrados en este ejercicio.</p>
+                </div>
+              ) : (
+                yearPayments.map((payment) => (
+                  <div key={payment.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`cobro_${payment.display_code ?? payment.id}`}</span>
+                    <span>{formatDateEs(payment.payment_date)}</span>
+                    <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
+                    <span>{formatCurrency(payment.amount)}</span>
+                    <span>{getPaymentMethodLabel(payment.payment_method)}</span>
+                    <span>{payment.notes?.trim() || 'Sin notas'}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Gastos y soportes anuales para gestor</h2>
+                <p>Tabla export-ready con naming, soporte documental y apertura de adjuntos reales.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Nombre carpeta</span>
+                <span>Proveedor</span>
+                <span>Total</span>
+                <span>Soporte</span>
+                <span>Revisión</span>
+                <span>Acciones</span>
+              </div>
+
+              {yearExpenses.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin gastos para exportar</strong>
+                  <p>No hay gastos registrados en este ejercicio.</p>
+                </div>
+              ) : (
+                yearExpenses.map((expense) => (
+                  <div key={expense.id} className="cc-quarterly-dossier-table__row">
+                    <span>{`gasto_${expense.display_code ?? expense.id}`}</span>
+                    <span>{expense.supplier_name}</span>
+                    <span>{formatCurrency(expense.total)}</span>
+                    <span>
+                      {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                    </span>
+                    <span>
+                      {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+                      {' · '}
+                      riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
+                    </span>
+                    <div className="cc-quarterly-dossier-table__actions">
+                      {expense.receipt_file_path ? (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => handleOpenExpenseDocument(expense)}
+                          disabled={openingExpenseId === expense.id}
+                        >
+                          {openingExpenseId === expense.id ? 'Abriendo...' : 'Ver soporte'}
+                        </button>
+                      ) : (
+                        <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('expenses', 'expense_year_missing_support', selectedYear)}>
+                          Revisar incidencia
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Incidencias y faltas de documentación</h2>
+                <p>Bloque final para completar el ejercicio antes de una futura exportación binaria.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-checklist">
+              {summary.incidences
+                .filter((incidence) => incidence.count > 0)
                 .map((incidence) => (
                   <button
                     key={incidence.id}

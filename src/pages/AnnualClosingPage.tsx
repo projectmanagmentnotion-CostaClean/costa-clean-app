@@ -584,7 +584,7 @@ export function AnnualClosingPage({
           </div>
         </div>
 
-        <div className="cc-quarterly-checklist">
+        <div className="cc-quarterly-checklist cc-bounded-list">
           {summary.incidences.map((incidence) => (
             <button
               key={incidence.id}
@@ -769,7 +769,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) => incidence.count > 0 || incidence.id === 'invoice_year_all' || incidence.id === 'payment_year_all')
                 .map((incidence) => (
@@ -831,7 +831,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Factura</span>
                 <span>Fecha</span>
@@ -880,7 +880,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Cobro</span>
                 <span>Fecha</span>
@@ -918,7 +918,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Gasto</span>
                 <span>Proveedor</span>
@@ -982,7 +982,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) =>
                   incidence.id === 'expense_year_missing_support' ||
@@ -1085,7 +1085,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-export-folder-list">
+            <div className="cc-export-folder-list cc-bounded-list">
               <article className="cc-export-folder-item">
                 <strong>01_resumen_anual</strong>
                 <p>{`resumen_${selectedYear}.json / pack gestor anual / snapshot persistido del cierre`}</p>
@@ -1117,7 +1117,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Fecha</span>
@@ -1162,7 +1162,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Fecha</span>
@@ -1200,7 +1200,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Proveedor</span>
@@ -1260,7 +1260,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) => incidence.count > 0)
                 .map((incidence) => (
@@ -1410,7 +1410,7 @@ export function AnnualClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Mes</span>
                 <span>Facturado</span>

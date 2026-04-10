@@ -29,9 +29,14 @@ export function getInvoiceDocumentTitle(invoice: InvoiceListItem): string {
 export function buildInvoicePrintDocumentHtml(
   invoice: InvoiceListItem,
   intent: InvoiceOutputIntent = 'print',
+  options?: {
+    logoSrc?: string
+  },
 ) {
   const documentTitle = getInvoiceDocumentTitle(invoice)
-  const markup = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} variant="print" />)
+  const markup = renderToStaticMarkup(
+    <InvoiceDocumentA4 invoice={invoice} variant="print" logoSrc={options?.logoSrc} />,
+  )
 
   return `<!doctype html>
 <html lang="es">

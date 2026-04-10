@@ -124,6 +124,22 @@ function downloadBlob(blob: Blob, fileName: string) {
   setTimeout(() => URL.revokeObjectURL(objectUrl), 1000)
 }
 
+async function fetchAsDataUrl(path: string): Promise<string> {
+  const response = await fetch(path)
+  if (!response.ok) {
+    throw new Error(`No se pudo cargar el recurso ${path} (${response.status}).`)
+  }
+
+  const blob = await response.blob()
+
+  return await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error(`No se pudo leer el recurso ${path}.`))
+    reader.readAsDataURL(blob)
+  })
+}
+
 function makeTextEntry(path: string, content: string): ZipEntry {
   return {
     path,
@@ -440,6 +456,13 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
 export async function downloadManagerExportPackage(input: ExportPackageInput): Promise<ManagerExportPackageResult> {
   const rootFolder = sanitizePathPart(input.folderName) || 'costa_clean_export'
   const entries: ZipEntry[] = []
+  let exportLogoSrc = '/branding/logo-costa-clean-web.png'
+
+  try {
+    exportLogoSrc = await fetchAsDataUrl('/branding/logo-costa-clean-web.png')
+  } catch {
+    // Keep the public path fallback for robustness in case the asset cannot be embedded.
+  }
 
   entries.push(makeTextEntry(`${rootFolder}/00_indice.html`, buildIndexHtml(input, 0)))
   entries.push(makeTextEntry(`${rootFolder}/01_resumen/resumen.html`, buildSummaryHtml(input)))
@@ -455,7 +478,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     input.invoices.map((invoice) => {
       const invoiceRef = invoice.invoice_number ?? invoice.display_code ?? invoice.id
       const fileName = `factura_${sanitizePathPart(invoiceRef)}.html`
-      const invoiceHtml = buildInvoicePrintDocumentHtml(invoice, 'pdf')
+      const invoiceHtml = buildInvoicePrintDocumentHtml(invoice, 'pdf', { logoSrc: exportLogoSrc })
       entries.push(makeTextEntry(`${rootFolder}/02_facturas_emitidas/${fileName}`, invoiceHtml))
       return [
         invoiceRef,

@@ -599,7 +599,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences.map((incidence) => (
                 <button
                   key={incidence.id}
@@ -767,7 +767,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) => incidence.count > 0 || incidence.id === 'invoice_quarter_all' || incidence.id === 'payment_quarter_all')
                 .map((incidence) => (
@@ -836,7 +836,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Factura</span>
                 <span>Fecha</span>
@@ -891,7 +891,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Cobro</span>
                 <span>Fecha</span>
@@ -929,7 +929,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Gasto</span>
                 <span>Proveedor</span>
@@ -995,7 +995,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) =>
                   incidence.id === 'expense_quarter_missing_support' ||
@@ -1105,7 +1105,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-export-folder-list">
+            <div className="cc-export-folder-list cc-bounded-list">
               <article className="cc-export-folder-item">
                 <strong>01_resumen_trimestral</strong>
                 <p>{`resumen_${selectedYear}_T${selectedQuarter}.json / pack gestor / snapshot del cierre guardado`}</p>
@@ -1137,7 +1137,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Fecha</span>
@@ -1182,7 +1182,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Fecha</span>
@@ -1220,7 +1220,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Nombre carpeta</span>
                 <span>Proveedor</span>
@@ -1280,7 +1280,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-checklist">
+            <div className="cc-quarterly-checklist cc-bounded-list">
               {summary.incidences
                 .filter((incidence) => incidence.count > 0)
                 .map((incidence) => (
@@ -1409,7 +1409,7 @@ export function QuarterlyClosingPage({
               </div>
             </div>
 
-            <div className="cc-quarterly-dossier-table">
+            <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
                 <span>Mes</span>
                 <span>Facturado</span>

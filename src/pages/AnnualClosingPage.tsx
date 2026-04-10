@@ -3,6 +3,8 @@ import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLa
 import type { AppView } from '../app/navigation'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
 import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
+import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
+import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
 import {
   getExpenseDocumentSupportStatusLabel,
   getExpenseFiscalRiskLevelLabel,
@@ -14,7 +16,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { AnnualClosingIncidence, AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
 
-type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study'
+type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
 
 interface AnnualClosingPageProps {
   availableYears: number[]
@@ -121,6 +123,9 @@ export function AnnualClosingPage({
   const [isExporting, setIsExporting] = useState(false)
   const [exportResult, setExportResult] = useState<ManagerExportPackageResult | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false)
+  const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
   useEffect(() => {
     setSelectedYear(defaultFiscalYear)
@@ -151,6 +156,8 @@ export function AnnualClosingPage({
     setDocumentActionError(null)
     setExportResult(null)
     setExportError(null)
+    setAiSummaryResult(null)
+    setAiSummaryError(null)
 
     if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
       setWorkspace('operations')
@@ -385,6 +392,75 @@ export function AnnualClosingPage({
     }
   }
 
+  async function handleGenerateAiSummary() {
+    if (!closing) return
+
+    setIsGeneratingAiSummary(true)
+    setAiSummaryResult(null)
+    setAiSummaryError(null)
+
+    try {
+      const result = await generateClosingIntelligenceSummary({
+        scope: 'annual',
+        payload: {
+          period: {
+            fiscal_year: selectedYear,
+            label: `Ejercicio ${selectedYear}`,
+          },
+          closing: {
+            status: closing.status,
+            closed_at: closing.closed_at,
+            notes: closing.notes,
+          },
+          saved_snapshot: closing.snapshot_json?.metrics ?? null,
+          current_summary: {
+            invoice_count: activeSummary.invoiceCount,
+            payment_count: activeSummary.paymentCount,
+            expense_count: activeSummary.expenseCount,
+            closure_expense_count: activeSummary.closureExpenseCount,
+            missing_support_count: activeSummary.missingSupportCount,
+            pending_review_count: activeSummary.pendingReviewCount,
+            risk_count: activeSummary.riskCount,
+            pending_invoice_count: activeSummary.pendingInvoiceCount,
+            unresolved_incidence_count: activeSummary.unresolvedIncidenceCount,
+            invoiced_total: activeSummary.invoicedTotal,
+            collected_total: activeSummary.collectedTotal,
+            outstanding_total: activeSummary.outstandingTotal,
+            expenses_total: activeSummary.expensesTotal,
+            quarterly_breakdown: activeSummary.quarterlyBreakdown.map((quarter) => ({
+              fiscal_quarter: quarter.fiscal_quarter,
+              invoiced_total: quarter.invoiced_total,
+              collected_total: quarter.collected_total,
+              outstanding_total: quarter.outstanding_total,
+              expenses_total: quarter.expenses_total,
+              unresolved_incidence_count: quarter.unresolved_incidence_count,
+            })),
+          },
+          documentary_completeness: {
+            expense_documents_present_count: yearExpenseDocumentsPresentCount,
+            expense_missing_documents_count: yearExpenseMissingDocuments.length,
+            total_expenses_in_period: yearExpenses.length,
+          },
+          open_incidences: activeSummary.incidences
+            .filter((incidence) => incidence.count > 0)
+            .map((incidence) => ({
+              id: incidence.id,
+              label: incidence.label,
+              detail: incidence.detail,
+              count: incidence.count,
+              tone: incidence.tone,
+            })),
+        },
+      })
+
+      setAiSummaryResult(result)
+    } catch (err) {
+      setAiSummaryError(err instanceof Error ? err.message : 'No se pudo generar el resumen inteligente anual.')
+    } finally {
+      setIsGeneratingAiSummary(false)
+    }
+  }
+
   return (
     <section className="page-section cc-master-page cc-annual-closing-page">
       <div className="section-header page-header-actions cc-master-page__hero">
@@ -459,6 +535,14 @@ export function AnnualClosingPage({
             onClick={() => setWorkspace('internal_study')}
           >
             Estudio interno
+          </button>
+          <button
+            type="button"
+            className={workspace === 'ai_summary' ? 'secondary-button is-active' : 'secondary-button'}
+            onClick={() => setWorkspace('ai_summary')}
+            disabled={!closing}
+          >
+            Resumen IA
           </button>
         </div>
 
@@ -1281,6 +1365,97 @@ export function AnnualClosingPage({
                   </button>
                 ))}
             </div>
+          </section>
+        </>
+      ) : null}
+
+      {workspace === 'ai_summary' && closing ? (
+        <>
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Resumen inteligente anual</h2>
+                <p>Interpretación asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del ejercicio.</p>
+              </div>
+              <button type="button" className="primary-button" onClick={handleGenerateAiSummary} disabled={isGeneratingAiSummary}>
+                {isGeneratingAiSummary ? 'Generando resumen...' : aiSummaryResult ? 'Regenerar resumen' : 'Generar resumen'}
+              </button>
+            </div>
+
+            <div className="cc-alert cc-alert--warning">
+              <strong>Texto asistivo generado por IA</strong>
+              <p>No modifica cálculos ni sustituye la revisión fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
+            </div>
+
+            {aiSummaryError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo generar el resumen inteligente</strong>
+                <p>{aiSummaryError}</p>
+              </div>
+            ) : null}
+
+            {aiSummaryResult ? (
+              <>
+                <div className="cc-quarterly-pack-header">
+                  <article className="cc-quarterly-persistence__card">
+                    <span className="cc-dashboard-panel__label">Generado</span>
+                    <strong className="cc-dashboard-panel__value">{formatDateTime(aiSummaryResult.generated_at)}</strong>
+                    <p className="cc-dashboard-panel__text">Modelo: {aiSummaryResult.model}</p>
+                  </article>
+                  <article className="cc-quarterly-persistence__card">
+                    <span className="cc-dashboard-panel__label">Ejercicio</span>
+                    <strong className="cc-dashboard-panel__value">{selectedYear}</strong>
+                    <p className="cc-dashboard-panel__text">Estado del cierre: {uiStatus.label}</p>
+                  </article>
+                </div>
+
+                <section className="cc-dashboard-block">
+                  <div className="cc-dashboard-block__header">
+                    <div>
+                      <h2>Executive Summary</h2>
+                    </div>
+                  </div>
+                  <article className="cc-quarterly-persistence__card">
+                    <p className="cc-dashboard-panel__text">{aiSummaryResult.summary.executive_summary}</p>
+                  </article>
+                </section>
+
+                <section className="cc-quarterly-pack-grid">
+                  <article className="cc-quarterly-persistence__card cc-bounded-list">
+                    <span className="cc-dashboard-panel__label">Key Risks / Incidences</span>
+                    {aiSummaryResult.summary.key_risks.length > 0 ? aiSummaryResult.summary.key_risks.map((item, index) => (
+                      <p key={`risk-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
+                    )) : <p className="cc-dashboard-panel__text">Sin riesgos destacados por la IA.</p>}
+                  </article>
+                  <article className="cc-quarterly-persistence__card cc-bounded-list">
+                    <span className="cc-dashboard-panel__label">Documentation Warnings</span>
+                    {aiSummaryResult.summary.documentation_warnings.length > 0 ? aiSummaryResult.summary.documentation_warnings.map((item, index) => (
+                      <p key={`doc-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
+                    )) : <p className="cc-dashboard-panel__text">Sin alertas documentales adicionales.</p>}
+                  </article>
+                  <article className="cc-quarterly-persistence__card cc-bounded-list">
+                    <span className="cc-dashboard-panel__label">Suggested Manager Notes</span>
+                    {aiSummaryResult.summary.suggested_manager_notes.length > 0 ? aiSummaryResult.summary.suggested_manager_notes.map((item, index) => (
+                      <p key={`note-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
+                    )) : <p className="cc-dashboard-panel__text">Sin notas sugeridas adicionales.</p>}
+                  </article>
+                </section>
+
+                <section className="cc-dashboard-block">
+                  <div className="cc-dashboard-block__header">
+                    <div>
+                      <h2>Suggested Next Actions</h2>
+                    </div>
+                  </div>
+                  <article className="cc-quarterly-persistence__card cc-bounded-list">
+                    {aiSummaryResult.summary.suggested_next_actions.length > 0 ? aiSummaryResult.summary.suggested_next_actions.map((item, index) => (
+                      <p key={`action-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
+                    )) : <p className="cc-dashboard-panel__text">Sin acciones sugeridas adicionales.</p>}
+                    <p className="cc-dashboard-panel__text">{aiSummaryResult.summary.assistive_notice}</p>
+                  </article>
+                </section>
+              </>
+            ) : null}
           </section>
         </>
       ) : null}

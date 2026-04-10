@@ -13,7 +13,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { AnnualClosingIncidence, AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
 
-type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier'
+type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'internal_study'
 
 interface AnnualClosingPageProps {
   availableYears: number[]
@@ -64,6 +64,20 @@ function getIncidenceToneClass(tone: AnnualClosingIncidence['tone']): string {
   if (tone === 'danger') return 'cc-quarterly-checklist__item--danger'
   if (tone === 'warning') return 'cc-quarterly-checklist__item--warning'
   return ''
+}
+
+function getMonthKey(dateValue: string): string | null {
+  if (!dateValue) return null
+  const normalized = dateValue.length > 10 ? dateValue : `${dateValue}T00:00:00`
+  const date = new Date(normalized)
+  if (Number.isNaN(date.getTime())) return null
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}
+
+function getMonthLabelFromKey(key: string): string {
+  const [yearPart, monthPart] = key.split('-')
+  const date = new Date(Number(yearPart), Number(monthPart) - 1, 1)
+  return new Intl.DateTimeFormat('es-ES', { month: 'short' }).format(date)
 }
 
 function matchesDateYear(dateValue: string, fiscalYear: number): boolean {
@@ -132,7 +146,7 @@ export function AnnualClosingPage({
     setSaveError(null)
     setDocumentActionError(null)
 
-    if (!closing && workspace !== 'operations') {
+    if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
       setWorkspace('operations')
     }
   }, [closing, selectedYear, workspace])
@@ -155,6 +169,107 @@ export function AnnualClosingPage({
       ),
     [yearExpenses],
   )
+  const paymentsByInvoiceId = useMemo(() => {
+    const map = new Map<string, number>()
+
+    for (const payment of payments) {
+      map.set(payment.invoice_id, (map.get(payment.invoice_id) ?? 0) + Number(payment.amount || 0))
+    }
+
+    return map
+  }, [payments])
+  const topYearClientsByInvoiced = useMemo(() => {
+    const totals = new Map<string, { label: string; amount: number; invoiceCount: number }>()
+
+    for (const invoice of yearInvoices) {
+      const label = invoice.client_name ?? invoice.client_display_code ?? invoice.client_id
+      const current = totals.get(invoice.client_id) ?? { label, amount: 0, invoiceCount: 0 }
+      current.amount += Number(invoice.total || 0)
+      current.invoiceCount += 1
+      totals.set(invoice.client_id, current)
+    }
+
+    return [...totals.values()].sort((left, right) => right.amount - left.amount).slice(0, 8)
+  }, [yearInvoices])
+  const topYearClientsByCollected = useMemo(() => {
+    const totals = new Map<string, { label: string; amount: number; paymentCount: number }>()
+    const invoicesById = new Map(yearInvoices.map((invoice) => [invoice.id, invoice] as const))
+
+    for (const payment of yearPayments) {
+      const invoice = invoicesById.get(payment.invoice_id)
+      const clientId = invoice?.client_id ?? payment.invoice_id
+      const label = invoice?.client_name ?? invoice?.client_display_code ?? clientId
+      const current = totals.get(clientId) ?? { label, amount: 0, paymentCount: 0 }
+      current.amount += Number(payment.amount || 0)
+      current.paymentCount += 1
+      totals.set(clientId, current)
+    }
+
+    return [...totals.values()].sort((left, right) => right.amount - left.amount).slice(0, 8)
+  }, [yearInvoices, yearPayments])
+  const yearOutstandingClients = useMemo(() => {
+    const totals = new Map<string, { label: string; amount: number; invoiceCount: number }>()
+
+    for (const invoice of yearInvoices) {
+      const outstandingAmount = Math.max(Number(invoice.total || 0) - (paymentsByInvoiceId.get(invoice.id) ?? 0), 0)
+      if (outstandingAmount <= 0) continue
+      const label = invoice.client_name ?? invoice.client_display_code ?? invoice.client_id
+      const current = totals.get(invoice.client_id) ?? { label, amount: 0, invoiceCount: 0 }
+      current.amount += outstandingAmount
+      current.invoiceCount += 1
+      totals.set(invoice.client_id, current)
+    }
+
+    return [...totals.values()].sort((left, right) => right.amount - left.amount).slice(0, 8)
+  }, [paymentsByInvoiceId, yearInvoices])
+  const yearExpenseBreakdown = useMemo(() => {
+    const totals = new Map<string, { category: string; amount: number; count: number }>()
+
+    for (const expense of yearExpenses) {
+      const category = expense.category || 'otros'
+      const current = totals.get(category) ?? { category, amount: 0, count: 0 }
+      current.amount += Number(expense.total || 0)
+      current.count += 1
+      totals.set(category, current)
+    }
+
+    return [...totals.values()].sort((left, right) => right.amount - left.amount)
+  }, [yearExpenses])
+  const yearMonthComparison = useMemo(() => {
+    const monthKeys = Array.from({ length: 12 }, (_, index) => `${selectedYear}-${String(index + 1).padStart(2, '0')}`)
+    const invoicesTotals = new Map<string, number>()
+    const paymentsTotals = new Map<string, number>()
+    const expensesTotals = new Map<string, number>()
+
+    for (const invoice of yearInvoices) {
+      const key = getMonthKey(invoice.issue_date)
+      if (key) invoicesTotals.set(key, (invoicesTotals.get(key) ?? 0) + Number(invoice.total || 0))
+    }
+
+    for (const payment of yearPayments) {
+      const key = getMonthKey(payment.payment_date)
+      if (key) paymentsTotals.set(key, (paymentsTotals.get(key) ?? 0) + Number(payment.amount || 0))
+    }
+
+    for (const expense of yearExpenses) {
+      const key = getMonthKey(expense.expense_date)
+      if (key) expensesTotals.set(key, (expensesTotals.get(key) ?? 0) + Number(expense.total || 0))
+    }
+
+    return monthKeys.map((key) => {
+      const invoiced = invoicesTotals.get(key) ?? 0
+      const collected = paymentsTotals.get(key) ?? 0
+      const spent = expensesTotals.get(key) ?? 0
+      return {
+        key,
+        label: getMonthLabelFromKey(key),
+        invoiced,
+        collected,
+        spent,
+        margin: invoiced - spent,
+      }
+    })
+  }, [selectedYear, yearExpenses, yearInvoices, yearPayments])
 
   if (!summary) {
     return (
@@ -270,6 +385,13 @@ export function AnnualClosingPage({
             disabled={!closing}
           >
             Abrir dossier documental
+          </button>
+          <button
+            type="button"
+            className={workspace === 'internal_study' ? 'secondary-button is-active' : 'secondary-button'}
+            onClick={() => setWorkspace('internal_study')}
+          >
+            Estudio interno
           </button>
         </div>
 
@@ -818,6 +940,156 @@ export function AnnualClosingPage({
                     </div>
                   </button>
                 ))}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {workspace === 'internal_study' ? (
+        <>
+          <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="Estudio interno anual">
+            <article className="cc-kpi-card cc-kpi-card--finance">
+              <span className="cc-kpi-label">Visión global anual</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal)}</strong>
+              <p className="cc-kpi-footnote">Cobrado: {formatCurrency(summary.collectedTotal)} · pendiente: {formatCurrency(summary.outstandingTotal)}</p>
+            </article>
+            <article className="cc-kpi-card">
+              <span className="cc-kpi-label">Gastos del año</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.expensesTotal)}</strong>
+              <p className="cc-kpi-footnote">{summary.expenseCount} gasto(s) registrados</p>
+            </article>
+            <article className="cc-kpi-card">
+              <span className="cc-kpi-label">Margen simple facturado</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal - summary.expensesTotal)}</strong>
+              <p className="cc-kpi-footnote">Facturado anual menos gastos anuales</p>
+            </article>
+            <article className="cc-kpi-card">
+              <span className="cc-kpi-label">Margen simple cobrado</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.collectedTotal - summary.expensesTotal)}</strong>
+              <p className="cc-kpi-footnote">Cobrado anual menos gastos anuales</p>
+            </article>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Comparativa por trimestre</h2>
+                <p>Lectura directa del comportamiento trimestral dentro del ejercicio.</p>
+              </div>
+            </div>
+
+            <div className="cc-annual-breakdown-grid">
+              {summary.quarterlyBreakdown.map((quarter) => (
+                <article key={quarter.fiscal_quarter} className="cc-quarterly-persistence__card cc-annual-breakdown-card">
+                  <span className="cc-dashboard-panel__label">T{quarter.fiscal_quarter}</span>
+                  <strong className="cc-dashboard-panel__value">{formatCurrency(quarter.invoiced_total)}</strong>
+                  <p className="cc-dashboard-panel__text">Cobrado: {formatCurrency(quarter.collected_total)}</p>
+                  <p className="cc-dashboard-panel__text">Gastos: {formatCurrency(quarter.expenses_total)}</p>
+                  <p className="cc-dashboard-panel__text">Margen simple: {formatCurrency(quarter.invoiced_total - quarter.expenses_total)}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="cc-quarterly-pack-grid">
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Top clientes facturados</span>
+              <strong className="cc-dashboard-panel__value">{topYearClientsByInvoiced.length}</strong>
+              {topYearClientsByInvoiced.length === 0 ? (
+                <p className="cc-dashboard-panel__text">Sin clientes facturados este año.</p>
+              ) : (
+                topYearClientsByInvoiced.map((client, index) => (
+                  <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                  </p>
+                ))
+              )}
+            </article>
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Top clientes cobrados</span>
+              <strong className="cc-dashboard-panel__value">{topYearClientsByCollected.length}</strong>
+              {topYearClientsByCollected.length === 0 ? (
+                <p className="cc-dashboard-panel__text">Sin cobros registrados este año.</p>
+              ) : (
+                topYearClientsByCollected.map((client, index) => (
+                  <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.paymentCount} cobro(s)
+                  </p>
+                ))
+              )}
+            </article>
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Clientes con saldo pendiente</span>
+              <strong className="cc-dashboard-panel__value">{yearOutstandingClients.length}</strong>
+              {yearOutstandingClients.length === 0 ? (
+                <p className="cc-dashboard-panel__text">No hay saldos pendientes en facturas del ejercicio.</p>
+              ) : (
+                yearOutstandingClients.map((client, index) => (
+                  <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                  </p>
+                ))
+              )}
+            </article>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Desglose de gastos por categoría</h2>
+                <p>Mix anual de gasto según las categorías actuales registradas en el CRM.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-pack-grid">
+              {yearExpenseBreakdown.length === 0 ? (
+                <div className="empty-state">
+                  <strong>Sin gastos para analizar</strong>
+                  <p>No hay gastos registrados en este ejercicio.</p>
+                </div>
+              ) : (
+                yearExpenseBreakdown.slice(0, 6).map((item) => (
+                  <article key={item.category} className="cc-quarterly-persistence__card">
+                    <span className="cc-dashboard-panel__label">{item.category}</span>
+                    <strong className="cc-dashboard-panel__value">{formatCurrency(item.amount)}</strong>
+                    <p className="cc-dashboard-panel__text">{item.count} gasto(s) en la categoría</p>
+                    <p className="cc-dashboard-panel__text">
+                      {summary.expensesTotal > 0 ? `${((item.amount / summary.expensesTotal) * 100).toFixed(1)}% del gasto anual` : 'Sin peso relativo'}
+                    </p>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Comparativa mes a mes</h2>
+                <p>Serie compacta de facturación, cobro, gasto y margen simple a lo largo del año.</p>
+              </div>
+            </div>
+
+            <div className="cc-quarterly-dossier-table">
+              <div className="cc-quarterly-dossier-table__head">
+                <span>Mes</span>
+                <span>Facturado</span>
+                <span>Cobrado</span>
+                <span>Gastos</span>
+                <span>Margen simple</span>
+                <span>Lectura</span>
+              </div>
+
+              {yearMonthComparison.map((month) => (
+                <div key={month.key} className="cc-quarterly-dossier-table__row">
+                  <span>{month.label}</span>
+                  <span>{formatCurrency(month.invoiced)}</span>
+                  <span>{formatCurrency(month.collected)}</span>
+                  <span>{formatCurrency(month.spent)}</span>
+                  <span>{formatCurrency(month.margin)}</span>
+                  <span>{month.collected >= month.invoiced ? 'Caja acompasada' : 'Cobro por detrás'}</span>
+                </div>
+              ))}
             </div>
           </section>
         </>

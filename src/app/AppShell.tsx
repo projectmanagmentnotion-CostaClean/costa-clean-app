@@ -1056,6 +1056,9 @@ export function AppShell() {
               defaultFiscalYear={currentFiscalYear}
               summaryByYear={annualClosingSummaryByYear}
               closings={annualClosings}
+              invoices={invoicesWithCodes}
+              payments={paymentsWithCodes}
+              expenses={expenses}
               error={annualClosingError}
               onNavigateToIncidence={handleAnnualClosingNavigation}
               onOpenQuarter={handleOpenQuarterFromAnnual}

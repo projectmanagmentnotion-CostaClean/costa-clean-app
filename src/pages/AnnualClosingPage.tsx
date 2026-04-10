@@ -1400,7 +1400,7 @@ export function AnnualClosingPage({
                   <article className="cc-quarterly-persistence__card">
                     <span className="cc-dashboard-panel__label">Generado</span>
                     <strong className="cc-dashboard-panel__value">{formatDateTime(aiSummaryResult.generated_at)}</strong>
-                    <p className="cc-dashboard-panel__text">Modelo: {aiSummaryResult.model}</p>
+                    <p className="cc-dashboard-panel__text">Modelo utilizado: {aiSummaryResult.model}</p>
                   </article>
                   <article className="cc-quarterly-persistence__card">
                     <span className="cc-dashboard-panel__label">Ejercicio</span>
@@ -1412,7 +1412,7 @@ export function AnnualClosingPage({
                 <section className="cc-dashboard-block">
                   <div className="cc-dashboard-block__header">
                     <div>
-                      <h2>Executive Summary</h2>
+                      <h2>Resumen ejecutivo</h2>
                     </div>
                   </div>
                   <article className="cc-quarterly-persistence__card">
@@ -1422,19 +1422,19 @@ export function AnnualClosingPage({
 
                 <section className="cc-quarterly-pack-grid">
                   <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Key Risks / Incidences</span>
+                    <span className="cc-dashboard-panel__label">Riesgos e incidencias clave</span>
                     {aiSummaryResult.summary.key_risks.length > 0 ? aiSummaryResult.summary.key_risks.map((item, index) => (
                       <p key={`risk-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
                     )) : <p className="cc-dashboard-panel__text">Sin riesgos destacados por la IA.</p>}
                   </article>
                   <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Documentation Warnings</span>
+                    <span className="cc-dashboard-panel__label">Alertas documentales</span>
                     {aiSummaryResult.summary.documentation_warnings.length > 0 ? aiSummaryResult.summary.documentation_warnings.map((item, index) => (
                       <p key={`doc-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
                     )) : <p className="cc-dashboard-panel__text">Sin alertas documentales adicionales.</p>}
                   </article>
                   <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Suggested Manager Notes</span>
+                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestoría</span>
                     {aiSummaryResult.summary.suggested_manager_notes.length > 0 ? aiSummaryResult.summary.suggested_manager_notes.map((item, index) => (
                       <p key={`note-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
                     )) : <p className="cc-dashboard-panel__text">Sin notas sugeridas adicionales.</p>}
@@ -1444,7 +1444,7 @@ export function AnnualClosingPage({
                 <section className="cc-dashboard-block">
                   <div className="cc-dashboard-block__header">
                     <div>
-                      <h2>Suggested Next Actions</h2>
+                      <h2>Siguientes acciones sugeridas</h2>
                     </div>
                   </div>
                   <article className="cc-quarterly-persistence__card cc-bounded-list">

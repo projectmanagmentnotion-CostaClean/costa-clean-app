@@ -6474,3 +6474,49 @@
     justify-content: stretch;
   }
 }
+
+@media (max-width: 640px) {
+  .cc-quarterly-closing-page .cc-dashboard-block,
+  .cc-annual-closing-page .cc-dashboard-block {
+    scroll-margin-top: 88px;
+  }
+
+  .cc-quarterly-closing-page .cc-quarterly-pack-header,
+  .cc-quarterly-closing-page .cc-quarterly-pack-grid,
+  .cc-quarterly-closing-page .cc-quarterly-persistence,
+  .cc-quarterly-closing-page .cc-export-folder-grid,
+  .cc-annual-closing-page .cc-quarterly-pack-header,
+  .cc-annual-closing-page .cc-quarterly-pack-grid,
+  .cc-annual-closing-page .cc-quarterly-persistence,
+  .cc-annual-closing-page .cc-export-folder-grid {
+    gap: 10px;
+  }
+
+  .cc-quarterly-closing-page .cc-bounded-list,
+  .cc-annual-closing-page .cc-bounded-list {
+    max-height: clamp(220px, 38vh, 320px);
+    padding-right: 0;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .cc-quarterly-closing-page .cc-quarterly-checklist.cc-bounded-list,
+  .cc-annual-closing-page .cc-quarterly-checklist.cc-bounded-list {
+    max-height: clamp(240px, 40vh, 340px);
+  }
+
+  .cc-quarterly-closing-page .cc-export-folder-list.cc-bounded-list,
+  .cc-annual-closing-page .cc-export-folder-list.cc-bounded-list {
+    max-height: clamp(210px, 34vh, 300px);
+  }
+
+  .cc-quarterly-closing-page .cc-quarterly-dossier-table.cc-bounded-list,
+  .cc-annual-closing-page .cc-quarterly-dossier-table.cc-bounded-list {
+    max-height: clamp(250px, 42vh, 360px);
+  }
+
+  .cc-quarterly-closing-page .cc-quarterly-persistence__card.cc-bounded-list,
+  .cc-annual-closing-page .cc-quarterly-persistence__card.cc-bounded-list {
+    max-height: clamp(210px, 34vh, 300px);
+  }
+}

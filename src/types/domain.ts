@@ -9,6 +9,7 @@
   | 'invoices'
   | 'payments'
   | 'quarterly_closings'
+  | 'annual_closings'
   | 'settings'
   | 'kpi_snapshots'
 

@@ -14,6 +14,11 @@ export type InvoiceModuleFilter =
       fiscalQuarter: number
       scope: 'all' | 'pending'
     }
+  | {
+      type: 'year'
+      fiscalYear: number
+      scope: 'all' | 'pending'
+    }
 
 export type QuoteModuleFilter = 'open' | 'accepted_without_job' | 'sent_older_5d'
 
@@ -34,6 +39,11 @@ export type ExpenseModuleFilter =
       fiscalQuarter: number
       scope: 'all' | 'closure' | 'missing_support' | 'pending_review' | 'risk'
     }
+  | {
+      type: 'year'
+      fiscalYear: number
+      scope: 'all' | 'closure' | 'missing_support' | 'pending_review' | 'risk'
+    }
 
 export type PaymentModuleFilter =
   | 'current_month'
@@ -41,6 +51,11 @@ export type PaymentModuleFilter =
       type: 'quarter'
       fiscalYear: number
       fiscalQuarter: number
+      scope: 'all'
+    }
+  | {
+      type: 'year'
+      fiscalYear: number
       scope: 'all'
     }
 
@@ -79,6 +94,20 @@ function matchesExpenseQuarter(expense: ExpenseListItem, fiscalYear: number, fis
   return matchesDateQuarter(expense.expense_date, fiscalYear, fiscalQuarter)
 }
 
+function matchesDateYear(dateValue: string, fiscalYear: number): boolean {
+  const date = getDateValue(dateValue)
+  if (!date) return false
+  return date.getFullYear() === fiscalYear
+}
+
+function matchesExpenseYear(expense: ExpenseListItem, fiscalYear: number): boolean {
+  if (expense.fiscal_year) {
+    return expense.fiscal_year === fiscalYear
+  }
+
+  return matchesDateYear(expense.expense_date, fiscalYear)
+}
+
 function getDateKey(dateValue: string): string | null {
   const date = getDateValue(dateValue)
   if (!date) return null
@@ -111,6 +140,10 @@ function getQuarterLabel(fiscalYear: number, fiscalQuarter: number): string {
   return `T${fiscalQuarter} ${fiscalYear}`
 }
 
+function getYearLabel(fiscalYear: number): string {
+  return `${fiscalYear}`
+}
+
 export interface ModuleFilterState {
   invoices: InvoiceModuleFilter | null
   quotes: QuoteModuleFilter | null
@@ -133,6 +166,8 @@ export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): strin
   if (filter === 'unpaid_older_7d') return 'Facturas pendientes con más de 7 días'
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Facturas de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'pending') return `Pendiente de cobro de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
+  if (filter?.type === 'year' && filter.scope === 'all') return `Facturas de ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'pending') return `Pendiente de cobro de ${getYearLabel(filter.fiscalYear)}`
   return null
 }
 
@@ -161,12 +196,18 @@ export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): strin
   if (filter?.type === 'quarter' && filter.scope === 'missing_support') return `Gastos sin justificante en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'pending_review') return `Gastos pendientes de revisión en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'risk') return `Gastos con riesgo medio/alto en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
+  if (filter?.type === 'year' && filter.scope === 'all') return `Gastos de ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'closure') return `Gastos que afectan al cierre en ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'missing_support') return `Gastos sin justificante en ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'pending_review') return `Gastos pendientes de revisión en ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'risk') return `Gastos con riesgo medio/alto en ${getYearLabel(filter.fiscalYear)}`
   return null
 }
 
 export function getPaymentFilterLabel(filter: PaymentModuleFilter | null): string | null {
   if (filter === 'current_month') return 'Cobros del mes'
   if (filter?.type === 'quarter') return `Cobros de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
+  if (filter?.type === 'year') return `Cobros de ${getYearLabel(filter.fiscalYear)}`
   return null
 }
 
@@ -194,6 +235,18 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
     }
 
     return quarterInvoices
+  }
+
+  if (filter?.type === 'year') {
+    const yearInvoices = invoices.filter((invoice) =>
+      matchesDateYear(invoice.issue_date, filter.fiscalYear),
+    )
+
+    if (filter.scope === 'pending') {
+      return yearInvoices.filter((invoice) => invoice.status !== 'paid')
+    }
+
+    return yearInvoices
   }
 
   return invoices
@@ -296,6 +349,41 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
     return quarterExpenses
   }
 
+  if (filter?.type === 'year') {
+    const yearExpenses = expenses.filter((expense) =>
+      matchesExpenseYear(expense, filter.fiscalYear),
+    )
+
+    if (filter.scope === 'closure') {
+      return yearExpenses.filter((expense) => expense.affects_annual_closure)
+    }
+
+    if (filter.scope === 'missing_support') {
+      return yearExpenses.filter(
+        (expense) =>
+          expense.affects_annual_closure &&
+          (expense.document_support_status === 'missing' ||
+            (!expense.receipt_file_path && expense.document_support_status !== 'invoice_valid')),
+      )
+    }
+
+    if (filter.scope === 'pending_review') {
+      return yearExpenses.filter(
+        (expense) => expense.affects_annual_closure && expense.fiscal_review_status === 'pending',
+      )
+    }
+
+    if (filter.scope === 'risk') {
+      return yearExpenses.filter(
+        (expense) =>
+          expense.affects_annual_closure &&
+          (expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high'),
+      )
+    }
+
+    return yearExpenses
+  }
+
   return expenses
 }
 
@@ -308,6 +396,12 @@ export function applyPaymentFilter(payments: PaymentListItem[], filter: PaymentM
   if (filter?.type === 'quarter') {
     return payments.filter((payment) =>
       matchesDateQuarter(payment.payment_date, filter.fiscalYear, filter.fiscalQuarter),
+    )
+  }
+
+  if (filter?.type === 'year') {
+    return payments.filter((payment) =>
+      matchesDateYear(payment.payment_date, filter.fiscalYear),
     )
   }
 

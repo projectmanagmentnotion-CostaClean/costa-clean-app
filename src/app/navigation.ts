@@ -1,6 +1,7 @@
 export type AppView =
   | 'dashboard'
   | 'quarterly_closing'
+  | 'annual_closing'
   | 'leads'
   | 'clients'
   | 'properties'

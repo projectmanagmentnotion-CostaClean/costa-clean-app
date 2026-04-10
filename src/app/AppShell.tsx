@@ -26,6 +26,7 @@ import { InvoicesPage } from '../pages/InvoicesPage'
 import { ExpensesPage } from '../pages/ExpensesPage'
 import { PaymentsPage } from '../pages/PaymentsPage'
 import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
+import { AnnualClosingPage } from '../pages/AnnualClosingPage'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -45,6 +46,9 @@ import {
 import { listQuarterlyClosings, saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
 import { buildQuarterlyClosingSnapshot, buildQuarterlyClosingSummary } from '../features/quarterlyClosing/quarterlyClosingSummary'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
+import { listAnnualClosings, saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
+import { buildAnnualClosingSnapshot, buildAnnualClosingSummary } from '../features/annualClosing/annualClosingSummary'
+import type { AnnualClosingIncidence, AnnualClosingRecord } from '../features/annualClosing/types'
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -172,6 +176,7 @@ function ShellLoadingState({ currentView }: { currentView: AppView }) {
   const titleByView: Record<AppView, string> = {
     dashboard: 'Preparando panel de control',
     quarterly_closing: 'Preparando cierre trimestral',
+    annual_closing: 'Preparando cierre anual',
     leads: 'Cargando leads',
     clients: 'Cargando clientes',
     properties: 'Cargando propiedades',
@@ -222,6 +227,7 @@ export function AppShell() {
   const [compactMobileNav, setCompactMobileNav] = useState(false)
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
+  const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
   const [leads, setLeads] = useState<LeadListItem[]>([])
@@ -233,6 +239,7 @@ export function AppShell() {
   const [expenses, setExpenses] = useState<ExpenseListItem[]>([])
   const [payments, setPayments] = useState<PaymentListItem[]>([])
   const [quarterlyClosings, setQuarterlyClosings] = useState<QuarterlyClosingRecord[]>([])
+  const [annualClosings, setAnnualClosings] = useState<AnnualClosingRecord[]>([])
   const [leadError, setLeadError] = useState<string | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [propertyError, setPropertyError] = useState<string | null>(null)
@@ -242,6 +249,7 @@ export function AppShell() {
   const [expenseError, setExpenseError] = useState<string | null>(null)
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
+  const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
 
   const loadLeads = useCallback(async () => {
     try {
@@ -439,6 +447,16 @@ export function AppShell() {
     }
   }, [])
 
+  const loadAnnualClosings = useCallback(async () => {
+    try {
+      setAnnualClosingError(null)
+      const data = await listAnnualClosings()
+      setAnnualClosings(data)
+    } catch (err) {
+      setAnnualClosingError(err instanceof Error ? err.message : 'Error desconocido cargando cierres anuales.')
+    }
+  }, [])
+
   const reloadInvoicesAndPayments = useCallback(async () => {
     await Promise.all([loadInvoices(), loadPayments()])
   }, [loadInvoices, loadPayments])
@@ -460,6 +478,7 @@ export function AppShell() {
       loadExpenses(),
       loadPayments(),
       loadQuarterlyClosings(),
+      loadAnnualClosings(),
     ]).finally(() => {
       if (isMounted) {
         setIsInitialDataLoading(false)
@@ -469,7 +488,7 @@ export function AppShell() {
     return () => {
       isMounted = false
     }
-  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments, loadQuarterlyClosings])
+  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments, loadQuarterlyClosings, loadAnnualClosings])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -749,6 +768,31 @@ export function AppShell() {
     return [...years].sort((left, right) => right - left)
   }, [quarterlyClosingSummaryByPeriod])
 
+  const annualClosingSummaryByYear = useMemo(() => {
+    const years = new Set<number>()
+
+    for (const periodKey of quarterlyClosingSummaryByPeriod.keys()) {
+      years.add(Number(periodKey.split('-Q')[0]))
+    }
+
+    for (const annualClosing of annualClosings) {
+      years.add(annualClosing.fiscal_year)
+    }
+
+    years.add(new Date().getFullYear())
+
+    return new Map(
+      [...years]
+        .sort((left, right) => right - left)
+        .map((fiscalYear) => [fiscalYear, buildAnnualClosingSummary(quarterlyClosingSummaryByPeriod, fiscalYear)] as const),
+    )
+  }, [annualClosings, quarterlyClosingSummaryByPeriod])
+
+  const availableAnnualClosingYears = useMemo(
+    () => [...annualClosingSummaryByYear.keys()].sort((left, right) => right - left),
+    [annualClosingSummaryByYear],
+  )
+
   const currentFiscalYear = new Date().getFullYear()
   const currentFiscalQuarter = Math.floor(new Date().getMonth() / 3) + 1
 
@@ -847,6 +891,69 @@ export function AppShell() {
     setCurrentView(view)
   }, [])
 
+  const handleAnnualClosingNavigation = useCallback((
+    view: AppView,
+    scope: AnnualClosingIncidence['scope'],
+    fiscalYear: number,
+  ) => {
+    setModuleFilters((current) => {
+      if (scope === 'invoice_year_all') {
+        return {
+          ...current,
+          invoices: { type: 'year', fiscalYear, scope: 'all' },
+        }
+      }
+
+      if (scope === 'invoice_year_pending') {
+        return {
+          ...current,
+          invoices: { type: 'year', fiscalYear, scope: 'pending' },
+        }
+      }
+
+      if (scope === 'payment_year_all') {
+        return {
+          ...current,
+          payments: { type: 'year', fiscalYear, scope: 'all' },
+        }
+      }
+
+      if (scope === 'expense_year_all') {
+        return {
+          ...current,
+          expenses: { type: 'year', fiscalYear, scope: 'all' },
+        }
+      }
+
+      if (scope === 'expense_year_closure') {
+        return {
+          ...current,
+          expenses: { type: 'year', fiscalYear, scope: 'closure' },
+        }
+      }
+
+      if (scope === 'expense_year_missing_support') {
+        return {
+          ...current,
+          expenses: { type: 'year', fiscalYear, scope: 'missing_support' },
+        }
+      }
+
+      if (scope === 'expense_year_pending_review') {
+        return {
+          ...current,
+          expenses: { type: 'year', fiscalYear, scope: 'pending_review' },
+        }
+      }
+
+      return {
+        ...current,
+        expenses: { type: 'year', fiscalYear, scope: 'risk' },
+      }
+    })
+    setCurrentView(view)
+  }, [])
+
   const handleSaveQuarterlyClosing = useCallback(async ({
     fiscalYear,
     fiscalQuarter,
@@ -872,6 +979,34 @@ export function AppShell() {
 
     await loadQuarterlyClosings()
   }, [loadQuarterlyClosings, quarterlyClosingSummaryByPeriod])
+
+  const handleSaveAnnualClosing = useCallback(async ({
+    fiscalYear,
+    notes,
+  }: {
+    fiscalYear: number
+    notes: string | null
+  }) => {
+    const summary = annualClosingSummaryByYear.get(fiscalYear)
+
+    if (!summary) {
+      throw new Error('No se pudo construir el resumen anual seleccionado.')
+    }
+
+    await saveAnnualClosing({
+      fiscalYear,
+      status: summary.readiness === 'issues' ? 'issues' : 'prepared',
+      notes,
+      snapshot: buildAnnualClosingSnapshot(summary),
+    })
+
+    await loadAnnualClosings()
+  }, [annualClosingSummaryByYear, loadAnnualClosings])
+
+  const handleOpenQuarterFromAnnual = useCallback((fiscalYear: number, fiscalQuarter: number) => {
+    setQuarterlyClosingFocus({ fiscalYear, fiscalQuarter })
+    setCurrentView('quarterly_closing')
+  }, [])
 
   const handleCreateJobFromQuote = useCallback((quote: QuoteListItem) => {
     const prefill = buildJobCreatePrefillFromQuote(quote)
@@ -915,11 +1050,22 @@ export function AppShell() {
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
             <ShellLoadingState currentView={currentView} />
+          ) : currentView === 'annual_closing' ? (
+            <AnnualClosingPage
+              availableYears={availableAnnualClosingYears}
+              defaultFiscalYear={currentFiscalYear}
+              summaryByYear={annualClosingSummaryByYear}
+              closings={annualClosings}
+              error={annualClosingError}
+              onNavigateToIncidence={handleAnnualClosingNavigation}
+              onOpenQuarter={handleOpenQuarterFromAnnual}
+              onSaveClosing={handleSaveAnnualClosing}
+            />
           ) : currentView === 'quarterly_closing' ? (
             <QuarterlyClosingPage
               availableYears={availableClosingYears}
-              defaultFiscalYear={currentFiscalYear}
-              defaultFiscalQuarter={currentFiscalQuarter}
+              defaultFiscalYear={quarterlyClosingFocus?.fiscalYear ?? currentFiscalYear}
+              defaultFiscalQuarter={quarterlyClosingFocus?.fiscalQuarter ?? currentFiscalQuarter}
               summaryByPeriod={quarterlyClosingSummaryByPeriod}
               closings={quarterlyClosings}
               invoices={invoicesWithCodes}

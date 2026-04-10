@@ -143,4 +143,18 @@ export const entitySchemas: EntitySchemaDefinition[] = [
       { key: 'updated_at', label: 'Última actualización', type: 'datetime', required: true, description: 'Última modificación del registro.' },
     ],
   },
+  {
+    entity: 'annual_closings',
+    label: 'Cierres anuales',
+    fields: [
+      { key: 'id', label: 'ID', type: 'string', required: true, description: 'Identificador único del cierre anual.' },
+      { key: 'fiscal_year', label: 'Ejercicio fiscal', type: 'number', required: true, description: 'Año fiscal del cierre anual.' },
+      { key: 'status', label: 'Estado', type: 'enum', required: true, description: 'Estado del snapshot anual guardado.' },
+      { key: 'closed_at', label: 'Fecha de cierre', type: 'datetime', required: false, description: 'Momento en el que se guardó el snapshot anual.' },
+      { key: 'notes', label: 'Notas', type: 'text', required: false, description: 'Observaciones del cierre anual.' },
+      { key: 'snapshot_json', label: 'Snapshot', type: 'text', required: false, description: 'Resumen persistido con totales, conteos y desglose trimestral del cierre anual.' },
+      { key: 'created_at', label: 'Fecha de creación', type: 'datetime', required: true, description: 'Fecha de alta del registro de cierre anual.' },
+      { key: 'updated_at', label: 'Última actualización', type: 'datetime', required: true, description: 'Última modificación del registro.' },
+    ],
+  },
 ]

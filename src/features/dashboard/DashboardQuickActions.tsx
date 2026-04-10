@@ -120,6 +120,27 @@ function ClosingIcon() {
   )
 }
 
+function AnnualClosingIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M6 4.5h12A1.5 1.5 0 0 1 19.5 6v12A1.5 1.5 0 0 1 18 19.5H6A1.5 1.5 0 0 1 4.5 18V6A1.5 1.5 0 0 1 6 4.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8 9h8M8 13h8M8 17h5M8 4.5v-2M16 4.5v-2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 const quickActions: Array<{
   title: string
   subtitle: string
@@ -157,6 +178,12 @@ const quickActions: Array<{
     subtitle: 'Preparar snapshot fiscal',
     view: 'quarterly_closing',
     Icon: ClosingIcon,
+  },
+  {
+    title: 'Cierre anual',
+    subtitle: 'Consolidar ejercicio fiscal',
+    view: 'annual_closing',
+    Icon: AnnualClosingIcon,
   },
   {
     title: 'Revisar cobros',

@@ -72,6 +72,13 @@ export const domainEntities: DomainEntityDefinition[] = [
     module: 'kpis',
   },
   {
+    key: 'annual_closings',
+    label: 'Cierres anuales',
+    description: 'Snapshots persistidos del cierre anual operativo y fiscal.',
+    phase: 'v2',
+    module: 'kpis',
+  },
+  {
     key: 'settings',
     label: 'Ajustes',
     description: 'Configuración global, datos de empresa y parámetros.',

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentPreview } from '../features/quotes/QuoteDocumentPreview'
@@ -33,6 +34,7 @@ export function QuotesPage({
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
 
   useEffect(() => {
     if (quotes.length === 0) {
@@ -107,7 +109,7 @@ export function QuotesPage({
               clients={clients}
               properties={properties}
               onQuoteUpdated={onQuoteCreated}
-              onOpenDocument={() => setShowDocumentScreen(true)}
+              onOpenDocument={() => setIsOpenDocumentConfirmVisible(true)}
               onCreateJobFromQuote={onCreateJobFromQuote}
             />
           </div>
@@ -130,6 +132,18 @@ export function QuotesPage({
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
+
+      <ConfirmDialog
+        isOpen={isOpenDocumentConfirmVisible && Boolean(selectedQuote)}
+        title="Abrir vista de presupuesto"
+        description="Se abrirá el presupuesto en una vista de documento para revisar, imprimir o guardar PDF. Continúa solo si quieres trabajar con este documento ahora."
+        confirmLabel="Abrir presupuesto"
+        onCancel={() => setIsOpenDocumentConfirmVisible(false)}
+        onConfirm={() => {
+          setIsOpenDocumentConfirmVisible(false)
+          setShowDocumentScreen(true)
+        }}
+      />
     </>
   )
 }

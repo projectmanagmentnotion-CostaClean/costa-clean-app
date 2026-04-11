@@ -1,4 +1,5 @@
 ﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { updateExpense, updateExpenseAttachment } from './expenseApi'
 import {
   createExpenseReceiptSignedUrl,
@@ -93,6 +94,8 @@ export function ExpenseDetailCard({
   const [isDeletingReceipt, setIsDeletingReceipt] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingReceiptAction, setPendingReceiptAction] = useState<'open' | 'delete' | null>(null)
+  const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     expense_date: '',
     supplier_name: '',
@@ -191,10 +194,13 @@ export function ExpenseDetailCard({
     setSaveError(null)
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
+  async function saveExpenseEdits(confirmedCancelledStatus = false) {
     if (!expense) return
+
+    if (form.payment_status === 'cancelled' && expense.payment_status !== 'cancelled' && !confirmedCancelledStatus) {
+      setPendingCancelledFormSave(true)
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -262,6 +268,11 @@ export function ExpenseDetailCard({
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await saveExpenseEdits()
+  }
+
   async function handleReceiptSelected(event: React.ChangeEvent<HTMLInputElement>) {
     if (!expense) return
 
@@ -311,8 +322,15 @@ export function ExpenseDetailCard({
   async function handleOpenReceipt() {
     if (!expense?.receipt_file_path) return
 
+    setPendingReceiptAction('open')
+  }
+
+  async function openReceiptAfterConfirmation() {
+    if (!expense?.receipt_file_path) return
+
     setSaveError(null)
     setSuccessMessage(null)
+    setPendingReceiptAction(null)
 
     try {
       const signedUrl = await createExpenseReceiptSignedUrl(expense.receipt_file_path)
@@ -327,8 +345,15 @@ export function ExpenseDetailCard({
   async function handleDeleteReceipt() {
     if (!expense?.receipt_file_path) return
 
+    setPendingReceiptAction('delete')
+  }
+
+  async function deleteReceiptAfterConfirmation() {
+    if (!expense?.receipt_file_path) return
+
     setSaveError(null)
     setSuccessMessage(null)
+    setPendingReceiptAction(null)
     setIsDeletingReceipt(true)
 
     try {
@@ -788,6 +813,40 @@ export function ExpenseDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={pendingReceiptAction === 'open'}
+        title="Abrir documento del gasto"
+        description="El soporte del gasto se abrirá en una nueva pestaña o ventana mediante un enlace temporal seguro. Continúa solo si quieres revisar este documento ahora."
+        confirmLabel="Abrir documento"
+        onCancel={() => setPendingReceiptAction(null)}
+        onConfirm={() => void openReceiptAfterConfirmation()}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingReceiptAction === 'delete'}
+        title="Eliminar documento adjunto"
+        description="Se eliminará el soporte documental vinculado a este gasto. Esta acción puede afectar la revisión fiscal si no subes un nuevo documento."
+        confirmLabel="Eliminar documento"
+        tone="warning"
+        isBusy={isDeletingReceipt}
+        onCancel={() => setPendingReceiptAction(null)}
+        onConfirm={() => void deleteReceiptAfterConfirmation()}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingCancelledFormSave}
+        title="Guardar gasto como cancelado"
+        description="Vas a guardar la edición dejando el gasto en estado cancelado. Confirma solo si este gasto no debe contar como pagado o pendiente."
+        confirmLabel="Guardar como cancelado"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingCancelledFormSave(false)}
+        onConfirm={() => {
+          setPendingCancelledFormSave(false)
+          void saveExpenseEdits(true)
+        }}
+      />
     </section>
   )
 }

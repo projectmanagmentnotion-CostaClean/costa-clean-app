@@ -1,7 +1,8 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
+import type { SyncStatus } from './syncStatus'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -52,8 +53,45 @@ import { buildAnnualClosingSnapshot, buildAnnualClosingSummary } from '../featur
 import type { AnnualClosingIncidence, AnnualClosingRecord } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { getSupabaseClient } from '../lib/supabase'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
+const foregroundRefreshStaleTimeMs = 30_000
+const realtimeRefreshDelayMs = 900
+
+type RefreshScope = 'all' | 'billing' | 'operations' | 'closings'
+
+const realtimeTables = [
+  'leads',
+  'clients',
+  'properties',
+  'quotes',
+  'quote_lines',
+  'jobs',
+  'invoices',
+  'invoice_lines',
+  'payments',
+  'expenses',
+  'quarterly_closings',
+  'annual_closings',
+] as const
+
+function isBrowserOnline(): boolean {
+  return typeof navigator === 'undefined' ? true : navigator.onLine
+}
+
+function combineRefreshScopes(left: RefreshScope | null, right: RefreshScope): RefreshScope {
+  if (!left || left === right) return right
+  if (left === 'all' || right === 'all') return 'all'
+  return 'all'
+}
+
+function getRefreshScopeForTable(table: string): RefreshScope {
+  if (table === 'quarterly_closings' || table === 'annual_closings') return 'closings'
+  if (table === 'leads' || table === 'clients' || table === 'properties') return 'operations'
+  if (table === 'expenses') return 'all'
+  return 'billing'
+}
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -232,6 +270,7 @@ export function AppShell() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
@@ -268,6 +307,10 @@ export function AppShell() {
       return []
     }
   })
+  const lastRefreshAtRef = useRef(0)
+  const isRefreshingRef = useRef(false)
+  const pendingRealtimeRefreshRef = useRef<number | null>(null)
+  const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
 
   const loadLeads = useCallback(async () => {
     try {
@@ -475,29 +518,80 @@ export function AppShell() {
     }
   }, [])
 
+  const runRefresh = useCallback(async (loaders: Array<() => Promise<void>>) => {
+    if (!isBrowserOnline()) {
+      setSyncStatus('offline')
+      return
+    }
+
+    if (isRefreshingRef.current) {
+      return
+    }
+
+    isRefreshingRef.current = true
+    setSyncStatus('syncing')
+
+    try {
+      await Promise.all(loaders.map((loader) => loader()))
+      lastRefreshAtRef.current = Date.now()
+      setSyncStatus('fresh')
+    } finally {
+      isRefreshingRef.current = false
+    }
+  }, [])
+
+  const refreshAll = useCallback(async () => {
+    await runRefresh([
+      loadLeads,
+      loadClients,
+      loadProperties,
+      loadQuotes,
+      loadJobs,
+      loadInvoices,
+      loadExpenses,
+      loadPayments,
+      loadQuarterlyClosings,
+      loadAnnualClosings,
+    ])
+  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, runRefresh])
+
+  const refreshBilling = useCallback(async () => {
+    await runRefresh([
+      loadQuotes,
+      loadJobs,
+      loadInvoices,
+      loadPayments,
+      loadExpenses,
+    ])
+  }, [loadExpenses, loadInvoices, loadJobs, loadPayments, loadQuotes, runRefresh])
+
+  const refreshOperations = useCallback(async () => {
+    await runRefresh([
+      loadLeads,
+      loadClients,
+      loadProperties,
+      loadQuotes,
+      loadJobs,
+      loadInvoices,
+    ])
+  }, [loadClients, loadInvoices, loadJobs, loadLeads, loadProperties, loadQuotes, runRefresh])
+
+  const refreshClosings = useCallback(async () => {
+    await runRefresh([loadQuarterlyClosings, loadAnnualClosings])
+  }, [loadAnnualClosings, loadQuarterlyClosings, runRefresh])
+
   const reloadInvoicesAndPayments = useCallback(async () => {
-    await Promise.all([loadInvoices(), loadPayments()])
-  }, [loadInvoices, loadPayments])
+    await refreshBilling()
+  }, [refreshBilling])
 
   const reloadLeadsAndClients = useCallback(async () => {
-    await Promise.all([loadLeads(), loadClients()])
-  }, [loadLeads, loadClients])
+    await refreshOperations()
+  }, [refreshOperations])
 
   useEffect(() => {
     let isMounted = true
 
-    void Promise.all([
-      loadLeads(),
-      loadClients(),
-      loadProperties(),
-      loadQuotes(),
-      loadJobs(),
-      loadInvoices(),
-      loadExpenses(),
-      loadPayments(),
-      loadQuarterlyClosings(),
-      loadAnnualClosings(),
-    ]).finally(() => {
+    void refreshAll().finally(() => {
       if (isMounted) {
         setIsInitialDataLoading(false)
       }
@@ -506,7 +600,115 @@ export function AppShell() {
     return () => {
       isMounted = false
     }
-  }, [loadLeads, loadClients, loadProperties, loadQuotes, loadJobs, loadInvoices, loadExpenses, loadPayments, loadQuarterlyClosings, loadAnnualClosings])
+  }, [refreshAll])
+
+  const requestForegroundRefresh = useCallback(() => {
+    if (!isBrowserOnline()) {
+      setSyncStatus('offline')
+      return
+    }
+
+    if (Date.now() - lastRefreshAtRef.current < foregroundRefreshStaleTimeMs) {
+      return
+    }
+
+    void refreshAll()
+  }, [refreshAll])
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        requestForegroundRefresh()
+      }
+    }
+
+    const handleOnline = () => {
+      void refreshAll()
+    }
+
+    const handleOffline = () => {
+      setSyncStatus('offline')
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pageshow', requestForegroundRefresh)
+    window.addEventListener('focus', requestForegroundRefresh)
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pageshow', requestForegroundRefresh)
+      window.removeEventListener('focus', requestForegroundRefresh)
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [refreshAll, requestForegroundRefresh])
+
+  const runScopedRefresh = useCallback((scope: RefreshScope) => {
+    if (scope === 'billing') {
+      void refreshBilling()
+      return
+    }
+
+    if (scope === 'operations') {
+      void refreshOperations()
+      return
+    }
+
+    if (scope === 'closings') {
+      void refreshClosings()
+      return
+    }
+
+    void refreshAll()
+  }, [refreshAll, refreshBilling, refreshClosings, refreshOperations])
+
+  const scheduleRealtimeRefresh = useCallback((scope: RefreshScope) => {
+    if (!isBrowserOnline()) {
+      setSyncStatus('offline')
+      return
+    }
+
+    pendingRealtimeScopeRef.current = combineRefreshScopes(pendingRealtimeScopeRef.current, scope)
+    setSyncStatus('changed')
+
+    if (pendingRealtimeRefreshRef.current !== null) {
+      window.clearTimeout(pendingRealtimeRefreshRef.current)
+    }
+
+    pendingRealtimeRefreshRef.current = window.setTimeout(() => {
+      const scopeToRefresh = pendingRealtimeScopeRef.current ?? 'all'
+      pendingRealtimeRefreshRef.current = null
+      pendingRealtimeScopeRef.current = null
+      runScopedRefresh(scopeToRefresh)
+    }, realtimeRefreshDelayMs)
+  }, [runScopedRefresh])
+
+  useEffect(() => {
+    const { client } = getSupabaseClient()
+    if (!client) return
+
+    const channel = client.channel('costaclean-app-sync')
+
+    for (const table of realtimeTables) {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
+        scheduleRealtimeRefresh(getRefreshScopeForTable(payload.table ?? table))
+      })
+    }
+
+    void channel.subscribe()
+
+    return () => {
+      if (pendingRealtimeRefreshRef.current !== null) {
+        window.clearTimeout(pendingRealtimeRefreshRef.current)
+        pendingRealtimeRefreshRef.current = null
+        pendingRealtimeScopeRef.current = null
+      }
+
+      void client.removeChannel(channel)
+    }
+  }, [scheduleRealtimeRefresh])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1048,8 +1250,8 @@ export function AppShell() {
       snapshot: buildQuarterlyClosingSnapshot(summary),
     })
 
-    await loadQuarterlyClosings()
-  }, [loadQuarterlyClosings, quarterlyClosingSummaryByPeriod])
+    await refreshClosings()
+  }, [quarterlyClosingSummaryByPeriod, refreshClosings])
 
   const handleSaveAnnualClosing = useCallback(async ({
     fiscalYear,
@@ -1071,8 +1273,8 @@ export function AppShell() {
       snapshot: buildAnnualClosingSnapshot(summary),
     })
 
-    await loadAnnualClosings()
-  }, [annualClosingSummaryByYear, loadAnnualClosings])
+    await refreshClosings()
+  }, [annualClosingSummaryByYear, refreshClosings])
 
   const handleOpenQuarterFromAnnual = useCallback((fiscalYear: number, fiscalQuarter: number) => {
     setQuarterlyClosingFocus({ fiscalYear, fiscalQuarter })
@@ -1117,6 +1319,11 @@ export function AppShell() {
           currentView={currentView}
           onChangeView={setCurrentView}
           compactMobile={compactMobileNav}
+          syncStatus={syncStatus}
+          alerts={automationAlerts}
+          reviewedAlertIds={reviewedAlertIds}
+          onOpenAlert={handleOpenAutomationAlert}
+          onOpenAlertsCenter={() => setCurrentView('alerts')}
         />
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
@@ -1166,18 +1373,18 @@ export function AppShell() {
               onOpenAlert={handleOpenAutomationAlert}
             />
           ) : currentView === 'leads' ? (
-            <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={loadLeads} onLeadConverted={reloadLeadsAndClients} />
+            <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
           ) : currentView === 'clients' ? (
-            <ClientsPage clients={clients} error={clientError} onClientCreated={loadClients} />
+            <ClientsPage clients={clients} error={clientError} onClientCreated={refreshOperations} />
           ) : currentView === 'properties' ? (
-            <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={loadProperties} />
+            <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={refreshOperations} />
           ) : currentView === 'quotes' ? (
             <QuotesPage
               quotes={filteredQuotes}
               clients={clients}
               properties={properties}
               error={quoteError}
-              onQuoteCreated={loadQuotes}
+              onQuoteCreated={refreshBilling}
               onCreateJobFromQuote={handleCreateJobFromQuote}
               activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
               onClearFilter={() => clearModuleFilter('quotes')}
@@ -1189,7 +1396,7 @@ export function AppShell() {
               properties={properties}
               quotes={quotes}
               error={jobError}
-              onJobCreated={loadJobs}
+              onJobCreated={refreshOperations}
               onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
               createPrefill={jobCreatePrefill}
               onPrefillConsumed={() => setJobCreatePrefill(null)}
@@ -1202,7 +1409,7 @@ export function AppShell() {
               jobs={jobsWithCodes}
               quotes={quotesWithCodes}
               error={invoiceError}
-              onInvoiceCreated={loadInvoices}
+              onInvoiceCreated={refreshBilling}
               createPrefill={invoiceCreatePrefill}
               onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
               activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
@@ -1212,7 +1419,7 @@ export function AppShell() {
             <ExpensesPage
               expenses={filteredExpenses}
               error={expenseError}
-              onExpenseCreated={loadExpenses}
+              onExpenseCreated={refreshBilling}
               activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
               onClearFilter={() => clearModuleFilter('expenses')}
             />
@@ -1239,8 +1446,3 @@ export function AppShell() {
     </main>
   )
 }
-
-
-
-
-

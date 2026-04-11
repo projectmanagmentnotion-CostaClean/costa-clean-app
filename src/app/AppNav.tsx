@@ -1,16 +1,23 @@
 import type { ReactElement } from 'react'
 import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
+import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
+import { AlertsBell } from './AlertsBell'
+import type { AutomationAlertItem } from '../features/automation/types'
 
 interface AppNavProps {
   currentView: AppView
   onChangeView: (view: AppView) => void
   compactMobile?: boolean
+  syncStatus?: SyncStatus
+  alerts?: AutomationAlertItem[]
+  reviewedAlertIds?: string[]
+  onOpenAlert?: (alert: AutomationAlertItem) => void
+  onOpenAlertsCenter?: () => void
 }
 
 const allViews: AppView[] = [
   'dashboard',
-  'alerts',
   'quarterly_closing',
   'annual_closing',
   'leads',
@@ -276,7 +283,16 @@ const viewIcon: Record<AppView, () => ReactElement> = {
   payments: PaymentsIcon,
 }
 
-export function AppNav({ currentView, onChangeView, compactMobile = false }: AppNavProps) {
+export function AppNav({
+  currentView,
+  onChangeView,
+  compactMobile = false,
+  syncStatus = 'fresh',
+  alerts = [],
+  reviewedAlertIds = [],
+  onOpenAlert,
+  onOpenAlertsCenter,
+}: AppNavProps) {
   const currentViewLabel = currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)
 
   return (
@@ -306,6 +322,24 @@ export function AppNav({ currentView, onChangeView, compactMobile = false }: App
           </div>
 
           <div className="cc-shell-nav__actions">
+            <div
+              className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
+              <span>{getSyncStatusLabel(syncStatus)}</span>
+            </div>
+
+            {onOpenAlert && onOpenAlertsCenter ? (
+              <AlertsBell
+                alerts={alerts}
+                reviewedAlertIds={reviewedAlertIds}
+                onOpenAlert={onOpenAlert}
+                onOpenAlertsCenter={onOpenAlertsCenter}
+              />
+            ) : null}
+
             {currentView !== 'dashboard' ? (
               <button
                 type="button"

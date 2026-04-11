@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
@@ -36,6 +37,7 @@ export function InvoicesPage({
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
   const [activeCreatePrefill, setActiveCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
 
   useEffect(() => {
@@ -133,7 +135,7 @@ export function InvoicesPage({
               jobs={jobs}
               quotes={quotes}
               onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => setShowDocumentScreen(true)}
+              onOpenDocument={() => setIsOpenDocumentConfirmVisible(true)}
             />
           </div>
         </div>
@@ -149,6 +151,18 @@ export function InvoicesPage({
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
+
+      <ConfirmDialog
+        isOpen={isOpenDocumentConfirmVisible && Boolean(selectedInvoice)}
+        title="Abrir vista de factura"
+        description="Se abrirá la factura en una vista de documento para revisar, imprimir o guardar PDF. Continúa solo si quieres trabajar con este documento ahora."
+        confirmLabel="Abrir factura"
+        onCancel={() => setIsOpenDocumentConfirmVisible(false)}
+        onConfirm={() => {
+          setIsOpenDocumentConfirmVisible(false)
+          setShowDocumentScreen(true)
+        }}
+      />
     </>
   )
 }

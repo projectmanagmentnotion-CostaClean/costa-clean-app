@@ -3,6 +3,7 @@ import { businessRules } from '../../app/businessRules'
 import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -233,6 +234,8 @@ export function InvoiceDetailCard({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingPaidStatusUpdate, setPendingPaidStatusUpdate] = useState<string | null>(null)
+  const [pendingPaidFormSave, setPendingPaidFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -389,10 +392,30 @@ export function InvoiceDetailCard({
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function requestInvoiceStatusUpdate(nextStatus: string) {
+    if (invoice?.status !== 'paid' && nextStatus === 'paid') {
+      setPendingPaidStatusUpdate(nextStatus)
+      return
+    }
 
+    void updateInvoiceStatus(nextStatus)
+  }
+
+  function handleConfirmPaidStatusUpdate() {
+    if (!pendingPaidStatusUpdate) return
+
+    const nextStatus = pendingPaidStatusUpdate
+    setPendingPaidStatusUpdate(null)
+    void updateInvoiceStatus(nextStatus)
+  }
+
+  async function saveInvoiceEdits(confirmedPaidStatus = false) {
     if (!invoice) return
+
+    if (form.status === 'paid' && invoice.status !== 'paid' && !confirmedPaidStatus) {
+      setPendingPaidFormSave(true)
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -501,6 +524,11 @@ export function InvoiceDetailCard({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await saveInvoiceEdits()
   }
 
   return (
@@ -715,7 +743,7 @@ export function InvoiceDetailCard({
                     key={status}
                     type="button"
                     className={status === invoice.status ? 'primary-button' : 'secondary-button'}
-                    onClick={() => void updateInvoiceStatus(status)}
+                    onClick={() => requestInvoiceStatusUpdate(status)}
                     disabled={isSaving || status === invoice.status}
                   >
                     {getStatusOptionLabel(status)}
@@ -790,6 +818,31 @@ export function InvoiceDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingPaidStatusUpdate)}
+        title="Marcar factura como pagada"
+        description="Esta acción cambia el estado contable visible de la factura a pagada. Confirma solo si el cobro ya está registrado o verificado."
+        confirmLabel="Sí, marcar pagada"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingPaidStatusUpdate(null)}
+        onConfirm={handleConfirmPaidStatusUpdate}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingPaidFormSave}
+        title="Guardar factura como pagada"
+        description="Vas a guardar la edición dejando la factura en estado pagada. Confirma solo si el cobro ya está registrado o verificado."
+        confirmLabel="Guardar como pagada"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingPaidFormSave(false)}
+        onConfirm={() => {
+          setPendingPaidFormSave(false)
+          void saveInvoiceEdits(true)
+        }}
+      />
     </section>
   )
 }

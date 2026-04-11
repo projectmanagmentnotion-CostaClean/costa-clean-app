@@ -2,6 +2,7 @@
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -76,6 +77,8 @@ export function JobDetailCard({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingCancelledStatusUpdate, setPendingCancelledStatusUpdate] = useState<string | null>(null)
+  const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     property_id: '',
@@ -168,9 +171,13 @@ export function JobDetailCard({
     })
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function saveJobEdits(confirmedCancelledStatus = false) {
     if (!job) return
+
+    if (form.status === 'cancelled' && job.status !== 'cancelled' && !confirmedCancelledStatus) {
+      setPendingCancelledFormSave(true)
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -258,6 +265,11 @@ export function JobDetailCard({
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await saveJobEdits()
+  }
+
   async function updateJobStatus(nextStatus: string) {
     if (!job || job.status === nextStatus) return
 
@@ -303,6 +315,23 @@ export function JobDetailCard({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  function requestJobStatusUpdate(nextStatus: string) {
+    if (job?.status !== 'cancelled' && nextStatus === 'cancelled') {
+      setPendingCancelledStatusUpdate(nextStatus)
+      return
+    }
+
+    void updateJobStatus(nextStatus)
+  }
+
+  function handleConfirmCancelledStatusUpdate() {
+    if (!pendingCancelledStatusUpdate) return
+
+    const nextStatus = pendingCancelledStatusUpdate
+    setPendingCancelledStatusUpdate(null)
+    void updateJobStatus(nextStatus)
   }
 
   return (
@@ -520,7 +549,7 @@ export function JobDetailCard({
                     key={status}
                     type="button"
                     className={status === job.status ? 'primary-button' : 'secondary-button'}
-                    onClick={() => void updateJobStatus(status)}
+                    onClick={() => requestJobStatusUpdate(status)}
                     disabled={isSaving || status === job.status}
                   >
                     {getStatusOptionLabel(status)}
@@ -605,7 +634,31 @@ export function JobDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingCancelledStatusUpdate)}
+        title="Cancelar servicio"
+        description="Esta acción marca el servicio como cancelado y lo aparta del seguimiento operativo activo. Confirma solo si el servicio no debe ejecutarse."
+        confirmLabel="Sí, cancelar servicio"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingCancelledStatusUpdate(null)}
+        onConfirm={handleConfirmCancelledStatusUpdate}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingCancelledFormSave}
+        title="Guardar servicio como cancelado"
+        description="Vas a guardar la edición dejando el servicio en estado cancelado. Confirma solo si el servicio no debe ejecutarse."
+        confirmLabel="Guardar como cancelado"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingCancelledFormSave(false)}
+        onConfirm={() => {
+          setPendingCancelledFormSave(false)
+          void saveJobEdits(true)
+        }}
+      />
     </section>
   )
 }
-

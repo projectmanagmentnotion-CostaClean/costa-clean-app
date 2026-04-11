@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
@@ -142,6 +143,8 @@ export function QuarterlyClosingPage({
   const [workspace, setWorkspace] = useState<QuarterlyClosingWorkspace>('operations')
   const [documentActionError, setDocumentActionError] = useState<string | null>(null)
   const [openingExpenseId, setOpeningExpenseId] = useState<string | null>(null)
+  const [pendingInvoicePdf, setPendingInvoicePdf] = useState<InvoiceListItem | null>(null)
+  const [pendingExpenseDocument, setPendingExpenseDocument] = useState<ExpenseListItem | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [exportResult, setExportResult] = useState<ManagerExportPackageResult | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
@@ -368,6 +371,21 @@ export function QuarterlyClosingPage({
     } finally {
       setOpeningExpenseId(null)
     }
+  }
+
+  function handleConfirmInvoicePdf() {
+    if (!pendingInvoicePdf) return
+
+    openInvoicePrintWindow(pendingInvoicePdf, 'pdf')
+    setPendingInvoicePdf(null)
+  }
+
+  function handleConfirmExpenseDocument() {
+    if (!pendingExpenseDocument) return
+
+    const expense = pendingExpenseDocument
+    setPendingExpenseDocument(null)
+    void handleOpenExpenseDocument(expense)
   }
 
   async function handleDownloadExportPackage() {
@@ -940,7 +958,7 @@ export function QuarterlyClosingPage({
                       <button
                         type="button"
                         className="secondary-button"
-                        onClick={() => openInvoicePrintWindow(invoice, 'pdf')}
+                        onClick={() => setPendingInvoicePdf(invoice)}
                       >
                         PDF
                       </button>
@@ -1041,7 +1059,7 @@ export function QuarterlyClosingPage({
                         <button
                           type="button"
                           className="secondary-button"
-                          onClick={() => handleOpenExpenseDocument(expense)}
+                          onClick={() => setPendingExpenseDocument(expense)}
                           disabled={openingExpenseId === expense.id}
                         >
                           {openingExpenseId === expense.id ? 'Abriendo...' : 'Ver soporte'}
@@ -1238,7 +1256,7 @@ export function QuarterlyClosingPage({
                     <span>{formatCurrency(invoice.total)}</span>
                     <span>{getDisplayStatusLabel(invoice.status)}</span>
                     <div className="cc-quarterly-dossier-table__actions">
-                      <button type="button" className="secondary-button" onClick={() => openInvoicePrintWindow(invoice, 'pdf')}>
+                      <button type="button" className="secondary-button" onClick={() => setPendingInvoicePdf(invoice)}>
                         PDF
                       </button>
                       <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('invoices', 'invoice_quarter_all', selectedYear, selectedQuarter)}>
@@ -1332,7 +1350,7 @@ export function QuarterlyClosingPage({
                         <button
                           type="button"
                           className="secondary-button"
-                          onClick={() => handleOpenExpenseDocument(expense)}
+                          onClick={() => setPendingExpenseDocument(expense)}
                           disabled={openingExpenseId === expense.id}
                         >
                           {openingExpenseId === expense.id ? 'Abriendo...' : 'Ver soporte'}
@@ -1601,6 +1619,24 @@ export function QuarterlyClosingPage({
           </section>
         </>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingInvoicePdf)}
+        title="Abrir PDF de factura"
+        description="El navegador abrirá una nueva ventana o pestaña para preparar el PDF de esta factura del cierre. Continúa solo si quieres generar el documento ahora."
+        confirmLabel="Abrir PDF"
+        onCancel={() => setPendingInvoicePdf(null)}
+        onConfirm={handleConfirmInvoicePdf}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingExpenseDocument)}
+        title="Abrir soporte del gasto"
+        description="El soporte documental del gasto se abrirá en una nueva pestaña o ventana mediante un enlace temporal seguro."
+        confirmLabel="Abrir soporte"
+        onCancel={() => setPendingExpenseDocument(null)}
+        onConfirm={handleConfirmExpenseDocument}
+      />
     </section>
   )
 }

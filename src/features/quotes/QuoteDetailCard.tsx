@@ -6,6 +6,7 @@ import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { formatCurrency } from '../../app/displayFormat'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
@@ -109,6 +110,8 @@ function QuoteDetailCardContent({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingRejectedStatusUpdate, setPendingRejectedStatusUpdate] = useState<string | null>(null)
+  const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     property_id: '',
@@ -258,8 +261,28 @@ function QuoteDetailCardContent({
     }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  function requestQuoteStatusUpdate(nextStatus: string) {
+    if (hydratedQuote.status !== 'rejected' && nextStatus === 'rejected') {
+      setPendingRejectedStatusUpdate(nextStatus)
+      return
+    }
+
+    void updateQuoteStatus(nextStatus)
+  }
+
+  function handleConfirmRejectedStatusUpdate() {
+    if (!pendingRejectedStatusUpdate) return
+
+    const nextStatus = pendingRejectedStatusUpdate
+    setPendingRejectedStatusUpdate(null)
+    void updateQuoteStatus(nextStatus)
+  }
+
+  async function saveQuoteEdits(confirmedRejectedStatus = false) {
+    if (form.status === 'rejected' && hydratedQuote.status !== 'rejected' && !confirmedRejectedStatus) {
+      setPendingRejectedFormSave(true)
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)
@@ -357,6 +380,11 @@ function QuoteDetailCardContent({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await saveQuoteEdits()
   }
 
   const clientLabel = buildClientLabel(hydratedQuote, clients)
@@ -592,7 +620,7 @@ function QuoteDetailCardContent({
                   key={status}
                   type="button"
                   className={status === hydratedQuote.status ? 'primary-button' : 'secondary-button'}
-                  onClick={() => void updateQuoteStatus(status)}
+                  onClick={() => requestQuoteStatusUpdate(status)}
                   disabled={isSaving || status === hydratedQuote.status || isLoadingLines || Boolean(linesError)}
                 >
                   {getStatusOptionLabel(status)}
@@ -675,6 +703,31 @@ function QuoteDetailCardContent({
           </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingRejectedStatusUpdate)}
+        title="Rechazar presupuesto"
+        description="Esta acción marca el presupuesto como rechazado y cambia su seguimiento comercial. Confirma solo si ya no debe tratarse como oportunidad activa."
+        confirmLabel="Sí, rechazar"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingRejectedStatusUpdate(null)}
+        onConfirm={handleConfirmRejectedStatusUpdate}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingRejectedFormSave}
+        title="Guardar presupuesto como rechazado"
+        description="Vas a guardar la edición dejando el presupuesto en estado rechazado. Confirma solo si ya no debe tratarse como oportunidad activa."
+        confirmLabel="Guardar como rechazado"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingRejectedFormSave(false)}
+        onConfirm={() => {
+          setPendingRejectedFormSave(false)
+          void saveQuoteEdits(true)
+        }}
+      />
     </section>
   )
 }

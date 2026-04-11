@@ -103,7 +103,7 @@ export function ListToolbar({
 
       <div className="cc-list-toolbar__controls" aria-label="Ordenación y filtros de lista">
         <label className="cc-list-toolbar__field">
-          <span>Ordenar por</span>
+          <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">↕</span> Ordenar por</span>
           <select
             value={preferences.sortField}
             onChange={(event) => updatePreferences((current) => ({ ...current, sortField: event.target.value }))}
@@ -115,7 +115,7 @@ export function ListToolbar({
         </label>
 
         <label className="cc-list-toolbar__field">
-          <span>Dirección</span>
+          <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⇅</span> Dirección</span>
           <select
             value={preferences.sortDirection}
             onChange={(event) => updatePreferences((current) => ({
@@ -130,7 +130,7 @@ export function ListToolbar({
 
         {filters.map((filter) => (
           <label key={filter.key} className="cc-list-toolbar__field">
-            <span>{filter.label}</span>
+            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⌁</span> {filter.label}</span>
             <select
               value={preferences.filters[filter.key] ?? 'all'}
               onChange={(event) => updatePreferences((current) => ({
@@ -154,6 +154,7 @@ export function ListToolbar({
           onClick={() => setPreferences(defaultPreferences)}
           disabled={!hasActiveControls}
         >
+          <span aria-hidden="true">×</span>
           Limpiar filtros
         </button>
       </div>

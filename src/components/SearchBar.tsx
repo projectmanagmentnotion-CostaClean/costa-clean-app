@@ -25,6 +25,17 @@ export function SearchBar({
       <label className="cc-searchbar__label">{label}</label>
 
       <div className="cc-searchbar__control">
+        <span className="cc-searchbar__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="17" height="17">
+            <path
+              d="m19 19-4.2-4.2M16.5 10.8a5.7 5.7 0 1 1-11.4 0 5.7 5.7 0 0 1 11.4 0Z"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeWidth="1.9"
+            />
+          </svg>
+        </span>
         <input
           className="cc-searchbar__input"
           type="search"

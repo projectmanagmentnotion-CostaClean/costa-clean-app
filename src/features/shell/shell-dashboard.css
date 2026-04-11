@@ -7514,6 +7514,212 @@
   color: var(--warning);
 }
 
+/* Sprint 5.2: final light-only coherence layer for late dark-inherited surfaces. */
+:root[data-theme="light"] .cc-dashboard-header__meta-card,
+:root[data-theme="light"] .cc-dashboard-exec__intro,
+:root[data-theme="light"] .cc-dashboard-exec__summary,
+:root[data-theme="light"] .cc-agenda-card,
+:root[data-theme="light"] .cc-agenda-item,
+:root[data-theme="light"] .cc-quick-action,
+:root[data-theme="light"] .cc-quick-action--dashboard,
+:root[data-theme="light"] .cc-quick-action--launcher,
+:root[data-theme="light"] .cc-module-filter-bar,
+:root[data-theme="light"] .cc-module-list-section,
+:root[data-theme="light"] .cc-master-layout__detail,
+:root[data-theme="light"] .cc-master-layout__list,
+:root[data-theme="light"] .lead-item,
+:root[data-theme="light"] .cc-expense-item,
+:root[data-theme="light"] .cc-expenses-layout__detail,
+:root[data-theme="light"] .lead-detail-card,
+:root[data-theme="light"] .cc-expense-detail-card,
+:root[data-theme="light"] .cc-expense-detail__section,
+:root[data-theme="light"] .cc-expense-detail__total-card,
+:root[data-theme="light"] .cc-expense-detail__info-card,
+:root[data-theme="light"] .cc-expense-detail__note-card,
+:root[data-theme="light"] .cc-quarterly-closing-filters,
+:root[data-theme="light"] .cc-annual-closing-filters,
+:root[data-theme="light"] .cc-quarterly-checklist__item,
+:root[data-theme="light"] .cc-quarterly-persistence__card,
+:root[data-theme="light"] .cc-quarterly-pack-header,
+:root[data-theme="light"] .cc-quarterly-dossier-table,
+:root[data-theme="light"] .cc-annual-breakdown-card,
+:root[data-theme="light"] .cc-shell-loading__hero,
+:root[data-theme="light"] .cc-shell-loading__card {
+  border-color: var(--cc-color-border);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(247, 252, 255, 0.95));
+  color: var(--text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 14px 30px rgba(17, 73, 103, 0.09);
+}
+
+:root[data-theme="light"] .cc-home-hero,
+:root[data-theme="light"] .cc-dashboard-overview__hero,
+:root[data-theme="light"] .cc-master-page__hero,
+:root[data-theme="light"] .cc-expenses-hero,
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero,
+:root[data-theme="light"] .lead-detail-header,
+:root[data-theme="light"] .cc-expense-detail__hero {
+  border-color: rgba(11, 131, 180, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.13), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(239, 248, 252, 0.96));
+  color: var(--text);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 18px 38px rgba(17, 73, 103, 0.12);
+}
+
+:root[data-theme="light"] .cc-home-hero__bg,
+:root[data-theme="light"] .cc-home-hero__glow {
+  opacity: 0.52;
+}
+
+:root[data-theme="light"] .cc-dashboard-header__meta-value,
+:root[data-theme="light"] .cc-agenda-card__header h3,
+:root[data-theme="light"] .cc-agenda-item__title-group strong,
+:root[data-theme="light"] .cc-quick-action__title,
+:root[data-theme="light"] .cc-quick-action--dashboard .cc-quick-action__title,
+:root[data-theme="light"] .cc-module-filter-bar__label,
+:root[data-theme="light"] .cc-list-section__header h2,
+:root[data-theme="light"] .lead-detail-header h3,
+:root[data-theme="light"] .detail-row strong,
+:root[data-theme="light"] .cc-expense-detail__title,
+:root[data-theme="light"] .cc-expense-detail__section-head h3,
+:root[data-theme="light"] .cc-expense-detail__total-value,
+:root[data-theme="light"] .cc-expense-detail__info-value,
+:root[data-theme="light"] .cc-quarterly-checklist__copy strong,
+:root[data-theme="light"] .cc-quarterly-checklist__meta span,
+:root[data-theme="light"] .cc-annual-breakdown-card strong,
+:root[data-theme="light"] .cc-home-hero__chip strong {
+  color: var(--brand-ink);
+}
+
+:root[data-theme="light"] .cc-dashboard-header__meta-label,
+:root[data-theme="light"] .cc-agenda-card__header p,
+:root[data-theme="light"] .cc-agenda-card__link,
+:root[data-theme="light"] .cc-agenda-item__code,
+:root[data-theme="light"] .cc-agenda-item p,
+:root[data-theme="light"] .cc-agenda-item__meta span,
+:root[data-theme="light"] .cc-quick-action__text,
+:root[data-theme="light"] .cc-quick-action--dashboard .cc-quick-action__text,
+:root[data-theme="light"] .cc-list-section__header p,
+:root[data-theme="light"] .lead-detail-header p,
+:root[data-theme="light"] .cc-expense-detail__subtitle,
+:root[data-theme="light"] .cc-expense-detail__section-head p,
+:root[data-theme="light"] .cc-expense-detail__total-label,
+:root[data-theme="light"] .cc-expense-detail__info-label,
+:root[data-theme="light"] .cc-expense-detail__note-card p,
+:root[data-theme="light"] .cc-quarterly-status-detail,
+:root[data-theme="light"] .cc-quarterly-checklist__copy p,
+:root[data-theme="light"] .cc-quarterly-checklist__meta small,
+:root[data-theme="light"] .cc-quarterly-dossier-table__head,
+:root[data-theme="light"] .cc-annual-breakdown-card p {
+  color: var(--muted);
+}
+
+:root[data-theme="light"] .cc-agenda-item__meta span,
+:root[data-theme="light"] .cc-list-meta span,
+:root[data-theme="light"] .cc-record-card__meta span,
+:root[data-theme="light"] .cc-expense-item__meta span,
+:root[data-theme="light"] .cc-home-hero__chip,
+:root[data-theme="light"] .detail-label {
+  border-color: rgba(11, 131, 180, 0.17);
+  background: rgba(11, 131, 180, 0.08);
+  color: var(--muted-strong);
+}
+
+:root[data-theme="light"] .cc-quick-action__icon,
+:root[data-theme="light"] .cc-quick-action--dashboard .cc-quick-action__icon,
+:root[data-theme="light"] .cc-quick-action--launcher .cc-quick-action__icon {
+  border-color: rgba(11, 131, 180, 0.22);
+  background:
+    linear-gradient(180deg, rgba(11, 131, 180, 0.14), rgba(8, 145, 178, 0.08));
+  color: var(--accent-strong);
+}
+
+:root[data-theme="light"] .cc-quick-action--primary,
+:root[data-theme="light"] .cc-quick-action--launcher.cc-quick-action--primary {
+  border-color: rgba(7, 95, 136, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.18), transparent 40%),
+    linear-gradient(180deg, rgba(245, 251, 255, 0.99), rgba(231, 244, 251, 0.96));
+}
+
+:root[data-theme="light"] .lead-item:hover,
+:root[data-theme="light"] .cc-expense-item:hover,
+:root[data-theme="light"] .cc-quick-action:hover,
+:root[data-theme="light"] .cc-agenda-item:hover,
+:root[data-theme="light"] .cc-quarterly-checklist__item:hover,
+:root[data-theme="light"] .cc-annual-breakdown-card:hover {
+  border-color: rgba(11, 131, 180, 0.30);
+  background:
+    linear-gradient(180deg, #ffffff, #eef8fd);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 18px 38px rgba(17, 73, 103, 0.14);
+}
+
+:root[data-theme="light"] .lead-item.selected,
+:root[data-theme="light"] .cc-expense-item.is-selected {
+  border-color: rgba(7, 95, 136, 0.34);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.16), transparent 38%),
+    linear-gradient(180deg, #ffffff, #e9f6fc);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 20px 40px rgba(17, 73, 103, 0.16);
+}
+
+:root[data-theme="light"] .cc-quarterly-checklist__item--danger,
+:root[data-theme="light"] .cc-alert-center-card--critical,
+:root[data-theme="light"] .cc-dashboard-alert--critical {
+  border-color: rgba(180, 35, 24, 0.28);
+  background:
+    radial-gradient(circle at top right, rgba(180, 35, 24, 0.14), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fff3f1);
+}
+
+:root[data-theme="light"] .cc-quarterly-checklist__item--warning,
+:root[data-theme="light"] .cc-alert-center-card--warning,
+:root[data-theme="light"] .cc-dashboard-alert--warning,
+:root[data-theme="light"] .cc-kpi-card--warning {
+  border-color: rgba(154, 91, 0, 0.30);
+  background:
+    radial-gradient(circle at top right, rgba(154, 91, 0, 0.16), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fff6e3);
+}
+
+:root[data-theme="light"] .cc-quarterly-persistence__card,
+:root[data-theme="light"] .cc-quarterly-pack-header,
+:root[data-theme="light"] .cc-quarterly-pack-grid,
+:root[data-theme="light"] .cc-export-folder-grid {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), var(--cc-surface-section));
+}
+
+:root[data-theme="light"] .cc-quarterly-dossier-table__head {
+  background: rgba(11, 131, 180, 0.10);
+  color: var(--accent-strong);
+}
+
+:root[data-theme="light"] .cc-quarterly-dossier-table__row {
+  border-color: var(--cc-color-border);
+  background: #ffffff;
+  color: var(--text);
+}
+
+:root[data-theme="light"] .cc-dashboard-block--utility,
+:root[data-theme="light"] .cc-dashboard-block--alerts {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(243, 249, 253, 0.96));
+}
+
+:root[data-theme="light"] .cc-bounded-list {
+  scrollbar-color: rgba(11, 131, 180, 0.34) rgba(234, 245, 250, 0.82);
+}
+
 @media (max-width: 900px) {
   .app-shell {
     padding:

@@ -8,6 +8,7 @@ import type { JobListItem } from '../features/jobs/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { NavigationGuard } from '../app/navigationGuard'
 
 interface JobsPageProps {
   jobs: JobListItem[]
@@ -21,6 +22,8 @@ interface JobsPageProps {
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function JobsPage({
@@ -35,10 +38,13 @@ export function JobsPage({
   onPrefillConsumed,
   activeFilterLabel,
   onClearFilter,
+  onUnsavedChange,
+  confirmNavigation,
 }: JobsPageProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [activeCreatePrefill, setActiveCreatePrefill] = useState<JobCreatePrefill | null>(null)
+  const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   useEffect(() => {
     if (!createPrefill) {
@@ -67,10 +73,34 @@ export function JobsPage({
 
   const selectedJob =
     jobs.find((job) => job.id === selectedJobId) ?? null
+  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en servicios. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
 
   async function handleJobCreated() {
     await onJobCreated()
     setActiveCreatePrefill(null)
+    setShowCreateForm(false)
   }
 
   return (
@@ -85,13 +115,15 @@ export function JobsPage({
           type="button"
           className="primary-button"
           onClick={() => {
-            setShowCreateForm((current) => {
-              const nextValue = !current
-              if (!nextValue) {
+            if (showCreateForm) {
+              runGuarded(() => {
+                setShowCreateForm(false)
                 setActiveCreatePrefill(null)
-              }
-              return nextValue
-            })
+              })
+              return
+            }
+
+            setShowCreateForm(true)
           }}
         >
           {showCreateForm ? 'Cerrar formulario' : 'Nuevo servicio'}
@@ -118,7 +150,10 @@ export function JobsPage({
             jobs={jobs}
             error={error}
             selectedJobId={selectedJobId}
-            onSelectJob={(job) => setSelectedJobId(job.id)}
+            onSelectJob={(job) => {
+              if (job.id === selectedJobId) return
+              runGuarded(() => setSelectedJobId(job.id))
+            }}
           />
         </div>
 
@@ -130,6 +165,7 @@ export function JobsPage({
             quotes={quotes}
             onJobUpdated={onJobCreated}
             onCreateInvoiceFromJob={onCreateInvoiceFromJob}
+            onUnsavedChange={setHasUnsavedDetailChanges}
           />
         </div>
       </div>

@@ -2,6 +2,7 @@
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
+import type { NavigationGuardOptions } from './navigationGuard'
 import type { SyncStatus } from './syncStatus'
 import {
   applyExpenseFilter,
@@ -29,6 +30,7 @@ import { PaymentsPage } from '../pages/PaymentsPage'
 import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
 import { AnnualClosingPage } from '../pages/AnnualClosingPage'
 import { AlertsCenterPage } from '../pages/AlertsCenterPage'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import type { LeadListItem } from '../features/leads/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -60,6 +62,13 @@ const foregroundRefreshStaleTimeMs = 30_000
 const realtimeRefreshDelayMs = 900
 
 type RefreshScope = 'all' | 'billing' | 'operations' | 'closings'
+
+interface PendingGuardedAction {
+  action: () => void
+  title: string
+  description: string
+  confirmLabel: string
+}
 
 const realtimeTables = [
   'leads',
@@ -271,6 +280,9 @@ export function AppShell() {
   const [compactMobileNav, setCompactMobileNav] = useState(false)
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
+  const [unsavedChangesContext, setUnsavedChangesContext] = useState<string | null>(null)
+  const [pendingGuardedAction, setPendingGuardedAction] = useState<PendingGuardedAction | null>(null)
+  const [navigationBackTarget, setNavigationBackTarget] = useState<AppView | null>(null)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
@@ -311,6 +323,7 @@ export function AppShell() {
   const isRefreshingRef = useRef(false)
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
+  const viewBackStackRef = useRef<AppView[]>([])
 
   const loadLeads = useCallback(async () => {
     try {
@@ -733,6 +746,20 @@ export function AppShell() {
     }
   }, [reviewedAlertIds])
 
+  useEffect(() => {
+    if (!unsavedChangesContext) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [unsavedChangesContext])
+
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
   const propertyCodeById = useMemo(() => new Map(properties.map((property) => [property.id, property.display_code ?? property.id])), [properties])
@@ -1067,30 +1094,111 @@ export function AppShell() {
     [paymentsWithCodes, moduleFilters.payments],
   )
 
+  const updateUnsavedChanges = useCallback((hasUnsavedChanges: boolean, contextLabel = 'cambios sin guardar') => {
+    setUnsavedChangesContext(hasUnsavedChanges ? contextLabel : null)
+  }, [])
+
+  const commitViewChange = useCallback((view: AppView, options?: { replace?: boolean }) => {
+    if (view === currentView) return
+
+    if (!options?.replace) {
+      viewBackStackRef.current = [...viewBackStackRef.current, currentView].slice(-8)
+    }
+
+    setCurrentView(view)
+    setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
+  }, [currentView])
+
+  const runWithNavigationGuard = useCallback((action: () => void, options?: NavigationGuardOptions) => {
+    if (!unsavedChangesContext) {
+      action()
+      return
+    }
+
+    setPendingGuardedAction({
+      action,
+      title: options?.title ?? 'Salir sin guardar',
+      description: options?.description ?? `Hay ${unsavedChangesContext}. Si continúas, perderás esos cambios.`,
+      confirmLabel: options?.confirmLabel ?? 'Salir sin guardar',
+    })
+  }, [unsavedChangesContext])
+
+  const handleConfirmGuardedAction = useCallback(() => {
+    if (!pendingGuardedAction) return
+
+    const action = pendingGuardedAction.action
+    setPendingGuardedAction(null)
+    setUnsavedChangesContext(null)
+    action()
+  }, [pendingGuardedAction])
+
+  const navigateToView = useCallback((view: AppView) => {
+    if (view === currentView) return
+
+    runWithNavigationGuard(() => {
+      commitViewChange(view)
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si cambias de módulo ahora, perderás esos cambios.`,
+      confirmLabel: 'Cambiar de módulo',
+    })
+  }, [commitViewChange, currentView, runWithNavigationGuard, unsavedChangesContext])
+
+  const navigateBack = useCallback(() => {
+    const previousView = viewBackStackRef.current.at(-1) ?? 'dashboard'
+    if (previousView === currentView) {
+      setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
+      return
+    }
+
+    runWithNavigationGuard(() => {
+      viewBackStackRef.current.pop()
+      setCurrentView(previousView)
+      setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si vuelves ahora, perderás esos cambios.`,
+      confirmLabel: 'Volver',
+    })
+  }, [currentView, runWithNavigationGuard, unsavedChangesContext])
+
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
     const action = dashboardKpiActionConfig[actionId]
-    setModuleFilters((current) => applyDashboardKpiAction(current, actionId))
-    setCurrentView(action.view)
-  }, [])
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => applyDashboardKpiAction(current, actionId))
+      commitViewChange(action.view)
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este indicador ahora, perderás esos cambios.`,
+      confirmLabel: 'Abrir indicador',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
   const handleOpenAutomationAlert = useCallback((alert: AutomationAlertItem) => {
     const routing = alert.routing
 
     if (routing.kind === 'quarterly_closing') {
-      setQuarterlyClosingFocus({
-        fiscalYear: routing.fiscalYear,
-        fiscalQuarter: routing.fiscalQuarter,
+      runWithNavigationGuard(() => {
+        setQuarterlyClosingFocus({
+          fiscalYear: routing.fiscalYear,
+          fiscalQuarter: routing.fiscalQuarter,
+        })
+        commitViewChange('quarterly_closing')
+      }, {
+        description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta alerta ahora, perderás esos cambios.`,
+        confirmLabel: 'Abrir alerta',
       })
-      setCurrentView('quarterly_closing')
       return
     }
 
-    setModuleFilters((current) => ({
-      ...current,
-      [routing.filterKey]: routing.filterValue,
-    }))
-    setCurrentView(routing.view)
-  }, [])
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => ({
+        ...current,
+        [routing.filterKey]: routing.filterValue,
+      }))
+      commitViewChange(routing.view)
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta alerta ahora, perderás esos cambios.`,
+      confirmLabel: 'Abrir alerta',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
   const handleToggleReviewedAlert = useCallback((alertId: string) => {
     setReviewedAlertIds((current) =>
@@ -1161,8 +1269,8 @@ export function AppShell() {
         expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'risk' },
       }
     })
-    setCurrentView(view)
-  }, [])
+    commitViewChange(view)
+  }, [commitViewChange])
 
   const handleAnnualClosingNavigation = useCallback((
     view: AppView,
@@ -1224,8 +1332,8 @@ export function AppShell() {
         expenses: { type: 'year', fiscalYear, scope: 'risk' },
       }
     })
-    setCurrentView(view)
-  }, [])
+    commitViewChange(view)
+  }, [commitViewChange])
 
   const handleSaveQuarterlyClosing = useCallback(async ({
     fiscalYear,
@@ -1278,8 +1386,8 @@ export function AppShell() {
 
   const handleOpenQuarterFromAnnual = useCallback((fiscalYear: number, fiscalQuarter: number) => {
     setQuarterlyClosingFocus({ fiscalYear, fiscalQuarter })
-    setCurrentView('quarterly_closing')
-  }, [])
+    commitViewChange('quarterly_closing')
+  }, [commitViewChange])
 
   const handleCreateJobFromQuote = useCallback((quote: QuoteListItem) => {
     const prefill = buildJobCreatePrefillFromQuote(quote)
@@ -1287,9 +1395,14 @@ export function AppShell() {
       return
     }
 
-    setJobCreatePrefill(prefill)
-    setCurrentView('jobs')
-  }, [])
+    runWithNavigationGuard(() => {
+      setJobCreatePrefill(prefill)
+      commitViewChange('jobs')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas el servicio desde este presupuesto ahora, perderás esos cambios.`,
+      confirmLabel: 'Crear servicio',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
   const handleCreateInvoiceFromJob = useCallback((job: JobListItem) => {
     const prefill = buildInvoiceCreatePrefillFromJob(job)
@@ -1297,9 +1410,14 @@ export function AppShell() {
       return
     }
 
-    setInvoiceCreatePrefill(prefill)
-    setCurrentView('invoices')
-  }, [])
+    runWithNavigationGuard(() => {
+      setInvoiceCreatePrefill(prefill)
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura desde este servicio ahora, perderás esos cambios.`,
+      confirmLabel: 'Crear factura',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
   const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
     setModuleFilters((current) => ({
@@ -1317,13 +1435,15 @@ export function AppShell() {
       <section className="hero-card cc-shell cc-shell-frame">
         <AppNav
           currentView={currentView}
-          onChangeView={setCurrentView}
+          onChangeView={navigateToView}
           compactMobile={compactMobileNav}
           syncStatus={syncStatus}
           alerts={automationAlerts}
           reviewedAlertIds={reviewedAlertIds}
           onOpenAlert={handleOpenAutomationAlert}
-          onOpenAlertsCenter={() => setCurrentView('alerts')}
+          onOpenAlertsCenter={() => navigateToView('alerts')}
+          backTargetView={navigationBackTarget}
+          onBack={navigateBack}
         />
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
@@ -1367,7 +1487,7 @@ export function AppShell() {
             <HomePage
               metrics={dashboardMetrics}
               agenda={dashboardAgenda}
-              onOpenView={setCurrentView}
+              onOpenView={navigateToView}
               onRunKpiAction={handleDashboardKpiAction}
               alerts={automationAlerts}
               onOpenAlert={handleOpenAutomationAlert}
@@ -1388,6 +1508,8 @@ export function AppShell() {
               onCreateJobFromQuote={handleCreateJobFromQuote}
               activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
               onClearFilter={() => clearModuleFilter('quotes')}
+              onUnsavedChange={updateUnsavedChanges}
+              confirmNavigation={runWithNavigationGuard}
             />
           ) : currentView === 'jobs' ? (
             <JobsPage
@@ -1402,6 +1524,8 @@ export function AppShell() {
               onPrefillConsumed={() => setJobCreatePrefill(null)}
               activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
               onClearFilter={() => clearModuleFilter('jobs')}
+              onUnsavedChange={updateUnsavedChanges}
+              confirmNavigation={runWithNavigationGuard}
             />
           ) : currentView === 'invoices' ? (
             <InvoicesPage
@@ -1414,6 +1538,8 @@ export function AppShell() {
               onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
               activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
               onClearFilter={() => clearModuleFilter('invoices')}
+              onUnsavedChange={updateUnsavedChanges}
+              confirmNavigation={runWithNavigationGuard}
             />
           ) : currentView === 'expenses' ? (
             <ExpensesPage
@@ -1422,6 +1548,8 @@ export function AppShell() {
               onExpenseCreated={refreshBilling}
               activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
               onClearFilter={() => clearModuleFilter('expenses')}
+              onUnsavedChange={updateUnsavedChanges}
+              confirmNavigation={runWithNavigationGuard}
             />
           ) : (
             <PaymentsPage
@@ -1431,6 +1559,8 @@ export function AppShell() {
               onPaymentCreated={reloadInvoicesAndPayments}
               activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
               onClearFilter={() => clearModuleFilter('payments')}
+              onUnsavedChange={updateUnsavedChanges}
+              confirmNavigation={runWithNavigationGuard}
             />
           )}
         </div>
@@ -1443,6 +1573,15 @@ export function AppShell() {
       >
         <span aria-hidden="true">↑</span>
       </button>
+      <ConfirmDialog
+        isOpen={Boolean(pendingGuardedAction)}
+        title={pendingGuardedAction?.title ?? 'Salir sin guardar'}
+        description={pendingGuardedAction?.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
+        confirmLabel={pendingGuardedAction?.confirmLabel ?? 'Salir sin guardar'}
+        tone="warning"
+        onCancel={() => setPendingGuardedAction(null)}
+        onConfirm={handleConfirmGuardedAction}
+      />
     </main>
   )
 }

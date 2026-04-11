@@ -10,6 +10,7 @@ import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { NavigationGuard } from '../app/navigationGuard'
 
 interface InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -21,6 +22,8 @@ interface InvoicesPageProps {
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function InvoicesPage({
@@ -33,12 +36,15 @@ export function InvoicesPage({
   onPrefillConsumed,
   activeFilterLabel,
   onClearFilter,
+  onUnsavedChange,
+  confirmNavigation,
 }: InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
   const [activeCreatePrefill, setActiveCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
+  const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   useEffect(() => {
     if (!createPrefill) {
@@ -69,10 +75,34 @@ export function InvoicesPage({
 
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
+  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en facturas')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en facturas. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
 
   async function handleInvoiceCreated() {
     await onInvoiceCreated()
     setActiveCreatePrefill(null)
+    setShowCreateForm(false)
   }
 
   return (
@@ -90,13 +120,15 @@ export function InvoicesPage({
             type="button"
             className="primary-button"
             onClick={() => {
-              setShowCreateForm((current) => {
-                const nextValue = !current
-                if (!nextValue) {
+              if (showCreateForm) {
+                runGuarded(() => {
+                  setShowCreateForm(false)
                   setActiveCreatePrefill(null)
-                }
-                return nextValue
-              })
+                })
+                return
+              }
+
+              setShowCreateForm(true)
             }}
           >
             {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
@@ -123,8 +155,12 @@ export function InvoicesPage({
               error={error}
               selectedInvoiceId={selectedInvoiceId}
               onSelectInvoice={(invoice) => {
-                setSelectedInvoiceId(invoice.id)
-                setShowDocumentScreen(false)
+                if (invoice.id === selectedInvoiceId) return
+
+                runGuarded(() => {
+                  setSelectedInvoiceId(invoice.id)
+                  setShowDocumentScreen(false)
+                })
               }}
             />
           </div>
@@ -135,7 +171,8 @@ export function InvoicesPage({
               jobs={jobs}
               quotes={quotes}
               onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => setIsOpenDocumentConfirmVisible(true)}
+              onOpenDocument={() => runGuarded(() => setIsOpenDocumentConfirmVisible(true))}
+              onUnsavedChange={setHasUnsavedDetailChanges}
             />
           </div>
         </div>

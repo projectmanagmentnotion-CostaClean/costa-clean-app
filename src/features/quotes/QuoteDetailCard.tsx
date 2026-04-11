@@ -28,6 +28,7 @@ interface QuoteDetailCardProps {
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
 interface EditFormState {
@@ -56,6 +57,7 @@ export function QuoteDetailCard({
   onQuoteUpdated,
   onOpenDocument,
   onCreateJobFromQuote,
+  onUnsavedChange,
 }: QuoteDetailCardProps) {
   if (!quote) {
     return (
@@ -82,6 +84,7 @@ export function QuoteDetailCard({
       onQuoteUpdated={onQuoteUpdated}
       onOpenDocument={onOpenDocument}
       onCreateJobFromQuote={onCreateJobFromQuote}
+      onUnsavedChange={onUnsavedChange}
     />
   )
 }
@@ -93,6 +96,7 @@ function QuoteDetailCardContent({
   onQuoteUpdated,
   onOpenDocument,
   onCreateJobFromQuote,
+  onUnsavedChange,
 }: {
   quote: QuoteListItem
   clients: ClientListItem[]
@@ -100,6 +104,7 @@ function QuoteDetailCardContent({
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }) {
   const {
     quote: hydratedQuote,
@@ -132,6 +137,11 @@ function QuoteDetailCardContent({
     })
     setLines(getFormLinesFromQuote(hydratedQuote, properties))
   }, [hydratedQuote, properties])
+
+  useEffect(() => {
+    onUnsavedChange?.(isEditing)
+    return () => onUnsavedChange?.(false)
+  }, [isEditing, onUnsavedChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {

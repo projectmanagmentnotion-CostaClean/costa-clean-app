@@ -4,6 +4,7 @@ import { ExpenseCreateForm } from '../features/expenses/ExpenseCreateForm'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
 import type { ExpenseListItem } from '../features/expenses/types'
+import type { NavigationGuard } from '../app/navigationGuard'
 
 interface ExpensesPageProps {
   expenses: ExpenseListItem[]
@@ -11,6 +12,8 @@ interface ExpensesPageProps {
   onExpenseCreated: () => Promise<void>
   activeFilterLabel: string | null
   onClearFilter: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 function formatCurrency(value: number): string {
@@ -26,9 +29,12 @@ export function ExpensesPage({
   onExpenseCreated,
   activeFilterLabel,
   onClearFilter,
+  onUnsavedChange,
+  confirmNavigation,
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   useEffect(() => {
     if (expenses.length === 0) {
@@ -47,6 +53,29 @@ export function ExpensesPage({
 
   const selectedExpense =
     expenses.find((expense) => expense.id === selectedExpenseId) ?? null
+  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en gastos')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en gastos. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
 
   const summary = useMemo(() => {
     const totalAmount = expenses.reduce(
@@ -70,6 +99,11 @@ export function ExpensesPage({
     }
   }, [expenses])
 
+  async function handleExpenseCreated() {
+    await onExpenseCreated()
+    setShowCreateForm(false)
+  }
+
   return (
     <section className="page-section cc-master-page cc-expenses-page">
       <div className="section-header page-header-actions cc-master-page__hero cc-expenses-hero">
@@ -81,7 +115,14 @@ export function ExpensesPage({
         <button
           type="button"
           className={showCreateForm ? 'secondary-button' : 'primary-button'}
-          onClick={() => setShowCreateForm((current) => !current)}
+          onClick={() => {
+            if (showCreateForm) {
+              runGuarded(() => setShowCreateForm(false))
+              return
+            }
+
+            setShowCreateForm(true)
+          }}
         >
           {showCreateForm ? 'Cerrar formulario' : 'Nuevo gasto'}
         </button>
@@ -120,7 +161,7 @@ export function ExpensesPage({
             <p>Crea un nuevo registro sin salir del flujo operativo.</p>
           </div>
 
-          <ExpenseCreateForm onCreated={onExpenseCreated} />
+          <ExpenseCreateForm onCreated={handleExpenseCreated} />
         </section>
       ) : null}
 
@@ -134,7 +175,10 @@ export function ExpensesPage({
             expenses={expenses}
             error={error}
             selectedExpenseId={selectedExpenseId}
-            onSelectExpense={(expense) => setSelectedExpenseId(expense.id)}
+            onSelectExpense={(expense) => {
+              if (expense.id === selectedExpenseId) return
+              runGuarded(() => setSelectedExpenseId(expense.id))
+            }}
           />
         </div>
 
@@ -142,6 +186,7 @@ export function ExpensesPage({
           <ExpenseDetailCard
             expense={selectedExpense}
             onExpenseUpdated={onExpenseCreated}
+            onUnsavedChange={setHasUnsavedDetailChanges}
           />
         </div>
       </div>

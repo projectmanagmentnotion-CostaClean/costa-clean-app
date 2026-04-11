@@ -15,6 +15,7 @@ interface JobDetailCardProps {
   quotes: QuoteListItem[]
   onJobUpdated: () => Promise<void>
   onCreateInvoiceFromJob: (job: JobListItem) => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
 interface EditFormState {
@@ -72,6 +73,7 @@ export function JobDetailCard({
   quotes,
   onJobUpdated,
   onCreateInvoiceFromJob,
+  onUnsavedChange,
 }: JobDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -133,6 +135,11 @@ export function JobDetailCard({
       notes: job.notes ?? '',
     })
   }, [job])
+
+  useEffect(() => {
+    onUnsavedChange?.(isEditing)
+    return () => onUnsavedChange?.(false)
+  }, [isEditing, onUnsavedChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []

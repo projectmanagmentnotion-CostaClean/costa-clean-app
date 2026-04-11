@@ -5,6 +5,7 @@ import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { NavigationGuard } from '../app/navigationGuard'
 
 interface PaymentsPageProps {
   payments: PaymentListItem[]
@@ -13,6 +14,8 @@ interface PaymentsPageProps {
   onPaymentCreated: () => Promise<void>
   activeFilterLabel: string | null
   onClearFilter: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function PaymentsPage({
@@ -22,9 +25,12 @@ export function PaymentsPage({
   onPaymentCreated,
   activeFilterLabel,
   onClearFilter,
+  onUnsavedChange,
+  confirmNavigation,
 }: PaymentsPageProps) {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   useEffect(() => {
     if (payments.length === 0) {
@@ -43,6 +49,34 @@ export function PaymentsPage({
 
   const selectedPayment =
     payments.find((payment) => payment.id === selectedPaymentId) ?? null
+  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en pagos. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
+
+  async function handlePaymentCreated() {
+    await onPaymentCreated()
+    setShowCreateForm(false)
+  }
 
   return (
     <section className="page-section cc-master-page">
@@ -57,7 +91,14 @@ export function PaymentsPage({
         <button
           type="button"
           className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
+          onClick={() => {
+            if (showCreateForm) {
+              runGuarded(() => setShowCreateForm(false))
+              return
+            }
+
+            setShowCreateForm(true)
+          }}
         >
           {showCreateForm ? 'Cerrar formulario' : 'Nuevo pago'}
         </button>
@@ -66,7 +107,7 @@ export function PaymentsPage({
       {showCreateForm ? (
         <PaymentCreateForm
           invoices={invoices}
-          onCreated={onPaymentCreated}
+          onCreated={handlePaymentCreated}
         />
       ) : null}
 
@@ -80,7 +121,10 @@ export function PaymentsPage({
             payments={payments}
             error={error}
             selectedPaymentId={selectedPaymentId}
-            onSelectPayment={(payment) => setSelectedPaymentId(payment.id)}
+            onSelectPayment={(payment) => {
+              if (payment.id === selectedPaymentId) return
+              runGuarded(() => setSelectedPaymentId(payment.id))
+            }}
           />
         </div>
 
@@ -89,6 +133,7 @@ export function PaymentsPage({
             payment={selectedPayment}
             invoices={invoices}
             onPaymentUpdated={onPaymentCreated}
+            onUnsavedChange={setHasUnsavedDetailChanges}
           />
         </div>
       </div>

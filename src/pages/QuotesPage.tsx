@@ -9,6 +9,7 @@ import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
+import type { NavigationGuard } from '../app/navigationGuard'
 
 interface QuotesPageProps {
   quotes: QuoteListItem[]
@@ -19,6 +20,8 @@ interface QuotesPageProps {
   onCreateJobFromQuote: (quote: QuoteListItem) => void
   activeFilterLabel: string | null
   onClearFilter: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function QuotesPage({
@@ -30,11 +33,14 @@ export function QuotesPage({
   onCreateJobFromQuote,
   activeFilterLabel,
   onClearFilter,
+  onUnsavedChange,
+  confirmNavigation,
 }: QuotesPageProps) {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
+  const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   useEffect(() => {
     if (quotes.length === 0) {
@@ -56,6 +62,35 @@ export function QuotesPage({
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? null
 
+  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en presupuestos. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
+
+  async function handleQuoteCreated() {
+    await onQuoteCreated()
+    setShowCreateForm(false)
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -70,7 +105,14 @@ export function QuotesPage({
           <button
             type="button"
             className="primary-button"
-            onClick={() => setShowCreateForm((current) => !current)}
+            onClick={() => {
+              if (showCreateForm) {
+                runGuarded(() => setShowCreateForm(false))
+                return
+              }
+
+              setShowCreateForm(true)
+            }}
           >
             {showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto'}
           </button>
@@ -80,7 +122,7 @@ export function QuotesPage({
           <QuoteCreateForm
             clients={clients}
             properties={properties}
-            onCreated={onQuoteCreated}
+            onCreated={handleQuoteCreated}
           />
         ) : null}
 
@@ -97,8 +139,12 @@ export function QuotesPage({
               error={error}
               selectedQuoteId={selectedQuoteId}
               onSelectQuote={(quote) => {
-                setSelectedQuoteId(quote.id)
-                setShowDocumentScreen(false)
+                if (quote.id === selectedQuoteId) return
+
+                runGuarded(() => {
+                  setSelectedQuoteId(quote.id)
+                  setShowDocumentScreen(false)
+                })
               }}
             />
           </div>
@@ -109,8 +155,9 @@ export function QuotesPage({
               clients={clients}
               properties={properties}
               onQuoteUpdated={onQuoteCreated}
-              onOpenDocument={() => setIsOpenDocumentConfirmVisible(true)}
+              onOpenDocument={() => runGuarded(() => setIsOpenDocumentConfirmVisible(true))}
               onCreateJobFromQuote={onCreateJobFromQuote}
+              onUnsavedChange={setHasUnsavedDetailChanges}
             />
           </div>
         </div>

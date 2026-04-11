@@ -25,6 +25,7 @@ import {
 interface ExpenseDetailCardProps {
   expense: ExpenseListItem | null
   onExpenseUpdated: () => Promise<void>
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
 interface EditFormState {
@@ -87,6 +88,7 @@ function getFileTypeLabel(filePath: string | null | undefined): string {
 export function ExpenseDetailCard({
   expense,
   onExpenseUpdated,
+  onUnsavedChange,
 }: ExpenseDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -165,6 +167,11 @@ export function ExpenseDetailCard({
       notes: expense.notes ?? '',
     })
   }, [expense])
+
+  useEffect(() => {
+    onUnsavedChange?.(isEditing)
+    return () => onUnsavedChange?.(false)
+  }, [isEditing, onUnsavedChange])
 
   function updateField<K extends keyof EditFormState>(
     field: K,

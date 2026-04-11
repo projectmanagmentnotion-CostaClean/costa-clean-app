@@ -14,6 +14,7 @@ interface InvoiceDetailCardProps {
   quotes: QuoteListItem[]
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
 interface EditFormState {
@@ -229,6 +230,7 @@ export function InvoiceDetailCard({
   quotes,
   onInvoiceUpdated,
   onOpenDocument,
+  onUnsavedChange,
 }: InvoiceDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -298,6 +300,11 @@ export function InvoiceDetailCard({
     })
     setLines(getFormLinesFromInvoice(invoice))
   }, [invoice])
+
+  useEffect(() => {
+    onUnsavedChange?.(isEditing)
+    return () => onUnsavedChange?.(false)
+  }, [isEditing, onUnsavedChange])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setForm((current) => ({

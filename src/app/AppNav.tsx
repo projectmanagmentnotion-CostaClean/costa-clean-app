@@ -14,6 +14,8 @@ interface AppNavProps {
   reviewedAlertIds?: string[]
   onOpenAlert?: (alert: AutomationAlertItem) => void
   onOpenAlertsCenter?: () => void
+  backTargetView?: AppView | null
+  onBack?: () => void
 }
 
 const allViews: AppView[] = [
@@ -292,8 +294,11 @@ export function AppNav({
   reviewedAlertIds = [],
   onOpenAlert,
   onOpenAlertsCenter,
+  backTargetView = null,
+  onBack,
 }: AppNavProps) {
   const currentViewLabel = currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)
+  const backLabel = backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'
 
   return (
     <>
@@ -344,9 +349,9 @@ export function AppNav({
               <button
                 type="button"
                 className="cc-shell-nav__back"
-                onClick={() => onChangeView('dashboard')}
+                onClick={onBack ?? (() => onChangeView('dashboard'))}
               >
-                Ir al inicio
+                {backLabel}
               </button>
             ) : null}
 

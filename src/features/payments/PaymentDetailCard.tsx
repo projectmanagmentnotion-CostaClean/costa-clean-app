@@ -8,6 +8,7 @@ interface PaymentDetailCardProps {
   payment: PaymentListItem | null
   invoices: InvoiceListItem[]
   onPaymentUpdated: () => Promise<void>
+  onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
 interface EditFormState {
@@ -42,6 +43,7 @@ export function PaymentDetailCard({
   payment,
   invoices,
   onPaymentUpdated,
+  onUnsavedChange,
 }: PaymentDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -81,6 +83,11 @@ export function PaymentDetailCard({
       notes: payment.notes ?? '',
     })
   }, [payment])
+
+  useEffect(() => {
+    onUnsavedChange?.(isEditing)
+    return () => onUnsavedChange?.(false)
+  }, [isEditing, onUnsavedChange])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setForm((current) => ({
@@ -353,4 +360,3 @@ export function PaymentDetailCard({
     </section>
   )
 }
-

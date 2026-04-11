@@ -5,6 +5,23 @@
   padding: 32px 20px;
 }
 
+.cc-theme-toast {
+  position: fixed;
+  right: max(18px, env(safe-area-inset-right, 0px));
+  bottom: max(18px, env(safe-area-inset-bottom, 0px));
+  z-index: 6000;
+  max-width: min(320px, calc(100vw - 36px));
+  padding: 11px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: var(--cc-color-surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow-float);
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
 .hero-card {
   width: 100%;
   max-width: 1100px;
@@ -14,6 +31,32 @@
   background: var(--card);
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
+}
+
+:root[data-theme="light"] .hero-card,
+:root[data-theme="light"] .status-card,
+:root[data-theme="light"] .data-section,
+:root[data-theme="light"] .lead-item,
+:root[data-theme="light"] .module-card,
+:root[data-theme="light"] .detail-row,
+:root[data-theme="light"] .empty-state {
+  background: var(--cc-color-surface);
+  border-color: var(--cc-color-border);
+}
+
+:root[data-theme="light"] .nav-button,
+:root[data-theme="light"] .secondary-button,
+:root[data-theme="light"] .module-state {
+  background: var(--cc-surface-glass-subtle);
+  border-color: var(--cc-color-border);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .lead-badge,
+:root[data-theme="light"] .module-phase,
+:root[data-theme="light"] .eyebrow {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
 }
 
 .app-nav {
@@ -262,6 +305,13 @@
 
   .status-card-wide {
     grid-column: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-theme-toast {
+    right: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 94px);
   }
 }
 

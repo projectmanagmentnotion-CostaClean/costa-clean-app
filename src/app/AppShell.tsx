@@ -4,6 +4,7 @@ import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
 import type { NavigationGuardOptions } from './navigationGuard'
 import type { SyncStatus } from './syncStatus'
+import type { AppTheme } from './theme'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -68,6 +69,11 @@ interface PendingGuardedAction {
   title: string
   description: string
   confirmLabel: string
+}
+
+interface AppShellProps {
+  theme: AppTheme
+  onToggleTheme: () => void
 }
 
 const realtimeTables = [
@@ -274,7 +280,7 @@ function ShellLoadingState({ currentView }: { currentView: AppView }) {
   )
 }
 
-export function AppShell() {
+export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const [currentView, setCurrentView] = useState<AppView>('dashboard')
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
@@ -1442,6 +1448,8 @@ export function AppShell() {
           reviewedAlertIds={reviewedAlertIds}
           onOpenAlert={handleOpenAutomationAlert}
           onOpenAlertsCenter={() => navigateToView('alerts')}
+          theme={theme}
+          onToggleTheme={onToggleTheme}
           backTargetView={navigationBackTarget}
           onBack={navigateBack}
         />

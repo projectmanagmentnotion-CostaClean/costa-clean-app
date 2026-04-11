@@ -1,14 +1,42 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import './App.css'
 import { AppShell } from './app/AppShell'
+import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { getSupabaseClient } from './lib/supabase'
 
 function App() {
+  const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
+  const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isBooting, setIsBooting] = useState(true)
   const [bootError, setBootError] = useState<string | null>(null)
+
+  useEffect(() => {
+    applyTheme(theme)
+    setStoredTheme(theme)
+  }, [theme])
+
+  useEffect(() => {
+    if (!themeFeedback) return undefined
+
+    const feedbackTimer = window.setTimeout(() => {
+      setThemeFeedback(null)
+    }, 1800)
+
+    return () => {
+      window.clearTimeout(feedbackTimer)
+    }
+  }, [themeFeedback])
+
+  const toggleTheme = useCallback(() => {
+    setTheme((currentTheme) => {
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark'
+      setThemeFeedback(getThemeFeedback(nextTheme))
+      return nextTheme
+    })
+  }, [])
 
   useEffect(() => {
     let isMounted = true
@@ -136,10 +164,14 @@ function App() {
 
   return (
     <div className="cc-app-shell-enter">
-      <AppShell />
+      <AppShell theme={theme} onToggleTheme={toggleTheme} />
+      {themeFeedback ? (
+        <div className="cc-theme-toast" role="status" aria-live="polite" aria-atomic="true">
+          {themeFeedback}
+        </div>
+      ) : null}
     </div>
   )
 }
 
 export default App
-

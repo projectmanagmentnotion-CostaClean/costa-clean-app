@@ -3,6 +3,8 @@ import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
 import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
 import { AlertsBell } from './AlertsBell'
+import { ThemeToggle } from './ThemeToggle'
+import type { AppTheme } from './theme'
 import type { AutomationAlertItem } from '../features/automation/types'
 
 interface AppNavProps {
@@ -14,6 +16,8 @@ interface AppNavProps {
   reviewedAlertIds?: string[]
   onOpenAlert?: (alert: AutomationAlertItem) => void
   onOpenAlertsCenter?: () => void
+  theme?: AppTheme
+  onToggleTheme?: () => void
   backTargetView?: AppView | null
   onBack?: () => void
 }
@@ -294,6 +298,8 @@ export function AppNav({
   reviewedAlertIds = [],
   onOpenAlert,
   onOpenAlertsCenter,
+  theme = 'dark',
+  onToggleTheme,
   backTargetView = null,
   onBack,
 }: AppNavProps) {
@@ -335,6 +341,8 @@ export function AppNav({
               <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
               <span>{getSyncStatusLabel(syncStatus)}</span>
             </div>
+
+            {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
 
             {onOpenAlert && onOpenAlertsCenter ? (
               <AlertsBell

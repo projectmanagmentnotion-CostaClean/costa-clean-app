@@ -22,6 +22,16 @@
   letter-spacing: -0.01em;
 }
 
+:root[data-theme="light"] .cc-theme-toast {
+  border-color: rgba(11, 131, 180, 0.22);
+  background:
+    linear-gradient(180deg, #ffffff, #f4fbff);
+  color: var(--brand-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 18px 34px rgba(17, 73, 103, 0.16);
+}
+
 .hero-card {
   width: 100%;
   max-width: 1100px;
@@ -44,6 +54,26 @@
   border-color: var(--cc-color-border);
 }
 
+:root[data-theme="light"] .status-card,
+:root[data-theme="light"] .data-section,
+:root[data-theme="light"] .lead-item,
+:root[data-theme="light"] .module-card,
+:root[data-theme="light"] .detail-row {
+  background:
+    linear-gradient(180deg, #ffffff, #f8fcff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 12px 26px rgba(17, 73, 103, 0.08);
+}
+
+:root[data-theme="light"] .status-label,
+:root[data-theme="light"] .status-detail,
+:root[data-theme="light"] .lead-item p,
+:root[data-theme="light"] .module-card p,
+:root[data-theme="light"] .detail-label {
+  color: var(--muted);
+}
+
 :root[data-theme="light"] .nav-button,
 :root[data-theme="light"] .secondary-button,
 :root[data-theme="light"] .module-state {
@@ -57,6 +87,7 @@
 :root[data-theme="light"] .eyebrow {
   background: var(--accent-soft);
   color: var(--accent-strong);
+  border-color: rgba(11, 131, 180, 0.20);
 }
 
 .app-nav {

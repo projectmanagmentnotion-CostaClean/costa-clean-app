@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
+import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface PaymentsListProps {
   payments: PaymentListItem[]
@@ -17,11 +18,13 @@ export function PaymentsList({
   selectedPaymentId,
   onSelectPayment,
 }: PaymentsListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const defaultPreferences = useMemo(() => createDefaultPreferences('payment_date', 'desc', { method: 'all' }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) =>
-      matchesSearchQuery(searchQuery, [
+      (preferences.filters.method === 'all' || payment.payment_method === preferences.filters.method) &&
+      matchesSearchQuery(preferences.searchQuery, [
         payment.display_code,
         payment.id,
         payment.invoice_display_code,
@@ -33,8 +36,19 @@ export function PaymentsList({
         getPaymentMethodLabel(payment.payment_method),
         payment.notes,
       ]),
-    )
-  }, [payments, searchQuery])
+    ).sort((left, right) => {
+      const comparison = preferences.sortField === 'code'
+        ? compareText(left.display_code ?? left.id, right.display_code ?? right.id)
+        : preferences.sortField === 'invoice'
+          ? compareText(left.invoice_number ?? left.invoice_display_code ?? left.invoice_id, right.invoice_number ?? right.invoice_display_code ?? right.invoice_id)
+          : preferences.sortField === 'amount'
+            ? compareNumber(left.amount, right.amount)
+            : preferences.sortField === 'method'
+              ? compareText(getPaymentMethodLabel(left.payment_method), getPaymentMethodLabel(right.payment_method))
+              : compareDate(left.payment_date, right.payment_date)
+      return applySortDirection(comparison, preferences.sortDirection)
+    })
+  }, [payments, preferences])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -45,13 +59,33 @@ export function PaymentsList({
         </div>
       </div>
 
-      <SearchBar
-        label="Buscar pago"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Código, factura, fecha, método o importe"
+      <ListToolbar
+        storageKey="costaclean-list-preferences-payments"
+        searchLabel="Buscar pago"
+        searchPlaceholder="Código, factura, fecha, método o importe"
         resultCount={filteredPayments.length}
         totalCount={payments.length}
+        sortOptions={[
+          { value: 'payment_date', label: 'Fecha de cobro' },
+          { value: 'code', label: 'Código' },
+          { value: 'invoice', label: 'Factura' },
+          { value: 'amount', label: 'Importe' },
+          { value: 'method', label: 'Método' },
+        ]}
+        defaultPreferences={defaultPreferences}
+        filters={[{
+          key: 'method',
+          label: 'Método',
+          value: preferences.filters.method ?? 'all',
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'transfer', label: 'Transferencia' },
+            { value: 'cash', label: 'Efectivo' },
+            { value: 'bizum', label: 'Bizum' },
+            { value: 'card', label: 'Tarjeta' },
+          ],
+        }]}
+        onChange={setPreferences}
       />
 
       {error ? (

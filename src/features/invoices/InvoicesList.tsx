@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
 import type { InvoiceListItem } from './types'
+import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -18,11 +19,13 @@ export function InvoicesList({
   selectedInvoiceId,
   onSelectInvoice,
 }: InvoicesListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'all' }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter((invoice) =>
-      matchesSearchQuery(searchQuery, [
+      (preferences.filters.status === 'all' || invoice.status === preferences.filters.status) &&
+      matchesSearchQuery(preferences.searchQuery, [
         invoice.display_code,
         invoice.id,
         invoice.invoice_number,
@@ -39,8 +42,19 @@ export function InvoicesList({
         invoice.total,
         invoice.notes,
       ]),
-    )
-  }, [invoices, searchQuery])
+    ).sort((left, right) => {
+      const comparison = preferences.sortField === 'code'
+        ? compareText(left.invoice_number ?? left.display_code ?? left.id, right.invoice_number ?? right.display_code ?? right.id)
+        : preferences.sortField === 'client'
+          ? compareText(left.client_name ?? left.client_display_code ?? left.client_id, right.client_name ?? right.client_display_code ?? right.client_id)
+          : preferences.sortField === 'total'
+            ? compareNumber(left.total, right.total)
+            : preferences.sortField === 'status'
+              ? compareText(getStatusLabel(left.status), getStatusLabel(right.status))
+              : compareDate(left.issue_date, right.issue_date)
+      return applySortDirection(comparison, preferences.sortDirection)
+    })
+  }, [invoices, preferences])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -51,13 +65,33 @@ export function InvoicesList({
         </div>
       </div>
 
-      <SearchBar
-        label="Buscar factura"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Número, código interno, servicio, cliente, estado o importe"
+      <ListToolbar
+        storageKey="costaclean-list-preferences-invoices"
+        searchLabel="Buscar factura"
+        searchPlaceholder="Número, código interno, servicio, cliente, estado o importe"
         resultCount={filteredInvoices.length}
         totalCount={invoices.length}
+        sortOptions={[
+          { value: 'issue_date', label: 'Fecha de emisión' },
+          { value: 'code', label: 'Número / código' },
+          { value: 'client', label: 'Cliente' },
+          { value: 'total', label: 'Importe total' },
+          { value: 'status', label: 'Estado' },
+        ]}
+        defaultPreferences={defaultPreferences}
+        filters={[{
+          key: 'status',
+          label: 'Estado',
+          value: preferences.filters.status ?? 'all',
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'draft', label: 'Borrador' },
+            { value: 'issued', label: 'Emitida' },
+            { value: 'paid', label: 'Pagada' },
+            { value: 'cancelled', label: 'Cancelada' },
+          ],
+        }]}
+        onChange={setPreferences}
       />
 
       {error ? (

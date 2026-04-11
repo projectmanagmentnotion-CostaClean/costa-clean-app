@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
+import { applySortDirection, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -36,11 +37,13 @@ export function QuotesList({
   selectedQuoteId,
   onSelectQuote,
 }: QuotesListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const defaultPreferences = useMemo(() => createDefaultPreferences('code', 'desc', { status: 'all' }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredQuotes = useMemo(() => {
     return quotes.filter((quote) =>
-      matchesSearchQuery(searchQuery, [
+      (preferences.filters.status === 'all' || quote.status === preferences.filters.status) &&
+      matchesSearchQuery(preferences.searchQuery, [
         quote.display_code,
         buildClientLabel(quote, clients),
         quote.client_display_code,
@@ -53,8 +56,19 @@ export function QuotesList({
         quote.total,
         quote.notes,
       ]),
-    )
-  }, [clients, properties, quotes, searchQuery])
+    ).sort((left, right) => {
+      const comparison = preferences.sortField === 'client'
+        ? compareText(buildClientLabel(left, clients), buildClientLabel(right, clients))
+        : preferences.sortField === 'property'
+          ? compareText(buildPropertyLabel(left, properties), buildPropertyLabel(right, properties))
+          : preferences.sortField === 'total'
+            ? compareNumber(left.total, right.total)
+            : preferences.sortField === 'status'
+              ? compareText(getStatusLabel(left.status), getStatusLabel(right.status))
+              : compareText(left.display_code ?? left.id, right.display_code ?? right.id)
+      return applySortDirection(comparison, preferences.sortDirection)
+    })
+  }, [clients, preferences, properties, quotes])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -65,13 +79,34 @@ export function QuotesList({
         </div>
       </div>
 
-      <SearchBar
-        label="Buscar presupuesto"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Referencia, cliente, propiedad, estado o importe"
+      <ListToolbar
+        storageKey="costaclean-list-preferences-quotes"
+        searchLabel="Buscar presupuesto"
+        searchPlaceholder="Referencia, cliente, propiedad, estado o importe"
         resultCount={filteredQuotes.length}
         totalCount={quotes.length}
+        sortOptions={[
+          { value: 'code', label: 'Código' },
+          { value: 'client', label: 'Cliente' },
+          { value: 'property', label: 'Propiedad' },
+          { value: 'total', label: 'Importe total' },
+          { value: 'status', label: 'Estado' },
+        ]}
+        defaultPreferences={defaultPreferences}
+        filters={[{
+          key: 'status',
+          label: 'Estado',
+          value: preferences.filters.status ?? 'all',
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'draft', label: 'Borrador' },
+            { value: 'sent', label: 'Enviado' },
+            { value: 'accepted', label: 'Aceptado' },
+            { value: 'rejected', label: 'Rechazado' },
+            { value: 'expired', label: 'Vencido' },
+          ],
+        }]}
+        onChange={setPreferences}
       />
 
       {error ? (

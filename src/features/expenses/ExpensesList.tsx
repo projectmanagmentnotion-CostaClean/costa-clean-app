@@ -1,13 +1,18 @@
 import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import {
+  expenseCategories,
+  expenseDocumentSupportStatuses,
+  expenseFiscalReviewStatuses,
+  expenseFiscalRiskLevels,
   getExpenseCategoryLabel,
   getExpenseDocumentSupportStatusLabel,
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   type ExpenseListItem,
 } from './types'
+import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface ExpensesListProps {
   expenses: ExpenseListItem[]
@@ -40,11 +45,21 @@ export function ExpensesList({
   selectedExpenseId,
   onSelectExpense,
 }: ExpensesListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const defaultPreferences = useMemo(() => createDefaultPreferences('expense_date', 'desc', {
+    category: 'all',
+    support: 'all',
+    review: 'all',
+    risk: 'all',
+  }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) =>
-      matchesSearchQuery(searchQuery, [
+      (preferences.filters.category === 'all' || expense.category === preferences.filters.category) &&
+      (preferences.filters.support === 'all' || expense.document_support_status === preferences.filters.support) &&
+      (preferences.filters.review === 'all' || expense.fiscal_review_status === preferences.filters.review) &&
+      (preferences.filters.risk === 'all' || expense.fiscal_risk_level === preferences.filters.risk) &&
+      matchesSearchQuery(preferences.searchQuery, [
         expense.display_code,
         expense.id,
         expense.expense_date,
@@ -61,8 +76,21 @@ export function ExpensesList({
         expense.total,
         expense.notes,
       ]),
-    )
-  }, [expenses, searchQuery])
+    ).sort((left, right) => {
+      const comparison = preferences.sortField === 'code'
+        ? compareText(left.display_code ?? left.id, right.display_code ?? right.id)
+        : preferences.sortField === 'supplier'
+          ? compareText(left.supplier_name, right.supplier_name)
+          : preferences.sortField === 'category'
+            ? compareText(getExpenseCategoryLabel(left.category), getExpenseCategoryLabel(right.category))
+            : preferences.sortField === 'total'
+              ? compareNumber(left.total, right.total)
+              : preferences.sortField === 'risk'
+                ? compareText(getExpenseFiscalRiskLevelLabel(left.fiscal_risk_level), getExpenseFiscalRiskLevelLabel(right.fiscal_risk_level))
+                : compareDate(left.expense_date, right.expense_date)
+      return applySortDirection(comparison, preferences.sortDirection)
+    })
+  }, [expenses, preferences])
 
   return (
     <section className="data-section cc-module-list-section cc-expenses-list-section">
@@ -73,13 +101,60 @@ export function ExpensesList({
         </div>
       </div>
 
-      <SearchBar
-        label="Buscar gasto"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Código, proveedor, descripción, categoría o riesgo"
+      <ListToolbar
+        storageKey="costaclean-list-preferences-expenses"
+        searchLabel="Buscar gasto"
+        searchPlaceholder="Código, proveedor, descripción, categoría o riesgo"
         resultCount={filteredExpenses.length}
         totalCount={expenses.length}
+        sortOptions={[
+          { value: 'expense_date', label: 'Fecha del gasto' },
+          { value: 'code', label: 'Código' },
+          { value: 'supplier', label: 'Proveedor' },
+          { value: 'category', label: 'Categoría' },
+          { value: 'total', label: 'Importe total' },
+          { value: 'risk', label: 'Riesgo fiscal' },
+        ]}
+        defaultPreferences={defaultPreferences}
+        filters={[
+          {
+            key: 'category',
+            label: 'Categoría',
+            value: preferences.filters.category ?? 'all',
+            options: [{ value: 'all', label: 'Todas' }, ...expenseCategories.map((category) => ({
+              value: category,
+              label: getExpenseCategoryLabel(category),
+            }))],
+          },
+          {
+            key: 'support',
+            label: 'Soporte',
+            value: preferences.filters.support ?? 'all',
+            options: [{ value: 'all', label: 'Todos' }, ...expenseDocumentSupportStatuses.map((status) => ({
+              value: status,
+              label: getExpenseDocumentSupportStatusLabel(status),
+            }))],
+          },
+          {
+            key: 'review',
+            label: 'Revisión',
+            value: preferences.filters.review ?? 'all',
+            options: [{ value: 'all', label: 'Todas' }, ...expenseFiscalReviewStatuses.map((status) => ({
+              value: status,
+              label: getExpenseFiscalReviewStatusLabel(status),
+            }))],
+          },
+          {
+            key: 'risk',
+            label: 'Riesgo',
+            value: preferences.filters.risk ?? 'all',
+            options: [{ value: 'all', label: 'Todos' }, ...expenseFiscalRiskLevels.map((risk) => ({
+              value: risk,
+              label: getExpenseFiscalRiskLevelLabel(risk),
+            }))],
+          },
+        ]}
+        onChange={setPreferences}
       />
 
       {error ? (

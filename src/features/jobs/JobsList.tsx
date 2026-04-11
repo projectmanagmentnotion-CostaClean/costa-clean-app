@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { matchesSearchQuery } from '../documents/search'
 import type { JobListItem } from './types'
+import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface JobsListProps {
   jobs: JobListItem[]
@@ -21,11 +22,13 @@ export function JobsList({
   selectedJobId,
   onSelectJob,
 }: JobsListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
+  const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'all' }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job) =>
-      matchesSearchQuery(searchQuery, [
+      (preferences.filters.status === 'all' || job.status === preferences.filters.status) &&
+      matchesSearchQuery(preferences.searchQuery, [
         job.display_code,
         job.id,
         job.client_name,
@@ -44,8 +47,19 @@ export function JobsList({
         job.scheduled_date,
         job.notes,
       ]),
-    )
-  }, [jobs, searchQuery])
+    ).sort((left, right) => {
+      const comparison = preferences.sortField === 'code'
+        ? compareText(left.display_code ?? left.id, right.display_code ?? right.id)
+        : preferences.sortField === 'client'
+          ? compareText(left.client_name ?? left.client_display_code ?? left.client_id, right.client_name ?? right.client_display_code ?? right.client_id)
+          : preferences.sortField === 'service'
+            ? compareText(getJobPrimaryReference(left), getJobPrimaryReference(right))
+            : preferences.sortField === 'status'
+              ? compareText(getDisplayStatusLabel(left.status), getDisplayStatusLabel(right.status))
+              : compareDate(left.scheduled_date, right.scheduled_date)
+      return applySortDirection(comparison, preferences.sortDirection)
+    })
+  }, [jobs, preferences])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -56,13 +70,33 @@ export function JobsList({
         </div>
       </div>
 
-      <SearchBar
-        label="Buscar servicio"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Servicio, cliente, propiedad, código interno, estado o fecha"
+      <ListToolbar
+        storageKey="costaclean-list-preferences-jobs"
+        searchLabel="Buscar servicio"
+        searchPlaceholder="Servicio, cliente, propiedad, código interno, estado o fecha"
         resultCount={filteredJobs.length}
         totalCount={jobs.length}
+        sortOptions={[
+          { value: 'scheduled_date', label: 'Fecha programada' },
+          { value: 'code', label: 'Código' },
+          { value: 'client', label: 'Cliente' },
+          { value: 'service', label: 'Servicio' },
+          { value: 'status', label: 'Estado' },
+        ]}
+        defaultPreferences={defaultPreferences}
+        filters={[{
+          key: 'status',
+          label: 'Estado',
+          value: preferences.filters.status ?? 'all',
+          options: [
+            { value: 'all', label: 'Todos' },
+            { value: 'scheduled', label: 'Programado' },
+            { value: 'in_progress', label: 'En curso' },
+            { value: 'completed', label: 'Completado' },
+            { value: 'cancelled', label: 'Cancelado' },
+          ],
+        }]}
+        onChange={setPreferences}
       />
 
       {error ? (

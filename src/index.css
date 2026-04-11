@@ -152,6 +152,8 @@
   --cc-surface-emphasis-strong: rgba(7, 95, 136, 0.14);
   --cc-surface-warning: rgba(154, 91, 0, 0.12);
   --cc-surface-success: rgba(8, 127, 91, 0.11);
+  --cc-control-shadow: 0 6px 16px rgba(17, 73, 103, 0.08);
+  --cc-control-shadow-hover: 0 10px 22px rgba(17, 73, 103, 0.12);
   --cc-shell-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 252, 255, 0.97)),
     radial-gradient(circle at top left, rgba(11, 131, 180, 0.12), transparent 34%);

@@ -7514,6 +7514,217 @@
   color: var(--warning);
 }
 
+/* Sprint 5.3: minimal shared-control polish and branded summary-card unification. */
+:root[data-theme="light"] .primary-button,
+:root[data-theme="light"] .secondary-button,
+:root[data-theme="light"] .cc-module-filter-bar .secondary-button,
+:root[data-theme="light"] .cc-list-toolbar__reset,
+:root[data-theme="light"] .cc-shell-nav__back,
+:root[data-theme="light"] .cc-theme-toggle,
+:root[data-theme="light"] .cc-alerts-bell__button,
+:root[data-theme="light"] .cc-shell-subnav--top .cc-shell-subnav__button,
+:root[data-theme="light"] .cc-bottom-dock__button {
+  min-height: 40px;
+  border-radius: 14px;
+  border-width: 1px;
+  box-shadow: none;
+  letter-spacing: -0.005em;
+}
+
+:root[data-theme="light"] .primary-button {
+  border: 1px solid rgba(7, 95, 136, 0.24);
+  background:
+    linear-gradient(180deg, #0b83b4, #076b98);
+  box-shadow: 0 8px 18px rgba(7, 95, 136, 0.16);
+}
+
+:root[data-theme="light"] .secondary-button,
+:root[data-theme="light"] .cc-list-toolbar__reset,
+:root[data-theme="light"] .cc-module-filter-bar .secondary-button {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 252, 255, 0.96));
+  border-color: rgba(11, 131, 180, 0.20);
+  color: var(--brand-ink);
+}
+
+:root[data-theme="light"] .primary-button:hover,
+:root[data-theme="light"] .secondary-button:hover,
+:root[data-theme="light"] .cc-list-toolbar__reset:hover,
+:root[data-theme="light"] .cc-module-filter-bar .secondary-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(7, 95, 136, 0.30);
+  box-shadow: var(--cc-control-shadow-hover);
+}
+
+:root[data-theme="light"] .cc-shell-nav__sync,
+:root[data-theme="light"] .cc-theme-toggle,
+:root[data-theme="light"] .cc-alerts-bell__button,
+:root[data-theme="light"] .cc-shell-nav__back,
+:root[data-theme="light"] .cc-shell-nav__current {
+  border-color: rgba(11, 131, 180, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 251, 254, 0.94));
+}
+
+:root[data-theme="light"] .cc-shell-nav__sync,
+:root[data-theme="light"] .cc-theme-toggle,
+:root[data-theme="light"] .cc-shell-nav__back {
+  min-height: 36px;
+  padding-inline: 11px;
+}
+
+:root[data-theme="light"] .cc-alerts-bell__button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+}
+
+:root[data-theme="light"] .cc-theme-toggle__icon {
+  width: 20px;
+  height: 20px;
+}
+
+:root[data-theme="light"] .cc-list-toolbar {
+  gap: 10px;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__controls,
+:root[data-theme="light"] .cc-module-filter-bar {
+  padding: 10px;
+  border-radius: 18px;
+  border-color: rgba(11, 131, 180, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 250, 253, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.90);
+}
+
+:root[data-theme="light"] .form-field input,
+:root[data-theme="light"] .form-field select,
+:root[data-theme="light"] .form-field textarea,
+:root[data-theme="light"] .cc-list-toolbar__field select,
+:root[data-theme="light"] .cc-line-editor-row__concept input,
+:root[data-theme="light"] .cc-line-editor-row__field input {
+  min-height: 44px;
+  border-radius: 13px;
+  border-color: rgba(11, 131, 180, 0.20);
+  background:
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+:root[data-theme="light"] .form-field textarea {
+  min-height: 112px;
+}
+
+:root[data-theme="light"] .form-field input::placeholder,
+:root[data-theme="light"] .form-field textarea::placeholder {
+  color: rgba(82, 103, 122, 0.70);
+}
+
+:root[data-theme="light"] .form-field > span:first-child,
+:root[data-theme="light"] .form-field span,
+:root[data-theme="light"] .cc-list-toolbar__field span,
+:root[data-theme="light"] .cc-module-filter-bar__eyebrow {
+  color: var(--muted-strong);
+  font-weight: 800;
+}
+
+:root[data-theme="light"] .cc-dashboard-overview__eyebrow,
+:root[data-theme="light"] .cc-dashboard-panel__label,
+:root[data-theme="light"] .cc-kpi-card__label,
+:root[data-theme="light"] .cc-dashboard-alert__label,
+:root[data-theme="light"] .cc-dashboard-summary-card__label,
+:root[data-theme="light"] .cc-dashboard-chip,
+:root[data-theme="light"] .lead-badge,
+:root[data-theme="light"] .cc-expense-chip,
+:root[data-theme="light"] .cc-quarterly-status-pill,
+:root[data-theme="light"] .cc-alert-center-card__badge,
+:root[data-theme="light"] .invoice-kicker,
+:root[data-theme="light"] .cc-invoice-preview__pill {
+  min-height: 24px;
+  border-radius: 999px;
+  border-color: rgba(11, 131, 180, 0.18);
+  background: rgba(11, 131, 180, 0.09);
+  color: var(--accent-strong);
+  box-shadow: none;
+  letter-spacing: 0.06em;
+}
+
+:root[data-theme="light"] .cc-dashboard-summary-card,
+:root[data-theme="light"] .cc-dashboard-stat,
+:root[data-theme="light"] .cc-kpi-card,
+:root[data-theme="light"] .cc-dashboard-panel,
+:root[data-theme="light"] .cc-state-card,
+:root[data-theme="light"] .status-card,
+:root[data-theme="light"] .cc-expenses-summary .cc-kpi-card,
+:root[data-theme="light"] .cc-quarterly-persistence__card,
+:root[data-theme="light"] .cc-annual-breakdown-card,
+:root[data-theme="light"] .cc-dashboard-header__meta-card {
+  border-color: rgba(11, 131, 180, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(244, 250, 253, 0.96));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 10px 24px rgba(17, 73, 103, 0.08);
+}
+
+:root[data-theme="light"] .cc-kpi-card--finance,
+:root[data-theme="light"] .cc-kpi-card--executive,
+:root[data-theme="light"] .cc-dashboard-panel--spotlight {
+  border-color: rgba(7, 95, 136, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(232, 246, 252, 0.96));
+}
+
+:root[data-theme="light"] .cc-kpi-card--warning,
+:root[data-theme="light"] .cc-dashboard-alert--warning,
+:root[data-theme="light"] .cc-quarterly-checklist__item--warning,
+:root[data-theme="light"] .cc-alert-center-card--warning {
+  border-color: rgba(154, 91, 0, 0.30);
+  background:
+    radial-gradient(circle at top right, rgba(154, 91, 0, 0.15), transparent 34%),
+    linear-gradient(180deg, #ffffff, #fff6e4);
+}
+
+:root[data-theme="light"] .cc-kpi-card--success,
+:root[data-theme="light"] .cc-quarterly-status-pill--success {
+  border-color: rgba(8, 127, 91, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(8, 127, 91, 0.12), transparent 34%),
+    linear-gradient(180deg, #ffffff, #f0fbf7);
+}
+
+:root[data-theme="light"] .cc-page-topline__title,
+:root[data-theme="light"] .cc-dashboard-overview__title,
+:root[data-theme="light"] .cc-dashboard-block__header h2,
+:root[data-theme="light"] .cc-dashboard-subsection__header h3,
+:root[data-theme="light"] .cc-master-page__hero h1,
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero h1,
+:root[data-theme="light"] .page-header-actions h1,
+:root[data-theme="light"] .page-header-actions h2,
+:root[data-theme="light"] .section-header h1,
+:root[data-theme="light"] .section-header h2,
+:root[data-theme="light"] .section-header h3,
+:root[data-theme="light"] .cc-document-screen__title,
+:root[data-theme="light"] .cc-shell-nav__title {
+  color: var(--brand-ink);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .cc-shell-subnav--top .cc-shell-subnav__button,
+:root[data-theme="light"] .cc-bottom-dock__button {
+  color: var(--muted-strong);
+}
+
+:root[data-theme="light"] .cc-shell-subnav--top .cc-shell-subnav__button.is-active,
+:root[data-theme="light"] .cc-bottom-dock__button.is-active {
+  border-color: rgba(11, 131, 180, 0.24);
+  background: rgba(11, 131, 180, 0.09);
+  color: var(--accent-strong);
+}
+
 /* Sprint 5.2: final light-only coherence layer for late dark-inherited surfaces. */
 :root[data-theme="light"] .cc-dashboard-header__meta-card,
 :root[data-theme="light"] .cc-dashboard-exec__intro,

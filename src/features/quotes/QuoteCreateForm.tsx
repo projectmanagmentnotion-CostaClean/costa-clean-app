@@ -3,6 +3,7 @@ import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
+import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
@@ -99,14 +100,6 @@ export function QuoteCreateForm({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSubmitError('Debes seleccionar un cliente.')
         return
@@ -120,14 +113,8 @@ export function QuoteCreateForm({
         return
       }
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/quotes`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await saveQuoteWithLines(
+        {
           id: quoteId,
           client_id: form.client_id,
           property_id: form.property_id || null,
@@ -136,30 +123,9 @@ export function QuoteCreateForm({
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/quote_lines`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(linePayloads),
-      })
-
-      if (!linesResponse.ok) {
-        const errorText = await linesResponse.text()
-        setSubmitError(`Presupuesto creado, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
-        return
-      }
+        linePayloads,
+      )
 
       await onCreated()
       setForm({

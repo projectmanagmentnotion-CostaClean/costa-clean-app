@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
+import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
@@ -300,14 +301,6 @@ export function InvoiceCreateForm({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.job_id) {
         setSubmitError('Debes seleccionar un servicio.')
         return
@@ -331,14 +324,8 @@ export function InvoiceCreateForm({
         return
       }
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/invoices`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await saveInvoiceWithLines(
+        {
           id: invoiceId,
           job_id: form.job_id,
           client_id: form.client_id,
@@ -348,30 +335,9 @@ export function InvoiceCreateForm({
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/invoice_lines`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(linePayloads),
-      })
-
-      if (!linesResponse.ok) {
-        const errorText = await linesResponse.text()
-        setSubmitError(`Factura creada, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
-        return
-      }
+        linePayloads,
+      )
 
       await onCreated()
 

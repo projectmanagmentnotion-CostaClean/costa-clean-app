@@ -1,6 +1,6 @@
 ﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { InvoiceListItem } from '../invoices/types'
-import { syncInvoicePaidStatus } from './paymentInvoiceStatus'
+import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 
 interface PaymentCreateFormProps {
   invoices: InvoiceListItem[]
@@ -88,14 +88,6 @@ export function PaymentCreateForm({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.invoice_id) {
         setSubmitError('Debes seleccionar una factura.')
         return
@@ -113,35 +105,25 @@ export function PaymentCreateForm({
         return
       }
 
+      if (amount <= 0) {
+        setSubmitError('El importe del pago debe ser mayor que cero.')
+        return
+      }
+
       const paymentId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? `PAYMENT-${crypto.randomUUID()}`
           : `PAYMENT-${Date.now()}`
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/payments`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: paymentId,
-          invoice_id: form.invoice_id,
-          payment_date: form.payment_date,
-          amount: Number(formatMoneyInput(amount)),
-          payment_method: form.payment_method || null,
-          notes: form.notes.trim() || null,
-        }),
+      await savePaymentAndRefreshInvoice({
+        id: paymentId,
+        invoice_id: form.invoice_id,
+        payment_date: form.payment_date,
+        amount: Number(formatMoneyInput(amount)),
+        payment_method: form.payment_method || null,
+        notes: form.notes.trim() || null,
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      await syncInvoicePaidStatus(form.invoice_id)
       await onCreated()
 
       setForm({

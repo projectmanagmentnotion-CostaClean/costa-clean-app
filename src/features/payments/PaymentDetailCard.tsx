@@ -2,7 +2,7 @@
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
-import { syncInvoicePaidStatus } from './paymentInvoiceStatus'
+import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -120,14 +120,6 @@ export function PaymentDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.invoice_id) {
         setSaveError('Debes seleccionar una factura.')
         return
@@ -145,36 +137,19 @@ export function PaymentDetailCard({
         return
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/payments?id=eq.${encodeURIComponent(payment.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            invoice_id: form.invoice_id,
-            payment_date: form.payment_date,
-            amount: Number(formatMoneyInput(amount)),
-            payment_method: form.payment_method || null,
-            notes: form.notes.trim() || null,
-          }),
-        },
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+      if (amount <= 0) {
+        setSaveError('El importe del pago debe ser mayor que cero.')
         return
       }
 
-      const previousInvoiceId = payment.invoice_id
-      await syncInvoicePaidStatus(previousInvoiceId)
-      if (form.invoice_id !== previousInvoiceId) {
-        await syncInvoicePaidStatus(form.invoice_id)
-      }
+      await savePaymentAndRefreshInvoice({
+        id: payment.id,
+        invoice_id: form.invoice_id,
+        payment_date: form.payment_date,
+        amount: Number(formatMoneyInput(amount)),
+        payment_method: form.payment_method || null,
+        notes: form.notes.trim() || null,
+      })
 
       await onPaymentUpdated()
       setSuccessMessage('Pago actualizado correctamente.')

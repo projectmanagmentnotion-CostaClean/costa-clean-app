@@ -8,6 +8,7 @@ import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOption
 import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
+import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
@@ -299,14 +300,6 @@ function QuoteDetailCardContent({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSaveError('Debes seleccionar un cliente.')
         return
@@ -319,65 +312,19 @@ function QuoteDetailCardContent({
         return
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/quotes?id=eq.${encodeURIComponent(hydratedQuote.id)}`,
+      await saveQuoteWithLines(
         {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: form.client_id,
-            property_id: form.property_id || null,
-            status: form.status,
-            subtotal: subtotalValue,
-            tax_amount: taxAmountValue,
-            total: totalValue,
-            notes: form.notes.trim() || null,
-          }),
+          id: hydratedQuote.id,
+          client_id: form.client_id,
+          property_id: form.property_id || null,
+          status: form.status,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
         },
+        linePayloads,
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      const deleteLinesResponse = await fetch(
-        `${supabaseUrl}/rest/v1/quote_lines?quote_id=eq.${encodeURIComponent(hydratedQuote.id)}`,
-        {
-          method: 'DELETE',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        },
-      )
-
-      if (!deleteLinesResponse.ok) {
-        const errorText = await deleteLinesResponse.text()
-        setSaveError(`Presupuesto actualizado, pero no se pudieron reemplazar las líneas. REST ${deleteLinesResponse.status}: ${errorText || deleteLinesResponse.statusText}`)
-        return
-      }
-
-      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/quote_lines`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(linePayloads),
-      })
-
-      if (!linesResponse.ok) {
-        const errorText = await linesResponse.text()
-        setSaveError(`Presupuesto actualizado, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
-        return
-      }
 
       await onQuoteUpdated()
       setSuccessMessage('Presupuesto actualizado correctamente.')

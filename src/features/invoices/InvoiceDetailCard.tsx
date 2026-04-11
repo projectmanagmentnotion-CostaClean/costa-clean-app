@@ -4,6 +4,7 @@ import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -429,14 +430,6 @@ export function InvoiceDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.job_id) {
         setSaveError('Debes seleccionar un servicio.')
         return
@@ -459,66 +452,20 @@ export function InvoiceDetailCard({
         return
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/invoices?id=eq.${encodeURIComponent(invoice.id)}`,
+      await saveInvoiceWithLines(
         {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            job_id: form.job_id,
-            client_id: form.client_id,
-            issue_date: form.issue_date,
-            status: form.status,
-            subtotal: subtotalValue,
-            tax_amount: taxAmountValue,
-            total: totalValue,
-            notes: form.notes.trim() || null,
-          }),
+          id: invoice.id,
+          job_id: form.job_id,
+          client_id: form.client_id,
+          issue_date: form.issue_date,
+          status: form.status,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
         },
+        linePayloads,
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      const deleteLinesResponse = await fetch(
-        `${supabaseUrl}/rest/v1/invoice_lines?invoice_id=eq.${encodeURIComponent(invoice.id)}`,
-        {
-          method: 'DELETE',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        },
-      )
-
-      if (!deleteLinesResponse.ok) {
-        const errorText = await deleteLinesResponse.text()
-        setSaveError(`Factura actualizada, pero no se pudieron reemplazar las líneas. REST ${deleteLinesResponse.status}: ${errorText || deleteLinesResponse.statusText}`)
-        return
-      }
-
-      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/invoice_lines`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(linePayloads),
-      })
-
-      if (!linesResponse.ok) {
-        const errorText = await linesResponse.text()
-        setSaveError(`Factura actualizada, pero no se pudieron guardar las líneas. REST ${linesResponse.status}: ${errorText || linesResponse.statusText}`)
-        return
-      }
 
       await onInvoiceUpdated()
       setSuccessMessage('Factura actualizada correctamente.')

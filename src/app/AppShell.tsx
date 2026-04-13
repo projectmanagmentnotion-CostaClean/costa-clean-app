@@ -2,9 +2,18 @@
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
-import type { NavigationGuardOptions } from './navigationGuard'
 import type { SyncStatus } from './syncStatus'
 import type { AppTheme } from './theme'
+import { useDashboardMetrics } from './dashboardMetrics'
+import { useClosingSummaries } from './useClosingSummaries'
+import { useShellNavigation } from './useShellNavigation'
+import {
+  combineRefreshScopes,
+  getRefreshScopeForTable,
+  isBrowserOnline,
+  realtimeTables,
+  type RefreshScope,
+} from './refreshInvalidation'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -42,7 +51,6 @@ import { buildInvoiceCreatePrefillFromJob, type InvoiceCreatePrefill } from '../
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import { listExpenses } from '../features/expenses/expenseApi'
-import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
 import type { PaymentListItem } from '../features/payments/types'
 import {
   applyDashboardKpiAction,
@@ -50,10 +58,10 @@ import {
   type DashboardKpiActionId,
 } from '../features/dashboard/kpiActions'
 import { listQuarterlyClosings, saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
-import { buildQuarterlyClosingSnapshot, buildQuarterlyClosingSummary } from '../features/quarterlyClosing/quarterlyClosingSummary'
+import { buildQuarterlyClosingSnapshot } from '../features/quarterlyClosing/quarterlyClosingSummary'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import { listAnnualClosings, saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
-import { buildAnnualClosingSnapshot, buildAnnualClosingSummary } from '../features/annualClosing/annualClosingSummary'
+import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClosingSummary'
 import type { AnnualClosingIncidence, AnnualClosingRecord } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
@@ -63,50 +71,9 @@ const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 const foregroundRefreshStaleTimeMs = 30_000
 const realtimeRefreshDelayMs = 900
 
-type RefreshScope = 'all' | 'billing' | 'operations' | 'closings'
-
-interface PendingGuardedAction {
-  action: () => void
-  title: string
-  description: string
-  confirmLabel: string
-}
-
 interface AppShellProps {
   theme: AppTheme
   onToggleTheme: () => void
-}
-
-const realtimeTables = [
-  'leads',
-  'clients',
-  'properties',
-  'quotes',
-  'quote_lines',
-  'jobs',
-  'invoices',
-  'invoice_lines',
-  'payments',
-  'expenses',
-  'quarterly_closings',
-  'annual_closings',
-] as const
-
-function isBrowserOnline(): boolean {
-  return typeof navigator === 'undefined' ? true : navigator.onLine
-}
-
-function combineRefreshScopes(left: RefreshScope | null, right: RefreshScope): RefreshScope {
-  if (!left || left === right) return right
-  if (left === 'all' || right === 'all') return 'all'
-  return 'all'
-}
-
-function getRefreshScopeForTable(table: string): RefreshScope {
-  if (table === 'quarterly_closings' || table === 'annual_closings') return 'closings'
-  if (table === 'leads' || table === 'clients' || table === 'properties') return 'operations'
-  if (table === 'expenses') return 'all'
-  return 'billing'
 }
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
@@ -172,33 +139,6 @@ function buildServiceDescription(
     : serviceType
 }
 
-function getExpenseMonthKey(dateValue: string): string | null {
-  if (!dateValue) return null
-  const date = new Date(`${dateValue}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return null
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  return `${year}-${month}`
-}
-
-function getExpenseQuarterKey(dateValue: string): string | null {
-  if (!dateValue) return null
-  const date = new Date(`${dateValue}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return null
-  const year = date.getFullYear()
-  const quarter = Math.floor(date.getMonth() / 3) + 1
-  return `${year}-Q${quarter}`
-}
-
-function getMonthKey(dateValue: string): string | null {
-  if (!dateValue) return null
-  const date = new Date(`${dateValue}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return null
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  return `${year}-${month}`
-}
-
 function getDateKey(dateValue: string): string | null {
   if (!dateValue) return null
   const normalizedValue = dateValue.length > 10 ? dateValue : `${dateValue}T00:00:00`
@@ -218,17 +158,6 @@ function createDayKey(offsetDays = 0): string {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
-}
-
-function isOlderThanDays(dateValue: string, days: number): boolean {
-  if (!dateValue) return false
-  const normalizedValue = dateValue.length > 10 ? dateValue : `${dateValue}T00:00:00`
-  const date = new Date(normalizedValue)
-  if (Number.isNaN(date.getTime())) return false
-  const threshold = new Date()
-  threshold.setHours(0, 0, 0, 0)
-  threshold.setDate(threshold.getDate() - days)
-  return date < threshold
 }
 
 function ShellLoadingState({ currentView }: { currentView: AppView }) {
@@ -282,14 +211,23 @@ function ShellLoadingState({ currentView }: { currentView: AppView }) {
 }
 
 export function AppShell({ theme, onToggleTheme }: AppShellProps) {
-  const [currentView, setCurrentView] = useState<AppView>('dashboard')
+  const {
+    currentView,
+    unsavedChangesContext,
+    pendingGuardedAction,
+    navigationBackTarget,
+    updateUnsavedChanges,
+    commitViewChange,
+    runWithNavigationGuard,
+    handleConfirmGuardedAction,
+    navigateToView,
+    navigateBack,
+    setPendingGuardedAction,
+  } = useShellNavigation()
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
-  const [unsavedChangesContext, setUnsavedChangesContext] = useState<string | null>(null)
-  const [pendingGuardedAction, setPendingGuardedAction] = useState<PendingGuardedAction | null>(null)
-  const [navigationBackTarget, setNavigationBackTarget] = useState<AppView | null>(null)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
@@ -330,7 +268,6 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const isRefreshingRef = useRef(false)
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
-  const viewBackStackRef = useRef<AppView[]>([])
 
   const loadLeads = useCallback(async () => {
     try {
@@ -777,102 +714,16 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const jobById = useMemo(() => new Map(jobs.map((job) => [job.id, job])), [jobs])
   const invoiceById = useMemo(() => new Map(invoices.map((invoice) => [invoice.id, invoice])), [invoices])
 
-  const dashboardMetrics = useMemo(() => {
-    const invoicePaidById = new Map<string, number>()
-    for (const payment of payments) {
-      const currentPaid = invoicePaidById.get(payment.invoice_id) ?? 0
-      invoicePaidById.set(payment.invoice_id, currentPaid + Number(payment.amount || 0))
-    }
-
-    const invoiceIdsWithLinks = new Set(invoices.map((invoice) => invoice.job_id))
-    const quoteIdsWithJobs = new Set(jobs.map((job) => job.quote_id).filter(Boolean))
-    const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
-    const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
-    const pendingInvoicesCount = invoices.filter((invoice) => invoice.status !== 'paid').length
-    const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
-    const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
-    const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => invoice.status !== 'paid' && isOlderThanDays(invoice.issue_date, 7)).length
-    const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
-    const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
-    const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
-    const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
-    const expensesWithReceiptCount = expenses.filter((expense) => Boolean(expense.receipt_file_path)).length
-    const expensesWithoutReceiptCount = expenses.filter((expense) => !expense.receipt_file_path).length
-    const deductibleExpensesCount = expenses.filter((expense) => expense.is_deductible).length
-    const expenseFiscalSummary = buildExpenseFiscalSummary(expenses)
-
-    const now = new Date()
-    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const currentQuarterKey = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`
-    const todayKey = createDayKey(0)
-    const tomorrowKey = createDayKey(1)
-    const invoicedThisMonthTotal = invoices
-      .filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
-      .reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
-    const collectedThisMonthTotal = payments
-      .filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
-      .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-    const outstandingReceivablesTotal = invoices.reduce((sum, invoice) => {
-      if (invoice.status === 'paid') {
-        return sum
-      }
-
-      const invoiceTotal = Number(invoice.total || 0)
-      const paidAmount = invoicePaidById.get(invoice.id) ?? 0
-      const remainingAmount = Math.max(invoiceTotal - paidAmount, 0)
-      return sum + remainingAmount
-    }, 0)
-
-    const expensesThisMonthTotal = expenses
-      .filter((expense) => getExpenseMonthKey(expense.expense_date) === currentMonthKey)
-      .reduce((sum, expense) => sum + Number(expense.total || 0), 0)
-
-    const expensesThisQuarterTotal = expenses
-      .filter((expense) => getExpenseQuarterKey(expense.expense_date) === currentQuarterKey)
-      .reduce((sum, expense) => sum + Number(expense.total || 0), 0)
-
-    const jobsScheduledTodayCount = jobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && job.status !== 'cancelled').length
-    const jobsScheduledTomorrowCount = jobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && job.status !== 'cancelled').length
-
-    return {
-      leadsCount: leads.length,
-      clientsCount: clients.length,
-      propertiesCount: properties.length,
-      quotesCount: quotes.length,
-      jobsCount: jobs.length,
-      invoicesCount: invoices.length,
-      paymentsCount: payments.length,
-      expensesCount: expenses.length,
-      openQuotesCount,
-      scheduledJobsCount,
-      pendingInvoicesCount,
-      invoicedThisMonthTotal,
-      collectedThisMonthTotal,
-      outstandingReceivablesTotal,
-      completedJobsWithoutInvoiceCount,
-      acceptedQuotesWithoutJobCount,
-      unpaidInvoicesOlderThan7DaysCount,
-      sentQuotesOlderThan5DaysCount,
-      completedJobsWithoutInvoiceOlderThan2DaysCount,
-      jobsScheduledTodayCount,
-      jobsScheduledTomorrowCount,
-      totalInvoiced,
-      totalCollected,
-      totalExpenses,
-      expensesThisMonthTotal,
-      expensesThisQuarterTotal,
-      expensesWithReceiptCount,
-      expensesWithoutReceiptCount,
-      deductibleExpensesCount,
-      estimatedDeductibleVat: expenseFiscalSummary.estimatedDeductibleVat,
-      estimatedDeductibleBase: expenseFiscalSummary.estimatedDeductibleBase,
-      fiscalReviewExpensesCount: expenseFiscalSummary.needsReviewCount,
-      fiscalRiskExpensesCount: expenseFiscalSummary.mediumHighRiskCount,
-      expensesMissingValidVatInvoiceCount: expenseFiscalSummary.missingValidVatInvoiceCount,
-      expensesZeroEstimatedVatCount: expenseFiscalSummary.zeroEstimatedVatCount,
-    }
-  }, [leads, clients, properties, quotes, jobs, invoices, expenses, payments])
+  const dashboardMetrics = useDashboardMetrics({
+    leads,
+    clients,
+    properties,
+    quotes,
+    jobs,
+    invoices,
+    expenses,
+    payments,
+  })
 
   const propertiesWithCodes = useMemo(
     () => properties.map((property) => ({ ...property, client_display_code: clientCodeById.get(property.client_id) ?? property.client_id })),
@@ -965,105 +816,20 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     [payments, invoiceById],
   )
 
-  const quarterlyClosingSummaryByPeriod = useMemo(() => {
-    const periodKeys = new Set<string>()
-
-    for (const invoice of invoicesWithCodes) {
-      const date = new Date(`${invoice.issue_date}T00:00:00`)
-      if (!Number.isNaN(date.getTime())) {
-        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
-      }
-    }
-
-    for (const payment of paymentsWithCodes) {
-      const date = new Date(`${payment.payment_date}T00:00:00`)
-      if (!Number.isNaN(date.getTime())) {
-        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
-      }
-    }
-
-    for (const expense of expenses) {
-      const fiscalYear = expense.fiscal_year
-      const fiscalQuarter = expense.fiscal_quarter
-
-      if (fiscalYear && fiscalQuarter) {
-        periodKeys.add(`${fiscalYear}-Q${fiscalQuarter}`)
-        continue
-      }
-
-      const date = new Date(`${expense.expense_date}T00:00:00`)
-      if (!Number.isNaN(date.getTime())) {
-        periodKeys.add(`${date.getFullYear()}-Q${Math.floor(date.getMonth() / 3) + 1}`)
-      }
-    }
-
-    for (const closing of quarterlyClosings) {
-      periodKeys.add(`${closing.fiscal_year}-Q${closing.fiscal_quarter}`)
-    }
-
-    const now = new Date()
-    periodKeys.add(`${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`)
-
-    const summaryEntries = [...periodKeys]
-      .sort((left, right) => right.localeCompare(left))
-      .map((periodKey) => {
-        const [yearPart, quarterPart] = periodKey.split('-Q')
-        const fiscalYear = Number(yearPart)
-        const fiscalQuarter = Number(quarterPart)
-
-        return [
-          periodKey,
-          buildQuarterlyClosingSummary(
-            invoicesWithCodes,
-            paymentsWithCodes,
-            expenses,
-            fiscalYear,
-            fiscalQuarter,
-          ),
-        ] as const
-      })
-
-    return new Map(summaryEntries)
-  }, [expenses, invoicesWithCodes, paymentsWithCodes, quarterlyClosings])
-
-  const availableClosingYears = useMemo(() => {
-    const years = new Set<number>()
-
-    for (const periodKey of quarterlyClosingSummaryByPeriod.keys()) {
-      years.add(Number(periodKey.split('-Q')[0]))
-    }
-
-    years.add(new Date().getFullYear())
-    return [...years].sort((left, right) => right - left)
-  }, [quarterlyClosingSummaryByPeriod])
-
-  const annualClosingSummaryByYear = useMemo(() => {
-    const years = new Set<number>()
-
-    for (const periodKey of quarterlyClosingSummaryByPeriod.keys()) {
-      years.add(Number(periodKey.split('-Q')[0]))
-    }
-
-    for (const annualClosing of annualClosings) {
-      years.add(annualClosing.fiscal_year)
-    }
-
-    years.add(new Date().getFullYear())
-
-    return new Map(
-      [...years]
-        .sort((left, right) => right - left)
-        .map((fiscalYear) => [fiscalYear, buildAnnualClosingSummary(quarterlyClosingSummaryByPeriod, fiscalYear)] as const),
-    )
-  }, [annualClosings, quarterlyClosingSummaryByPeriod])
-
-  const availableAnnualClosingYears = useMemo(
-    () => [...annualClosingSummaryByYear.keys()].sort((left, right) => right - left),
-    [annualClosingSummaryByYear],
-  )
-
-  const currentFiscalYear = new Date().getFullYear()
-  const currentFiscalQuarter = Math.floor(new Date().getMonth() / 3) + 1
+  const {
+    quarterlyClosingSummaryByPeriod,
+    availableClosingYears,
+    annualClosingSummaryByYear,
+    availableAnnualClosingYears,
+    currentFiscalYear,
+    currentFiscalQuarter,
+  } = useClosingSummaries({
+    invoices: invoicesWithCodes,
+    payments: paymentsWithCodes,
+    expenses,
+    quarterlyClosings,
+    annualClosings,
+  })
 
   const automationAlerts = useMemo(
     () =>
@@ -1107,72 +873,6 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     () => applyPaymentFilter(paymentsWithCodes, moduleFilters.payments),
     [paymentsWithCodes, moduleFilters.payments],
   )
-
-  const updateUnsavedChanges = useCallback((hasUnsavedChanges: boolean, contextLabel = 'cambios sin guardar') => {
-    setUnsavedChangesContext(hasUnsavedChanges ? contextLabel : null)
-  }, [])
-
-  const commitViewChange = useCallback((view: AppView, options?: { replace?: boolean }) => {
-    if (view === currentView) return
-
-    if (!options?.replace) {
-      viewBackStackRef.current = [...viewBackStackRef.current, currentView].slice(-8)
-    }
-
-    setCurrentView(view)
-    setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
-  }, [currentView])
-
-  const runWithNavigationGuard = useCallback((action: () => void, options?: NavigationGuardOptions) => {
-    if (!unsavedChangesContext) {
-      action()
-      return
-    }
-
-    setPendingGuardedAction({
-      action,
-      title: options?.title ?? 'Salir sin guardar',
-      description: options?.description ?? `Hay ${unsavedChangesContext}. Si continúas, perderás esos cambios.`,
-      confirmLabel: options?.confirmLabel ?? 'Salir sin guardar',
-    })
-  }, [unsavedChangesContext])
-
-  const handleConfirmGuardedAction = useCallback(() => {
-    if (!pendingGuardedAction) return
-
-    const action = pendingGuardedAction.action
-    setPendingGuardedAction(null)
-    setUnsavedChangesContext(null)
-    action()
-  }, [pendingGuardedAction])
-
-  const navigateToView = useCallback((view: AppView) => {
-    if (view === currentView) return
-
-    runWithNavigationGuard(() => {
-      commitViewChange(view)
-    }, {
-      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si cambias de módulo ahora, perderás esos cambios.`,
-      confirmLabel: 'Cambiar de módulo',
-    })
-  }, [commitViewChange, currentView, runWithNavigationGuard, unsavedChangesContext])
-
-  const navigateBack = useCallback(() => {
-    const previousView = viewBackStackRef.current.at(-1) ?? 'dashboard'
-    if (previousView === currentView) {
-      setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
-      return
-    }
-
-    runWithNavigationGuard(() => {
-      viewBackStackRef.current.pop()
-      setCurrentView(previousView)
-      setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
-    }, {
-      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si vuelves ahora, perderás esos cambios.`,
-      confirmLabel: 'Volver',
-    })
-  }, [currentView, runWithNavigationGuard, unsavedChangesContext])
 
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
     const action = dashboardKpiActionConfig[actionId]

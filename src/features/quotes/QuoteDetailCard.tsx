@@ -8,7 +8,7 @@ import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOption
 import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
-import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import { saveQuoteWithLines, updateQuoteStatus as updateQuoteStatusRpc } from '../financial/financialWriteApi'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
@@ -232,32 +232,7 @@ function QuoteDetailCardContent({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/quotes?id=eq.${encodeURIComponent(hydratedQuote.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: nextStatus }),
-        },
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+      await updateQuoteStatusRpc(hydratedQuote.id, nextStatus)
 
       await onQuoteUpdated()
       setSuccessMessage(`Estado del presupuesto actualizado a ${getStatusLabel(nextStatus)}.`)

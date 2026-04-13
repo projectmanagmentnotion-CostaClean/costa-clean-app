@@ -63,3 +63,25 @@ export async function refreshInvoicePaymentStatus(invoiceId: string): Promise<vo
     'No se pudo sincronizar el estado de pago de la factura.',
   )
 }
+
+export async function updateQuoteStatus(
+  quoteId: string,
+  status: string,
+): Promise<void> {
+  await callFinancialRpc(
+    'update_quote_status',
+    { p_quote_id: quoteId, p_status: status },
+    'No se pudo actualizar el estado del presupuesto.',
+  )
+}
+
+export async function updateInvoiceStatus(
+  invoiceId: string,
+  status: string,
+): Promise<void> {
+  await callFinancialRpc(
+    'update_invoice_status',
+    { p_invoice_id: invoiceId, p_status: status },
+    'No se pudo actualizar el estado de la factura.',
+  )
+}

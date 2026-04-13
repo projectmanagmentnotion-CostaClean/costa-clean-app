@@ -22,6 +22,7 @@ function buildExpensePayload(expense: ExpenseListItem) {
     document_type: expense.document_type,
     document_support_status: expense.document_support_status,
     has_receipt_file: Boolean(expense.receipt_file_path),
+    receipt_file_path: expense.receipt_file_path,
     payment_method: expense.payment_method,
     payment_status: expense.payment_status,
     subtotal: Number(expense.subtotal || 0),

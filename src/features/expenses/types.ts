@@ -115,6 +115,14 @@ export interface ExpenseFiscalIntelligenceResult {
 export interface ExpenseFiscalIntelligenceResponse {
   result: ExpenseFiscalIntelligenceResult
   deterministic_precheck: ExpenseFiscalIntelligenceResult
+  document_context?: {
+    available: boolean
+    reason?: string | null
+    file_path?: string | null
+    content_type?: string | null
+    content_length?: number | null
+    kind?: string | null
+  }
   generated_at: string
   model: string
   source_version: string

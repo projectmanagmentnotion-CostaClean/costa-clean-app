@@ -1,4 +1,6 @@
 const sourceVersionFallback = 'spain-autonomo-expense-rules-2026-04-13'
+const expenseReceiptsBucket = 'expense-receipts'
+const maxDocumentBytes = 8 * 1024 * 1024
 
 const outputSchema = {
   type: 'object',
@@ -72,14 +74,233 @@ function buildSystemPrompt() {
   return [
     'Eres un asistente fiscal de apoyo para clasificar gastos de un autonomo en Espana que presta servicios de limpieza premium.',
     'Tu respuesta es una estimacion prudente para revision del usuario o su gestoria, no asesoramiento fiscal definitivo.',
-    'No uses OCR ni supongas contenido de documentos adjuntos. Interpreta solo los datos estructurados recibidos.',
+    'Si se aporta un documento del gasto, usalo solo para extraer senales fiscales relevantes del propio justificante.',
+    'Compara el documento con los datos estructurados recibidos: tipo de documento, proveedor, NIF/CIF, fecha, base, IVA, total y numero o referencia.',
+    'Si el documento parece ticket o recibo en lugar de factura, si faltan identificadores fiscales, si el IVA/base/total no cuadran, o si la calidad documental es debil, marca flags claros y baja la confianza.',
+    'No conviertas esta capacidad en OCR generico: limita la interpretacion al soporte fiscal del gasto analizado.',
     'Respeta el preanalisis determinista salvo que la descripcion estructurada justifique una postura mas conservadora.',
     'Aplica criterios conservadores: vinculacion con la actividad, soporte documental, registro y cautela especial para IVA.',
     'Para IVA, exige factura valida o deja el IVA deducible en cero o revision. En categorias de posible uso mixto, usa parcial o revision.',
     'No inventes datos. Si falta contexto, marca requires_review o gestoria_review.',
+    'Usa flags como document_receipt_not_invoice, document_tax_mismatch, document_total_mismatch, document_supplier_mismatch, document_missing_fiscal_identifier, document_unavailable o weak_document_support cuando proceda.',
     'La salida debe ser estrictamente JSON valido que cumpla el schema.',
     'Usa espanol profesional, breve y claro. No digas que algo esta aprobado legalmente o confirmado por AEAT.',
   ].join(' ')
+}
+
+function getSupabaseServerConfig() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    return null
+  }
+
+  return { supabaseUrl, serviceRoleKey }
+}
+
+function normalizeStoragePath(filePath) {
+  if (typeof filePath !== 'string') return null
+  const trimmedPath = filePath.trim()
+  if (!trimmedPath || trimmedPath.includes('..')) return null
+  return trimmedPath.replace(/^\/+/, '')
+}
+
+function getSupportedDocumentKind(contentType, filePath) {
+  const normalizedType = String(contentType || '').toLowerCase()
+  const normalizedPath = String(filePath || '').toLowerCase()
+
+  if (normalizedType.startsWith('image/') || /\.(png|jpe?g|webp)$/i.test(normalizedPath)) {
+    return 'image'
+  }
+
+  if (normalizedType.includes('pdf') || /\.pdf$/i.test(normalizedPath)) {
+    return 'pdf'
+  }
+
+  return 'unsupported'
+}
+
+async function loadExpenseDocument(expense) {
+  const filePath = normalizeStoragePath(expense?.receipt_file_path)
+
+  if (!filePath) {
+    return {
+      available: false,
+      reason: 'no_valid_receipt_file_path',
+    }
+  }
+
+  const config = getSupabaseServerConfig()
+  if (!config) {
+    return {
+      available: false,
+      file_path: filePath,
+      reason: 'missing_server_supabase_document_credentials',
+    }
+  }
+
+  const encodedPath = filePath.split('/').map(encodeURIComponent).join('/')
+  const response = await fetch(`${config.supabaseUrl}/storage/v1/object/${expenseReceiptsBucket}/${encodedPath}`, {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${config.serviceRoleKey}`,
+      apikey: config.serviceRoleKey,
+    },
+  })
+
+  if (!response.ok) {
+    return {
+      available: false,
+      file_path: filePath,
+      reason: `storage_${response.status}`,
+    }
+  }
+
+  const contentLength = Number(response.headers.get('content-length') || 0)
+  if (contentLength > maxDocumentBytes) {
+    return {
+      available: false,
+      file_path: filePath,
+      reason: 'document_too_large',
+      content_length: contentLength,
+    }
+  }
+
+  const arrayBuffer = await response.arrayBuffer()
+  if (arrayBuffer.byteLength > maxDocumentBytes) {
+    return {
+      available: false,
+      file_path: filePath,
+      reason: 'document_too_large',
+      content_length: arrayBuffer.byteLength,
+    }
+  }
+
+  const contentType = response.headers.get('content-type') || 'application/octet-stream'
+  const kind = getSupportedDocumentKind(contentType, filePath)
+
+  if (kind === 'unsupported') {
+    return {
+      available: false,
+      file_path: filePath,
+      reason: 'unsupported_document_type',
+      content_type: contentType,
+      content_length: arrayBuffer.byteLength,
+    }
+  }
+
+  const base64 = Buffer.from(arrayBuffer).toString('base64')
+
+  return {
+    available: true,
+    file_path: filePath,
+    content_type: contentType,
+    content_length: arrayBuffer.byteLength,
+    kind,
+    base64,
+  }
+}
+
+function buildDocumentSummary(documentContext) {
+  if (!documentContext?.available) {
+    return {
+      available: false,
+      reason: documentContext?.reason ?? 'no_document',
+      file_path: documentContext?.file_path ?? null,
+      content_type: documentContext?.content_type ?? null,
+      content_length: documentContext?.content_length ?? null,
+    }
+  }
+
+  return {
+    available: true,
+    file_path: documentContext.file_path,
+    content_type: documentContext.content_type,
+    content_length: documentContext.content_length,
+    kind: documentContext.kind,
+  }
+}
+
+function buildUserContent({ expense, deterministicPrecheck, sourceVersion, documentContext, includeDocument }) {
+  const documentSummary = buildDocumentSummary(documentContext)
+  const content = [
+    {
+      type: 'input_text',
+      text: JSON.stringify({
+        expense,
+        deterministic_precheck: deterministicPrecheck,
+        source_version: sourceVersion,
+        document_context: documentSummary,
+      }),
+    },
+  ]
+
+  if (includeDocument && documentContext?.available) {
+    if (documentContext.kind === 'image') {
+      content.push({
+        type: 'input_image',
+        image_url: `data:${documentContext.content_type};base64,${documentContext.base64}`,
+      })
+    }
+
+    if (documentContext.kind === 'pdf') {
+      content.push({
+        type: 'input_file',
+        filename: documentContext.file_path.split('/').at(-1) || 'expense-document.pdf',
+        file_data: `data:${documentContext.content_type};base64,${documentContext.base64}`,
+      })
+    }
+  }
+
+  return content
+}
+
+async function requestFiscalAnalysis({ model, expense, deterministicPrecheck, sourceVersion, documentContext, includeDocument }) {
+  const apiResponse = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: 'system',
+          content: [{ type: 'input_text', text: buildSystemPrompt() }],
+        },
+        {
+          role: 'user',
+          content: buildUserContent({
+            expense,
+            deterministicPrecheck,
+            sourceVersion,
+            documentContext,
+            includeDocument,
+          }),
+        },
+      ],
+      text: {
+        format: {
+          type: 'json_schema',
+          name: 'expense_fiscal_intelligence_result',
+          schema: outputSchema,
+          strict: true,
+        },
+      },
+    }),
+  })
+
+  const responseJson = await apiResponse.json()
+
+  if (!apiResponse.ok) {
+    const errorMessage = responseJson?.error?.message || 'OpenAI devolvio un error generando la estimacion fiscal.'
+    throw Object.assign(new Error(errorMessage), { statusCode: apiResponse.status })
+  }
+
+  const outputText = extractOutputText(responseJson)
+  return JSON.parse(outputText)
 }
 
 function isValidRequestBody(body) {
@@ -116,57 +337,49 @@ export default async function handler(req, res) {
   const model = process.env.OPENAI_EXPENSE_FISCAL_MODEL || 'gpt-4o-mini'
 
   try {
-    const apiResponse = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model,
-        input: [
-          {
-            role: 'system',
-            content: [{ type: 'input_text', text: buildSystemPrompt() }],
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'input_text',
-                text: JSON.stringify({
-                  expense,
-                  deterministic_precheck: deterministicPrecheck,
-                  source_version: sourceVersion,
-                }),
-              },
-            ],
-          },
-        ],
-        text: {
-          format: {
-            type: 'json_schema',
-            name: 'expense_fiscal_intelligence_result',
-            schema: outputSchema,
-            strict: true,
-          },
-        },
-      }),
-    })
-
-    const responseJson = await apiResponse.json()
-
-    if (!apiResponse.ok) {
-      const errorMessage = responseJson?.error?.message || 'OpenAI devolvio un error generando la estimacion fiscal.'
-      return res.status(apiResponse.status).json({ error: errorMessage })
+    let documentContext = { available: false, reason: 'no_document' }
+    if (expense?.has_receipt_file || expense?.receipt_file_path) {
+      documentContext = await loadExpenseDocument(expense).catch((error) => ({
+        available: false,
+        file_path: normalizeStoragePath(expense?.receipt_file_path),
+        reason: error instanceof Error ? error.message : 'document_load_failed',
+      }))
     }
 
-    const outputText = extractOutputText(responseJson)
-    const result = JSON.parse(outputText)
+    let result
+    try {
+      result = await requestFiscalAnalysis({
+        model,
+        expense,
+        deterministicPrecheck,
+        sourceVersion,
+        documentContext,
+        includeDocument: Boolean(documentContext.available),
+      })
+    } catch (error) {
+      if (!documentContext.available) {
+        throw error
+      }
+
+      documentContext = {
+        ...buildDocumentSummary(documentContext),
+        available: false,
+        reason: `document_analysis_retry_without_attachment: ${error instanceof Error ? error.message : 'unknown_error'}`,
+      }
+      result = await requestFiscalAnalysis({
+        model,
+        expense,
+        deterministicPrecheck,
+        sourceVersion,
+        documentContext,
+        includeDocument: false,
+      })
+    }
 
     return res.status(200).json({
       result,
       deterministic_precheck: deterministicPrecheck,
+      document_context: buildDocumentSummary(documentContext),
       generated_at: new Date().toISOString(),
       model,
       source_version: sourceVersion,

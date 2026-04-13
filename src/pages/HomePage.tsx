@@ -39,6 +39,12 @@ interface HomePageProps {
     expensesWithReceiptCount: number
     expensesWithoutReceiptCount: number
     deductibleExpensesCount: number
+    estimatedDeductibleVat: number
+    estimatedDeductibleBase: number
+    fiscalReviewExpensesCount: number
+    fiscalRiskExpensesCount: number
+    expensesMissingValidVatInvoiceCount: number
+    expensesZeroEstimatedVatCount: number
   }
   agenda: {
     todayJobs: JobListItem[]

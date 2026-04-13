@@ -16,12 +16,18 @@ function buildQuarterlyBreakdown(
       missingSupportCount: 0,
       pendingReviewCount: 0,
       riskCount: 0,
+      fiscalReviewCount: 0,
+      fiscalRiskCount: 0,
+      missingValidVatInvoiceCount: 0,
       pendingInvoiceCount: 0,
       unresolvedIncidenceCount: 0,
       invoicedTotal: 0,
       collectedTotal: 0,
       outstandingTotal: 0,
       expensesTotal: 0,
+      estimatedDeductibleBase: 0,
+      estimatedDeductibleVat: 0,
+      totalVatSupported: 0,
       incidences: [],
       readiness: 'ready' as const,
     }
@@ -51,12 +57,18 @@ export function buildAnnualClosingSummary(
   const missingSupportCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.missingSupportCount, 0)
   const pendingReviewCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.pendingReviewCount, 0)
   const riskCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.riskCount, 0)
+  const fiscalReviewCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.fiscalReviewCount, 0)
+  const fiscalRiskCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.fiscalRiskCount, 0)
+  const missingValidVatInvoiceCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.missingValidVatInvoiceCount, 0)
   const pendingInvoiceCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.pendingInvoiceCount, 0)
   const unresolvedIncidenceCount = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.unresolvedIncidenceCount, 0)
   const invoicedTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.invoicedTotal, 0)
   const collectedTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.collectedTotal, 0)
   const outstandingTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.outstandingTotal, 0)
   const expensesTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.expensesTotal, 0)
+  const estimatedDeductibleBase = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.estimatedDeductibleBase, 0)
+  const estimatedDeductibleVat = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.estimatedDeductibleVat, 0)
+  const totalVatSupported = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.totalVatSupported, 0)
 
   return {
     fiscalYear,
@@ -67,16 +79,25 @@ export function buildAnnualClosingSummary(
     missingSupportCount,
     pendingReviewCount,
     riskCount,
+    fiscalReviewCount,
+    fiscalRiskCount,
+    missingValidVatInvoiceCount,
     pendingInvoiceCount,
     unresolvedIncidenceCount,
     invoicedTotal,
     collectedTotal,
     outstandingTotal,
     expensesTotal,
+    estimatedDeductibleBase,
+    estimatedDeductibleVat,
+    totalVatSupported,
     readiness:
       missingSupportCount > 0 ||
       pendingReviewCount > 0 ||
       riskCount > 0 ||
+      fiscalReviewCount > 0 ||
+      fiscalRiskCount > 0 ||
+      missingValidVatInvoiceCount > 0 ||
       pendingInvoiceCount > 0
         ? 'issues'
         : 'ready',
@@ -161,12 +182,18 @@ export function buildAnnualClosingSnapshot(summary: AnnualClosingSummary): Annua
       missing_support_count: summary.missingSupportCount,
       pending_review_count: summary.pendingReviewCount,
       risk_count: summary.riskCount,
+      fiscal_review_count: summary.fiscalReviewCount,
+      fiscal_risk_count: summary.fiscalRiskCount,
+      missing_valid_vat_invoice_count: summary.missingValidVatInvoiceCount,
       pending_invoice_count: summary.pendingInvoiceCount,
       unresolved_incidence_count: summary.unresolvedIncidenceCount,
       invoiced_total: summary.invoicedTotal,
       collected_total: summary.collectedTotal,
       outstanding_total: summary.outstandingTotal,
       expenses_total: summary.expensesTotal,
+      estimated_deductible_base: summary.estimatedDeductibleBase,
+      estimated_deductible_vat: summary.estimatedDeductibleVat,
+      total_vat_supported: summary.totalVatSupported,
       quarterly_breakdown: summary.quarterlyBreakdown.map((quarter) => ({
         fiscal_quarter: quarter.fiscal_quarter,
         invoiced_total: quarter.invoiced_total,

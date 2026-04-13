@@ -1,4 +1,5 @@
 import type { ExpenseListItem } from '../expenses/types'
+import { buildExpenseFiscalSummary } from '../expenses/fiscalIntelligenceSummary'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
@@ -52,6 +53,7 @@ export function buildQuarterlyClosingSummary(
   const riskExpenses = quarterClosureExpenses.filter(
     (expense) => expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high',
   )
+  const fiscalSummary = buildExpenseFiscalSummary(quarterClosureExpenses)
 
   const paidAmountByInvoiceId = new Map<string, number>()
   for (const payment of payments) {
@@ -75,11 +77,15 @@ export function buildQuarterlyClosingSummary(
     missingSupportCount: missingSupportExpenses.length,
     pendingReviewCount: pendingReviewExpenses.length,
     riskCount: riskExpenses.length,
+    fiscalReviewCount: fiscalSummary.needsReviewCount,
+    fiscalRiskCount: fiscalSummary.mediumHighRiskCount,
+    missingValidVatInvoiceCount: fiscalSummary.missingValidVatInvoiceCount,
     pendingInvoiceCount: pendingQuarterInvoices.length,
     unresolvedIncidenceCount:
       missingSupportExpenses.length +
       pendingReviewExpenses.length +
       riskExpenses.length +
+      fiscalSummary.missingValidVatInvoiceCount +
       pendingQuarterInvoices.length,
     invoicedTotal: quarterInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0),
     collectedTotal: quarterPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
@@ -89,10 +95,16 @@ export function buildQuarterlyClosingSummary(
       return sum + Math.max(invoiceTotal - paidAmount, 0)
     }, 0),
     expensesTotal: quarterExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0),
+    estimatedDeductibleBase: fiscalSummary.estimatedDeductibleBase,
+    estimatedDeductibleVat: fiscalSummary.estimatedDeductibleVat,
+    totalVatSupported: fiscalSummary.totalVatSupported,
     readiness:
       missingSupportExpenses.length > 0 ||
       pendingReviewExpenses.length > 0 ||
       riskExpenses.length > 0 ||
+      fiscalSummary.needsReviewCount > 0 ||
+      fiscalSummary.mediumHighRiskCount > 0 ||
+      fiscalSummary.missingValidVatInvoiceCount > 0 ||
       pendingQuarterInvoices.length > 0
         ? 'issues'
         : 'ready',
@@ -179,12 +191,18 @@ export function buildQuarterlyClosingSnapshot(summary: QuarterlyClosingSummary):
       missing_support_count: summary.missingSupportCount,
       pending_review_count: summary.pendingReviewCount,
       risk_count: summary.riskCount,
+      fiscal_review_count: summary.fiscalReviewCount,
+      fiscal_risk_count: summary.fiscalRiskCount,
+      missing_valid_vat_invoice_count: summary.missingValidVatInvoiceCount,
       pending_invoice_count: summary.pendingInvoiceCount,
       unresolved_incidence_count: summary.unresolvedIncidenceCount,
       invoiced_total: summary.invoicedTotal,
       collected_total: summary.collectedTotal,
       outstanding_total: summary.outstandingTotal,
       expenses_total: summary.expensesTotal,
+      estimated_deductible_base: summary.estimatedDeductibleBase,
+      estimated_deductible_vat: summary.estimatedDeductibleVat,
+      total_vat_supported: summary.totalVatSupported,
     },
   }
 }

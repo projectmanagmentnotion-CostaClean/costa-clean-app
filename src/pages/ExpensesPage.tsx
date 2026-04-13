@@ -3,6 +3,7 @@ import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ExpenseCreateForm } from '../features/expenses/ExpenseCreateForm'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
+import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 
@@ -72,7 +73,7 @@ export function ExpensesPage({
     }
 
     confirmNavigation(action, {
-      description: 'Hay cambios sin guardar en gastos. Si continúas, perderás esos cambios.',
+      description: 'Hay cambios sin guardar en gastos. Si continuas, perderas esos cambios.',
       confirmLabel: 'Continuar',
     })
   }
@@ -82,20 +83,12 @@ export function ExpensesPage({
       (sum, expense) => sum + Number(expense.total ?? 0),
       0,
     )
-
-    const pendingReview = expenses.filter(
-      (expense) => expense.fiscal_review_status === 'pending',
-    ).length
-
-    const missingDocument = expenses.filter(
-      (expense) => expense.document_support_status === 'missing',
-    ).length
+    const fiscalSummary = buildExpenseFiscalSummary(expenses)
 
     return {
       totalItems: expenses.length,
       totalAmount,
-      pendingReview,
-      missingDocument,
+      fiscalSummary,
     }
   }, [expenses])
 
@@ -109,7 +102,7 @@ export function ExpensesPage({
       <div className="section-header page-header-actions cc-master-page__hero cc-expenses-hero">
         <div>
           <h1>Gastos</h1>
-          <p>Control operativo, fiscal y documental con lectura rápida en móvil.</p>
+          <p>Control operativo, fiscal y documental con lectura rapida en movil.</p>
         </div>
 
         <button
@@ -132,7 +125,7 @@ export function ExpensesPage({
         <article className="cc-kpi-card">
           <span className="cc-kpi-label">Registros</span>
           <strong className="cc-kpi-value">{summary.totalItems}</strong>
-          <p className="cc-kpi-footnote">Gastos disponibles en el módulo</p>
+          <p className="cc-kpi-footnote">Gastos disponibles en el modulo</p>
         </article>
 
         <article className="cc-kpi-card">
@@ -142,15 +135,39 @@ export function ExpensesPage({
         </article>
 
         <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Pendiente revisión</span>
-          <strong className="cc-kpi-value">{summary.pendingReview}</strong>
-          <p className="cc-kpi-footnote">Requieren validación fiscal</p>
+          <span className="cc-kpi-label">IVA soportado total</span>
+          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.totalVatSupported)}</strong>
+          <p className="cc-kpi-footnote">IVA registrado en gastos</p>
+        </article>
+
+        <article className="cc-kpi-card cc-kpi-card--finance">
+          <span className="cc-kpi-label">IVA deducible estimado</span>
+          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.estimatedDeductibleVat)}</strong>
+          <p className="cc-kpi-footnote">Estimacion asistida, no definitiva</p>
+        </article>
+
+        <article className="cc-kpi-card cc-kpi-card--finance">
+          <span className="cc-kpi-label">Base deducible estimada</span>
+          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.estimatedDeductibleBase)}</strong>
+          <p className="cc-kpi-footnote">Usa IA si existe y fallback manual</p>
+        </article>
+
+        <article className="cc-kpi-card cc-kpi-card--warning">
+          <span className="cc-kpi-label">Requiere revision</span>
+          <strong className="cc-kpi-value">{summary.fiscalSummary.needsReviewCount}</strong>
+          <p className="cc-kpi-footnote">Pendientes o marcados por estimacion</p>
+        </article>
+
+        <article className="cc-kpi-card cc-kpi-card--warning">
+          <span className="cc-kpi-label">Riesgo fiscal</span>
+          <strong className="cc-kpi-value">{summary.fiscalSummary.mediumHighRiskCount}</strong>
+          <p className="cc-kpi-footnote">Gastos con riesgo medio/alto</p>
         </article>
 
         <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Sin documento</span>
-          <strong className="cc-kpi-value">{summary.missingDocument}</strong>
-          <p className="cc-kpi-footnote">Falta ticket o factura adjunta</p>
+          <span className="cc-kpi-label">Sin factura valida IVA</span>
+          <strong className="cc-kpi-value">{summary.fiscalSummary.missingValidVatInvoiceCount}</strong>
+          <p className="cc-kpi-footnote">Revisar antes de deducir IVA</p>
         </article>
       </section>
 

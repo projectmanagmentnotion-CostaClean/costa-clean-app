@@ -26,6 +26,12 @@ interface DashboardKpisProps {
     expensesWithReceiptCount: number
     expensesWithoutReceiptCount: number
     deductibleExpensesCount: number
+    estimatedDeductibleVat: number
+    estimatedDeductibleBase: number
+    fiscalReviewExpensesCount: number
+    fiscalRiskExpensesCount: number
+    expensesMissingValidVatInvoiceCount: number
+    expensesZeroEstimatedVatCount: number
     totalExpenses: number
     totalCollected: number
   }
@@ -62,10 +68,17 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
       tone: 'warning',
     },
     {
-      label: 'Sin documento',
-      value: String(metrics.expensesWithoutReceiptCount),
-      detail: 'Gastos que siguen sin soporte adjunto.',
-      actionId: 'expenses_without_receipt',
+      label: 'Requiere revision fiscal',
+      value: String(metrics.fiscalReviewExpensesCount),
+      detail: 'Estimaciones o estados pendientes de revisar antes del cierre.',
+      actionId: 'expenses_fiscal_requires_review',
+      tone: 'warning',
+    },
+    {
+      label: 'Riesgo fiscal gastos',
+      value: String(metrics.fiscalRiskExpensesCount),
+      detail: 'Gastos con riesgo medio/alto segun campos manuales o IA.',
+      actionId: 'expenses_fiscal_medium_high_risk',
       tone: 'warning',
     },
   ]
@@ -86,7 +99,11 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
     { label: 'Gastos', value: String(metrics.expensesCount) },
     { label: 'Gasto del trimestre', value: formatCurrency(metrics.expensesThisQuarterTotal), tone: 'finance' as const },
     { label: 'Gastos totales', value: formatCurrency(metrics.totalExpenses), tone: 'finance' as const },
+    { label: 'IVA deducible estimado', value: formatCurrency(metrics.estimatedDeductibleVat), tone: 'finance' as const },
+    { label: 'Base deducible estimada', value: formatCurrency(metrics.estimatedDeductibleBase), tone: 'finance' as const },
     { label: 'Con documento', value: String(metrics.expensesWithReceiptCount), tone: 'success' as const },
+    { label: 'Sin factura valida IVA', value: String(metrics.expensesMissingValidVatInvoiceCount), actionId: 'expenses_missing_valid_vat_invoice' },
+    { label: 'IVA estimado 0', value: String(metrics.expensesZeroEstimatedVatCount), actionId: 'expenses_vat_zero_estimate' },
     { label: 'Deducibles marcados', value: String(metrics.deductibleExpensesCount), tone: 'success' as const },
     { label: 'Cobrado acumulado', value: formatCurrency(metrics.totalCollected), tone: 'finance' as const },
     { label: 'Gastos del mes', value: formatCurrency(metrics.expensesThisMonthTotal), actionId: 'expenses_this_month', tone: 'finance' as const },

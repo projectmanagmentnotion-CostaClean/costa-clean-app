@@ -22,12 +22,18 @@ export interface QuarterlyClosingMetricSnapshot {
   missing_support_count: number
   pending_review_count: number
   risk_count: number
+  fiscal_review_count: number
+  fiscal_risk_count: number
+  missing_valid_vat_invoice_count: number
   pending_invoice_count: number
   unresolved_incidence_count: number
   invoiced_total: number
   collected_total: number
   outstanding_total: number
   expenses_total: number
+  estimated_deductible_base: number
+  estimated_deductible_vat: number
+  total_vat_supported: number
 }
 
 export interface QuarterlyClosingSnapshot {
@@ -65,12 +71,18 @@ export interface QuarterlyClosingSummary {
   missingSupportCount: number
   pendingReviewCount: number
   riskCount: number
+  fiscalReviewCount: number
+  fiscalRiskCount: number
+  missingValidVatInvoiceCount: number
   pendingInvoiceCount: number
   unresolvedIncidenceCount: number
   invoicedTotal: number
   collectedTotal: number
   outstandingTotal: number
   expensesTotal: number
+  estimatedDeductibleBase: number
+  estimatedDeductibleVat: number
+  totalVatSupported: number
   incidences: QuarterlyClosingIncidence[]
   readiness: 'ready' | 'issues'
 }

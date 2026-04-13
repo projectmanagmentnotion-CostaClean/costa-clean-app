@@ -42,6 +42,7 @@ import { buildInvoiceCreatePrefillFromJob, type InvoiceCreatePrefill } from '../
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import { listExpenses } from '../features/expenses/expenseApi'
+import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
 import type { PaymentListItem } from '../features/payments/types'
 import {
   applyDashboardKpiAction,
@@ -799,6 +800,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     const expensesWithReceiptCount = expenses.filter((expense) => Boolean(expense.receipt_file_path)).length
     const expensesWithoutReceiptCount = expenses.filter((expense) => !expense.receipt_file_path).length
     const deductibleExpensesCount = expenses.filter((expense) => expense.is_deductible).length
+    const expenseFiscalSummary = buildExpenseFiscalSummary(expenses)
 
     const now = new Date()
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -863,6 +865,12 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       expensesWithReceiptCount,
       expensesWithoutReceiptCount,
       deductibleExpensesCount,
+      estimatedDeductibleVat: expenseFiscalSummary.estimatedDeductibleVat,
+      estimatedDeductibleBase: expenseFiscalSummary.estimatedDeductibleBase,
+      fiscalReviewExpensesCount: expenseFiscalSummary.needsReviewCount,
+      fiscalRiskExpensesCount: expenseFiscalSummary.mediumHighRiskCount,
+      expensesMissingValidVatInvoiceCount: expenseFiscalSummary.missingValidVatInvoiceCount,
+      expensesZeroEstimatedVatCount: expenseFiscalSummary.zeroEstimatedVatCount,
     }
   }, [leads, clients, properties, quotes, jobs, invoices, expenses, payments])
 

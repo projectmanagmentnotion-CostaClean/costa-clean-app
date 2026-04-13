@@ -6,13 +6,21 @@ import {
   expenseDocumentSupportStatuses,
   expenseFiscalReviewStatuses,
   expenseFiscalRiskLevels,
+  expenseAiFiscalClassifications,
   getExpenseCategoryLabel,
+  getExpenseAiFiscalClassificationLabel,
   getExpenseDocumentSupportStatusLabel,
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   type ExpenseListItem,
 } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
+import {
+  hasMediumHighFiscalRisk,
+  hasValidVatInvoiceSupport,
+  hasZeroEstimatedDeductibleVat,
+  needsFiscalReview,
+} from './fiscalIntelligenceSummary'
 
 interface ExpensesListProps {
   expenses: ExpenseListItem[]
@@ -50,6 +58,8 @@ export function ExpensesList({
     support: 'all',
     review: 'all',
     risk: 'all',
+    fiscalFocus: 'all',
+    classification: 'all',
   }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
@@ -59,6 +69,12 @@ export function ExpensesList({
       (preferences.filters.support === 'all' || expense.document_support_status === preferences.filters.support) &&
       (preferences.filters.review === 'all' || expense.fiscal_review_status === preferences.filters.review) &&
       (preferences.filters.risk === 'all' || expense.fiscal_risk_level === preferences.filters.risk) &&
+      (preferences.filters.fiscalFocus === 'all' ||
+        (preferences.filters.fiscalFocus === 'requires_review' && needsFiscalReview(expense)) ||
+        (preferences.filters.fiscalFocus === 'medium_high_risk' && hasMediumHighFiscalRisk(expense)) ||
+        (preferences.filters.fiscalFocus === 'vat_zero_estimate' && hasZeroEstimatedDeductibleVat(expense)) ||
+        (preferences.filters.fiscalFocus === 'missing_valid_vat_invoice' && !hasValidVatInvoiceSupport(expense))) &&
+      (preferences.filters.classification === 'all' || expense.ai_fiscal_classification === preferences.filters.classification) &&
       matchesSearchQuery(preferences.searchQuery, [
         expense.display_code,
         expense.id,
@@ -73,6 +89,8 @@ export function ExpensesList({
         getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status),
         expense.fiscal_risk_level,
         getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level),
+        expense.ai_fiscal_classification,
+        getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification),
         expense.total,
         expense.notes,
       ]),
@@ -153,6 +171,27 @@ export function ExpensesList({
               label: getExpenseFiscalRiskLevelLabel(risk),
             }))],
           },
+          {
+            key: 'fiscalFocus',
+            label: 'Estimacion fiscal',
+            value: preferences.filters.fiscalFocus ?? 'all',
+            options: [
+              { value: 'all', label: 'Todas' },
+              { value: 'requires_review', label: 'Requiere revision' },
+              { value: 'medium_high_risk', label: 'Riesgo medio/alto' },
+              { value: 'vat_zero_estimate', label: 'IVA estimado 0' },
+              { value: 'missing_valid_vat_invoice', label: 'Sin factura valida IVA' },
+            ],
+          },
+          {
+            key: 'classification',
+            label: 'Clasificacion',
+            value: preferences.filters.classification ?? 'all',
+            options: [{ value: 'all', label: 'Todas' }, ...expenseAiFiscalClassifications.map((classification) => ({
+              value: classification,
+              label: getExpenseAiFiscalClassificationLabel(classification),
+            }))],
+          },
         ]}
         onChange={setPreferences}
       />
@@ -212,6 +251,11 @@ export function ExpensesList({
                   <span className="cc-expense-chip">
                     Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
                   </span>
+                  {expense.ai_fiscal_classification ? (
+                    <span className="cc-expense-chip">
+                      {getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)}
+                    </span>
+                  ) : null}
                 </div>
               </button>
             )

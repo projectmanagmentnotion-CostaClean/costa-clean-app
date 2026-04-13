@@ -1,4 +1,10 @@
 import { automationRuleThresholds } from '../features/automation/ruleConfig'
+import {
+  hasMediumHighFiscalRisk,
+  hasValidVatInvoiceSupport,
+  hasZeroEstimatedDeductibleVat,
+  needsFiscalReview,
+} from '../features/expenses/fiscalIntelligenceSummary'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -39,6 +45,14 @@ export type ExpenseModuleFilter =
   | 'missing_receipt'
   | 'pending_review'
   | 'current_month'
+  | 'fiscal_requires_review'
+  | 'fiscal_medium_high_risk'
+  | 'vat_zero_estimate'
+  | 'missing_valid_vat_invoice'
+  | {
+      type: 'classification'
+      classification: 'probably_deductible' | 'partially_deductible' | 'probably_not_deductible' | 'requires_review'
+    }
   | {
       type: 'quarter'
       fiscalYear: number
@@ -201,6 +215,16 @@ export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): strin
   if (filter === 'missing_receipt') return 'Sin ticket o factura adjunta'
   if (filter === 'pending_review') return 'Gastos pendientes de revisión fiscal'
   if (filter === 'current_month') return 'Gastos del mes'
+  if (filter === 'fiscal_requires_review') return 'Estimacion fiscal: requiere revision'
+  if (filter === 'fiscal_medium_high_risk') return 'Riesgo fiscal medio/alto'
+  if (filter === 'vat_zero_estimate') return 'IVA deducible estimado 0'
+  if (filter === 'missing_valid_vat_invoice') return 'Sin factura valida para IVA'
+  if (filter?.type === 'classification') {
+    if (filter.classification === 'probably_deductible') return 'Estimacion: probablemente deducible'
+    if (filter.classification === 'partially_deductible') return 'Estimacion: parcialmente deducible'
+    if (filter.classification === 'probably_not_deductible') return 'Estimacion: probablemente no deducible'
+    return 'Estimacion: requiere revision'
+  }
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Gastos de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'closure') return `Gastos que afectan al cierre en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'missing_support') return `Gastos sin justificante en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
@@ -335,6 +359,26 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
   if (filter === 'current_month') {
     const currentMonthKey = getCurrentMonthKey()
     return expenses.filter((expense) => getMonthKey(expense.expense_date) === currentMonthKey)
+  }
+
+  if (filter === 'fiscal_requires_review') {
+    return expenses.filter((expense) => needsFiscalReview(expense))
+  }
+
+  if (filter === 'fiscal_medium_high_risk') {
+    return expenses.filter((expense) => hasMediumHighFiscalRisk(expense))
+  }
+
+  if (filter === 'vat_zero_estimate') {
+    return expenses.filter((expense) => hasZeroEstimatedDeductibleVat(expense))
+  }
+
+  if (filter === 'missing_valid_vat_invoice') {
+    return expenses.filter((expense) => !hasValidVatInvoiceSupport(expense))
+  }
+
+  if (filter?.type === 'classification') {
+    return expenses.filter((expense) => expense.ai_fiscal_classification === filter.classification)
   }
 
   if (filter?.type === 'quarter') {

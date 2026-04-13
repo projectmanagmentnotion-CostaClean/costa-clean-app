@@ -25,6 +25,10 @@ export type DashboardKpiActionId =
   | 'open_quotes'
   | 'scheduled_jobs'
   | 'expenses_without_receipt'
+  | 'expenses_fiscal_requires_review'
+  | 'expenses_fiscal_medium_high_risk'
+  | 'expenses_vat_zero_estimate'
+  | 'expenses_missing_valid_vat_invoice'
 
 interface DashboardKpiActionConfig {
   id: DashboardKpiActionId
@@ -129,6 +133,30 @@ export const dashboardKpiActionConfig: Record<DashboardKpiActionId, DashboardKpi
     view: 'expenses',
     filterKey: 'expenses',
     filterValue: 'missing_receipt',
+  },
+  expenses_fiscal_requires_review: {
+    id: 'expenses_fiscal_requires_review',
+    view: 'expenses',
+    filterKey: 'expenses',
+    filterValue: 'fiscal_requires_review',
+  },
+  expenses_fiscal_medium_high_risk: {
+    id: 'expenses_fiscal_medium_high_risk',
+    view: 'expenses',
+    filterKey: 'expenses',
+    filterValue: 'fiscal_medium_high_risk',
+  },
+  expenses_vat_zero_estimate: {
+    id: 'expenses_vat_zero_estimate',
+    view: 'expenses',
+    filterKey: 'expenses',
+    filterValue: 'vat_zero_estimate',
+  },
+  expenses_missing_valid_vat_invoice: {
+    id: 'expenses_missing_valid_vat_invoice',
+    view: 'expenses',
+    filterKey: 'expenses',
+    filterValue: 'missing_valid_vat_invoice',
   },
 }
 

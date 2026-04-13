@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../../lib/supabase'
+import { recordAuditEvent } from '../auditTrail/auditTrailApi'
 
 type JsonRecord = Record<string, unknown>
 type JsonPayload = object
@@ -30,22 +31,42 @@ export async function saveQuoteWithLines(
   quote: JsonPayload,
   lines: JsonPayload[],
 ): Promise<void> {
+  const quoteRecord = quote as JsonRecord
+
   await callFinancialRpc(
     'save_quote_with_lines',
     { p_quote: quote, p_lines: lines },
-    'No se pudo guardar el presupuesto y sus líneas.',
+    'No se pudo guardar el presupuesto y sus lineas.',
   )
+  await recordAuditEvent({
+    entityType: 'quote',
+    entityId: String(quoteRecord.id ?? ''),
+    action: 'upsert',
+    changedFields: Object.keys(quoteRecord),
+    newValues: quoteRecord,
+    metadata: { line_count: lines.length },
+  })
 }
 
 export async function saveInvoiceWithLines(
   invoice: JsonPayload,
   lines: JsonPayload[],
 ): Promise<void> {
+  const invoiceRecord = invoice as JsonRecord
+
   await callFinancialRpc(
     'save_invoice_with_lines',
     { p_invoice: invoice, p_lines: lines },
-    'No se pudo guardar la factura y sus líneas.',
+    'No se pudo guardar la factura y sus lineas.',
   )
+  await recordAuditEvent({
+    entityType: 'invoice',
+    entityId: String(invoiceRecord.id ?? ''),
+    action: 'upsert',
+    changedFields: Object.keys(invoiceRecord),
+    newValues: invoiceRecord,
+    metadata: { line_count: lines.length },
+  })
 }
 
 export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise<void> {
@@ -54,6 +75,14 @@ export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise
     { p_payment: payment },
     'No se pudo guardar el pago y sincronizar la factura.',
   )
+  await recordAuditEvent({
+    entityType: 'payment',
+    entityId: String(payment.id ?? ''),
+    action: 'upsert',
+    changedFields: Object.keys(payment),
+    newValues: payment,
+    metadata: { invoice_id: payment.invoice_id },
+  })
 }
 
 export async function refreshInvoicePaymentStatus(invoiceId: string): Promise<void> {
@@ -73,6 +102,13 @@ export async function updateQuoteStatus(
     { p_quote_id: quoteId, p_status: status },
     'No se pudo actualizar el estado del presupuesto.',
   )
+  await recordAuditEvent({
+    entityType: 'quote',
+    entityId: quoteId,
+    action: 'status_update',
+    changedFields: ['status'],
+    newValues: { status },
+  })
 }
 
 export async function updateInvoiceStatus(
@@ -84,4 +120,11 @@ export async function updateInvoiceStatus(
     { p_invoice_id: invoiceId, p_status: status },
     'No se pudo actualizar el estado de la factura.',
   )
+  await recordAuditEvent({
+    entityType: 'invoice',
+    entityId: invoiceId,
+    action: 'status_update',
+    changedFields: ['status'],
+    newValues: { status },
+  })
 }

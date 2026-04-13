@@ -1,4 +1,5 @@
 ﻿import { getSupabaseClient } from '../../lib/supabase'
+import { recordAuditEvent } from '../auditTrail/auditTrailApi'
 import type { ExpenseListItem, ExpenseUpsertInput } from './types'
 
 const EXPENSES_SELECT = [
@@ -126,13 +127,24 @@ export async function createExpense(input: ExpenseUpsertInput): Promise<void> {
 
   const payload = normalizeExpensePayload(input)
 
-  const { error: insertError } = await client
+  const { data, error: insertError } = await client
     .from('expenses')
     .insert(payload)
+    .select('id')
+    .single()
 
   if (insertError) {
     throw new Error(insertError.message)
   }
+
+  await recordAuditEvent({
+    entityType: 'expense',
+    entityId: String(data?.id ?? ''),
+    action: 'upsert',
+    changedFields: Object.keys(payload),
+    newValues: payload,
+    metadata: { operation: 'create' },
+  })
 }
 
 export async function updateExpense(
@@ -155,6 +167,14 @@ export async function updateExpense(
   if (updateError) {
     throw new Error(updateError.message)
   }
+
+  await recordAuditEvent({
+    entityType: 'expense',
+    entityId: expenseId,
+    action: 'upsert',
+    changedFields: Object.keys(payload),
+    newValues: payload,
+  })
 }
 
 export async function updateExpenseAttachment(
@@ -182,6 +202,18 @@ export async function updateExpenseAttachment(
   if (updateError) {
     throw new Error(updateError.message)
   }
+
+  await recordAuditEvent({
+    entityType: 'expense',
+    entityId: expenseId,
+    action: 'attachment_update',
+    changedFields: ['receipt_file_path', 'receipt_file_url', 'attachment_count'],
+    newValues: {
+      receipt_file_path: filePath,
+      receipt_file_url: fileUrl,
+      attachment_count: attachmentCount,
+    },
+  })
 }
 
 export async function updateExpenseFiscalIntelligence(
@@ -215,6 +247,19 @@ export async function updateExpenseFiscalIntelligence(
   if (updateError) {
     throw new Error(updateError.message)
   }
+
+  await recordAuditEvent({
+    entityType: 'expense',
+    entityId: expenseId,
+    action: 'fiscal_analysis',
+    changedFields: Object.keys(input),
+    newValues: input,
+    metadata: {
+      classification: input.ai_fiscal_classification,
+      risk_level: input.ai_fiscal_risk_level,
+      model: input.ai_fiscal_model,
+    },
+  })
 }
 
 export { EXPENSES_SELECT }

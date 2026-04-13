@@ -1189,6 +1189,11 @@ export function QuarterlyClosingPage({
                 <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
                 <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales/documentales.</p>
               </article>
+              <article className="cc-quarterly-persistence__card">
+                <span className="cc-dashboard-panel__label">06 · Revision gestoria</span>
+                <strong className="cc-dashboard-panel__value">{summary.fiscalReviewCount + summary.fiscalRiskCount}</strong>
+                <p className="cc-dashboard-panel__text">Checklist fiscal, IVA deducible estimado y gastos con riesgo.</p>
+              </article>
             </div>
           </section>
 

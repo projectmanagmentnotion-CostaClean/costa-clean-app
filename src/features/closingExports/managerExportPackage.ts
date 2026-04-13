@@ -1,10 +1,19 @@
 import { createExpenseReceiptSignedUrl } from '../expenses/expenseAttachmentsApi'
 import {
+  getExpenseAiFiscalClassificationLabel,
   getExpenseDocumentSupportStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   getExpenseFiscalReviewStatusLabel,
   type ExpenseListItem,
 } from '../expenses/types'
+import {
+  buildExpenseFiscalSummary,
+  getEstimatedDeductibleBase,
+  getEstimatedDeductibleVat,
+  hasMediumHighFiscalRisk,
+  hasValidVatInvoiceSupport,
+  needsFiscalReview,
+} from '../expenses/fiscalIntelligenceSummary'
 import { buildInvoicePrintDocumentHtml } from '../invoices/openInvoicePrintWindow'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
@@ -29,6 +38,12 @@ interface ExportSummaryMetrics {
   collected_total: number
   outstanding_total: number
   expenses_total: number
+  total_vat_supported?: number
+  estimated_deductible_vat?: number
+  estimated_deductible_base?: number
+  fiscal_review_count?: number
+  fiscal_risk_count?: number
+  missing_valid_vat_invoice_count?: number
 }
 
 interface ExportPackageInput {
@@ -313,6 +328,7 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
             <li><code>03_cobros</code></li>
             <li><code>04_gastos_y_soportes</code></li>
             <li><code>05_incidencias_pendientes</code></li>
+            <li><code>06_revision_gestoria</code></li>
           </ul>
         </section>
         <section class="card">
@@ -336,6 +352,7 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
 
 function buildSummaryHtml(input: ExportPackageInput): string {
   const metrics = input.summaryMetrics
+  const fiscalSummary = buildExpenseFiscalSummary(input.expenses)
   return `<!doctype html>
 <html lang="es">
   <head>
@@ -362,7 +379,74 @@ function buildSummaryHtml(input: ExportPackageInput): string {
         <article class="card"><span class="label">Cobrado</span><strong>${escapeHtml(formatCurrency(metrics.collected_total))}</strong><p>${metrics.payment_count} cobro(s)</p></article>
         <article class="card"><span class="label">Pendiente</span><strong>${escapeHtml(formatCurrency(metrics.outstanding_total))}</strong><p>${metrics.pending_invoice_count} factura(s) abiertas</p></article>
         <article class="card"><span class="label">Gastos</span><strong>${escapeHtml(formatCurrency(metrics.expenses_total))}</strong><p>${metrics.expense_count} gasto(s)</p></article>
+        <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(metrics.total_vat_supported ?? fiscalSummary.totalVatSupported))}</strong><p>Base fiscal de revision</p></article>
+        <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_vat ?? fiscalSummary.estimatedDeductibleVat))}</strong><p>Estimacion asistiva, no cierre legal definitivo</p></article>
+        <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_base ?? fiscalSummary.estimatedDeductibleBase))}</strong><p>Segun campos fiscales disponibles</p></article>
+        <article class="card"><span class="label">Gastos a revisar</span><strong>${metrics.fiscal_review_count ?? fiscalSummary.needsReviewCount}</strong><p>Riesgo medio/alto: ${metrics.fiscal_risk_count ?? fiscalSummary.mediumHighRiskCount}</p></article>
       </div>
+    </main>
+  </body>
+</html>`
+}
+
+function buildFiscalReviewHtml(input: ExportPackageInput): string {
+  const fiscalSummary = buildExpenseFiscalSummary(input.expenses)
+  const rows = input.expenses
+    .filter((expense) =>
+      needsFiscalReview(expense) ||
+      hasMediumHighFiscalRisk(expense) ||
+      !hasValidVatInvoiceSupport(expense),
+    )
+    .map((expense) => `
+      <tr>
+        <td>${escapeHtml(expense.display_code ?? expense.id)}</td>
+        <td>${escapeHtml(expense.supplier_name)}</td>
+        <td>${escapeHtml(formatCurrency(Number(expense.total || 0)))}</td>
+        <td>${escapeHtml(getExpenseDocumentSupportStatusLabel(expense.document_support_status))}</td>
+        <td>${escapeHtml(getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status))}</td>
+        <td>${escapeHtml(getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level))}</td>
+        <td>${escapeHtml(formatCurrency(getEstimatedDeductibleBase(expense)))}</td>
+        <td>${escapeHtml(formatCurrency(getEstimatedDeductibleVat(expense)))}</td>
+      </tr>`)
+    .join('')
+
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(input.label)} · Revision fiscal</title>
+    <style>
+      body { font-family: Inter, Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #0f172a; }
+      main { max-width: 1120px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
+      .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 20px 0; }
+      .card { border: 1px solid #dbe3ee; border-radius: 16px; padding: 16px; background: #fbfdff; }
+      .label { display: block; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
+      strong { font-size: 20px; }
+      p { color: #475569; }
+      table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 13px; }
+      th, td { border-bottom: 1px solid #e2e8f0; padding: 10px; text-align: left; vertical-align: top; }
+      th { color: #475569; text-transform: uppercase; font-size: 11px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Revision fiscal para gestoria</h1>
+      <p>Vista de apoyo para revisar gastos, soporte documental, riesgo fiscal e importes deducibles estimados. Es una estimacion operativa y no sustituye la revision profesional.</p>
+      <div class="grid">
+        <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(fiscalSummary.totalVatSupported))}</strong></article>
+        <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(fiscalSummary.estimatedDeductibleVat))}</strong></article>
+        <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(fiscalSummary.estimatedDeductibleBase))}</strong></article>
+        <article class="card"><span class="label">Puntos a revisar</span><strong>${fiscalSummary.needsReviewCount + fiscalSummary.mediumHighRiskCount + fiscalSummary.missingValidVatInvoiceCount}</strong></article>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Gasto</th><th>Proveedor</th><th>Total</th><th>Soporte</th><th>Revision</th><th>Riesgo</th><th>Base deducible</th><th>IVA deducible</th>
+          </tr>
+        </thead>
+        <tbody>${rows || '<tr><td colspan="8">Sin puntos fiscales prioritarios en este paquete.</td></tr>'}</tbody>
+      </table>
     </main>
   </body>
 </html>`
@@ -425,6 +509,7 @@ async function buildExpenseEntries(expenses: ExpenseListItem[], rootFolder: stri
 }
 
 function buildManifest(input: ExportPackageInput, includedFiles: number, missingDocuments: number, warnings: string[]) {
+  const fiscalSummary = buildExpenseFiscalSummary(input.expenses)
   return {
     generated_at: new Date().toISOString(),
     scope: input.scope,
@@ -433,6 +518,16 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
     closing_saved_at: input.closingSavedAt,
     notes: input.closingNotes,
     summary_metrics: input.summaryMetrics,
+    fiscal_review_metrics: {
+      total_vat_supported: fiscalSummary.totalVatSupported,
+      estimated_deductible_vat: fiscalSummary.estimatedDeductibleVat,
+      estimated_deductible_base: fiscalSummary.estimatedDeductibleBase,
+      needs_review_count: fiscalSummary.needsReviewCount,
+      medium_high_risk_count: fiscalSummary.mediumHighRiskCount,
+      missing_valid_vat_invoice_count: fiscalSummary.missingValidVatInvoiceCount,
+      analyzed_count: fiscalSummary.analyzedCount,
+      unanalyzed_count: fiscalSummary.unanalyzedCount,
+    },
     included_files: includedFiles,
     missing_documents: missingDocuments,
     warnings,
@@ -442,6 +537,7 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
       '03_cobros',
       '04_gastos_y_soportes',
       '05_incidencias_pendientes',
+      '06_revision_gestoria',
     ],
     incidences: input.incidences.map((incidence) => ({
       id: incidence.id,
@@ -506,18 +602,110 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   entries.push(makeTextEntry(`${rootFolder}/03_cobros/cobros.csv`, paymentsCsv))
 
   const expensesCsv = buildCsv(
-    ['expense_ref', 'supplier', 'total', 'document_support_status', 'fiscal_review_status', 'fiscal_risk_level', 'attachment_expected'],
+    [
+      'expense_ref',
+      'date',
+      'supplier',
+      'category',
+      'subtotal',
+      'tax_amount',
+      'total',
+      'document_type',
+      'document_support_status',
+      'fiscal_review_status',
+      'fiscal_risk_level',
+      'ai_classification',
+      'ai_confidence',
+      'estimated_deductible_base',
+      'estimated_deductible_vat',
+      'attachment_expected',
+      'manager_note',
+    ],
     input.expenses.map((expense) => [
       expense.display_code ?? expense.id,
+      expense.expense_date,
       expense.supplier_name,
+      expense.category,
+      Number(expense.subtotal || 0).toFixed(2),
+      Number(expense.tax_amount || 0).toFixed(2),
       Number(expense.total || 0).toFixed(2),
+      expense.document_type,
       getExpenseDocumentSupportStatusLabel(expense.document_support_status),
       getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status),
-      getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level),
+      getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level),
+      getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification),
+      typeof expense.ai_fiscal_confidence === 'number' ? `${Math.round(expense.ai_fiscal_confidence * 100)}%` : '',
+      getEstimatedDeductibleBase(expense).toFixed(2),
+      getEstimatedDeductibleVat(expense).toFixed(2),
       expense.receipt_file_path ? 'included_if_downloadable' : 'missing',
+      expense.manager_note ?? '',
     ]),
   )
   entries.push(makeTextEntry(`${rootFolder}/04_gastos_y_soportes/gastos.csv`, expensesCsv))
+
+  const fiscalReviewSummary = buildExpenseFiscalSummary(input.expenses)
+  const fiscalReviewCsv = buildCsv(
+    [
+      'expense_ref',
+      'supplier',
+      'reason',
+      'document_support_status',
+      'fiscal_review_status',
+      'risk_level',
+      'ai_classification',
+      'estimated_deductible_base',
+      'estimated_deductible_vat',
+      'ai_reasoning',
+      'flags',
+    ],
+    input.expenses
+      .filter((expense) =>
+        needsFiscalReview(expense) ||
+        hasMediumHighFiscalRisk(expense) ||
+        !hasValidVatInvoiceSupport(expense),
+      )
+      .map((expense) => {
+        const reasons = [
+          needsFiscalReview(expense) ? 'requires_review' : null,
+          hasMediumHighFiscalRisk(expense) ? 'medium_high_risk' : null,
+          !hasValidVatInvoiceSupport(expense) ? 'missing_valid_vat_invoice' : null,
+        ].filter(Boolean)
+
+        return [
+          expense.display_code ?? expense.id,
+          expense.supplier_name,
+          reasons.join('|'),
+          getExpenseDocumentSupportStatusLabel(expense.document_support_status),
+          getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status),
+          getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level),
+          getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification),
+          getEstimatedDeductibleBase(expense).toFixed(2),
+          getEstimatedDeductibleVat(expense).toFixed(2),
+          expense.ai_fiscal_reasoning ?? '',
+          expense.ai_fiscal_flags?.join('|') ?? '',
+        ]
+      }),
+  )
+  const gestorReviewChecklist = buildCsv(
+    ['check', 'status', 'count', 'detail'],
+    [
+      ['iva_soportado_total', 'informativo', fiscalReviewSummary.totalVatSupported.toFixed(2), 'IVA soportado total en gastos del paquete.'],
+      ['iva_deducible_estimado', 'estimacion', fiscalReviewSummary.estimatedDeductibleVat.toFixed(2), 'Estimacion asistiva, no liquidacion definitiva.'],
+      ['base_deducible_estimada', 'estimacion', fiscalReviewSummary.estimatedDeductibleBase.toFixed(2), 'Base deducible estimada por campos fiscales y/o IA.'],
+      ['gastos_requieren_revision', fiscalReviewSummary.needsReviewCount > 0 ? 'revisar' : 'ok', fiscalReviewSummary.needsReviewCount, 'Gastos pendientes o marcados por IA como requiere revision.'],
+      ['gastos_riesgo_medio_alto', fiscalReviewSummary.mediumHighRiskCount > 0 ? 'revisar' : 'ok', fiscalReviewSummary.mediumHighRiskCount, 'Gastos con riesgo fiscal medio/alto.'],
+      ['gastos_sin_factura_valida_iva', fiscalReviewSummary.missingValidVatInvoiceCount > 0 ? 'revisar' : 'ok', fiscalReviewSummary.missingValidVatInvoiceCount, 'Gastos sin factura valida para deducibilidad de IVA.'],
+      ['gastos_sin_analisis_ia', fiscalReviewSummary.unanalyzedCount > 0 ? 'informativo' : 'ok', fiscalReviewSummary.unanalyzedCount, 'Gastos todavia no analizados fiscalmente por IA.'],
+    ],
+  )
+  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/resumen_revision_fiscal.html`, buildFiscalReviewHtml(input)))
+  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/gastos_revision_fiscal.csv`, fiscalReviewCsv))
+  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/checklist_gestoria.csv`, gestorReviewChecklist))
+  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/resumen_revision_fiscal.json`, JSON.stringify({
+    generated_at: new Date().toISOString(),
+    assistive_notice: 'Estimacion operativa para revision. No sustituye asesoramiento fiscal ni revision de gestoria.',
+    metrics: fiscalReviewSummary,
+  }, null, 2)))
 
   const incidenceCsv = buildCsv(
     ['incidence_id', 'label', 'count', 'tone', 'detail'],

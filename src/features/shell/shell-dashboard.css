@@ -8898,3 +8898,239 @@
 :root[data-theme="light"] .cc-kpi-card__detail {
   color: #38566c;
 }
+
+/* Sprint 16/17: mobile fit and action hierarchy polish. */
+.cc-dashboard-page,
+.cc-dashboard-stack,
+.cc-dashboard-header,
+.cc-dashboard-block,
+.cc-dashboard-secondary-grid,
+.cc-dashboard-subsection,
+.cc-master-page,
+.cc-master-layout,
+.cc-master-layout__list,
+.cc-master-layout__detail,
+.data-section,
+.lead-detail-card,
+.cc-expense-detail,
+.cc-expense-detail-card,
+.cc-doc-preview-panel,
+.cc-doc-preview-panel__viewport,
+.cc-doc-preview-panel__canvas,
+.cc-invoice-preview,
+.invoice-document,
+.invoice-document-premium,
+.invoice-sheet {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cc-dashboard-header,
+.cc-dashboard-block__header,
+.cc-dashboard-subsection__header,
+.cc-agenda-card__header,
+.cc-agenda-item__top,
+.page-header-actions,
+.form-actions,
+.cc-expense-detail__header-actions,
+.cc-expense-detail__hero,
+.cc-expense-detail__status-row,
+.cc-module-filter-bar,
+.cc-list-toolbar,
+.cc-list-toolbar__controls {
+  min-width: 0;
+}
+
+.cc-page-topline__title,
+.cc-page-topline__text,
+.cc-dashboard-block__header h2,
+.cc-dashboard-block__header p,
+.cc-dashboard-subsection__header h3,
+.cc-dashboard-subsection__header p,
+.cc-kpi-card__label,
+.cc-kpi-card__detail,
+.cc-quick-action__title,
+.cc-quick-action__text,
+.cc-agenda-item__title-group strong,
+.cc-agenda-item p,
+.cc-expense-detail__title,
+.cc-expense-detail__subtitle,
+.cc-expense-detail__info-value,
+.cc-expense-metric__value,
+.detail-value,
+.detail-label {
+  overflow-wrap: anywhere;
+}
+
+.cc-collapsible-section {
+  border-radius: 18px;
+}
+
+.cc-collapsible-section__summary {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding-right: 38px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cc-collapsible-section__summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-collapsible-section__summary::after {
+  content: "+";
+  position: absolute;
+  top: 2px;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cc-text-secondary);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.cc-collapsible-section[open] > .cc-collapsible-section__summary::after {
+  content: "-";
+}
+
+.cc-collapsible-section > .cc-kpi-grid {
+  margin-top: 12px;
+}
+
+:root[data-theme="light"] .cc-collapsible-section__summary::after {
+  border-color: rgba(7, 95, 136, 0.20);
+  background: rgba(7, 95, 136, 0.07);
+  color: #075f88;
+}
+
+@media (max-width: 700px) {
+  .app-shell,
+  .hero-card.cc-shell,
+  .cc-shell-content {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    padding-inline: max(6px, env(safe-area-inset-left, 0px)) max(6px, env(safe-area-inset-right, 0px));
+  }
+
+  .cc-dashboard-page,
+  .cc-dashboard-stack {
+    width: 100%;
+  }
+
+  .cc-dashboard-stack {
+    gap: 14px;
+  }
+
+  .cc-dashboard-header,
+  .cc-dashboard-block,
+  .data-section,
+  .lead-detail-card,
+  .cc-expense-detail-card {
+    border-radius: 18px;
+  }
+
+  .cc-dashboard-header,
+  .cc-dashboard-block__header,
+  .cc-dashboard-subsection__header,
+  .page-header-actions,
+  .cc-module-filter-bar,
+  .cc-list-toolbar__controls,
+  .cc-expense-detail__hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-dashboard-header__meta,
+  .cc-dashboard-overview__grid,
+  .cc-dashboard-exec,
+  .cc-dashboard-strategic-grid,
+  .cc-dashboard-stat-strip,
+  .cc-dashboard-alerts,
+  .cc-dashboard-agenda,
+  .cc-dashboard-secondary-grid,
+  .cc-kpi-grid,
+  .cc-kpi-grid--compact,
+  .cc-kpi-grid--dense,
+  .cc-quick-actions,
+  .cc-quick-actions--dashboard,
+  .lead-form,
+  .cc-expense-detail__metrics,
+  .cc-expense-detail__doc-grid,
+  .cc-expense-detail__info-grid,
+  .cc-expense-detail__notes {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .page-header-actions > div,
+  .page-header-actions .form-actions,
+  .form-actions,
+  .cc-expense-detail__header-actions,
+  .cc-module-filter-bar,
+  .cc-list-toolbar,
+  .cc-list-toolbar__controls,
+  .cc-list-toolbar__field,
+  .cc-list-toolbar__field select,
+  .cc-list-toolbar__reset,
+  .cc-quick-action--dashboard,
+  .primary-button,
+  .secondary-button {
+    width: 100%;
+  }
+
+  .form-actions,
+  .cc-expense-detail__header-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: stretch;
+  }
+
+  .cc-expense-detail__status-row,
+  .cc-agenda-item__meta,
+  .cc-list-meta {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .cc-expense-chip,
+  .cc-agenda-item__meta span,
+  .cc-list-meta span {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .cc-expense-detail__total-card {
+    width: 100%;
+  }
+
+  .cc-doc-preview-panel,
+  .cc-doc-preview-panel > .data-section,
+  .cc-doc-preview-panel.data-section,
+  .cc-document-screen,
+  .cc-document-screen__topbar,
+  .cc-doc-preview-panel__viewport {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .cc-doc-preview-panel__canvas,
+  .cc-doc-preview-panel__canvas--document,
+  .cc-invoice-preview,
+  .invoice-document,
+  .invoice-document-premium,
+  .invoice-sheet {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

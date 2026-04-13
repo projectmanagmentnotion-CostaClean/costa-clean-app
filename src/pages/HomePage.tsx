@@ -88,11 +88,11 @@ export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, 
       </header>
 
       <div className="cc-dashboard-stack">
+        <DashboardQuickActions onOpenView={onOpenView} />
         <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
         <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
         <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
         <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
-        <DashboardQuickActions onOpenView={onOpenView} />
       </div>
     </section>
   )

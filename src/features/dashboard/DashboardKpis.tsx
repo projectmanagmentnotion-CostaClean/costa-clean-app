@@ -119,11 +119,11 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
       </div>
 
       <div className="cc-dashboard-secondary-grid">
-        <div className="cc-dashboard-subsection">
-          <div className="cc-dashboard-subsection__header">
+        <details className="cc-dashboard-subsection cc-collapsible-section" open>
+          <summary className="cc-dashboard-subsection__header cc-collapsible-section__summary">
             <h3>Atencion operativa</h3>
             <p>Bloque enfocado en incidencias accionables del dia a dia.</p>
-          </div>
+          </summary>
 
           <div className="cc-kpi-grid cc-kpi-grid--compact">
             {operationalCards.map((card) => (
@@ -140,13 +140,13 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
               </button>
             ))}
           </div>
-        </div>
+        </details>
 
-        <div className="cc-dashboard-subsection">
-          <div className="cc-dashboard-subsection__header">
+        <details className="cc-dashboard-subsection cc-collapsible-section">
+          <summary className="cc-dashboard-subsection__header cc-collapsible-section__summary">
             <h3>Base operativa y cobertura</h3>
             <p>Volumen de cartera, actividad registrada y control de soporte.</p>
-          </div>
+          </summary>
 
           <div className="cc-kpi-grid cc-kpi-grid--dense">
             {portfolioCards.map((card) => (
@@ -171,7 +171,7 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
               )
             ))}
           </div>
-        </div>
+        </details>
       </div>
     </section>
   )

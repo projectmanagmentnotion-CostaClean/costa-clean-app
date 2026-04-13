@@ -2,6 +2,10 @@ export type AppTheme = 'dark' | 'light'
 
 const themeStorageKey = 'costaclean-theme'
 const supportedThemes = new Set<AppTheme>(['dark', 'light'])
+const themeColorByTheme: Record<AppTheme, string> = {
+  dark: '#06101d',
+  light: '#f4f9fc',
+}
 
 export function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && supportedThemes.has(value as AppTheme)
@@ -37,6 +41,11 @@ export function applyTheme(theme: AppTheme) {
 
   document.documentElement.dataset.theme = theme
   document.documentElement.style.colorScheme = theme
+
+  const themeColorMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+  if (themeColorMeta) {
+    themeColorMeta.content = themeColorByTheme[theme]
+  }
 }
 
 export function getThemeFeedback(theme: AppTheme): string {

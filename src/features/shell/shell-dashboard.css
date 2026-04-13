@@ -8533,3 +8533,28 @@
   background: var(--warning-soft);
   color: var(--warning);
 }
+
+/* Sprint 7: installed web app shell polish for iPhone/iPad. */
+@supports (padding: max(0px)) {
+  .app-shell {
+    min-height: 100dvh;
+  }
+}
+
+@media (max-width: 900px) {
+  .cc-shell-frame {
+    min-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+  }
+
+  .cc-shell-nav--top-only {
+    top: env(safe-area-inset-top, 0px);
+  }
+
+  .cc-bottom-dock--mobile {
+    padding-bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  }
+
+  .cc-bottom-dock--compact {
+    padding-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) + 7px));
+  }
+}

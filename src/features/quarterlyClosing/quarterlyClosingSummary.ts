@@ -1,5 +1,9 @@
 import type { ExpenseListItem } from '../expenses/types'
-import { buildExpenseFiscalSummary } from '../expenses/fiscalIntelligenceSummary'
+import {
+  buildExpenseFiscalSummary,
+  hasMediumHighFiscalRisk,
+  needsFiscalReview,
+} from '../expenses/fiscalIntelligenceSummary'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
@@ -48,10 +52,10 @@ export function buildQuarterlyClosingSummary(
       (!expense.receipt_file_path && expense.document_support_status !== 'invoice_valid'),
   )
   const pendingReviewExpenses = quarterClosureExpenses.filter(
-    (expense) => expense.fiscal_review_status === 'pending',
+    (expense) => needsFiscalReview(expense),
   )
   const riskExpenses = quarterClosureExpenses.filter(
-    (expense) => expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high',
+    (expense) => hasMediumHighFiscalRisk(expense),
   )
   const fiscalSummary = buildExpenseFiscalSummary(quarterClosureExpenses)
 

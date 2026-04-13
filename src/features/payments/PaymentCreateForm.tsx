@@ -64,6 +64,19 @@ export function PaymentCreateForm({
   )
 
   useEffect(() => {
+    if (invoices.length === 0 || selectedInvoice) {
+      return
+    }
+
+    const fallbackInvoice = invoices[0]
+    setForm((current) => ({
+      ...current,
+      invoice_id: fallbackInvoice.id,
+      amount: formatMoneyInput(Number(fallbackInvoice.total || 0)),
+    }))
+  }, [invoices, selectedInvoice])
+
+  useEffect(() => {
     if (!selectedInvoice) {
       return
     }
@@ -90,6 +103,11 @@ export function PaymentCreateForm({
     try {
       if (!form.invoice_id) {
         setSubmitError('Debes seleccionar una factura.')
+        return
+      }
+
+      if (!selectedInvoice) {
+        setSubmitError('No se pudo resolver la factura seleccionada. Actualiza la lista antes de guardar.')
         return
       }
 

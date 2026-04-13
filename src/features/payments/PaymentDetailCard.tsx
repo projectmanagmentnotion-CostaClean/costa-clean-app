@@ -89,6 +89,9 @@ export function PaymentDetailCard({
     return () => onUnsavedChange?.(false)
   }, [isEditing, onUnsavedChange])
 
+  const selectedInvoice = invoices.find((invoice) => invoice.id === form.invoice_id) ?? null
+  const isSelectedInvoiceMissing = Boolean(form.invoice_id && !selectedInvoice)
+
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setForm((current) => ({
       ...current,
@@ -97,8 +100,8 @@ export function PaymentDetailCard({
   }
 
   function syncAmountFromInvoice() {
-    const selectedInvoice = invoices.find((invoice) => invoice.id === form.invoice_id) ?? null
     if (!selectedInvoice) {
+      setSaveError('No se pudo resolver la factura seleccionada para traer su total.')
       return
     }
 
@@ -122,6 +125,11 @@ export function PaymentDetailCard({
     try {
       if (!form.invoice_id) {
         setSaveError('Debes seleccionar una factura.')
+        return
+      }
+
+      if (!selectedInvoice) {
+        setSaveError('No se pudo resolver la factura seleccionada. Actualiza la lista antes de guardar.')
         return
       }
 
@@ -210,6 +218,11 @@ export function PaymentDetailCard({
                   value={form.invoice_id}
                   onChange={(event) => updateField('invoice_id', event.target.value)}
                 >
+                  {isSelectedInvoiceMissing ? (
+                    <option value={form.invoice_id}>
+                      Factura no disponible - {form.invoice_id}
+                    </option>
+                  ) : null}
                   {invoices.map((invoice) => (
                     <option key={invoice.id} value={invoice.id}>
                       {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {formatCurrency(invoice.total)}

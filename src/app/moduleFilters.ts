@@ -401,15 +401,13 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
 
     if (filter.scope === 'pending_review') {
       return quarterExpenses.filter(
-        (expense) => expense.affects_quarterly_closure && expense.fiscal_review_status === 'pending',
+        (expense) => expense.affects_quarterly_closure && needsFiscalReview(expense),
       )
     }
 
     if (filter.scope === 'risk') {
       return quarterExpenses.filter(
-        (expense) =>
-          expense.affects_quarterly_closure &&
-          (expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high'),
+        (expense) => expense.affects_quarterly_closure && hasMediumHighFiscalRisk(expense),
       )
     }
 
@@ -436,15 +434,13 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
 
     if (filter.scope === 'pending_review') {
       return yearExpenses.filter(
-        (expense) => expense.affects_annual_closure && expense.fiscal_review_status === 'pending',
+        (expense) => expense.affects_annual_closure && needsFiscalReview(expense),
       )
     }
 
     if (filter.scope === 'risk') {
       return yearExpenses.filter(
-        (expense) =>
-          expense.affects_annual_closure &&
-          (expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high'),
+        (expense) => expense.affects_annual_closure && hasMediumHighFiscalRisk(expense),
       )
     }
 

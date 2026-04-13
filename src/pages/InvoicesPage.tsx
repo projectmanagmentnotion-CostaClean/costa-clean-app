@@ -43,39 +43,13 @@ export function InvoicesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
-  const [activeCreatePrefill, setActiveCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
-  useEffect(() => {
-    if (!createPrefill) {
-      return
-    }
-
-    setActiveCreatePrefill(createPrefill)
-    setShowCreateForm(true)
-    onPrefillConsumed()
-  }, [createPrefill, onPrefillConsumed])
-
-  useEffect(() => {
-    if (invoices.length === 0) {
-      setSelectedInvoiceId(null)
-      setShowDocumentScreen(false)
-      return
-    }
-
-    const selectedStillExists = invoices.some(
-      (invoice) => invoice.id === selectedInvoiceId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedInvoiceId(invoices[0].id)
-      setShowDocumentScreen(false)
-    }
-  }, [invoices, selectedInvoiceId])
-
   const selectedInvoice =
-    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
-  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
+  const selectedInvoiceKey = selectedInvoice?.id ?? null
+  const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
+  const hasPendingWork = isCreateFormVisible || hasUnsavedDetailChanges
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en facturas')
@@ -101,7 +75,7 @@ export function InvoicesPage({
 
   async function handleInvoiceCreated() {
     await onInvoiceCreated()
-    setActiveCreatePrefill(null)
+    onPrefillConsumed()
     setShowCreateForm(false)
   }
 
@@ -120,10 +94,10 @@ export function InvoicesPage({
             type="button"
             className="primary-button"
             onClick={() => {
-              if (showCreateForm) {
+              if (isCreateFormVisible) {
                 runGuarded(() => {
                   setShowCreateForm(false)
-                  setActiveCreatePrefill(null)
+                  onPrefillConsumed()
                 })
                 return
               }
@@ -131,16 +105,16 @@ export function InvoicesPage({
               setShowCreateForm(true)
             }}
           >
-            {showCreateForm ? 'Cerrar formulario' : 'Nueva factura'}
+            {isCreateFormVisible ? 'Cerrar formulario' : 'Nueva factura'}
           </button>
         </div>
 
-        {showCreateForm ? (
+        {isCreateFormVisible ? (
           <InvoiceCreateForm
             jobs={jobs}
             quotes={quotes}
             onCreated={handleInvoiceCreated}
-            prefill={activeCreatePrefill}
+            prefill={createPrefill}
           />
         ) : null}
 
@@ -153,9 +127,9 @@ export function InvoicesPage({
             <InvoicesList
               invoices={invoices}
               error={error}
-              selectedInvoiceId={selectedInvoiceId}
+              selectedInvoiceId={selectedInvoiceKey}
               onSelectInvoice={(invoice) => {
-                if (invoice.id === selectedInvoiceId) return
+                if (invoice.id === selectedInvoiceKey) return
 
                 runGuarded(() => {
                   setSelectedInvoiceId(invoice.id)

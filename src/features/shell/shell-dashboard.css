@@ -8728,3 +8728,173 @@
 :root[data-theme="light"] .cc-alert strong {
   color: #10243a;
 }
+
+/* Stabilization sprint: targeted final light-theme cleanup. */
+:root[data-theme="light"] .section-header.page-header-actions,
+:root[data-theme="light"] .cc-master-page__hero,
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero {
+  border-color: rgba(7, 95, 136, 0.20);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(241, 249, 253, 0.97));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 10px 24px rgba(17, 73, 103, 0.08);
+}
+
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.995), rgba(239, 248, 252, 0.98));
+}
+
+:root[data-theme="light"] .page-header-actions h1,
+:root[data-theme="light"] .page-header-actions h2,
+:root[data-theme="light"] .cc-master-page__hero h1,
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero h1 {
+  color: #0b3553;
+}
+
+:root[data-theme="light"] .page-header-actions p,
+:root[data-theme="light"] .cc-master-page__hero p,
+:root[data-theme="light"] .cc-doc-page .cc-master-page__hero p,
+:root[data-theme="light"] .section-header p,
+:root[data-theme="light"] .cc-expense-detail__section-head p {
+  color: #38566c;
+}
+
+:root[data-theme="light"] .cc-list-toolbar,
+:root[data-theme="light"] .cc-module-filter-bar {
+  color: #10243a;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__controls,
+:root[data-theme="light"] .cc-module-filter-bar,
+:root[data-theme="light"] .cc-quarterly-closing-filters,
+:root[data-theme="light"] .cc-annual-closing-filters {
+  border-color: rgba(7, 95, 136, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(247, 252, 255, 0.98));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 18px rgba(17, 73, 103, 0.055);
+}
+
+:root[data-theme="light"] .cc-list-toolbar__field > span,
+:root[data-theme="light"] .cc-list-toolbar__summary,
+:root[data-theme="light"] .cc-module-filter-bar__eyebrow,
+:root[data-theme="light"] .cc-module-filter-bar__label {
+  color: #27475f;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__field select,
+:root[data-theme="light"] .form-field input,
+:root[data-theme="light"] .form-field select,
+:root[data-theme="light"] .form-field textarea {
+  border-color: rgba(7, 95, 136, 0.22);
+  background:
+    linear-gradient(180deg, #ffffff, #fbfdff);
+  color: #10243a;
+}
+
+:root[data-theme="light"] .form-field input::placeholder,
+:root[data-theme="light"] .form-field textarea::placeholder {
+  color: #536f85;
+}
+
+:root[data-theme="light"] .data-section,
+:root[data-theme="light"] .cc-master-layout__detail,
+:root[data-theme="light"] .cc-master-layout__list,
+:root[data-theme="light"] .lead-detail-card,
+:root[data-theme="light"] .cc-expense-detail-card,
+:root[data-theme="light"] .cc-expense-detail__info-card,
+:root[data-theme="light"] .cc-expense-metric,
+:root[data-theme="light"] .cc-expense-detail__note-card,
+:root[data-theme="light"] .cc-fiscal-intelligence-panel {
+  border-color: rgba(7, 95, 136, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(245, 251, 254, 0.97));
+}
+
+:root[data-theme="light"] .cc-expense-detail__section,
+:root[data-theme="light"] .cc-expense-detail__doc-grid,
+:root[data-theme="light"] .cc-expense-detail__info-grid,
+:root[data-theme="light"] .cc-expense-detail__notes {
+  color: #10243a;
+}
+
+:root[data-theme="light"] .cc-expense-detail__header-actions {
+  align-items: center;
+  gap: 10px;
+}
+
+:root[data-theme="light"] .page-header-actions .primary-button,
+:root[data-theme="light"] .page-header-actions .secondary-button,
+:root[data-theme="light"] .cc-expense-detail__header-actions .primary-button,
+:root[data-theme="light"] .cc-expense-detail__header-actions .secondary-button,
+:root[data-theme="light"] .form-actions .primary-button,
+:root[data-theme="light"] .form-actions .secondary-button {
+  min-height: 42px;
+  padding-inline: 15px;
+  border-radius: 12px;
+}
+
+:root[data-theme="light"] .secondary-button,
+:root[data-theme="light"] .cc-list-toolbar__reset,
+:root[data-theme="light"] .cc-module-filter-bar .secondary-button {
+  border-color: rgba(7, 95, 136, 0.22);
+  background:
+    linear-gradient(180deg, #ffffff, #f7fbfe);
+  color: #12324a;
+  box-shadow: 0 6px 14px rgba(17, 73, 103, 0.06);
+}
+
+:root[data-theme="light"] .secondary-button:hover,
+:root[data-theme="light"] .cc-list-toolbar__reset:hover,
+:root[data-theme="light"] .cc-module-filter-bar .secondary-button:hover {
+  border-color: rgba(7, 95, 136, 0.32);
+  background: rgba(11, 131, 180, 0.07);
+}
+
+:root[data-theme="light"] .cc-doc-preview-panel > .data-section,
+:root[data-theme="light"] .cc-doc-preview-panel.data-section,
+:root[data-theme="light"] .cc-doc-preview-panel .section-header,
+:root[data-theme="light"] .cc-document-screen__topbar {
+  border-color: rgba(7, 95, 136, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(246, 252, 255, 0.98));
+  color: #10243a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 10px 22px rgba(17, 73, 103, 0.075);
+}
+
+:root[data-theme="light"] .cc-invoice-preview__topbar,
+:root[data-theme="light"] .cc-invoice-preview__table-head,
+:root[data-theme="light"] .invoice-sheet-header,
+:root[data-theme="light"] .invoice-sheet-header-branded,
+:root[data-theme="light"] .premium-header {
+  border-color: rgba(7, 95, 136, 0.18);
+  background:
+    linear-gradient(180deg, rgba(247, 252, 255, 0.98), rgba(235, 247, 252, 0.96));
+  color: #10243a;
+}
+
+:root[data-theme="light"] .cc-invoice-preview__total-row--grand {
+  border-color: #075f88;
+  background:
+    linear-gradient(180deg, #0f8db8, #075f88);
+  color: #ffffff;
+}
+
+:root[data-theme="light"] .empty-state,
+:root[data-theme="light"] .cc-state-card {
+  border-color: rgba(7, 95, 136, 0.20);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(242, 249, 253, 0.98));
+}
+
+:root[data-theme="light"] .empty-state p,
+:root[data-theme="light"] .cc-state-card p,
+:root[data-theme="light"] .cc-kpi-footnote,
+:root[data-theme="light"] .cc-kpi-card__detail {
+  color: #38566c;
+}

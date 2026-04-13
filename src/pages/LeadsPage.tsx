@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
@@ -59,23 +59,9 @@ export function LeadsPage({
     })
   }, [leads, searchTerm, statusFilter, showArchived])
 
-  useEffect(() => {
-    if (filteredLeads.length === 0) {
-      setSelectedLeadId(null)
-      return
-    }
-
-    const selectedStillExists = filteredLeads.some(
-      (lead) => lead.id === selectedLeadId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedLeadId(filteredLeads[0].id)
-    }
-  }, [filteredLeads, selectedLeadId])
-
   const selectedLead =
-    filteredLeads.find((lead) => lead.id === selectedLeadId) ?? null
+    filteredLeads.find((lead) => lead.id === selectedLeadId) ?? filteredLeads[0] ?? null
+  const selectedLeadKey = selectedLead?.id ?? null
 
   const convertedLeadIds = useMemo(() => {
     return new Set(
@@ -177,7 +163,7 @@ export function LeadsPage({
           <LeadsList
             leads={filteredLeads}
             error={error}
-            selectedLeadId={selectedLeadId}
+            selectedLeadId={selectedLeadKey}
             onSelectLead={(lead) => setSelectedLeadId(lead.id)}
           />
         </div>

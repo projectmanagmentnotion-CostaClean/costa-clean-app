@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { PropertyCreateForm } from '../features/properties/PropertyCreateForm'
 import { PropertyDetailCard } from '../features/properties/PropertyDetailCard'
 import { PropertiesList } from '../features/properties/PropertiesList'
@@ -21,23 +21,9 @@ export function PropertiesPage({
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
-  useEffect(() => {
-    if (properties.length === 0) {
-      setSelectedPropertyId(null)
-      return
-    }
-
-    const selectedStillExists = properties.some(
-      (property) => property.id === selectedPropertyId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedPropertyId(properties[0].id)
-    }
-  }, [properties, selectedPropertyId])
-
   const selectedProperty =
-    properties.find((property) => property.id === selectedPropertyId) ?? null
+    properties.find((property) => property.id === selectedPropertyId) ?? properties[0] ?? null
+  const selectedPropertyKey = selectedProperty?.id ?? null
 
   return (
     <section className="page-section cc-master-page">
@@ -65,7 +51,7 @@ export function PropertiesPage({
           <PropertiesList
             properties={properties}
             error={error}
-            selectedPropertyId={selectedPropertyId}
+            selectedPropertyId={selectedPropertyKey}
             onSelectProperty={(property) => setSelectedPropertyId(property.id)}
           />
         </div>

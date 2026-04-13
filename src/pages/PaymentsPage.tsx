@@ -32,23 +32,9 @@ export function PaymentsPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
-  useEffect(() => {
-    if (payments.length === 0) {
-      setSelectedPaymentId(null)
-      return
-    }
-
-    const selectedStillExists = payments.some(
-      (payment) => payment.id === selectedPaymentId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedPaymentId(payments[0].id)
-    }
-  }, [payments, selectedPaymentId])
-
   const selectedPayment =
-    payments.find((payment) => payment.id === selectedPaymentId) ?? null
+    payments.find((payment) => payment.id === selectedPaymentId) ?? payments[0] ?? null
+  const selectedPaymentKey = selectedPayment?.id ?? null
   const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
 
   useEffect(() => {
@@ -120,9 +106,9 @@ export function PaymentsPage({
           <PaymentsList
             payments={payments}
             error={error}
-            selectedPaymentId={selectedPaymentId}
+            selectedPaymentId={selectedPaymentKey}
             onSelectPayment={(payment) => {
-              if (payment.id === selectedPaymentId) return
+              if (payment.id === selectedPaymentKey) return
               runGuarded(() => setSelectedPaymentId(payment.id))
             }}
           />

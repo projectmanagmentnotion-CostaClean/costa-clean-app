@@ -37,23 +37,9 @@ export function ExpensesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
-  useEffect(() => {
-    if (expenses.length === 0) {
-      setSelectedExpenseId(null)
-      return
-    }
-
-    const selectedStillExists = expenses.some(
-      (expense) => expense.id === selectedExpenseId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedExpenseId(expenses[0].id)
-    }
-  }, [expenses, selectedExpenseId])
-
   const selectedExpense =
-    expenses.find((expense) => expense.id === selectedExpenseId) ?? null
+    expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
+  const selectedExpenseKey = selectedExpense?.id ?? null
   const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
 
   useEffect(() => {
@@ -191,9 +177,9 @@ export function ExpensesPage({
           <ExpensesList
             expenses={expenses}
             error={error}
-            selectedExpenseId={selectedExpenseId}
+            selectedExpenseId={selectedExpenseKey}
             onSelectExpense={(expense) => {
-              if (expense.id === selectedExpenseId) return
+              if (expense.id === selectedExpenseKey) return
               runGuarded(() => setSelectedExpenseId(expense.id))
             }}
           />

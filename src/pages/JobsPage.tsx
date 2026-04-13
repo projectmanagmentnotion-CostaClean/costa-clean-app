@@ -43,37 +43,13 @@ export function JobsPage({
 }: JobsPageProps) {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [activeCreatePrefill, setActiveCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
-  useEffect(() => {
-    if (!createPrefill) {
-      return
-    }
-
-    setActiveCreatePrefill(createPrefill)
-    setShowCreateForm(true)
-    onPrefillConsumed()
-  }, [createPrefill, onPrefillConsumed])
-
-  useEffect(() => {
-    if (jobs.length === 0) {
-      setSelectedJobId(null)
-      return
-    }
-
-    const selectedStillExists = jobs.some(
-      (job) => job.id === selectedJobId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedJobId(jobs[0].id)
-    }
-  }, [jobs, selectedJobId])
-
   const selectedJob =
-    jobs.find((job) => job.id === selectedJobId) ?? null
-  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+    jobs.find((job) => job.id === selectedJobId) ?? jobs[0] ?? null
+  const selectedJobKey = selectedJob?.id ?? null
+  const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
+  const hasPendingWork = isCreateFormVisible || hasUnsavedDetailChanges
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
@@ -99,7 +75,7 @@ export function JobsPage({
 
   async function handleJobCreated() {
     await onJobCreated()
-    setActiveCreatePrefill(null)
+    onPrefillConsumed()
     setShowCreateForm(false)
   }
 
@@ -115,10 +91,10 @@ export function JobsPage({
           type="button"
           className="primary-button"
           onClick={() => {
-            if (showCreateForm) {
+            if (isCreateFormVisible) {
               runGuarded(() => {
                 setShowCreateForm(false)
-                setActiveCreatePrefill(null)
+                onPrefillConsumed()
               })
               return
             }
@@ -126,17 +102,17 @@ export function JobsPage({
             setShowCreateForm(true)
           }}
         >
-          {showCreateForm ? 'Cerrar formulario' : 'Nuevo servicio'}
+          {isCreateFormVisible ? 'Cerrar formulario' : 'Nuevo servicio'}
         </button>
       </div>
 
-      {showCreateForm ? (
+      {isCreateFormVisible ? (
         <JobCreateForm
           clients={clients}
           properties={properties}
           quotes={quotes}
           onCreated={handleJobCreated}
-          prefill={activeCreatePrefill}
+          prefill={createPrefill}
         />
       ) : null}
 
@@ -149,9 +125,9 @@ export function JobsPage({
           <JobsList
             jobs={jobs}
             error={error}
-            selectedJobId={selectedJobId}
+            selectedJobId={selectedJobKey}
             onSelectJob={(job) => {
-              if (job.id === selectedJobId) return
+              if (job.id === selectedJobKey) return
               runGuarded(() => setSelectedJobId(job.id))
             }}
           />

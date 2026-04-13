@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientDetailCard } from '../features/clients/ClientDetailCard'
 import { ClientsList } from '../features/clients/ClientsList'
@@ -18,23 +18,9 @@ export function ClientsPage({
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
 
-  useEffect(() => {
-    if (clients.length === 0) {
-      setSelectedClientId(null)
-      return
-    }
-
-    const selectedStillExists = clients.some(
-      (client) => client.id === selectedClientId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedClientId(clients[0].id)
-    }
-  }, [clients, selectedClientId])
-
   const selectedClient =
-    clients.find((client) => client.id === selectedClientId) ?? null
+    clients.find((client) => client.id === selectedClientId) ?? clients[0] ?? null
+  const selectedClientKey = selectedClient?.id ?? null
 
   return (
     <section className="page-section cc-master-page">
@@ -60,7 +46,7 @@ export function ClientsPage({
           <ClientsList
             clients={clients}
             error={error}
-            selectedClientId={selectedClientId}
+            selectedClientId={selectedClientKey}
             onSelectClient={(client) => setSelectedClientId(client.id)}
           />
         </div>

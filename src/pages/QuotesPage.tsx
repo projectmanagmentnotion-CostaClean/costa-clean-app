@@ -42,25 +42,9 @@ export function QuotesPage({
   const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
-  useEffect(() => {
-    if (quotes.length === 0) {
-      setSelectedQuoteId(null)
-      setShowDocumentScreen(false)
-      return
-    }
-
-    const selectedStillExists = quotes.some(
-      (quote) => quote.id === selectedQuoteId,
-    )
-
-    if (!selectedStillExists) {
-      setSelectedQuoteId(quotes[0].id)
-      setShowDocumentScreen(false)
-    }
-  }, [quotes, selectedQuoteId])
-
   const selectedQuote =
-    quotes.find((quote) => quote.id === selectedQuoteId) ?? null
+    quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
+  const selectedQuoteKey = selectedQuote?.id ?? null
 
   const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
 
@@ -137,9 +121,9 @@ export function QuotesPage({
               clients={clients}
               properties={properties}
               error={error}
-              selectedQuoteId={selectedQuoteId}
+              selectedQuoteId={selectedQuoteKey}
               onSelectQuote={(quote) => {
-                if (quote.id === selectedQuoteId) return
+                if (quote.id === selectedQuoteKey) return
 
                 runGuarded(() => {
                   setSelectedQuoteId(quote.id)

@@ -9134,3 +9134,169 @@
     overflow-x: auto;
   }
 }
+
+/* iPhone header fit hotfix: keep the shared shell controls inside the viewport. */
+.cc-shell-nav--top-only,
+.cc-shell-nav__topline,
+.cc-shell-nav__brand,
+.cc-shell-nav__brand-copy,
+.cc-shell-nav__actions,
+.cc-shell-nav__current {
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 700px) {
+  .cc-shell-frame {
+    overflow-x: clip;
+  }
+
+  .cc-shell-nav--top-only {
+    width: 100%;
+    max-width: 100%;
+    overflow: visible;
+  }
+
+  .cc-shell-nav__topline {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 9px;
+  }
+
+  .cc-shell-nav__brand {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cc-shell-nav__brand-copy {
+    overflow: hidden;
+  }
+
+  .cc-shell-nav__subtitle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-shell-nav__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) repeat(2, 36px);
+    gap: 7px;
+    align-items: stretch;
+  }
+
+  .cc-shell-nav__sync,
+  .cc-theme-toggle,
+  .cc-alerts-bell,
+  .cc-shell-nav__back,
+  .cc-shell-nav__current {
+    min-width: 0;
+  }
+
+  .cc-shell-nav__sync {
+    width: 100%;
+    min-height: 36px;
+    padding: 0 9px;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+
+  .cc-shell-nav__sync span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-theme-toggle,
+  .cc-alerts-bell__button {
+    width: 36px;
+    height: 36px;
+    min-height: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .cc-theme-toggle__label {
+    display: none;
+  }
+
+  .cc-shell-nav__back,
+  .cc-shell-nav__current {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .cc-shell-nav__back {
+    min-height: 34px;
+    padding: 0 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-shell-nav__current {
+    padding: 8px 10px;
+    text-align: left;
+  }
+
+  .cc-shell-nav__current-value {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-shell {
+    padding-inline: max(5px, env(safe-area-inset-left, 0px)) max(5px, env(safe-area-inset-right, 0px));
+  }
+
+  .cc-shell-frame {
+    padding: 9px;
+    border-radius: 20px;
+  }
+
+  .cc-shell-nav--top-only {
+    padding: 9px;
+    border-radius: 18px;
+  }
+
+  .cc-shell-nav__brand-mark {
+    width: 34px;
+    height: 34px;
+    flex-basis: 34px;
+  }
+
+  .cc-shell-nav__brand-mark-image {
+    width: 24px;
+    height: 24px;
+  }
+
+  .cc-shell-nav__title {
+    font-size: 0.9rem;
+  }
+
+  .cc-shell-nav__subtitle {
+    font-size: 0.64rem;
+  }
+
+  .cc-shell-nav__actions {
+    grid-template-columns: minmax(0, 1fr) repeat(2, 34px);
+    gap: 6px;
+  }
+
+  .cc-shell-nav__sync,
+  .cc-theme-toggle,
+  .cc-alerts-bell__button {
+    min-height: 34px;
+    height: 34px;
+  }
+
+  .cc-theme-toggle,
+  .cc-alerts-bell__button {
+    width: 34px;
+  }
+}

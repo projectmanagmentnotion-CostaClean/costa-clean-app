@@ -33,6 +33,18 @@ const EXPENSES_SELECT = [
   'fiscal_review_status',
   'fiscal_risk_level',
   'manager_note',
+  'ai_fiscal_classification',
+  'ai_deductibility_percentage',
+  'ai_vat_deductibility_percentage',
+  'ai_estimated_deductible_base',
+  'ai_estimated_deductible_vat',
+  'ai_fiscal_confidence',
+  'ai_fiscal_risk_level',
+  'ai_fiscal_reasoning',
+  'ai_fiscal_flags',
+  'ai_fiscal_model',
+  'ai_fiscal_analyzed_at',
+  'ai_fiscal_source_version',
   'notes',
   'fiscal_year',
   'fiscal_quarter',
@@ -165,6 +177,39 @@ export async function updateExpenseAttachment(
       receipt_file_url: fileUrl,
       attachment_count: attachmentCount,
     })
+    .eq('id', expenseId)
+
+  if (updateError) {
+    throw new Error(updateError.message)
+  }
+}
+
+export async function updateExpenseFiscalIntelligence(
+  expenseId: string,
+  input: {
+    ai_fiscal_classification: string
+    ai_deductibility_percentage: number
+    ai_vat_deductibility_percentage: number
+    ai_estimated_deductible_base: number
+    ai_estimated_deductible_vat: number
+    ai_fiscal_confidence: number
+    ai_fiscal_risk_level: string
+    ai_fiscal_reasoning: string
+    ai_fiscal_flags: string[]
+    ai_fiscal_model: string
+    ai_fiscal_analyzed_at: string
+    ai_fiscal_source_version: string
+  },
+): Promise<void> {
+  const { client, error } = getSupabaseClient()
+
+  if (error || !client) {
+    throw new Error(error ?? 'No se pudo crear el cliente Supabase.')
+  }
+
+  const { error: updateError } = await client
+    .from('expenses')
+    .update(input)
     .eq('id', expenseId)
 
   if (updateError) {

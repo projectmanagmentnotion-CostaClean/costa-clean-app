@@ -8558,3 +8558,47 @@
     padding-bottom: max(8px, calc(env(safe-area-inset-bottom, 0px) + 7px));
   }
 }
+
+/* Sprint 8.1: fiscal intelligence foundation for expenses. */
+.cc-expense-detail__header-actions {
+  margin: 0;
+  justify-content: flex-end;
+}
+
+.cc-fiscal-intelligence-panel {
+  border-color: rgba(147, 197, 253, 0.18);
+  background:
+    linear-gradient(180deg, rgba(14, 28, 46, 0.74), rgba(10, 19, 34, 0.48));
+}
+
+.cc-fiscal-intelligence-panel__metrics {
+  margin-bottom: 14px;
+}
+
+.cc-fiscal-intelligence-panel__reasoning {
+  margin-top: 14px;
+}
+
+.cc-fiscal-intelligence-panel__flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.cc-fiscal-intelligence-panel .cc-alert {
+  margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  .cc-expense-detail__header-actions {
+    width: 100%;
+  }
+}
+
+:root[data-theme="light"] .cc-fiscal-intelligence-panel {
+  border-color: rgba(11, 131, 180, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(11, 131, 180, 0.10), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(239, 248, 252, 0.96));
+}

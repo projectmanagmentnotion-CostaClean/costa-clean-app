@@ -7,6 +7,10 @@ import {
   uploadExpenseReceipt,
 } from './expenseAttachmentsApi'
 import {
+  analyzeExpenseFiscalIntelligence,
+  saveExpenseFiscalIntelligenceResult,
+} from './fiscalIntelligenceApi'
+import {
   expenseCategories,
   expenseDocumentSupportStatuses,
   expenseDocumentTypes,
@@ -16,6 +20,7 @@ import {
   getExpenseCategoryLabel,
   getExpenseDocumentSupportStatusLabel,
   getExpenseDocumentTypeLabel,
+  getExpenseAiFiscalClassificationLabel,
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   getExpensePaymentStatusLabel,
@@ -75,6 +80,14 @@ function formatMoneyInput(value: number | null | undefined): string {
   return Number(value ?? 0).toFixed(2)
 }
 
+function formatPercentage(value: number | null | undefined): string {
+  return `${Number(value ?? 0).toFixed(0)}%`
+}
+
+function formatConfidence(value: number | null | undefined): string {
+  return `${Math.round(Number(value ?? 0) * 100)}%`
+}
+
 function getFileTypeLabel(filePath: string | null | undefined): string {
   if (!filePath) return 'Sin documento'
   const lower = filePath.toLowerCase()
@@ -94,8 +107,10 @@ export function ExpenseDetailCard({
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false)
   const [isDeletingReceipt, setIsDeletingReceipt] = useState(false)
+  const [isAnalyzingFiscalIntelligence, setIsAnalyzingFiscalIntelligence] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [fiscalAssistiveNotice, setFiscalAssistiveNotice] = useState<string | null>(null)
   const [pendingReceiptAction, setPendingReceiptAction] = useState<'open' | 'delete' | null>(null)
   const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
@@ -124,6 +139,7 @@ export function ExpenseDetailCard({
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setFiscalAssistiveNotice(null)
       setForm({
         expense_date: '',
         supplier_name: '',
@@ -148,6 +164,7 @@ export function ExpenseDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setFiscalAssistiveNotice(null)
     setForm({
       expense_date: expense.expense_date,
       supplier_name: expense.supplier_name ?? '',
@@ -377,6 +394,28 @@ export function ExpenseDetailCard({
     }
   }
 
+  async function handleAnalyzeFiscalIntelligence() {
+    if (!expense) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsAnalyzingFiscalIntelligence(true)
+
+    try {
+      const response = await analyzeExpenseFiscalIntelligence(expense)
+      await saveExpenseFiscalIntelligenceResult(expense.id, response)
+      setFiscalAssistiveNotice(response.result.assistive_notice)
+      await onExpenseUpdated()
+      setSuccessMessage('Estimacion fiscal actualizada correctamente.')
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido generando la estimacion fiscal.'
+      setSaveError(message)
+    } finally {
+      setIsAnalyzingFiscalIntelligence(false)
+    }
+  }
+
   return (
     <section className="data-section cc-expense-detail">
       <div className="section-header page-header-actions">
@@ -385,17 +424,30 @@ export function ExpenseDetailCard({
         </div>
 
         {expense ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-            }}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar gasto'}
-          </button>
+          <div className="form-actions cc-expense-detail__header-actions">
+            {!isEditing ? (
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => void handleAnalyzeFiscalIntelligence()}
+                disabled={isAnalyzingFiscalIntelligence}
+              >
+                {isAnalyzingFiscalIntelligence ? 'Analizando...' : 'Analizar fiscalmente'}
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setIsEditing((current) => !current)
+                setSaveError(null)
+                setSuccessMessage(null)
+              }}
+            >
+              {isEditing ? 'Cancelar edición' : 'Editar gasto'}
+            </button>
+          </div>
         ) : null}
       </div>
 
@@ -790,6 +842,99 @@ export function ExpenseDetailCard({
                     </strong>
                   </div>
                 </div>
+              </section>
+
+              <section className="cc-expense-detail__section cc-fiscal-intelligence-panel">
+                <div className="cc-expense-detail__section-head">
+                  <h3>Inteligencia fiscal</h3>
+                  <p>Estimacion asistida basada en los datos estructurados del gasto. No usa OCR.</p>
+                </div>
+
+                {expense.ai_fiscal_classification ? (
+                  <>
+                    <div className="cc-expense-detail__metrics cc-fiscal-intelligence-panel__metrics">
+                      <article className="cc-expense-metric">
+                        <span className="cc-expense-metric__label">Clasificacion</span>
+                        <strong className="cc-expense-metric__value">
+                          {getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)}
+                        </strong>
+                      </article>
+                      <article className="cc-expense-metric">
+                        <span className="cc-expense-metric__label">Deducibilidad estimada</span>
+                        <strong className="cc-expense-metric__value">
+                          {formatPercentage(expense.ai_deductibility_percentage)}
+                        </strong>
+                      </article>
+                      <article className="cc-expense-metric">
+                        <span className="cc-expense-metric__label">IVA deducible estimado</span>
+                        <strong className="cc-expense-metric__value">
+                          {formatPercentage(expense.ai_vat_deductibility_percentage)}
+                        </strong>
+                      </article>
+                      <article className="cc-expense-metric">
+                        <span className="cc-expense-metric__label">Confianza</span>
+                        <strong className="cc-expense-metric__value">
+                          {formatConfidence(expense.ai_fiscal_confidence)}
+                        </strong>
+                      </article>
+                    </div>
+
+                    <div className="cc-expense-detail__info-grid">
+                      <div className="cc-expense-detail__info-card">
+                        <span className="cc-expense-detail__info-label">Base deducible estimada</span>
+                        <strong className="cc-expense-detail__info-value">
+                          {formatCurrency(expense.ai_estimated_deductible_base)}
+                        </strong>
+                      </div>
+                      <div className="cc-expense-detail__info-card">
+                        <span className="cc-expense-detail__info-label">IVA deducible estimado</span>
+                        <strong className="cc-expense-detail__info-value">
+                          {formatCurrency(expense.ai_estimated_deductible_vat)}
+                        </strong>
+                      </div>
+                      <div className="cc-expense-detail__info-card">
+                        <span className="cc-expense-detail__info-label">Riesgo sugerido</span>
+                        <strong className="cc-expense-detail__info-value">
+                          {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level)}
+                        </strong>
+                      </div>
+                      <div className="cc-expense-detail__info-card">
+                        <span className="cc-expense-detail__info-label">Analizado</span>
+                        <strong className="cc-expense-detail__info-value">
+                          {expense.ai_fiscal_analyzed_at ? formatDateEs(expense.ai_fiscal_analyzed_at.slice(0, 10)) : 'Sin fecha'}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <article className="cc-expense-detail__note-card cc-fiscal-intelligence-panel__reasoning">
+                      <span className="cc-expense-detail__info-label">Motivo sugerido</span>
+                      <p>{expense.ai_fiscal_reasoning ?? 'Sin razonamiento registrado.'}</p>
+                    </article>
+
+                    {expense.ai_fiscal_flags?.length ? (
+                      <div className="cc-fiscal-intelligence-panel__flags" aria-label="Banderas fiscales sugeridas">
+                        {expense.ai_fiscal_flags.map((flag) => (
+                          <span key={flag} className="cc-expense-chip cc-expense-chip--risk">
+                            {flag.replaceAll('_', ' ')}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div className="cc-alert cc-alert--warning">
+                      <strong>Estimacion asistida</strong>
+                      <p>
+                        {fiscalAssistiveNotice ??
+                          'Estimacion orientativa basada en datos estructurados del gasto. No sustituye la revision de una gestoria ni constituye asesoramiento fiscal.'}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="empty-state">
+                    <strong>Sin estimacion fiscal asistida</strong>
+                    <p>Usa Analizar fiscalmente para generar una estimacion prudente con datos estructurados del gasto.</p>
+                  </div>
+                )}
               </section>
 
               {(expense.manager_note || expense.notes) ? (

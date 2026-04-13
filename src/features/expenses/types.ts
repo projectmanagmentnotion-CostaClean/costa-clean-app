@@ -78,6 +78,48 @@ export const expenseFiscalRiskLevels = [
 export type ExpenseFiscalRiskLevel =
   (typeof expenseFiscalRiskLevels)[number]
 
+export const expenseAiFiscalClassifications = [
+  'probably_deductible',
+  'partially_deductible',
+  'probably_not_deductible',
+  'requires_review',
+] as const
+
+export type ExpenseAiFiscalClassification =
+  (typeof expenseAiFiscalClassifications)[number]
+
+export const expenseAiReviewRecommendations = [
+  'no_review_needed',
+  'user_review',
+  'gestoria_review',
+] as const
+
+export type ExpenseAiReviewRecommendation =
+  (typeof expenseAiReviewRecommendations)[number]
+
+export interface ExpenseFiscalIntelligenceResult {
+  classification: ExpenseAiFiscalClassification
+  deductibility_percentage: number
+  vat_deductibility_percentage: number
+  estimated_deductible_base: number
+  estimated_deductible_vat: number
+  confidence: number
+  risk_level: ExpenseFiscalRiskLevel
+  reasoning: string
+  flags: string[]
+  review_recommendation: ExpenseAiReviewRecommendation
+  questions_for_user: string[]
+  assistive_notice: string
+}
+
+export interface ExpenseFiscalIntelligenceResponse {
+  result: ExpenseFiscalIntelligenceResult
+  deterministic_precheck: ExpenseFiscalIntelligenceResult
+  generated_at: string
+  model: string
+  source_version: string
+}
+
 export interface ExpenseListItem {
   id: string
   display_code: string | null
@@ -121,6 +163,19 @@ export interface ExpenseListItem {
   fiscal_review_status: ExpenseFiscalReviewStatus | string
   fiscal_risk_level: ExpenseFiscalRiskLevel | string
   manager_note: string | null
+
+  ai_fiscal_classification: ExpenseAiFiscalClassification | string | null
+  ai_deductibility_percentage: number | null
+  ai_vat_deductibility_percentage: number | null
+  ai_estimated_deductible_base: number | null
+  ai_estimated_deductible_vat: number | null
+  ai_fiscal_confidence: number | null
+  ai_fiscal_risk_level: ExpenseFiscalRiskLevel | string | null
+  ai_fiscal_reasoning: string | null
+  ai_fiscal_flags: string[] | null
+  ai_fiscal_model: string | null
+  ai_fiscal_analyzed_at: string | null
+  ai_fiscal_source_version: string | null
 
   notes: string | null
 
@@ -255,5 +310,24 @@ export function getExpenseFiscalRiskLevelLabel(value: string | null | undefined)
     case 'medium': return 'Medio'
     case 'high': return 'Alto'
     default: return value ?? 'Sin riesgo'
+  }
+}
+
+export function getExpenseAiFiscalClassificationLabel(value: string | null | undefined): string {
+  switch (value) {
+    case 'probably_deductible': return 'Probablemente deducible'
+    case 'partially_deductible': return 'Parcialmente deducible'
+    case 'probably_not_deductible': return 'Probablemente no deducible'
+    case 'requires_review': return 'Requiere revision'
+    default: return value ?? 'Sin estimacion'
+  }
+}
+
+export function getExpenseAiReviewRecommendationLabel(value: string | null | undefined): string {
+  switch (value) {
+    case 'no_review_needed': return 'Sin revision adicional prioritaria'
+    case 'user_review': return 'Revisar antes del cierre'
+    case 'gestoria_review': return 'Revisar con gestoria'
+    default: return value ?? 'Sin recomendacion'
   }
 }

@@ -1,19 +1,12 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
-import type { SyncStatus } from './syncStatus'
 import type { AppTheme } from './theme'
 import { useDashboardMetrics } from './dashboardMetrics'
 import { useClosingSummaries } from './useClosingSummaries'
 import { useShellNavigation } from './useShellNavigation'
-import {
-  combineRefreshScopes,
-  getRefreshScopeForTable,
-  isBrowserOnline,
-  realtimeTables,
-  type RefreshScope,
-} from './refreshInvalidation'
+import { useAppData } from './useAppData'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -41,35 +34,27 @@ import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
 import { AnnualClosingPage } from '../pages/AnnualClosingPage'
 import { AlertsCenterPage } from '../pages/AlertsCenterPage'
 import { ConfirmDialog } from '../components/ConfirmDialog'
-import type { LeadListItem } from '../features/leads/types'
-import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
-import { buildJobCreatePrefillFromQuote, type JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
+import { buildJobCreatePrefillFromQuote } from '../features/jobs/jobCreatePrefill'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
-import { buildInvoiceCreatePrefillFromJob, type InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
+import { buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
-import type { ExpenseListItem } from '../features/expenses/types'
-import { listExpenses } from '../features/expenses/expenseApi'
-import type { PaymentListItem } from '../features/payments/types'
 import {
   applyDashboardKpiAction,
   dashboardKpiActionConfig,
   type DashboardKpiActionId,
 } from '../features/dashboard/kpiActions'
-import { listQuarterlyClosings, saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
+import { saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
 import { buildQuarterlyClosingSnapshot } from '../features/quarterlyClosing/quarterlyClosingSummary'
-import type { QuarterlyClosingIncidence, QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
-import { listAnnualClosings, saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
+import type { QuarterlyClosingIncidence } from '../features/quarterlyClosing/types'
+import { saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
 import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClosingSummary'
-import type { AnnualClosingIncidence, AnnualClosingRecord } from '../features/annualClosing/types'
+import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
-import { getSupabaseClient } from '../lib/supabase'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
-const foregroundRefreshStaleTimeMs = 30_000
-const realtimeRefreshDelayMs = 900
 
 interface AppShellProps {
   theme: AppTheme
@@ -80,22 +65,6 @@ function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
     (left, right) => Number(left.sort_order) - Number(right.sort_order),
   )
-}
-
-function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
-  const linesByInvoiceId = new Map<string, NonNullable<InvoiceListItem['lines']>>()
-
-  for (const line of lines) {
-    const currentLines = linesByInvoiceId.get(line.invoice_id) ?? []
-    currentLines.push(line)
-    linesByInvoiceId.set(line.invoice_id, currentLines)
-  }
-
-  for (const invoiceLines of linesByInvoiceId.values()) {
-    invoiceLines.sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
-  }
-
-  return linesByInvoiceId
 }
 
 function buildPropertyAddressLine(property: PropertyListItem | undefined): string | null {
@@ -226,32 +195,39 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   } = useShellNavigation()
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
-  const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
-  const [jobCreatePrefill, setJobCreatePrefill] = useState<JobCreatePrefill | null>(null)
-  const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
-  const [leads, setLeads] = useState<LeadListItem[]>([])
-  const [clients, setClients] = useState<ClientListItem[]>([])
-  const [properties, setProperties] = useState<PropertyListItem[]>([])
-  const [quotes, setQuotes] = useState<QuoteListItem[]>([])
-  const [jobs, setJobs] = useState<JobListItem[]>([])
-  const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
-  const [expenses, setExpenses] = useState<ExpenseListItem[]>([])
-  const [payments, setPayments] = useState<PaymentListItem[]>([])
-  const [quarterlyClosings, setQuarterlyClosings] = useState<QuarterlyClosingRecord[]>([])
-  const [annualClosings, setAnnualClosings] = useState<AnnualClosingRecord[]>([])
-  const [leadError, setLeadError] = useState<string | null>(null)
-  const [clientError, setClientError] = useState<string | null>(null)
-  const [propertyError, setPropertyError] = useState<string | null>(null)
-  const [quoteError, setQuoteError] = useState<string | null>(null)
-  const [jobError, setJobError] = useState<string | null>(null)
-  const [invoiceError, setInvoiceError] = useState<string | null>(null)
-  const [expenseError, setExpenseError] = useState<string | null>(null)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
-  const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
+  const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
+  const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
+  const {
+    isInitialDataLoading,
+    syncStatus,
+    leads,
+    clients,
+    properties,
+    quotes,
+    jobs,
+    invoices,
+    expenses,
+    payments,
+    quarterlyClosings,
+    annualClosings,
+    leadError,
+    clientError,
+    propertyError,
+    quoteError,
+    jobError,
+    invoiceError,
+    expenseError,
+    paymentError,
+    quarterlyClosingError,
+    annualClosingError,
+    refreshBilling,
+    refreshOperations,
+    refreshClosings,
+    reloadInvoicesAndPayments,
+    reloadLeadsAndClients,
+  } = useAppData()
   const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
 
@@ -264,409 +240,6 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       return []
     }
   })
-  const lastRefreshAtRef = useRef(0)
-  const isRefreshingRef = useRef(false)
-  const pendingRealtimeRefreshRef = useRef<number | null>(null)
-  const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
-
-  const loadLeads = useCallback(async () => {
-    try {
-      setLeadError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setLeadError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/leads?select=id,display_code,full_name,phone,email,city,status,archived_at&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setLeadError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setLeads(((await response.json()) as LeadListItem[]) ?? [])
-    } catch (err) {
-      setLeadError(err instanceof Error ? err.message : 'Error desconocido cargando leads.')
-    }
-  }, [])
-
-  const loadClients = useCallback(async () => {
-    try {
-      setClientError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setClientError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/clients?select=id,display_code,full_name,phone,email,status,source_lead_id&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setClientError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setClients(((await response.json()) as ClientListItem[]) ?? [])
-    } catch (err) {
-      setClientError(err instanceof Error ? err.message : 'Error desconocido cargando clients.')
-    }
-  }, [])
-
-  const loadProperties = useCallback(async () => {
-    try {
-      setPropertyError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setPropertyError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/properties?select=id,display_code,client_id,name,property_type,address,city,postal_code,notes&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setPropertyError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setProperties(((await response.json()) as PropertyListItem[]) ?? [])
-    } catch (err) {
-      setPropertyError(err instanceof Error ? err.message : 'Error desconocido cargando properties.')
-    }
-  }, [])
-
-  const loadQuotes = useCallback(async () => {
-    try {
-      setQuoteError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setQuoteError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/quotes?select=id,display_code,client_id,property_id,status,subtotal,tax_amount,total,notes,created_at&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setQuoteError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setQuotes(((await response.json()) as QuoteListItem[]) ?? [])
-    } catch (err) {
-      setQuoteError(err instanceof Error ? err.message : 'Error desconocido cargando quotes.')
-    }
-  }, [])
-
-  const loadJobs = useCallback(async () => {
-    try {
-      setJobError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setJobError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setJobError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setJobs(((await response.json()) as JobListItem[]) ?? [])
-    } catch (err) {
-      setJobError(err instanceof Error ? err.message : 'Error desconocido cargando jobs.')
-    }
-  }, [])
-
-  const loadInvoices = useCallback(async () => {
-    try {
-      setInvoiceError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setInvoiceError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setInvoiceError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      const loadedInvoices = ((await response.json()) as InvoiceListItem[]) ?? []
-
-      const linesResponse = await fetch(`${supabaseUrl}/rest/v1/invoice_lines?select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!linesResponse.ok) {
-        setInvoiceError(`REST ${linesResponse.status}: ${linesResponse.statusText}`)
-        return
-      }
-
-      const linesByInvoiceId = groupInvoiceLines(((await linesResponse.json()) as NonNullable<InvoiceListItem['lines']>) ?? [])
-      setInvoices(loadedInvoices.map((invoice) => ({
-        ...invoice,
-        lines: linesByInvoiceId.get(invoice.id) ?? [],
-      })))
-    } catch (err) {
-      setInvoiceError(err instanceof Error ? err.message : 'Error desconocido cargando invoices.')
-    }
-  }, [])
-
-  const loadExpenses = useCallback(async () => {
-    try {
-      setExpenseError(null)
-      const data = await listExpenses()
-      setExpenses(data)
-    } catch (err) {
-      setExpenseError(err instanceof Error ? err.message : 'Error desconocido cargando expenses.')
-    }
-  }, [])
-
-  const loadPayments = useCallback(async () => {
-    try {
-      setPaymentError(null)
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setPaymentError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-      const response = await fetch(`${supabaseUrl}/rest/v1/payments?select=id,display_code,invoice_id,payment_date,amount,payment_method,notes&order=created_at.desc`, {
-        method: 'GET',
-        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
-      })
-      if (!response.ok) {
-        setPaymentError(`REST ${response.status}: ${response.statusText}`)
-        return
-      }
-      setPayments(((await response.json()) as PaymentListItem[]) ?? [])
-    } catch (err) {
-      setPaymentError(err instanceof Error ? err.message : 'Error desconocido cargando payments.')
-    }
-  }, [])
-
-  const loadQuarterlyClosings = useCallback(async () => {
-    try {
-      setQuarterlyClosingError(null)
-      const data = await listQuarterlyClosings()
-      setQuarterlyClosings(data)
-    } catch (err) {
-      setQuarterlyClosingError(err instanceof Error ? err.message : 'Error desconocido cargando cierres trimestrales.')
-    }
-  }, [])
-
-  const loadAnnualClosings = useCallback(async () => {
-    try {
-      setAnnualClosingError(null)
-      const data = await listAnnualClosings()
-      setAnnualClosings(data)
-    } catch (err) {
-      setAnnualClosingError(err instanceof Error ? err.message : 'Error desconocido cargando cierres anuales.')
-    }
-  }, [])
-
-  const runRefresh = useCallback(async (loaders: Array<() => Promise<void>>) => {
-    if (!isBrowserOnline()) {
-      setSyncStatus('offline')
-      return
-    }
-
-    if (isRefreshingRef.current) {
-      return
-    }
-
-    isRefreshingRef.current = true
-    setSyncStatus('syncing')
-
-    try {
-      await Promise.all(loaders.map((loader) => loader()))
-      lastRefreshAtRef.current = Date.now()
-      setSyncStatus('fresh')
-    } finally {
-      isRefreshingRef.current = false
-    }
-  }, [])
-
-  const refreshAll = useCallback(async () => {
-    await runRefresh([
-      loadLeads,
-      loadClients,
-      loadProperties,
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-      loadExpenses,
-      loadPayments,
-      loadQuarterlyClosings,
-      loadAnnualClosings,
-    ])
-  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, runRefresh])
-
-  const refreshBilling = useCallback(async () => {
-    await runRefresh([
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-      loadPayments,
-      loadExpenses,
-    ])
-  }, [loadExpenses, loadInvoices, loadJobs, loadPayments, loadQuotes, runRefresh])
-
-  const refreshOperations = useCallback(async () => {
-    await runRefresh([
-      loadLeads,
-      loadClients,
-      loadProperties,
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-    ])
-  }, [loadClients, loadInvoices, loadJobs, loadLeads, loadProperties, loadQuotes, runRefresh])
-
-  const refreshClosings = useCallback(async () => {
-    await runRefresh([loadQuarterlyClosings, loadAnnualClosings])
-  }, [loadAnnualClosings, loadQuarterlyClosings, runRefresh])
-
-  const reloadInvoicesAndPayments = useCallback(async () => {
-    await refreshBilling()
-  }, [refreshBilling])
-
-  const reloadLeadsAndClients = useCallback(async () => {
-    await refreshOperations()
-  }, [refreshOperations])
-
-  useEffect(() => {
-    let isMounted = true
-
-    void refreshAll().finally(() => {
-      if (isMounted) {
-        setIsInitialDataLoading(false)
-      }
-    })
-
-    return () => {
-      isMounted = false
-    }
-  }, [refreshAll])
-
-  const requestForegroundRefresh = useCallback(() => {
-    if (!isBrowserOnline()) {
-      setSyncStatus('offline')
-      return
-    }
-
-    if (Date.now() - lastRefreshAtRef.current < foregroundRefreshStaleTimeMs) {
-      return
-    }
-
-    void refreshAll()
-  }, [refreshAll])
-
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        requestForegroundRefresh()
-      }
-    }
-
-    const handleOnline = () => {
-      void refreshAll()
-    }
-
-    const handleOffline = () => {
-      setSyncStatus('offline')
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('pageshow', requestForegroundRefresh)
-    window.addEventListener('focus', requestForegroundRefresh)
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('pageshow', requestForegroundRefresh)
-      window.removeEventListener('focus', requestForegroundRefresh)
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
-  }, [refreshAll, requestForegroundRefresh])
-
-  const runScopedRefresh = useCallback((scope: RefreshScope) => {
-    if (scope === 'billing') {
-      void refreshBilling()
-      return
-    }
-
-    if (scope === 'operations') {
-      void refreshOperations()
-      return
-    }
-
-    if (scope === 'closings') {
-      void refreshClosings()
-      return
-    }
-
-    void refreshAll()
-  }, [refreshAll, refreshBilling, refreshClosings, refreshOperations])
-
-  const scheduleRealtimeRefresh = useCallback((scope: RefreshScope) => {
-    if (!isBrowserOnline()) {
-      setSyncStatus('offline')
-      return
-    }
-
-    pendingRealtimeScopeRef.current = combineRefreshScopes(pendingRealtimeScopeRef.current, scope)
-    setSyncStatus('changed')
-
-    if (pendingRealtimeRefreshRef.current !== null) {
-      window.clearTimeout(pendingRealtimeRefreshRef.current)
-    }
-
-    pendingRealtimeRefreshRef.current = window.setTimeout(() => {
-      const scopeToRefresh = pendingRealtimeScopeRef.current ?? 'all'
-      pendingRealtimeRefreshRef.current = null
-      pendingRealtimeScopeRef.current = null
-      runScopedRefresh(scopeToRefresh)
-    }, realtimeRefreshDelayMs)
-  }, [runScopedRefresh])
-
-  useEffect(() => {
-    const { client } = getSupabaseClient()
-    if (!client) return
-
-    const channel = client.channel('costaclean-app-sync')
-
-    for (const table of realtimeTables) {
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
-        scheduleRealtimeRefresh(getRefreshScopeForTable(payload.table ?? table))
-      })
-    }
-
-    void channel.subscribe()
-
-    return () => {
-      if (pendingRealtimeRefreshRef.current !== null) {
-        window.clearTimeout(pendingRealtimeRefreshRef.current)
-        pendingRealtimeRefreshRef.current = null
-        pendingRealtimeScopeRef.current = null
-      }
-
-      void client.removeChannel(channel)
-    }
-  }, [scheduleRealtimeRefresh])
-
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY || window.pageYOffset || 0
@@ -844,34 +417,40 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     [expenses, invoicesWithCodes, jobsWithCodes, paymentsWithCodes, quarterlyClosings, quotesWithCodes],
   )
 
-  useEffect(() => {
+  const activeReviewedAlertIds = useMemo(() => {
     const activeIds = new Set(automationAlerts.map((alert) => alert.id))
-    setReviewedAlertIds((current) => current.filter((id) => activeIds.has(id)))
-  }, [automationAlerts])
+    return reviewedAlertIds.filter((id) => activeIds.has(id))
+  }, [automationAlerts, reviewedAlertIds])
+
+  const quoteFilter = moduleFilters.quotes
+  const jobFilter = moduleFilters.jobs
+  const invoiceFilter = moduleFilters.invoices
+  const expenseFilter = moduleFilters.expenses
+  const paymentFilter = moduleFilters.payments
 
   const filteredQuotes = useMemo(
-    () => applyQuoteFilter(quotesWithCodes, moduleFilters.quotes),
-    [quotesWithCodes, moduleFilters.quotes],
+    () => applyQuoteFilter(quotesWithCodes, quoteFilter),
+    [quotesWithCodes, quoteFilter],
   )
 
   const filteredJobs = useMemo(
-    () => applyJobFilter(jobsWithCodes, moduleFilters.jobs),
-    [jobsWithCodes, moduleFilters.jobs],
+    () => applyJobFilter(jobsWithCodes, jobFilter),
+    [jobsWithCodes, jobFilter],
   )
 
   const filteredInvoices = useMemo(
-    () => applyInvoiceFilter(invoicesWithCodes, moduleFilters.invoices),
-    [invoicesWithCodes, moduleFilters.invoices],
+    () => applyInvoiceFilter(invoicesWithCodes, invoiceFilter),
+    [invoicesWithCodes, invoiceFilter],
   )
 
   const filteredExpenses = useMemo(
-    () => applyExpenseFilter(expenses, moduleFilters.expenses),
-    [expenses, moduleFilters.expenses],
+    () => applyExpenseFilter(expenses, expenseFilter),
+    [expenses, expenseFilter],
   )
 
   const filteredPayments = useMemo(
-    () => applyPaymentFilter(paymentsWithCodes, moduleFilters.payments),
-    [paymentsWithCodes, moduleFilters.payments],
+    () => applyPaymentFilter(paymentsWithCodes, paymentFilter),
+    [paymentsWithCodes, paymentFilter],
   )
 
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
@@ -1153,7 +732,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           compactMobile={compactMobileNav}
           syncStatus={syncStatus}
           alerts={automationAlerts}
-          reviewedAlertIds={reviewedAlertIds}
+          reviewedAlertIds={activeReviewedAlertIds}
           onOpenAlert={handleOpenAutomationAlert}
           onOpenAlertsCenter={() => navigateToView('alerts')}
           theme={theme}
@@ -1167,7 +746,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           ) : currentView === 'alerts' ? (
             <AlertsCenterPage
               alerts={automationAlerts}
-              reviewedAlertIds={reviewedAlertIds}
+              reviewedAlertIds={activeReviewedAlertIds}
               onToggleReviewed={handleToggleReviewedAlert}
               onOpenAlert={handleOpenAutomationAlert}
             />

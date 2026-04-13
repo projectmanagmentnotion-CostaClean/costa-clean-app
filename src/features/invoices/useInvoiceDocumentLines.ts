@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { fetchSupabaseRestList } from '../../lib/supabaseRest'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
 interface InvoiceDocumentLinesState {
@@ -37,29 +38,9 @@ export function useInvoiceDocumentLines(invoice: InvoiceListItem): InvoiceDocume
       setIsLoadingLines(true)
 
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-        if (!supabaseUrl || !supabaseAnonKey) {
-          throw new Error('Faltan las variables de entorno de Supabase.')
-        }
-
-        const response = await fetch(
-          `${supabaseUrl}/rest/v1/invoice_lines?invoice_id=eq.${encodeURIComponent(invoice.id)}&select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`,
-          {
-            method: 'GET',
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
-            },
-          },
+        const lines = await fetchSupabaseRestList<InvoiceLineItem>(
+          `invoice_lines?invoice_id=eq.${encodeURIComponent(invoice.id)}&select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`,
         )
-
-        if (!response.ok) {
-          throw new Error(`REST ${response.status}: ${response.statusText}`)
-        }
-
-        const lines = ((await response.json()) as InvoiceLineItem[]) ?? []
 
         if (isActive) {
           setLoadedLines(sortInvoiceLines(lines))

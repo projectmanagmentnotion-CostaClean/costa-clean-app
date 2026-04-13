@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { fetchSupabaseRestList } from '../../lib/supabaseRest'
 import type { QuoteLineItem, QuoteListItem } from './types'
 
 interface QuoteDocumentLinesState {
@@ -37,29 +38,9 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
       setIsLoadingLines(true)
 
       try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-        if (!supabaseUrl || !supabaseAnonKey) {
-          throw new Error('Faltan las variables de entorno de Supabase.')
-        }
-
-        const response = await fetch(
-          `${supabaseUrl}/rest/v1/quote_lines?quote_id=eq.${encodeURIComponent(quote.id)}&select=id,quote_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`,
-          {
-            method: 'GET',
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
-            },
-          },
+        const lines = await fetchSupabaseRestList<QuoteLineItem>(
+          `quote_lines?quote_id=eq.${encodeURIComponent(quote.id)}&select=id,quote_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc`,
         )
-
-        if (!response.ok) {
-          throw new Error(`REST ${response.status}: ${response.statusText}`)
-        }
-
-        const lines = ((await response.json()) as QuoteLineItem[]) ?? []
 
         if (isActive) {
           setLoadedLines(sortQuoteLines(lines))

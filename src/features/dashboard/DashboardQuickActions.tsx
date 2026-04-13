@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
 
 interface DashboardQuickActionsProps {
@@ -221,14 +221,22 @@ const quickActions: Array<{
 ]
 
 export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps) {
+  const [isOpen, setIsOpen] = useState(() =>
+    typeof window === 'undefined' ? true : !window.matchMedia('(max-width: 700px)').matches,
+  )
+
   return (
-    <section className="cc-dashboard-block cc-dashboard-block--utility">
-      <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
+    <details
+      className="cc-dashboard-block cc-dashboard-block--utility cc-collapsible-section cc-quick-actions-panel"
+      open={isOpen}
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
+    >
+      <summary className="cc-dashboard-block__header cc-dashboard-block__header--split cc-collapsible-section__summary cc-quick-actions-panel__summary">
         <div>
           <h2>Acciones rapidas</h2>
           <p>Utilidades directas para crear o revisar movimientos sin romper el foco del panel.</p>
         </div>
-      </div>
+      </summary>
 
       <div className="cc-quick-actions cc-quick-actions--dashboard">
         {quickActions.map((action) => {
@@ -256,6 +264,6 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
           )
         })}
       </div>
-    </section>
+    </details>
   )
 }

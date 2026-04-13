@@ -8602,3 +8602,129 @@
     radial-gradient(circle at top right, rgba(11, 131, 180, 0.10), transparent 34%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(239, 248, 252, 0.96));
 }
+
+/* Sprint 5.5: final light-theme contrast and readability pass. */
+:root[data-theme="light"] {
+  --cc-color-text-muted: #41596f;
+  --cc-color-text-muted-strong: #263f56;
+}
+
+:root[data-theme="light"] .cc-page-topline__text,
+:root[data-theme="light"] .cc-dashboard-overview__text,
+:root[data-theme="light"] .cc-dashboard-panel__text,
+:root[data-theme="light"] .cc-kpi-card__detail,
+:root[data-theme="light"] .cc-quick-action__text,
+:root[data-theme="light"] .section-header p,
+:root[data-theme="light"] .cc-dashboard-block__header p,
+:root[data-theme="light"] .cc-dashboard-subsection__header p,
+:root[data-theme="light"] .cc-list-section__header p,
+:root[data-theme="light"] .cc-master-page__hero p,
+:root[data-theme="light"] .cc-document-screen__subtitle,
+:root[data-theme="light"] .cc-expense-detail__subtitle,
+:root[data-theme="light"] .cc-expense-detail__section-head p,
+:root[data-theme="light"] .cc-alert-center-card__detail,
+:root[data-theme="light"] .cc-alert-center-card__examples p,
+:root[data-theme="light"] .cc-quarterly-checklist__copy p,
+:root[data-theme="light"] .cc-annual-breakdown-card p,
+:root[data-theme="light"] .cc-shell-loading .empty-state p {
+  color: #41596f;
+}
+
+:root[data-theme="light"] .cc-dashboard-header__meta-label,
+:root[data-theme="light"] .cc-dashboard-stat__label,
+:root[data-theme="light"] .cc-dashboard-panel__label,
+:root[data-theme="light"] .cc-kpi-card__label,
+:root[data-theme="light"] .cc-kpi-label,
+:root[data-theme="light"] .cc-dashboard-alert__label,
+:root[data-theme="light"] .cc-dashboard-summary-card__label,
+:root[data-theme="light"] .cc-expense-metric__label,
+:root[data-theme="light"] .cc-expense-detail__info-label,
+:root[data-theme="light"] .detail-label,
+:root[data-theme="light"] .invoice-meta-label,
+:root[data-theme="light"] .invoice-document-muted,
+:root[data-theme="light"] .cc-document-screen__action-label,
+:root[data-theme="light"] .cc-quarterly-checklist__meta small,
+:root[data-theme="light"] .cc-alert-center-card__eyebrow {
+  color: #263f56;
+}
+
+:root[data-theme="light"] .cc-list-meta,
+:root[data-theme="light"] .cc-record-card__meta,
+:root[data-theme="light"] .cc-expense-item__meta,
+:root[data-theme="light"] .cc-agenda-item__meta,
+:root[data-theme="light"] .cc-alert-center-card__meta span {
+  color: #41596f;
+}
+
+:root[data-theme="light"] .cc-list-meta span,
+:root[data-theme="light"] .cc-record-card__meta span,
+:root[data-theme="light"] .cc-expense-item__meta span,
+:root[data-theme="light"] .cc-agenda-item__meta span,
+:root[data-theme="light"] .cc-quarterly-checklist__meta span,
+:root[data-theme="light"] .cc-home-hero__chip,
+:root[data-theme="light"] .detail-label {
+  border-color: rgba(7, 95, 136, 0.22);
+  background: rgba(11, 131, 180, 0.095);
+  color: #314c63;
+}
+
+:root[data-theme="light"] .empty-state {
+  border-color: rgba(7, 95, 136, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(242, 249, 253, 0.97));
+  color: #10243a;
+}
+
+:root[data-theme="light"] .empty-state p {
+  color: #41596f;
+}
+
+:root[data-theme="light"] .cc-list-toolbar {
+  color: #10243a;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__controls {
+  border-color: rgba(7, 95, 136, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(242, 249, 253, 0.97));
+}
+
+:root[data-theme="light"] .cc-list-toolbar__field > span,
+:root[data-theme="light"] .cc-list-toolbar__summary {
+  color: #314c63;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__field-icon {
+  color: #075f88;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__field select {
+  border-color: rgba(7, 95, 136, 0.24);
+  background: #ffffff;
+  color: #10243a;
+}
+
+:root[data-theme="light"] .form-field span,
+:root[data-theme="light"] .checkbox-row {
+  color: #263f56;
+}
+
+:root[data-theme="light"] .form-field input,
+:root[data-theme="light"] .form-field select,
+:root[data-theme="light"] .form-field textarea {
+  border-color: rgba(7, 95, 136, 0.22);
+  color: #10243a;
+}
+
+:root[data-theme="light"] .form-field input::placeholder,
+:root[data-theme="light"] .form-field textarea::placeholder {
+  color: #5f7487;
+}
+
+:root[data-theme="light"] .cc-alert p {
+  color: #314c63;
+}
+
+:root[data-theme="light"] .cc-alert strong {
+  color: #10243a;
+}

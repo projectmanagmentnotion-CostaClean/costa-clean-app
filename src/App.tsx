@@ -5,8 +5,14 @@ import { AppShell } from './app/AppShell'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { getSupabaseClient } from './lib/supabase'
+import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
+
+const publicQuoteRequestPaths = new Set(['/quote-request', '/presupuesto'])
 
 function App() {
+  const isPublicQuoteRequestPath = typeof window !== 'undefined'
+    ? publicQuoteRequestPaths.has(window.location.pathname)
+    : false
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -44,6 +50,13 @@ function App() {
     let authCleanup: (() => void) | undefined
 
     async function bootstrapAuth() {
+      if (isPublicQuoteRequestPath) {
+        if (isMounted) {
+          setIsBooting(false)
+        }
+        return
+      }
+
       try {
         setBootError(null)
         const { client, error } = getSupabaseClient()
@@ -108,7 +121,11 @@ function App() {
         authCleanup()
       }
     }
-  }, [])
+  }, [isPublicQuoteRequestPath])
+
+  if (isPublicQuoteRequestPath) {
+    return <PublicQuoteRequestPage />
+  }
 
   if (isBooting) {
     return (

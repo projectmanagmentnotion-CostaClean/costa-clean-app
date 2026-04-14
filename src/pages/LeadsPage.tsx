@@ -3,11 +3,13 @@ import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
 import type { LeadListItem } from '../features/leads/types'
+import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import type { ClientListItem } from '../features/clients/types'
 import { getStatusLabel } from '../app/displayText'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
+  leadDrafts: LeadDraftRecord[]
   clients: ClientListItem[]
   error: string | null
   onLeadCreated: () => Promise<void>
@@ -18,6 +20,7 @@ type LeadStatusFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
 
 export function LeadsPage({
   leads,
+  leadDrafts,
   clients,
   error,
   onLeadCreated,
@@ -62,6 +65,9 @@ export function LeadsPage({
   const selectedLead =
     filteredLeads.find((lead) => lead.id === selectedLeadId) ?? filteredLeads[0] ?? null
   const selectedLeadKey = selectedLead?.id ?? null
+  const selectedLeadDraft = selectedLead
+    ? leadDrafts.find((draft) => draft.matched_lead_id === selectedLead.id) ?? null
+    : null
 
   const convertedLeadIds = useMemo(() => {
     return new Set(
@@ -171,6 +177,7 @@ export function LeadsPage({
         <div className="cc-master-layout__detail">
           <LeadDetailCard
             lead={selectedLead}
+            leadDraft={selectedLeadDraft}
             alreadyConverted={selectedLeadAlreadyConverted}
             onLeadUpdated={onLeadCreated}
             onLeadConverted={onLeadConverted}

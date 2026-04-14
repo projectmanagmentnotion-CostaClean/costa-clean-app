@@ -52,14 +52,6 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
         <div className="auth-page__wave" aria-hidden="true" />
         <div className="auth-card__topbar">
           <div className="auth-brand">
-            <div className="auth-brand__mark" aria-hidden="true">
-              <img
-                src="/branding/Costa_Clean-LOGO.png"
-                alt=""
-                className="auth-brand__mark-image"
-              />
-            </div>
-
             <div className="auth-brand__copy">
               <p className="auth-kicker">CostaClean CRM</p>
               <img

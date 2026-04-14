@@ -1,6 +1,7 @@
 import type { ExpenseListItem } from '../expenses/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
+import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { QuarterlyClosingRecord } from '../quarterlyClosing/types'
@@ -14,6 +15,7 @@ interface BuildAutomationAlertsInput {
   expenses: ExpenseListItem[]
   payments: PaymentListItem[]
   quarterlyClosings: QuarterlyClosingRecord[]
+  leadDrafts?: LeadDraftRecord[]
 }
 
 function getDateValue(dateValue: string | null | undefined): Date | null {
@@ -108,9 +110,32 @@ export function buildAutomationAlerts({
   expenses,
   payments,
   quarterlyClosings,
+  leadDrafts = [],
 }: BuildAutomationAlertsInput): AutomationAlertItem[] {
   const alerts: AutomationAlertItem[] = []
   const invoicePaidAmount = new Map<string, number>()
+  const pendingIntakeDrafts = leadDrafts.filter(
+    (draft) => draft.status !== 'converted' && draft.status !== 'dismissed',
+  )
+
+  if (pendingIntakeDrafts.length > 0) {
+    alerts.push({
+      id: 'public-intake-lead-drafts-pending',
+      ruleId: 'public_intake_lead_drafts_pending',
+      severity: 'info',
+      title: 'Solicitudes de presupuesto pendientes',
+      summary: `${pendingIntakeDrafts.length} solicitud(es) de intake por revisar`,
+      detail: 'Borradores generados desde el formulario publico que requieren revision operativa antes de enviar respuesta.',
+      count: pendingIntakeDrafts.length,
+      examples: pendingIntakeDrafts.slice(0, 3).map((draft) =>
+        `${buildExampleLabel(draft.suggested_full_name, 'Lead sin nombre')} · ${draft.city ?? draft.phone}`,
+      ),
+      routing: {
+        kind: 'view',
+        view: 'leads',
+      },
+    })
+  }
 
   for (const payment of payments) {
     invoicePaidAmount.set(payment.invoice_id, (invoicePaidAmount.get(payment.invoice_id) ?? 0) + payment.amount)

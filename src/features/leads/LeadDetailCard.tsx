@@ -1,10 +1,13 @@
 ﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
+import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { LeadListItem } from './types'
 
 interface LeadDetailCardProps {
   lead: LeadListItem | null
+  leadDraft: LeadDraftRecord | null
   alreadyConverted: boolean
   onLeadUpdated: () => Promise<void>
   onLeadConverted: () => Promise<void>
@@ -19,6 +22,7 @@ interface EditFormState {
 
 export function LeadDetailCard({
   lead,
+  leadDraft,
   alreadyConverted,
   onLeadUpdated,
   onLeadConverted,
@@ -455,6 +459,8 @@ export function LeadDetailCard({
               </div>
             </div>
           )}
+
+          {!isEditing ? <LeadDraftCards leadDraft={leadDraft} /> : null}
 
           {!isEditing && saveError ? (
             <div className="cc-alert cc-alert--error">

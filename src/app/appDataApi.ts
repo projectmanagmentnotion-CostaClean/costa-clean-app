@@ -5,6 +5,7 @@ import { listExpenses } from '../features/expenses/expenseApi'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
+import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import type { LeadListItem } from '../features/leads/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -31,6 +32,12 @@ function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
 
 export async function listLeads(): Promise<LeadListItem[]> {
   return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at&order=created_at.desc')
+}
+
+export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
+  return fetchSupabaseRestList<LeadDraftRecord>(
+    'lead_drafts?select=id,intake_submission_id,suggested_full_name,phone,email,city,postal_code,status,matched_lead_id,normalized_input,quote_draft_seed,pricing_breakdown,ai_email_draft,ai_whatsapp_draft,ai_generation_metadata,created_at,updated_at&order=created_at.desc',
+  )
 }
 
 export async function listClients(): Promise<ClientListItem[]> {
@@ -74,4 +81,5 @@ export type {
   AnnualClosingRecord,
   ExpenseListItem,
   QuarterlyClosingRecord,
+  LeadDraftRecord,
 }

@@ -203,6 +203,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     isInitialDataLoading,
     syncStatus,
     leads,
+    leadDrafts,
     clients,
     properties,
     quotes,
@@ -213,6 +214,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     quarterlyClosings,
     annualClosings,
     leadError,
+    leadDraftError,
     clientError,
     propertyError,
     quoteError,
@@ -227,6 +229,8 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     refreshClosings,
     reloadInvoicesAndPayments,
     reloadLeadsAndClients,
+    intakeRealtimeNotifications,
+    dismissIntakeRealtimeNotification,
   } = useAppData()
   const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
@@ -276,6 +280,20 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [unsavedChangesContext])
+
+  const latestIntakeNotification = intakeRealtimeNotifications[0] ?? null
+
+  useEffect(() => {
+    if (!latestIntakeNotification) return
+
+    const timeoutId = window.setTimeout(() => {
+      dismissIntakeRealtimeNotification(latestIntakeNotification.id)
+    }, 6500)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [dismissIntakeRealtimeNotification, latestIntakeNotification])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
@@ -413,8 +431,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         expenses,
         payments: paymentsWithCodes,
         quarterlyClosings,
+        leadDrafts,
       }),
-    [expenses, invoicesWithCodes, jobsWithCodes, paymentsWithCodes, quarterlyClosings, quotesWithCodes],
+    [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes],
   )
 
   const activeReviewedAlertIds = useMemo(() => {
@@ -474,6 +493,16 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           fiscalQuarter: routing.fiscalQuarter,
         })
         commitViewChange('quarterly_closing')
+      }, {
+        description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta alerta ahora, perderás esos cambios.`,
+        confirmLabel: 'Abrir alerta',
+      })
+      return
+    }
+
+    if (routing.kind === 'view') {
+      runWithNavigationGuard(() => {
+        commitViewChange(routing.view)
       }, {
         description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta alerta ahora, perderás esos cambios.`,
         confirmLabel: 'Abrir alerta',
@@ -788,7 +817,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               onOpenAlert={handleOpenAutomationAlert}
             />
           ) : currentView === 'leads' ? (
-            <LeadsPage leads={leads} clients={clients} error={leadError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
+            <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
           ) : currentView === 'clients' ? (
             <ClientsPage clients={clients} error={clientError} onClientCreated={refreshOperations} />
           ) : currentView === 'properties' ? (
@@ -868,6 +897,13 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       >
         <span aria-hidden="true">↑</span>
       </button>
+      {latestIntakeNotification ? (
+        <div className="cc-realtime-toast" role="status" aria-live="polite" aria-atomic="true">
+          <span>Nueva entrada</span>
+          <strong>{latestIntakeNotification.title}</strong>
+          <p>{latestIntakeNotification.summary}</p>
+        </div>
+      ) : null}
       <ConfirmDialog
         isOpen={Boolean(pendingGuardedAction)}
         title={pendingGuardedAction?.title ?? 'Salir sin guardar'}

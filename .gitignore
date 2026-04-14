@@ -41,3 +41,6 @@ _*.txt
 _dump_*.ps1
 .vercel
 .env*.local
+
+# Local client import files
+api/tools/imports/*.csv

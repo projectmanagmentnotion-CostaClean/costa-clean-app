@@ -10,6 +10,7 @@ import type {
 export type AutomationAlertSeverity = 'critical' | 'warning' | 'info'
 
 export type AutomationAlertRuleId =
+  | 'public_intake_lead_drafts_pending'
   | 'unpaid_invoices_older_threshold'
   | 'completed_jobs_without_invoice_older_threshold'
   | 'accepted_quotes_without_job_older_threshold'
@@ -28,6 +29,10 @@ export type AutomationAlertRouting =
         | JobModuleFilter
         | ExpenseModuleFilter
         | PaymentModuleFilter
+    }
+  | {
+      kind: 'view'
+      view: AppView
     }
   | {
       kind: 'quarterly_closing'
@@ -49,4 +54,3 @@ export interface AutomationAlertItem {
   examples?: string[]
   routing: AutomationAlertRouting
 }
-

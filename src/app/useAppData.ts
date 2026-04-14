@@ -12,6 +12,7 @@ import {
   listClients,
   listExpenses,
   listInvoices,
+  listLeadDrafts,
   listJobs,
   listLeads,
   listPayments,
@@ -23,6 +24,7 @@ import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
+import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import type { LeadListItem } from '../features/leads/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -34,14 +36,51 @@ import { getSupabaseClient } from '../lib/supabase'
 const foregroundRefreshStaleTimeMs = 30_000
 const realtimeRefreshDelayMs = 900
 
+export interface IntakeRealtimeNotification {
+  id: string
+  title: string
+  summary: string
+  createdAt: string
+  intakeSubmissionId: string
+}
+
 function getErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback
+}
+
+function getStringValue(record: Record<string, unknown>, key: string): string | null {
+  const value = record[key]
+  return typeof value === 'string' && value.trim() ? value.trim() : null
+}
+
+function buildIntakeNotification(row: Record<string, unknown>): IntakeRealtimeNotification | null {
+  if (row.source !== 'public_quote_form') return null
+
+  const intakeSubmissionId = getStringValue(row, 'id')
+  if (!intakeSubmissionId) return null
+
+  const normalizedInput = row.normalized_input && typeof row.normalized_input === 'object'
+    ? row.normalized_input as Record<string, unknown>
+    : null
+  const fullName = normalizedInput ? getStringValue(normalizedInput, 'fullName') : null
+  const city = normalizedInput ? getStringValue(normalizedInput, 'city') : null
+  const serviceNeedLabel = normalizedInput ? getStringValue(normalizedInput, 'serviceNeedLabel') : null
+  const summaryParts = [fullName, city, serviceNeedLabel].filter(Boolean)
+
+  return {
+    id: `intake:${intakeSubmissionId}`,
+    title: 'Nueva solicitud de presupuesto',
+    summary: summaryParts.length > 0 ? summaryParts.join(' · ') : 'Solicitud recibida desde el formulario publico.',
+    createdAt: getStringValue(row, 'created_at') ?? new Date().toISOString(),
+    intakeSubmissionId,
+  }
 }
 
 export function useAppData() {
   const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
   const [leads, setLeads] = useState<LeadListItem[]>([])
+  const [leadDrafts, setLeadDrafts] = useState<LeadDraftRecord[]>([])
   const [clients, setClients] = useState<ClientListItem[]>([])
   const [properties, setProperties] = useState<PropertyListItem[]>([])
   const [quotes, setQuotes] = useState<QuoteListItem[]>([])
@@ -52,6 +91,7 @@ export function useAppData() {
   const [quarterlyClosings, setQuarterlyClosings] = useState<QuarterlyClosingRecord[]>([])
   const [annualClosings, setAnnualClosings] = useState<AnnualClosingRecord[]>([])
   const [leadError, setLeadError] = useState<string | null>(null)
+  const [leadDraftError, setLeadDraftError] = useState<string | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [propertyError, setPropertyError] = useState<string | null>(null)
   const [quoteError, setQuoteError] = useState<string | null>(null)
@@ -61,10 +101,12 @@ export function useAppData() {
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
+  const [intakeRealtimeNotifications, setIntakeRealtimeNotifications] = useState<IntakeRealtimeNotification[]>([])
   const lastRefreshAtRef = useRef(0)
   const isRefreshingRef = useRef(false)
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
+  const seenIntakeRealtimeNotificationIdsRef = useRef<Set<string>>(new Set())
 
   const loadLeads = useCallback(async () => {
     try {
@@ -72,6 +114,15 @@ export function useAppData() {
       setLeads(await listLeads())
     } catch (err) {
       setLeadError(getErrorMessage(err, 'Error desconocido cargando leads.'))
+    }
+  }, [])
+
+  const loadLeadDrafts = useCallback(async () => {
+    try {
+      setLeadDraftError(null)
+      setLeadDrafts(await listLeadDrafts())
+    } catch (err) {
+      setLeadDraftError(getErrorMessage(err, 'Error desconocido cargando borradores de intake.'))
     }
   }, [])
 
@@ -181,6 +232,7 @@ export function useAppData() {
   const refreshAll = useCallback(async () => {
     await runRefresh([
       loadLeads,
+      loadLeadDrafts,
       loadClients,
       loadProperties,
       loadQuotes,
@@ -191,7 +243,7 @@ export function useAppData() {
       loadQuarterlyClosings,
       loadAnnualClosings,
     ])
-  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, runRefresh])
+  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, runRefresh])
 
   const refreshBilling = useCallback(async () => {
     await runRefresh([
@@ -206,13 +258,14 @@ export function useAppData() {
   const refreshOperations = useCallback(async () => {
     await runRefresh([
       loadLeads,
+      loadLeadDrafts,
       loadClients,
       loadProperties,
       loadQuotes,
       loadJobs,
       loadInvoices,
     ])
-  }, [loadClients, loadInvoices, loadJobs, loadLeads, loadProperties, loadQuotes, runRefresh])
+  }, [loadClients, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadProperties, loadQuotes, runRefresh])
 
   const refreshClosings = useCallback(async () => {
     await runRefresh([loadQuarterlyClosings, loadAnnualClosings])
@@ -323,6 +376,17 @@ export function useAppData() {
     }, realtimeRefreshDelayMs)
   }, [runScopedRefresh])
 
+  const pushIntakeRealtimeNotification = useCallback((notification: IntakeRealtimeNotification) => {
+    if (seenIntakeRealtimeNotificationIdsRef.current.has(notification.id)) return
+
+    seenIntakeRealtimeNotificationIdsRef.current.add(notification.id)
+    setIntakeRealtimeNotifications((current) => [notification, ...current].slice(0, 5))
+  }, [])
+
+  const dismissIntakeRealtimeNotification = useCallback((notificationId: string) => {
+    setIntakeRealtimeNotifications((current) => current.filter((notification) => notification.id !== notificationId))
+  }, [])
+
   useEffect(() => {
     const { client } = getSupabaseClient()
     if (!client) return
@@ -332,6 +396,13 @@ export function useAppData() {
     for (const table of realtimeTables) {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
         scheduleRealtimeRefresh(getRefreshScopeForTable(payload.table ?? table))
+
+        if (table === 'intake_submissions' && payload.eventType === 'INSERT') {
+          const notification = buildIntakeNotification(payload.new as Record<string, unknown>)
+          if (notification) {
+            pushIntakeRealtimeNotification(notification)
+          }
+        }
       })
     }
 
@@ -346,12 +417,13 @@ export function useAppData() {
 
       void client.removeChannel(channel)
     }
-  }, [scheduleRealtimeRefresh])
+  }, [pushIntakeRealtimeNotification, scheduleRealtimeRefresh])
 
   return {
     isInitialDataLoading,
     syncStatus,
     leads,
+    leadDrafts,
     clients,
     properties,
     quotes,
@@ -362,6 +434,7 @@ export function useAppData() {
     quarterlyClosings,
     annualClosings,
     leadError,
+    leadDraftError,
     clientError,
     propertyError,
     quoteError,
@@ -376,5 +449,7 @@ export function useAppData() {
     refreshClosings,
     reloadInvoicesAndPayments,
     reloadLeadsAndClients,
+    intakeRealtimeNotifications,
+    dismissIntakeRealtimeNotification,
   }
 }

@@ -1,7 +1,9 @@
 export type RefreshScope = 'all' | 'billing' | 'operations' | 'closings'
 
 export const realtimeTables = [
+  'intake_submissions',
   'leads',
+  'lead_drafts',
   'clients',
   'properties',
   'quotes',
@@ -27,7 +29,7 @@ export function combineRefreshScopes(left: RefreshScope | null, right: RefreshSc
 
 export function getRefreshScopeForTable(table: string): RefreshScope {
   if (table === 'quarterly_closings' || table === 'annual_closings') return 'closings'
-  if (table === 'leads' || table === 'clients' || table === 'properties') return 'operations'
+  if (table === 'intake_submissions' || table === 'leads' || table === 'lead_drafts' || table === 'clients' || table === 'properties') return 'operations'
   if (table === 'expenses') return 'all'
   return 'billing'
 }

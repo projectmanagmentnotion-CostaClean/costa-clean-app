@@ -7,4 +7,5 @@
   city: string | null
   status: string
   archived_at?: string | null
+  public_intake_last_submission_id?: string | null
 }

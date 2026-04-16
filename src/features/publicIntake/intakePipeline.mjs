@@ -152,8 +152,37 @@ export const googleFormLegacyAllowedMissingFields = [
   'preferredQuoteChannel',
 ]
 
+function normalizeGoogleFormLegacyTimestamp(value) {
+  const text = normalizeText(value)
+  if (!text) return text
+
+  const legacyMatch = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2}):(\d{2})$/)
+  if (!legacyMatch) return text
+
+  const [, dayText, monthText, yearText, hourText, minuteText, secondText] = legacyMatch
+  const day = Number.parseInt(dayText, 10)
+  const month = Number.parseInt(monthText, 10)
+  const year = Number.parseInt(yearText, 10)
+  const hour = Number.parseInt(hourText, 10)
+  const minute = Number.parseInt(minuteText, 10)
+  const second = Number.parseInt(secondText, 10)
+
+  const timestamp = new Date(Date.UTC(year, month - 1, day, hour, minute, second))
+  const isValidLegacyTimestamp =
+    timestamp.getUTCFullYear() === year &&
+    timestamp.getUTCMonth() === month - 1 &&
+    timestamp.getUTCDate() === day &&
+    timestamp.getUTCHours() === hour &&
+    timestamp.getUTCMinutes() === minute &&
+    timestamp.getUTCSeconds() === second
+
+  return isValidLegacyTimestamp ? timestamp.toISOString() : text
+}
+
 export function prepareGoogleFormLegacyImportInput(input, rowNumber) {
   const preparedInput = { ...input }
+
+  preparedInput.submittedAt = normalizeGoogleFormLegacyTimestamp(preparedInput.submittedAt)
 
   if (!preparedInput.fullName) {
     const identity = preparedInput.phone || preparedInput.email || `fila ${rowNumber}`

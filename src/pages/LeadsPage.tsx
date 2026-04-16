@@ -18,6 +18,25 @@ interface LeadsPageProps {
 
 type LeadStatusFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
 
+const visibleLeadDraftStatuses = new Set<LeadDraftRecord['status']>([
+  'new',
+  'matched_existing_lead',
+  'ready_for_review',
+])
+
+function sameId(left: string | null | undefined, right: string | null | undefined): boolean {
+  return Boolean(left && right && left.trim() === right.trim())
+}
+
+function isVisibleDraftForLead(draft: LeadDraftRecord, lead: LeadListItem): boolean {
+  if (!visibleLeadDraftStatuses.has(draft.status)) return false
+
+  return (
+    sameId(draft.matched_lead_id, lead.id) ||
+    sameId(draft.intake_submission_id, lead.public_intake_last_submission_id)
+  )
+}
+
 export function LeadsPage({
   leads,
   leadDrafts,
@@ -65,9 +84,11 @@ export function LeadsPage({
   const selectedLead =
     filteredLeads.find((lead) => lead.id === selectedLeadId) ?? filteredLeads[0] ?? null
   const selectedLeadKey = selectedLead?.id ?? null
-  const selectedLeadDraft = selectedLead
-    ? leadDrafts.find((draft) => draft.matched_lead_id === selectedLead.id) ?? null
-    : null
+  const selectedLeadDraft = useMemo(() => {
+    if (!selectedLead) return null
+
+    return leadDrafts.find((draft) => isVisibleDraftForLead(draft, selectedLead)) ?? null
+  }, [leadDrafts, selectedLead])
 
   const convertedLeadIds = useMemo(() => {
     return new Set(

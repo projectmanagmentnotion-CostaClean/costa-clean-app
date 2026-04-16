@@ -31,7 +31,7 @@ function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
 }
 
 export async function listLeads(): Promise<LeadListItem[]> {
-  return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at&order=created_at.desc')
+  return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at,public_intake_last_submission_id&order=created_at.desc')
 }
 
 export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {

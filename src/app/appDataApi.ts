@@ -12,6 +12,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { listQuarterlyClosings } from '../features/quarterlyClosing/quarterlyClosingApi'
 import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { getSupabaseClient } from '../lib/supabase'
 import { fetchSupabaseRestList } from '../lib/supabaseRest'
 
 function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
@@ -34,8 +35,49 @@ export async function listLeads(): Promise<LeadListItem[]> {
   return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at,public_intake_last_submission_id&order=created_at.desc')
 }
 
+async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord[]> {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Faltan las variables de entorno de Supabase.')
+  }
+
+  const { client, error } = getSupabaseClient()
+  if (error || !client) {
+    throw new Error(error ?? 'No se pudo crear el cliente de Supabase.')
+  }
+
+  const {
+    data: { session },
+    error: sessionError,
+  } = await client.auth.getSession()
+
+  if (sessionError) {
+    throw new Error(sessionError.message)
+  }
+
+  if (!session?.access_token) {
+    throw new Error('No hay una sesión activa para cargar borradores de intake.')
+  }
+
+  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
+    method: 'GET',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`REST ${response.status}: ${response.statusText}`)
+  }
+
+  return ((await response.json()) as LeadDraftRecord[]) ?? []
+}
+
 export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
-  return fetchSupabaseRestList<LeadDraftRecord>(
+  return fetchLeadDraftsWithSession(
     'lead_drafts?select=id,intake_submission_id,suggested_full_name,phone,email,city,postal_code,status,matched_lead_id,normalized_input,quote_draft_seed,pricing_breakdown,ai_email_draft,ai_whatsapp_draft,ai_generation_metadata,created_at,updated_at&order=created_at.desc',
   )
 }

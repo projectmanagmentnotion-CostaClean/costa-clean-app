@@ -1,4 +1,6 @@
-﻿export interface BusinessRules {
+import { costaCleanLeadQuoteMessagingEngine } from '../config/leadQuoteMessagingEngineAccess'
+
+export interface BusinessRules {
   currency: 'EUR'
   timezone: string
   defaultHourlyRate: number
@@ -12,12 +14,12 @@
 }
 
 export const businessRules: BusinessRules = {
-  currency: 'EUR',
+  currency: costaCleanLeadQuoteMessagingEngine.currency,
   timezone: 'Europe/Madrid',
-  defaultHourlyRate: 20,
-  defaultMinimumHours: 3,
-  defaultTaxRate: 0.21,
-  quotesIncludeTaxByDefault: false,
+  defaultHourlyRate: costaCleanLeadQuoteMessagingEngine.pricing.baseHourlyRateStandard,
+  defaultMinimumHours: costaCleanLeadQuoteMessagingEngine.serviceMinimums.minimumHoursPerOperator,
+  defaultTaxRate: costaCleanLeadQuoteMessagingEngine.taxRules.vatRate,
+  quotesIncludeTaxByDefault: costaCleanLeadQuoteMessagingEngine.taxRules.customerView === 'show_price_with_vat',
   airbnbLinenSurchargePerRoom: 15,
   defaultQuoteValidityDays: 15,
   defaultQuoteLegalNote: 'Los precios indicados no incluyen IVA.',

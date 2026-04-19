@@ -1,9 +1,28 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
+import type { ClientListItem } from '../clients/types'
+import type { LeadListItem } from '../leads/types'
+import {
+  convertReviewedLeadDraftToQuote,
+  createOrLinkClientFromReviewedLeadDraft,
+  markLeadDraftReviewed,
+} from './leadDraftConversion'
+import { regenerateLeadDraftMessages, type LeadMessageDraftResponse } from './leadDraftMessagingApi'
 import type { LeadDraftRecord } from './types'
 
 interface LeadDraftCardsProps {
+  lead: LeadListItem
   leadDraft: LeadDraftRecord | null
+  clients: ClientListItem[]
+  onWorkflowUpdated: () => Promise<void>
+}
+
+type ActionStatusTone = 'loading' | 'success' | 'error' | 'review'
+
+interface ActionStatus {
+  tone: ActionStatusTone
+  title: string
+  message: string
 }
 
 function getDraftPricing(leadDraft: LeadDraftRecord) {
@@ -11,9 +30,14 @@ function getDraftPricing(leadDraft: LeadDraftRecord) {
 }
 
 function getEmailSubject(leadDraft: LeadDraftRecord): string {
+  const metadataSubject = leadDraft.ai_generation_metadata?.email_subject
+  if (typeof metadataSubject === 'string' && metadataSubject.trim()) {
+    return metadataSubject.trim()
+  }
+
   const service = leadDraft.normalized_input.serviceNeedLabel ?? 'servicio de limpieza'
   const city = leadDraft.normalized_input.city ?? 'tu zona'
-  return `CostaClean - presupuesto para ${service} en ${city}`
+  return `Costa Clean BCN - presupuesto para ${service} en ${city}`
 }
 
 function getEmailBody(leadDraft: LeadDraftRecord): string {
@@ -38,163 +62,362 @@ function normalizeWhatsAppPhone(phone: string): string {
   return digits
 }
 
+function getClientActionMessage(action: 'created' | 'linked' | 'already_linked'): string {
+  if (action === 'created') return 'Cliente creado y vinculado al lead.'
+  if (action === 'linked') return 'Cliente existente vinculado al lead.'
+  return 'El lead ya tenía un cliente vinculado.'
+}
+
 async function copyToClipboard(text: string): Promise<boolean> {
   if (!navigator.clipboard) return false
   await navigator.clipboard.writeText(text)
   return true
 }
 
-export function LeadDraftCards({ leadDraft }: LeadDraftCardsProps) {
-  const [actionMessage, setActionMessage] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+export function LeadDraftCards({
+  lead,
+  leadDraft,
+  clients,
+  onWorkflowUpdated,
+}: LeadDraftCardsProps) {
+  const [draftOverride, setDraftOverride] = useState<LeadDraftRecord | null>(null)
+  const [actionStatus, setActionStatus] = useState<ActionStatus | null>(null)
+  const [isActionRunning, setIsActionRunning] = useState(false)
 
-  const pricing = leadDraft ? getDraftPricing(leadDraft) : null
-  const emailSubject = useMemo(() => (leadDraft ? getEmailSubject(leadDraft) : ''), [leadDraft])
-  const emailBody = useMemo(() => (leadDraft ? getEmailBody(leadDraft) : ''), [leadDraft])
-  const whatsAppMessage = useMemo(() => (leadDraft ? getWhatsAppMessage(leadDraft) : ''), [leadDraft])
+  useEffect(() => {
+    setDraftOverride(null)
+    setActionStatus(null)
+  }, [leadDraft?.id])
 
-  if (!leadDraft) {
+  const activeDraft = draftOverride ?? leadDraft
+  const pricing = activeDraft ? getDraftPricing(activeDraft) : null
+  const emailSubject = useMemo(() => (activeDraft ? getEmailSubject(activeDraft) : ''), [activeDraft])
+  const emailBody = useMemo(() => (activeDraft ? getEmailBody(activeDraft) : ''), [activeDraft])
+  const whatsAppMessage = useMemo(() => (activeDraft ? getWhatsAppMessage(activeDraft) : ''), [activeDraft])
+
+  if (!activeDraft) {
     return null
   }
 
-  const input = leadDraft.normalized_input
-  const quoteDraft = leadDraft.quote_draft_seed
-  const whatsAppPhone = normalizeWhatsAppPhone(leadDraft.phone)
+  const currentDraft = activeDraft
+  const input = currentDraft.normalized_input
+  const quoteDraft = currentDraft.quote_draft_seed
+  const whatsAppPhone = normalizeWhatsAppPhone(currentDraft.phone)
   const whatsAppHref = whatsAppPhone
     ? `https://wa.me/${whatsAppPhone}?text=${encodeURIComponent(whatsAppMessage)}`
     : null
-  const mailtoHref = leadDraft.email
-    ? `mailto:${leadDraft.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
+  const mailtoHref = currentDraft.email
+    ? `mailto:${currentDraft.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
     : null
+  const isReviewed = currentDraft.ai_draft_status === 'reviewed'
+  const canConvertDraft = (
+    (currentDraft.status === 'ready_for_review' || currentDraft.status === 'matched_existing_lead') &&
+    isReviewed
+  )
 
-  function handleReviewQuote() {
-    setActionError(null)
-    setActionMessage('Borrador listo para revisión. La conversión a presupuesto CRM se habilitará en el flujo de aprobación.')
+  function setLoadingStatus(message: string) {
+    setActionStatus({
+      tone: 'loading',
+      title: 'Procesando acción',
+      message,
+    })
+  }
+
+  function setSuccessStatus(title: string, message: string) {
+    setActionStatus({ tone: 'success', title, message })
+  }
+
+  function setReviewStatus(message: string) {
+    setActionStatus({
+      tone: 'review',
+      title: 'Pendiente de revisión manual',
+      message,
+    })
+  }
+
+  function setErrorStatus(error: unknown, fallback: string) {
+    setActionStatus({
+      tone: 'error',
+      title: 'No se pudo completar la acción',
+      message: error instanceof Error ? error.message : fallback,
+    })
+  }
+
+  function applyRegeneratedDraft(result: LeadMessageDraftResponse) {
+    setDraftOverride({
+      ...currentDraft,
+      ai_email_draft: result.email_body,
+      ai_whatsapp_draft: result.whatsapp_message,
+      ai_draft_status: 'drafted',
+      ai_generation_metadata: {
+        ...(currentDraft.ai_generation_metadata ?? {}),
+        ...result.metadata,
+        email_subject: result.email_subject,
+        review_notes: result.review_notes,
+        source: result.source,
+      },
+    })
+  }
+
+  async function handleReviewQuote() {
+    setLoadingStatus('Guardando la revisión manual del presupuesto y los borradores.')
+    setIsActionRunning(true)
+
+    try {
+      await markLeadDraftReviewed(currentDraft.id)
+      setDraftOverride({
+        ...currentDraft,
+        ai_draft_status: 'reviewed',
+      })
+      await onWorkflowUpdated()
+      setSuccessStatus(
+        'Revisión registrada',
+        'Ya puedes crear o vincular el cliente, crear el presupuesto CRM y abrir comunicaciones manuales.',
+      )
+    } catch (error) {
+      setErrorStatus(error, 'No se pudo registrar la revisión manual.')
+    } finally {
+      setIsActionRunning(false)
+    }
+  }
+
+  async function handleCreateOrLinkClient() {
+    setLoadingStatus('Comprobando clientes existentes y vinculando este lead si corresponde.')
+    setIsActionRunning(true)
+
+    try {
+      const result = await createOrLinkClientFromReviewedLeadDraft(lead, currentDraft, clients)
+      await onWorkflowUpdated()
+      setSuccessStatus('Cliente actualizado', getClientActionMessage(result.clientAction))
+    } catch (error) {
+      setErrorStatus(error, 'No se pudo crear o vincular el cliente.')
+    } finally {
+      setIsActionRunning(false)
+    }
+  }
+
+  async function handleCreateQuote() {
+    setLoadingStatus('Creando el presupuesto CRM en estado borrador desde el lead revisado.')
+    setIsActionRunning(true)
+
+    try {
+      const result = await convertReviewedLeadDraftToQuote(lead, currentDraft, clients)
+      await onWorkflowUpdated()
+      setDraftOverride({
+        ...currentDraft,
+        status: 'converted',
+      })
+      setSuccessStatus(
+        'Presupuesto CRM creado',
+        `${getClientActionMessage(result.clientAction)} Presupuesto ${result.quoteId} creado en estado borrador.`,
+      )
+    } catch (error) {
+      setErrorStatus(error, 'No se pudo crear el presupuesto CRM.')
+    } finally {
+      setIsActionRunning(false)
+    }
   }
 
   function handleSendEmail() {
-    setActionError(null)
+    if (!isReviewed) {
+      setReviewStatus('Revisa manualmente el presupuesto y los borradores de comunicación antes de abrir el email.')
+      return
+    }
+
     if (!mailtoHref) {
-      setActionMessage(null)
-      setActionError('Este lead no tiene email registrado.')
+      setErrorStatus(null, 'Este lead no tiene email registrado.')
       return
     }
 
     window.location.href = mailtoHref
-    setActionMessage('Se abrió el borrador en el cliente de correo. Revisa antes de enviar.')
+    setSuccessStatus('Borrador de email abierto', 'Revisa el contenido en tu cliente de correo antes de enviar.')
   }
 
   function handleOpenWhatsApp() {
-    setActionError(null)
+    if (!isReviewed) {
+      setReviewStatus('Revisa manualmente el presupuesto y los borradores de comunicación antes de abrir WhatsApp.')
+      return
+    }
+
     if (!whatsAppHref) {
-      setActionMessage(null)
-      setActionError('Este lead no tiene un teléfono válido para WhatsApp.')
+      setErrorStatus(null, 'Este lead no tiene un teléfono válido para WhatsApp.')
       return
     }
 
     window.open(whatsAppHref, '_blank', 'noopener,noreferrer')
-    setActionMessage('Se abrió WhatsApp con el mensaje preparado. Revisa antes de enviar.')
+    setSuccessStatus('WhatsApp abierto', 'El mensaje quedó preparado. Revisa antes de enviar manualmente.')
   }
 
   async function handleCopyMessage() {
-    setActionError(null)
+    if (!isReviewed) {
+      setReviewStatus('Revisa manualmente el presupuesto y los borradores de comunicación antes de copiar el mensaje.')
+      return
+    }
+
     try {
       const didCopy = await copyToClipboard(whatsAppMessage)
       if (!didCopy) {
-        setActionError('No se pudo acceder al portapapeles desde este navegador.')
+        setErrorStatus(null, 'No se pudo acceder al portapapeles desde este navegador.')
         return
       }
-      setActionMessage('Mensaje copiado al portapapeles.')
+      setSuccessStatus('Mensaje copiado', 'El borrador quedó en el portapapeles. Revisa antes de enviarlo.')
     } catch (error) {
-      setActionError(error instanceof Error ? error.message : 'No se pudo copiar el mensaje.')
+      setErrorStatus(error, 'No se pudo copiar el mensaje.')
     }
   }
 
-  function handleRegenerateDraft() {
-    setActionError(null)
-    setActionMessage('Regeneración pendiente: el hook de IA está preparado, pero no se ejecuta automáticamente desde esta pantalla.')
+  async function handleRegenerateDraft() {
+    setLoadingStatus('Generando y guardando nuevos borradores de email y WhatsApp.')
+    setIsActionRunning(true)
+
+    try {
+      const result = await regenerateLeadDraftMessages(currentDraft)
+      applyRegeneratedDraft(result)
+      await onWorkflowUpdated()
+      setSuccessStatus(
+        result.source === 'openai' ? 'Borradores IA actualizados' : 'Borradores fallback actualizados',
+        result.source === 'openai'
+          ? 'Borradores generados con OpenAI y guardados para revisión manual.'
+          : 'OpenAI no estuvo disponible. Se guardaron borradores fallback del motor para revisión manual.',
+      )
+    } catch (error) {
+      setErrorStatus(error, 'No se pudieron regenerar los borradores.')
+    } finally {
+      setIsActionRunning(false)
+    }
   }
 
   return (
     <div className="cc-intake-draft-stack">
-      <section className="cc-intake-draft-card" aria-label="Borrador de presupuesto">
-        <div className="cc-intake-draft-card__header">
+      <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Revisión manual" open>
+        <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
+          <div>
+            <p>Revisión obligatoria</p>
+            <h4>{isReviewed ? 'Borrador revisado' : 'Pendiente de revisión manual'}</h4>
+          </div>
+          <span className="lead-badge">{isReviewed ? 'Revisado' : 'Bloqueado'}</span>
+        </summary>
+
+        <div className="cc-intake-draft-card__body">
+          <p className="detail-helper">
+            La conversión crea registros CRM, pero no envía email ni WhatsApp. Revisa alcance, precio, datos de contacto y comunicación antes de continuar.
+          </p>
+
+          <div className="cc-intake-draft-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void handleReviewQuote()}
+              disabled={isActionRunning || isReviewed || currentDraft.status === 'converted'}
+            >
+              {isReviewed ? 'Revisión registrada' : 'Marcar revisión manual'}
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void handleCreateOrLinkClient()}
+              disabled={isActionRunning || !canConvertDraft}
+            >
+              Crear/vincular cliente
+            </button>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => void handleCreateQuote()}
+              disabled={isActionRunning || !canConvertDraft || !pricing}
+            >
+              Crear presupuesto CRM
+            </button>
+          </div>
+        </div>
+      </details>
+
+      <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Borrador de presupuesto" open>
+        <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
           <div>
             <p>Borrador de presupuesto</p>
             <h4>{quoteDraft.serviceSummary}</h4>
           </div>
           <span className="lead-badge">{quoteDraft.status}</span>
-        </div>
+        </summary>
 
-        <div className="cc-intake-draft-grid">
-          <div><span>Servicio</span><strong>{input.serviceNeedLabel ?? 'Sin dato'}</strong></div>
-          <div><span>Propiedad</span><strong>{input.propertyType ?? 'Sin dato'}</strong></div>
-          <div><span>Metros</span><strong>{input.sqmBand ?? 'Sin dato'}</strong></div>
-          <div><span>Habitaciones</span><strong>{input.rooms ?? 'Sin dato'}</strong></div>
-          <div><span>Baños</span><strong>{input.bathrooms ?? 'Sin dato'}</strong></div>
-          <div><span>Fecha</span><strong>{formatDateEs(input.requestedServiceDate)}</strong></div>
-          <div><span>Horario</span><strong>{input.preferredTimeSlot ?? 'Flexible'}</strong></div>
-          <div><span>Total sin IVA</span><strong>{pricing ? formatCurrency(pricing.subtotal) : 'Pendiente'}</strong></div>
-        </div>
+        <div className="cc-intake-draft-card__body">
+          <div className="cc-intake-draft-grid">
+            <div><span>Servicio</span><strong>{input.serviceNeedLabel ?? 'Sin dato'}</strong></div>
+            <div><span>Propiedad</span><strong>{input.propertyType ?? 'Sin dato'}</strong></div>
+            <div><span>Metros</span><strong>{input.sqmBand ?? 'Sin dato'}</strong></div>
+            <div><span>Habitaciones</span><strong>{input.rooms ?? 'Sin dato'}</strong></div>
+            <div><span>Baños</span><strong>{input.bathrooms ?? 'Sin dato'}</strong></div>
+            <div><span>Fecha</span><strong>{formatDateEs(input.requestedServiceDate)}</strong></div>
+            <div><span>Horario</span><strong>{input.preferredTimeSlot ?? 'Flexible'}</strong></div>
+            <div><span>Total sin IVA</span><strong>{pricing ? formatCurrency(pricing.subtotal) : 'Pendiente'}</strong></div>
+          </div>
 
-        <div className="cc-intake-draft-actions">
-          <button type="button" className="secondary-button" onClick={handleReviewQuote}>
-            Review quote
-          </button>
-          <button type="button" className="secondary-button" onClick={handleRegenerateDraft}>
-            Regenerate draft
-          </button>
+          <div className="cc-intake-draft-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void handleRegenerateDraft()}
+              disabled={isActionRunning || currentDraft.status === 'converted'}
+            >
+              Regenerar borradores IA
+            </button>
+          </div>
         </div>
-      </section>
+      </details>
 
-      <section className="cc-intake-draft-card" aria-label="Borradores de comunicación">
-        <div className="cc-intake-draft-card__header">
+      <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Borradores de comunicación" open>
+        <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
           <div>
             <p>Comunicación</p>
             <h4>Borradores para revisión</h4>
           </div>
           <span className="lead-badge">No enviado</span>
-        </div>
+        </summary>
 
-        <div className="cc-intake-message-preview">
-          <div>
-            <span>Asunto email</span>
-            <strong>{emailSubject}</strong>
+        <div className="cc-intake-draft-card__body">
+          <div className="cc-intake-message-preview">
+            <div>
+              <span>Asunto email</span>
+              <strong>{emailSubject}</strong>
+            </div>
+            <div>
+              <span>Cuerpo email</span>
+              <p>{emailBody}</p>
+            </div>
+            <div>
+              <span>WhatsApp</span>
+              <p>{whatsAppMessage}</p>
+            </div>
           </div>
-          <div>
-            <span>Cuerpo email</span>
-            <p>{emailBody}</p>
+
+          <div className="cc-intake-draft-actions">
+            <button type="button" className="secondary-button" onClick={handleSendEmail} disabled={!isReviewed || isActionRunning}>
+              Abrir borrador email
+            </button>
+            <button type="button" className="secondary-button" onClick={handleOpenWhatsApp} disabled={!isReviewed || isActionRunning}>
+              Abrir WhatsApp
+            </button>
+            <button type="button" className="secondary-button" onClick={() => void handleCopyMessage()} disabled={!isReviewed || isActionRunning}>
+              Copiar mensaje
+            </button>
           </div>
-          <div>
-            <span>WhatsApp</span>
-            <p>{whatsAppMessage}</p>
-          </div>
         </div>
+      </details>
 
-        <div className="cc-intake-draft-actions">
-          <button type="button" className="secondary-button" onClick={handleSendEmail}>
-            Send email
-          </button>
-          <button type="button" className="secondary-button" onClick={handleOpenWhatsApp}>
-            Open WhatsApp
-          </button>
-          <button type="button" className="secondary-button" onClick={() => void handleCopyMessage()}>
-            Copy message
-          </button>
-        </div>
-      </section>
-
-      {actionMessage ? (
-        <div className="cc-alert cc-alert--success">
-          <strong>Acción preparada</strong>
-          <p>{actionMessage}</p>
-        </div>
-      ) : null}
-
-      {actionError ? (
-        <div className="cc-alert cc-alert--error">
-          <strong>No se pudo completar la acción</strong>
-          <p>{actionError}</p>
+      {actionStatus ? (
+        <div
+          className={[
+            'cc-alert',
+            actionStatus.tone === 'error'
+              ? 'cc-alert--error'
+              : actionStatus.tone === 'review' || actionStatus.tone === 'loading'
+                ? 'cc-alert--warning'
+                : 'cc-alert--success',
+          ].join(' ')}
+        >
+          <strong>{actionStatus.title}</strong>
+          <p>{actionStatus.message}</p>
         </div>
       ) : null}
     </div>

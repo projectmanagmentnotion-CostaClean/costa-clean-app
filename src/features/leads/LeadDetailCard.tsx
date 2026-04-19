@@ -1,6 +1,7 @@
 ﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import type { ClientListItem } from '../clients/types'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { LeadListItem } from './types'
@@ -8,6 +9,7 @@ import type { LeadListItem } from './types'
 interface LeadDetailCardProps {
   lead: LeadListItem | null
   leadDraft: LeadDraftRecord | null
+  clients: ClientListItem[]
   alreadyConverted: boolean
   onLeadUpdated: () => Promise<void>
   onLeadConverted: () => Promise<void>
@@ -23,6 +25,7 @@ interface EditFormState {
 export function LeadDetailCard({
   lead,
   leadDraft,
+  clients,
   alreadyConverted,
   onLeadUpdated,
   onLeadConverted,
@@ -157,6 +160,16 @@ export function LeadDetailCard({
 
   async function handleConvertToClient() {
     if (!lead) return
+
+    if (
+      leadDraft &&
+      (leadDraft.status === 'ready_for_review' || leadDraft.status === 'matched_existing_lead') &&
+      leadDraft.ai_draft_status !== 'reviewed'
+    ) {
+      setSaveError('Revisa manualmente el borrador de intake antes de convertir este lead a cliente.')
+      setSuccessMessage(null)
+      return
+    }
 
     if (alreadyConverted || lead.status === 'won') {
       setSaveError(null)
@@ -460,7 +473,14 @@ export function LeadDetailCard({
             </div>
           )}
 
-          {!isEditing ? <LeadDraftCards leadDraft={leadDraft} /> : null}
+          {!isEditing ? (
+            <LeadDraftCards
+              lead={lead}
+              leadDraft={leadDraft}
+              clients={clients}
+              onWorkflowUpdated={onLeadConverted}
+            />
+          ) : null}
 
           {!isEditing && saveError ? (
             <div className="cc-alert cc-alert--error">
@@ -485,4 +505,3 @@ export function LeadDetailCard({
     </section>
   )
 }
-

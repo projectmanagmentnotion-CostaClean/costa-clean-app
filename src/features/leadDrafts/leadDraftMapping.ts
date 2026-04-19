@@ -1,5 +1,6 @@
 import type { LeadDraftCreateInput, QuoteDraftSeed } from './types'
 import type { PublicQuotePricingBreakdown, QuoteRequestNormalizedInput } from '../publicIntake/types'
+import { buildQuoteDraftSeed } from '../../config/leadQuoteMessagingEngineAccess'
 
 function joinParts(parts: Array<string | null>): string {
   return parts.filter((part): part is string => Boolean(part)).join(' · ')
@@ -50,7 +51,9 @@ export function buildLeadDraftFromIntake(
     status: matchedLeadId ? 'matched_existing_lead' : 'ready_for_review',
     matchedLeadId,
     quoteDraftSeed: {
-      ...buildQuoteDraftSeedFromIntake(normalizedInput),
+      ...(pricingBreakdown
+        ? buildQuoteDraftSeed(normalizedInput, pricingBreakdown)
+        : buildQuoteDraftSeedFromIntake(normalizedInput)),
       ...(pricingBreakdown ? { pricingBreakdown } : {}),
     },
     ...(pricingBreakdown ? { pricingBreakdown } : {}),

@@ -78,7 +78,7 @@ async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord
 
 export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
   return fetchLeadDraftsWithSession(
-    'lead_drafts?select=id,intake_submission_id,suggested_full_name,phone,email,city,postal_code,status,matched_lead_id,normalized_input,quote_draft_seed,pricing_breakdown,ai_email_draft,ai_whatsapp_draft,ai_generation_metadata,created_at,updated_at&order=created_at.desc',
+    'lead_drafts?select=id,intake_submission_id,suggested_full_name,phone,email,city,postal_code,status,matched_lead_id,normalized_input,quote_draft_seed,pricing_breakdown,ai_email_draft,ai_whatsapp_draft,ai_draft_status,ai_generation_metadata,created_at,updated_at&order=created_at.desc',
   )
 }
 

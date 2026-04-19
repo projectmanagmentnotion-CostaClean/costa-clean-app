@@ -1,3 +1,23 @@
+import {
+  buildCommunicationDraftPlaceholders,
+  buildNotes,
+  buildQuoteDraftSeed,
+  calculatePricing,
+  costaCleanLeadQuoteMessagingEngine,
+  getDefaultTaxRate,
+  mapPropertyType,
+  mapServiceType,
+} from '../../config/costaCleanLeadQuoteMessagingEngine.runtime.mjs'
+
+export {
+  buildCommunicationDraftPlaceholders,
+  buildNotes,
+  buildQuoteDraftSeed,
+  calculatePricing,
+  mapPropertyType,
+  mapServiceType,
+}
+
 export const googleFormsQuoteRequestFields = {
   submittedAt: 'Marca temporal',
   fullName: 'Nombre completo',
@@ -27,7 +47,7 @@ export const nativeQuoteRequestFieldMap = Object.fromEntries(
   Object.keys(googleFormsQuoteRequestFields).map((field) => [field, `native.${field}`]),
 )
 
-export const taxRate = 0.21
+export const taxRate = getDefaultTaxRate()
 
 export function createId(prefix) {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -130,17 +150,18 @@ export function normalizeGoogleFormsQuoteRequestRow(row) {
 
 export function validateInput(input, normalizedPhone) {
   const errors = {}
+  const mandatoryMessages = costaCleanLeadQuoteMessagingEngine.mandatoryConditions.intake
 
-  if (!input.fullName) errors.fullName = 'El nombre completo es obligatorio.'
-  if (!input.phone || !normalizedPhone) errors.phone = 'El teléfono es obligatorio.'
-  if (!input.serviceNeedLabel) errors.serviceNeedLabel = 'El tipo de servicio es obligatorio.'
-  if (!input.serviceFrequencyLabel) errors.serviceFrequencyLabel = 'La frecuencia del servicio es obligatoria.'
-  if (!input.propertyType) errors.propertyType = 'El tipo de propiedad es obligatorio.'
-  if (!input.sqmBand) errors.sqmBand = 'La franja de metros cuadrados es obligatoria.'
-  if (!input.city) errors.city = 'La población es obligatoria.'
-  if (!input.postalCode) errors.postalCode = 'El código postal es obligatorio.'
-  if (input.preferredQuoteChannel === 'unknown') errors.preferredQuoteChannel = 'El canal preferido es obligatorio.'
-  if (!input.consentQuoteProcessing) errors.consentQuoteProcessing = 'El consentimiento es obligatorio.'
+  if (!input.fullName) errors.fullName = mandatoryMessages.fullName
+  if (!input.phone || !normalizedPhone) errors.phone = mandatoryMessages.phone
+  if (!input.serviceNeedLabel) errors.serviceNeedLabel = mandatoryMessages.serviceNeedLabel
+  if (!input.serviceFrequencyLabel) errors.serviceFrequencyLabel = mandatoryMessages.serviceFrequencyLabel
+  if (!input.propertyType) errors.propertyType = mandatoryMessages.propertyType
+  if (!input.sqmBand) errors.sqmBand = mandatoryMessages.sqmBand
+  if (!input.city) errors.city = mandatoryMessages.city
+  if (!input.postalCode) errors.postalCode = mandatoryMessages.postalCode
+  if (input.preferredQuoteChannel === 'unknown') errors.preferredQuoteChannel = mandatoryMessages.preferredQuoteChannel
+  if (!input.consentQuoteProcessing) errors.consentQuoteProcessing = mandatoryMessages.consentQuoteProcessing
 
   return errors
 }
@@ -222,164 +243,6 @@ export function validateGoogleFormLegacyImportInput(input, normalizedPhone) {
   }
 
   return errors
-}
-
-function parseCount(value) {
-  const parsed = Number.parseInt(String(value || '').replace(/[^\d]/g, ''), 10)
-  return Number.isFinite(parsed) ? parsed : 0
-}
-
-function roundMoney(value) {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-function getSqmBaseAmount(sqmBand) {
-  const label = String(sqmBand || '').toLocaleLowerCase('es-ES')
-  if (label.includes('menos') || label.includes('<50')) return 85
-  if (label.includes('50') && label.includes('80')) return 115
-  if (label.includes('80') && label.includes('120')) return 155
-  if (label.includes('120') && label.includes('180')) return 220
-  if (label.includes('180')) return 290
-  return 130
-}
-
-function getServiceMultiplier(serviceNeedLabel) {
-  const label = String(serviceNeedLabel || '').toLocaleLowerCase('es-ES')
-  if (label.includes('profunda')) return 1.35
-  if (label.includes('tur')) return 1.2
-  if (label.includes('oficina')) return 1.1
-  return 1
-}
-
-export function calculatePricing(input) {
-  const baseAmount = getSqmBaseAmount(input.sqmBand)
-  const serviceMultiplier = getServiceMultiplier(input.serviceNeedLabel)
-  const serviceAdjustedAmount = roundMoney(baseAmount * serviceMultiplier)
-  const adjustments = []
-  const rooms = parseCount(input.rooms)
-  const bathrooms = parseCount(input.bathrooms)
-  const urgency = String(input.urgencyLabel || '').toLocaleLowerCase('es-ES')
-
-  if (rooms > 2) {
-    adjustments.push({
-      code: 'extra_rooms',
-      label: `Habitaciones adicionales (${rooms - 2})`,
-      amount: (rooms - 2) * 12,
-    })
-  }
-
-  if (bathrooms > 1) {
-    adjustments.push({
-      code: 'extra_bathrooms',
-      label: `Baños adicionales (${bathrooms - 1})`,
-      amount: (bathrooms - 1) * 18,
-    })
-  }
-
-  if (input.hasOutdoorAreas === true) {
-    adjustments.push({ code: 'outdoor_areas', label: 'Terraza o zonas exteriores', amount: 25 })
-  }
-
-  if (input.hasPets === true) {
-    adjustments.push({ code: 'pets', label: 'Mascotas en la propiedad', amount: 15 })
-  }
-
-  if (urgency.includes('antes') || urgency.includes('posible')) {
-    adjustments.push({ code: 'urgent_asap', label: 'Servicio lo antes posible', amount: 35 })
-  } else if (urgency.includes('semana')) {
-    adjustments.push({ code: 'urgent_week', label: 'Servicio esta semana', amount: 15 })
-  }
-
-  const subtotal = roundMoney(serviceAdjustedAmount + adjustments.reduce((sum, item) => sum + item.amount, 0))
-  const taxAmount = roundMoney(subtotal * taxRate)
-  const total = roundMoney(subtotal + taxAmount)
-
-  return {
-    version: 'pricing_v1',
-    currency: 'EUR',
-    baseAmount,
-    serviceMultiplier,
-    serviceAdjustedAmount,
-    adjustments,
-    subtotal,
-    taxRate,
-    taxAmount,
-    total,
-    confidence: 'estimate',
-  }
-}
-
-export function mapServiceType(label) {
-  const normalized = String(label || '').toLocaleLowerCase('es-ES')
-  if (normalized.includes('profunda')) return 'deep_cleaning'
-  if (normalized.includes('tur')) return 'airbnb_turnover'
-  if (normalized.includes('oficina')) return 'standard_cleaning'
-  return 'standard_cleaning'
-}
-
-export function mapPropertyType(label) {
-  const normalized = String(label || '').toLocaleLowerCase('es-ES')
-  if (normalized.includes('casa') || normalized.includes('villa')) return 'house'
-  if (normalized.includes('oficina')) return 'office'
-  if (normalized.includes('local')) return 'local'
-  if (normalized.includes('tur')) return 'tourist_apartment'
-  return 'apartment'
-}
-
-export function buildNotes(input, pricing) {
-  return [
-    input.scopeNotes,
-    input.rooms ? `Habitaciones: ${input.rooms}` : null,
-    input.bathrooms ? `Baños: ${input.bathrooms}` : null,
-    input.hasOutdoorAreas === null ? null : `Zonas exteriores: ${input.hasOutdoorAreas ? 'sí' : 'no'}`,
-    input.hasPets === null ? null : `Mascotas: ${input.hasPets ? 'sí' : 'no'}`,
-    input.requestedServiceDate ? `Fecha solicitada: ${input.requestedServiceDate}` : null,
-    input.preferredTimeSlot ? `Horario preferido: ${input.preferredTimeSlot}` : null,
-    input.urgencyLabel ? `Urgencia: ${input.urgencyLabel}` : null,
-    input.previousCleaningIssues ? `Historial: ${input.previousCleaningIssues}` : null,
-    `Estimación V1: ${pricing.subtotal.toFixed(2)} EUR + IVA (${pricing.total.toFixed(2)} EUR total).`,
-  ].filter(Boolean).join('\n')
-}
-
-export function buildQuoteDraftSeed(input, pricing) {
-  return {
-    status: 'draft',
-    serviceSummary: [
-      input.serviceNeedLabel,
-      input.serviceFrequencyLabel,
-      input.propertyType,
-      input.sqmBand,
-    ].filter(Boolean).join(' · ') || 'Solicitud de presupuesto de limpieza',
-    notes: buildNotes(input, pricing),
-    requestedServiceDate: input.requestedServiceDate,
-    preferredTimeSlot: input.preferredTimeSlot,
-    preferredQuoteChannel: input.preferredQuoteChannel,
-    pricingBreakdown: pricing,
-  }
-}
-
-export function buildCommunicationDraftPlaceholders(input, pricing) {
-  const greetingName = input.fullName.split(' ')[0] || input.fullName
-  const estimate = `${pricing.total.toFixed(2)} EUR IVA incluido`
-
-  return {
-    ai_email_draft: [
-      `Hola ${greetingName},`,
-      '',
-      `Gracias por contactar con CostaClean. Hemos recibido tu solicitud para ${input.serviceNeedLabel || 'un servicio de limpieza'} en ${input.city || 'tu zona'}.`,
-      `La estimación inicial es ${estimate}, pendiente de revisión final del equipo.`,
-      '',
-      'No se ha enviado este mensaje automáticamente.',
-    ].join('\n'),
-    ai_whatsapp_draft: `Hola ${greetingName}, gracias por contactar con CostaClean. Hemos recibido tu solicitud y la estimación inicial es ${estimate}, pendiente de revisión final. No enviado automáticamente.`,
-    ai_draft_status: 'drafted',
-    ai_generation_metadata: {
-      provider: 'placeholder',
-      integration_status: 'openai_hook_not_enabled',
-      auto_send: false,
-      generated_at: new Date().toISOString(),
-    },
-  }
 }
 
 export function buildLeadPayload(input, normalizedPhone, intakeSubmissionId, pricing, existingLead = null, source = 'public_quote_form') {

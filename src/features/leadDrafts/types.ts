@@ -1,6 +1,7 @@
 import type { PublicQuotePricingBreakdown, QuoteRequestNormalizedInput } from '../publicIntake/types'
 
 export type LeadDraftStatus = 'new' | 'matched_existing_lead' | 'ready_for_review' | 'converted' | 'dismissed'
+export type LeadDraftAiDraftStatus = 'not_generated' | 'drafted' | 'reviewed'
 
 export interface QuoteDraftSeed {
   status: 'draft'
@@ -41,6 +42,7 @@ export interface LeadDraftRecord {
   pricing_breakdown?: PublicQuotePricingBreakdown | null
   ai_email_draft: string | null
   ai_whatsapp_draft: string | null
+  ai_draft_status: LeadDraftAiDraftStatus
   ai_generation_metadata?: Record<string, unknown> | null
   created_at?: string
   updated_at?: string

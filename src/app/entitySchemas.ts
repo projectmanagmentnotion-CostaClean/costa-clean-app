@@ -15,6 +15,7 @@ export interface EntityFieldDefinition {
     | 'currency'
     | 'enum'
     | 'relation'
+    | 'json'
   required: boolean
   description: string
   enumName?: string
@@ -85,7 +86,9 @@ export const entitySchemas: EntitySchemaDefinition[] = [
       { key: 'subtotal', label: 'Subtotal', type: 'currency', required: true, description: 'Base del presupuesto antes de impuestos.' },
       { key: 'tax_amount', label: 'IVA', type: 'currency', required: false, description: 'Importe del impuesto.' },
       { key: 'total', label: 'Total', type: 'currency', required: true, description: 'Importe total.' },
-      { key: 'notes', label: 'Notas', type: 'text', required: false, description: 'Condiciones o comentarios.' },
+      { key: 'notes', label: 'Notas visibles', type: 'text', required: false, description: 'Resumen comercial visible para el cliente.' },
+      { key: 'internal_notes', label: 'Notas internas', type: 'text', required: false, description: 'Supuestos operativos y revision interna.' },
+      { key: 'pricing_metadata', label: 'Metadata de pricing', type: 'json', required: false, description: 'Datos tecnicos estructurados del motor de pricing.' },
     ],
   },
   {
@@ -116,6 +119,9 @@ export const entitySchemas: EntitySchemaDefinition[] = [
       { key: 'subtotal', label: 'Subtotal', type: 'currency', required: true, description: 'Base imponible.' },
       { key: 'tax_amount', label: 'IVA', type: 'currency', required: true, description: 'Importe del impuesto.' },
       { key: 'total', label: 'Total', type: 'currency', required: true, description: 'Importe total de la factura.' },
+      { key: 'notes', label: 'Notas visibles', type: 'text', required: false, description: 'Observaciones visibles para el cliente.' },
+      { key: 'internal_notes', label: 'Notas internas', type: 'text', required: false, description: 'Contexto interno no visible en el documento.' },
+      { key: 'pricing_metadata', label: 'Metadata de pricing', type: 'json', required: false, description: 'Datos tecnicos estructurados heredados del presupuesto.' },
     ],
   },
   {

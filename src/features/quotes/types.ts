@@ -14,6 +14,8 @@ export interface QuoteListItem {
   tax_amount: number | null
   total: number
   notes?: string | null
+  internal_notes?: string | null
+  pricing_metadata?: Record<string, unknown> | null
   created_at?: string
   quote_lines?: QuoteLineItem[]
   lines?: QuoteLineItem[]

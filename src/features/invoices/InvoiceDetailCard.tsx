@@ -195,6 +195,14 @@ function getInvoiceServiceReference(invoice: InvoiceListItem): string {
     ?? 'Factura creada desde presupuesto aceptado'
 }
 
+function buildVisibleInvoiceNotes(): string {
+  return [
+    'Servicio realizado segun presupuesto aprobado.',
+    'Condiciones economicas aplicadas segun presupuesto aceptado.',
+    'Precios sin IVA.',
+  ].join('\n')
+}
+
 function calculateSubtotal(lines: LineFormState[]): number {
   return roundMoney(lines.reduce((sum, line) => {
     const lineSubtotal = calculateLineSubtotal(line)
@@ -354,7 +362,7 @@ export function InvoiceDetailCard({
     setForm((current) => ({
       ...current,
       client_id: selectedJob.client_id,
-      notes: current.notes.trim() ? current.notes : linkedQuote?.notes ?? '',
+      notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
     setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
   }
@@ -439,6 +447,8 @@ export function InvoiceDetailCard({
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
+          internal_notes: invoice.internal_notes ?? linkedQuote?.internal_notes ?? null,
+          pricing_metadata: invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null,
         },
         linePayloads,
       )

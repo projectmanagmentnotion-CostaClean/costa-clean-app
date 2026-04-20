@@ -54,7 +54,11 @@ export async function saveQuoteWithLines(
     action: 'upsert',
     changedFields: Object.keys(quoteRecord),
     newValues: quoteRecord,
-    metadata: { line_count: lines.length },
+    metadata: {
+      line_count: lines.length,
+      pricing_metadata: quoteRecord.pricing_metadata ?? null,
+      has_internal_notes: Boolean(quoteRecord.internal_notes),
+    },
   })
 }
 
@@ -75,7 +79,11 @@ export async function saveInvoiceWithLines(
     action: 'upsert',
     changedFields: Object.keys(invoiceRecord),
     newValues: invoiceRecord,
-    metadata: { line_count: lines.length },
+    metadata: {
+      line_count: lines.length,
+      pricing_metadata: invoiceRecord.pricing_metadata ?? null,
+      has_internal_notes: Boolean(invoiceRecord.internal_notes),
+    },
   })
 }
 

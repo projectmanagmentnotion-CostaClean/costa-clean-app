@@ -116,7 +116,11 @@ export function LeadDraftCards({
   const isReviewed = currentDraft.ai_draft_status === 'reviewed'
   const generationSource = currentDraft.ai_generation_metadata?.source ?? currentDraft.ai_generation_metadata?.provider ?? 'placeholder'
   const canConvertDraft = (
-    (currentDraft.status === 'ready_for_review' || currentDraft.status === 'matched_existing_lead') &&
+    (
+      currentDraft.status === 'ready_for_review' ||
+      currentDraft.status === 'matched_existing_lead' ||
+      currentDraft.status === 'converted'
+    ) &&
     isReviewed
   )
 
@@ -146,7 +150,7 @@ export function LeadDraftCards({
     quote: {
       title: 'Crear presupuesto CRM',
       confirmLabel: 'Crear presupuesto',
-      description: 'Se recalculara el presupuesto con el motor Costa Clean BCN, se guardaran lineas CRM y se vinculara el intake al presupuesto en estado borrador.',
+      description: 'Se recalculara el presupuesto con el motor Costa Clean BCN. Si ya existe un borrador del lead, se actualizara con las nuevas lineas, totales y notas.',
     },
     regenerate: {
       title: 'Regenerar borradores IA',
@@ -355,7 +359,7 @@ export function LeadDraftCards({
               type="button"
               className="secondary-button"
               onClick={() => setConfirmedAction('review')}
-              disabled={isActionRunning || isReviewed || currentDraft.status === 'converted'}
+              disabled={isActionRunning || isReviewed}
             >
               {isReviewed ? 'Revisión registrada' : 'Marcar revisión manual'}
             </button>
@@ -373,7 +377,7 @@ export function LeadDraftCards({
               onClick={() => setConfirmedAction('quote')}
               disabled={isActionRunning || !canConvertDraft || !pricing}
             >
-              Crear presupuesto CRM
+              {currentDraft.status === 'converted' ? 'Actualizar presupuesto CRM' : 'Crear presupuesto CRM'}
             </button>
           </div>
         </div>
@@ -417,7 +421,7 @@ export function LeadDraftCards({
               type="button"
               className="secondary-button"
               onClick={() => setConfirmedAction('regenerate')}
-              disabled={isActionRunning || currentDraft.status === 'converted'}
+              disabled={isActionRunning}
             >
               {isActionRunning ? 'Regenerando...' : 'Regenerar borradores IA'}
             </button>

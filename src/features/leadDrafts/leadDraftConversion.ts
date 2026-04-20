@@ -29,7 +29,10 @@ export interface LeadDraftQuoteConversionResult {
 const convertibleDraftStatuses = new Set<LeadDraftRecord['status']>([
   'matched_existing_lead',
   'ready_for_review',
+  'converted',
 ])
+
+const replaceableQuoteStatuses = new Set(['draft', 'sent'])
 
 function getClientOrThrow() {
   const { client, error } = getSupabaseClient()
@@ -77,23 +80,140 @@ function assertReviewedDraft(leadDraft: LeadDraftRecord) {
   }
 }
 
-function buildQuoteNotes(leadDraft: LeadDraftRecord): string {
-  const pricing = getEnginePricing(leadDraft)
-  const notes = leadDraft.quote_draft_seed.notes?.trim()
-  const pricingNotes = [
-    `Motor: ${pricing.engineId ?? costaCleanLeadQuoteMessagingEngine.engineId} v${pricing.engineVersion ?? costaCleanLeadQuoteMessagingEngine.version} / ${pricing.version}.`,
-    `Clasificacion: servicio ${pricing.serviceType ?? mapServiceType(leadDraft.normalized_input.serviceNeedLabel)}; propiedad ${pricing.propertyType ?? mapPropertyType(leadDraft.normalized_input.propertyType)}.`,
-    `Equipo: ${pricing.operators ?? '-'} operador(es) x ${pricing.hoursPerOperator ?? '-'}h; minimo ${pricing.minimumTotalHours ?? '-'}h; total ${pricing.totalHours ?? '-'}h.`,
-    `Tarifa: ${pricing.hourlyRate ?? costaCleanLeadQuoteMessagingEngine.pricing.baseHourlyRateStandard} EUR/h. Suplementos: ${(pricing.supplementsTotal ?? 0).toFixed(2)} EUR. Descuento: ${(pricing.discountTotal ?? 0).toFixed(2)} EUR.`,
-    `Modelo ${pricing.priceStructure ?? 'standard'}: base ${pricing.subtotal.toFixed(2)} EUR; base facturada ${(pricing.invoicedBase ?? pricing.subtotal).toFixed(2)} EUR; no facturada ${(pricing.nonInvoicedAmount ?? 0).toFixed(2)} EUR.`,
-    `IVA ${pricing.taxRate * 100}%: ${pricing.taxAmount.toFixed(2)} EUR. Total cliente: ${pricing.total.toFixed(2)} EUR. Confianza: ${pricing.confidence}.`,
-    ...(pricing.mandatoryMessages ?? costaCleanLeadQuoteMessagingEngine.mandatoryMessages),
-    ...(pricing.limitations ?? []),
-  ].join('\n')
+function formatRequestValue(value: string | number | null | undefined, fallback = 'Pendiente de concretar'): string {
+  const normalized = String(value ?? '').trim()
+  return normalized || fallback
+}
 
-  return [notes, pricingNotes, 'Creado desde lead draft revisado. No enviado automaticamente.']
-    .filter((part): part is string => Boolean(part))
-    .join('\n\n')
+function buildRoomsLabel(leadDraft: LeadDraftRecord): string {
+  return `Habitaciones: ${formatRequestValue(leadDraft.normalized_input.rooms)}`
+}
+
+function buildBathroomsLabel(leadDraft: LeadDraftRecord): string {
+  return `Banos: ${formatRequestValue(leadDraft.normalized_input.bathrooms)}`
+}
+
+function buildVisibleQuoteNotes(leadDraft: LeadDraftRecord): string {
+  const pricing = getEnginePricing(leadDraft)
+
+  return [
+    'Servicio solicitado:',
+    formatRequestValue(leadDraft.quote_draft_seed.serviceSummary || leadDraft.normalized_input.serviceNeedLabel, 'Servicio de limpieza'),
+    '',
+    'Resumen de la estimacion:',
+    `- ${formatRequestValue(pricing.operators, '-')} operario(s) x ${formatRequestValue(pricing.hoursPerOperator, '-')} horas`,
+    `- ${buildRoomsLabel(leadDraft)}`,
+    `- ${buildBathroomsLabel(leadDraft)}`,
+    `- Horario solicitado: ${formatRequestValue(leadDraft.normalized_input.preferredTimeSlot)}`,
+    `- Fecha solicitada: ${formatRequestValue(leadDraft.normalized_input.requestedServiceDate)}`,
+    '',
+    'Observaciones:',
+    'Presupuesto estimado en base a la informacion facilitada. El precio final podra ajustarse si el estado real del inmueble o el alcance del servicio difieren de lo indicado inicialmente.',
+    '',
+    'Condiciones:',
+    '- Si el servicio finaliza antes, solo se cobran las horas realmente trabajadas.',
+    '- Si se necesita mas tiempo, se informara previamente.',
+    '- Precios sin IVA.',
+  ].join('\n')
+}
+
+function buildInternalQuoteNotes(leadDraft: LeadDraftRecord): string {
+  const pricing = getEnginePricing(leadDraft)
+  const internalNotes = [
+    leadDraft.quote_draft_seed.notes?.trim() || null,
+    pricing.limitations?.length ? `Limitaciones operativas: ${pricing.limitations.join(' ')}` : null,
+    pricing.adjustments?.length ? `Suplementos aplicados: ${pricing.adjustments.map((item) => item.label).join(', ')}` : null,
+    'Creado desde lead draft revisado. No enviado automaticamente.',
+  ].filter(Boolean)
+
+  return internalNotes.join('\n\n')
+}
+
+function buildPricingMetadata(leadDraft: LeadDraftRecord): Record<string, unknown> {
+  const pricing = getEnginePricing(leadDraft)
+
+  return {
+    source: 'lead_draft_engine_quote',
+    lead_draft_id: leadDraft.id,
+    intake_submission_id: leadDraft.intake_submission_id,
+    engine_id: pricing.engineId ?? costaCleanLeadQuoteMessagingEngine.engineId,
+    engine_version: pricing.engineVersion ?? costaCleanLeadQuoteMessagingEngine.version,
+    pricing_version: pricing.version,
+    currency: pricing.currency,
+    confidence: pricing.confidence,
+    service_type: pricing.serviceType ?? mapServiceType(leadDraft.normalized_input.serviceNeedLabel),
+    property_type: pricing.propertyType ?? mapPropertyType(leadDraft.normalized_input.propertyType),
+    operators: pricing.operators,
+    hours_per_operator: pricing.hoursPerOperator,
+    minimum_total_hours: pricing.minimumTotalHours,
+    total_hours: pricing.totalHours,
+    hourly_rate: pricing.hourlyRate ?? costaCleanLeadQuoteMessagingEngine.pricing.baseHourlyRateStandard,
+    price_structure: pricing.priceStructure,
+    subtotal: pricing.subtotal,
+    tax_rate: pricing.taxRate,
+    tax_amount: pricing.taxAmount,
+    total: pricing.total,
+    supplements_total: pricing.supplementsTotal ?? 0,
+    discount_total: pricing.discountTotal ?? 0,
+    adjustments: pricing.adjustments,
+    limitations: pricing.limitations ?? [],
+    mandatory_messages: pricing.mandatoryMessages ?? costaCleanLeadQuoteMessagingEngine.mandatoryMessages,
+  }
+}
+
+async function findReplaceableLeadQuote(leadId: string, intakeQuoteId: string | null): Promise<string | null> {
+  const client = getClientOrThrow()
+
+  if (intakeQuoteId) {
+    const { data, error } = await client
+      .from('quotes')
+      .select('id,status')
+      .eq('id', intakeQuoteId)
+      .limit(1)
+
+    if (error) {
+      throw new Error(error.message || 'No se pudo comprobar el presupuesto existente del intake.')
+    }
+
+    const existingQuote = data?.[0] as { id?: string; status?: string | null } | undefined
+    if (!existingQuote?.id) return null
+    if (replaceableQuoteStatuses.has(existingQuote.status ?? '')) return existingQuote.id
+
+    throw new Error('Este intake ya tiene un presupuesto finalizado o no reemplazable. No se sobrescribira automaticamente.')
+  }
+
+  const { data, error } = await client
+    .from('quotes')
+    .select('id,status')
+    .eq('lead_id', leadId)
+    .in('status', Array.from(replaceableQuoteStatuses))
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo comprobar si el lead ya tiene presupuesto borrador.')
+  }
+
+  const existingQuote = data?.[0] as { id?: string } | undefined
+  return existingQuote?.id ?? null
+}
+
+async function ensureNoFinalizedLeadQuoteConflict(leadId: string): Promise<void> {
+  const client = getClientOrThrow()
+  const { data, error } = await client
+    .from('quotes')
+    .select('id,status')
+    .eq('lead_id', leadId)
+    .in('status', ['accepted', 'rejected', 'expired', 'cancelled'])
+    .limit(1)
+
+  if (error) {
+    throw new Error(error.message || 'No se pudo comprobar presupuestos finalizados del lead.')
+  }
+
+  if (data && data.length > 0) {
+    throw new Error('Este lead ya tiene un presupuesto finalizado. No se creara otro borrador automaticamente.')
+  }
 }
 
 function buildEngineQuoteLines(leadDraft: LeadDraftRecord, quoteId: string): QuoteLinePayload[] {
@@ -153,7 +273,7 @@ export async function markLeadDraftReviewed(leadDraftId: string): Promise<void> 
     .from('lead_drafts')
     .update({ ai_draft_status: 'reviewed' })
     .eq('id', leadDraftId)
-    .in('status', ['matched_existing_lead', 'ready_for_review'])
+    .in('status', ['matched_existing_lead', 'ready_for_review', 'converted'])
 
   if (error) {
     throw new Error(error.message || 'No se pudo marcar el borrador como revisado.')
@@ -201,11 +321,12 @@ export async function convertReviewedLeadDraftToQuote(
   }
 
   const intakeRow = intakeRows?.[0] as { quote_id?: string | null } | undefined
-  if (intakeRow?.quote_id) {
-    throw new Error('Este intake ya tiene un presupuesto CRM vinculado.')
+  const existingQuoteId = await findReplaceableLeadQuote(lead.id, intakeRow?.quote_id ?? null)
+  if (!existingQuoteId) {
+    await ensureNoFinalizedLeadQuoteConflict(lead.id)
   }
 
-  const quoteId = createRecordId('QUOTE')
+  const quoteId = existingQuoteId ?? createRecordId('QUOTE')
   const subtotal = roundMoney(pricing.subtotal)
   const taxAmount = roundMoney(pricing.taxAmount)
   const total = roundMoney(pricing.total)
@@ -221,7 +342,9 @@ export async function convertReviewedLeadDraftToQuote(
       subtotal,
       tax_amount: taxAmount,
       total,
-      notes: buildQuoteNotes(leadDraft),
+      notes: buildVisibleQuoteNotes(leadDraft),
+      internal_notes: buildInternalQuoteNotes(leadDraft),
+      pricing_metadata: buildPricingMetadata(leadDraft),
     },
     quoteLines,
   )
@@ -252,7 +375,6 @@ export async function convertReviewedLeadDraftToQuote(
       quote_id: quoteId,
     })
     .eq('id', leadDraft.intake_submission_id)
-    .is('quote_id', null)
 
   if (intakeUpdateError) {
     throw new Error(intakeUpdateError.message || 'El presupuesto se creo, pero no se pudo vincular el intake.')

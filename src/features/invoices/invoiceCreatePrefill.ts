@@ -55,13 +55,13 @@ function buildBillingLine(job: JobListItem): InvoiceCreatePrefillLine | null {
 }
 
 function buildInvoiceNotes(job: JobListItem): string {
-  const notes = job.notes?.trim()
-  if (notes) {
-    return notes
-  }
+  if (!job.quote_id) return job.notes?.trim() ?? ''
 
-  const reference = job.display_code?.trim() || job.id
-  return reference ? `Referencia servicio: ${reference}` : ''
+  return [
+    'Servicio realizado segun presupuesto aprobado.',
+    'Condiciones economicas aplicadas segun presupuesto aceptado.',
+    'Precios sin IVA.',
+  ].join('\n')
 }
 
 export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreatePrefill | null {

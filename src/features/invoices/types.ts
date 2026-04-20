@@ -14,6 +14,8 @@
   tax_amount: number
   total: number
   notes?: string | null
+  internal_notes?: string | null
+  pricing_metadata?: Record<string, unknown> | null
 
   client_name?: string | null
   client_phone?: string | null

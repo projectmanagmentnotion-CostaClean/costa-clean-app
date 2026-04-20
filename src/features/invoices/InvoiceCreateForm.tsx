@@ -96,6 +96,14 @@ function createDefaultFormState(jobs: JobListItem[]): FormState {
   }
 }
 
+function buildVisibleInvoiceNotes(): string {
+  return [
+    'Servicio realizado segun presupuesto aprobado.',
+    'Condiciones economicas aplicadas segun presupuesto aceptado.',
+    'Precios sin IVA.',
+  ].join('\n')
+}
+
 function getJobBillingLine(job: JobListItem | null): LineFormState | null {
   if (!job) return null
 
@@ -257,7 +265,7 @@ export function InvoiceCreateForm({
     setForm((current) => ({
       ...current,
       client_id: selectedJob.client_id,
-      notes: current.notes.trim() ? current.notes : linkedQuote?.notes ?? '',
+      notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
 
     setLines(buildLinesForJob(selectedJob, linkedQuote))
@@ -340,6 +348,8 @@ export function InvoiceCreateForm({
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
+          internal_notes: linkedQuote?.internal_notes ?? null,
+          pricing_metadata: linkedQuote?.pricing_metadata ?? null,
         },
         linePayloads,
       )

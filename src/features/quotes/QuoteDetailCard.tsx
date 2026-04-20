@@ -336,6 +336,8 @@ function QuoteDetailCardContent({
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
+          internal_notes: hydratedQuote.internal_notes ?? null,
+          pricing_metadata: hydratedQuote.pricing_metadata ?? null,
         },
         linePayloads,
       )

@@ -188,6 +188,7 @@ function getInvoiceServiceReference(invoice: InvoiceListItem): string {
     ?? invoice.service_description
     ?? invoice.job_display_code
     ?? invoice.job_id
+    ?? 'Factura creada desde presupuesto aceptado'
 }
 
 function calculateSubtotal(lines: LineFormState[]): number {
@@ -293,7 +294,7 @@ export function InvoiceDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setForm({
-      job_id: invoice.job_id,
+      job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
       issue_date: invoice.issue_date,
       status: invoice.status,
@@ -334,7 +335,7 @@ export function InvoiceDetailCard({
     if (!invoice) return
 
     setForm({
-      job_id: invoice.job_id,
+      job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
       issue_date: invoice.issue_date,
       status: invoice.status,
@@ -405,13 +406,8 @@ export function InvoiceDetailCard({
     setIsSaving(true)
 
     try {
-      if (!form.job_id) {
-        setSaveError('Debes seleccionar un servicio.')
-        return
-      }
-
       if (!form.client_id) {
-        setSaveError('No se pudo resolver el cliente del servicio.')
+        setSaveError('No se pudo resolver el cliente de la factura.')
         return
       }
 
@@ -430,7 +426,7 @@ export function InvoiceDetailCard({
       await saveInvoiceWithLines(
         {
           id: invoice.id,
-          job_id: form.job_id,
+          job_id: form.job_id || null,
           client_id: form.client_id,
           issue_date: form.issue_date,
           status: form.status,
@@ -513,11 +509,12 @@ export function InvoiceDetailCard({
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
               <label className="form-field">
-                <span>Servicio *</span>
+                <span>Servicio</span>
                 <select
                   value={form.job_id}
                   onChange={(event) => updateField('job_id', event.target.value)}
                 >
+                  <option value="">Sin servicio vinculado</option>
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>
                       {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}

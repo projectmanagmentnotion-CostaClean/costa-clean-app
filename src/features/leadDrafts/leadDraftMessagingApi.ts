@@ -1,7 +1,9 @@
 import { getSupabaseClient } from '../../lib/supabase'
-import type { LeadDraftRecord } from './types'
+import { buildQuoteDraftSeed, calculatePricing } from '../../config/leadQuoteMessagingEngineAccess'
+import type { LeadDraftRecord, QuoteDraftSeed } from './types'
+import type { PublicQuotePricingBreakdown } from '../publicIntake/types'
 
-export interface LeadMessageDraftResponse {
+interface LeadMessageDraftApiResponse {
   ok: true
   source: 'openai' | 'fallback'
   email_subject: string
@@ -11,7 +13,12 @@ export interface LeadMessageDraftResponse {
   metadata: Record<string, unknown>
 }
 
-function isLeadMessageDraftResponse(value: unknown): value is LeadMessageDraftResponse {
+export interface LeadMessageDraftResponse extends LeadMessageDraftApiResponse {
+  pricing_breakdown: PublicQuotePricingBreakdown
+  quote_draft_seed: QuoteDraftSeed
+}
+
+function isLeadMessageDraftResponse(value: unknown): value is LeadMessageDraftApiResponse {
   return Boolean(
     value &&
     typeof value === 'object' &&
@@ -22,10 +29,6 @@ function isLeadMessageDraftResponse(value: unknown): value is LeadMessageDraftRe
     'whatsapp_message' in value &&
     typeof value.whatsapp_message === 'string',
   )
-}
-
-function getDraftPricing(leadDraft: LeadDraftRecord) {
-  return leadDraft.pricing_breakdown ?? leadDraft.quote_draft_seed.pricingBreakdown ?? null
 }
 
 function getClientOrThrow() {
@@ -39,10 +42,8 @@ function getClientOrThrow() {
 }
 
 export async function regenerateLeadDraftMessages(leadDraft: LeadDraftRecord): Promise<LeadMessageDraftResponse> {
-  const pricing = getDraftPricing(leadDraft)
-  if (!pricing) {
-    throw new Error('El borrador no tiene pricing para generar comunicaciones.')
-  }
+  const pricing = calculatePricing(leadDraft.normalized_input)
+  const quoteDraftSeed = buildQuoteDraftSeed(leadDraft.normalized_input, pricing)
 
   const response = await fetch('/api/lead-message-drafts', {
     method: 'POST',
@@ -51,7 +52,7 @@ export async function regenerateLeadDraftMessages(leadDraft: LeadDraftRecord): P
       lead_draft_id: leadDraft.id,
       normalized_input: leadDraft.normalized_input,
       pricing_breakdown: pricing,
-      quote_draft_seed: leadDraft.quote_draft_seed,
+      quote_draft_seed: quoteDraftSeed,
     }),
   })
 
@@ -75,6 +76,8 @@ export async function regenerateLeadDraftMessages(leadDraft: LeadDraftRecord): P
   const { error } = await client
     .from('lead_drafts')
     .update({
+      quote_draft_seed: quoteDraftSeed,
+      pricing_breakdown: pricing,
       ai_email_draft: responseBody.email_body,
       ai_whatsapp_draft: responseBody.whatsapp_message,
       ai_draft_status: 'drafted',
@@ -86,5 +89,9 @@ export async function regenerateLeadDraftMessages(leadDraft: LeadDraftRecord): P
     throw new Error(error.message || 'No se pudieron guardar los borradores generados.')
   }
 
-  return responseBody
+  return {
+    ...responseBody,
+    pricing_breakdown: pricing,
+    quote_draft_seed: quoteDraftSeed,
+  }
 }

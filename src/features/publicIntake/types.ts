@@ -36,10 +36,30 @@ export interface PublicQuotePricingAdjustment {
 export interface PublicQuotePricingBreakdown {
   version: 'pricing_v1'
   currency: 'EUR'
+  engineId?: string
+  engineVersion?: string
+  serviceType?: string
+  propertyType?: string
+  operators?: number
+  hoursPerOperator?: number
+  totalHours?: number
+  minimumTotalHours?: number
+  hourlyRate?: number
   baseAmount: number
   serviceMultiplier: number
   serviceAdjustedAmount: number
   adjustments: PublicQuotePricingAdjustment[]
+  supplementsTotal?: number
+  discountTotal?: number
+  invoicedBase?: number
+  invoicedVat?: number
+  invoicedTotalWithVat?: number
+  nonInvoicedAmount?: number
+  grandTotalCustomerView?: number
+  priceStructure?: 'standard' | 'mixed'
+  mandatoryMessages?: string[]
+  limitations?: string[]
+  forbiddenServiceRequested?: boolean
   subtotal: number
   taxRate: number
   taxAmount: number

@@ -9,6 +9,7 @@ import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { saveQuoteWithLines, updateQuoteStatus as updateQuoteStatusRpc } from '../financial/financialWriteApi'
+import { acceptQuoteAndCreateInvoice } from './quoteAcceptanceWorkflow'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
@@ -117,6 +118,7 @@ function QuoteDetailCardContent({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingRejectedStatusUpdate, setPendingRejectedStatusUpdate] = useState<string | null>(null)
+  const [pendingAcceptedStatusUpdate, setPendingAcceptedStatusUpdate] = useState(false)
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
@@ -248,12 +250,39 @@ function QuoteDetailCardContent({
   }
 
   function requestQuoteStatusUpdate(nextStatus: string) {
+    if (hydratedQuote.status !== 'accepted' && nextStatus === 'accepted') {
+      setPendingAcceptedStatusUpdate(true)
+      return
+    }
+
     if (hydratedQuote.status !== 'rejected' && nextStatus === 'rejected') {
       setPendingRejectedStatusUpdate(nextStatus)
       return
     }
 
     void updateQuoteStatus(nextStatus)
+  }
+
+  async function handleConfirmAcceptedStatusUpdate() {
+    setPendingAcceptedStatusUpdate(false)
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const result = await acceptQuoteAndCreateInvoice(hydratedQuote)
+      await onQuoteUpdated()
+      setSuccessMessage(
+        `Presupuesto aceptado. Factura ${result.invoiceId} creada y cliente ${result.clientId} confirmado.`,
+      )
+      setIsEditing(false)
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido aceptando el presupuesto y creando la factura.'
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function handleConfirmRejectedStatusUpdate() {
@@ -345,11 +374,11 @@ function QuoteDetailCardContent({
             Abrir documento
           </button>
 
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={handleCreateJobFromQuote}
-          >
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={handleCreateJobFromQuote}
+            >
             Crear trabajo desde presupuesto
           </button>
 
@@ -555,7 +584,9 @@ function QuoteDetailCardContent({
                   onClick={() => requestQuoteStatusUpdate(status)}
                   disabled={isSaving || status === hydratedQuote.status || isLoadingLines || Boolean(linesError)}
                 >
-                  {getStatusOptionLabel(status)}
+                  {status === 'accepted' && hydratedQuote.status !== 'accepted'
+                    ? 'Aceptar y facturar'
+                    : getStatusOptionLabel(status)}
                 </button>
               ))}
             </div>
@@ -635,6 +666,17 @@ function QuoteDetailCardContent({
           </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        isOpen={pendingAcceptedStatusUpdate}
+        title="Aceptar presupuesto y crear factura"
+        description="Esta accion marca el presupuesto como aceptado, convierte el lead en cliente cuando hay lead origen y crea una factura emitida desde las lineas del presupuesto. No envia comunicaciones."
+        confirmLabel="Aceptar y crear factura"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingAcceptedStatusUpdate(false)}
+        onConfirm={() => void handleConfirmAcceptedStatusUpdate()}
+      />
 
       <ConfirmDialog
         isOpen={Boolean(pendingRejectedStatusUpdate)}

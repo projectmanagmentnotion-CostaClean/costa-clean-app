@@ -2,7 +2,7 @@
   id: string
   display_code: string | null
   invoice_number: string | null
-  job_id: string
+  job_id: string | null
   job_display_code?: string | null
   client_id: string
   client_display_code?: string | null

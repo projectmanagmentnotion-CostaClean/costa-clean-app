@@ -85,7 +85,7 @@ function buildServiceReference(
   property: PropertyListItem | undefined,
 ): string | null {
   const parts = [
-    invoice.job_display_code ?? job?.display_code ?? invoice.job_id,
+    invoice.job_display_code ?? job?.display_code ?? invoice.job_id ?? null,
     property?.display_code ?? null,
     property?.name ?? null,
   ].filter(Boolean)
@@ -367,14 +367,14 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const invoicesWithCodes = useMemo(
     () => invoices.map((invoice) => {
       const client = clientById.get(invoice.client_id)
-      const job = jobById.get(invoice.job_id)
+      const job = invoice.job_id ? jobById.get(invoice.job_id) : undefined
       const property = job?.property_id ? propertyById.get(job.property_id) : undefined
       const quote = job?.quote_id ? quoteById.get(job.quote_id) : undefined
 
       return {
         ...invoice,
         client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
-        job_display_code: jobCodeById.get(invoice.job_id) ?? invoice.job_id,
+        job_display_code: invoice.job_id ? jobCodeById.get(invoice.job_id) ?? invoice.job_id : null,
         client_name: client?.full_name ?? null,
         client_phone: client?.phone ?? null,
         client_email: client?.email ?? null,
@@ -828,7 +828,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               clients={clients}
               properties={properties}
               error={quoteError}
-              onQuoteCreated={refreshBilling}
+              onQuoteCreated={refreshOperations}
               onCreateJobFromQuote={handleCreateJobFromQuote}
               activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
               onClearFilter={() => clearModuleFilter('quotes')}

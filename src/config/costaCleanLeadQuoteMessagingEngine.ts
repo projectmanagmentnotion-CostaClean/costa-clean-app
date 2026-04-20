@@ -596,6 +596,31 @@ function resolvePropertyType(input: QuoteRequestNormalizedInput): PropertyTypeCo
   return 'apartment'
 }
 
+function getServiceTypeLabel(serviceType: ServiceTypeCode): string {
+  const labels: Record<ServiceTypeCode, string> = {
+    basic_cleaning: 'Limpieza basica',
+    deep_cleaning: 'Limpieza profunda',
+    airbnb_tourist: 'Airbnb / apartamento turistico',
+    post_construction: 'Limpieza fin de obra',
+    hotel_or_multiroom: 'Hotel / multiroom',
+    gym_fixed_model: 'Gimnasio con modelo fijo',
+  }
+
+  return labels[serviceType]
+}
+
+function getPropertyTypeLabel(propertyType: PropertyTypeCode): string {
+  const labels: Record<PropertyTypeCode, string> = {
+    apartment: 'Piso',
+    house_or_villa: 'Casa o villa',
+    office: 'Oficina',
+    local: 'Local',
+    tourist_apartment: 'Apartamento turistico',
+  }
+
+  return labels[propertyType]
+}
+
 function resolveStaffingRule(input: QuoteRequestNormalizedInput): StaffingRule {
   const serviceType = resolveServiceType(input)
   const propertyType = resolvePropertyType(input)
@@ -696,7 +721,7 @@ export function getSqmBaseAmount(sqmBand: string | null | undefined): number {
   return staffingRule.minimumTotalHours * costaCleanLeadQuoteMessagingEngine.pricing.baseHourlyRateStandard
 }
 
-export function getServiceMultiplier(_serviceNeedLabel: string | null | undefined): number {
+export function getServiceMultiplier(): number {
   return 1
 }
 
@@ -730,6 +755,8 @@ export function buildSupplementAdjustments(input: QuoteRequestNormalizedInput): 
 }
 
 export function calculatePricing(input: QuoteRequestNormalizedInput): PublicQuotePricingBreakdown {
+  const serviceType = resolveServiceType(input)
+  const propertyType = resolvePropertyType(input)
   const staffingRule = resolveStaffingRule(input)
   const totalHours = Math.max(
     staffingRule.minimumTotalHours,
@@ -740,18 +767,59 @@ export function calculatePricing(input: QuoteRequestNormalizedInput): PublicQuot
   const serviceMultiplier = 1
   const serviceAdjustedAmount = baseAmount
   const adjustments = buildSupplementAdjustments(input)
-  const subtotal = roundMoney(serviceAdjustedAmount + adjustments.reduce((sum, item) => sum + item.amount, 0))
+  const supplementsTotal = roundMoney(adjustments.reduce((sum, item) => sum + item.amount, 0))
+  const discountTotal = 0
+  const subtotal = roundMoney(serviceAdjustedAmount + supplementsTotal - discountTotal)
   const taxRate = getDefaultTaxRate()
-  const taxAmount = roundMoney(subtotal * taxRate)
-  const total = roundMoney(subtotal + taxAmount)
+  const mixedModel = costaCleanLeadQuoteMessagingEngine.priceStructure.mixedModel
+  const priceStructure = mixedModel.enabled ? 'mixed' : 'standard'
+  const invoicedBase = priceStructure === 'mixed'
+    ? roundMoney(subtotal * mixedModel.defaultSplit.invoicedRatio)
+    : subtotal
+  const nonInvoicedAmount = roundMoney(subtotal - invoicedBase)
+  const taxAmount = roundMoney(invoicedBase * taxRate)
+  const total = roundMoney(invoicedBase + taxAmount + nonInvoicedAmount)
+  const limitations = [
+    input.hasOutdoorAreas === true
+      ? 'El formulario no captura tamano de terraza; se aplica suplemento alto hasta revision manual.'
+      : null,
+    includesAny(input.scopeNotes, ['jardin', 'jardÃ­n', 'garden'])
+      ? 'El jardin se estima con el minimo de horas extra del motor hasta medir alcance real.'
+      : null,
+    includesAny(input.scopeNotes, ['ventana', 'cristal', 'window'])
+      ? 'El formulario no captura tamano/cantidad de ventanas; limpieza de cristales queda para ajuste manual.'
+      : null,
+    'El formulario no captura numero de sedes ni acuerdo B2B de volumen; no se aplica tarifa de volumen.',
+    'El formulario no captura preferencia fiscal del cliente; se aplica el modelo mixto por defecto del motor y revision manual obligatoria.',
+  ].filter((item): item is string => Boolean(item))
 
   return {
     version: costaCleanLeadQuoteMessagingEngine.pricingVersion,
     currency: costaCleanLeadQuoteMessagingEngine.currency,
+    engineId: costaCleanLeadQuoteMessagingEngine.engineId,
+    engineVersion: costaCleanLeadQuoteMessagingEngine.version,
+    serviceType,
+    propertyType,
+    operators: staffingRule.operators,
+    hoursPerOperator: staffingRule.hoursPerOperator,
+    totalHours,
+    minimumTotalHours: staffingRule.minimumTotalHours,
+    hourlyRate,
     baseAmount,
     serviceMultiplier,
     serviceAdjustedAmount,
     adjustments,
+    supplementsTotal,
+    discountTotal,
+    invoicedBase,
+    invoicedVat: taxAmount,
+    invoicedTotalWithVat: roundMoney(invoicedBase + taxAmount),
+    nonInvoicedAmount,
+    grandTotalCustomerView: total,
+    priceStructure,
+    mandatoryMessages: [...costaCleanLeadQuoteMessagingEngine.mandatoryMessages],
+    limitations,
+    forbiddenServiceRequested: isForbiddenServiceRequested(input),
     subtotal,
     taxRate,
     taxAmount,
@@ -778,6 +846,9 @@ export function mapPropertyType(label: string | null | undefined): string {
 export function buildNotes(input: QuoteRequestNormalizedInput, pricing: PublicQuotePricingBreakdown): string {
   return [
     input.scopeNotes,
+    pricing.serviceType ? `Tipo de servicio motor: ${getServiceTypeLabel(pricing.serviceType as ServiceTypeCode)}` : null,
+    pricing.propertyType ? `Tipo de propiedad motor: ${getPropertyTypeLabel(pricing.propertyType as PropertyTypeCode)}` : null,
+    pricing.totalHours ? `Equipo motor: ${pricing.operators ?? '-'} operador(es) x ${pricing.hoursPerOperator ?? '-'}h = ${pricing.totalHours}h.` : null,
     input.rooms ? `Habitaciones: ${input.rooms}` : null,
     input.bathrooms ? `Banos: ${input.bathrooms}` : null,
     input.hasOutdoorAreas === null ? null : `Zonas exteriores: ${input.hasOutdoorAreas ? 'si' : 'no'}`,
@@ -786,8 +857,12 @@ export function buildNotes(input: QuoteRequestNormalizedInput, pricing: PublicQu
     input.preferredTimeSlot ? `Horario preferido: ${input.preferredTimeSlot}` : null,
     input.urgencyLabel ? `Urgencia: ${input.urgencyLabel}` : null,
     input.previousCleaningIssues ? `Historial: ${input.previousCleaningIssues}` : null,
-    `Estimacion ${pricing.version}: ${pricing.subtotal.toFixed(2)} EUR + IVA (${pricing.total.toFixed(2)} EUR total).`,
-    ...costaCleanLeadQuoteMessagingEngine.mandatoryMessages,
+    `Estimacion ${pricing.version}: ${pricing.subtotal.toFixed(2)} EUR base + IVA ${pricing.taxAmount.toFixed(2)} EUR (${pricing.total.toFixed(2)} EUR total cliente).`,
+    pricing.priceStructure === 'mixed'
+      ? `Modelo mixto motor: base facturada ${pricing.invoicedBase?.toFixed(2)} EUR, no facturada ${pricing.nonInvoicedAmount?.toFixed(2)} EUR; IVA solo sobre parte facturada.`
+      : null,
+    ...(pricing.mandatoryMessages ?? costaCleanLeadQuoteMessagingEngine.mandatoryMessages),
+    ...(pricing.limitations ?? []),
   ].filter(Boolean).join('\n')
 }
 

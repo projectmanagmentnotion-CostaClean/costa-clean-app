@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { calculatePricing } from '../../config/leadQuoteMessagingEngineAccess'
 import type { ClientListItem } from '../clients/types'
 import type { LeadListItem } from '../leads/types'
 import {
@@ -18,6 +20,7 @@ interface LeadDraftCardsProps {
 }
 
 type ActionStatusTone = 'loading' | 'success' | 'error' | 'review'
+type ConfirmedAction = 'review' | 'client' | 'quote' | 'regenerate'
 
 interface ActionStatus {
   tone: ActionStatusTone
@@ -26,7 +29,7 @@ interface ActionStatus {
 }
 
 function getDraftPricing(leadDraft: LeadDraftRecord) {
-  return leadDraft.pricing_breakdown ?? leadDraft.quote_draft_seed.pricingBreakdown ?? null
+  return leadDraft.pricing_breakdown ?? leadDraft.quote_draft_seed.pricingBreakdown ?? calculatePricing(leadDraft.normalized_input)
 }
 
 function getEmailSubject(leadDraft: LeadDraftRecord): string {
@@ -83,6 +86,7 @@ export function LeadDraftCards({
   const [draftOverride, setDraftOverride] = useState<LeadDraftRecord | null>(null)
   const [actionStatus, setActionStatus] = useState<ActionStatus | null>(null)
   const [isActionRunning, setIsActionRunning] = useState(false)
+  const [confirmedAction, setConfirmedAction] = useState<ConfirmedAction | null>(null)
 
   useEffect(() => {
     setDraftOverride(null)
@@ -110,6 +114,7 @@ export function LeadDraftCards({
     ? `mailto:${currentDraft.email}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`
     : null
   const isReviewed = currentDraft.ai_draft_status === 'reviewed'
+  const generationSource = currentDraft.ai_generation_metadata?.source ?? currentDraft.ai_generation_metadata?.provider ?? 'placeholder'
   const canConvertDraft = (
     (currentDraft.status === 'ready_for_review' || currentDraft.status === 'matched_existing_lead') &&
     isReviewed
@@ -121,6 +126,33 @@ export function LeadDraftCards({
       title: 'Procesando acción',
       message,
     })
+  }
+
+  const confirmationContent: Record<ConfirmedAction, {
+    title: string
+    confirmLabel: string
+    description: string
+  }> = {
+    review: {
+      title: 'Registrar revision manual',
+      confirmLabel: 'Registrar revision',
+      description: 'Confirma que ya revisaste alcance, precio, condiciones obligatorias y borradores. Despues se desbloquean cliente, presupuesto y comunicaciones manuales.',
+    },
+    client: {
+      title: 'Crear o vincular cliente',
+      confirmLabel: 'Crear/vincular',
+      description: 'Se comprobara si ya existe un cliente por lead, telefono o email. Si no existe, se creara un cliente activo vinculado a este lead.',
+    },
+    quote: {
+      title: 'Crear presupuesto CRM',
+      confirmLabel: 'Crear presupuesto',
+      description: 'Se recalculara el presupuesto con el motor Costa Clean BCN, se guardaran lineas CRM y se vinculara el intake al presupuesto en estado borrador.',
+    },
+    regenerate: {
+      title: 'Regenerar borradores IA',
+      confirmLabel: 'Regenerar',
+      description: 'Se crearan nuevos borradores de email y WhatsApp desde el pricing actual. La revision manual volvera a quedar pendiente antes de abrir, copiar o enviar.',
+    },
   }
 
   function setSuccessStatus(title: string, message: string) {
@@ -146,6 +178,8 @@ export function LeadDraftCards({
   function applyRegeneratedDraft(result: LeadMessageDraftResponse) {
     setDraftOverride({
       ...currentDraft,
+      quote_draft_seed: result.quote_draft_seed,
+      pricing_breakdown: result.pricing_breakdown,
       ai_email_draft: result.email_body,
       ai_whatsapp_draft: result.whatsapp_message,
       ai_draft_status: 'drafted',
@@ -287,6 +321,19 @@ export function LeadDraftCards({
     }
   }
 
+  function handleConfirmedAction() {
+    const action = confirmedAction
+    if (!action) return
+
+    setConfirmedAction(null)
+    if (action === 'review') void handleReviewQuote()
+    if (action === 'client') void handleCreateOrLinkClient()
+    if (action === 'quote') void handleCreateQuote()
+    if (action === 'regenerate') void handleRegenerateDraft()
+  }
+
+  const activeConfirmation = confirmedAction ? confirmationContent[confirmedAction] : null
+
   return (
     <div className="cc-intake-draft-stack">
       <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Revisión manual" open>
@@ -307,7 +354,7 @@ export function LeadDraftCards({
             <button
               type="button"
               className="secondary-button"
-              onClick={() => void handleReviewQuote()}
+              onClick={() => setConfirmedAction('review')}
               disabled={isActionRunning || isReviewed || currentDraft.status === 'converted'}
             >
               {isReviewed ? 'Revisión registrada' : 'Marcar revisión manual'}
@@ -315,7 +362,7 @@ export function LeadDraftCards({
             <button
               type="button"
               className="secondary-button"
-              onClick={() => void handleCreateOrLinkClient()}
+              onClick={() => setConfirmedAction('client')}
               disabled={isActionRunning || !canConvertDraft}
             >
               Crear/vincular cliente
@@ -323,7 +370,7 @@ export function LeadDraftCards({
             <button
               type="button"
               className="primary-button"
-              onClick={() => void handleCreateQuote()}
+              onClick={() => setConfirmedAction('quote')}
               disabled={isActionRunning || !canConvertDraft || !pricing}
             >
               Crear presupuesto CRM
@@ -350,17 +397,29 @@ export function LeadDraftCards({
             <div><span>Baños</span><strong>{input.bathrooms ?? 'Sin dato'}</strong></div>
             <div><span>Fecha</span><strong>{formatDateEs(input.requestedServiceDate)}</strong></div>
             <div><span>Horario</span><strong>{input.preferredTimeSlot ?? 'Flexible'}</strong></div>
+            <div><span>Motor</span><strong>{pricing?.engineVersion ? `${pricing.engineId ?? 'engine'} v${pricing.engineVersion}` : pricing?.version ?? 'Pendiente'}</strong></div>
+            <div><span>Equipo</span><strong>{pricing?.totalHours ? `${pricing.operators ?? '-'} op. x ${pricing.hoursPerOperator ?? '-'}h · ${pricing.totalHours}h` : 'Pendiente'}</strong></div>
+            <div><span>Modelo</span><strong>{pricing?.priceStructure === 'mixed' ? 'Mixto con IVA sobre parte facturada' : 'Estandar'}</strong></div>
             <div><span>Total sin IVA</span><strong>{pricing ? formatCurrency(pricing.subtotal) : 'Pendiente'}</strong></div>
+            <div><span>IVA motor</span><strong>{pricing ? formatCurrency(pricing.taxAmount) : 'Pendiente'}</strong></div>
+            <div><span>Total cliente</span><strong>{pricing ? formatCurrency(pricing.total) : 'Pendiente'}</strong></div>
           </div>
+
+          {pricing?.limitations?.length ? (
+            <div className="cc-intake-engine-note">
+              <strong>Limites por datos no capturados</strong>
+              <p>{pricing.limitations.join(' ')}</p>
+            </div>
+          ) : null}
 
           <div className="cc-intake-draft-actions">
             <button
               type="button"
               className="secondary-button"
-              onClick={() => void handleRegenerateDraft()}
+              onClick={() => setConfirmedAction('regenerate')}
               disabled={isActionRunning || currentDraft.status === 'converted'}
             >
-              Regenerar borradores IA
+              {isActionRunning ? 'Regenerando...' : 'Regenerar borradores IA'}
             </button>
           </div>
         </div>
@@ -377,6 +436,10 @@ export function LeadDraftCards({
 
         <div className="cc-intake-draft-card__body">
           <div className="cc-intake-message-preview">
+            <div>
+              <span>Origen actual</span>
+              <strong>{generationSource === 'openai' ? 'OpenAI' : generationSource === 'fallback' ? 'Fallback del motor' : 'Plantilla del motor'}</strong>
+            </div>
             <div>
               <span>Asunto email</span>
               <strong>{emailSubject}</strong>
@@ -420,6 +483,17 @@ export function LeadDraftCards({
           <p>{actionStatus.message}</p>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={Boolean(activeConfirmation)}
+        title={activeConfirmation?.title ?? ''}
+        description={activeConfirmation?.description ?? ''}
+        confirmLabel={activeConfirmation?.confirmLabel ?? 'Confirmar'}
+        tone={confirmedAction === 'quote' || confirmedAction === 'regenerate' ? 'warning' : 'default'}
+        isBusy={isActionRunning}
+        onCancel={() => setConfirmedAction(null)}
+        onConfirm={handleConfirmedAction}
+      />
     </div>
   )
 }

@@ -147,7 +147,7 @@ export function InvoicesList({
 
                 <div className="cc-list-meta cc-record-card__meta">
                   <span>{invoice.issue_date}</span>
-                  <span>Servicio {invoice.job_display_code ?? invoice.job_id}</span>
+                  <span>{invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}</span>
                 </div>
               </button>
             )

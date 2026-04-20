@@ -48,7 +48,7 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return invoice.service_reference || invoice.job_display_code || invoice.job_id
+  return invoice.service_reference || invoice.job_display_code || invoice.job_id || 'Factura desde presupuesto aceptado'
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {

@@ -9,7 +9,7 @@ import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { saveQuoteWithLines, updateQuoteStatus as updateQuoteStatusRpc } from '../financial/financialWriteApi'
-import { acceptQuoteAndCreateInvoice } from './quoteAcceptanceWorkflow'
+import { acceptQuoteAndCreateInvoice, acceptQuoteOnly } from './quoteAcceptanceWorkflow'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
@@ -34,7 +34,7 @@ interface QuoteDetailCardProps {
 }
 
 interface EditFormState {
-  client_id: string
+  client_id: string | null
   property_id: string
   status: string
   notes: string
@@ -42,7 +42,12 @@ interface EditFormState {
 
 function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
   const client = clients.find((item) => item.id === quote.client_id)
-  return client?.full_name?.trim() || quote.client_display_code || quote.client_id
+  return client?.full_name?.trim()
+    || quote.client_display_code
+    || quote.lead_name
+    || quote.lead_display_code
+    || quote.client_id
+    || 'Lead sin cliente'
 }
 
 function buildPropertyLabel(quote: QuoteListItem, properties: PropertyListItem[]): string {
@@ -118,10 +123,10 @@ function QuoteDetailCardContent({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingRejectedStatusUpdate, setPendingRejectedStatusUpdate] = useState<string | null>(null)
-  const [pendingAcceptedStatusUpdate, setPendingAcceptedStatusUpdate] = useState(false)
+  const [pendingAcceptanceAction, setPendingAcceptanceAction] = useState<'accept' | 'invoice' | null>(null)
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
-    client_id: '',
+    client_id: null,
     property_id: '',
     status: 'draft',
     notes: '',
@@ -133,7 +138,7 @@ function QuoteDetailCardContent({
     setSaveError(null)
     setSuccessMessage(null)
     setForm({
-      client_id: hydratedQuote.client_id,
+      client_id: hydratedQuote.client_id ?? null,
       property_id: hydratedQuote.property_id ?? '',
       status: hydratedQuote.status,
       notes: hydratedQuote.notes ?? '',
@@ -205,7 +210,7 @@ function QuoteDetailCardContent({
 
   function resetFormFromQuote() {
     setForm({
-      client_id: hydratedQuote.client_id,
+      client_id: hydratedQuote.client_id ?? null,
       property_id: hydratedQuote.property_id ?? '',
       status: hydratedQuote.status,
       notes: hydratedQuote.notes ?? '',
@@ -251,7 +256,7 @@ function QuoteDetailCardContent({
 
   function requestQuoteStatusUpdate(nextStatus: string) {
     if (hydratedQuote.status !== 'accepted' && nextStatus === 'accepted') {
-      setPendingAcceptedStatusUpdate(true)
+      setPendingAcceptanceAction('accept')
       return
     }
 
@@ -263,17 +268,21 @@ function QuoteDetailCardContent({
     void updateQuoteStatus(nextStatus)
   }
 
-  async function handleConfirmAcceptedStatusUpdate() {
-    setPendingAcceptedStatusUpdate(false)
+  async function handleConfirmAcceptedStatusUpdate(createInvoice: boolean) {
+    setPendingAcceptanceAction(null)
     setSaveError(null)
     setSuccessMessage(null)
     setIsSaving(true)
 
     try {
-      const result = await acceptQuoteAndCreateInvoice(hydratedQuote)
+      const result = createInvoice
+        ? await acceptQuoteAndCreateInvoice(hydratedQuote)
+        : await acceptQuoteOnly(hydratedQuote)
       await onQuoteUpdated()
       setSuccessMessage(
-        `Presupuesto aceptado. Factura ${result.invoiceId} creada y cliente ${result.clientId} confirmado.`,
+        createInvoice
+          ? `Presupuesto aceptado. Factura ${result.invoiceId} creada y cliente ${result.clientId} confirmado.`
+          : `Presupuesto aceptado. Cliente ${result.clientId} confirmado.`,
       )
       setIsEditing(false)
     } catch (err) {
@@ -304,8 +313,8 @@ function QuoteDetailCardContent({
     setIsSaving(true)
 
     try {
-      if (!form.client_id) {
-        setSaveError('Debes seleccionar un cliente.')
+      if (!form.client_id && !hydratedQuote.lead_id) {
+        setSaveError('El presupuesto necesita cliente o lead vinculado.')
         return
       }
 
@@ -320,6 +329,7 @@ function QuoteDetailCardContent({
         {
           id: hydratedQuote.id,
           client_id: form.client_id,
+          lead_id: hydratedQuote.lead_id ?? null,
           property_id: form.property_id || null,
           status: form.status,
           subtotal: subtotalValue,
@@ -423,9 +433,12 @@ function QuoteDetailCardContent({
             <label className="form-field">
               <span>Cliente *</span>
               <select
-                value={form.client_id}
-                onChange={(event) => updateField('client_id', event.target.value)}
+                value={form.client_id ?? ''}
+                onChange={(event) => updateField('client_id', event.target.value || null)}
               >
+                {hydratedQuote.lead_id ? (
+                  <option value="">Lead sin cliente hasta aceptacion</option>
+                ) : null}
                 {clients.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.full_name} · {client.display_code ?? client.id}
@@ -576,17 +589,42 @@ function QuoteDetailCardContent({
         ) : (
           <>
             <div className="form-actions" style={{ marginBottom: '1rem' }}>
+              {hydratedQuote.status !== 'accepted' ? (
+                <>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setPendingAcceptanceAction('accept')}
+                    disabled={isSaving || isLoadingLines || Boolean(linesError)}
+                  >
+                    Aceptar presupuesto
+                  </button>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setPendingAcceptanceAction('invoice')}
+                    disabled={isSaving || isLoadingLines || Boolean(linesError)}
+                  >
+                    Aceptar y convertir a factura
+                  </button>
+                </>
+              ) : null}
+
               {quoteStatusOptions.map((status) => (
                 <button
                   key={status}
                   type="button"
                   className={status === hydratedQuote.status ? 'primary-button' : 'secondary-button'}
                   onClick={() => requestQuoteStatusUpdate(status)}
-                  disabled={isSaving || status === hydratedQuote.status || isLoadingLines || Boolean(linesError)}
+                  disabled={
+                    isSaving ||
+                    status === hydratedQuote.status ||
+                    status === 'accepted' ||
+                    isLoadingLines ||
+                    Boolean(linesError)
+                  }
                 >
-                  {status === 'accepted' && hydratedQuote.status !== 'accepted'
-                    ? 'Aceptar y facturar'
-                    : getStatusOptionLabel(status)}
+                  {getStatusOptionLabel(status)}
                 </button>
               ))}
             </div>
@@ -605,6 +643,11 @@ function QuoteDetailCardContent({
             <div className="detail-row">
               <span className="detail-label">Ref. CRM cliente</span>
               <strong>{hydratedQuote.client_display_code ?? 'Sin referencia CRM'}</strong>
+            </div>
+
+            <div className="detail-row">
+              <span className="detail-label">Lead origen</span>
+              <strong>{hydratedQuote.lead_display_code ?? hydratedQuote.lead_id ?? 'Sin lead vinculado'}</strong>
             </div>
 
             <div className="detail-row">
@@ -668,14 +711,18 @@ function QuoteDetailCardContent({
       </div>
 
       <ConfirmDialog
-        isOpen={pendingAcceptedStatusUpdate}
-        title="Aceptar presupuesto y crear factura"
-        description="Esta accion marca el presupuesto como aceptado, convierte el lead en cliente cuando hay lead origen y crea una factura emitida desde las lineas del presupuesto. No envia comunicaciones."
-        confirmLabel="Aceptar y crear factura"
+        isOpen={Boolean(pendingAcceptanceAction)}
+        title={pendingAcceptanceAction === 'invoice' ? 'Aceptar y convertir a factura' : 'Aceptar presupuesto'}
+        description={
+          pendingAcceptanceAction === 'invoice'
+            ? 'Esta accion acepta el presupuesto, convierte el lead en cliente si hace falta, vincula el presupuesto al cliente y crea una factura emitida desde sus lineas. No envia comunicaciones.'
+            : 'Esta accion acepta el presupuesto, convierte el lead en cliente si hace falta y vincula el presupuesto al cliente. No crea factura ni envia comunicaciones.'
+        }
+        confirmLabel={pendingAcceptanceAction === 'invoice' ? 'Aceptar y crear factura' : 'Aceptar presupuesto'}
         tone="warning"
         isBusy={isSaving}
-        onCancel={() => setPendingAcceptedStatusUpdate(false)}
-        onConfirm={() => void handleConfirmAcceptedStatusUpdate()}
+        onCancel={() => setPendingAcceptanceAction(null)}
+        onConfirm={() => void handleConfirmAcceptedStatusUpdate(pendingAcceptanceAction === 'invoice')}
       />
 
       <ConfirmDialog

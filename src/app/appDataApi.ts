@@ -32,7 +32,7 @@ function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
 }
 
 export async function listLeads(): Promise<LeadListItem[]> {
-  return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at,public_intake_last_submission_id&order=created_at.desc')
+  return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at,public_intake_last_submission_id,converted_client_id,converted_at&order=created_at.desc')
 }
 
 async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord[]> {
@@ -91,7 +91,7 @@ export async function listProperties(): Promise<PropertyListItem[]> {
 }
 
 export async function listQuotes(): Promise<QuoteListItem[]> {
-  return fetchSupabaseRestList<QuoteListItem>('quotes?select=id,display_code,client_id,property_id,status,subtotal,tax_amount,total,notes,created_at&order=created_at.desc')
+  return fetchSupabaseRestList<QuoteListItem>('quotes?select=id,display_code,lead_id,client_id,property_id,status,subtotal,tax_amount,total,notes,created_at&order=created_at.desc')
 }
 
 export async function listJobs(): Promise<JobListItem[]> {
@@ -99,7 +99,7 @@ export async function listJobs(): Promise<JobListItem[]> {
 }
 
 export async function listInvoices(): Promise<InvoiceListItem[]> {
-  const loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>('invoices?select=id,display_code,invoice_number,job_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc')
+  const loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>('invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc')
   const invoiceLines = await fetchSupabaseRestList<NonNullable<InvoiceListItem['lines']>[number]>('invoice_lines?select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc')
   const linesByInvoiceId = groupInvoiceLines(invoiceLines)
 

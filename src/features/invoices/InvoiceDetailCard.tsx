@@ -7,6 +7,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { saveInvoiceWithLines, updateInvoiceStatus as updateInvoiceStatusRpc } from '../financial/financialWriteApi'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
+import { simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 
 interface InvoiceDetailCardProps {
@@ -84,7 +85,7 @@ function createBlankLine(): LineFormState {
 function lineItemToFormLine(line: InvoiceLineItem): LineFormState {
   return {
     local_id: line.id || createLocalId('LINE-DRAFT'),
-    concept: line.concept,
+    concept: simplifyLineConcept(line.concept),
     quantity: formatQuantityInput(Number(line.quantity)),
     unit: line.unit || 'servicio',
     unit_price: formatMoneyInput(Number(line.unit_price)),
@@ -101,7 +102,7 @@ function getFallbackLineFromInvoice(invoice: InvoiceListItem): LineFormState {
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza',
+    concept: simplifyLineConcept(invoice.billing_concept || invoice.service_description),
     quantity: formatQuantityInput(safeQuantity),
     unit: invoice.billing_unit?.trim() || 'servicio',
     unit_price: formatMoneyInput(safeUnitPrice),
@@ -136,7 +137,7 @@ function getJobBillingLine(job: JobListItem | null): LineFormState | null {
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: job.billing_concept?.trim() || getServiceTypeLabel(job.service_type),
+    concept: simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
     quantity: formatQuantityInput(quantity),
     unit: job.billing_unit?.trim() || 'servicio',
     unit_price: formatMoneyInput(unitPrice),
@@ -151,7 +152,10 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: quote.notes?.trim() || `Servicio según presupuesto ${quote.display_code ?? quote.id}`,
+    concept: simplifyLineConcept(
+      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept ?? quote.notes,
+      `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
+    ),
     quantity: '1.00',
     unit: 'servicio',
     unit_price: formatMoneyInput(subtotal),
@@ -202,12 +206,12 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
   const payloads: LinePayload[] = []
 
   for (const [index, line] of lines.entries()) {
-    const concept = line.concept.trim()
+    const concept = simplifyLineConcept(line.concept)
     const quantity = parseDecimalInput(line.quantity)
     const unitPrice = parseDecimalInput(line.unit_price)
     const lineSubtotal = calculateLineSubtotal(line)
 
-    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0 || !Number.isFinite(lineSubtotal) || lineSubtotal < 0) {
+    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || !Number.isFinite(lineSubtotal)) {
       return null
     }
 
@@ -427,6 +431,7 @@ export function InvoiceDetailCard({
         {
           id: invoice.id,
           job_id: form.job_id || null,
+          quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
           client_id: form.client_id,
           issue_date: form.issue_date,
           status: form.status,

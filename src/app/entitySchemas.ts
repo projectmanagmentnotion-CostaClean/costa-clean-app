@@ -77,7 +77,8 @@ export const entitySchemas: EntitySchemaDefinition[] = [
     label: 'Presupuestos',
     fields: [
       { key: 'id', label: 'ID', type: 'string', required: true, description: 'Identificador único del presupuesto.' },
-      { key: 'client_id', label: 'Cliente', type: 'relation', required: true, description: 'Cliente del presupuesto.' },
+      { key: 'lead_id', label: 'Lead', type: 'relation', required: false, description: 'Lead comercial origen antes de conversion a cliente.' },
+      { key: 'client_id', label: 'Cliente', type: 'relation', required: false, description: 'Cliente del presupuesto tras conversion o presupuesto directo a cliente.' },
       { key: 'property_id', label: 'Inmueble', type: 'relation', required: false, description: 'Inmueble asociado.' },
       { key: 'created_at', label: 'Fecha de creación', type: 'datetime', required: true, description: 'Fecha de creación del presupuesto.' },
       { key: 'status', label: 'Estado', type: 'enum', required: true, description: 'Estado comercial del presupuesto.', enumName: 'quoteStatuses' },
@@ -106,7 +107,8 @@ export const entitySchemas: EntitySchemaDefinition[] = [
     label: 'Facturas',
     fields: [
       { key: 'id', label: 'ID', type: 'string', required: true, description: 'Identificador único de la factura.' },
-      { key: 'job_id', label: 'Servicio', type: 'relation', required: true, description: 'Servicio facturado.' },
+      { key: 'job_id', label: 'Servicio', type: 'relation', required: false, description: 'Servicio facturado si existe.' },
+      { key: 'quote_id', label: 'Presupuesto', type: 'relation', required: false, description: 'Presupuesto aceptado origen si existe.' },
       { key: 'client_id', label: 'Cliente', type: 'relation', required: true, description: 'Cliente facturado.' },
       { key: 'invoice_number', label: 'Número de factura', type: 'string', required: true, description: 'Número o serie de factura.' },
       { key: 'issue_date', label: 'Fecha de emisión', type: 'date', required: true, description: 'Fecha de emisión.' },

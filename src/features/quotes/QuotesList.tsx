@@ -19,7 +19,12 @@ interface QuotesListProps {
 
 function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
   const client = clients.find((item) => item.id === quote.client_id)
-  return client?.full_name?.trim() || quote.client_display_code || quote.client_id
+  return client?.full_name?.trim()
+    || quote.client_display_code
+    || quote.lead_name
+    || quote.lead_display_code
+    || quote.client_id
+    || 'Lead sin cliente'
 }
 
 function buildPropertyLabel(quote: QuoteListItem, properties: PropertyListItem[]): string {
@@ -47,6 +52,8 @@ export function QuotesList({
         quote.display_code,
         buildClientLabel(quote, clients),
         quote.client_display_code,
+        quote.lead_display_code,
+        quote.lead_name,
         buildPropertyLabel(quote, properties),
         quote.property_display_code,
         quote.status,

@@ -17,6 +17,8 @@ function getClientName(quote: QuoteListItem, clients: ClientListItem[]): string 
   return (
     client?.full_name?.trim() ||
     quote.client_display_code ||
+    quote.lead_name ||
+    quote.lead_display_code ||
     quote.client_id ||
     'Cliente'
   )

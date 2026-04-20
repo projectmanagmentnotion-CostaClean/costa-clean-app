@@ -7,21 +7,23 @@ import {
   mapServiceType,
 } from '../../config/leadQuoteMessagingEngineAccess'
 import type { ClientListItem } from '../clients/types'
-import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import { convertLeadToClient, saveQuoteWithLines } from '../financial/financialWriteApi'
 import type { LeadListItem } from '../leads/types'
 import { createLocalId, roundMoney } from '../quotes/quoteLineUtils'
 import type { QuoteLinePayload } from '../quotes/quoteLineUtils'
+import { simplifyBaseQuoteLineConcept, simplifySupplementLineConcept } from '../quotes/lineConcepts'
 import type { LeadDraftRecord } from './types'
 
-type ClientAction = 'created' | 'linked' | 'already_linked'
+type ClientAction = 'created' | 'linked_existing' | 'already_converted'
 
 export interface LeadDraftClientLinkResult {
   clientId: string
   clientAction: ClientAction
 }
 
-export interface LeadDraftQuoteConversionResult extends LeadDraftClientLinkResult {
+export interface LeadDraftQuoteConversionResult {
   quoteId: string
+  leadId: string
 }
 
 const convertibleDraftStatuses = new Set<LeadDraftRecord['status']>([
@@ -41,34 +43,6 @@ function getClientOrThrow() {
 
 function createRecordId(prefix: string): string {
   return createLocalId(prefix)
-}
-
-function normalizePhone(value: string | null | undefined): string {
-  return (value ?? '').replace(/[^\d]/g, '')
-}
-
-function normalizeText(value: string | null | undefined): string {
-  return (value ?? '').trim().toLowerCase()
-}
-
-function findLoadedClientMatch(
-  lead: LeadListItem,
-  clients: ClientListItem[],
-): ClientListItem | null {
-  const leadPhone = normalizePhone(lead.phone)
-  const leadEmail = normalizeText(lead.email)
-
-  return clients.find((client) => {
-    if (client.source_lead_id === lead.id) return true
-    if (client.source_lead_id) return false
-
-    const clientPhone = normalizePhone(client.phone)
-    const clientEmail = normalizeText(client.email)
-    return Boolean(
-      (leadPhone && clientPhone && leadPhone === clientPhone) ||
-      (leadEmail && clientEmail && leadEmail === clientEmail),
-    )
-  }) ?? null
 }
 
 function getDraftPricing(leadDraft: LeadDraftRecord) {
@@ -124,11 +98,12 @@ function buildQuoteNotes(leadDraft: LeadDraftRecord): string {
 
 function buildEngineQuoteLines(leadDraft: LeadDraftRecord, quoteId: string): QuoteLinePayload[] {
   const pricing = getEnginePricing(leadDraft)
-  const serviceConcept = [
-    leadDraft.quote_draft_seed.serviceSummary.trim() || leadDraft.normalized_input.serviceNeedLabel || 'Servicio de limpieza',
-    pricing.serviceType ? `motor:${pricing.serviceType}` : null,
-    pricing.propertyType ? `propiedad:${pricing.propertyType}` : null,
-  ].filter(Boolean).join(' · ')
+  const serviceConcept = simplifyBaseQuoteLineConcept({
+    input: leadDraft.normalized_input,
+    serviceType: pricing.serviceType,
+    propertyType: pricing.propertyType,
+    fallback: leadDraft.quote_draft_seed.serviceSummary,
+  })
 
   const lines: QuoteLinePayload[] = [
     {
@@ -148,7 +123,7 @@ function buildEngineQuoteLines(leadDraft: LeadDraftRecord, quoteId: string): Quo
       id: createRecordId('QUOTE-LINE'),
       quote_id: quoteId,
       sort_order: lines.length + 1,
-      concept: `Suplemento motor: ${adjustment.label}`,
+      concept: simplifySupplementLineConcept(adjustment),
       quantity: 1,
       unit: 'suplemento',
       unit_price: roundMoney(adjustment.amount),
@@ -188,68 +163,19 @@ export async function markLeadDraftReviewed(leadDraftId: string): Promise<void> 
 export async function createOrLinkClientFromReviewedLeadDraft(
   lead: LeadListItem,
   leadDraft: LeadDraftRecord,
-  clients: ClientListItem[],
-  newClientStatus: 'active' | 'inactive' = 'active',
+  _clients: ClientListItem[],
+  _newClientStatus: 'active' | 'inactive' = 'active',
 ): Promise<LeadDraftClientLinkResult> {
   assertReviewedDraft(leadDraft)
 
-  const client = getClientOrThrow()
-  const { data: linkedClients, error: linkedError } = await client
-    .from('clients')
-    .select('id,source_lead_id')
-    .eq('source_lead_id', lead.id)
-    .limit(1)
-
-  if (linkedError) {
-    throw new Error(linkedError.message || 'No se pudo comprobar el cliente vinculado.')
-  }
-
-  if (linkedClients && linkedClients.length > 0) {
-    return { clientId: String(linkedClients[0].id), clientAction: 'already_linked' }
-  }
-
-  const loadedMatch = findLoadedClientMatch(lead, clients)
-  if (loadedMatch) {
-    if (loadedMatch.source_lead_id === lead.id) {
-      return { clientId: loadedMatch.id, clientAction: 'already_linked' }
-    }
-
-    const { error: linkError } = await client
-      .from('clients')
-      .update({ source_lead_id: lead.id })
-      .eq('id', loadedMatch.id)
-      .is('source_lead_id', null)
-
-    if (linkError) {
-      throw new Error(linkError.message || 'No se pudo vincular el cliente existente.')
-    }
-
-    return { clientId: loadedMatch.id, clientAction: 'linked' }
-  }
-
-  const clientId = createRecordId('CLIENT')
-  const { error: createError } = await client
-    .from('clients')
-    .insert({
-      id: clientId,
-      full_name: lead.full_name,
-      phone: lead.phone || leadDraft.phone || null,
-      email: lead.email ?? leadDraft.email ?? null,
-      status: newClientStatus,
-      source_lead_id: lead.id,
-    })
-
-  if (createError) {
-    throw new Error(createError.message || 'No se pudo crear el cliente desde el lead.')
-  }
-
-  return { clientId, clientAction: 'created' }
+  const result = await convertLeadToClient(lead.id)
+  return { clientId: result.client_id, clientAction: result.client_action }
 }
 
 export async function convertReviewedLeadDraftToQuote(
   lead: LeadListItem,
   leadDraft: LeadDraftRecord,
-  clients: ClientListItem[],
+  _clients: ClientListItem[],
 ): Promise<LeadDraftQuoteConversionResult> {
   assertReviewedDraft(leadDraft)
 
@@ -279,7 +205,6 @@ export async function convertReviewedLeadDraftToQuote(
     throw new Error('Este intake ya tiene un presupuesto CRM vinculado.')
   }
 
-  const clientLink = await createOrLinkClientFromReviewedLeadDraft(lead, leadDraft, clients, 'inactive')
   const quoteId = createRecordId('QUOTE')
   const subtotal = roundMoney(pricing.subtotal)
   const taxAmount = roundMoney(pricing.taxAmount)
@@ -289,7 +214,8 @@ export async function convertReviewedLeadDraftToQuote(
   await saveQuoteWithLines(
     {
       id: quoteId,
-      client_id: clientLink.clientId,
+      client_id: null,
+      lead_id: lead.id,
       property_id: null,
       status: 'draft',
       subtotal,
@@ -333,7 +259,7 @@ export async function convertReviewedLeadDraftToQuote(
   }
 
   return {
-    ...clientLink,
     quoteId,
+    leadId: lead.id,
   }
 }

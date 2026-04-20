@@ -1,9 +1,12 @@
 import { getSupabaseClient } from '../../lib/supabase'
 
-type AuditEntityType = 'quote' | 'invoice' | 'payment' | 'expense'
+type AuditEntityType = 'lead' | 'quote' | 'invoice' | 'payment' | 'expense'
 type AuditAction =
   | 'upsert'
   | 'status_update'
+  | 'convert_to_client'
+  | 'accept'
+  | 'accept_and_invoice'
   | 'attachment_update'
   | 'fiscal_analysis'
 

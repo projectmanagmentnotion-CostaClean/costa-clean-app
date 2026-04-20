@@ -2,6 +2,7 @@
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import type { ClientListItem } from '../clients/types'
+import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { LeadListItem } from './types'
@@ -182,112 +183,9 @@ export function LeadDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
-      const existingClientResponse = await fetch(
-        `${supabaseUrl}/rest/v1/clients?select=id,full_name,source_lead_id&source_lead_id=eq.${encodeURIComponent(lead.id)}&limit=1`,
-        {
-          method: 'GET',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-          },
-        },
-      )
-
-      if (!existingClientResponse.ok) {
-        const errorText = await existingClientResponse.text()
-        setSaveError(`REST ${existingClientResponse.status}: ${errorText || existingClientResponse.statusText}`)
-        return
-      }
-
-      const existingClients = (await existingClientResponse.json()) as Array<{
-        id: string
-        full_name: string
-        source_lead_id: string | null
-      }>
-
-      if (existingClients.length > 0) {
-        const leadResponse = await fetch(
-          `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
-          {
-            method: 'PATCH',
-            headers: {
-              apikey: supabaseAnonKey,
-              Authorization: `Bearer ${supabaseAnonKey}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: 'won' }),
-          },
-        )
-
-        if (!leadResponse.ok) {
-          const errorText = await leadResponse.text()
-          setSaveError(`REST ${leadResponse.status}: ${errorText || leadResponse.statusText}`)
-          return
-        }
-
-        await onLeadConverted()
-        setSuccessMessage('Este lead ya tenía un cliente asociado. Se sincronizó como convertido.')
-        setIsEditing(false)
-        return
-      }
-
-      const clientId =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? `CLIENT-${crypto.randomUUID()}`
-          : `CLIENT-${Date.now()}`
-
-      const clientResponse = await fetch(`${supabaseUrl}/rest/v1/clients`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: clientId,
-          full_name: lead.full_name,
-          phone: lead.phone,
-          email: lead.email,
-          status: 'active',
-          source_lead_id: lead.id,
-        }),
-      })
-
-      if (!clientResponse.ok) {
-        const errorText = await clientResponse.text()
-        setSaveError(`REST ${clientResponse.status}: ${errorText || clientResponse.statusText}`)
-        return
-      }
-
-      const leadResponse = await fetch(
-        `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: 'won' }),
-        },
-      )
-
-      if (!leadResponse.ok) {
-        const errorText = await leadResponse.text()
-        setSaveError(`REST ${leadResponse.status}: ${errorText || leadResponse.statusText}`)
-        return
-      }
-
+      const result = await convertLeadToClient(lead.id)
       await onLeadConverted()
-      setSuccessMessage('Lead convertido a cliente correctamente.')
+      setSuccessMessage(`Lead convertido a cliente correctamente. Cliente: ${result.client_id}.`)
       setIsEditing(false)
     } catch (err) {
       const message =

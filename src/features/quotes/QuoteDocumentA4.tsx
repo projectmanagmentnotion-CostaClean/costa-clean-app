@@ -4,6 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import type { QuoteLineItem, QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
+import { simplifyLineConcept } from './lineConcepts'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -48,7 +49,12 @@ function buildClientName(
 ): string {
   const client = clients.find((item) => item.id === quote.client_id)
 
-  return client?.full_name?.trim() || quote.client_display_code || quote.client_id
+  return client?.full_name?.trim()
+    || quote.client_display_code
+    || quote.lead_name
+    || quote.lead_display_code
+    || quote.client_id
+    || 'Lead sin cliente'
 }
 
 function buildClientMeta(
@@ -57,7 +63,11 @@ function buildClientMeta(
 ): string[] {
   const client = clients.find((item) => item.id === quote.client_id)
 
-  return [client?.phone, client?.email].filter(Boolean) as string[]
+  return [
+    client?.phone,
+    client?.email,
+    quote.lead_display_code ? `Lead: ${quote.lead_display_code}` : null,
+  ].filter(Boolean) as string[]
 }
 
 function getProperty(
@@ -109,7 +119,7 @@ function buildFallbackConcept(
     return `Servicio de limpieza en ${propertyName}`
   }
 
-  return quote.notes?.trim() || 'Servicio de limpieza'
+  return simplifyLineConcept(quote.notes, 'Servicio de limpieza')
 }
 
 function getPersistedDocumentLines(quote: QuoteListItem): DocumentLine[] {
@@ -119,7 +129,7 @@ function getPersistedDocumentLines(quote: QuoteListItem): DocumentLine[] {
     .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
     .map((line: QuoteLineItem) => ({
       id: line.id,
-      concept: line.concept?.trim() || 'Servicio de limpieza',
+      concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
       quantity: Number(line.quantity),
       unit: normalizeUnit(line.unit),
       unit_price: Number(line.unit_price),

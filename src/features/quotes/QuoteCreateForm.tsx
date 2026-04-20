@@ -117,6 +117,7 @@ export function QuoteCreateForm({
         {
           id: quoteId,
           client_id: form.client_id,
+          lead_id: null,
           property_id: form.property_id || null,
           status: form.status,
           subtotal: subtotalValue,

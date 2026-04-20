@@ -1,5 +1,6 @@
 import './invoiceDocument.css'
 import { businessRules } from '../../app/businessRules'
+import { simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
 interface InvoiceDocumentA4Props {
@@ -48,7 +49,7 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return invoice.service_reference || invoice.job_display_code || invoice.job_id || 'Factura desde presupuesto aceptado'
+  return invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Factura desde presupuesto aceptado'
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {
@@ -78,7 +79,7 @@ function getPersistedDocumentLines(invoice: InvoiceListItem): DocumentLine[] {
     .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
     .map((line: InvoiceLineItem) => ({
       id: line.id,
-      concept: line.concept?.trim() || 'Servicio de limpieza',
+      concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
       quantity: Number(line.quantity),
       unit: normalizeUnit(line.unit),
       unit_price: Number(line.unit_price),
@@ -103,7 +104,7 @@ function getDocumentLines(invoice: InvoiceListItem): DocumentLine[] {
 
   return [{
     id: `${invoice.id}-fallback-line`,
-    concept: invoice.billing_concept?.trim() || invoice.service_description || 'Servicio de limpieza',
+    concept: simplifyLineConcept(invoice.billing_concept || invoice.service_description),
     quantity,
     unit: normalizeUnit(invoice.billing_unit),
     unit_price: unitPrice,

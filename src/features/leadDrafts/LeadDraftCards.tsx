@@ -65,10 +65,10 @@ function normalizeWhatsAppPhone(phone: string): string {
   return digits
 }
 
-function getClientActionMessage(action: 'created' | 'linked' | 'already_linked'): string {
-  if (action === 'created') return 'Cliente creado y vinculado al lead.'
-  if (action === 'linked') return 'Cliente existente vinculado al lead.'
-  return 'El lead ya tenía un cliente vinculado.'
+function getClientActionMessage(action: 'created' | 'linked_existing' | 'already_converted'): string {
+  if (action === 'created') return 'Cliente creado, lead marcado como ganado y presupuestos del lead vinculados.'
+  if (action === 'linked_existing') return 'Cliente existente vinculado, lead marcado como ganado y presupuestos del lead vinculados.'
+  return 'El lead ya tenia cliente convertido y vinculado.'
 }
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -141,7 +141,7 @@ export function LeadDraftCards({
     client: {
       title: 'Crear o vincular cliente',
       confirmLabel: 'Crear/vincular',
-      description: 'Se comprobara si ya existe un cliente por lead, telefono o email. Si no existe, se creara un cliente activo vinculado a este lead.',
+      description: 'Se ejecutara la conversion transaccional del lead a cliente y se vincularan sus presupuestos. Usalo solo si el lead debe dejar de ser oportunidad activa.',
     },
     quote: {
       title: 'Crear presupuesto CRM',
@@ -243,7 +243,7 @@ export function LeadDraftCards({
       })
       setSuccessStatus(
         'Presupuesto CRM creado',
-        `${getClientActionMessage(result.clientAction)} Presupuesto ${result.quoteId} creado en estado borrador.`,
+        `Presupuesto ${result.quoteId} creado en estado borrador y vinculado directamente al lead ${result.leadId}. El cliente se creara automaticamente al aceptar.`,
       )
     } catch (error) {
       setErrorStatus(error, 'No se pudo crear el presupuesto CRM.')

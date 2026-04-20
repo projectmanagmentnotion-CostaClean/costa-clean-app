@@ -4,6 +4,8 @@
   invoice_number: string | null
   job_id: string | null
   job_display_code?: string | null
+  quote_id?: string | null
+  quote_display_code?: string | null
   client_id: string
   client_display_code?: string | null
   issue_date: string
@@ -22,7 +24,6 @@
   property_name?: string | null
   property_address_line?: string | null
 
-  quote_id?: string | null
   service_reference?: string | null
   service_description?: string | null
   billing_concept?: string | null

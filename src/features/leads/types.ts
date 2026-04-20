@@ -8,4 +8,6 @@
   status: string
   archived_at?: string | null
   public_intake_last_submission_id?: string | null
+  converted_client_id?: string | null
+  converted_at?: string | null
 }

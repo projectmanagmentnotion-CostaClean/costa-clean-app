@@ -19,12 +19,22 @@ async function callFinancialRpc(
   params: JsonRecord,
   fallbackMessage: string,
 ): Promise<void> {
+  await callFinancialRpcForResult(functionName, params, fallbackMessage)
+}
+
+async function callFinancialRpcForResult<T>(
+  functionName: string,
+  params: JsonRecord,
+  fallbackMessage: string,
+): Promise<T> {
   const client = getClientOrThrow()
-  const { error } = await client.rpc(functionName, params)
+  const { data, error } = await client.rpc(functionName, params)
 
   if (error) {
     throw new Error(error.message || fallbackMessage)
   }
+
+  return data as T
 }
 
 export async function saveQuoteWithLines(
@@ -109,6 +119,84 @@ export async function updateQuoteStatus(
     changedFields: ['status'],
     newValues: { status },
   })
+}
+
+export interface LeadConversionRpcResult {
+  client_id: string
+  lead_id: string
+  client_action: 'created' | 'linked_existing' | 'already_converted'
+}
+
+export async function convertLeadToClient(
+  leadId: string,
+  clientId?: string | null,
+): Promise<LeadConversionRpcResult> {
+  const result = await callFinancialRpcForResult<LeadConversionRpcResult>(
+    'convert_lead_to_client',
+    { p_lead_id: leadId, p_client_id: clientId ?? null },
+    'No se pudo convertir el lead en cliente.',
+  )
+
+  await recordAuditEvent({
+    entityType: 'lead',
+    entityId: leadId,
+    action: 'convert_to_client',
+    changedFields: ['status', 'converted_client_id', 'converted_at'],
+    newValues: { ...result },
+    metadata: { client_id: result.client_id, client_action: result.client_action },
+  })
+
+  return result
+}
+
+export interface QuoteAcceptanceRpcResult {
+  quote_id: string
+  lead_id: string | null
+  client_id: string
+  invoice_id: string | null
+  created_invoice: boolean
+  client_action: string
+}
+
+export async function acceptQuoteWorkflow({
+  quoteId,
+  createInvoice,
+  invoiceId,
+  issueDate,
+}: {
+  quoteId: string
+  createInvoice: boolean
+  invoiceId?: string | null
+  issueDate?: string | null
+}): Promise<QuoteAcceptanceRpcResult> {
+  const result = await callFinancialRpcForResult<QuoteAcceptanceRpcResult>(
+    'accept_quote_workflow',
+    {
+      p_quote_id: quoteId,
+      p_create_invoice: createInvoice,
+      p_invoice_id: invoiceId ?? null,
+      p_issue_date: issueDate ?? null,
+    },
+    createInvoice
+      ? 'No se pudo aceptar el presupuesto y crear la factura.'
+      : 'No se pudo aceptar el presupuesto.',
+  )
+
+  await recordAuditEvent({
+    entityType: 'quote',
+    entityId: quoteId,
+    action: createInvoice ? 'accept_and_invoice' : 'accept',
+    changedFields: createInvoice ? ['status', 'client_id', 'invoice_id'] : ['status', 'client_id'],
+    newValues: { ...result },
+    metadata: {
+      lead_id: result.lead_id,
+      client_id: result.client_id,
+      invoice_id: result.invoice_id,
+      client_action: result.client_action,
+    },
+  })
+
+  return result
 }
 
 export async function updateInvoiceStatus(

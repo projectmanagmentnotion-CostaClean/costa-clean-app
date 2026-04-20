@@ -83,8 +83,10 @@ function buildServiceReference(
   invoice: InvoiceListItem,
   job: JobListItem | undefined,
   property: PropertyListItem | undefined,
+  quote: QuoteListItem | undefined,
 ): string | null {
   const parts = [
+    invoice.quote_display_code ?? quote?.display_code ?? invoice.quote_id ?? null,
     invoice.job_display_code ?? job?.display_code ?? invoice.job_id ?? null,
     property?.display_code ?? null,
     property?.name ?? null,
@@ -297,6 +299,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
+  const leadById = useMemo(() => new Map(leads.map((lead) => [lead.id, lead])), [leads])
   const propertyCodeById = useMemo(() => new Map(properties.map((property) => [property.id, property.display_code ?? property.id])), [properties])
   const propertyById = useMemo(() => new Map(properties.map((property) => [property.id, property])), [properties])
   const quoteCodeById = useMemo(() => new Map(quotes.map((quote) => [quote.id, quote.display_code ?? quote.id])), [quotes])
@@ -324,11 +327,13 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const quotesWithCodes = useMemo(
     () => quotes.map((quote) => ({
       ...quote,
-      client_display_code: clientCodeById.get(quote.client_id) ?? quote.client_id,
+      client_display_code: quote.client_id ? clientCodeById.get(quote.client_id) ?? quote.client_id : null,
+      lead_display_code: quote.lead_id ? leadById.get(quote.lead_id)?.display_code ?? quote.lead_id : null,
+      lead_name: quote.lead_id ? leadById.get(quote.lead_id)?.full_name ?? null : null,
       property_display_code: quote.property_id ? propertyCodeById.get(quote.property_id) ?? quote.property_id : null,
       job_id: jobs.find((job) => job.quote_id === quote.id)?.id ?? null,
     })),
-    [quotes, jobs, clientCodeById, propertyCodeById],
+    [quotes, jobs, clientCodeById, leadById, propertyCodeById],
   )
 
   const jobsWithCodes = useMemo(
@@ -369,7 +374,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       const client = clientById.get(invoice.client_id)
       const job = invoice.job_id ? jobById.get(invoice.job_id) : undefined
       const property = job?.property_id ? propertyById.get(job.property_id) : undefined
-      const quote = job?.quote_id ? quoteById.get(job.quote_id) : undefined
+      const quote = invoice.quote_id ? quoteById.get(invoice.quote_id) : job?.quote_id ? quoteById.get(job.quote_id) : undefined
 
       return {
         ...invoice,
@@ -382,8 +387,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         property_display_code: property?.display_code ?? (job?.property_id ? propertyCodeById.get(job.property_id) ?? job.property_id : null),
         property_name: property?.name ?? null,
         property_address_line: buildPropertyAddressLine(property),
-        quote_id: job?.quote_id ?? null,
-        service_reference: buildServiceReference(invoice, job, property),
+        quote_id: invoice.quote_id ?? job?.quote_id ?? null,
+        quote_display_code: quote?.display_code ?? invoice.quote_id ?? job?.quote_id ?? null,
+        service_reference: buildServiceReference(invoice, job, property, quote),
         service_description: buildServiceDescription(job, property),
         billing_concept: invoice.billing_concept ?? job?.billing_concept ?? null,
         billing_quantity: invoice.billing_quantity ?? job?.billing_quantity ?? null,

@@ -4,6 +4,7 @@ import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
+import { simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 
@@ -112,7 +113,7 @@ function getJobBillingLine(job: JobListItem | null): LineFormState | null {
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: job.billing_concept?.trim() || getServiceTypeLabel(job.service_type),
+    concept: simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
     quantity: formatQuantityInput(quantity),
     unit: job.billing_unit?.trim() || 'servicio',
     unit_price: formatMoneyInput(unitPrice),
@@ -127,7 +128,10 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: quote.notes?.trim() || `Servicio según presupuesto ${quote.display_code ?? quote.id}`,
+    concept: simplifyLineConcept(
+      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept ?? quote.notes,
+      `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
+    ),
     quantity: '1.00',
     unit: 'servicio',
     unit_price: formatMoneyInput(subtotal),
@@ -145,7 +149,7 @@ function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
 
   return prefill.lines.map((line) => ({
     local_id: createLocalId('LINE-DRAFT'),
-    concept: line.concept,
+    concept: simplifyLineConcept(line.concept),
     quantity: line.quantity,
     unit: line.unit,
     unit_price: line.unit_price,
@@ -186,12 +190,12 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
   const payloads: LinePayload[] = []
 
   for (const [index, line] of lines.entries()) {
-    const concept = line.concept.trim()
+    const concept = simplifyLineConcept(line.concept)
     const quantity = parseDecimalInput(line.quantity)
     const unitPrice = parseDecimalInput(line.unit_price)
     const lineSubtotal = calculateLineSubtotal(line)
 
-    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0 || !Number.isFinite(lineSubtotal) || lineSubtotal < 0) {
+    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || !Number.isFinite(lineSubtotal)) {
       return null
     }
 
@@ -328,6 +332,7 @@ export function InvoiceCreateForm({
         {
           id: invoiceId,
           job_id: form.job_id,
+          quote_id: selectedJob?.quote_id ?? null,
           client_id: form.client_id,
           issue_date: form.issue_date,
           status: form.status,

@@ -1,7 +1,10 @@
 export interface QuoteListItem {
   id: string
   display_code: string | null
-  client_id: string
+  lead_id?: string | null
+  lead_display_code?: string | null
+  lead_name?: string | null
+  client_id: string | null
   client_display_code?: string | null
   property_id: string | null
   property_display_code?: string | null

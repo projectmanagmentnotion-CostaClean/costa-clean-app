@@ -2,6 +2,7 @@ import { businessRules } from '../../app/businessRules'
 import { formatCurrency } from '../../app/displayFormat'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteLineItem, QuoteListItem } from './types'
+import { simplifyLineConcept } from './lineConcepts'
 
 export interface QuoteLineFormState {
   local_id: string
@@ -70,13 +71,13 @@ function buildFallbackConcept(
     }
   }
 
-  return quote.notes?.trim() || 'Servicio de limpieza'
+  return simplifyLineConcept(quote.notes, 'Servicio de limpieza')
 }
 
 export function quoteLineItemToFormLine(line: QuoteLineItem): QuoteLineFormState {
   return {
     local_id: line.id || createLocalId('QUOTE-LINE-DRAFT'),
-    concept: line.concept,
+    concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
     quantity: formatQuantityInput(Number(line.quantity)),
     unit: line.unit || 'servicio',
     unit_price: formatMoneyInput(Number(line.unit_price)),
@@ -92,7 +93,7 @@ export function getFallbackLineFromQuote(
 
   return {
     local_id: createLocalId('QUOTE-LINE-DRAFT'),
-    concept: buildFallbackConcept(quote, properties),
+    concept: simplifyLineConcept(buildFallbackConcept(quote, properties), 'Servicio de limpieza'),
     quantity: '1.00',
     unit: 'servicio',
     unit_price: formatMoneyInput(safeSubtotal),
@@ -154,7 +155,7 @@ export function buildQuoteLinePayloads(
   const payloads: QuoteLinePayload[] = []
 
   for (const [index, line] of lines.entries()) {
-    const concept = line.concept.trim()
+    const concept = simplifyLineConcept(line.concept.trim(), 'Servicio de limpieza')
     const quantity = parseDecimalInput(line.quantity)
     const unitPrice = parseDecimalInput(line.unit_price)
     const lineSubtotal = calculateQuoteLineSubtotal(line)
@@ -164,9 +165,7 @@ export function buildQuoteLinePayloads(
       !Number.isFinite(quantity) ||
       quantity <= 0 ||
       !Number.isFinite(unitPrice) ||
-      unitPrice < 0 ||
-      !Number.isFinite(lineSubtotal) ||
-      lineSubtotal < 0
+      !Number.isFinite(lineSubtotal)
     ) {
       return null
     }

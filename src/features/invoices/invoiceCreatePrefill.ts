@@ -1,5 +1,6 @@
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import type { JobListItem } from '../jobs/types'
+import { simplifyLineConcept } from '../quotes/lineConcepts'
 
 export interface InvoiceCreatePrefillLine {
   concept: string
@@ -46,7 +47,7 @@ function buildBillingLine(job: JobListItem): InvoiceCreatePrefillLine | null {
   }
 
   return {
-    concept: job.billing_concept?.trim() || getServiceTypeLabel(job.service_type),
+    concept: simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
     quantity: formatDecimalInput(quantity),
     unit: normalizeBillingUnit(job.billing_unit),
     unit_price: formatDecimalInput(unitPrice),

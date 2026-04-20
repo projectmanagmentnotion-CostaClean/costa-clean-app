@@ -22,6 +22,7 @@ const visibleLeadDraftStatuses = new Set<LeadDraftRecord['status']>([
   'new',
   'matched_existing_lead',
   'ready_for_review',
+  'converted',
 ])
 
 function sameId(left: string | null | undefined, right: string | null | undefined): boolean {

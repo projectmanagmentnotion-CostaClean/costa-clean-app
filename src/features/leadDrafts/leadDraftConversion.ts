@@ -7,7 +7,7 @@ import {
   mapServiceType,
 } from '../../config/leadQuoteMessagingEngineAccess'
 import type { ClientListItem } from '../clients/types'
-import { convertLeadToClient, saveQuoteWithLines } from '../financial/financialWriteApi'
+import { convertLeadToClient, saveLeadQuoteWithLines } from '../financial/financialWriteApi'
 import type { LeadListItem } from '../leads/types'
 import { createLocalId, roundMoney } from '../quotes/quoteLineUtils'
 import type { QuoteLinePayload } from '../quotes/quoteLineUtils'
@@ -31,8 +31,6 @@ const convertibleDraftStatuses = new Set<LeadDraftRecord['status']>([
   'ready_for_review',
   'converted',
 ])
-
-const replaceableQuoteStatuses = new Set(['draft', 'sent'])
 
 function getClientOrThrow() {
   const { client, error } = getSupabaseClient()
@@ -161,61 +159,6 @@ function buildPricingMetadata(leadDraft: LeadDraftRecord): Record<string, unknow
   }
 }
 
-async function findReplaceableLeadQuote(leadId: string, intakeQuoteId: string | null): Promise<string | null> {
-  const client = getClientOrThrow()
-
-  if (intakeQuoteId) {
-    const { data, error } = await client
-      .from('quotes')
-      .select('id,status')
-      .eq('id', intakeQuoteId)
-      .limit(1)
-
-    if (error) {
-      throw new Error(error.message || 'No se pudo comprobar el presupuesto existente del intake.')
-    }
-
-    const existingQuote = data?.[0] as { id?: string; status?: string | null } | undefined
-    if (!existingQuote?.id) return null
-    if (replaceableQuoteStatuses.has(existingQuote.status ?? '')) return existingQuote.id
-
-    throw new Error('Este intake ya tiene un presupuesto finalizado o no reemplazable. No se sobrescribira automaticamente.')
-  }
-
-  const { data, error } = await client
-    .from('quotes')
-    .select('id,status')
-    .eq('lead_id', leadId)
-    .in('status', Array.from(replaceableQuoteStatuses))
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  if (error) {
-    throw new Error(error.message || 'No se pudo comprobar si el lead ya tiene presupuesto borrador.')
-  }
-
-  const existingQuote = data?.[0] as { id?: string } | undefined
-  return existingQuote?.id ?? null
-}
-
-async function ensureNoFinalizedLeadQuoteConflict(leadId: string): Promise<void> {
-  const client = getClientOrThrow()
-  const { data, error } = await client
-    .from('quotes')
-    .select('id,status')
-    .eq('lead_id', leadId)
-    .in('status', ['accepted', 'rejected', 'expired', 'cancelled'])
-    .limit(1)
-
-  if (error) {
-    throw new Error(error.message || 'No se pudo comprobar presupuestos finalizados del lead.')
-  }
-
-  if (data && data.length > 0) {
-    throw new Error('Este lead ya tiene un presupuesto finalizado. No se creara otro borrador automaticamente.')
-  }
-}
-
 function buildEngineQuoteLines(leadDraft: LeadDraftRecord, quoteId: string): QuoteLinePayload[] {
   const pricing = getEnginePricing(leadDraft)
   const serviceConcept = simplifyBaseQuoteLineConcept({
@@ -309,79 +252,35 @@ export async function convertReviewedLeadDraftToQuote(
     throw new Error('Este borrador contiene un servicio no disponible segun la politica interna. Revisalo antes de convertir.')
   }
 
-  const client = getClientOrThrow()
-  const { data: intakeRows, error: intakeError } = await client
-    .from('intake_submissions')
-    .select('id,quote_id')
-    .eq('id', leadDraft.intake_submission_id)
-    .limit(1)
-
-  if (intakeError) {
-    throw new Error(intakeError.message || 'No se pudo comprobar el intake origen.')
-  }
-
-  const intakeRow = intakeRows?.[0] as { quote_id?: string | null } | undefined
-  const existingQuoteId = await findReplaceableLeadQuote(lead.id, intakeRow?.quote_id ?? null)
-  if (!existingQuoteId) {
-    await ensureNoFinalizedLeadQuoteConflict(lead.id)
-  }
-
-  const quoteId = existingQuoteId ?? createRecordId('QUOTE')
+  const quoteId = createRecordId('QUOTE')
   const subtotal = roundMoney(pricing.subtotal)
   const taxAmount = roundMoney(pricing.taxAmount)
   const total = roundMoney(pricing.total)
   const quoteLines = buildEngineQuoteLines(leadDraft, quoteId)
 
-  await saveQuoteWithLines(
+  const result = await saveLeadQuoteWithLines(
     {
-      id: quoteId,
-      client_id: null,
-      lead_id: lead.id,
-      property_id: null,
-      status: 'draft',
-      subtotal,
-      tax_amount: taxAmount,
-      total,
-      notes: buildVisibleQuoteNotes(leadDraft),
-      internal_notes: buildInternalQuoteNotes(leadDraft),
-      pricing_metadata: buildPricingMetadata(leadDraft),
+      leadId: lead.id,
+      intakeSubmissionId: leadDraft.intake_submission_id,
+      quote: {
+        id: quoteId,
+        client_id: null,
+        lead_id: lead.id,
+        property_id: null,
+        status: 'draft',
+        subtotal,
+        tax_amount: taxAmount,
+        total,
+        notes: buildVisibleQuoteNotes(leadDraft),
+        internal_notes: buildInternalQuoteNotes(leadDraft),
+        pricing_metadata: buildPricingMetadata(leadDraft),
+      },
+      lines: quoteLines,
     },
-    quoteLines,
   )
 
-  const { error: leadError } = await client
-    .from('leads')
-    .update({ status: 'quoted' })
-    .eq('id', lead.id)
-
-  if (leadError) {
-    throw new Error(leadError.message || 'El presupuesto se creo, pero no se pudo actualizar el lead.')
-  }
-
-  const { error: draftError } = await client
-    .from('lead_drafts')
-    .update({ status: 'converted', matched_lead_id: lead.id })
-    .eq('id', leadDraft.id)
-
-  if (draftError) {
-    throw new Error(draftError.message || 'El presupuesto se creo, pero no se pudo cerrar el borrador.')
-  }
-
-  const { error: intakeUpdateError } = await client
-    .from('intake_submissions')
-    .update({
-      status: 'converted',
-      lead_id: lead.id,
-      quote_id: quoteId,
-    })
-    .eq('id', leadDraft.intake_submission_id)
-
-  if (intakeUpdateError) {
-    throw new Error(intakeUpdateError.message || 'El presupuesto se creo, pero no se pudo vincular el intake.')
-  }
-
   return {
-    quoteId,
-    leadId: lead.id,
+    quoteId: result.quote_id,
+    leadId: result.lead_id,
   }
 }

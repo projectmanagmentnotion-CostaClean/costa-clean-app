@@ -6904,6 +6904,28 @@
   box-shadow: 0 12px 28px rgba(224, 129, 53, 0.18);
 }
 
+.cc-feedback-dialog__panel {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.cc-feedback-dialog__panel--success {
+  background:
+    radial-gradient(circle at top right, rgba(42, 157, 143, 0.16), transparent 38%),
+    linear-gradient(180deg, rgba(14, 27, 32, 0.98), rgba(8, 14, 24, 0.98));
+}
+
+.cc-feedback-dialog__panel--error {
+  background:
+    radial-gradient(circle at top right, rgba(239, 68, 68, 0.15), transparent 38%),
+    linear-gradient(180deg, rgba(32, 18, 24, 0.98), rgba(9, 15, 25, 0.98));
+}
+
+.cc-feedback-dialog__panel--loading {
+  background:
+    radial-gradient(circle at top right, rgba(99, 179, 237, 0.13), transparent 38%),
+    linear-gradient(180deg, rgba(14, 24, 38, 0.98), rgba(8, 14, 24, 0.98));
+}
+
 .cc-list-toolbar {
   display: grid;
   gap: 12px;

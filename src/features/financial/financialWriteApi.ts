@@ -62,6 +62,54 @@ export async function saveQuoteWithLines(
   })
 }
 
+export interface LeadQuoteSaveRpcResult {
+  quote_id: string
+  lead_id: string
+  action: string
+}
+
+export async function saveLeadQuoteWithLines({
+  leadId,
+  intakeSubmissionId,
+  quote,
+  lines,
+}: {
+  leadId: string
+  intakeSubmissionId: string | null
+  quote: JsonPayload
+  lines: JsonPayload[]
+}): Promise<LeadQuoteSaveRpcResult> {
+  const quoteRecord = quote as JsonRecord
+  const result = await callFinancialRpcForResult<LeadQuoteSaveRpcResult>(
+    'save_lead_quote_with_lines',
+    {
+      p_lead_id: leadId,
+      p_intake_submission_id: intakeSubmissionId,
+      p_quote: quote,
+      p_lines: lines,
+    },
+    'No se pudo guardar el presupuesto del lead y sus lineas.',
+  )
+
+  await recordAuditEvent({
+    entityType: 'quote',
+    entityId: result.quote_id,
+    action: 'upsert',
+    changedFields: Object.keys(quoteRecord),
+    newValues: { ...quoteRecord, id: result.quote_id, lead_id: result.lead_id },
+    metadata: {
+      lead_id: result.lead_id,
+      intake_submission_id: intakeSubmissionId,
+      action: result.action,
+      line_count: lines.length,
+      pricing_metadata: quoteRecord.pricing_metadata ?? null,
+      has_internal_notes: Boolean(quoteRecord.internal_notes),
+    },
+  })
+
+  return result
+}
+
 export async function saveInvoiceWithLines(
   invoice: JsonPayload,
   lines: JsonPayload[],

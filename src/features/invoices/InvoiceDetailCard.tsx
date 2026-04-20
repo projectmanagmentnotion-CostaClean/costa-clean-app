@@ -4,6 +4,7 @@ import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { saveInvoiceWithLines, updateInvoiceStatus as updateInvoiceStatusRpc } from '../financial/financialWriteApi'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import type { JobListItem } from '../jobs/types'
@@ -739,19 +740,6 @@ export function InvoiceDetailCard({
             </>
           )}
 
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo actualizar la factura</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
-
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
         </div>
       ) : (
         <div className="empty-state">
@@ -759,6 +747,22 @@ export function InvoiceDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <FeedbackDialog
+        isOpen={!isEditing && Boolean(saveError)}
+        tone="error"
+        title="No se pudo actualizar la factura"
+        message={saveError ?? ''}
+        onClose={() => setSaveError(null)}
+      />
+
+      <FeedbackDialog
+        isOpen={!isEditing && Boolean(successMessage)}
+        tone="success"
+        title="Operacion correcta"
+        message={successMessage ?? ''}
+        onClose={() => setSuccessMessage(null)}
+      />
 
       <ConfirmDialog
         isOpen={Boolean(pendingPaidStatusUpdate)}

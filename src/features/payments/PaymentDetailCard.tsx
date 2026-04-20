@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
+import { FeedbackDialog } from '../../components/FeedbackDialog'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
@@ -325,19 +326,21 @@ export function PaymentDetailCard({
             </div>
           )}
 
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo actualizar el pago</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(saveError)}
+            tone="error"
+            title="No se pudo actualizar el pago"
+            message={saveError ?? ''}
+            onClose={() => setSaveError(null)}
+          />
 
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(successMessage)}
+            tone="success"
+            title="Operacion correcta"
+            message={successMessage ?? ''}
+            onClose={() => setSuccessMessage(null)}
+          />
         </div>
       ) : (
         <div className="empty-state">

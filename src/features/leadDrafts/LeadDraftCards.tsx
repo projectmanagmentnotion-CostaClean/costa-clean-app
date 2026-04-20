@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { FeedbackDialog, type FeedbackDialogTone } from '../../components/FeedbackDialog'
 import { calculatePricing } from '../../config/leadQuoteMessagingEngineAccess'
 import type { ClientListItem } from '../clients/types'
 import type { LeadListItem } from '../leads/types'
@@ -69,6 +70,11 @@ function getClientActionMessage(action: 'created' | 'linked_existing' | 'already
   if (action === 'created') return 'Cliente creado, lead marcado como ganado y presupuestos del lead vinculados.'
   if (action === 'linked_existing') return 'Cliente existente vinculado, lead marcado como ganado y presupuestos del lead vinculados.'
   return 'El lead ya tenia cliente convertido y vinculado.'
+}
+
+function getFeedbackTone(tone: ActionStatusTone): FeedbackDialogTone {
+  if (tone === 'review') return 'warning'
+  return tone
 }
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -246,8 +252,8 @@ export function LeadDraftCards({
         status: 'converted',
       })
       setSuccessStatus(
-        'Presupuesto CRM creado',
-        `Presupuesto ${result.quoteId} creado en estado borrador y vinculado directamente al lead ${result.leadId}. El cliente se creara automaticamente al aceptar.`,
+        'Presupuesto CRM actualizado',
+        `Presupuesto ${result.quoteId} guardado con los ultimos calculos del motor y vinculado al lead ${result.leadId}.`,
       )
     } catch (error) {
       setErrorStatus(error, 'No se pudo crear el presupuesto CRM.')
@@ -472,22 +478,6 @@ export function LeadDraftCards({
         </div>
       </details>
 
-      {actionStatus ? (
-        <div
-          className={[
-            'cc-alert',
-            actionStatus.tone === 'error'
-              ? 'cc-alert--error'
-              : actionStatus.tone === 'review' || actionStatus.tone === 'loading'
-                ? 'cc-alert--warning'
-                : 'cc-alert--success',
-          ].join(' ')}
-        >
-          <strong>{actionStatus.title}</strong>
-          <p>{actionStatus.message}</p>
-        </div>
-      ) : null}
-
       <ConfirmDialog
         isOpen={Boolean(activeConfirmation)}
         title={activeConfirmation?.title ?? ''}
@@ -497,6 +487,14 @@ export function LeadDraftCards({
         isBusy={isActionRunning}
         onCancel={() => setConfirmedAction(null)}
         onConfirm={handleConfirmedAction}
+      />
+
+      <FeedbackDialog
+        isOpen={Boolean(actionStatus)}
+        tone={actionStatus ? getFeedbackTone(actionStatus.tone) : 'info'}
+        title={actionStatus?.title ?? ''}
+        message={actionStatus?.message ?? ''}
+        onClose={actionStatus?.tone === 'loading' ? undefined : () => setActionStatus(null)}
       />
     </div>
   )

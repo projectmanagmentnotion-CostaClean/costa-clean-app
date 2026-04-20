@@ -7,6 +7,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { saveQuoteWithLines, updateQuoteStatus as updateQuoteStatusRpc } from '../financial/financialWriteApi'
 import { acceptQuoteAndCreateInvoice, acceptQuoteOnly } from './quoteAcceptanceWorkflow'
@@ -697,20 +698,23 @@ function QuoteDetailCardContent({
           </>
         )}
 
-        {!isEditing && saveError ? (
-          <div className="cc-alert cc-alert--error">
-            <strong>No se pudo actualizar el presupuesto</strong>
-            <p>{saveError}</p>
-          </div>
-        ) : null}
-
-        {!isEditing && successMessage ? (
-          <div className="cc-alert cc-alert--success">
-            <strong>Operación correcta</strong>
-            <p>{successMessage}</p>
-          </div>
-        ) : null}
       </div>
+
+      <FeedbackDialog
+        isOpen={!isEditing && Boolean(saveError)}
+        tone="error"
+        title="No se pudo actualizar el presupuesto"
+        message={saveError ?? ''}
+        onClose={() => setSaveError(null)}
+      />
+
+      <FeedbackDialog
+        isOpen={!isEditing && Boolean(successMessage)}
+        tone="success"
+        title="Operacion correcta"
+        message={successMessage ?? ''}
+        onClose={() => setSuccessMessage(null)}
+      />
 
       <ConfirmDialog
         isOpen={Boolean(pendingAcceptanceAction)}

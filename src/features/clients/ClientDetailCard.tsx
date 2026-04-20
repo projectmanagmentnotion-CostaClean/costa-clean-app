@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { FeedbackDialog } from '../../components/FeedbackDialog'
 import type { ClientListItem } from './types'
 
 interface ClientDetailCardProps {
@@ -249,19 +250,21 @@ export function ClientDetailCard({
             </div>
           )}
 
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo actualizar el cliente</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(saveError)}
+            tone="error"
+            title="No se pudo actualizar el cliente"
+            message={saveError ?? ''}
+            onClose={() => setSaveError(null)}
+          />
 
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(successMessage)}
+            tone="success"
+            title="Operacion correcta"
+            message={successMessage ?? ''}
+            onClose={() => setSuccessMessage(null)}
+          />
         </div>
       ) : (
         <div className="empty-state">

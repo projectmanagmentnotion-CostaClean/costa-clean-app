@@ -2,6 +2,7 @@
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import type { ClientListItem } from '../clients/types'
+import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
@@ -380,19 +381,21 @@ export function LeadDetailCard({
             />
           ) : null}
 
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo completar la operación</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(saveError)}
+            tone="error"
+            title="No se pudo completar la operacion"
+            message={saveError ?? ''}
+            onClose={() => setSaveError(null)}
+          />
 
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          <FeedbackDialog
+            isOpen={!isEditing && Boolean(successMessage)}
+            tone="success"
+            title="Operacion correcta"
+            message={successMessage ?? ''}
+            onClose={() => setSuccessMessage(null)}
+          />
         </div>
       ) : (
         <div className="empty-state">

@@ -9759,3 +9759,165 @@
     justify-content: start;
   }
 }
+
+/* Sprint 2026-04-22: authoritative document screen and dialog centering fixes. */
+.cc-document-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 3000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100vw !important;
+  min-height: 100vh !important;
+  height: 100vh !important;
+  min-height: 100dvh !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: contain !important;
+  isolation: isolate;
+}
+
+.cc-document-screen__topbar {
+  position: relative !important;
+  top: auto !important;
+  z-index: 2 !important;
+  flex: 0 0 auto !important;
+  padding-top: max(0.85rem, calc(env(safe-area-inset-top, 0px) + 0.35rem)) !important;
+}
+
+.cc-document-screen__actions {
+  align-items: center;
+}
+
+.cc-document-screen__actions .primary-button,
+.cc-document-screen__actions .secondary-button {
+  width: auto !important;
+  flex: 0 0 auto;
+}
+
+.cc-document-screen__content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior-y: contain !important;
+  padding:
+    0.75rem
+    max(0.75rem, env(safe-area-inset-right, 0px))
+    max(1rem, calc(env(safe-area-inset-bottom, 0px) + 1rem))
+    max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+}
+
+.cc-document-screen__panel {
+  width: 100% !important;
+  max-width: 980px !important;
+  min-height: 0 !important;
+  align-content: start !important;
+}
+
+.cc-document-screen__viewer {
+  overflow: hidden !important;
+}
+
+.cc-doc-preview-panel--screen {
+  gap: 0.85rem !important;
+}
+
+.cc-doc-preview-panel--screen .section-header {
+  margin-bottom: 0 !important;
+}
+
+.cc-doc-preview-panel--screen .cc-doc-preview-panel__viewport {
+  overflow: visible !important;
+  padding: 0 !important;
+}
+
+.cc-doc-preview-panel--screen .cc-doc-preview-panel__canvas,
+.cc-doc-preview-panel--screen .cc-doc-preview-panel__canvas--document {
+  aspect-ratio: auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+  display: grid !important;
+  place-items: start center !important;
+}
+
+.cc-doc-preview-panel--screen .cc-invoice-a4--embedded {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: min(100%, 860px) !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  transform: none !important;
+}
+
+.cc-confirm-dialog {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 5000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding:
+    max(18px, calc(env(safe-area-inset-top, 0px) + 12px))
+    max(18px, calc(env(safe-area-inset-right, 0px) + 12px))
+    max(18px, calc(env(safe-area-inset-bottom, 0px) + 12px))
+    max(18px, calc(env(safe-area-inset-left, 0px) + 12px)) !important;
+}
+
+.cc-confirm-dialog__panel,
+.cc-feedback-dialog__panel {
+  max-height: min(88vh, calc(100dvh - 36px)) !important;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .cc-document-screen__topbar {
+    padding-inline: max(0.85rem, env(safe-area-inset-left, 0px)) max(0.85rem, env(safe-area-inset-right, 0px)) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-document-screen__topbar {
+    gap: 0.85rem !important;
+    align-items: stretch !important;
+  }
+
+  .cc-document-screen__actions {
+    justify-content: stretch !important;
+  }
+
+  .cc-document-screen__actions .primary-button,
+  .cc-document-screen__actions .secondary-button {
+    flex: 1 1 calc(50% - 0.4rem);
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .cc-document-screen__content {
+    padding-top: 0.6rem !important;
+  }
+
+  .cc-document-screen__viewer {
+    padding: 0.45rem !important;
+    border-radius: 20px;
+  }
+
+  .cc-doc-preview-panel--screen {
+    padding: 0.85rem !important;
+    border-radius: 22px !important;
+  }
+
+  .cc-doc-preview-panel--screen .cc-invoice-a4--embedded {
+    width: 100% !important;
+    padding: 1rem !important;
+    border-radius: 18px !important;
+  }
+
+  .cc-confirm-dialog__panel,
+  .cc-feedback-dialog__panel {
+    width: min(420px, 100%) !important;
+  }
+}

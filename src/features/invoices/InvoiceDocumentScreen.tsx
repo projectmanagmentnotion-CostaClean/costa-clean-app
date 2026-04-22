@@ -66,6 +66,7 @@ export function InvoiceDocumentScreen({
         onShare={handleShare}
         onPrint={handlePrint}
         onSavePdf={handleSavePdf}
+        isOutputDisabled={isLoadingLines || Boolean(linesError)}
       >
         {isLoadingLines ? (
           <div className="empty-state cc-state-card cc-state-card--loading">

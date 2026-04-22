@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 export type FeedbackDialogTone = 'success' | 'error' | 'warning' | 'loading' | 'info'
 
@@ -55,7 +56,7 @@ export function FeedbackDialog({
 
   if (!isOpen) return null
 
-  return (
+  const dialog = (
     <div
       className="cc-confirm-dialog cc-feedback-dialog"
       role="presentation"
@@ -92,4 +93,10 @@ export function FeedbackDialog({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return dialog
+  }
+
+  return createPortal(dialog, document.body)
 }

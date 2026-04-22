@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 interface DocumentScreenFrameProps {
   title: string
@@ -10,6 +11,7 @@ interface DocumentScreenFrameProps {
   onShare: () => void | Promise<void>
   onPrint: () => void
   onSavePdf: () => void
+  isOutputDisabled?: boolean
   children: ReactNode
 }
 
@@ -178,6 +180,7 @@ export function DocumentScreenFrame({
   onShare,
   onPrint,
   onSavePdf,
+  isOutputDisabled = false,
   children,
 }: DocumentScreenFrameProps) {
   useEffect(() => {
@@ -193,7 +196,7 @@ export function DocumentScreenFrame({
     }
   }, [onClose])
 
-  return (
+  const screen = (
     <div className="cc-document-screen" style={overlayStyle}>
       <div className="cc-document-screen__topbar" style={topbarStyle}>
         <div className="cc-document-screen__title-wrap" style={titleWrapStyle}>
@@ -209,24 +212,24 @@ export function DocumentScreenFrame({
             </span>
           </button>
 
-          <button type="button" className="secondary-button" onClick={onShare}>
+          <button type="button" className="secondary-button" onClick={onShare} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <IosShareIcon />
               Compartir
             </span>
           </button>
 
-          <button type="button" className="secondary-button" onClick={onPrint}>
+          <button type="button" className="secondary-button" onClick={onPrint} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <PrintIcon />
               Imprimir
             </span>
           </button>
 
-          <button type="button" className="primary-button" onClick={onSavePdf}>
+          <button type="button" className="primary-button" onClick={onSavePdf} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <DownloadIcon />
-              Guardar PDF
+              Guardar
             </span>
           </button>
         </div>
@@ -251,4 +254,10 @@ export function DocumentScreenFrame({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return screen
+  }
+
+  return createPortal(screen, document.body)
 }

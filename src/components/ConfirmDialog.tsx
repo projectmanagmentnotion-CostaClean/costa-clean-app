@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -50,7 +51,7 @@ export function ConfirmDialog({
 
   if (!isOpen) return null
 
-  return (
+  const dialog = (
     <div className="cc-confirm-dialog" role="presentation" onMouseDown={isBusy ? undefined : onCancel}>
       <div
         className={`cc-confirm-dialog__panel cc-confirm-dialog__panel--${tone}`}
@@ -90,4 +91,10 @@ export function ConfirmDialog({
       </div>
     </div>
   )
+
+  if (typeof document === 'undefined') {
+    return dialog
+  }
+
+  return createPortal(dialog, document.body)
 }

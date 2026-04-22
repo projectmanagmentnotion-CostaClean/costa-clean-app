@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { DocumentThumbnail } from './DocumentThumbnail'
 
 interface DocumentScreenFrameProps {
   title: string
@@ -244,9 +245,9 @@ export function DocumentScreenFrame({
               </div>
 
               <div className="cc-doc-preview-panel__viewport">
-                <div className="cc-doc-preview-panel__canvas cc-doc-preview-panel__canvas--document">
+                <DocumentThumbnail className="cc-doc-preview-panel__canvas--document">
                   {children}
-                </div>
+                </DocumentThumbnail>
               </div>
             </section>
           </div>

@@ -9910,10 +9910,53 @@
     border-radius: 22px !important;
   }
 
-  .cc-doc-preview-panel--screen .cc-invoice-a4--embedded {
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__viewport {
+    overflow: hidden !important;
+  }
+
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__canvas,
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__canvas--document {
+    position: relative !important;
     width: 100% !important;
-    padding: 1rem !important;
-    border-radius: 18px !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    margin: 0 auto !important;
+    aspect-ratio: auto !important;
+  }
+
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__thumbnail {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    height: var(--cc-doc-thumb-height, auto);
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__thumbnail-doc {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--cc-doc-thumb-width, 280%);
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    transform: translateX(-50%) scale(var(--cc-doc-thumb-scale, 0.357142857));
+    transform-origin: top center;
+    will-change: transform;
+  }
+
+  .cc-doc-preview-panel--screen .cc-doc-preview-panel__thumbnail .cc-invoice-a4--embedded {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
   }
 
   .cc-confirm-dialog__panel,

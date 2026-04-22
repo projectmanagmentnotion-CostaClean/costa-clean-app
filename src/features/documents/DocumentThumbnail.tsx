@@ -4,10 +4,15 @@ const MOBILE_BREAKPOINT_QUERY = '(max-width: 640px)'
 const MOBILE_THUMBNAIL_WIDTH_PERCENT = 280
 
 interface DocumentThumbnailProps {
+  className?: string
   children: ReactNode
 }
 
-export function DocumentThumbnail({ children }: DocumentThumbnailProps) {
+function joinClassNames(...values: Array<string | undefined>): string {
+  return values.filter(Boolean).join(' ')
+}
+
+export function DocumentThumbnail({ className, children }: DocumentThumbnailProps) {
   const canvasRef = useRef<HTMLDivElement | null>(null)
   const documentRef = useRef<HTMLDivElement | null>(null)
   const [thumbnailHeight, setThumbnailHeight] = useState<number | null>(null)
@@ -95,7 +100,7 @@ export function DocumentThumbnail({ children }: DocumentThumbnailProps) {
   }
 
   return (
-    <div className="cc-doc-preview-panel__canvas" ref={canvasRef}>
+    <div className={joinClassNames('cc-doc-preview-panel__canvas', className)} ref={canvasRef}>
       <div className="cc-doc-preview-panel__thumbnail" style={thumbnailStyle}>
         <div className="cc-doc-preview-panel__thumbnail-doc" ref={documentRef}>
           {children}

@@ -1,4 +1,5 @@
 import type { InvoiceListItem } from './types'
+import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
 
@@ -47,7 +48,7 @@ function InvoiceDocumentPreviewContent({
       </div>
 
       <div className="cc-doc-preview-panel__viewport">
-        <div className="cc-doc-preview-panel__canvas">
+        <DocumentThumbnail>
           {isLoadingLines ? (
             <div className="empty-state cc-state-card cc-state-card--loading">
               <strong>Cargando líneas de factura</strong>
@@ -61,7 +62,7 @@ function InvoiceDocumentPreviewContent({
           ) : (
             <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
           )}
-        </div>
+        </DocumentThumbnail>
       </div>
     </section>
   )

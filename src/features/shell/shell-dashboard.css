@@ -9921,3 +9921,49 @@
     width: min(420px, 100%) !important;
   }
 }
+
+@media (max-width: 640px) {
+  .cc-doc-preview-panel:not(.cc-doc-preview-panel--screen) .cc-doc-preview-panel__canvas {
+    position: relative !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    display: block !important;
+    margin: 0 auto !important;
+    aspect-ratio: auto !important;
+  }
+
+  .cc-doc-preview-panel:not(.cc-doc-preview-panel--screen) .cc-doc-preview-panel__thumbnail {
+    position: relative;
+    width: 100%;
+    min-height: 0;
+    height: var(--cc-doc-thumb-height, auto);
+    overflow: hidden;
+  }
+
+  .cc-doc-preview-panel:not(.cc-doc-preview-panel--screen) .cc-doc-preview-panel__thumbnail-doc {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: var(--cc-doc-thumb-width, 280%);
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    transform: translateX(-50%) scale(var(--cc-doc-thumb-scale, 0.357142857));
+    transform-origin: top center;
+    will-change: transform;
+  }
+
+  .cc-doc-preview-panel:not(.cc-doc-preview-panel--screen) .cc-doc-preview-panel__thumbnail .cc-invoice-a4--embedded {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}

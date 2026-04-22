@@ -1,6 +1,7 @@
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
+import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { QuoteDocumentA4 } from './QuoteDocumentA4'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 
@@ -63,7 +64,7 @@ function QuoteDocumentPreviewContent({
       </div>
 
       <div className="cc-doc-preview-panel__viewport">
-        <div className="cc-doc-preview-panel__canvas">
+        <DocumentThumbnail>
           {isLoadingLines ? (
             <div className="empty-state cc-state-card cc-state-card--loading">
               <strong>Cargando líneas de presupuesto</strong>
@@ -82,7 +83,7 @@ function QuoteDocumentPreviewContent({
               variant="embedded"
             />
           )}
-        </div>
+        </DocumentThumbnail>
       </div>
     </section>
   )

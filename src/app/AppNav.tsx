@@ -22,43 +22,23 @@ interface AppNavProps {
   onBack?: () => void
 }
 
-const allViews: AppView[] = [
-  'dashboard',
-  'quarterly_closing',
-  'annual_closing',
-  'leads',
-  'clients',
-  'properties',
-  'quotes',
-  'jobs',
-  'invoices',
-  'expenses',
-  'payments',
-]
-
-const viewShortLabel: Record<AppView, string> = {
-  dashboard: 'Home',
-  alerts: 'Alertas',
-  quarterly_closing: 'Cierre T',
-  annual_closing: 'Cierre A',
-  leads: 'Leads',
-  clients: 'Clientes',
-  properties: 'Propiedades',
-  quotes: 'Presupuestos',
-  jobs: 'Servicios',
-  invoices: 'Facturas',
-  expenses: 'Gastos',
-  payments: 'Cobros',
+interface NavItemDefinition {
+  view: AppView
+  shortLabel: string
+  section: string
+  icon: () => ReactElement
+  mobilePriority?: boolean
 }
 
-function DashboardIcon() {
+function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
       <path
-        d="M4 5.5h7v5H4zM13 5.5h7v8h-7zM4 12.5h7v6H4zM13 15.5h7v3h-7z"
+        d="M4.5 10.5 12 4l7.5 6.5V19a1.5 1.5 0 0 1-1.5 1.5h-3.5v-5h-5v5H6A1.5 1.5 0 0 1 4.5 19v-8.5Z"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.9"
+        strokeLinecap="round"
         strokeLinejoin="round"
       />
     </svg>
@@ -71,27 +51,6 @@ function LeadsIcon() {
       <circle cx="9" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.9" />
       <path
         d="M4.5 18a4.5 4.5 0 0 1 9 0M16.5 8.5h4M18.5 6.5v4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
-
-function AlertsIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
-      <path
-        d="M12 4.5a4.5 4.5 0 0 1 4.5 4.5v2.3c0 .9.28 1.78.8 2.51l1.12 1.56A1 1 0 0 1 17.61 17H6.39a1 1 0 0 1-.81-1.63l1.12-1.56c.52-.73.8-1.61.8-2.51V9A4.5 4.5 0 0 1 12 4.5Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 19a2 2 0 0 0 4 0"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.9"
@@ -274,20 +233,22 @@ function PaymentsIcon() {
   )
 }
 
-const viewIcon: Record<AppView, () => ReactElement> = {
-  dashboard: DashboardIcon,
-  alerts: AlertsIcon,
-  quarterly_closing: QuarterlyClosingIcon,
-  annual_closing: AnnualClosingIcon,
-  leads: LeadsIcon,
-  clients: ClientsIcon,
-  properties: PropertiesIcon,
-  quotes: QuotesIcon,
-  jobs: JobsIcon,
-  invoices: InvoicesIcon,
-  expenses: ExpensesIcon,
-  payments: PaymentsIcon,
-}
+const navItems: NavItemDefinition[] = [
+  { view: 'dashboard', shortLabel: 'Home', section: 'General', icon: HomeIcon, mobilePriority: true },
+  { view: 'leads', shortLabel: 'Leads', section: 'Comercial', icon: LeadsIcon, mobilePriority: true },
+  { view: 'clients', shortLabel: 'Clientes', section: 'Base', icon: ClientsIcon, mobilePriority: true },
+  { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', icon: PropertiesIcon, mobilePriority: true },
+  { view: 'quotes', shortLabel: 'Presupuestos', section: 'Operaciones', icon: QuotesIcon, mobilePriority: true },
+  { view: 'jobs', shortLabel: 'Servicios', section: 'Operaciones', icon: JobsIcon, mobilePriority: true },
+  { view: 'invoices', shortLabel: 'Facturas', section: 'Finanzas', icon: InvoicesIcon, mobilePriority: true },
+  { view: 'payments', shortLabel: 'Cobros', section: 'Finanzas', icon: PaymentsIcon, mobilePriority: true },
+  { view: 'expenses', shortLabel: 'Gastos', section: 'Finanzas', icon: ExpensesIcon, mobilePriority: false },
+  { view: 'quarterly_closing', shortLabel: 'Cierre trimestral', section: 'Cierre', icon: QuarterlyClosingIcon, mobilePriority: false },
+  { view: 'annual_closing', shortLabel: 'Cierre anual', section: 'Cierre', icon: AnnualClosingIcon, mobilePriority: false },
+]
+
+const bottomDockItems = navItems.filter((item) => item.mobilePriority)
+const topNavItems = navItems
 
 export function AppNav({
   currentView,
@@ -327,8 +288,9 @@ export function AppNav({
             </div>
 
             <div className="cc-shell-nav__brand-copy">
-              <span className="cc-shell-nav__title">CostaClean CRM</span>
-              <span className="cc-shell-nav__subtitle">Control operativo | limpieza premium</span>
+              <span className="cc-shell-nav__eyebrow">CostaClean</span>
+              <span className="cc-shell-nav__title">Centro operativo CRM</span>
+              <span className="cc-shell-nav__subtitle">Comercial, servicio, facturacion y cierre en una sola shell.</span>
             </div>
           </div>
 
@@ -371,25 +333,29 @@ export function AppNav({
         </div>
 
         <div className="cc-shell-subnav cc-shell-subnav--top" aria-label="Modulos">
-          {allViews.map((view) => {
-            const Icon = viewIcon[view]
+          {topNavItems.map((item) => {
+            const Icon = item.icon
 
             return (
               <button
-                key={view}
+                key={item.view}
                 type="button"
                 className={
-                  currentView === view
+                  currentView === item.view
                     ? 'cc-shell-subnav__button is-active'
                     : 'cc-shell-subnav__button'
                 }
-                onClick={() => onChangeView(view)}
-                aria-current={currentView === view ? 'page' : undefined}
+                onClick={() => onChangeView(item.view)}
+                aria-current={currentView === item.view ? 'page' : undefined}
+                data-section={item.section}
               >
+                <span className="cc-shell-subnav__meta" aria-hidden="true">
+                  <span className="cc-shell-subnav__section">{item.section}</span>
+                </span>
                 <span className="cc-shell-subnav__glyph" aria-hidden="true">
                   <Icon />
                 </span>
-                <span className="cc-shell-subnav__text">{viewShortLabel[view]}</span>
+                <span className="cc-shell-subnav__text">{item.shortLabel}</span>
               </button>
             )
           })}
@@ -405,25 +371,25 @@ export function AppNav({
         aria-label="Navegacion rapida"
       >
         <div className="cc-bottom-dock__scroll">
-          {allViews.map((view) => {
-            const Icon = viewIcon[view]
+          {bottomDockItems.map((item) => {
+            const Icon = item.icon
 
             return (
               <button
-                key={view}
+                key={item.view}
                 type="button"
                 className={
-                  currentView === view
+                  currentView === item.view
                     ? 'cc-bottom-dock__button is-active'
                     : 'cc-bottom-dock__button'
                 }
-                onClick={() => onChangeView(view)}
-                aria-current={currentView === view ? 'page' : undefined}
+                onClick={() => onChangeView(item.view)}
+                aria-current={currentView === item.view ? 'page' : undefined}
               >
                 <span className="cc-bottom-dock__icon" aria-hidden="true">
                   <Icon />
                 </span>
-                <span className="cc-bottom-dock__label">{viewShortLabel[view]}</span>
+                <span className="cc-bottom-dock__label">{item.shortLabel}</span>
               </button>
             )
           })}

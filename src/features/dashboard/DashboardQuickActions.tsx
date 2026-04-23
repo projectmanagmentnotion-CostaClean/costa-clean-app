@@ -234,7 +234,7 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
       <summary className="cc-dashboard-block__header cc-dashboard-block__header--split cc-collapsible-section__summary cc-quick-actions-panel__summary">
         <div>
           <h2>Acciones rapidas</h2>
-          <p>Utilidades directas para crear o revisar movimientos sin romper el foco del panel.</p>
+          <p>Accesos directos para moverte sin salir del panel.</p>
         </div>
       </summary>
 

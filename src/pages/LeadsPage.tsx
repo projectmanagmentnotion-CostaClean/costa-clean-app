@@ -47,6 +47,7 @@ export function LeadsPage({
   onLeadConverted,
 }: LeadsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeadStatusFilter>('all')
@@ -102,13 +103,14 @@ export function LeadsPage({
   const selectedLeadAlreadyConverted = selectedLead
     ? convertedLeadIds.has(selectedLead.id)
     : false
+  const hasActiveFilters = Boolean(searchTerm || statusFilter !== 'all' || showArchived)
 
   return (
     <section className="page-section cc-master-page">
       <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Leads</h1>
-          <p>Gestiona oportunidades comerciales, seguimiento y conversión a cliente.</p>
+          <p>Gestiona oportunidades comerciales, seguimiento y conversion a cliente.</p>
         </div>
 
         <button
@@ -122,67 +124,82 @@ export function LeadsPage({
 
       {showCreateForm ? <LeadCreateForm onCreated={onLeadCreated} /> : null}
 
-      <section className="data-section">
-        <div className="section-header">
-          <h2>Búsqueda y filtros</h2>
-          <p>Encuentra leads por nombre, teléfono, ciudad o estado.</p>
-        </div>
+      <section className="data-section cc-filters-block">
+        <details
+          className="cc-filters-panel cc-collapsible-section"
+          open={showFilters}
+          onToggle={(event) => setShowFilters(event.currentTarget.open)}
+        >
+          <summary className="cc-filters-panel__summary cc-collapsible-section__summary">
+            <div className="cc-filters-panel__copy">
+              <strong>Busqueda y filtros</strong>
+              <span>
+                {hasActiveFilters
+                  ? 'Filtros activos en leads'
+                  : 'Ocultos para mantener la vista compacta'}
+              </span>
+            </div>
+            {hasActiveFilters ? <span className="cc-filters-panel__badge">Activos</span> : null}
+          </summary>
 
-        <div className="filters-grid">
-          <label className="form-field filter-field-wide">
-            <span>Buscar</span>
+          <div className="filters-grid">
+            <label className="form-field filter-field-wide">
+              <span>Buscar</span>
+              <input
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Ej. Marta, 600123123, Barcelona..."
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Estado</span>
+              <select
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as LeadStatusFilter)
+                }
+              >
+                <option value="all">Todos</option>
+                <option value="new">{getStatusLabel('new')}</option>
+                <option value="contacted">{getStatusLabel('contacted')}</option>
+                <option value="quoted">{getStatusLabel('quoted')}</option>
+                <option value="won">{getStatusLabel('won')}</option>
+                <option value="lost">{getStatusLabel('lost')}</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="checkbox-row">
             <input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Ej. Marta, 600123123, Barcelona..."
+              type="checkbox"
+              checked={showArchived}
+              onChange={(event) => setShowArchived(event.target.checked)}
             />
+            <span>Mostrar leads archivados</span>
           </label>
 
-          <label className="form-field">
-            <span>Estado</span>
-            <select
-              value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as LeadStatusFilter)
-              }
-            >
-              <option value="all">Todos</option>
-              <option value="new">{getStatusLabel('new')}</option>
-              <option value="contacted">{getStatusLabel('contacted')}</option>
-              <option value="quoted">{getStatusLabel('quoted')}</option>
-              <option value="won">{getStatusLabel('won')}</option>
-              <option value="lost">{getStatusLabel('lost')}</option>
-            </select>
-          </label>
-        </div>
-
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={showArchived}
-            onChange={(event) => setShowArchived(event.target.checked)}
-          />
-          <span>Mostrar leads archivados</span>
-        </label>
+          {hasActiveFilters ? (
+            <div className="cc-filters-panel__actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setSearchTerm('')
+                  setStatusFilter('all')
+                  setShowArchived(false)
+                }}
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          ) : null}
+        </details>
 
         <div className="results-bar">
           <span>
             {filteredLeads.length} resultado(s) de {leads.length} lead(s)
           </span>
-
-          {(searchTerm || statusFilter !== 'all' || showArchived) && (
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                setSearchTerm('')
-                setStatusFilter('all')
-                setShowArchived(false)
-              }}
-            >
-              Limpiar filtros
-            </button>
-          )}
         </div>
       </section>
 

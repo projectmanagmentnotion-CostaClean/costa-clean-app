@@ -74,7 +74,18 @@ export function ListToolbar({
   onChange,
 }: ListToolbarProps) {
   const [preferences, setPreferences] = useState<ListPreferences>(() => readPreferences(storageKey, defaultPreferences))
+  const [showAdvancedControls, setShowAdvancedControls] = useState(false)
   const hasActiveControls = hasActivePreferences(preferences, defaultPreferences)
+  const activeFilterCount = Object.entries(preferences.filters).filter(
+    ([key, value]) => value !== (defaultPreferences.filters[key] ?? 'all'),
+  ).length
+  const activeSummaryBits = [
+    preferences.searchQuery.trim() ? 'busqueda' : null,
+    preferences.sortField !== defaultPreferences.sortField || preferences.sortDirection !== defaultPreferences.sortDirection
+      ? 'orden'
+      : null,
+    activeFilterCount > 0 ? `${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}` : null,
+  ].filter(Boolean)
 
   useEffect(() => {
     onChange(preferences)
@@ -101,63 +112,79 @@ export function ListToolbar({
         totalCount={totalCount}
       />
 
-      <div className="cc-list-toolbar__controls" aria-label="Ordenación y filtros de lista">
-        <label className="cc-list-toolbar__field">
-          <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">↕</span> Ordenar por</span>
-          <select
-            value={preferences.sortField}
-            onChange={(event) => updatePreferences((current) => ({ ...current, sortField: event.target.value }))}
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
+      <details
+        className="cc-list-toolbar__panel cc-collapsible-section"
+        open={showAdvancedControls}
+        onToggle={(event) => setShowAdvancedControls(event.currentTarget.open)}
+      >
+        <summary className="cc-list-toolbar__panel-summary cc-collapsible-section__summary">
+          <div className="cc-list-toolbar__panel-copy">
+            <strong>Orden y filtros</strong>
+            <span>
+              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' · ') : 'Ocultos para mantener la lista limpia'}
+            </span>
+          </div>
+          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Activos</span> : null}
+        </summary>
 
-        <label className="cc-list-toolbar__field">
-          <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⇅</span> Dirección</span>
-          <select
-            value={preferences.sortDirection}
-            onChange={(event) => updatePreferences((current) => ({
-              ...current,
-              sortDirection: event.target.value === 'asc' ? 'asc' : 'desc',
-            }))}
-          >
-            <option value="desc">Mayor / reciente primero</option>
-            <option value="asc">Menor / antiguo primero</option>
-          </select>
-        </label>
-
-        {filters.map((filter) => (
-          <label key={filter.key} className="cc-list-toolbar__field">
-            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⌁</span> {filter.label}</span>
+        <div className="cc-list-toolbar__controls" aria-label="Ordenacion y filtros de lista">
+          <label className="cc-list-toolbar__field">
+            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">↕</span> Ordenar por</span>
             <select
-              value={preferences.filters[filter.key] ?? 'all'}
-              onChange={(event) => updatePreferences((current) => ({
-                ...current,
-                filters: {
-                  ...current.filters,
-                  [filter.key]: event.target.value,
-                },
-              }))}
+              value={preferences.sortField}
+              onChange={(event) => updatePreferences((current) => ({ ...current, sortField: event.target.value }))}
             >
-              {filter.options.map((option) => (
+              {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
           </label>
-        ))}
 
-        <button
-          type="button"
-          className="secondary-button cc-list-toolbar__reset"
-          onClick={() => setPreferences(defaultPreferences)}
-          disabled={!hasActiveControls}
-        >
-          <span aria-hidden="true">×</span>
-          Limpiar filtros
-        </button>
-      </div>
+          <label className="cc-list-toolbar__field">
+            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⇅</span> Direccion</span>
+            <select
+              value={preferences.sortDirection}
+              onChange={(event) => updatePreferences((current) => ({
+                ...current,
+                sortDirection: event.target.value === 'asc' ? 'asc' : 'desc',
+              }))}
+            >
+              <option value="desc">Mayor / reciente primero</option>
+              <option value="asc">Menor / antiguo primero</option>
+            </select>
+          </label>
+
+          {filters.map((filter) => (
+            <label key={filter.key} className="cc-list-toolbar__field">
+              <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">⌁</span> {filter.label}</span>
+              <select
+                value={preferences.filters[filter.key] ?? 'all'}
+                onChange={(event) => updatePreferences((current) => ({
+                  ...current,
+                  filters: {
+                    ...current.filters,
+                    [filter.key]: event.target.value,
+                  },
+                }))}
+              >
+                {filter.options.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          ))}
+
+          <button
+            type="button"
+            className="secondary-button cc-list-toolbar__reset"
+            onClick={() => setPreferences(defaultPreferences)}
+            disabled={!hasActiveControls}
+          >
+            <span aria-hidden="true">×</span>
+            Limpiar filtros
+          </button>
+        </div>
+      </details>
 
       {hasActiveControls ? (
         <div className="cc-list-toolbar__summary" aria-live="polite">

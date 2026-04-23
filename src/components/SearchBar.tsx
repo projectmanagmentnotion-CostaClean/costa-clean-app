@@ -47,7 +47,7 @@ export function SearchBar({
 
       {showCount ? (
         <p className="cc-searchbar__count">
-          Mostrando {resultCount} de {totalCount} resultados
+          {resultCount} visibles de {totalCount} registros
         </p>
       ) : null}
     </div>

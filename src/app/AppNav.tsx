@@ -290,7 +290,7 @@ export function AppNav({
             <div className="cc-shell-nav__brand-copy">
               <span className="cc-shell-nav__eyebrow">CostaClean</span>
               <span className="cc-shell-nav__title">Centro operativo CRM</span>
-              <span className="cc-shell-nav__subtitle">Comercial, servicio, facturacion y cierre en una sola shell.</span>
+              <span className="cc-shell-nav__subtitle">Comercial, operaciones, finanzas y cierre en un flujo unico.</span>
             </div>
           </div>
 
@@ -326,7 +326,7 @@ export function AppNav({
             ) : null}
 
             <div className="cc-shell-nav__current">
-              <span className="cc-shell-nav__current-label">Modulo activo</span>
+              <span className="cc-shell-nav__current-label">Vista activa</span>
               <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
             </div>
           </div>

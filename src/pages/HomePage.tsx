@@ -65,7 +65,7 @@ export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, 
           <span className="cc-page-topline__eyebrow">CostaClean CRM</span>
           <h1 className="cc-page-topline__title">Centro de control</h1>
           <p className="cc-page-topline__text">
-            Finanzas, seguimiento operativo y atencion comercial en una vista mas clara y ejecutiva.
+            Prioridades, cobro, servicio y seguimiento comercial en una lectura mas limpia y ejecutiva.
           </p>
         </div>
 

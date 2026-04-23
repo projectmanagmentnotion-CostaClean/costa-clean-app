@@ -10386,12 +10386,12 @@
    ========================================================= */
 
 .app-shell {
-  padding: clamp(14px, 2vw, 24px) clamp(10px, 1.8vw, 20px) 108px;
+  padding: clamp(10px, 1.4vw, 18px) clamp(8px, 1.2vw, 16px) 104px;
 }
 
 .hero-card.cc-shell,
 .hero-card {
-  padding: clamp(12px, 1.6vw, 18px);
+  padding: clamp(10px, 1.2vw, 14px);
   border-radius: 30px;
   border-color: rgba(255, 255, 255, 0.09);
   background:
@@ -10400,7 +10400,7 @@
 }
 
 .cc-shell-content {
-  max-width: 1220px;
+  max-width: 1280px;
 }
 
 .cc-shell-nav--top-only {
@@ -10580,7 +10580,7 @@
 .cc-doc-page .cc-master-page__hero,
 .section-header.page-header-actions {
   gap: 12px;
-  padding: 18px 20px;
+  padding: 16px 18px;
   border-radius: 24px;
   border-color: rgba(255, 255, 255, 0.07);
   background:
@@ -10668,7 +10668,7 @@
 .cc-module-filter-bar,
 .lead-detail-card,
 .cc-expense-detail-card {
-  padding: 18px;
+  padding: 16px;
 }
 
 .section-header {
@@ -11884,12 +11884,14 @@
 .cc-alerts-bell {
   position: relative;
   display: inline-flex;
+  isolation: isolate;
 }
 
 .cc-alerts-bell__panel {
   top: calc(100% + 10px);
   right: 0;
   left: auto;
+  z-index: 180;
   width: min(380px, calc(100vw - 28px));
   max-width: calc(100vw - 28px);
   max-height: min(70vh, calc(100dvh - 108px));
@@ -12243,6 +12245,7 @@
     left: max(8px, env(safe-area-inset-left, 0px));
     right: max(8px, env(safe-area-inset-right, 0px));
     bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+    width: auto;
     border-radius: 18px;
     padding: 11px;
   }
@@ -12460,6 +12463,15 @@
 }
 
 @media (max-width: 900px) {
+  .app-shell {
+    padding: 9px 8px 100px;
+  }
+
+  .hero-card.cc-shell,
+  .hero-card {
+    padding: 9px;
+  }
+
   .cc-shell-nav__topline {
     align-items: stretch;
   }
@@ -12501,6 +12513,34 @@
 }
 
 @media (max-width: 640px) {
+  .app-shell {
+    padding:
+      max(7px, calc(env(safe-area-inset-top, 0px) + 2px))
+      max(6px, env(safe-area-inset-right, 0px))
+      calc(env(safe-area-inset-bottom, 0px) + 100px)
+      max(6px, env(safe-area-inset-left, 0px));
+  }
+
+  .hero-card.cc-shell,
+  .hero-card {
+    padding: 8px;
+  }
+
+  .cc-master-page__hero,
+  .cc-doc-page .cc-master-page__hero,
+  .section-header.page-header-actions {
+    padding: 14px 15px;
+  }
+
+  .data-section,
+  .cc-dashboard-overview,
+  .cc-dashboard-block,
+  .cc-module-filter-bar,
+  .lead-detail-card,
+  .cc-expense-detail-card {
+    padding: 14px;
+  }
+
   .cc-shell-nav--top-only {
     padding: 12px;
   }
@@ -12590,6 +12630,13 @@
 :root[data-theme="light"] .cc-list-toolbar__panel,
 :root[data-theme="light"] .cc-filters-panel {
   border-color: rgba(17, 73, 103, 0.12);
+}
+
+.hero-card.cc-shell,
+.cc-shell-frame,
+.cc-shell-nav,
+.cc-shell-nav__actions {
+  overflow: visible;
 }
 
 /* =========================================================

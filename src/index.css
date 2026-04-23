@@ -119,8 +119,8 @@
   --control-height-md: 44px;
   --control-height-lg: 50px;
 
-  --container-max: 1380px;
-  --content-max: 1180px;
+  --container-max: 1440px;
+  --content-max: 1260px;
 
   --motion-fast: 160ms cubic-bezier(.2,.8,.2,1);
   --motion-base: 220ms cubic-bezier(.2,.8,.2,1);

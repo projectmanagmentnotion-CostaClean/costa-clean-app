@@ -148,6 +148,8 @@ function FieldError({ message }: { message?: string }) {
 
 export function PublicQuoteRequestForm() {
   const [form, setForm] = useState<QuoteRequestNormalizedInput>(initialForm)
+  const [startedAt] = useState(() => new Date().toISOString())
+  const [website, setWebsite] = useState('')
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [errors, setErrors] = useState<ErrorMap>({})
   const [submitState, setSubmitState] = useState<{
@@ -223,7 +225,10 @@ export function PublicQuoteRequestForm() {
     setSubmitState({ isSubmitting: true, error: null, success: null })
 
     try {
-      const result = await submitPublicQuoteRequest(submissionInput)
+      const result = await submitPublicQuoteRequest(submissionInput, {
+        startedAt,
+        website,
+      })
       setForm(submissionInput)
       setSubmitState({ isSubmitting: false, error: null, success: result })
     } catch (error) {
@@ -260,6 +265,29 @@ export function PublicQuoteRequestForm() {
       </ol>
 
       <form onSubmit={handleSubmit} noValidate>
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            overflow: 'hidden',
+            clip: 'rect(0 0 0 0)',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <label>
+            Website
+            <input
+              name="website"
+              tabIndex={-1}
+              autoComplete="off"
+              value={website}
+              onChange={(event) => setWebsite(event.target.value)}
+            />
+          </label>
+        </div>
+
         <div className="cc-public-intake-step-heading">
           <p>{currentStep.label}</p>
           <h2>{currentStep.title}</h2>

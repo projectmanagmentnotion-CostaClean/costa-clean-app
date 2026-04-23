@@ -42,7 +42,7 @@ export function useShellNavigation() {
     setPendingGuardedAction({
       action,
       title: options?.title ?? 'Salir sin guardar',
-      description: options?.description ?? `Hay ${unsavedChangesContext}. Si continúas, perderás esos cambios.`,
+      description: options?.description ?? `Hay ${unsavedChangesContext}. Si continuas, perderas esos cambios.`,
       confirmLabel: options?.confirmLabel ?? 'Salir sin guardar',
     })
   }, [unsavedChangesContext])
@@ -62,8 +62,8 @@ export function useShellNavigation() {
     runWithNavigationGuard(() => {
       commitViewChange(view)
     }, {
-      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si cambias de módulo ahora, perderás esos cambios.`,
-      confirmLabel: 'Cambiar de módulo',
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si cambias de modulo ahora, perderas esos cambios.`,
+      confirmLabel: 'Cambiar de modulo',
     })
   }, [commitViewChange, currentView, runWithNavigationGuard, unsavedChangesContext])
 
@@ -79,7 +79,7 @@ export function useShellNavigation() {
       setCurrentView(previousView)
       setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
     }, {
-      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si vuelves ahora, perderás esos cambios.`,
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si vuelves ahora, perderas esos cambios.`,
       confirmLabel: 'Volver',
     })
   }, [currentView, runWithNavigationGuard, unsavedChangesContext])

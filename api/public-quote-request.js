@@ -7,6 +7,12 @@ import {
   normalizeRequestInput,
   validateInput,
 } from '../src/features/publicIntake/intakePipeline.mjs'
+import {
+  getClientIp,
+  isHoneypotTriggered,
+  registerIpAttempt,
+  validateSubmissionTiming,
+} from './_lib/requestProtection.js'
 
 function getSupabaseServerConfig() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
@@ -94,6 +100,34 @@ async function createOrUpdateLead(input, normalizedPhone, intakeSubmissionId, pr
   return { lead, matchedExistingLead: false }
 }
 
+async function hasRecentDuplicateSubmission(input) {
+  const tenMinutesAgoIso = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+  const checks = []
+
+  if (input.phone) {
+    checks.push(
+      supabaseRequest(
+        `lead_drafts?select=id&phone=eq.${encodeURIComponent(input.phone)}&created_at=gte.${encodeURIComponent(tenMinutesAgoIso)}&limit=1`,
+      ),
+    )
+  }
+
+  if (input.email) {
+    checks.push(
+      supabaseRequest(
+        `lead_drafts?select=id&email=eq.${encodeURIComponent(input.email)}&created_at=gte.${encodeURIComponent(tenMinutesAgoIso)}&limit=1`,
+      ),
+    )
+  }
+
+  if (checks.length === 0) {
+    return false
+  }
+
+  const results = await Promise.all(checks)
+  return results.some((result) => Array.isArray(result) && result.length > 0)
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
@@ -102,6 +136,25 @@ export default async function handler(req, res) {
 
   try {
     const rawBody = req.body && typeof req.body === 'object' ? req.body : {}
+    if (isHoneypotTriggered(rawBody)) {
+      return res.status(400).json({ error: 'Solicitud invalida.' })
+    }
+
+    const timingValidation = validateSubmissionTiming({
+      startedAt: rawBody.startedAt,
+      submittedAt: rawBody.normalizedInput?.submittedAt,
+    })
+    if (!timingValidation.ok) {
+      return res.status(400).json({ error: timingValidation.error })
+    }
+
+    const clientIp = getClientIp(req)
+    if (!registerIpAttempt(clientIp)) {
+      return res.status(429).json({
+        error: 'Has enviado demasiadas solicitudes en poco tiempo. Espera unos minutos e intentalo de nuevo.',
+      })
+    }
+
     const { normalizedInput, normalizedPhone } = normalizeRequestInput(rawBody.normalizedInput || rawBody)
     const validationErrors = validateInput(normalizedInput, normalizedPhone)
 
@@ -109,6 +162,12 @@ export default async function handler(req, res) {
       return res.status(400).json({
         error: 'La solicitud contiene campos incompletos.',
         fieldErrors: validationErrors,
+      })
+    }
+
+    if (await hasRecentDuplicateSubmission(normalizedInput)) {
+      return res.status(429).json({
+        error: 'Ya hemos recibido una solicitud reciente con estos datos. Espera unos minutos antes de reenviarla.',
       })
     }
 

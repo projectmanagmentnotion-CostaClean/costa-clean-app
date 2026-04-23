@@ -19,10 +19,10 @@ export function PublicQuoteRequestPage() {
 
         <div className="cc-public-intake-hero__copy">
           <p className="cc-public-intake-eyebrow">Presupuesto de limpieza</p>
-          <h1 id="public-quote-title">Cuéntanos qué necesitas.</h1>
+          <h1 id="public-quote-title">Cuentanos que necesitas.</h1>
           <p>
             Te prepararemos una propuesta clara para tu vivienda, oficina o alojamiento.
-            No enviaremos nada automático.
+            No enviaremos nada automatico.
           </p>
         </div>
       </section>

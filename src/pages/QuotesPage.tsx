@@ -65,7 +65,7 @@ export function QuotesPage({
     }
 
     confirmNavigation(action, {
-      description: 'Hay cambios sin guardar en presupuestos. Si continúas, perderás esos cambios.',
+      description: 'Hay cambios sin guardar en presupuestos. Si continuas, perderas esos cambios.',
       confirmLabel: 'Continuar',
     })
   }
@@ -167,7 +167,7 @@ export function QuotesPage({
       <ConfirmDialog
         isOpen={isOpenDocumentConfirmVisible && Boolean(selectedQuote)}
         title="Abrir vista de presupuesto"
-        description="Se abrirá el presupuesto en una vista de documento para revisar, imprimir o guardar PDF. Continúa solo si quieres trabajar con este documento ahora."
+        description="Se abrira el presupuesto en una vista de documento para revisar, imprimir o guardar PDF. Continua solo si quieres trabajar con este documento ahora."
         confirmLabel="Abrir presupuesto"
         onCancel={() => setIsOpenDocumentConfirmVisible(false)}
         onConfirm={() => {

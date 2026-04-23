@@ -20,11 +20,13 @@ interface AuditEventInput {
 }
 
 export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
-  const { client } = getSupabaseClient()
+  const { client, error } = getSupabaseClient()
 
-  if (!client) return
+  if (!client) {
+    throw new Error(error ?? 'No se pudo inicializar Supabase para la auditoria.')
+  }
 
-  const { error } = await client.rpc('record_audit_event', {
+  const { error: auditError } = await client.rpc('record_audit_event', {
     p_entity_type: input.entityType,
     p_entity_id: input.entityId,
     p_action: input.action,
@@ -33,7 +35,7 @@ export async function recordAuditEvent(input: AuditEventInput): Promise<void> {
     p_metadata: input.metadata ?? {},
   })
 
-  if (error) {
-    console.warn('No se pudo registrar el evento de auditoria.', error.message)
+  if (auditError) {
+    throw new Error(auditError.message || 'No se pudo registrar el evento de auditoria.')
   }
 }

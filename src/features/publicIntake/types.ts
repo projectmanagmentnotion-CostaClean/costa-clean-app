@@ -33,6 +33,11 @@ export interface PublicQuotePricingAdjustment {
   amount: number
 }
 
+export interface PublicQuoteRequestProtectionInput {
+  startedAt: string
+  website: string
+}
+
 export interface PublicQuotePricingBreakdown {
   version: 'pricing_v1'
   currency: 'EUR'

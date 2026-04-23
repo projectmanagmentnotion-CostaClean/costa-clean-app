@@ -68,7 +68,7 @@ export function InvoicesPage({
     }
 
     confirmNavigation(action, {
-      description: 'Hay cambios sin guardar en facturas. Si continúas, perderás esos cambios.',
+      description: 'Hay cambios sin guardar en facturas. Si continuas, perderas esos cambios.',
       confirmLabel: 'Continuar',
     })
   }
@@ -86,7 +86,7 @@ export function InvoicesPage({
           <div>
             <h1>Facturas</h1>
             <p>
-              Gestiona documentos de cobro con una estructura más clara y compacta en iPhone.
+              Gestiona documentos de cobro con una estructura mas clara y compacta en iPhone.
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export function InvoicesPage({
       <ConfirmDialog
         isOpen={isOpenDocumentConfirmVisible && Boolean(selectedInvoice)}
         title="Abrir vista de factura"
-        description="Se abrirá la factura en una vista de documento para revisar, imprimir o guardar PDF. Continúa solo si quieres trabajar con este documento ahora."
+        description="Se abrira la factura en una vista de documento para revisar, imprimir o guardar PDF. Continua solo si quieres trabajar con este documento ahora."
         confirmLabel="Abrir factura"
         onCancel={() => setIsOpenDocumentConfirmVisible(false)}
         onConfirm={() => {

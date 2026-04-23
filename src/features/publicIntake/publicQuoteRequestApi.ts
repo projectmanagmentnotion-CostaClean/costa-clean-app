@@ -1,4 +1,8 @@
-import type { PublicQuotePricingBreakdown, QuoteRequestNormalizedInput } from './types'
+import type {
+  PublicQuotePricingBreakdown,
+  PublicQuoteRequestProtectionInput,
+  QuoteRequestNormalizedInput,
+} from './types'
 
 export interface PublicQuoteRequestSuccess {
   ok: true
@@ -33,6 +37,7 @@ function getErrorMessage(value: unknown): string {
 
 export async function submitPublicQuoteRequest(
   normalizedInput: QuoteRequestNormalizedInput,
+  protection: PublicQuoteRequestProtectionInput,
 ): Promise<PublicQuoteRequestSuccess> {
   const response = await fetch('/api/public-quote-request', {
     method: 'POST',
@@ -42,6 +47,8 @@ export async function submitPublicQuoteRequest(
     body: JSON.stringify({
       source: 'public_quote_form',
       normalizedInput,
+      startedAt: protection.startedAt,
+      website: protection.website,
     }),
   })
 

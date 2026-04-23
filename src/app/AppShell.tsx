@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppNav } from './AppNav'
+import { Suspense, lazy } from 'react'
 import '../features/shell/shell-dashboard.css'
 import type { AppView } from './navigation'
 import type { AppTheme } from './theme'
@@ -21,18 +22,6 @@ import {
   getQuoteFilterLabel,
   type ModuleFilterState,
 } from './moduleFilters'
-import { HomePage } from '../pages/HomePage'
-import { LeadsPage } from '../pages/LeadsPage'
-import { ClientsPage } from '../pages/ClientsPage'
-import { PropertiesPage } from '../pages/PropertiesPage'
-import { QuotesPage } from '../pages/QuotesPage'
-import { JobsPage } from '../pages/JobsPage'
-import { InvoicesPage } from '../pages/InvoicesPage'
-import { ExpensesPage } from '../pages/ExpensesPage'
-import { PaymentsPage } from '../pages/PaymentsPage'
-import { QuarterlyClosingPage } from '../pages/QuarterlyClosingPage'
-import { AnnualClosingPage } from '../pages/AnnualClosingPage'
-import { AlertsCenterPage } from '../pages/AlertsCenterPage'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import type { PropertyListItem } from '../features/properties/types'
 import { buildJobCreatePrefillFromQuote } from '../features/jobs/jobCreatePrefill'
@@ -60,6 +49,19 @@ interface AppShellProps {
   theme: AppTheme
   onToggleTheme: () => void
 }
+
+const HomePage = lazy(async () => ({ default: (await import('../pages/HomePage')).HomePage }))
+const LeadsPage = lazy(async () => ({ default: (await import('../pages/LeadsPage')).LeadsPage }))
+const ClientsPage = lazy(async () => ({ default: (await import('../pages/ClientsPage')).ClientsPage }))
+const PropertiesPage = lazy(async () => ({ default: (await import('../pages/PropertiesPage')).PropertiesPage }))
+const QuotesPage = lazy(async () => ({ default: (await import('../pages/QuotesPage')).QuotesPage }))
+const JobsPage = lazy(async () => ({ default: (await import('../pages/JobsPage')).JobsPage }))
+const InvoicesPage = lazy(async () => ({ default: (await import('../pages/InvoicesPage')).InvoicesPage }))
+const ExpensesPage = lazy(async () => ({ default: (await import('../pages/ExpensesPage')).ExpensesPage }))
+const PaymentsPage = lazy(async () => ({ default: (await import('../pages/PaymentsPage')).PaymentsPage }))
+const QuarterlyClosingPage = lazy(async () => ({ default: (await import('../pages/QuarterlyClosingPage')).QuarterlyClosingPage }))
+const AnnualClosingPage = lazy(async () => ({ default: (await import('../pages/AnnualClosingPage')).AnnualClosingPage }))
+const AlertsCenterPage = lazy(async () => ({ default: (await import('../pages/AlertsCenterPage')).AlertsCenterPage }))
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -778,120 +780,124 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         <div className="cc-shell-content">
           {isInitialDataLoading ? (
             <ShellLoadingState currentView={currentView} />
-          ) : currentView === 'alerts' ? (
-            <AlertsCenterPage
-              alerts={automationAlerts}
-              reviewedAlertIds={activeReviewedAlertIds}
-              onToggleReviewed={handleToggleReviewedAlert}
-              onOpenAlert={handleOpenAutomationAlert}
-            />
-          ) : currentView === 'annual_closing' ? (
-            <AnnualClosingPage
-              availableYears={availableAnnualClosingYears}
-              defaultFiscalYear={currentFiscalYear}
-              summaryByYear={annualClosingSummaryByYear}
-              closings={annualClosings}
-              invoices={invoicesWithCodes}
-              payments={paymentsWithCodes}
-              expenses={expenses}
-              error={annualClosingError}
-              onNavigateToIncidence={handleAnnualClosingNavigation}
-              onOpenQuarter={handleOpenQuarterFromAnnual}
-              onSaveClosing={handleSaveAnnualClosing}
-            />
-          ) : currentView === 'quarterly_closing' ? (
-            <QuarterlyClosingPage
-              availableYears={availableClosingYears}
-              defaultFiscalYear={quarterlyClosingFocus?.fiscalYear ?? currentFiscalYear}
-              defaultFiscalQuarter={quarterlyClosingFocus?.fiscalQuarter ?? currentFiscalQuarter}
-              summaryByPeriod={quarterlyClosingSummaryByPeriod}
-              closings={quarterlyClosings}
-              invoices={invoicesWithCodes}
-              payments={paymentsWithCodes}
-              expenses={expenses}
-              error={quarterlyClosingError}
-              onNavigateToIncidence={handleQuarterlyClosingNavigation}
-              onSaveClosing={handleSaveQuarterlyClosing}
-            />
-          ) : currentView === 'dashboard' ? (
-            <HomePage
-              metrics={dashboardMetrics}
-              agenda={dashboardAgenda}
-              onOpenView={navigateToView}
-              onRunKpiAction={handleDashboardKpiAction}
-              alerts={automationAlerts}
-              onOpenAlert={handleOpenAutomationAlert}
-            />
-          ) : currentView === 'leads' ? (
-            <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
-          ) : currentView === 'clients' ? (
-            <ClientsPage clients={clients} error={clientError} onClientCreated={refreshOperations} />
-          ) : currentView === 'properties' ? (
-            <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={refreshOperations} />
-          ) : currentView === 'quotes' ? (
-            <QuotesPage
-              quotes={filteredQuotes}
-              clients={clients}
-              properties={properties}
-              error={quoteError}
-              onQuoteCreated={refreshOperations}
-              onCreateJobFromQuote={handleCreateJobFromQuote}
-              activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
-              onClearFilter={() => clearModuleFilter('quotes')}
-              onUnsavedChange={updateUnsavedChanges}
-              confirmNavigation={runWithNavigationGuard}
-            />
-          ) : currentView === 'jobs' ? (
-            <JobsPage
-              jobs={filteredJobs}
-              clients={clients}
-              properties={properties}
-              quotes={quotes}
-              error={jobError}
-              onJobCreated={refreshOperations}
-              onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
-              createPrefill={jobCreatePrefill}
-              onPrefillConsumed={() => setJobCreatePrefill(null)}
-              activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
-              onClearFilter={() => clearModuleFilter('jobs')}
-              onUnsavedChange={updateUnsavedChanges}
-              confirmNavigation={runWithNavigationGuard}
-            />
-          ) : currentView === 'invoices' ? (
-            <InvoicesPage
-              invoices={filteredInvoices}
-              jobs={jobsWithCodes}
-              quotes={quotesWithCodes}
-              error={invoiceError}
-              onInvoiceCreated={refreshBilling}
-              createPrefill={invoiceCreatePrefill}
-              onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
-              activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
-              onClearFilter={() => clearModuleFilter('invoices')}
-              onUnsavedChange={updateUnsavedChanges}
-              confirmNavigation={runWithNavigationGuard}
-            />
-          ) : currentView === 'expenses' ? (
-            <ExpensesPage
-              expenses={filteredExpenses}
-              error={expenseError}
-              onExpenseCreated={refreshBilling}
-              activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
-              onClearFilter={() => clearModuleFilter('expenses')}
-              onUnsavedChange={updateUnsavedChanges}
-              confirmNavigation={runWithNavigationGuard}
-            />
           ) : (
-            <PaymentsPage
-              payments={filteredPayments}
-              invoices={invoicesWithCodes}
-              error={paymentError}
-              onPaymentCreated={reloadInvoicesAndPayments}
-              activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
-              onClearFilter={() => clearModuleFilter('payments')}
-              onUnsavedChange={updateUnsavedChanges}
-              confirmNavigation={runWithNavigationGuard}
-            />
+            <Suspense fallback={<ShellLoadingState currentView={currentView} />}>
+              {currentView === 'alerts' ? (
+                <AlertsCenterPage
+                  alerts={automationAlerts}
+                  reviewedAlertIds={activeReviewedAlertIds}
+                  onToggleReviewed={handleToggleReviewedAlert}
+                  onOpenAlert={handleOpenAutomationAlert}
+                />
+              ) : currentView === 'annual_closing' ? (
+                <AnnualClosingPage
+                  availableYears={availableAnnualClosingYears}
+                  defaultFiscalYear={currentFiscalYear}
+                  summaryByYear={annualClosingSummaryByYear}
+                  closings={annualClosings}
+                  invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
+                  expenses={expenses}
+                  error={annualClosingError}
+                  onNavigateToIncidence={handleAnnualClosingNavigation}
+                  onOpenQuarter={handleOpenQuarterFromAnnual}
+                  onSaveClosing={handleSaveAnnualClosing}
+                />
+              ) : currentView === 'quarterly_closing' ? (
+                <QuarterlyClosingPage
+                  availableYears={availableClosingYears}
+                  defaultFiscalYear={quarterlyClosingFocus?.fiscalYear ?? currentFiscalYear}
+                  defaultFiscalQuarter={quarterlyClosingFocus?.fiscalQuarter ?? currentFiscalQuarter}
+                  summaryByPeriod={quarterlyClosingSummaryByPeriod}
+                  closings={quarterlyClosings}
+                  invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
+                  expenses={expenses}
+                  error={quarterlyClosingError}
+                  onNavigateToIncidence={handleQuarterlyClosingNavigation}
+                  onSaveClosing={handleSaveQuarterlyClosing}
+                />
+              ) : currentView === 'dashboard' ? (
+                <HomePage
+                  metrics={dashboardMetrics}
+                  agenda={dashboardAgenda}
+                  onOpenView={navigateToView}
+                  onRunKpiAction={handleDashboardKpiAction}
+                  alerts={automationAlerts}
+                  onOpenAlert={handleOpenAutomationAlert}
+                />
+              ) : currentView === 'leads' ? (
+                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
+              ) : currentView === 'clients' ? (
+                <ClientsPage clients={clients} error={clientError} onClientCreated={refreshOperations} />
+              ) : currentView === 'properties' ? (
+                <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={refreshOperations} />
+              ) : currentView === 'quotes' ? (
+                <QuotesPage
+                  quotes={filteredQuotes}
+                  clients={clients}
+                  properties={properties}
+                  error={quoteError}
+                  onQuoteCreated={refreshOperations}
+                  onCreateJobFromQuote={handleCreateJobFromQuote}
+                  activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
+                  onClearFilter={() => clearModuleFilter('quotes')}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
+                />
+              ) : currentView === 'jobs' ? (
+                <JobsPage
+                  jobs={filteredJobs}
+                  clients={clients}
+                  properties={properties}
+                  quotes={quotes}
+                  error={jobError}
+                  onJobCreated={refreshOperations}
+                  onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
+                  createPrefill={jobCreatePrefill}
+                  onPrefillConsumed={() => setJobCreatePrefill(null)}
+                  activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
+                  onClearFilter={() => clearModuleFilter('jobs')}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
+                />
+              ) : currentView === 'invoices' ? (
+                <InvoicesPage
+                  invoices={filteredInvoices}
+                  jobs={jobsWithCodes}
+                  quotes={quotesWithCodes}
+                  error={invoiceError}
+                  onInvoiceCreated={refreshBilling}
+                  createPrefill={invoiceCreatePrefill}
+                  onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
+                  activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
+                  onClearFilter={() => clearModuleFilter('invoices')}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
+                />
+              ) : currentView === 'expenses' ? (
+                <ExpensesPage
+                  expenses={filteredExpenses}
+                  error={expenseError}
+                  onExpenseCreated={refreshBilling}
+                  activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
+                  onClearFilter={() => clearModuleFilter('expenses')}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
+                />
+              ) : (
+                <PaymentsPage
+                  payments={filteredPayments}
+                  invoices={invoicesWithCodes}
+                  error={paymentError}
+                  onPaymentCreated={reloadInvoicesAndPayments}
+                  activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
+                  onClearFilter={() => clearModuleFilter('payments')}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
+                />
+              )}
+            </Suspense>
           )}
         </div>
       </section>

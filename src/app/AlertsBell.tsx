@@ -30,7 +30,7 @@ function BellIcon() {
 }
 
 function getSeverityLabel(severity: AutomationAlertSeverity): string {
-  if (severity === 'critical') return 'Crítica'
+  if (severity === 'critical') return 'Critica'
   if (severity === 'warning') return 'Prioritaria'
   return 'Recordatorio'
 }

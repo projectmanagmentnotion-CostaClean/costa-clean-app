@@ -1,7 +1,6 @@
 ﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
-import type { ClientListItem } from '../clients/types'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
@@ -11,7 +10,6 @@ import type { LeadListItem } from './types'
 interface LeadDetailCardProps {
   lead: LeadListItem | null
   leadDraft: LeadDraftRecord | null
-  clients: ClientListItem[]
   alreadyConverted: boolean
   onLeadUpdated: () => Promise<void>
   onLeadConverted: () => Promise<void>
@@ -27,7 +25,6 @@ interface EditFormState {
 export function LeadDetailCard({
   lead,
   leadDraft,
-  clients,
   alreadyConverted,
   onLeadUpdated,
   onLeadConverted,
@@ -376,7 +373,6 @@ export function LeadDetailCard({
             <LeadDraftCards
               lead={lead}
               leadDraft={leadDraft}
-              clients={clients}
               onWorkflowUpdated={onLeadConverted}
             />
           ) : null}

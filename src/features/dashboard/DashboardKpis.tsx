@@ -121,8 +121,10 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
       <div className="cc-dashboard-secondary-grid">
         <details className="cc-dashboard-subsection cc-collapsible-section" open>
           <summary className="cc-dashboard-subsection__header cc-collapsible-section__summary">
-            <h3>Atencion operativa</h3>
-            <p>Bloque enfocado en incidencias accionables del dia a dia.</p>
+            <div className="cc-collapsible-section__copy">
+              <h3>Atencion operativa</h3>
+              <p>Bloque enfocado en incidencias accionables del dia a dia.</p>
+            </div>
           </summary>
 
           <div className="cc-kpi-grid cc-kpi-grid--compact">
@@ -144,8 +146,10 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
 
         <details className="cc-dashboard-subsection cc-collapsible-section">
           <summary className="cc-dashboard-subsection__header cc-collapsible-section__summary">
-            <h3>Base operativa y cobertura</h3>
-            <p>Volumen de cartera, actividad registrada y control de soporte.</p>
+            <div className="cc-collapsible-section__copy">
+              <h3>Base operativa y cobertura</h3>
+              <p>Volumen de cartera, actividad registrada y control de soporte.</p>
+            </div>
           </summary>
 
           <div className="cc-kpi-grid cc-kpi-grid--dense">

@@ -3,7 +3,6 @@ import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog, type FeedbackDialogTone } from '../../components/FeedbackDialog'
 import { calculatePricing } from '../../config/leadQuoteMessagingEngineAccess'
-import type { ClientListItem } from '../clients/types'
 import type { LeadListItem } from '../leads/types'
 import {
   convertReviewedLeadDraftToQuote,
@@ -16,7 +15,6 @@ import type { LeadDraftRecord } from './types'
 interface LeadDraftCardsProps {
   lead: LeadListItem
   leadDraft: LeadDraftRecord | null
-  clients: ClientListItem[]
   onWorkflowUpdated: () => Promise<void>
 }
 
@@ -86,7 +84,6 @@ async function copyToClipboard(text: string): Promise<boolean> {
 export function LeadDraftCards({
   lead,
   leadDraft,
-  clients,
   onWorkflowUpdated,
 }: LeadDraftCardsProps) {
   const [draftOverride, setDraftOverride] = useState<LeadDraftRecord | null>(null)
@@ -230,7 +227,7 @@ export function LeadDraftCards({
     setIsActionRunning(true)
 
     try {
-      const result = await createOrLinkClientFromReviewedLeadDraft(lead, currentDraft, clients)
+      const result = await createOrLinkClientFromReviewedLeadDraft(lead, currentDraft)
       await onWorkflowUpdated()
       setSuccessStatus('Cliente actualizado', getClientActionMessage(result.clientAction))
     } catch (error) {
@@ -245,7 +242,7 @@ export function LeadDraftCards({
     setIsActionRunning(true)
 
     try {
-      const result = await convertReviewedLeadDraftToQuote(lead, currentDraft, clients)
+      const result = await convertReviewedLeadDraftToQuote(lead, currentDraft)
       await onWorkflowUpdated()
       setDraftOverride({
         ...currentDraft,

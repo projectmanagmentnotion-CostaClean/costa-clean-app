@@ -231,12 +231,12 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
       open={isOpen}
       onToggle={(event) => setIsOpen(event.currentTarget.open)}
     >
-      <summary className="cc-dashboard-block__header cc-dashboard-block__header--split cc-collapsible-section__summary cc-quick-actions-panel__summary">
-        <div>
-          <h2>Acciones rapidas</h2>
-          <p>Accesos directos para moverte sin salir del panel.</p>
-        </div>
-      </summary>
+        <summary className="cc-dashboard-block__header cc-dashboard-block__header--split cc-collapsible-section__summary cc-quick-actions-panel__summary">
+          <div>
+            <h2>Acciones rapidas</h2>
+            <p>Accesos directos para tareas frecuentes.</p>
+          </div>
+        </summary>
 
       <div className="cc-quick-actions cc-quick-actions--dashboard">
         {quickActions.map((action) => {

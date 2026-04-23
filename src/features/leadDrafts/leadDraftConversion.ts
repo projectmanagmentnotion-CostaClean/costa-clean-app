@@ -6,7 +6,6 @@ import {
   mapPropertyType,
   mapServiceType,
 } from '../../config/leadQuoteMessagingEngineAccess'
-import type { ClientListItem } from '../clients/types'
 import { convertLeadToClient, saveLeadQuoteWithLines } from '../financial/financialWriteApi'
 import type { LeadListItem } from '../leads/types'
 import { createLocalId, roundMoney } from '../quotes/quoteLineUtils'
@@ -226,8 +225,6 @@ export async function markLeadDraftReviewed(leadDraftId: string): Promise<void> 
 export async function createOrLinkClientFromReviewedLeadDraft(
   lead: LeadListItem,
   leadDraft: LeadDraftRecord,
-  _clients: ClientListItem[],
-  _newClientStatus: 'active' | 'inactive' = 'active',
 ): Promise<LeadDraftClientLinkResult> {
   assertReviewedDraft(leadDraft)
 
@@ -238,7 +235,6 @@ export async function createOrLinkClientFromReviewedLeadDraft(
 export async function convertReviewedLeadDraftToQuote(
   lead: LeadListItem,
   leadDraft: LeadDraftRecord,
-  _clients: ClientListItem[],
 ): Promise<LeadDraftQuoteConversionResult> {
   assertReviewedDraft(leadDraft)
 

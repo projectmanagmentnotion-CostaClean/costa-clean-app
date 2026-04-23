@@ -25,9 +25,8 @@ interface AppNavProps {
 interface NavItemDefinition {
   view: AppView
   shortLabel: string
-  section: string
   icon: () => ReactElement
-  navHint?: string
+  section: string
   mobilePriority?: boolean
 }
 
@@ -235,17 +234,17 @@ function PaymentsIcon() {
 }
 
 const navItems: NavItemDefinition[] = [
-  { view: 'dashboard', shortLabel: 'Home', section: 'General', navHint: 'Resumen', icon: HomeIcon, mobilePriority: true },
-  { view: 'leads', shortLabel: 'Leads', section: 'Comercial', navHint: 'Pipeline', icon: LeadsIcon, mobilePriority: true },
-  { view: 'clients', shortLabel: 'Clientes', section: 'Base', navHint: 'Cartera', icon: ClientsIcon, mobilePriority: true },
-  { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', navHint: 'Activos', icon: PropertiesIcon, mobilePriority: true },
-  { view: 'quotes', shortLabel: 'Presupuestos', section: 'Operaciones', navHint: 'Propuestas', icon: QuotesIcon, mobilePriority: true },
-  { view: 'jobs', shortLabel: 'Servicios', section: 'Operaciones', navHint: 'Agenda', icon: JobsIcon, mobilePriority: true },
-  { view: 'invoices', shortLabel: 'Facturas', section: 'Finanzas', navHint: 'Emision', icon: InvoicesIcon, mobilePriority: true },
-  { view: 'payments', shortLabel: 'Cobros', section: 'Finanzas', navHint: 'Seguimiento', icon: PaymentsIcon, mobilePriority: true },
-  { view: 'expenses', shortLabel: 'Gastos', section: 'Finanzas', navHint: 'Control', icon: ExpensesIcon, mobilePriority: false },
-  { view: 'quarterly_closing', shortLabel: 'Cierre trimestral', section: 'Cierre', navHint: 'Q', icon: QuarterlyClosingIcon, mobilePriority: false },
-  { view: 'annual_closing', shortLabel: 'Cierre anual', section: 'Cierre', navHint: 'FY', icon: AnnualClosingIcon, mobilePriority: false },
+  { view: 'dashboard', shortLabel: 'Home', section: 'General', icon: HomeIcon, mobilePriority: true },
+  { view: 'leads', shortLabel: 'Leads', section: 'Comercial', icon: LeadsIcon, mobilePriority: true },
+  { view: 'clients', shortLabel: 'Clientes', section: 'Base', icon: ClientsIcon, mobilePriority: true },
+  { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', icon: PropertiesIcon, mobilePriority: true },
+  { view: 'quotes', shortLabel: 'Presupuestos', section: 'Operaciones', icon: QuotesIcon, mobilePriority: true },
+  { view: 'jobs', shortLabel: 'Servicios', section: 'Operaciones', icon: JobsIcon, mobilePriority: true },
+  { view: 'invoices', shortLabel: 'Facturas', section: 'Finanzas', icon: InvoicesIcon, mobilePriority: true },
+  { view: 'payments', shortLabel: 'Cobros', section: 'Finanzas', icon: PaymentsIcon, mobilePriority: true },
+  { view: 'expenses', shortLabel: 'Gastos', section: 'Finanzas', icon: ExpensesIcon, mobilePriority: false },
+  { view: 'quarterly_closing', shortLabel: 'Cierre trimestral', section: 'Cierre', icon: QuarterlyClosingIcon, mobilePriority: false },
+  { view: 'annual_closing', shortLabel: 'Cierre anual', section: 'Cierre', icon: AnnualClosingIcon, mobilePriority: false },
 ]
 
 const bottomDockItems = navItems.filter((item) => item.mobilePriority)
@@ -290,8 +289,7 @@ export function AppNav({
             </div>
 
             <div className="cc-shell-nav__brand-copy">
-              <span className="cc-shell-nav__eyebrow">CostaClean CRM</span>
-              <span className="cc-shell-nav__title">Centro operativo</span>
+              <span className="cc-shell-nav__title">CostaClean CRM</span>
             </div>
           </div>
 
@@ -351,11 +349,9 @@ export function AppNav({
                 onClick={() => onChangeView(item.view)}
                 aria-current={currentView === item.view ? 'page' : undefined}
                 data-section={item.section}
-                title={item.shortLabel}
+                title={`${item.shortLabel} · ${item.section}`}
+                aria-label={`${item.shortLabel}, ${item.section}`}
               >
-                <span className="cc-shell-subnav__meta" aria-hidden="true">
-                  <span className="cc-shell-subnav__section">{item.navHint ?? item.section}</span>
-                </span>
                 <span className="cc-shell-subnav__glyph" aria-hidden="true">
                   <Icon />
                 </span>

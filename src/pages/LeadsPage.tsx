@@ -217,7 +217,6 @@ export function LeadsPage({
           <LeadDetailCard
             lead={selectedLead}
             leadDraft={selectedLeadDraft}
-            clients={clients}
             alreadyConverted={selectedLeadAlreadyConverted}
             onLeadUpdated={onLeadCreated}
             onLeadConverted={onLeadConverted}

@@ -12573,3 +12573,367 @@
 :root[data-theme="light"] .cc-filters-panel {
   border-color: rgba(17, 73, 103, 0.12);
 }
+
+/* =========================================================
+   Sprint 2026-04-23 D
+   Toggle, theme switch and quarterly closing finish
+   ========================================================= */
+
+.cc-collapsible-section__summary,
+.cc-intake-draft-card__summary,
+.cc-list-toolbar__panel-summary,
+.cc-filters-panel__summary {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  min-height: 48px;
+  padding-inline-end: 46px;
+}
+
+.cc-collapsible-section__summary::before,
+.cc-intake-draft-card__summary::before,
+.cc-list-toolbar__panel-summary::before,
+.cc-filters-panel__summary::before {
+  right: 2px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+}
+
+.cc-collapsible-section__summary::after,
+.cc-intake-draft-card__summary::after,
+.cc-list-toolbar__panel-summary::after,
+.cc-filters-panel__summary::after {
+  right: 15px;
+  position: absolute;
+}
+
+.cc-collapsible-section__summary > *:not(:first-child),
+.cc-intake-draft-card__summary > *:not(:first-child),
+.cc-list-toolbar__panel-summary > *:not(:first-child),
+.cc-filters-panel__summary > *:not(:first-child) {
+  justify-self: start;
+  align-self: center;
+}
+
+.cc-collapsible-section__summary .lead-badge,
+.cc-intake-draft-card__summary .lead-badge,
+.cc-collapsible-section__summary .cc-list-toolbar__panel-badge,
+.cc-collapsible-section__summary .cc-filters-panel__badge {
+  position: relative;
+  z-index: 1;
+  max-width: 100%;
+}
+
+.lead-badge--summary,
+.cc-list-toolbar__panel-badge,
+.cc-filters-panel__badge {
+  min-height: 24px;
+  padding-inline: 9px;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.lead-badge--success {
+  border-color: rgba(52, 211, 153, 0.2);
+  background: rgba(52, 211, 153, 0.14);
+  color: #dcfce7;
+}
+
+.cc-intake-draft-card__summary h4,
+.cc-collapsible-section__summary h4 {
+  margin: 0;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+.cc-intake-draft-card__summary p,
+.cc-collapsible-section__summary p {
+  max-width: 56ch;
+}
+
+.cc-theme-toggle {
+  position: relative;
+  min-height: 38px;
+  gap: 10px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 22px rgba(8, 21, 35, 0.14);
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.cc-theme-toggle:hover {
+  border-color: rgba(125, 211, 252, 0.24);
+  background:
+    linear-gradient(180deg, rgba(125, 211, 252, 0.12), rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 12px 24px rgba(8, 21, 35, 0.16);
+}
+
+.cc-theme-toggle:active {
+  transform: scale(0.985);
+}
+
+.cc-theme-toggle__track {
+  position: relative;
+  width: 50px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(7, 14, 24, 0.86), rgba(18, 27, 40, 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.03);
+  flex-shrink: 0;
+}
+
+.cc-theme-toggle__rail-icon {
+  position: absolute;
+  top: 50%;
+  width: 13px;
+  height: 13px;
+  display: inline-grid;
+  place-items: center;
+  color: rgba(201, 215, 231, 0.54);
+  transform: translateY(-50%);
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.cc-theme-toggle__rail-icon--sun {
+  left: 6px;
+}
+
+.cc-theme-toggle__rail-icon--moon {
+  right: 6px;
+}
+
+.cc-theme-toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(250, 250, 250, 0.98), rgba(224, 232, 240, 0.92));
+  color: #075985;
+  box-shadow:
+    0 6px 14px rgba(15, 23, 42, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.cc-theme-toggle.is-dark .cc-theme-toggle__thumb {
+  transform: translateX(20px);
+  background:
+    linear-gradient(180deg, rgba(202, 215, 232, 0.96), rgba(170, 186, 208, 0.92));
+  color: #0f172a;
+}
+
+.cc-theme-toggle.is-light .cc-theme-toggle__rail-icon--sun,
+.cc-theme-toggle.is-dark .cc-theme-toggle__rail-icon--moon {
+  color: rgba(255, 255, 255, 0.84);
+}
+
+.cc-theme-toggle__icon {
+  width: 16px;
+  height: 16px;
+  background: transparent;
+}
+
+.cc-theme-toggle__label {
+  min-width: 48px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.cc-quarterly-closing-shell {
+  padding: 22px;
+}
+
+.cc-quarterly-closing-shell__header {
+  align-items: start;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.cc-quarterly-closing-shell__intro {
+  display: grid;
+  gap: 7px;
+  max-width: 62ch;
+}
+
+.cc-quarterly-closing-shell__intro h2 {
+  margin: 0;
+}
+
+.cc-quarterly-closing-shell__intro p {
+  margin: 0;
+}
+
+.cc-quarterly-status-pill {
+  min-height: 42px;
+  padding-inline: 15px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.cc-quarterly-closing-filters {
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.cc-quarterly-closing-shell__meta {
+  display: grid;
+  gap: 14px;
+  padding-top: 2px;
+}
+
+.cc-quarterly-status-detail {
+  max-width: 74ch;
+}
+
+.cc-quarterly-workspace-switcher {
+  gap: 9px;
+  margin-top: 0;
+}
+
+.cc-quarterly-workspace-switcher .secondary-button {
+  min-height: 40px;
+  padding-inline: 14px;
+  border-radius: 14px;
+}
+
+.cc-quarterly-workspace-switcher .secondary-button.is-active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 22px rgba(8, 21, 35, 0.12);
+}
+
+.cc-quarterly-closing-shell .cc-alert {
+  margin-top: 14px;
+}
+
+@media (max-width: 900px) {
+  .cc-quarterly-closing-shell {
+    padding: 18px;
+  }
+
+  .cc-quarterly-closing-shell__header {
+    margin-bottom: 16px;
+  }
+
+  .cc-quarterly-closing-shell__meta {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-collapsible-section__summary,
+  .cc-intake-draft-card__summary,
+  .cc-list-toolbar__panel-summary,
+  .cc-filters-panel__summary {
+    padding-inline-end: 40px;
+  }
+
+  .cc-collapsible-section__summary::before,
+  .cc-intake-draft-card__summary::before,
+  .cc-list-toolbar__panel-summary::before,
+  .cc-filters-panel__summary::before {
+    width: 32px;
+    height: 32px;
+  }
+
+  .cc-collapsible-section__summary::after,
+  .cc-intake-draft-card__summary::after,
+  .cc-list-toolbar__panel-summary::after,
+  .cc-filters-panel__summary::after {
+    right: 14px;
+  }
+
+  .lead-badge--summary,
+  .cc-list-toolbar__panel-badge,
+  .cc-filters-panel__badge {
+    min-height: 22px;
+    padding-inline: 8px;
+    font-size: 0.58rem;
+  }
+
+  .cc-theme-toggle {
+    padding-inline-end: 8px;
+  }
+
+  .cc-theme-toggle__track {
+    width: 46px;
+  }
+
+  .cc-theme-toggle.is-dark .cc-theme-toggle__thumb {
+    transform: translateX(16px);
+  }
+
+  .cc-quarterly-closing-shell {
+    padding: 16px;
+  }
+}
+
+:root[data-theme="light"] .lead-badge--success {
+  border-color: rgba(22, 163, 74, 0.18);
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+:root[data-theme="light"] .cc-theme-toggle {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(242, 249, 253, 0.94));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    0 10px 22px rgba(17, 73, 103, 0.1);
+}
+
+:root[data-theme="light"] .cc-theme-toggle:hover {
+  border-color: rgba(11, 131, 180, 0.2);
+  background:
+    linear-gradient(180deg, #ffffff, rgba(232, 246, 252, 0.96));
+}
+
+:root[data-theme="light"] .cc-theme-toggle__track {
+  background:
+    linear-gradient(180deg, rgba(219, 234, 254, 0.96), rgba(191, 219, 254, 0.88));
+}
+
+:root[data-theme="light"] .cc-theme-toggle.is-dark .cc-theme-toggle__thumb {
+  background:
+    linear-gradient(180deg, rgba(30, 41, 59, 0.96), rgba(51, 65, 85, 0.92));
+  color: #e2e8f0;
+}
+
+:root[data-theme="light"] .cc-theme-toggle.is-light .cc-theme-toggle__thumb {
+  color: #0c4a6e;
+}
+
+:root[data-theme="light"] .cc-theme-toggle__rail-icon {
+  color: rgba(12, 74, 110, 0.42);
+}
+
+:root[data-theme="light"] .cc-quarterly-status-pill {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}

@@ -345,11 +345,11 @@ export function LeadDraftCards({
     <div className="cc-intake-draft-stack">
       <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Revisión manual" open>
         <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
-          <div>
+          <div className="cc-collapsible-section__copy">
             <p>Revisión obligatoria</p>
             <h4>{isReviewed ? 'Borrador revisado' : 'Pendiente de revisión manual'}</h4>
           </div>
-          <span className="lead-badge">{isReviewed ? 'Revisado' : 'Bloqueado'}</span>
+          <span className={isReviewed ? 'lead-badge lead-badge--summary lead-badge--success' : 'lead-badge lead-badge--summary'}>{isReviewed ? 'Revisado' : 'Bloqueado'}</span>
         </summary>
 
         <div className="cc-intake-draft-card__body">
@@ -388,11 +388,11 @@ export function LeadDraftCards({
 
       <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Borrador de presupuesto" open>
         <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
-          <div>
+          <div className="cc-collapsible-section__copy">
             <p>Borrador de presupuesto</p>
             <h4>{quoteDraft.serviceSummary}</h4>
           </div>
-          <span className="lead-badge">{quoteDraft.status}</span>
+          <span className="lead-badge lead-badge--summary">{quoteDraft.status}</span>
         </summary>
 
         <div className="cc-intake-draft-card__body">
@@ -434,11 +434,11 @@ export function LeadDraftCards({
 
       <details className="cc-intake-draft-card cc-intake-draft-card--collapsible cc-collapsible-section" aria-label="Borradores de comunicación" open>
         <summary className="cc-intake-draft-card__header cc-intake-draft-card__summary cc-collapsible-section__summary">
-          <div>
+          <div className="cc-collapsible-section__copy">
             <p>Comunicación</p>
             <h4>Borradores para revisión</h4>
           </div>
-          <span className="lead-badge">No enviado</span>
+          <span className="lead-badge lead-badge--summary">No enviado</span>
         </summary>
 
         <div className="cc-intake-draft-card__body">

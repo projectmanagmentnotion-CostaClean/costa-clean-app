@@ -512,8 +512,8 @@ export function QuarterlyClosingPage({
       </div>
 
       <section className="cc-dashboard-block cc-quarterly-closing-shell" aria-label="Configuración de cierre trimestral">
-        <div className="cc-dashboard-block__header">
-          <div>
+        <div className="cc-dashboard-block__header cc-quarterly-closing-shell__header">
+          <div className="cc-quarterly-closing-shell__intro">
             <h2>Periodo de cierre</h2>
             <p>Selecciona ejercicio y trimestre para revisar el estado operativo y abrir el pack documental del cierre guardado.</p>
           </div>
@@ -547,9 +547,10 @@ export function QuarterlyClosingPage({
           </label>
         </div>
 
-        <p className="cc-quarterly-status-detail">{uiStatus.detail}</p>
+        <div className="cc-quarterly-closing-shell__meta">
+          <p className="cc-quarterly-status-detail">{uiStatus.detail}</p>
 
-        <div className="cc-quarterly-workspace-switcher">
+          <div className="cc-quarterly-workspace-switcher">
           <button
             type="button"
             className={workspace === 'operations' ? 'secondary-button is-active' : 'secondary-button'}
@@ -596,6 +597,7 @@ export function QuarterlyClosingPage({
           >
             Resumen IA
           </button>
+          </div>
         </div>
 
         {!closing ? (

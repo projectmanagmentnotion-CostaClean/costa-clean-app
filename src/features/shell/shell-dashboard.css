@@ -11893,6 +11893,8 @@
   width: min(380px, calc(100vw - 28px));
   max-width: calc(100vw - 28px);
   max-height: min(70vh, calc(100dvh - 108px));
+  grid-template-rows: auto minmax(0, 1fr);
+  box-sizing: border-box;
   overflow: hidden;
   overscroll-behavior: contain;
 }
@@ -12172,13 +12174,16 @@
     top: max(76px, calc(env(safe-area-inset-top, 0px) + 64px));
     left: max(10px, env(safe-area-inset-left, 0px));
     right: max(10px, env(safe-area-inset-right, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 98px);
     width: auto;
     max-width: none;
-    max-height: min(68vh, calc(100dvh - 124px));
+    max-height: none;
+    padding: 12px;
   }
 
   .cc-alerts-bell__list {
-    max-height: min(50vh, calc(100dvh - 210px));
+    min-height: 0;
+    max-height: none;
   }
 
   .cc-list-toolbar__controls {
@@ -12234,15 +12239,28 @@
   }
 
   .cc-alerts-bell__panel {
-    top: max(72px, calc(env(safe-area-inset-top, 0px) + 58px));
+    top: max(70px, calc(env(safe-area-inset-top, 0px) + 56px));
+    left: max(8px, env(safe-area-inset-left, 0px));
+    right: max(8px, env(safe-area-inset-right, 0px));
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
     border-radius: 18px;
-    padding: 12px;
+    padding: 11px;
   }
 
   .cc-alerts-bell__panel-header {
     display: grid;
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+
+  .cc-alerts-bell__panel-header div {
+    min-width: 0;
+  }
+
+  .cc-alerts-bell__panel-header strong,
+  .cc-alerts-bell__item strong,
+  .cc-alerts-bell__item small {
+    overflow-wrap: break-word;
   }
 
   .cc-alerts-bell__panel-header .secondary-button {

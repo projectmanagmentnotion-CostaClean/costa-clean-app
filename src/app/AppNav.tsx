@@ -309,39 +309,41 @@ export function AppNav({
           </div>
 
           <div className="cc-shell-nav__actions">
-            <div
-              className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
-              aria-live="polite"
-              aria-atomic="true"
-              title={getSyncStatusLabel(syncStatus)}
-            >
-              <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
-              <span>Sync</span>
+            <div className="cc-shell-nav__utilities">
+              <div
+                className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
+                aria-live="polite"
+                aria-atomic="true"
+                title={getSyncStatusLabel(syncStatus)}
+              >
+                <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
+                <span>Sync</span>
+              </div>
+
+              {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
+
+              {onOpenAlert && onOpenAlertsCenter ? (
+                <AlertsBell
+                  alerts={alerts}
+                  reviewedAlertIds={reviewedAlertIds}
+                  onOpenAlert={onOpenAlert}
+                  onOpenAlertsCenter={onOpenAlertsCenter}
+                />
+              ) : null}
+
+              {currentView !== 'dashboard' ? (
+                <button
+                  type="button"
+                  className="cc-shell-nav__back"
+                  onClick={onBack ?? (() => onChangeView('dashboard'))}
+                  aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
+                >
+                  {backLabel}
+                </button>
+              ) : null}
             </div>
 
-            {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
-
-            {onOpenAlert && onOpenAlertsCenter ? (
-              <AlertsBell
-                alerts={alerts}
-                reviewedAlertIds={reviewedAlertIds}
-                onOpenAlert={onOpenAlert}
-                onOpenAlertsCenter={onOpenAlertsCenter}
-              />
-            ) : null}
-
-            {currentView !== 'dashboard' ? (
-              <button
-                type="button"
-                className="cc-shell-nav__back"
-                onClick={onBack ?? (() => onChangeView('dashboard'))}
-                aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
-              >
-                {backLabel}
-              </button>
-            ) : null}
-
-            <div className="cc-shell-nav__current">
+            <div className="cc-shell-nav__current" title={currentViewLabel}>
               <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
               <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
             </div>

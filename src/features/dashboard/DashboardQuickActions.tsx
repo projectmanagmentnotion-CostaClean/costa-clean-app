@@ -252,6 +252,8 @@ export function DashboardQuickActions({ onOpenView }: DashboardQuickActionsProps
                   : 'cc-quick-action cc-quick-action--dashboard'
               }
               onClick={() => onOpenView(action.view)}
+              title={action.title}
+              aria-label={`${action.title}. ${action.subtitle}`}
             >
               <span className="cc-quick-action__icon" aria-hidden="true">
                 <Icon />

@@ -1,4 +1,5 @@
-﻿import './SearchBar.css'
+import { useId } from 'react'
+import './SearchBar.css'
 
 interface SearchBarProps {
   label: string
@@ -17,12 +18,13 @@ export function SearchBar({
   resultCount,
   totalCount,
 }: SearchBarProps) {
+  const inputId = useId()
   const showCount =
     typeof resultCount === 'number' && typeof totalCount === 'number'
 
   return (
     <div className="cc-searchbar">
-      <label className="cc-searchbar__label">{label}</label>
+      <label className="cc-searchbar__label" htmlFor={inputId}>{label}</label>
 
       <div className="cc-searchbar__control">
         <span className="cc-searchbar__icon" aria-hidden="true">
@@ -37,6 +39,7 @@ export function SearchBar({
           </svg>
         </span>
         <input
+          id={inputId}
           className="cc-searchbar__input"
           type="search"
           value={value}

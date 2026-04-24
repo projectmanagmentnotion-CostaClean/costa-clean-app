@@ -52,6 +52,11 @@ export function QuoteCreateForm({
     return properties.filter((property) => property.client_id === form.client_id)
   }, [properties, form.client_id])
 
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === form.client_id) ?? null,
+    [clients, form.client_id],
+  )
+
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
   const taxAmountValue = useMemo(
     () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
@@ -109,7 +114,7 @@ export function QuoteCreateForm({
       const linePayloads = buildQuoteLinePayloads(lines, quoteId)
 
       if (!linePayloads || linePayloads.length === 0) {
-        setSubmitError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
+        setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
 
@@ -148,12 +153,28 @@ export function QuoteCreateForm({
   }
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Nuevo presupuesto</h2>
-        <p>
-          Crea una propuesta comercial con líneas detalladas e IVA automático del {businessRules.defaultTaxRate * 100}%.
-        </p>
+    <section className="data-section cc-form-shell cc-form-shell--quote">
+      <div className="section-header cc-form-shell__header">
+        <div className="cc-form-shell__intro">
+          <span className="cc-form-shell__eyebrow">Propuesta comercial</span>
+          <h2>Nuevo presupuesto</h2>
+          <p>
+            Crea una propuesta con lineas detalladas e IVA automatico del {businessRules.defaultTaxRate * 100}%.
+          </p>
+        </div>
+
+        <div className="cc-form-shell__summary">
+          <div className="cc-form-shell__summary-card">
+            <span>Cliente</span>
+            <strong>{selectedClient?.full_name ?? 'Pendiente'}</strong>
+            <small>{availableProperties.length} propiedad(es) disponibles</small>
+          </div>
+          <div className="cc-form-shell__summary-card">
+            <span>Total actual</span>
+            <strong>{formatMoneyInput(totalValue)} €</strong>
+            <small>{lines.length} linea(s)</small>
+          </div>
+        </div>
       </div>
 
       {clients.length === 0 ? (
@@ -162,160 +183,194 @@ export function QuoteCreateForm({
           <p>Primero debes crear al menos un cliente para poder generar un presupuesto.</p>
         </div>
       ) : (
-        <form className="lead-form" onSubmit={handleSubmit}>
-          <label className="form-field">
-            <span>Cliente *</span>
-            <select
-              value={form.client_id}
-              onChange={(event) => updateField('client_id', event.target.value)}
-            >
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.full_name} · {client.display_code ?? client.id}
-                </option>
-              ))}
-            </select>
-          </label>
+        <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
+          <div className="cc-form-shell__main">
+            <section className="cc-form-shell__section">
+              <div className="cc-form-shell__section-head">
+                <strong>Base del presupuesto</strong>
+                <span>Cliente, propiedad y estado inicial.</span>
+              </div>
 
-          <label className="form-field">
-            <span>Propiedad</span>
-            <select
-              value={form.property_id}
-              onChange={(event) => updateField('property_id', event.target.value)}
-            >
-              <option value="">Sin propiedad</option>
-              {availableProperties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.name} · {property.display_code ?? property.id}
-                </option>
-              ))}
-            </select>
-          </label>
+              <label className="form-field">
+                <span>Cliente *</span>
+                <select
+                  value={form.client_id}
+                  onChange={(event) => updateField('client_id', event.target.value)}
+                >
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.full_name} · {client.display_code ?? client.id}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="form-field">
-            <span>Estado</span>
-            <select
-              value={form.status}
-              onChange={(event) => updateField('status', event.target.value)}
-            >
-              {quoteStatusOptions.map((status) => (
-                <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
-              ))}
-            </select>
-          </label>
+              <label className="form-field">
+                <span>Propiedad</span>
+                <select
+                  value={form.property_id}
+                  onChange={(event) => updateField('property_id', event.target.value)}
+                >
+                  <option value="">Sin propiedad</option>
+                  {availableProperties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {property.name} · {property.display_code ?? property.id}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <div className="form-field form-field-full">
-            <span>Líneas de presupuesto *</span>
-            {lines.map((line, index) => (
-              <div key={line.local_id} className="lead-form cc-line-editor-row" style={{ marginTop: '0.75rem' }}>
-                <label className="form-field form-field-full cc-line-editor-row__concept">
-                  <span>Concepto {index + 1}</span>
-                  <input
-                    value={line.concept}
-                    onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
-                    required
-                  />
-                </label>
+              <label className="form-field">
+                <span>Estado</span>
+                <select
+                  value={form.status}
+                  onChange={(event) => updateField('status', event.target.value)}
+                >
+                  {quoteStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
+                </select>
+              </label>
+            </section>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--quantity">
-                  <span>Cantidad</span>
-                  <input
-                    value={line.quantity}
-                    onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
-                    required
-                  />
-                </label>
+            <section className="cc-form-shell__section cc-form-shell__section--full">
+              <div className="cc-form-shell__section-head">
+                <strong>Lineas y alcance</strong>
+                <span>Conceptos, cantidades y precios con lectura mas clara.</span>
+              </div>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--unit">
-                  <span>Unidad</span>
-                  <input
-                    value={line.unit}
-                    onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
-                    required
-                  />
-                </label>
+              <div className="form-field form-field-full">
+                <span>Lineas de presupuesto *</span>
+                <div className="cc-form-shell__line-list">
+                  {lines.map((line, index) => (
+                    <div key={line.local_id} className="lead-form cc-line-editor-row cc-line-editor-row--premium">
+                      <label className="form-field form-field-full cc-line-editor-row__concept">
+                        <span>Concepto {index + 1}</span>
+                        <input
+                          value={line.concept}
+                          onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--price">
-                  <span>Precio unitario</span>
-                  <input
-                    value={line.unit_price}
-                    onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
-                    required
-                  />
-                </label>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--quantity">
+                        <span>Cantidad</span>
+                        <input
+                          value={line.quantity}
+                          onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--amount">
-                  <span>Importe</span>
-                  <input value={formatQuoteLineSubtotalInput(line)} readOnly />
-                </label>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--unit">
+                        <span>Unidad</span>
+                        <input
+                          value={line.unit}
+                          onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <div className="form-actions form-field-full cc-line-editor-row__actions">
-                  <button
-                    type="button"
-                    className="secondary-button cc-line-editor-row__remove"
-                    onClick={() => removeLine(line.local_id)}
-                    disabled={lines.length === 1}
-                  >
-                    Quitar línea
-                  </button>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--price">
+                        <span>Precio unitario</span>
+                        <input
+                          value={line.unit_price}
+                          onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                          required
+                        />
+                      </label>
+
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--amount">
+                        <span>Importe</span>
+                        <input value={formatQuoteLineSubtotalInput(line)} readOnly />
+                      </label>
+
+                      <div className="form-actions form-field-full cc-line-editor-row__actions">
+                        <button
+                          type="button"
+                          className="secondary-button cc-line-editor-row__remove"
+                          onClick={() => removeLine(line.local_id)}
+                          disabled={lines.length === 1}
+                        >
+                          Quitar linea
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
+                >
+                  Añadir linea
+                </button>
+              </div>
+            </section>
+
+            <section className="cc-form-shell__section cc-form-shell__section--full">
+              <div className="cc-form-shell__section-head">
+                <strong>Notas y condiciones</strong>
+                <span>Aclaraciones para el cliente o para el equipo.</span>
+              </div>
+
+              <label className="form-field form-field-full">
+                <span>Notas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  placeholder="Condiciones, alcance o notas del presupuesto"
+                  rows={4}
+                />
+              </label>
+            </section>
+
+            {submitError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo crear el presupuesto</strong>
+                <p>{submitError}</p>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className="cc-alert cc-alert--success">
+                <strong>Operacion correcta</strong>
+                <p>{successMessage}</p>
+              </div>
+            ) : null}
+          </div>
+
+          <aside className="cc-form-shell__aside">
+            <div className="cc-form-shell__sticky">
+              <div className="cc-form-shell__totals">
+                <div className="cc-form-shell__totals-row">
+                  <span>Subtotal</span>
+                  <strong>{formatMoneyInput(subtotalValue)} €</strong>
+                </div>
+                <div className="cc-form-shell__totals-row">
+                  <span>IVA</span>
+                  <strong>{formatMoneyInput(taxAmountValue)} €</strong>
+                </div>
+                <div className="cc-form-shell__totals-row cc-form-shell__totals-row--grand">
+                  <span>Total</span>
+                  <strong>{formatMoneyInput(totalValue)} €</strong>
                 </div>
               </div>
-            ))}
 
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
-              style={{ marginTop: '0.75rem' }}
-            >
-              Añadir línea
-            </button>
-          </div>
+              <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+                <span>Resultado</span>
+                <strong>Listo para guardar</strong>
+                <small>Se guardará con sus lineas y totales calculados.</small>
+              </div>
 
-          <label className="form-field">
-            <span>Subtotal</span>
-            <input value={formatMoneyInput(subtotalValue)} readOnly />
-          </label>
-
-          <label className="form-field">
-            <span>IVA (automático)</span>
-            <input value={formatMoneyInput(taxAmountValue)} readOnly />
-          </label>
-
-          <label className="form-field">
-            <span>Total (automático)</span>
-            <input value={formatMoneyInput(totalValue)} readOnly />
-          </label>
-
-          <label className="form-field form-field-full">
-            <span>Notas</span>
-            <textarea
-              value={form.notes}
-              onChange={(event) => updateField('notes', event.target.value)}
-              placeholder="Condiciones, alcance o notas del presupuesto"
-              rows={4}
-            />
-          </label>
-
-          <div className="form-actions">
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar presupuesto'}
-            </button>
-          </div>
-
-          {submitError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo crear el presupuesto</strong>
-              <p>{submitError}</p>
+              <div className="form-actions cc-form-shell__actions">
+                <button type="submit" className="primary-button" disabled={isSubmitting}>
+                  {isSubmitting ? 'Guardando...' : 'Guardar presupuesto'}
+                </button>
+              </div>
             </div>
-          ) : null}
-
-          {successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          </aside>
         </form>
       )}
     </section>

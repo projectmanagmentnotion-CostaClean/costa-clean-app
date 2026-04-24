@@ -324,7 +324,7 @@ export function InvoiceCreateForm({
       }
 
       if (!form.issue_date) {
-        setSubmitError('Debes indicar la fecha de emisión.')
+        setSubmitError('Debes indicar la fecha de emision.')
         return
       }
 
@@ -332,7 +332,7 @@ export function InvoiceCreateForm({
       const linePayloads = buildLinePayloads(lines, invoiceId)
 
       if (!linePayloads || linePayloads.length === 0) {
-        setSubmitError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
+        setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
 
@@ -372,12 +372,28 @@ export function InvoiceCreateForm({
   }
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Nueva factura</h2>
-        <p>
-          Emite una factura vinculada a un servicio, con líneas e IVA automático del {businessRules.defaultTaxRate * 100}%.
-        </p>
+    <section className="data-section cc-form-shell cc-form-shell--invoice">
+      <div className="section-header cc-form-shell__header">
+        <div className="cc-form-shell__intro">
+          <span className="cc-form-shell__eyebrow">Documento de cobro</span>
+          <h2>Nueva factura</h2>
+          <p>
+            Emite una factura vinculada a un servicio, con lineas e IVA automatico del {businessRules.defaultTaxRate * 100}%.
+          </p>
+        </div>
+
+        <div className="cc-form-shell__summary">
+          <div className="cc-form-shell__summary-card">
+            <span>Servicio</span>
+            <strong>{selectedJob?.display_code ?? selectedJob?.id ?? 'Pendiente'}</strong>
+            <small>{selectedJob?.client_display_code ?? selectedJob?.client_id ?? 'Sin cliente'}</small>
+          </div>
+          <div className="cc-form-shell__summary-card">
+            <span>Total actual</span>
+            <strong>{formatMoneyInput(totalValue)} €</strong>
+            <small>{lines.length} linea(s)</small>
+          </div>
+        </div>
       </div>
 
       {jobs.length === 0 ? (
@@ -386,155 +402,189 @@ export function InvoiceCreateForm({
           <p>Primero debes crear al menos un servicio para poder facturar.</p>
         </div>
       ) : (
-        <form className="lead-form" onSubmit={handleSubmit}>
-          <label className="form-field">
-            <span>Servicio *</span>
-            <select
-              value={form.job_id}
-              onChange={(event) => updateField('job_id', event.target.value)}
-            >
-              {jobs.map((job) => (
-                <option key={job.id} value={job.id}>
-                  {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
-                </option>
-              ))}
-            </select>
-          </label>
+        <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
+          <div className="cc-form-shell__main">
+            <section className="cc-form-shell__section">
+              <div className="cc-form-shell__section-head">
+                <strong>Base documental</strong>
+                <span>Servicio, fecha y estado de emision.</span>
+              </div>
 
-          <label className="form-field">
-            <span>Fecha de emisión *</span>
-            <input
-              type="date"
-              value={form.issue_date}
-              onChange={(event) => updateField('issue_date', event.target.value)}
-              required
-            />
-          </label>
+              <label className="form-field">
+                <span>Servicio *</span>
+                <select
+                  value={form.job_id}
+                  onChange={(event) => updateField('job_id', event.target.value)}
+                >
+                  {jobs.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="form-field">
-            <span>Estado</span>
-            <select
-              value={form.status}
-              onChange={(event) => updateField('status', event.target.value)}
-            >
-              {invoiceStatusOptions.map((status) => (
-                <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
-              ))}
-            </select>
-          </label>
+              <label className="form-field">
+                <span>Fecha de emision *</span>
+                <input
+                  type="date"
+                  value={form.issue_date}
+                  onChange={(event) => updateField('issue_date', event.target.value)}
+                  required
+                />
+              </label>
 
-          <div className="form-field form-field-full">
-            <span>Líneas de factura *</span>
-            {lines.map((line, index) => (
-              <div key={line.local_id} className="lead-form cc-line-editor-row" style={{ marginTop: '0.75rem' }}>
-                <label className="form-field form-field-full cc-line-editor-row__concept">
-                  <span>Concepto {index + 1}</span>
-                  <input
-                    value={line.concept}
-                    onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
-                    required
-                  />
-                </label>
+              <label className="form-field">
+                <span>Estado</span>
+                <select
+                  value={form.status}
+                  onChange={(event) => updateField('status', event.target.value)}
+                >
+                  {invoiceStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
+                </select>
+              </label>
+            </section>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--quantity">
-                  <span>Cantidad</span>
-                  <input
-                    value={line.quantity}
-                    onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
-                    required
-                  />
-                </label>
+            <section className="cc-form-shell__section cc-form-shell__section--full">
+              <div className="cc-form-shell__section-head">
+                <strong>Lineas de cobro</strong>
+                <span>Detalle editable con importes visibles y consistentes.</span>
+              </div>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--unit">
-                  <span>Unidad</span>
-                  <input
-                    value={line.unit}
-                    onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
-                    required
-                  />
-                </label>
+              <div className="form-field form-field-full">
+                <span>Lineas de factura *</span>
+                <div className="cc-form-shell__line-list">
+                  {lines.map((line, index) => (
+                    <div key={line.local_id} className="lead-form cc-line-editor-row cc-line-editor-row--premium">
+                      <label className="form-field form-field-full cc-line-editor-row__concept">
+                        <span>Concepto {index + 1}</span>
+                        <input
+                          value={line.concept}
+                          onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--price">
-                  <span>Precio unitario</span>
-                  <input
-                    value={line.unit_price}
-                    onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
-                    required
-                  />
-                </label>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--quantity">
+                        <span>Cantidad</span>
+                        <input
+                          value={line.quantity}
+                          onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--amount">
-                  <span>Importe</span>
-                  <input value={formatLineSubtotalInput(line)} readOnly />
-                </label>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--unit">
+                        <span>Unidad</span>
+                        <input
+                          value={line.unit}
+                          onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                <div className="form-actions form-field-full cc-line-editor-row__actions">
-                  <button
-                    type="button"
-                    className="secondary-button cc-line-editor-row__remove"
-                    onClick={() => removeLine(line.local_id)}
-                    disabled={lines.length === 1}
-                  >
-                    Quitar línea
-                  </button>
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--price">
+                        <span>Precio unitario</span>
+                        <input
+                          value={line.unit_price}
+                          onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                          required
+                        />
+                      </label>
+
+                      <label className="form-field cc-line-editor-row__field cc-line-editor-row__field--amount">
+                        <span>Importe</span>
+                        <input value={formatLineSubtotalInput(line)} readOnly />
+                      </label>
+
+                      <div className="form-actions form-field-full cc-line-editor-row__actions">
+                        <button
+                          type="button"
+                          className="secondary-button cc-line-editor-row__remove"
+                          onClick={() => removeLine(line.local_id)}
+                          disabled={lines.length === 1}
+                        >
+                          Quitar linea
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setLines((current) => [...current, createBlankLine()])}
+                >
+                  Añadir linea
+                </button>
+              </div>
+            </section>
+
+            <section className="cc-form-shell__section cc-form-shell__section--full">
+              <div className="cc-form-shell__section-head">
+                <strong>Notas visibles</strong>
+                <span>Condiciones o texto contextual del documento.</span>
+              </div>
+
+              <label className="form-field form-field-full">
+                <span>Notas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  rows={4}
+                  placeholder="Notas o condiciones de la factura"
+                />
+              </label>
+            </section>
+
+            {submitError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo crear la factura</strong>
+                <p>{submitError}</p>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className="cc-alert cc-alert--success">
+                <strong>Operacion correcta</strong>
+                <p>{successMessage}</p>
+              </div>
+            ) : null}
+          </div>
+
+          <aside className="cc-form-shell__aside">
+            <div className="cc-form-shell__sticky">
+              <div className="cc-form-shell__totals">
+                <div className="cc-form-shell__totals-row">
+                  <span>Subtotal</span>
+                  <strong>{formatMoneyInput(subtotalValue)} €</strong>
+                </div>
+                <div className="cc-form-shell__totals-row">
+                  <span>IVA</span>
+                  <strong>{formatMoneyInput(taxAmountValue)} €</strong>
+                </div>
+                <div className="cc-form-shell__totals-row cc-form-shell__totals-row--grand">
+                  <span>Total</span>
+                  <strong>{formatMoneyInput(totalValue)} €</strong>
                 </div>
               </div>
-            ))}
 
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => setLines((current) => [...current, createBlankLine()])}
-              style={{ marginTop: '0.75rem' }}
-            >
-              Añadir línea
-            </button>
-          </div>
+              <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+                <span>Salida</span>
+                <strong>Factura lista</strong>
+                <small>Se emitirá con lineas, fecha y referencia al servicio seleccionado.</small>
+              </div>
 
-          <label className="form-field">
-            <span>Subtotal</span>
-            <input value={formatMoneyInput(subtotalValue)} readOnly />
-          </label>
-
-          <label className="form-field">
-            <span>IVA (automático)</span>
-            <input value={formatMoneyInput(taxAmountValue)} readOnly />
-          </label>
-
-          <label className="form-field">
-            <span>Total (automático)</span>
-            <input value={formatMoneyInput(totalValue)} readOnly />
-          </label>
-
-          <label className="form-field form-field-full">
-            <span>Notas</span>
-            <textarea
-              value={form.notes}
-              onChange={(event) => updateField('notes', event.target.value)}
-              rows={4}
-              placeholder="Notas o condiciones de la factura"
-            />
-          </label>
-
-          <div className="form-actions">
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar factura'}
-            </button>
-          </div>
-
-          {submitError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo crear la factura</strong>
-              <p>{submitError}</p>
+              <div className="form-actions cc-form-shell__actions">
+                <button type="submit" className="primary-button" disabled={isSubmitting}>
+                  {isSubmitting ? 'Guardando...' : 'Guardar factura'}
+                </button>
+              </div>
             </div>
-          ) : null}
-
-          {successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          </aside>
         </form>
       )}
     </section>

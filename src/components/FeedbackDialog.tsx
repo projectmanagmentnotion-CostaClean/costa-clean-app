@@ -64,7 +64,7 @@ export function FeedbackDialog({
     >
       <div
         className={`cc-confirm-dialog__panel cc-feedback-dialog__panel cc-feedback-dialog__panel--${tone}`}
-        role="dialog"
+        role={tone === 'error' || tone === 'warning' ? 'alertdialog' : 'dialog'}
         aria-modal="true"
         aria-labelledby="cc-feedback-dialog-title"
         aria-describedby="cc-feedback-dialog-description"
@@ -73,7 +73,7 @@ export function FeedbackDialog({
         <div className="cc-confirm-dialog__content">
           <span className="cc-confirm-dialog__eyebrow">{getEyebrow(tone)}</span>
           <h2 id="cc-feedback-dialog-title">{title}</h2>
-          <div id="cc-feedback-dialog-description" className="cc-confirm-dialog__description">
+          <div id="cc-feedback-dialog-description" className="cc-confirm-dialog__description" aria-live={tone === 'loading' ? 'polite' : 'assertive'}>
             {typeof message === 'string' ? <p>{message}</p> : message}
           </div>
         </div>

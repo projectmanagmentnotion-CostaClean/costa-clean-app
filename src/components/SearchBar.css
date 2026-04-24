@@ -39,7 +39,6 @@
   color: #f4f7fb;
   border-radius: 14px;
   padding: 0 14px 0 42px;
-  outline: none;
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
@@ -50,7 +49,7 @@
   color: rgba(177, 189, 204, 0.5);
 }
 
-.cc-searchbar__input:focus {
+.cc-searchbar__input:focus-visible {
   border-color: rgba(173, 191, 213, 0.18);
   box-shadow: 0 0 0 3px rgba(143, 169, 197, 0.08);
   background: rgba(255,255,255,0.035);
@@ -96,7 +95,7 @@
   color: #5f7487;
 }
 
-:root[data-theme="light"] .cc-searchbar__input:focus {
+:root[data-theme="light"] .cc-searchbar__input:focus-visible {
   border-color: rgba(11, 131, 180, 0.42);
   box-shadow: 0 0 0 3px rgba(11, 131, 180, 0.12);
   background: #ffffff;

@@ -118,120 +118,170 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
   }
 
   return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>Nuevo lead</h2>
-      </div>
-
-      <form className="lead-form" onSubmit={handleSubmit}>
-        <label className="form-field">
-          <span>Nombre completo *</span>
-          <input
-            value={form.full_name}
-            onChange={(event) => updateField('full_name', event.target.value)}
-            placeholder="Ej. Marta López"
-            required
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Teléfono *</span>
-          <input
-            value={form.phone}
-            onChange={(event) => updateField('phone', event.target.value)}
-            placeholder="Ej. 600123123"
-            required
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Email</span>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) => updateField('email', event.target.value)}
-            placeholder="Ej. cliente@email.com"
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Tipo de servicio *</span>
-          <select
-            value={form.service_type}
-            onChange={(event) => updateField('service_type', event.target.value)}
-          >
-            <option value="standard_cleaning">{getServiceTypeLabel('standard_cleaning')}</option>
-            <option value="deep_cleaning">{getServiceTypeLabel('deep_cleaning')}</option>
-            <option value="post_construction">{getServiceTypeLabel('post_construction')}</option>
-            <option value="check_out_cleaning">{getServiceTypeLabel('check_out_cleaning')}</option>
-            <option value="airbnb_turnover">{getServiceTypeLabel('airbnb_turnover')}</option>
-            <option value="glass_cleaning">{getServiceTypeLabel('glass_cleaning')}</option>
-          </select>
-        </label>
-
-        <label className="form-field">
-          <span>Tipo de inmueble</span>
-          <select
-            value={form.property_type}
-            onChange={(event) => updateField('property_type', event.target.value)}
-          >
-            <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
-            <option value="house">{getPropertyTypeLabel('house')}</option>
-            <option value="office">{getPropertyTypeLabel('office')}</option>
-            <option value="local">{getPropertyTypeLabel('local')}</option>
-            <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
-            <option value="community">{getPropertyTypeLabel('community')}</option>
-            <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
-          </select>
-        </label>
-
-        <label className="form-field">
-          <span>Ciudad</span>
-          <input
-            value={form.city}
-            onChange={(event) => updateField('city', event.target.value)}
-            placeholder="Ej. Barcelona"
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Código postal</span>
-          <input
-            value={form.postal_code}
-            onChange={(event) => updateField('postal_code', event.target.value)}
-            placeholder="Ej. 08001"
-          />
-        </label>
-
-        <label className="form-field form-field-full">
-          <span>Notas</span>
-          <textarea
-            value={form.notes}
-            onChange={(event) => updateField('notes', event.target.value)}
-            placeholder="Notas iniciales del lead"
-            rows={4}
-          />
-        </label>
-
-        <div className="form-actions">
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Guardar lead'}
-          </button>
+    <section className="data-section cc-form-shell cc-form-shell--lead">
+      <div className="section-header cc-form-shell__header">
+        <div className="cc-form-shell__intro">
+          <span className="cc-form-shell__eyebrow">Alta comercial</span>
+          <h2>Nuevo lead</h2>
+          <p>Registra el contacto inicial con mejor contexto para seguimiento y conversion.</p>
         </div>
 
-        {submitError ? (
-          <div className="empty-state">
-            <strong>No se pudo crear el lead</strong>
-            <p>{submitError}</p>
+        <div className="cc-form-shell__summary">
+          <div className="cc-form-shell__summary-card">
+            <span>Servicio</span>
+            <strong>{getServiceTypeLabel(form.service_type)}</strong>
+            <small>{getPropertyTypeLabel(form.property_type)}</small>
           </div>
-        ) : null}
+          <div className="cc-form-shell__summary-card">
+            <span>Contacto</span>
+            <strong>{form.full_name.trim() || 'Pendiente'}</strong>
+            <small>{form.phone.trim() || 'Sin telefono'}</small>
+          </div>
+        </div>
+      </div>
 
-        {successMessage ? (
-          <div className="empty-state">
-            <strong>Operación correcta</strong>
-            <p>{successMessage}</p>
+      <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
+        <div className="cc-form-shell__main">
+          <section className="cc-form-shell__section">
+            <div className="cc-form-shell__section-head">
+              <strong>Contacto base</strong>
+              <span>Datos mínimos para empezar el seguimiento comercial.</span>
+            </div>
+
+            <label className="form-field">
+              <span>Nombre completo *</span>
+              <input
+                value={form.full_name}
+                onChange={(event) => updateField('full_name', event.target.value)}
+                placeholder="Ej. Marta López"
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Teléfono *</span>
+              <input
+                value={form.phone}
+                onChange={(event) => updateField('phone', event.target.value)}
+                placeholder="Ej. 600123123"
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Email</span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => updateField('email', event.target.value)}
+                placeholder="Ej. cliente@email.com"
+              />
+            </label>
+          </section>
+
+          <section className="cc-form-shell__section">
+            <div className="cc-form-shell__section-head">
+              <strong>Servicio y ubicacion</strong>
+              <span>Contexto operativo inicial para clasificar el lead.</span>
+            </div>
+
+            <label className="form-field">
+              <span>Tipo de servicio *</span>
+              <select
+                value={form.service_type}
+                onChange={(event) => updateField('service_type', event.target.value)}
+              >
+                <option value="standard_cleaning">{getServiceTypeLabel('standard_cleaning')}</option>
+                <option value="deep_cleaning">{getServiceTypeLabel('deep_cleaning')}</option>
+                <option value="post_construction">{getServiceTypeLabel('post_construction')}</option>
+                <option value="check_out_cleaning">{getServiceTypeLabel('check_out_cleaning')}</option>
+                <option value="airbnb_turnover">{getServiceTypeLabel('airbnb_turnover')}</option>
+                <option value="glass_cleaning">{getServiceTypeLabel('glass_cleaning')}</option>
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Tipo de inmueble</span>
+              <select
+                value={form.property_type}
+                onChange={(event) => updateField('property_type', event.target.value)}
+              >
+                <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
+                <option value="house">{getPropertyTypeLabel('house')}</option>
+                <option value="office">{getPropertyTypeLabel('office')}</option>
+                <option value="local">{getPropertyTypeLabel('local')}</option>
+                <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
+                <option value="community">{getPropertyTypeLabel('community')}</option>
+                <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Ciudad</span>
+              <input
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                placeholder="Ej. Barcelona"
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Código postal</span>
+              <input
+                value={form.postal_code}
+                onChange={(event) => updateField('postal_code', event.target.value)}
+                placeholder="Ej. 08001"
+              />
+            </label>
+          </section>
+
+          <section className="cc-form-shell__section cc-form-shell__section--full">
+            <div className="cc-form-shell__section-head">
+              <strong>Notas iniciales</strong>
+              <span>Observaciones para priorizar o preparar la siguiente acción.</span>
+            </div>
+
+            <label className="form-field form-field-full">
+              <span>Notas</span>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                placeholder="Notas iniciales del lead"
+                rows={4}
+              />
+            </label>
+          </section>
+
+          {submitError ? (
+            <div className="cc-alert cc-alert--error">
+              <strong>No se pudo crear el lead</strong>
+              <p>{submitError}</p>
+            </div>
+          ) : null}
+
+          {successMessage ? (
+            <div className="cc-alert cc-alert--success">
+              <strong>Operación correcta</strong>
+              <p>{successMessage}</p>
+            </div>
+          ) : null}
+        </div>
+
+        <aside className="cc-form-shell__aside">
+          <div className="cc-form-shell__sticky">
+            <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+              <span>Siguiente paso</span>
+              <strong>Guardar lead</strong>
+              <small>Se añadirá al pipeline para seguimiento inmediato.</small>
+            </div>
+
+            <div className="form-actions cc-form-shell__actions">
+              <button type="submit" className="primary-button" disabled={isSubmitting}>
+                {isSubmitting ? 'Guardando...' : 'Guardar lead'}
+              </button>
+            </div>
           </div>
-        ) : null}
+        </aside>
       </form>
     </section>
   )

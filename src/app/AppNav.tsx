@@ -30,6 +30,12 @@ interface NavItemDefinition {
   mobilePriority?: boolean
 }
 
+interface NavSectionDefinition {
+  key: string
+  label: string
+  items: NavItemDefinition[]
+}
+
 function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
@@ -249,6 +255,15 @@ const navItems: NavItemDefinition[] = [
 
 const bottomDockItems = navItems.filter((item) => item.mobilePriority)
 const topNavItems = navItems
+const sectionOrder = ['General', 'Comercial', 'Base', 'Operaciones', 'Finanzas', 'Cierre'] as const
+
+const topNavSections: NavSectionDefinition[] = sectionOrder
+  .map((section) => ({
+    key: section.toLowerCase(),
+    label: section,
+    items: topNavItems.filter((item) => item.section === section),
+  }))
+  .filter((section) => section.items.length > 0)
 
 export function AppNav({
   currentView,
@@ -334,31 +349,45 @@ export function AppNav({
         </div>
 
         <div className="cc-shell-subnav cc-shell-subnav--top" aria-label="Modulos">
-          {topNavItems.map((item) => {
-            const Icon = item.icon
+          {topNavSections.map((section) => (
+            <div key={section.key} className="cc-shell-subnav__group" data-group={section.label}>
+              <div className="cc-shell-subnav__group-header">
+                <span className="cc-shell-subnav__group-label">{section.label}</span>
+                <span className="cc-shell-subnav__group-count">{section.items.length}</span>
+              </div>
 
-            return (
-              <button
-                key={item.view}
-                type="button"
-                className={
-                  currentView === item.view
-                    ? 'cc-shell-subnav__button is-active'
-                    : 'cc-shell-subnav__button'
-                }
-                onClick={() => onChangeView(item.view)}
-                aria-current={currentView === item.view ? 'page' : undefined}
-                data-section={item.section}
-                title={`${item.shortLabel} · ${item.section}`}
-                aria-label={`${item.shortLabel}, ${item.section}`}
-              >
-                <span className="cc-shell-subnav__glyph" aria-hidden="true">
-                  <Icon />
-                </span>
-                <span className="cc-shell-subnav__text">{item.shortLabel}</span>
-              </button>
-            )
-          })}
+              <div className="cc-shell-subnav__group-grid">
+                {section.items.map((item) => {
+                  const Icon = item.icon
+
+                  return (
+                    <button
+                      key={item.view}
+                      type="button"
+                      className={
+                        currentView === item.view
+                          ? 'cc-shell-subnav__button is-active'
+                          : 'cc-shell-subnav__button'
+                      }
+                      onClick={() => onChangeView(item.view)}
+                      aria-current={currentView === item.view ? 'page' : undefined}
+                      data-section={item.section}
+                      title={`${item.shortLabel} - ${item.section}`}
+                      aria-label={`${item.shortLabel}, ${item.section}`}
+                    >
+                      <span className="cc-shell-subnav__glyph" aria-hidden="true">
+                        <Icon />
+                      </span>
+                      <span className="cc-shell-subnav__text">
+                        <span className="cc-shell-subnav__title">{item.shortLabel}</span>
+                        <span className="cc-shell-subnav__section">{item.section}</span>
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </nav>
 

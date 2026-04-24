@@ -1,0 +1,327 @@
+/* =========================================================
+   Sprint 2026-04-24 Structural UX pass
+   Navigation hierarchy, list controls and card scanability
+   ========================================================= */
+
+.cc-shell-subnav--top {
+  display: grid;
+  gap: 14px;
+}
+
+.cc-shell-subnav__group {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 36px rgba(2, 8, 23, 0.14);
+}
+
+.cc-shell-subnav__group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 2px 0;
+}
+
+.cc-shell-subnav__group-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.6);
+}
+
+.cc-shell-subnav__group-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(241, 245, 249, 0.78);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.cc-shell-subnav__group-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(156px, 1fr));
+  gap: 10px;
+}
+
+.cc-shell-subnav--top .cc-shell-subnav__button,
+.cc-shell-subnav__button {
+  min-height: 78px;
+  gap: 12px;
+}
+
+.cc-shell-subnav__text {
+  align-content: start;
+}
+
+.cc-shell-subnav__title {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.cc-shell-subnav__section {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.58);
+}
+
+.cc-shell-subnav__button::after {
+  display: none;
+}
+
+.cc-list-toolbar {
+  gap: 12px;
+}
+
+.cc-list-toolbar__overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 40px rgba(2, 8, 23, 0.14);
+}
+
+.cc-list-toolbar__intro {
+  display: grid;
+  gap: 3px;
+}
+
+.cc-list-toolbar__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(191, 219, 254, 0.7);
+}
+
+.cc-list-toolbar__headline {
+  font-family: var(--cc-font-display);
+  font-size: clamp(1.05rem, 1.2vw, 1.22rem);
+  letter-spacing: -0.03em;
+  color: rgba(248, 250, 252, 0.98);
+}
+
+.cc-list-toolbar__caption {
+  color: rgba(191, 219, 254, 0.68);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.cc-list-toolbar__snapshot,
+.cc-list-toolbar__active-pills,
+.cc-record-card__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-list-toolbar__snapshot {
+  justify-content: flex-end;
+}
+
+.cc-list-toolbar__snapshot-pill,
+.cc-list-toolbar__active-pill,
+.cc-record-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(241, 245, 249, 0.84);
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.cc-list-toolbar__active-pills {
+  margin-top: -2px;
+}
+
+.cc-list-toolbar__active-pill {
+  background: rgba(125, 211, 252, 0.12);
+  border-color: rgba(125, 211, 252, 0.18);
+  color: rgba(224, 242, 254, 0.96);
+}
+
+.cc-list-toolbar__panel-summary {
+  gap: 12px;
+}
+
+.cc-list-toolbar__panel-badge.is-muted {
+  opacity: 0.76;
+  background: rgba(148, 163, 184, 0.18);
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.cc-list-toolbar__field-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+.cc-module-filter-bar {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.cc-module-filter-bar__content {
+  display: grid;
+  gap: 4px;
+}
+
+.cc-module-filter-bar__note {
+  color: rgba(191, 219, 254, 0.66);
+  font-size: 0.84rem;
+}
+
+.cc-module-filter-bar__button-icon {
+  display: inline-flex;
+  margin-right: 6px;
+  transform: rotate(45deg);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.cc-record-card__summary {
+  line-height: 1.45;
+}
+
+.cc-record-card__chips {
+  margin-top: 10px;
+}
+
+.cc-record-card__meta {
+  margin-top: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.cc-record-card__meta span {
+  gap: 4px;
+}
+
+.cc-record-card__meta-label {
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.82);
+}
+
+.cc-record-card__meta-value {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: rgba(241, 245, 249, 0.92);
+}
+
+:root[data-theme="light"] .cc-shell-subnav__group,
+:root[data-theme="light"] .cc-list-toolbar__overview,
+:root[data-theme="light"] .cc-module-filter-bar {
+  border-color: rgba(14, 84, 114, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 250, 255, 0.92));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 16px 34px rgba(17, 73, 103, 0.1);
+}
+
+:root[data-theme="light"] .cc-shell-subnav__group-label,
+:root[data-theme="light"] .cc-shell-subnav__section,
+:root[data-theme="light"] .cc-list-toolbar__eyebrow,
+:root[data-theme="light"] .cc-record-card__meta-label,
+:root[data-theme="light"] .cc-module-filter-bar__eyebrow {
+  color: #5c768c;
+}
+
+:root[data-theme="light"] .cc-shell-subnav__group-count,
+:root[data-theme="light"] .cc-list-toolbar__snapshot-pill,
+:root[data-theme="light"] .cc-list-toolbar__active-pill,
+:root[data-theme="light"] .cc-record-card__chip {
+  border-color: rgba(14, 84, 114, 0.12);
+  background: rgba(245, 250, 255, 0.92);
+  color: #17354b;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__active-pill {
+  background: rgba(11, 125, 176, 0.1);
+  border-color: rgba(11, 125, 176, 0.16);
+  color: #0a5678;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__headline,
+:root[data-theme="light"] .cc-shell-subnav__title,
+:root[data-theme="light"] .cc-record-card__meta-value,
+:root[data-theme="light"] .cc-module-filter-bar__label {
+  color: #0e2435;
+}
+
+:root[data-theme="light"] .cc-list-toolbar__caption,
+:root[data-theme="light"] .cc-module-filter-bar__note {
+  color: #597286;
+}
+
+@media (max-width: 900px) {
+  .cc-shell-subnav__group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cc-list-toolbar__overview,
+  .cc-module-filter-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-list-toolbar__snapshot {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-shell-subnav__group {
+    padding: 10px;
+    border-radius: 20px;
+  }
+
+  .cc-shell-subnav__group-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-list-toolbar__overview {
+    padding: 14px;
+  }
+
+  .cc-record-card__meta {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

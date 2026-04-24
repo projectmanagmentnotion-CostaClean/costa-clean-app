@@ -73,12 +73,12 @@ export function JobsList({
       <ListToolbar
         storageKey="costaclean-list-preferences-jobs"
         searchLabel="Buscar servicio"
-        searchPlaceholder="Servicio, cliente, propiedad, código interno, estado o fecha"
+        searchPlaceholder="Servicio, cliente, propiedad, codigo interno, estado o fecha"
         resultCount={filteredJobs.length}
         totalCount={jobs.length}
         sortOptions={[
           { value: 'scheduled_date', label: 'Fecha programada' },
-          { value: 'code', label: 'Código' },
+          { value: 'code', label: 'Codigo' },
           { value: 'client', label: 'Cliente' },
           { value: 'service', label: 'Servicio' },
           { value: 'status', label: 'Estado' },
@@ -107,12 +107,12 @@ export function JobsList({
       ) : jobs.length === 0 ? (
         <div className="empty-state">
           <strong>No hay servicios</strong>
-          <p>Todavía no existen registros en la tabla jobs.</p>
+          <p>Todavia no existen registros en la tabla jobs.</p>
         </div>
       ) : filteredJobs.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos servicios que coincidan con tu búsqueda.</p>
+          <p>No encontramos servicios que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -143,12 +143,23 @@ export function JobsList({
                 </div>
 
                 <p className="cc-record-card__summary">
-                  {(job.client_name ?? job.client_display_code ?? job.client_id)} · {(job.property_name ?? job.property_display_code ?? job.property_id)}
+                  {(job.client_name ?? job.client_display_code ?? job.client_id)} - {(job.property_name ?? job.property_display_code ?? job.property_id)}
                 </p>
 
+                <div className="cc-record-card__chips" aria-label="Contexto del servicio">
+                  <span className="cc-record-card__chip">{getServiceTypeLabel(job.service_type)}</span>
+                  <span className="cc-record-card__chip">{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
+                </div>
+
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{getServiceTypeLabel(job.service_type)}</span>
-                  <span>{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Servicio</span>
+                    <span className="cc-record-card__meta-value">{getServiceTypeLabel(job.service_type)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Origen</span>
+                    <span className="cc-record-card__meta-value">{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
+                  </span>
                 </div>
               </button>
             )

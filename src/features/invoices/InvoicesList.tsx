@@ -68,12 +68,12 @@ export function InvoicesList({
       <ListToolbar
         storageKey="costaclean-list-preferences-invoices"
         searchLabel="Buscar factura"
-        searchPlaceholder="Número, código interno, servicio, cliente, estado o importe"
+        searchPlaceholder="Numero, codigo interno, servicio, cliente, estado o importe"
         resultCount={filteredInvoices.length}
         totalCount={invoices.length}
         sortOptions={[
-          { value: 'issue_date', label: 'Fecha de emisión' },
-          { value: 'code', label: 'Número / código' },
+          { value: 'issue_date', label: 'Fecha de emision' },
+          { value: 'code', label: 'Numero / codigo' },
           { value: 'client', label: 'Cliente' },
           { value: 'total', label: 'Importe total' },
           { value: 'status', label: 'Estado' },
@@ -102,12 +102,12 @@ export function InvoicesList({
       ) : invoices.length === 0 ? (
         <div className="empty-state">
           <strong>No hay facturas</strong>
-          <p>Todavía no existen facturas registradas en el sistema.</p>
+          <p>Todavia no existen facturas registradas en el sistema.</p>
         </div>
       ) : filteredInvoices.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos facturas que coincidan con tu búsqueda.</p>
+          <p>No encontramos facturas que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -145,9 +145,24 @@ export function InvoicesList({
                   {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}
                 </p>
 
+                <div className="cc-record-card__chips" aria-label="Contexto de la factura">
+                  <span className="cc-record-card__chip">{invoice.issue_date}</span>
+                  <span className="cc-record-card__chip">
+                    {invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}
+                  </span>
+                </div>
+
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{invoice.issue_date}</span>
-                  <span>{invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Emision</span>
+                    <span className="cc-record-card__meta-value">{invoice.issue_date}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Origen</span>
+                    <span className="cc-record-card__meta-value">
+                      {invoice.job_display_code ?? invoice.job_id ?? 'Presupuesto aceptado'}
+                    </span>
+                  </span>
                 </div>
               </button>
             )

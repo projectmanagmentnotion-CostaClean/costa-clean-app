@@ -122,14 +122,14 @@ export function ExpensesList({
       <ListToolbar
         storageKey="costaclean-list-preferences-expenses"
         searchLabel="Buscar gasto"
-        searchPlaceholder="Código, proveedor, descripción, categoría o riesgo"
+        searchPlaceholder="Codigo, proveedor, descripcion, categoria o riesgo"
         resultCount={filteredExpenses.length}
         totalCount={expenses.length}
         sortOptions={[
           { value: 'expense_date', label: 'Fecha del gasto' },
-          { value: 'code', label: 'Código' },
+          { value: 'code', label: 'Codigo' },
           { value: 'supplier', label: 'Proveedor' },
-          { value: 'category', label: 'Categoría' },
+          { value: 'category', label: 'Categoria' },
           { value: 'total', label: 'Importe total' },
           { value: 'risk', label: 'Riesgo fiscal' },
         ]}
@@ -137,7 +137,7 @@ export function ExpensesList({
         filters={[
           {
             key: 'category',
-            label: 'Categoría',
+            label: 'Categoria',
             value: preferences.filters.category ?? 'all',
             options: [{ value: 'all', label: 'Todas' }, ...expenseCategories.map((category) => ({
               value: category,
@@ -155,7 +155,7 @@ export function ExpensesList({
           },
           {
             key: 'review',
-            label: 'Revisión',
+            label: 'Revision',
             value: preferences.filters.review ?? 'all',
             options: [{ value: 'all', label: 'Todas' }, ...expenseFiscalReviewStatuses.map((status) => ({
               value: status,
@@ -173,14 +173,14 @@ export function ExpensesList({
           },
           {
             key: 'fiscalFocus',
-            label: 'Estimacion fiscal',
+            label: 'Enfoque fiscal',
             value: preferences.filters.fiscalFocus ?? 'all',
             options: [
               { value: 'all', label: 'Todas' },
               { value: 'requires_review', label: 'Requiere revision' },
               { value: 'medium_high_risk', label: 'Riesgo medio/alto' },
               { value: 'vat_zero_estimate', label: 'IVA estimado 0' },
-              { value: 'missing_valid_vat_invoice', label: 'Sin factura valida IVA' },
+              { value: 'missing_valid_vat_invoice', label: 'Sin factura valida de IVA' },
             ],
           },
           {
@@ -204,12 +204,12 @@ export function ExpensesList({
       ) : expenses.length === 0 ? (
         <div className="empty-state">
           <strong>No hay gastos</strong>
-          <p>Todavía no existen registros en la tabla expenses.</p>
+          <p>Todavia no existen registros en la tabla expenses.</p>
         </div>
       ) : filteredExpenses.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos gastos que coincidan con tu búsqueda.</p>
+          <p>No encontramos gastos que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="cc-expenses-list cc-record-list cc-bounded-list">
@@ -242,17 +242,26 @@ export function ExpensesList({
                 <p className="cc-record-card__summary">{expense.description}</p>
 
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{formatDateEs(expense.expense_date)}</span>
-                  <span>{getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</span>
-                  <span>{getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Fecha</span>
+                    <span className="cc-record-card__meta-value">{formatDateEs(expense.expense_date)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Soporte</span>
+                    <span className="cc-record-card__meta-value">{getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Revision</span>
+                    <span className="cc-record-card__meta-value">{getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</span>
+                  </span>
                 </div>
 
-                <div className="cc-expense-item__chips">
-                  <span className="cc-expense-chip">
+                <div className="cc-record-card__chips cc-expense-item__chips">
+                  <span className="cc-record-card__chip cc-expense-chip">
                     Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
                   </span>
                   {expense.ai_fiscal_classification ? (
-                    <span className="cc-expense-chip">
+                    <span className="cc-record-card__chip cc-expense-chip">
                       {getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)}
                     </span>
                   ) : null}

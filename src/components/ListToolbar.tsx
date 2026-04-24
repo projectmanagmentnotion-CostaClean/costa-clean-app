@@ -64,6 +64,50 @@ function hasActivePreferences(preferences: ListPreferences, defaults: ListPrefer
   return Object.entries(preferences.filters).some(([key, value]) => value !== (defaults.filters[key] ?? 'all'))
 }
 
+function FiltersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M4.5 7h15M7.5 12h9M10 17h4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function SortIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M8 6.5v11M8 17.5l-2.5-2.5M8 17.5l2.5-2.5M16 17.5v-11M16 6.5 13.5 9M16 6.5 18.5 9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+function ResetIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <path
+        d="M7.5 8.5H4.5v-3M5 8.5a7 7 0 1 1-1 7.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 export function ListToolbar({
   storageKey,
   searchLabel,
@@ -88,6 +132,22 @@ export function ListToolbar({
       : null,
     activeFilterCount > 0 ? `${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}` : null,
   ].filter(Boolean)
+  const sortLabel =
+    sortOptions.find((option) => option.value === preferences.sortField)?.label ?? preferences.sortField
+  const activePills = [
+    preferences.searchQuery.trim() ? `Busqueda: ${preferences.searchQuery.trim()}` : null,
+    preferences.sortField !== defaultPreferences.sortField || preferences.sortDirection !== defaultPreferences.sortDirection
+      ? `Orden: ${sortLabel} (${preferences.sortDirection === 'asc' ? 'ascendente' : 'descendente'})`
+      : null,
+    ...filters
+      .map((filter) => {
+        const value = preferences.filters[filter.key] ?? defaultPreferences.filters[filter.key] ?? 'all'
+        if (value === (defaultPreferences.filters[filter.key] ?? 'all')) return null
+        const optionLabel = filter.options.find((option) => option.value === value)?.label ?? value
+        return `${filter.label}: ${optionLabel}`
+      })
+      .filter((value): value is string => Boolean(value)),
+  ]
 
   useEffect(() => {
     onChange(preferences)
@@ -105,6 +165,31 @@ export function ListToolbar({
 
   return (
     <div className="cc-list-toolbar">
+      <div className="cc-list-toolbar__overview">
+        <div className="cc-list-toolbar__intro">
+          <span className="cc-list-toolbar__eyebrow">Explorar lista</span>
+          <strong className="cc-list-toolbar__headline">
+            {resultCount} visibles de {totalCount}
+          </strong>
+          <span className="cc-list-toolbar__caption">
+            {hasActiveControls
+              ? 'Hay preferencias activas afinando la vista.'
+              : 'Busqueda rapida y controles avanzados bajo demanda.'}
+          </span>
+        </div>
+
+        <div className="cc-list-toolbar__snapshot" aria-label="Resumen de preferencias">
+          <span className="cc-list-toolbar__snapshot-pill">
+            <SortIcon />
+            <span>{sortLabel}</span>
+          </span>
+          <span className="cc-list-toolbar__snapshot-pill">
+            <FiltersIcon />
+            <span>{activeFilterCount > 0 ? `${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}` : 'Sin filtros'}</span>
+          </span>
+        </div>
+      </div>
+
       <SearchBar
         label={searchLabel}
         value={preferences.searchQuery}
@@ -126,12 +211,12 @@ export function ListToolbar({
               {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Ocultos para mantener la lista limpia'}
             </span>
           </div>
-          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Activos</span> : null}
+          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Activos</span> : <span className="cc-list-toolbar__panel-badge is-muted">Base</span>}
         </summary>
 
         <div className="cc-list-toolbar__controls" aria-label="Ordenacion y filtros de lista">
           <label className="cc-list-toolbar__field">
-            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">-</span> Ordenar por</span>
+            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><SortIcon /></span> Ordenar por</span>
             <select
               value={preferences.sortField}
               onChange={(event) => updatePreferences((current) => ({ ...current, sortField: event.target.value }))}
@@ -143,7 +228,7 @@ export function ListToolbar({
           </label>
 
           <label className="cc-list-toolbar__field">
-            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">-</span> Direccion</span>
+            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><SortIcon /></span> Direccion</span>
             <select
               value={preferences.sortDirection}
               onChange={(event) => updatePreferences((current) => ({
@@ -158,7 +243,7 @@ export function ListToolbar({
 
           {filters.map((filter) => (
             <label key={filter.key} className="cc-list-toolbar__field">
-              <span><span className="cc-list-toolbar__field-icon" aria-hidden="true">-</span> {filter.label}</span>
+              <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><FiltersIcon /></span> {filter.label}</span>
               <select
                 value={preferences.filters[filter.key] ?? 'all'}
                 onChange={(event) => updatePreferences((current) => ({
@@ -182,11 +267,19 @@ export function ListToolbar({
             onClick={() => setPreferences(defaultPreferences)}
             disabled={!hasActiveControls}
           >
-            <span aria-hidden="true">x</span>
+            <span className="cc-list-toolbar__field-icon" aria-hidden="true"><ResetIcon /></span>
             Limpiar filtros
           </button>
         </div>
       </details>
+
+      {activePills.length > 0 ? (
+        <div className="cc-list-toolbar__active-pills" aria-label="Preferencias activas">
+          {activePills.map((pill) => (
+            <span key={pill} className="cc-list-toolbar__active-pill">{pill}</span>
+          ))}
+        </div>
+      ) : null}
 
       {hasActiveControls ? (
         <div className="cc-list-toolbar__summary" aria-live="polite">

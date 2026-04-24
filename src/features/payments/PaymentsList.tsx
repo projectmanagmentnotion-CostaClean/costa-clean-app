@@ -62,20 +62,20 @@ export function PaymentsList({
       <ListToolbar
         storageKey="costaclean-list-preferences-payments"
         searchLabel="Buscar pago"
-        searchPlaceholder="Código, factura, fecha, método o importe"
+        searchPlaceholder="Codigo, factura, fecha, metodo o importe"
         resultCount={filteredPayments.length}
         totalCount={payments.length}
         sortOptions={[
           { value: 'payment_date', label: 'Fecha de cobro' },
-          { value: 'code', label: 'Código' },
+          { value: 'code', label: 'Codigo' },
           { value: 'invoice', label: 'Factura' },
           { value: 'amount', label: 'Importe' },
-          { value: 'method', label: 'Método' },
+          { value: 'method', label: 'Metodo' },
         ]}
         defaultPreferences={defaultPreferences}
         filters={[{
           key: 'method',
-          label: 'Método',
+          label: 'Metodo',
           value: preferences.filters.method ?? 'all',
           options: [
             { value: 'all', label: 'Todos' },
@@ -96,12 +96,12 @@ export function PaymentsList({
       ) : payments.length === 0 ? (
         <div className="empty-state">
           <strong>No hay pagos</strong>
-          <p>Todavía no existen pagos registrados en el sistema.</p>
+          <p>Todavia no existen pagos registrados en el sistema.</p>
         </div>
       ) : filteredPayments.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos pagos que coincidan con tu búsqueda.</p>
+          <p>No encontramos pagos que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -135,9 +135,20 @@ export function PaymentsList({
 
                 <p className="cc-record-card__summary">{formatDateEs(payment.payment_date)}</p>
 
+                <div className="cc-record-card__chips" aria-label="Contexto del cobro">
+                  <span className="cc-record-card__chip">{getPaymentMethodLabel(payment.payment_method)}</span>
+                  <span className="cc-record-card__chip">{payment.notes?.trim() || 'Sin notas'}</span>
+                </div>
+
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{getPaymentMethodLabel(payment.payment_method)}</span>
-                  <span>{payment.notes?.trim() || 'Sin notas'}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Metodo</span>
+                    <span className="cc-record-card__meta-value">{getPaymentMethodLabel(payment.payment_method)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Notas</span>
+                    <span className="cc-record-card__meta-value">{payment.notes?.trim() || 'Sin notas'}</span>
+                  </span>
                 </div>
               </button>
             )

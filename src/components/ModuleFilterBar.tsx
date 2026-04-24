@@ -9,9 +9,11 @@ export function ModuleFilterBar({ label, onClear }: ModuleFilterBarProps) {
       <div className="cc-module-filter-bar__content">
         <span className="cc-module-filter-bar__eyebrow">Vista filtrada</span>
         <strong className="cc-module-filter-bar__label">{label}</strong>
+        <span className="cc-module-filter-bar__note">Estas viendo un subconjunto del modulo actual.</span>
       </div>
 
       <button type="button" className="secondary-button" onClick={onClear}>
+        <span className="cc-module-filter-bar__button-icon" aria-hidden="true">+</span>
         Quitar filtro
       </button>
     </section>

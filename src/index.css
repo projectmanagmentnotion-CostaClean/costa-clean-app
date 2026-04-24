@@ -516,3 +516,78 @@ a,
     max-width: 240px;
   }
 }
+
+/* =========================================================
+   Sprint 2026-04-24
+   Visual system refresh - iOS-forward polish
+   ========================================================= */
+
+:root {
+  --cc-color-brand: #7dd3fc;
+  --cc-color-brand-strong: #38bdf8;
+  --cc-color-brand-soft: rgba(56, 189, 248, 0.16);
+  --cc-color-border: rgba(255, 255, 255, 0.12);
+  --cc-color-border-strong: rgba(255, 255, 255, 0.2);
+  --cc-color-surface: rgba(255, 255, 255, 0.08);
+  --cc-color-surface-raised: rgba(9, 17, 30, 0.82);
+  --cc-color-surface-solid: #0c1524;
+  --cc-surface-glass: rgba(255, 255, 255, 0.08);
+  --cc-surface-glass-subtle: rgba(255, 255, 255, 0.04);
+  --cc-surface-input: rgba(255, 255, 255, 0.07);
+  --shadow: 0 30px 80px rgba(2, 8, 23, 0.34);
+  --shadow-soft: 0 18px 44px rgba(2, 8, 23, 0.2);
+  --shadow-shell: 0 32px 90px rgba(2, 8, 23, 0.38);
+  --shadow-float: 0 20px 40px rgba(2, 8, 23, 0.24);
+  --radius-md: 22px;
+  --radius-lg: 26px;
+  --radius-xl: 30px;
+  --radius-2xl: 38px;
+  --space-4: 18px;
+  --space-5: 24px;
+  --space-6: 30px;
+  --space-7: 36px;
+  --space-8: 44px;
+  --space-9: 56px;
+  --control-height-md: 46px;
+  --control-height-lg: 54px;
+}
+
+:root[data-theme="light"] {
+  --cc-color-background: #edf6fb;
+  --cc-color-background-soft: #e5f2f8;
+  --cc-color-surface: rgba(255, 255, 255, 0.88);
+  --cc-color-surface-raised: rgba(255, 255, 255, 0.96);
+  --cc-color-surface-solid: #ffffff;
+  --cc-color-border: rgba(14, 84, 114, 0.12);
+  --cc-color-border-strong: rgba(14, 84, 114, 0.22);
+  --cc-color-brand: #0b7db0;
+  --cc-color-brand-strong: #065d87;
+  --cc-color-brand-soft: rgba(11, 125, 176, 0.12);
+  --cc-surface-glass: rgba(255, 255, 255, 0.84);
+  --cc-surface-glass-subtle: rgba(248, 252, 255, 0.88);
+  --cc-surface-input: rgba(255, 255, 255, 0.96);
+  --shadow: 0 24px 64px rgba(17, 73, 103, 0.12);
+  --shadow-soft: 0 16px 34px rgba(17, 73, 103, 0.1);
+  --shadow-shell: 0 28px 68px rgba(17, 73, 103, 0.14);
+  --shadow-float: 0 16px 30px rgba(17, 73, 103, 0.14);
+}
+
+body {
+  letter-spacing: -0.011em;
+}
+
+body::before {
+  opacity: 0.34;
+}
+
+body::after {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.06), transparent 16%),
+    linear-gradient(180deg, transparent 0%, rgba(2, 6, 23, 0.2) 100%);
+}
+
+:root[data-theme="light"] body::after {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.68), transparent 16%),
+    linear-gradient(180deg, transparent 0%, rgba(190, 216, 229, 0.18) 100%);
+}

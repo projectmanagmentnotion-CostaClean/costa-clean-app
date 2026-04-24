@@ -2,6 +2,8 @@
 import { AppNav } from './AppNav'
 import { Suspense, lazy } from 'react'
 import '../features/shell/shell-dashboard.css'
+import '../features/shell/shell-dashboard-polish.css'
+import '../features/shell/shell-dashboard-structure.css'
 import type { AppView } from './navigation'
 import type { AppTheme } from './theme'
 import { useDashboardMetrics } from './dashboardMetrics'

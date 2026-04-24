@@ -93,7 +93,7 @@ export function QuotesList({
         resultCount={filteredQuotes.length}
         totalCount={quotes.length}
         sortOptions={[
-          { value: 'code', label: 'Código' },
+          { value: 'code', label: 'Codigo' },
           { value: 'client', label: 'Cliente' },
           { value: 'property', label: 'Propiedad' },
           { value: 'total', label: 'Importe total' },
@@ -124,12 +124,12 @@ export function QuotesList({
       ) : quotes.length === 0 ? (
         <div className="empty-state">
           <strong>No hay presupuestos</strong>
-          <p>Todavía no existen presupuestos registrados en el sistema.</p>
+          <p>Todavia no existen presupuestos registrados en el sistema.</p>
         </div>
       ) : filteredQuotes.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos presupuestos que coincidan con tu búsqueda.</p>
+          <p>No encontramos presupuestos que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -163,9 +163,20 @@ export function QuotesList({
 
                 <p className="cc-record-card__summary">{clientLabel}</p>
 
+                <div className="cc-record-card__chips" aria-label="Contexto del presupuesto">
+                  <span className="cc-record-card__chip">Base {formatCurrency(quote.subtotal)}</span>
+                  <span className="cc-record-card__chip">{propertyLabel}</span>
+                </div>
+
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>Base {formatCurrency(quote.subtotal)}</span>
-                  <span>Total {formatCurrency(quote.total)}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Base</span>
+                    <span className="cc-record-card__meta-value">{formatCurrency(quote.subtotal)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Total</span>
+                    <span className="cc-record-card__meta-value">{formatCurrency(quote.total)}</span>
+                  </span>
                 </div>
               </button>
             )

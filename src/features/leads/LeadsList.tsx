@@ -92,7 +92,7 @@ export function LeadsList({
                   </div>
 
                   <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getStatusLabel(lead.status)}</span>
+                    <span className={`lead-badge cc-status-badge cc-status-badge--${lead.status}`}>{getStatusLabel(lead.status)}</span>
                   </div>
                 </div>
 

@@ -473,21 +473,14 @@ export function InvoiceDetailCard({
   }
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-detail-panel cc-detail-panel--invoice">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle de la factura</h2>
         </div>
 
         {invoice ? (
-          <div
-            style={{
-              display: 'flex',
-              gap: '0.75rem',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
+          <div className="cc-detail-panel__actions">
             <button
               type="button"
               className="primary-button"
@@ -515,15 +508,36 @@ export function InvoiceDetailCard({
       {invoice ? (
         <div className="lead-detail-card">
           <div className="lead-detail-header">
-            <div>
+            <div className="cc-detail-panel__identity">
+              <span className="cc-detail-panel__eyebrow">Workspace financiero</span>
               <h3>{getInvoicePrimaryReference(invoice)}</h3>
               <p>Interno {getInvoiceInternalReference(invoice)}</p>
             </div>
-            <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+            <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
           </div>
 
+          {!isEditing ? (
+            <div className="cc-detail-panel__summary">
+              <div className="cc-detail-panel__summary-card">
+                <span>Cliente</span>
+                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
+                <small>{invoice.job_display_code ?? invoice.job_id ?? 'Sin servicio'}</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Emision</span>
+                <strong>{invoice.issue_date}</strong>
+                <small>{displayLines.length} linea(s)</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Total</span>
+                <strong>{formatCurrency(invoice.total)}</strong>
+                <small>{formatCurrency(invoice.tax_amount)} IVA</small>
+              </div>
+            </div>
+          ) : null}
+
           {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
+            <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
               <label className="form-field">
                 <span>Servicio</span>
                 <select
@@ -563,8 +577,9 @@ export function InvoiceDetailCard({
 
               <div className="form-field form-field-full">
                 <span>Líneas de factura *</span>
+                <div className="cc-detail-panel__line-items">
                 {lines.map((line, index) => (
-                  <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
+                  <div key={line.local_id} className="lead-form cc-detail-panel__line-item" style={{ marginTop: '0.75rem' }}>
                     <label className="form-field form-field-full">
                       <span>Concepto {index + 1}</span>
                       <input
@@ -618,6 +633,7 @@ export function InvoiceDetailCard({
                     </div>
                   </div>
                 ))}
+                </div>
 
                 <button
                   type="button"
@@ -679,7 +695,7 @@ export function InvoiceDetailCard({
             </form>
           ) : (
             <>
-              <div className="form-actions" style={{ marginBottom: '1rem' }}>
+              <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
                 {invoiceStatusOptions.map((status) => (
                   <button
                     key={status}
@@ -693,7 +709,7 @@ export function InvoiceDetailCard({
                 ))}
               </div>
 
-            <div className="lead-detail-grid">
+            <div className="lead-detail-grid cc-detail-panel__grid">
               <div className="detail-row">
                 <span className="detail-label">Número factura</span>
                 <strong>{invoice.invoice_number ?? 'Sin número'}</strong>

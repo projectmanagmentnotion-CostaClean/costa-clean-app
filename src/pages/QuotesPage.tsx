@@ -140,7 +140,12 @@ export function QuotesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
-        <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-page-mode-strip">
+          <span className="cc-page-mode-strip__pill cc-page-mode-strip__pill--active">Gestion</span>
+          <span className="cc-page-mode-strip__text">Lista y detalle para trabajar el presupuesto</span>
+        </div>
+
+        <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">
             <QuotesList
               quotes={quotes}
@@ -172,7 +177,12 @@ export function QuotesPage({
           </div>
         </div>
 
-        <div className="cc-doc-preview-panel">
+        <div className="cc-page-mode-strip cc-page-mode-strip--document">
+          <span className="cc-page-mode-strip__pill">Documento</span>
+          <span className="cc-page-mode-strip__text">Vista previa aislada para revisar, imprimir o exportar</span>
+        </div>
+
+        <div className="cc-doc-preview-panel cc-doc-preview-panel--workspace">
           <QuoteDocumentPreview
             quote={selectedQuote}
             clients={clients}

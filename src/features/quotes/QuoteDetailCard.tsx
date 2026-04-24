@@ -365,20 +365,13 @@ function QuoteDetailCardContent({
   const propertyLabel = buildPropertyLabel(hydratedQuote, properties)
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-detail-panel cc-detail-panel--quote">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del presupuesto</h2>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.75rem',
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end',
-          }}
-        >
+        <div className="cc-detail-panel__actions">
           <button
             type="button"
             className="primary-button"
@@ -413,13 +406,34 @@ function QuoteDetailCardContent({
 
       <div className="lead-detail-card">
         <div className="lead-detail-header">
-          <div>
+          <div className="cc-detail-panel__identity">
+            <span className="cc-detail-panel__eyebrow">Workspace de gestion</span>
             <h3>{hydratedQuote.display_code ?? hydratedQuote.id}</h3>
             <p>{clientLabel}</p>
           </div>
 
-          <span className="lead-badge">{getStatusLabel(hydratedQuote.status)}</span>
+          <span className={`lead-badge cc-status-badge cc-status-badge--${hydratedQuote.status}`}>{getStatusLabel(hydratedQuote.status)}</span>
         </div>
+
+        {!isLoadingLines && !linesError && !isEditing ? (
+          <div className="cc-detail-panel__summary">
+            <div className="cc-detail-panel__summary-card">
+              <span>Cliente</span>
+              <strong>{clientLabel}</strong>
+              <small>{hydratedQuote.client_display_code ?? 'Sin ref. CRM'}</small>
+            </div>
+            <div className="cc-detail-panel__summary-card">
+              <span>Propiedad</span>
+              <strong>{propertyLabel}</strong>
+              <small>{hydratedQuote.property_display_code ?? 'Sin ref. CRM'}</small>
+            </div>
+            <div className="cc-detail-panel__summary-card">
+              <span>Total</span>
+              <strong>{formatCurrency(hydratedQuote.total)}</strong>
+              <small>{displayLines.length} linea(s)</small>
+            </div>
+          </div>
+        ) : null}
 
         {isLoadingLines ? (
           <div className="empty-state">
@@ -432,7 +446,7 @@ function QuoteDetailCardContent({
             <p>{linesError}</p>
           </div>
         ) : isEditing ? (
-          <form className="lead-form" onSubmit={handleSubmit}>
+          <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
             <label className="form-field">
               <span>Cliente *</span>
               <select
@@ -479,8 +493,9 @@ function QuoteDetailCardContent({
 
             <div className="form-field form-field-full">
               <span>Líneas de presupuesto *</span>
+              <div className="cc-detail-panel__line-items">
               {lines.map((line, index) => (
-                <div key={line.local_id} className="lead-form" style={{ marginTop: '0.75rem' }}>
+                <div key={line.local_id} className="lead-form cc-detail-panel__line-item" style={{ marginTop: '0.75rem' }}>
                   <label className="form-field form-field-full">
                     <span>Concepto {index + 1}</span>
                     <input
@@ -534,6 +549,7 @@ function QuoteDetailCardContent({
                   </div>
                 </div>
               ))}
+              </div>
 
               <button
                 type="button"
@@ -591,7 +607,7 @@ function QuoteDetailCardContent({
           </form>
         ) : (
           <>
-            <div className="form-actions" style={{ marginBottom: '1rem' }}>
+            <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
               {hydratedQuote.status !== 'accepted' ? (
                 <>
                   <button
@@ -632,7 +648,7 @@ function QuoteDetailCardContent({
               ))}
             </div>
 
-          <div className="lead-detail-grid">
+          <div className="lead-detail-grid cc-detail-panel__grid">
             <div className="detail-row">
               <span className="detail-label">Referencia</span>
               <strong>{hydratedQuote.display_code ?? hydratedQuote.id}</strong>

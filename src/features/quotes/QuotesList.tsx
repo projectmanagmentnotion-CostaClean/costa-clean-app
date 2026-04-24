@@ -159,7 +159,7 @@ export function QuotesList({
                   </div>
 
                   <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getStatusLabel(quote.status)}</span>
+                    <span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>
                     <strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>
                   </div>
                 </div>

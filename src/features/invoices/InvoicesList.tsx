@@ -139,7 +139,7 @@ export function InvoicesList({
                   </div>
 
                   <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+                    <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
                     <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
                   </div>
                 </div>

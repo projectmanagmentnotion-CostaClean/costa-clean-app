@@ -148,7 +148,12 @@ export function InvoicesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
-        <div className="cc-master-layout cc-master-layout--list-first">
+        <div className="cc-page-mode-strip">
+          <span className="cc-page-mode-strip__pill cc-page-mode-strip__pill--active">Gestion</span>
+          <span className="cc-page-mode-strip__text">Lista y detalle para emitir, revisar y actualizar</span>
+        </div>
+
+        <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">
             <InvoicesList
               invoices={invoices}
@@ -177,7 +182,12 @@ export function InvoicesPage({
           </div>
         </div>
 
-        <div className="cc-doc-preview-panel">
+        <div className="cc-page-mode-strip cc-page-mode-strip--document">
+          <span className="cc-page-mode-strip__pill">Documento</span>
+          <span className="cc-page-mode-strip__text">Vista previa separada para validacion y salida</span>
+        </div>
+
+        <div className="cc-doc-preview-panel cc-doc-preview-panel--workspace">
           <InvoiceDocumentPreview invoice={selectedInvoice} />
         </div>
       </section>

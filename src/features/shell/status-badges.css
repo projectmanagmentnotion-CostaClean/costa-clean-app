@@ -1,0 +1,72 @@
+.cc-status-badge {
+  border-color: transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.cc-status-badge--new,
+.cc-status-badge--draft {
+  background: rgba(148, 163, 184, 0.18);
+  color: rgba(226, 232, 240, 0.92);
+}
+
+.cc-status-badge--contacted,
+.cc-status-badge--sent,
+.cc-status-badge--issued {
+  background: rgba(59, 130, 246, 0.18);
+  color: rgba(219, 234, 254, 0.96);
+}
+
+.cc-status-badge--quoted,
+.cc-status-badge--accepted,
+.cc-status-badge--paid,
+.cc-status-badge--won {
+  background: rgba(16, 185, 129, 0.18);
+  color: rgba(209, 250, 229, 0.96);
+}
+
+.cc-status-badge--rejected,
+.cc-status-badge--cancelled,
+.cc-status-badge--lost,
+.cc-status-badge--archived {
+  background: rgba(244, 63, 94, 0.16);
+  color: rgba(255, 228, 230, 0.96);
+}
+
+.cc-status-badge--expired {
+  background: rgba(245, 158, 11, 0.18);
+  color: rgba(254, 243, 199, 0.96);
+}
+
+:root[data-theme="light"] .cc-status-badge--new,
+:root[data-theme="light"] .cc-status-badge--draft {
+  background: rgba(148, 163, 184, 0.14);
+  color: #4c6376;
+}
+
+:root[data-theme="light"] .cc-status-badge--contacted,
+:root[data-theme="light"] .cc-status-badge--sent,
+:root[data-theme="light"] .cc-status-badge--issued {
+  background: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
+:root[data-theme="light"] .cc-status-badge--quoted,
+:root[data-theme="light"] .cc-status-badge--accepted,
+:root[data-theme="light"] .cc-status-badge--paid,
+:root[data-theme="light"] .cc-status-badge--won {
+  background: rgba(16, 185, 129, 0.12);
+  color: #047857;
+}
+
+:root[data-theme="light"] .cc-status-badge--rejected,
+:root[data-theme="light"] .cc-status-badge--cancelled,
+:root[data-theme="light"] .cc-status-badge--lost,
+:root[data-theme="light"] .cc-status-badge--archived {
+  background: rgba(244, 63, 94, 0.1);
+  color: #be123c;
+}
+
+:root[data-theme="light"] .cc-status-badge--expired {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+}

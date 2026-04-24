@@ -203,14 +203,14 @@ export function LeadDetailCard({
       : 'Convertir a cliente'
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-detail-panel cc-detail-panel--lead">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del lead</h2>
         </div>
 
         {lead ? (
-          <div className="detail-actions">
+          <div className="detail-actions cc-detail-panel__actions">
             <button
               type="button"
               className="secondary-button"
@@ -253,21 +253,42 @@ export function LeadDetailCard({
       {lead ? (
         <div className="lead-detail-card">
           <div className="lead-detail-header">
-            <div>
+            <div className="cc-detail-panel__identity">
+              <span className="cc-detail-panel__eyebrow">Workspace comercial</span>
               <h3>{lead.full_name}</h3>
               <p>{lead.display_code ?? lead.id}</p>
             </div>
 
-            <div className="lead-item-badges">
-              <span className="lead-badge">{getDisplayStatusLabel(lead.status)}</span>
+            <div className="lead-item-badges cc-detail-panel__badge-row">
+              <span className={`lead-badge cc-status-badge cc-status-badge--${lead.status}`}>{getDisplayStatusLabel(lead.status)}</span>
               {lead.archived_at ? (
-                <span className="lead-badge lead-badge-archived">Archivado</span>
+                <span className="lead-badge lead-badge-archived cc-status-badge cc-status-badge--archived">Archivado</span>
               ) : null}
             </div>
           </div>
 
+          {!isEditing ? (
+            <div className="cc-detail-panel__summary">
+              <div className="cc-detail-panel__summary-card">
+                <span>Contacto</span>
+                <strong>{lead.phone}</strong>
+                <small>{lead.email ?? 'Sin email'}</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Ubicacion</span>
+                <strong>{lead.city ?? 'Sin ciudad'}</strong>
+                <small>{lead.archived_at ? 'Archivado' : 'Activo'}</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Conversion</span>
+                <strong>{alreadyConverted || lead.status === 'won' ? 'Cerrado' : 'Pendiente'}</strong>
+                <small>{leadDraft ? 'Con intake asociado' : 'Sin intake activo'}</small>
+              </div>
+            </div>
+          ) : null}
+
           {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
+            <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
               <label className="form-field">
                 <span>Nombre completo *</span>
                 <input
@@ -333,7 +354,7 @@ export function LeadDetailCard({
               ) : null}
             </form>
           ) : (
-            <div className="lead-detail-grid">
+            <div className="lead-detail-grid cc-detail-panel__grid">
               <div className="detail-row">
                 <span className="detail-label">Código</span>
                 <strong>{lead.display_code ?? lead.id}</strong>

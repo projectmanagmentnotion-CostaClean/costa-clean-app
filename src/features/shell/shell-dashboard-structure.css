@@ -325,3 +325,124 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Minimal nav v2 */
+
+.cc-shell-nav__rail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.cc-shell-nav__rail-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.cc-shell-nav__rail-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.cc-shell-nav__rail-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 0 14px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 232, 240, 0.9);
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.cc-shell-nav__rail-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cc-shell-nav__rail-button.is-active {
+  border-color: rgba(125, 211, 252, 0.24);
+  background: rgba(125, 211, 252, 0.11);
+  color: #f8fbff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 10px 20px rgba(14, 165, 233, 0.12);
+}
+
+.cc-shell-nav__rail-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.07);
+  flex: 0 0 26px;
+}
+
+.cc-shell-nav__rail-copy {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+}
+
+.cc-shell-nav__rail-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+.cc-shell-nav__rail-section {
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.8);
+}
+
+:root[data-theme="light"] .cc-shell-nav__rail {
+  border-top-color: rgba(14, 84, 114, 0.08);
+}
+
+:root[data-theme="light"] .cc-shell-nav__rail-button {
+  border-color: rgba(14, 84, 114, 0.1);
+  background: rgba(255, 255, 255, 0.8);
+  color: #123247;
+}
+
+:root[data-theme="light"] .cc-shell-nav__rail-button.is-active {
+  border-color: rgba(11, 125, 176, 0.2);
+  background: rgba(11, 125, 176, 0.11);
+  color: #0c2a3d;
+}
+
+:root[data-theme="light"] .cc-shell-nav__rail-icon {
+  background: rgba(11, 125, 176, 0.08);
+}
+
+:root[data-theme="light"] .cc-shell-nav__rail-section {
+  color: #5f778b;
+}
+
+@media (max-width: 900px) {
+  .cc-shell-nav__rail {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .cc-shell-nav__rail-button {
+    min-height: 42px;
+    padding: 0 12px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-shell-nav__rail {
+    display: none;
+  }
+}

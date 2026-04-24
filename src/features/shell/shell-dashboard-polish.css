@@ -651,6 +651,10 @@
 
 /* Navbar and compact dashboard actions refinement */
 
+.cc-shell-nav__topline {
+  align-items: center;
+}
+
 .cc-shell-nav__actions {
   display: grid;
   justify-items: end;
@@ -714,6 +718,13 @@
 
 .cc-shell-nav__current-value {
   font-size: 0.78rem;
+}
+
+.cc-shell-subnav--top,
+.cc-shell-subnav__group,
+.cc-shell-subnav__group-header,
+.cc-shell-subnav__group-grid {
+  display: contents;
 }
 
 .cc-quick-actions-panel__summary {

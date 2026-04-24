@@ -84,6 +84,9 @@ export function QuotesList({
           <h2>Presupuestos</h2>
           <p>Seguimiento comercial y conversion operativa.</p>
         </div>
+        <span className="cc-list-section__count">
+          {filteredQuotes.length} / {quotes.length}
+        </span>
       </div>
 
       <ListToolbar

@@ -104,22 +104,48 @@ export function LeadsPage({
     ? convertedLeadIds.has(selectedLead.id)
     : false
   const hasActiveFilters = Boolean(searchTerm || statusFilter !== 'all' || showArchived)
+  const visibleLeadsCount = filteredLeads.length
+  const newLeadsCount = leads.filter((lead) => lead.status === 'new' && !lead.archived_at).length
+  const quotedLeadsCount = leads.filter((lead) => lead.status === 'quoted' && !lead.archived_at).length
+  const wonLeadsCount = leads.filter((lead) => lead.status === 'won' && !lead.archived_at).length
 
   return (
     <section className="page-section cc-master-page">
       <div className="section-header page-header-actions cc-master-page__hero">
-        <div>
+        <div className="cc-module-hero__body">
+          <span className="cc-module-hero__eyebrow">Pipeline comercial</span>
           <h1>Leads</h1>
           <p>Gestiona oportunidades comerciales, seguimiento y conversion a cliente.</p>
+
+          <div className="cc-module-hero__meta" aria-label="Resumen del modulo leads">
+            <span className="cc-module-hero__metric">
+              <strong>{visibleLeadsCount}</strong>
+              <span>visibles</span>
+            </span>
+            <span className="cc-module-hero__metric">
+              <strong>{newLeadsCount}</strong>
+              <span>nuevos</span>
+            </span>
+            <span className="cc-module-hero__metric">
+              <strong>{quotedLeadsCount}</strong>
+              <span>presupuestados</span>
+            </span>
+            <span className="cc-module-hero__metric">
+              <strong>{wonLeadsCount}</strong>
+              <span>ganados</span>
+            </span>
+          </div>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
-        >
-          {showCreateForm ? 'Cerrar formulario' : 'Nuevo lead'}
-        </button>
+        <div className="cc-module-hero__actions">
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => setShowCreateForm((current) => !current)}
+          >
+            {showCreateForm ? 'Cerrar formulario' : 'Nuevo lead'}
+          </button>
+        </div>
       </div>
 
       {showCreateForm ? <LeadCreateForm onCreated={onLeadCreated} /> : null}

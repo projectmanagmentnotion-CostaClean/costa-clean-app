@@ -10,6 +10,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
+import { formatCurrency } from '../app/displayFormat'
 
 interface QuotesPageProps {
   quotes: QuoteListItem[]
@@ -47,6 +48,9 @@ export function QuotesPage({
   const selectedQuoteKey = selectedQuote?.id ?? null
 
   const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+  const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
+  const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
+  const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
@@ -79,27 +83,49 @@ export function QuotesPage({
     <>
       <section className="page-section cc-master-page cc-doc-page">
         <div className="section-header page-header-actions cc-master-page__hero">
-          <div>
+          <div className="cc-module-hero__body">
+            <span className="cc-module-hero__eyebrow">Propuesta y conversion</span>
             <h1>Presupuestos</h1>
             <p>
               Gestiona propuestas comerciales y abre el documento del presupuesto seleccionado.
             </p>
+
+            <div className="cc-module-hero__meta" aria-label="Resumen del modulo presupuestos">
+              <span className="cc-module-hero__metric">
+                <strong>{quotes.length}</strong>
+                <span>registros</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{draftQuotesCount}</strong>
+                <span>borradores</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{acceptedQuotesCount}</strong>
+                <span>aceptados</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{selectedQuoteTotal !== null ? formatCurrency(selectedQuoteTotal) : ' - '}</strong>
+                <span>seleccionado</span>
+              </span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              if (showCreateForm) {
-                runGuarded(() => setShowCreateForm(false))
-                return
-              }
+          <div className="cc-module-hero__actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                if (showCreateForm) {
+                  runGuarded(() => setShowCreateForm(false))
+                  return
+                }
 
-              setShowCreateForm(true)
-            }}
-          >
-            {showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto'}
-          </button>
+                setShowCreateForm(true)
+              }}
+            >
+              {showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto'}
+            </button>
+          </div>
         </div>
 
         {showCreateForm ? (

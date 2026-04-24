@@ -63,6 +63,9 @@ export function InvoicesList({
           <h2>Facturas</h2>
           <p>Emision, cobro y trazabilidad documental.</p>
         </div>
+        <span className="cc-list-section__count">
+          {filteredInvoices.length} / {invoices.length}
+        </span>
       </div>
 
       <ListToolbar

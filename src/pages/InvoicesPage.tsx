@@ -11,6 +11,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
+import { formatCurrency } from '../app/displayFormat'
 
 interface InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -50,6 +51,9 @@ export function InvoicesPage({
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
   const hasPendingWork = isCreateFormVisible || hasUnsavedDetailChanges
+  const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
+  const paidInvoicesCount = invoices.filter((invoice) => invoice.status === 'paid').length
+  const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en facturas')
@@ -83,30 +87,52 @@ export function InvoicesPage({
     <>
       <section className="page-section cc-master-page cc-doc-page">
         <div className="section-header page-header-actions cc-master-page__hero">
-          <div>
+          <div className="cc-module-hero__body">
+            <span className="cc-module-hero__eyebrow">Cobro y documento</span>
             <h1>Facturas</h1>
             <p>
               Gestiona documentos de cobro con una estructura mas clara y compacta en iPhone.
             </p>
+
+            <div className="cc-module-hero__meta" aria-label="Resumen del modulo facturas">
+              <span className="cc-module-hero__metric">
+                <strong>{invoices.length}</strong>
+                <span>registros</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{issuedInvoicesCount}</strong>
+                <span>emitidas</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{paidInvoicesCount}</strong>
+                <span>pagadas</span>
+              </span>
+              <span className="cc-module-hero__metric">
+                <strong>{selectedInvoiceTotal !== null ? formatCurrency(selectedInvoiceTotal) : ' - '}</strong>
+                <span>seleccionada</span>
+              </span>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={() => {
-              if (isCreateFormVisible) {
-                runGuarded(() => {
-                  setShowCreateForm(false)
-                  onPrefillConsumed()
-                })
-                return
-              }
+          <div className="cc-module-hero__actions">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                if (isCreateFormVisible) {
+                  runGuarded(() => {
+                    setShowCreateForm(false)
+                    onPrefillConsumed()
+                  })
+                  return
+                }
 
-              setShowCreateForm(true)
-            }}
-          >
-            {isCreateFormVisible ? 'Cerrar formulario' : 'Nueva factura'}
-          </button>
+                setShowCreateForm(true)
+              }}
+            >
+              {isCreateFormVisible ? 'Cerrar formulario' : 'Nueva factura'}
+            </button>
+          </div>
         </div>
 
         {isCreateFormVisible ? (

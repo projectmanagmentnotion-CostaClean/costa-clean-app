@@ -1,0 +1,83 @@
+.page-header-actions {
+  gap: 14px;
+}
+
+.section-header p,
+.cc-record-card__summary,
+.cc-module-filter-bar__note,
+.cc-list-toolbar__caption,
+.cc-page-mode-strip__text {
+  text-wrap: balance;
+}
+
+.cc-record-card__chip,
+.cc-list-toolbar__snapshot-pill,
+.cc-list-toolbar__active-pill,
+.cc-page-mode-strip__pill,
+.cc-list-section__count {
+  white-space: nowrap;
+}
+
+.detail-actions,
+.form-actions,
+.cc-detail-panel__actions,
+.cc-detail-panel__status-actions {
+  align-items: stretch;
+}
+
+.detail-actions .primary-button,
+.detail-actions .secondary-button,
+.form-actions .primary-button,
+.form-actions .secondary-button {
+  min-width: 0;
+}
+
+.lead-item-button,
+.cc-record-card,
+.cc-module-filter-bar,
+.cc-list-toolbar__overview,
+.cc-list-toolbar__panel-summary {
+  overflow-wrap: anywhere;
+}
+
+.cc-master-layout__list,
+.cc-master-layout__detail {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .page-header-actions {
+    align-items: stretch;
+  }
+
+  .page-header-actions > :last-child {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-list-toolbar__snapshot,
+  .cc-list-toolbar__active-pills,
+  .cc-record-card__chips {
+    gap: 6px;
+  }
+
+  .cc-record-card__chip,
+  .cc-list-toolbar__snapshot-pill,
+  .cc-list-toolbar__active-pill {
+    white-space: normal;
+  }
+
+  .detail-actions,
+  .form-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .detail-actions .primary-button,
+  .detail-actions .secondary-button,
+  .form-actions .primary-button,
+  .form-actions .secondary-button {
+    width: 100%;
+  }
+}

@@ -1,6 +1,8 @@
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
+import { formatCurrency } from '../../app/displayFormat'
+import { getStatusLabel } from '../../app/displayText'
 import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { QuoteDocumentA4 } from './QuoteDocumentA4'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
@@ -20,8 +22,10 @@ export function QuoteDocumentPreview({
     return (
       <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote">
         <div className="section-header">
-          <h2>Vista previa de presupuesto</h2>
-          <p>Previsualización comercial adaptada para revisión rápida en móvil.</p>
+          <div>
+            <h2>Vista previa de presupuesto</h2>
+            <p>Previsualizacion comercial adaptada para revision rapida en movil.</p>
+          </div>
         </div>
 
         <div className="empty-state">
@@ -59,20 +63,26 @@ function QuoteDocumentPreviewContent({
   return (
     <section className="data-section cc-doc-preview-panel cc-doc-preview-panel--quote">
       <div className="section-header">
-        <h2>Vista previa de presupuesto</h2>
-        <p>Documento comercial presentado en una vista optimizada para móvil.</p>
+        <div>
+          <h2>Vista previa de presupuesto</h2>
+          <p>Documento comercial presentado en una vista optimizada para movil.</p>
+        </div>
+        <div className="cc-doc-preview-panel__meta" aria-label="Resumen del documento">
+          <span className={`lead-badge cc-status-badge cc-status-badge--${hydratedQuote.status}`}>{getStatusLabel(hydratedQuote.status)}</span>
+          <span className="cc-doc-preview-panel__pill">{formatCurrency(hydratedQuote.total)}</span>
+        </div>
       </div>
 
       <div className="cc-doc-preview-panel__viewport">
         <DocumentThumbnail>
           {isLoadingLines ? (
             <div className="empty-state cc-state-card cc-state-card--loading">
-              <strong>Cargando líneas de presupuesto</strong>
+              <strong>Cargando lineas de presupuesto</strong>
               <p>Preparando la vista previa con los conceptos reales.</p>
             </div>
           ) : linesError ? (
             <div className="empty-state">
-              <strong>No se pudieron cargar las líneas</strong>
+              <strong>No se pudieron cargar las lineas</strong>
               <p>{linesError}</p>
             </div>
           ) : (

@@ -280,13 +280,12 @@ export function AppNav({
       >
         <div className="cc-shell-nav__topline">
           <div className="cc-shell-nav__brand">
-            <div className="cc-shell-nav__brand-mark" aria-hidden="true">
-              <img
-                src="/branding/Costa_Clean-LOGO.png"
-                alt=""
-                className="cc-shell-nav__brand-mark-image"
-              />
-            </div>
+            <img
+              src="/branding/Costa_Clean-LOGO.png"
+              alt=""
+              className="cc-shell-nav__logo"
+              aria-hidden="true"
+            />
 
             <div className="cc-shell-nav__brand-copy">
               <span className="cc-shell-nav__title">CostaClean CRM</span>
@@ -328,10 +327,12 @@ export function AppNav({
               ) : null}
             </div>
 
-            <div className="cc-shell-nav__current" title={currentViewLabel}>
-              <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
-              <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
-            </div>
+            {!compactMobile ? (
+              <div className="cc-shell-nav__current" title={currentViewLabel}>
+                <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
+                <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
+              </div>
+            ) : null}
           </div>
         </div>
 

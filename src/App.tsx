@@ -4,10 +4,19 @@ import './App.css'
 import { AppShell } from './app/AppShell'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
-import { getSupabaseClient } from './lib/supabase'
+import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 
 const publicQuoteRequestPaths = new Set(['/quote-request', '/presupuesto'])
+
+function isRecoverableAuthBootstrapError(message: string) {
+  const normalizedMessage = message.trim().toLowerCase()
+
+  return normalizedMessage.includes('failed to fetch')
+    || normalizedMessage.includes('networkerror')
+    || normalizedMessage.includes('load failed')
+    || normalizedMessage.includes('lock broken by another request')
+}
 
 function App() {
   const isPublicQuoteRequestPath = typeof window !== 'undefined'
@@ -75,6 +84,16 @@ function App() {
         } = await client.auth.getSession()
 
         if (sessionError) {
+          if (isRecoverableAuthBootstrapError(sessionError.message)) {
+            clearStoredSupabaseSession()
+
+            if (isMounted) {
+              setSession(null)
+              setIsBooting(false)
+            }
+            return
+          }
+
           if (isMounted) {
             setBootError(sessionError.message)
             setIsBooting(false)

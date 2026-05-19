@@ -1,10 +1,10 @@
-﻿import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { getSupabasePublicEnv } from './supabaseEnv'
 
 let supabaseClient: SupabaseClient | null = null
 
 export function getSupabaseClient() {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
 
   if (!supabaseUrl || !supabaseAnonKey) {
     return {

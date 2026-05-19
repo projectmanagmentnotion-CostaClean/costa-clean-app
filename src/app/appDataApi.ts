@@ -13,6 +13,7 @@ import { listQuarterlyClosings } from '../features/quarterlyClosing/quarterlyClo
 import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import { getSupabaseClient } from '../lib/supabase'
+import { getSupabasePublicEnv } from '../lib/supabaseEnv'
 import { fetchSupabaseRestList } from '../lib/supabaseRest'
 
 function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
@@ -36,8 +37,7 @@ export async function listLeads(): Promise<LeadListItem[]> {
 }
 
 async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord[]> {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-  const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
 
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error('Faltan las variables de entorno de Supabase.')

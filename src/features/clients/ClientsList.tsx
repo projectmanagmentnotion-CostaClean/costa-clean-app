@@ -45,8 +45,6 @@ export function ClientsList({
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder="Nombre, código interno, teléfono, email o estado"
-        resultCount={filteredClients.length}
-        totalCount={clients.length}
       />
 
       {error ? (

@@ -50,8 +50,6 @@ export function LeadsList({
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder="Nombre, código, teléfono, email, ciudad o estado"
-        resultCount={filteredLeads.length}
-        totalCount={leads.length}
       />
 
       {error ? (

@@ -6,8 +6,6 @@ interface SearchBarProps {
   value: string
   onChange: (value: string) => void
   placeholder?: string
-  resultCount?: number
-  totalCount?: number
 }
 
 export function SearchBar({
@@ -15,12 +13,8 @@ export function SearchBar({
   value,
   onChange,
   placeholder,
-  resultCount,
-  totalCount,
 }: SearchBarProps) {
   const inputId = useId()
-  const showCount =
-    typeof resultCount === 'number' && typeof totalCount === 'number'
 
   return (
     <div className="cc-searchbar">
@@ -47,12 +41,6 @@ export function SearchBar({
           placeholder={placeholder ?? 'Buscar'}
         />
       </div>
-
-      {showCount ? (
-        <p className="cc-searchbar__count">
-          {resultCount} visibles de {totalCount} registros
-        </p>
-      ) : null}
     </div>
   )
 }

@@ -48,13 +48,14 @@
 .cc-record-card__identity,
 .cc-record-card__aside,
 .cc-list-toolbar__intro,
-.cc-list-toolbar__snapshot,
+.cc-list-toolbar__actions,
 .cc-module-filter-bar__content {
   min-width: 0;
 }
 
 .cc-list-toolbar__headline,
 .cc-list-toolbar__caption,
+.cc-list-toolbar__state,
 .cc-module-filter-bar__label,
 .cc-module-filter-bar__note,
 .cc-record-card__title,
@@ -96,7 +97,7 @@
 }
 
 @media (max-width: 640px) {
-  .cc-list-toolbar__snapshot,
+  .cc-list-toolbar__actions,
   .cc-list-toolbar__active-pills,
   .cc-record-card__chips {
     gap: 6px;

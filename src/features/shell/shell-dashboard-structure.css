@@ -95,9 +95,9 @@
 
 .cc-list-toolbar__overview {
   display: grid;
-  grid-template-columns: minmax(0, 1.22fr) minmax(0, auto);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 14px 16px;
-  align-items: start;
+  align-items: center;
   padding: 15px 17px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -136,7 +136,7 @@
   max-width: 52ch;
 }
 
-.cc-list-toolbar__snapshot,
+.cc-list-toolbar__actions,
 .cc-list-toolbar__active-pills,
 .cc-record-card__chips {
   display: flex;
@@ -145,9 +145,17 @@
   min-width: 0;
 }
 
-.cc-list-toolbar__snapshot {
+.cc-list-toolbar__actions {
   justify-content: flex-end;
-  align-self: center;
+  align-items: center;
+}
+
+.cc-list-toolbar__state {
+  color: rgba(226, 232, 240, 0.76);
+  font-size: 0.79rem;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: right;
 }
 
 .cc-list-toolbar__snapshot-pill,
@@ -310,9 +318,9 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .cc-list-toolbar__snapshot {
+  .cc-list-toolbar__actions {
     justify-content: flex-start;
-    align-self: start;
+    align-items: center;
   }
 }
 
@@ -332,6 +340,15 @@
 
   .cc-list-toolbar__caption {
     max-width: none;
+  }
+
+  .cc-list-toolbar__actions,
+  .cc-list-toolbar__reset {
+    width: 100%;
+  }
+
+  .cc-list-toolbar__state {
+    text-align: left;
   }
 
   .cc-record-card__meta {

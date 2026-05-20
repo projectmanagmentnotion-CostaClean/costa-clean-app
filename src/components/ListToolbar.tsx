@@ -134,20 +134,12 @@ export function ListToolbar({
   ].filter(Boolean)
   const sortLabel =
     sortOptions.find((option) => option.value === preferences.sortField)?.label ?? preferences.sortField
-  const activePills = [
-    preferences.searchQuery.trim() ? `Busqueda: ${preferences.searchQuery.trim()}` : null,
-    preferences.sortField !== defaultPreferences.sortField || preferences.sortDirection !== defaultPreferences.sortDirection
-      ? `Orden: ${sortLabel} (${preferences.sortDirection === 'asc' ? 'ascendente' : 'descendente'})`
-      : null,
-    ...filters
-      .map((filter) => {
-        const value = preferences.filters[filter.key] ?? defaultPreferences.filters[filter.key] ?? 'all'
-        if (value === (defaultPreferences.filters[filter.key] ?? 'all')) return null
-        const optionLabel = filter.options.find((option) => option.value === value)?.label ?? value
-        return `${filter.label}: ${optionLabel}`
-      })
-      .filter((value): value is string => Boolean(value)),
-  ]
+  const toolbarState = activeSummaryBits.length > 0
+    ? `Activos: ${activeSummaryBits.join(' / ')}`
+    : `Orden base: ${sortLabel}`
+  const toolbarCaption = hasActiveControls
+    ? 'La vista esta afinada con preferencias reales activas.'
+    : 'Busqueda y filtros reales en un solo bloque cuando los necesitas.'
 
   useEffect(() => {
     onChange(preferences)
@@ -167,26 +159,25 @@ export function ListToolbar({
     <div className="cc-list-toolbar">
       <div className="cc-list-toolbar__overview">
         <div className="cc-list-toolbar__intro">
-          <span className="cc-list-toolbar__eyebrow">Explorar lista</span>
+          <span className="cc-list-toolbar__eyebrow">Vista de lista</span>
           <strong className="cc-list-toolbar__headline">
             {resultCount} visibles de {totalCount}
           </strong>
-          <span className="cc-list-toolbar__caption">
-            {hasActiveControls
-              ? 'Hay preferencias activas afinando la vista.'
-              : 'Busqueda rapida y controles avanzados bajo demanda.'}
-          </span>
+          <span className="cc-list-toolbar__caption">{toolbarCaption}</span>
         </div>
 
-        <div className="cc-list-toolbar__snapshot" aria-label="Resumen de preferencias">
-          <span className="cc-list-toolbar__snapshot-pill">
-            <SortIcon />
-            <span>{sortLabel}</span>
-          </span>
-          <span className="cc-list-toolbar__snapshot-pill">
-            <FiltersIcon />
-            <span>{activeFilterCount > 0 ? `${activeFilterCount} filtro${activeFilterCount > 1 ? 's' : ''}` : 'Sin filtros'}</span>
-          </span>
+        <div className="cc-list-toolbar__actions">
+          <span className="cc-list-toolbar__state" aria-live="polite">{toolbarState}</span>
+          {hasActiveControls ? (
+            <button
+              type="button"
+              className="secondary-button cc-list-toolbar__reset"
+              onClick={() => setPreferences(defaultPreferences)}
+            >
+              <span className="cc-list-toolbar__field-icon" aria-hidden="true"><ResetIcon /></span>
+              Limpiar vista
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -195,8 +186,6 @@ export function ListToolbar({
         value={preferences.searchQuery}
         onChange={(searchQuery) => updatePreferences((current) => ({ ...current, searchQuery }))}
         placeholder={searchPlaceholder}
-        resultCount={resultCount}
-        totalCount={totalCount}
       />
 
       <details
@@ -261,31 +250,8 @@ export function ListToolbar({
             </label>
           ))}
 
-          <button
-            type="button"
-            className="secondary-button cc-list-toolbar__reset"
-            onClick={() => setPreferences(defaultPreferences)}
-            disabled={!hasActiveControls}
-          >
-            <span className="cc-list-toolbar__field-icon" aria-hidden="true"><ResetIcon /></span>
-            Limpiar filtros
-          </button>
         </div>
       </details>
-
-      {activePills.length > 0 ? (
-        <div className="cc-list-toolbar__active-pills" aria-label="Preferencias activas">
-          {activePills.map((pill) => (
-            <span key={pill} className="cc-list-toolbar__active-pill">{pill}</span>
-          ))}
-        </div>
-      ) : null}
-
-      {hasActiveControls ? (
-        <div className="cc-list-toolbar__summary" aria-live="polite">
-          Mostrando {resultCount} de {totalCount} registros con preferencias aplicadas.
-        </div>
-      ) : null}
     </div>
   )
 }

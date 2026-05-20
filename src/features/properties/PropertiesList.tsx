@@ -51,8 +51,6 @@ export function PropertiesList({
         value={searchQuery}
         onChange={setSearchQuery}
         placeholder="Nombre, dirección, código interno, cliente, tipo, ciudad o nota"
-        resultCount={filteredProperties.length}
-        totalCount={properties.length}
       />
 
       {error ? (

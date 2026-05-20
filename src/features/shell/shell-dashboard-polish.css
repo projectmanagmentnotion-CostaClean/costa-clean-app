@@ -1097,11 +1097,19 @@
 }
 
 .cc-module-filter-bar {
-  gap: 16px;
+  gap: 12px;
 }
 
 .cc-module-filter-bar__label {
   line-height: 1.18;
+}
+
+.cc-list-toolbar__actions {
+  gap: 10px;
+}
+
+.cc-list-toolbar__state {
+  max-width: 30ch;
 }
 
 .cc-module-filter-bar .secondary-button {
@@ -1629,6 +1637,11 @@
     line-height: 1.4;
   }
 
+  .cc-list-toolbar__state {
+    max-width: none;
+    font-size: 0.78rem;
+  }
+
   .cc-record-card--lead,
   .cc-record-card--quote,
   .cc-record-card--invoice {
@@ -1661,11 +1674,6 @@
 
   .cc-module-filter-bar__label {
     font-size: 0.98rem;
-  }
-
-  .cc-module-filter-bar__note {
-    font-size: 0.8rem;
-    line-height: 1.42;
   }
 
   .cc-module-filter-bar .secondary-button {

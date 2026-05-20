@@ -15,6 +15,7 @@ interface QuotesListProps {
   error: string | null
   selectedQuoteId: string | null
   onSelectQuote: (quote: QuoteListItem) => void
+  onOpenDocument: (quote: QuoteListItem) => void
 }
 
 function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
@@ -41,6 +42,7 @@ export function QuotesList({
   error,
   selectedQuoteId,
   onSelectQuote,
+  onOpenDocument,
 }: QuotesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('code', 'desc', { status: 'all' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
@@ -142,46 +144,60 @@ export function QuotesList({
             const propertyLabel = buildPropertyLabel(quote, properties)
 
             return (
-              <button
+              <article
                 key={quote.id}
-                type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--quote'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--quote'
+                    ? 'cc-record-card cc-record-card--quote is-selected'
+                    : 'cc-record-card cc-record-card--quote'
                 }
-                onClick={() => onSelectQuote(quote)}
               >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{quote.display_code ?? quote.id}</strong>
-                    <span className="cc-record-card__subref">{propertyLabel}</span>
+                <button
+                  type="button"
+                  className="lead-item-button cc-record-card__primary"
+                  onClick={() => onSelectQuote(quote)}
+                >
+                  <div className="cc-record-card__head">
+                    <div className="cc-record-card__identity">
+                      <strong className="cc-record-card__title">{quote.display_code ?? quote.id}</strong>
+                      <span className="cc-record-card__subref">{propertyLabel}</span>
+                    </div>
+
+                    <div className="cc-record-card__aside">
+                      <span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>
+                      <strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>
+                    </div>
                   </div>
 
-                  <div className="cc-record-card__aside">
-                    <span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>
-                    <strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>
+                  <p className="cc-record-card__summary">{clientLabel}</p>
+
+                  <div className="cc-record-card__chips" aria-label="Contexto del presupuesto">
+                    <span className="cc-record-card__chip">Base {formatCurrency(quote.subtotal)}</span>
+                    <span className="cc-record-card__chip">{propertyLabel}</span>
                   </div>
-                </div>
 
-                <p className="cc-record-card__summary">{clientLabel}</p>
+                  <div className="cc-list-meta cc-record-card__meta">
+                    <span>
+                      <span className="cc-record-card__meta-label">Base</span>
+                      <span className="cc-record-card__meta-value">{formatCurrency(quote.subtotal)}</span>
+                    </span>
+                    <span>
+                      <span className="cc-record-card__meta-label">Total</span>
+                      <span className="cc-record-card__meta-value">{formatCurrency(quote.total)}</span>
+                    </span>
+                  </div>
+                </button>
 
-                <div className="cc-record-card__chips" aria-label="Contexto del presupuesto">
-                  <span className="cc-record-card__chip">Base {formatCurrency(quote.subtotal)}</span>
-                  <span className="cc-record-card__chip">{propertyLabel}</span>
+                <div className="cc-record-card__footer">
+                  <button
+                    type="button"
+                    className="secondary-button cc-record-card__action"
+                    onClick={() => onOpenDocument(quote)}
+                  >
+                    Abrir documento
+                  </button>
                 </div>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Base</span>
-                    <span className="cc-record-card__meta-value">{formatCurrency(quote.subtotal)}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Total</span>
-                    <span className="cc-record-card__meta-value">{formatCurrency(quote.total)}</span>
-                  </span>
-                </div>
-              </button>
+              </article>
             )
           })}
         </div>

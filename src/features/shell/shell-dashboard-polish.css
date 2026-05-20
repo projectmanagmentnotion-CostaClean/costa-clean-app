@@ -1213,9 +1213,21 @@
 .cc-record-card--lead,
 .cc-record-card--quote,
 .cc-record-card--invoice {
-  gap: 14px;
-  padding: 16px;
+  gap: 16px;
+  padding: 18px;
   border-radius: 24px;
+}
+
+.cc-record-card__primary {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .cc-record-card__head {
@@ -1253,10 +1265,23 @@
 
 .cc-record-card__summary {
   margin: 0;
-  max-width: 48ch;
+  max-width: 52ch;
   font-size: 0.95rem;
-  line-height: 1.5;
+  line-height: 1.55;
   color: rgba(226, 232, 240, 0.78);
+}
+
+.cc-record-card__footer {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 2px;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.cc-record-card__action {
+  min-height: 36px;
+  padding-inline: 14px;
+  border-radius: 999px;
 }
 
 :root[data-theme="light"] .cc-module-hero__eyebrow {
@@ -1282,6 +1307,10 @@
   color: #5a7184;
 }
 
+:root[data-theme="light"] .cc-record-card__footer {
+  border-top-color: rgba(14, 84, 114, 0.12);
+}
+
 @media (max-width: 900px) {
   .app-shell {
     padding:
@@ -1293,6 +1322,13 @@
 
   .cc-shell-content {
     gap: 18px;
+  }
+
+  .cc-record-card--lead,
+  .cc-record-card--quote,
+  .cc-record-card--invoice {
+    padding: 16px;
+    gap: 14px;
   }
 
   .cc-shell-nav {

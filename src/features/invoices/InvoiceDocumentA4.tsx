@@ -1,6 +1,6 @@
 import './invoiceDocument.css'
 import { businessRules } from '../../app/businessRules'
-import { simplifyLineConcept } from '../quotes/lineConcepts'
+import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
 interface InvoiceDocumentA4Props {
@@ -79,7 +79,7 @@ function getPersistedDocumentLines(invoice: InvoiceListItem): DocumentLine[] {
     .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
     .map((line: InvoiceLineItem) => ({
       id: line.id,
-      concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
+      concept: normalizeLineConcept(line.concept),
       quantity: Number(line.quantity),
       unit: normalizeUnit(line.unit),
       unit_price: Number(line.unit_price),

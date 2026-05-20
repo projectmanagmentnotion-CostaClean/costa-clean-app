@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
@@ -43,7 +42,6 @@ export function InvoicesPage({
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
-  const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   const selectedInvoice =
@@ -81,6 +79,13 @@ export function InvoicesPage({
     await onInvoiceCreated()
     onPrefillConsumed()
     setShowCreateForm(false)
+  }
+
+  function openInvoiceDocument(targetInvoice: InvoiceListItem) {
+    runGuarded(() => {
+      setSelectedInvoiceId(targetInvoice.id)
+      setShowDocumentScreen(true)
+    })
   }
 
   return (
@@ -159,6 +164,7 @@ export function InvoicesPage({
               invoices={invoices}
               error={error}
               selectedInvoiceId={selectedInvoiceKey}
+              onOpenDocument={openInvoiceDocument}
               onSelectInvoice={(invoice) => {
                 if (invoice.id === selectedInvoiceKey) return
 
@@ -176,7 +182,11 @@ export function InvoicesPage({
               jobs={jobs}
               quotes={quotes}
               onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => runGuarded(() => setIsOpenDocumentConfirmVisible(true))}
+              onOpenDocument={() => {
+                if (selectedInvoice) {
+                  openInvoiceDocument(selectedInvoice)
+                }
+              }}
               onUnsavedChange={setHasUnsavedDetailChanges}
             />
           </div>
@@ -198,18 +208,6 @@ export function InvoicesPage({
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
-
-      <ConfirmDialog
-        isOpen={isOpenDocumentConfirmVisible && Boolean(selectedInvoice)}
-        title="Abrir vista de factura"
-        description="Se abrira la factura en una vista de documento para revisar, imprimir o guardar PDF. Continua solo si quieres trabajar con este documento ahora."
-        confirmLabel="Abrir factura"
-        onCancel={() => setIsOpenDocumentConfirmVisible(false)}
-        onConfirm={() => {
-          setIsOpenDocumentConfirmVisible(false)
-          setShowDocumentScreen(true)
-        }}
-      />
     </>
   )
 }

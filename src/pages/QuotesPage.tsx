@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentPreview } from '../features/quotes/QuoteDocumentPreview'
@@ -40,7 +39,6 @@ export function QuotesPage({
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
-  const [isOpenDocumentConfirmVisible, setIsOpenDocumentConfirmVisible] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   const selectedQuote =
@@ -77,6 +75,13 @@ export function QuotesPage({
   async function handleQuoteCreated() {
     await onQuoteCreated()
     setShowCreateForm(false)
+  }
+
+  function openQuoteDocument(targetQuote: QuoteListItem) {
+    runGuarded(() => {
+      setSelectedQuoteId(targetQuote.id)
+      setShowDocumentScreen(true)
+    })
   }
 
   return (
@@ -153,6 +158,7 @@ export function QuotesPage({
               properties={properties}
               error={error}
               selectedQuoteId={selectedQuoteKey}
+              onOpenDocument={openQuoteDocument}
               onSelectQuote={(quote) => {
                 if (quote.id === selectedQuoteKey) return
 
@@ -170,7 +176,11 @@ export function QuotesPage({
               clients={clients}
               properties={properties}
               onQuoteUpdated={onQuoteCreated}
-              onOpenDocument={() => runGuarded(() => setIsOpenDocumentConfirmVisible(true))}
+              onOpenDocument={() => {
+                if (selectedQuote) {
+                  openQuoteDocument(selectedQuote)
+                }
+              }}
               onCreateJobFromQuote={onCreateJobFromQuote}
               onUnsavedChange={setHasUnsavedDetailChanges}
             />
@@ -199,18 +209,6 @@ export function QuotesPage({
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
-
-      <ConfirmDialog
-        isOpen={isOpenDocumentConfirmVisible && Boolean(selectedQuote)}
-        title="Abrir vista de presupuesto"
-        description="Se abrira el presupuesto en una vista de documento para revisar, imprimir o guardar PDF. Continua solo si quieres trabajar con este documento ahora."
-        confirmLabel="Abrir presupuesto"
-        onCancel={() => setIsOpenDocumentConfirmVisible(false)}
-        onConfirm={() => {
-          setIsOpenDocumentConfirmVisible(false)
-          setShowDocumentScreen(true)
-        }}
-      />
     </>
   )
 }

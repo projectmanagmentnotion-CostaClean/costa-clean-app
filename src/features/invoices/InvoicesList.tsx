@@ -11,6 +11,7 @@ interface InvoicesListProps {
   error: string | null
   selectedInvoiceId: string | null
   onSelectInvoice: (invoice: InvoiceListItem) => void
+  onOpenDocument: (invoice: InvoiceListItem) => void
 }
 
 export function InvoicesList({
@@ -18,6 +19,7 @@ export function InvoicesList({
   error,
   selectedInvoiceId,
   onSelectInvoice,
+  onOpenDocument,
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'all' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
@@ -118,56 +120,70 @@ export function InvoicesList({
             const isSelected = invoice.id === selectedInvoiceId
 
             return (
-              <button
+              <article
                 key={invoice.id}
-                type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--invoice'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--invoice'
+                    ? 'cc-record-card cc-record-card--invoice is-selected'
+                    : 'cc-record-card cc-record-card--invoice'
                 }
-                onClick={() => onSelectInvoice(invoice)}
               >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">
-                      {invoice.invoice_number ?? invoice.display_code ?? invoice.id}
-                    </strong>
-                    <span className="cc-record-card__subref">
-                      Interno {invoice.display_code ?? invoice.id}
+                <button
+                  type="button"
+                  className="lead-item-button cc-record-card__primary"
+                  onClick={() => onSelectInvoice(invoice)}
+                >
+                  <div className="cc-record-card__head">
+                    <div className="cc-record-card__identity">
+                      <strong className="cc-record-card__title">
+                        {invoice.invoice_number ?? invoice.display_code ?? invoice.id}
+                      </strong>
+                      <span className="cc-record-card__subref">
+                        Interno {invoice.display_code ?? invoice.id}
+                      </span>
+                    </div>
+
+                    <div className="cc-record-card__aside">
+                      <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
+                      <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
+                    </div>
+                  </div>
+
+                  <p className="cc-record-card__summary">
+                    {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}
+                  </p>
+
+                  <div className="cc-record-card__chips" aria-label="Contexto de la factura">
+                    <span className="cc-record-card__chip">{invoice.issue_date}</span>
+                    <span className="cc-record-card__chip">
+                      {invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}
                     </span>
                   </div>
 
-                  <div className="cc-record-card__aside">
-                    <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
-                    <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
-                  </div>
-                </div>
-
-                <p className="cc-record-card__summary">
-                  {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}
-                </p>
-
-                <div className="cc-record-card__chips" aria-label="Contexto de la factura">
-                  <span className="cc-record-card__chip">{invoice.issue_date}</span>
-                  <span className="cc-record-card__chip">
-                    {invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}
-                  </span>
-                </div>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Emision</span>
-                    <span className="cc-record-card__meta-value">{invoice.issue_date}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Origen</span>
-                    <span className="cc-record-card__meta-value">
-                      {invoice.job_display_code ?? invoice.job_id ?? 'Presupuesto aceptado'}
+                  <div className="cc-list-meta cc-record-card__meta">
+                    <span>
+                      <span className="cc-record-card__meta-label">Emision</span>
+                      <span className="cc-record-card__meta-value">{invoice.issue_date}</span>
                     </span>
-                  </span>
+                    <span>
+                      <span className="cc-record-card__meta-label">Origen</span>
+                      <span className="cc-record-card__meta-value">
+                        {invoice.job_display_code ?? invoice.job_id ?? 'Presupuesto aceptado'}
+                      </span>
+                    </span>
+                  </div>
+                </button>
+
+                <div className="cc-record-card__footer">
+                  <button
+                    type="button"
+                    className="secondary-button cc-record-card__action"
+                    onClick={() => onOpenDocument(invoice)}
+                  >
+                    Abrir documento
+                  </button>
                 </div>
-              </button>
+              </article>
             )
           })}
         </div>

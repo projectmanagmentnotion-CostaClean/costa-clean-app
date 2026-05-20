@@ -4,7 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import type { QuoteLineItem, QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
-import { simplifyLineConcept } from './lineConcepts'
+import { normalizeLineConcept, simplifyLineConcept } from './lineConcepts'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -129,7 +129,7 @@ function getPersistedDocumentLines(quote: QuoteListItem): DocumentLine[] {
     .sort((left, right) => Number(left.sort_order) - Number(right.sort_order))
     .map((line: QuoteLineItem) => ({
       id: line.id,
-      concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
+      concept: normalizeLineConcept(line.concept),
       quantity: Number(line.quantity),
       unit: normalizeUnit(line.unit),
       unit_price: Number(line.unit_price),

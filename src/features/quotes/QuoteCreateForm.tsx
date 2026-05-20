@@ -241,6 +241,7 @@ export function QuoteCreateForm({
 
               <div className="form-field form-field-full">
                 <span>Lineas de presupuesto *</span>
+                <p className="cc-line-editor-note">El concepto manual se guardará exactamente como lo escribas.</p>
                 <div className="cc-form-shell__line-list">
                   {lines.map((line, index) => (
                     <div key={line.local_id} className="lead-form cc-line-editor-row cc-line-editor-row--premium">

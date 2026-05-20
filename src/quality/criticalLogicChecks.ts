@@ -88,6 +88,8 @@ function checkFinancialLinePayloads(): void {
   assert(payloads?.length === 2, 'Quote payload generation should return two valid lines.')
   assert(payloads?.[0]?.line_subtotal === 80, 'Quote payload should preserve rounded first-line subtotal.')
   assert(payloads?.[1]?.line_subtotal === 15.5, 'Quote payload should preserve rounded second-line subtotal.')
+  assert(payloads?.[0]?.concept === 'Limpieza final', 'Quote payload should preserve the manual concept of the first line.')
+  assert(payloads?.[1]?.concept === 'Materiales', 'Quote payload should preserve the manual concept of the second line.')
   assert(buildQuoteLinePayloads([{ ...firstLine, concept: '' }], 'QUOTE-CHECK-1') === null, 'Quote payloads should reject empty concepts.')
 }
 

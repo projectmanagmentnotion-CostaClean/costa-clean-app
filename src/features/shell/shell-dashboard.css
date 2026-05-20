@@ -10698,17 +10698,17 @@
 }
 
 .cc-bounded-list {
-  padding-right: 2px;
+  padding: 4px 4px 6px 0;
 }
 
 .lead-list,
 .cc-record-list {
-  gap: 10px;
+  gap: 14px;
 }
 
 .lead-item,
 .cc-record-card {
-  padding: 14px 15px;
+  padding: 16px;
   min-height: auto;
 }
 
@@ -10801,6 +10801,13 @@
 
 .cc-line-editor__actions {
   justify-content: flex-start;
+}
+
+.cc-line-editor-note {
+  margin: 6px 0 12px;
+  color: rgba(191, 219, 254, 0.72);
+  font-size: 0.82rem;
+  line-height: 1.45;
 }
 
 .cc-line-summary-list {

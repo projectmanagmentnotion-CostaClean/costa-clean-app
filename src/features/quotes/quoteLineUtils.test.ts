@@ -5,6 +5,7 @@ import {
   calculateQuoteTax,
   calculateQuoteTotal,
   createBlankQuoteLine,
+  quoteLineItemToFormLine,
 } from './quoteLineUtils'
 
 describe('quoteLineUtils', () => {
@@ -41,7 +42,7 @@ describe('quoteLineUtils', () => {
   it('creates sorted payloads with normalized values', () => {
     const line = {
       ...createBlankQuoteLine(),
-      concept: 'Limpieza premium',
+      concept: 'Limpieza premium de cocina y cristales',
       quantity: '1.5',
       unit_price: '80',
       unit: 'hora',
@@ -56,6 +57,22 @@ describe('quoteLineUtils', () => {
       unit_price: 80,
       line_subtotal: 120,
       unit: 'hora',
+      concept: 'Limpieza premium de cocina y cristales',
     })
+  })
+
+  it('keeps persisted manual concepts unchanged when reopening a quote', () => {
+    const formLine = quoteLineItemToFormLine({
+      id: 'QL-1',
+      quote_id: 'QUOTE-3',
+      sort_order: 1,
+      concept: 'Limpieza general cocina + cristales interiores',
+      quantity: 1,
+      unit: 'servicio',
+      unit_price: 55,
+      line_subtotal: 55,
+    })
+
+    expect(formLine.concept).toBe('Limpieza general cocina + cristales interiores')
   })
 })

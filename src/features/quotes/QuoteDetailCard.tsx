@@ -493,6 +493,7 @@ function QuoteDetailCardContent({
 
             <div className="form-field form-field-full">
               <span>Líneas de presupuesto *</span>
+              <p className="cc-line-editor-note">Los conceptos editados manualmente se guardan y se reabren sin simplificarse.</p>
               <div className="cc-detail-panel__line-items">
               {lines.map((line, index) => (
                 <div key={line.local_id} className="lead-form cc-detail-panel__line-item" style={{ marginTop: '0.75rem' }}>

@@ -4,7 +4,7 @@ import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
-import { simplifyLineConcept } from '../quotes/lineConcepts'
+import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 
@@ -121,7 +121,7 @@ function getJobBillingLine(job: JobListItem | null): LineFormState | null {
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
+    concept: normalizeLineConcept(job.billing_concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
     quantity: formatQuantityInput(quantity),
     unit: job.billing_unit?.trim() || 'servicio',
     unit_price: formatMoneyInput(unitPrice),
@@ -136,9 +136,12 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
 
   return {
     local_id: createLocalId('LINE-DRAFT'),
-    concept: simplifyLineConcept(
-      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept ?? quote.notes,
-      `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
+    concept: normalizeLineConcept(
+      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept,
+      simplifyLineConcept(
+        quote.notes,
+        `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
+      ),
     ),
     quantity: '1.00',
     unit: 'servicio',
@@ -157,7 +160,7 @@ function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
 
   return prefill.lines.map((line) => ({
     local_id: createLocalId('LINE-DRAFT'),
-    concept: simplifyLineConcept(line.concept),
+    concept: normalizeLineConcept(line.concept),
     quantity: line.quantity,
     unit: line.unit,
     unit_price: line.unit_price,
@@ -198,7 +201,7 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
   const payloads: LinePayload[] = []
 
   for (const [index, line] of lines.entries()) {
-    const concept = simplifyLineConcept(line.concept)
+    const concept = normalizeLineConcept(line.concept)
     const quantity = parseDecimalInput(line.quantity)
     const unitPrice = parseDecimalInput(line.unit_price)
     const lineSubtotal = calculateLineSubtotal(line)

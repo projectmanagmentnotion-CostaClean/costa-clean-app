@@ -2,7 +2,7 @@ import { businessRules } from '../../app/businessRules'
 import { formatCurrency } from '../../app/displayFormat'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteLineItem, QuoteListItem } from './types'
-import { simplifyLineConcept } from './lineConcepts'
+import { normalizeLineConcept, simplifyLineConcept } from './lineConcepts'
 
 export interface QuoteLineFormState {
   local_id: string
@@ -77,7 +77,7 @@ function buildFallbackConcept(
 export function quoteLineItemToFormLine(line: QuoteLineItem): QuoteLineFormState {
   return {
     local_id: line.id || createLocalId('QUOTE-LINE-DRAFT'),
-    concept: simplifyLineConcept(line.concept, 'Servicio de limpieza'),
+    concept: normalizeLineConcept(line.concept),
     quantity: formatQuantityInput(Number(line.quantity)),
     unit: line.unit || 'servicio',
     unit_price: formatMoneyInput(Number(line.unit_price)),
@@ -155,7 +155,7 @@ export function buildQuoteLinePayloads(
   const payloads: QuoteLinePayload[] = []
 
   for (const [index, line] of lines.entries()) {
-    const concept = simplifyLineConcept(line.concept.trim(), 'Servicio de limpieza')
+    const concept = normalizeLineConcept(line.concept)
     const quantity = parseDecimalInput(line.quantity)
     const unitPrice = parseDecimalInput(line.unit_price)
     const lineSubtotal = calculateQuoteLineSubtotal(line)

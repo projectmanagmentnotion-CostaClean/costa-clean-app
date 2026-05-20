@@ -1,6 +1,7 @@
 import type { PublicQuotePricingAdjustment, QuoteRequestNormalizedInput } from '../publicIntake/types'
 
 const maxConceptLength = 80
+const maxManualConceptLength = 120
 
 function normalizeText(value: string | null | undefined): string {
   return String(value ?? '')
@@ -13,6 +14,16 @@ function compactConcept(value: string): string {
   const compacted = value.replace(/\s+/g, ' ').trim()
   if (compacted.length <= maxConceptLength) return compacted
   return `${compacted.slice(0, maxConceptLength - 3).trim()}...`
+}
+
+export function normalizeLineConcept(
+  value: string | null | undefined,
+  fallback = 'Servicio de limpieza',
+): string {
+  const compacted = String(value ?? '').replace(/\s+/g, ' ').trim()
+  if (!compacted) return fallback
+  if (compacted.length <= maxManualConceptLength) return compacted
+  return compacted.slice(0, maxManualConceptLength).trim()
 }
 
 function includesAny(value: string, terms: string[]): boolean {

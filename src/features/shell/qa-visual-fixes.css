@@ -7,7 +7,7 @@
 .cc-module-filter-bar__note,
 .cc-list-toolbar__caption,
 .cc-page-mode-strip__text {
-  text-wrap: balance;
+  text-wrap: pretty;
 }
 
 .cc-record-card__chip,
@@ -15,7 +15,8 @@
 .cc-list-toolbar__active-pill,
 .cc-page-mode-strip__pill,
 .cc-list-section__count {
-  white-space: nowrap;
+  max-width: 100%;
+  white-space: normal;
 }
 
 .detail-actions,
@@ -37,7 +38,46 @@
 .cc-module-filter-bar,
 .cc-list-toolbar__overview,
 .cc-list-toolbar__panel-summary {
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+}
+
+.cc-list-toolbar__overview,
+.cc-module-filter-bar,
+.cc-list-toolbar__panel-summary,
+.cc-record-card__head,
+.cc-record-card__identity,
+.cc-record-card__aside,
+.cc-list-toolbar__intro,
+.cc-list-toolbar__snapshot,
+.cc-module-filter-bar__content {
+  min-width: 0;
+}
+
+.cc-list-toolbar__headline,
+.cc-list-toolbar__caption,
+.cc-module-filter-bar__label,
+.cc-module-filter-bar__note,
+.cc-record-card__title,
+.cc-record-card__subref,
+.cc-record-card__summary {
+  overflow-wrap: break-word;
+}
+
+.cc-list-toolbar__snapshot-pill,
+.cc-list-toolbar__active-pill,
+.cc-record-card__chip,
+.cc-list-section__count {
+  align-items: center;
+  line-height: 1.25;
+}
+
+.cc-record-card__meta span,
+.cc-expense-item__meta span,
+.cc-list-meta span {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 .cc-master-layout__list,
@@ -60,12 +100,6 @@
   .cc-list-toolbar__active-pills,
   .cc-record-card__chips {
     gap: 6px;
-  }
-
-  .cc-record-card__chip,
-  .cc-list-toolbar__snapshot-pill,
-  .cc-list-toolbar__active-pill {
-    white-space: normal;
   }
 
   .detail-actions,

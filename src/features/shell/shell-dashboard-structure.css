@@ -95,10 +95,10 @@
 
 .cc-list-toolbar__overview {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 16px 18px;
+  grid-template-columns: minmax(0, 1.22fr) minmax(0, auto);
+  gap: 14px 16px;
+  align-items: start;
+  padding: 15px 17px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -110,7 +110,8 @@
 
 .cc-list-toolbar__intro {
   display: grid;
-  gap: 3px;
+  gap: 4px;
+  min-width: 0;
 }
 
 .cc-list-toolbar__eyebrow {
@@ -132,6 +133,7 @@
   color: rgba(191, 219, 254, 0.68);
   font-size: 0.86rem;
   line-height: 1.45;
+  max-width: 52ch;
 }
 
 .cc-list-toolbar__snapshot,
@@ -140,10 +142,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  min-width: 0;
 }
 
 .cc-list-toolbar__snapshot {
   justify-content: flex-end;
+  align-self: center;
 }
 
 .cc-list-toolbar__snapshot-pill,
@@ -153,6 +157,7 @@
   align-items: center;
   gap: 8px;
   min-height: 34px;
+  max-width: 100%;
   padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -160,6 +165,7 @@
   color: rgba(241, 245, 249, 0.84);
   font-size: 0.78rem;
   font-weight: 650;
+  line-height: 1.2;
 }
 
 .cc-list-toolbar__active-pills {
@@ -191,14 +197,15 @@
 }
 
 .cc-module-filter-bar {
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1.12fr) auto;
+  gap: 12px 14px;
+  align-items: start;
 }
 
 .cc-module-filter-bar__content {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .cc-module-filter-bar__note {
@@ -219,17 +226,18 @@
 }
 
 .cc-record-card__chips {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .cc-record-card__meta {
-  margin-top: 12px;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 10px;
+  margin-top: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 8px;
 }
 
 .cc-record-card__meta span {
   gap: 4px;
+  align-items: flex-start;
 }
 
 .cc-record-card__meta-label {
@@ -304,6 +312,7 @@
 
   .cc-list-toolbar__snapshot {
     justify-content: flex-start;
+    align-self: start;
   }
 }
 
@@ -319,6 +328,10 @@
 
   .cc-list-toolbar__overview {
     padding: 14px;
+  }
+
+  .cc-list-toolbar__caption {
+    max-width: none;
   }
 
   .cc-record-card__meta {

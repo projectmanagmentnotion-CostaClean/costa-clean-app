@@ -191,7 +191,8 @@
   line-height: 1.55;
 }
 
-.empty-state::after {
+.cc-form-shell .empty-state::after,
+.lead-form .empty-state::after {
   content: "Siguiente paso: revisa filtros, crea un registro nuevo o cambia de módulo.";
   display: block;
   margin-top: 4px;
@@ -245,7 +246,8 @@
 
 :root[data-theme="light"] .cc-form-shell__summary-card span,
 :root[data-theme="light"] .cc-form-shell__section-head span,
-:root[data-theme="light"] .empty-state::after {
+:root[data-theme="light"] .cc-form-shell .empty-state::after,
+:root[data-theme="light"] .lead-form .empty-state::after {
   color: #5a7184;
 }
 
@@ -284,7 +286,8 @@
   }
 
   .cc-form-shell__section-head span,
-  .empty-state::after {
+  .cc-form-shell .empty-state::after,
+  .lead-form .empty-state::after {
     font-size: 0.8rem;
   }
 }

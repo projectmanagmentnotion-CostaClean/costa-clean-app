@@ -81,6 +81,13 @@
   overflow-wrap: break-word;
 }
 
+.lead-badge,
+.cc-status-badge {
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .cc-master-layout__list,
 .cc-master-layout__detail {
   min-width: 0;

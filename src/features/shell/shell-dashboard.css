@@ -3074,6 +3074,12 @@
 }
 
 .lead-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  flex: 0 0 auto;
   min-height: 28px;
   padding: 0 11px;
   border-radius: 999px;
@@ -3084,6 +3090,8 @@
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .lead-item p {
@@ -3627,6 +3635,17 @@
     0 12px 28px rgba(2, 6, 23, 0.12);
 }
 
+.cc-dashboard-block--agenda .empty-state {
+  min-height: 100%;
+  align-content: center;
+  gap: 10px;
+  padding: 20px 18px;
+}
+
+.cc-dashboard-block--agenda .empty-state::after {
+  content: none;
+}
+
 .cc-agenda-card__header {
   display: flex;
   align-items: flex-start;
@@ -3672,7 +3691,7 @@
 
 .cc-agenda-item__top {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
@@ -3688,6 +3707,7 @@
   color: rgba(226, 232, 240, 0.78);
   font-size: 0.82rem;
   line-height: 1.4;
+  overflow-wrap: break-word;
 }
 
 @media (max-width: 1180px) {
@@ -3713,6 +3733,10 @@
 
   .cc-agenda-card__header {
     display: grid;
+  }
+
+  .cc-dashboard-block--agenda .empty-state {
+    padding: 18px 16px;
   }
 }
 
@@ -5066,7 +5090,7 @@
 
   .cc-record-card__aside {
     min-width: max-content;
-    max-width: min(38%, 11.75rem);
+    max-width: min(42%, 14rem);
     align-content: start;
     justify-items: end;
   }
@@ -5079,13 +5103,19 @@
     justify-self: end;
   }
 
-  .cc-record-card__aside .lead-badge,
   .cc-record-card__aside .cc-expense-chip,
   .cc-record-card__meta span,
   .cc-expense-item__meta span,
   .cc-list-meta span {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cc-record-card__aside .lead-badge,
+  .cc-record-card__aside .cc-status-badge {
+    overflow: visible;
+    text-overflow: clip;
     white-space: nowrap;
   }
 

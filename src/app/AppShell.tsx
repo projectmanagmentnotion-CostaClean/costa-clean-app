@@ -50,6 +50,7 @@ import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClos
 import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { formatClientLabel } from './relationshipLabels'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 
@@ -330,20 +331,26 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   })
 
   const propertiesWithCodes = useMemo(
-    () => properties.map((property) => ({ ...property, client_display_code: clientCodeById.get(property.client_id) ?? property.client_id })),
-    [properties, clientCodeById],
+    () => properties.map((property) => ({
+      ...property,
+      client_display_code: clientCodeById.get(property.client_id) ?? property.client_id,
+      client_name: clientById.get(property.client_id)?.full_name ?? null,
+    })),
+    [properties, clientById, clientCodeById],
   )
 
   const quotesWithCodes = useMemo(
     () => quotes.map((quote) => ({
       ...quote,
       client_display_code: quote.client_id ? clientCodeById.get(quote.client_id) ?? quote.client_id : null,
+      client_name: quote.client_id ? clientById.get(quote.client_id)?.full_name ?? null : null,
       lead_display_code: quote.lead_id ? leadById.get(quote.lead_id)?.display_code ?? quote.lead_id : null,
       lead_name: quote.lead_id ? leadById.get(quote.lead_id)?.full_name ?? null : null,
       property_display_code: quote.property_id ? propertyCodeById.get(quote.property_id) ?? quote.property_id : null,
       job_id: jobs.find((job) => job.quote_id === quote.id)?.id ?? null,
+      invoice_id: invoices.find((invoice) => invoice.quote_id === quote.id)?.id ?? null,
     })),
-    [quotes, jobs, clientCodeById, leadById, propertyCodeById],
+    [quotes, jobs, invoices, clientById, clientCodeById, leadById, propertyCodeById],
   )
 
   const jobsWithCodes = useMemo(
@@ -399,6 +406,11 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         property_address_line: buildPropertyAddressLine(property),
         quote_id: invoice.quote_id ?? job?.quote_id ?? null,
         quote_display_code: quote?.display_code ?? invoice.quote_id ?? job?.quote_id ?? null,
+        client_label: formatClientLabel({
+          client_id: invoice.client_id,
+          client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
+          client_name: client?.full_name ?? null,
+        }),
         service_reference: buildServiceReference(invoice, job, property, quote),
         service_description: buildServiceDescription(job, property),
         billing_concept: invoice.billing_concept ?? job?.billing_concept ?? null,
@@ -837,9 +849,25 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'leads' ? (
                 <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
               ) : currentView === 'clients' ? (
-                <ClientsPage clients={clients} error={clientError} onClientCreated={refreshOperations} />
+                <ClientsPage
+                  clients={clients}
+                  properties={propertiesWithCodes}
+                  jobs={jobsWithCodes}
+                  quotes={quotesWithCodes}
+                  invoices={invoicesWithCodes}
+                  error={clientError}
+                  onClientCreated={refreshOperations}
+                />
               ) : currentView === 'properties' ? (
-                <PropertiesPage properties={propertiesWithCodes} clients={clients} error={propertyError} onPropertyCreated={refreshOperations} />
+                <PropertiesPage
+                  properties={propertiesWithCodes}
+                  clients={clients}
+                  jobs={jobsWithCodes}
+                  quotes={quotesWithCodes}
+                  invoices={invoicesWithCodes}
+                  error={propertyError}
+                  onPropertyCreated={refreshOperations}
+                />
               ) : currentView === 'quotes' ? (
                 <QuotesPage
                   quotes={filteredQuotes}

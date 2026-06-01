@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
+import { formatClientLabel, formatJobWithClientLabel } from '../../app/relationshipLabels'
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
@@ -389,7 +390,7 @@ export function InvoiceCreateForm({
           <div className="cc-form-shell__summary-card">
             <span>Servicio</span>
             <strong>{selectedJob?.display_code ?? selectedJob?.id ?? 'Pendiente'}</strong>
-            <small>{selectedJob?.client_display_code ?? selectedJob?.client_id ?? 'Sin cliente'}</small>
+            <small>{selectedJob ? formatClientLabel(selectedJob) : 'Sin cliente'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -421,7 +422,7 @@ export function InvoiceCreateForm({
                 >
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>
-                      {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                      {formatJobWithClientLabel(job)}
                     </option>
                   ))}
                 </select>

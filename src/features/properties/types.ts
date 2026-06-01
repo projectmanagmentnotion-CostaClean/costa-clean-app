@@ -1,8 +1,9 @@
-﻿export interface PropertyListItem {
+export interface PropertyListItem {
   id: string
   display_code: string | null
   client_id: string
   client_display_code?: string | null
+  client_name?: string | null
   name: string
   property_type: string
   address: string

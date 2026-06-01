@@ -1,9 +1,10 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import type { ClientListItem } from '../clients/types'
-import type { PropertyListItem } from '../properties/types'
 import { businessRules } from '../../app/businessRules'
+import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
+import type { ClientListItem } from '../clients/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import type { PropertyListItem } from '../properties/types'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
@@ -166,7 +167,7 @@ export function QuoteCreateForm({
         <div className="cc-form-shell__summary">
           <div className="cc-form-shell__summary-card">
             <span>Cliente</span>
-            <strong>{selectedClient?.full_name ?? 'Pendiente'}</strong>
+            <strong>{selectedClient ? formatClientLabel(selectedClient) : 'Pendiente'}</strong>
             <small>{availableProperties.length} propiedad(es) disponibles</small>
           </div>
           <div className="cc-form-shell__summary-card">
@@ -199,7 +200,7 @@ export function QuoteCreateForm({
                 >
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.full_name} · {client.display_code ?? client.id}
+                      {formatClientLabel(client)}
                     </option>
                   ))}
                 </select>
@@ -214,7 +215,7 @@ export function QuoteCreateForm({
                   <option value="">Sin propiedad</option>
                   {availableProperties.map((property) => (
                     <option key={property.id} value={property.id}>
-                      {property.name} · {property.display_code ?? property.id}
+                      {formatPropertyLabel(property)}
                     </option>
                   ))}
                 </select>

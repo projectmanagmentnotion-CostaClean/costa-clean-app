@@ -1,4 +1,5 @@
-﻿import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
+import { formatClientLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../clients/types'
 
 interface PropertyCreateFormProps {
@@ -145,7 +146,7 @@ export function PropertyCreateForm({
             >
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
-                  {client.full_name} · {client.display_code ?? client.id}
+                  {formatClientLabel(client)}
                 </option>
               ))}
             </select>
@@ -239,5 +240,3 @@ export function PropertyCreateForm({
     </section>
   )
 }
-
-

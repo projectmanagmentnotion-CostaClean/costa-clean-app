@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
 import { getPropertyTypeLabel } from '../../app/displayFormat'
+import { formatClientLabel } from '../../app/relationshipLabels'
 import { matchesSearchQuery } from '../documents/search'
 import type { PropertyListItem } from './types'
 
@@ -25,6 +26,7 @@ export function PropertiesList({
         property.name,
         property.display_code,
         property.id,
+        property.client_name,
         property.client_display_code,
         property.client_id,
         property.property_type,
@@ -98,7 +100,7 @@ export function PropertiesList({
                 <p className="cc-record-card__summary">{property.address}</p>
 
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{property.client_display_code ?? property.client_id}</span>
+                  <span>{formatClientLabel(property)}</span>
                   <span>{property.city ?? 'Sin ciudad'}</span>
                 </div>
               </button>

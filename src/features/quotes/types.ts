@@ -6,10 +6,12 @@ export interface QuoteListItem {
   lead_name?: string | null
   client_id: string | null
   client_display_code?: string | null
+  client_name?: string | null
   property_id: string | null
   property_display_code?: string | null
   status: string
   job_id?: string | null
+  invoice_id?: string | null
   subtotal: number
   tax_amount: number | null
   total: number

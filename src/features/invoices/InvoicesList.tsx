@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { formatClientLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -48,7 +49,7 @@ export function InvoicesList({
       const comparison = preferences.sortField === 'code'
         ? compareText(left.invoice_number ?? left.display_code ?? left.id, right.invoice_number ?? right.display_code ?? right.id)
         : preferences.sortField === 'client'
-          ? compareText(left.client_name ?? left.client_display_code ?? left.client_id, right.client_name ?? right.client_display_code ?? right.client_id)
+          ? compareText(formatClientLabel(left), formatClientLabel(right))
           : preferences.sortField === 'total'
             ? compareNumber(left.total, right.total)
             : preferences.sortField === 'status'
@@ -150,7 +151,7 @@ export function InvoicesList({
                   </div>
 
                   <p className="cc-record-card__summary">
-                    {invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}
+                    {formatClientLabel(invoice)}
                   </p>
 
                   <div className="cc-record-card__chips" aria-label="Contexto de la factura">

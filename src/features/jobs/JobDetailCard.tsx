@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { JobListItem } from './types'
@@ -60,8 +61,8 @@ function getJobPrimaryReference(job: JobListItem): string {
 
 function getJobSecondaryReference(job: JobListItem): string {
   return [
-    job.client_display_code ?? job.client_id,
-    job.property_display_code ?? job.property_id,
+    formatClientLabel(job),
+    formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name }),
     formatDateEs(job.scheduled_date),
   ].join(' · ')
 }
@@ -409,7 +410,7 @@ export function JobDetailCard({
                 >
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
-                      {client.full_name} · {client.display_code ?? client.id}
+                      {formatClientLabel(client)}
                     </option>
                   ))}
                 </select>
@@ -424,7 +425,7 @@ export function JobDetailCard({
                   <option value="">Selecciona una propiedad</option>
                   {availableProperties.map((property) => (
                     <option key={property.id} value={property.id}>
-                      {property.name} · {property.display_code ?? property.id}
+                      {formatPropertyLabel(property)}
                     </option>
                   ))}
                 </select>
@@ -439,7 +440,7 @@ export function JobDetailCard({
                   <option value="">Sin presupuesto</option>
                   {availableQuotes.map((quote) => (
                     <option key={quote.id} value={quote.id}>
-                      {quote.display_code ?? quote.id}
+                      {formatQuoteLabel(quote)}
                     </option>
                   ))}
                 </select>
@@ -571,15 +572,15 @@ export function JobDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
-                <strong>{job.client_display_code ?? job.client_id}</strong>
+                <strong>{formatClientLabel(job)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Propiedad</span>
-                <strong>{job.property_display_code ?? job.property_id}</strong>
+                <strong>{formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Presupuesto</span>
-                <strong>{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</strong>
+                <strong>{job.quote_display_code ?? formatQuoteLabel({ id: job.quote_id })}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha programada</span>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -252,11 +253,11 @@ export function JobCreateForm({
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
             >
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.full_name} · {client.display_code ?? client.id}
-                </option>
-              ))}
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {formatClientLabel(client)}
+                  </option>
+                ))}
             </select>
           </label>
 
@@ -267,11 +268,11 @@ export function JobCreateForm({
               onChange={(event) => updateField('property_id', event.target.value)}
             >
               <option value="">Selecciona una propiedad</option>
-              {availableProperties.map((property) => (
-                <option key={property.id} value={property.id}>
-                  {property.name} · {property.display_code ?? property.id}
-                </option>
-              ))}
+                {availableProperties.map((property) => (
+                  <option key={property.id} value={property.id}>
+                    {formatPropertyLabel(property)}
+                  </option>
+                ))}
             </select>
           </label>
 
@@ -282,11 +283,11 @@ export function JobCreateForm({
               onChange={(event) => updateField('quote_id', event.target.value)}
             >
               <option value="">Sin presupuesto</option>
-              {availableQuotes.map((quote) => (
-                <option key={quote.id} value={quote.id}>
-                  {quote.display_code ?? quote.id}
-                </option>
-              ))}
+                {availableQuotes.map((quote) => (
+                  <option key={quote.id} value={quote.id}>
+                    {formatQuoteLabel(quote)}
+                  </option>
+                ))}
             </select>
           </label>
 

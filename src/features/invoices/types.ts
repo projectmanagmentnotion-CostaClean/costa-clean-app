@@ -8,6 +8,7 @@
   quote_display_code?: string | null
   client_id: string
   client_display_code?: string | null
+  client_label?: string | null
   issue_date: string
   status: string
   subtotal: number

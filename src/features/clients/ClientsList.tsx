@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { formatClientLabel } from '../../app/relationshipLabels'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
@@ -80,7 +81,7 @@ export function ClientsList({
               >
                 <div className="cc-record-card__head">
                   <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{client.full_name}</strong>
+                    <strong className="cc-record-card__title">{formatClientLabel(client)}</strong>
                     <span className="cc-record-card__subref">Interno {client.display_code ?? client.id}</span>
                   </div>
 

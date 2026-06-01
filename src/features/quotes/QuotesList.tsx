@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
-import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
-import { matchesSearchQuery } from '../documents/search'
-import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
+import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
+import { getStatusLabel } from '../../app/displayText'
+import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import type { ClientListItem } from '../clients/types'
+import { matchesSearchQuery } from '../documents/search'
+import { applySortDirection, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
-import { applySortDirection, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -18,21 +19,21 @@ interface QuotesListProps {
   onOpenDocument: (quote: QuoteListItem) => void
 }
 
-function buildClientLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
+function buildClientDisplay(quote: QuoteListItem, clients: ClientListItem[]): string {
   const client = clients.find((item) => item.id === quote.client_id)
-  return client?.full_name?.trim()
-    || quote.client_display_code
-    || quote.lead_name
-    || quote.lead_display_code
-    || quote.client_id
-    || 'Lead sin cliente'
+  return client
+    ? formatClientLabel(client)
+    : quote.lead_name
+      || quote.lead_display_code
+      || formatClientLabel(quote)
+      || 'Lead sin cliente'
 }
 
-function buildPropertyLabel(quote: QuoteListItem, properties: PropertyListItem[]): string {
+function buildPropertyDisplay(quote: QuoteListItem, properties: PropertyListItem[]): string {
   if (!quote.property_id) return 'Sin propiedad'
 
   const property = properties.find((item) => item.id === quote.property_id)
-  return property?.name?.trim() || quote.property_display_code || quote.property_id
+  return property ? formatPropertyLabel(property) : quote.property_display_code || quote.property_id
 }
 
 export function QuotesList({
@@ -52,11 +53,11 @@ export function QuotesList({
       (preferences.filters.status === 'all' || quote.status === preferences.filters.status) &&
       matchesSearchQuery(preferences.searchQuery, [
         quote.display_code,
-        buildClientLabel(quote, clients),
+        buildClientDisplay(quote, clients),
         quote.client_display_code,
         quote.lead_display_code,
         quote.lead_name,
-        buildPropertyLabel(quote, properties),
+        buildPropertyDisplay(quote, properties),
         quote.property_display_code,
         quote.status,
         getStatusLabel(quote.status),
@@ -67,9 +68,9 @@ export function QuotesList({
       ]),
     ).sort((left, right) => {
       const comparison = preferences.sortField === 'client'
-        ? compareText(buildClientLabel(left, clients), buildClientLabel(right, clients))
+        ? compareText(buildClientDisplay(left, clients), buildClientDisplay(right, clients))
         : preferences.sortField === 'property'
-          ? compareText(buildPropertyLabel(left, properties), buildPropertyLabel(right, properties))
+          ? compareText(buildPropertyDisplay(left, properties), buildPropertyDisplay(right, properties))
           : preferences.sortField === 'total'
             ? compareNumber(left.total, right.total)
             : preferences.sortField === 'status'
@@ -140,8 +141,8 @@ export function QuotesList({
         <div className="lead-list cc-record-list cc-bounded-list">
           {filteredQuotes.map((quote) => {
             const isSelected = quote.id === selectedQuoteId
-            const clientLabel = buildClientLabel(quote, clients)
-            const propertyLabel = buildPropertyLabel(quote, properties)
+            const clientLabel = buildClientDisplay(quote, clients)
+            const propertyLabel = buildPropertyDisplay(quote, properties)
 
             return (
               <article

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { formatClientLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { matchesSearchQuery } from '../documents/search'
@@ -51,7 +52,7 @@ export function JobsList({
       const comparison = preferences.sortField === 'code'
         ? compareText(left.display_code ?? left.id, right.display_code ?? right.id)
         : preferences.sortField === 'client'
-          ? compareText(left.client_name ?? left.client_display_code ?? left.client_id, right.client_name ?? right.client_display_code ?? right.client_id)
+          ? compareText(formatClientLabel(left), formatClientLabel(right))
           : preferences.sortField === 'service'
             ? compareText(getJobPrimaryReference(left), getJobPrimaryReference(right))
             : preferences.sortField === 'status'
@@ -143,7 +144,7 @@ export function JobsList({
                 </div>
 
                 <p className="cc-record-card__summary">
-                  {(job.client_name ?? job.client_display_code ?? job.client_id)} - {(job.property_name ?? job.property_display_code ?? job.property_id)}
+                  {formatClientLabel(job)} - {(job.property_name ?? job.property_display_code ?? job.property_id)}
                 </p>
 
                 <div className="cc-record-card__chips" aria-label="Contexto del servicio">

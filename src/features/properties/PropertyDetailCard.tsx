@@ -1,13 +1,25 @@
-﻿import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { buildPropertyRelationshipSummary } from '../../app/entityIntegrity'
 import { getPropertyTypeLabel } from '../../app/displayFormat'
+import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+import type { ClientListItem } from '../clients/types'
+import type { InvoiceListItem } from '../invoices/types'
+import type { JobListItem } from '../jobs/types'
+import type { QuoteListItem } from '../quotes/types'
 import type { PropertyListItem } from './types'
 
 interface PropertyDetailCardProps {
   property: PropertyListItem | null
+  clients: ClientListItem[]
+  jobs: JobListItem[]
+  quotes: QuoteListItem[]
+  invoices: InvoiceListItem[]
   onPropertyUpdated: () => Promise<void>
 }
 
 interface EditFormState {
+  client_id: string
   name: string
   property_type: string
   address: string
@@ -31,13 +43,19 @@ function getPropertyTypeOptionLabel(value: string): string {
 
 export function PropertyDetailCard({
   property,
+  clients,
+  jobs,
+  quotes,
+  invoices,
   onPropertyUpdated,
 }: PropertyDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingClientReassignment, setPendingClientReassignment] = useState(false)
   const [form, setForm] = useState<EditFormState>({
+    client_id: '',
     name: '',
     property_type: 'apartment',
     address: '',
@@ -52,6 +70,7 @@ export function PropertyDetailCard({
       setSaveError(null)
       setSuccessMessage(null)
       setForm({
+        client_id: '',
         name: '',
         property_type: 'apartment',
         address: '',
@@ -66,6 +85,7 @@ export function PropertyDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setForm({
+      client_id: property.client_id,
       name: property.name,
       property_type: property.property_type,
       address: property.address,
@@ -74,6 +94,20 @@ export function PropertyDetailCard({
       notes: property.notes ?? '',
     })
   }, [property])
+
+  const relationshipSummary = useMemo(() => {
+    if (!property) return null
+    return buildPropertyRelationshipSummary(property.id, jobs, quotes, invoices)
+  }, [property, jobs, quotes, invoices])
+
+  const previousClient = useMemo(
+    () => property ? clients.find((client) => client.id === property.client_id) ?? null : null,
+    [clients, property],
+  )
+  const nextClient = useMemo(
+    () => clients.find((client) => client.id === form.client_id) ?? null,
+    [clients, form.client_id],
+  )
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -85,8 +119,7 @@ export function PropertyDetailCard({
     }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function persistProperty() {
     if (!property) return
 
     setSaveError(null)
@@ -102,6 +135,32 @@ export function PropertyDetailCard({
         return
       }
 
+      if (!form.client_id) {
+        setSaveError('Debes seleccionar un cliente.')
+        return
+      }
+
+      if (form.client_id !== property.client_id) {
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reassign_property_client`, {
+          method: 'POST',
+          headers: {
+            apikey: supabaseAnonKey,
+            Authorization: `Bearer ${supabaseAnonKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            p_property_id: property.id,
+            p_client_id: form.client_id,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+          return
+        }
+      }
+
       const response = await fetch(
         `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(property.id)}`,
         {
@@ -112,6 +171,7 @@ export function PropertyDetailCard({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
+            client_id: form.client_id,
             name: form.name.trim(),
             property_type: form.property_type,
             address: form.address.trim(),
@@ -129,7 +189,11 @@ export function PropertyDetailCard({
       }
 
       await onPropertyUpdated()
-      setSuccessMessage('Propiedad actualizada correctamente.')
+      setSuccessMessage(
+        form.client_id !== property.client_id
+          ? 'Propiedad reasignada y actualizada correctamente.'
+          : 'Propiedad actualizada correctamente.',
+      )
       setIsEditing(false)
     } catch (err) {
       const message =
@@ -138,6 +202,17 @@ export function PropertyDetailCard({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (property && form.client_id !== property.client_id) {
+      setPendingClientReassignment(true)
+      return
+    }
+
+    await persistProperty()
   }
 
   return (
@@ -156,6 +231,7 @@ export function PropertyDetailCard({
               setSaveError(null)
               setSuccessMessage(null)
               setForm({
+                client_id: property.client_id,
                 name: property.name,
                 property_type: property.property_type,
                 address: property.address,
@@ -174,15 +250,49 @@ export function PropertyDetailCard({
         <div className="lead-detail-card">
           <div className="lead-detail-header">
             <div>
-              <h3>{property.name}</h3>
+              <h3>{formatPropertyLabel(property)}</h3>
               <p>{property.address}</p>
             </div>
 
             <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
           </div>
 
+          {!isEditing && relationshipSummary ? (
+            <div className="cc-detail-panel__summary">
+              <div className="cc-detail-panel__summary-card">
+                <span>Servicios</span>
+                <strong>{relationshipSummary.jobsCount}</strong>
+                <small>{relationshipSummary.activeJobsCount} activo(s)</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Presupuestos</span>
+                <strong>{relationshipSummary.quotesCount}</strong>
+                <small>{relationshipSummary.openQuotesCount} abierto(s)</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Facturas</span>
+                <strong>{relationshipSummary.invoicesCount}</strong>
+                <small>Histórico protegido</small>
+              </div>
+            </div>
+          ) : null}
+
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
+              <label className="form-field">
+                <span>Cliente *</span>
+                <select
+                  value={form.client_id}
+                  onChange={(event) => updateField('client_id', event.target.value)}
+                >
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {formatClientLabel(client)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               <label className="form-field">
                 <span>Nombre *</span>
                 <input
@@ -263,40 +373,53 @@ export function PropertyDetailCard({
               ) : null}
             </form>
           ) : (
-            <div className="lead-detail-grid">
-              <div className="detail-row">
-                <span className="detail-label">Nombre</span>
-                <strong>{property.name}</strong>
+            <>
+              <div className="lead-detail-grid">
+                <div className="detail-row">
+                  <span className="detail-label">Propiedad</span>
+                  <strong>{formatPropertyLabel(property)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Dirección</span>
+                  <strong>{property.address}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Tipo</span>
+                  <strong>{getPropertyTypeLabel(property.property_type)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Ciudad</span>
+                  <strong>{property.city ?? 'Sin ciudad'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Código postal</span>
+                  <strong>{property.postal_code ?? 'Sin código postal'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Cliente</span>
+                  <strong>{formatClientLabel(property)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Código interno</span>
+                  <strong>{property.display_code ?? property.id}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Notas</span>
+                  <strong>{property.notes ?? 'Sin notas'}</strong>
+                </div>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Dirección</span>
-                <strong>{property.address}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Tipo</span>
-                <strong>{getPropertyTypeLabel(property.property_type)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Ciudad</span>
-                <strong>{property.city ?? 'Sin ciudad'}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Código postal</span>
-                <strong>{property.postal_code ?? 'Sin código postal'}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Cliente</span>
-                <strong>{property.client_display_code ?? property.client_id}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Código interno</span>
-                <strong>{property.display_code ?? property.id}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Notas</span>
-                <strong>{property.notes ?? 'Sin notas'}</strong>
-              </div>
-            </div>
+
+              {relationshipSummary ? (
+                <div className="cc-alert cc-alert--info">
+                  <strong>Política operativa</strong>
+                  <p>
+                    Los servicios completados, presupuestos aceptados y facturas vinculadas se mantienen como histórico.
+                    La reasignación de cliente solo reorienta la propiedad y realinea servicios/presupuestos abiertos para
+                    no romper la integridad relacional ni el histórico financiero.
+                  </p>
+                </div>
+              ) : null}
+            </>
           )}
 
           {!isEditing && saveError ? (
@@ -319,7 +442,24 @@ export function PropertyDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={pendingClientReassignment}
+        title="Reasignar propiedad a otro cliente"
+        description={
+          property && relationshipSummary
+            ? `La propiedad pasará de ${formatClientLabel(previousClient ?? property)} a ${formatClientLabel(nextClient ?? { id: form.client_id })}. Se realinearán ${relationshipSummary.activeJobsCount} servicio(s) activo(s) y ${relationshipSummary.openQuotesCount} presupuesto(s) abierto(s). El histórico completado o facturado se mantendrá sin alterarse.`
+            : 'La propiedad cambiará de cliente y se preservará el histórico relacionado.'
+        }
+        confirmLabel="Sí, reasignar propiedad"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingClientReassignment(false)}
+        onConfirm={() => {
+          setPendingClientReassignment(false)
+          void persistProperty()
+        }}
+      />
     </section>
   )
 }
-

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatClientLabel, formatJobWithClientLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -526,7 +527,7 @@ export function InvoiceDetailCard({
             <div className="cc-detail-panel__summary">
               <div className="cc-detail-panel__summary-card">
                 <span>Cliente</span>
-                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
+                <strong>{formatClientLabel(invoice)}</strong>
                 <small>{invoice.job_display_code ?? invoice.job_id ?? 'Sin servicio'}</small>
               </div>
               <div className="cc-detail-panel__summary-card">
@@ -553,7 +554,7 @@ export function InvoiceDetailCard({
                   <option value="">Sin servicio vinculado</option>
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>
-                      {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                      {formatJobWithClientLabel(job)}
                     </option>
                   ))}
                 </select>
@@ -730,7 +731,7 @@ export function InvoiceDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
-                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
+                <strong>{formatClientLabel(invoice)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha de emisión</span>

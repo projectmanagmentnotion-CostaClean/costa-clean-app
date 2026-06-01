@@ -5,9 +5,11 @@ import { AppShell } from './app/AppShell'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
+import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 
 const publicQuoteRequestPaths = new Set(['/quote-request', '/presupuesto'])
+const publicGymManualQuizPaths = new Set(['/manual-quiz', '/prueba-operativa-gimnasio', '/prueba-manual-gimnasio'])
 
 function isRecoverableAuthBootstrapError(message: string) {
   const normalizedMessage = message.trim().toLowerCase()
@@ -19,9 +21,10 @@ function isRecoverableAuthBootstrapError(message: string) {
 }
 
 function App() {
-  const isPublicQuoteRequestPath = typeof window !== 'undefined'
-    ? publicQuoteRequestPaths.has(window.location.pathname)
-    : false
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+  const isPublicQuoteRequestPath = publicQuoteRequestPaths.has(pathname)
+  const isPublicGymManualQuizPath = publicGymManualQuizPaths.has(pathname)
+  const isPublicStandalonePath = isPublicQuoteRequestPath || isPublicGymManualQuizPath
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -59,7 +62,7 @@ function App() {
     let authCleanup: (() => void) | undefined
 
     async function bootstrapAuth() {
-      if (isPublicQuoteRequestPath) {
+      if (isPublicStandalonePath) {
         if (isMounted) {
           setIsBooting(false)
         }
@@ -140,10 +143,14 @@ function App() {
         authCleanup()
       }
     }
-  }, [isPublicQuoteRequestPath])
+  }, [isPublicStandalonePath])
 
   if (isPublicQuoteRequestPath) {
     return <PublicQuoteRequestPage />
+  }
+
+  if (isPublicGymManualQuizPath) {
+    return <PublicGymManualQuizPage />
   }
 
   if (isBooting) {

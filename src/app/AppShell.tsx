@@ -91,14 +91,15 @@ function buildPropertyAddressLine(property: PropertyListItem | undefined): strin
 }
 
 function buildServiceReference(
-  invoice: InvoiceListItem,
+  resolvedQuoteId: string | null,
+  resolvedJobId: string | null,
   job: JobListItem | undefined,
   property: PropertyListItem | undefined,
   quote: QuoteListItem | undefined,
 ): string | null {
   const parts = [
-    invoice.quote_display_code ?? quote?.display_code ?? invoice.quote_id ?? null,
-    invoice.job_display_code ?? job?.display_code ?? invoice.job_id ?? null,
+    quote?.display_code ?? resolvedQuoteId ?? null,
+    job?.display_code ?? resolvedJobId ?? null,
     property?.display_code ?? null,
     property?.name ?? null,
   ].filter(Boolean)
@@ -388,30 +389,35 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
 
   const invoicesWithCodes = useMemo(
     () => invoices.map((invoice) => {
-      const client = clientById.get(invoice.client_id)
       const job = invoice.job_id ? jobById.get(invoice.job_id) : undefined
-      const property = job?.property_id ? propertyById.get(job.property_id) : undefined
-      const quote = invoice.quote_id ? quoteById.get(invoice.quote_id) : job?.quote_id ? quoteById.get(job.quote_id) : undefined
+      const resolvedClientId = job?.client_id ?? invoice.client_id
+      const resolvedJobId = job?.id ?? invoice.job_id ?? null
+      const resolvedQuoteId = job?.quote_id ?? invoice.quote_id ?? null
+      const quote = resolvedQuoteId ? quoteById.get(resolvedQuoteId) : undefined
+      const resolvedPropertyId = job?.property_id ?? quote?.property_id ?? null
+      const property = resolvedPropertyId ? propertyById.get(resolvedPropertyId) : undefined
+      const client = clientById.get(resolvedClientId)
 
       return {
         ...invoice,
-        client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
-        job_display_code: invoice.job_id ? jobCodeById.get(invoice.job_id) ?? invoice.job_id : null,
+        client_id: resolvedClientId,
+        client_display_code: clientCodeById.get(resolvedClientId) ?? resolvedClientId,
+        job_display_code: resolvedJobId ? jobCodeById.get(resolvedJobId) ?? resolvedJobId : null,
         client_name: client?.full_name ?? null,
         client_phone: client?.phone ?? null,
         client_email: client?.email ?? null,
-        property_id: property?.id ?? job?.property_id ?? quote?.property_id ?? null,
-        property_display_code: property?.display_code ?? (job?.property_id ? propertyCodeById.get(job.property_id) ?? job.property_id : null),
+        property_id: resolvedPropertyId,
+        property_display_code: property?.display_code ?? (resolvedPropertyId ? propertyCodeById.get(resolvedPropertyId) ?? resolvedPropertyId : null),
         property_name: property?.name ?? null,
         property_address_line: buildPropertyAddressLine(property),
-        quote_id: invoice.quote_id ?? job?.quote_id ?? null,
-        quote_display_code: quote?.display_code ?? invoice.quote_id ?? job?.quote_id ?? null,
+        quote_id: resolvedQuoteId,
+        quote_display_code: quote?.display_code ?? resolvedQuoteId,
         client_label: formatClientLabel({
-          client_id: invoice.client_id,
-          client_display_code: clientCodeById.get(invoice.client_id) ?? invoice.client_id,
+          client_id: resolvedClientId,
+          client_display_code: clientCodeById.get(resolvedClientId) ?? resolvedClientId,
           client_name: client?.full_name ?? null,
         }),
-        service_reference: buildServiceReference(invoice, job, property, quote),
+        service_reference: buildServiceReference(resolvedQuoteId, resolvedJobId, job, property, quote),
         service_description: buildServiceDescription(job, property),
         billing_concept: invoice.billing_concept ?? job?.billing_concept ?? null,
         billing_quantity: invoice.billing_quantity ?? job?.billing_quantity ?? null,

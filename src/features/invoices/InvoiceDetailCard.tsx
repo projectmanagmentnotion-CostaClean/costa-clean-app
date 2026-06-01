@@ -218,6 +218,24 @@ function calculateSubtotal(lines: LineFormState[]): number {
   }, 0))
 }
 
+function buildPropertyReference(job: JobListItem | null): string {
+  if (!job) return 'Sin propiedad vinculada'
+  return job.property_name ?? job.property_display_code ?? job.property_id
+}
+
+function buildDraftServiceReference(job: JobListItem | null, quote: QuoteListItem | null): string {
+  if (!job) {
+    return quote?.display_code ?? 'Factura creada desde presupuesto aceptado'
+  }
+
+  return [
+    quote?.display_code ?? job.quote_display_code ?? job.quote_id ?? null,
+    job.display_code ?? job.id,
+    job.property_display_code ?? null,
+    job.property_name ?? null,
+  ].filter(Boolean).join(' · ')
+}
+
 function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePayload[] | null {
   const payloads: LinePayload[] = []
 
@@ -260,6 +278,7 @@ export function InvoiceDetailCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingPaidStatusUpdate, setPendingPaidStatusUpdate] = useState<string | null>(null)
   const [pendingPaidFormSave, setPendingPaidFormSave] = useState(false)
+  const [pendingRelationSyncSave, setPendingRelationSyncSave] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -294,11 +313,49 @@ export function InvoiceDetailCard({
     return getFormLinesFromInvoice(invoice)
   }, [invoice])
 
+  const draftRelationship = useMemo(() => {
+    if (!invoice) {
+      return {
+        clientId: form.client_id,
+        clientLabel: '',
+        serviceReference: '',
+        propertyReference: '',
+        hasChanges: false,
+      }
+    }
+
+    const nextClientId = selectedJob?.client_id ?? form.client_id
+    const nextClientLabel = selectedJob ? formatClientLabel(selectedJob) : formatClientLabel({
+      client_id: nextClientId,
+      client_display_code: invoice.client_display_code,
+      client_name: invoice.client_name,
+    })
+    const nextServiceReference = selectedJob
+      ? buildDraftServiceReference(selectedJob, linkedQuote)
+      : getInvoiceServiceReference(invoice)
+    const nextPropertyReference = selectedJob
+      ? buildPropertyReference(selectedJob)
+      : invoice.property_name ?? invoice.property_display_code ?? 'Sin propiedad vinculada'
+
+    return {
+      clientId: nextClientId,
+      clientLabel: nextClientLabel,
+      serviceReference: nextServiceReference,
+      propertyReference: nextPropertyReference,
+      hasChanges:
+        nextClientId !== invoice.client_id ||
+        (form.job_id || '') !== (invoice.job_id ?? '') ||
+        nextServiceReference !== getInvoiceServiceReference(invoice) ||
+        nextPropertyReference !== (invoice.property_name ?? invoice.property_display_code ?? 'Sin propiedad vinculada'),
+    }
+  }, [form.client_id, form.job_id, invoice, linkedQuote, selectedJob])
+
   useEffect(() => {
     if (!invoice) {
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setPendingRelationSyncSave(false)
       setForm({
         job_id: '',
         client_id: '',
@@ -313,6 +370,7 @@ export function InvoiceDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setPendingRelationSyncSave(false)
     setForm({
       job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
@@ -333,6 +391,23 @@ export function InvoiceDetailCard({
       ...current,
       [field]: value,
     }))
+  }
+
+  function handleJobChange(nextJobId: string) {
+    const nextJob = jobs.find((job) => job.id === nextJobId) ?? null
+
+    setForm((current) => ({
+      ...current,
+      job_id: nextJobId,
+      client_id: nextJob?.client_id ?? current.client_id,
+    }))
+
+    setSaveError(null)
+    setSuccessMessage(
+      nextJob
+        ? 'Servicio vinculado actualizado. Al guardar se alinearán cliente, referencia y propiedad con ese servicio. Usa "Traer datos del servicio/presupuesto" si también quieres renovar líneas y notas.'
+        : null,
+    )
   }
 
   function updateLine<K extends keyof LineFormState>(
@@ -413,11 +488,16 @@ export function InvoiceDetailCard({
     void updateInvoiceStatus(nextStatus)
   }
 
-  async function saveInvoiceEdits(confirmedPaidStatus = false) {
+  async function saveInvoiceEdits(confirmedPaidStatus = false, skipRelationConfirm = false) {
     if (!invoice) return
 
     if (form.status === 'paid' && invoice.status !== 'paid' && !confirmedPaidStatus) {
       setPendingPaidFormSave(true)
+      return
+    }
+
+    if (draftRelationship.hasChanges && !skipRelationConfirm) {
+      setPendingRelationSyncSave(true)
       return
     }
 
@@ -426,7 +506,11 @@ export function InvoiceDetailCard({
     setIsSaving(true)
 
     try {
-      if (!form.client_id) {
+      const resolvedJobId = form.job_id || null
+      const resolvedClientId = selectedJob?.client_id ?? form.client_id
+      const resolvedQuoteId = selectedJob?.quote_id ?? (resolvedJobId ? null : invoice.quote_id ?? null)
+
+      if (!resolvedClientId) {
         setSaveError('No se pudo resolver el cliente de la factura.')
         return
       }
@@ -446,9 +530,9 @@ export function InvoiceDetailCard({
       await saveInvoiceWithLines(
         {
           id: invoice.id,
-          job_id: form.job_id || null,
-          quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
-          client_id: form.client_id,
+          job_id: resolvedJobId,
+          quote_id: resolvedQuoteId,
+          client_id: resolvedClientId,
           issue_date: form.issue_date,
           status: form.status,
           subtotal: subtotalValue,
@@ -464,6 +548,7 @@ export function InvoiceDetailCard({
       await onInvoiceUpdated()
       setSuccessMessage('Factura actualizada correctamente.')
       setIsEditing(false)
+      setPendingRelationSyncSave(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando la factura.'
@@ -549,7 +634,7 @@ export function InvoiceDetailCard({
                 <span>Servicio</span>
                 <select
                   value={form.job_id}
-                  onChange={(event) => updateField('job_id', event.target.value)}
+                  onChange={(event) => handleJobChange(event.target.value)}
                 >
                   <option value="">Sin servicio vinculado</option>
                   {jobs.map((job) => (
@@ -675,6 +760,24 @@ export function InvoiceDetailCard({
                   rows={4}
                 />
               </label>
+
+              <div className="cc-detail-panel__summary form-field-full">
+                <div className="cc-detail-panel__summary-card">
+                  <span>Cliente que quedará</span>
+                  <strong>{draftRelationship.clientLabel || 'Sin cliente'}</strong>
+                  <small>{draftRelationship.clientId || 'Sin id de cliente'}</small>
+                </div>
+                <div className="cc-detail-panel__summary-card">
+                  <span>Servicio / referencia</span>
+                  <strong>{draftRelationship.serviceReference || 'Sin referencia'}</strong>
+                  <small>{selectedJob ? 'Derivado del servicio seleccionado' : 'Se conserva la referencia actual'}</small>
+                </div>
+                <div className="cc-detail-panel__summary-card">
+                  <span>Propiedad / ubicación</span>
+                  <strong>{draftRelationship.propertyReference || 'Sin propiedad vinculada'}</strong>
+                  <small>{selectedJob ? 'Se alineará con el servicio' : 'Se conserva la relación actual'}</small>
+                </div>
+              </div>
 
               <div className="form-actions">
                 <button type="button" className="secondary-button" onClick={syncFromJobQuote}>
@@ -809,6 +912,20 @@ export function InvoiceDetailCard({
         onConfirm={() => {
           setPendingPaidFormSave(false)
           void saveInvoiceEdits(true)
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingRelationSyncSave}
+        title="Aplicar nueva relación de factura"
+        description={`La factura pasará a usar ${draftRelationship.clientLabel || 'el cliente seleccionado'} como cliente facturado, ${draftRelationship.serviceReference || 'la nueva referencia'} como servicio/referencia y ${draftRelationship.propertyReference || 'la nueva propiedad'} como ubicación. Las líneas no se cambiarán automáticamente salvo que uses "Traer datos del servicio/presupuesto".`}
+        confirmLabel="Sí, guardar relación"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setPendingRelationSyncSave(false)}
+        onConfirm={() => {
+          setPendingRelationSyncSave(false)
+          void saveInvoiceEdits(form.status === 'paid' && invoice?.status !== 'paid', true)
         }}
       />
     </section>

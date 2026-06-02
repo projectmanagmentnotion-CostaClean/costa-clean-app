@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { formatClientLabel, formatInvoiceLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { saveInvoiceWithLines, updateInvoiceStatus as updateInvoiceStatusRpc } from '../financial/financialWriteApi'
@@ -505,8 +506,8 @@ export function InvoiceDetailCard({
             <div className="cc-detail-panel__summary">
               <div className="cc-detail-panel__summary-card">
                 <span>Cliente</span>
-                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
-                <small>{invoice.job_display_code ?? invoice.job_id ?? 'Sin servicio'}</small>
+                <strong>{formatInvoiceLabel(invoice)}</strong>
+                <small>{invoice.job_id ? formatJobLabel({ id: invoice.job_id, display_code: invoice.job_display_code, billing_concept: invoice.billing_concept, property_name: invoice.property_name, property_display_code: invoice.property_display_code, client_name: invoice.client_name, client_display_code: invoice.client_display_code }) : 'Sin servicio'}</small>
               </div>
               <div className="cc-detail-panel__summary-card">
                 <span>Emision</span>
@@ -532,7 +533,7 @@ export function InvoiceDetailCard({
                   <option value="">Sin servicio vinculado</option>
                   {jobs.map((job) => (
                     <option key={job.id} value={job.id}>
-                      {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                      {formatJobLabel(job)}
                     </option>
                   ))}
                 </select>
@@ -717,7 +718,7 @@ export function InvoiceDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cliente</span>
-                <strong>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</strong>
+                <strong>{formatClientLabel({ client_id: invoice.client_id, client_display_code: invoice.client_display_code, client_name: invoice.client_name })}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha de emisión</span>

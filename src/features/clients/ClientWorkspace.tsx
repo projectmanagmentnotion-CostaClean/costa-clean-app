@@ -10,9 +10,11 @@ import {
 import { getStatusLabel } from '../../app/displayText'
 import {
   formatClientLabel,
+  formatInvoiceLabel,
   formatJobLabel,
   formatPropertyLabel,
   formatQuoteLabel,
+  formatRecurringPlanLabel,
 } from '../../app/relationshipLabels'
 import { ClientDetailCard } from './ClientDetailCard'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
@@ -29,7 +31,7 @@ import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { QuoteListItem } from '../quotes/types'
 import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import { RecurringInvoicePlanForm } from '../recurringInvoices/RecurringInvoicePlanForm'
-import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
+import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../recurringInvoices/recurringInvoiceApi'
 import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
 
@@ -79,7 +81,7 @@ function buildOriginLabel(client: ClientListItem): string {
   }
 
   if (client.source_lead_display_code && client.source_lead_name) {
-    return `${client.source_lead_display_code} · ${client.source_lead_name}`
+    return `${client.source_lead_display_code} - ${client.source_lead_name}`
   }
 
   return client.source_lead_display_code ?? client.source_lead_id
@@ -137,6 +139,33 @@ function buildInvoiceBalance(invoice: InvoiceListItem, payments: PaymentListItem
   }
 }
 
+function buildRecurringPlanAmount(plan: RecurringInvoicePlanListItem): number {
+  return plan.template_lines.reduce((sum, line) => sum + Number(line.line_subtotal ?? 0), 0)
+}
+
+function buildRecurringPlanPersistenceInput(
+  plan: RecurringInvoicePlanListItem,
+  overrides: Partial<RecurringInvoicePlanListItem> = {},
+) {
+  return {
+    id: overrides.id ?? plan.id,
+    client_id: overrides.client_id ?? plan.client_id,
+    property_id: overrides.property_id ?? plan.property_id,
+    quote_id: overrides.quote_id ?? plan.quote_id,
+    title: overrides.title ?? plan.title,
+    frequency: overrides.frequency ?? plan.frequency,
+    status: overrides.status ?? plan.status,
+    default_invoice_status: overrides.default_invoice_status ?? plan.default_invoice_status,
+    next_issue_date: overrides.next_issue_date ?? plan.next_issue_date,
+    last_issued_at: overrides.last_issued_at ?? plan.last_issued_at,
+    tax_rate: overrides.tax_rate ?? plan.tax_rate,
+    notes: overrides.notes ?? plan.notes,
+    internal_notes: overrides.internal_notes ?? plan.internal_notes,
+    pricing_metadata: overrides.pricing_metadata ?? plan.pricing_metadata,
+    template_lines: overrides.template_lines ?? plan.template_lines,
+  }
+}
+
 export function ClientWorkspace({
   client,
   properties,
@@ -157,6 +186,7 @@ export function ClientWorkspace({
   const [isClientEditing, setIsClientEditing] = useState(false)
   const [editingRecurringPlanId, setEditingRecurringPlanId] = useState<string | null>(null)
   const [recurringFeedback, setRecurringFeedback] = useState<string | null>(null)
+  const [pendingRecurringPlanId, setPendingRecurringPlanId] = useState<string | null>(null)
 
   const relatedProperties = useMemo(
     () => properties.filter((property) => property.client_id === client.id),
@@ -185,6 +215,18 @@ export function ClientWorkspace({
   const relatedRecurringPlans = useMemo(
     () => recurringInvoicePlans.filter((plan) => plan.client_id === client.id),
     [client.id, recurringInvoicePlans],
+  )
+  const propertyById = useMemo(
+    () => new Map(relatedProperties.map((property) => [property.id, property])),
+    [relatedProperties],
+  )
+  const quoteById = useMemo(
+    () => new Map(relatedQuotes.map((quote) => [quote.id, quote])),
+    [relatedQuotes],
+  )
+  const invoiceById = useMemo(
+    () => new Map(relatedInvoices.map((invoice) => [invoice.id, invoice])),
+    [relatedInvoices],
   )
 
   const paymentsByInvoiceId = useMemo(() => {
@@ -224,6 +266,12 @@ export function ClientWorkspace({
   const latestInvoice = sortedInvoices[0] ?? null
   const dueRecurringPlans = useMemo(
     () => relatedRecurringPlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)),
+    [relatedRecurringPlans],
+  )
+  const latestIssuedRecurringPlan = useMemo(
+    () => [...relatedRecurringPlans]
+      .filter((plan) => Boolean(plan.last_issued_at))
+      .sort((left, right) => compareByDateDesc(left.last_issued_at, right.last_issued_at))[0] ?? null,
     [relatedRecurringPlans],
   )
 
@@ -291,7 +339,7 @@ export function ClientWorkspace({
         id: `quote-${quote.id}`,
         date: quote.created_at,
         title: `Presupuesto ${formatQuoteLabel(quote)}`,
-        detail: `${getStatusLabel(quote.status)} · ${formatCurrency(quote.total)}`,
+        detail: `${getStatusLabel(quote.status)} - ${formatCurrency(quote.total)}`,
         tone: quote.status === 'accepted' ? 'success' : 'info',
       })
     }
@@ -301,7 +349,7 @@ export function ClientWorkspace({
         id: `job-${job.id}`,
         date: job.scheduled_date,
         title: `Servicio ${formatJobLabel(job)}`,
-        detail: `${job.property_name ?? job.property_display_code ?? job.property_id} · ${getStatusLabel(job.status)}`,
+        detail: `${formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })} - ${getStatusLabel(job.status)}`,
         tone: job.status === 'completed' ? 'success' : 'warning',
       })
     }
@@ -310,8 +358,8 @@ export function ClientWorkspace({
       items.push({
         id: `invoice-${invoice.id}`,
         date: invoice.issue_date,
-        title: `Factura ${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`,
-        detail: `${getStatusLabel(invoice.status)} · ${formatCurrency(invoice.total)}`,
+        title: `Factura ${formatInvoiceLabel(invoice)}`,
+        detail: `${getStatusLabel(invoice.status)} - ${formatCurrency(invoice.total)}`,
         tone: invoice.status === 'paid' ? 'success' : 'warning',
       })
     }
@@ -320,14 +368,14 @@ export function ClientWorkspace({
       items.push({
         id: `payment-${payment.id}`,
         date: payment.payment_date,
-        title: `Cobro ${payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}`,
-        detail: `${formatCurrency(payment.amount)} · ${getPaymentMethodLabel(payment.payment_method)}`,
+        title: `Cobro ${formatInvoiceLabel(invoiceById.get(payment.invoice_id) ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}`,
+        detail: `${formatCurrency(payment.amount)} - ${getPaymentMethodLabel(payment.payment_method)}`,
         tone: 'success',
       })
     }
 
     return items.sort((left, right) => compareByDateDesc(left.date, right.date))
-  }, [client, relatedInvoices, relatedJobs, relatedPayments, relatedQuotes])
+  }, [client, invoiceById, relatedInvoices, relatedJobs, relatedPayments, relatedQuotes])
 
   const noteItems = useMemo<ClientNoteItem[]>(() => {
     const items: ClientNoteItem[] = []
@@ -348,7 +396,7 @@ export function ClientWorkspace({
         id: `job-note-${job.id}`,
         label: 'Nota de servicio',
         body: job.notes.trim(),
-        meta: `${formatJobLabel(job)} · ${job.property_name ?? job.property_display_code ?? job.property_id}`,
+        meta: `${formatJobLabel(job)} - ${formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}`,
       })
     }
 
@@ -378,7 +426,7 @@ export function ClientWorkspace({
         id: `invoice-note-${invoice.id}`,
         label: 'Nota de factura',
         body: invoice.notes.trim(),
-        meta: invoice.invoice_number ?? invoice.display_code ?? invoice.id,
+        meta: formatInvoiceLabel(invoice),
       })
     }
 
@@ -388,16 +436,16 @@ export function ClientWorkspace({
         id: `payment-note-${payment.id}`,
         label: 'Nota de cobro',
         body: payment.notes.trim(),
-        meta: payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id,
+        meta: formatInvoiceLabel(invoiceById.get(payment.invoice_id) ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number }),
       })
     }
 
     return items
-  }, [relatedInvoices, relatedJobs, relatedPayments, relatedProperties, relatedQuotes])
+  }, [invoiceById, relatedInvoices, relatedJobs, relatedPayments, relatedProperties, relatedQuotes])
 
   useEffect(() => {
-    onPendingStateChange?.(Boolean(activeAction) || isClientEditing)
-  }, [activeAction, isClientEditing, onPendingStateChange])
+    onPendingStateChange?.(Boolean(activeAction) || isClientEditing || Boolean(pendingRecurringPlanId))
+  }, [activeAction, isClientEditing, onPendingStateChange, pendingRecurringPlanId])
 
   function openAction(action: Exclude<ClientWorkspaceAction, null>) {
     setActiveAction(action)
@@ -411,9 +459,53 @@ export function ClientWorkspace({
   }
 
   async function handleRecurringPlanIssued(planId: string) {
-    await generateInvoiceFromRecurringPlan(planId)
-    await onRefresh()
-    setRecurringFeedback('Factura recurrente emitida y plan actualizado.')
+    setPendingRecurringPlanId(planId)
+    setRecurringFeedback(null)
+
+    try {
+      await generateInvoiceFromRecurringPlan(planId)
+      await onRefresh()
+      setRecurringFeedback('Factura recurrente emitida y plan actualizado.')
+    } finally {
+      setPendingRecurringPlanId(null)
+    }
+  }
+
+  async function handleRecurringPlanStatusChange(
+    plan: RecurringInvoicePlanListItem,
+    status: RecurringInvoicePlanListItem['status'],
+    successMessage: string,
+  ) {
+    setPendingRecurringPlanId(plan.id)
+    setRecurringFeedback(null)
+
+    try {
+      await saveRecurringInvoicePlan(buildRecurringPlanPersistenceInput(plan, { status }))
+      await onRefresh()
+      setRecurringFeedback(successMessage)
+    } finally {
+      setPendingRecurringPlanId(null)
+    }
+  }
+
+  async function handleRecurringPlanDuplicate(plan: RecurringInvoicePlanListItem) {
+    const nextPlanId = createPrefillId('RECURRING-PLAN')
+
+    setPendingRecurringPlanId(plan.id)
+    setRecurringFeedback(null)
+
+    try {
+      await saveRecurringInvoicePlan(buildRecurringPlanPersistenceInput(plan, {
+        id: nextPlanId,
+        title: `${plan.title} copia`,
+        status: 'paused',
+        last_issued_at: null,
+      }))
+      await onRefresh()
+      setRecurringFeedback('Plan recurrente duplicado como borrador pausado.')
+    } finally {
+      setPendingRecurringPlanId(null)
+    }
   }
 
   const jobCreatePrefill = useMemo(
@@ -444,7 +536,7 @@ export function ClientWorkspace({
           <div className="cc-client-workspace__identity-copy">
             <span className="cc-client-workspace__kicker">Centro operativo</span>
             <h1>{client.full_name}</h1>
-            <p>{formatClientLabel(client)} · {buildOriginLabel(client)}</p>
+            <p>{formatClientLabel(client)} - {buildOriginLabel(client)}</p>
           </div>
 
           <div className="cc-client-workspace__status">
@@ -485,8 +577,8 @@ export function ClientWorkspace({
         </article>
         <article className="cc-client-workspace__snapshot-card">
           <span>Última factura</span>
-          <strong>{latestInvoice ? formatCurrency(latestInvoice.total) : 'Sin facturas'}</strong>
-          <small>{latestInvoice ? formatDateEs(latestInvoice.issue_date) : 'Aún no emitida'}</small>
+          <strong>{latestInvoice ? formatInvoiceLabel(latestInvoice) : 'Sin facturas'}</strong>
+          <small>{latestInvoice ? `${formatDateEs(latestInvoice.issue_date)} - ${formatCurrency(latestInvoice.total)}` : 'Aún no emitida'}</small>
         </article>
         <article className="cc-client-workspace__snapshot-card">
           <span>Último servicio</span>
@@ -685,7 +777,7 @@ export function ClientWorkspace({
                     <strong>{formatPropertyLabel(property)}</strong>
                     <span>{property.address}</span>
                     <small>
-                      {jobsByPropertyId.get(property.id)?.length ?? 0} servicio(s) · {quotesByPropertyId.get(property.id)?.length ?? 0} presupuesto(s) · {invoicesByPropertyId.get(property.id)?.length ?? 0} factura(s)
+                      {jobsByPropertyId.get(property.id)?.length ?? 0} servicio(s) - {quotesByPropertyId.get(property.id)?.length ?? 0} presupuesto(s) - {invoicesByPropertyId.get(property.id)?.length ?? 0} factura(s)
                     </small>
                   </article>
                 ))}
@@ -701,10 +793,10 @@ export function ClientWorkspace({
               <div className="cc-client-workspace__relationship-list">
                 {relatedRecurringPlans.slice(0, 3).map((plan) => (
                   <article key={plan.id} className="cc-client-workspace__relationship-card">
-                    <strong>{plan.title}</strong>
-                    <span>{getRecurringFrequencyLabel(plan.frequency)} · {plan.status}</span>
+                    <strong>{formatRecurringPlanLabel(plan)}</strong>
+                    <span>{getRecurringFrequencyLabel(plan.frequency)} - {plan.status}</span>
                     <small>
-                      Siguiente emision {formatDateEs(plan.next_issue_date)} · {plan.template_lines.length} linea(s)
+                      Siguiente emision {formatDateEs(plan.next_issue_date)} - {formatCurrency(buildRecurringPlanAmount(plan))} - {plan.template_lines.length} linea(s)
                     </small>
                   </article>
                 ))}
@@ -763,9 +855,9 @@ export function ClientWorkspace({
                     {propertyJobs.map((job) => (
                       <article key={job.id} className="cc-client-workspace__nested-item">
                         <strong>{formatJobLabel(job)}</strong>
-                        <span>{getServiceTypeLabel(job.service_type)} · {formatDateEs(job.scheduled_date)} · {getStatusLabel(job.status)}</span>
+                        <span>{getServiceTypeLabel(job.service_type)} - {formatDateEs(job.scheduled_date)} - {getStatusLabel(job.status)}</span>
                         <small>
-                          {job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'} · {job.invoice_id ?? 'Sin factura'}
+                          {job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'} - {job.invoice_id ? formatInvoiceLabel(invoiceById.get(job.invoice_id) ?? { id: job.invoice_id }) : 'Sin factura'}
                         </small>
                       </article>
                     ))}
@@ -792,7 +884,7 @@ export function ClientWorkspace({
               <div className="section-header">
                 <div>
                   <h2>{formatJobLabel(job)}</h2>
-                  <p>{job.property_name ?? job.property_display_code ?? job.property_id}</p>
+                  <p>{formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}</p>
                 </div>
                 <span className="lead-badge">{getStatusLabel(job.status)}</span>
               </div>
@@ -808,15 +900,15 @@ export function ClientWorkspace({
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Propiedad</span>
-                  <strong>{job.property_name ?? job.property_display_code ?? job.property_id}</strong>
+                  <strong>{formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Presupuesto origen</span>
-                  <strong>{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</strong>
+                  <strong>{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Factura</span>
-                  <strong>{job.invoice_id ?? 'Pendiente de facturar'}</strong>
+                  <strong>{job.invoice_id ? formatInvoiceLabel(invoiceById.get(job.invoice_id) ?? { id: job.invoice_id }) : 'Pendiente de facturar'}</strong>
                 </div>
               </div>
             </article>
@@ -838,7 +930,7 @@ export function ClientWorkspace({
               <div className="section-header">
                 <div>
                   <h2>{formatQuoteLabel(quote)}</h2>
-                  <p>{quote.property_display_code ?? quote.property_id ?? 'Sin propiedad vinculada'}</p>
+                  <p>{quote.property_id ? formatPropertyLabel({ id: quote.property_id, display_code: quote.property_display_code, name: propertyById.get(quote.property_id)?.name ?? null }) : 'Sin propiedad vinculada'}</p>
                 </div>
                 <span className="lead-badge">{getStatusLabel(quote.status)}</span>
               </div>
@@ -854,11 +946,11 @@ export function ClientWorkspace({
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Servicio generado</span>
-                  <strong>{quote.job_id ?? 'Todavía no generado'}</strong>
+                  <strong>{quote.job_id ? formatJobLabel(relatedJobs.find((job) => job.id === quote.job_id) ?? { id: quote.job_id, display_code: undefined, client_name: quote.client_name, property_name: quote.property_id ? propertyById.get(quote.property_id)?.name ?? null : null }) : 'Todavía no generado'}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Factura generada</span>
-                  <strong>{quote.invoice_id ?? 'Todavía no generada'}</strong>
+                  <strong>{quote.invoice_id ? formatInvoiceLabel(invoiceById.get(quote.invoice_id) ?? { id: quote.invoice_id }) : 'Todavía no generada'}</strong>
                 </div>
               </div>
             </article>
@@ -905,10 +997,10 @@ export function ClientWorkspace({
               <div className="cc-client-workspace__relationship-list">
                 {relatedRecurringPlans.map((plan) => (
                   <article key={plan.id} className="cc-client-workspace__relationship-card">
-                    <strong>{plan.title}</strong>
-                    <span>{getRecurringFrequencyLabel(plan.frequency)} · {plan.status}</span>
+                    <strong>{formatRecurringPlanLabel(plan)}</strong>
+                    <span>{getRecurringFrequencyLabel(plan.frequency)} - {plan.status}</span>
                     <small>
-                      Proxima emision {formatDateEs(plan.next_issue_date)} · {formatCurrency(plan.template_lines.reduce((sum, line) => sum + Number(line.line_subtotal ?? 0), 0))}
+                      Proxima emision {formatDateEs(plan.next_issue_date)} - {formatCurrency(buildRecurringPlanAmount(plan))}
                     </small>
                     <div className="form-actions">
                       <button
@@ -921,13 +1013,51 @@ export function ClientWorkspace({
                       >
                         Editar plan
                       </button>
+                      {plan.status === 'active' ? (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => void handleRecurringPlanStatusChange(plan, 'paused', 'Plan recurrente pausado.')}
+                          disabled={pendingRecurringPlanId === plan.id}
+                        >
+                          Pausar
+                        </button>
+                      ) : null}
+                      {plan.status === 'paused' ? (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => void handleRecurringPlanStatusChange(plan, 'active', 'Plan recurrente reanudado.')}
+                          disabled={pendingRecurringPlanId === plan.id}
+                        >
+                          Reanudar
+                        </button>
+                      ) : null}
+                      {plan.status !== 'archived' ? (
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => void handleRecurringPlanStatusChange(plan, 'archived', 'Plan recurrente archivado.')}
+                          disabled={pendingRecurringPlanId === plan.id}
+                        >
+                          Archivar
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => void handleRecurringPlanDuplicate(plan)}
+                        disabled={pendingRecurringPlanId === plan.id}
+                      >
+                        Duplicar
+                      </button>
                       <button
                         type="button"
                         className="primary-button"
                         onClick={() => void handleRecurringPlanIssued(plan.id)}
-                        disabled={plan.status !== 'active'}
+                        disabled={plan.status !== 'active' || pendingRecurringPlanId === plan.id}
                       >
-                        Emitir ahora
+                        {pendingRecurringPlanId === plan.id ? 'Procesando...' : 'Emitir ahora'}
                       </button>
                     </div>
                   </article>
@@ -957,7 +1087,7 @@ export function ClientWorkspace({
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Ultimo plan emitido</span>
-                  <strong>{relatedRecurringPlans.find((plan) => plan.last_issued_at)?.title ?? 'Sin emisiones'}</strong>
+                  <strong>{latestIssuedRecurringPlan ? formatRecurringPlanLabel(latestIssuedRecurringPlan) : 'Sin emisiones'}</strong>
                 </div>
               </div>
             </article>
@@ -975,8 +1105,8 @@ export function ClientWorkspace({
               <article key={invoice.id} className="data-section cc-client-workspace__entity-card">
                 <div className="section-header">
                   <div>
-                    <h2>{invoice.invoice_number ?? invoice.display_code ?? invoice.id}</h2>
-                    <p>{invoice.service_reference ?? invoice.job_display_code ?? 'Sin referencia operativa'}</p>
+                    <h2>{formatInvoiceLabel(invoice)}</h2>
+                    <p>{invoice.service_reference ?? invoice.job_display_code ?? invoice.property_name ?? 'Sin referencia operativa'}</p>
                   </div>
                   <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
                 </div>
@@ -998,14 +1128,14 @@ export function ClientWorkspace({
                     <span className="detail-label">Pendiente</span>
                     <strong>{formatCurrency(outstanding)}</strong>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Presupuesto origen</span>
-                    <strong>{invoice.quote_display_code ?? invoice.quote_id ?? 'Sin presupuesto'}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Propiedad</span>
-                    <strong>{invoice.property_name ?? invoice.property_display_code ?? 'Sin propiedad'}</strong>
-                  </div>
+                <div className="detail-row">
+                  <span className="detail-label">Presupuesto origen</span>
+                  <strong>{invoice.quote_id ? formatQuoteLabel(quoteById.get(invoice.quote_id) ?? { id: invoice.quote_id, display_code: invoice.quote_display_code, client_name: invoice.client_name, property_name: invoice.property_name }) : 'Sin presupuesto'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Propiedad</span>
+                  <strong>{invoice.property_id ? formatPropertyLabel({ id: invoice.property_id, display_code: invoice.property_display_code, name: invoice.property_name }) : 'Sin propiedad'}</strong>
+                </div>
                 </div>
               </article>
             )
@@ -1026,7 +1156,7 @@ export function ClientWorkspace({
             <article key={payment.id} className="data-section cc-client-workspace__entity-card">
               <div className="section-header">
                 <div>
-                  <h2>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</h2>
+                  <h2>{formatInvoiceLabel(invoiceById.get(payment.invoice_id) ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</h2>
                   <p>{formatDateEs(payment.payment_date)}</p>
                 </div>
                 <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>

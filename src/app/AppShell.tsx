@@ -456,6 +456,21 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     [payments, invoiceById],
   )
 
+  const recurringInvoicePlansWithCodes = useMemo(
+    () => recurringInvoicePlans.map((plan) => {
+      const property = plan.property_id ? propertyById.get(plan.property_id) : undefined
+      return {
+        ...plan,
+        client_display_code: clientCodeById.get(plan.client_id) ?? plan.client_id,
+        client_name: clientById.get(plan.client_id)?.full_name ?? null,
+        property_display_code: plan.property_id ? propertyCodeById.get(plan.property_id) ?? plan.property_id : null,
+        property_name: property?.name ?? null,
+        quote_display_code: plan.quote_id ? quoteCodeById.get(plan.quote_id) ?? plan.quote_id : null,
+      }
+    }),
+    [recurringInvoicePlans, clientById, clientCodeById, propertyById, propertyCodeById, quoteCodeById],
+  )
+
   const {
     quarterlyClosingSummaryByPeriod,
     availableClosingYears,
@@ -473,17 +488,17 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
 
   const automationAlerts = useMemo(
     () =>
-      buildAutomationAlerts({
-        invoices: invoicesWithCodes,
-        jobs: jobsWithCodes,
-        quotes: quotesWithCodes,
-        expenses,
-        payments: paymentsWithCodes,
-        quarterlyClosings,
-        leadDrafts,
-        recurringInvoicePlans,
-      }),
-    [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes, recurringInvoicePlans],
+        buildAutomationAlerts({
+          invoices: invoicesWithCodes,
+          jobs: jobsWithCodes,
+          quotes: quotesWithCodes,
+          expenses,
+          payments: paymentsWithCodes,
+          quarterlyClosings,
+          leadDrafts,
+          recurringInvoicePlans: recurringInvoicePlansWithCodes,
+        }),
+    [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes, recurringInvoicePlansWithCodes],
   )
 
   const activeReviewedAlertIds = useMemo(() => {
@@ -878,7 +893,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   quotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
-                  recurringInvoicePlans={recurringInvoicePlans}
+                    recurringInvoicePlans={recurringInvoicePlansWithCodes}
                   error={clientError}
                   onClientCreated={async () => {
                     await Promise.all([

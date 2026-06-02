@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
-import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
@@ -491,7 +491,7 @@ export function InvoiceCreateForm({
           <div className="cc-form-shell__summary-card">
             <span>Ruta activa</span>
             <strong>{form.origin_mode === 'job' ? 'Servicio -> factura' : form.origin_mode === 'quote' ? 'Presupuesto -> factura' : 'Factura directa'}</strong>
-            <small>{selectedQuote ? formatQuoteLabel(selectedQuote) : selectedJob?.display_code ?? 'Sin documento origen'}</small>
+            <small>{selectedQuote ? formatQuoteLabel(selectedQuote) : selectedJob ? formatJobLabel(selectedJob) : 'Sin documento origen'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -537,7 +537,7 @@ export function InvoiceCreateForm({
                     <option value="">Selecciona un servicio</option>
                     {availableJobs.map((job) => (
                       <option key={job.id} value={job.id}>
-                        {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                        {formatJobLabel(job)}
                       </option>
                     ))}
                   </select>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatClientLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { matchesSearchQuery } from '../documents/search'
@@ -133,8 +133,8 @@ export function JobsList({
               >
                 <div className="cc-record-card__head">
                   <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{getJobPrimaryReference(job)}</strong>
-                    <span className="cc-record-card__subref">Interno {job.display_code ?? job.id}</span>
+                    <strong className="cc-record-card__title">{formatJobLabel(job)}</strong>
+                    <span className="cc-record-card__subref">{getJobPrimaryReference(job)}</span>
                   </div>
 
                   <div className="cc-record-card__aside">
@@ -144,12 +144,12 @@ export function JobsList({
                 </div>
 
                 <p className="cc-record-card__summary">
-                  {formatClientLabel(job)} - {(job.property_name ?? job.property_display_code ?? job.property_id)}
+                  {formatClientLabel(job)} - {formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}
                 </p>
 
                 <div className="cc-record-card__chips" aria-label="Contexto del servicio">
                   <span className="cc-record-card__chip">{getServiceTypeLabel(job.service_type)}</span>
-                  <span className="cc-record-card__chip">{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
+                  <span className="cc-record-card__chip">{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</span>
                 </div>
 
                 <div className="cc-list-meta cc-record-card__meta">
@@ -159,7 +159,7 @@ export function JobsList({
                   </span>
                   <span>
                     <span className="cc-record-card__meta-label">Origen</span>
-                    <span className="cc-record-card__meta-value">{job.quote_display_code ?? job.quote_id ?? 'Sin presupuesto'}</span>
+                    <span className="cc-record-card__meta-value">{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</span>
                   </span>
                 </div>
               </button>

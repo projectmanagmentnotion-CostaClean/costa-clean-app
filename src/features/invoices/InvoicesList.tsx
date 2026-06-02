@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatClientLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
@@ -137,10 +137,10 @@ export function InvoicesList({
                   <div className="cc-record-card__head">
                     <div className="cc-record-card__identity">
                       <strong className="cc-record-card__title">
-                        {invoice.invoice_number ?? invoice.display_code ?? invoice.id}
+                        {formatInvoiceLabel(invoice)}
                       </strong>
                       <span className="cc-record-card__subref">
-                        Interno {invoice.display_code ?? invoice.id}
+                        {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Sin origen operativo'}
                       </span>
                     </div>
 
@@ -157,7 +157,7 @@ export function InvoicesList({
                   <div className="cc-record-card__chips" aria-label="Contexto de la factura">
                     <span className="cc-record-card__chip">{invoice.issue_date}</span>
                     <span className="cc-record-card__chip">
-                      {invoice.job_display_code ?? invoice.job_id ?? 'Desde presupuesto aceptado'}
+                      {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Desde presupuesto aceptado'}
                     </span>
                   </div>
 
@@ -169,7 +169,7 @@ export function InvoicesList({
                     <span>
                       <span className="cc-record-card__meta-label">Origen</span>
                       <span className="cc-record-card__meta-value">
-                        {invoice.job_display_code ?? invoice.job_id ?? 'Presupuesto aceptado'}
+                        {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Presupuesto aceptado'}
                       </span>
                     </span>
                   </div>

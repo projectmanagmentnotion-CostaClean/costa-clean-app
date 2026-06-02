@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { formatCurrency } from '../../app/displayFormat'
-import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import type { ClientListItem } from '../clients/types'
@@ -160,7 +160,7 @@ export function QuotesList({
                 >
                   <div className="cc-record-card__head">
                     <div className="cc-record-card__identity">
-                      <strong className="cc-record-card__title">{quote.display_code ?? quote.id}</strong>
+                      <strong className="cc-record-card__title">{formatQuoteLabel({ ...quote, client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null, property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null })}</strong>
                       <span className="cc-record-card__subref">{propertyLabel}</span>
                     </div>
 

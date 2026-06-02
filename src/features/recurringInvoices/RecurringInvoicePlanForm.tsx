@@ -1,5 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
-import { formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
+import { formatPropertyLabel, formatQuoteLabel, formatRecurringPlanLabel } from '../../app/relationshipLabels'
 import { businessRules } from '../../app/businessRules'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -112,6 +112,14 @@ export function RecurringInvoicePlanForm({
   const availableQuotes = useMemo(
     () => quotes.filter((quote) => !form.property_id || quote.property_id === form.property_id),
     [form.property_id, quotes],
+  )
+  const selectedProperty = useMemo(
+    () => properties.find((property) => property.id === form.property_id) ?? null,
+    [properties, form.property_id],
+  )
+  const selectedQuote = useMemo(
+    () => quotes.find((quote) => quote.id === form.quote_id) ?? null,
+    [quotes, form.quote_id],
   )
   const subtotal = useMemo(() => calculateQuoteSubtotal(lines), [lines])
   const taxRate = parsePercentInput(form.tax_rate)
@@ -227,9 +235,9 @@ export function RecurringInvoicePlanForm({
 
         <div className="cc-form-shell__summary">
           <div className="cc-form-shell__summary-card">
-            <span>Cadencia</span>
-            <strong>{getRecurringFrequencyLabel(form.frequency)}</strong>
-            <small>Siguiente: {form.next_issue_date || 'Pendiente'}</small>
+            <span>Plan</span>
+            <strong>{formatRecurringPlanLabel({ id: initialPlan?.id ?? null, title: form.title, property_name: selectedProperty?.name ?? null, property_display_code: selectedProperty?.display_code ?? null })}</strong>
+            <small>{getRecurringFrequencyLabel(form.frequency)} - siguiente {form.next_issue_date || 'Pendiente'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Vista previa</span>
@@ -281,7 +289,7 @@ export function RecurringInvoicePlanForm({
                 <option value="">Sin presupuesto fijo</option>
                 {availableQuotes.map((quote) => (
                   <option key={quote.id} value={quote.id}>
-                    {formatQuoteLabel(quote)}
+                    {formatQuoteLabel({ ...quote, property_name: properties.find((property) => property.id === quote.property_id)?.name ?? null })}
                   </option>
                 ))}
               </select>
@@ -474,6 +482,12 @@ export function RecurringInvoicePlanForm({
                 <span>Total</span>
                 <strong>{formatMoneyInput(total)} €</strong>
               </div>
+            </div>
+
+            <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+              <span>Contexto</span>
+              <strong>{selectedProperty ? formatPropertyLabel(selectedProperty) : 'Sin propiedad fija'}</strong>
+              <small>{selectedQuote ? formatQuoteLabel({ ...selectedQuote, property_name: properties.find((property) => property.id === selectedQuote.property_id)?.name ?? null }) : 'Sin presupuesto fijo'}</small>
             </div>
 
             <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">

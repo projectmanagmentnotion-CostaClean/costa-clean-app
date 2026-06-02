@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
+import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
@@ -207,7 +208,7 @@ export function PaymentDetailCard({
           <div className="lead-detail-header">
             <div>
               <h3>{payment.display_code ?? payment.id}</h3>
-              <p>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</p>
+              <p>{formatInvoiceLabel(selectedInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</p>
             </div>
           </div>
 
@@ -226,7 +227,7 @@ export function PaymentDetailCard({
                   ) : null}
                   {invoices.map((invoice) => (
                     <option key={invoice.id} value={invoice.id}>
-                      {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {formatCurrency(invoice.total)}
+                      {formatInvoiceLabel(invoice)} - Total {formatCurrency(invoice.total)}
                     </option>
                   ))}
                 </select>
@@ -305,7 +306,7 @@ export function PaymentDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Factura</span>
-                <strong>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</strong>
+                <strong>{formatInvoiceLabel(selectedInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Fecha de cobro</span>

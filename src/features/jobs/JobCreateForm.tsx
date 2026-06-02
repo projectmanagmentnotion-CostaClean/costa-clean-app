@@ -353,7 +353,11 @@ export function JobCreateForm({
                   <option value="">Servicio directo sin presupuesto</option>
                   {availableQuotes.map((quote) => (
                     <option key={quote.id} value={quote.id}>
-                      {formatQuoteLabel(quote)}
+                      {formatQuoteLabel({
+                        ...quote,
+                        client_name: quote.client_name ?? selectedClient?.full_name ?? null,
+                        property_name: properties.find((property) => property.id === quote.property_id)?.name ?? null,
+                      })}
                     </option>
                   ))}
                 </select>

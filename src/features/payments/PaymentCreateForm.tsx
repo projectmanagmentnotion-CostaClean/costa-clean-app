@@ -1,4 +1,5 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 
@@ -174,7 +175,7 @@ export function PaymentCreateForm({
               <option value="">Selecciona una factura</option>
               {invoices.map((invoice) => (
                 <option key={invoice.id} value={invoice.id}>
-                  {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {invoice.total}
+                  {formatInvoiceLabel(invoice)} - Total {formatMoneyInput(Number(invoice.total))}
                 </option>
               ))}
             </select>

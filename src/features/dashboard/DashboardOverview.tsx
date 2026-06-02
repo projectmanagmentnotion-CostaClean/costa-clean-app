@@ -17,6 +17,10 @@ interface DashboardOverviewProps {
     collectedThisMonthTotal: number
     outstandingReceivablesTotal: number
     totalExpenses: number
+    jobsScheduledTodayCount: number
+    completedJobsWithoutInvoiceCount: number
+    unpaidInvoicesOlderThan7DaysCount: number
+    dueRecurringPlansCount: number
   }
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
@@ -83,6 +87,37 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
       label: 'Gasto acumulado',
       value: formatCurrency(metrics.totalExpenses),
       actionId: 'expenses_this_month',
+    },
+  ]
+
+  const operationalSignals: Array<{
+    label: string
+    value: string
+    detail: string
+    actionId?: DashboardKpiActionId
+  }> = [
+    {
+      label: 'Servicios hoy',
+      value: String(metrics.jobsScheduledTodayCount),
+      detail: 'Carga inmediata de ejecucion.',
+      actionId: 'jobs_today',
+    },
+    {
+      label: 'Listos para facturar',
+      value: String(metrics.completedJobsWithoutInvoiceCount),
+      detail: 'Servicios completados aun sin factura.',
+      actionId: 'completed_jobs_without_invoice',
+    },
+    {
+      label: 'Cobros fuera de plazo',
+      value: String(metrics.unpaidInvoicesOlderThan7DaysCount),
+      detail: 'Facturas emitidas con seguimiento urgente.',
+      actionId: 'unpaid_invoices_older_7d',
+    },
+    {
+      label: 'Recurrentes listas',
+      value: String(metrics.dueRecurringPlansCount),
+      detail: 'Planes activos que ya pueden emitirse.',
     },
   ]
 
@@ -168,6 +203,30 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
             <article key={stat.label} className="cc-dashboard-stat">
               <span className="cc-dashboard-stat__label">{stat.label}</span>
               <strong className="cc-dashboard-stat__value">{stat.value}</strong>
+            </article>
+          )
+        ))}
+      </div>
+
+      <div className="cc-kpi-grid cc-kpi-grid--compact">
+        {operationalSignals.map((signal) => (
+          signal.actionId ? (
+            <button
+              key={signal.label}
+              type="button"
+              className="cc-kpi-card cc-kpi-card--compact cc-kpi-card--actionable cc-kpi-card--warning"
+              onClick={() => onRunKpiAction(signal.actionId!)}
+            >
+              <span className="cc-kpi-card__label">{signal.label}</span>
+              <strong className="cc-kpi-card__value">{signal.value}</strong>
+              <p className="cc-kpi-card__detail">{signal.detail}</p>
+              <span className="cc-kpi-card__hint">Abrir lista</span>
+            </button>
+          ) : (
+            <article key={signal.label} className="cc-kpi-card cc-kpi-card--compact cc-kpi-card--warning">
+              <span className="cc-kpi-card__label">{signal.label}</span>
+              <strong className="cc-kpi-card__value">{signal.value}</strong>
+              <p className="cc-kpi-card__detail">{signal.detail}</p>
             </article>
           )
         ))}

@@ -31,6 +31,7 @@ interface HomePageProps {
     completedJobsWithoutInvoiceOlderThan2DaysCount: number
     jobsScheduledTodayCount: number
     jobsScheduledTomorrowCount: number
+    dueRecurringPlansCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number
@@ -51,13 +52,24 @@ interface HomePageProps {
     tomorrowJobs: JobListItem[]
     upcomingJobs: JobListItem[]
   }
+  onOpenJobWorkspace: (jobId: string) => void
   onOpenView: (view: AppView) => void
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
   alerts: AutomationAlertItem[]
   onOpenAlert: (alert: AutomationAlertItem) => void
 }
 
-export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, onOpenAlert }: HomePageProps) {
+export function HomePage({
+  metrics,
+  agenda,
+  onOpenJobWorkspace,
+  onOpenView,
+  onRunKpiAction,
+  alerts,
+  onOpenAlert,
+}: HomePageProps) {
+  const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
+
   return (
     <section className="cc-dashboard-page">
       <header className="cc-dashboard-header">
@@ -84,6 +96,10 @@ export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, 
             <span className="cc-dashboard-header__meta-label">Servicios hoy</span>
             <strong className="cc-dashboard-header__meta-value">{metrics.jobsScheduledTodayCount}</strong>
           </div>
+          <div className="cc-dashboard-header__meta-card">
+            <span className="cc-dashboard-header__meta-label">Alertas criticas</span>
+            <strong className="cc-dashboard-header__meta-value">{criticalAlertsCount}</strong>
+          </div>
         </div>
       </header>
 
@@ -91,7 +107,11 @@ export function HomePage({ metrics, agenda, onOpenView, onRunKpiAction, alerts, 
         <DashboardQuickActions onOpenView={onOpenView} />
         <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
         <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
-        <DashboardAgenda agenda={agenda} onRunKpiAction={onRunKpiAction} />
+        <DashboardAgenda
+          agenda={agenda}
+          onRunKpiAction={onRunKpiAction}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+        />
         <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
       </div>
     </section>

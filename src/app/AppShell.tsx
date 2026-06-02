@@ -52,6 +52,9 @@ import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
 import { formatClientLabel } from './relationshipLabels'
+import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
+import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
+import { setJobWorkspaceLocation } from '../features/jobs/useJobWorkspaceNavigation'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 
@@ -331,6 +334,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     invoices,
     expenses,
     payments,
+    recurringInvoicePlans,
   })
 
   const propertiesWithCodes = useMemo(
@@ -791,18 +795,37 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
-  const handleCreateInvoiceFromJob = useCallback((job: JobListItem) => {
-    const prefill = buildInvoiceCreatePrefillFromJob(job)
-    if (!prefill) {
-      return
-    }
-
+  const handleOpenClientWorkspace = useCallback((clientId: string, tab: ClientWorkspaceTab = 'summary') => {
     runWithNavigationGuard(() => {
-      setInvoiceCreatePrefill(prefill)
-      commitViewChange('invoices')
+      setClientWorkspaceLocation({ clientId, tab })
+      commitViewChange('clients')
     }, {
-      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura desde este servicio ahora, perderás esos cambios.`,
-      confirmLabel: 'Crear factura',
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este cliente ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir cliente',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleOpenPropertyWorkspace = useCallback((propertyId: string, tab: PropertyWorkspaceTab = 'summary') => {
+    runWithNavigationGuard(() => {
+      setPropertyWorkspaceLocation({ propertyId, tab })
+      commitViewChange('properties')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta propiedad ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir propiedad',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleOpenJobWorkspace = useCallback((jobId: string) => {
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => ({
+        ...current,
+        jobs: null,
+      }))
+      setJobWorkspaceLocation({ jobId, tab: 'summary' })
+      commitViewChange('jobs')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este servicio ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir servicio',
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
@@ -878,6 +901,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                 <HomePage
                   metrics={dashboardMetrics}
                   agenda={dashboardAgenda}
+                  onOpenJobWorkspace={handleOpenJobWorkspace}
                   onOpenView={navigateToView}
                   onRunKpiAction={handleDashboardKpiAction}
                   alerts={automationAlerts}
@@ -936,9 +960,12 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   clients={clientsWithContext}
                   properties={properties}
                   quotes={quotes}
+                  invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
                   error={jobError}
                   onJobCreated={refreshOperations}
-                  onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
+                  onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
                   createPrefill={jobCreatePrefill}
                   onPrefillConsumed={() => setJobCreatePrefill(null)}
                   activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}

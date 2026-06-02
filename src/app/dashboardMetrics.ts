@@ -8,6 +8,8 @@ import type { LeadListItem } from '../features/leads/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
+import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 
 function getExpenseMonthKey(dateValue: string): string | null {
   if (!dateValue) return null
@@ -77,6 +79,7 @@ interface UseDashboardMetricsInput {
   invoices: InvoiceListItem[]
   expenses: ExpenseListItem[]
   payments: PaymentListItem[]
+  recurringInvoicePlans: RecurringInvoicePlanListItem[]
 }
 
 export function useDashboardMetrics({
@@ -88,6 +91,7 @@ export function useDashboardMetrics({
   invoices,
   expenses,
   payments,
+  recurringInvoicePlans,
 }: UseDashboardMetricsInput) {
   return useMemo(() => {
     const invoicePaidById = new Map<string, number>()
@@ -106,6 +110,7 @@ export function useDashboardMetrics({
     const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => invoice.status !== 'paid' && isOlderThanDays(invoice.issue_date, 7)).length
     const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
     const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
+    const dueRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)).length
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
@@ -169,6 +174,7 @@ export function useDashboardMetrics({
       completedJobsWithoutInvoiceOlderThan2DaysCount,
       jobsScheduledTodayCount,
       jobsScheduledTomorrowCount,
+      dueRecurringPlansCount,
       totalInvoiced,
       totalCollected,
       totalExpenses,
@@ -184,5 +190,5 @@ export function useDashboardMetrics({
       expensesMissingValidVatInvoiceCount: expenseFiscalSummary.missingValidVatInvoiceCount,
       expensesZeroEstimatedVatCount: expenseFiscalSummary.zeroEstimatedVatCount,
     }
-  }, [leads, clients, properties, quotes, jobs, invoices, expenses, payments])
+  }, [leads, clients, properties, quotes, jobs, invoices, expenses, payments, recurringInvoicePlans])
 }

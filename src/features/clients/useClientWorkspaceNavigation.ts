@@ -33,7 +33,7 @@ function readClientWorkspaceLocation() {
   }
 }
 
-function writeClientWorkspaceLocation(
+export function setClientWorkspaceLocation(
   nextState: {
     clientId?: string | null
     tab?: ClientWorkspaceTab
@@ -72,7 +72,7 @@ export function useClientWorkspaceNavigation(validClientIds: string[]) {
 
   useEffect(() => {
     if (state.clientId && !validClientIds.includes(state.clientId)) {
-      writeClientWorkspaceLocation({ clientId: null }, true)
+      setClientWorkspaceLocation({ clientId: null }, true)
     }
   }, [state.clientId, validClientIds])
 
@@ -91,12 +91,12 @@ export function useClientWorkspaceNavigation(validClientIds: string[]) {
 
   const openClientWorkspace = useCallback((clientId: string, tab: ClientWorkspaceTab = 'summary') => {
     const nextState = { clientId, tab }
-    writeClientWorkspaceLocation(nextState)
+    setClientWorkspaceLocation(nextState)
     setState(nextState)
   }, [])
 
   const closeClientWorkspace = useCallback(() => {
-    writeClientWorkspaceLocation({ clientId: null })
+    setClientWorkspaceLocation({ clientId: null })
     setState({
       clientId: null,
       tab: 'summary',
@@ -110,7 +110,7 @@ export function useClientWorkspaceNavigation(validClientIds: string[]) {
         tab,
       }
 
-      writeClientWorkspaceLocation(nextState, true)
+      setClientWorkspaceLocation(nextState, true)
       return nextState
     })
   }, [])

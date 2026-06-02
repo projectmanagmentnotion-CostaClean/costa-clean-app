@@ -32,7 +32,7 @@ function readPropertyWorkspaceLocation() {
   }
 }
 
-function writePropertyWorkspaceLocation(
+export function setPropertyWorkspaceLocation(
   nextState: {
     propertyId?: string | null
     tab?: PropertyWorkspaceTab
@@ -71,7 +71,7 @@ export function usePropertyWorkspaceNavigation(validPropertyIds: string[]) {
 
   useEffect(() => {
     if (state.propertyId && !validPropertyIds.includes(state.propertyId)) {
-      writePropertyWorkspaceLocation({ propertyId: null }, true)
+      setPropertyWorkspaceLocation({ propertyId: null }, true)
     }
   }, [state.propertyId, validPropertyIds])
 
@@ -90,12 +90,12 @@ export function usePropertyWorkspaceNavigation(validPropertyIds: string[]) {
 
   const openPropertyWorkspace = useCallback((propertyId: string, tab: PropertyWorkspaceTab = 'summary') => {
     const nextState = { propertyId, tab }
-    writePropertyWorkspaceLocation(nextState)
+    setPropertyWorkspaceLocation(nextState)
     setState(nextState)
   }, [])
 
   const closePropertyWorkspace = useCallback(() => {
-    writePropertyWorkspaceLocation({ propertyId: null })
+    setPropertyWorkspaceLocation({ propertyId: null })
     setState({
       propertyId: null,
       tab: 'summary',
@@ -109,7 +109,7 @@ export function usePropertyWorkspaceNavigation(validPropertyIds: string[]) {
         tab,
       }
 
-      writePropertyWorkspaceLocation(nextState, true)
+      setPropertyWorkspaceLocation(nextState, true)
       return nextState
     })
   }, [])

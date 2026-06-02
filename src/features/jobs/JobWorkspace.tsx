@@ -1,0 +1,524 @@
+import { useEffect, useMemo, useState } from 'react'
+import {
+  formatCurrency,
+  formatDateEs,
+  getDisplayStatusLabel,
+  getServiceTypeLabel,
+} from '../../app/displayFormat'
+import {
+  formatClientLabel,
+  formatInvoiceLabel,
+  formatJobLabel,
+  formatPropertyLabel,
+  formatQuoteLabel,
+} from '../../app/relationshipLabels'
+import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import type { InvoiceListItem } from '../invoices/types'
+import type { PaymentListItem } from '../payments/types'
+import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
+import type { ClientListItem } from '../clients/types'
+import type { PropertyListItem } from '../properties/types'
+import type { QuoteListItem } from '../quotes/types'
+import { JobDetailCard } from './JobDetailCard'
+import type { JobListItem } from './types'
+import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
+import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
+
+type JobWorkspaceAction = 'invoice' | 'payment' | null
+
+interface JobWorkspaceProps {
+  job: JobListItem
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
+  quotes: QuoteListItem[]
+  invoices: InvoiceListItem[]
+  payments: PaymentListItem[]
+  activeTab: JobWorkspaceTab
+  onTabChange: (tab: JobWorkspaceTab) => void
+  onClose: () => void
+  onRefresh: () => Promise<void>
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenPropertyWorkspace: (propertyId: string) => void
+  onPendingStateChange?: (hasPendingState: boolean) => void
+}
+
+function getWorkspaceTabLabel(tab: JobWorkspaceTab) {
+  switch (tab) {
+    case 'summary': return 'Resumen'
+    case 'operations': return 'Operativa'
+    case 'billing': return 'Facturacion'
+    case 'activity': return 'Actividad / Notas'
+  }
+}
+
+function getRecommendedNextStep(
+  job: JobListItem,
+  invoice: InvoiceListItem | null,
+  payments: PaymentListItem[],
+) {
+  if (job.status !== 'completed') return 'Completar el servicio y revisar la ejecucion'
+  if (!invoice) return 'Emitir factura desde el servicio'
+  if (invoice.status !== 'paid' && payments.length === 0) return 'Registrar cobro o hacer seguimiento'
+  if (invoice.status !== 'paid' && payments.length > 0) return 'Revisar saldo pendiente de cobro'
+  return 'Servicio cerrado y cobrado'
+}
+
+function getOperationalSignal(
+  job: JobListItem,
+  invoice: InvoiceListItem | null,
+  outstanding: number,
+) {
+  if (job.status === 'completed' && !invoice) {
+    return {
+      label: 'Listo para facturar',
+      detail: 'El servicio ya termino y aun no genero factura.',
+      tone: 'warning' as const,
+    }
+  }
+
+  if (invoice && outstanding > 0) {
+    return {
+      label: 'Pendiente de cobro',
+      detail: 'Existe factura emitida con saldo abierto.',
+      tone: 'warning' as const,
+    }
+  }
+
+  if (invoice && outstanding <= 0) {
+    return {
+      label: 'Cobro completado',
+      detail: 'El ciclo de servicio y cobro esta cerrado.',
+      tone: 'success' as const,
+    }
+  }
+
+  if (job.status === 'cancelled') {
+    return {
+      label: 'Servicio cancelado',
+      detail: 'Quedo fuera del circuito operativo activo.',
+      tone: 'warning' as const,
+    }
+  }
+
+  return {
+    label: 'En seguimiento operativo',
+    detail: 'Todavia forma parte de la agenda activa de ejecucion.',
+    tone: 'info' as const,
+  }
+}
+
+function TimelineCard({ item }: { item: RelationshipTimelineItem }) {
+  return (
+    <article className={`cc-client-workspace__timeline-item cc-client-workspace__timeline-item--${item.tone}`}>
+      <span>{formatDateEs(item.date)}</span>
+      <strong>{item.title}</strong>
+      <p>{item.detail}</p>
+    </article>
+  )
+}
+
+export function JobWorkspace({
+  job,
+  clients,
+  properties,
+  quotes,
+  invoices,
+  payments,
+  activeTab,
+  onTabChange,
+  onClose,
+  onRefresh,
+  onOpenClientWorkspace,
+  onOpenPropertyWorkspace,
+  onPendingStateChange,
+}: JobWorkspaceProps) {
+  const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
+  const [hasPendingDetailState, setHasPendingDetailState] = useState(false)
+
+  const client = useMemo(
+    () => clients.find((entry) => entry.id === job.client_id) ?? null,
+    [clients, job.client_id],
+  )
+  const property = useMemo(
+    () => properties.find((entry) => entry.id === job.property_id) ?? null,
+    [job.property_id, properties],
+  )
+  const quote = useMemo(
+    () => (job.quote_id ? quotes.find((entry) => entry.id === job.quote_id) ?? null : null),
+    [job.quote_id, quotes],
+  )
+  const invoice = useMemo(
+    () =>
+      invoices.find((entry) => entry.job_id === job.id)
+      ?? (job.invoice_id ? invoices.find((entry) => entry.id === job.invoice_id) ?? null : null),
+    [invoices, job.id, job.invoice_id],
+  )
+  const relatedPayments = useMemo(
+    () => (invoice ? payments.filter((payment) => payment.invoice_id === invoice.id) : []),
+    [invoice, payments],
+  )
+  const totalCollected = useMemo(
+    () => relatedPayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0),
+    [relatedPayments],
+  )
+  const outstanding = Math.max(Number(invoice?.total ?? 0) - totalCollected, 0)
+  const nextStep = getRecommendedNextStep(job, invoice, relatedPayments)
+  const operationalSignal = getOperationalSignal(job, invoice, outstanding)
+  const timelineItems = useMemo(
+    () => buildJobTimelineItems({ job, quote, invoice, payments: relatedPayments }),
+    [invoice, job, quote, relatedPayments],
+  )
+
+  useEffect(() => {
+    onPendingStateChange?.(Boolean(activeAction) || hasPendingDetailState)
+  }, [activeAction, hasPendingDetailState, onPendingStateChange])
+
+  async function handleActionCreated() {
+    await onRefresh()
+    setActiveAction(null)
+  }
+
+  function openAction(action: JobWorkspaceAction) {
+    setActiveAction(action)
+    onTabChange('billing')
+  }
+
+  return (
+    <section className="cc-client-workspace">
+      <div className="cc-client-workspace__topline">
+        <button type="button" className="secondary-button" onClick={onClose}>
+          Volver a servicios
+        </button>
+        <span className="cc-client-workspace__eyebrow">Workspace de servicio</span>
+      </div>
+
+      <header className="cc-client-workspace__hero">
+        <div className="cc-client-workspace__identity">
+          <div className="cc-client-workspace__identity-copy">
+            <span className="cc-client-workspace__kicker">Operacion viva</span>
+            <h1>{job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)}</h1>
+            <p>{formatJobLabel(job)} · {formatDateEs(job.scheduled_date)}</p>
+          </div>
+
+          <div className="cc-client-workspace__status">
+            <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
+            <span className="cc-client-workspace__status-meta">{job.display_code ?? job.id}</span>
+          </div>
+        </div>
+
+        <div className="cc-client-workspace__meta">
+          <article className="cc-client-workspace__meta-card">
+            <span>Cliente</span>
+            <strong>{client ? formatClientLabel(client) : formatClientLabel(job)}</strong>
+            <small>{client?.phone ?? client?.email ?? 'Sin contacto principal'}</small>
+          </article>
+          <article className="cc-client-workspace__meta-card">
+            <span>Propiedad</span>
+            <strong>
+              {property
+                ? formatPropertyLabel(property)
+                : formatPropertyLabel({
+                    id: job.property_id,
+                    display_code: job.property_display_code,
+                    name: job.property_name,
+                  })}
+            </strong>
+            <small>{property?.address ?? 'Sin direccion ampliada'}</small>
+          </article>
+          <article className="cc-client-workspace__meta-card">
+            <span>Tipo</span>
+            <strong>{getServiceTypeLabel(job.service_type)}</strong>
+            <small>{job.billing_concept ?? 'Sin concepto de facturacion definido'}</small>
+          </article>
+        </div>
+      </header>
+
+      <section className="cc-client-workspace__snapshot">
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Origen</span>
+          <strong>{quote ? 'Desde presupuesto' : 'Servicio directo'}</strong>
+          <small>{quote ? formatQuoteLabel(quote) : 'Sin presupuesto origen'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Factura asociada</span>
+          <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente'}</strong>
+          <small>{invoice ? getDisplayStatusLabel(invoice.status) : 'Todavia no emitida'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Estado de cobro</span>
+          <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
+          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Estado operativo</span>
+          <strong>{operationalSignal.label}</strong>
+          <small>{operationalSignal.detail}</small>
+        </article>
+      </section>
+
+      <section className="cc-client-workspace__actions">
+        <button type="button" className="primary-button" onClick={() => onTabChange('operations')}>
+          Editar servicio
+        </button>
+        <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
+          Crear factura
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => openAction('payment')}
+          disabled={!invoice}
+        >
+          Registrar cobro
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => onOpenClientWorkspace(job.client_id)}
+        >
+          Abrir cliente
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => onOpenPropertyWorkspace(job.property_id)}
+        >
+          Abrir propiedad
+        </button>
+      </section>
+
+      <nav className="cc-client-workspace__tabs" aria-label="Secciones del servicio">
+        {jobWorkspaceTabs.map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            className={tab === activeTab ? 'cc-client-workspace__tab is-active' : 'cc-client-workspace__tab'}
+            onClick={() => onTabChange(tab)}
+          >
+            {getWorkspaceTabLabel(tab)}
+          </button>
+        ))}
+      </nav>
+
+      {activeAction ? (
+        <section className="data-section cc-client-workspace__action-panel">
+          <div className="section-header page-header-actions">
+            <div>
+              <h2>{activeAction === 'invoice' ? 'Nueva factura' : 'Registrar cobro'}</h2>
+              <p>La accion se guardara vinculada a {formatJobLabel(job)}.</p>
+            </div>
+
+            <button type="button" className="secondary-button" onClick={() => setActiveAction(null)}>
+              Cerrar accion
+            </button>
+          </div>
+
+          {activeAction === 'invoice' ? (
+            <InvoiceCreateForm
+              clients={client ? [client] : clients}
+              properties={property ? [property] : properties}
+              jobs={[job]}
+              quotes={quote ? [quote] : []}
+              onCreated={handleActionCreated}
+            />
+          ) : null}
+
+          {activeAction === 'payment' ? (
+            <PaymentCreateForm
+              invoices={invoice ? [invoice] : []}
+              clients={client ? [client] : clients}
+              properties={property ? [property] : properties}
+              jobs={[job]}
+              quotes={quote ? [quote] : []}
+              onCreated={handleActionCreated}
+            />
+          ) : null}
+        </section>
+      ) : null}
+
+      {activeTab === 'summary' ? (
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__summary-grid">
+          <article className="data-section">
+            <div className="section-header">
+              <h2>Relaciones conectadas</h2>
+              <p>Lectura rapida del servicio dentro de la red cliente-propiedad-presupuesto-factura.</p>
+            </div>
+
+            <div className="cc-client-workspace__ledger-grid">
+              <div className="detail-row">
+                <span className="detail-label">Cliente</span>
+                <strong>{client ? formatClientLabel(client) : 'Sin cliente'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Propiedad</span>
+                <strong>{property ? formatPropertyLabel(property) : 'Sin propiedad'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Presupuesto origen</span>
+                <strong>{quote ? formatQuoteLabel(quote) : 'Servicio directo'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Factura</span>
+                <strong>{invoice ? formatInvoiceLabel(invoice) : 'Todavia no emitida'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Cobrado</span>
+                <strong>{invoice ? formatCurrency(totalCollected) : 'Sin factura'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Pendiente</span>
+                <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="data-section">
+            <div className="section-header">
+              <h2>Siguiente paso operativo</h2>
+              <p>Recomendacion derivada del estado real del servicio y su ciclo de cobro.</p>
+            </div>
+
+            <div className="cc-client-workspace__relationship-card">
+              <strong>{nextStep}</strong>
+              <span>
+                {job.status === 'completed'
+                  ? 'El servicio ya salio de operacion y entra en facturacion o cobro.'
+                  : 'Aun esta dentro del ciclo operativo.'}
+              </span>
+              <small>
+                {invoice
+                  ? `Factura asociada: ${formatInvoiceLabel(invoice)}`
+                  : 'No existe factura asociada todavia.'}
+              </small>
+            </div>
+          </article>
+        </section>
+      ) : null}
+
+      {activeTab === 'operations' ? (
+        <section className="cc-client-workspace__tab-panel">
+          <JobDetailCard
+            job={job}
+            clients={clients}
+            properties={properties}
+            quotes={quotes}
+            onJobUpdated={onRefresh}
+            onCreateInvoiceFromJob={() => openAction('invoice')}
+            onUnsavedChange={setHasPendingDetailState}
+          />
+        </section>
+      ) : null}
+
+      {activeTab === 'billing' ? (
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
+          <article className="data-section cc-client-workspace__entity-card">
+            <div className="section-header">
+              <div>
+                <h2>Factura</h2>
+                <p>{invoice ? formatInvoiceLabel(invoice) : 'Sin factura asociada'}</p>
+              </div>
+              <span className="lead-badge">{invoice ? getDisplayStatusLabel(invoice.status) : 'Pendiente'}</span>
+            </div>
+
+            <div className="cc-client-workspace__detail-stack">
+              <div className="detail-row">
+                <span className="detail-label">Total</span>
+                <strong>{invoice ? formatCurrency(invoice.total) : 'Sin factura'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Cobrado</span>
+                <strong>{invoice ? formatCurrency(totalCollected) : 'Sin factura'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Pendiente</span>
+                <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
+              </div>
+            </div>
+          </article>
+
+          <article className="data-section cc-client-workspace__entity-card">
+            <div className="section-header">
+              <div>
+                <h2>Cobros</h2>
+                <p>Seguimiento real del dinero asociado al servicio.</p>
+              </div>
+            </div>
+
+            <div className="cc-client-workspace__timeline">
+              {relatedPayments.map((payment) => (
+                <TimelineCard
+                  key={payment.id}
+                  item={{
+                    id: payment.id,
+                    date: payment.payment_date,
+                    title: 'Cobro registrado',
+                    detail: `${payment.display_code ?? payment.id} · ${formatCurrency(payment.amount)}`,
+                    tone: 'success',
+                    entityType: 'payment',
+                    entityId: payment.id,
+                  }}
+                />
+              ))}
+              {relatedPayments.length === 0 ? <p>No hay cobros registrados para este servicio.</p> : null}
+            </div>
+          </article>
+        </section>
+      ) : null}
+
+      {activeTab === 'activity' ? (
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__activity-grid">
+          <article className="data-section">
+            <div className="section-header">
+              <h2>Timeline relacional</h2>
+              <p>Eventos reales del servicio, su presupuesto, su factura y sus cobros.</p>
+            </div>
+
+            <div className="cc-client-workspace__timeline">
+              {timelineItems.map((item) => (
+                <TimelineCard key={item.id} item={item} />
+              ))}
+              {timelineItems.length === 0 ? <p>No hay suficiente historial relacional para este servicio.</p> : null}
+            </div>
+          </article>
+
+          <article className="data-section">
+            <div className="section-header">
+              <h2>Notas y contexto</h2>
+              <p>Lectura operativa consolidada de servicio, propiedad y facturacion.</p>
+            </div>
+
+            <div className="cc-client-workspace__notes">
+              <article className="cc-client-workspace__note-card">
+                <span>Servicio</span>
+                <strong>{formatJobLabel(job)}</strong>
+                <p>{job.notes?.trim() || 'Sin notas operativas registradas.'}</p>
+              </article>
+              {property?.notes?.trim() ? (
+                <article className="cc-client-workspace__note-card">
+                  <span>Propiedad</span>
+                  <strong>{formatPropertyLabel(property)}</strong>
+                  <p>{property.notes.trim()}</p>
+                </article>
+              ) : null}
+              {quote?.notes?.trim() ? (
+                <article className="cc-client-workspace__note-card">
+                  <span>Presupuesto</span>
+                  <strong>{formatQuoteLabel(quote)}</strong>
+                  <p>{quote.notes.trim()}</p>
+                </article>
+              ) : null}
+              {invoice?.notes?.trim() ? (
+                <article className="cc-client-workspace__note-card">
+                  <span>Factura</span>
+                  <strong>{formatInvoiceLabel(invoice)}</strong>
+                  <p>{invoice.notes.trim()}</p>
+                </article>
+              ) : null}
+            </div>
+          </article>
+        </section>
+      ) : null}
+    </section>
+  )
+}

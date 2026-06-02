@@ -9,6 +9,7 @@ interface DashboardAgendaProps {
     upcomingJobs: JobListItem[]
   }
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
+  onOpenJobWorkspace: (jobId: string) => void
 }
 
 function buildPrimaryLabel(job: JobListItem): string {
@@ -29,6 +30,7 @@ function AgendaColumn({
   actionId,
   actionLabel,
   onRunKpiAction,
+  onOpenJobWorkspace,
 }: {
   title: string
   subtitle: string
@@ -37,6 +39,7 @@ function AgendaColumn({
   actionId: DashboardKpiActionId
   actionLabel: string
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
+  onOpenJobWorkspace: (jobId: string) => void
 }) {
   return (
     <article className="cc-agenda-card">
@@ -67,7 +70,7 @@ function AgendaColumn({
               key={job.id}
               type="button"
               className="cc-agenda-item"
-              onClick={() => onRunKpiAction(actionId)}
+              onClick={() => onOpenJobWorkspace(job.id)}
             >
               <div className="cc-agenda-item__top">
                 <div className="cc-agenda-item__title-group">
@@ -81,6 +84,7 @@ function AgendaColumn({
 
               <div className="cc-agenda-item__meta">
                 <span>{formatDateEs(job.scheduled_date)}</span>
+                <span>Abrir workspace</span>
               </div>
             </button>
           ))}
@@ -90,7 +94,11 @@ function AgendaColumn({
   )
 }
 
-export function DashboardAgenda({ agenda, onRunKpiAction }: DashboardAgendaProps) {
+export function DashboardAgenda({
+  agenda,
+  onRunKpiAction,
+  onOpenJobWorkspace,
+}: DashboardAgendaProps) {
   return (
     <section className="cc-dashboard-block cc-dashboard-block--agenda">
       <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
@@ -109,6 +117,7 @@ export function DashboardAgenda({ agenda, onRunKpiAction }: DashboardAgendaProps
           actionId="jobs_today"
           actionLabel="Ver hoy"
           onRunKpiAction={onRunKpiAction}
+          onOpenJobWorkspace={onOpenJobWorkspace}
         />
         <AgendaColumn
           title="Manana"
@@ -118,6 +127,7 @@ export function DashboardAgenda({ agenda, onRunKpiAction }: DashboardAgendaProps
           actionId="jobs_tomorrow"
           actionLabel="Ver manana"
           onRunKpiAction={onRunKpiAction}
+          onOpenJobWorkspace={onOpenJobWorkspace}
         />
         <AgendaColumn
           title="Proximos"
@@ -127,6 +137,7 @@ export function DashboardAgenda({ agenda, onRunKpiAction }: DashboardAgendaProps
           actionId="jobs_upcoming"
           actionLabel="Ver agenda"
           onRunKpiAction={onRunKpiAction}
+          onOpenJobWorkspace={onOpenJobWorkspace}
         />
       </div>
     </section>

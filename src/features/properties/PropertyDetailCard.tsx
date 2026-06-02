@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { buildPropertyRelationshipSummary } from '../../app/entityIntegrity'
-import { getPropertyTypeLabel } from '../../app/displayFormat'
+import {
+  formatCurrency,
+  formatDateEs,
+  getPropertyTypeLabel,
+  getServiceTypeLabel,
+} from '../../app/displayFormat'
+import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { ClientListItem } from '../clients/types'
@@ -39,6 +45,27 @@ function getPropertyTypeOptionLabel(value: string): string {
     case 'construction_site': return 'Obra'
     default: return value
   }
+}
+
+function buildListKey(title: string, item: string) {
+  return `${title}:${item}`
+}
+
+function renderRelationList(title: string, emptyLabel: string, items: string[]) {
+  return (
+    <section>
+      <h4>{title}</h4>
+      {items.length === 0 ? (
+        <p>{emptyLabel}</p>
+      ) : (
+        <ul>
+          {items.map((item) => (
+            <li key={buildListKey(title, item)}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </section>
+  )
 }
 
 export function PropertyDetailCard({
@@ -101,12 +128,31 @@ export function PropertyDetailCard({
   }, [property, jobs, quotes, invoices])
 
   const previousClient = useMemo(
-    () => property ? clients.find((client) => client.id === property.client_id) ?? null : null,
+    () => (property ? clients.find((client) => client.id === property.client_id) ?? null : null),
     [clients, property],
   )
   const nextClient = useMemo(
     () => clients.find((client) => client.id === form.client_id) ?? null,
     [clients, form.client_id],
+  )
+  const owner = useMemo(
+    () => (property ? clients.find((client) => client.id === property.client_id) ?? null : null),
+    [clients, property],
+  )
+  const ownerLabel = owner
+    ? `${owner.display_code ?? owner.id} · ${owner.full_name}`
+    : (property?.client_display_code ?? property?.client_id ?? 'Sin cliente')
+  const relatedJobs = useMemo(
+    () => (property ? jobs.filter((job) => job.property_id === property.id) : []),
+    [jobs, property],
+  )
+  const relatedQuotes = useMemo(
+    () => (property ? quotes.filter((quote) => quote.property_id === property.id) : []),
+    [property, quotes],
+  )
+  const relatedInvoices = useMemo(
+    () => (property ? invoices.filter((invoice) => invoice.property_id === property.id) : []),
+    [invoices, property],
   )
 
   function updateField<K extends keyof EditFormState>(
@@ -215,6 +261,23 @@ export function PropertyDetailCard({
     await persistProperty()
   }
 
+  if (!property) {
+    return (
+      <section className="data-section">
+        <div className="section-header page-header-actions">
+          <div>
+            <h2>Detalle de la propiedad</h2>
+          </div>
+        </div>
+
+        <div className="empty-state">
+          <strong>Ninguna propiedad seleccionada</strong>
+          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="data-section">
       <div className="section-header page-header-actions">
@@ -222,232 +285,241 @@ export function PropertyDetailCard({
           <h2>Detalle de la propiedad</h2>
         </div>
 
-        {property ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-              setForm({
-                client_id: property.client_id,
-                name: property.name,
-                property_type: property.property_type,
-                address: property.address,
-                city: property.city ?? '',
-                postal_code: property.postal_code ?? '',
-                notes: property.notes ?? '',
-              })
-            }}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar propiedad'}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => {
+            setIsEditing((current) => !current)
+            setSaveError(null)
+            setSuccessMessage(null)
+            setForm({
+              client_id: property.client_id,
+              name: property.name,
+              property_type: property.property_type,
+              address: property.address,
+              city: property.city ?? '',
+              postal_code: property.postal_code ?? '',
+              notes: property.notes ?? '',
+            })
+          }}
+        >
+          {isEditing ? 'Cancelar edición' : 'Editar propiedad'}
+        </button>
       </div>
 
-      {property ? (
-        <div className="lead-detail-card">
-          <div className="lead-detail-header">
-            <div>
-              <h3>{formatPropertyLabel(property)}</h3>
-              <p>{property.address}</p>
-            </div>
-
-            <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
+      <div className="lead-detail-card">
+        <div className="lead-detail-header">
+          <div>
+            <h3>{formatPropertyLabel(property)}</h3>
+            <p>{property.address}</p>
           </div>
 
-          {!isEditing && relationshipSummary ? (
-            <div className="cc-detail-panel__summary">
-              <div className="cc-detail-panel__summary-card">
-                <span>Servicios</span>
-                <strong>{relationshipSummary.jobsCount}</strong>
-                <small>{relationshipSummary.activeJobsCount} activo(s)</small>
-              </div>
-              <div className="cc-detail-panel__summary-card">
-                <span>Presupuestos</span>
-                <strong>{relationshipSummary.quotesCount}</strong>
-                <small>{relationshipSummary.openQuotesCount} abierto(s)</small>
-              </div>
-              <div className="cc-detail-panel__summary-card">
-                <span>Facturas</span>
-                <strong>{relationshipSummary.invoicesCount}</strong>
-                <small>Histórico protegido</small>
-              </div>
-            </div>
-          ) : null}
-
-          {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
-              <label className="form-field">
-                <span>Cliente *</span>
-                <select
-                  value={form.client_id}
-                  onChange={(event) => updateField('client_id', event.target.value)}
-                >
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {formatClientLabel(client)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Nombre *</span>
-                <input
-                  value={form.name}
-                  onChange={(event) => updateField('name', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Tipo *</span>
-                <select
-                  value={form.property_type}
-                  onChange={(event) => updateField('property_type', event.target.value)}
-                >
-                  <option value="apartment">{getPropertyTypeOptionLabel('apartment')}</option>
-                  <option value="house">{getPropertyTypeOptionLabel('house')}</option>
-                  <option value="office">{getPropertyTypeOptionLabel('office')}</option>
-                  <option value="local">{getPropertyTypeOptionLabel('local')}</option>
-                  <option value="tourist_apartment">{getPropertyTypeOptionLabel('tourist_apartment')}</option>
-                  <option value="community">{getPropertyTypeOptionLabel('community')}</option>
-                  <option value="construction_site">{getPropertyTypeOptionLabel('construction_site')}</option>
-                </select>
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Dirección *</span>
-                <input
-                  value={form.address}
-                  onChange={(event) => updateField('address', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Ciudad</span>
-                <input
-                  value={form.city}
-                  onChange={(event) => updateField('city', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Código postal</span>
-                <input
-                  value={form.postal_code}
-                  onChange={(event) => updateField('postal_code', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Notas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  rows={4}
-                />
-              </label>
-
-              <div className="form-actions">
-                <button type="submit" className="primary-button" disabled={isSaving}>
-                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-                </button>
-              </div>
-
-              {saveError ? (
-                <div className="cc-alert cc-alert--error">
-                  <strong>No se pudo actualizar la propiedad</strong>
-                  <p>{saveError}</p>
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
-                  <p>{successMessage}</p>
-                </div>
-              ) : null}
-            </form>
-          ) : (
-            <>
-              <div className="lead-detail-grid">
-                <div className="detail-row">
-                  <span className="detail-label">Propiedad</span>
-                  <strong>{formatPropertyLabel(property)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Dirección</span>
-                  <strong>{property.address}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Tipo</span>
-                  <strong>{getPropertyTypeLabel(property.property_type)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Ciudad</span>
-                  <strong>{property.city ?? 'Sin ciudad'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Código postal</span>
-                  <strong>{property.postal_code ?? 'Sin código postal'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Cliente</span>
-                  <strong>{formatClientLabel(property)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Código interno</span>
-                  <strong>{property.display_code ?? property.id}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Notas</span>
-                  <strong>{property.notes ?? 'Sin notas'}</strong>
-                </div>
-              </div>
-
-              {relationshipSummary ? (
-                <div className="cc-alert cc-alert--info">
-                  <strong>Política operativa</strong>
-                  <p>
-                    Los servicios completados, presupuestos aceptados y facturas vinculadas se mantienen como histórico.
-                    La reasignación de cliente solo reorienta la propiedad y realinea servicios/presupuestos abiertos para
-                    no romper la integridad relacional ni el histórico financiero.
-                  </p>
-                </div>
-              ) : null}
-            </>
-          )}
-
-          {!isEditing && saveError ? (
-            <div className="cc-alert cc-alert--error">
-              <strong>No se pudo actualizar la propiedad</strong>
-              <p>{saveError}</p>
-            </div>
-          ) : null}
-
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
+          <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
         </div>
-      ) : (
-        <div className="empty-state">
-          <strong>Ninguna propiedad seleccionada</strong>
-          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
-        </div>
-      )}
+
+        {!isEditing && relationshipSummary ? (
+          <div className="cc-detail-panel__summary">
+            <div className="cc-detail-panel__summary-card">
+              <span>Servicios</span>
+              <strong>{relationshipSummary.jobsCount}</strong>
+              <small>{relationshipSummary.activeJobsCount} activo(s)</small>
+            </div>
+            <div className="cc-detail-panel__summary-card">
+              <span>Presupuestos</span>
+              <strong>{relationshipSummary.quotesCount}</strong>
+              <small>{relationshipSummary.openQuotesCount} abierto(s)</small>
+            </div>
+            <div className="cc-detail-panel__summary-card">
+              <span>Facturas</span>
+              <strong>{relationshipSummary.invoicesCount}</strong>
+              <small>Histórico protegido</small>
+            </div>
+          </div>
+        ) : null}
+
+        {isEditing ? (
+          <form className="lead-form" onSubmit={handleSubmit}>
+            <label className="form-field">
+              <span>Cliente *</span>
+              <select
+                value={form.client_id}
+                onChange={(event) => updateField('client_id', event.target.value)}
+              >
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {formatClientLabel(client)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Nombre *</span>
+              <input
+                value={form.name}
+                onChange={(event) => updateField('name', event.target.value)}
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Tipo *</span>
+              <select
+                value={form.property_type}
+                onChange={(event) => updateField('property_type', event.target.value)}
+              >
+                <option value="apartment">{getPropertyTypeOptionLabel('apartment')}</option>
+                <option value="house">{getPropertyTypeOptionLabel('house')}</option>
+                <option value="office">{getPropertyTypeOptionLabel('office')}</option>
+                <option value="local">{getPropertyTypeOptionLabel('local')}</option>
+                <option value="tourist_apartment">{getPropertyTypeOptionLabel('tourist_apartment')}</option>
+                <option value="community">{getPropertyTypeOptionLabel('community')}</option>
+                <option value="construction_site">{getPropertyTypeOptionLabel('construction_site')}</option>
+              </select>
+            </label>
+
+            <label className="form-field form-field-full">
+              <span>Dirección *</span>
+              <input
+                value={form.address}
+                onChange={(event) => updateField('address', event.target.value)}
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Ciudad</span>
+              <input
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Código postal</span>
+              <input
+                value={form.postal_code}
+                onChange={(event) => updateField('postal_code', event.target.value)}
+              />
+            </label>
+
+            <label className="form-field form-field-full">
+              <span>Notas</span>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                rows={4}
+              />
+            </label>
+
+            <div className="form-actions">
+              <button type="submit" className="primary-button" disabled={isSaving}>
+                {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+              </button>
+            </div>
+
+            {saveError ? (
+              <div className="cc-alert cc-alert--error">
+                <strong>No se pudo actualizar la propiedad</strong>
+                <p>{saveError}</p>
+              </div>
+            ) : null}
+
+            {successMessage ? (
+              <div className="cc-alert cc-alert--success">
+                <strong>Operación correcta</strong>
+                <p>{successMessage}</p>
+              </div>
+            ) : null}
+          </form>
+        ) : (
+          <>
+            <div className="lead-detail-grid">
+              <div className="detail-row">
+                <span className="detail-label">Propiedad</span>
+                <strong>{formatPropertyLabel(property)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Dirección</span>
+                <strong>{property.address}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Tipo</span>
+                <strong>{getPropertyTypeLabel(property.property_type)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Ciudad</span>
+                <strong>{property.city ?? 'Sin ciudad'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Código postal</span>
+                <strong>{property.postal_code ?? 'Sin código postal'}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Cliente propietario</span>
+                <strong>{ownerLabel}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Código interno</span>
+                <strong>{property.display_code ?? property.id}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Notas</span>
+                <strong>{property.notes ?? 'Sin notas'}</strong>
+              </div>
+            </div>
+
+            {relationshipSummary ? (
+              <div className="cc-alert cc-alert--info">
+                <strong>Política operativa</strong>
+                <p>
+                  Los servicios completados, presupuestos aceptados y facturas vinculadas se mantienen como histórico.
+                  La reasignación de cliente solo reorienta la propiedad y realinea servicios/presupuestos abiertos para
+                  no romper la integridad relacional ni el histórico financiero.
+                </p>
+              </div>
+            ) : null}
+
+            <div className="lead-detail-grid" style={{ marginTop: '1rem' }}>
+              {renderRelationList(
+                'Servicios relacionados',
+                'Sin servicios relacionados.',
+                relatedJobs.map((job) => `${job.display_code ?? job.id} · ${job.billing_concept ?? getServiceTypeLabel(job.service_type)} · ${formatDateEs(job.scheduled_date)}`),
+              )}
+              {renderRelationList(
+                'Presupuestos relacionados',
+                'Sin presupuestos relacionados.',
+                relatedQuotes.map((quote) => `${quote.display_code ?? quote.id} · ${getStatusLabel(quote.status)} · ${formatCurrency(quote.total)}`),
+              )}
+              {renderRelationList(
+                'Facturas relacionadas',
+                'Sin facturas relacionadas.',
+                relatedInvoices.map((invoice) => `${invoice.invoice_number ?? invoice.display_code ?? invoice.id} · ${getStatusLabel(invoice.status)} · ${formatCurrency(invoice.total)}`),
+              )}
+            </div>
+          </>
+        )}
+
+        {!isEditing && saveError ? (
+          <div className="cc-alert cc-alert--error">
+            <strong>No se pudo actualizar la propiedad</strong>
+            <p>{saveError}</p>
+          </div>
+        ) : null}
+
+        {!isEditing && successMessage ? (
+          <div className="cc-alert cc-alert--success">
+            <strong>Operación correcta</strong>
+            <p>{successMessage}</p>
+          </div>
+        ) : null}
+      </div>
 
       <ConfirmDialog
         isOpen={pendingClientReassignment}
         title="Reasignar propiedad a otro cliente"
         description={
-          property && relationshipSummary
+          relationshipSummary
             ? `La propiedad pasará de ${formatClientLabel(previousClient ?? property)} a ${formatClientLabel(nextClient ?? { id: form.client_id })}. Se realinearán ${relationshipSummary.activeJobsCount} servicio(s) activo(s) y ${relationshipSummary.openQuotesCount} presupuesto(s) abierto(s). El histórico completado o facturado se mantendrá sin alterarse.`
             : 'La propiedad cambiará de cliente y se preservará el histórico relacionado.'
         }

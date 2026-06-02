@@ -9,6 +9,8 @@ interface FormState {
   full_name: string
   phone: string
   email: string
+  tax_id: string
+  billing_address: string
   status: string
 }
 
@@ -16,6 +18,8 @@ const initialFormState: FormState = {
   full_name: '',
   phone: '',
   email: '',
+  tax_id: '',
+  billing_address: '',
   status: 'active',
 }
 
@@ -64,6 +68,8 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
           full_name: form.full_name.trim(),
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,
+          tax_id: form.tax_id.trim() || null,
+          billing_address: form.billing_address.trim() || null,
           status: form.status,
           source_lead_id: null,
         }),
@@ -121,6 +127,25 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
             value={form.email}
             onChange={(event) => updateField('email', event.target.value)}
             placeholder="Ej. cliente@email.com"
+          />
+        </label>
+
+        <label className="form-field">
+          <span>DNI/NIF/CIF</span>
+          <input
+            value={form.tax_id}
+            onChange={(event) => updateField('tax_id', event.target.value)}
+            placeholder="Ej. B12345678"
+          />
+        </label>
+
+        <label className="form-field form-field-full">
+          <span>Dirección fiscal</span>
+          <textarea
+            value={form.billing_address}
+            onChange={(event) => updateField('billing_address', event.target.value)}
+            placeholder="Dirección completa para facturación"
+            rows={3}
           />
         </label>
 

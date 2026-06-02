@@ -3,10 +3,11 @@ import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientDetailCard } from '../features/clients/ClientDetailCard'
 import { ClientsList } from '../features/clients/ClientsList'
 import type { ClientListItem } from '../features/clients/types'
-import type { PropertyListItem } from '../features/properties/types'
-import type { JobListItem } from '../features/jobs/types'
-import type { QuoteListItem } from '../features/quotes/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
+import type { PaymentListItem } from '../features/payments/types'
+import type { PropertyListItem } from '../features/properties/types'
+import type { QuoteListItem } from '../features/quotes/types'
 
 interface ClientsPageProps {
   clients: ClientListItem[]
@@ -14,6 +15,7 @@ interface ClientsPageProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
+  payments: PaymentListItem[]
   error: string | null
   onClientCreated: () => Promise<void>
 }
@@ -24,6 +26,7 @@ export function ClientsPage({
   jobs,
   quotes,
   invoices,
+  payments,
   error,
   onClientCreated,
 }: ClientsPageProps) {
@@ -70,6 +73,7 @@ export function ClientsPage({
             jobs={jobs}
             quotes={quotes}
             invoices={invoices}
+            payments={payments}
             onClientUpdated={onClientCreated}
           />
         </div>

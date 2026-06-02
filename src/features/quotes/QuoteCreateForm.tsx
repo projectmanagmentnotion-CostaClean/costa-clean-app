@@ -35,7 +35,7 @@ export function QuoteCreateForm({
   onCreated,
 }: QuoteCreateFormProps) {
   const [form, setForm] = useState<FormState>({
-    client_id: clients[0]?.id ?? '',
+    client_id: '',
     property_id: '',
     status: 'draft',
     notes: '',
@@ -136,7 +136,7 @@ export function QuoteCreateForm({
 
       await onCreated()
       setForm({
-        client_id: clients[0]?.id ?? '',
+        client_id: '',
         property_id: '',
         status: 'draft',
         notes: '',
@@ -198,6 +198,7 @@ export function QuoteCreateForm({
                   value={form.client_id}
                   onChange={(event) => updateField('client_id', event.target.value)}
                 >
+                  <option value="">Selecciona un cliente</option>
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
                       {formatClientLabel(client)}

@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatClientLabel, formatJobWithClientLabel } from '../../app/relationshipLabels'
 import { getServiceTypeLabel } from '../../app/displayFormat'
-import { getStatusOptionLabel, invoiceStatusOptions } from '../../app/statusOptions'
+import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
@@ -87,10 +86,10 @@ function createBlankLine(): LineFormState {
   }
 }
 
-function createDefaultFormState(jobs: JobListItem[]): FormState {
+function createDefaultFormState(): FormState {
   return {
-    job_id: jobs[0]?.id ?? '',
-    client_id: jobs[0]?.client_id ?? '',
+    job_id: '',
+    client_id: '',
     issue_date: todayLocalDate(),
     status: 'draft',
     notes: '',
@@ -168,8 +167,8 @@ function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
   }))
 }
 
-function applyPrefillToForm(prefill: InvoiceCreatePrefill, jobs: JobListItem[]): FormState {
-  const defaultState = createDefaultFormState(jobs)
+function applyPrefillToForm(prefill: InvoiceCreatePrefill): FormState {
+  const defaultState = createDefaultFormState()
 
   return {
     ...defaultState,
@@ -233,7 +232,7 @@ export function InvoiceCreateForm({
   prefill = null,
 }: InvoiceCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
-    prefill ? applyPrefillToForm(prefill, jobs) : createDefaultFormState(jobs)
+    prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
   const [lines, setLines] = useState<LineFormState[]>(() => (
     prefill ? buildLinesFromPrefill(prefill) : [createBlankLine()]
@@ -280,7 +279,7 @@ export function InvoiceCreateForm({
       return
     }
 
-    setForm(applyPrefillToForm(prefill, jobs))
+    setForm(applyPrefillToForm(prefill))
     setLines(buildLinesFromPrefill(prefill))
     setSubmitError(null)
     setSuccessMessage(null)
@@ -360,10 +359,8 @@ export function InvoiceCreateForm({
 
       await onCreated()
 
-      const firstJob = jobs[0] ?? null
-      const firstQuote = firstJob?.quote_id ? quotes.find((quote) => quote.id === firstJob.quote_id) ?? null : null
-      setForm(createDefaultFormState(jobs))
-      setLines(buildLinesForJob(firstJob, firstQuote))
+      setForm(createDefaultFormState())
+      setLines([createBlankLine()])
       setSuccessMessage('Factura creada correctamente.')
     } catch (err) {
       const message =
@@ -390,7 +387,7 @@ export function InvoiceCreateForm({
           <div className="cc-form-shell__summary-card">
             <span>Servicio</span>
             <strong>{selectedJob?.display_code ?? selectedJob?.id ?? 'Pendiente'}</strong>
-            <small>{selectedJob ? formatClientLabel(selectedJob) : 'Sin cliente'}</small>
+            <small>{selectedJob?.client_display_code ?? selectedJob?.client_id ?? 'Sin cliente'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -416,13 +413,14 @@ export function InvoiceCreateForm({
 
               <label className="form-field">
                 <span>Servicio *</span>
-                <select
-                  value={form.job_id}
-                  onChange={(event) => updateField('job_id', event.target.value)}
-                >
-                  {jobs.map((job) => (
-                    <option key={job.id} value={job.id}>
-                      {formatJobWithClientLabel(job)}
+              <select
+                value={form.job_id}
+                onChange={(event) => updateField('job_id', event.target.value)}
+              >
+                <option value="">Selecciona un servicio</option>
+                {jobs.map((job) => (
+                  <option key={job.id} value={job.id}>
+                    {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
                     </option>
                   ))}
                 </select>
@@ -444,7 +442,7 @@ export function InvoiceCreateForm({
                   value={form.status}
                   onChange={(event) => updateField('status', event.target.value)}
                 >
-                  {invoiceStatusOptions.map((status) => (
+                  {invoiceManualStatusOptions.map((status) => (
                     <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
                   ))}
                 </select>

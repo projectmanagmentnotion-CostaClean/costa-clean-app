@@ -94,6 +94,7 @@ export function ClientsList({
 
                 <div className="cc-list-meta cc-record-card__meta">
                   <span>{client.phone ?? 'Sin teléfono'}</span>
+                  <span>{client.tax_id ?? 'Sin dato fiscal'}</span>
                   <span>{client.source_lead_id ? `Lead ${client.source_lead_id}` : 'Alta directa'}</span>
                 </div>
               </button>

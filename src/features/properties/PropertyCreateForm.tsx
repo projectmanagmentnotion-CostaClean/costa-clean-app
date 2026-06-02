@@ -35,7 +35,7 @@ export function PropertyCreateForm({
   onCreated,
 }: PropertyCreateFormProps) {
   const [form, setForm] = useState<FormState>({
-    client_id: clients[0]?.id ?? '',
+    client_id: '',
     name: '',
     property_type: 'apartment',
     address: '',
@@ -106,7 +106,7 @@ export function PropertyCreateForm({
 
       await onCreated()
       setForm({
-        client_id: clients[0]?.id ?? '',
+        client_id: '',
         name: '',
         property_type: 'apartment',
         address: '',
@@ -144,6 +144,7 @@ export function PropertyCreateForm({
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
             >
+              <option value="">Selecciona un cliente</option>
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {formatClientLabel(client)}

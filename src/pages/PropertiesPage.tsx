@@ -1,12 +1,12 @@
 import { useState } from 'react'
+import type { ClientListItem } from '../features/clients/types'
+import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
+import { PropertiesList } from '../features/properties/PropertiesList'
 import { PropertyCreateForm } from '../features/properties/PropertyCreateForm'
 import { PropertyDetailCard } from '../features/properties/PropertyDetailCard'
-import { PropertiesList } from '../features/properties/PropertiesList'
 import type { PropertyListItem } from '../features/properties/types'
-import type { ClientListItem } from '../features/clients/types'
-import type { JobListItem } from '../features/jobs/types'
 import type { QuoteListItem } from '../features/quotes/types'
-import type { InvoiceListItem } from '../features/invoices/types'
 
 interface PropertiesPageProps {
   properties: PropertyListItem[]

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
+import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
-import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import type { JobCreatePrefill } from './jobCreatePrefill'
 
 interface JobCreateFormProps {
@@ -46,9 +46,9 @@ function parseDecimalInput(value: string): number {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
-function createDefaultFormState(clients: ClientListItem[]): FormState {
+function createDefaultFormState(): FormState {
   return {
-    client_id: clients[0]?.id ?? '',
+    client_id: '',
     property_id: '',
     quote_id: '',
     scheduled_date: '',
@@ -62,8 +62,8 @@ function createDefaultFormState(clients: ClientListItem[]): FormState {
   }
 }
 
-function applyPrefillToForm(prefill: JobCreatePrefill, clients: ClientListItem[]): FormState {
-  const defaultState = createDefaultFormState(clients)
+function applyPrefillToForm(prefill: JobCreatePrefill): FormState {
+  const defaultState = createDefaultFormState()
 
   return {
     ...defaultState,
@@ -83,7 +83,7 @@ export function JobCreateForm({
   prefill = null,
 }: JobCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
-    prefill ? applyPrefillToForm(prefill, clients) : createDefaultFormState(clients)
+    prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -111,7 +111,7 @@ export function JobCreateForm({
       return
     }
 
-    setForm(applyPrefillToForm(prefill, clients))
+    setForm(applyPrefillToForm(prefill))
     setSubmitError(null)
     setSuccessMessage(null)
     setLastAppliedPrefillId(prefill.request_id)
@@ -221,7 +221,7 @@ export function JobCreateForm({
       }
 
       await onCreated()
-      setForm(createDefaultFormState(clients))
+      setForm(createDefaultFormState())
       setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
       const message =
@@ -253,11 +253,12 @@ export function JobCreateForm({
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
             >
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {formatClientLabel(client)}
-                  </option>
-                ))}
+              <option value="">Selecciona un cliente</option>
+              {clients.map((client) => (
+                <option key={client.id} value={client.id}>
+                  {formatClientLabel(client)}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -268,11 +269,11 @@ export function JobCreateForm({
               onChange={(event) => updateField('property_id', event.target.value)}
             >
               <option value="">Selecciona una propiedad</option>
-                {availableProperties.map((property) => (
-                  <option key={property.id} value={property.id}>
-                    {formatPropertyLabel(property)}
-                  </option>
-                ))}
+              {availableProperties.map((property) => (
+                <option key={property.id} value={property.id}>
+                  {formatPropertyLabel(property)}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -283,11 +284,11 @@ export function JobCreateForm({
               onChange={(event) => updateField('quote_id', event.target.value)}
             >
               <option value="">Sin presupuesto</option>
-                {availableQuotes.map((quote) => (
-                  <option key={quote.id} value={quote.id}>
-                    {formatQuoteLabel(quote)}
-                  </option>
-                ))}
+              {availableQuotes.map((quote) => (
+                <option key={quote.id} value={quote.id}>
+                  {formatQuoteLabel(quote)}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -319,12 +320,12 @@ export function JobCreateForm({
               value={form.service_type}
               onChange={(event) => updateField('service_type', event.target.value)}
             >
-              <option value="standard_cleaning">standard_cleaning</option>
-              <option value="deep_cleaning">deep_cleaning</option>
-              <option value="post_construction">post_construction</option>
-              <option value="check_out_cleaning">check_out_cleaning</option>
-              <option value="airbnb_turnover">airbnb_turnover</option>
-              <option value="glass_cleaning">glass_cleaning</option>
+              <option value="standard_cleaning">{getServiceTypeOptionLabel('standard_cleaning')}</option>
+              <option value="deep_cleaning">{getServiceTypeOptionLabel('deep_cleaning')}</option>
+              <option value="post_construction">{getServiceTypeOptionLabel('post_construction')}</option>
+              <option value="check_out_cleaning">{getServiceTypeOptionLabel('check_out_cleaning')}</option>
+              <option value="airbnb_turnover">{getServiceTypeOptionLabel('airbnb_turnover')}</option>
+              <option value="glass_cleaning">{getServiceTypeOptionLabel('glass_cleaning')}</option>
             </select>
           </label>
 

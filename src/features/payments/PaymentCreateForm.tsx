@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 
@@ -48,9 +48,9 @@ export function PaymentCreateForm({
   onCreated,
 }: PaymentCreateFormProps) {
   const [form, setForm] = useState<FormState>({
-    invoice_id: invoices[0]?.id ?? '',
+    invoice_id: '',
     payment_date: todayLocalDate(),
-    amount: invoices[0] ? formatMoneyInput(Number(invoices[0].total)) : '0.00',
+    amount: '',
     payment_method: 'transfer',
     notes: '',
   })
@@ -63,34 +63,23 @@ export function PaymentCreateForm({
     [invoices, form.invoice_id],
   )
 
-  useEffect(() => {
-    if (invoices.length === 0 || selectedInvoice) {
-      return
-    }
-
-    const fallbackInvoice = invoices[0]
-    setForm((current) => ({
-      ...current,
-      invoice_id: fallbackInvoice.id,
-      amount: formatMoneyInput(Number(fallbackInvoice.total || 0)),
-    }))
-  }, [invoices, selectedInvoice])
-
-  useEffect(() => {
-    if (!selectedInvoice) {
-      return
-    }
-
-    setForm((current) => ({
-      ...current,
-      amount: formatMoneyInput(Number(selectedInvoice.total)),
-    }))
-  }, [selectedInvoice])
-
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({
       ...current,
       [field]: value,
+    }))
+  }
+
+  function syncAmountFromInvoice() {
+    if (!selectedInvoice) {
+      setSubmitError('Selecciona una factura antes de traer su total.')
+      return
+    }
+
+    setSubmitError(null)
+    setForm((current) => ({
+      ...current,
+      amount: formatMoneyInput(Number(selectedInvoice.total)),
     }))
   }
 
@@ -145,9 +134,9 @@ export function PaymentCreateForm({
       await onCreated()
 
       setForm({
-        invoice_id: invoices[0]?.id ?? '',
+        invoice_id: '',
         payment_date: todayLocalDate(),
-        amount: invoices[0] ? formatMoneyInput(Number(invoices[0].total)) : '0.00',
+        amount: '',
         payment_method: 'transfer',
         notes: '',
       })
@@ -182,6 +171,7 @@ export function PaymentCreateForm({
               value={form.invoice_id}
               onChange={(event) => updateField('invoice_id', event.target.value)}
             >
+              <option value="">Selecciona una factura</option>
               {invoices.map((invoice) => (
                 <option key={invoice.id} value={invoice.id}>
                   {(invoice.invoice_number ?? invoice.display_code ?? invoice.id)} · Total {invoice.total}
@@ -205,6 +195,7 @@ export function PaymentCreateForm({
             <input
               value={form.amount}
               onChange={(event) => updateField('amount', event.target.value)}
+              placeholder="Ej. 121.00"
               required
             />
           </label>
@@ -233,6 +224,9 @@ export function PaymentCreateForm({
           </label>
 
           <div className="form-actions">
+            <button type="button" className="secondary-button" onClick={syncAmountFromInvoice}>
+              Traer total de factura
+            </button>
             <button type="submit" className="primary-button" disabled={isSubmitting}>
               {isSubmitting ? 'Guardando...' : 'Guardar pago'}
             </button>

@@ -861,6 +861,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
                   error={clientError}
                   onClientCreated={refreshOperations}
                 />

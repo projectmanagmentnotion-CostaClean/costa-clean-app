@@ -1,8 +1,13 @@
 ﻿import { useState, type FormEvent } from 'react'
 import { getStatusLabel } from '../../app/displayText'
+import type { ClientListItem } from './types'
 
 interface ClientCreateFormProps {
   onCreated: () => Promise<void>
+  onCreatedClient?: (client: ClientListItem) => void | Promise<void>
+  title?: string
+  description?: string
+  submitLabel?: string
 }
 
 interface FormState {
@@ -23,7 +28,13 @@ const initialFormState: FormState = {
   status: 'active',
 }
 
-export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
+export function ClientCreateForm({
+  onCreated,
+  onCreatedClient,
+  title = 'Nuevo cliente',
+  description,
+  submitLabel = 'Guardar cliente',
+}: ClientCreateFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -82,6 +93,17 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
       }
 
       await onCreated()
+      await onCreatedClient?.({
+        id: clientId,
+        display_code: null,
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        tax_id: form.tax_id.trim() || null,
+        billing_address: form.billing_address.trim() || null,
+        status: form.status,
+        source_lead_id: null,
+      })
       setForm(initialFormState)
       setSuccessMessage('Cliente creado correctamente.')
     } catch (err) {
@@ -97,7 +119,8 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nuevo cliente</h2>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
       </div>
 
       <form className="lead-form" onSubmit={handleSubmit}>
@@ -162,7 +185,7 @@ export function ClientCreateForm({ onCreated }: ClientCreateFormProps) {
 
         <div className="form-actions">
           <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Guardar cliente'}
+            {isSubmitting ? 'Guardando...' : submitLabel}
           </button>
         </div>
 

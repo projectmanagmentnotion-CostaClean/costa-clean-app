@@ -1,10 +1,20 @@
 import { useMemo, useState, type FormEvent } from 'react'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import type { ClientListItem } from '../clients/types'
+import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import type { JobListItem } from '../jobs/types'
+import type { PropertyListItem } from '../properties/types'
+import type { QuoteListItem } from '../quotes/types'
 
 interface PaymentCreateFormProps {
   invoices: InvoiceListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
+  jobs: JobListItem[]
+  quotes: QuoteListItem[]
   onCreated: () => Promise<void>
 }
 
@@ -46,6 +56,10 @@ function getPaymentMethodLabel(value: string): string {
 
 export function PaymentCreateForm({
   invoices,
+  clients,
+  properties,
+  jobs,
+  quotes,
   onCreated,
 }: PaymentCreateFormProps) {
   const [form, setForm] = useState<FormState>({
@@ -58,6 +72,7 @@ export function PaymentCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showInvoiceCreate, setShowInvoiceCreate] = useState(false)
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
@@ -160,10 +175,28 @@ export function PaymentCreateForm({
       </div>
 
       {invoices.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay facturas disponibles</strong>
-          <p>Primero debes crear al menos una factura para poder registrar un pago.</p>
-        </div>
+        <ContextualCreateSection
+          actionLabel="Crear factura"
+          title="Falta la factura base"
+          description="Crea la factura dentro del mismo flujo y el pago podrá continuar sin salir del contexto."
+          isOpen={showInvoiceCreate}
+          onToggle={() => setShowInvoiceCreate((current) => !current)}
+        >
+          <InvoiceCreateForm
+            clients={clients}
+            properties={properties}
+            jobs={jobs}
+            quotes={quotes}
+            onCreated={onCreated}
+            onCreatedInvoice={async (invoice) => {
+              setForm((current) => ({
+                ...current,
+                invoice_id: invoice.id,
+              }))
+              setShowInvoiceCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
       ) : (
         <form className="lead-form" onSubmit={handleSubmit}>
           <label className="form-field">
@@ -180,6 +213,29 @@ export function PaymentCreateForm({
               ))}
             </select>
           </label>
+
+          <ContextualCreateSection
+            actionLabel="Crear factura"
+            title="Factura en contexto"
+            description="Si la factura aún no existe, emítela aquí y se seleccionará automáticamente para registrar el cobro."
+            isOpen={showInvoiceCreate}
+            onToggle={() => setShowInvoiceCreate((current) => !current)}
+          >
+            <InvoiceCreateForm
+              clients={clients}
+              properties={properties}
+              jobs={jobs}
+              quotes={quotes}
+              onCreated={onCreated}
+              onCreatedInvoice={async (invoice) => {
+                setForm((current) => ({
+                  ...current,
+                  invoice_id: invoice.id,
+                }))
+                setShowInvoiceCreate(false)
+              }}
+            />
+          </ContextualCreateSection>
 
           <label className="form-field">
             <span>Fecha de cobro *</span>

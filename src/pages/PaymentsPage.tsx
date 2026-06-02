@@ -4,12 +4,20 @@ import { PaymentCreateForm } from '../features/payments/PaymentCreateForm'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
+import type { ClientListItem } from '../features/clients/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
+import type { PropertyListItem } from '../features/properties/types'
+import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 
 interface PaymentsPageProps {
   payments: PaymentListItem[]
   invoices: InvoiceListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
+  jobs: JobListItem[]
+  quotes: QuoteListItem[]
   error: string | null
   onPaymentCreated: () => Promise<void>
   activeFilterLabel: string | null
@@ -21,6 +29,10 @@ interface PaymentsPageProps {
 export function PaymentsPage({
   payments,
   invoices,
+  clients,
+  properties,
+  jobs,
+  quotes,
   error,
   onPaymentCreated,
   activeFilterLabel,
@@ -93,6 +105,10 @@ export function PaymentsPage({
       {showCreateForm ? (
         <PaymentCreateForm
           invoices={invoices}
+          clients={clients}
+          properties={properties}
+          jobs={jobs}
+          quotes={quotes}
           onCreated={handlePaymentCreated}
         />
       ) : null}

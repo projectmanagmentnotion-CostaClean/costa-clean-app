@@ -1,7 +1,11 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { formatPropertyLabel, formatQuoteLabel, formatRecurringPlanLabel } from '../../app/relationshipLabels'
 import { businessRules } from '../../app/businessRules'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
+import { PropertyCreateForm } from '../properties/PropertyCreateForm'
+import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import type { QuoteListItem } from '../quotes/types'
 import {
   buildQuoteLinePayloads,
@@ -19,6 +23,7 @@ import type { RecurringInvoiceFrequency, RecurringInvoicePlanListItem } from './
 
 interface RecurringInvoicePlanFormProps {
   clientId: string
+  clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
   onSaved: () => Promise<void>
@@ -86,6 +91,7 @@ function parsePercentInput(value: string): number {
 
 export function RecurringInvoicePlanForm({
   clientId,
+  clients,
   properties,
   quotes,
   onSaved,
@@ -108,6 +114,8 @@ export function RecurringInvoicePlanForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showPropertyCreate, setShowPropertyCreate] = useState(false)
+  const [showQuoteCreate, setShowQuoteCreate] = useState(false)
 
   const availableQuotes = useMemo(
     () => quotes.filter((quote) => !form.property_id || quote.property_id === form.property_id),
@@ -280,6 +288,31 @@ export function RecurringInvoicePlanForm({
               </select>
             </label>
 
+            <ContextualCreateSection
+              actionLabel="Crear propiedad"
+              title="Propiedad en contexto"
+              description="Si el plan recurrente necesita una nueva propiedad, créala aquí sin salir del cliente actual."
+              isOpen={showPropertyCreate}
+              onToggle={() => setShowPropertyCreate((current) => !current)}
+            >
+              <PropertyCreateForm
+                clients={clients}
+                onCreated={onSaved}
+                contextClientId={clientId}
+                title="Nueva propiedad para recurrencia"
+                description="La propiedad quedará asignada al plan al volver."
+                submitLabel="Guardar propiedad y usarla"
+                onCreatedProperty={async (property) => {
+                  setForm((current) => ({
+                    ...current,
+                    property_id: property.id,
+                    quote_id: '',
+                  }))
+                  setShowPropertyCreate(false)
+                }}
+              />
+            </ContextualCreateSection>
+
             <label className="form-field">
               <span>Presupuesto de referencia</span>
               <select
@@ -294,6 +327,30 @@ export function RecurringInvoicePlanForm({
                 ))}
               </select>
             </label>
+
+            <ContextualCreateSection
+              actionLabel="Crear presupuesto"
+              title="Presupuesto en contexto"
+              description="Genera un presupuesto de referencia sin salir del plan recurrente."
+              isOpen={showQuoteCreate}
+              onToggle={() => setShowQuoteCreate((current) => !current)}
+            >
+              <QuoteCreateForm
+                clients={clients}
+                properties={properties}
+                onCreated={onSaved}
+                contextClientId={clientId}
+                contextPropertyId={form.property_id || null}
+                onCreatedQuote={async (quote) => {
+                  setForm((current) => ({
+                    ...current,
+                    quote_id: quote.id,
+                    property_id: quote.property_id ?? current.property_id,
+                  }))
+                  setShowQuoteCreate(false)
+                }}
+              />
+            </ContextualCreateSection>
 
             <label className="form-field">
               <span>Cadencia</span>

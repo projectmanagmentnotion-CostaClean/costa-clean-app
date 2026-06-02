@@ -1,11 +1,18 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { ClientCreateForm } from '../clients/ClientCreateForm'
+import type { PropertyListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 
 interface PropertyCreateFormProps {
   clients: ClientListItem[]
   onCreated: () => Promise<void>
   contextClientId?: string | null
+  onCreatedProperty?: (property: PropertyListItem) => void | Promise<void>
+  title?: string
+  description?: string
+  submitLabel?: string
 }
 
 interface FormState {
@@ -35,6 +42,10 @@ export function PropertyCreateForm({
   clients,
   onCreated,
   contextClientId = null,
+  onCreatedProperty,
+  title = 'Nueva propiedad',
+  description,
+  submitLabel = 'Guardar propiedad',
 }: PropertyCreateFormProps) {
   const contextualClient = useMemo(
     () => (contextClientId ? clients.find((client) => client.id === contextClientId) ?? null : null),
@@ -52,6 +63,7 @@ export function PropertyCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showClientCreate, setShowClientCreate] = useState(false)
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({
@@ -111,6 +123,19 @@ export function PropertyCreateForm({
       }
 
       await onCreated()
+      await onCreatedProperty?.({
+        id: propertyId,
+        display_code: null,
+        client_id: form.client_id,
+        client_display_code: contextualClient?.display_code ?? clients.find((client) => client.id === form.client_id)?.display_code ?? null,
+        client_name: contextualClient?.full_name ?? clients.find((client) => client.id === form.client_id)?.full_name ?? null,
+        name: form.name.trim(),
+        property_type: form.property_type,
+        address: form.address.trim(),
+        city: form.city.trim() || null,
+        postal_code: form.postal_code.trim() || null,
+        notes: form.notes.trim() || null,
+      })
       setForm({
         client_id: contextClientId ?? '',
         name: '',
@@ -134,14 +159,32 @@ export function PropertyCreateForm({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nueva propiedad</h2>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
       </div>
 
       {clients.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay clientes disponibles</strong>
-          <p>Primero debes crear al menos un cliente para poder registrar una propiedad.</p>
-        </div>
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Falta el cliente base"
+          description="Crea el cliente sin salir del flujo y se seleccionará automáticamente para esta propiedad."
+          isOpen={showClientCreate}
+          onToggle={() => setShowClientCreate((current) => !current)}
+        >
+          <ClientCreateForm
+            onCreated={onCreated}
+            title="Nuevo cliente en contexto"
+            description="Guarda el cliente y vuelve directamente al alta de propiedad."
+            submitLabel="Guardar cliente y volver"
+            onCreatedClient={async (client) => {
+              setForm((current) => ({
+                ...current,
+                client_id: client.id,
+              }))
+              setShowClientCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
       ) : (
         <form className="lead-form" onSubmit={handleSubmit}>
           <label className="form-field">
@@ -159,6 +202,30 @@ export function PropertyCreateForm({
               ))}
             </select>
           </label>
+
+          {!contextualClient ? (
+            <ContextualCreateSection
+              actionLabel="Crear cliente"
+              title="¿Falta el cliente?"
+              description="Abre un subflujo rápido para crear el cliente y seguir con esta propiedad sin perder lo ya escrito."
+              isOpen={showClientCreate}
+              onToggle={() => setShowClientCreate((current) => !current)}
+            >
+              <ClientCreateForm
+                onCreated={onCreated}
+                title="Nuevo cliente en contexto"
+                description="Al guardarlo, quedará seleccionado aquí automáticamente."
+                submitLabel="Guardar cliente y usarlo"
+                onCreatedClient={async (client) => {
+                  setForm((current) => ({
+                    ...current,
+                    client_id: client.id,
+                  }))
+                  setShowClientCreate(false)
+                }}
+              />
+            </ContextualCreateSection>
+          ) : null}
 
           <label className="form-field">
             <span>Nombre interno *</span>
@@ -226,7 +293,7 @@ export function PropertyCreateForm({
 
           <div className="form-actions">
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar propiedad'}
+              {isSubmitting ? 'Guardando...' : submitLabel}
             </button>
           </div>
 

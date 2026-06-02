@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
+import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import type { QuoteListItem } from '../quotes/types'
 import type { JobCreatePrefill } from './jobCreatePrefill'
+import type { JobListItem } from './types'
 
 interface JobCreateFormProps {
   clients: ClientListItem[]
@@ -12,6 +17,7 @@ interface JobCreateFormProps {
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
   prefill?: JobCreatePrefill | null
+  onCreatedJob?: (job: JobListItem) => void | Promise<void>
 }
 
 interface FormState {
@@ -92,6 +98,7 @@ export function JobCreateForm({
   quotes,
   onCreated,
   prefill = null,
+  onCreatedJob,
 }: JobCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
@@ -100,6 +107,9 @@ export function JobCreateForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
+  const [showClientCreate, setShowClientCreate] = useState(false)
+  const [showPropertyCreate, setShowPropertyCreate] = useState(false)
+  const [showQuoteCreate, setShowQuoteCreate] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -265,6 +275,26 @@ export function JobCreateForm({
       }
 
       await onCreated()
+      await onCreatedJob?.({
+        id: jobId,
+        display_code: null,
+        client_id: form.client_id,
+        client_display_code: selectedClient?.display_code ?? null,
+        client_name: selectedClient?.full_name ?? null,
+        property_id: form.property_id,
+        property_display_code: selectedProperty?.display_code ?? null,
+        property_name: selectedProperty?.name ?? null,
+        quote_id: form.quote_id || null,
+        quote_display_code: selectedQuote?.display_code ?? null,
+        scheduled_date: form.scheduled_date,
+        status: form.status,
+        service_type: form.service_type,
+        billing_concept: form.billing_concept.trim() || null,
+        billing_quantity: billingQuantity,
+        billing_unit: form.billing_unit.trim() || 'servicio',
+        billing_unit_price: billingUnitPrice,
+        notes: form.notes.trim() || null,
+      })
       setForm(createDefaultFormState())
       setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
@@ -301,10 +331,27 @@ export function JobCreateForm({
       </div>
 
       {clients.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay clientes disponibles</strong>
-          <p>Primero debes crear al menos un cliente para poder crear un servicio.</p>
-        </div>
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Falta el cliente base"
+          description="Crea el cliente sin salir del servicio y continúa después con la propiedad y la planificación."
+          isOpen={showClientCreate}
+          onToggle={() => setShowClientCreate((current) => !current)}
+        >
+          <ClientCreateForm
+            onCreated={onCreated}
+            title="Nuevo cliente para este servicio"
+            description="El cliente quedará listo para seguir con la ruta operativa."
+            submitLabel="Guardar cliente y continuar"
+            onCreatedClient={async (client) => {
+              setForm((current) => ({
+                ...current,
+                client_id: client.id,
+              }))
+              setShowClientCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
       ) : (
         <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
           <div className="cc-form-shell__main">
@@ -329,6 +376,30 @@ export function JobCreateForm({
                 </select>
               </label>
 
+              <ContextualCreateSection
+                actionLabel="Crear cliente"
+                title="Cliente en contexto"
+                description="Si el servicio nace sobre un cliente nuevo, créalo aquí y el formulario lo reutilizará al instante."
+                isOpen={showClientCreate}
+                onToggle={() => setShowClientCreate((current) => !current)}
+              >
+                <ClientCreateForm
+                  onCreated={onCreated}
+                  title="Nuevo cliente para este servicio"
+                  description="El cliente se asignará automáticamente al servicio en curso."
+                  submitLabel="Guardar cliente y usarlo"
+                  onCreatedClient={async (client) => {
+                    setForm((current) => ({
+                      ...current,
+                      client_id: client.id,
+                      property_id: '',
+                      quote_id: '',
+                    }))
+                    setShowClientCreate(false)
+                  }}
+                />
+              </ContextualCreateSection>
+
               <label className="form-field">
                 <span>Propiedad *</span>
                 <select
@@ -343,6 +414,33 @@ export function JobCreateForm({
                   ))}
                 </select>
               </label>
+
+              {form.client_id ? (
+                <ContextualCreateSection
+                  actionLabel="Crear propiedad"
+                  title="Propiedad en contexto"
+                  description="Da de alta la propiedad del cliente actual sin romper la planificación del servicio."
+                  isOpen={showPropertyCreate}
+                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                >
+                  <PropertyCreateForm
+                    clients={clients}
+                    onCreated={onCreated}
+                    contextClientId={form.client_id}
+                    title="Nueva propiedad para este servicio"
+                    description="La nueva propiedad quedará seleccionada al volver al servicio."
+                    submitLabel="Guardar propiedad y usarla"
+                    onCreatedProperty={async (property) => {
+                      setForm((current) => ({
+                        ...current,
+                        property_id: property.id,
+                        quote_id: '',
+                      }))
+                      setShowPropertyCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
 
               <label className="form-field">
                 <span>Presupuesto origen</span>
@@ -362,6 +460,33 @@ export function JobCreateForm({
                   ))}
                 </select>
               </label>
+
+              {form.client_id ? (
+                <ContextualCreateSection
+                  actionLabel="Crear presupuesto"
+                  title="Presupuesto en contexto"
+                  description="Si todavía no existe el presupuesto, créalo aquí y mantén la correlación comercial del servicio."
+                  isOpen={showQuoteCreate}
+                  onToggle={() => setShowQuoteCreate((current) => !current)}
+                >
+                  <QuoteCreateForm
+                    clients={clients}
+                    properties={properties}
+                    onCreated={onCreated}
+                    contextClientId={form.client_id}
+                    contextPropertyId={form.property_id || null}
+                    onCreatedQuote={async (quote) => {
+                      setForm((current) => ({
+                        ...current,
+                        quote_id: quote.id,
+                        client_id: quote.client_id,
+                        property_id: quote.property_id ?? current.property_id,
+                      }))
+                      setShowQuoteCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
             </section>
 
             <section className="cc-form-shell__section">

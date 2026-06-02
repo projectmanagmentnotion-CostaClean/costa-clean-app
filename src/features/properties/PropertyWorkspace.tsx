@@ -406,6 +406,10 @@ export function PropertyWorkspace({
             <PaymentCreateForm
               key={`property-payment-${property.id}`}
               invoices={relatedInvoices}
+              clients={owner ? [owner] : clients}
+              properties={[property]}
+              jobs={relatedJobs}
+              quotes={relatedQuotes}
               onCreated={handleActionCreated}
             />
           ) : null}

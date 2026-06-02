@@ -719,6 +719,10 @@ export function ClientWorkspace({
             <PaymentCreateForm
               key={`payment-${client.id}`}
               invoices={relatedInvoices}
+              clients={[client]}
+              properties={relatedProperties}
+              jobs={relatedJobs}
+              quotes={relatedQuotes}
               onCreated={handleActionCreated}
             />
           ) : null}
@@ -727,6 +731,7 @@ export function ClientWorkspace({
             <RecurringInvoicePlanForm
               key={`recurring-${editingRecurringPlanId ?? client.id}`}
               clientId={client.id}
+              clients={[client]}
               properties={relatedProperties}
               quotes={relatedQuotes}
               initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}

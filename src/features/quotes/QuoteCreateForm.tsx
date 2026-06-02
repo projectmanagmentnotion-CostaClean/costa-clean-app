@@ -2,8 +2,11 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
 import {
   buildQuoteLinePayloads,
@@ -22,6 +25,7 @@ interface QuoteCreateFormProps {
   onCreated: () => Promise<void>
   contextClientId?: string | null
   contextPropertyId?: string | null
+  onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
 }
 
 interface FormState {
@@ -37,6 +41,7 @@ export function QuoteCreateForm({
   onCreated,
   contextClientId = null,
   contextPropertyId = null,
+  onCreatedQuote,
 }: QuoteCreateFormProps) {
   const [form, setForm] = useState<FormState>({
     client_id: contextClientId ?? '',
@@ -48,6 +53,8 @@ export function QuoteCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showClientCreate, setShowClientCreate] = useState(false)
+  const [showPropertyCreate, setShowPropertyCreate] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -143,6 +150,11 @@ export function QuoteCreateForm({
       )
 
       await onCreated()
+      await onCreatedQuote?.({
+        id: quoteId,
+        client_id: form.client_id,
+        property_id: form.property_id || null,
+      })
       setForm({
         client_id: contextClientId ?? '',
         property_id: contextPropertyId ?? '',
@@ -192,10 +204,27 @@ export function QuoteCreateForm({
       </div>
 
       {clients.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay clientes disponibles</strong>
-          <p>Primero debes crear al menos un cliente para poder generar un presupuesto.</p>
-        </div>
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Falta el cliente base"
+          description="Crea el cliente aquí y el flujo de presupuesto seguirá disponible sin salir del contexto."
+          isOpen={showClientCreate}
+          onToggle={() => setShowClientCreate((current) => !current)}
+        >
+          <ClientCreateForm
+            onCreated={onCreated}
+            title="Nuevo cliente para este presupuesto"
+            description="Al guardarlo, el presupuesto podrá continuar con el cliente ya seleccionado."
+            submitLabel="Guardar cliente y continuar"
+            onCreatedClient={async (client) => {
+              setForm((current) => ({
+                ...current,
+                client_id: client.id,
+              }))
+              setShowClientCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
       ) : (
         <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
           <div className="cc-form-shell__main">
@@ -221,6 +250,31 @@ export function QuoteCreateForm({
                 </select>
               </label>
 
+              {!contextClientId ? (
+                <ContextualCreateSection
+                  actionLabel="Crear cliente"
+                  title="Cliente en contexto"
+                  description="Si el cliente no existe todavía, créalo aquí y seguirá seleccionado en este presupuesto."
+                  isOpen={showClientCreate}
+                  onToggle={() => setShowClientCreate((current) => !current)}
+                >
+                  <ClientCreateForm
+                    onCreated={onCreated}
+                    title="Nuevo cliente para este presupuesto"
+                    description="El nuevo cliente quedará seleccionado sin perder líneas ni notas."
+                    submitLabel="Guardar cliente y usarlo"
+                    onCreatedClient={async (client) => {
+                      setForm((current) => ({
+                        ...current,
+                        client_id: client.id,
+                        property_id: '',
+                      }))
+                      setShowClientCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
+
               <label className="form-field">
                 <span>Propiedad</span>
                 <select
@@ -236,6 +290,32 @@ export function QuoteCreateForm({
                   ))}
                 </select>
               </label>
+
+              {form.client_id && !contextPropertyId ? (
+                <ContextualCreateSection
+                  actionLabel="Crear propiedad"
+                  title="Propiedad en contexto"
+                  description="Añade la propiedad del cliente actual y se vinculará automáticamente al presupuesto."
+                  isOpen={showPropertyCreate}
+                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                >
+                  <PropertyCreateForm
+                    clients={clients}
+                    onCreated={onCreated}
+                    contextClientId={form.client_id}
+                    title="Nueva propiedad para este presupuesto"
+                    description="La propiedad se guardará sin salir del flujo comercial actual."
+                    submitLabel="Guardar propiedad y usarla"
+                    onCreatedProperty={async (property) => {
+                      setForm((current) => ({
+                        ...current,
+                        property_id: property.id,
+                      }))
+                      setShowPropertyCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
 
               <label className="form-field">
                 <span>Estado</span>

@@ -976,6 +976,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                 <PaymentsPage
                   payments={filteredPayments}
                   invoices={invoicesWithCodes}
+                  clients={clientsWithContext}
+                  properties={properties}
+                  jobs={jobsWithCodes}
+                  quotes={quotesWithCodes}
                   error={paymentError}
                   onPaymentCreated={reloadInvoicesAndPayments}
                   activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}

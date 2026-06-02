@@ -3,13 +3,19 @@ import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
+import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
+import { JobCreateForm } from '../jobs/JobCreateForm'
 import type { JobListItem } from '../jobs/types'
+import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
+import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
+import type { InvoiceListItem } from './types'
 
 interface InvoiceCreateFormProps {
   clients: ClientListItem[]
@@ -18,6 +24,7 @@ interface InvoiceCreateFormProps {
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
+  onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
 }
 
 type InvoiceOriginMode = 'job' | 'quote' | 'manual'
@@ -256,6 +263,7 @@ export function InvoiceCreateForm({
   quotes,
   onCreated,
   prefill = null,
+  onCreatedInvoice,
 }: InvoiceCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
@@ -267,6 +275,10 @@ export function InvoiceCreateForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
+  const [showClientCreate, setShowClientCreate] = useState(false)
+  const [showPropertyCreate, setShowPropertyCreate] = useState(false)
+  const [showJobCreate, setShowJobCreate] = useState(false)
+  const [showQuoteCreate, setShowQuoteCreate] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -464,6 +476,30 @@ export function InvoiceCreateForm({
       )
 
       await onCreated()
+      await onCreatedInvoice?.({
+        id: invoiceId,
+        display_code: null,
+        invoice_number: null,
+        job_id: form.origin_mode === 'job' ? form.job_id : null,
+        quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
+        client_id: form.client_id,
+        client_display_code: selectedClient?.display_code ?? null,
+        issue_date: form.issue_date,
+        status: form.status,
+        subtotal: subtotalValue,
+        tax_amount: taxAmountValue,
+        total: totalValue,
+        notes: form.notes.trim() || null,
+        internal_notes: selectedQuote?.internal_notes ?? null,
+        pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+        client_name: selectedClient?.full_name ?? null,
+        property_id: form.property_id || null,
+        property_display_code: selectedProperty?.display_code ?? null,
+        property_name: selectedProperty?.name ?? null,
+        service_reference: selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : null,
+        service_description: selectedJob?.billing_concept ?? null,
+        lines: linePayloads,
+      })
 
       setForm(createDefaultFormState())
       setLines([createBlankLine()])
@@ -502,10 +538,27 @@ export function InvoiceCreateForm({
       </div>
 
       {clients.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay clientes disponibles</strong>
-          <p>Primero debes crear al menos un cliente para poder facturar.</p>
-        </div>
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Falta el cliente base"
+          description="Crea el cliente sin salir del documento y la factura podrá continuar dentro del mismo flujo."
+          isOpen={showClientCreate}
+          onToggle={() => setShowClientCreate((current) => !current)}
+        >
+          <ClientCreateForm
+            onCreated={onCreated}
+            title="Nuevo cliente para esta factura"
+            description="El cliente quedará listo para retomar la factura sin perder líneas ni fecha."
+            submitLabel="Guardar cliente y continuar"
+            onCreatedClient={async (client) => {
+              setForm((current) => ({
+                ...current,
+                client_id: client.id,
+              }))
+              setShowClientCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
       ) : (
         <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
           <div className="cc-form-shell__main">
@@ -577,6 +630,31 @@ export function InvoiceCreateForm({
                 </select>
               </label>
 
+              {form.origin_mode === 'manual' ? (
+                <ContextualCreateSection
+                  actionLabel="Crear cliente"
+                  title="Cliente en contexto"
+                  description="Para facturación directa, crea el cliente aquí y sigue con la factura sin salir del documento."
+                  isOpen={showClientCreate}
+                  onToggle={() => setShowClientCreate((current) => !current)}
+                >
+                  <ClientCreateForm
+                    onCreated={onCreated}
+                    title="Nuevo cliente para esta factura"
+                    description="Se seleccionará automáticamente en la factura manual."
+                    submitLabel="Guardar cliente y usarlo"
+                    onCreatedClient={async (client) => {
+                      setForm((current) => ({
+                        ...current,
+                        client_id: client.id,
+                        property_id: '',
+                      }))
+                      setShowClientCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
+
               <label className="form-field">
                 <span>Propiedad</span>
                 <select
@@ -592,6 +670,88 @@ export function InvoiceCreateForm({
                   ))}
                 </select>
               </label>
+
+              {form.origin_mode === 'manual' && form.client_id ? (
+                <ContextualCreateSection
+                  actionLabel="Crear propiedad"
+                  title="Propiedad en contexto"
+                  description="Crea la propiedad del cliente actual y asóciala de inmediato a esta factura directa."
+                  isOpen={showPropertyCreate}
+                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                >
+                  <PropertyCreateForm
+                    clients={clients}
+                    onCreated={onCreated}
+                    contextClientId={form.client_id}
+                    title="Nueva propiedad para esta factura"
+                    description="La propiedad quedará fijada sin perder líneas ni fecha de emisión."
+                    submitLabel="Guardar propiedad y usarla"
+                    onCreatedProperty={async (property) => {
+                      setForm((current) => ({
+                        ...current,
+                        property_id: property.id,
+                      }))
+                      setShowPropertyCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
+
+              {form.origin_mode === 'job' ? (
+                <ContextualCreateSection
+                  actionLabel="Crear servicio"
+                  title="Servicio en contexto"
+                  description="Si aún no existe el servicio facturable, créalo aquí y vuelve a la factura con el contexto completo."
+                  isOpen={showJobCreate}
+                  onToggle={() => setShowJobCreate((current) => !current)}
+                >
+                  <JobCreateForm
+                    clients={clients}
+                    properties={properties}
+                    quotes={quotes}
+                    onCreated={onCreated}
+                    onCreatedJob={async (job) => {
+                      setForm((current) => ({
+                        ...current,
+                        origin_mode: 'job',
+                        job_id: job.id,
+                        client_id: job.client_id,
+                        property_id: job.property_id,
+                        quote_id: job.quote_id ?? '',
+                      }))
+                      setShowJobCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
+
+              {form.origin_mode === 'quote' ? (
+                <ContextualCreateSection
+                  actionLabel="Crear presupuesto"
+                  title="Presupuesto en contexto"
+                  description="Si falta el presupuesto de origen, créalo aquí y continúa la factura manteniendo su trazabilidad."
+                  isOpen={showQuoteCreate}
+                  onToggle={() => setShowQuoteCreate((current) => !current)}
+                >
+                  <QuoteCreateForm
+                    clients={clients}
+                    properties={properties}
+                    onCreated={onCreated}
+                    contextClientId={form.client_id || null}
+                    contextPropertyId={form.property_id || null}
+                    onCreatedQuote={async (quote) => {
+                      setForm((current) => ({
+                        ...current,
+                        origin_mode: 'quote',
+                        quote_id: quote.id,
+                        client_id: quote.client_id,
+                        property_id: quote.property_id ?? current.property_id,
+                      }))
+                      setShowQuoteCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
 
               <label className="form-field">
                 <span>Fecha de emision *</span>

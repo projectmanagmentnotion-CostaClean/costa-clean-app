@@ -2,11 +2,13 @@ import type { QuoteListItem } from '../quotes/types'
 
 export interface JobCreatePrefill {
   request_id: string
+  origin_kind: 'client' | 'property' | 'quote'
   client_id: string
   property_id: string
   quote_id: string
   notes: string
   billing_concept: string
+  service_type?: string
 }
 
 function createPrefillId(): string {
@@ -26,10 +28,12 @@ export function buildJobCreatePrefillFromQuote(quote: QuoteListItem): JobCreateP
 
   return {
     request_id: createPrefillId(),
+    origin_kind: 'quote',
     client_id: quote.client_id,
     property_id: quote.property_id,
     quote_id: quote.id,
     notes: quote.notes?.trim() || '',
     billing_concept: firstLineConcept,
+    service_type: 'standard_cleaning',
   }
 }

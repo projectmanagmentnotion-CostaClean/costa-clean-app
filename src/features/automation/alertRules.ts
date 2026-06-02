@@ -5,6 +5,7 @@ import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { QuarterlyClosingRecord } from '../quarterlyClosing/types'
+import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
 import { automationRuleThresholds } from './ruleConfig'
 import type { AutomationAlertItem } from './types'
 
@@ -16,6 +17,7 @@ interface BuildAutomationAlertsInput {
   payments: PaymentListItem[]
   quarterlyClosings: QuarterlyClosingRecord[]
   leadDrafts?: LeadDraftRecord[]
+  recurringInvoicePlans?: RecurringInvoicePlanListItem[]
 }
 
 function getDateValue(dateValue: string | null | undefined): Date | null {
@@ -111,6 +113,7 @@ export function buildAutomationAlerts({
   payments,
   quarterlyClosings,
   leadDrafts = [],
+  recurringInvoicePlans = [],
 }: BuildAutomationAlertsInput): AutomationAlertItem[] {
   const alerts: AutomationAlertItem[] = []
   const invoicePaidAmount = new Map<string, number>()
@@ -133,6 +136,35 @@ export function buildAutomationAlerts({
       routing: {
         kind: 'view',
         view: 'leads',
+      },
+    })
+  }
+
+  const dueRecurringPlans = recurringInvoicePlans.filter((plan) => {
+    if (plan.status !== 'active') return false
+    const nextDate = getDateValue(plan.next_issue_date)
+    if (!nextDate) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    nextDate.setHours(0, 0, 0, 0)
+    return nextDate <= today
+  })
+
+  if (dueRecurringPlans.length > 0) {
+    alerts.push({
+      id: 'recurring-invoice-plans-due',
+      ruleId: 'recurring_invoice_plan_due',
+      severity: 'warning',
+      title: 'Automatizaciones recurrentes listas para emitir',
+      summary: `${dueRecurringPlans.length} plan(es) con emision vencida o para hoy`,
+      detail: 'Planes recurrentes activos cuya proxima emision ya esta disponible y conviene revisar o ejecutar.',
+      count: dueRecurringPlans.length,
+      examples: dueRecurringPlans.slice(0, 3).map((plan) =>
+        `${buildExampleLabel(plan.title, 'Plan recurrente sin titulo')} · ${formatDate(plan.next_issue_date)}`,
+      ),
+      routing: {
+        kind: 'view',
+        view: 'clients',
       },
     })
   }

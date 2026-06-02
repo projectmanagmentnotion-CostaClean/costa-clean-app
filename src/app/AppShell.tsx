@@ -226,6 +226,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     invoices,
     expenses,
     payments,
+    recurringInvoicePlans,
     quarterlyClosings,
     annualClosings,
     leadError,
@@ -408,7 +409,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       const resolvedJobId = job?.id ?? invoice.job_id ?? null
       const resolvedQuoteId = job?.quote_id ?? invoice.quote_id ?? null
       const quote = resolvedQuoteId ? quoteById.get(resolvedQuoteId) : undefined
-      const resolvedPropertyId = job?.property_id ?? quote?.property_id ?? null
+      const resolvedPropertyId = invoice.property_id ?? job?.property_id ?? quote?.property_id ?? null
       const property = resolvedPropertyId ? propertyById.get(resolvedPropertyId) : undefined
       const client = clientById.get(resolvedClientId)
 
@@ -480,8 +481,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         payments: paymentsWithCodes,
         quarterlyClosings,
         leadDrafts,
+        recurringInvoicePlans,
       }),
-    [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes],
+    [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes, recurringInvoicePlans],
   )
 
   const activeReviewedAlertIds = useMemo(() => {
@@ -876,6 +878,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   quotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
+                  recurringInvoicePlans={recurringInvoicePlans}
                   error={clientError}
                   onClientCreated={async () => {
                     await Promise.all([
@@ -928,6 +931,8 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'invoices' ? (
                 <InvoicesPage
                   invoices={filteredInvoices}
+                  clients={clientsWithContext}
+                  properties={properties}
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
                   error={invoiceError}

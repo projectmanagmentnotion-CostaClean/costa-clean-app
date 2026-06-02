@@ -12,6 +12,7 @@ export const realtimeTables = [
   'invoices',
   'invoice_lines',
   'payments',
+  'recurring_invoice_plans',
   'expenses',
   'quarterly_closings',
   'annual_closings',

@@ -11,10 +11,14 @@ export interface InvoiceCreatePrefillLine {
 
 export interface InvoiceCreatePrefill {
   request_id: string
+  origin_kind: 'job' | 'quote' | 'manual' | 'recurring'
   job_id: string
+  quote_id: string
   client_id: string
+  property_id: string
   notes: string
   lines: InvoiceCreatePrefillLine[]
+  title?: string
 }
 
 function createPrefillId(): string {
@@ -73,9 +77,13 @@ export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreat
 
   return {
     request_id: createPrefillId(),
+    origin_kind: 'job',
     job_id: job.id,
+    quote_id: job.quote_id ?? '',
     client_id: job.client_id,
+    property_id: job.property_id,
     notes: buildInvoiceNotes(job),
     lines: billingLine ? [billingLine] : [],
+    title: job.display_code ?? job.id,
   }
 }

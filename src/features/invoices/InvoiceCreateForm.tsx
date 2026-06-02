@@ -1,23 +1,33 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
+import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
+import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
+import type { PropertyListItem } from '../properties/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 
 interface InvoiceCreateFormProps {
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
 }
 
+type InvoiceOriginMode = 'job' | 'quote' | 'manual'
+
 interface FormState {
+  origin_mode: InvoiceOriginMode
   job_id: string
+  quote_id: string
   client_id: string
+  property_id: string
   issue_date: string
   status: string
   notes: string
@@ -88,8 +98,11 @@ function createBlankLine(): LineFormState {
 
 function createDefaultFormState(): FormState {
   return {
+    origin_mode: 'job',
     job_id: '',
+    quote_id: '',
     client_id: '',
+    property_id: '',
     issue_date: todayLocalDate(),
     status: 'draft',
     notes: '',
@@ -149,10 +162,6 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
   }
 }
 
-function buildLinesForJob(job: JobListItem | null, quote: QuoteListItem | null): LineFormState[] {
-  return [getJobBillingLine(job) ?? getQuoteBillingLine(quote) ?? createBlankLine()]
-}
-
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
   if (prefill.lines.length === 0) {
     return [createBlankLine()]
@@ -169,11 +178,15 @@ function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
 
 function applyPrefillToForm(prefill: InvoiceCreatePrefill): FormState {
   const defaultState = createDefaultFormState()
+  const originMode = prefill.origin_kind === 'quote' ? 'quote' : prefill.origin_kind === 'manual' ? 'manual' : 'job'
 
   return {
     ...defaultState,
+    origin_mode: originMode,
     job_id: prefill.job_id,
+    quote_id: prefill.quote_id,
     client_id: prefill.client_id,
+    property_id: prefill.property_id,
     notes: prefill.notes,
   }
 }
@@ -225,7 +238,20 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
   return payloads
 }
 
+function getOriginDescription(originMode: InvoiceOriginMode): string {
+  switch (originMode) {
+    case 'job':
+      return 'Ruta B. Emite la factura desde un servicio real y reutiliza su base de facturacion.'
+    case 'quote':
+      return 'Ruta A. Factura desde un presupuesto cuando todavia no existe servicio o quieres emitirlo antes.'
+    case 'manual':
+      return 'Ruta B. Factura directa por cliente y propiedad, sin forzar servicio ni presupuesto previo.'
+  }
+}
+
 export function InvoiceCreateForm({
+  clients,
+  properties,
   jobs,
   quotes,
   onCreated,
@@ -242,15 +268,44 @@ export function InvoiceCreateForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
 
+  const availableProperties = useMemo(() => {
+    if (!form.client_id) return []
+    return properties.filter((property) => property.client_id === form.client_id)
+  }, [properties, form.client_id])
+
+  const availableJobs = useMemo(() => jobs.filter((job) => {
+    if (form.client_id && job.client_id !== form.client_id) return false
+    if (form.property_id && job.property_id !== form.property_id) return false
+    return true
+  }), [jobs, form.client_id, form.property_id])
+
+  const availableQuotes = useMemo(() => quotes.filter((quote) => {
+    if (form.client_id && quote.client_id !== form.client_id) return false
+    if (form.property_id && quote.property_id && quote.property_id !== form.property_id) return false
+    return true
+  }), [quotes, form.client_id, form.property_id])
+
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === form.client_id) ?? null,
+    [clients, form.client_id],
+  )
+  const selectedProperty = useMemo(
+    () => properties.find((property) => property.id === form.property_id) ?? null,
+    [properties, form.property_id],
+  )
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === form.job_id) ?? null,
     [jobs, form.job_id],
   )
+  const selectedQuote = useMemo(() => {
+    if (form.origin_mode === 'job') {
+      if (!selectedJob?.quote_id) return null
+      return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
+    }
 
-  const linkedQuote = useMemo(() => {
-    if (!selectedJob?.quote_id) return null
-    return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
-  }, [quotes, selectedJob])
+    if (!form.quote_id) return null
+    return quotes.find((quote) => quote.id === form.quote_id) ?? null
+  }, [form.origin_mode, form.quote_id, quotes, selectedJob])
 
   const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
   const taxAmountValue = useMemo(
@@ -263,16 +318,31 @@ export function InvoiceCreateForm({
   )
 
   useEffect(() => {
-    if (!selectedJob) return
+    if (!selectedJob || form.origin_mode !== 'job') return
 
     setForm((current) => ({
       ...current,
       client_id: selectedJob.client_id,
-      notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
+      property_id: selectedJob.property_id,
+      quote_id: selectedJob.quote_id ?? '',
+      notes: current.notes.trim() ? current.notes : selectedJob.quote_id ? buildVisibleInvoiceNotes() : '',
     }))
 
-    setLines(buildLinesForJob(selectedJob, linkedQuote))
-  }, [selectedJob, linkedQuote])
+    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(selectedQuote) ?? createBlankLine()])
+  }, [form.origin_mode, selectedJob, selectedQuote])
+
+  useEffect(() => {
+    if (!selectedQuote || form.origin_mode !== 'quote') return
+
+    setForm((current) => ({
+      ...current,
+      client_id: selectedQuote.client_id ?? current.client_id,
+      property_id: selectedQuote.property_id ?? current.property_id,
+      notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
+    }))
+
+    setLines([getQuoteBillingLine(selectedQuote) ?? createBlankLine()])
+  }, [form.origin_mode, selectedQuote])
 
   useEffect(() => {
     if (!prefill || prefill.request_id === lastAppliedPrefillId) {
@@ -284,13 +354,43 @@ export function InvoiceCreateForm({
     setSubmitError(null)
     setSuccessMessage(null)
     setLastAppliedPrefillId(prefill.request_id)
-  }, [jobs, lastAppliedPrefillId, prefill])
+  }, [lastAppliedPrefillId, prefill])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }))
+    setForm((current) => {
+      const next = {
+        ...current,
+        [field]: value,
+      }
+
+      if (field === 'origin_mode') {
+        if (value === 'manual') {
+          next.job_id = ''
+          next.quote_id = ''
+        }
+
+        if (value === 'quote') {
+          next.job_id = ''
+        }
+      }
+
+      if (field === 'client_id') {
+        next.property_id = ''
+        if (current.origin_mode !== 'job') {
+          next.quote_id = ''
+          next.job_id = ''
+        }
+      }
+
+      if (field === 'property_id' && current.origin_mode !== 'job') {
+        next.quote_id = ''
+        if (current.origin_mode === 'manual') {
+          next.job_id = ''
+        }
+      }
+
+      return next
+    })
   }
 
   function updateLine<K extends keyof LineFormState>(
@@ -316,13 +416,18 @@ export function InvoiceCreateForm({
     setIsSubmitting(true)
 
     try {
-      if (!form.job_id) {
+      if (form.origin_mode === 'job' && !form.job_id) {
         setSubmitError('Debes seleccionar un servicio.')
         return
       }
 
+      if (form.origin_mode === 'quote' && !form.quote_id) {
+        setSubmitError('Debes seleccionar un presupuesto.')
+        return
+      }
+
       if (!form.client_id) {
-        setSubmitError('No se pudo resolver el cliente del servicio.')
+        setSubmitError('Debes seleccionar un cliente.')
         return
       }
 
@@ -342,17 +447,18 @@ export function InvoiceCreateForm({
       await saveInvoiceWithLines(
         {
           id: invoiceId,
-          job_id: form.job_id,
-          quote_id: selectedJob?.quote_id ?? null,
+          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
           client_id: form.client_id,
+          property_id: form.property_id || null,
           issue_date: form.issue_date,
           status: form.status,
           subtotal: subtotalValue,
           tax_amount: taxAmountValue,
           total: totalValue,
           notes: form.notes.trim() || null,
-          internal_notes: linkedQuote?.internal_notes ?? null,
-          pricing_metadata: linkedQuote?.pricing_metadata ?? null,
+          internal_notes: selectedQuote?.internal_notes ?? null,
+          pricing_metadata: selectedQuote?.pricing_metadata ?? null,
         },
         linePayloads,
       )
@@ -378,16 +484,14 @@ export function InvoiceCreateForm({
         <div className="cc-form-shell__intro">
           <span className="cc-form-shell__eyebrow">Documento de cobro</span>
           <h2>Nueva factura</h2>
-          <p>
-            Emite una factura vinculada a un servicio, con lineas e IVA automatico del {businessRules.defaultTaxRate * 100}%.
-          </p>
+          <p>{getOriginDescription(form.origin_mode)}</p>
         </div>
 
         <div className="cc-form-shell__summary">
           <div className="cc-form-shell__summary-card">
-            <span>Servicio</span>
-            <strong>{selectedJob?.display_code ?? selectedJob?.id ?? 'Pendiente'}</strong>
-            <small>{selectedJob?.client_display_code ?? selectedJob?.client_id ?? 'Sin cliente'}</small>
+            <span>Ruta activa</span>
+            <strong>{form.origin_mode === 'job' ? 'Servicio -> factura' : form.origin_mode === 'quote' ? 'Presupuesto -> factura' : 'Factura directa'}</strong>
+            <small>{selectedQuote ? formatQuoteLabel(selectedQuote) : selectedJob?.display_code ?? 'Sin documento origen'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -397,30 +501,93 @@ export function InvoiceCreateForm({
         </div>
       </div>
 
-      {jobs.length === 0 ? (
+      {clients.length === 0 ? (
         <div className="empty-state">
-          <strong>No hay servicios disponibles</strong>
-          <p>Primero debes crear al menos un servicio para poder facturar.</p>
+          <strong>No hay clientes disponibles</strong>
+          <p>Primero debes crear al menos un cliente para poder facturar.</p>
         </div>
       ) : (
         <form className="lead-form cc-form-shell__grid" onSubmit={handleSubmit}>
           <div className="cc-form-shell__main">
             <section className="cc-form-shell__section">
               <div className="cc-form-shell__section-head">
-                <strong>Base documental</strong>
-                <span>Servicio, fecha y estado de emision.</span>
+                <strong>Origen de la factura</strong>
+                <span>Elige la ruta completa o una facturacion directa sin forzar el flujo comercial.</span>
               </div>
 
               <label className="form-field">
-                <span>Servicio *</span>
-              <select
-                value={form.job_id}
-                onChange={(event) => updateField('job_id', event.target.value)}
-              >
-                <option value="">Selecciona un servicio</option>
-                {jobs.map((job) => (
-                  <option key={job.id} value={job.id}>
-                    {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                <span>Ruta</span>
+                <select
+                  value={form.origin_mode}
+                  onChange={(event) => updateField('origin_mode', event.target.value as InvoiceOriginMode)}
+                >
+                  <option value="job">Desde servicio</option>
+                  <option value="quote">Desde presupuesto</option>
+                  <option value="manual">Directa por cliente y propiedad</option>
+                </select>
+              </label>
+
+              {form.origin_mode === 'job' ? (
+                <label className="form-field">
+                  <span>Servicio *</span>
+                  <select
+                    value={form.job_id}
+                    onChange={(event) => updateField('job_id', event.target.value)}
+                  >
+                    <option value="">Selecciona un servicio</option>
+                    {availableJobs.map((job) => (
+                      <option key={job.id} value={job.id}>
+                        {(job.display_code ?? job.id)} · {(job.client_display_code ?? job.client_id)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              {form.origin_mode === 'quote' ? (
+                <label className="form-field">
+                  <span>Presupuesto *</span>
+                  <select
+                    value={form.quote_id}
+                    onChange={(event) => updateField('quote_id', event.target.value)}
+                  >
+                    <option value="">Selecciona un presupuesto</option>
+                    {availableQuotes.map((quote) => (
+                      <option key={quote.id} value={quote.id}>
+                        {formatQuoteLabel(quote)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
+
+              <label className="form-field">
+                <span>Cliente *</span>
+                <select
+                  value={form.client_id}
+                  onChange={(event) => updateField('client_id', event.target.value)}
+                  disabled={form.origin_mode === 'job' || form.origin_mode === 'quote'}
+                >
+                  {form.origin_mode === 'manual' ? <option value="">Selecciona un cliente</option> : null}
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {formatClientLabel(client)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="form-field">
+                <span>Propiedad</span>
+                <select
+                  value={form.property_id}
+                  onChange={(event) => updateField('property_id', event.target.value)}
+                  disabled={form.origin_mode === 'job' || form.origin_mode === 'quote'}
+                >
+                  <option value="">Sin propiedad</option>
+                  {availableProperties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {formatPropertyLabel(property)}
                     </option>
                   ))}
                 </select>
@@ -452,7 +619,7 @@ export function InvoiceCreateForm({
             <section className="cc-form-shell__section cc-form-shell__section--full">
               <div className="cc-form-shell__section-head">
                 <strong>Lineas de cobro</strong>
-                <span>Detalle editable con importes visibles y consistentes.</span>
+                <span>Detalle editable con importes visibles y consistente con el origen elegido.</span>
               </div>
 
               <div className="form-field form-field-full">
@@ -575,9 +742,19 @@ export function InvoiceCreateForm({
               </div>
 
               <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+                <span>Contexto</span>
+                <strong>{selectedClient ? formatClientLabel(selectedClient) : 'Cliente pendiente'}</strong>
+                <small>{selectedProperty ? formatPropertyLabel(selectedProperty) : 'Sin propiedad fija'}</small>
+              </div>
+
+              <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
                 <span>Salida</span>
                 <strong>Factura lista</strong>
-                <small>Se emitirá con lineas, fecha y referencia al servicio seleccionado.</small>
+                <small>
+                  {form.origin_mode === 'manual'
+                    ? 'Se emitira como documento directo de cliente y propiedad.'
+                    : 'Se emitira con su relacion de origen conservada.'}
+                </small>
               </div>
 
               <div className="form-actions cc-form-shell__actions">

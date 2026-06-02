@@ -17,6 +17,7 @@ export type AutomationAlertRuleId =
   | 'expenses_missing_support'
   | 'expenses_pending_fiscal_review'
   | 'quarter_closing_reminder'
+  | 'recurring_invoice_plan_due'
 
 export type AutomationAlertRouting =
   | {

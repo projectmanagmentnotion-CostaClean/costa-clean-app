@@ -13,6 +13,7 @@ import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 
 interface ClientsPageProps {
   clients: ClientListItem[]
@@ -21,6 +22,7 @@ interface ClientsPageProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
+  recurringInvoicePlans: RecurringInvoicePlanListItem[]
   error: string | null
   onClientCreated: () => Promise<void>
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
@@ -34,6 +36,7 @@ export function ClientsPage({
   quotes,
   invoices,
   payments,
+  recurringInvoicePlans,
   error,
   onClientCreated,
   onUnsavedChange,
@@ -136,6 +139,7 @@ export function ClientsPage({
           quotes={quotes}
           invoices={invoices}
           payments={payments}
+          recurringInvoicePlans={recurringInvoicePlans}
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onClose={() => {

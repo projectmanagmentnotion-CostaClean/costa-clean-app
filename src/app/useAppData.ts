@@ -19,6 +19,7 @@ import {
   listProperties,
   listQuarterlyClosings,
   listQuotes,
+  listRecurringInvoicePlans,
 } from './appDataApi'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
@@ -31,6 +32,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { AnnualClosingRecord } from '../features/annualClosing/types'
 import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { getSupabaseClient } from '../lib/supabase'
 
 const foregroundRefreshStaleTimeMs = 30_000
@@ -88,6 +90,7 @@ export function useAppData() {
   const [invoices, setInvoices] = useState<InvoiceListItem[]>([])
   const [expenses, setExpenses] = useState<ExpenseListItem[]>([])
   const [payments, setPayments] = useState<PaymentListItem[]>([])
+  const [recurringInvoicePlans, setRecurringInvoicePlans] = useState<RecurringInvoicePlanListItem[]>([])
   const [quarterlyClosings, setQuarterlyClosings] = useState<QuarterlyClosingRecord[]>([])
   const [annualClosings, setAnnualClosings] = useState<AnnualClosingRecord[]>([])
   const [leadError, setLeadError] = useState<string | null>(null)
@@ -99,6 +102,7 @@ export function useAppData() {
   const [invoiceError, setInvoiceError] = useState<string | null>(null)
   const [expenseError, setExpenseError] = useState<string | null>(null)
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [recurringInvoicePlanError, setRecurringInvoicePlanError] = useState<string | null>(null)
   const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
   const [intakeRealtimeNotifications, setIntakeRealtimeNotifications] = useState<IntakeRealtimeNotification[]>([])
@@ -189,6 +193,15 @@ export function useAppData() {
     }
   }, [])
 
+  const loadRecurringInvoicePlans = useCallback(async () => {
+    try {
+      setRecurringInvoicePlanError(null)
+      setRecurringInvoicePlans(await listRecurringInvoicePlans())
+    } catch (err) {
+      setRecurringInvoicePlanError(getErrorMessage(err, 'Error desconocido cargando automatizaciones recurrentes.'))
+    }
+  }, [])
+
   const loadQuarterlyClosings = useCallback(async () => {
     try {
       setQuarterlyClosingError(null)
@@ -240,10 +253,11 @@ export function useAppData() {
       loadInvoices,
       loadExpenses,
       loadPayments,
+      loadRecurringInvoicePlans,
       loadQuarterlyClosings,
       loadAnnualClosings,
     ])
-  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, runRefresh])
+  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, loadRecurringInvoicePlans, runRefresh])
 
   const refreshBilling = useCallback(async () => {
     await runRefresh([
@@ -251,9 +265,10 @@ export function useAppData() {
       loadJobs,
       loadInvoices,
       loadPayments,
+      loadRecurringInvoicePlans,
       loadExpenses,
     ])
-  }, [loadExpenses, loadInvoices, loadJobs, loadPayments, loadQuotes, runRefresh])
+  }, [loadExpenses, loadInvoices, loadJobs, loadPayments, loadQuotes, loadRecurringInvoicePlans, runRefresh])
 
   const refreshOperations = useCallback(async () => {
     await runRefresh([
@@ -264,8 +279,9 @@ export function useAppData() {
       loadQuotes,
       loadJobs,
       loadInvoices,
+      loadRecurringInvoicePlans,
     ])
-  }, [loadClients, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadProperties, loadQuotes, runRefresh])
+  }, [loadClients, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadProperties, loadQuotes, loadRecurringInvoicePlans, runRefresh])
 
   const refreshClosings = useCallback(async () => {
     await runRefresh([loadQuarterlyClosings, loadAnnualClosings])
@@ -431,6 +447,7 @@ export function useAppData() {
     invoices,
     expenses,
     payments,
+    recurringInvoicePlans,
     quarterlyClosings,
     annualClosings,
     leadError,
@@ -442,6 +459,7 @@ export function useAppData() {
     invoiceError,
     expenseError,
     paymentError,
+    recurringInvoicePlanError,
     quarterlyClosingError,
     annualClosingError,
     refreshBilling,

@@ -28,8 +28,12 @@ import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { QuoteListItem } from '../quotes/types'
 import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { RecurringInvoicePlanForm } from '../recurringInvoices/RecurringInvoicePlanForm'
+import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
+import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
+import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
 
-type ClientWorkspaceAction = 'property' | 'job' | 'quote' | 'invoice' | 'payment' | null
+type ClientWorkspaceAction = 'property' | 'job' | 'quote' | 'invoice' | 'payment' | 'recurring' | null
 
 interface ClientWorkspaceProps {
   client: ClientListItem
@@ -38,6 +42,7 @@ interface ClientWorkspaceProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
+  recurringInvoicePlans: RecurringInvoicePlanListItem[]
   activeTab: ClientWorkspaceTab
   onTabChange: (tab: ClientWorkspaceTab) => void
   onClose: () => void
@@ -97,6 +102,7 @@ function buildActionTab(action: Exclude<ClientWorkspaceAction, null>): ClientWor
     case 'quote': return 'quotes'
     case 'invoice': return 'invoices'
     case 'payment': return 'payments'
+    case 'recurring': return 'invoices'
   }
 }
 
@@ -119,6 +125,7 @@ function getActionTitle(action: Exclude<ClientWorkspaceAction, null>) {
     case 'quote': return 'Nuevo presupuesto'
     case 'invoice': return 'Nueva factura'
     case 'payment': return 'Registrar cobro'
+    case 'recurring': return 'Automatizacion recurrente'
   }
 }
 
@@ -137,6 +144,7 @@ export function ClientWorkspace({
   quotes,
   invoices,
   payments,
+  recurringInvoicePlans,
   activeTab,
   onTabChange,
   onClose,
@@ -147,6 +155,8 @@ export function ClientWorkspace({
   const [editRequestToken, setEditRequestToken] = useState(0)
   const [archiveRequestToken, setArchiveRequestToken] = useState(0)
   const [isClientEditing, setIsClientEditing] = useState(false)
+  const [editingRecurringPlanId, setEditingRecurringPlanId] = useState<string | null>(null)
+  const [recurringFeedback, setRecurringFeedback] = useState<string | null>(null)
 
   const relatedProperties = useMemo(
     () => properties.filter((property) => property.client_id === client.id),
@@ -171,6 +181,10 @@ export function ClientWorkspace({
   const relatedPayments = useMemo(
     () => payments.filter((payment) => invoiceIds.has(payment.invoice_id)),
     [invoiceIds, payments],
+  )
+  const relatedRecurringPlans = useMemo(
+    () => recurringInvoicePlans.filter((plan) => plan.client_id === client.id),
+    [client.id, recurringInvoicePlans],
   )
 
   const paymentsByInvoiceId = useMemo(() => {
@@ -208,6 +222,10 @@ export function ClientWorkspace({
     [relatedJobs],
   )
   const latestInvoice = sortedInvoices[0] ?? null
+  const dueRecurringPlans = useMemo(
+    () => relatedRecurringPlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)),
+    [relatedRecurringPlans],
+  )
 
   const todayTimestamp = toTimestamp(new Date().toISOString())
   const nextJob = sortedJobsAsc.find((job) => toTimestamp(job.scheduled_date) >= todayTimestamp && job.status !== 'cancelled') ?? null
@@ -389,16 +407,25 @@ export function ClientWorkspace({
   async function handleActionCreated() {
     await onRefresh()
     setActiveAction(null)
+    setEditingRecurringPlanId(null)
+  }
+
+  async function handleRecurringPlanIssued(planId: string) {
+    await generateInvoiceFromRecurringPlan(planId)
+    await onRefresh()
+    setRecurringFeedback('Factura recurrente emitida y plan actualizado.')
   }
 
   const jobCreatePrefill = useMemo(
     () => ({
       request_id: createPrefillId(`client-job-${client.id}`),
+      origin_kind: 'client' as const,
       client_id: client.id,
       property_id: '',
       quote_id: '',
       notes: '',
       billing_concept: '',
+      service_type: 'standard_cleaning',
     }),
     [client.id],
   )
@@ -485,6 +512,16 @@ export function ClientWorkspace({
         </button>
         <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
           Nueva factura
+        </button>
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => {
+            setEditingRecurringPlanId(null)
+            openAction('recurring')
+          }}
+        >
+          Automatizar factura
         </button>
         <button type="button" className="secondary-button" onClick={() => openAction('payment')}>
           Registrar cobro
@@ -578,6 +615,8 @@ export function ClientWorkspace({
           {activeAction === 'invoice' ? (
             <InvoiceCreateForm
               key={`invoice-${client.id}`}
+              clients={[client]}
+              properties={relatedProperties}
               jobs={relatedJobs}
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
@@ -589,6 +628,17 @@ export function ClientWorkspace({
               key={`payment-${client.id}`}
               invoices={relatedInvoices}
               onCreated={handleActionCreated}
+            />
+          ) : null}
+
+          {activeAction === 'recurring' ? (
+            <RecurringInvoicePlanForm
+              key={`recurring-${editingRecurringPlanId ?? client.id}`}
+              clientId={client.id}
+              properties={relatedProperties}
+              quotes={relatedQuotes}
+              initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
+              onSaved={handleActionCreated}
             />
           ) : null}
         </section>
@@ -640,6 +690,25 @@ export function ClientWorkspace({
                   </article>
                 ))}
                 {relatedProperties.length === 0 ? <p>Este cliente aún no tiene propiedades vinculadas.</p> : null}
+              </div>
+            </article>
+            <article className="data-section">
+              <div className="section-header">
+                <h2>Automatizacion recurrente</h2>
+                <p>Planes activos para emitir facturas repetitivas por cliente.</p>
+              </div>
+
+              <div className="cc-client-workspace__relationship-list">
+                {relatedRecurringPlans.slice(0, 3).map((plan) => (
+                  <article key={plan.id} className="cc-client-workspace__relationship-card">
+                    <strong>{plan.title}</strong>
+                    <span>{getRecurringFrequencyLabel(plan.frequency)} · {plan.status}</span>
+                    <small>
+                      Siguiente emision {formatDateEs(plan.next_issue_date)} · {plan.template_lines.length} linea(s)
+                    </small>
+                  </article>
+                ))}
+                {relatedRecurringPlans.length === 0 ? <p>Este cliente aun no tiene automatizaciones recurrentes.</p> : null}
               </div>
             </article>
           </section>
@@ -801,6 +870,98 @@ export function ClientWorkspace({
               <p>Este cliente todavía no tiene presupuestos asociados.</p>
             </div>
           ) : null}
+        </section>
+      ) : null}
+
+      {activeTab === 'invoices' ? (
+        <section className="cc-client-workspace__tab-panel">
+          <section className="cc-client-workspace__summary-grid">
+            <article className="data-section">
+              <div className="section-header page-header-actions">
+                <div>
+                  <h2>Automatizaciones recurrentes</h2>
+                  <p>Programacion reutilizable para clientes con facturacion repetitiva.</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setEditingRecurringPlanId(null)
+                    openAction('recurring')
+                  }}
+                >
+                  Nueva automatizacion
+                </button>
+              </div>
+
+              {recurringFeedback ? (
+                <div className="cc-alert cc-alert--success">
+                  <strong>Operacion correcta</strong>
+                  <p>{recurringFeedback}</p>
+                </div>
+              ) : null}
+
+              <div className="cc-client-workspace__relationship-list">
+                {relatedRecurringPlans.map((plan) => (
+                  <article key={plan.id} className="cc-client-workspace__relationship-card">
+                    <strong>{plan.title}</strong>
+                    <span>{getRecurringFrequencyLabel(plan.frequency)} · {plan.status}</span>
+                    <small>
+                      Proxima emision {formatDateEs(plan.next_issue_date)} · {formatCurrency(plan.template_lines.reduce((sum, line) => sum + Number(line.line_subtotal ?? 0), 0))}
+                    </small>
+                    <div className="form-actions">
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => {
+                          setEditingRecurringPlanId(plan.id)
+                          openAction('recurring')
+                        }}
+                      >
+                        Editar plan
+                      </button>
+                      <button
+                        type="button"
+                        className="primary-button"
+                        onClick={() => void handleRecurringPlanIssued(plan.id)}
+                        disabled={plan.status !== 'active'}
+                      >
+                        Emitir ahora
+                      </button>
+                    </div>
+                  </article>
+                ))}
+                {relatedRecurringPlans.length === 0 ? <p>No hay automatizaciones recurrentes para este cliente.</p> : null}
+              </div>
+            </article>
+
+            <article className="data-section">
+              <div className="section-header">
+                <h2>Estado de emision</h2>
+                <p>Controla las automatizaciones que requieren accion operativa.</p>
+              </div>
+
+              <div className="cc-client-workspace__ledger-grid">
+                <div className="detail-row">
+                  <span className="detail-label">Planes activos</span>
+                  <strong>{relatedRecurringPlans.filter((plan) => plan.status === 'active').length}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Vencidos o para hoy</span>
+                  <strong>{dueRecurringPlans.length}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Pausados</span>
+                  <strong>{relatedRecurringPlans.filter((plan) => plan.status === 'paused').length}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Ultimo plan emitido</span>
+                  <strong>{relatedRecurringPlans.find((plan) => plan.last_issued_at)?.title ?? 'Sin emisiones'}</strong>
+                </div>
+              </div>
+            </article>
+          </section>
         </section>
       ) : null}
 

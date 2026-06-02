@@ -21,6 +21,7 @@ interface QuoteCreateFormProps {
   properties: PropertyListItem[]
   onCreated: () => Promise<void>
   contextClientId?: string | null
+  contextPropertyId?: string | null
 }
 
 interface FormState {
@@ -35,10 +36,11 @@ export function QuoteCreateForm({
   properties,
   onCreated,
   contextClientId = null,
+  contextPropertyId = null,
 }: QuoteCreateFormProps) {
   const [form, setForm] = useState<FormState>({
     client_id: contextClientId ?? '',
-    property_id: '',
+    property_id: contextPropertyId ?? '',
     status: 'draft',
     notes: '',
   })
@@ -59,6 +61,10 @@ export function QuoteCreateForm({
     () => clients.find((client) => client.id === form.client_id) ?? null,
     [clients, form.client_id],
   )
+  const selectedProperty = useMemo(
+    () => properties.find((property) => property.id === form.property_id) ?? null,
+    [properties, form.property_id],
+  )
 
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
   const taxAmountValue = useMemo(
@@ -78,7 +84,7 @@ export function QuoteCreateForm({
       }
 
       if (field === 'client_id') {
-        next.property_id = ''
+        next.property_id = contextPropertyId ?? ''
       }
 
       return next
@@ -139,7 +145,7 @@ export function QuoteCreateForm({
       await onCreated()
       setForm({
         client_id: contextClientId ?? '',
-        property_id: '',
+        property_id: contextPropertyId ?? '',
         status: 'draft',
         notes: '',
       })
@@ -162,7 +168,7 @@ export function QuoteCreateForm({
           <span className="cc-form-shell__eyebrow">Propuesta comercial</span>
           <h2>Nuevo presupuesto</h2>
           <p>
-            Crea una propuesta con lineas detalladas e IVA automatico del {businessRules.defaultTaxRate * 100}%.
+            Crea una propuesta conectada a cliente y propiedad para mantener la trazabilidad completa hacia servicio y factura.
           </p>
         </div>
 
@@ -171,6 +177,11 @@ export function QuoteCreateForm({
             <span>Cliente</span>
             <strong>{selectedClient ? formatClientLabel(selectedClient) : 'Pendiente'}</strong>
             <small>{availableProperties.length} propiedad(es) disponibles</small>
+          </div>
+          <div className="cc-form-shell__summary-card">
+            <span>Ruta</span>
+            <strong>Cliente - presupuesto - servicio - factura</strong>
+            <small>{selectedProperty ? formatPropertyLabel(selectedProperty) : 'Asocia una propiedad para reforzar la trazabilidad operativa'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -191,7 +202,7 @@ export function QuoteCreateForm({
             <section className="cc-form-shell__section">
               <div className="cc-form-shell__section-head">
                 <strong>Base del presupuesto</strong>
-                <span>Cliente, propiedad y estado inicial.</span>
+                <span>Cliente, propiedad y estado inicial del flujo comercial.</span>
               </div>
 
               <label className="form-field">
@@ -215,8 +226,9 @@ export function QuoteCreateForm({
                 <select
                   value={form.property_id}
                   onChange={(event) => updateField('property_id', event.target.value)}
+                  disabled={Boolean(contextPropertyId)}
                 >
-                  <option value="">Sin propiedad</option>
+                  {!contextPropertyId ? <option value="">Sin propiedad</option> : null}
                   {availableProperties.map((property) => (
                     <option key={property.id} value={property.id}>
                       {formatPropertyLabel(property)}
@@ -246,7 +258,7 @@ export function QuoteCreateForm({
 
               <div className="form-field form-field-full">
                 <span>Lineas de presupuesto *</span>
-                <p className="cc-line-editor-note">El concepto manual se guardará exactamente como lo escribas.</p>
+                <p className="cc-line-editor-note">El concepto manual se guardara exactamente como lo escribas.</p>
                 <div className="cc-form-shell__line-list">
                   {lines.map((line, index) => (
                     <div key={line.local_id} className="lead-form cc-line-editor-row cc-line-editor-row--premium">
@@ -366,8 +378,8 @@ export function QuoteCreateForm({
 
               <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
                 <span>Resultado</span>
-                <strong>Listo para guardar</strong>
-                <small>Se guardará con sus lineas y totales calculados.</small>
+                <strong>Presupuesto trazable</strong>
+                <small>Se guardara con sus lineas, totales y relacion operativa lista para pasar a servicio.</small>
               </div>
 
               <div className="form-actions cc-form-shell__actions">

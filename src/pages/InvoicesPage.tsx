@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import type { ClientListItem } from '../features/clients/types'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
@@ -11,9 +12,12 @@ import type { JobListItem } from '../features/jobs/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
+import type { PropertyListItem } from '../features/properties/types'
 
 interface InvoicesPageProps {
   invoices: InvoiceListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   error: string | null
@@ -28,6 +32,8 @@ interface InvoicesPageProps {
 
 export function InvoicesPage({
   invoices,
+  clients,
+  properties,
   jobs,
   quotes,
   error,
@@ -142,6 +148,8 @@ export function InvoicesPage({
 
         {isCreateFormVisible ? (
           <InvoiceCreateForm
+            clients={clients}
+            properties={properties}
             jobs={jobs}
             quotes={quotes}
             onCreated={handleInvoiceCreated}

@@ -12,6 +12,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { listQuarterlyClosings } from '../features/quarterlyClosing/quarterlyClosingApi'
 import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { getSupabaseClient } from '../lib/supabase'
 import { getSupabasePublicEnv } from '../lib/supabaseEnv'
 import { fetchSupabaseRestList } from '../lib/supabaseRest'
@@ -99,7 +100,7 @@ export async function listJobs(): Promise<JobListItem[]> {
 }
 
 export async function listInvoices(): Promise<InvoiceListItem[]> {
-  const loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>('invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,issue_date,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc')
+  const loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>('invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc')
   const invoiceLines = await fetchSupabaseRestList<NonNullable<InvoiceListItem['lines']>[number]>('invoice_lines?select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc')
   const linesByInvoiceId = groupInvoiceLines(invoiceLines)
 
@@ -111,6 +112,10 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
 
 export async function listPayments(): Promise<PaymentListItem[]> {
   return fetchSupabaseRestList<PaymentListItem>('payments?select=id,display_code,invoice_id,payment_date,amount,payment_method,notes&order=created_at.desc')
+}
+
+export async function listRecurringInvoicePlans(): Promise<RecurringInvoicePlanListItem[]> {
+  return fetchSupabaseRestList<RecurringInvoicePlanListItem>('recurring_invoice_plans?select=id,client_id,property_id,quote_id,title,frequency,status,default_invoice_status,next_issue_date,last_issued_at,tax_rate,notes,internal_notes,pricing_metadata,template_lines,created_at,updated_at&order=next_issue_date.asc')
 }
 
 export {

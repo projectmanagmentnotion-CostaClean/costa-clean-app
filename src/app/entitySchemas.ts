@@ -113,6 +113,7 @@ export const entitySchemas: EntitySchemaDefinition[] = [
       { key: 'job_id', label: 'Servicio', type: 'relation', required: false, description: 'Servicio facturado si existe.' },
       { key: 'quote_id', label: 'Presupuesto', type: 'relation', required: false, description: 'Presupuesto aceptado origen si existe.' },
       { key: 'client_id', label: 'Cliente', type: 'relation', required: true, description: 'Cliente facturado.' },
+      { key: 'property_id', label: 'Inmueble', type: 'relation', required: false, description: 'Inmueble vinculado cuando la factura nace directa de una propiedad o se quiere preservar ese contexto.' },
       { key: 'invoice_number', label: 'Número de factura', type: 'string', required: true, description: 'Número o serie de factura.' },
       { key: 'issue_date', label: 'Fecha de emisión', type: 'date', required: true, description: 'Fecha de emisión.' },
       { key: 'status', label: 'Estado', type: 'enum', required: true, description: 'Estado administrativo de la factura.', enumName: 'invoiceStatuses' },

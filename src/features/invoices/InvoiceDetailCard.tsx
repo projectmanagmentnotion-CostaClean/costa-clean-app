@@ -18,6 +18,10 @@ interface InvoiceDetailCardProps {
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  emptyState?: {
+    title: string
+    description: string
+  }
 }
 
 interface EditFormState {
@@ -252,6 +256,7 @@ export function InvoiceDetailCard({
   onInvoiceUpdated,
   onOpenDocument,
   onUnsavedChange,
+  emptyState,
 }: InvoiceDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -757,8 +762,8 @@ export function InvoiceDetailCard({
         </div>
       ) : (
         <div className="empty-state">
-          <strong>Ninguna factura seleccionada</strong>
-          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
+          <strong>{emptyState?.title ?? 'Ninguna factura seleccionada'}</strong>
+          <p>{emptyState?.description ?? 'Haz clic en una tarjeta del listado para ver su detalle.'}</p>
         </div>
       )}
 

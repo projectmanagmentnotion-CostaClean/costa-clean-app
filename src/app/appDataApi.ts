@@ -100,7 +100,42 @@ export async function listJobs(): Promise<JobListItem[]> {
 }
 
 export async function listInvoices(): Promise<InvoiceListItem[]> {
-  const loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>('invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc')
+  let loadedInvoices: InvoiceListItem[]
+
+  try {
+    loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>(
+      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc',
+    )
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    const hasRecoverableSchemaMismatch =
+      message.includes('REST 400')
+      && (
+        message.includes('property_id')
+        || message.includes('internal_notes')
+        || message.includes('pricing_metadata')
+      )
+
+    if (!hasRecoverableSchemaMismatch) {
+      throw error
+    }
+
+    const legacyInvoices = await fetchSupabaseRestList<Array<
+      Pick<InvoiceListItem, 'id' | 'display_code' | 'invoice_number' | 'job_id' | 'client_id' | 'issue_date' | 'status' | 'subtotal' | 'tax_amount' | 'total' | 'notes'>
+      & { quote_id?: string | null }
+    >[number]>(
+      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc',
+    )
+
+    loadedInvoices = legacyInvoices.map((invoice) => ({
+      ...invoice,
+      quote_id: invoice.quote_id ?? null,
+      property_id: null,
+      internal_notes: null,
+      pricing_metadata: {},
+    }))
+  }
+
   const invoiceLines = await fetchSupabaseRestList<NonNullable<InvoiceListItem['lines']>[number]>('invoice_lines?select=id,invoice_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc')
   const linesByInvoiceId = groupInvoiceLines(invoiceLines)
 

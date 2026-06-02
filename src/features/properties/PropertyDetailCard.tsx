@@ -22,6 +22,9 @@ interface PropertyDetailCardProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   onPropertyUpdated: () => Promise<void>
+  hideHeaderActions?: boolean
+  editRequestToken?: number
+  onEditingStateChange?: (isEditing: boolean) => void
 }
 
 interface EditFormState {
@@ -75,6 +78,9 @@ export function PropertyDetailCard({
   quotes,
   invoices,
   onPropertyUpdated,
+  hideHeaderActions = false,
+  editRequestToken,
+  onEditingStateChange,
 }: PropertyDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -90,6 +96,28 @@ export function PropertyDetailCard({
     postal_code: '',
     notes: '',
   })
+
+  useEffect(() => {
+    onEditingStateChange?.(isEditing)
+    return () => onEditingStateChange?.(false)
+  }, [isEditing, onEditingStateChange])
+
+  useEffect(() => {
+    if (!property || editRequestToken === undefined) return
+
+    setIsEditing(true)
+    setSaveError(null)
+    setSuccessMessage(null)
+    setForm({
+      client_id: property.client_id,
+      name: property.name,
+      property_type: property.property_type,
+      address: property.address,
+      city: property.city ?? '',
+      postal_code: property.postal_code ?? '',
+      notes: property.notes ?? '',
+    })
+  }, [editRequestToken, property])
 
   useEffect(() => {
     if (!property) {
@@ -285,26 +313,28 @@ export function PropertyDetailCard({
           <h2>Detalle de la propiedad</h2>
         </div>
 
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            setIsEditing((current) => !current)
-            setSaveError(null)
-            setSuccessMessage(null)
-            setForm({
-              client_id: property.client_id,
-              name: property.name,
-              property_type: property.property_type,
-              address: property.address,
-              city: property.city ?? '',
-              postal_code: property.postal_code ?? '',
-              notes: property.notes ?? '',
-            })
-          }}
-        >
-          {isEditing ? 'Cancelar edición' : 'Editar propiedad'}
-        </button>
+        {!hideHeaderActions ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => {
+              setIsEditing((current) => !current)
+              setSaveError(null)
+              setSuccessMessage(null)
+              setForm({
+                client_id: property.client_id,
+                name: property.name,
+                property_type: property.property_type,
+                address: property.address,
+                city: property.city ?? '',
+                postal_code: property.postal_code ?? '',
+                notes: property.notes ?? '',
+              })
+            }}
+          >
+            {isEditing ? 'Cancelar edición' : 'Editar propiedad'}
+          </button>
+        ) : null}
       </div>
 
       <div className="lead-detail-card">

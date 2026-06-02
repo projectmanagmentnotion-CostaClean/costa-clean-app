@@ -904,16 +904,19 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
                 />
-              ) : currentView === 'properties' ? (
-                <PropertiesPage
-                  properties={propertiesWithCodes}
-                  clients={clientsWithContext}
-                  jobs={jobsWithCodes}
-                  quotes={quotesWithCodes}
-                  invoices={invoicesWithCodes}
-                  error={propertyError}
-                  onPropertyCreated={refreshOperations}
-                />
+                ) : currentView === 'properties' ? (
+                  <PropertiesPage
+                    properties={propertiesWithCodes}
+                    clients={clientsWithContext}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    error={propertyError}
+                    onPropertyCreated={refreshOperations}
+                    onUnsavedChange={updateUnsavedChanges}
+                    confirmNavigation={runWithNavigationGuard}
+                  />
               ) : currentView === 'quotes' ? (
                 <QuotesPage
                   quotes={filteredQuotes}

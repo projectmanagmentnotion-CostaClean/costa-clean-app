@@ -49,6 +49,12 @@ export function InvoicesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [listState, setListState] = useState({
+    visibleCount: invoices.length,
+    totalCount: invoices.length,
+    hasError: Boolean(error),
+    searchQuery: '',
+  })
 
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
@@ -58,6 +64,27 @@ export function InvoicesPage({
   const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
   const paidInvoicesCount = invoices.filter((invoice) => invoice.status === 'paid').length
   const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
+  const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
+  const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
+
+  const detailEmptyState = error
+    ? {
+      title: 'Error real de carga',
+      description: error,
+    }
+    : invoices.length === 0
+      ? {
+        title: 'No hay facturas',
+        description: 'Todavía no existen facturas registradas en el sistema.',
+      }
+      : listState.visibleCount === 0
+        ? {
+          title: 'Sin resultados visibles',
+          description: listState.searchQuery.trim()
+            ? `No hay facturas que coincidan con "${listState.searchQuery.trim()}" y los filtros activos.`
+            : 'No hay facturas visibles con los filtros activos.',
+        }
+        : undefined
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en facturas')
@@ -173,6 +200,7 @@ export function InvoicesPage({
               error={error}
               selectedInvoiceId={selectedInvoiceKey}
               onOpenDocument={openInvoiceDocument}
+              onStateChange={(state) => setListState(state)}
               onSelectInvoice={(invoice) => {
                 if (invoice.id === selectedInvoiceKey) return
 
@@ -186,16 +214,17 @@ export function InvoicesPage({
 
           <div className="cc-master-layout__detail">
             <InvoiceDetailCard
-              invoice={selectedInvoice}
+              invoice={detailInvoice}
               jobs={jobs}
               quotes={quotes}
               onInvoiceUpdated={onInvoiceCreated}
               onOpenDocument={() => {
-                if (selectedInvoice) {
-                  openInvoiceDocument(selectedInvoice)
+                if (detailInvoice) {
+                  openInvoiceDocument(detailInvoice)
                 }
               }}
               onUnsavedChange={setHasUnsavedDetailChanges}
+              emptyState={detailEmptyState}
             />
           </div>
         </div>
@@ -206,13 +235,13 @@ export function InvoicesPage({
         </div>
 
         <div className="cc-doc-preview-panel cc-doc-preview-panel--workspace">
-          <InvoiceDocumentPreview invoice={selectedInvoice} />
+          <InvoiceDocumentPreview invoice={detailInvoice} />
         </div>
       </section>
 
-      {showDocumentScreen && selectedInvoice ? (
+      {showDocumentScreen && detailInvoice ? (
         <InvoiceDocumentScreen
-          invoice={selectedInvoice}
+          invoice={detailInvoice}
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}

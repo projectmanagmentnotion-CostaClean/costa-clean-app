@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { matchesSearchQuery } from '../documents/search'
@@ -13,6 +13,12 @@ interface InvoicesListProps {
   selectedInvoiceId: string | null
   onSelectInvoice: (invoice: InvoiceListItem) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
+  onStateChange?: (state: {
+    visibleCount: number
+    totalCount: number
+    hasError: boolean
+    searchQuery: string
+  }) => void
 }
 
 export function InvoicesList({
@@ -21,6 +27,7 @@ export function InvoicesList({
   selectedInvoiceId,
   onSelectInvoice,
   onOpenDocument,
+  onStateChange,
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'all' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
@@ -58,6 +65,15 @@ export function InvoicesList({
       return applySortDirection(comparison, preferences.sortDirection)
     })
   }, [invoices, preferences])
+
+  useEffect(() => {
+    onStateChange?.({
+      visibleCount: filteredInvoices.length,
+      totalCount: invoices.length,
+      hasError: Boolean(error),
+      searchQuery: preferences.searchQuery,
+    })
+  }, [error, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -113,7 +129,11 @@ export function InvoicesList({
       ) : filteredInvoices.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos facturas que coincidan con tu busqueda.</p>
+          <p>
+            {preferences.searchQuery.trim()
+              ? `No encontramos facturas para "${preferences.searchQuery.trim()}" con los filtros activos.`
+              : 'No encontramos facturas con los filtros activos.'}
+          </p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">

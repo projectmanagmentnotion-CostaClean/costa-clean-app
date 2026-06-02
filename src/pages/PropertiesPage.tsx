@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { NavigationGuard } from '../app/navigationGuard'
 import type { ClientListItem } from '../features/clients/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
+import type { PaymentListItem } from '../features/payments/types'
 import { PropertiesList } from '../features/properties/PropertiesList'
 import { PropertyCreateForm } from '../features/properties/PropertyCreateForm'
-import { PropertyDetailCard } from '../features/properties/PropertyDetailCard'
+import { PropertyWorkspace } from '../features/properties/PropertyWorkspace'
+import { usePropertyWorkspaceNavigation } from '../features/properties/usePropertyWorkspaceNavigation'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 
@@ -14,8 +17,11 @@ interface PropertiesPageProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
+  payments: PaymentListItem[]
   error: string | null
   onPropertyCreated: () => Promise<void>
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function PropertiesPage({
@@ -24,58 +30,115 @@ export function PropertiesPage({
   jobs,
   quotes,
   invoices,
+  payments,
   error,
   onPropertyCreated,
+  onUnsavedChange,
+  confirmNavigation,
 }: PropertiesPageProps) {
-  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
+  const {
+    activePropertyId,
+    activeTab,
+    openPropertyWorkspace,
+    closePropertyWorkspace,
+    setActiveTab,
+  } = usePropertyWorkspaceNavigation(properties.map((property) => property.id))
+  const activeProperty = useMemo(
+    () => properties.find((property) => property.id === activePropertyId) ?? null,
+    [activePropertyId, properties],
+  )
+  const hasPendingWork = showCreateForm || hasPendingWorkspaceState
 
-  const selectedProperty =
-    properties.find((property) => property.id === selectedPropertyId) ?? properties[0] ?? null
-  const selectedPropertyKey = selectedProperty?.id ?? null
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en propiedades')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork || !confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en propiedades. Si continuas, perderas esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
 
   return (
     <section className="page-section cc-master-page">
-      <div className="section-header page-header-actions cc-master-page__hero">
-        <div>
-          <h1>Propiedades</h1>
-          <p>Gestiona inmuebles, direcciones y datos operativos vinculados a clientes.</p>
-        </div>
+      {!activeProperty ? (
+        <>
+          <div className="section-header page-header-actions cc-master-page__hero">
+            <div>
+              <h1>Propiedades</h1>
+              <p>La cartera de inmuebles ahora funciona como punto de entrada a workspaces persistentes por propiedad.</p>
+            </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
-        >
-          {showCreateForm ? 'Cerrar formulario' : 'Nueva propiedad'}
-        </button>
-      </div>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                if (showCreateForm) {
+                  runGuarded(() => setShowCreateForm(false))
+                  return
+                }
 
-      {showCreateForm ? (
-        <PropertyCreateForm clients={clients} onCreated={onPropertyCreated} />
-      ) : null}
+                setShowCreateForm(true)
+              }}
+            >
+              {showCreateForm ? 'Cerrar formulario' : 'Nueva propiedad'}
+            </button>
+          </div>
 
-      <div className="cc-master-layout cc-master-layout--list-first">
-        <div className="cc-master-layout__list">
-          <PropertiesList
-            properties={properties}
-            error={error}
-            selectedPropertyId={selectedPropertyKey}
-            onSelectProperty={(property) => setSelectedPropertyId(property.id)}
-          />
-        </div>
+          {showCreateForm ? (
+            <PropertyCreateForm clients={clients} onCreated={onPropertyCreated} />
+          ) : null}
 
-        <div className="cc-master-layout__detail">
-          <PropertyDetailCard
-            property={selectedProperty}
-            clients={clients}
-            jobs={jobs}
-            quotes={quotes}
-            invoices={invoices}
-            onPropertyUpdated={onPropertyCreated}
-          />
-        </div>
-      </div>
+          <div className="data-section">
+            <div className="section-header page-header-actions">
+              <div>
+                <h2>Directorio de propiedades</h2>
+                <p>Abre una propiedad para ver su estado operativo, documental y financiero en contexto.</p>
+              </div>
+            </div>
+
+            <PropertiesList
+              properties={properties}
+              error={error}
+              selectedPropertyId={null}
+              onSelectProperty={(property) => {
+                runGuarded(() => {
+                  setShowCreateForm(false)
+                  openPropertyWorkspace(property.id)
+                })
+              }}
+            />
+          </div>
+        </>
+      ) : (
+        <PropertyWorkspace
+          property={activeProperty}
+          clients={clients}
+          jobs={jobs}
+          quotes={quotes}
+          invoices={invoices}
+          payments={payments}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onClose={() => {
+            runGuarded(() => {
+              setHasPendingWorkspaceState(false)
+              closePropertyWorkspace()
+            })
+          }}
+          onRefresh={onPropertyCreated}
+          onPendingStateChange={setHasPendingWorkspaceState}
+        />
+      )}
     </section>
   )
 }

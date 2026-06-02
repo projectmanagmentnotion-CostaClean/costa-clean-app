@@ -18,7 +18,25 @@ export async function fetchSupabaseRestList<T>(path: string): Promise<T[]> {
   })
 
   if (!response.ok) {
-    throw new Error(`REST ${response.status}: ${response.statusText}`)
+    let detail = response.statusText
+
+    try {
+      const rawBody = await response.text()
+      if (rawBody.trim()) {
+        try {
+          const parsedBody = JSON.parse(rawBody) as { message?: string; details?: string; hint?: string }
+          detail = [parsedBody.message, parsedBody.details, parsedBody.hint]
+            .filter((part) => typeof part === 'string' && part.trim().length > 0)
+            .join(' | ') || rawBody
+        } catch {
+          detail = rawBody
+        }
+      }
+    } catch {
+      detail = response.statusText
+    }
+
+    throw new Error(`REST ${response.status}: ${detail}`)
   }
 
   return ((await response.json()) as T[]) ?? []

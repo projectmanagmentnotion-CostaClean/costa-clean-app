@@ -10,6 +10,7 @@ import '../features/shell/document-density.css'
 import '../features/shell/forms-feedback-accessibility.css'
 import '../features/shell/qa-visual-fixes.css'
 import '../features/shell/status-badges.css'
+import '../features/clients/client-workspace.css'
 import type { AppView } from './navigation'
 import type { AppTheme } from './theme'
 import { useDashboardMetrics } from './dashboardMetrics'
@@ -338,6 +339,19 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       client_name: clientById.get(property.client_id)?.full_name ?? null,
     })),
     [properties, clientById, clientCodeById],
+  )
+
+  const clientsWithContext = useMemo(
+    () => clients.map((client) => ({
+      ...client,
+      source_lead_display_code: client.source_lead_id
+        ? leadById.get(client.source_lead_id)?.display_code ?? client.source_lead_id
+        : null,
+      source_lead_name: client.source_lead_id
+        ? leadById.get(client.source_lead_id)?.full_name ?? null
+        : null,
+    })),
+    [clients, leadById],
   )
 
   const quotesWithCodes = useMemo(
@@ -856,19 +870,26 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                 <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
               ) : currentView === 'clients' ? (
                 <ClientsPage
-                  clients={clients}
+                  clients={clientsWithContext}
                   properties={propertiesWithCodes}
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
                   error={clientError}
-                  onClientCreated={refreshOperations}
+                  onClientCreated={async () => {
+                    await Promise.all([
+                      refreshOperations(),
+                      reloadInvoicesAndPayments(),
+                    ])
+                  }}
+                  onUnsavedChange={updateUnsavedChanges}
+                  confirmNavigation={runWithNavigationGuard}
                 />
               ) : currentView === 'properties' ? (
                 <PropertiesPage
                   properties={propertiesWithCodes}
-                  clients={clients}
+                  clients={clientsWithContext}
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
@@ -878,7 +899,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'quotes' ? (
                 <QuotesPage
                   quotes={filteredQuotes}
-                  clients={clients}
+                  clients={clientsWithContext}
                   properties={properties}
                   error={quoteError}
                   onQuoteCreated={refreshOperations}
@@ -891,7 +912,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'jobs' ? (
                 <JobsPage
                   jobs={filteredJobs}
-                  clients={clients}
+                  clients={clientsWithContext}
                   properties={properties}
                   quotes={quotes}
                   error={jobError}

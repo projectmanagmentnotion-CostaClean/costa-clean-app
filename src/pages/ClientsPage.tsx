@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import type { NavigationGuard } from '../app/navigationGuard'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
-import { ClientDetailCard } from '../features/clients/ClientDetailCard'
+import { ClientWorkspace } from '../features/clients/ClientWorkspace'
 import { ClientsList } from '../features/clients/ClientsList'
+import {
+  type ClientWorkspaceTab,
+  useClientWorkspaceNavigation,
+} from '../features/clients/useClientWorkspaceNavigation'
 import type { ClientListItem } from '../features/clients/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -18,6 +23,8 @@ interface ClientsPageProps {
   payments: PaymentListItem[]
   error: string | null
   onClientCreated: () => Promise<void>
+  onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
+  confirmNavigation?: NavigationGuard
 }
 
 export function ClientsPage({
@@ -29,55 +36,118 @@ export function ClientsPage({
   payments,
   error,
   onClientCreated,
+  onUnsavedChange,
+  confirmNavigation,
 }: ClientsPageProps) {
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
+  const {
+    activeClientId,
+    activeTab,
+    openClientWorkspace,
+    closeClientWorkspace,
+    setActiveTab,
+  } = useClientWorkspaceNavigation(clients.map((client) => client.id))
 
-  const selectedClient =
-    clients.find((client) => client.id === selectedClientId) ?? clients[0] ?? null
-  const selectedClientKey = selectedClient?.id ?? null
+  const activeClient = useMemo(
+    () => clients.find((client) => client.id === activeClientId) ?? null,
+    [activeClientId, clients],
+  )
+  const hasPendingWork = showCreateForm || hasPendingWorkspaceState
+
+  useEffect(() => {
+    onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en clientes')
+    return () => onUnsavedChange?.(false)
+  }, [hasPendingWork, onUnsavedChange])
+
+  function runGuarded(action: () => void) {
+    if (!hasPendingWork) {
+      action()
+      return
+    }
+
+    if (!confirmNavigation) {
+      action()
+      return
+    }
+
+    confirmNavigation(action, {
+      description: 'Hay cambios sin guardar en clientes. Si continúas, perderás esos cambios.',
+      confirmLabel: 'Continuar',
+    })
+  }
+
+  function handleOpenWorkspace(clientId: string, tab: ClientWorkspaceTab = 'summary') {
+    runGuarded(() => {
+      setShowCreateForm(false)
+      openClientWorkspace(clientId, tab)
+    })
+  }
 
   return (
     <section className="page-section cc-master-page">
-      <div className="section-header page-header-actions cc-master-page__hero">
-        <div>
-          <h1>Clientes</h1>
-          <p>Gestiona la base de clientes con una lectura más clara y directa en móvil.</p>
-        </div>
+      {!activeClient ? (
+        <>
+          <div className="section-header page-header-actions cc-master-page__hero">
+            <div>
+              <h1>Clientes</h1>
+              <p>La cartera ahora funciona como punto de entrada a workspaces de cliente persistentes.</p>
+            </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => setShowCreateForm((current) => !current)}
-        >
-          {showCreateForm ? 'Cerrar formulario' : 'Nuevo cliente'}
-        </button>
-      </div>
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => {
+                if (showCreateForm) {
+                  runGuarded(() => setShowCreateForm(false))
+                  return
+                }
 
-      {showCreateForm ? <ClientCreateForm onCreated={onClientCreated} /> : null}
+                setShowCreateForm(true)
+              }}
+            >
+              {showCreateForm ? 'Cerrar formulario' : 'Nuevo cliente'}
+            </button>
+          </div>
 
-      <div className="cc-master-layout cc-master-layout--list-first">
-        <div className="cc-master-layout__list">
-          <ClientsList
-            clients={clients}
-            error={error}
-            selectedClientId={selectedClientKey}
-            onSelectClient={(client) => setSelectedClientId(client.id)}
-          />
-        </div>
+          {showCreateForm ? <ClientCreateForm onCreated={onClientCreated} /> : null}
 
-        <div className="cc-master-layout__detail">
-          <ClientDetailCard
-            client={selectedClient}
-            properties={properties}
-            jobs={jobs}
-            quotes={quotes}
-            invoices={invoices}
-            payments={payments}
-            onClientUpdated={onClientCreated}
-          />
-        </div>
-      </div>
+          <div className="data-section">
+            <div className="section-header page-header-actions">
+              <div>
+                <h2>Directorio de clientes</h2>
+                <p>Haz clic en una tarjeta para abrir su workspace operativo completo.</p>
+              </div>
+            </div>
+
+            <ClientsList
+              clients={clients}
+              error={error}
+              selectedClientId={null}
+              onSelectClient={(client) => handleOpenWorkspace(client.id)}
+            />
+          </div>
+        </>
+      ) : (
+        <ClientWorkspace
+          client={activeClient}
+          properties={properties}
+          jobs={jobs}
+          quotes={quotes}
+          invoices={invoices}
+          payments={payments}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onClose={() => {
+            runGuarded(() => {
+              setHasPendingWorkspaceState(false)
+              closeClientWorkspace()
+            })
+          }}
+          onRefresh={onClientCreated}
+          onPendingStateChange={setHasPendingWorkspaceState}
+        />
+      )}
     </section>
   )
 }

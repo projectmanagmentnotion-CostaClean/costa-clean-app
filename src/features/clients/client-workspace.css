@@ -1,0 +1,239 @@
+.cc-client-workspace {
+  display: grid;
+  gap: 1rem;
+}
+
+.cc-client-workspace__topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cc-client-workspace__eyebrow,
+.cc-client-workspace__kicker {
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.cc-client-workspace__hero {
+  border: 1px solid var(--card-border);
+  border-radius: 1.5rem;
+  padding: 1.35rem;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 75%, transparent) 0%, transparent 36%),
+    linear-gradient(160deg, color-mix(in srgb, var(--card) 92%, transparent), color-mix(in srgb, var(--bg-soft) 70%, transparent));
+  box-shadow: var(--shadow-shell);
+}
+
+.cc-client-workspace__identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cc-client-workspace__identity-copy h1 {
+  margin: 0.35rem 0 0.45rem;
+}
+
+.cc-client-workspace__identity-copy p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.cc-client-workspace__status {
+  display: grid;
+  justify-items: end;
+  gap: 0.45rem;
+}
+
+.cc-client-workspace__status-meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cc-client-workspace__meta,
+.cc-client-workspace__snapshot,
+.cc-client-workspace__summary-grid,
+.cc-client-workspace__activity-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.cc-client-workspace__meta {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+}
+
+.cc-client-workspace__meta-card,
+.cc-client-workspace__snapshot-card,
+.cc-client-workspace__relationship-card,
+.cc-client-workspace__nested-item,
+.cc-client-workspace__timeline-item,
+.cc-client-workspace__note-card {
+  border: 1px solid var(--card-border);
+  border-radius: 1.1rem;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  padding: 1rem;
+}
+
+.cc-client-workspace__meta-card span,
+.cc-client-workspace__snapshot-card span,
+.cc-client-workspace__note-card span,
+.cc-client-workspace__timeline-item span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cc-client-workspace__meta-card strong,
+.cc-client-workspace__snapshot-card strong,
+.cc-client-workspace__relationship-card strong,
+.cc-client-workspace__nested-item strong,
+.cc-client-workspace__timeline-item strong,
+.cc-client-workspace__note-card strong {
+  display: block;
+  margin-top: 0.45rem;
+}
+
+.cc-client-workspace__meta-card small,
+.cc-client-workspace__snapshot-card small,
+.cc-client-workspace__relationship-card small,
+.cc-client-workspace__nested-item small {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--muted);
+}
+
+.cc-client-workspace__snapshot {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.cc-client-workspace__actions,
+.cc-client-workspace__tabs,
+.cc-client-workspace__entity-grid,
+.cc-client-workspace__relationship-list,
+.cc-client-workspace__notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.cc-client-workspace__tabs {
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: 0.75rem;
+}
+
+.cc-client-workspace__tab {
+  min-height: var(--control-height-md);
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--card-border);
+  background: var(--cc-surface-glass-subtle);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.cc-client-workspace__tab.is-active {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: white;
+  border-color: transparent;
+}
+
+.cc-client-workspace__tab-panel,
+.cc-client-workspace__summary-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.cc-client-workspace__summary-grid {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+}
+
+.cc-client-workspace__ledger-grid,
+.cc-client-workspace__detail-stack,
+.cc-client-workspace__nested-list,
+.cc-client-workspace__timeline {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cc-client-workspace__relationship-list,
+.cc-client-workspace__entity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-client-workspace__entity-meta,
+.cc-client-workspace__inline-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.cc-client-workspace__entity-meta span,
+.cc-client-workspace__inline-summary span {
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--cc-surface-glass-subtle);
+  border: 1px solid var(--card-border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cc-client-workspace__timeline-item--success {
+  border-color: color-mix(in srgb, var(--success) 40%, var(--card-border));
+}
+
+.cc-client-workspace__timeline-item--warning {
+  border-color: color-mix(in srgb, var(--warning) 44%, var(--card-border));
+}
+
+.cc-client-workspace__timeline-item--info {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--card-border));
+}
+
+.cc-client-workspace__action-panel > .data-section {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+@media (max-width: 1100px) {
+  .cc-client-workspace__meta,
+  .cc-client-workspace__snapshot,
+  .cc-client-workspace__summary-grid,
+  .cc-client-workspace__relationship-list,
+  .cc-client-workspace__entity-grid,
+  .cc-client-workspace__activity-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .cc-client-workspace__topline,
+  .cc-client-workspace__identity {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cc-client-workspace__status {
+    justify-items: start;
+  }
+
+  .cc-client-workspace__meta,
+  .cc-client-workspace__snapshot,
+  .cc-client-workspace__summary-grid,
+  .cc-client-workspace__relationship-list,
+  .cc-client-workspace__entity-grid,
+  .cc-client-workspace__activity-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

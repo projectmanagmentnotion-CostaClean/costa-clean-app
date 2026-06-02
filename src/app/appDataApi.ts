@@ -83,7 +83,7 @@ export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
 }
 
 export async function listClients(): Promise<ClientListItem[]> {
-  return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,full_name,phone,email,tax_id,billing_address,status,source_lead_id&order=created_at.desc')
+  return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id&order=created_at.desc')
 }
 
 export async function listProperties(): Promise<PropertyListItem[]> {

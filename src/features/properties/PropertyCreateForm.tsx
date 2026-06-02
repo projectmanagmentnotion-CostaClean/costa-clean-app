@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../clients/types'
 
 interface PropertyCreateFormProps {
   clients: ClientListItem[]
   onCreated: () => Promise<void>
+  contextClientId?: string | null
 }
 
 interface FormState {
@@ -33,9 +34,14 @@ function getPropertyTypeLabel(value: string): string {
 export function PropertyCreateForm({
   clients,
   onCreated,
+  contextClientId = null,
 }: PropertyCreateFormProps) {
+  const contextualClient = useMemo(
+    () => (contextClientId ? clients.find((client) => client.id === contextClientId) ?? null : null),
+    [clients, contextClientId],
+  )
   const [form, setForm] = useState<FormState>({
-    client_id: '',
+    client_id: contextClientId ?? '',
     name: '',
     property_type: 'apartment',
     address: '',
@@ -106,7 +112,7 @@ export function PropertyCreateForm({
 
       await onCreated()
       setForm({
-        client_id: '',
+        client_id: contextClientId ?? '',
         name: '',
         property_type: 'apartment',
         address: '',
@@ -143,8 +149,9 @@ export function PropertyCreateForm({
             <select
               value={form.client_id}
               onChange={(event) => updateField('client_id', event.target.value)}
+              disabled={Boolean(contextualClient)}
             >
-              <option value="">Selecciona un cliente</option>
+              {!contextualClient ? <option value="">Selecciona un cliente</option> : null}
               {clients.map((client) => (
                 <option key={client.id} value={client.id}>
                   {formatClientLabel(client)}

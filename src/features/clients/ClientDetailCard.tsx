@@ -27,6 +27,10 @@ interface ClientDetailCardProps {
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
   onClientUpdated: () => Promise<void>
+  hideHeaderActions?: boolean
+  editRequestToken?: number
+  archiveRequestToken?: number
+  onEditingStateChange?: (isEditing: boolean) => void
 }
 
 interface EditFormState {
@@ -67,6 +71,10 @@ export function ClientDetailCard({
   invoices,
   payments,
   onClientUpdated,
+  hideHeaderActions = false,
+  editRequestToken = 0,
+  archiveRequestToken = 0,
+  onEditingStateChange,
 }: ClientDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -110,6 +118,31 @@ export function ClientDetailCard({
       status: client.status,
     })
   }, [client])
+
+  useEffect(() => {
+    onEditingStateChange?.(isEditing)
+  }, [isEditing, onEditingStateChange])
+
+  useEffect(() => {
+    if (!client || editRequestToken === 0) return
+
+    setIsEditing(true)
+    setSaveError(null)
+    setSuccessMessage(null)
+    setForm({
+      full_name: client.full_name,
+      phone: client.phone ?? '',
+      email: client.email ?? '',
+      tax_id: client.tax_id ?? '',
+      billing_address: client.billing_address ?? '',
+      status: client.status,
+    })
+  }, [client, editRequestToken])
+
+  useEffect(() => {
+    if (!client || archiveRequestToken === 0 || client.status === 'inactive') return
+    setPendingInactiveConfirmation(true)
+  }, [archiveRequestToken, client])
 
   const relationshipSummary = useMemo(() => {
     if (!client) return null
@@ -258,37 +291,39 @@ export function ClientDetailCard({
           <h2>Detalle del cliente</h2>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          {client.status !== 'inactive' ? (
+        {!hideHeaderActions ? (
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            {client.status !== 'inactive' ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setPendingInactiveConfirmation(true)}
+              >
+                Archivar cliente
+              </button>
+            ) : null}
+
             <button
               type="button"
               className="secondary-button"
-              onClick={() => setPendingInactiveConfirmation(true)}
+              onClick={() => {
+                setIsEditing((current) => !current)
+                setSaveError(null)
+                setSuccessMessage(null)
+                setForm({
+                  full_name: client.full_name,
+                  phone: client.phone ?? '',
+                  email: client.email ?? '',
+                  tax_id: client.tax_id ?? '',
+                  billing_address: client.billing_address ?? '',
+                  status: client.status,
+                })
+              }}
             >
-              Archivar cliente
+              {isEditing ? 'Cancelar edición' : 'Editar cliente'}
             </button>
-          ) : null}
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-              setForm({
-                full_name: client.full_name,
-                phone: client.phone ?? '',
-                email: client.email ?? '',
-                tax_id: client.tax_id ?? '',
-                billing_address: client.billing_address ?? '',
-                status: client.status,
-              })
-            }}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar cliente'}
-          </button>
-        </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="lead-detail-card">

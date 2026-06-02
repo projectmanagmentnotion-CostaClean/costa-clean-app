@@ -20,6 +20,7 @@ interface QuoteCreateFormProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   onCreated: () => Promise<void>
+  contextClientId?: string | null
 }
 
 interface FormState {
@@ -33,9 +34,10 @@ export function QuoteCreateForm({
   clients,
   properties,
   onCreated,
+  contextClientId = null,
 }: QuoteCreateFormProps) {
   const [form, setForm] = useState<FormState>({
-    client_id: '',
+    client_id: contextClientId ?? '',
     property_id: '',
     status: 'draft',
     notes: '',
@@ -136,7 +138,7 @@ export function QuoteCreateForm({
 
       await onCreated()
       setForm({
-        client_id: '',
+        client_id: contextClientId ?? '',
         property_id: '',
         status: 'draft',
         notes: '',
@@ -197,8 +199,9 @@ export function QuoteCreateForm({
                 <select
                   value={form.client_id}
                   onChange={(event) => updateField('client_id', event.target.value)}
+                  disabled={Boolean(contextClientId)}
                 >
-                  <option value="">Selecciona un cliente</option>
+                  {!contextClientId ? <option value="">Selecciona un cliente</option> : null}
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
                       {formatClientLabel(client)}

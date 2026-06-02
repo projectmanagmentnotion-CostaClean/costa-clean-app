@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react'
-import type { AppView } from './navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { appViews, type AppView } from './navigation'
 import type { NavigationGuardOptions } from './navigationGuard'
 
 interface PendingGuardedAction {
@@ -9,12 +9,45 @@ interface PendingGuardedAction {
   confirmLabel: string
 }
 
+const supportedViews = new Set<AppView>(appViews)
+
+function readViewFromLocation(): AppView {
+  if (typeof window === 'undefined') return 'dashboard'
+
+  const url = new URL(window.location.href)
+  const view = url.searchParams.get('view')
+
+  if (view && supportedViews.has(view as AppView)) {
+    return view as AppView
+  }
+
+  return 'dashboard'
+}
+
+function writeViewToLocation(view: AppView, replace = false) {
+  if (typeof window === 'undefined') return
+
+  const url = new URL(window.location.href)
+  url.searchParams.set('view', view)
+
+  if (replace) {
+    window.history.replaceState({ view }, '', url)
+    return
+  }
+
+  window.history.pushState({ view }, '', url)
+}
+
 export function useShellNavigation() {
-  const [currentView, setCurrentView] = useState<AppView>('dashboard')
+  const [currentView, setCurrentView] = useState<AppView>(() => readViewFromLocation())
   const [unsavedChangesContext, setUnsavedChangesContext] = useState<string | null>(null)
   const [pendingGuardedAction, setPendingGuardedAction] = useState<PendingGuardedAction | null>(null)
   const [navigationBackTarget, setNavigationBackTarget] = useState<AppView | null>(null)
   const viewBackStackRef = useRef<AppView[]>([])
+
+  useEffect(() => {
+    writeViewToLocation(readViewFromLocation(), true)
+  }, [])
 
   const updateUnsavedChanges = useCallback((hasUnsavedChanges: boolean, contextLabel = 'cambios sin guardar') => {
     setUnsavedChangesContext(hasUnsavedChanges ? contextLabel : null)
@@ -28,9 +61,24 @@ export function useShellNavigation() {
         viewBackStackRef.current = [...viewBackStackRef.current, currentView].slice(-8)
       }
 
+      writeViewToLocation(view, Boolean(options?.replace))
       setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
       return view
     })
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const handlePopState = () => {
+      setCurrentView(readViewFromLocation())
+      setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
   }, [])
 
   const runWithNavigationGuard = useCallback((action: () => void, options?: NavigationGuardOptions) => {

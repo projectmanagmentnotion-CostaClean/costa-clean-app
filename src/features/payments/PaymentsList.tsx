@@ -117,8 +117,8 @@ export function PaymentsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--payment'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--payment'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--payment cc-record-card--compact'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--payment cc-record-card--compact'
                 }
                 onClick={() => onSelectPayment(payment)}
               >

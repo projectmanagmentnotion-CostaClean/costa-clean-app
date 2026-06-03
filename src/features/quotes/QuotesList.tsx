@@ -149,8 +149,8 @@ export function QuotesList({
                 key={quote.id}
                 className={
                   isSelected
-                    ? 'cc-record-card cc-record-card--quote is-selected'
-                    : 'cc-record-card cc-record-card--quote'
+                    ? 'cc-record-card cc-record-card--quote cc-record-card--compact is-selected'
+                    : 'cc-record-card cc-record-card--quote cc-record-card--compact'
                 }
               >
                 <button
@@ -197,6 +197,7 @@ export function QuotesList({
                   >
                     Abrir documento
                   </button>
+                  <span className="cc-record-card__microhint">{getStatusLabel(quote.status)}</span>
                 </div>
               </article>
             )

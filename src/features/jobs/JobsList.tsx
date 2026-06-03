@@ -126,8 +126,8 @@ export function JobsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--job'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--job'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--job cc-record-card--compact'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--job cc-record-card--compact'
                 }
                 onClick={() => onSelectJob(job)}
               >

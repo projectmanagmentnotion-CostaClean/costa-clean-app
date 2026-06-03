@@ -63,6 +63,7 @@ export function getInvoiceFinancialStatusLabel(status: InvoiceFinancialStatus): 
 export function getPaymentOriginLabel(originType: string | null | undefined): string {
   switch (originType) {
     case 'transfer_auto': return 'Automatico por transferencia'
+    case 'transfer_regularization': return 'Regularizacion historica por transferencia'
     case 'manual': return 'Manual'
     default: return 'Manual'
   }

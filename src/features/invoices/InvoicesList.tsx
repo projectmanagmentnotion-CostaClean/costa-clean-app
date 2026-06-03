@@ -12,13 +12,17 @@ interface InvoicesListProps {
   invoices: InvoiceListItem[]
   error: string | null
   selectedInvoiceId: string | null
+  selectedInvoiceIds?: string[]
+  isSelectionMode?: boolean
   onSelectInvoice: (invoice: InvoiceListItem) => void
+  onToggleInvoiceSelection?: (invoiceId: string) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
   onStateChange?: (state: {
     visibleCount: number
     totalCount: number
     hasError: boolean
     searchQuery: string
+    visibleInvoices: InvoiceListItem[]
   }) => void
 }
 
@@ -26,7 +30,10 @@ export function InvoicesList({
   invoices,
   error,
   selectedInvoiceId,
+  selectedInvoiceIds = [],
+  isSelectionMode = false,
   onSelectInvoice,
+  onToggleInvoiceSelection,
   onOpenDocument,
   onStateChange,
 }: InvoicesListProps) {
@@ -78,8 +85,9 @@ export function InvoicesList({
       totalCount: invoices.length,
       hasError: Boolean(error),
       searchQuery: preferences.searchQuery,
+      visibleInvoices: filteredInvoices,
     })
-  }, [error, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
+  }, [error, filteredInvoices, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -146,16 +154,27 @@ export function InvoicesList({
         <div className="lead-list cc-record-list cc-bounded-list">
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
+            const isChecked = selectedInvoiceIds.includes(invoice.id)
 
             return (
               <article
                 key={invoice.id}
                 className={
                   isSelected
-                    ? 'cc-record-card cc-record-card--invoice is-selected'
-                    : 'cc-record-card cc-record-card--invoice'
+                    ? 'cc-record-card cc-record-card--invoice cc-record-card--compact is-selected'
+                    : 'cc-record-card cc-record-card--invoice cc-record-card--compact'
                 }
               >
+                {isSelectionMode ? (
+                  <label className="cc-record-card__selection" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => onToggleInvoiceSelection?.(invoice.id)}
+                    />
+                    <span>Seleccionar factura</span>
+                  </label>
+                ) : null}
                 <button
                   type="button"
                   className="lead-item-button cc-record-card__primary"
@@ -212,6 +231,11 @@ export function InvoicesList({
                   >
                     Abrir documento
                   </button>
+                  {invoice.payment_status !== 'paid' ? (
+                    <span className="cc-record-card__microhint">Pendiente {formatCurrency(invoice.outstanding_amount ?? invoice.total)}</span>
+                  ) : (
+                    <span className="cc-record-card__microhint">Cobro cerrado</span>
+                  )}
                 </div>
               </article>
             )

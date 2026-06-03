@@ -1,0 +1,145 @@
+.cc-record-list--compact,
+.cc-bounded-list {
+  gap: 10px;
+}
+
+.cc-record-card--compact,
+.cc-record-card--compact.cc-record-card--invoice,
+.cc-record-card--compact.cc-record-card--quote,
+.cc-record-card--compact.cc-record-card--job,
+.cc-record-card--compact.cc-record-card--payment {
+  position: relative;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+.cc-record-card--compact .cc-record-card__primary {
+  gap: 8px;
+}
+
+.cc-record-card--compact .cc-record-card__head {
+  gap: 10px;
+}
+
+.cc-record-card--compact .cc-record-card__title {
+  font-size: 0.95rem;
+  line-height: 1.12;
+}
+
+.cc-record-card--compact .cc-record-card__subref,
+.cc-record-card--compact .cc-record-card__summary,
+.cc-record-card--compact .cc-record-card__meta,
+.cc-record-card--compact .cc-record-card__chip {
+  font-size: 0.76rem;
+}
+
+.cc-record-card--compact .cc-record-card__summary {
+  max-width: none;
+  line-height: 1.35;
+}
+
+.cc-record-card--compact .cc-record-card__chips {
+  gap: 6px;
+}
+
+.cc-record-card--compact .cc-record-card__chip {
+  min-height: 24px;
+  padding: 0 10px;
+}
+
+.cc-record-card--compact .cc-record-card__amount,
+.cc-record-card--compact .cc-record-card__meta-emphasis {
+  font-size: 0.94rem;
+}
+
+.cc-record-card--compact .cc-record-card__footer {
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.cc-record-card__selection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.cc-record-card__selection input {
+  inline-size: 16px;
+  block-size: 16px;
+  margin: 0;
+}
+
+.cc-record-card__microhint {
+  color: var(--muted);
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.cc-bulk-toolbar {
+  display: grid;
+  gap: 10px;
+}
+
+.cc-bulk-toolbar__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cc-bulk-toolbar__summary strong {
+  font-size: 0.92rem;
+}
+
+.cc-bulk-toolbar__summary span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.cc-bulk-toolbar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-client-workspace__relationship-card,
+.cc-client-workspace__nested-item,
+.cc-client-workspace__timeline-item,
+.cc-client-workspace__note-card {
+  padding: 0.78rem 0.9rem;
+  border-radius: 0.95rem;
+}
+
+.cc-client-workspace__relationship-card strong,
+.cc-client-workspace__nested-item strong,
+.cc-client-workspace__timeline-item strong,
+.cc-client-workspace__note-card strong {
+  margin-top: 0.28rem;
+  font-size: 0.92rem;
+}
+
+.cc-client-workspace__relationship-card small,
+.cc-client-workspace__nested-item small {
+  margin-top: 0.24rem;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 640px) {
+  .cc-record-card--compact,
+  .cc-record-card--compact.cc-record-card--invoice,
+  .cc-record-card--compact.cc-record-card--quote,
+  .cc-record-card--compact.cc-record-card--job,
+  .cc-record-card--compact.cc-record-card--payment {
+    padding: 11px 12px;
+    border-radius: 16px;
+  }
+
+  .cc-bulk-toolbar__actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

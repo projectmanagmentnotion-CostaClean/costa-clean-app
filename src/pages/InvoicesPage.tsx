@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
@@ -8,6 +10,7 @@ import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
+import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
@@ -64,6 +67,15 @@ export function InvoicesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
+  const [visibleInvoices, setVisibleInvoices] = useState<InvoiceListItem[]>(invoices)
+  const [bulkDialog, setBulkDialog] = useState<{
+    mode: 'transfer' | 'sync' | 'cancel'
+    title: string
+    description: string
+  } | null>(null)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
   const [listState, setListState] = useState({
     visibleCount: invoices.length,
     totalCount: invoices.length,
@@ -81,6 +93,10 @@ export function InvoicesPage({
   const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
+  const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
+  const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
+  const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
+  const cancelEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status === 'draft' || invoice.status === 'issued')
 
   const detailEmptyState = error
     ? {
@@ -134,6 +150,61 @@ export function InvoicesPage({
       setSelectedInvoiceId(targetInvoice.id)
       setShowDocumentScreen(true)
     })
+  }
+
+  function toggleInvoiceSelection(invoiceId: string) {
+    setSelectedInvoiceIds((current) => (
+      current.includes(invoiceId)
+        ? current.filter((id) => id !== invoiceId)
+        : [...current, invoiceId]
+    ))
+  }
+
+  function toggleSelectAllVisible() {
+    const visibleIds = visibleInvoices.map((invoice) => invoice.id)
+    setSelectedInvoiceIds((current) => (
+      allVisibleSelected
+        ? current.filter((id) => !visibleIds.includes(id))
+        : [...new Set([...current, ...visibleIds])]
+    ))
+  }
+
+  async function runBulkAction() {
+    if (!bulkDialog) return
+
+    setBulkBusy(true)
+    setBulkFeedback(null)
+
+    try {
+      if (bulkDialog.mode === 'transfer') {
+        for (const invoice of transferEligibleInvoices) {
+          await settleInvoiceByTransfer(invoice.id)
+        }
+        await onInvoiceCreated()
+        setBulkFeedback(`Regularizacion completada en ${transferEligibleInvoices.length} factura(s).`)
+      }
+
+      if (bulkDialog.mode === 'sync') {
+        for (const invoice of selectedInvoices) {
+          await refreshInvoicePaymentStatus(invoice.id)
+        }
+        await onInvoiceCreated()
+        setBulkFeedback(`Sincronizacion completada en ${selectedInvoices.length} factura(s).`)
+      }
+
+      if (bulkDialog.mode === 'cancel') {
+        for (const invoice of cancelEligibleInvoices) {
+          await updateInvoiceStatus(invoice.id, 'cancelled')
+        }
+        await onInvoiceCreated()
+        setBulkFeedback(`Cancelacion administrativa aplicada en ${cancelEligibleInvoices.length} factura(s).`)
+      }
+
+      setSelectedInvoiceIds([])
+      setBulkDialog(null)
+    } finally {
+      setBulkBusy(false)
+    }
   }
 
   return (
@@ -203,6 +274,55 @@ export function InvoicesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
+        {selectedInvoiceIds.length > 0 ? (
+          <BulkSelectionToolbar
+            selectedCount={selectedInvoiceIds.length}
+            totalVisibleCount={visibleInvoices.length}
+            allVisibleSelected={allVisibleSelected}
+            onToggleSelectAllVisible={toggleSelectAllVisible}
+            onClearSelection={() => setSelectedInvoiceIds([])}
+            actions={[
+              {
+                id: 'transfer',
+                label: 'Cobrar por transferencia',
+                disabled: transferEligibleInvoices.length === 0,
+                onClick: () => setBulkDialog({
+                  mode: 'transfer',
+                  title: 'Regularizar cobro por transferencia',
+                  description: `${transferEligibleInvoices.length} factura(s) se pueden cubrir por transferencia. Las ya cobradas o canceladas quedaran fuera.`,
+                }),
+              },
+              {
+                id: 'sync',
+                label: 'Sincronizar cobro',
+                onClick: () => setBulkDialog({
+                  mode: 'sync',
+                  title: 'Sincronizar estado financiero',
+                  description: `Se recalculara el estado financiero derivado de ${selectedInvoices.length} factura(s) a partir de sus cobros reales.`,
+                }),
+              },
+              {
+                id: 'cancel',
+                label: 'Cancelar emitidas/borrador',
+                tone: 'warning',
+                disabled: cancelEligibleInvoices.length === 0,
+                onClick: () => setBulkDialog({
+                  mode: 'cancel',
+                  title: 'Cancelar facturas seleccionadas',
+                  description: `${cancelEligibleInvoices.length} factura(s) estan en estado compatible. No se tocara ninguna ya cancelada ni ninguna fuera de ese grupo.`,
+                }),
+              },
+            ]}
+          />
+        ) : null}
+
+        {bulkFeedback ? (
+          <div className="cc-alert cc-alert--success">
+            <strong>Operacion masiva completada</strong>
+            <p>{bulkFeedback}</p>
+          </div>
+        ) : null}
+
         <div className="cc-page-mode-strip">
           <span className="cc-page-mode-strip__pill cc-page-mode-strip__pill--active">Gestion</span>
           <span className="cc-page-mode-strip__text">Lista y detalle para emitir, revisar y actualizar</span>
@@ -214,8 +334,14 @@ export function InvoicesPage({
               invoices={invoices}
               error={error}
               selectedInvoiceId={selectedInvoiceKey}
+              selectedInvoiceIds={selectedInvoiceIds}
+              isSelectionMode
+              onToggleInvoiceSelection={toggleInvoiceSelection}
               onOpenDocument={openInvoiceDocument}
-              onStateChange={(state) => setListState(state)}
+              onStateChange={(state) => {
+                setListState(state)
+                setVisibleInvoices(state.visibleInvoices)
+              }}
               onSelectInvoice={(invoice) => {
                 if (invoice.id === selectedInvoiceKey) return
 
@@ -266,6 +392,17 @@ export function InvoicesPage({
           onClose={() => setShowDocumentScreen(false)}
         />
       ) : null}
+
+      <ConfirmDialog
+        isOpen={Boolean(bulkDialog)}
+        title={bulkDialog?.title ?? 'Confirmar accion masiva'}
+        description={bulkDialog?.description ?? ''}
+        confirmLabel="Aplicar accion"
+        tone="warning"
+        isBusy={bulkBusy}
+        onCancel={() => setBulkDialog(null)}
+        onConfirm={() => void runBulkAction()}
+      />
     </>
   )
 }

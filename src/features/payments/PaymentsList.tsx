@@ -11,6 +11,7 @@ interface PaymentsListProps {
   error: string | null
   selectedPaymentId: string | null
   onSelectPayment: (payment: PaymentListItem) => void
+  onOpenInvoiceDetail?: (invoiceId: string) => void
 }
 
 export function PaymentsList({
@@ -18,6 +19,7 @@ export function PaymentsList({
   error,
   selectedPaymentId,
   onSelectPayment,
+  onOpenInvoiceDetail,
 }: PaymentsListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('payment_date', 'desc', { method: 'all' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
@@ -112,16 +114,19 @@ export function PaymentsList({
             const isSelected = payment.id === selectedPaymentId
 
             return (
-              <button
+              <article
                 key={payment.id}
-                type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--payment cc-record-card--compact'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--payment cc-record-card--compact'
+                    ? 'cc-record-card cc-record-card--payment cc-record-card--compact is-selected'
+                    : 'cc-record-card cc-record-card--payment cc-record-card--compact'
                 }
-                onClick={() => onSelectPayment(payment)}
               >
+                <button
+                  type="button"
+                  className="lead-item-button cc-record-card__primary"
+                  onClick={() => onSelectPayment(payment)}
+                >
                 <div className="cc-record-card__head">
                   <div className="cc-record-card__identity">
                     <strong className="cc-record-card__title">
@@ -153,7 +158,31 @@ export function PaymentsList({
                     <span className="cc-record-card__meta-value">{payment.notes?.trim() || getPaymentOriginLabel(payment.origin_type)}</span>
                   </span>
                 </div>
-              </button>
+                </button>
+
+                <div className="cc-record-card__footer">
+                  <div className="cc-record-card__footer-actions">
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action is-primary"
+                      onClick={() => onSelectPayment(payment)}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onOpenInvoiceDetail?.(payment.invoice_id)
+                      }}
+                    >
+                      Factura
+                    </button>
+                  </div>
+                  <span className="cc-record-card__microhint">{getPaymentOriginLabel(payment.origin_type)}</span>
+                </div>
+              </article>
             )
           })}
         </div>

@@ -354,35 +354,39 @@ export function InvoicesPage({
           </div>
 
           <div className="cc-master-layout__detail">
-            <InvoiceDetailCard
-              invoice={detailInvoice}
-              jobs={jobs}
-              quotes={quotes}
-              payments={payments}
-              onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => {
-                if (detailInvoice) {
-                  openInvoiceDocument(detailInvoice)
-                }
-              }}
-              onViewPayments={onViewPayments}
-              onOpenJobWorkspace={onOpenJobWorkspace}
-              onOpenClientWorkspace={onOpenClientWorkspace}
-              onOpenPropertyWorkspace={onOpenPropertyWorkspace}
-              onOpenQuoteDetail={onOpenQuoteDetail}
-              onUnsavedChange={setHasUnsavedDetailChanges}
-              emptyState={detailEmptyState}
-            />
+            <div className="cc-doc-workspace__detail-stack">
+              <InvoiceDetailCard
+                invoice={detailInvoice}
+                jobs={jobs}
+                quotes={quotes}
+                payments={payments}
+                onInvoiceUpdated={onInvoiceCreated}
+                onOpenDocument={() => {
+                  if (detailInvoice) {
+                    openInvoiceDocument(detailInvoice)
+                  }
+                }}
+                onViewPayments={onViewPayments}
+                onOpenJobWorkspace={onOpenJobWorkspace}
+                onOpenClientWorkspace={onOpenClientWorkspace}
+                onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+                onOpenQuoteDetail={onOpenQuoteDetail}
+                onUnsavedChange={setHasUnsavedDetailChanges}
+                emptyState={detailEmptyState}
+              />
+
+              <div className="cc-contextual-preview-shell cc-doc-preview-panel--workspace">
+                <div className="cc-contextual-preview-shell__strip">
+                  <div className="cc-contextual-preview-shell__strip-copy">
+                    <span className="cc-contextual-preview-shell__eyebrow">Preview contextual</span>
+                    <strong>Documento sin salir de la vista</strong>
+                    <span>La factura seleccionada se revisa al lado del detalle operativo.</span>
+                  </div>
+                </div>
+                <InvoiceDocumentPreview invoice={detailInvoice} />
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="cc-page-mode-strip cc-page-mode-strip--document">
-          <span className="cc-page-mode-strip__pill">Documento</span>
-          <span className="cc-page-mode-strip__text">Vista previa separada para validacion y salida</span>
-        </div>
-
-        <div className="cc-doc-preview-panel cc-doc-preview-panel--workspace">
-          <InvoiceDocumentPreview invoice={detailInvoice} />
         </div>
       </section>
 

@@ -224,13 +224,22 @@ export function InvoicesList({
                 </button>
 
                 <div className="cc-record-card__footer">
-                  <button
-                    type="button"
-                    className="secondary-button cc-record-card__action"
-                    onClick={() => onOpenDocument(invoice)}
-                  >
-                    Abrir documento
-                  </button>
+                  <div className="cc-record-card__footer-actions">
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action is-primary"
+                      onClick={() => onSelectInvoice(invoice)}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action"
+                      onClick={() => onOpenDocument(invoice)}
+                    >
+                      Documento
+                    </button>
+                  </div>
                   {invoice.payment_status !== 'paid' ? (
                     <span className="cc-record-card__microhint">Pendiente {formatCurrency(invoice.outstanding_amount ?? invoice.total)}</span>
                   ) : (

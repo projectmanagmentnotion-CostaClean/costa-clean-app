@@ -162,6 +162,8 @@ export function JobsPage({
               jobs={jobs}
               error={error}
               selectedJobId={null}
+              onOpenQuoteDetail={onOpenQuoteDetail}
+              onOpenInvoiceDetail={onOpenInvoiceDetail}
               onSelectJob={(job) => handleOpenWorkspace(job.id)}
             />
           </div>

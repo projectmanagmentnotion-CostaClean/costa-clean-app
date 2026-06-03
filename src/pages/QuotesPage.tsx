@@ -171,33 +171,37 @@ export function QuotesPage({
           </div>
 
           <div className="cc-master-layout__detail">
-            <QuoteDetailCard
-              quote={selectedQuote}
-              clients={clients}
-              properties={properties}
-              onQuoteUpdated={onQuoteCreated}
-              onOpenDocument={() => {
-                if (selectedQuote) {
-                  openQuoteDocument(selectedQuote)
-                }
-              }}
-              onCreateJobFromQuote={onCreateJobFromQuote}
-              onUnsavedChange={setHasUnsavedDetailChanges}
-            />
+            <div className="cc-doc-workspace__detail-stack">
+              <QuoteDetailCard
+                quote={selectedQuote}
+                clients={clients}
+                properties={properties}
+                onQuoteUpdated={onQuoteCreated}
+                onOpenDocument={() => {
+                  if (selectedQuote) {
+                    openQuoteDocument(selectedQuote)
+                  }
+                }}
+                onCreateJobFromQuote={onCreateJobFromQuote}
+                onUnsavedChange={setHasUnsavedDetailChanges}
+              />
+
+              <div className="cc-contextual-preview-shell cc-doc-preview-panel--workspace">
+                <div className="cc-contextual-preview-shell__strip">
+                  <div className="cc-contextual-preview-shell__strip-copy">
+                    <span className="cc-contextual-preview-shell__eyebrow">Preview contextual</span>
+                    <strong>Documento sin salir de la vista</strong>
+                    <span>El presupuesto se valida dentro del mismo flujo comercial y operativo.</span>
+                  </div>
+                </div>
+                <QuoteDocumentPreview
+                  quote={selectedQuote}
+                  clients={clients}
+                  properties={properties}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="cc-page-mode-strip cc-page-mode-strip--document">
-          <span className="cc-page-mode-strip__pill">Documento</span>
-          <span className="cc-page-mode-strip__text">Vista previa aislada para revisar, imprimir o exportar</span>
-        </div>
-
-        <div className="cc-doc-preview-panel cc-doc-preview-panel--workspace">
-          <QuoteDocumentPreview
-            quote={selectedQuote}
-            clients={clients}
-            properties={properties}
-          />
         </div>
       </section>
 

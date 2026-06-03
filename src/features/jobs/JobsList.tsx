@@ -11,6 +11,8 @@ interface JobsListProps {
   error: string | null
   selectedJobId: string | null
   onSelectJob: (job: JobListItem) => void
+  onOpenQuoteDetail?: (quoteId: string) => void
+  onOpenInvoiceDetail?: (invoiceId: string) => void
 }
 
 function getJobPrimaryReference(job: JobListItem): string {
@@ -22,6 +24,8 @@ export function JobsList({
   error,
   selectedJobId,
   onSelectJob,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
 }: JobsListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'all' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
@@ -121,16 +125,19 @@ export function JobsList({
             const isSelected = job.id === selectedJobId
 
             return (
-              <button
+              <article
                 key={job.id}
-                type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--job cc-record-card--compact'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--job cc-record-card--compact'
+                    ? 'cc-record-card cc-record-card--job cc-record-card--compact is-selected'
+                    : 'cc-record-card cc-record-card--job cc-record-card--compact'
                 }
-                onClick={() => onSelectJob(job)}
               >
+                <button
+                  type="button"
+                  className="lead-item-button cc-record-card__primary"
+                  onClick={() => onSelectJob(job)}
+                >
                 <div className="cc-record-card__head">
                   <div className="cc-record-card__identity">
                     <strong className="cc-record-card__title">{formatJobLabel(job)}</strong>
@@ -162,7 +169,47 @@ export function JobsList({
                     <span className="cc-record-card__meta-value">{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</span>
                   </span>
                 </div>
-              </button>
+                </button>
+
+                <div className="cc-record-card__footer">
+                  <div className="cc-record-card__footer-actions">
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action is-primary"
+                      onClick={() => onSelectJob(job)}
+                    >
+                      Abrir
+                    </button>
+                    {job.quote_id ? (
+                      <button
+                        type="button"
+                        className="cc-record-card__inline-action"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onOpenQuoteDetail?.(job.quote_id!)
+                        }}
+                      >
+                        Presupuesto
+                      </button>
+                    ) : null}
+                    {job.invoice_id ? (
+                      <button
+                        type="button"
+                        className="cc-record-card__inline-action"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          onOpenInvoiceDetail?.(job.invoice_id!)
+                        }}
+                      >
+                        Factura
+                      </button>
+                    ) : null}
+                  </div>
+                  <span className="cc-record-card__microhint">
+                    {job.invoice_id ? 'Facturacion enlazada' : 'Pendiente de facturar'}
+                  </span>
+                </div>
+              </article>
             )
           })}
         </div>

@@ -128,6 +128,7 @@ export function PaymentsPage({
             payments={payments}
             error={error}
             selectedPaymentId={selectedPaymentKey}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
             onSelectPayment={(payment) => {
               if (payment.id === selectedPaymentKey) return
               runGuarded(() => setSelectedPaymentId(payment.id))

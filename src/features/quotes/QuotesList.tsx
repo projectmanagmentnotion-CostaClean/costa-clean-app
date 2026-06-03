@@ -190,13 +190,22 @@ export function QuotesList({
                 </button>
 
                 <div className="cc-record-card__footer">
-                  <button
-                    type="button"
-                    className="secondary-button cc-record-card__action"
-                    onClick={() => onOpenDocument(quote)}
-                  >
-                    Abrir documento
-                  </button>
+                  <div className="cc-record-card__footer-actions">
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action is-primary"
+                      onClick={() => onSelectQuote(quote)}
+                    >
+                      Abrir
+                    </button>
+                    <button
+                      type="button"
+                      className="cc-record-card__inline-action"
+                      onClick={() => onOpenDocument(quote)}
+                    >
+                      Documento
+                    </button>
+                  </div>
                   <span className="cc-record-card__microhint">{getStatusLabel(quote.status)}</span>
                 </div>
               </article>

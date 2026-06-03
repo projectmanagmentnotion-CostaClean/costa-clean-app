@@ -13,6 +13,7 @@ import {
   formatQuoteLabel,
 } from '../../app/relationshipLabels'
 import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import { PaymentCreateForm } from '../payments/PaymentCreateForm'
@@ -55,12 +56,13 @@ function getWorkspaceTabLabel(tab: JobWorkspaceTab) {
 function getRecommendedNextStep(
   job: JobListItem,
   invoice: InvoiceListItem | null,
-  payments: PaymentListItem[],
+  paymentSummary: ReturnType<typeof buildInvoicePaymentSummary> | null,
 ) {
   if (job.status !== 'completed') return 'Completar el servicio y revisar la ejecucion'
   if (!invoice) return 'Emitir factura desde el servicio'
-  if (invoice.status !== 'paid' && payments.length === 0) return 'Registrar cobro o hacer seguimiento'
-  if (invoice.status !== 'paid' && payments.length > 0) return 'Revisar saldo pendiente de cobro'
+  if (!paymentSummary || paymentSummary.outstandingAmount <= 0.009) return 'Servicio cerrado y cobrado'
+  if (paymentSummary.paidAmount <= 0.009) return 'Registrar cobro o hacer seguimiento'
+  if (paymentSummary.financialStatus === 'partially_paid') return 'Revisar saldo pendiente de cobro'
   return 'Servicio cerrado y cobrado'
 }
 
@@ -162,8 +164,12 @@ export function JobWorkspace({
     () => relatedPayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0),
     [relatedPayments],
   )
-  const outstanding = Math.max(Number(invoice?.total ?? 0) - totalCollected, 0)
-  const nextStep = getRecommendedNextStep(job, invoice, relatedPayments)
+  const paymentSummary = useMemo(
+    () => (invoice ? buildInvoicePaymentSummary(invoice, relatedPayments) : null),
+    [invoice, relatedPayments],
+  )
+  const outstanding = paymentSummary?.outstandingAmount ?? 0
+  const nextStep = getRecommendedNextStep(job, invoice, paymentSummary)
   const operationalSignal = getOperationalSignal(job, invoice, outstanding)
   const timelineItems = useMemo(
     () => buildJobTimelineItems({ job, quote, invoice, payments: relatedPayments }),
@@ -240,11 +246,11 @@ export function JobWorkspace({
           <strong>{quote ? 'Desde presupuesto' : 'Servicio directo'}</strong>
           <small>{quote ? formatQuoteLabel(quote) : 'Sin presupuesto origen'}</small>
         </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Factura asociada</span>
-          <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente'}</strong>
-          <small>{invoice ? getDisplayStatusLabel(invoice.status) : 'Todavia no emitida'}</small>
-        </article>
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Factura asociada</span>
+            <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente'}</strong>
+            <small>{invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Todavia no emitida'}</small>
+          </article>
         <article className="cc-client-workspace__snapshot-card">
           <span>Estado de cobro</span>
           <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
@@ -418,7 +424,9 @@ export function JobWorkspace({
                 <h2>Factura</h2>
                 <p>{invoice ? formatInvoiceLabel(invoice) : 'Sin factura asociada'}</p>
               </div>
-              <span className="lead-badge">{invoice ? getDisplayStatusLabel(invoice.status) : 'Pendiente'}</span>
+              <span className="lead-badge">
+                {invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}
+              </span>
             </div>
 
             <div className="cc-client-workspace__detail-stack">

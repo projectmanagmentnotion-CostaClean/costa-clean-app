@@ -146,7 +146,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
 }
 
 export async function listPayments(): Promise<PaymentListItem[]> {
-  return fetchSupabaseRestList<PaymentListItem>('payments?select=id,display_code,invoice_id,payment_date,amount,payment_method,notes&order=created_at.desc')
+  return fetchSupabaseRestList<PaymentListItem>('payments?select=id,display_code,invoice_id,payment_date,created_at,amount,payment_method,origin_type,notes&order=created_at.desc')
 }
 
 export async function listRecurringInvoicePlans(): Promise<RecurringInvoicePlanListItem[]> {

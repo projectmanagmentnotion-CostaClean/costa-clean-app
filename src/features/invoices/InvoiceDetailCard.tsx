@@ -1,22 +1,35 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatCurrency, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatInvoiceLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
-import { saveInvoiceWithLines, updateInvoiceStatus as updateInvoiceStatusRpc } from '../financial/financialWriteApi'
-import type { InvoiceLineItem, InvoiceListItem } from './types'
+import {
+  saveInvoiceWithLines,
+  settleInvoiceByTransfer,
+  updateInvoiceStatus as updateInvoiceStatusRpc,
+} from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
+import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
+import {
+  buildInvoicePaymentMeta,
+  buildInvoicePaymentSummary,
+  getInvoiceFinancialStatusLabel,
+} from './paymentState'
+import type { InvoiceLineItem, InvoiceListItem } from './types'
 
 interface InvoiceDetailCardProps {
   invoice: InvoiceListItem | null
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  payments: PaymentListItem[]
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
+  onViewPayments: (invoiceId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   emptyState?: {
     title: string
@@ -50,6 +63,8 @@ interface LinePayload {
   unit_price: number
   line_subtotal: number
 }
+
+type PaymentActionMode = 'manual' | 'partial' | null
 
 function createLocalId(prefix: string): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -187,7 +202,7 @@ function formatLineSubtotalInput(line: LineFormState): string {
 
 function formatLineSubtotalDisplay(line: LineFormState): string {
   const lineSubtotal = calculateLineSubtotal(line)
-  return Number.isNaN(lineSubtotal) ? 'Importe no válido' : formatCurrency(lineSubtotal)
+  return Number.isNaN(lineSubtotal) ? 'Importe no valido' : formatCurrency(lineSubtotal)
 }
 
 function getInvoicePrimaryReference(invoice: InvoiceListItem): string {
@@ -253,8 +268,10 @@ export function InvoiceDetailCard({
   invoice,
   jobs,
   quotes,
+  payments,
   onInvoiceUpdated,
   onOpenDocument,
+  onViewPayments,
   onUnsavedChange,
   emptyState,
 }: InvoiceDetailCardProps) {
@@ -262,6 +279,7 @@ export function InvoiceDetailCard({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [paymentActionMode, setPaymentActionMode] = useState<PaymentActionMode>(null)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -296,11 +314,21 @@ export function InvoiceDetailCard({
     return getFormLinesFromInvoice(invoice)
   }, [invoice])
 
+  const invoicePayments = useMemo(
+    () => invoice ? payments.filter((payment) => payment.invoice_id === invoice.id) : [],
+    [invoice, payments],
+  )
+  const paymentSummary = useMemo(
+    () => invoice ? buildInvoicePaymentSummary(invoice, invoicePayments) : null,
+    [invoice, invoicePayments],
+  )
+
   useEffect(() => {
     if (!invoice) {
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setPaymentActionMode(null)
       setForm({
         job_id: '',
         client_id: '',
@@ -315,6 +343,7 @@ export function InvoiceDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setPaymentActionMode(null)
     setForm({
       job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
@@ -326,9 +355,9 @@ export function InvoiceDetailCard({
   }, [invoice])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing)
+    onUnsavedChange?.(isEditing || paymentActionMode !== null)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange])
+  }, [isEditing, onUnsavedChange, paymentActionMode])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setForm((current) => ({
@@ -388,7 +417,7 @@ export function InvoiceDetailCard({
       await updateInvoiceStatusRpc(invoice.id, nextStatus)
 
       await onInvoiceUpdated()
-      setSuccessMessage(`Estado de la factura actualizado a ${getStatusLabel(nextStatus)}.`)
+      setSuccessMessage(`Estado administrativo de la factura actualizado a ${getStatusLabel(nextStatus)}.`)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el estado de la factura.'
@@ -400,6 +429,36 @@ export function InvoiceDetailCard({
 
   function requestInvoiceStatusUpdate(nextStatus: string) {
     void updateInvoiceStatus(nextStatus)
+  }
+
+  async function handleTransferSettlement() {
+    if (!invoice || !paymentSummary) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+
+    try {
+      const result = await settleInvoiceByTransfer(invoice.id)
+      await onInvoiceUpdated()
+
+      if (!result.created_payment) {
+        setSuccessMessage('La factura ya estaba completamente cubierta por cobros reales. No se creó otro cobro.')
+        return
+      }
+
+      setSuccessMessage(
+        paymentSummary.financialStatus === 'partially_paid'
+          ? 'Se registró por transferencia el importe restante y la factura quedó cobrada.'
+          : 'Se registró el cobro por transferencia con el importe pendiente exacto.',
+      )
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Error desconocido registrando el cobro por transferencia.'
+      setSaveError(message)
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function saveInvoiceEdits() {
@@ -416,14 +475,14 @@ export function InvoiceDetailCard({
       }
 
       if (!form.issue_date) {
-        setSaveError('Debes indicar la fecha de emisión.')
+        setSaveError('Debes indicar la fecha de emision.')
         return
       }
 
       const linePayloads = buildLinePayloads(lines, invoice.id)
 
       if (!linePayloads || linePayloads.length === 0) {
-        setSaveError('Cada línea debe tener concepto, cantidad mayor que 0 y precio unitario válido.')
+        setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
 
@@ -433,6 +492,7 @@ export function InvoiceDetailCard({
           job_id: form.job_id || null,
           quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
           client_id: form.client_id,
+          property_id: invoice.property_id ?? null,
           issue_date: form.issue_date,
           status: form.status,
           subtotal: subtotalValue,
@@ -487,10 +547,11 @@ export function InvoiceDetailCard({
                 setIsEditing((current) => !current)
                 setSaveError(null)
                 setSuccessMessage(null)
+                setPaymentActionMode(null)
                 resetFormFromInvoice()
               }}
             >
-              {isEditing ? 'Cancelar edición' : 'Editar factura'}
+              {isEditing ? 'Cancelar edicion' : 'Editar factura'}
             </button>
           </div>
         ) : null}
@@ -504,7 +565,9 @@ export function InvoiceDetailCard({
               <h3>{getInvoicePrimaryReference(invoice)}</h3>
               <p>Interno {getInvoiceInternalReference(invoice)}</p>
             </div>
-            <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
+            <span className={`lead-badge cc-status-badge cc-status-badge--${paymentSummary?.financialStatus ?? invoice.status}`}>
+              {paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : getStatusLabel(invoice.status)}
+            </span>
           </div>
 
           {!isEditing ? (
@@ -512,17 +575,34 @@ export function InvoiceDetailCard({
               <div className="cc-detail-panel__summary-card">
                 <span>Cliente</span>
                 <strong>{formatInvoiceLabel(invoice)}</strong>
-                <small>{invoice.job_id ? formatJobLabel({ id: invoice.job_id, display_code: invoice.job_display_code, billing_concept: invoice.billing_concept, property_name: invoice.property_name, property_display_code: invoice.property_display_code, client_name: invoice.client_name, client_display_code: invoice.client_display_code }) : 'Sin servicio'}</small>
+                <small>
+                  {invoice.job_id
+                    ? formatJobLabel({
+                      id: invoice.job_id,
+                      display_code: invoice.job_display_code,
+                      billing_concept: invoice.billing_concept,
+                      property_name: invoice.property_name,
+                      property_display_code: invoice.property_display_code,
+                      client_name: invoice.client_name,
+                      client_display_code: invoice.client_display_code,
+                    })
+                    : 'Sin servicio'}
+                </small>
               </div>
               <div className="cc-detail-panel__summary-card">
                 <span>Emision</span>
-                <strong>{invoice.issue_date}</strong>
+                <strong>{formatDateEs(invoice.issue_date)}</strong>
                 <small>{displayLines.length} linea(s)</small>
               </div>
               <div className="cc-detail-panel__summary-card">
                 <span>Total</span>
                 <strong>{formatCurrency(invoice.total)}</strong>
                 <small>{formatCurrency(invoice.tax_amount)} IVA</small>
+              </div>
+              <div className="cc-detail-panel__summary-card">
+                <span>Estado financiero</span>
+                <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
+                <small>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</small>
               </div>
             </div>
           ) : null}
@@ -545,7 +625,7 @@ export function InvoiceDetailCard({
               </label>
 
               <label className="form-field">
-                <span>Fecha de emisión *</span>
+                <span>Fecha de emision *</span>
                 <input
                   type="date"
                   value={form.issue_date}
@@ -555,7 +635,7 @@ export function InvoiceDetailCard({
               </label>
 
               <label className="form-field">
-                <span>Estado</span>
+                <span>Estado administrativo</span>
                 <select
                   value={form.status}
                   onChange={(event) => updateField('status', event.target.value)}
@@ -563,70 +643,67 @@ export function InvoiceDetailCard({
                   {invoiceManualStatusOptions.map((status) => (
                     <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
                   ))}
-                  {invoice.status === 'paid' ? (
-                    <option value="paid" disabled>Pagada (derivada de cobros)</option>
-                  ) : null}
                 </select>
               </label>
 
               <div className="form-field form-field-full">
-                <span>Líneas de factura *</span>
+                <span>Lineas de factura *</span>
                 <div className="cc-detail-panel__line-items">
-                {lines.map((line, index) => (
-                  <div key={line.local_id} className="lead-form cc-detail-panel__line-item" style={{ marginTop: '0.75rem' }}>
-                    <label className="form-field form-field-full">
-                      <span>Concepto {index + 1}</span>
-                      <input
-                        value={line.concept}
-                        onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
-                        required
-                      />
-                    </label>
+                  {lines.map((line, index) => (
+                    <div key={line.local_id} className="lead-form cc-detail-panel__line-item" style={{ marginTop: '0.75rem' }}>
+                      <label className="form-field form-field-full">
+                        <span>Concepto {index + 1}</span>
+                        <input
+                          value={line.concept}
+                          onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                    <label className="form-field">
-                      <span>Cantidad</span>
-                      <input
-                        value={line.quantity}
-                        onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
-                        required
-                      />
-                    </label>
+                      <label className="form-field">
+                        <span>Cantidad</span>
+                        <input
+                          value={line.quantity}
+                          onChange={(event) => updateLine(line.local_id, 'quantity', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                    <label className="form-field">
-                      <span>Unidad</span>
-                      <input
-                        value={line.unit}
-                        onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
-                        required
-                      />
-                    </label>
+                      <label className="form-field">
+                        <span>Unidad</span>
+                        <input
+                          value={line.unit}
+                          onChange={(event) => updateLine(line.local_id, 'unit', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                    <label className="form-field">
-                      <span>Precio unitario</span>
-                      <input
-                        value={line.unit_price}
-                        onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
-                        required
-                      />
-                    </label>
+                      <label className="form-field">
+                        <span>Precio unitario</span>
+                        <input
+                          value={line.unit_price}
+                          onChange={(event) => updateLine(line.local_id, 'unit_price', event.target.value)}
+                          required
+                        />
+                      </label>
 
-                    <label className="form-field">
-                      <span>Importe</span>
-                      <input value={formatLineSubtotalInput(line)} readOnly />
-                    </label>
+                      <label className="form-field">
+                        <span>Importe</span>
+                        <input value={formatLineSubtotalInput(line)} readOnly />
+                      </label>
 
-                    <div className="form-actions form-field-full">
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => removeLine(line.local_id)}
-                        disabled={lines.length === 1}
-                      >
-                        Quitar línea
-                      </button>
+                      <div className="form-actions form-field-full">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => removeLine(line.local_id)}
+                          disabled={lines.length === 1}
+                        >
+                          Quitar linea
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 </div>
 
                 <button
@@ -635,7 +712,7 @@ export function InvoiceDetailCard({
                   onClick={() => setLines((current) => [...current, createBlankLine()])}
                   style={{ marginTop: '0.75rem' }}
                 >
-                  Añadir línea
+                  Añadir linea
                 </button>
               </div>
 
@@ -682,83 +759,182 @@ export function InvoiceDetailCard({
 
               {successMessage ? (
                 <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
+                  <strong>Operacion correcta</strong>
                   <p>{successMessage}</p>
                 </div>
               ) : null}
             </form>
           ) : (
             <>
-              <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
-                {invoiceManualStatusOptions.map((status) => (
-                  <button
-                    key={status}
-                    type="button"
-                    className={status === invoice.status ? 'primary-button' : 'secondary-button'}
-                    onClick={() => requestInvoiceStatusUpdate(status)}
-                    disabled={isSaving || status === invoice.status}
-                  >
-                    {getStatusOptionLabel(status)}
-                  </button>
-                ))}
-                {invoice.status === 'paid' ? (
-                  <button type="button" className="primary-button" disabled>
-                    Pagada por cobros
-                  </button>
-                ) : null}
-              </div>
+              <section className="data-section" style={{ marginBottom: '1rem' }}>
+                <div className="section-header page-header-actions">
+                  <div>
+                    <h2>Bloque de cobro</h2>
+                    <p>El estado financiero se deriva solo de los cobros reales asociados.</p>
+                  </div>
+                </div>
 
-            <div className="lead-detail-grid cc-detail-panel__grid">
-              <div className="detail-row">
-                <span className="detail-label">Número factura</span>
-                <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+                <div className="lead-detail-grid cc-detail-panel__grid">
+                  <div className="detail-row">
+                    <span className="detail-label">Total</span>
+                    <strong>{formatCurrency(invoice.total)}</strong>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Cobrado</span>
+                    <strong>{formatCurrency(paymentSummary?.paidAmount ?? 0)}</strong>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Pendiente</span>
+                    <strong>{formatCurrency(paymentSummary?.outstandingAmount ?? invoice.total)}</strong>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Estado financiero</span>
+                    <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Ultimo cobro</span>
+                    <strong>
+                      {paymentSummary?.lastPayment
+                        ? `${formatDateEs(paymentSummary.lastPayment.payment_date)} · ${formatCurrency(paymentSummary.lastPayment.amount)}`
+                        : 'Sin cobros'}
+                    </strong>
+                  </div>
+                  <div className="detail-row">
+                    <span className="detail-label">Metodo y origen</span>
+                    <strong>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</strong>
+                  </div>
+                </div>
+
+                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => void handleTransferSettlement()}
+                    disabled={isSaving || !paymentSummary || paymentSummary.outstandingAmount <= 0.009 || invoice.status === 'cancelled'}
+                  >
+                    {paymentSummary?.financialStatus === 'partially_paid'
+                      ? 'Cobrar restante por transferencia'
+                      : 'Cobrar por transferencia'}
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setPaymentActionMode('manual')}
+                    disabled={isSaving || invoice.status === 'cancelled'}
+                  >
+                    Registrar cobro
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setPaymentActionMode('partial')}
+                    disabled={isSaving || invoice.status === 'cancelled' || (paymentSummary?.outstandingAmount ?? invoice.total) <= 0.009}
+                  >
+                    Registrar cobro parcial
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onViewPayments(invoice.id)}
+                  >
+                    Ver cobros
+                  </button>
+                </div>
+
+                {paymentActionMode ? (
+                  <div style={{ marginTop: '1rem' }}>
+                    <PaymentCreateForm
+                      invoices={[invoice]}
+                      clients={[]}
+                      properties={[]}
+                      jobs={[]}
+                      quotes={[]}
+                      onCreated={async () => {
+                        await onInvoiceUpdated()
+                        setPaymentActionMode(null)
+                      }}
+                      title={paymentActionMode === 'partial' ? 'Registrar cobro parcial' : 'Registrar cobro'}
+                      description={
+                        paymentActionMode === 'partial'
+                          ? 'Registra un importe manual inferior o igual al pendiente real.'
+                          : 'Registra un cobro asociado a esta factura sin salir del detalle.'
+                      }
+                      submitLabel={paymentActionMode === 'partial' ? 'Guardar cobro parcial' : 'Guardar cobro'}
+                      prefillInvoiceId={invoice.id}
+                      prefillAmount={paymentActionMode === 'manual'
+                        ? formatMoneyInput(paymentSummary?.outstandingAmount ?? invoice.total)
+                        : ''}
+                      lockInvoiceSelection
+                      hideInvoiceCreateAction
+                    />
+                  </div>
+                ) : null}
+
+                <div className="form-actions cc-detail-panel__status-actions" style={{ marginTop: '1rem' }}>
+                  {invoiceManualStatusOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      className={status === invoice.status ? 'primary-button' : 'secondary-button'}
+                      onClick={() => requestInvoiceStatusUpdate(status)}
+                      disabled={isSaving || status === invoice.status}
+                    >
+                      {getStatusOptionLabel(status)}
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <div className="lead-detail-grid cc-detail-panel__grid">
+                <div className="detail-row">
+                  <span className="detail-label">Numero factura</span>
+                  <strong>{invoice.invoice_number ?? 'Sin numero'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Codigo interno</span>
+                  <strong>{getInvoiceInternalReference(invoice)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Servicio</span>
+                  <strong>{getInvoiceServiceReference(invoice)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Cliente</span>
+                  <strong>{formatClientLabel({ client_id: invoice.client_id, client_display_code: invoice.client_display_code, client_name: invoice.client_name })}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Fecha de emision</span>
+                  <strong>{formatDateEs(invoice.issue_date)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Cobro</span>
+                  <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Lineas</span>
+                  <strong>
+                    {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
+                  </strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Subtotal</span>
+                  <strong>{formatCurrency(invoice.subtotal)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">IVA</span>
+                  <strong>{formatCurrency(invoice.tax_amount)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Total</span>
+                  <strong>{formatCurrency(invoice.total)}</strong>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Notas</span>
+                  <strong>{invoice.notes ?? 'Sin notas'}</strong>
+                </div>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Código interno</span>
-                <strong>{getInvoiceInternalReference(invoice)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Servicio</span>
-                <strong>{getInvoiceServiceReference(invoice)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Cliente</span>
-                <strong>{formatClientLabel({ client_id: invoice.client_id, client_display_code: invoice.client_display_code, client_name: invoice.client_name })}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Fecha de emisión</span>
-                <strong>{invoice.issue_date}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Cobro</span>
-                <strong>{invoice.status === 'paid' ? 'Derivado de cobros registrados' : 'Pendiente o parcial según cobros'}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Líneas</span>
-                <strong>
-                  {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
-                </strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Subtotal</span>
-                <strong>{formatCurrency(invoice.subtotal)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">IVA</span>
-                <strong>{formatCurrency(invoice.tax_amount)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Total</span>
-                <strong>{formatCurrency(invoice.total)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Notas</span>
-                <strong>{invoice.notes ?? 'Sin notas'}</strong>
-              </div>
-            </div>
             </>
           )}
-
         </div>
       ) : (
         <div className="empty-state">
@@ -782,7 +958,6 @@ export function InvoiceDetailCard({
         message={successMessage ?? ''}
         onClose={() => setSuccessMessage(null)}
       />
-
     </section>
   )
 }

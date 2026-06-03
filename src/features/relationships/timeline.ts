@@ -1,5 +1,6 @@
 import { formatCurrency } from '../../app/displayFormat'
 import type { ClientListItem } from '../clients/types'
+import { buildInvoicePaymentSummary } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
@@ -39,16 +40,19 @@ function describeJobStatus(status: string) {
   return 'Servicio programado'
 }
 
-function describeInvoiceStatus(status: string) {
-  if (status === 'paid') return 'Factura cobrada'
-  if (status === 'issued') return 'Factura emitida'
+function describeInvoiceStatus(invoice: InvoiceListItem, payments: PaymentListItem[]) {
+  const paymentSummary = buildInvoicePaymentSummary(invoice, payments)
+
+  if (paymentSummary.financialStatus === 'paid') return 'Factura cobrada'
+  if (paymentSummary.financialStatus === 'partially_paid') return 'Factura parcialmente cobrada'
+  if (invoice.status === 'issued') return 'Factura emitida'
   return 'Factura registrada'
 }
 
 function describeRecurringStatus(status: string) {
-  if (status === 'paused') return 'Automatización pausada'
-  if (status === 'archived') return 'Automatización archivada'
-  return 'Automatización activa'
+  if (status === 'paused') return 'Automatizacion pausada'
+  if (status === 'archived') return 'Automatizacion archivada'
+  return 'Automatizacion activa'
 }
 
 function buildRecurringTimelineDate(plan: RecurringInvoicePlanListItem): string | null {
@@ -134,13 +138,15 @@ export function buildClientTimelineItems({
 
   for (const invoice of invoices) {
     if (!hasTimelineDate(invoice.issue_date)) continue
+    const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
+    const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
 
     items.push({
       id: `invoice-${invoice.id}`,
       date: invoice.issue_date,
-      title: describeInvoiceStatus(invoice.status),
+      title: describeInvoiceStatus(invoice, invoicePayments),
       detail: `${invoice.display_code ?? invoice.id} · ${formatCurrency(invoice.total)}`,
-      tone: invoice.status === 'paid' ? 'success' : 'warning',
+      tone: paymentSummary.financialStatus === 'paid' ? 'success' : 'warning',
       entityType: 'invoice',
       entityId: invoice.id,
     })
@@ -222,13 +228,15 @@ export function buildPropertyTimelineItems({
 
   for (const invoice of invoices) {
     if (!hasTimelineDate(invoice.issue_date)) continue
+    const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
+    const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
 
     items.push({
       id: `invoice-${invoice.id}`,
       date: invoice.issue_date,
-      title: describeInvoiceStatus(invoice.status),
+      title: describeInvoiceStatus(invoice, invoicePayments),
       detail: `${invoice.display_code ?? invoice.id} · ${formatCurrency(invoice.total)}`,
-      tone: invoice.status === 'paid' ? 'success' : 'warning',
+      tone: paymentSummary.financialStatus === 'paid' ? 'success' : 'warning',
       entityType: 'invoice',
       entityId: invoice.id,
     })
@@ -289,12 +297,14 @@ export function buildJobTimelineItems({
   }
 
   if (invoice && hasTimelineDate(invoice.issue_date)) {
+    const paymentSummary = buildInvoicePaymentSummary(invoice, payments)
+
     items.push({
       id: `job-invoice-${invoice.id}`,
       date: invoice.issue_date,
-      title: describeInvoiceStatus(invoice.status),
+      title: describeInvoiceStatus(invoice, payments),
       detail: `${invoice.display_code ?? invoice.id} · ${formatCurrency(invoice.total)}`,
-      tone: invoice.status === 'paid' ? 'success' : 'warning',
+      tone: paymentSummary.financialStatus === 'paid' ? 'success' : 'warning',
       entityType: 'invoice',
       entityId: invoice.id,
     })

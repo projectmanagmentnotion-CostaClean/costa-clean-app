@@ -20,6 +20,7 @@ import { ClientDetailCard } from './ClientDetailCard'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
 import { clientWorkspaceTabs } from './useClientWorkspaceNavigation'
 import type { ClientListItem } from './types'
+import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
 import type { JobListItem } from '../jobs/types'
@@ -128,14 +129,6 @@ function getActionTitle(action: Exclude<ClientWorkspaceAction, null>) {
     case 'invoice': return 'Nueva factura'
     case 'payment': return 'Registrar cobro'
     case 'recurring': return 'Automatizacion recurrente'
-  }
-}
-
-function buildInvoiceBalance(invoice: InvoiceListItem, payments: PaymentListItem[]) {
-  const collected = payments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0)
-  return {
-    collected,
-    outstanding: Number(invoice.total ?? 0) - collected,
   }
 }
 
@@ -355,12 +348,13 @@ export function ClientWorkspace({
     }
 
     for (const invoice of relatedInvoices) {
+      const paymentSummary = buildInvoicePaymentSummary(invoice, paymentsByInvoiceId.get(invoice.id) ?? [])
       items.push({
         id: `invoice-${invoice.id}`,
         date: invoice.issue_date,
         title: `Factura ${formatInvoiceLabel(invoice)}`,
-        detail: `${getStatusLabel(invoice.status)} - ${formatCurrency(invoice.total)}`,
-        tone: invoice.status === 'paid' ? 'success' : 'warning',
+        detail: `${getInvoiceFinancialStatusLabel(paymentSummary.financialStatus)} - ${formatCurrency(invoice.total)}`,
+        tone: paymentSummary.financialStatus === 'paid' ? 'success' : 'warning',
       })
     }
 
@@ -375,7 +369,7 @@ export function ClientWorkspace({
     }
 
     return items.sort((left, right) => compareByDateDesc(left.date, right.date))
-  }, [client, invoiceById, relatedInvoices, relatedJobs, relatedPayments, relatedQuotes])
+  }, [client, invoiceById, paymentsByInvoiceId, relatedInvoices, relatedJobs, relatedPayments, relatedQuotes])
 
   const noteItems = useMemo<ClientNoteItem[]>(() => {
     const items: ClientNoteItem[] = []
@@ -761,11 +755,11 @@ export function ClientWorkspace({
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Facturas pagadas</span>
-                  <strong>{relatedInvoices.filter((invoice) => invoice.status === 'paid').length}</strong>
+                  <strong>{relatedInvoices.filter((invoice) => invoice.payment_status === 'paid').length}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Facturas pendientes</span>
-                  <strong>{relatedInvoices.filter((invoice) => invoice.status !== 'paid' && invoice.status !== 'cancelled').length}</strong>
+                  <strong>{relatedInvoices.filter((invoice) => invoice.payment_status !== 'paid' && invoice.status !== 'cancelled').length}</strong>
                 </div>
               </div>
             </article>
@@ -1104,7 +1098,7 @@ export function ClientWorkspace({
         <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
           {relatedInvoices.map((invoice) => {
             const invoicePayments = paymentsByInvoiceId.get(invoice.id) ?? []
-            const { collected, outstanding } = buildInvoiceBalance(invoice, invoicePayments)
+            const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
 
             return (
               <article key={invoice.id} className="data-section cc-client-workspace__entity-card">
@@ -1113,7 +1107,7 @@ export function ClientWorkspace({
                     <h2>{formatInvoiceLabel(invoice)}</h2>
                     <p>{invoice.service_reference ?? invoice.job_display_code ?? invoice.property_name ?? 'Sin referencia operativa'}</p>
                   </div>
-                  <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+                  <span className="lead-badge">{getInvoiceFinancialStatusLabel(paymentSummary.financialStatus)}</span>
                 </div>
 
                 <div className="cc-client-workspace__detail-stack">
@@ -1127,11 +1121,11 @@ export function ClientWorkspace({
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Cobrado</span>
-                    <strong>{formatCurrency(collected)}</strong>
+                    <strong>{formatCurrency(paymentSummary.paidAmount)}</strong>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Pendiente</span>
-                    <strong>{formatCurrency(outstanding)}</strong>
+                    <strong>{formatCurrency(paymentSummary.outstandingAmount)}</strong>
                   </div>
                 <div className="detail-row">
                   <span className="detail-label">Presupuesto origen</span>

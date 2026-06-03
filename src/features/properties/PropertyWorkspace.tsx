@@ -3,6 +3,7 @@ import { formatCurrency, formatDateEs, getPaymentMethodLabel, getPropertyTypeLab
 import { getStatusLabel } from '../../app/displayText'
 import type { InvoiceCreatePrefill } from '../invoices/invoiceCreatePrefill'
 import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import { JobCreateForm } from '../jobs/JobCreateForm'
 import type { JobCreatePrefill } from '../jobs/jobCreatePrefill'
@@ -67,14 +68,6 @@ function getActionTitle(action: Exclude<PropertyWorkspaceAction, null>) {
     case 'quote': return 'Nuevo presupuesto'
     case 'invoice': return 'Nueva factura'
     case 'payment': return 'Registrar cobro'
-  }
-}
-
-function buildInvoiceBalance(invoice: InvoiceListItem, payments: PaymentListItem[]) {
-  const collected = payments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0)
-  return {
-    collected,
-    outstanding: Number(invoice.total ?? 0) - collected,
   }
 }
 
@@ -173,12 +166,13 @@ export function PropertyWorkspace({
     }
 
     for (const invoice of relatedInvoices) {
+      const paymentSummary = buildInvoicePaymentSummary(invoice, relatedPayments.filter((payment) => payment.invoice_id === invoice.id))
       items.push({
         id: `invoice-${invoice.id}`,
         date: invoice.issue_date,
         title: `Factura ${formatInvoiceLabel(invoice)}`,
-        detail: `${getStatusLabel(invoice.status)} - ${formatCurrency(invoice.total)}`,
-        tone: invoice.status === 'paid' ? 'success' : 'warning',
+        detail: `${getInvoiceFinancialStatusLabel(paymentSummary.financialStatus)} - ${formatCurrency(invoice.total)}`,
+        tone: paymentSummary.financialStatus === 'paid' ? 'success' : 'warning',
       })
     }
 
@@ -575,7 +569,7 @@ export function PropertyWorkspace({
         <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
           {relatedInvoices.map((invoice) => {
             const invoicePayments = relatedPayments.filter((payment) => payment.invoice_id === invoice.id)
-            const { collected, outstanding } = buildInvoiceBalance(invoice, invoicePayments)
+            const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
             return (
               <article key={invoice.id} className="data-section cc-client-workspace__entity-card">
                 <div className="section-header">
@@ -583,7 +577,7 @@ export function PropertyWorkspace({
                     <h2>{formatInvoiceLabel(invoice)}</h2>
                     <p>{owner ? formatClientLabel(owner) : 'Sin cliente'}</p>
                   </div>
-                  <span className="lead-badge">{getStatusLabel(invoice.status)}</span>
+                  <span className="lead-badge">{getInvoiceFinancialStatusLabel(paymentSummary.financialStatus)}</span>
                 </div>
 
                 <div className="cc-client-workspace__detail-stack">
@@ -597,11 +591,11 @@ export function PropertyWorkspace({
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Cobrado</span>
-                    <strong>{formatCurrency(collected)}</strong>
+                    <strong>{formatCurrency(paymentSummary.paidAmount)}</strong>
                   </div>
                   <div className="detail-row">
                     <span className="detail-label">Pendiente</span>
-                    <strong>{formatCurrency(outstanding)}</strong>
+                    <strong>{formatCurrency(paymentSummary.outstandingAmount)}</strong>
                   </div>
                 </div>
               </article>

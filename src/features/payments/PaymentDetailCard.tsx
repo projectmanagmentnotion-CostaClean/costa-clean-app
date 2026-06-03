@@ -5,6 +5,7 @@ import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { getPaymentOriginLabel } from '../invoices/paymentState'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -158,6 +159,7 @@ export function PaymentDetailCard({
         payment_date: form.payment_date,
         amount: Number(formatMoneyInput(amount)),
         payment_method: form.payment_method || null,
+        origin_type: payment.origin_type ?? 'manual',
         notes: form.notes.trim() || null,
       })
 
@@ -319,6 +321,10 @@ export function PaymentDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Método</span>
                 <strong>{getPaymentMethodLabel(payment.payment_method)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Origen</span>
+                <strong>{getPaymentOriginLabel(payment.origin_type)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Notas</span>

@@ -1,4 +1,4 @@
-﻿export interface InvoiceListItem {
+export interface InvoiceListItem {
   id: string
   display_code: string | null
   invoice_number: string | null
@@ -17,6 +17,13 @@
   notes?: string | null
   internal_notes?: string | null
   pricing_metadata?: Record<string, unknown> | null
+  payment_status?: 'pending' | 'partially_paid' | 'paid' | 'cancelled'
+  paid_amount?: number
+  outstanding_amount?: number
+  payment_count?: number
+  last_payment_date?: string | null
+  last_payment_method?: string | null
+  last_payment_origin_type?: string | null
 
   client_name?: string | null
   client_phone?: string | null

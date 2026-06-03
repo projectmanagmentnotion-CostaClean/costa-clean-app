@@ -9,6 +9,7 @@ import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScree
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
+import type { PaymentListItem } from '../features/payments/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
@@ -20,8 +21,10 @@ interface InvoicesPageProps {
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  payments: PaymentListItem[]
   error: string | null
   onInvoiceCreated: () => Promise<void>
+  onViewPayments: (invoiceId: string) => void
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
@@ -36,8 +39,10 @@ export function InvoicesPage({
   properties,
   jobs,
   quotes,
+  payments,
   error,
   onInvoiceCreated,
+  onViewPayments,
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
@@ -62,7 +67,7 @@ export function InvoicesPage({
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
   const hasPendingWork = isCreateFormVisible || hasUnsavedDetailChanges
   const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
-  const paidInvoicesCount = invoices.filter((invoice) => invoice.status === 'paid').length
+  const paidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'paid').length
   const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
@@ -217,12 +222,14 @@ export function InvoicesPage({
               invoice={detailInvoice}
               jobs={jobs}
               quotes={quotes}
+              payments={payments}
               onInvoiceUpdated={onInvoiceCreated}
               onOpenDocument={() => {
                 if (detailInvoice) {
                   openInvoiceDocument(detailInvoice)
                 }
               }}
+              onViewPayments={onViewPayments}
               onUnsavedChange={setHasUnsavedDetailChanges}
               emptyState={detailEmptyState}
             />

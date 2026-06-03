@@ -104,10 +104,10 @@ export function useDashboardMetrics({
     const quoteIdsWithJobs = new Set(jobs.map((job) => job.quote_id).filter(Boolean))
     const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
     const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
-    const pendingInvoicesCount = invoices.filter((invoice) => invoice.status !== 'paid').length
+    const pendingInvoicesCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled').length
     const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
     const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
-    const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => invoice.status !== 'paid' && isOlderThanDays(invoice.issue_date, 7)).length
+    const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7)).length
     const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
     const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
     const dueRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)).length
@@ -131,13 +131,13 @@ export function useDashboardMetrics({
       .filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
       .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     const outstandingReceivablesTotal = invoices.reduce((sum, invoice) => {
-      if (invoice.status === 'paid') {
+      if ((invoice.outstanding_amount ?? 0) <= 0.009) {
         return sum
       }
 
       const invoiceTotal = Number(invoice.total || 0)
-      const paidAmount = invoicePaidById.get(invoice.id) ?? 0
-      const remainingAmount = Math.max(invoiceTotal - paidAmount, 0)
+      const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
+      const remainingAmount = invoice.outstanding_amount ?? Math.max(invoiceTotal - paidAmount, 0)
       return sum + remainingAmount
     }, 0)
 

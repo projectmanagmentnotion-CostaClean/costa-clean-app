@@ -174,14 +174,14 @@ export function buildAutomationAlerts({
   }
 
   const overdueInvoices = invoices.filter((invoice) => {
-    if (invoice.status === 'paid') return false
-    const pendingAmount = Math.max(0, invoice.total - (invoicePaidAmount.get(invoice.id) ?? 0))
+    if (invoice.payment_status === 'paid' || invoice.status === 'cancelled') return false
+    const pendingAmount = Math.max(0, invoice.outstanding_amount ?? (invoice.total - (invoicePaidAmount.get(invoice.id) ?? 0)))
     return pendingAmount > 0 && isOlderThanDays(invoice.issue_date, automationRuleThresholds.unpaidInvoicesOlderThanDays)
   })
 
   if (overdueInvoices.length > 0) {
     const totalPending = overdueInvoices.reduce(
-      (sum, invoice) => sum + Math.max(0, invoice.total - (invoicePaidAmount.get(invoice.id) ?? 0)),
+      (sum, invoice) => sum + Math.max(0, invoice.outstanding_amount ?? (invoice.total - (invoicePaidAmount.get(invoice.id) ?? 0))),
       0,
     )
     const oldestDate = getOldestDateValue(overdueInvoices, (invoice) => invoice.issue_date)

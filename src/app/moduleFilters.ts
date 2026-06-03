@@ -13,6 +13,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 
 export type InvoiceModuleFilter =
   | 'pending'
+  | 'partially_paid'
   | 'current_month'
   | 'unpaid_older_7d'
   | {
@@ -67,6 +68,11 @@ export type ExpenseModuleFilter =
 
 export type PaymentModuleFilter =
   | 'current_month'
+  | {
+      type: 'invoice'
+      invoiceId: string
+      invoiceLabel: string
+    }
   | {
       type: 'quarter'
       fiscalYear: number
@@ -182,6 +188,7 @@ export const emptyModuleFilterState: ModuleFilterState = {
 
 export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): string | null {
   if (filter === 'pending') return 'Pendientes de cobro'
+  if (filter === 'partially_paid') return 'Facturas parcialmente cobradas'
   if (filter === 'current_month') return 'Facturas emitidas este mes'
   if (filter === 'unpaid_older_7d') return 'Facturas pendientes con más de 7 días'
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Facturas de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
@@ -240,6 +247,7 @@ export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): strin
 
 export function getPaymentFilterLabel(filter: PaymentModuleFilter | null): string | null {
   if (filter === 'current_month') return 'Cobros del mes'
+  if (filter?.type === 'invoice') return `Cobros de ${filter.invoiceLabel}`
   if (filter?.type === 'quarter') return `Cobros de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'year') return `Cobros de ${getYearLabel(filter.fiscalYear)}`
   return null
@@ -247,7 +255,11 @@ export function getPaymentFilterLabel(filter: PaymentModuleFilter | null): strin
 
 export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceModuleFilter | null): InvoiceListItem[] {
   if (filter === 'pending') {
-    return invoices.filter((invoice) => invoice.status !== 'paid')
+    return invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+  }
+
+  if (filter === 'partially_paid') {
+    return invoices.filter((invoice) => invoice.payment_status === 'partially_paid')
   }
 
   if (filter === 'current_month') {
@@ -256,7 +268,7 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
   }
 
   if (filter === 'unpaid_older_7d') {
-    return invoices.filter((invoice) => invoice.status !== 'paid' && isOlderThanDays(invoice.issue_date, 7))
+    return invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7))
   }
 
   if (filter?.type === 'quarter') {
@@ -265,7 +277,7 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
     )
 
     if (filter.scope === 'pending') {
-      return quarterInvoices.filter((invoice) => invoice.status !== 'paid')
+      return quarterInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
     }
 
     return quarterInvoices
@@ -277,7 +289,7 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
     )
 
     if (filter.scope === 'pending') {
-      return yearInvoices.filter((invoice) => invoice.status !== 'paid')
+      return yearInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
     }
 
     return yearInvoices
@@ -454,6 +466,10 @@ export function applyPaymentFilter(payments: PaymentListItem[], filter: PaymentM
   if (filter === 'current_month') {
     const currentMonthKey = getCurrentMonthKey()
     return payments.filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
+  }
+
+  if (filter?.type === 'invoice') {
+    return payments.filter((payment) => payment.invoice_id === filter.invoiceId)
   }
 
   if (filter?.type === 'quarter') {

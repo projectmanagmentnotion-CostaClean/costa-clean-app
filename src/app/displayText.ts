@@ -22,6 +22,8 @@ const statusLabels: Record<string, string> = {
   rejected: 'Rechazado',
   expired: 'Vencido',
   issued: 'Emitida',
+  pending: 'Pendiente',
+  partially_paid: 'Parcialmente cobrada',
   paid: 'Pagada',
   cancelled: 'Cancelada',
   new: 'Nuevo',

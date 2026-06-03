@@ -6,6 +6,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
 import type { InvoiceListItem } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
+import { getInvoiceFinancialStatusLabel } from './paymentState'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -34,7 +35,11 @@ export function InvoicesList({
 
   const filteredInvoices = useMemo(() => {
     return invoices.filter((invoice) =>
-      (preferences.filters.status === 'all' || invoice.status === preferences.filters.status) &&
+      (
+        preferences.filters.status === 'all'
+        || (preferences.filters.status === 'draft' && invoice.status === 'draft')
+        || (preferences.filters.status !== 'draft' && (invoice.payment_status ?? invoice.status) === preferences.filters.status)
+      ) &&
       matchesSearchQuery(preferences.searchQuery, [
         invoice.display_code,
         invoice.id,
@@ -46,6 +51,7 @@ export function InvoicesList({
         invoice.client_name,
         invoice.status,
         getStatusLabel(invoice.status),
+        getInvoiceFinancialStatusLabel(invoice.payment_status ?? 'pending'),
         invoice.issue_date,
         invoice.subtotal,
         invoice.tax_amount,
@@ -108,8 +114,9 @@ export function InvoicesList({
           options: [
             { value: 'all', label: 'Todos' },
             { value: 'draft', label: 'Borrador' },
-            { value: 'issued', label: 'Emitida' },
-            { value: 'paid', label: 'Pagada' },
+            { value: 'pending', label: 'Pendiente' },
+            { value: 'partially_paid', label: 'Parcialmente cobrada' },
+            { value: 'paid', label: 'Cobrada' },
             { value: 'cancelled', label: 'Cancelada' },
           ],
         }]}
@@ -165,7 +172,9 @@ export function InvoicesList({
                     </div>
 
                     <div className="cc-record-card__aside">
-                      <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.status}`}>{getStatusLabel(invoice.status)}</span>
+                      <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.payment_status ?? invoice.status}`}>
+                        {getInvoiceFinancialStatusLabel(invoice.payment_status ?? 'pending')}
+                      </span>
                       <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
                     </div>
                   </div>

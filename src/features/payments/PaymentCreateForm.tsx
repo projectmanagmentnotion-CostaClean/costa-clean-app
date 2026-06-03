@@ -1,13 +1,13 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
-import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
-import { formatInvoiceLabel } from '../../app/relationshipLabels'
-import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import { formatInvoiceLabel } from '../../app/relationshipLabels'
 
 interface PaymentCreateFormProps {
   invoices: InvoiceListItem[]
@@ -16,6 +16,16 @@ interface PaymentCreateFormProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   onCreated: () => Promise<void>
+  title?: string
+  description?: string
+  submitLabel?: string
+  prefillInvoiceId?: string
+  prefillAmount?: string
+  prefillPaymentMethod?: string
+  prefillNotes?: string
+  lockInvoiceSelection?: boolean
+  hideInvoiceCreateAction?: boolean
+  originType?: 'manual' | 'transfer_auto'
 }
 
 interface FormState {
@@ -50,7 +60,25 @@ function getPaymentMethodLabel(value: string): string {
     case 'cash': return 'Efectivo'
     case 'bizum': return 'Bizum'
     case 'card': return 'Tarjeta'
-    default: return value || 'Sin método'
+    default: return value || 'Sin metodo'
+  }
+}
+
+function buildInitialState({
+  prefillInvoiceId,
+  prefillAmount,
+  prefillPaymentMethod,
+  prefillNotes,
+}: Pick<
+  PaymentCreateFormProps,
+  'prefillInvoiceId' | 'prefillAmount' | 'prefillPaymentMethod' | 'prefillNotes'
+>): FormState {
+  return {
+    invoice_id: prefillInvoiceId ?? '',
+    payment_date: todayLocalDate(),
+    amount: prefillAmount ?? '',
+    payment_method: prefillPaymentMethod ?? 'transfer',
+    notes: prefillNotes ?? '',
   }
 }
 
@@ -61,18 +89,36 @@ export function PaymentCreateForm({
   jobs,
   quotes,
   onCreated,
+  title = 'Nuevo cobro',
+  description = 'Registra un cobro vinculado a una factura y documenta su metodo e importe.',
+  submitLabel = 'Guardar cobro',
+  prefillInvoiceId,
+  prefillAmount,
+  prefillPaymentMethod,
+  prefillNotes,
+  lockInvoiceSelection = false,
+  hideInvoiceCreateAction = false,
+  originType = 'manual',
 }: PaymentCreateFormProps) {
-  const [form, setForm] = useState<FormState>({
-    invoice_id: '',
-    payment_date: todayLocalDate(),
-    amount: '',
-    payment_method: 'transfer',
-    notes: '',
-  })
+  const [form, setForm] = useState<FormState>(() => buildInitialState({
+    prefillInvoiceId,
+    prefillAmount,
+    prefillPaymentMethod,
+    prefillNotes,
+  }))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showInvoiceCreate, setShowInvoiceCreate] = useState(false)
+
+  useEffect(() => {
+    setForm(buildInitialState({
+      prefillInvoiceId,
+      prefillAmount,
+      prefillPaymentMethod,
+      prefillNotes,
+    }))
+  }, [prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
@@ -95,7 +141,7 @@ export function PaymentCreateForm({
     setSubmitError(null)
     setForm((current) => ({
       ...current,
-      amount: formatMoneyInput(Number(selectedInvoice.total)),
+      amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
     }))
   }
 
@@ -124,12 +170,12 @@ export function PaymentCreateForm({
       const amount = parseDecimalInput(form.amount)
 
       if (Number.isNaN(amount)) {
-        setSubmitError('El importe debe ser un número válido.')
+        setSubmitError('El importe debe ser un numero valido.')
         return
       }
 
       if (amount <= 0) {
-        setSubmitError('El importe del pago debe ser mayor que cero.')
+        setSubmitError('El importe del cobro debe ser mayor que cero.')
         return
       }
 
@@ -144,22 +190,22 @@ export function PaymentCreateForm({
         payment_date: form.payment_date,
         amount: Number(formatMoneyInput(amount)),
         payment_method: form.payment_method || null,
+        origin_type: originType,
         notes: form.notes.trim() || null,
       })
 
       await onCreated()
 
-      setForm({
-        invoice_id: '',
-        payment_date: todayLocalDate(),
-        amount: '',
-        payment_method: 'transfer',
-        notes: '',
-      })
-      setSuccessMessage('Pago creado correctamente.')
+      setForm(buildInitialState({
+        prefillInvoiceId,
+        prefillAmount,
+        prefillPaymentMethod,
+        prefillNotes,
+      }))
+      setSuccessMessage('Cobro registrado correctamente.')
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Error desconocido creando el pago.'
+        err instanceof Error ? err.message : 'Error desconocido creando el cobro.'
 
       setSubmitError(message)
     } finally {
@@ -170,54 +216,21 @@ export function PaymentCreateForm({
   return (
     <section className="data-section">
       <div className="section-header">
-        <h2>Nuevo pago</h2>
-        <p>Registra un cobro vinculado a una factura y documenta su método e importe.</p>
+        <h2>{title}</h2>
+        <p>{description}</p>
       </div>
 
       {invoices.length === 0 ? (
-        <ContextualCreateSection
-          actionLabel="Crear factura"
-          title="Falta la factura base"
-          description="Crea la factura dentro del mismo flujo y el pago podrá continuar sin salir del contexto."
-          isOpen={showInvoiceCreate}
-          onToggle={() => setShowInvoiceCreate((current) => !current)}
-        >
-          <InvoiceCreateForm
-            clients={clients}
-            properties={properties}
-            jobs={jobs}
-            quotes={quotes}
-            onCreated={onCreated}
-            onCreatedInvoice={async (invoice) => {
-              setForm((current) => ({
-                ...current,
-                invoice_id: invoice.id,
-              }))
-              setShowInvoiceCreate(false)
-            }}
-          />
-        </ContextualCreateSection>
-      ) : (
-        <form className="lead-form" onSubmit={handleSubmit}>
-          <label className="form-field">
-            <span>Factura *</span>
-            <select
-              value={form.invoice_id}
-              onChange={(event) => updateField('invoice_id', event.target.value)}
-            >
-              <option value="">Selecciona una factura</option>
-              {invoices.map((invoice) => (
-                <option key={invoice.id} value={invoice.id}>
-                  {formatInvoiceLabel(invoice)} - Total {formatMoneyInput(Number(invoice.total))}
-                </option>
-              ))}
-            </select>
-          </label>
-
+        hideInvoiceCreateAction ? (
+          <div className="empty-state">
+            <strong>Falta la factura base</strong>
+            <p>No hay facturas disponibles para registrar este cobro.</p>
+          </div>
+        ) : (
           <ContextualCreateSection
             actionLabel="Crear factura"
-            title="Factura en contexto"
-            description="Si la factura aún no existe, emítela aquí y se seleccionará automáticamente para registrar el cobro."
+            title="Falta la factura base"
+            description="Crea la factura dentro del mismo flujo y el cobro podra continuar sin salir del contexto."
             isOpen={showInvoiceCreate}
             onToggle={() => setShowInvoiceCreate((current) => !current)}
           >
@@ -236,6 +249,49 @@ export function PaymentCreateForm({
               }}
             />
           </ContextualCreateSection>
+        )
+      ) : (
+        <form className="lead-form" onSubmit={handleSubmit}>
+          <label className="form-field">
+            <span>Factura *</span>
+            <select
+              value={form.invoice_id}
+              onChange={(event) => updateField('invoice_id', event.target.value)}
+              disabled={lockInvoiceSelection}
+            >
+              <option value="">Selecciona una factura</option>
+              {invoices.map((invoice) => (
+                <option key={invoice.id} value={invoice.id}>
+                  {formatInvoiceLabel(invoice)} - Pendiente {formatMoneyInput(Number(invoice.outstanding_amount ?? invoice.total))}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {!hideInvoiceCreateAction ? (
+            <ContextualCreateSection
+              actionLabel="Crear factura"
+              title="Factura en contexto"
+              description="Si la factura aun no existe, emitela aqui y se seleccionara automaticamente para registrar el cobro."
+              isOpen={showInvoiceCreate}
+              onToggle={() => setShowInvoiceCreate((current) => !current)}
+            >
+              <InvoiceCreateForm
+                clients={clients}
+                properties={properties}
+                jobs={jobs}
+                quotes={quotes}
+                onCreated={onCreated}
+                onCreatedInvoice={async (invoice) => {
+                  setForm((current) => ({
+                    ...current,
+                    invoice_id: invoice.id,
+                  }))
+                  setShowInvoiceCreate(false)
+                }}
+              />
+            </ContextualCreateSection>
+          ) : null}
 
           <label className="form-field">
             <span>Fecha de cobro *</span>
@@ -258,7 +314,7 @@ export function PaymentCreateForm({
           </label>
 
           <label className="form-field">
-            <span>Método de pago</span>
+            <span>Metodo de cobro</span>
             <select
               value={form.payment_method}
               onChange={(event) => updateField('payment_method', event.target.value)}
@@ -282,23 +338,23 @@ export function PaymentCreateForm({
 
           <div className="form-actions">
             <button type="button" className="secondary-button" onClick={syncAmountFromInvoice}>
-              Traer total de factura
+              Traer pendiente real
             </button>
             <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : 'Guardar pago'}
+              {isSubmitting ? 'Guardando...' : submitLabel}
             </button>
           </div>
 
           {submitError ? (
             <div className="cc-alert cc-alert--error">
-              <strong>No se pudo crear el pago</strong>
+              <strong>No se pudo registrar el cobro</strong>
               <p>{submitError}</p>
             </div>
           ) : null}
 
           {successMessage ? (
             <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
+              <strong>Operacion correcta</strong>
               <p>{successMessage}</p>
             </div>
           ) : null}

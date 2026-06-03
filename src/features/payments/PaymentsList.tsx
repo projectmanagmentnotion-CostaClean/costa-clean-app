@@ -4,6 +4,7 @@ import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
+import { getPaymentOriginLabel } from '../invoices/paymentState'
 
 interface PaymentsListProps {
   payments: PaymentListItem[]
@@ -34,6 +35,8 @@ export function PaymentsList({
         payment.amount,
         payment.payment_method,
         getPaymentMethodLabel(payment.payment_method),
+        payment.origin_type,
+        getPaymentOriginLabel(payment.origin_type),
         payment.notes,
       ]),
     ).sort((left, right) => {
@@ -137,7 +140,7 @@ export function PaymentsList({
 
                 <div className="cc-record-card__chips" aria-label="Contexto del cobro">
                   <span className="cc-record-card__chip">{getPaymentMethodLabel(payment.payment_method)}</span>
-                  <span className="cc-record-card__chip">{payment.notes?.trim() || 'Sin notas'}</span>
+                  <span className="cc-record-card__chip">{getPaymentOriginLabel(payment.origin_type)}</span>
                 </div>
 
                 <div className="cc-list-meta cc-record-card__meta">
@@ -147,7 +150,7 @@ export function PaymentsList({
                   </span>
                   <span>
                     <span className="cc-record-card__meta-label">Notas</span>
-                    <span className="cc-record-card__meta-value">{payment.notes?.trim() || 'Sin notas'}</span>
+                    <span className="cc-record-card__meta-value">{payment.notes?.trim() || getPaymentOriginLabel(payment.origin_type)}</span>
                   </span>
                 </div>
               </button>

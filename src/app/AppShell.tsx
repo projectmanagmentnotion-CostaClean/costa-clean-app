@@ -38,6 +38,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
 import { buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
+import { buildInvoicePaymentSummary } from '../features/invoices/paymentState'
 import {
   applyDashboardKpiAction,
   dashboardKpiActionConfig,
@@ -51,7 +52,7 @@ import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClos
 import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
-import { formatClientLabel } from './relationshipLabels'
+import { formatClientLabel, formatInvoiceLabel } from './relationshipLabels'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { setJobWorkspaceLocation } from '../features/jobs/useJobWorkspaceNavigation'
@@ -324,6 +325,17 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const jobCodeById = useMemo(() => new Map(jobs.map((job) => [job.id, job.display_code ?? job.id])), [jobs])
   const jobById = useMemo(() => new Map(jobs.map((job) => [job.id, job])), [jobs])
   const invoiceById = useMemo(() => new Map(invoices.map((invoice) => [invoice.id, invoice])), [invoices])
+  const paymentsByInvoiceId = useMemo(() => {
+    const map = new Map<string, typeof payments>()
+
+    for (const payment of payments) {
+      const currentItems = map.get(payment.invoice_id) ?? []
+      currentItems.push(payment)
+      map.set(payment.invoice_id, currentItems)
+    }
+
+    return map
+  }, [payments])
 
   const dashboardMetrics = useDashboardMetrics({
     leads,
@@ -416,6 +428,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       const resolvedPropertyId = invoice.property_id ?? job?.property_id ?? quote?.property_id ?? null
       const property = resolvedPropertyId ? propertyById.get(resolvedPropertyId) : undefined
       const client = clientById.get(resolvedClientId)
+      const paymentSummary = buildInvoicePaymentSummary(invoice, paymentsByInvoiceId.get(invoice.id) ?? [])
 
       return {
         ...invoice,
@@ -442,10 +455,17 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         billing_quantity: invoice.billing_quantity ?? job?.billing_quantity ?? null,
         billing_unit: invoice.billing_unit ?? job?.billing_unit ?? null,
         billing_unit_price: invoice.billing_unit_price ?? job?.billing_unit_price ?? null,
+        payment_status: paymentSummary.financialStatus,
+        paid_amount: paymentSummary.paidAmount,
+        outstanding_amount: paymentSummary.outstandingAmount,
+        payment_count: paymentSummary.paymentCount,
+        last_payment_date: paymentSummary.lastPayment?.payment_date ?? null,
+        last_payment_method: paymentSummary.lastPayment?.payment_method ?? null,
+        last_payment_origin_type: paymentSummary.lastPayment?.origin_type ?? null,
         lines: normalizeInvoiceLines(invoice),
       }
     }),
-    [invoices, clientById, clientCodeById, jobById, jobCodeById, propertyById, propertyCodeById, quoteById],
+    [invoices, clientById, clientCodeById, jobById, jobCodeById, paymentsByInvoiceId, propertyById, propertyCodeById, quoteById],
   )
 
   const paymentsWithCodes = useMemo(
@@ -829,6 +849,28 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
+  const handleViewPaymentsForInvoice = useCallback((invoiceId: string) => {
+    const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
+    const invoiceLabel = invoice
+      ? formatInvoiceLabel(invoice)
+      : invoiceId
+
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => ({
+        ...current,
+        payments: {
+          type: 'invoice',
+          invoiceId,
+          invoiceLabel,
+        },
+      }))
+      commitViewChange('payments')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres los cobros ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir cobros',
+    })
+  }, [commitViewChange, invoicesWithCodes, runWithNavigationGuard, unsavedChangesContext])
+
   const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
     setModuleFilters((current) => ({
       ...current,
@@ -980,8 +1022,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   properties={properties}
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
+                  payments={paymentsWithCodes}
                   error={invoiceError}
                   onInvoiceCreated={refreshBilling}
+                  onViewPayments={handleViewPaymentsForInvoice}
                   createPrefill={invoiceCreatePrefill}
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}

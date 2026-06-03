@@ -147,8 +147,50 @@ export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise
     action: 'upsert',
     changedFields: Object.keys(payment),
     newValues: payment,
-    metadata: { invoice_id: payment.invoice_id },
+    metadata: { invoice_id: payment.invoice_id, origin_type: payment.origin_type ?? 'manual' },
   })
+}
+
+export interface TransferSettlementRpcResult {
+  payment_id: string | null
+  invoice_id: string
+  created_payment: boolean
+  outstanding_before: number
+  paid_total_after: number
+  outstanding_after: number
+  financial_status: 'pending' | 'partially_paid' | 'paid'
+}
+
+export async function settleInvoiceByTransfer(invoiceId: string): Promise<TransferSettlementRpcResult> {
+  const result = await callFinancialRpcForResult<TransferSettlementRpcResult>(
+    'settle_invoice_by_transfer',
+    { p_invoice_id: invoiceId },
+    'No se pudo registrar el cobro por transferencia.',
+  )
+
+  if (result.created_payment && result.payment_id) {
+    await recordAuditEvent({
+      entityType: 'payment',
+      entityId: result.payment_id,
+      action: 'upsert',
+      changedFields: ['invoice_id', 'payment_date', 'amount', 'payment_method', 'origin_type'],
+      newValues: {
+        id: result.payment_id,
+        invoice_id: result.invoice_id,
+        amount: result.outstanding_before,
+        payment_method: 'transfer',
+        origin_type: 'transfer_auto',
+      },
+      metadata: {
+        invoice_id: result.invoice_id,
+        origin_type: 'transfer_auto',
+        outstanding_before: result.outstanding_before,
+        outstanding_after: result.outstanding_after,
+      },
+    })
+  }
+
+  return result
 }
 
 export async function refreshInvoicePaymentStatus(invoiceId: string): Promise<void> {

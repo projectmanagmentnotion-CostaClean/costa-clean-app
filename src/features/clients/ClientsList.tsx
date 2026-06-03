@@ -45,7 +45,7 @@ export function ClientsList({
         label="Buscar cliente"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Nombre, código interno, teléfono, email o estado"
+        placeholder="Nombre, codigo interno, telefono, email o estado"
       />
 
       {error ? (
@@ -56,12 +56,12 @@ export function ClientsList({
       ) : clients.length === 0 ? (
         <div className="empty-state">
           <strong>No hay clientes</strong>
-          <p>Todavía no existen registros en la tabla clients.</p>
+          <p>Todavia no existen registros en la tabla clients.</p>
         </div>
       ) : filteredClients.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos clientes que coincidan con tu búsqueda.</p>
+          <p>No encontramos clientes que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -74,8 +74,8 @@ export function ClientsList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--client'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--client'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--client cc-record-card--compact'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--client cc-record-card--compact'
                 }
                 onClick={() => onSelectClient(client)}
               >
@@ -93,9 +93,18 @@ export function ClientsList({
                 <p className="cc-record-card__summary">{client.email ?? 'Sin email registrado'}</p>
 
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{client.phone ?? 'Sin teléfono'}</span>
-                  <span>{client.tax_id ?? 'Sin dato fiscal'}</span>
-                  <span>{client.source_lead_id ? `Lead ${client.source_lead_id}` : 'Alta directa'}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Telefono</span>
+                    <span className="cc-record-card__meta-value">{client.phone ?? 'Sin telefono'}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Fiscal</span>
+                    <span className="cc-record-card__meta-value">{client.tax_id ?? 'Sin dato fiscal'}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Origen</span>
+                    <span className="cc-record-card__meta-value">{client.source_lead_id ? `Lead ${client.source_lead_id}` : 'Alta directa'}</span>
+                  </span>
                 </div>
               </button>
             )

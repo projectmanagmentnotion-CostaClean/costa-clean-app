@@ -52,7 +52,7 @@ export function PropertiesList({
         label="Buscar propiedad"
         value={searchQuery}
         onChange={setSearchQuery}
-        placeholder="Nombre, dirección, código interno, cliente, tipo, ciudad o nota"
+        placeholder="Nombre, direccion, codigo interno, cliente, tipo, ciudad o nota"
       />
 
       {error ? (
@@ -63,12 +63,12 @@ export function PropertiesList({
       ) : properties.length === 0 ? (
         <div className="empty-state">
           <strong>No hay propiedades</strong>
-          <p>Todavía no existen registros en la tabla properties.</p>
+          <p>Todavia no existen registros en la tabla properties.</p>
         </div>
       ) : filteredProperties.length === 0 ? (
         <div className="empty-state">
           <strong>Sin resultados</strong>
-          <p>No encontramos propiedades que coincidan con tu búsqueda.</p>
+          <p>No encontramos propiedades que coincidan con tu busqueda.</p>
         </div>
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
@@ -81,8 +81,8 @@ export function PropertiesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--property'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--property'
+                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--property cc-record-card--compact'
+                    : 'lead-item lead-item-button cc-record-card cc-record-card--property cc-record-card--compact'
                 }
                 onClick={() => onSelectProperty(property)}
               >
@@ -100,8 +100,18 @@ export function PropertiesList({
                 <p className="cc-record-card__summary">{property.address}</p>
 
                 <div className="cc-list-meta cc-record-card__meta">
-                  <span>{formatClientLabel(property)}</span>
-                  <span>{property.city ?? 'Sin ciudad'}</span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Cliente</span>
+                    <span className="cc-record-card__meta-value">{formatClientLabel(property)}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Ciudad</span>
+                    <span className="cc-record-card__meta-value">{property.city ?? 'Sin ciudad'}</span>
+                  </span>
+                  <span>
+                    <span className="cc-record-card__meta-label">Postal</span>
+                    <span className="cc-record-card__meta-value">{property.postal_code ?? 'Sin CP'}</span>
+                  </span>
                 </div>
               </button>
             )

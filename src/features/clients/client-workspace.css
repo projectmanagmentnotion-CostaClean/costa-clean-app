@@ -1,6 +1,6 @@
 .cc-client-workspace {
   display: grid;
-  gap: 1rem;
+  gap: 0.82rem;
 }
 
 .cc-client-workspace__topline {
@@ -20,8 +20,8 @@
 
 .cc-client-workspace__hero {
   border: 1px solid var(--card-border);
-  border-radius: 1.5rem;
-  padding: 1.35rem;
+  border-radius: 1.3rem;
+  padding: 1.05rem 1.1rem;
   background:
     radial-gradient(circle at top right, color-mix(in srgb, var(--accent-soft) 75%, transparent) 0%, transparent 36%),
     linear-gradient(160deg, color-mix(in srgb, var(--card) 92%, transparent), color-mix(in srgb, var(--bg-soft) 70%, transparent));
@@ -36,23 +36,27 @@
 }
 
 .cc-client-workspace__identity-copy h1 {
-  margin: 0.35rem 0 0.45rem;
+  margin: 0.24rem 0 0.3rem;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
 }
 
 .cc-client-workspace__identity-copy p {
   margin: 0;
   color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.42;
 }
 
 .cc-client-workspace__status {
   display: grid;
   justify-items: end;
-  gap: 0.45rem;
+  gap: 0.32rem;
 }
 
 .cc-client-workspace__status-meta {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.79rem;
 }
 
 .cc-client-workspace__meta,
@@ -60,12 +64,12 @@
 .cc-client-workspace__summary-grid,
 .cc-client-workspace__activity-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.72rem;
 }
 
 .cc-client-workspace__meta {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 1rem;
+  margin-top: 0.8rem;
 }
 
 .cc-client-workspace__meta-card,
@@ -75,9 +79,9 @@
 .cc-client-workspace__timeline-item,
 .cc-client-workspace__note-card {
   border: 1px solid var(--card-border);
-  border-radius: 1.1rem;
+  border-radius: 0.95rem;
   background: color-mix(in srgb, var(--card) 88%, transparent);
-  padding: 1rem;
+  padding: 0.78rem 0.86rem;
 }
 
 .cc-client-workspace__meta-card span,
@@ -86,7 +90,7 @@
 .cc-client-workspace__timeline-item span {
   display: block;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -98,7 +102,9 @@
 .cc-client-workspace__timeline-item strong,
 .cc-client-workspace__note-card strong {
   display: block;
-  margin-top: 0.45rem;
+  margin-top: 0.22rem;
+  font-size: 0.92rem;
+  line-height: 1.18;
 }
 
 .cc-client-workspace__meta-card small,
@@ -106,12 +112,14 @@
 .cc-client-workspace__relationship-card small,
 .cc-client-workspace__nested-item small {
   display: block;
-  margin-top: 0.4rem;
+  margin-top: 0.22rem;
   color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.3;
 }
 
 .cc-client-workspace__snapshot {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
 .cc-client-workspace__actions,
@@ -121,22 +129,24 @@
 .cc-client-workspace__notes {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .cc-client-workspace__tabs {
   border-bottom: 1px solid var(--card-border);
-  padding-bottom: 0.75rem;
+  padding-bottom: 0.55rem;
 }
 
 .cc-client-workspace__tab {
   min-height: var(--control-height-md);
-  padding: 0.7rem 1rem;
+  padding: 0.56rem 0.86rem;
   border-radius: 999px;
   border: 1px solid var(--card-border);
   background: var(--cc-surface-glass-subtle);
   color: var(--text);
   cursor: pointer;
+  font-size: 0.83rem;
+  line-height: 1.1;
 }
 
 .cc-client-workspace__tab.is-active {
@@ -148,7 +158,7 @@
 .cc-client-workspace__tab-panel,
 .cc-client-workspace__summary-grid {
   display: grid;
-  gap: 1rem;
+  gap: 0.78rem;
 }
 
 .cc-client-workspace__summary-grid {
@@ -160,31 +170,90 @@
 .cc-client-workspace__nested-list,
 .cc-client-workspace__timeline {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .cc-client-workspace__relationship-list,
 .cc-client-workspace__entity-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  align-items: start;
 }
 
 .cc-client-workspace__entity-meta,
 .cc-client-workspace__inline-summary {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.85rem;
+  gap: 0.42rem;
+  margin-bottom: 0.65rem;
 }
 
 .cc-client-workspace__entity-meta span,
 .cc-client-workspace__inline-summary span {
-  padding: 0.5rem 0.75rem;
+  padding: 0.38rem 0.62rem;
   border-radius: 999px;
   background: var(--cc-surface-glass-subtle);
   border: 1px solid var(--card-border);
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.76rem;
+  line-height: 1.2;
+}
+
+.cc-client-workspace__entity-card {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.95rem;
+  border-radius: 1rem;
+}
+
+.cc-client-workspace__entity-card .section-header,
+.cc-client-workspace__action-panel .section-header,
+.cc-client-workspace__tab-panel > .data-section > .section-header {
+  margin-bottom: 0.2rem;
+}
+
+.cc-client-workspace__entity-card .section-header h2,
+.cc-client-workspace__tab-panel > .data-section > .section-header h2 {
+  font-size: 1rem;
+  line-height: 1.08;
+}
+
+.cc-client-workspace__entity-card .section-header p,
+.cc-client-workspace__tab-panel > .data-section > .section-header p,
+.cc-client-workspace__action-panel .section-header p {
+  font-size: 0.8rem;
+  line-height: 1.34;
+}
+
+.cc-client-workspace__detail-stack .detail-row,
+.cc-client-workspace__ledger-grid .detail-row {
+  padding: 0.66rem 0.76rem;
+  border-radius: 0.88rem;
+}
+
+.cc-client-workspace__detail-stack .detail-label,
+.cc-client-workspace__ledger-grid .detail-label {
+  font-size: 0.68rem;
+}
+
+.cc-client-workspace__detail-stack .detail-row strong,
+.cc-client-workspace__ledger-grid .detail-row strong {
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.cc-client-workspace__note-card p,
+.cc-client-workspace__timeline-item p {
+  margin: 0.18rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.36;
+}
+
+.cc-client-workspace__relationship-card span {
+  display: block;
+  margin-top: 0.16rem;
+  font-size: 0.76rem;
+  line-height: 1.3;
 }
 
 .cc-client-workspace__timeline-item--success {
@@ -235,5 +304,13 @@
   .cc-client-workspace__entity-grid,
   .cc-client-workspace__activity-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-client-workspace__hero {
+    padding: 0.92rem 0.94rem;
+  }
+
+  .cc-client-workspace__entity-card {
+    padding: 0.86rem;
   }
 }

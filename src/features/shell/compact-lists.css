@@ -1,62 +1,96 @@
 .cc-record-list--compact,
 .cc-bounded-list {
-  gap: 10px;
+  gap: 8px;
 }
 
 .cc-record-card--compact,
+.cc-record-card--compact.cc-record-card--client,
+.cc-record-card--compact.cc-record-card--property,
 .cc-record-card--compact.cc-record-card--invoice,
 .cc-record-card--compact.cc-record-card--quote,
 .cc-record-card--compact.cc-record-card--job,
 .cc-record-card--compact.cc-record-card--payment {
   position: relative;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 11px 13px;
+  border-radius: 16px;
 }
 
 .cc-record-card--compact .cc-record-card__primary {
-  gap: 8px;
+  gap: 7px;
 }
 
 .cc-record-card--compact .cc-record-card__head {
-  gap: 10px;
+  gap: 8px;
+  align-items: flex-start;
 }
 
 .cc-record-card--compact .cc-record-card__title {
-  font-size: 0.95rem;
-  line-height: 1.12;
+  font-size: 0.92rem;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
 }
 
 .cc-record-card--compact .cc-record-card__subref,
 .cc-record-card--compact .cc-record-card__summary,
 .cc-record-card--compact .cc-record-card__meta,
 .cc-record-card--compact .cc-record-card__chip {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
 }
 
 .cc-record-card--compact .cc-record-card__summary {
   max-width: none;
-  line-height: 1.35;
+  line-height: 1.3;
+  margin-top: -1px;
 }
 
 .cc-record-card--compact .cc-record-card__chips {
-  gap: 6px;
+  gap: 5px;
+  margin-top: 2px;
 }
 
 .cc-record-card--compact .cc-record-card__chip {
-  min-height: 24px;
-  padding: 0 10px;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
 }
 
 .cc-record-card--compact .cc-record-card__amount,
 .cc-record-card--compact .cc-record-card__meta-emphasis {
-  font-size: 0.94rem;
+  font-size: 0.9rem;
+}
+
+.cc-record-card--compact .cc-record-card__aside {
+  gap: 6px;
+}
+
+.cc-record-card--compact .lead-badge,
+.cc-record-card--compact .cc-status-badge {
+  min-height: 22px;
+  padding-inline: 8px;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.cc-record-card--compact .cc-record-card__meta {
+  margin-top: 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 8px;
+}
+
+.cc-record-card--compact .cc-record-card__meta-label {
+  font-size: 0.63rem;
+}
+
+.cc-record-card--compact .cc-record-card__meta-value {
+  font-size: 0.76rem;
+  line-height: 1.24;
 }
 
 .cc-record-card--compact .cc-record-card__footer {
   align-items: center;
   justify-content: space-between;
-  padding-top: 8px;
+  padding-top: 6px;
 }
 
 .cc-record-card__selection {
@@ -110,32 +144,89 @@
 .cc-client-workspace__nested-item,
 .cc-client-workspace__timeline-item,
 .cc-client-workspace__note-card {
-  padding: 0.78rem 0.9rem;
-  border-radius: 0.95rem;
+  padding: 0.72rem 0.82rem;
+  border-radius: 0.9rem;
 }
 
 .cc-client-workspace__relationship-card strong,
 .cc-client-workspace__nested-item strong,
 .cc-client-workspace__timeline-item strong,
 .cc-client-workspace__note-card strong {
-  margin-top: 0.28rem;
-  font-size: 0.92rem;
+  margin-top: 0.18rem;
+  font-size: 0.89rem;
+  line-height: 1.18;
 }
 
 .cc-client-workspace__relationship-card small,
 .cc-client-workspace__nested-item small {
-  margin-top: 0.24rem;
-  font-size: 0.76rem;
+  margin-top: 0.18rem;
+  font-size: 0.74rem;
+}
+
+.cc-client-workspace__timeline-item span,
+.cc-client-workspace__note-card span {
+  font-size: 0.72rem;
+}
+
+.cc-client-workspace__timeline-item p,
+.cc-client-workspace__note-card p,
+.cc-client-workspace__relationship-card span,
+.cc-client-workspace__relationship-card small,
+.cc-client-workspace__nested-item small {
+  margin: 0;
+  line-height: 1.32;
+}
+
+.cc-client-workspace__entity-card {
+  padding: 0;
+}
+
+.cc-client-workspace__entity-card .section-header {
+  margin-bottom: 0.7rem;
+}
+
+.cc-client-workspace__entity-card .section-header h2 {
+  font-size: 1rem;
+}
+
+.cc-client-workspace__entity-card .section-header p {
+  font-size: 0.78rem;
+}
+
+.cc-client-workspace__entity-card .lead-badge {
+  min-height: 22px;
+  padding-inline: 8px;
+  font-size: 0.62rem;
+}
+
+.cc-client-workspace__detail-stack .detail-row {
+  padding: 0.68rem 0.78rem;
+  border-radius: 0.9rem;
+}
+
+.cc-client-workspace__detail-stack .detail-label {
+  font-size: 0.68rem;
+}
+
+.cc-client-workspace__detail-stack .detail-row strong {
+  font-size: 0.84rem;
+  line-height: 1.2;
 }
 
 @media (max-width: 640px) {
   .cc-record-card--compact,
+  .cc-record-card--compact.cc-record-card--client,
+  .cc-record-card--compact.cc-record-card--property,
   .cc-record-card--compact.cc-record-card--invoice,
   .cc-record-card--compact.cc-record-card--quote,
   .cc-record-card--compact.cc-record-card--job,
   .cc-record-card--compact.cc-record-card--payment {
-    padding: 11px 12px;
-    border-radius: 16px;
+    padding: 10px 11px;
+    border-radius: 15px;
+  }
+
+  .cc-record-card--compact .cc-record-card__meta {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .cc-bulk-toolbar__actions {

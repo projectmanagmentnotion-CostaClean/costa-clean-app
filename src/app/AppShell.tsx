@@ -1052,6 +1052,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                       reloadInvoicesAndPayments(),
                     ])
                   }}
+                  onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
+                  onOpenJobWorkspace={handleOpenJobWorkspace}
+                  onOpenQuoteDetail={handleOpenQuoteDetail}
+                  onOpenInvoiceDetail={handleOpenInvoiceDetail}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
                 />
@@ -1065,6 +1069,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                     payments={paymentsWithCodes}
                     error={propertyError}
                     onPropertyCreated={refreshOperations}
+                    onOpenClientWorkspace={handleOpenClientWorkspace}
+                    onOpenJobWorkspace={handleOpenJobWorkspace}
+                    onOpenQuoteDetail={handleOpenQuoteDetail}
+                    onOpenInvoiceDetail={handleOpenInvoiceDetail}
                     onUnsavedChange={updateUnsavedChanges}
                     confirmNavigation={runWithNavigationGuard}
                   />

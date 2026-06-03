@@ -25,6 +25,10 @@ interface ClientsPageProps {
   recurringInvoicePlans: RecurringInvoicePlanListItem[]
   error: string | null
   onClientCreated: () => Promise<void>
+  onOpenPropertyWorkspace: (propertyId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  onOpenQuoteDetail: (quoteId: string) => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
 }
@@ -39,6 +43,10 @@ export function ClientsPage({
   recurringInvoicePlans,
   error,
   onClientCreated,
+  onOpenPropertyWorkspace,
+  onOpenJobWorkspace,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
   onUnsavedChange,
   confirmNavigation,
 }: ClientsPageProps) {
@@ -149,6 +157,10 @@ export function ClientsPage({
             })
           }}
           onRefresh={onClientCreated}
+          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenQuoteDetail={onOpenQuoteDetail}
+          onOpenInvoiceDetail={onOpenInvoiceDetail}
           onPendingStateChange={setHasPendingWorkspaceState}
         />
       )}

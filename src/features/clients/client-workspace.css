@@ -180,6 +180,25 @@
   align-items: start;
 }
 
+.cc-client-workspace__entity-grid--scrollable {
+  max-height: min(62vh, 760px);
+  overflow: auto;
+  padding-right: 0.35rem;
+  overscroll-behavior: contain;
+  align-content: start;
+}
+
+.cc-client-workspace__entity-grid--scrollable::-webkit-scrollbar {
+  width: 10px;
+}
+
+.cc-client-workspace__entity-grid--scrollable::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.24);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 .cc-client-workspace__entity-meta,
 .cc-client-workspace__inline-summary {
   display: flex;
@@ -350,5 +369,10 @@
   .cc-client-workspace__entity-card {
     padding: 0.86rem;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-client-workspace__entity-grid--scrollable {
+    max-height: min(54vh, 620px);
+    padding-right: 0;
   }
 }

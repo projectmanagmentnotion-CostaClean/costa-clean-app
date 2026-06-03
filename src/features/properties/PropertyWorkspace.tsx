@@ -32,6 +32,10 @@ interface PropertyWorkspaceProps {
   onTabChange: (tab: PropertyWorkspaceTab) => void
   onClose: () => void
   onRefresh: () => Promise<void>
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  onOpenQuoteDetail: (quoteId: string) => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   onPendingStateChange?: (hasPendingState: boolean) => void
 }
 
@@ -82,6 +86,10 @@ export function PropertyWorkspace({
   onTabChange,
   onClose,
   onRefresh,
+  onOpenClientWorkspace,
+  onOpenJobWorkspace,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
   onPendingStateChange,
 }: PropertyWorkspaceProps) {
   const [activeAction, setActiveAction] = useState<PropertyWorkspaceAction>(null)
@@ -482,7 +490,7 @@ export function PropertyWorkspace({
       ) : null}
 
       {activeTab === 'jobs' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
           {relatedJobs.map((job) => (
             <article key={job.id} className="data-section cc-client-workspace__entity-card">
               <div className="section-header">
@@ -511,6 +519,29 @@ export function PropertyWorkspace({
                   <strong>{job.invoice_id ? formatInvoiceLabel(invoiceById.get(job.invoice_id) ?? { id: job.invoice_id }) : 'Pendiente de facturar'}</strong>
                 </div>
               </div>
+
+              <div className="cc-record-card__footer">
+                <div className="cc-record-card__footer-actions">
+                  <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenJobWorkspace(job.id)}>
+                    Ver servicio
+                  </button>
+                  {owner ? (
+                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
+                      Ver cliente
+                    </button>
+                  ) : null}
+                  {job.quote_id ? (
+                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenQuoteDetail(job.quote_id!)}>
+                      Ver presupuesto
+                    </button>
+                  ) : null}
+                  {job.invoice_id ? (
+                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenInvoiceDetail(job.invoice_id!)}>
+                      Ver factura
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             </article>
           ))}
 
@@ -524,7 +555,7 @@ export function PropertyWorkspace({
       ) : null}
 
       {activeTab === 'quotes' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
           {relatedQuotes.map((quote) => (
             <article key={quote.id} className="data-section cc-client-workspace__entity-card">
               <div className="section-header">
@@ -566,7 +597,7 @@ export function PropertyWorkspace({
       ) : null}
 
       {activeTab === 'invoices' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
           {relatedInvoices.map((invoice) => {
             const invoicePayments = relatedPayments.filter((payment) => payment.invoice_id === invoice.id)
             const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
@@ -598,6 +629,19 @@ export function PropertyWorkspace({
                     <strong>{formatCurrency(paymentSummary.outstandingAmount)}</strong>
                   </div>
                 </div>
+
+                <div className="cc-record-card__footer">
+                  <div className="cc-record-card__footer-actions">
+                    <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenInvoiceDetail(invoice.id)}>
+                      Ver factura
+                    </button>
+                    {owner ? (
+                      <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
+                        Ver cliente
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </article>
             )
           })}
@@ -612,7 +656,7 @@ export function PropertyWorkspace({
       ) : null}
 
       {activeTab === 'payments' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid">
+        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
           {relatedPayments.map((payment) => (
             <article key={payment.id} className="data-section cc-client-workspace__entity-card">
               <div className="section-header">
@@ -635,6 +679,19 @@ export function PropertyWorkspace({
                 <div className="detail-row">
                   <span className="detail-label">Notas</span>
                   <strong>{payment.notes ?? 'Sin notas'}</strong>
+                </div>
+              </div>
+
+              <div className="cc-record-card__footer">
+                <div className="cc-record-card__footer-actions">
+                  <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenInvoiceDetail(payment.invoice_id)}>
+                    Ver factura
+                  </button>
+                  {owner ? (
+                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
+                      Ver cliente
+                    </button>
+                  ) : null}
                 </div>
               </div>
             </article>

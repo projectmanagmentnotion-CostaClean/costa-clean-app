@@ -20,6 +20,10 @@ interface PropertiesPageProps {
   payments: PaymentListItem[]
   error: string | null
   onPropertyCreated: () => Promise<void>
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  onOpenQuoteDetail: (quoteId: string) => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
 }
@@ -33,6 +37,10 @@ export function PropertiesPage({
   payments,
   error,
   onPropertyCreated,
+  onOpenClientWorkspace,
+  onOpenJobWorkspace,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
   onUnsavedChange,
   confirmNavigation,
 }: PropertiesPageProps) {
@@ -136,6 +144,10 @@ export function PropertiesPage({
             })
           }}
           onRefresh={onPropertyCreated}
+          onOpenClientWorkspace={onOpenClientWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenQuoteDetail={onOpenQuoteDetail}
+          onOpenInvoiceDetail={onOpenInvoiceDetail}
           onPendingStateChange={setHasPendingWorkspaceState}
         />
       )}

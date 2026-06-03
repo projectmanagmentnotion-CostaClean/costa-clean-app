@@ -10,6 +10,7 @@ import type { JobCreatePrefill } from '../jobs/jobCreatePrefill'
 import type { JobListItem } from '../jobs/types'
 import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import type { PaymentListItem } from '../payments/types'
+import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
 import { propertyWorkspaceTabs } from './usePropertyWorkspaceNavigation'
@@ -490,219 +491,219 @@ export function PropertyWorkspace({
       ) : null}
 
       {activeTab === 'jobs' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
-          {relatedJobs.map((job) => (
-            <article key={job.id} className="data-section cc-client-workspace__entity-card">
-              <div className="section-header">
-                <div>
-                  <h2>{formatJobLabel(job)}</h2>
-                  <p>{getServiceTypeLabel(job.service_type)}</p>
-                </div>
-                <span className="lead-badge">{getStatusLabel(job.status)}</span>
-              </div>
-
-              <div className="cc-client-workspace__detail-stack">
-                <div className="detail-row">
-                  <span className="detail-label">Fecha</span>
-                  <strong>{formatDateEs(job.scheduled_date)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Cliente</span>
-                  <strong>{owner ? formatClientLabel(owner) : 'Sin cliente'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Presupuesto origen</span>
-                  <strong>{job.quote_id ? formatQuoteLabel(quoteById.get(job.quote_id) ?? { id: job.quote_id, display_code: job.quote_display_code, client_name: owner?.full_name ?? null, property_name: property.name }) : 'Sin presupuesto'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Factura</span>
-                  <strong>{job.invoice_id ? formatInvoiceLabel(invoiceById.get(job.invoice_id) ?? { id: job.invoice_id }) : 'Pendiente de facturar'}</strong>
-                </div>
-              </div>
-
-              <div className="cc-record-card__footer">
-                <div className="cc-record-card__footer-actions">
-                  <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenJobWorkspace(job.id)}>
-                    Ver servicio
-                  </button>
-                  {owner ? (
-                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
-                      Ver cliente
-                    </button>
-                  ) : null}
-                  {job.quote_id ? (
-                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenQuoteDetail(job.quote_id!)}>
-                      Ver presupuesto
-                    </button>
-                  ) : null}
-                  {job.invoice_id ? (
-                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenInvoiceDetail(job.invoice_id!)}>
-                      Ver factura
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {relatedJobs.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin servicios</strong>
-              <p>Esta propiedad todavía no tiene servicios vinculados.</p>
-            </div>
-          ) : null}
+        <section className="cc-client-workspace__tab-panel">
+          <WorkspaceRelationBrowser
+            ariaLabel="Servicios de la propiedad"
+            emptyTitle="Sin servicios"
+            emptyDescription="Esta propiedad todavía no tiene servicios vinculados."
+            items={relatedJobs.map((job) => ({
+              id: job.id,
+              title: formatJobLabel(job),
+              subtitle: getServiceTypeLabel(job.service_type),
+              statusLabel: getStatusLabel(job.status),
+              context: job.notes?.trim() || 'Sin notas operativas registradas para este servicio.',
+              rowMeta: [
+                formatDateEs(job.scheduled_date),
+                owner ? formatClientLabel(owner) : 'Sin cliente',
+                job.invoice_id ? 'Con factura' : 'Sin factura',
+              ],
+              detailSummary: 'Servicio de esta propiedad con accesos directos a cliente, presupuesto y factura.',
+              detailFields: [
+                { label: 'Fecha', value: formatDateEs(job.scheduled_date) },
+                { label: 'Cliente', value: owner ? formatClientLabel(owner) : 'Sin cliente' },
+                { label: 'Tipo', value: getServiceTypeLabel(job.service_type) },
+                { label: 'Presupuesto origen', value: job.quote_id ? formatQuoteLabel(quoteById.get(job.quote_id) ?? { id: job.quote_id, display_code: job.quote_display_code, client_name: owner?.full_name ?? null, property_name: property.name }) : 'Sin presupuesto' },
+                { label: 'Factura', value: job.invoice_id ? formatInvoiceLabel(invoiceById.get(job.invoice_id) ?? { id: job.invoice_id }) : 'Pendiente de facturar' },
+              ],
+              actions: [
+                {
+                  key: 'open-job',
+                  label: 'Ver servicio',
+                  tone: 'primary',
+                  onClick: () => onOpenJobWorkspace(job.id),
+                },
+                ...(owner
+                  ? [{
+                      key: 'open-client',
+                      label: 'Ver cliente',
+                      onClick: () => onOpenClientWorkspace(owner.id),
+                    }]
+                  : []),
+                ...(job.quote_id
+                  ? [{
+                      key: 'open-quote',
+                      label: 'Ver presupuesto',
+                      onClick: () => onOpenQuoteDetail(job.quote_id!),
+                    }]
+                  : []),
+                ...(job.invoice_id
+                  ? [{
+                      key: 'open-invoice',
+                      label: 'Ver factura',
+                      onClick: () => onOpenInvoiceDetail(job.invoice_id!),
+                    }]
+                  : []),
+              ],
+            }))}
+          />
         </section>
       ) : null}
 
       {activeTab === 'quotes' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
-          {relatedQuotes.map((quote) => (
-            <article key={quote.id} className="data-section cc-client-workspace__entity-card">
-              <div className="section-header">
-                <div>
-                  <h2>{formatQuoteLabel(quote)}</h2>
-                  <p>{owner ? formatClientLabel(owner) : 'Sin cliente'}</p>
-                </div>
-                <span className="lead-badge">{getStatusLabel(quote.status)}</span>
-              </div>
-
-              <div className="cc-client-workspace__detail-stack">
-                <div className="detail-row">
-                  <span className="detail-label">Total</span>
-                  <strong>{formatCurrency(quote.total)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Creado</span>
-                  <strong>{quote.created_at ? formatDateEs(quote.created_at) : 'Sin fecha'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Servicio generado</span>
-                  <strong>{quote.job_id ? formatJobLabel(relatedJobs.find((job) => job.id === quote.job_id) ?? { id: quote.job_id, client_name: owner?.full_name ?? null, property_name: property.name }) : 'Todavía no generado'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Factura generada</span>
-                  <strong>{quote.invoice_id ? formatInvoiceLabel(invoiceById.get(quote.invoice_id) ?? { id: quote.invoice_id }) : 'Todavía no generada'}</strong>
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {relatedQuotes.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin presupuestos</strong>
-              <p>Esta propiedad todavía no tiene presupuestos asociados.</p>
-            </div>
-          ) : null}
+        <section className="cc-client-workspace__tab-panel">
+          <WorkspaceRelationBrowser
+            ariaLabel="Presupuestos de la propiedad"
+            emptyTitle="Sin presupuestos"
+            emptyDescription="Esta propiedad todavía no tiene presupuestos asociados."
+            items={relatedQuotes.map((quote) => ({
+              id: quote.id,
+              title: formatQuoteLabel(quote),
+              subtitle: owner ? formatClientLabel(owner) : 'Sin cliente',
+              statusLabel: getStatusLabel(quote.status),
+              context: quote.notes?.trim() || quote.internal_notes?.trim() || 'Sin notas visibles para este presupuesto.',
+              rowMeta: [
+                quote.created_at ? formatDateEs(quote.created_at) : 'Sin fecha',
+                formatCurrency(quote.total),
+                quote.invoice_id ? 'Facturado' : 'Sin facturar',
+              ],
+              detailSummary: 'Presupuesto emitido para esta propiedad con trazabilidad hacia servicio y factura.',
+              detailFields: [
+                { label: 'Total', value: formatCurrency(quote.total) },
+                { label: 'Creado', value: quote.created_at ? formatDateEs(quote.created_at) : 'Sin fecha' },
+                { label: 'Cliente', value: owner ? formatClientLabel(owner) : 'Sin cliente' },
+                { label: 'Servicio generado', value: quote.job_id ? formatJobLabel(relatedJobs.find((job) => job.id === quote.job_id) ?? { id: quote.job_id, client_name: owner?.full_name ?? null, property_name: property.name }) : 'Todavía no generado' },
+                { label: 'Factura generada', value: quote.invoice_id ? formatInvoiceLabel(invoiceById.get(quote.invoice_id) ?? { id: quote.invoice_id }) : 'Todavía no generada' },
+              ],
+              actions: [
+                {
+                  key: 'open-quote',
+                  label: 'Ver presupuesto',
+                  tone: 'primary',
+                  onClick: () => onOpenQuoteDetail(quote.id),
+                },
+                ...(owner
+                  ? [{
+                      key: 'open-client',
+                      label: 'Ver cliente',
+                      onClick: () => onOpenClientWorkspace(owner.id),
+                    }]
+                  : []),
+                ...(quote.job_id
+                  ? [{
+                      key: 'open-job',
+                      label: 'Ver servicio',
+                      onClick: () => onOpenJobWorkspace(quote.job_id!),
+                    }]
+                  : []),
+                ...(quote.invoice_id
+                  ? [{
+                      key: 'open-invoice',
+                      label: 'Ver factura',
+                      onClick: () => onOpenInvoiceDetail(quote.invoice_id!),
+                    }]
+                  : []),
+              ],
+            }))}
+          />
         </section>
       ) : null}
 
       {activeTab === 'invoices' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
-          {relatedInvoices.map((invoice) => {
-            const invoicePayments = relatedPayments.filter((payment) => payment.invoice_id === invoice.id)
-            const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
-            return (
-              <article key={invoice.id} className="data-section cc-client-workspace__entity-card">
-                <div className="section-header">
-                  <div>
-                    <h2>{formatInvoiceLabel(invoice)}</h2>
-                    <p>{owner ? formatClientLabel(owner) : 'Sin cliente'}</p>
-                  </div>
-                  <span className="lead-badge">{getInvoiceFinancialStatusLabel(paymentSummary.financialStatus)}</span>
-                </div>
+        <section className="cc-client-workspace__tab-panel">
+          <WorkspaceRelationBrowser
+            ariaLabel="Facturas de la propiedad"
+            emptyTitle="Sin facturas"
+            emptyDescription="Esta propiedad todavía no tiene facturas emitidas."
+            items={relatedInvoices.map((invoice) => {
+              const invoicePayments = relatedPayments.filter((payment) => payment.invoice_id === invoice.id)
+              const paymentSummary = buildInvoicePaymentSummary(invoice, invoicePayments)
 
-                <div className="cc-client-workspace__detail-stack">
-                  <div className="detail-row">
-                    <span className="detail-label">Emitida</span>
-                    <strong>{formatDateEs(invoice.issue_date)}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Total</span>
-                    <strong>{formatCurrency(invoice.total)}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Cobrado</span>
-                    <strong>{formatCurrency(paymentSummary.paidAmount)}</strong>
-                  </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Pendiente</span>
-                    <strong>{formatCurrency(paymentSummary.outstandingAmount)}</strong>
-                  </div>
-                </div>
-
-                <div className="cc-record-card__footer">
-                  <div className="cc-record-card__footer-actions">
-                    <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenInvoiceDetail(invoice.id)}>
-                      Ver factura
-                    </button>
-                    {owner ? (
-                      <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
-                        Ver cliente
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              </article>
-            )
-          })}
-
-          {relatedInvoices.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin facturas</strong>
-              <p>Esta propiedad todavía no tiene facturas emitidas.</p>
-            </div>
-          ) : null}
+              return {
+                id: invoice.id,
+                title: formatInvoiceLabel(invoice),
+                subtitle: owner ? formatClientLabel(owner) : 'Sin cliente',
+                statusLabel: getInvoiceFinancialStatusLabel(paymentSummary.financialStatus),
+                context: invoice.notes?.trim() || 'Sin notas visibles en esta factura.',
+                rowMeta: [
+                  formatDateEs(invoice.issue_date),
+                  formatCurrency(invoice.total),
+                  `Pendiente ${formatCurrency(paymentSummary.outstandingAmount)}`,
+                ],
+                detailSummary: 'Factura emitida sobre esta propiedad con lectura clara de saldo y cobro.',
+                detailFields: [
+                  { label: 'Emitida', value: formatDateEs(invoice.issue_date) },
+                  { label: 'Total', value: formatCurrency(invoice.total) },
+                  { label: 'Cobrado', value: formatCurrency(paymentSummary.paidAmount) },
+                  { label: 'Pendiente', value: formatCurrency(paymentSummary.outstandingAmount) },
+                  { label: 'Cliente', value: owner ? formatClientLabel(owner) : 'Sin cliente' },
+                ],
+                actions: [
+                  {
+                    key: 'open-invoice',
+                    label: 'Ver factura',
+                    tone: 'primary',
+                    onClick: () => onOpenInvoiceDetail(invoice.id),
+                  },
+                  ...(owner
+                    ? [{
+                        key: 'open-client',
+                        label: 'Ver cliente',
+                        onClick: () => onOpenClientWorkspace(owner.id),
+                      }]
+                    : []),
+                ],
+              }
+            })}
+          />
         </section>
       ) : null}
 
       {activeTab === 'payments' ? (
-        <section className="cc-client-workspace__tab-panel cc-client-workspace__entity-grid cc-client-workspace__entity-grid--scrollable">
-          {relatedPayments.map((payment) => (
-            <article key={payment.id} className="data-section cc-client-workspace__entity-card">
-              <div className="section-header">
-                <div>
-                  <h2>{formatInvoiceLabel(invoiceById.get(payment.invoice_id) ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</h2>
-                  <p>{formatDateEs(payment.payment_date)}</p>
-                </div>
-                <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>
-              </div>
+        <section className="cc-client-workspace__tab-panel">
+          <WorkspaceRelationBrowser
+            ariaLabel="Cobros de la propiedad"
+            emptyTitle="Sin cobros"
+            emptyDescription="Todavía no se han registrado cobros relacionados con esta propiedad."
+            items={relatedPayments.map((payment) => {
+              const paymentInvoice = invoiceById.get(payment.invoice_id) ?? null
 
-              <div className="cc-client-workspace__detail-stack">
-                <div className="detail-row">
-                  <span className="detail-label">Importe</span>
-                  <strong>{formatCurrency(payment.amount)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Metodo</span>
-                  <strong>{getPaymentMethodLabel(payment.payment_method)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Notas</span>
-                  <strong>{payment.notes ?? 'Sin notas'}</strong>
-                </div>
-              </div>
-
-              <div className="cc-record-card__footer">
-                <div className="cc-record-card__footer-actions">
-                  <button type="button" className="cc-record-card__inline-action is-primary" onClick={() => onOpenInvoiceDetail(payment.invoice_id)}>
-                    Ver factura
-                  </button>
-                  {owner ? (
-                    <button type="button" className="cc-record-card__inline-action" onClick={() => onOpenClientWorkspace(owner.id)}>
-                      Ver cliente
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </article>
-          ))}
-
-          {relatedPayments.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin cobros</strong>
-              <p>Todavía no se han registrado cobros relacionados con esta propiedad.</p>
-            </div>
-          ) : null}
+              return {
+                id: payment.id,
+                title: formatInvoiceLabel(paymentInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number }),
+                subtitle: formatDateEs(payment.payment_date),
+                statusLabel: getPaymentMethodLabel(payment.payment_method),
+                context: payment.notes?.trim() || 'Sin notas adicionales para este cobro.',
+                rowMeta: [
+                  formatCurrency(payment.amount),
+                  getPaymentMethodLabel(payment.payment_method),
+                  owner ? formatClientLabel(owner) : 'Sin cliente',
+                ],
+                detailSummary: 'Cobro ligado a la propiedad con acceso a factura y cliente relacionado.',
+                detailFields: [
+                  { label: 'Importe', value: formatCurrency(payment.amount) },
+                  { label: 'Método', value: getPaymentMethodLabel(payment.payment_method) },
+                  { label: 'Fecha', value: formatDateEs(payment.payment_date) },
+                  { label: 'Factura', value: formatInvoiceLabel(paymentInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number }) },
+                  { label: 'Cliente', value: owner ? formatClientLabel(owner) : 'Sin cliente' },
+                ],
+                actions: [
+                  {
+                    key: 'open-invoice',
+                    label: 'Ver factura',
+                    tone: 'primary',
+                    onClick: () => onOpenInvoiceDetail(payment.invoice_id),
+                  },
+                  ...(owner
+                    ? [{
+                        key: 'open-client',
+                        label: 'Ver cliente',
+                        onClick: () => onOpenClientWorkspace(owner.id),
+                      }]
+                    : []),
+                ],
+              }
+            })}
+          />
         </section>
       ) : null}
 

@@ -30,6 +30,10 @@ interface InvoiceDetailCardProps {
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
   onViewPayments: (invoiceId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenPropertyWorkspace: (propertyId: string) => void
+  onOpenQuoteDetail: (quoteId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   emptyState?: {
     title: string
@@ -272,6 +276,10 @@ export function InvoiceDetailCard({
   onInvoiceUpdated,
   onOpenDocument,
   onViewPayments,
+  onOpenJobWorkspace,
+  onOpenClientWorkspace,
+  onOpenPropertyWorkspace,
+  onOpenQuoteDetail,
   onUnsavedChange,
   emptyState,
 }: InvoiceDetailCardProps) {
@@ -805,7 +813,44 @@ export function InvoiceDetailCard({
                   </div>
                 </div>
 
-                <div className="form-actions" style={{ marginTop: '1rem' }}>
+              <div className="form-actions" style={{ marginTop: '1rem' }}>
+                {invoice.job_id ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onOpenJobWorkspace(invoice.job_id!)}
+                  >
+                    Abrir servicio
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => onOpenClientWorkspace(invoice.client_id)}
+                >
+                  Abrir cliente
+                </button>
+                {invoice.property_id ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onOpenPropertyWorkspace(invoice.property_id!)}
+                  >
+                    Abrir propiedad
+                  </button>
+                ) : null}
+                {invoice.quote_id ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => onOpenQuoteDetail(invoice.quote_id!)}
+                  >
+                    Ver presupuesto origen
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="form-actions" style={{ marginTop: '1rem' }}>
                   <button
                     type="button"
                     className="primary-button"

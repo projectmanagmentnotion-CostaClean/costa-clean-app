@@ -41,6 +41,8 @@ interface JobWorkspaceProps {
   onRefresh: () => Promise<void>
   onOpenClientWorkspace: (clientId: string) => void
   onOpenPropertyWorkspace: (propertyId: string) => void
+  onOpenQuoteDetail: (quoteId: string) => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   onPendingStateChange?: (hasPendingState: boolean) => void
 }
 
@@ -133,6 +135,8 @@ export function JobWorkspace({
   onRefresh,
   onOpenClientWorkspace,
   onOpenPropertyWorkspace,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
   onPendingStateChange,
 }: JobWorkspaceProps) {
   const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
@@ -267,9 +271,20 @@ export function JobWorkspace({
         <button type="button" className="primary-button" onClick={() => onTabChange('operations')}>
           Editar servicio
         </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
-          Crear factura
-        </button>
+        {!invoice ? (
+          <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
+            Crear factura
+          </button>
+        ) : null}
+        {invoice ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onOpenInvoiceDetail(invoice.id)}
+          >
+            Abrir factura
+          </button>
+        ) : null}
         <button
           type="button"
           className="secondary-button"
@@ -278,6 +293,15 @@ export function JobWorkspace({
         >
           Registrar cobro
         </button>
+        {quote ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onOpenQuoteDetail(quote.id)}
+          >
+            Ver presupuesto origen
+          </button>
+        ) : null}
         <button
           type="button"
           className="secondary-button"

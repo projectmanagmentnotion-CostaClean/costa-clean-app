@@ -17,6 +17,11 @@ export type InvoiceModuleFilter =
   | 'current_month'
   | 'unpaid_older_7d'
   | {
+      type: 'invoice'
+      invoiceId: string
+      invoiceLabel: string
+    }
+  | {
       type: 'quarter'
       fiscalYear: number
       fiscalQuarter: number
@@ -33,6 +38,11 @@ export type QuoteModuleFilter =
   | 'accepted_without_job'
   | 'accepted_without_job_3d'
   | 'sent_older_5d'
+  | {
+      type: 'quote'
+      quoteId: string
+      quoteLabel: string
+    }
 
 export type JobModuleFilter =
   | 'scheduled'
@@ -190,7 +200,8 @@ export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): strin
   if (filter === 'pending') return 'Pendientes de cobro'
   if (filter === 'partially_paid') return 'Facturas parcialmente cobradas'
   if (filter === 'current_month') return 'Facturas emitidas este mes'
-  if (filter === 'unpaid_older_7d') return 'Facturas pendientes con más de 7 días'
+  if (filter === 'unpaid_older_7d') return 'Facturas pendientes con mas de 7 dias'
+  if (filter?.type === 'invoice') return filter.invoiceLabel
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Facturas de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'pending') return `Pendiente de cobro de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'year' && filter.scope === 'all') return `Facturas de ${getYearLabel(filter.fiscalYear)}`
@@ -202,25 +213,26 @@ export function getQuoteFilterLabel(filter: QuoteModuleFilter | null): string | 
   if (filter === 'open') return 'Presupuestos abiertos'
   if (filter === 'accepted_without_job') return 'Presupuestos aceptados sin trabajo'
   if (filter === 'accepted_without_job_3d') {
-    return `Presupuestos aceptados sin trabajo con más de ${automationRuleThresholds.acceptedQuotesWithoutJobOlderThanDays} días`
+    return `Presupuestos aceptados sin trabajo con mas de ${automationRuleThresholds.acceptedQuotesWithoutJobOlderThanDays} dias`
   }
-  if (filter === 'sent_older_5d') return 'Presupuestos enviados con más de 5 días'
+  if (filter === 'sent_older_5d') return 'Presupuestos enviados con mas de 5 dias'
+  if (filter?.type === 'quote') return filter.quoteLabel
   return null
 }
 
 export function getJobFilterLabel(filter: JobModuleFilter | null): string | null {
   if (filter === 'scheduled') return 'Servicios programados o en curso'
   if (filter === 'completed_without_invoice') return 'Servicios completados sin factura'
-  if (filter === 'completed_without_invoice_2d') return 'Servicios completados sin factura con más de 2 días'
+  if (filter === 'completed_without_invoice_2d') return 'Servicios completados sin factura con mas de 2 dias'
   if (filter === 'today') return 'Servicios programados para hoy'
-  if (filter === 'tomorrow') return 'Servicios programados para mañana'
-  if (filter === 'upcoming') return 'Próximos servicios programados'
+  if (filter === 'tomorrow') return 'Servicios programados para manana'
+  if (filter === 'upcoming') return 'Proximos servicios programados'
   return null
 }
 
 export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): string | null {
   if (filter === 'missing_receipt') return 'Sin ticket o factura adjunta'
-  if (filter === 'pending_review') return 'Gastos pendientes de revisión fiscal'
+  if (filter === 'pending_review') return 'Gastos pendientes de revision fiscal'
   if (filter === 'current_month') return 'Gastos del mes'
   if (filter === 'fiscal_requires_review') return 'Estimacion fiscal: requiere revision'
   if (filter === 'fiscal_medium_high_risk') return 'Riesgo fiscal medio/alto'
@@ -235,12 +247,12 @@ export function getExpenseFilterLabel(filter: ExpenseModuleFilter | null): strin
   if (filter?.type === 'quarter' && filter.scope === 'all') return `Gastos de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'closure') return `Gastos que afectan al cierre en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'missing_support') return `Gastos sin justificante en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
-  if (filter?.type === 'quarter' && filter.scope === 'pending_review') return `Gastos pendientes de revisión en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
+  if (filter?.type === 'quarter' && filter.scope === 'pending_review') return `Gastos pendientes de revision en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'quarter' && filter.scope === 'risk') return `Gastos con riesgo medio/alto en ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'year' && filter.scope === 'all') return `Gastos de ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'year' && filter.scope === 'closure') return `Gastos que afectan al cierre en ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'year' && filter.scope === 'missing_support') return `Gastos sin justificante en ${getYearLabel(filter.fiscalYear)}`
-  if (filter?.type === 'year' && filter.scope === 'pending_review') return `Gastos pendientes de revisión en ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'year' && filter.scope === 'pending_review') return `Gastos pendientes de revision en ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'year' && filter.scope === 'risk') return `Gastos con riesgo medio/alto en ${getYearLabel(filter.fiscalYear)}`
   return null
 }
@@ -269,6 +281,10 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
 
   if (filter === 'unpaid_older_7d') {
     return invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7))
+  }
+
+  if (filter?.type === 'invoice') {
+    return invoices.filter((invoice) => invoice.id === filter.invoiceId)
   }
 
   if (filter?.type === 'quarter') {
@@ -318,6 +334,10 @@ export function applyQuoteFilter(quotes: QuoteListItem[], filter: QuoteModuleFil
 
   if (filter === 'sent_older_5d') {
     return quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5))
+  }
+
+  if (filter?.type === 'quote') {
+    return quotes.filter((quote) => quote.id === filter.quoteId)
   }
 
   return quotes

@@ -52,7 +52,8 @@ import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClos
 import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
-import { formatClientLabel, formatInvoiceLabel } from './relationshipLabels'
+import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
+import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relationshipLabels'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { setJobWorkspaceLocation } from '../features/jobs/useJobWorkspaceNavigation'
@@ -495,6 +496,42 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     [recurringInvoicePlans, clientById, clientCodeById, propertyById, propertyCodeById, quoteCodeById],
   )
 
+  const clientBalanceLeaders = useMemo(() => {
+    const totalsByClientId = new Map<string, { pendingAmount: number; pendingInvoices: number }>()
+
+    for (const invoice of invoicesWithCodes) {
+      if (!invoice.client_id || invoice.status === 'cancelled') continue
+      const outstandingAmount = Number(invoice.outstanding_amount ?? 0)
+      if (outstandingAmount <= 0.009) continue
+
+      const current = totalsByClientId.get(invoice.client_id) ?? { pendingAmount: 0, pendingInvoices: 0 }
+      current.pendingAmount += outstandingAmount
+      current.pendingInvoices += 1
+      totalsByClientId.set(invoice.client_id, current)
+    }
+
+    return [...totalsByClientId.entries()]
+      .map(([clientId, value]) => ({
+        clientId,
+        clientLabel: formatClientLabel(clientById.get(clientId) ?? {
+          client_id: clientId,
+          client_display_code: clientCodeById.get(clientId) ?? clientId,
+        }),
+        pendingAmount: value.pendingAmount,
+        pendingInvoices: value.pendingInvoices,
+      }))
+      .sort((left, right) => right.pendingAmount - left.pendingAmount)
+      .slice(0, 5)
+  }, [clientById, clientCodeById, invoicesWithCodes])
+
+  const dueRecurringPlansPreview = useMemo(
+    () => recurringInvoicePlansWithCodes
+      .filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date))
+      .sort((left, right) => left.next_issue_date.localeCompare(right.next_issue_date))
+      .slice(0, 5),
+    [recurringInvoicePlansWithCodes],
+  )
+
   const {
     quarterlyClosingSummaryByPeriod,
     availableClosingYears,
@@ -849,6 +886,50 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
+  const handleOpenInvoiceDetail = useCallback((invoiceId: string) => {
+    const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
+    const invoiceLabel = invoice
+      ? formatInvoiceLabel(invoice)
+      : invoiceId
+
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => ({
+        ...current,
+        invoices: {
+          type: 'invoice',
+          invoiceId,
+          invoiceLabel,
+        },
+      }))
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta factura ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir factura',
+    })
+  }, [commitViewChange, invoicesWithCodes, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleOpenQuoteDetail = useCallback((quoteId: string) => {
+    const quote = quotesWithCodes.find((entry) => entry.id === quoteId)
+    const quoteLabel = quote
+      ? formatQuoteLabel(quote)
+      : quoteId
+
+    runWithNavigationGuard(() => {
+      setModuleFilters((current) => ({
+        ...current,
+        quotes: {
+          type: 'quote',
+          quoteId,
+          quoteLabel,
+        },
+      }))
+      commitViewChange('quotes')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este presupuesto ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir presupuesto',
+    })
+  }, [commitViewChange, quotesWithCodes, runWithNavigationGuard, unsavedChangesContext])
+
   const handleViewPaymentsForInvoice = useCallback((invoiceId: string) => {
     const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
     const invoiceLabel = invoice
@@ -943,7 +1024,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                 <HomePage
                   metrics={dashboardMetrics}
                   agenda={dashboardAgenda}
+                  clientBalanceLeaders={clientBalanceLeaders}
+                  dueRecurringPlans={dueRecurringPlansPreview}
                   onOpenJobWorkspace={handleOpenJobWorkspace}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
                   onOpenView={navigateToView}
                   onRunKpiAction={handleDashboardKpiAction}
                   alerts={automationAlerts}
@@ -1008,6 +1092,8 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onJobCreated={refreshOperations}
                   onOpenClientWorkspace={handleOpenClientWorkspace}
                   onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
+                  onOpenQuoteDetail={handleOpenQuoteDetail}
+                  onOpenInvoiceDetail={handleOpenInvoiceDetail}
                   createPrefill={jobCreatePrefill}
                   onPrefillConsumed={() => setJobCreatePrefill(null)}
                   activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
@@ -1026,6 +1112,10 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   error={invoiceError}
                   onInvoiceCreated={refreshBilling}
                   onViewPayments={handleViewPaymentsForInvoice}
+                  onOpenJobWorkspace={handleOpenJobWorkspace}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
+                  onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
+                  onOpenQuoteDetail={handleOpenQuoteDetail}
                   createPrefill={invoiceCreatePrefill}
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
@@ -1053,6 +1143,8 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   quotes={quotesWithCodes}
                   error={paymentError}
                   onPaymentCreated={reloadInvoicesAndPayments}
+                  onOpenInvoiceDetail={handleOpenInvoiceDetail}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
                   activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
                   onClearFilter={() => clearModuleFilter('payments')}
                   onUnsavedChange={updateUnsavedChanges}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
+import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
@@ -10,6 +11,7 @@ import { InvoicesList } from '../features/invoices/InvoicesList'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
+import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
@@ -25,6 +27,10 @@ interface InvoicesPageProps {
   error: string | null
   onInvoiceCreated: () => Promise<void>
   onViewPayments: (invoiceId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
+  onOpenPropertyWorkspace: (propertyId: string, tab?: PropertyWorkspaceTab) => void
+  onOpenQuoteDetail: (quoteId: string) => void
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
@@ -43,6 +49,10 @@ export function InvoicesPage({
   error,
   onInvoiceCreated,
   onViewPayments,
+  onOpenJobWorkspace,
+  onOpenClientWorkspace,
+  onOpenPropertyWorkspace,
+  onOpenQuoteDetail,
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
@@ -230,6 +240,10 @@ export function InvoicesPage({
                 }
               }}
               onViewPayments={onViewPayments}
+              onOpenJobWorkspace={onOpenJobWorkspace}
+              onOpenClientWorkspace={onOpenClientWorkspace}
+              onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+              onOpenQuoteDetail={onOpenQuoteDetail}
               onUnsavedChange={setHasUnsavedDetailChanges}
               emptyState={detailEmptyState}
             />

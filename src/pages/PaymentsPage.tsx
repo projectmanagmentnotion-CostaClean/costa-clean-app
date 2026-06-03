@@ -5,6 +5,7 @@ import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
 import type { ClientListItem } from '../features/clients/types'
+import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -20,6 +21,8 @@ interface PaymentsPageProps {
   quotes: QuoteListItem[]
   error: string | null
   onPaymentCreated: () => Promise<void>
+  onOpenInvoiceDetail: (invoiceId: string) => void
+  onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
   activeFilterLabel: string | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
@@ -35,6 +38,8 @@ export function PaymentsPage({
   quotes,
   error,
   onPaymentCreated,
+  onOpenInvoiceDetail,
+  onOpenClientWorkspace,
   activeFilterLabel,
   onClearFilter,
   onUnsavedChange,
@@ -135,6 +140,8 @@ export function PaymentsPage({
             payment={selectedPayment}
             invoices={invoices}
             onPaymentUpdated={onPaymentCreated}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onOpenClientWorkspace={onOpenClientWorkspace}
             onUnsavedChange={setHasUnsavedDetailChanges}
           />
         </div>

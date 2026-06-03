@@ -2,11 +2,14 @@ import type { AppView } from '../app/navigation'
 import { DashboardAgenda } from '../features/dashboard/DashboardAgenda'
 import { DashboardAlerts } from '../features/dashboard/DashboardAlerts'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { DashboardOperationalFocus } from '../features/dashboard/DashboardOperationalFocus'
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
+import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { JobListItem } from '../features/jobs/types'
+import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 
 interface HomePageProps {
   metrics: {
@@ -52,7 +55,15 @@ interface HomePageProps {
     tomorrowJobs: JobListItem[]
     upcomingJobs: JobListItem[]
   }
+  clientBalanceLeaders: Array<{
+    clientId: string
+    clientLabel: string
+    pendingAmount: number
+    pendingInvoices: number
+  }>
+  dueRecurringPlans: RecurringInvoicePlanListItem[]
   onOpenJobWorkspace: (jobId: string) => void
+  onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
   onOpenView: (view: AppView) => void
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
   alerts: AutomationAlertItem[]
@@ -62,7 +73,10 @@ interface HomePageProps {
 export function HomePage({
   metrics,
   agenda,
+  clientBalanceLeaders,
+  dueRecurringPlans,
   onOpenJobWorkspace,
+  onOpenClientWorkspace,
   onOpenView,
   onRunKpiAction,
   alerts,
@@ -111,6 +125,11 @@ export function HomePage({
           agenda={agenda}
           onRunKpiAction={onRunKpiAction}
           onOpenJobWorkspace={onOpenJobWorkspace}
+        />
+        <DashboardOperationalFocus
+          clientBalanceLeaders={clientBalanceLeaders}
+          dueRecurringPlans={dueRecurringPlans}
+          onOpenClientWorkspace={onOpenClientWorkspace}
         />
         <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
       </div>

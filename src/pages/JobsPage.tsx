@@ -29,6 +29,8 @@ interface JobsPageProps {
   onJobCreated: () => Promise<void>
   onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
   onOpenPropertyWorkspace: (propertyId: string, tab?: PropertyWorkspaceTab) => void
+  onOpenQuoteDetail: (quoteId: string) => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   createPrefill: JobCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
@@ -48,6 +50,8 @@ export function JobsPage({
   onJobCreated,
   onOpenClientWorkspace,
   onOpenPropertyWorkspace,
+  onOpenQuoteDetail,
+  onOpenInvoiceDetail,
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
@@ -181,6 +185,8 @@ export function JobsPage({
           onRefresh={onJobCreated}
           onOpenClientWorkspace={onOpenClientWorkspace}
           onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenQuoteDetail={onOpenQuoteDetail}
+          onOpenInvoiceDetail={onOpenInvoiceDetail}
           onPendingStateChange={setHasPendingWorkspaceState}
         />
       )}

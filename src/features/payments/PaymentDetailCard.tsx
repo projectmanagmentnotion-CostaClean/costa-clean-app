@@ -11,6 +11,8 @@ interface PaymentDetailCardProps {
   payment: PaymentListItem | null
   invoices: InvoiceListItem[]
   onPaymentUpdated: () => Promise<void>
+  onOpenInvoiceDetail: (invoiceId: string) => void
+  onOpenClientWorkspace: (clientId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
@@ -46,6 +48,8 @@ export function PaymentDetailCard({
   payment,
   invoices,
   onPaymentUpdated,
+  onOpenInvoiceDetail,
+  onOpenClientWorkspace,
   onUnsavedChange,
 }: PaymentDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -211,6 +215,24 @@ export function PaymentDetailCard({
             <div>
               <h3>{payment.display_code ?? payment.id}</h3>
               <p>{formatInvoiceLabel(selectedInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</p>
+            </div>
+            <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => onOpenInvoiceDetail(payment.invoice_id)}
+              >
+                Ver factura
+              </button>
+              {selectedInvoice?.client_id ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => onOpenClientWorkspace(selectedInvoice.client_id)}
+                >
+                  Abrir cliente
+                </button>
+              ) : null}
             </div>
           </div>
 

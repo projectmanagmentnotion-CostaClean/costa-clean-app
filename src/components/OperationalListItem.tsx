@@ -1,0 +1,107 @@
+import type { ReactNode } from 'react'
+
+export interface OperationalListAction {
+  key: string
+  label: string
+  onClick: () => void
+  tone?: 'primary' | 'default'
+}
+
+interface OperationalListItemProps {
+  selected: boolean
+  onSelect: () => void
+  title: string
+  subtitle?: string
+  status?: ReactNode
+  aside?: ReactNode
+  summary?: string
+  chips?: string[]
+  meta?: Array<{ label: string; value: string }>
+  actions?: OperationalListAction[]
+  microhint?: string
+  selectionControl?: ReactNode
+}
+
+export function OperationalListItem({
+  selected,
+  onSelect,
+  title,
+  subtitle,
+  status,
+  aside,
+  summary,
+  chips = [],
+  meta = [],
+  actions = [],
+  microhint,
+  selectionControl,
+}: OperationalListItemProps) {
+  return (
+    <article className={selected ? 'cc-operational-item is-selected' : 'cc-operational-item'}>
+      {selectionControl ? <div className="cc-operational-item__selection">{selectionControl}</div> : null}
+
+      <button
+        type="button"
+        className="cc-operational-item__select"
+        aria-pressed={selected}
+        onClick={onSelect}
+      >
+        <div className="cc-operational-item__head">
+          <div className="cc-operational-item__identity">
+            <strong className="cc-operational-item__title">{title}</strong>
+            {subtitle ? <span className="cc-operational-item__subtitle">{subtitle}</span> : null}
+          </div>
+
+          {(status || aside) ? (
+            <div className="cc-operational-item__aside">
+              {status}
+              {aside}
+            </div>
+          ) : null}
+        </div>
+
+        {summary ? <p className="cc-operational-item__summary">{summary}</p> : null}
+
+        {chips.length > 0 ? (
+          <div className="cc-operational-item__chips" aria-label="Contexto del registro">
+            {chips.map((chip) => (
+              <span key={chip} className="cc-operational-item__chip">{chip}</span>
+            ))}
+          </div>
+        ) : null}
+
+        {meta.length > 0 ? (
+          <div className="cc-operational-item__meta">
+            {meta.map((item) => (
+              <span key={`${item.label}-${item.value}`}>
+                <span className="cc-operational-item__meta-label">{item.label}</span>
+                <span className="cc-operational-item__meta-value">{item.value}</span>
+              </span>
+            ))}
+          </div>
+        ) : null}
+      </button>
+
+      {(actions.length > 0 || microhint) ? (
+        <div className="cc-operational-item__footer">
+          {actions.length > 0 ? (
+            <div className="cc-operational-item__actions">
+              {actions.map((action) => (
+                <button
+                  key={action.key}
+                  type="button"
+                  className={action.tone === 'primary' ? 'cc-record-card__inline-action is-primary' : 'cc-record-card__inline-action'}
+                  onClick={action.onClick}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          ) : <span />}
+
+          {microhint ? <span className="cc-operational-item__microhint">{microhint}</span> : null}
+        </div>
+      ) : null}
+    </article>
+  )
+}

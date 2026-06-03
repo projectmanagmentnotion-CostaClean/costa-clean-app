@@ -5,6 +5,7 @@ import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/d
 import type { PaymentListItem } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { getPaymentOriginLabel } from '../invoices/paymentState'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface PaymentsListProps {
   payments: PaymentListItem[]
@@ -109,80 +110,40 @@ export function PaymentsList({
           <p>No encontramos pagos que coincidan con tu busqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de cobros">
           {filteredPayments.map((payment) => {
             const isSelected = payment.id === selectedPaymentId
 
             return (
-              <article
+              <OperationalListItem
                 key={payment.id}
-                className={
-                  isSelected
-                    ? 'cc-record-card cc-record-card--payment cc-record-card--compact is-selected'
-                    : 'cc-record-card cc-record-card--payment cc-record-card--compact'
-                }
-              >
-                <button
-                  type="button"
-                  className="lead-item-button cc-record-card__primary"
-                  onClick={() => onSelectPayment(payment)}
-                >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">
-                      {payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}
-                    </strong>
-                    <span className="cc-record-card__subref">Pago {payment.display_code ?? payment.id}</span>
-                  </div>
-
-                  <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>
-                    <strong className="cc-record-card__amount">{formatCurrency(payment.amount)}</strong>
-                  </div>
-                </div>
-
-                <p className="cc-record-card__summary">{formatDateEs(payment.payment_date)}</p>
-
-                <div className="cc-record-card__chips" aria-label="Contexto del cobro">
-                  <span className="cc-record-card__chip">{getPaymentMethodLabel(payment.payment_method)}</span>
-                  <span className="cc-record-card__chip">{getPaymentOriginLabel(payment.origin_type)}</span>
-                </div>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Metodo</span>
-                    <span className="cc-record-card__meta-value">{getPaymentMethodLabel(payment.payment_method)}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Notas</span>
-                    <span className="cc-record-card__meta-value">{payment.notes?.trim() || getPaymentOriginLabel(payment.origin_type)}</span>
-                  </span>
-                </div>
-                </button>
-
-                <div className="cc-record-card__footer">
-                  <div className="cc-record-card__footer-actions">
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action is-primary"
-                      onClick={() => onSelectPayment(payment)}
-                    >
-                      Abrir
-                    </button>
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        onOpenInvoiceDetail?.(payment.invoice_id)
-                      }}
-                    >
-                      Factura
-                    </button>
-                  </div>
-                  <span className="cc-record-card__microhint">{getPaymentOriginLabel(payment.origin_type)}</span>
-                </div>
-              </article>
+                selected={isSelected}
+                onSelect={() => onSelectPayment(payment)}
+                title={payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}
+                subtitle={`Pago ${payment.display_code ?? payment.id}`}
+                status={<span className="lead-badge">{getPaymentMethodLabel(payment.payment_method)}</span>}
+                aside={<strong className="cc-record-card__amount">{formatCurrency(payment.amount)}</strong>}
+                summary={formatDateEs(payment.payment_date)}
+                chips={[getPaymentMethodLabel(payment.payment_method), getPaymentOriginLabel(payment.origin_type)]}
+                meta={[
+                  { label: 'Metodo', value: getPaymentMethodLabel(payment.payment_method) },
+                  { label: 'Notas', value: payment.notes?.trim() || getPaymentOriginLabel(payment.origin_type) },
+                ]}
+                actions={[
+                  {
+                    key: 'open',
+                    label: 'Abrir',
+                    tone: 'primary',
+                    onClick: () => onSelectPayment(payment),
+                  },
+                  {
+                    key: 'invoice',
+                    label: 'Factura',
+                    onClick: () => onOpenInvoiceDetail?.(payment.invoice_id),
+                  },
+                ]}
+                microhint={getPaymentOriginLabel(payment.origin_type)}
+              />
             )
           })}
         </div>

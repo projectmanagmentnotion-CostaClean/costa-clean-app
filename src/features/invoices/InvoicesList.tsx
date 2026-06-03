@@ -7,6 +7,7 @@ import { formatCurrency } from '../../app/displayFormat'
 import type { InvoiceListItem } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { getInvoiceFinancialStatusLabel } from './paymentState'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -151,21 +152,34 @@ export function InvoicesList({
           </p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de facturas">
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
             const isChecked = selectedInvoiceIds.includes(invoice.id)
 
             return (
-              <article
+              <OperationalListItem
                 key={invoice.id}
-                className={
-                  isSelected
-                    ? 'cc-record-card cc-record-card--invoice cc-record-card--compact is-selected'
-                    : 'cc-record-card cc-record-card--invoice cc-record-card--compact'
+                selected={isSelected}
+                onSelect={() => onSelectInvoice(invoice)}
+                title={formatInvoiceLabel(invoice)}
+                subtitle={invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Sin origen operativo'}
+                status={
+                  <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.payment_status ?? invoice.status}`}>
+                    {getInvoiceFinancialStatusLabel(invoice.payment_status ?? 'pending')}
+                  </span>
                 }
-              >
-                {isSelectionMode ? (
+                aside={<strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>}
+                summary={formatClientLabel(invoice)}
+                chips={[
+                  invoice.issue_date,
+                  invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Desde presupuesto aceptado',
+                ]}
+                meta={[
+                  { label: 'Emision', value: invoice.issue_date },
+                  { label: 'Origen', value: invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Presupuesto aceptado' },
+                ]}
+                selectionControl={isSelectionMode ? (
                   <label className="cc-record-card__selection" onClick={(event) => event.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -174,79 +188,24 @@ export function InvoicesList({
                     />
                     <span>Seleccionar factura</span>
                   </label>
-                ) : null}
-                <button
-                  type="button"
-                  className="lead-item-button cc-record-card__primary"
-                  onClick={() => onSelectInvoice(invoice)}
-                >
-                  <div className="cc-record-card__head">
-                    <div className="cc-record-card__identity">
-                      <strong className="cc-record-card__title">
-                        {formatInvoiceLabel(invoice)}
-                      </strong>
-                      <span className="cc-record-card__subref">
-                        {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Sin origen operativo'}
-                      </span>
-                    </div>
-
-                    <div className="cc-record-card__aside">
-                      <span className={`lead-badge cc-status-badge cc-status-badge--${invoice.payment_status ?? invoice.status}`}>
-                        {getInvoiceFinancialStatusLabel(invoice.payment_status ?? 'pending')}
-                      </span>
-                      <strong className="cc-record-card__amount">{formatCurrency(invoice.total)}</strong>
-                    </div>
-                  </div>
-
-                  <p className="cc-record-card__summary">
-                    {formatClientLabel(invoice)}
-                  </p>
-
-                  <div className="cc-record-card__chips" aria-label="Contexto de la factura">
-                    <span className="cc-record-card__chip">{invoice.issue_date}</span>
-                    <span className="cc-record-card__chip">
-                      {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Desde presupuesto aceptado'}
-                    </span>
-                  </div>
-
-                  <div className="cc-list-meta cc-record-card__meta">
-                    <span>
-                      <span className="cc-record-card__meta-label">Emision</span>
-                      <span className="cc-record-card__meta-value">{invoice.issue_date}</span>
-                    </span>
-                    <span>
-                      <span className="cc-record-card__meta-label">Origen</span>
-                      <span className="cc-record-card__meta-value">
-                        {invoice.job_display_code ?? invoice.job_id ?? invoice.property_name ?? 'Presupuesto aceptado'}
-                      </span>
-                    </span>
-                  </div>
-                </button>
-
-                <div className="cc-record-card__footer">
-                  <div className="cc-record-card__footer-actions">
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action is-primary"
-                      onClick={() => onSelectInvoice(invoice)}
-                    >
-                      Abrir
-                    </button>
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action"
-                      onClick={() => onOpenDocument(invoice)}
-                    >
-                      Documento
-                    </button>
-                  </div>
-                  {invoice.payment_status !== 'paid' ? (
-                    <span className="cc-record-card__microhint">Pendiente {formatCurrency(invoice.outstanding_amount ?? invoice.total)}</span>
-                  ) : (
-                    <span className="cc-record-card__microhint">Cobro cerrado</span>
-                  )}
-                </div>
-              </article>
+                ) : undefined}
+                actions={[
+                  {
+                    key: 'open',
+                    label: 'Abrir',
+                    tone: 'primary',
+                    onClick: () => onSelectInvoice(invoice),
+                  },
+                  {
+                    key: 'document',
+                    label: 'Documento',
+                    onClick: () => onOpenDocument(invoice),
+                  },
+                ]}
+                microhint={invoice.payment_status !== 'paid'
+                  ? `Pendiente ${formatCurrency(invoice.outstanding_amount ?? invoice.total)}`
+                  : 'Cobro cerrado'}
+              />
             )
           })}
         </div>

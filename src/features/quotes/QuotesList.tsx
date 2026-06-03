@@ -8,6 +8,7 @@ import { matchesSearchQuery } from '../documents/search'
 import { applySortDirection, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -138,77 +139,42 @@ export function QuotesList({
           <p>No encontramos presupuestos que coincidan con tu busqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de presupuestos">
           {filteredQuotes.map((quote) => {
             const isSelected = quote.id === selectedQuoteId
             const clientLabel = buildClientDisplay(quote, clients)
             const propertyLabel = buildPropertyDisplay(quote, properties)
 
             return (
-              <article
+              <OperationalListItem
                 key={quote.id}
-                className={
-                  isSelected
-                    ? 'cc-record-card cc-record-card--quote cc-record-card--compact is-selected'
-                    : 'cc-record-card cc-record-card--quote cc-record-card--compact'
-                }
-              >
-                <button
-                  type="button"
-                  className="lead-item-button cc-record-card__primary"
-                  onClick={() => onSelectQuote(quote)}
-                >
-                  <div className="cc-record-card__head">
-                    <div className="cc-record-card__identity">
-                      <strong className="cc-record-card__title">{formatQuoteLabel({ ...quote, client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null, property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null })}</strong>
-                      <span className="cc-record-card__subref">{propertyLabel}</span>
-                    </div>
-
-                    <div className="cc-record-card__aside">
-                      <span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>
-                      <strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>
-                    </div>
-                  </div>
-
-                  <p className="cc-record-card__summary">{clientLabel}</p>
-
-                  <div className="cc-record-card__chips" aria-label="Contexto del presupuesto">
-                    <span className="cc-record-card__chip">Base {formatCurrency(quote.subtotal)}</span>
-                    <span className="cc-record-card__chip">{propertyLabel}</span>
-                  </div>
-
-                  <div className="cc-list-meta cc-record-card__meta">
-                    <span>
-                      <span className="cc-record-card__meta-label">Base</span>
-                      <span className="cc-record-card__meta-value">{formatCurrency(quote.subtotal)}</span>
-                    </span>
-                    <span>
-                      <span className="cc-record-card__meta-label">Total</span>
-                      <span className="cc-record-card__meta-value">{formatCurrency(quote.total)}</span>
-                    </span>
-                  </div>
-                </button>
-
-                <div className="cc-record-card__footer">
-                  <div className="cc-record-card__footer-actions">
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action is-primary"
-                      onClick={() => onSelectQuote(quote)}
-                    >
-                      Abrir
-                    </button>
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action"
-                      onClick={() => onOpenDocument(quote)}
-                    >
-                      Documento
-                    </button>
-                  </div>
-                  <span className="cc-record-card__microhint">{getStatusLabel(quote.status)}</span>
-                </div>
-              </article>
+                selected={isSelected}
+                onSelect={() => onSelectQuote(quote)}
+                title={formatQuoteLabel({ ...quote, client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null, property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null })}
+                subtitle={propertyLabel}
+                status={<span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>}
+                aside={<strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>}
+                summary={clientLabel}
+                chips={[`Base ${formatCurrency(quote.subtotal)}`, propertyLabel]}
+                meta={[
+                  { label: 'Base', value: formatCurrency(quote.subtotal) },
+                  { label: 'Total', value: formatCurrency(quote.total) },
+                ]}
+                actions={[
+                  {
+                    key: 'open',
+                    label: 'Abrir',
+                    tone: 'primary',
+                    onClick: () => onSelectQuote(quote),
+                  },
+                  {
+                    key: 'document',
+                    label: 'Documento',
+                    onClick: () => onOpenDocument(quote),
+                  },
+                ]}
+                microhint={getStatusLabel(quote.status)}
+              />
             )
           })}
         </div>

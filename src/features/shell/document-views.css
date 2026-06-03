@@ -44,6 +44,7 @@
 .cc-doc-workspace__detail-stack {
   display: grid;
   gap: 12px;
+  align-items: start;
 }
 
 .cc-contextual-preview-shell {
@@ -88,6 +89,7 @@
 
 .cc-doc-preview-panel--workspace {
   position: relative;
+  align-self: start;
 }
 
 .cc-doc-preview-panel--workspace::before {
@@ -131,8 +133,13 @@
 
 @media (min-width: 1280px) {
   .cc-doc-workspace__detail-stack {
-    grid-template-columns: minmax(0, 0.98fr) minmax(0, 0.92fr);
+    grid-template-columns: minmax(0, 1.04fr) minmax(320px, 0.86fr);
     align-items: start;
+  }
+
+  .cc-doc-preview-panel--workspace {
+    position: sticky;
+    top: 18px;
   }
 }
 

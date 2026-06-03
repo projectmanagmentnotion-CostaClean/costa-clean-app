@@ -5,6 +5,7 @@ import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../
 import { matchesSearchQuery } from '../documents/search'
 import type { JobListItem } from './types'
 import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface JobsListProps {
   jobs: JobListItem[]
@@ -120,96 +121,52 @@ export function JobsList({
           <p>No encontramos servicios que coincidan con tu busqueda.</p>
         </div>
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de servicios">
           {filteredJobs.map((job) => {
             const isSelected = job.id === selectedJobId
 
             return (
-              <article
+              <OperationalListItem
                 key={job.id}
-                className={
-                  isSelected
-                    ? 'cc-record-card cc-record-card--job cc-record-card--compact is-selected'
-                    : 'cc-record-card cc-record-card--job cc-record-card--compact'
-                }
-              >
-                <button
-                  type="button"
-                  className="lead-item-button cc-record-card__primary"
-                  onClick={() => onSelectJob(job)}
-                >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{formatJobLabel(job)}</strong>
-                    <span className="cc-record-card__subref">{getJobPrimaryReference(job)}</span>
-                  </div>
-
-                  <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
-                    <strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>
-                  </div>
-                </div>
-
-                <p className="cc-record-card__summary">
-                  {formatClientLabel(job)} - {formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}
-                </p>
-
-                <div className="cc-record-card__chips" aria-label="Contexto del servicio">
-                  <span className="cc-record-card__chip">{getServiceTypeLabel(job.service_type)}</span>
-                  <span className="cc-record-card__chip">{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</span>
-                </div>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Servicio</span>
-                    <span className="cc-record-card__meta-value">{getServiceTypeLabel(job.service_type)}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Origen</span>
-                    <span className="cc-record-card__meta-value">{job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto'}</span>
-                  </span>
-                </div>
-                </button>
-
-                <div className="cc-record-card__footer">
-                  <div className="cc-record-card__footer-actions">
-                    <button
-                      type="button"
-                      className="cc-record-card__inline-action is-primary"
-                      onClick={() => onSelectJob(job)}
-                    >
-                      Abrir
-                    </button>
-                    {job.quote_id ? (
-                      <button
-                        type="button"
-                        className="cc-record-card__inline-action"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          onOpenQuoteDetail?.(job.quote_id!)
-                        }}
-                      >
-                        Presupuesto
-                      </button>
-                    ) : null}
-                    {job.invoice_id ? (
-                      <button
-                        type="button"
-                        className="cc-record-card__inline-action"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          onOpenInvoiceDetail?.(job.invoice_id!)
-                        }}
-                      >
-                        Factura
-                      </button>
-                    ) : null}
-                  </div>
-                  <span className="cc-record-card__microhint">
-                    {job.invoice_id ? 'Facturacion enlazada' : 'Pendiente de facturar'}
-                  </span>
-                </div>
-              </article>
+                selected={isSelected}
+                onSelect={() => onSelectJob(job)}
+                title={formatJobLabel(job)}
+                subtitle={getJobPrimaryReference(job)}
+                status={<span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>}
+                aside={<strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>}
+                summary={`${formatClientLabel(job)} - ${formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}`}
+                chips={[
+                  getServiceTypeLabel(job.service_type),
+                  job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto',
+                ]}
+                meta={[
+                  { label: 'Servicio', value: getServiceTypeLabel(job.service_type) },
+                  { label: 'Origen', value: job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto' },
+                ]}
+                actions={[
+                  {
+                    key: 'open',
+                    label: 'Abrir',
+                    tone: 'primary',
+                    onClick: () => onSelectJob(job),
+                  },
+                  ...(job.quote_id
+                    ? [{
+                        key: 'quote',
+                        label: 'Presupuesto',
+                        onClick: () => onOpenQuoteDetail?.(job.quote_id!),
+                      }]
+                    : []),
+                  ...(job.invoice_id
+                    ? [{
+                        key: 'invoice',
+                        label: 'Factura',
+                        onClick: () => onOpenInvoiceDetail?.(job.invoice_id!),
+                      }]
+                    : []),
+                ]}
+                microhint={job.invoice_id ? 'Facturacion enlazada' : 'Pendiente de facturar'}
+              />
             )
           })}
         </div>

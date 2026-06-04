@@ -2,11 +2,14 @@ import type { AppView } from '../app/navigation'
 import { DashboardAgenda } from '../features/dashboard/DashboardAgenda'
 import { DashboardAlerts } from '../features/dashboard/DashboardAlerts'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { DashboardIncidents } from '../features/dashboard/DashboardIncidents'
 import { DashboardOperationalFocus } from '../features/dashboard/DashboardOperationalFocus'
 import { DashboardOverview } from '../features/dashboard/DashboardOverview'
 import { DashboardKpis } from '../features/dashboard/DashboardKpis'
 import { DashboardQuickActions } from '../features/dashboard/DashboardQuickActions'
+import { DashboardQuickViews } from '../features/dashboard/DashboardQuickViews'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
+import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
@@ -24,6 +27,7 @@ interface HomePageProps {
     openQuotesCount: number
     scheduledJobsCount: number
     pendingInvoicesCount: number
+    partiallyPaidInvoicesCount: number
     invoicedThisMonthTotal: number
     collectedThisMonthTotal: number
     outstandingReceivablesTotal: number
@@ -35,6 +39,10 @@ interface HomePageProps {
     jobsScheduledTodayCount: number
     jobsScheduledTomorrowCount: number
     dueRecurringPlansCount: number
+    pausedRecurringPlansCount: number
+    clientsWithPendingBalanceCount: number
+    clientsMissingFiscalDataCount: number
+    propertyAnomalyCount: number
     totalInvoiced: number
     totalCollected: number
     totalExpenses: number
@@ -68,6 +76,9 @@ interface HomePageProps {
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
   alerts: AutomationAlertItem[]
   onOpenAlert: (alert: AutomationAlertItem) => void
+  operationalIncidents: OperationalIncident[]
+  operationalQuickViews: OperationalQuickView[]
+  onRunOperationalAction: (action: OperationalAction) => void
 }
 
 export function HomePage({
@@ -81,8 +92,12 @@ export function HomePage({
   onRunKpiAction,
   alerts,
   onOpenAlert,
+  operationalIncidents,
+  operationalQuickViews,
+  onRunOperationalAction,
 }: HomePageProps) {
   const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
+  const urgentCollectionsCount = metrics.unpaidInvoicesOlderThan7DaysCount + metrics.partiallyPaidInvoicesCount
 
   return (
     <section className="cc-dashboard-page">
@@ -107,8 +122,12 @@ export function HomePage({
             </strong>
           </div>
           <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Servicios hoy</span>
-            <strong className="cc-dashboard-header__meta-value">{metrics.jobsScheduledTodayCount}</strong>
+            <span className="cc-dashboard-header__meta-label">Por facturar</span>
+            <strong className="cc-dashboard-header__meta-value">{metrics.completedJobsWithoutInvoiceCount}</strong>
+          </div>
+          <div className="cc-dashboard-header__meta-card">
+            <span className="cc-dashboard-header__meta-label">Cobros urgentes</span>
+            <strong className="cc-dashboard-header__meta-value">{urgentCollectionsCount}</strong>
           </div>
           <div className="cc-dashboard-header__meta-card">
             <span className="cc-dashboard-header__meta-label">Alertas criticas</span>
@@ -120,6 +139,8 @@ export function HomePage({
       <div className="cc-dashboard-stack">
         <DashboardQuickActions onOpenView={onOpenView} />
         <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardQuickViews views={operationalQuickViews} onRunAction={onRunOperationalAction} />
+        <DashboardIncidents incidents={operationalIncidents} onRunAction={onRunOperationalAction} />
         <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
         <DashboardAgenda
           agenda={agenda}

@@ -19,8 +19,14 @@ interface DashboardKpisProps {
     paymentsCount: number
     expensesCount: number
     pendingInvoicesCount: number
+    partiallyPaidInvoicesCount: number
     completedJobsWithoutInvoiceCount: number
     acceptedQuotesWithoutJobCount: number
+    dueRecurringPlansCount: number
+    pausedRecurringPlansCount: number
+    clientsWithPendingBalanceCount: number
+    clientsMissingFiscalDataCount: number
+    propertyAnomalyCount: number
     expensesThisMonthTotal: number
     expensesThisQuarterTotal: number
     expensesWithReceiptCount: number
@@ -65,6 +71,43 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
       value: String(metrics.pendingInvoicesCount),
       detail: 'Control rapido del pendiente de cobro abierto.',
       actionId: 'pending_invoices',
+      tone: 'warning',
+    },
+    {
+      label: 'Facturas parcialmente cobradas',
+      value: String(metrics.partiallyPaidInvoicesCount),
+      detail: 'Cobros iniciados que todavia no estan liquidados.',
+      actionId: 'outstanding_invoices',
+      tone: 'warning',
+    },
+    {
+      label: 'Recurrentes por emitir',
+      value: String(metrics.dueRecurringPlansCount),
+      detail: 'Automatizaciones listas para generar factura hoy.',
+      tone: 'warning',
+    },
+    {
+      label: 'Recurrentes pausadas',
+      value: String(metrics.pausedRecurringPlansCount),
+      detail: 'Planes detenidos que conviene revisar o reactivar.',
+      tone: 'warning',
+    },
+    {
+      label: 'Clientes con saldo',
+      value: String(metrics.clientsWithPendingBalanceCount),
+      detail: 'Cartera viva que requiere seguimiento de cobro.',
+      tone: 'warning',
+    },
+    {
+      label: 'Fichas fiscales incompletas',
+      value: String(metrics.clientsMissingFiscalDataCount),
+      detail: 'Clientes con NIF/CIF o direccion fiscal pendientes.',
+      tone: 'warning',
+    },
+    {
+      label: 'Anomalias de propiedad',
+      value: String(metrics.propertyAnomalyCount),
+      detail: 'Relaciones cliente-propiedad con desajuste detectado.',
       tone: 'warning',
     },
     {
@@ -129,17 +172,28 @@ export function DashboardKpis({ metrics, onRunKpiAction }: DashboardKpisProps) {
 
           <div className="cc-kpi-grid cc-kpi-grid--compact">
             {operationalCards.map((card) => (
-              <button
-                key={card.label}
-                type="button"
-                className={`cc-kpi-card cc-kpi-card--compact cc-kpi-card--actionable${card.tone ? ` cc-kpi-card--${card.tone}` : ''}`}
-                onClick={() => onRunKpiAction(card.actionId!)}
-              >
-                <span className="cc-kpi-card__label">{card.label}</span>
-                <strong className="cc-kpi-card__value">{card.value}</strong>
-                <p className="cc-kpi-card__detail">{card.detail}</p>
-                <span className="cc-kpi-card__hint">Abrir lista</span>
-              </button>
+              card.actionId ? (
+                <button
+                  key={card.label}
+                  type="button"
+                  className={`cc-kpi-card cc-kpi-card--compact cc-kpi-card--actionable${card.tone ? ` cc-kpi-card--${card.tone}` : ''}`}
+                  onClick={() => onRunKpiAction(card.actionId!)}
+                >
+                  <span className="cc-kpi-card__label">{card.label}</span>
+                  <strong className="cc-kpi-card__value">{card.value}</strong>
+                  <p className="cc-kpi-card__detail">{card.detail}</p>
+                  <span className="cc-kpi-card__hint">Abrir lista</span>
+                </button>
+              ) : (
+                <article
+                  key={card.label}
+                  className={`cc-kpi-card cc-kpi-card--compact${card.tone ? ` cc-kpi-card--${card.tone}` : ''}`}
+                >
+                  <span className="cc-kpi-card__label">{card.label}</span>
+                  <strong className="cc-kpi-card__value">{card.value}</strong>
+                  <p className="cc-kpi-card__detail">{card.detail}</p>
+                </article>
+              )
             ))}
           </div>
         </details>

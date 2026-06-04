@@ -40,11 +40,17 @@ import type { JobListItem } from '../features/jobs/types'
 import { buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
 import { buildInvoicePaymentSummary } from '../features/invoices/paymentState'
+import { settleInvoiceByTransfer } from '../features/financial/financialWriteApi'
 import {
   applyDashboardKpiAction,
   dashboardKpiActionConfig,
   type DashboardKpiActionId,
 } from '../features/dashboard/kpiActions'
+import {
+  buildOperationalIncidents,
+  buildOperationalQuickViews,
+  type OperationalAction,
+} from '../features/dashboard/operationalControl'
 import { saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
 import { buildQuarterlyClosingSnapshot } from '../features/quarterlyClosing/quarterlyClosingSummary'
 import type { QuarterlyClosingIncidence } from '../features/quarterlyClosing/types'
@@ -53,11 +59,13 @@ import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClos
 import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { buildRecurringPlanPersistenceInput } from '../features/recurringInvoices/planPersistence'
+import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../features/recurringInvoices/recurringInvoiceApi'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relationshipLabels'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
-import { setJobWorkspaceLocation } from '../features/jobs/useJobWorkspaceNavigation'
+import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/useJobWorkspaceNavigation'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 
@@ -216,6 +224,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   } = useShellNavigation()
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
+  const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
@@ -316,6 +325,18 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       window.clearTimeout(timeoutId)
     }
   }, [dismissIntakeRealtimeNotification, latestIntakeNotification])
+
+  useEffect(() => {
+    if (!operationalToast) return
+
+    const timeoutId = window.setTimeout(() => {
+      setOperationalToast(null)
+    }, 5200)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [operationalToast])
 
   const clientCodeById = useMemo(() => new Map(clients.map((client) => [client.id, client.display_code ?? client.id])), [clients])
   const clientById = useMemo(() => new Map(clients.map((client) => [client.id, client])), [clients])
@@ -531,6 +552,44 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       .sort((left, right) => left.next_issue_date.localeCompare(right.next_issue_date))
       .slice(0, 5),
     [recurringInvoicePlansWithCodes],
+  )
+
+  const operationalIncidents = useMemo(
+    () => buildOperationalIncidents({
+      clients: clientsWithContext,
+      properties: propertiesWithCodes,
+      quotes: quotesWithCodes,
+      jobs: jobsWithCodes,
+      invoices: invoicesWithCodes,
+      recurringInvoicePlans: recurringInvoicePlansWithCodes,
+    }),
+    [
+      clientsWithContext,
+      propertiesWithCodes,
+      quotesWithCodes,
+      jobsWithCodes,
+      invoicesWithCodes,
+      recurringInvoicePlansWithCodes,
+    ],
+  )
+
+  const operationalQuickViews = useMemo(
+    () => buildOperationalQuickViews({
+      clients: clientsWithContext,
+      properties: propertiesWithCodes,
+      quotes: quotesWithCodes,
+      jobs: jobsWithCodes,
+      invoices: invoicesWithCodes,
+      recurringInvoicePlans: recurringInvoicePlansWithCodes,
+    }),
+    [
+      clientsWithContext,
+      propertiesWithCodes,
+      quotesWithCodes,
+      jobsWithCodes,
+      invoicesWithCodes,
+      recurringInvoicePlansWithCodes,
+    ],
   )
 
   const {
@@ -873,13 +932,13 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
-  const handleOpenJobWorkspace = useCallback((jobId: string) => {
+  const handleOpenJobWorkspace = useCallback((jobId: string, tab: JobWorkspaceTab = 'summary') => {
     runWithNavigationGuard(() => {
       setModuleFilters((current) => ({
         ...current,
         jobs: null,
       }))
-      setJobWorkspaceLocation({ jobId, tab: 'summary' })
+      setJobWorkspaceLocation({ jobId, tab })
       commitViewChange('jobs')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este servicio ahora, perderas esos cambios.`,
@@ -952,6 +1011,130 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       confirmLabel: 'Abrir cobros',
     })
   }, [commitViewChange, invoicesWithCodes, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleRunOperationalAction = useCallback(async (action: OperationalAction) => {
+    if (action.kind === 'module_view') {
+      runWithNavigationGuard(() => {
+        setModuleFilters((current) => ({
+          ...current,
+          [action.filterKey]: action.filterValue,
+        }))
+        commitViewChange(action.view)
+      }, {
+        description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta vista ahora, perderas esos cambios.`,
+        confirmLabel: action.label,
+      })
+      return
+    }
+
+    if (action.kind === 'open_client_workspace') {
+      handleOpenClientWorkspace(action.clientId, action.tab ?? 'summary')
+      return
+    }
+
+    if (action.kind === 'open_property_workspace') {
+      handleOpenPropertyWorkspace(action.propertyId, action.tab ?? 'summary')
+      return
+    }
+
+    if (action.kind === 'open_job_workspace') {
+      handleOpenJobWorkspace(action.jobId, action.tab ?? 'summary')
+      return
+    }
+
+    if (action.kind === 'open_invoice_detail') {
+      handleOpenInvoiceDetail(action.invoiceId)
+      return
+    }
+
+    if (action.kind === 'open_quote_detail') {
+      handleOpenQuoteDetail(action.quoteId)
+      return
+    }
+
+    if (action.kind === 'open_invoice_payments') {
+      handleViewPaymentsForInvoice(action.invoiceId)
+      return
+    }
+
+    if (action.kind === 'create_job_from_quote') {
+      const quote = quotesWithCodes.find((entry) => entry.id === action.quoteId)
+      if (quote) {
+        handleCreateJobFromQuote(quote)
+      }
+      return
+    }
+
+    if (action.kind === 'settle_invoice_by_transfer') {
+      try {
+        const result = await settleInvoiceByTransfer(action.invoiceId)
+        await reloadInvoicesAndPayments()
+        setOperationalToast({
+          title: result.created_payment ? 'Cobro registrado por transferencia' : 'Factura ya cubierta',
+          summary: result.created_payment
+            ? 'Se liquido el pendiente exacto y el estado financiero se sincronizo.'
+            : 'No fue necesario crear un nuevo cobro porque la factura ya estaba cubierta.',
+        })
+      } catch (error) {
+        setOperationalToast({
+          title: 'No se pudo registrar el cobro',
+          summary: error instanceof Error ? error.message : 'Error desconocido.',
+        })
+      }
+      return
+    }
+
+    if (action.kind === 'emit_recurring_plan') {
+      try {
+        await generateInvoiceFromRecurringPlan(action.planId)
+        await refreshBilling()
+        setOperationalToast({
+          title: 'Factura recurrente emitida',
+          summary: 'La automatizacion genero la factura y actualizo su siguiente emision.',
+        })
+      } catch (error) {
+        setOperationalToast({
+          title: 'No se pudo emitir la recurrente',
+          summary: error instanceof Error ? error.message : 'Error desconocido.',
+        })
+      }
+      return
+    }
+
+    if (action.kind === 'resume_recurring_plan') {
+      const plan = recurringInvoicePlansWithCodes.find((entry) => entry.id === action.planId)
+      if (!plan) return
+
+      try {
+        await saveRecurringInvoicePlan(buildRecurringPlanPersistenceInput(plan, { status: 'active' }))
+        await refreshBilling()
+        setOperationalToast({
+          title: 'Automatizacion reanudada',
+          summary: 'El plan vuelve a estar activo y listo para su siguiente ciclo.',
+        })
+      } catch (error) {
+        setOperationalToast({
+          title: 'No se pudo reanudar la automatizacion',
+          summary: error instanceof Error ? error.message : 'Error desconocido.',
+        })
+      }
+    }
+  }, [
+    commitViewChange,
+    handleCreateJobFromQuote,
+    handleOpenClientWorkspace,
+    handleOpenInvoiceDetail,
+    handleOpenJobWorkspace,
+    handleOpenPropertyWorkspace,
+    handleOpenQuoteDetail,
+    handleViewPaymentsForInvoice,
+    quotesWithCodes,
+    recurringInvoicePlansWithCodes,
+    refreshBilling,
+    reloadInvoicesAndPayments,
+    runWithNavigationGuard,
+    unsavedChangesContext,
+  ])
 
   const clearModuleFilter = useCallback((filterKey: keyof ModuleFilterState) => {
     setModuleFilters((current) => ({
@@ -1033,6 +1216,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onRunKpiAction={handleDashboardKpiAction}
                   alerts={automationAlerts}
                   onOpenAlert={handleOpenAutomationAlert}
+                  operationalIncidents={operationalIncidents}
+                  operationalQuickViews={operationalQuickViews}
+                  onRunOperationalAction={handleRunOperationalAction}
                 />
               ) : currentView === 'leads' ? (
                 <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
@@ -1172,6 +1358,13 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       >
         <span aria-hidden="true">↑</span>
       </button>
+      {operationalToast ? (
+        <div className="cc-realtime-toast" role="status" aria-live="polite" aria-atomic="true">
+          <span>Operativa</span>
+          <strong>{operationalToast.title}</strong>
+          <p>{operationalToast.summary}</p>
+        </div>
+      ) : null}
       {latestIntakeNotification ? (
         <div className="cc-realtime-toast" role="status" aria-live="polite" aria-atomic="true">
           <span>Nueva entrada</span>

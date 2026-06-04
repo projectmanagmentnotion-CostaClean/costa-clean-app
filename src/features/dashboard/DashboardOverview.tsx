@@ -21,6 +21,9 @@ interface DashboardOverviewProps {
     completedJobsWithoutInvoiceCount: number
     unpaidInvoicesOlderThan7DaysCount: number
     dueRecurringPlansCount: number
+    partiallyPaidInvoicesCount: number
+    pausedRecurringPlansCount: number
+    clientsWithPendingBalanceCount: number
   }
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
 }
@@ -115,9 +118,25 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
       actionId: 'unpaid_invoices_older_7d',
     },
     {
+      label: 'Facturas parciales',
+      value: String(metrics.partiallyPaidInvoicesCount),
+      detail: 'Casos con cobro iniciado y saldo aun pendiente.',
+      actionId: 'outstanding_invoices',
+    },
+    {
       label: 'Recurrentes listas',
       value: String(metrics.dueRecurringPlansCount),
       detail: 'Planes activos que ya pueden emitirse.',
+    },
+    {
+      label: 'Clientes con saldo',
+      value: String(metrics.clientsWithPendingBalanceCount),
+      detail: 'Cartera activa con seguimiento de cobro abierto.',
+    },
+    {
+      label: 'Recurrentes pausadas',
+      value: String(metrics.pausedRecurringPlansCount),
+      detail: 'Planes detenidos que conviene revisar o reactivar.',
     },
   ]
 

@@ -105,12 +105,14 @@ export function useDashboardMetrics({
     const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
     const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
     const pendingInvoicesCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled').length
+    const partiallyPaidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'partially_paid').length
     const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
     const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
     const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7)).length
     const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
     const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
     const dueRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)).length
+    const pausedRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'paused').length
     const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
     const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
@@ -151,6 +153,20 @@ export function useDashboardMetrics({
 
     const jobsScheduledTodayCount = jobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && job.status !== 'cancelled').length
     const jobsScheduledTomorrowCount = jobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && job.status !== 'cancelled').length
+    const clientsWithPendingBalanceCount = new Set(
+      invoices
+        .filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+        .map((invoice) => invoice.client_id),
+    ).size
+    const clientsMissingFiscalDataCount = clients.filter(
+      (client) => !client.tax_id?.trim() || !client.billing_address?.trim(),
+    ).length
+    const propertyAnomalyCount = properties.filter((property) => {
+      const hasJobMismatch = jobs.some((job) => job.property_id === property.id && job.client_id !== property.client_id)
+      const hasQuoteMismatch = quotes.some((quote) => quote.property_id === property.id && quote.client_id && quote.client_id !== property.client_id)
+      const hasInvoiceMismatch = invoices.some((invoice) => invoice.property_id === property.id && invoice.client_id !== property.client_id)
+      return hasJobMismatch || hasQuoteMismatch || hasInvoiceMismatch
+    }).length
 
     return {
       leadsCount: leads.length,
@@ -164,6 +180,7 @@ export function useDashboardMetrics({
       openQuotesCount,
       scheduledJobsCount,
       pendingInvoicesCount,
+      partiallyPaidInvoicesCount,
       invoicedThisMonthTotal,
       collectedThisMonthTotal,
       outstandingReceivablesTotal,
@@ -175,6 +192,10 @@ export function useDashboardMetrics({
       jobsScheduledTodayCount,
       jobsScheduledTomorrowCount,
       dueRecurringPlansCount,
+      pausedRecurringPlansCount,
+      clientsWithPendingBalanceCount,
+      clientsMissingFiscalDataCount,
+      propertyAnomalyCount,
       totalInvoiced,
       totalCollected,
       totalExpenses,

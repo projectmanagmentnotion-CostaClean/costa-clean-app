@@ -7,7 +7,6 @@ import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceN
 import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
-import { InvoiceDocumentPreview } from '../features/invoices/InvoiceDocumentPreview'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
@@ -354,38 +353,25 @@ export function InvoicesPage({
           </div>
 
           <div className="cc-master-layout__detail">
-            <div className="cc-doc-workspace__detail-stack">
-              <InvoiceDetailCard
-                invoice={detailInvoice}
-                jobs={jobs}
-                quotes={quotes}
-                payments={payments}
-                onInvoiceUpdated={onInvoiceCreated}
-                onOpenDocument={() => {
-                  if (detailInvoice) {
-                    openInvoiceDocument(detailInvoice)
-                  }
-                }}
-                onViewPayments={onViewPayments}
-                onOpenJobWorkspace={onOpenJobWorkspace}
-                onOpenClientWorkspace={onOpenClientWorkspace}
-                onOpenPropertyWorkspace={onOpenPropertyWorkspace}
-                onOpenQuoteDetail={onOpenQuoteDetail}
-                onUnsavedChange={setHasUnsavedDetailChanges}
-                emptyState={detailEmptyState}
-              />
-
-              <div className="cc-contextual-preview-shell cc-doc-preview-panel--workspace">
-                <div className="cc-contextual-preview-shell__strip">
-                  <div className="cc-contextual-preview-shell__strip-copy">
-                    <span className="cc-contextual-preview-shell__eyebrow">Preview contextual</span>
-                    <strong>Documento sin salir de la vista</strong>
-                    <span>La factura seleccionada se revisa al lado del detalle operativo.</span>
-                  </div>
-                </div>
-                <InvoiceDocumentPreview invoice={detailInvoice} />
-              </div>
-            </div>
+            <InvoiceDetailCard
+              invoice={detailInvoice}
+              jobs={jobs}
+              quotes={quotes}
+              payments={payments}
+              onInvoiceUpdated={onInvoiceCreated}
+              onOpenDocument={() => {
+                if (detailInvoice) {
+                  openInvoiceDocument(detailInvoice)
+                }
+              }}
+              onViewPayments={onViewPayments}
+              onOpenJobWorkspace={onOpenJobWorkspace}
+              onOpenClientWorkspace={onOpenClientWorkspace}
+              onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+              onOpenQuoteDetail={onOpenQuoteDetail}
+              onUnsavedChange={setHasUnsavedDetailChanges}
+              emptyState={detailEmptyState}
+            />
           </div>
         </div>
       </section>

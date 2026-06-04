@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
-import { QuoteDocumentPreview } from '../features/quotes/QuoteDocumentPreview'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
@@ -171,36 +170,19 @@ export function QuotesPage({
           </div>
 
           <div className="cc-master-layout__detail">
-            <div className="cc-doc-workspace__detail-stack">
-              <QuoteDetailCard
-                quote={selectedQuote}
-                clients={clients}
-                properties={properties}
-                onQuoteUpdated={onQuoteCreated}
-                onOpenDocument={() => {
-                  if (selectedQuote) {
-                    openQuoteDocument(selectedQuote)
-                  }
-                }}
-                onCreateJobFromQuote={onCreateJobFromQuote}
-                onUnsavedChange={setHasUnsavedDetailChanges}
-              />
-
-              <div className="cc-contextual-preview-shell cc-doc-preview-panel--workspace">
-                <div className="cc-contextual-preview-shell__strip">
-                  <div className="cc-contextual-preview-shell__strip-copy">
-                    <span className="cc-contextual-preview-shell__eyebrow">Preview contextual</span>
-                    <strong>Documento sin salir de la vista</strong>
-                    <span>El presupuesto se valida dentro del mismo flujo comercial y operativo.</span>
-                  </div>
-                </div>
-                <QuoteDocumentPreview
-                  quote={selectedQuote}
-                  clients={clients}
-                  properties={properties}
-                />
-              </div>
-            </div>
+            <QuoteDetailCard
+              quote={selectedQuote}
+              clients={clients}
+              properties={properties}
+              onQuoteUpdated={onQuoteCreated}
+              onOpenDocument={() => {
+                if (selectedQuote) {
+                  openQuoteDocument(selectedQuote)
+                }
+              }}
+              onCreateJobFromQuote={onCreateJobFromQuote}
+              onUnsavedChange={setHasUnsavedDetailChanges}
+            />
           </div>
         </div>
       </section>

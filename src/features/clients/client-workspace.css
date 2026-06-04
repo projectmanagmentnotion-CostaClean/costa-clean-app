@@ -546,3 +546,211 @@
     padding-right: 0;
   }
 }
+
+/* =========================================================
+   Workspace consolidation
+   Less hero, less decorative density, more operational focus
+   ========================================================= */
+
+.cc-client-workspace {
+  gap: 0.72rem;
+}
+
+.cc-client-workspace__topline {
+  align-items: center;
+}
+
+.cc-client-workspace__hero {
+  padding: 0.92rem 1rem;
+  border-radius: 1.05rem;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--card) 90%, transparent), color-mix(in srgb, var(--bg-soft) 64%, transparent));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 10px 22px rgba(2, 8, 23, 0.08);
+}
+
+.cc-client-workspace__identity-copy h1 {
+  margin: 0.14rem 0 0.22rem;
+  font-size: clamp(1.5rem, 2.7vw, 2.15rem);
+  line-height: 0.98;
+}
+
+.cc-client-workspace__identity-copy p {
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.cc-client-workspace__status {
+  gap: 0.22rem;
+}
+
+.cc-client-workspace__status-meta {
+  font-size: 0.73rem;
+}
+
+.cc-client-workspace__meta {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.65rem;
+}
+
+.cc-client-workspace__meta-card,
+.cc-client-workspace__snapshot-card,
+.cc-client-workspace__relationship-card,
+.cc-client-workspace__nested-item,
+.cc-client-workspace__timeline-item,
+.cc-client-workspace__note-card {
+  padding: 0.66rem 0.74rem;
+  border-radius: 0.88rem;
+  border-color: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  box-shadow: none;
+}
+
+.cc-client-workspace__meta-card span,
+.cc-client-workspace__snapshot-card span,
+.cc-client-workspace__note-card span,
+.cc-client-workspace__timeline-item span {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+}
+
+.cc-client-workspace__meta-card strong,
+.cc-client-workspace__snapshot-card strong,
+.cc-client-workspace__relationship-card strong,
+.cc-client-workspace__nested-item strong,
+.cc-client-workspace__timeline-item strong,
+.cc-client-workspace__note-card strong {
+  margin-top: 0.16rem;
+  font-size: 0.86rem;
+  line-height: 1.15;
+}
+
+.cc-client-workspace__meta-card small,
+.cc-client-workspace__snapshot-card small,
+.cc-client-workspace__relationship-card small,
+.cc-client-workspace__nested-item small {
+  margin-top: 0.16rem;
+  font-size: 0.71rem;
+  line-height: 1.26;
+}
+
+.cc-client-workspace__snapshot {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  gap: 0.55rem;
+}
+
+.cc-client-workspace__actions {
+  gap: 0.45rem;
+}
+
+.cc-client-workspace__actions .primary-button,
+.cc-client-workspace__actions .secondary-button {
+  min-height: 38px;
+  padding-inline: 13px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.cc-client-workspace__actions .secondary-button {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.cc-client-workspace__tabs {
+  gap: 0.42rem;
+  padding-bottom: 0.42rem;
+}
+
+.cc-client-workspace__tab {
+  min-height: 36px;
+  padding: 0.44rem 0.72rem;
+  font-size: 0.77rem;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.cc-client-workspace__tab.is-active {
+  background: rgba(83, 199, 255, 0.14);
+  color: rgba(248, 250, 252, 0.98);
+}
+
+.cc-client-workspace__tab-panel,
+.cc-client-workspace__summary-grid {
+  gap: 0.68rem;
+}
+
+.cc-client-workspace__summary-grid {
+  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+}
+
+.cc-client-workspace__ledger-grid,
+.cc-client-workspace__detail-stack,
+.cc-client-workspace__nested-list,
+.cc-client-workspace__timeline,
+.cc-client-workspace__notes,
+.cc-client-workspace__relationship-list {
+  gap: 0.48rem;
+}
+
+.cc-client-workspace__ledger-grid .detail-row,
+.cc-client-workspace__detail-stack .detail-row {
+  min-height: 0;
+  padding: 0.62rem 0.72rem;
+  border-radius: 0.82rem;
+}
+
+.cc-client-workspace__ledger-grid .detail-label,
+.cc-client-workspace__detail-stack .detail-label {
+  font-size: 0.64rem;
+}
+
+.cc-client-workspace__ledger-grid .detail-row strong,
+.cc-client-workspace__detail-stack .detail-row strong {
+  font-size: 0.8rem;
+}
+
+.cc-client-workspace .data-section {
+  border-radius: 1.05rem;
+}
+
+.cc-client-workspace__action-panel {
+  padding-top: 0.1rem;
+}
+
+:root[data-theme="light"] .cc-client-workspace__meta-card,
+:root[data-theme="light"] .cc-client-workspace__snapshot-card,
+:root[data-theme="light"] .cc-client-workspace__relationship-card,
+:root[data-theme="light"] .cc-client-workspace__nested-item,
+:root[data-theme="light"] .cc-client-workspace__timeline-item,
+:root[data-theme="light"] .cc-client-workspace__note-card {
+  border-color: rgba(14, 84, 114, 0.08);
+  background: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 1100px) {
+  .cc-client-workspace__meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .cc-client-workspace__hero {
+    padding: 0.86rem 0.9rem;
+  }
+
+  .cc-client-workspace__meta,
+  .cc-client-workspace__snapshot,
+  .cc-client-workspace__summary-grid,
+  .cc-client-workspace__activity-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-client-workspace__actions .primary-button,
+  .cc-client-workspace__actions .secondary-button {
+    width: auto;
+  }
+}

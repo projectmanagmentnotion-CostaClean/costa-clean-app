@@ -130,12 +130,6 @@ export function DashboardOverview({ metrics, onRunKpiAction }: DashboardOverview
           <p className="cc-dashboard-overview__text">
             Lectura priorizada para caja, seguimiento comercial y carga operativa sin salir del dashboard.
           </p>
-
-          <div className="cc-dashboard-exec__tags">
-            <span className="cc-dashboard-chip">Finanzas del mes</span>
-            <span className="cc-dashboard-chip">Seguimiento comercial</span>
-            <span className="cc-dashboard-chip">Operacion activa</span>
-          </div>
         </div>
 
         <div className="cc-dashboard-exec__summary">

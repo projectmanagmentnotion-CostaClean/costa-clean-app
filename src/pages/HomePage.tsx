@@ -95,7 +95,7 @@ export function HomePage({
           </p>
         </div>
 
-        <div className="cc-dashboard-header__meta">
+        <div className="cc-dashboard-header__meta" aria-label="Resumen rapido">
           <div className="cc-dashboard-header__meta-card">
             <span className="cc-dashboard-header__meta-label">Cobrado del mes</span>
             <strong className="cc-dashboard-header__meta-value">

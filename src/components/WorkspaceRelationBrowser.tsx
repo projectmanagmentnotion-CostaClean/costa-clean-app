@@ -1,11 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
+import { ActionGroup, type ActionGroupItem } from './ActionGroup'
 
-export interface WorkspaceRelationAction {
-  key: string
-  label: string
-  onClick: () => void
-  tone?: 'primary' | 'default'
-}
+export type WorkspaceRelationAction = ActionGroupItem
 
 export interface WorkspaceRelationField {
   label: string
@@ -84,11 +80,11 @@ export function WorkspaceRelationBrowser({
                   {item.statusLabel ? <span className="lead-badge">{item.statusLabel}</span> : null}
                 </div>
 
-                {item.context ? <p className="cc-workspace-browser__row-context">{item.context}</p> : null}
+                {isSelected && item.context ? <p className="cc-workspace-browser__row-context">{item.context}</p> : null}
 
                 {item.rowMeta?.length ? (
                   <div className="cc-workspace-browser__row-meta">
-                    {item.rowMeta.map((meta) => (
+                    {item.rowMeta.slice(0, 2).map((meta) => (
                       <span key={meta}>{meta}</span>
                     ))}
                   </div>
@@ -97,16 +93,7 @@ export function WorkspaceRelationBrowser({
 
               {item.actions?.length ? (
                 <div className="cc-workspace-browser__row-actions">
-                  {item.actions.map((action) => (
-                    <button
-                      key={action.key}
-                      type="button"
-                      className={action.tone === 'primary' ? 'cc-record-card__inline-action is-primary' : 'cc-record-card__inline-action'}
-                      onClick={action.onClick}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
+                  <ActionGroup actions={item.actions} />
                 </div>
               ) : null}
             </article>
@@ -145,16 +132,7 @@ export function WorkspaceRelationBrowser({
 
           {selectedItem.actions?.length ? (
             <div className="cc-workspace-browser__detail-actions">
-              {selectedItem.actions.map((action) => (
-                <button
-                  key={action.key}
-                  type="button"
-                  className={action.tone === 'primary' ? 'cc-record-card__inline-action is-primary' : 'cc-record-card__inline-action'}
-                  onClick={action.onClick}
-                >
-                  {action.label}
-                </button>
-              ))}
+              <ActionGroup actions={selectedItem.actions} />
             </div>
           ) : null}
         </aside>

@@ -5,6 +5,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatInvoiceLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import {
   saveInvoiceWithLines,
   settleInvoiceByTransfer,
@@ -531,6 +532,136 @@ export function InvoiceDetailCard({
     await saveInvoiceEdits()
   }
 
+  const invoiceNextStep = !invoice
+    ? ''
+    : invoice.status === 'cancelled'
+      ? 'La factura esta cancelada y queda fuera del circuito normal de cobro.'
+      : (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009
+        ? 'El siguiente paso natural es registrar o cerrar el cobro pendiente.'
+        : 'La factura ya esta cubierta. Revisa cobros o documento solo si necesitas trazabilidad.'
+  const headerActions: ActionGroupItem[] = []
+
+  if (invoice && invoice.status !== 'cancelled' && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009) {
+    headerActions.push({
+      key: 'settle-transfer',
+      label: paymentSummary?.financialStatus === 'partially_paid'
+        ? 'Cobrar restante'
+        : 'Cobrar por transferencia',
+      tone: 'primary',
+      onClick: () => void handleTransferSettlement(),
+      disabled: isSaving || !paymentSummary,
+    })
+  } else if (invoice) {
+    headerActions.push({
+      key: 'open-document-primary',
+      label: 'Abrir documento',
+      tone: 'primary',
+      onClick: onOpenDocument,
+    })
+  }
+
+  if (invoice) {
+    headerActions.push(
+      {
+        key: 'open-document',
+        label: 'Abrir documento',
+        onClick: onOpenDocument,
+      },
+      {
+        key: 'edit-invoice',
+        label: isEditing ? 'Cancelar edicion' : 'Editar factura',
+        onClick: () => {
+          setIsEditing((current) => !current)
+          setSaveError(null)
+          setSuccessMessage(null)
+          setPaymentActionMode(null)
+          resetFormFromInvoice()
+        },
+      },
+      {
+        key: 'view-payments',
+        label: 'Ver cobros',
+        onClick: () => onViewPayments(invoice.id),
+      },
+    )
+  }
+
+  const paymentActions: ActionGroupItem[] = invoice ? [
+    {
+      key: 'manual-payment',
+      label: 'Registrar cobro',
+      tone: 'primary',
+      onClick: () => setPaymentActionMode('manual'),
+      disabled: isSaving || invoice.status === 'cancelled',
+    },
+    {
+      key: 'partial-payment',
+      label: 'Registrar cobro parcial',
+      onClick: () => setPaymentActionMode('partial'),
+      disabled: isSaving || invoice.status === 'cancelled' || (paymentSummary?.outstandingAmount ?? invoice.total) <= 0.009,
+    },
+    {
+      key: 'settle-payment',
+      label: paymentSummary?.financialStatus === 'partially_paid'
+        ? 'Cobrar restante por transferencia'
+        : 'Cobrar por transferencia',
+      onClick: () => void handleTransferSettlement(),
+      disabled: isSaving || !paymentSummary || paymentSummary.outstandingAmount <= 0.009 || invoice.status === 'cancelled',
+    },
+    {
+      key: 'view-payments-secondary',
+      label: 'Ver cobros',
+      onClick: () => onViewPayments(invoice.id),
+    },
+  ] : []
+
+  const relationActions: ActionGroupItem[] = []
+
+  if (invoice?.job_id) {
+    relationActions.push({
+      key: 'open-job',
+      label: 'Abrir servicio',
+      tone: 'primary',
+      onClick: () => onOpenJobWorkspace(invoice.job_id!),
+    })
+  }
+
+  if (invoice) {
+    relationActions.push({
+      key: 'open-client',
+      label: 'Abrir cliente',
+      onClick: () => onOpenClientWorkspace(invoice.client_id),
+    })
+  }
+
+  if (invoice?.property_id) {
+    relationActions.push({
+      key: 'open-property',
+      label: 'Abrir propiedad',
+      onClick: () => onOpenPropertyWorkspace(invoice.property_id!),
+    })
+  }
+
+  if (invoice?.quote_id) {
+    relationActions.push({
+      key: 'open-quote',
+      label: 'Ver presupuesto origen',
+      onClick: () => onOpenQuoteDetail(invoice.quote_id!),
+    })
+  }
+
+  const statusActions: ActionGroupItem[] = invoice
+    ? invoiceManualStatusOptions
+      .filter((status) => status !== invoice.status)
+      .map((status, index) => ({
+        key: `invoice-status-${status}`,
+        label: getStatusOptionLabel(status),
+        tone: index === 0 ? 'primary' : 'default',
+        onClick: () => requestInvoiceStatusUpdate(status),
+        disabled: isSaving,
+      }))
+    : []
+
   return (
     <section className="data-section cc-detail-panel cc-detail-panel--invoice">
       <div className="section-header page-header-actions">
@@ -540,27 +671,7 @@ export function InvoiceDetailCard({
 
         {invoice ? (
           <div className="cc-detail-panel__actions">
-            <button
-              type="button"
-              className="primary-button"
-              onClick={onOpenDocument}
-            >
-              Abrir documento
-            </button>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                setIsEditing((current) => !current)
-                setSaveError(null)
-                setSuccessMessage(null)
-                setPaymentActionMode(null)
-                resetFormFromInvoice()
-              }}
-            >
-              {isEditing ? 'Cancelar edicion' : 'Editar factura'}
-            </button>
+            <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
           </div>
         ) : null}
       </div>
@@ -612,6 +723,13 @@ export function InvoiceDetailCard({
                 <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
                 <small>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</small>
               </div>
+            </div>
+          ) : null}
+
+          {!isEditing ? (
+            <div className="cc-detail-panel__next-step">
+              <span>Siguiente paso recomendado</span>
+              <strong>{invoiceNextStep}</strong>
             </div>
           ) : null}
 
@@ -813,78 +931,17 @@ export function InvoiceDetailCard({
                   </div>
                 </div>
 
-              <div className="form-actions" style={{ marginTop: '1rem' }}>
-                {invoice.job_id ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onOpenJobWorkspace(invoice.job_id!)}
-                  >
-                    Abrir servicio
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => onOpenClientWorkspace(invoice.client_id)}
-                >
-                  Abrir cliente
-                </button>
-                {invoice.property_id ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onOpenPropertyWorkspace(invoice.property_id!)}
-                  >
-                    Abrir propiedad
-                  </button>
-                ) : null}
-                {invoice.quote_id ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onOpenQuoteDetail(invoice.quote_id!)}
-                  >
-                    Ver presupuesto origen
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="form-actions" style={{ marginTop: '1rem' }}>
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => void handleTransferSettlement()}
-                    disabled={isSaving || !paymentSummary || paymentSummary.outstandingAmount <= 0.009 || invoice.status === 'cancelled'}
-                  >
-                    {paymentSummary?.financialStatus === 'partially_paid'
-                      ? 'Cobrar restante por transferencia'
-                      : 'Cobrar por transferencia'}
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setPaymentActionMode('manual')}
-                    disabled={isSaving || invoice.status === 'cancelled'}
-                  >
-                    Registrar cobro
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => setPaymentActionMode('partial')}
-                    disabled={isSaving || invoice.status === 'cancelled' || (paymentSummary?.outstandingAmount ?? invoice.total) <= 0.009}
-                  >
-                    Registrar cobro parcial
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onViewPayments(invoice.id)}
-                  >
-                    Ver cobros
-                  </button>
+              {relationActions.length > 0 ? (
+                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                  <ActionGroup actions={relationActions} moreLabel="Mas relaciones" />
                 </div>
+              ) : null}
+
+              {paymentActions.length > 0 ? (
+                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                  <ActionGroup actions={paymentActions} moreLabel="Mas cobros" />
+                </div>
+              ) : null}
 
                 {paymentActionMode ? (
                   <div style={{ marginTop: '1rem' }}>
@@ -915,29 +972,17 @@ export function InvoiceDetailCard({
                   </div>
                 ) : null}
 
-                <div className="form-actions cc-detail-panel__status-actions" style={{ marginTop: '1rem' }}>
-                  {invoiceManualStatusOptions.map((status) => (
-                    <button
-                      key={status}
-                      type="button"
-                      className={status === invoice.status ? 'primary-button' : 'secondary-button'}
-                      onClick={() => requestInvoiceStatusUpdate(status)}
-                      disabled={isSaving || status === invoice.status}
-                    >
-                      {getStatusOptionLabel(status)}
-                    </button>
-                  ))}
-                </div>
+                {statusActions.length > 0 ? (
+                  <div className="form-actions cc-detail-panel__status-actions" style={{ marginTop: '1rem' }}>
+                    <ActionGroup actions={statusActions} moreLabel="Estado admin." />
+                  </div>
+                ) : null}
               </section>
 
-              <div className="lead-detail-grid cc-detail-panel__grid">
+<div className="lead-detail-grid cc-detail-panel__grid">
                 <div className="detail-row">
                   <span className="detail-label">Numero factura</span>
                   <strong>{invoice.invoice_number ?? 'Sin numero'}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Codigo interno</span>
-                  <strong>{getInvoiceInternalReference(invoice)}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Servicio</span>
@@ -958,16 +1003,9 @@ export function InvoiceDetailCard({
                 <div className="detail-row">
                   <span className="detail-label">Lineas</span>
                   <strong>
-                    {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
+                    {displayLines.slice(0, 2).map((line) => `${line.concept} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
+                    {displayLines.length > 2 ? ` | +${displayLines.length - 2} linea(s)` : ''}
                   </strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Subtotal</span>
-                  <strong>{formatCurrency(invoice.subtotal)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">IVA</span>
-                  <strong>{formatCurrency(invoice.tax_amount)}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Total</span>

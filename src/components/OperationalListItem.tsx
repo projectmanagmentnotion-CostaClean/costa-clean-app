@@ -1,11 +1,7 @@
 import type { ReactNode } from 'react'
+import { ActionGroup, type ActionGroupItem } from './ActionGroup'
 
-export interface OperationalListAction {
-  key: string
-  label: string
-  onClick: () => void
-  tone?: 'primary' | 'default'
-}
+export type OperationalListAction = ActionGroupItem
 
 interface OperationalListItemProps {
   selected: boolean
@@ -64,7 +60,7 @@ export function OperationalListItem({
 
         {chips.length > 0 ? (
           <div className="cc-operational-item__chips" aria-label="Contexto del registro">
-            {chips.map((chip) => (
+            {chips.slice(0, 1).map((chip) => (
               <span key={chip} className="cc-operational-item__chip">{chip}</span>
             ))}
           </div>
@@ -72,7 +68,7 @@ export function OperationalListItem({
 
         {meta.length > 0 ? (
           <div className="cc-operational-item__meta">
-            {meta.map((item) => (
+            {meta.slice(0, 1).map((item) => (
               <span key={`${item.label}-${item.value}`}>
                 <span className="cc-operational-item__meta-label">{item.label}</span>
                 <span className="cc-operational-item__meta-value">{item.value}</span>
@@ -84,20 +80,7 @@ export function OperationalListItem({
 
       {(actions.length > 0 || microhint) ? (
         <div className="cc-operational-item__footer">
-          {actions.length > 0 ? (
-            <div className="cc-operational-item__actions">
-              {actions.map((action) => (
-                <button
-                  key={action.key}
-                  type="button"
-                  className={action.tone === 'primary' ? 'cc-record-card__inline-action is-primary' : 'cc-record-card__inline-action'}
-                  onClick={action.onClick}
-                >
-                  {action.label}
-                </button>
-              ))}
-            </div>
-          ) : <span />}
+          {actions.length > 0 ? <ActionGroup actions={actions} /> : <span />}
 
           {microhint ? <span className="cc-operational-item__microhint">{microhint}</span> : null}
         </div>

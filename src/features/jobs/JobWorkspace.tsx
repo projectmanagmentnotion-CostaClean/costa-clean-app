@@ -25,6 +25,7 @@ import { JobDetailCard } from './JobDetailCard'
 import type { JobListItem } from './types'
 import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
 import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 
 type JobWorkspaceAction = 'invoice' | 'payment' | null
 
@@ -66,6 +67,17 @@ function getRecommendedNextStep(
   if (paymentSummary.paidAmount <= 0.009) return 'Registrar cobro o hacer seguimiento'
   if (paymentSummary.financialStatus === 'partially_paid') return 'Revisar saldo pendiente de cobro'
   return 'Servicio cerrado y cobrado'
+}
+
+function getJobPrimaryAction(
+  job: JobListItem,
+  invoice: InvoiceListItem | null,
+  outstanding: number,
+): JobWorkspaceAction | 'open-invoice' | 'edit' {
+  if (job.status === 'completed' && !invoice) return 'invoice'
+  if (invoice && outstanding > 0.009) return 'payment'
+  if (invoice) return 'open-invoice'
+  return 'edit'
 }
 
 function getOperationalSignal(
@@ -175,9 +187,83 @@ export function JobWorkspace({
   const outstanding = paymentSummary?.outstandingAmount ?? 0
   const nextStep = getRecommendedNextStep(job, invoice, paymentSummary)
   const operationalSignal = getOperationalSignal(job, invoice, outstanding)
+  const primaryAction = getJobPrimaryAction(job, invoice, outstanding)
   const timelineItems = useMemo(
     () => buildJobTimelineItems({ job, quote, invoice, payments: relatedPayments }),
     [invoice, job, quote, relatedPayments],
+  )
+  const heroActions: ActionGroupItem[] = []
+
+  if (primaryAction === 'invoice') {
+    heroActions.push({
+      key: 'create-invoice',
+      label: 'Crear factura',
+      tone: 'primary',
+      onClick: () => openAction('invoice'),
+    })
+  } else if (primaryAction === 'payment') {
+    heroActions.push({
+      key: 'register-payment',
+      label: 'Registrar cobro',
+      tone: 'primary',
+      onClick: () => openAction('payment'),
+    })
+  } else if (primaryAction === 'open-invoice' && invoice) {
+    heroActions.push({
+      key: 'open-invoice',
+      label: 'Abrir factura',
+      tone: 'primary',
+      onClick: () => onOpenInvoiceDetail(invoice.id),
+    })
+  } else {
+    heroActions.push({
+      key: 'edit-job',
+      label: 'Editar servicio',
+      tone: 'primary',
+      onClick: () => onTabChange('operations'),
+    })
+  }
+
+  if (!invoice) {
+    heroActions.push({
+      key: 'create-invoice-secondary',
+      label: 'Crear factura',
+      onClick: () => openAction('invoice'),
+    })
+  }
+
+  if (invoice) {
+    heroActions.push({
+      key: 'open-invoice-secondary',
+      label: 'Abrir factura',
+      onClick: () => onOpenInvoiceDetail(invoice.id),
+    })
+    heroActions.push({
+      key: 'register-payment-secondary',
+      label: 'Registrar cobro',
+      onClick: () => openAction('payment'),
+    })
+  }
+
+  if (quote) {
+    heroActions.push({
+      key: 'open-quote',
+      label: 'Ver presupuesto origen',
+      onClick: () => onOpenQuoteDetail(quote.id),
+    })
+  }
+
+  heroActions.push(
+    {
+      key: 'open-client',
+      label: 'Abrir cliente',
+      onClick: () => onOpenClientWorkspace(job.client_id),
+    },
+    {
+      key: 'open-property',
+      label: 'Abrir propiedad',
+      onClick: () => onOpenPropertyWorkspace(job.property_id),
+    },
   )
 
   useEffect(() => {
@@ -267,55 +353,13 @@ export function JobWorkspace({
         </article>
       </section>
 
-      <section className="cc-client-workspace__actions">
-        <button type="button" className="primary-button" onClick={() => onTabChange('operations')}>
-          Editar servicio
-        </button>
-        {!invoice ? (
-          <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
-            Crear factura
-          </button>
-        ) : null}
-        {invoice ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => onOpenInvoiceDetail(invoice.id)}
-          >
-            Abrir factura
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => openAction('payment')}
-          disabled={!invoice}
-        >
-          Registrar cobro
-        </button>
-        {quote ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => onOpenQuoteDetail(quote.id)}
-          >
-            Ver presupuesto origen
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => onOpenClientWorkspace(job.client_id)}
-        >
-          Abrir cliente
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => onOpenPropertyWorkspace(job.property_id)}
-        >
-          Abrir propiedad
-        </button>
+      <section className="cc-client-workspace__next-step">
+        <div>
+          <span>Siguiente paso recomendado</span>
+          <strong>{nextStep}</strong>
+          <small>{operationalSignal.detail}</small>
+        </div>
+        <ActionGroup actions={heroActions} moreLabel="Mas acciones" />
       </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones del servicio">

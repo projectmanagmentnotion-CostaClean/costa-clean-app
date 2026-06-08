@@ -19,6 +19,7 @@ import type { QuoteListItem } from '../quotes/types'
 import { formatClientLabel, formatInvoiceLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from './types'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 
 type PropertyWorkspaceAction = 'job' | 'quote' | 'invoice' | 'payment' | null
 
@@ -73,6 +74,43 @@ function getActionTitle(action: Exclude<PropertyWorkspaceAction, null>) {
     case 'quote': return 'Nuevo presupuesto'
     case 'invoice': return 'Nueva factura'
     case 'payment': return 'Registrar cobro'
+  }
+}
+
+function getPropertyNextStep(
+  pendingBalance: number,
+  nextJob: JobListItem | null,
+  relatedJobsCount: number,
+  relatedQuotesCount: number,
+) {
+  if (pendingBalance > 0.009) {
+    return {
+      title: 'Registrar o perseguir el cobro pendiente',
+      detail: 'La prioridad operativa esta en cerrar el saldo abierto de esta propiedad.',
+      action: 'payment' as const,
+    }
+  }
+
+  if (!nextJob && relatedJobsCount === 0 && relatedQuotesCount > 0) {
+    return {
+      title: 'Convertir el trabajo pendiente en servicio',
+      detail: 'Ya existe actividad comercial y falta moverla a ejecucion.',
+      action: 'job' as const,
+    }
+  }
+
+  if (!nextJob) {
+    return {
+      title: 'Programar un nuevo servicio',
+      detail: 'No hay agenda futura para esta propiedad y conviene marcar la siguiente visita.',
+      action: 'job' as const,
+    }
+  }
+
+  return {
+    title: 'Preparar el proximo servicio',
+    detail: `La propiedad ya tiene agenda y el siguiente hito esta previsto para ${formatDateEs(nextJob.scheduled_date)}.`,
+    action: 'job' as const,
   }
 }
 
@@ -149,6 +187,7 @@ export function PropertyWorkspace({
   const totalInvoiced = relatedInvoices.reduce((sum, invoice) => sum + Number(invoice.total ?? 0), 0)
   const totalCollected = relatedPayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0)
   const pendingBalance = totalInvoiced - totalCollected
+  const nextStep = getPropertyNextStep(pendingBalance, nextJob, relatedJobs.length, relatedQuotes.length)
 
   const activityItems = useMemo<PropertyActivityItem[]>(() => {
     const items: PropertyActivityItem[] = []
@@ -220,6 +259,37 @@ export function PropertyWorkspace({
     billing_concept: '',
     service_type: 'standard_cleaning',
   }), [property.client_id, property.id, property.notes])
+  const heroActions: ActionGroupItem[] = [
+    {
+      key: nextStep.action === 'payment' ? 'primary-payment' : 'primary-job',
+      label: nextStep.action === 'payment' ? 'Registrar cobro' : 'Nuevo servicio',
+      tone: 'primary',
+      onClick: () => openAction(nextStep.action),
+    },
+    {
+      key: 'new-quote',
+      label: 'Nuevo presupuesto',
+      onClick: () => openAction('quote'),
+    },
+    {
+      key: 'new-invoice',
+      label: 'Nueva factura',
+      onClick: () => openAction('invoice'),
+    },
+    {
+      key: 'register-payment',
+      label: 'Registrar cobro',
+      onClick: () => openAction('payment'),
+    },
+    {
+      key: 'edit-property',
+      label: 'Editar propiedad',
+      onClick: () => {
+        onTabChange('summary')
+        setEditRequestToken((current) => current + 1)
+      },
+    },
+  ]
 
   useEffect(() => {
     onPendingStateChange?.(Boolean(activeAction) || hasPendingDetailState)
@@ -320,29 +390,13 @@ export function PropertyWorkspace({
         </article>
       </section>
 
-      <section className="cc-client-workspace__actions">
-        <button type="button" className="primary-button" onClick={() => openAction('job')}>
-          Nuevo servicio
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('quote')}>
-          Nuevo presupuesto
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
-          Nueva factura
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('payment')}>
-          Registrar cobro
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            onTabChange('summary')
-            setEditRequestToken((current) => current + 1)
-          }}
-        >
-          Editar propiedad
-        </button>
+      <section className="cc-client-workspace__next-step">
+        <div>
+          <span>Siguiente paso recomendado</span>
+          <strong>{nextStep.title}</strong>
+          <small>{nextStep.detail}</small>
+        </div>
+        <ActionGroup actions={heroActions} moreLabel="Mas acciones" />
       </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones de la propiedad">

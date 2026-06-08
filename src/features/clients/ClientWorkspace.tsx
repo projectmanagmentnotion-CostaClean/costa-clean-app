@@ -18,6 +18,7 @@ import {
 } from '../../app/relationshipLabels'
 import { ClientDetailCard } from './ClientDetailCard'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
 import { clientWorkspaceTabs } from './useClientWorkspaceNavigation'
 import type { ClientListItem } from './types'
@@ -142,6 +143,60 @@ function buildRecurringPlanAmount(plan: RecurringInvoicePlanListItem): number {
   return plan.template_lines.reduce((sum, line) => sum + Number(line.line_subtotal ?? 0), 0)
 }
 
+function getClientNextStep(
+  client: ClientListItem,
+  relatedPropertiesCount: number,
+  dueRecurringPlansCount: number,
+  pendingBalance: number,
+  nextJob: JobListItem | null,
+) {
+  if (!client.tax_id || !client.billing_address) {
+    return {
+      title: 'Completar la ficha fiscal',
+      detail: 'Conviene cerrar NIF/CIF y direccion fiscal antes de seguir ampliando la facturacion.',
+      action: 'edit' as const,
+    }
+  }
+
+  if (relatedPropertiesCount === 0) {
+    return {
+      title: 'Crear la primera propiedad',
+      detail: 'Sin propiedad vinculada cuesta encadenar presupuestos, servicios y facturas con contexto.',
+      action: 'property' as const,
+    }
+  }
+
+  if (pendingBalance > 0.009) {
+    return {
+      title: 'Hacer seguimiento del cobro pendiente',
+      detail: 'Hay saldo abierto y el siguiente paso natural es registrar o empujar el cobro.',
+      action: 'payment' as const,
+    }
+  }
+
+  if (dueRecurringPlansCount > 0) {
+    return {
+      title: 'Revisar la facturacion automatica vencida',
+      detail: 'Hay planes recurrentes activos listos para emitir o revisar.',
+      action: 'recurring' as const,
+    }
+  }
+
+  if (nextJob) {
+    return {
+      title: 'Preparar el proximo servicio',
+      detail: `Hay un servicio programado para ${formatDateEs(nextJob.scheduled_date)} y el cliente ya esta operativo.`,
+      action: 'job' as const,
+    }
+  }
+
+  return {
+    title: 'Programar un nuevo servicio',
+    detail: 'La ficha esta lista y el siguiente paso natural es crear operativa nueva.',
+    action: 'job' as const,
+  }
+}
+
 export function ClientWorkspace({
   client,
   properties,
@@ -260,6 +315,13 @@ export function ClientWorkspace({
   const latestJob = sortedJobsDesc.find((job) => toTimestamp(job.scheduled_date) <= todayTimestamp || job.status === 'completed')
     ?? sortedJobsDesc[0]
     ?? null
+  const nextStep = getClientNextStep(
+    client,
+    relatedProperties.length,
+    dueRecurringPlans.length,
+    pendingBalance,
+    nextJob,
+  )
 
   const quotesByPropertyId = useMemo(() => {
     const map = new Map<string, QuoteListItem[]>()
@@ -502,6 +564,107 @@ export function ClientWorkspace({
     }),
     [client.id],
   )
+  const heroActions: ActionGroupItem[] = []
+
+  const openRecurringAction = () => {
+    setEditingRecurringPlanId(null)
+    openAction('recurring')
+  }
+
+  if (nextStep.action === 'property') {
+    heroActions.push({
+      key: 'new-property',
+      label: 'Nueva propiedad',
+      tone: 'primary',
+      onClick: () => openAction('property'),
+    })
+  } else if (nextStep.action === 'payment') {
+    heroActions.push({
+      key: 'register-payment',
+      label: 'Registrar cobro',
+      tone: 'primary',
+      onClick: () => openAction('payment'),
+    })
+  } else if (nextStep.action === 'recurring') {
+    heroActions.push({
+      key: 'open-recurring',
+      label: 'Automatizar factura',
+      tone: 'primary',
+      onClick: openRecurringAction,
+    })
+  } else if (nextStep.action === 'edit') {
+    heroActions.push({
+      key: 'edit-client',
+      label: 'Editar cliente',
+      tone: 'primary',
+      onClick: () => {
+        onTabChange('summary')
+        setActiveAction(null)
+        setEditRequestToken((current) => current + 1)
+      },
+    })
+  } else {
+    heroActions.push({
+      key: 'new-job',
+      label: 'Nuevo servicio',
+      tone: 'primary',
+      onClick: () => openAction('job'),
+    })
+  }
+
+  heroActions.push(
+    {
+      key: 'secondary-property',
+      label: 'Nueva propiedad',
+      onClick: () => openAction('property'),
+    },
+    {
+      key: 'secondary-job',
+      label: 'Nuevo servicio',
+      onClick: () => openAction('job'),
+    },
+    {
+      key: 'secondary-quote',
+      label: 'Nuevo presupuesto',
+      onClick: () => openAction('quote'),
+    },
+    {
+      key: 'secondary-invoice',
+      label: 'Nueva factura',
+      onClick: () => openAction('invoice'),
+    },
+    {
+      key: 'secondary-recurring',
+      label: 'Automatizar factura',
+      onClick: openRecurringAction,
+    },
+    {
+      key: 'secondary-payment',
+      label: 'Registrar cobro',
+      onClick: () => openAction('payment'),
+    },
+    {
+      key: 'secondary-edit',
+      label: 'Editar cliente',
+      onClick: () => {
+        onTabChange('summary')
+        setActiveAction(null)
+        setEditRequestToken((current) => current + 1)
+      },
+    },
+  )
+
+  if (client.status !== 'inactive') {
+    heroActions.push({
+      key: 'archive-client',
+      label: 'Archivar cliente',
+      onClick: () => {
+        onTabChange('summary')
+        setActiveAction(null)
+        setArchiveRequestToken((current) => current + 1)
+      },
+    })
+  }
 
   return (
     <section className="cc-client-workspace">
@@ -573,56 +736,13 @@ export function ClientWorkspace({
         </article>
       </section>
 
-      <section className="cc-client-workspace__actions">
-        <button type="button" className="primary-button" onClick={() => openAction('property')}>
-          Nueva propiedad
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('job')}>
-          Nuevo servicio
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('quote')}>
-          Nuevo presupuesto
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('invoice')}>
-          Nueva factura
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            setEditingRecurringPlanId(null)
-            openAction('recurring')
-          }}
-        >
-          Automatizar factura
-        </button>
-        <button type="button" className="secondary-button" onClick={() => openAction('payment')}>
-          Registrar cobro
-        </button>
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => {
-            onTabChange('summary')
-            setActiveAction(null)
-            setEditRequestToken((current) => current + 1)
-          }}
-        >
-          Editar cliente
-        </button>
-        {client.status !== 'inactive' ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              onTabChange('summary')
-              setActiveAction(null)
-              setArchiveRequestToken((current) => current + 1)
-            }}
-          >
-            Archivar cliente
-          </button>
-        ) : null}
+      <section className="cc-client-workspace__next-step">
+        <div>
+          <span>Siguiente paso recomendado</span>
+          <strong>{nextStep.title}</strong>
+          <small>{nextStep.detail}</small>
+        </div>
+        <ActionGroup actions={heroActions} moreLabel="Mas acciones" />
       </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones del cliente">

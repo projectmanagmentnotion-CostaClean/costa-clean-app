@@ -8,6 +8,7 @@ import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOption
 import { formatCurrency } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { buildJobCreatePrefillFromQuote } from '../jobs/jobCreatePrefill'
 import { saveQuoteWithLines, updateQuoteStatus as updateQuoteStatusRpc } from '../financial/financialWriteApi'
 import { acceptQuoteAndCreateInvoice, acceptQuoteOnly } from './quoteAcceptanceWorkflow'
@@ -363,6 +364,91 @@ function QuoteDetailCardContent({
 
   const clientLabel = buildClientLabel(hydratedQuote, clients)
   const propertyLabel = buildPropertyLabel(hydratedQuote, properties)
+  const quoteNextStep = hydratedQuote.status !== 'accepted'
+    ? 'Confirmar aceptacion y preparar la conversion a servicio o factura.'
+    : hydratedQuote.job_id
+      ? 'El presupuesto ya genero servicio. Revisa la operativa asociada o abre el documento para compartirlo.'
+      : 'El presupuesto ya esta aceptado. El siguiente paso natural es crear el servicio.'
+  const headerActions: ActionGroupItem[] = []
+
+  if (hydratedQuote.status === 'accepted' && !hydratedQuote.job_id) {
+    headerActions.push({
+      key: 'create-job-primary',
+      label: 'Crear servicio',
+      tone: 'primary',
+      onClick: handleCreateJobFromQuote,
+    })
+  } else if (hydratedQuote.status !== 'accepted') {
+    headerActions.push({
+      key: 'accept-and-invoice',
+      label: 'Aceptar y facturar',
+      tone: 'primary',
+      onClick: () => setPendingAcceptanceAction('invoice'),
+    })
+  } else {
+    headerActions.push({
+      key: 'open-document-primary',
+      label: 'Abrir documento',
+      tone: 'primary',
+      onClick: onOpenDocument,
+    })
+  }
+
+  headerActions.push(
+    {
+      key: 'open-document',
+      label: 'Abrir documento',
+      onClick: onOpenDocument,
+    },
+    {
+      key: 'edit-quote',
+      label: isEditing ? 'Cancelar edicion' : 'Editar presupuesto',
+      onClick: () => {
+        setIsEditing((current) => !current)
+        setSaveError(null)
+        setSuccessMessage(null)
+        resetFormFromQuote()
+      },
+      disabled: isLoadingLines || Boolean(linesError),
+    },
+  )
+
+  if (!hydratedQuote.job_id) {
+    headerActions.push({
+      key: 'create-job',
+      label: 'Crear servicio',
+      onClick: handleCreateJobFromQuote,
+    })
+  }
+
+  const statusActions: ActionGroupItem[] = []
+
+  if (hydratedQuote.status !== 'accepted') {
+    statusActions.push({
+      key: 'accept-quote',
+      label: 'Aceptar presupuesto',
+      tone: 'primary',
+      onClick: () => setPendingAcceptanceAction('accept'),
+      disabled: isSaving || isLoadingLines || Boolean(linesError),
+    })
+    statusActions.push({
+      key: 'accept-quote-invoice',
+      label: 'Aceptar y convertir a factura',
+      onClick: () => setPendingAcceptanceAction('invoice'),
+      disabled: isSaving || isLoadingLines || Boolean(linesError),
+    })
+  }
+
+  quoteStatusOptions
+    .filter((status) => status !== hydratedQuote.status && status !== 'accepted')
+    .forEach((status) => {
+      statusActions.push({
+        key: `status-${status}`,
+        label: getStatusOptionLabel(status),
+        onClick: () => requestQuoteStatusUpdate(status),
+        disabled: isSaving || isLoadingLines || Boolean(linesError),
+      })
+    })
 
   return (
     <section className="data-section cc-detail-panel cc-detail-panel--quote">
@@ -372,35 +458,7 @@ function QuoteDetailCardContent({
         </div>
 
         <div className="cc-detail-panel__actions">
-          <button
-            type="button"
-            className="primary-button"
-            onClick={onOpenDocument}
-          >
-            Abrir documento
-          </button>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={handleCreateJobFromQuote}
-            >
-            Crear trabajo desde presupuesto
-          </button>
-
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-              resetFormFromQuote()
-            }}
-            disabled={isLoadingLines || Boolean(linesError)}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar presupuesto'}
-          </button>
+          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
         </div>
       </div>
 
@@ -420,18 +478,25 @@ function QuoteDetailCardContent({
             <div className="cc-detail-panel__summary-card">
               <span>Cliente</span>
               <strong>{clientLabel}</strong>
-              <small>{hydratedQuote.client_display_code ?? 'Sin ref. CRM'}</small>
+              <small>{hydratedQuote.status === 'accepted' ? 'Listo para operativa' : 'Pendiente de decision comercial'}</small>
             </div>
             <div className="cc-detail-panel__summary-card">
               <span>Propiedad</span>
               <strong>{propertyLabel}</strong>
-              <small>{hydratedQuote.property_display_code ?? 'Sin ref. CRM'}</small>
+              <small>{hydratedQuote.job_id ? 'Servicio ya generado' : 'Todavia sin servicio asociado'}</small>
             </div>
             <div className="cc-detail-panel__summary-card">
               <span>Total</span>
               <strong>{formatCurrency(hydratedQuote.total)}</strong>
               <small>{displayLines.length} linea(s)</small>
             </div>
+          </div>
+        ) : null}
+
+        {!isLoadingLines && !linesError && !isEditing ? (
+          <div className="cc-detail-panel__next-step">
+            <span>Siguiente paso recomendado</span>
+            <strong>{quoteNextStep}</strong>
           </div>
         ) : null}
 
@@ -608,48 +673,13 @@ function QuoteDetailCardContent({
           </form>
         ) : (
           <>
-            <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
-              {hydratedQuote.status !== 'accepted' ? (
-                <>
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setPendingAcceptanceAction('accept')}
-                    disabled={isSaving || isLoadingLines || Boolean(linesError)}
-                  >
-                    Aceptar presupuesto
-                  </button>
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setPendingAcceptanceAction('invoice')}
-                    disabled={isSaving || isLoadingLines || Boolean(linesError)}
-                  >
-                    Aceptar y convertir a factura
-                  </button>
-                </>
-              ) : null}
+            {statusActions.length > 0 ? (
+              <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
+                <ActionGroup actions={statusActions} moreLabel="Gestionar estado" />
+              </div>
+            ) : null}
 
-              {quoteStatusOptions.map((status) => (
-                <button
-                  key={status}
-                  type="button"
-                  className={status === hydratedQuote.status ? 'primary-button' : 'secondary-button'}
-                  onClick={() => requestQuoteStatusUpdate(status)}
-                  disabled={
-                    isSaving ||
-                    status === hydratedQuote.status ||
-                    status === 'accepted' ||
-                    isLoadingLines ||
-                    Boolean(linesError)
-                  }
-                >
-                  {getStatusOptionLabel(status)}
-                </button>
-              ))}
-            </div>
-
-          <div className="lead-detail-grid cc-detail-panel__grid">
+<div className="lead-detail-grid cc-detail-panel__grid">
             <div className="detail-row">
               <span className="detail-label">Referencia</span>
               <strong>{hydratedQuote.display_code ?? hydratedQuote.id}</strong>
@@ -661,8 +691,8 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Ref. CRM cliente</span>
-              <strong>{hydratedQuote.client_display_code ?? 'Sin referencia CRM'}</strong>
+              <span className="detail-label">Estado</span>
+              <strong>{getStatusLabel(hydratedQuote.status)}</strong>
             </div>
 
             <div className="detail-row">
@@ -676,30 +706,21 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Ref. CRM propiedad</span>
-              <strong>{hydratedQuote.property_display_code ?? 'Sin referencia CRM'}</strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Estado</span>
-              <strong>{getStatusLabel(hydratedQuote.status)}</strong>
+              <span className="detail-label">Servicio generado</span>
+              <strong>{hydratedQuote.job_id ?? 'Todavia no generado'}</strong>
             </div>
 
             <div className="detail-row">
               <span className="detail-label">Líneas</span>
               <strong>
-                {displayLines.map((line) => `${line.concept} · ${line.quantity} ${line.unit} · ${formatQuoteLineSubtotalDisplay(line)}`).join(' | ')}
+                {displayLines.slice(0, 2).map((line) => `${line.concept} · ${formatQuoteLineSubtotalDisplay(line)}`).join(' | ')}
+                {displayLines.length > 2 ? ` | +${displayLines.length - 2} linea(s)` : ''}
               </strong>
             </div>
 
             <div className="detail-row">
               <span className="detail-label">Subtotal</span>
               <strong>{formatCurrency(hydratedQuote.subtotal)}</strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">IVA</span>
-              <strong>{formatCurrency(hydratedQuote.tax_amount ?? 0)}</strong>
             </div>
 
             <div className="detail-row">

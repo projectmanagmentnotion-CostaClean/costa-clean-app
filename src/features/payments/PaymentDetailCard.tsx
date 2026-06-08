@@ -2,10 +2,10 @@
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
-import { getPaymentOriginLabel } from '../invoices/paymentState'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -180,61 +180,71 @@ export function PaymentDetailCard({
     }
   }
 
+  const paymentNextStep = !payment
+    ? ''
+    : selectedInvoice
+      ? 'El siguiente paso natural es revisar la factura vinculada y confirmar que el saldo quedo actualizado.'
+      : 'Conviene revisar la factura origen para validar el contexto de este cobro.'
+  const headerActions: ActionGroupItem[] = payment ? [
+    {
+      key: 'open-invoice',
+      label: 'Ver factura',
+      tone: 'primary',
+      onClick: () => onOpenInvoiceDetail(payment.invoice_id),
+    },
+    {
+      key: 'edit-payment',
+      label: isEditing ? 'Cancelar edicion' : 'Editar pago',
+      onClick: () => {
+        setIsEditing((current) => !current)
+        setSaveError(null)
+        setSuccessMessage(null)
+        setForm({
+          invoice_id: payment.invoice_id,
+          payment_date: payment.payment_date,
+          amount: String(payment.amount),
+          payment_method: payment.payment_method ?? 'transfer',
+          notes: payment.notes ?? '',
+        })
+      },
+    },
+    ...(selectedInvoice?.client_id
+      ? [{
+          key: 'open-client',
+          label: 'Abrir cliente',
+          onClick: () => onOpenClientWorkspace(selectedInvoice.client_id),
+        }]
+      : []),
+  ] : []
+
   return (
-    <section className="data-section">
+    <section className="data-section cc-detail-panel cc-detail-panel--payment">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del pago</h2>
         </div>
 
         {payment ? (
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={() => {
-              setIsEditing((current) => !current)
-              setSaveError(null)
-              setSuccessMessage(null)
-              setForm({
-                invoice_id: payment.invoice_id,
-                payment_date: payment.payment_date,
-                amount: String(payment.amount),
-                payment_method: payment.payment_method ?? 'transfer',
-                notes: payment.notes ?? '',
-              })
-            }}
-          >
-            {isEditing ? 'Cancelar edición' : 'Editar pago'}
-          </button>
+          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
         ) : null}
       </div>
 
       {payment ? (
         <div className="lead-detail-card">
           <div className="lead-detail-header">
-            <div>
+            <div className="cc-detail-panel__identity">
+              <span className="cc-detail-panel__eyebrow">Cobro registrado</span>
               <h3>{payment.display_code ?? payment.id}</h3>
               <p>{formatInvoiceLabel(selectedInvoice ?? { id: payment.invoice_id, display_code: payment.invoice_display_code, invoice_number: payment.invoice_number })}</p>
             </div>
-            <div className="form-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => onOpenInvoiceDetail(payment.invoice_id)}
-              >
-                Ver factura
-              </button>
-              {selectedInvoice?.client_id ? (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => onOpenClientWorkspace(selectedInvoice.client_id)}
-                >
-                  Abrir cliente
-                </button>
-              ) : null}
-            </div>
           </div>
+
+          {!isEditing ? (
+            <div className="cc-detail-panel__next-step">
+              <span>Siguiente paso recomendado</span>
+              <strong>{paymentNextStep}</strong>
+            </div>
+          ) : null}
 
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
@@ -323,7 +333,7 @@ export function PaymentDetailCard({
               ) : null}
             </form>
           ) : (
-            <div className="lead-detail-grid">
+            <div className="lead-detail-grid cc-detail-panel__grid">
               <div className="detail-row">
                 <span className="detail-label">Código</span>
                 <strong>{payment.display_code ?? payment.id}</strong>
@@ -343,10 +353,6 @@ export function PaymentDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Método</span>
                 <strong>{getPaymentMethodLabel(payment.payment_method)}</strong>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Origen</span>
-                <strong>{getPaymentOriginLabel(payment.origin_type)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Notas</span>

@@ -98,6 +98,34 @@ export function HomePage({
 }: HomePageProps) {
   const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
   const urgentCollectionsCount = metrics.unpaidInvoicesOlderThan7DaysCount + metrics.partiallyPaidInvoicesCount
+  const topIncident = operationalIncidents[0] ?? null
+  const homePrimaryAction = topIncident
+    ? {
+        label: topIncident.primaryAction.label,
+        summary: topIncident.summary,
+        detail: topIncident.detail,
+        onRun: () => onRunOperationalAction(topIncident.primaryAction),
+      }
+    : metrics.completedJobsWithoutInvoiceCount > 0
+      ? {
+          label: 'Facturar servicios pendientes',
+          summary: `${metrics.completedJobsWithoutInvoiceCount} servicio(s) completados sin factura`,
+          detail: 'Conviene cerrar hoy el paso de servicio a factura.',
+          onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
+        }
+      : urgentCollectionsCount > 0
+        ? {
+            label: 'Revisar cobros pendientes',
+            summary: `${urgentCollectionsCount} factura(s) requieren seguimiento`,
+            detail: 'Prioriza las facturas abiertas y parciales antes de abrir otras vistas.',
+            onRun: () => onRunKpiAction('outstanding_invoices'),
+          }
+        : {
+            label: 'Atender agenda de hoy',
+            summary: `${metrics.jobsScheduledTodayCount} servicio(s) previstos hoy`,
+            detail: 'La operativa diaria esta estable; revisa primero la agenda de hoy.',
+            onRun: () => onRunKpiAction('jobs_today'),
+          }
 
   return (
     <section className="cc-dashboard-page">
@@ -129,29 +157,57 @@ export function HomePage({
             <span className="cc-dashboard-header__meta-label">Cobros urgentes</span>
             <strong className="cc-dashboard-header__meta-value">{urgentCollectionsCount}</strong>
           </div>
-          <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Alertas criticas</span>
-            <strong className="cc-dashboard-header__meta-value">{criticalAlertsCount}</strong>
-          </div>
         </div>
       </header>
 
       <div className="cc-dashboard-stack">
-        <DashboardQuickActions onOpenView={onOpenView} />
-        <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
-        <DashboardQuickViews views={operationalQuickViews} onRunAction={onRunOperationalAction} />
+        <section className="cc-dashboard-block cc-dashboard-block--incidents">
+          <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
+            <div>
+              <h2>Que hago ahora</h2>
+              <p>Una sola accion principal para arrancar la operativa del dia.</p>
+            </div>
+            <span className="lead-badge">{criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Hoy'}</span>
+          </div>
+
+          <article className="cc-dashboard-incident cc-dashboard-incident--warning">
+            <div className="cc-dashboard-incident__top">
+              <div>
+                <span className="cc-dashboard-incident__severity">Prioridad</span>
+                <h3>{homePrimaryAction.label}</h3>
+              </div>
+            </div>
+
+            <strong className="cc-dashboard-incident__summary">{homePrimaryAction.summary}</strong>
+            <p className="cc-dashboard-incident__detail">{homePrimaryAction.detail}</p>
+
+            <div className="cc-dashboard-incident__actions">
+              <button
+                type="button"
+                className="primary-button cc-dashboard-incident__action"
+                onClick={homePrimaryAction.onRun}
+              >
+                {homePrimaryAction.label}
+              </button>
+            </div>
+          </article>
+        </section>
+
         <DashboardIncidents incidents={operationalIncidents} onRunAction={onRunOperationalAction} />
-        <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
         <DashboardAgenda
           agenda={agenda}
           onRunKpiAction={onRunKpiAction}
           onOpenJobWorkspace={onOpenJobWorkspace}
         />
+        <DashboardOverview metrics={metrics} onRunKpiAction={onRunKpiAction} />
+        <DashboardQuickViews views={operationalQuickViews} onRunAction={onRunOperationalAction} />
         <DashboardOperationalFocus
           clientBalanceLeaders={clientBalanceLeaders}
           dueRecurringPlans={dueRecurringPlans}
           onOpenClientWorkspace={onOpenClientWorkspace}
         />
+        <DashboardAlerts alerts={alerts} onOpenAlert={onOpenAlert} />
+        <DashboardQuickActions onOpenView={onOpenView} />
         <DashboardKpis metrics={metrics} onRunKpiAction={onRunKpiAction} />
       </div>
     </section>

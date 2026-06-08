@@ -2323,3 +2323,361 @@
     width: 100%;
   }
 }
+/* =========================================================
+   Daily control center
+   Home becomes one operational console, not a block mosaic
+   ========================================================= */
+
+.cc-dashboard-stack--console {
+  gap: 0.88rem;
+}
+
+.cc-dashboard-console-hero,
+.cc-dashboard-console-section {
+  display: grid;
+  gap: 0.78rem;
+}
+
+.cc-dashboard-console-hero__grid,
+.cc-dashboard-console-work,
+.cc-dashboard-console-followup {
+  display: grid;
+  gap: 0.78rem;
+}
+
+.cc-dashboard-console-hero__grid {
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+}
+
+.cc-dashboard-console-primary,
+.cc-dashboard-console-workpanel,
+.cc-dashboard-console-sidepanel,
+.cc-dashboard-console-card,
+.cc-dashboard-console-lane,
+.cc-dashboard-console-queue,
+.cc-dashboard-console-followupcard,
+.cc-dashboard-console-job,
+.cc-dashboard-console-client,
+.cc-dashboard-console-alert,
+.cc-dashboard-console-footnote {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+}
+
+.cc-dashboard-console-primary,
+.cc-dashboard-console-workpanel,
+.cc-dashboard-console-sidepanel,
+.cc-dashboard-console-card,
+.cc-dashboard-console-followupcard {
+  padding: 0.92rem;
+}
+
+.cc-dashboard-console-primary {
+  display: grid;
+  gap: 0.72rem;
+  background:
+    radial-gradient(circle at top right, rgba(83, 199, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+}
+
+.cc-dashboard-console-primary__eyebrow,
+.cc-dashboard-console-workpanel__eyebrow,
+.cc-dashboard-console-card__eyebrow {
+  color: var(--muted);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cc-dashboard-console-primary h3,
+.cc-dashboard-console-workpanel h3,
+.cc-dashboard-console-sidepanel h3,
+.cc-dashboard-console-card h3 {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.12;
+}
+
+.cc-dashboard-console-primary__summary,
+.cc-dashboard-console-card__summary {
+  font-size: 0.94rem;
+  line-height: 1.24;
+}
+
+.cc-dashboard-console-primary__detail,
+.cc-dashboard-console-card__detail,
+.cc-dashboard-console-workpanel p,
+.cc-dashboard-console-sidepanel p,
+.cc-dashboard-console-lane__detail,
+.cc-dashboard-console-queue p,
+.cc-dashboard-console-followupcard p,
+.cc-dashboard-console-job p,
+.cc-dashboard-console-alert p,
+.cc-dashboard-console-client p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.38;
+}
+
+.cc-dashboard-console-primary__actions,
+.cc-dashboard-console-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.cc-dashboard-console-lanes,
+.cc-dashboard-console-followup__grid,
+.cc-dashboard-console-grid,
+.cc-dashboard-console-queuegrid,
+.cc-dashboard-console-clientlist,
+.cc-dashboard-console-alertlist,
+.cc-dashboard-console-joblist,
+.cc-dashboard-console-footnotes {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.cc-dashboard-console-lane,
+.cc-dashboard-console-queue,
+.cc-dashboard-console-followupcard,
+.cc-dashboard-console-job,
+.cc-dashboard-console-client,
+.cc-dashboard-console-alert,
+.cc-dashboard-console-footnote {
+  padding: 0.78rem 0.84rem;
+  text-align: left;
+  color: inherit;
+}
+
+.cc-dashboard-console-lane {
+  display: grid;
+  gap: 0.28rem;
+  min-height: 0;
+}
+
+.cc-dashboard-console-lane__label,
+.cc-dashboard-console-queue span,
+.cc-dashboard-console-followupcard span,
+.cc-dashboard-console-alert span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cc-dashboard-console-lane__value,
+.cc-dashboard-console-queue strong,
+.cc-dashboard-console-followupcard strong,
+.cc-dashboard-console-alert strong,
+.cc-dashboard-console-client__top strong {
+  font-size: 0.94rem;
+  line-height: 1.16;
+}
+
+.cc-dashboard-console-lane__cta,
+.cc-dashboard-console-queue small,
+.cc-dashboard-console-followupcard small {
+  color: rgba(191, 219, 254, 0.78);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cc-dashboard-console-lane--critical,
+.cc-dashboard-console-card--critical,
+.cc-dashboard-console-queue--critical {
+  border-color: rgba(248, 113, 113, 0.22);
+}
+
+.cc-dashboard-console-lane--warning,
+.cc-dashboard-console-card--warning,
+.cc-dashboard-console-queue--warning,
+.cc-dashboard-console-followupcard--warning {
+  border-color: rgba(251, 191, 36, 0.18);
+}
+
+.cc-dashboard-console-lane--info,
+.cc-dashboard-console-card--info,
+.cc-dashboard-console-queue--info,
+.cc-dashboard-console-followupcard--info {
+  border-color: rgba(83, 199, 255, 0.14);
+}
+
+.cc-dashboard-console-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-dashboard-console-card {
+  display: grid;
+  gap: 0.56rem;
+}
+
+.cc-dashboard-console-card__top,
+.cc-dashboard-console-job__top,
+.cc-dashboard-console-client__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.cc-dashboard-console-work {
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+}
+
+.cc-dashboard-console-joblist,
+.cc-dashboard-console-clientlist,
+.cc-dashboard-console-alertlist {
+  align-content: start;
+}
+
+.cc-dashboard-console-job,
+.cc-dashboard-console-client,
+.cc-dashboard-console-alert,
+.cc-dashboard-console-footnote,
+.cc-dashboard-console-queue,
+.cc-dashboard-console-lane,
+.cc-dashboard-console-followupcard {
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.cc-dashboard-console-job:hover,
+.cc-dashboard-console-client:hover,
+.cc-dashboard-console-alert:hover,
+.cc-dashboard-console-footnote:hover,
+.cc-dashboard-console-queue:hover,
+.cc-dashboard-console-lane:hover,
+.cc-dashboard-console-followupcard:hover {
+  transform: translateY(-1px);
+}
+
+.cc-dashboard-console-job__meta,
+.cc-dashboard-console-subqueue__item,
+.cc-dashboard-console-client__top span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+.cc-dashboard-console-job__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+  margin-top: 0.42rem;
+}
+
+.cc-dashboard-console-subqueue {
+  display: grid;
+  gap: 0.46rem;
+}
+
+.cc-dashboard-console-subqueue__label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-dashboard-console-subqueue__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.62rem 0.72rem;
+  border-radius: 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.02);
+  text-align: left;
+}
+
+.cc-dashboard-console-queuegrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-dashboard-console-side {
+  display: grid;
+  gap: 0.78rem;
+}
+
+.cc-dashboard-console-sidepanel__header {
+  display: grid;
+  gap: 0.24rem;
+  margin-bottom: 0.68rem;
+}
+
+.cc-dashboard-console-client__top span {
+  font-weight: 700;
+}
+
+.cc-dashboard-console-footnotes {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.cc-dashboard-console-footnote {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.cc-dashboard-console-footnote strong {
+  font-size: 0.82rem;
+  line-height: 1.22;
+}
+
+.cc-dashboard-console-footnote span {
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+
+:root[data-theme="light"] .cc-dashboard-console-primary,
+:root[data-theme="light"] .cc-dashboard-console-workpanel,
+:root[data-theme="light"] .cc-dashboard-console-sidepanel,
+:root[data-theme="light"] .cc-dashboard-console-card,
+:root[data-theme="light"] .cc-dashboard-console-lane,
+:root[data-theme="light"] .cc-dashboard-console-queue,
+:root[data-theme="light"] .cc-dashboard-console-followupcard,
+:root[data-theme="light"] .cc-dashboard-console-job,
+:root[data-theme="light"] .cc-dashboard-console-client,
+:root[data-theme="light"] .cc-dashboard-console-alert,
+:root[data-theme="light"] .cc-dashboard-console-footnote,
+:root[data-theme="light"] .cc-dashboard-console-subqueue__item {
+  border-color: rgba(14, 84, 114, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 255, 0.95));
+}
+
+@media (max-width: 1100px) {
+  .cc-dashboard-console-hero__grid,
+  .cc-dashboard-console-work,
+  .cc-dashboard-console-followup {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-dashboard-console-grid,
+  .cc-dashboard-console-queuegrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .cc-dashboard-console-primary,
+  .cc-dashboard-console-workpanel,
+  .cc-dashboard-console-sidepanel,
+  .cc-dashboard-console-card,
+  .cc-dashboard-console-lane,
+  .cc-dashboard-console-queue,
+  .cc-dashboard-console-followupcard,
+  .cc-dashboard-console-job,
+  .cc-dashboard-console-client,
+  .cc-dashboard-console-alert,
+  .cc-dashboard-console-footnote {
+    padding: 0.82rem;
+  }
+
+  .cc-dashboard-console-primary__actions,
+  .cc-dashboard-console-card__actions,
+  .cc-dashboard-console-job__meta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

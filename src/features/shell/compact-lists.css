@@ -527,20 +527,20 @@
    ========================================================= */
 
 .cc-record-card__inline-action {
-  min-height: 26px;
-  padding: 0 9px;
+  min-height: 24px;
+  padding: 0 8px;
   border-radius: 999px;
   background: transparent;
-  color: rgba(226, 232, 240, 0.82);
-  font-size: 0.68rem;
+  color: rgba(226, 232, 240, 0.74);
+  font-size: 0.66rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   box-shadow: none;
 }
 
 .cc-record-card__inline-action.is-primary {
-  background: rgba(125, 211, 252, 0.1);
+  background: rgba(125, 211, 252, 0.07);
   color: rgba(239, 246, 255, 0.98);
 }
 
@@ -549,15 +549,15 @@
 }
 
 .cc-operational-item {
-  gap: 9px;
-  padding: 12px 13px 11px;
-  border-radius: 18px;
+  gap: 8px;
+  padding: 11px 12px 10px;
+  border-radius: 16px;
   border-color: rgba(255, 255, 255, 0.06);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 18px rgba(2, 8, 23, 0.08);
+    0 6px 14px rgba(2, 8, 23, 0.07);
 }
 
 .cc-operational-item.is-selected {
@@ -578,14 +578,14 @@
 }
 
 .cc-operational-item__title {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   line-height: 1.12;
 }
 
 .cc-operational-item__subtitle,
 .cc-operational-item__summary,
 .cc-operational-item__microhint {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   line-height: 1.35;
 }
 
@@ -598,12 +598,12 @@
 }
 
 .cc-operational-item__chip {
-  min-height: 20px;
-  padding: 0 8px;
+  min-height: 18px;
+  padding: 0 7px;
   border: 0;
-  background: rgba(255, 255, 255, 0.03);
-  color: rgba(226, 232, 240, 0.68);
-  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.02);
+  color: rgba(226, 232, 240, 0.58);
+  font-size: 0.64rem;
   font-weight: 700;
 }
 
@@ -612,12 +612,12 @@
 }
 
 .cc-operational-item__meta-label {
-  font-size: 0.61rem;
-  letter-spacing: 0.1em;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
 }
 
 .cc-operational-item__meta-value {
-  font-size: 0.75rem;
+  font-size: 0.73rem;
   line-height: 1.3;
 }
 
@@ -631,25 +631,25 @@
 }
 
 .cc-operational-item__microhint {
-  font-size: 0.69rem;
+  font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.01em;
 }
 
 .cc-workspace-browser__row,
 .cc-workspace-browser__detail {
-  border-radius: 18px;
+  border-radius: 16px;
   border-color: rgba(255, 255, 255, 0.06);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 8px 18px rgba(2, 8, 23, 0.08);
+    0 6px 14px rgba(2, 8, 23, 0.07);
 }
 
 .cc-workspace-browser__row {
   gap: 8px;
-  padding: 12px 13px 11px;
+  padding: 11px 12px 10px;
 }
 
 .cc-workspace-browser__row.is-selected {
@@ -660,7 +660,7 @@
 }
 
 .cc-workspace-browser__row-copy strong {
-  font-size: 0.94rem;
+  font-size: 0.92rem;
   line-height: 1.12;
 }
 
@@ -681,8 +681,8 @@
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: rgba(226, 232, 240, 0.64);
-  font-size: 0.7rem;
+  color: rgba(226, 232, 240, 0.6);
+  font-size: 0.68rem;
   font-weight: 700;
 }
 
@@ -704,11 +704,30 @@
 
 .cc-workspace-browser__detail {
   gap: 0.82rem;
-  padding: 14px;
+  padding: 13px;
 }
 
 .cc-workspace-browser__detail-copy h3 {
-  font-size: 0.98rem;
+  font-size: 0.94rem;
+}
+
+.lead-badge,
+.cc-status-badge,
+.cc-list-toolbar__panel-badge {
+  min-height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  box-shadow: none;
+}
+
+.cc-list-toolbar__panel-badge.is-muted {
+  opacity: 0.72;
 }
 
 :root[data-theme="light"] .cc-record-card__inline-action {
@@ -735,5 +754,13 @@
 
 :root[data-theme="light"] .cc-operational-item__chip,
 :root[data-theme="light"] .cc-workspace-browser__row-meta span {
+  color: #5a7184;
+}
+
+:root[data-theme="light"] .lead-badge,
+:root[data-theme="light"] .cc-status-badge,
+:root[data-theme="light"] .cc-list-toolbar__panel-badge {
+  border-color: rgba(14, 84, 114, 0.08);
+  background: rgba(11, 125, 176, 0.05);
   color: #5a7184;
 }

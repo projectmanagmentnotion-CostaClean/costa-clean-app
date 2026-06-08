@@ -189,7 +189,7 @@ export function HomePage({
           <span className="cc-page-topline__eyebrow">CostaClean CRM</span>
           <h1 className="cc-page-topline__title">Centro de control diario</h1>
           <p className="cc-page-topline__text">
-            Que hago hoy, que falta facturar o cobrar y que requiere seguimiento en una sola consola operativa.
+            Que toca hoy, que falta facturar o cobrar y que conviene vigilar.
           </p>
         </div>
 
@@ -214,7 +214,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header cc-dashboard-block__header--split">
             <div>
               <h2>Que hago ahora</h2>
-              <p>Una accion dominante para arrancar el dia y tres colas reales para no perder foco.</p>
+              <p>Una prioridad y tres colas reales.</p>
             </div>
             <span className="lead-badge">{criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Hoy'}</span>
           </div>
@@ -267,7 +267,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Urgente hoy</h2>
-              <p>Facturar, cobrar, emitir o resolver bloqueos reales antes de abrir trabajo secundario.</p>
+              <p>Bloqueos reales antes del resto.</p>
             </div>
           </div>
 
@@ -287,7 +287,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Trabajo de hoy</h2>
-              <p>La agenda diaria y las colas de facturacion o cobro quedan en el mismo plano de trabajo.</p>
+              <p>Agenda, facturacion y cobro en una sola capa.</p>
             </div>
           </div>
 
@@ -296,7 +296,7 @@ export function HomePage({
               <div>
                 <span className="cc-dashboard-console-workpanel__eyebrow">Agenda inmediata</span>
                 <h3>Servicios de hoy</h3>
-                <p>{todayActionJobs.length > 0 ? 'Abrir, ejecutar y cerrar la operativa programada para hoy.' : 'No hay servicios programados para hoy; usa manana y proximos como seguimiento.'}</p>
+                <p>{todayActionJobs.length > 0 ? 'Abrir, ejecutar y cerrar la agenda de hoy.' : 'Sin agenda hoy; manda facturacion, cobro o seguimiento.'}</p>
               </div>
 
               <div className="cc-dashboard-console-joblist">
@@ -321,7 +321,7 @@ export function HomePage({
                 {todayActionJobs.length === 0 ? (
                   <div className="empty-state">
                     <strong>Sin agenda de hoy</strong>
-                    <p>La siguiente capa de trabajo esta en facturacion, cobro o seguimiento.</p>
+                    <p>La prioridad pasa a facturacion, cobro o seguimiento.</p>
                   </div>
                 ) : null}
               </div>
@@ -343,7 +343,7 @@ export function HomePage({
               <div>
                 <span className="cc-dashboard-console-workpanel__eyebrow">Dinero pendiente</span>
                 <h3>Facturar y cobrar</h3>
-                <p>Accesos de trabajo para cerrar ingresos antes que abrir vistas decorativas.</p>
+                <p>Accesos directos para cerrar ingresos.</p>
               </div>
 
               <div className="cc-dashboard-console-queuegrid">
@@ -369,7 +369,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Seguimiento</h2>
-              <p>Lo que no es urgente ahora, pero no debe salir del radar operativo de hoy.</p>
+              <p>Lo que conviene vigilar hoy.</p>
             </div>
           </div>
 
@@ -392,7 +392,7 @@ export function HomePage({
               <article className="cc-dashboard-console-followupcard cc-dashboard-console-followupcard--info">
                 <span>Automatizaciones pausadas</span>
                 <strong>{pausedRecurringCount}</strong>
-                <p>Planes detenidos que conviene revisar antes de perder continuidad de facturacion.</p>
+                <p>Planes detenidos que conviene reactivar o cerrar.</p>
                 <small>{pausedRecurringCount > 0 ? 'Abrir clientes con seguimiento' : 'Sin planes pausados relevantes'}</small>
               </article>
             </div>
@@ -401,7 +401,7 @@ export function HomePage({
               <article className="cc-dashboard-console-sidepanel">
                 <div className="cc-dashboard-console-sidepanel__header">
                   <h3>Clientes que necesitan atencion</h3>
-                  <p>Cartera con saldo pendiente real y acceso directo a cobros.</p>
+                  <p>Saldo abierto con acceso directo a cobros.</p>
                 </div>
                 <div className="cc-dashboard-console-clientlist">
                   {clientBalanceLeaders.map((entry) => (
@@ -430,7 +430,7 @@ export function HomePage({
               <article className="cc-dashboard-console-sidepanel">
                 <div className="cc-dashboard-console-sidepanel__header">
                   <h3>Automatizaciones y alertas</h3>
-                  <p>Seguimiento secundario para recurrentes listas y reglas no urgentes.</p>
+                  <p>Recurrentes listas y alertas no urgentes.</p>
                 </div>
                 <div className="cc-dashboard-console-alertlist">
                   {dueRecurringPlans.slice(0, 3).map((plan) => (

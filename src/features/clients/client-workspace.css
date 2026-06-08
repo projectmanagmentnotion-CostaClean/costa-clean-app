@@ -127,11 +127,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.82rem 0.9rem;
-  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--card-border));
+  padding: 0.72rem 0.82rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 16%, var(--card-border));
   border-radius: 1rem;
   background:
-    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 28%, transparent), color-mix(in srgb, var(--card) 92%, transparent));
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 18%, transparent), color-mix(in srgb, var(--card) 92%, transparent));
 }
 
 .cc-client-workspace__next-step > div {
@@ -141,21 +141,21 @@
 
 .cc-client-workspace__next-step span {
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .cc-client-workspace__next-step strong {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   line-height: 1.2;
 }
 
 .cc-client-workspace__next-step small {
   color: var(--muted);
-  font-size: 0.77rem;
-  line-height: 1.32;
+  font-size: 0.72rem;
+  line-height: 1.28;
 }
 
 .cc-client-workspace__actions,
@@ -412,16 +412,16 @@
 .cc-client-workspace__focus-card {
   display: grid;
   gap: 0.16rem;
-  padding: 0.78rem 0.84rem;
+  padding: 0.72rem 0.78rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 0.92rem;
-  background: color-mix(in srgb, var(--card) 84%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--card) 78%, transparent);
 }
 
 .cc-client-workspace__focus-card span {
   color: var(--muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -432,8 +432,8 @@
 
 .cc-client-workspace__focus-card small {
   color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.32;
+  font-size: 0.72rem;
+  line-height: 1.28;
 }
 
 .cc-client-workspace__entity-meta span,
@@ -635,7 +635,7 @@
     linear-gradient(180deg, color-mix(in srgb, var(--card) 90%, transparent), color-mix(in srgb, var(--bg-soft) 64%, transparent));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 10px 22px rgba(2, 8, 23, 0.08);
+    0 8px 18px rgba(2, 8, 23, 0.07);
 }
 
 .cc-client-workspace__identity-copy h1 {
@@ -669,10 +669,10 @@
 .cc-client-workspace__nested-item,
 .cc-client-workspace__timeline-item,
 .cc-client-workspace__note-card {
-  padding: 0.66rem 0.74rem;
-  border-radius: 0.88rem;
+  padding: 0.62rem 0.7rem;
+  border-radius: 0.82rem;
   border-color: rgba(255, 255, 255, 0.06);
-  background: color-mix(in srgb, var(--card) 82%, transparent);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
   box-shadow: none;
 }
 
@@ -680,8 +680,8 @@
 .cc-client-workspace__snapshot-card span,
 .cc-client-workspace__note-card span,
 .cc-client-workspace__timeline-item span {
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
 }
 
 .cc-client-workspace__meta-card strong,
@@ -691,7 +691,7 @@
 .cc-client-workspace__timeline-item strong,
 .cc-client-workspace__note-card strong {
   margin-top: 0.16rem;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   line-height: 1.15;
 }
 
@@ -700,8 +700,8 @@
 .cc-client-workspace__relationship-card small,
 .cc-client-workspace__nested-item small {
   margin-top: 0.16rem;
-  font-size: 0.71rem;
-  line-height: 1.26;
+  font-size: 0.7rem;
+  line-height: 1.24;
 }
 
 .cc-client-workspace__snapshot {
@@ -734,15 +734,15 @@
 }
 
 .cc-client-workspace__tab {
-  min-height: 36px;
-  padding: 0.44rem 0.72rem;
-  font-size: 0.77rem;
+  min-height: 34px;
+  padding: 0.42rem 0.68rem;
+  font-size: 0.75rem;
   border-radius: 999px;
   background: transparent;
 }
 
 .cc-client-workspace__tab.is-active {
-  background: rgba(83, 199, 255, 0.14);
+  background: rgba(83, 199, 255, 0.1);
   color: rgba(248, 250, 252, 0.98);
 }
 
@@ -767,8 +767,8 @@
 .cc-client-workspace__ledger-grid .detail-row,
 .cc-client-workspace__detail-stack .detail-row {
   min-height: 0;
-  padding: 0.62rem 0.72rem;
-  border-radius: 0.82rem;
+  padding: 0.58rem 0.68rem;
+  border-radius: 0.78rem;
 }
 
 .cc-client-workspace__ledger-grid .detail-label,
@@ -802,7 +802,7 @@
 
 :root[data-theme="light"] .cc-client-workspace__next-step {
   border-color: rgba(14, 84, 114, 0.12);
-  background: linear-gradient(180deg, rgba(236, 247, 255, 0.92), rgba(255, 255, 255, 0.98));
+  background: linear-gradient(180deg, rgba(236, 247, 255, 0.88), rgba(255, 255, 255, 0.96));
 }
 
 @media (max-width: 1100px) {

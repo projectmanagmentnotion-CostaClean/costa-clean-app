@@ -135,11 +135,11 @@ export function ListToolbar({
   const sortLabel =
     sortOptions.find((option) => option.value === preferences.sortField)?.label ?? preferences.sortField
   const toolbarState = activeSummaryBits.length > 0
-    ? `Activos: ${activeSummaryBits.join(' / ')}`
+    ? activeSummaryBits.join(' / ')
     : `Orden base: ${sortLabel}`
   const toolbarCaption = hasActiveControls
-    ? 'La vista esta afinada con preferencias reales activas.'
-    : 'Busqueda y filtros reales en un solo bloque cuando los necesitas.'
+    ? 'Solo queda visible lo que cambia la lectura de esta lista.'
+    : 'Busqueda, orden y filtros en segundo plano hasta que hagan falta.'
 
   useEffect(() => {
     onChange(preferences)
@@ -195,12 +195,12 @@ export function ListToolbar({
       >
         <summary className="cc-list-toolbar__panel-summary cc-collapsible-section__summary">
           <div className="cc-list-toolbar__panel-copy">
-            <strong>Orden y filtros</strong>
+            <strong>Ajustar lista</strong>
             <span>
-              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Ocultos para mantener la lista limpia'}
+              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Controles ocultos para leer mejor'}
             </span>
           </div>
-          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Activos</span> : <span className="cc-list-toolbar__panel-badge is-muted">Base</span>}
+          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Afinada</span> : <span className="cc-list-toolbar__panel-badge is-muted">Base</span>}
         </summary>
 
         <div className="cc-list-toolbar__controls" aria-label="Ordenacion y filtros de lista">

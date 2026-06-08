@@ -460,7 +460,7 @@ export function PropertyWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Situacion actual</h2>
-                <p>Lo minimo para entender dinero, agenda y carga operativa de la propiedad.</p>
+                <p>Lo minimo para leer dinero, agenda y carga operativa.</p>
               </div>
 
               <div className="cc-client-workspace__ledger-grid">
@@ -486,7 +486,7 @@ export function PropertyWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Que mirar despues</h2>
-                <p>Solo las relaciones que pueden cambiar la siguiente accion.</p>
+                <p>Solo relaciones que pueden cambiar el siguiente paso.</p>
               </div>
 
               <div className="cc-client-workspace__focus-list">

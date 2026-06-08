@@ -800,7 +800,7 @@ export function ClientWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Situacion actual</h2>
-                <p>Lo minimo para saber si este cliente pide ficha, agenda, factura o cobro.</p>
+                <p>Lo minimo para decidir ficha, agenda, factura o cobro.</p>
               </div>
               <div className="cc-client-workspace__ledger-grid">
                 <div className="detail-row">
@@ -824,7 +824,7 @@ export function ClientWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Que importa ahora</h2>
-                <p>Solo relaciones activas o proximas a cambiar la siguiente accion.</p>
+                <p>Solo relaciones que cambian el siguiente paso.</p>
               </div>
               <div className="cc-client-workspace__focus-list">
                 <article className="cc-client-workspace__focus-card">
@@ -864,7 +864,7 @@ export function ClientWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Automatizacion recurrente</h2>
-                <p>Resumen corto de planes activos y emisiones que no conviene olvidar.</p>
+                <p>Planes activos y emisiones que siguen vivas hoy.</p>
               </div>
               <div className="cc-client-workspace__focus-list">
                 {relatedRecurringPlans.slice(0, 3).map((plan) => (

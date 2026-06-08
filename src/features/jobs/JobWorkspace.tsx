@@ -416,7 +416,7 @@ export function JobWorkspace({
           <article className="data-section">
             <div className="section-header">
               <h2>Donde estoy</h2>
-              <p>Lectura minima del servicio dentro del circuito cliente-propiedad-factura.</p>
+              <p>Lectura minima del servicio dentro del circuito operativo.</p>
             </div>
 
             <div className="cc-client-workspace__ledger-grid">
@@ -450,7 +450,7 @@ export function JobWorkspace({
             <article className="data-section">
               <div className="section-header">
                 <h2>Que toca ahora</h2>
-                <p>Una sola lectura de estado para saber si ejecutar, facturar o cobrar.</p>
+                <p>Una sola lectura para ejecutar, facturar o cobrar.</p>
               </div>
 
               <div className="cc-client-workspace__focus-list">

@@ -1773,7 +1773,7 @@
 .cc-dashboard-header__meta-card {
   flex: 1 1 0;
   min-width: 0;
-  padding: 10px 12px 9px;
+  padding: 9px 11px 8px;
   border-radius: 14px;
   border: 0;
   background: transparent;
@@ -1786,9 +1786,9 @@
 .cc-dashboard-header__meta-label {
   display: block;
   color: rgba(191, 219, 254, 0.62);
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -2361,8 +2361,9 @@
 .cc-dashboard-console-alert,
 .cc-dashboard-console-footnote {
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 1rem;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+  border-radius: 0.95rem;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.018));
+  box-shadow: none;
 }
 
 .cc-dashboard-console-primary,
@@ -2370,23 +2371,23 @@
 .cc-dashboard-console-sidepanel,
 .cc-dashboard-console-card,
 .cc-dashboard-console-followupcard {
-  padding: 0.92rem;
+  padding: 0.84rem;
 }
 
 .cc-dashboard-console-primary {
   display: grid;
   gap: 0.72rem;
   background:
-    radial-gradient(circle at top right, rgba(83, 199, 255, 0.14), transparent 34%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+    radial-gradient(circle at top right, rgba(83, 199, 255, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
 }
 
 .cc-dashboard-console-primary__eyebrow,
 .cc-dashboard-console-workpanel__eyebrow,
 .cc-dashboard-console-card__eyebrow {
   color: var(--muted);
-  font-size: 0.64rem;
-  letter-spacing: 0.12em;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -2395,13 +2396,13 @@
 .cc-dashboard-console-sidepanel h3,
 .cc-dashboard-console-card h3 {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: 0.98rem;
   line-height: 1.12;
 }
 
 .cc-dashboard-console-primary__summary,
 .cc-dashboard-console-card__summary {
-  font-size: 0.94rem;
+  font-size: 0.9rem;
   line-height: 1.24;
 }
 
@@ -2417,7 +2418,7 @@
 .cc-dashboard-console-client p {
   margin: 0;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   line-height: 1.38;
 }
 
@@ -2447,7 +2448,7 @@
 .cc-dashboard-console-client,
 .cc-dashboard-console-alert,
 .cc-dashboard-console-footnote {
-  padding: 0.78rem 0.84rem;
+  padding: 0.72rem 0.78rem;
   text-align: left;
   color: inherit;
 }
@@ -2463,8 +2464,8 @@
 .cc-dashboard-console-followupcard span,
 .cc-dashboard-console-alert span {
   color: var(--muted);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
+  font-size: 0.62rem;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
 }
 
@@ -2473,15 +2474,15 @@
 .cc-dashboard-console-followupcard strong,
 .cc-dashboard-console-alert strong,
 .cc-dashboard-console-client__top strong {
-  font-size: 0.94rem;
+  font-size: 0.9rem;
   line-height: 1.16;
 }
 
 .cc-dashboard-console-lane__cta,
 .cc-dashboard-console-queue small,
 .cc-dashboard-console-followupcard small {
-  color: rgba(191, 219, 254, 0.78);
-  font-size: 0.72rem;
+  color: rgba(191, 219, 254, 0.7);
+  font-size: 0.69rem;
   font-weight: 700;
 }
 
@@ -2585,8 +2586,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.65rem;
-  padding: 0.62rem 0.72rem;
-  border-radius: 0.82rem;
+  padding: 0.58rem 0.68rem;
+  border-radius: 0.78rem;
   border: 1px solid rgba(255, 255, 255, 0.04);
   background: rgba(255, 255, 255, 0.02);
   text-align: left;
@@ -2621,13 +2622,13 @@
 }
 
 .cc-dashboard-console-footnote strong {
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   line-height: 1.22;
 }
 
 .cc-dashboard-console-footnote span {
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: 0.71rem;
 }
 
 :root[data-theme="light"] .cc-dashboard-console-primary,

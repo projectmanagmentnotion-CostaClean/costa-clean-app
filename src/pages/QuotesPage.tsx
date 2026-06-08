@@ -38,13 +38,14 @@ export function QuotesPage({
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
   const selectedQuoteKey = selectedQuote?.id ?? null
 
-  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
   const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
   const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
   const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
@@ -74,6 +75,7 @@ export function QuotesPage({
   async function handleQuoteCreated() {
     await onQuoteCreated()
     setShowCreateForm(false)
+    setHasCreateFormDirty(false)
   }
 
   function openQuoteDocument(targetQuote: QuoteListItem) {
@@ -137,6 +139,11 @@ export function QuotesPage({
             clients={clients}
             properties={properties}
             onCreated={handleQuoteCreated}
+            onCancel={() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+            }}
+            onDirtyChange={setHasCreateFormDirty}
           />
         ) : null}
 

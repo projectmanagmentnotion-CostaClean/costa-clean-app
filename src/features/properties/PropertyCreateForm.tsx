@@ -1,5 +1,6 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { PropertyListItem } from './types'
@@ -10,6 +11,8 @@ interface PropertyCreateFormProps {
   onCreated: () => Promise<void>
   contextClientId?: string | null
   onCreatedProperty?: (property: PropertyListItem) => void | Promise<void>
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
   title?: string
   description?: string
   submitLabel?: string
@@ -43,6 +46,8 @@ export function PropertyCreateForm({
   onCreated,
   contextClientId = null,
   onCreatedProperty,
+  onCancel,
+  onDirtyChange,
   title = 'Nueva propiedad',
   description,
   submitLabel = 'Guardar propiedad',
@@ -64,8 +69,16 @@ export function PropertyCreateForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showClientCreate, setShowClientCreate] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -145,6 +158,7 @@ export function PropertyCreateForm({
         postal_code: '',
         notes: '',
       })
+      setIsDirty(false)
       setSuccessMessage('Propiedad creada correctamente.')
     } catch (err) {
       const message =
@@ -154,6 +168,16 @@ export function PropertyCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -173,6 +197,7 @@ export function PropertyCreateForm({
         >
           <ClientCreateForm
             onCreated={onCreated}
+            onDirtyChange={setIsDirty}
             title="Nuevo cliente en contexto"
             description="Guarda el cliente y vuelve directamente al alta de propiedad."
             submitLabel="Guardar cliente y volver"
@@ -181,6 +206,7 @@ export function PropertyCreateForm({
                 ...current,
                 client_id: client.id,
               }))
+              setIsDirty(true)
               setShowClientCreate(false)
             }}
           />
@@ -213,17 +239,19 @@ export function PropertyCreateForm({
             >
               <ClientCreateForm
                 onCreated={onCreated}
+                onDirtyChange={setIsDirty}
                 title="Nuevo cliente en contexto"
                 description="Al guardarlo, quedará seleccionado aquí automáticamente."
                 submitLabel="Guardar cliente y usarlo"
                 onCreatedClient={async (client) => {
                   setForm((current) => ({
-                    ...current,
-                    client_id: client.id,
-                  }))
-                  setShowClientCreate(false)
-                }}
-              />
+                      ...current,
+                      client_id: client.id,
+                    }))
+                    setIsDirty(true)
+                    setShowClientCreate(false)
+                  }}
+                />
             </ContextualCreateSection>
           ) : null}
 
@@ -292,6 +320,11 @@ export function PropertyCreateForm({
           </label>
 
           <div className="form-actions">
+            {onCancel ? (
+              <button type="button" className="secondary-button" onClick={requestCancel}>
+                Cancelar
+              </button>
+            ) : null}
             <button type="submit" className="primary-button" disabled={isSubmitting}>
               {isSubmitting ? 'Guardando...' : submitLabel}
             </button>
@@ -312,6 +345,19 @@ export function PropertyCreateForm({
           ) : null}
         </form>
       )}
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar propiedad en curso"
+        description="Has empezado a completar esta propiedad. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

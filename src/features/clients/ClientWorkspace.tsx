@@ -17,6 +17,7 @@ import {
   formatRecurringPlanLabel,
 } from '../../app/relationshipLabels'
 import { ClientDetailCard } from './ClientDetailCard'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
@@ -217,6 +218,8 @@ export function ClientWorkspace({
   const [editingRecurringPlanId, setEditingRecurringPlanId] = useState<string | null>(null)
   const [recurringFeedback, setRecurringFeedback] = useState<string | null>(null)
   const [pendingRecurringPlanId, setPendingRecurringPlanId] = useState<string | null>(null)
+  const [hasActionDirty, setHasActionDirty] = useState(false)
+  const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
 
   const relatedProperties = useMemo(
     () => properties.filter((property) => property.client_id === client.id),
@@ -478,11 +481,12 @@ export function ClientWorkspace({
   }, [invoiceById, relatedInvoices, relatedJobs, relatedPayments, relatedProperties, relatedQuotes])
 
   useEffect(() => {
-    onPendingStateChange?.(Boolean(activeAction) || isClientEditing || Boolean(pendingRecurringPlanId))
-  }, [activeAction, isClientEditing, onPendingStateChange, pendingRecurringPlanId])
+    onPendingStateChange?.(hasActionDirty || isClientEditing || Boolean(pendingRecurringPlanId))
+  }, [hasActionDirty, isClientEditing, onPendingStateChange, pendingRecurringPlanId])
 
   function openAction(action: Exclude<ClientWorkspaceAction, null>) {
     setActiveAction(action)
+    setHasActionDirty(false)
     onTabChange(buildActionTab(action))
   }
 
@@ -490,6 +494,17 @@ export function ClientWorkspace({
     await onRefresh()
     setActiveAction(null)
     setEditingRecurringPlanId(null)
+    setHasActionDirty(false)
+  }
+
+  function requestCloseAction() {
+    if (!hasActionDirty) {
+      setActiveAction(null)
+      setEditingRecurringPlanId(null)
+      return
+    }
+
+    setShowCloseActionConfirm(true)
   }
 
   async function handleRecurringPlanIssued(planId: string) {
@@ -723,7 +738,7 @@ export function ClientWorkspace({
             <button
               type="button"
               className="secondary-button"
-              onClick={() => setActiveAction(null)}
+              onClick={requestCloseAction}
             >
               Cerrar acción
             </button>
@@ -735,6 +750,8 @@ export function ClientWorkspace({
               clients={[client]}
               contextClientId={client.id}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -746,6 +763,8 @@ export function ClientWorkspace({
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
               prefill={jobCreatePrefill}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
               onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
@@ -757,6 +776,8 @@ export function ClientWorkspace({
               properties={relatedProperties}
               contextClientId={client.id}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -768,6 +789,8 @@ export function ClientWorkspace({
               jobs={relatedJobs}
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -780,6 +803,8 @@ export function ClientWorkspace({
               jobs={relatedJobs}
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -792,6 +817,8 @@ export function ClientWorkspace({
               quotes={relatedQuotes}
               initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
               onSaved={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
         </section>
@@ -1302,6 +1329,20 @@ export function ClientWorkspace({
           </article>
         </section>
       ) : null}
+      <ConfirmDialog
+        isOpen={showCloseActionConfirm}
+        title="Descartar accion en curso"
+        description="Has empezado a completar esta accion contextual. Si la cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCloseActionConfirm(false)}
+        onConfirm={() => {
+          setShowCloseActionConfirm(false)
+          setActiveAction(null)
+          setEditingRecurringPlanId(null)
+          setHasActionDirty(false)
+        }}
+      />
     </section>
   )
 }

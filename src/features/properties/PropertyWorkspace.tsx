@@ -11,6 +11,7 @@ import type { JobListItem } from '../jobs/types'
 import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import type { PaymentListItem } from '../payments/types'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
 import { propertyWorkspaceTabs } from './usePropertyWorkspaceNavigation'
@@ -134,6 +135,8 @@ export function PropertyWorkspace({
   const [activeAction, setActiveAction] = useState<PropertyWorkspaceAction>(null)
   const [editRequestToken, setEditRequestToken] = useState(0)
   const [hasPendingDetailState, setHasPendingDetailState] = useState(false)
+  const [hasActionDirty, setHasActionDirty] = useState(false)
+  const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
 
   const owner = useMemo(
     () => clients.find((client) => client.id === property.client_id) ?? null,
@@ -290,16 +293,18 @@ export function PropertyWorkspace({
   )
 
   useEffect(() => {
-    onPendingStateChange?.(Boolean(activeAction) || hasPendingDetailState)
-  }, [activeAction, hasPendingDetailState, onPendingStateChange])
+    onPendingStateChange?.(hasActionDirty || hasPendingDetailState)
+  }, [hasActionDirty, hasPendingDetailState, onPendingStateChange])
 
   async function handleActionCreated() {
     await onRefresh()
     setActiveAction(null)
+    setHasActionDirty(false)
   }
 
   function openAction(action: Exclude<PropertyWorkspaceAction, null>) {
     setActiveAction(action)
+    setHasActionDirty(false)
     if (action === 'payment') {
       onTabChange('payments')
       return
@@ -316,6 +321,15 @@ export function PropertyWorkspace({
     }
 
     onTabChange('jobs')
+  }
+
+  function requestCloseAction() {
+    if (!hasActionDirty) {
+      setActiveAction(null)
+      return
+    }
+
+    setShowCloseActionConfirm(true)
   }
 
   return (
@@ -403,7 +417,7 @@ export function PropertyWorkspace({
               <p>La accion se guardara vinculada a {formatPropertyLabel(property)} y {owner ? formatClientLabel(owner) : 'sin cliente'}.</p>
             </div>
 
-            <button type="button" className="secondary-button" onClick={() => setActiveAction(null)}>
+            <button type="button" className="secondary-button" onClick={requestCloseAction}>
               Cerrar accion
             </button>
           </div>
@@ -416,6 +430,8 @@ export function PropertyWorkspace({
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
               prefill={jobPrefill}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
               onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
@@ -428,6 +444,8 @@ export function PropertyWorkspace({
               contextClientId={property.client_id}
               contextPropertyId={property.id}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -440,6 +458,8 @@ export function PropertyWorkspace({
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
               prefill={invoicePrefill}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -452,6 +472,8 @@ export function PropertyWorkspace({
               jobs={relatedJobs}
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
         </section>
@@ -799,6 +821,19 @@ export function PropertyWorkspace({
           </article>
         </section>
       ) : null}
+      <ConfirmDialog
+        isOpen={showCloseActionConfirm}
+        title="Descartar accion en curso"
+        description="Has empezado a completar esta accion contextual. Si la cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCloseActionConfirm(false)}
+        onConfirm={() => {
+          setShowCloseActionConfirm(false)
+          setActiveAction(null)
+          setHasActionDirty(false)
+        }}
+      />
     </section>
   )
 }

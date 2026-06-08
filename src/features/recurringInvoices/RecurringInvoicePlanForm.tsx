@@ -1,6 +1,7 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatPropertyLabel, formatQuoteLabel, formatRecurringPlanLabel } from '../../app/relationshipLabels'
 import { businessRules } from '../../app/businessRules'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -28,6 +29,8 @@ interface RecurringInvoicePlanFormProps {
   quotes: QuoteListItem[]
   onSaved: () => Promise<void>
   initialPlan?: RecurringInvoicePlanListItem | null
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 interface FormState {
@@ -96,6 +99,8 @@ export function RecurringInvoicePlanForm({
   quotes,
   onSaved,
   initialPlan = null,
+  onCancel,
+  onDirtyChange,
 }: RecurringInvoicePlanFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     initialPlan ? createFormStateFromPlan(initialPlan) : createDefaultState()
@@ -116,6 +121,8 @@ export function RecurringInvoicePlanForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   const availableQuotes = useMemo(
     () => quotes.filter((quote) => !form.property_id || quote.property_id === form.property_id),
@@ -134,7 +141,13 @@ export function RecurringInvoicePlanForm({
   const taxAmount = Number.isFinite(taxRate) ? roundMoney(subtotal * taxRate) : 0
   const total = roundMoney(subtotal + taxAmount)
 
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
+
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -150,12 +163,14 @@ export function RecurringInvoicePlanForm({
   }
 
   function updateLine<K extends keyof QuoteLineFormState>(localId: string, field: K, value: QuoteLineFormState[K]) {
+    setIsDirty(true)
     setLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
     )))
   }
 
   function removeLine(localId: string) {
+    setIsDirty(true)
     setLines((current) => (
       current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
     ))
@@ -223,6 +238,7 @@ export function RecurringInvoicePlanForm({
         setForm(createDefaultState())
         setLines([createBlankQuoteLine()])
       }
+      setIsDirty(false)
       setSuccessMessage('Automatizacion recurrente guardada correctamente.')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido guardando la automatizacion recurrente.'
@@ -230,6 +246,16 @@ export function RecurringInvoicePlanForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -298,6 +324,7 @@ export function RecurringInvoicePlanForm({
               <PropertyCreateForm
                 clients={clients}
                 onCreated={onSaved}
+                onDirtyChange={setIsDirty}
                 contextClientId={clientId}
                 title="Nueva propiedad para recurrencia"
                 description="La propiedad quedará asignada al plan al volver."
@@ -308,6 +335,7 @@ export function RecurringInvoicePlanForm({
                     property_id: property.id,
                     quote_id: '',
                   }))
+                  setIsDirty(true)
                   setShowPropertyCreate(false)
                 }}
               />
@@ -339,6 +367,7 @@ export function RecurringInvoicePlanForm({
                 clients={clients}
                 properties={properties}
                 onCreated={onSaved}
+                onDirtyChange={setIsDirty}
                 contextClientId={clientId}
                 contextPropertyId={form.property_id || null}
                 onCreatedQuote={async (quote) => {
@@ -347,6 +376,7 @@ export function RecurringInvoicePlanForm({
                     quote_id: quote.id,
                     property_id: quote.property_id ?? current.property_id,
                   }))
+                  setIsDirty(true)
                   setShowQuoteCreate(false)
                 }}
               />
@@ -477,7 +507,10 @@ export function RecurringInvoicePlanForm({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
+                onClick={() => {
+                  setIsDirty(true)
+                  setLines((current) => [...current, createBlankQuoteLine()])
+                }}
               >
                 Añadir linea
               </button>
@@ -554,6 +587,11 @@ export function RecurringInvoicePlanForm({
             </div>
 
             <div className="form-actions cc-form-shell__actions">
+              {onCancel ? (
+                <button type="button" className="secondary-button" onClick={requestCancel}>
+                  Cancelar
+                </button>
+              ) : null}
               <button type="submit" className="primary-button" disabled={isSubmitting}>
                 {isSubmitting ? 'Guardando...' : initialPlan ? 'Actualizar automatizacion' : 'Guardar automatizacion'}
               </button>
@@ -561,6 +599,19 @@ export function RecurringInvoicePlanForm({
           </div>
         </aside>
       </form>
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar automatizacion en curso"
+        description="Has empezado a configurar esta automatizacion. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

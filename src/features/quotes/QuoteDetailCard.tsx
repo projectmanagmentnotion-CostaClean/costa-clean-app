@@ -127,6 +127,8 @@ function QuoteDetailCardContent({
   const [pendingRejectedStatusUpdate, setPendingRejectedStatusUpdate] = useState<string | null>(null)
   const [pendingAcceptanceAction, setPendingAcceptanceAction] = useState<'accept' | 'invoice' | null>(null)
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: null,
     property_id: '',
@@ -139,6 +141,7 @@ function QuoteDetailCardContent({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       client_id: hydratedQuote.client_id ?? null,
       property_id: hydratedQuote.property_id ?? '',
@@ -149,9 +152,9 @@ function QuoteDetailCardContent({
   }, [hydratedQuote, properties])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing)
+    onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange])
+  }, [isDirty, onUnsavedChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -180,6 +183,7 @@ function QuoteDetailCardContent({
     field: K,
     value: EditFormState[K],
   ) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -199,12 +203,14 @@ function QuoteDetailCardContent({
     field: K,
     value: QuoteLineFormState[K],
   ) {
+    setIsDirty(true)
     setLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
     )))
   }
 
   function removeLine(localId: string) {
+    setIsDirty(true)
     setLines((current) => (
       current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
     ))
@@ -218,6 +224,7 @@ function QuoteDetailCardContent({
       notes: hydratedQuote.notes ?? '',
     })
     setLines(getFormLinesFromQuote(hydratedQuote, properties))
+    setIsDirty(false)
   }
 
   function handleCreateJobFromQuote() {
@@ -347,6 +354,7 @@ function QuoteDetailCardContent({
       await onQuoteUpdated()
       setSuccessMessage('Presupuesto actualizado correctamente.')
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el presupuesto.'
@@ -404,9 +412,15 @@ function QuoteDetailCardContent({
       key: 'edit-quote',
       label: isEditing ? 'Cancelar edicion' : 'Editar presupuesto',
       onClick: () => {
+        if (isEditing && isDirty) {
+          setShowDiscardConfirm(true)
+          return
+        }
+
         setIsEditing((current) => !current)
         setSaveError(null)
         setSuccessMessage(null)
+        setIsDirty(false)
         resetFormFromQuote()
       },
       disabled: isLoadingLines || Boolean(linesError),
@@ -616,7 +630,10 @@ function QuoteDetailCardContent({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
+                onClick={() => {
+                  setIsDirty(true)
+                  setLines((current) => [...current, createBlankQuoteLine()])
+                }}
                 style={{ marginTop: '0.75rem' }}
               >
                 Añadir línea
@@ -648,6 +665,21 @@ function QuoteDetailCardContent({
             </label>
 
             <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  if (isDirty) {
+                    setShowDiscardConfirm(true)
+                    return
+                  }
+
+                  setIsEditing(false)
+                  setIsDirty(false)
+                }}
+              >
+                Cancelar
+              </button>
               <button type="submit" className="primary-button" disabled={isSaving}>
                 {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
               </button>
@@ -748,6 +780,22 @@ function QuoteDetailCardContent({
         title="Operacion correcta"
         message={successMessage ?? ''}
         onClose={() => setSuccessMessage(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de presupuesto"
+        description="Has modificado este presupuesto. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+          resetFormFromQuote()
+        }}
       />
 
       <ConfirmDialog

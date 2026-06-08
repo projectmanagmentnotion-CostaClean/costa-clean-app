@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
@@ -26,6 +27,8 @@ interface PaymentCreateFormProps {
   lockInvoiceSelection?: boolean
   hideInvoiceCreateAction?: boolean
   originType?: 'manual' | 'transfer_auto'
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 interface FormState {
@@ -104,6 +107,8 @@ export function PaymentCreateForm({
   lockInvoiceSelection = false,
   hideInvoiceCreateAction = false,
   originType = 'manual',
+  onCancel,
+  onDirtyChange,
 }: PaymentCreateFormProps) {
   const availableInvoices = useMemo(() => (
     invoices.filter((invoice) => {
@@ -121,6 +126,13 @@ export function PaymentCreateForm({
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showInvoiceCreate, setShowInvoiceCreate] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
 
   useEffect(() => {
     setForm(buildInitialState({
@@ -129,6 +141,7 @@ export function PaymentCreateForm({
       prefillPaymentMethod,
       prefillNotes,
     }))
+    setIsDirty(false)
   }, [availableInvoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
@@ -150,6 +163,7 @@ export function PaymentCreateForm({
   }, [prefillAmount, selectedInvoice])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -163,6 +177,7 @@ export function PaymentCreateForm({
     }
 
     setSubmitError(null)
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
@@ -226,6 +241,7 @@ export function PaymentCreateForm({
         prefillPaymentMethod,
         prefillNotes,
       }))
+      setIsDirty(false)
       setSuccessMessage('Cobro registrado correctamente.')
     } catch (err) {
       const message =
@@ -235,6 +251,16 @@ export function PaymentCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -264,11 +290,13 @@ export function PaymentCreateForm({
               jobs={jobs}
               quotes={quotes}
               onCreated={onCreated}
+              onDirtyChange={setIsDirty}
               onCreatedInvoice={async (invoice) => {
                 setForm((current) => ({
                   ...current,
                   invoice_id: invoice.id,
                 }))
+                setIsDirty(true)
                 setShowInvoiceCreate(false)
               }}
             />
@@ -314,11 +342,13 @@ export function PaymentCreateForm({
                 jobs={jobs}
                 quotes={quotes}
                 onCreated={onCreated}
+                onDirtyChange={setIsDirty}
                 onCreatedInvoice={async (invoice) => {
                   setForm((current) => ({
                     ...current,
                     invoice_id: invoice.id,
                   }))
+                  setIsDirty(true)
                   setShowInvoiceCreate(false)
                 }}
               />
@@ -369,6 +399,11 @@ export function PaymentCreateForm({
           </label>
 
           <div className="form-actions">
+            {onCancel ? (
+              <button type="button" className="secondary-button" onClick={requestCancel}>
+                Cancelar
+              </button>
+            ) : null}
             <button type="button" className="secondary-button" onClick={syncAmountFromInvoice}>
               Traer pendiente real
             </button>
@@ -392,6 +427,19 @@ export function PaymentCreateForm({
           ) : null}
         </form>
       )}
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar cobro en curso"
+        description="Has empezado a registrar este cobro. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

@@ -45,6 +45,7 @@ export function PropertiesPage({
   confirmNavigation,
 }: PropertiesPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const {
     activePropertyId,
@@ -57,7 +58,7 @@ export function PropertiesPage({
     () => properties.find((property) => property.id === activePropertyId) ?? null,
     [activePropertyId, properties],
   )
-  const hasPendingWork = showCreateForm || hasPendingWorkspaceState
+  const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en propiedades')
@@ -103,7 +104,15 @@ export function PropertiesPage({
           </div>
 
           {showCreateForm ? (
-            <PropertyCreateForm clients={clients} onCreated={onPropertyCreated} />
+            <PropertyCreateForm
+              clients={clients}
+              onCreated={onPropertyCreated}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+              }}
+              onDirtyChange={setHasCreateFormDirty}
+            />
           ) : null}
 
           <div className="data-section">

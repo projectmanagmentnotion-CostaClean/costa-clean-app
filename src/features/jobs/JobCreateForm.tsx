@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
@@ -20,6 +21,8 @@ interface JobCreateFormProps {
   onCreatedJob?: (job: JobListItem) => void | Promise<void>
   onOpenCreatedJob?: (jobId: string) => void
   onCreateInvoiceFromJob?: (job: JobListItem) => void
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 interface FormState {
@@ -111,6 +114,8 @@ export function JobCreateForm({
   onCreatedJob,
   onOpenCreatedJob,
   onCreateInvoiceFromJob,
+  onCancel,
+  onDirtyChange,
 }: JobCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
@@ -123,6 +128,13 @@ export function JobCreateForm({
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
   const [createdJob, setCreatedJob] = useState<JobListItem | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -171,6 +183,7 @@ export function JobCreateForm({
     setSubmitError(null)
     setSuccessMessage(null)
     setCreatedJob(null)
+    setIsDirty(false)
     setLastAppliedPrefillId(prefill.request_id)
   }, [lastAppliedPrefillId, prefill])
 
@@ -189,6 +202,7 @@ export function JobCreateForm({
   }, [selectedQuote])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -320,6 +334,7 @@ export function JobCreateForm({
       await onCreatedJob?.(nextCreatedJob)
       setForm(createDefaultFormState())
       setCreatedJob(nextCreatedJob)
+      setIsDirty(false)
       setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
       const message =
@@ -329,6 +344,16 @@ export function JobCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -364,6 +389,7 @@ export function JobCreateForm({
         >
           <ClientCreateForm
             onCreated={onCreated}
+            onDirtyChange={setIsDirty}
             title="Nuevo cliente para este servicio"
             description="El cliente quedará listo para seguir con la ruta operativa."
             submitLabel="Guardar cliente y continuar"
@@ -372,6 +398,7 @@ export function JobCreateForm({
                 ...current,
                 client_id: client.id,
               }))
+              setIsDirty(true)
               setShowClientCreate(false)
             }}
           />
@@ -411,6 +438,7 @@ export function JobCreateForm({
                 >
                   <ClientCreateForm
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     title="Nuevo cliente para este servicio"
                     description="El cliente se asignará automáticamente al servicio en curso."
                     submitLabel="Guardar cliente y usarlo"
@@ -421,6 +449,7 @@ export function JobCreateForm({
                         property_id: '',
                         quote_id: '',
                       }))
+                      setIsDirty(true)
                       setShowClientCreate(false)
                     }}
                   />
@@ -454,6 +483,7 @@ export function JobCreateForm({
                   <PropertyCreateForm
                     clients={clients}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para este servicio"
                     description="La nueva propiedad quedará seleccionada al volver al servicio."
@@ -464,6 +494,7 @@ export function JobCreateForm({
                         property_id: property.id,
                         quote_id: '',
                       }))
+                      setIsDirty(true)
                       setShowPropertyCreate(false)
                     }}
                   />
@@ -502,6 +533,7 @@ export function JobCreateForm({
                     clients={clients}
                     properties={properties}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     contextPropertyId={form.property_id || null}
                     onCreatedQuote={async (quote) => {
@@ -511,6 +543,7 @@ export function JobCreateForm({
                         client_id: quote.client_id,
                         property_id: quote.property_id ?? current.property_id,
                       }))
+                      setIsDirty(true)
                       setShowQuoteCreate(false)
                     }}
                   />
@@ -684,6 +717,11 @@ export function JobCreateForm({
               </div>
 
               <div className="form-actions cc-form-shell__actions">
+                {onCancel ? (
+                  <button type="button" className="secondary-button" onClick={requestCancel}>
+                    Cancelar
+                  </button>
+                ) : null}
                 <button type="submit" className="primary-button" disabled={isSubmitting}>
                   {isSubmitting ? 'Guardando...' : 'Guardar servicio'}
                 </button>
@@ -692,6 +730,19 @@ export function JobCreateForm({
           </aside>
         </form>
       )}
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar servicio en curso"
+        description="Has empezado a completar este servicio. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

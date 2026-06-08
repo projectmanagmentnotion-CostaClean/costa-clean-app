@@ -4,6 +4,7 @@ import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/dis
 import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import {
@@ -289,6 +290,9 @@ export function InvoiceDetailCard({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [paymentActionMode, setPaymentActionMode] = useState<PaymentActionMode>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [hasPaymentFormDirty, setHasPaymentFormDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -338,6 +342,8 @@ export function InvoiceDetailCard({
       setSaveError(null)
       setSuccessMessage(null)
       setPaymentActionMode(null)
+      setIsDirty(false)
+      setHasPaymentFormDirty(false)
       setForm({
         job_id: '',
         client_id: '',
@@ -353,6 +359,8 @@ export function InvoiceDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setPaymentActionMode(null)
+    setIsDirty(false)
+    setHasPaymentFormDirty(false)
     setForm({
       job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
@@ -364,11 +372,12 @@ export function InvoiceDetailCard({
   }, [invoice])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing || paymentActionMode !== null)
+    onUnsavedChange?.(isDirty || hasPaymentFormDirty)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange, paymentActionMode])
+  }, [hasPaymentFormDirty, isDirty, onUnsavedChange])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -380,12 +389,14 @@ export function InvoiceDetailCard({
     field: K,
     value: LineFormState[K],
   ) {
+    setIsDirty(true)
     setLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
     )))
   }
 
   function removeLine(localId: string) {
+    setIsDirty(true)
     setLines((current) => (
       current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
     ))
@@ -402,11 +413,13 @@ export function InvoiceDetailCard({
       notes: invoice.notes ?? '',
     })
     setLines(getFormLinesFromInvoice(invoice))
+    setIsDirty(false)
   }
 
   function syncFromJobQuote() {
     if (!selectedJob) return
 
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       client_id: selectedJob.client_id,
@@ -517,6 +530,7 @@ export function InvoiceDetailCard({
       await onInvoiceUpdated()
       setSuccessMessage('Factura actualizada correctamente.')
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando la factura.'
@@ -569,10 +583,17 @@ export function InvoiceDetailCard({
         key: 'edit-invoice',
         label: isEditing ? 'Cancelar edicion' : 'Editar factura',
         onClick: () => {
+          if (isEditing && isDirty) {
+            setShowDiscardConfirm(true)
+            return
+          }
+
           setIsEditing((current) => !current)
           setSaveError(null)
           setSuccessMessage(null)
           setPaymentActionMode(null)
+          setHasPaymentFormDirty(false)
+          setIsDirty(false)
           resetFormFromInvoice()
         },
       },
@@ -836,7 +857,10 @@ export function InvoiceDetailCard({
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => setLines((current) => [...current, createBlankLine()])}
+                  onClick={() => {
+                    setIsDirty(true)
+                    setLines((current) => [...current, createBlankLine()])
+                  }}
                   style={{ marginTop: '0.75rem' }}
                 >
                   Añadir linea
@@ -868,6 +892,21 @@ export function InvoiceDetailCard({
               </label>
 
               <div className="form-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    if (isDirty) {
+                      setShowDiscardConfirm(true)
+                      return
+                    }
+
+                    setIsEditing(false)
+                    resetFormFromInvoice()
+                  }}
+                >
+                  Cancelar
+                </button>
                 <button type="button" className="secondary-button" onClick={syncFromJobQuote}>
                   Traer datos del servicio/presupuesto
                 </button>
@@ -969,6 +1008,11 @@ export function InvoiceDetailCard({
                         : ''}
                       lockInvoiceSelection
                       hideInvoiceCreateAction
+                      onCancel={() => {
+                        setPaymentActionMode(null)
+                        setHasPaymentFormDirty(false)
+                      }}
+                      onDirtyChange={setHasPaymentFormDirty}
                     />
                     <div className="form-actions" style={{ marginTop: '0.75rem' }}>
                       <button
@@ -1050,6 +1094,21 @@ export function InvoiceDetailCard({
         title="Operacion correcta"
         message={successMessage ?? ''}
         onClose={() => setSuccessMessage(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de factura"
+        description="Has modificado esta factura. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+          resetFormFromInvoice()
+        }}
       />
     </section>
   )

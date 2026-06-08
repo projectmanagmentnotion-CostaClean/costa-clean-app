@@ -3,6 +3,7 @@ import { businessRules } from '../../app/businessRules'
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
@@ -25,6 +26,8 @@ interface InvoiceCreateFormProps {
   onCreated: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
   onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 type InvoiceOriginMode = 'job' | 'quote' | 'manual'
@@ -264,6 +267,8 @@ export function InvoiceCreateForm({
   onCreated,
   prefill = null,
   onCreatedInvoice,
+  onCancel,
+  onDirtyChange,
 }: InvoiceCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
@@ -280,6 +285,8 @@ export function InvoiceCreateForm({
   const [showJobCreate, setShowJobCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
   const [showSecondaryRoutes, setShowSecondaryRoutes] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -333,6 +340,11 @@ export function InvoiceCreateForm({
   const isOriginLocked = Boolean(prefill?.job_id || prefill?.quote_id)
 
   useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
+
+  useEffect(() => {
     if (!selectedJob || form.origin_mode !== 'job') return
 
     setForm((current) => ({
@@ -368,10 +380,12 @@ export function InvoiceCreateForm({
     setLines(buildLinesFromPrefill(prefill))
     setSubmitError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setLastAppliedPrefillId(prefill.request_id)
   }, [lastAppliedPrefillId, prefill])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -413,12 +427,14 @@ export function InvoiceCreateForm({
     field: K,
     value: LineFormState[K],
   ) {
+    setIsDirty(true)
     setLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
     )))
   }
 
   function removeLine(localId: string) {
+    setIsDirty(true)
     setLines((current) => (
       current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
     ))
@@ -506,6 +522,7 @@ export function InvoiceCreateForm({
 
       setForm(createDefaultFormState())
       setLines([createBlankLine()])
+      setIsDirty(false)
       setSuccessMessage('Factura creada correctamente.')
     } catch (err) {
       const message =
@@ -515,6 +532,16 @@ export function InvoiceCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -550,6 +577,7 @@ export function InvoiceCreateForm({
         >
           <ClientCreateForm
             onCreated={onCreated}
+            onDirtyChange={setIsDirty}
             title="Nuevo cliente para esta factura"
             description="El cliente quedará listo para retomar la factura sin perder líneas ni fecha."
             submitLabel="Guardar cliente y continuar"
@@ -558,6 +586,7 @@ export function InvoiceCreateForm({
                 ...current,
                 client_id: client.id,
               }))
+              setIsDirty(true)
               setShowClientCreate(false)
             }}
           />
@@ -609,6 +638,7 @@ export function InvoiceCreateForm({
                     className="secondary-button"
                     onClick={(event) => {
                       event.preventDefault()
+                      setIsDirty(true)
                       setShowSecondaryRoutes((current) => !current)
                     }}
                   >
@@ -676,6 +706,7 @@ export function InvoiceCreateForm({
                 >
                   <ClientCreateForm
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     title="Nuevo cliente para esta factura"
                     description="Se seleccionará automáticamente en la factura manual."
                     submitLabel="Guardar cliente y usarlo"
@@ -685,6 +716,7 @@ export function InvoiceCreateForm({
                         client_id: client.id,
                         property_id: '',
                       }))
+                      setIsDirty(true)
                       setShowClientCreate(false)
                     }}
                   />
@@ -718,6 +750,7 @@ export function InvoiceCreateForm({
                   <PropertyCreateForm
                     clients={clients}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para esta factura"
                     description="La propiedad quedará fijada sin perder líneas ni fecha de emisión."
@@ -727,6 +760,7 @@ export function InvoiceCreateForm({
                         ...current,
                         property_id: property.id,
                       }))
+                      setIsDirty(true)
                       setShowPropertyCreate(false)
                     }}
                   />
@@ -746,6 +780,7 @@ export function InvoiceCreateForm({
                     properties={properties}
                     quotes={quotes}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     onCreatedJob={async (job) => {
                       setForm((current) => ({
                         ...current,
@@ -755,6 +790,7 @@ export function InvoiceCreateForm({
                         property_id: job.property_id,
                         quote_id: job.quote_id ?? '',
                       }))
+                      setIsDirty(true)
                       setShowJobCreate(false)
                     }}
                   />
@@ -773,6 +809,7 @@ export function InvoiceCreateForm({
                     clients={clients}
                     properties={properties}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     contextClientId={form.client_id || null}
                     contextPropertyId={form.property_id || null}
                     onCreatedQuote={async (quote) => {
@@ -783,6 +820,7 @@ export function InvoiceCreateForm({
                         client_id: quote.client_id,
                         property_id: quote.property_id ?? current.property_id,
                       }))
+                      setIsDirty(true)
                       setShowQuoteCreate(false)
                     }}
                   />
@@ -881,7 +919,10 @@ export function InvoiceCreateForm({
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => setLines((current) => [...current, createBlankLine()])}
+                  onClick={() => {
+                    setIsDirty(true)
+                    setLines((current) => [...current, createBlankLine()])
+                  }}
                 >
                   Añadir linea
                 </button>
@@ -954,6 +995,11 @@ export function InvoiceCreateForm({
               </div>
 
               <div className="form-actions cc-form-shell__actions">
+                {onCancel ? (
+                  <button type="button" className="secondary-button" onClick={requestCancel}>
+                    Cancelar
+                  </button>
+                ) : null}
                 <button type="submit" className="primary-button" disabled={isSubmitting}>
                   {isSubmitting ? 'Guardando...' : 'Guardar factura'}
                 </button>
@@ -962,6 +1008,19 @@ export function InvoiceCreateForm({
           </aside>
         </form>
       )}
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar factura en curso"
+        description="Has empezado a preparar esta factura. Si cierras ahora, perderas las lineas y datos no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

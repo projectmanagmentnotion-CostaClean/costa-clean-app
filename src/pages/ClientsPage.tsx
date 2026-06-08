@@ -51,6 +51,7 @@ export function ClientsPage({
   confirmNavigation,
 }: ClientsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const {
     activeClientId,
@@ -64,7 +65,7 @@ export function ClientsPage({
     () => clients.find((client) => client.id === activeClientId) ?? null,
     [activeClientId, clients],
   )
-  const hasPendingWork = showCreateForm || hasPendingWorkspaceState
+  const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en clientes')
@@ -121,7 +122,16 @@ export function ClientsPage({
             </button>
           </div>
 
-          {showCreateForm ? <ClientCreateForm onCreated={onClientCreated} /> : null}
+          {showCreateForm ? (
+            <ClientCreateForm
+              onCreated={onClientCreated}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+              }}
+              onDirtyChange={setHasCreateFormDirty}
+            />
+          ) : null}
 
           <div className="data-section">
             <div className="section-header page-header-actions">

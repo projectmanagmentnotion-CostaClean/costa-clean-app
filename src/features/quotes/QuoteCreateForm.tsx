@@ -1,7 +1,8 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
@@ -26,6 +27,8 @@ interface QuoteCreateFormProps {
   contextClientId?: string | null
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 interface FormState {
@@ -42,6 +45,8 @@ export function QuoteCreateForm({
   contextClientId = null,
   contextPropertyId = null,
   onCreatedQuote,
+  onCancel,
+  onDirtyChange,
 }: QuoteCreateFormProps) {
   const [form, setForm] = useState<FormState>({
     client_id: contextClientId ?? '',
@@ -55,6 +60,13 @@ export function QuoteCreateForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -84,6 +96,7 @@ export function QuoteCreateForm({
   )
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -103,12 +116,14 @@ export function QuoteCreateForm({
     field: K,
     value: QuoteLineFormState[K],
   ) {
+    setIsDirty(true)
     setLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
     )))
   }
 
   function removeLine(localId: string) {
+    setIsDirty(true)
     setLines((current) => (
       current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
     ))
@@ -162,6 +177,7 @@ export function QuoteCreateForm({
         notes: '',
       })
       setLines([createBlankQuoteLine()])
+      setIsDirty(false)
       setSuccessMessage('Presupuesto creado correctamente.')
     } catch (err) {
       const message =
@@ -171,6 +187,16 @@ export function QuoteCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -213,6 +239,7 @@ export function QuoteCreateForm({
         >
           <ClientCreateForm
             onCreated={onCreated}
+            onDirtyChange={setIsDirty}
             title="Nuevo cliente para este presupuesto"
             description="Al guardarlo, el presupuesto podrá continuar con el cliente ya seleccionado."
             submitLabel="Guardar cliente y continuar"
@@ -221,6 +248,7 @@ export function QuoteCreateForm({
                 ...current,
                 client_id: client.id,
               }))
+              setIsDirty(true)
               setShowClientCreate(false)
             }}
           />
@@ -260,6 +288,7 @@ export function QuoteCreateForm({
                 >
                   <ClientCreateForm
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     title="Nuevo cliente para este presupuesto"
                     description="El nuevo cliente quedará seleccionado sin perder líneas ni notas."
                     submitLabel="Guardar cliente y usarlo"
@@ -269,6 +298,7 @@ export function QuoteCreateForm({
                         client_id: client.id,
                         property_id: '',
                       }))
+                      setIsDirty(true)
                       setShowClientCreate(false)
                     }}
                   />
@@ -302,6 +332,7 @@ export function QuoteCreateForm({
                   <PropertyCreateForm
                     clients={clients}
                     onCreated={onCreated}
+                    onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para este presupuesto"
                     description="La propiedad se guardará sin salir del flujo comercial actual."
@@ -311,6 +342,7 @@ export function QuoteCreateForm({
                         ...current,
                         property_id: property.id,
                       }))
+                      setIsDirty(true)
                       setShowPropertyCreate(false)
                     }}
                   />
@@ -399,9 +431,12 @@ export function QuoteCreateForm({
 
                 <button
                   type="button"
-                  className="secondary-button"
-                  onClick={() => setLines((current) => [...current, createBlankQuoteLine()])}
-                >
+                          className="secondary-button"
+                          onClick={() => {
+                            setIsDirty(true)
+                            setLines((current) => [...current, createBlankQuoteLine()])
+                          }}
+                        >
                   Añadir linea
                 </button>
               </div>
@@ -463,6 +498,11 @@ export function QuoteCreateForm({
               </div>
 
               <div className="form-actions cc-form-shell__actions">
+                {onCancel ? (
+                  <button type="button" className="secondary-button" onClick={requestCancel}>
+                    Cancelar
+                  </button>
+                ) : null}
                 <button type="submit" className="primary-button" disabled={isSubmitting}>
                   {isSubmitting ? 'Guardando...' : 'Guardar presupuesto'}
                 </button>
@@ -471,6 +511,19 @@ export function QuoteCreateForm({
           </aside>
         </form>
       )}
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar presupuesto en curso"
+        description="Has empezado a editar este presupuesto. Si cierras ahora, perderas las lineas y notas no guardadas."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

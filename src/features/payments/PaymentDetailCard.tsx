@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, type FormEvent } from 'react'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
@@ -56,6 +57,8 @@ export function PaymentDetailCard({
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     invoice_id: '',
     payment_date: '',
@@ -69,6 +72,7 @@ export function PaymentDetailCard({
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setIsDirty(false)
       setForm({
         invoice_id: '',
         payment_date: '',
@@ -82,6 +86,7 @@ export function PaymentDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       invoice_id: payment.invoice_id,
       payment_date: payment.payment_date,
@@ -92,14 +97,15 @@ export function PaymentDetailCard({
   }, [payment])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing)
+    onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange])
+  }, [isDirty, onUnsavedChange])
 
   const selectedInvoice = invoices.find((invoice) => invoice.id === form.invoice_id) ?? null
   const isSelectedInvoiceMissing = Boolean(form.invoice_id && !selectedInvoice)
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -112,6 +118,7 @@ export function PaymentDetailCard({
       return
     }
 
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       amount: formatMoneyInput(Number(selectedInvoice.total)),
@@ -170,6 +177,7 @@ export function PaymentDetailCard({
       await onPaymentUpdated()
       setSuccessMessage('Pago actualizado correctamente.')
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el pago.'
@@ -196,9 +204,15 @@ export function PaymentDetailCard({
       key: 'edit-payment',
       label: isEditing ? 'Cancelar edicion' : 'Editar pago',
       onClick: () => {
+        if (isEditing && isDirty) {
+          setShowDiscardConfirm(true)
+          return
+        }
+
         setIsEditing((current) => !current)
         setSaveError(null)
         setSuccessMessage(null)
+        setIsDirty(false)
         setForm({
           invoice_id: payment.invoice_id,
           payment_date: payment.payment_date,
@@ -313,6 +327,22 @@ export function PaymentDetailCard({
                   Traer total de factura
                 </button>
 
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    if (isDirty) {
+                      setShowDiscardConfirm(true)
+                      return
+                    }
+
+                    setIsEditing(false)
+                    setIsDirty(false)
+                  }}
+                >
+                  Cancelar
+                </button>
+
                 <button type="submit" className="primary-button" disabled={isSaving}>
                   {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
                 </button>
@@ -375,6 +405,20 @@ export function PaymentDetailCard({
             title="Operacion correcta"
             message={successMessage ?? ''}
             onClose={() => setSuccessMessage(null)}
+          />
+
+          <ConfirmDialog
+            isOpen={showDiscardConfirm}
+            title="Descartar cambios de cobro"
+            description="Has modificado este cobro. Si cierras ahora, perderas los cambios no guardados."
+            confirmLabel="Descartar cambios"
+            tone="warning"
+            onCancel={() => setShowDiscardConfirm(false)}
+            onConfirm={() => {
+              setShowDiscardConfirm(false)
+              setIsEditing(false)
+              setIsDirty(false)
+            }}
           />
         </div>
       ) : (

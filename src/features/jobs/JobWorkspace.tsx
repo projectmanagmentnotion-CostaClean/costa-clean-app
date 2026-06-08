@@ -18,6 +18,7 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -153,6 +154,8 @@ export function JobWorkspace({
 }: JobWorkspaceProps) {
   const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
   const [hasPendingDetailState, setHasPendingDetailState] = useState(false)
+  const [hasActionDirty, setHasActionDirty] = useState(false)
+  const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
 
   const client = useMemo(
     () => clients.find((entry) => entry.id === job.client_id) ?? null,
@@ -275,17 +278,28 @@ export function JobWorkspace({
   )
 
   useEffect(() => {
-    onPendingStateChange?.(Boolean(activeAction) || hasPendingDetailState)
-  }, [activeAction, hasPendingDetailState, onPendingStateChange])
+    onPendingStateChange?.(hasActionDirty || hasPendingDetailState)
+  }, [hasActionDirty, hasPendingDetailState, onPendingStateChange])
 
   async function handleActionCreated() {
     await onRefresh()
     setActiveAction(null)
+    setHasActionDirty(false)
   }
 
   function openAction(action: JobWorkspaceAction) {
     setActiveAction(action)
+    setHasActionDirty(false)
     onTabChange('billing')
+  }
+
+  function requestCloseAction() {
+    if (!hasActionDirty) {
+      setActiveAction(null)
+      return
+    }
+
+    setShowCloseActionConfirm(true)
   }
 
   return (
@@ -386,7 +400,7 @@ export function JobWorkspace({
               <p>La accion se guardara vinculada a {formatJobLabel(job)}.</p>
             </div>
 
-            <button type="button" className="secondary-button" onClick={() => setActiveAction(null)}>
+            <button type="button" className="secondary-button" onClick={requestCloseAction}>
               Cerrar accion
             </button>
           </div>
@@ -398,6 +412,8 @@ export function JobWorkspace({
               jobs={[job]}
               quotes={quote ? [quote] : []}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
@@ -409,6 +425,8 @@ export function JobWorkspace({
               jobs={[job]}
               quotes={quote ? [quote] : []}
               onCreated={handleActionCreated}
+              onCancel={requestCloseAction}
+              onDirtyChange={setHasActionDirty}
             />
           ) : null}
         </section>
@@ -597,6 +615,19 @@ export function JobWorkspace({
           </article>
         </section>
       ) : null}
+      <ConfirmDialog
+        isOpen={showCloseActionConfirm}
+        title="Descartar accion en curso"
+        description="Has empezado a completar esta accion contextual. Si la cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCloseActionConfirm(false)}
+        onConfirm={() => {
+          setShowCloseActionConfirm(false)
+          setActiveAction(null)
+          setHasActionDirty(false)
+        }}
+      />
     </section>
   )
 }

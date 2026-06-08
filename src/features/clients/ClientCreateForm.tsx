@@ -1,10 +1,14 @@
 ﻿import { useState, type FormEvent } from 'react'
+import { useEffect } from 'react'
 import { getStatusLabel } from '../../app/displayText'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
 import type { ClientListItem } from './types'
 
 interface ClientCreateFormProps {
   onCreated: () => Promise<void>
   onCreatedClient?: (client: ClientListItem) => void | Promise<void>
+  onCancel?: () => void
+  onDirtyChange?: (isDirty: boolean) => void
   title?: string
   description?: string
   submitLabel?: string
@@ -31,6 +35,8 @@ const initialFormState: FormState = {
 export function ClientCreateForm({
   onCreated,
   onCreatedClient,
+  onCancel,
+  onDirtyChange,
   title = 'Nuevo cliente',
   description,
   submitLabel = 'Guardar cliente',
@@ -39,8 +45,16 @@ export function ClientCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+    return () => onDirtyChange?.(false)
+  }, [isDirty, onDirtyChange])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -105,6 +119,7 @@ export function ClientCreateForm({
         source_lead_id: null,
       })
       setForm(initialFormState)
+      setIsDirty(false)
       setSuccessMessage('Cliente creado correctamente.')
     } catch (err) {
       const message =
@@ -114,6 +129,16 @@ export function ClientCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  function requestCancel() {
+    if (!onCancel) return
+    if (!isDirty) {
+      onCancel()
+      return
+    }
+
+    setShowCancelConfirm(true)
   }
 
   return (
@@ -184,6 +209,11 @@ export function ClientCreateForm({
         </label>
 
         <div className="form-actions">
+          {onCancel ? (
+            <button type="button" className="secondary-button" onClick={requestCancel}>
+              Cancelar
+            </button>
+          ) : null}
           <button type="submit" className="primary-button" disabled={isSubmitting}>
             {isSubmitting ? 'Guardando...' : submitLabel}
           </button>
@@ -203,6 +233,19 @@ export function ClientCreateForm({
           </div>
         ) : null}
       </form>
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Descartar cliente en curso"
+        description="Has empezado a completar este cliente. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          onCancel?.()
+        }}
+      />
     </section>
   )
 }

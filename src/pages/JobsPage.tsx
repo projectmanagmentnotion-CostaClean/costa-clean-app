@@ -60,6 +60,7 @@ export function JobsPage({
   confirmNavigation,
 }: JobsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const {
     activeJobId,
@@ -74,7 +75,7 @@ export function JobsPage({
     [activeJobId, jobs],
   )
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
-  const hasPendingWork = isCreateFormVisible || hasPendingWorkspaceState
+  const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
@@ -97,6 +98,7 @@ export function JobsPage({
     await onJobCreated()
     onPrefillConsumed()
     setShowCreateForm(false)
+    setHasCreateFormDirty(false)
   }
 
   function handleOpenWorkspace(jobId: string, tab: JobWorkspaceTab = 'summary') {
@@ -143,6 +145,12 @@ export function JobsPage({
               quotes={quotes}
               onCreated={handleJobCreated}
               prefill={createPrefill}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+                onPrefillConsumed()
+              }}
+              onDirtyChange={setHasCreateFormDirty}
               onOpenCreatedJob={(jobId) => handleOpenWorkspace(jobId)}
             />
           ) : null}

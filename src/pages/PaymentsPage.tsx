@@ -47,12 +47,13 @@ export function PaymentsPage({
 }: PaymentsPageProps) {
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   const selectedPayment =
     payments.find((payment) => payment.id === selectedPaymentId) ?? payments[0] ?? null
   const selectedPaymentKey = selectedPayment?.id ?? null
-  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
@@ -79,6 +80,7 @@ export function PaymentsPage({
   async function handlePaymentCreated() {
     await onPaymentCreated()
     setShowCreateForm(false)
+    setHasCreateFormDirty(false)
   }
 
   return (
@@ -115,6 +117,11 @@ export function PaymentsPage({
           jobs={jobs}
           quotes={quotes}
           onCreated={handlePaymentCreated}
+          onCancel={() => {
+            setHasCreateFormDirty(false)
+            setShowCreateForm(false)
+          }}
+          onDirtyChange={setHasCreateFormDirty}
         />
       ) : null}
 

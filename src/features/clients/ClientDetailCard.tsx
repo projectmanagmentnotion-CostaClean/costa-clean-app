@@ -81,6 +81,8 @@ export function ClientDetailCard({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingInactiveConfirmation, setPendingInactiveConfirmation] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     full_name: '',
     phone: '',
@@ -95,6 +97,7 @@ export function ClientDetailCard({
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setIsDirty(false)
       setForm({
         full_name: '',
         phone: '',
@@ -109,6 +112,7 @@ export function ClientDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       full_name: client.full_name,
       phone: client.phone ?? '',
@@ -120,8 +124,9 @@ export function ClientDetailCard({
   }, [client])
 
   useEffect(() => {
-    onEditingStateChange?.(isEditing)
-  }, [isEditing, onEditingStateChange])
+    onEditingStateChange?.(isDirty)
+    return () => onEditingStateChange?.(false)
+  }, [isDirty, onEditingStateChange])
 
   useEffect(() => {
     if (!client || editRequestToken === 0) return
@@ -183,6 +188,7 @@ export function ClientDetailCard({
     field: K,
     value: EditFormState[K],
   ) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -238,6 +244,7 @@ export function ClientDetailCard({
           : 'Cliente actualizado correctamente.',
       )
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el cliente.'
@@ -307,9 +314,15 @@ export function ClientDetailCard({
               type="button"
               className="secondary-button"
               onClick={() => {
+                if (isEditing && isDirty) {
+                  setShowDiscardConfirm(true)
+                  return
+                }
+
                 setIsEditing((current) => !current)
                 setSaveError(null)
                 setSuccessMessage(null)
+                setIsDirty(false)
                 setForm({
                   full_name: client.full_name,
                   phone: client.phone ?? '',
@@ -413,6 +426,21 @@ export function ClientDetailCard({
             </label>
 
             <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  if (isDirty) {
+                    setShowDiscardConfirm(true)
+                    return
+                  }
+
+                  setIsEditing(false)
+                  setIsDirty(false)
+                }}
+              >
+                Cancelar
+              </button>
               <button type="submit" className="primary-button" disabled={isSaving}>
                 {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
               </button>
@@ -534,6 +562,21 @@ export function ClientDetailCard({
           onClose={() => setSuccessMessage(null)}
         />
       </div>
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de cliente"
+        description="Has modificado este cliente. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={pendingInactiveConfirmation}

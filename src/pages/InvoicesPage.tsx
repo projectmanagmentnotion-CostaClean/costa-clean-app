@@ -65,6 +65,7 @@ export function InvoicesPage({
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
   const [visibleInvoices, setVisibleInvoices] = useState<InvoiceListItem[]>(invoices)
@@ -86,7 +87,7 @@ export function InvoicesPage({
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
-  const hasPendingWork = isCreateFormVisible || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
   const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
   const paidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'paid').length
   const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
@@ -142,6 +143,7 @@ export function InvoicesPage({
     await onInvoiceCreated()
     onPrefillConsumed()
     setShowCreateForm(false)
+    setHasCreateFormDirty(false)
   }
 
   function openInvoiceDocument(targetInvoice: InvoiceListItem) {
@@ -266,6 +268,12 @@ export function InvoicesPage({
             quotes={quotes}
             onCreated={handleInvoiceCreated}
             prefill={createPrefill}
+            onCancel={() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+              onPrefillConsumed()
+            }}
+            onDirtyChange={setHasCreateFormDirty}
           />
         ) : null}
 

@@ -82,6 +82,8 @@ export function JobDetailCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingCancelledStatusUpdate, setPendingCancelledStatusUpdate] = useState<string | null>(null)
   const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     property_id: '',
@@ -101,6 +103,7 @@ export function JobDetailCard({
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setIsDirty(false)
       setForm({
         client_id: '',
         property_id: '',
@@ -120,6 +123,7 @@ export function JobDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       client_id: job.client_id,
       property_id: job.property_id,
@@ -138,9 +142,9 @@ export function JobDetailCard({
   }, [job])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing)
+    onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange])
+  }, [isDirty, onUnsavedChange])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -156,6 +160,7 @@ export function JobDetailCard({
     field: K,
     value: EditFormState[K],
   ) {
+    setIsDirty(true)
     setForm((current) => {
       const next = {
         ...current,
@@ -264,6 +269,7 @@ export function JobDetailCard({
       await onJobUpdated()
       setSuccessMessage('Servicio actualizado correctamente.')
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el servicio.'
@@ -363,9 +369,15 @@ export function JobDetailCard({
               type="button"
               className="secondary-button"
               onClick={() => {
+                if (isEditing && isDirty) {
+                  setShowDiscardConfirm(true)
+                  return
+                }
+
                 setIsEditing((current) => !current)
                 setSaveError(null)
                 setSuccessMessage(null)
+                setIsDirty(false)
                 setForm({
                   client_id: job.client_id,
                   property_id: job.property_id,
@@ -530,6 +542,21 @@ export function JobDetailCard({
               </label>
 
               <div className="form-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    if (isDirty) {
+                      setShowDiscardConfirm(true)
+                      return
+                    }
+
+                    setIsEditing(false)
+                    setIsDirty(false)
+                  }}
+                >
+                  Cancelar
+                </button>
                 <button type="submit" className="primary-button" disabled={isSaving}>
                   {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
                 </button>
@@ -642,6 +669,20 @@ export function JobDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de servicio"
+        description="Has modificado este servicio. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={Boolean(pendingCancelledStatusUpdate)}

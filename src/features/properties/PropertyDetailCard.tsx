@@ -87,6 +87,8 @@ export function PropertyDetailCard({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingClientReassignment, setPendingClientReassignment] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     name: '',
@@ -98,9 +100,9 @@ export function PropertyDetailCard({
   })
 
   useEffect(() => {
-    onEditingStateChange?.(isEditing)
+    onEditingStateChange?.(isDirty)
     return () => onEditingStateChange?.(false)
-  }, [isEditing, onEditingStateChange])
+  }, [isDirty, onEditingStateChange])
 
   useEffect(() => {
     if (!property || editRequestToken === undefined) return
@@ -108,6 +110,7 @@ export function PropertyDetailCard({
     setIsEditing(true)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       client_id: property.client_id,
       name: property.name,
@@ -124,6 +127,7 @@ export function PropertyDetailCard({
       setIsEditing(false)
       setSaveError(null)
       setSuccessMessage(null)
+      setIsDirty(false)
       setForm({
         client_id: '',
         name: '',
@@ -139,6 +143,7 @@ export function PropertyDetailCard({
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
+    setIsDirty(false)
     setForm({
       client_id: property.client_id,
       name: property.name,
@@ -187,6 +192,7 @@ export function PropertyDetailCard({
     field: K,
     value: EditFormState[K],
   ) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -269,6 +275,7 @@ export function PropertyDetailCard({
           : 'Propiedad actualizada correctamente.',
       )
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando la propiedad.'
@@ -318,9 +325,15 @@ export function PropertyDetailCard({
             type="button"
             className="secondary-button"
             onClick={() => {
+              if (isEditing && isDirty) {
+                setShowDiscardConfirm(true)
+                return
+              }
+
               setIsEditing((current) => !current)
               setSaveError(null)
               setSuccessMessage(null)
+              setIsDirty(false)
               setForm({
                 client_id: property.client_id,
                 name: property.name,
@@ -443,6 +456,21 @@ export function PropertyDetailCard({
             </label>
 
             <div className="form-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  if (isDirty) {
+                    setShowDiscardConfirm(true)
+                    return
+                  }
+
+                  setIsEditing(false)
+                  setIsDirty(false)
+                }}
+              >
+                Cancelar
+              </button>
               <button type="submit" className="primary-button" disabled={isSaving}>
                 {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
               </button>
@@ -544,6 +572,21 @@ export function PropertyDetailCard({
           </div>
         ) : null}
       </div>
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de propiedad"
+        description="Has modificado esta propiedad. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={pendingClientReassignment}

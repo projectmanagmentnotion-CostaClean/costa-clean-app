@@ -214,7 +214,7 @@ export function InvoicesPage({
             <span className="cc-module-hero__eyebrow">Cobro y documento</span>
             <h1>Facturas</h1>
             <p>
-              Gestiona documentos de cobro con una estructura mas clara y compacta en iPhone.
+              La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
             </p>
 
             <div className="cc-module-hero__meta" aria-label="Resumen del modulo facturas">

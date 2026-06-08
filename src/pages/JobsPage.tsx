@@ -143,6 +143,7 @@ export function JobsPage({
               quotes={quotes}
               onCreated={handleJobCreated}
               prefill={createPrefill}
+              onOpenCreatedJob={(jobId) => handleOpenWorkspace(jobId)}
             />
           ) : null}
 

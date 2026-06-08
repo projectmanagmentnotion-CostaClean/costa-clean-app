@@ -433,6 +433,7 @@ export function PropertyWorkspace({
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
               prefill={jobPrefill}
+              onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
 

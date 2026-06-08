@@ -87,7 +87,7 @@ export function PaymentsPage({
         <div>
           <h1>Pagos</h1>
           <p>
-            Registra y consulta cobros con un patrón de lista y detalle más limpio.
+            Usa esta vista para control y auditoría de cobros. El flujo primario debe arrancar desde la factura.
           </p>
         </div>
 
@@ -103,7 +103,7 @@ export function PaymentsPage({
             setShowCreateForm(true)
           }}
         >
-          {showCreateForm ? 'Cerrar formulario' : 'Nuevo pago'}
+          {showCreateForm ? 'Cerrar formulario' : 'Registrar cobro'}
         </button>
       </div>
 

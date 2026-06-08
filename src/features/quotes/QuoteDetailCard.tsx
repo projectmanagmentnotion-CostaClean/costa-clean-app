@@ -284,7 +284,7 @@ function QuoteDetailCardContent({
       setSuccessMessage(
         createInvoice
           ? `Presupuesto aceptado. Factura ${result.invoiceId} creada y cliente ${result.clientId} confirmado.`
-          : `Presupuesto aceptado. Cliente ${result.clientId} confirmado.`,
+          : `Presupuesto aceptado. Cliente ${result.clientId} confirmado. Siguiente paso recomendado: crear servicio.`,
       )
       setIsEditing(false)
     } catch (err) {

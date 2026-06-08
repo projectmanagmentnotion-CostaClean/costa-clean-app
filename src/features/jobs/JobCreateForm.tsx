@@ -18,6 +18,8 @@ interface JobCreateFormProps {
   onCreated: () => Promise<void>
   prefill?: JobCreatePrefill | null
   onCreatedJob?: (job: JobListItem) => void | Promise<void>
+  onOpenCreatedJob?: (jobId: string) => void
+  onCreateInvoiceFromJob?: (job: JobListItem) => void
 }
 
 interface FormState {
@@ -84,12 +86,20 @@ function applyPrefillToForm(prefill: JobCreatePrefill): FormState {
   }
 }
 
-function getOriginIntro(originMode: JobOriginMode): string {
-  if (originMode === 'quote') {
-    return 'Ruta A. El servicio nacerá desde un presupuesto y mantendrá la trazabilidad comercial completa.'
+function getOriginSummary(prefill: JobCreatePrefill | null, hasSelectedQuote: boolean): string {
+  if (prefill?.origin_kind === 'quote' || hasSelectedQuote) {
+    return 'Servicio heredado desde presupuesto aceptado.'
   }
 
-  return 'Ruta B. Programa un servicio directo desde cliente y propiedad, sin forzar presupuesto previo.'
+  if (prefill?.origin_kind === 'property') {
+    return 'Servicio heredado desde propiedad y cliente.'
+  }
+
+  if (prefill?.origin_kind === 'client') {
+    return 'Servicio heredado desde cliente.'
+  }
+
+  return 'Servicio directo con cliente y propiedad como base operativa.'
 }
 
 export function JobCreateForm({
@@ -99,6 +109,8 @@ export function JobCreateForm({
   onCreated,
   prefill = null,
   onCreatedJob,
+  onOpenCreatedJob,
+  onCreateInvoiceFromJob,
 }: JobCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
@@ -110,6 +122,7 @@ export function JobCreateForm({
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
+  const [createdJob, setCreatedJob] = useState<JobListItem | null>(null)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -127,7 +140,7 @@ export function JobCreateForm({
     return quotes.filter((quote) => {
       if (quote.client_id !== form.client_id) return false
       if (!form.property_id) return true
-      return quote.property_id === form.property_id || quote.property_id === null
+      return (quote.property_id === form.property_id || quote.property_id === null) && quote.status === 'accepted'
     })
   }, [quotes, form.client_id, form.property_id])
 
@@ -144,6 +157,10 @@ export function JobCreateForm({
     [quotes, form.quote_id],
   )
   const originMode: JobOriginMode = form.quote_id ? 'quote' : 'direct'
+  const isClientLocked = Boolean(prefill?.client_id)
+  const isPropertyLocked = Boolean(prefill?.property_id)
+  const isQuoteLocked = Boolean(prefill?.quote_id)
+  const originSummary = getOriginSummary(prefill, Boolean(form.quote_id))
 
   useEffect(() => {
     if (!prefill || prefill.request_id === lastAppliedPrefillId) {
@@ -153,6 +170,7 @@ export function JobCreateForm({
     setForm(applyPrefillToForm(prefill))
     setSubmitError(null)
     setSuccessMessage(null)
+    setCreatedJob(null)
     setLastAppliedPrefillId(prefill.request_id)
   }, [lastAppliedPrefillId, prefill])
 
@@ -163,6 +181,9 @@ export function JobCreateForm({
       ...current,
       client_id: selectedQuote.client_id ?? current.client_id,
       property_id: selectedQuote.property_id ?? current.property_id,
+      billing_concept: current.billing_concept.trim()
+        ? current.billing_concept
+        : selectedQuote.lines?.[0]?.concept?.trim() || selectedQuote.quote_lines?.[0]?.concept?.trim() || current.billing_concept,
       notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
     }))
   }, [selectedQuote])
@@ -193,6 +214,7 @@ export function JobCreateForm({
 
       return next
     })
+    setCreatedJob(null)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -275,7 +297,7 @@ export function JobCreateForm({
       }
 
       await onCreated()
-      await onCreatedJob?.({
+      const nextCreatedJob = {
         id: jobId,
         display_code: null,
         client_id: form.client_id,
@@ -294,8 +316,10 @@ export function JobCreateForm({
         billing_unit: form.billing_unit.trim() || 'servicio',
         billing_unit_price: billingUnitPrice,
         notes: form.notes.trim() || null,
-      })
+      }
+      await onCreatedJob?.(nextCreatedJob)
       setForm(createDefaultFormState())
+      setCreatedJob(nextCreatedJob)
       setSuccessMessage('Servicio creado correctamente.')
     } catch (err) {
       const message =
@@ -313,13 +337,13 @@ export function JobCreateForm({
         <div className="cc-form-shell__intro">
           <span className="cc-form-shell__eyebrow">Operacion guiada</span>
           <h2>Nuevo servicio</h2>
-          <p>{getOriginIntro(originMode)}</p>
+          <p>El servicio es el centro de ejecucion. Si ya vienes con contexto, el sistema lo hereda y evita volver a pedirlo.</p>
         </div>
 
         <div className="cc-form-shell__summary">
           <div className="cc-form-shell__summary-card">
             <span>Origen</span>
-            <strong>{originMode === 'quote' ? 'Desde presupuesto' : 'Servicio directo'}</strong>
+            <strong>{originSummary}</strong>
             <small>{selectedQuote ? formatQuoteLabel(selectedQuote) : 'Sin presupuesto forzado'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
@@ -357,8 +381,8 @@ export function JobCreateForm({
           <div className="cc-form-shell__main">
             <section className="cc-form-shell__section">
               <div className="cc-form-shell__section-head">
-                <strong>Ruta de entrada</strong>
-                <span>Elige si este servicio nace desde presupuesto o de forma directa.</span>
+                <strong>Base operativa</strong>
+                <span>Cliente y propiedad mandan. El presupuesto solo entra como apoyo cuando ya existe y aporta continuidad.</span>
               </div>
 
               <label className="form-field">
@@ -366,8 +390,9 @@ export function JobCreateForm({
                 <select
                   value={form.client_id}
                   onChange={(event) => updateField('client_id', event.target.value)}
+                  disabled={isClientLocked}
                 >
-                  <option value="">Selecciona un cliente</option>
+                  {!isClientLocked ? <option value="">Selecciona un cliente</option> : null}
                   {clients.map((client) => (
                     <option key={client.id} value={client.id}>
                       {formatClientLabel(client)}
@@ -376,37 +401,40 @@ export function JobCreateForm({
                 </select>
               </label>
 
-              <ContextualCreateSection
-                actionLabel="Crear cliente"
-                title="Cliente en contexto"
-                description="Si el servicio nace sobre un cliente nuevo, créalo aquí y el formulario lo reutilizará al instante."
-                isOpen={showClientCreate}
-                onToggle={() => setShowClientCreate((current) => !current)}
-              >
-                <ClientCreateForm
-                  onCreated={onCreated}
-                  title="Nuevo cliente para este servicio"
-                  description="El cliente se asignará automáticamente al servicio en curso."
-                  submitLabel="Guardar cliente y usarlo"
-                  onCreatedClient={async (client) => {
-                    setForm((current) => ({
-                      ...current,
-                      client_id: client.id,
-                      property_id: '',
-                      quote_id: '',
-                    }))
-                    setShowClientCreate(false)
-                  }}
-                />
-              </ContextualCreateSection>
+              {!isClientLocked ? (
+                <ContextualCreateSection
+                  actionLabel="Crear cliente"
+                  title="Cliente en contexto"
+                  description="Si el servicio nace sobre un cliente nuevo, créalo aquí y el flujo seguirá sin reiniciarse."
+                  isOpen={showClientCreate}
+                  onToggle={() => setShowClientCreate((current) => !current)}
+                >
+                  <ClientCreateForm
+                    onCreated={onCreated}
+                    title="Nuevo cliente para este servicio"
+                    description="El cliente se asignará automáticamente al servicio en curso."
+                    submitLabel="Guardar cliente y usarlo"
+                    onCreatedClient={async (client) => {
+                      setForm((current) => ({
+                        ...current,
+                        client_id: client.id,
+                        property_id: '',
+                        quote_id: '',
+                      }))
+                      setShowClientCreate(false)
+                    }}
+                  />
+                </ContextualCreateSection>
+              ) : null}
 
               <label className="form-field">
                 <span>Propiedad *</span>
                 <select
                   value={form.property_id}
                   onChange={(event) => updateField('property_id', event.target.value)}
+                  disabled={isPropertyLocked}
                 >
-                  <option value="">Selecciona una propiedad</option>
+                  {!isPropertyLocked ? <option value="">Selecciona una propiedad</option> : null}
                   {availableProperties.map((property) => (
                     <option key={property.id} value={property.id}>
                       {formatPropertyLabel(property)}
@@ -415,7 +443,7 @@ export function JobCreateForm({
                 </select>
               </label>
 
-              {form.client_id ? (
+              {form.client_id && !isPropertyLocked ? (
                 <ContextualCreateSection
                   actionLabel="Crear propiedad"
                   title="Propiedad en contexto"
@@ -443,12 +471,13 @@ export function JobCreateForm({
               ) : null}
 
               <label className="form-field">
-                <span>Presupuesto origen</span>
+                <span>Presupuesto aceptado</span>
                 <select
                   value={form.quote_id}
                   onChange={(event) => updateField('quote_id', event.target.value)}
+                  disabled={isQuoteLocked}
                 >
-                  <option value="">Servicio directo sin presupuesto</option>
+                  {!isQuoteLocked ? <option value="">Sin presupuesto previo</option> : null}
                   {availableQuotes.map((quote) => (
                     <option key={quote.id} value={quote.id}>
                       {formatQuoteLabel({
@@ -461,11 +490,11 @@ export function JobCreateForm({
                 </select>
               </label>
 
-              {form.client_id ? (
+              {form.client_id && !isQuoteLocked ? (
                 <ContextualCreateSection
                   actionLabel="Crear presupuesto"
                   title="Presupuesto en contexto"
-                  description="Si todavía no existe el presupuesto, créalo aquí y mantén la correlación comercial del servicio."
+                  description="Si todavía no existe el presupuesto aceptado, créalo aquí y úsalo como origen secundario del servicio."
                   isOpen={showQuoteCreate}
                   onToggle={() => setShowQuoteCreate((current) => !current)}
                 >
@@ -536,7 +565,7 @@ export function JobCreateForm({
             <section className="cc-form-shell__section cc-form-shell__section--full">
               <div className="cc-form-shell__section-head">
                 <strong>Base de facturacion</strong>
-                <span>Define el concepto que viajará a la factura directa o posterior.</span>
+                <span>Queda lista para que la siguiente acción natural sea crear factura desde este servicio.</span>
               </div>
 
               <label className="form-field form-field-full">
@@ -607,6 +636,33 @@ export function JobCreateForm({
                 <p>{successMessage}</p>
               </div>
             ) : null}
+
+            {createdJob ? (
+              <div className="cc-detail-panel__next-step">
+                <span>Siguiente paso recomendado</span>
+                <strong>El servicio ya está creado. Ahora conviene facturarlo o abrir su workspace.</strong>
+                <div className="form-actions">
+                  {onCreateInvoiceFromJob ? (
+                    <button
+                      type="button"
+                      className="primary-button"
+                      onClick={() => onCreateInvoiceFromJob(createdJob)}
+                    >
+                      Crear factura
+                    </button>
+                  ) : null}
+                  {onOpenCreatedJob ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => onOpenCreatedJob(createdJob.id)}
+                    >
+                      Ver servicio
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <aside className="cc-form-shell__aside">
@@ -617,7 +673,7 @@ export function JobCreateForm({
                 <small>
                   {originMode === 'quote'
                     ? 'Mantendra cliente, propiedad y presupuesto enlazados.'
-                    : 'Quedara listo para facturar despues, sin presupuesto forzado.'}
+                    : 'Quedara listo para facturar desde el servicio, sin presupuesto forzado.'}
                 </small>
               </div>
 

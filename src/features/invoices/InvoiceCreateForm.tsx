@@ -248,11 +248,11 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
 function getOriginDescription(originMode: InvoiceOriginMode): string {
   switch (originMode) {
     case 'job':
-      return 'Ruta B. Emite la factura desde un servicio real y reutiliza su base de facturacion.'
+      return 'Ruta principal. Emite la factura desde un servicio real y reutiliza su base de facturacion.'
     case 'quote':
-      return 'Ruta A. Factura desde un presupuesto cuando todavia no existe servicio o quieres emitirlo antes.'
+      return 'Ruta secundaria. Factura desde un presupuesto aceptado cuando todavia no existe servicio.'
     case 'manual':
-      return 'Ruta B. Factura directa por cliente y propiedad, sin forzar servicio ni presupuesto previo.'
+      return 'Excepcion administrativa. Factura directa por cliente y propiedad solo cuando no aplica la ruta operativa normal.'
   }
 }
 
@@ -279,6 +279,7 @@ export function InvoiceCreateForm({
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showJobCreate, setShowJobCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
+  const [showSecondaryRoutes, setShowSecondaryRoutes] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -288,13 +289,14 @@ export function InvoiceCreateForm({
   const availableJobs = useMemo(() => jobs.filter((job) => {
     if (form.client_id && job.client_id !== form.client_id) return false
     if (form.property_id && job.property_id !== form.property_id) return false
+    if ((job as JobListItem & { invoice_id?: string | null }).invoice_id) return false
     return true
   }), [jobs, form.client_id, form.property_id])
 
   const availableQuotes = useMemo(() => quotes.filter((quote) => {
     if (form.client_id && quote.client_id !== form.client_id) return false
     if (form.property_id && quote.property_id && quote.property_id !== form.property_id) return false
-    return true
+    return quote.status === 'accepted'
   }), [quotes, form.client_id, form.property_id])
 
   const selectedClient = useMemo(
@@ -328,6 +330,7 @@ export function InvoiceCreateForm({
     () => roundMoney(subtotalValue + taxAmountValue),
     [subtotalValue, taxAmountValue],
   )
+  const isOriginLocked = Boolean(prefill?.job_id || prefill?.quote_id)
 
   useEffect(() => {
     if (!selectedJob || form.origin_mode !== 'job') return
@@ -527,7 +530,7 @@ export function InvoiceCreateForm({
           <div className="cc-form-shell__summary-card">
             <span>Ruta activa</span>
             <strong>{form.origin_mode === 'job' ? 'Servicio -> factura' : form.origin_mode === 'quote' ? 'Presupuesto -> factura' : 'Factura directa'}</strong>
-            <small>{selectedQuote ? formatQuoteLabel(selectedQuote) : selectedJob ? formatJobLabel(selectedJob) : 'Sin documento origen'}</small>
+            <small>{selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : 'Sin documento origen'}</small>
           </div>
           <div className="cc-form-shell__summary-card">
             <span>Total actual</span>
@@ -564,54 +567,88 @@ export function InvoiceCreateForm({
           <div className="cc-form-shell__main">
             <section className="cc-form-shell__section">
               <div className="cc-form-shell__section-head">
-                <strong>Origen de la factura</strong>
-                <span>Elige la ruta completa o una facturacion directa sin forzar el flujo comercial.</span>
+                <strong>Ruta de facturacion</strong>
+                <span>La ruta principal es desde servicio. Las alternativas quedan disponibles como secundaria o excepcion administrativa.</span>
               </div>
 
               <label className="form-field">
-                <span>Ruta</span>
+                <span>Ruta principal</span>
                 <select
                   value={form.origin_mode}
                   onChange={(event) => updateField('origin_mode', event.target.value as InvoiceOriginMode)}
+                  disabled={isOriginLocked}
                 >
                   <option value="job">Desde servicio</option>
-                  <option value="quote">Desde presupuesto</option>
-                  <option value="manual">Directa por cliente y propiedad</option>
+                  <option value="quote">Desde presupuesto aceptado</option>
+                  <option value="manual">Directa administrativa</option>
                 </select>
               </label>
 
               {form.origin_mode === 'job' ? (
-                <label className="form-field">
-                  <span>Servicio *</span>
-                  <select
-                    value={form.job_id}
-                    onChange={(event) => updateField('job_id', event.target.value)}
-                  >
-                    <option value="">Selecciona un servicio</option>
-                    {availableJobs.map((job) => (
-                      <option key={job.id} value={job.id}>
-                        {formatJobLabel(job)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <>
+                  <label className="form-field">
+                    <span>Servicio *</span>
+                    <select
+                      value={form.job_id}
+                      onChange={(event) => updateField('job_id', event.target.value)}
+                    >
+                      <option value="">Selecciona un servicio</option>
+                      {availableJobs.map((job) => (
+                        <option key={job.id} value={job.id}>
+                          {formatJobLabel(job)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <p className="cc-line-editor-note">Cliente, propiedad y base de facturacion se heredan automaticamente desde el servicio.</p>
+                </>
               ) : null}
 
-              {form.origin_mode === 'quote' ? (
-                <label className="form-field">
-                  <span>Presupuesto *</span>
-                  <select
-                    value={form.quote_id}
-                    onChange={(event) => updateField('quote_id', event.target.value)}
+              {!isOriginLocked ? (
+                <details open={form.origin_mode !== 'job' || showSecondaryRoutes} className="cc-form-shell__section">
+                  <summary
+                    className="secondary-button"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      setShowSecondaryRoutes((current) => !current)
+                    }}
                   >
-                    <option value="">Selecciona un presupuesto</option>
-                    {availableQuotes.map((quote) => (
-                      <option key={quote.id} value={quote.id}>
-                        {formatQuoteLabel(quote)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    {showSecondaryRoutes || form.origin_mode !== 'job' ? 'Ocultar rutas secundarias' : 'Usar ruta secundaria o administrativa'}
+                  </summary>
+
+                  {showSecondaryRoutes || form.origin_mode !== 'job' ? (
+                    <div style={{ display: 'grid', gap: '0.85rem', marginTop: '0.85rem' }}>
+                      <label className="form-field">
+                        <span>Ruta alternativa</span>
+                        <select
+                          value={form.origin_mode}
+                          onChange={(event) => updateField('origin_mode', event.target.value as InvoiceOriginMode)}
+                        >
+                          <option value="job">Volver a servicio</option>
+                          <option value="quote">Usar presupuesto aceptado</option>
+                          <option value="manual">Usar factura administrativa</option>
+                        </select>
+                      </label>
+
+                      {form.origin_mode === 'quote' ? (
+                        <label className="form-field">
+                          <span>Presupuesto aceptado *</span>
+                          <select
+                            value={form.quote_id}
+                            onChange={(event) => updateField('quote_id', event.target.value)}
+                          >
+                            <option value="">Selecciona un presupuesto</option>
+                            {availableQuotes.map((quote) => (
+                              <option key={quote.id} value={quote.id}>
+                                {formatQuoteLabel(quote)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </details>
               ) : null}
 
               <label className="form-field">
@@ -632,8 +669,8 @@ export function InvoiceCreateForm({
 
               {form.origin_mode === 'manual' ? (
                 <ContextualCreateSection
-                  actionLabel="Crear cliente"
-                  title="Cliente en contexto"
+                  actionLabel="Crear cliente excepcional"
+                  title="Cliente para factura administrativa"
                   description="Para facturación directa, crea el cliente aquí y sigue con la factura sin salir del documento."
                   isOpen={showClientCreate}
                   onToggle={() => setShowClientCreate((current) => !current)}
@@ -673,8 +710,8 @@ export function InvoiceCreateForm({
 
               {form.origin_mode === 'manual' && form.client_id ? (
                 <ContextualCreateSection
-                  actionLabel="Crear propiedad"
-                  title="Propiedad en contexto"
+                  actionLabel="Crear propiedad excepcional"
+                  title="Propiedad para factura administrativa"
                   description="Crea la propiedad del cliente actual y asóciala de inmediato a esta factura directa."
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate((current) => !current)}
@@ -701,7 +738,7 @@ export function InvoiceCreateForm({
                 <ContextualCreateSection
                   actionLabel="Crear servicio"
                   title="Servicio en contexto"
-                  description="Si aún no existe el servicio facturable, créalo aquí y vuelve a la factura con el contexto completo."
+                  description="Si aún no existe el servicio facturable, créalo aquí y vuelve a la factura por la ruta principal."
                   isOpen={showJobCreate}
                   onToggle={() => setShowJobCreate((current) => !current)}
                 >
@@ -729,7 +766,7 @@ export function InvoiceCreateForm({
                 <ContextualCreateSection
                   actionLabel="Crear presupuesto"
                   title="Presupuesto en contexto"
-                  description="Si falta el presupuesto de origen, créalo aquí y continúa la factura manteniendo su trazabilidad."
+                  description="Si falta el presupuesto aceptado de origen, créalo aquí y mantén la factura como ruta secundaria."
                   isOpen={showQuoteCreate}
                   onToggle={() => setShowQuoteCreate((current) => !current)}
                 >

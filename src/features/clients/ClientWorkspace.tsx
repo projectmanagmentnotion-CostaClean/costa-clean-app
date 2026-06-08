@@ -792,6 +792,7 @@ export function ClientWorkspace({
               quotes={relatedQuotes}
               onCreated={handleActionCreated}
               prefill={jobCreatePrefill}
+              onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
 

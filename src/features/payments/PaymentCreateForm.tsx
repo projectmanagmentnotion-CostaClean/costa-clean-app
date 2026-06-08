@@ -82,6 +82,11 @@ function buildInitialState({
   }
 }
 
+function getPreferredInvoiceId(invoices: InvoiceListItem[]): string {
+  const openInvoice = invoices.find((invoice) => Number(invoice.outstanding_amount ?? invoice.total) > 0.009)
+  return openInvoice?.id ?? invoices[0]?.id ?? ''
+}
+
 export function PaymentCreateForm({
   invoices,
   clients,
@@ -101,7 +106,7 @@ export function PaymentCreateForm({
   originType = 'manual',
 }: PaymentCreateFormProps) {
   const [form, setForm] = useState<FormState>(() => buildInitialState({
-    prefillInvoiceId,
+    prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(invoices),
     prefillAmount,
     prefillPaymentMethod,
     prefillNotes,
@@ -113,12 +118,12 @@ export function PaymentCreateForm({
 
   useEffect(() => {
     setForm(buildInitialState({
-      prefillInvoiceId,
+      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(invoices),
       prefillAmount,
       prefillPaymentMethod,
       prefillNotes,
     }))
-  }, [prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
+  }, [invoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
@@ -217,7 +222,7 @@ export function PaymentCreateForm({
     <section className="data-section">
       <div className="section-header">
         <h2>{title}</h2>
-        <p>{description}</p>
+        <p>{prefillInvoiceId ? description : 'El cobro debe nacer desde una factura abierta. Usa esta vista como control o resolución, no como punto de partida mental.'}</p>
       </div>
 
       {invoices.length === 0 ? (
@@ -252,6 +257,13 @@ export function PaymentCreateForm({
         )
       ) : (
         <form className="lead-form" onSubmit={handleSubmit}>
+          {selectedInvoice ? (
+            <div className="cc-detail-panel__next-step" style={{ marginBottom: '1rem' }}>
+              <span>Factura origen</span>
+              <strong>{formatInvoiceLabel(selectedInvoice)}</strong>
+            </div>
+          ) : null}
+
           <label className="form-field">
             <span>Factura *</span>
             <select
@@ -270,9 +282,9 @@ export function PaymentCreateForm({
 
           {!hideInvoiceCreateAction ? (
             <ContextualCreateSection
-              actionLabel="Crear factura"
-              title="Factura en contexto"
-              description="Si la factura aun no existe, emitela aqui y se seleccionara automaticamente para registrar el cobro."
+              actionLabel="Crear factura excepcional"
+              title="Excepción administrativa"
+              description="Solo si el cobro no puede nacer desde una factura ya existente, emite la factura aquí y vuelve al cobro con el contexto fijado."
               isOpen={showInvoiceCreate}
               onToggle={() => setShowInvoiceCreate((current) => !current)}
             >

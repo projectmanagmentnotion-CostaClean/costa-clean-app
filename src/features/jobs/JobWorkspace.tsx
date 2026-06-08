@@ -224,7 +224,7 @@ export function JobWorkspace({
     })
   }
 
-  if (!invoice) {
+  if (!invoice && primaryAction !== 'invoice') {
     heroActions.push({
       key: 'create-invoice-secondary',
       label: 'Crear factura',
@@ -233,16 +233,21 @@ export function JobWorkspace({
   }
 
   if (invoice) {
-    heroActions.push({
-      key: 'open-invoice-secondary',
-      label: 'Abrir factura',
-      onClick: () => onOpenInvoiceDetail(invoice.id),
-    })
-    heroActions.push({
-      key: 'register-payment-secondary',
-      label: 'Registrar cobro',
-      onClick: () => openAction('payment'),
-    })
+    if (primaryAction !== 'open-invoice') {
+      heroActions.push({
+        key: 'open-invoice-secondary',
+        label: 'Abrir factura',
+        onClick: () => onOpenInvoiceDetail(invoice.id),
+      })
+    }
+
+    if (primaryAction !== 'payment') {
+      heroActions.push({
+        key: 'register-payment-secondary',
+        label: 'Registrar cobro',
+        onClick: () => openAction('payment'),
+      })
+    }
   }
 
   if (quote) {
@@ -323,33 +328,28 @@ export function JobWorkspace({
             <small>{property?.address ?? 'Sin direccion ampliada'}</small>
           </article>
           <article className="cc-client-workspace__meta-card">
-            <span>Tipo</span>
-            <strong>{getServiceTypeLabel(job.service_type)}</strong>
-            <small>{job.billing_concept ?? 'Sin concepto de facturacion definido'}</small>
+            <span>Facturacion</span>
+            <strong>{job.billing_concept?.trim() || 'Sin concepto definido'}</strong>
+            <small>{quote ? `Origen ${formatQuoteLabel(quote)}` : 'Servicio directo sin presupuesto origen'}</small>
           </article>
         </div>
       </header>
 
       <section className="cc-client-workspace__snapshot">
         <article className="cc-client-workspace__snapshot-card">
-          <span>Origen</span>
-          <strong>{quote ? 'Desde presupuesto' : 'Servicio directo'}</strong>
-          <small>{quote ? formatQuoteLabel(quote) : 'Sin presupuesto origen'}</small>
-        </article>
-          <article className="cc-client-workspace__snapshot-card">
-            <span>Factura asociada</span>
-            <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente'}</strong>
-            <small>{invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Todavia no emitida'}</small>
-          </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Estado de cobro</span>
-          <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
-          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Estado operativo</span>
+          <span>Situacion actual</span>
           <strong>{operationalSignal.label}</strong>
           <small>{operationalSignal.detail}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Factura</span>
+          <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente de emitir'}</strong>
+          <small>{invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Todavia no emitida'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Saldo</span>
+          <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
+          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
         </article>
       </section>
 
@@ -415,8 +415,8 @@ export function JobWorkspace({
         <section className="cc-client-workspace__tab-panel cc-client-workspace__summary-grid">
           <article className="data-section">
             <div className="section-header">
-              <h2>Relaciones conectadas</h2>
-              <p>Lectura rapida del servicio dentro de la red cliente-propiedad-presupuesto-factura.</p>
+              <h2>Donde estoy</h2>
+              <p>Lectura minima del servicio dentro del circuito cliente-propiedad-factura.</p>
             </div>
 
             <div className="cc-client-workspace__ledger-grid">
@@ -447,27 +447,26 @@ export function JobWorkspace({
             </div>
           </article>
 
-          <article className="data-section">
-            <div className="section-header">
-              <h2>Siguiente paso operativo</h2>
-              <p>Recomendacion derivada del estado real del servicio y su ciclo de cobro.</p>
-            </div>
+            <article className="data-section">
+              <div className="section-header">
+                <h2>Que toca ahora</h2>
+                <p>Una sola lectura de estado para saber si ejecutar, facturar o cobrar.</p>
+              </div>
 
-            <div className="cc-client-workspace__relationship-card">
-              <strong>{nextStep}</strong>
-              <span>
-                {job.status === 'completed'
-                  ? 'El servicio ya salio de operacion y entra en facturacion o cobro.'
-                  : 'Aun esta dentro del ciclo operativo.'}
-              </span>
-              <small>
-                {invoice
-                  ? `Factura asociada: ${formatInvoiceLabel(invoice)}`
-                  : 'No existe factura asociada todavia.'}
-              </small>
-            </div>
-          </article>
-        </section>
+              <div className="cc-client-workspace__focus-list">
+                <article className="cc-client-workspace__focus-card">
+                  <span>Siguiente paso</span>
+                  <strong>{nextStep}</strong>
+                  <small>{operationalSignal.detail}</small>
+                </article>
+                <article className="cc-client-workspace__focus-card">
+                  <span>Relacion importante</span>
+                  <strong>{invoice ? formatInvoiceLabel(invoice) : quote ? formatQuoteLabel(quote) : 'Servicio directo'}</strong>
+                  <small>{invoice ? 'La factura manda sobre el cobro.' : quote ? 'El presupuesto explica el origen del servicio.' : 'No depende de un presupuesto previo.'}</small>
+                </article>
+              </div>
+            </article>
+          </section>
       ) : null}
 
       {activeTab === 'operations' ? (

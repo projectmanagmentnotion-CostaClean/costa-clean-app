@@ -172,16 +172,11 @@ export function PropertyWorkspace({
     () => [...relatedJobs].sort((left, right) => left.scheduled_date.localeCompare(right.scheduled_date)),
     [relatedJobs],
   )
-  const sortedJobsDesc = useMemo(
-    () => [...relatedJobs].sort((left, right) => right.scheduled_date.localeCompare(left.scheduled_date)),
-    [relatedJobs],
-  )
   const sortedInvoicesDesc = useMemo(
     () => [...relatedInvoices].sort((left, right) => right.issue_date.localeCompare(left.issue_date)),
     [relatedInvoices],
   )
 
-  const latestJob = sortedJobsDesc[0] ?? null
   const nextJob = sortedJobsAsc.find((job) => job.status !== 'cancelled' && job.scheduled_date >= new Date().toISOString().slice(0, 10)) ?? null
   const latestInvoice = sortedInvoicesDesc[0] ?? null
   const totalInvoiced = relatedInvoices.reduce((sum, invoice) => sum + Number(invoice.total ?? 0), 0)
@@ -350,38 +345,23 @@ export function PropertyWorkspace({
             <small>{owner?.phone ?? owner?.email ?? 'Sin contacto principal'}</small>
           </article>
           <article className="cc-client-workspace__meta-card">
-            <span>Ubicacion</span>
-            <strong>{property.city ?? 'Sin ciudad'}</strong>
-            <small>{property.postal_code ?? 'Sin codigo postal'}</small>
-          </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Notas operativas</span>
-            <strong>{property.notes?.trim() || 'Sin notas'}</strong>
-            <small>{property.address}</small>
+            <span>Ubicacion operativa</span>
+            <strong>{property.address || 'Sin direccion'}</strong>
+            <small>{[property.city, property.postal_code].filter(Boolean).join(' · ') || 'Sin ciudad ni codigo postal'}</small>
           </article>
         </div>
       </header>
 
       <section className="cc-client-workspace__snapshot">
         <article className="cc-client-workspace__snapshot-card">
+          <span>Situacion actual</span>
+          <strong>{pendingBalance > 0.009 ? 'Cobro pendiente' : nextJob ? 'Con agenda activa' : 'Sin agenda futura'}</strong>
+          <small>{pendingBalance > 0.009 ? 'La prioridad es cerrar el saldo abierto.' : nextJob ? `Siguiente servicio ${formatDateEs(nextJob.scheduled_date)}` : 'Conviene programar el siguiente servicio.'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
           <span>Saldo pendiente</span>
           <strong>{formatCurrency(pendingBalance)}</strong>
           <small>{pendingBalance > 0 ? 'Facturas con cobro pendiente' : 'Sin saldo pendiente relevante'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Total facturado</span>
-          <strong>{formatCurrency(totalInvoiced)}</strong>
-          <small>{relatedInvoices.length} factura(s)</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Ultima factura</span>
-          <strong>{latestInvoice ? formatInvoiceLabel(latestInvoice) : 'Sin facturas'}</strong>
-          <small>{latestInvoice ? formatDateEs(latestInvoice.issue_date) : 'Aun no emitida'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Ultimo servicio</span>
-          <strong>{latestJob ? formatJobLabel(latestJob) : 'Sin servicios'}</strong>
-          <small>{latestJob ? formatDateEs(latestJob.scheduled_date) : 'Sin historico operativo'}</small>
         </article>
         <article className="cc-client-workspace__snapshot-card">
           <span>Proximo servicio</span>
@@ -479,8 +459,8 @@ export function PropertyWorkspace({
           <section className="cc-client-workspace__summary-grid">
             <article className="data-section">
               <div className="section-header">
-                <h2>Lectura operativa</h2>
-                <p>Estado financiero y densidad de actividad de esta propiedad.</p>
+                <h2>Situacion actual</h2>
+                <p>Lo minimo para entender dinero, agenda y carga operativa de la propiedad.</p>
               </div>
 
               <div className="cc-client-workspace__ledger-grid">
@@ -505,28 +485,33 @@ export function PropertyWorkspace({
 
             <article className="data-section">
               <div className="section-header">
-                <h2>Relaciones vivas</h2>
-                <p>Documentos y operaciones activas sobre el inmueble.</p>
+                <h2>Que mirar despues</h2>
+                <p>Solo las relaciones que pueden cambiar la siguiente accion.</p>
               </div>
 
-              <div className="cc-client-workspace__relationship-list">
-                {relatedQuotes.slice(0, 2).map((quote) => (
-                  <article key={quote.id} className="cc-client-workspace__relationship-card">
-                    <strong>{formatQuoteLabel(quote)}</strong>
-                    <span>{getStatusLabel(quote.status)}</span>
-                    <small>{formatCurrency(quote.total)}</small>
-                  </article>
-                ))}
-                {relatedJobs.slice(0, 2).map((job) => (
-                  <article key={job.id} className="cc-client-workspace__relationship-card">
-                    <strong>{formatJobLabel(job)}</strong>
-                    <span>{getStatusLabel(job.status)}</span>
-                    <small>{formatDateEs(job.scheduled_date)}</small>
-                  </article>
-                ))}
-                {relatedInvoices.length === 0 && relatedQuotes.length === 0 && relatedJobs.length === 0 ? (
-                  <p>Esta propiedad aun no tiene actividad relacional relevante.</p>
-                ) : null}
+              <div className="cc-client-workspace__focus-list">
+                <article className="cc-client-workspace__focus-card">
+                  <span>Siguiente paso</span>
+                  <strong>{nextStep.title}</strong>
+                  <small>{nextStep.detail}</small>
+                </article>
+                <article className="cc-client-workspace__focus-card">
+                  <span>Documento que importa</span>
+                  <strong>
+                    {latestInvoice
+                      ? formatInvoiceLabel(latestInvoice)
+                      : relatedQuotes[0]
+                        ? formatQuoteLabel(relatedQuotes[0])
+                        : 'Sin documento dominante'}
+                  </strong>
+                  <small>
+                    {latestInvoice
+                      ? 'La ultima factura marca la lectura financiera.'
+                      : relatedQuotes[0]
+                        ? 'El presupuesto pendiente explica la siguiente conversion.'
+                        : 'Todavia no hay una relacion documental prioritaria.'}
+                  </small>
+                </article>
               </div>
             </article>
           </section>
@@ -559,10 +544,9 @@ export function PropertyWorkspace({
               context: job.notes?.trim() || 'Sin notas operativas registradas para este servicio.',
               rowMeta: [
                 formatDateEs(job.scheduled_date),
-                owner ? formatClientLabel(owner) : 'Sin cliente',
                 job.invoice_id ? 'Con factura' : 'Sin factura',
               ],
-              detailSummary: 'Servicio de esta propiedad con accesos directos a cliente, presupuesto y factura.',
+              detailSummary: 'Servicio activo dentro de esta propiedad.',
               detailFields: [
                 { label: 'Fecha', value: formatDateEs(job.scheduled_date) },
                 { label: 'Cliente', value: owner ? formatClientLabel(owner) : 'Sin cliente' },
@@ -621,7 +605,7 @@ export function PropertyWorkspace({
                 formatCurrency(quote.total),
                 quote.invoice_id ? 'Facturado' : 'Sin facturar',
               ],
-              detailSummary: 'Presupuesto emitido para esta propiedad con trazabilidad hacia servicio y factura.',
+              detailSummary: 'Presupuesto de esta propiedad y su conversion operativa.',
               detailFields: [
                 { label: 'Total', value: formatCurrency(quote.total) },
                 { label: 'Creado', value: quote.created_at ? formatDateEs(quote.created_at) : 'Sin fecha' },
@@ -684,7 +668,7 @@ export function PropertyWorkspace({
                   formatCurrency(invoice.total),
                   `Pendiente ${formatCurrency(paymentSummary.outstandingAmount)}`,
                 ],
-                detailSummary: 'Factura emitida sobre esta propiedad con lectura clara de saldo y cobro.',
+                detailSummary: 'Factura vinculada a la propiedad con su saldo actual.',
                 detailFields: [
                   { label: 'Emitida', value: formatDateEs(invoice.issue_date) },
                   { label: 'Total', value: formatCurrency(invoice.total) },
@@ -733,7 +717,7 @@ export function PropertyWorkspace({
                   getPaymentMethodLabel(payment.payment_method),
                   owner ? formatClientLabel(owner) : 'Sin cliente',
                 ],
-                detailSummary: 'Cobro ligado a la propiedad con acceso a factura y cliente relacionado.',
+                detailSummary: 'Cobro registrado para esta propiedad.',
                 detailFields: [
                   { label: 'Importe', value: formatCurrency(payment.amount) },
                   { label: 'Método', value: getPaymentMethodLabel(payment.payment_method) },

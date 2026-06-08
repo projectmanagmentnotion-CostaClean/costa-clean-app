@@ -91,7 +91,7 @@ export function WorkspaceRelationBrowser({
                 ) : null}
               </button>
 
-              {item.actions?.length ? (
+              {isSelected && item.actions?.length ? (
                 <div className="cc-workspace-browser__row-actions">
                   <ActionGroup actions={item.actions} />
                 </div>
@@ -105,7 +105,7 @@ export function WorkspaceRelationBrowser({
         <aside className="data-section cc-workspace-browser__detail">
           <div className="cc-workspace-browser__detail-header">
             <div className="cc-workspace-browser__detail-copy">
-              <span className="cc-client-workspace__eyebrow">Seleccionado</span>
+              <span className="cc-client-workspace__eyebrow">Situacion actual</span>
               <h3>{selectedItem.title}</h3>
               {selectedItem.subtitle ? <p>{selectedItem.subtitle}</p> : null}
             </div>

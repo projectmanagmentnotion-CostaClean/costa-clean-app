@@ -404,6 +404,38 @@
   margin-bottom: 0.65rem;
 }
 
+.cc-client-workspace__focus-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.cc-client-workspace__focus-card {
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.78rem 0.84rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.92rem;
+  background: color-mix(in srgb, var(--card) 84%, transparent);
+}
+
+.cc-client-workspace__focus-card span {
+  color: var(--muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-client-workspace__focus-card strong {
+  font-size: 0.88rem;
+  line-height: 1.18;
+}
+
+.cc-client-workspace__focus-card small {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.32;
+}
+
 .cc-client-workspace__entity-meta span,
 .cc-client-workspace__inline-summary span {
   padding: 0.38rem 0.62rem;
@@ -626,7 +658,7 @@
 }
 
 .cc-client-workspace__meta {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
   margin-top: 0.65rem;
 }
@@ -673,7 +705,7 @@
 }
 
 .cc-client-workspace__snapshot {
-  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 0.55rem;
 }
 
@@ -762,7 +794,8 @@
 :root[data-theme="light"] .cc-client-workspace__relationship-card,
 :root[data-theme="light"] .cc-client-workspace__nested-item,
 :root[data-theme="light"] .cc-client-workspace__timeline-item,
-:root[data-theme="light"] .cc-client-workspace__note-card {
+:root[data-theme="light"] .cc-client-workspace__note-card,
+:root[data-theme="light"] .cc-client-workspace__focus-card {
   border-color: rgba(14, 84, 114, 0.08);
   background: rgba(255, 255, 255, 0.8);
 }

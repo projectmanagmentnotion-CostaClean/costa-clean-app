@@ -34,8 +34,7 @@ import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { QuoteListItem } from '../quotes/types'
 import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import { RecurringInvoicePlanForm } from '../recurringInvoices/RecurringInvoicePlanForm'
-import { buildRecurringPlanPersistenceInput } from '../recurringInvoices/planPersistence'
-import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../recurringInvoices/recurringInvoiceApi'
+import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
 import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
 
@@ -137,10 +136,6 @@ function getActionTitle(action: Exclude<ClientWorkspaceAction, null>) {
     case 'payment': return 'Registrar cobro'
     case 'recurring': return 'Automatizacion recurrente'
   }
-}
-
-function buildRecurringPlanAmount(plan: RecurringInvoicePlanListItem): number {
-  return plan.template_lines.reduce((sum, line) => sum + Number(line.line_subtotal ?? 0), 0)
 }
 
 function getClientNextStep(
@@ -276,15 +271,11 @@ export function ClientWorkspace({
     return map
   }, [relatedPayments])
 
-  const totalInvoiced = useMemo(
-    () => relatedInvoices.reduce((sum, invoice) => sum + Number(invoice.total ?? 0), 0),
-    [relatedInvoices],
-  )
   const totalCollected = useMemo(
     () => relatedPayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0),
     [relatedPayments],
   )
-  const pendingBalance = totalInvoiced - totalCollected
+  const pendingBalance = relatedInvoices.reduce((sum, invoice) => sum + Number(invoice.total ?? 0), 0) - totalCollected
 
   const sortedInvoices = useMemo(
     () => [...relatedInvoices].sort((left, right) => compareByDateDesc(left.issue_date, right.issue_date)),
@@ -514,43 +505,6 @@ export function ClientWorkspace({
     }
   }
 
-  async function handleRecurringPlanStatusChange(
-    plan: RecurringInvoicePlanListItem,
-    status: RecurringInvoicePlanListItem['status'],
-    successMessage: string,
-  ) {
-    setPendingRecurringPlanId(plan.id)
-    setRecurringFeedback(null)
-
-    try {
-      await saveRecurringInvoicePlan(buildRecurringPlanPersistenceInput(plan, { status }))
-      await onRefresh()
-      setRecurringFeedback(successMessage)
-    } finally {
-      setPendingRecurringPlanId(null)
-    }
-  }
-
-  async function handleRecurringPlanDuplicate(plan: RecurringInvoicePlanListItem) {
-    const nextPlanId = createPrefillId('RECURRING-PLAN')
-
-    setPendingRecurringPlanId(plan.id)
-    setRecurringFeedback(null)
-
-    try {
-      await saveRecurringInvoicePlan(buildRecurringPlanPersistenceInput(plan, {
-        id: nextPlanId,
-        title: `${plan.title} copia`,
-        status: 'paused',
-        last_issued_at: null,
-      }))
-      await onRefresh()
-      setRecurringFeedback('Plan recurrente duplicado como borrador pausado.')
-    } finally {
-      setPendingRecurringPlanId(null)
-    }
-  }
-
   const jobCreatePrefill = useMemo(
     () => ({
       request_id: createPrefillId(`client-job-${client.id}`),
@@ -692,47 +646,44 @@ export function ClientWorkspace({
         <div className="cc-client-workspace__meta">
           <article className="cc-client-workspace__meta-card">
             <span>Contacto</span>
-            <strong>{client.phone ?? 'Sin teléfono'}</strong>
+            <strong>{client.phone ?? 'Sin telefono'}</strong>
             <small>{client.email ?? 'Sin email'}</small>
           </article>
           <article className="cc-client-workspace__meta-card">
-            <span>Origen</span>
-            <strong>{buildOriginLabel(client)}</strong>
-            <small>{client.source_lead_id ? 'Lead convertido' : 'Alta directa'}</small>
-          </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Dirección fiscal</span>
-            <strong>{client.billing_address ?? 'Pendiente'}</strong>
-            <small>{client.tax_id ?? 'Completa la ficha fiscal'}</small>
+            <span>Ficha fiscal</span>
+            <strong>{client.tax_id ?? 'Pendiente'}</strong>
+            <small>{client.billing_address ?? buildOriginLabel(client)}</small>
           </article>
         </div>
       </header>
-
       <section className="cc-client-workspace__snapshot">
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Situacion actual</span>
+          <strong>
+            {pendingBalance > 0.009
+              ? 'Cobro pendiente'
+              : nextJob
+                ? 'Con agenda activa'
+                : relatedProperties.length > 0
+                  ? 'Sin siguiente visita'
+                  : 'Sin propiedades'}
+          </strong>
+          <small>{nextStep.detail}</small>
+        </article>
         <article className="cc-client-workspace__snapshot-card">
           <span>Saldo pendiente</span>
           <strong>{formatCurrency(pendingBalance)}</strong>
           <small>{pendingBalance > 0 ? 'Facturas con saldo abierto' : 'Sin saldo pendiente relevante'}</small>
         </article>
         <article className="cc-client-workspace__snapshot-card">
-          <span>Total facturado</span>
-          <strong>{formatCurrency(totalInvoiced)}</strong>
-          <small>{relatedInvoices.length} factura(s)</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Última factura</span>
-          <strong>{latestInvoice ? formatInvoiceLabel(latestInvoice) : 'Sin facturas'}</strong>
-          <small>{latestInvoice ? `${formatDateEs(latestInvoice.issue_date)} - ${formatCurrency(latestInvoice.total)}` : 'Aún no emitida'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Último servicio</span>
-          <strong>{latestJob ? formatJobLabel(latestJob) : 'Sin servicios'}</strong>
-          <small>{latestJob ? formatDateEs(latestJob.scheduled_date) : 'Sin histórico operativo'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Próximo servicio</span>
+          <span>Proximo servicio</span>
           <strong>{nextJob ? formatJobLabel(nextJob) : 'No programado'}</strong>
           <small>{nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura'}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Automatizacion</span>
+          <strong>{dueRecurringPlans.length > 0 ? `${dueRecurringPlans.length} por emitir` : `${relatedRecurringPlans.length} plan(es)`}</strong>
+          <small>{latestIssuedRecurringPlan ? `Ultima emision ${formatDateEs(latestIssuedRecurringPlan.last_issued_at ?? latestIssuedRecurringPlan.next_issue_date)}` : 'Sin emisiones recurrentes previas'}</small>
         </article>
       </section>
 
@@ -848,10 +799,9 @@ export function ClientWorkspace({
           <section className="cc-client-workspace__summary-grid">
             <article className="data-section">
               <div className="section-header">
-                <h2>Estado de cuenta</h2>
-                <p>Lectura rápida del saldo, operaciones y documentos abiertos.</p>
+                <h2>Situacion actual</h2>
+                <p>Lo minimo para saber si este cliente pide ficha, agenda, factura o cobro.</p>
               </div>
-
               <div className="cc-client-workspace__ledger-grid">
                 <div className="detail-row">
                   <span className="detail-label">Pendiente</span>
@@ -871,39 +821,58 @@ export function ClientWorkspace({
                 </div>
               </div>
             </article>
-
             <article className="data-section">
               <div className="section-header">
-                <h2>Relación viva</h2>
-                <p>Qué está ocurriendo ahora entre propiedades, servicios y documentos.</p>
+                <h2>Que importa ahora</h2>
+                <p>Solo relaciones activas o proximas a cambiar la siguiente accion.</p>
               </div>
-
-              <div className="cc-client-workspace__relationship-list">
+              <div className="cc-client-workspace__focus-list">
+                <article className="cc-client-workspace__focus-card">
+                  <span>Siguiente paso</span>
+                  <strong>{nextStep.title}</strong>
+                  <small>{nextStep.detail}</small>
+                </article>
+                <article className="cc-client-workspace__focus-card">
+                  <span>Documento dominante</span>
+                  <strong>
+                    {latestInvoice
+                      ? formatInvoiceLabel(latestInvoice)
+                      : latestJob
+                        ? formatJobLabel(latestJob)
+                        : 'Sin documento prioritario'}
+                  </strong>
+                  <small>
+                    {latestInvoice
+                      ? 'La ultima factura manda sobre el cobro y el seguimiento.'
+                      : latestJob
+                        ? 'El ultimo servicio marca el punto operativo actual.'
+                        : 'Aun no hay historico suficiente para una prioridad documental.'}
+                  </small>
+                </article>
                 {relatedProperties.slice(0, 3).map((property) => (
-                  <article key={property.id} className="cc-client-workspace__relationship-card">
+                  <article key={property.id} className="cc-client-workspace__focus-card">
+                    <span>Propiedad viva</span>
                     <strong>{formatPropertyLabel(property)}</strong>
-                    <span>{property.address}</span>
                     <small>
-                      {jobsByPropertyId.get(property.id)?.length ?? 0} servicio(s) - {quotesByPropertyId.get(property.id)?.length ?? 0} presupuesto(s) - {invoicesByPropertyId.get(property.id)?.length ?? 0} factura(s)
+                      {jobsByPropertyId.get(property.id)?.length ?? 0} servicio(s) · {quotesByPropertyId.get(property.id)?.length ?? 0} presupuesto(s) · {invoicesByPropertyId.get(property.id)?.length ?? 0} factura(s)
                     </small>
                   </article>
                 ))}
-                {relatedProperties.length === 0 ? <p>Este cliente aún no tiene propiedades vinculadas.</p> : null}
+                {relatedProperties.length === 0 ? <p>Este cliente aun no tiene propiedades vinculadas.</p> : null}
               </div>
             </article>
             <article className="data-section">
               <div className="section-header">
                 <h2>Automatizacion recurrente</h2>
-                <p>Planes activos para emitir facturas repetitivas por cliente.</p>
+                <p>Resumen corto de planes activos y emisiones que no conviene olvidar.</p>
               </div>
-
-              <div className="cc-client-workspace__relationship-list">
+              <div className="cc-client-workspace__focus-list">
                 {relatedRecurringPlans.slice(0, 3).map((plan) => (
-                  <article key={plan.id} className="cc-client-workspace__relationship-card">
+                  <article key={plan.id} className="cc-client-workspace__focus-card">
+                    <span>Plan recurrente</span>
                     <strong>{formatRecurringPlanLabel(plan)}</strong>
-                    <span>{getRecurringFrequencyLabel(plan.frequency)} - {plan.status}</span>
                     <small>
-                      Siguiente emision {formatDateEs(plan.next_issue_date)} - {formatCurrency(buildRecurringPlanAmount(plan))} - {plan.template_lines.length} linea(s)
+                      {getRecurringFrequencyLabel(plan.frequency)} · {plan.status} · siguiente emision {formatDateEs(plan.next_issue_date)}
                     </small>
                   </article>
                 ))}
@@ -911,7 +880,6 @@ export function ClientWorkspace({
               </div>
             </article>
           </section>
-
           <ClientDetailCard
             client={client}
             properties={properties}
@@ -1110,14 +1078,13 @@ export function ClientWorkspace({
 
       {activeTab === 'invoices' ? (
         <section className="cc-client-workspace__tab-panel">
-          <section className="cc-client-workspace__summary-grid">
+          {relatedRecurringPlans.length > 0 ? (
             <article className="data-section">
               <div className="section-header page-header-actions">
                 <div>
                   <h2>Automatizaciones recurrentes</h2>
-                  <p>Programacion reutilizable para clientes con facturacion repetitiva.</p>
+                  <p>Se quedan aqui como control, pero no compiten con las facturas del cliente.</p>
                 </div>
-
                 <button
                   type="button"
                   className="secondary-button"
@@ -1129,22 +1096,18 @@ export function ClientWorkspace({
                   Nueva automatizacion
                 </button>
               </div>
-
               {recurringFeedback ? (
                 <div className="cc-alert cc-alert--success">
                   <strong>Operacion correcta</strong>
                   <p>{recurringFeedback}</p>
                 </div>
               ) : null}
-
-              <div className="cc-client-workspace__relationship-list">
-                {relatedRecurringPlans.map((plan) => (
-                  <article key={plan.id} className="cc-client-workspace__relationship-card">
+              <div className="cc-client-workspace__focus-list">
+                {relatedRecurringPlans.slice(0, 3).map((plan) => (
+                  <article key={plan.id} className="cc-client-workspace__focus-card">
+                    <span>Plan recurrente</span>
                     <strong>{formatRecurringPlanLabel(plan)}</strong>
-                    <span>{getRecurringFrequencyLabel(plan.frequency)} - {plan.status}</span>
-                    <small>
-                      Proxima emision {formatDateEs(plan.next_issue_date)} - {formatCurrency(buildRecurringPlanAmount(plan))}
-                    </small>
+                    <small>{getRecurringFrequencyLabel(plan.frequency)} · {plan.status} · siguiente {formatDateEs(plan.next_issue_date)}</small>
                     <div className="form-actions">
                       <button
                         type="button"
@@ -1155,44 +1118,6 @@ export function ClientWorkspace({
                         }}
                       >
                         Editar plan
-                      </button>
-                      {plan.status === 'active' ? (
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => void handleRecurringPlanStatusChange(plan, 'paused', 'Plan recurrente pausado.')}
-                          disabled={pendingRecurringPlanId === plan.id}
-                        >
-                          Pausar
-                        </button>
-                      ) : null}
-                      {plan.status === 'paused' ? (
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => void handleRecurringPlanStatusChange(plan, 'active', 'Plan recurrente reanudado.')}
-                          disabled={pendingRecurringPlanId === plan.id}
-                        >
-                          Reanudar
-                        </button>
-                      ) : null}
-                      {plan.status !== 'archived' ? (
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => void handleRecurringPlanStatusChange(plan, 'archived', 'Plan recurrente archivado.')}
-                          disabled={pendingRecurringPlanId === plan.id}
-                        >
-                          Archivar
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => void handleRecurringPlanDuplicate(plan)}
-                        disabled={pendingRecurringPlanId === plan.id}
-                      >
-                        Duplicar
                       </button>
                       <button
                         type="button"
@@ -1205,41 +1130,9 @@ export function ClientWorkspace({
                     </div>
                   </article>
                 ))}
-                {relatedRecurringPlans.length === 0 ? <p>No hay automatizaciones recurrentes para este cliente.</p> : null}
               </div>
             </article>
-
-            <article className="data-section">
-              <div className="section-header">
-                <h2>Estado de emision</h2>
-                <p>Controla las automatizaciones que requieren accion operativa.</p>
-              </div>
-
-              <div className="cc-client-workspace__ledger-grid">
-                <div className="detail-row">
-                  <span className="detail-label">Planes activos</span>
-                  <strong>{relatedRecurringPlans.filter((plan) => plan.status === 'active').length}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Vencidos o para hoy</span>
-                  <strong>{dueRecurringPlans.length}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Pausados</span>
-                  <strong>{relatedRecurringPlans.filter((plan) => plan.status === 'paused').length}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Ultimo plan emitido</span>
-                  <strong>{latestIssuedRecurringPlan ? formatRecurringPlanLabel(latestIssuedRecurringPlan) : 'Sin emisiones'}</strong>
-                </div>
-              </div>
-            </article>
-          </section>
-        </section>
-      ) : null}
-
-      {activeTab === 'invoices' ? (
-        <section className="cc-client-workspace__tab-panel">
+          ) : null}
           <WorkspaceRelationBrowser
             ariaLabel="Facturas del cliente"
             emptyTitle="Sin facturas"
@@ -1259,7 +1152,7 @@ export function ClientWorkspace({
                   formatCurrency(invoice.total),
                   `Pendiente ${formatCurrency(paymentSummary.outstandingAmount)}`,
                 ],
-                detailSummary: 'Factura conectada al circuito de servicio y cobro del cliente.',
+                detailSummary: 'Factura del cliente y su estado real de cobro.',
                 detailFields: [
                   { label: 'Emitida', value: formatDateEs(invoice.issue_date) },
                   { label: 'Total', value: formatCurrency(invoice.total) },

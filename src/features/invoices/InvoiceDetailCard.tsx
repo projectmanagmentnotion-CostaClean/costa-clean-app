@@ -5,6 +5,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import {
@@ -984,7 +985,20 @@ export function InvoiceDetailCard({
               ) : null}
 
                 {paymentActionMode ? (
-                  <div style={{ marginTop: '1rem' }}>
+                  <ActionFlowOverlay
+                    isOpen={Boolean(paymentActionMode)}
+                    title={paymentActionMode === 'partial' ? 'Registrar cobro parcial' : 'Registrar cobro'}
+                    description="El cobro se registra en una superficie guiada y al cerrar vuelves exactamente al detalle de la factura."
+                    onClose={() => {
+                      if (hasPaymentFormDirty) {
+                        setShowDiscardConfirm(true)
+                        return
+                      }
+
+                      setPaymentActionMode(null)
+                      setHasPaymentFormDirty(false)
+                    }}
+                  >
                     <PaymentCreateForm
                       invoices={[invoice]}
                       clients={[]}
@@ -1014,16 +1028,7 @@ export function InvoiceDetailCard({
                       }}
                       onDirtyChange={setHasPaymentFormDirty}
                     />
-                    <div className="form-actions" style={{ marginTop: '0.75rem' }}>
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => setPaymentActionMode(null)}
-                      >
-                        Cancelar cobro
-                      </button>
-                    </div>
-                  </div>
+                  </ActionFlowOverlay>
                 ) : null}
 
                 {statusActions.length > 0 ? (
@@ -1098,13 +1103,21 @@ export function InvoiceDetailCard({
 
       <ConfirmDialog
         isOpen={showDiscardConfirm}
-        title="Descartar cambios de factura"
-        description="Has modificado esta factura. Si cierras ahora, perderas los cambios no guardados."
+        title={paymentActionMode ? 'Descartar cobro en curso' : 'Descartar cambios de factura'}
+        description={paymentActionMode
+          ? 'Has empezado a registrar un cobro. Si cierras ahora, perderas los cambios no guardados.'
+          : 'Has modificado esta factura. Si cierras ahora, perderas los cambios no guardados.'}
         confirmLabel="Descartar cambios"
         tone="warning"
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
+          if (paymentActionMode) {
+            setPaymentActionMode(null)
+            setHasPaymentFormDirty(false)
+            return
+          }
+
           setIsEditing(false)
           setIsDirty(false)
           resetFormFromInvoice()

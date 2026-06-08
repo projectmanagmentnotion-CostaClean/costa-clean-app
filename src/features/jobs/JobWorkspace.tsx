@@ -19,6 +19,7 @@ import type { PaymentListItem } from '../payments/types'
 import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -393,18 +394,12 @@ export function JobWorkspace({
       </nav>
 
       {activeAction ? (
-        <section className="data-section cc-client-workspace__action-panel">
-          <div className="section-header page-header-actions">
-            <div>
-              <h2>{activeAction === 'invoice' ? 'Nueva factura' : 'Registrar cobro'}</h2>
-              <p>La accion se guardara vinculada a {formatJobLabel(job)}.</p>
-            </div>
-
-            <button type="button" className="secondary-button" onClick={requestCloseAction}>
-              Cerrar accion
-            </button>
-          </div>
-
+        <ActionFlowOverlay
+          isOpen={Boolean(activeAction)}
+          title={activeAction === 'invoice' ? 'Nueva factura' : 'Registrar cobro'}
+          description={`La accion se guardara vinculada a ${formatJobLabel(job)}. Al cerrar volveras a este servicio.`}
+          onClose={requestCloseAction}
+        >
           {activeAction === 'invoice' ? (
             <InvoiceCreateForm
               clients={client ? [client] : clients}
@@ -429,7 +424,7 @@ export function JobWorkspace({
               onDirtyChange={setHasActionDirty}
             />
           ) : null}
-        </section>
+        </ActionFlowOverlay>
       ) : null}
 
       {activeTab === 'summary' ? (

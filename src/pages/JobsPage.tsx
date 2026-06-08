@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
@@ -139,20 +140,33 @@ export function JobsPage({
           </div>
 
           {isCreateFormVisible ? (
-            <JobCreateForm
-              clients={clients}
-              properties={properties}
-              quotes={quotes}
-              onCreated={handleJobCreated}
-              prefill={createPrefill}
-              onCancel={() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
-                onPrefillConsumed()
+            <ActionFlowOverlay
+              isOpen={isCreateFormVisible}
+              title="Nuevo servicio"
+              description="Planifica el servicio en un flujo dedicado. Al cerrar volveras al mismo contexto operativo."
+              onClose={() => {
+                runGuarded(() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  onPrefillConsumed()
+                })
               }}
-              onDirtyChange={setHasCreateFormDirty}
-              onOpenCreatedJob={(jobId) => handleOpenWorkspace(jobId)}
-            />
+            >
+              <JobCreateForm
+                clients={clients}
+                properties={properties}
+                quotes={quotes}
+                onCreated={handleJobCreated}
+                prefill={createPrefill}
+                onCancel={() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  onPrefillConsumed()
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+                onOpenCreatedJob={(jobId) => handleOpenWorkspace(jobId)}
+              />
+            </ActionFlowOverlay>
           ) : null}
 
           {activeFilterLabel ? (

@@ -12,6 +12,7 @@ import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import type { PaymentListItem } from '../payments/types'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
 import { propertyWorkspaceTabs } from './usePropertyWorkspaceNavigation'
@@ -410,18 +411,12 @@ export function PropertyWorkspace({
       </nav>
 
       {activeAction ? (
-        <section className="data-section cc-client-workspace__action-panel">
-          <div className="section-header page-header-actions">
-            <div>
-              <h2>{getActionTitle(activeAction)}</h2>
-              <p>La accion se guardara vinculada a {formatPropertyLabel(property)} y {owner ? formatClientLabel(owner) : 'sin cliente'}.</p>
-            </div>
-
-            <button type="button" className="secondary-button" onClick={requestCloseAction}>
-              Cerrar accion
-            </button>
-          </div>
-
+        <ActionFlowOverlay
+          isOpen={Boolean(activeAction)}
+          title={getActionTitle(activeAction)}
+          description={`La accion se guardara vinculada a ${formatPropertyLabel(property)} y ${owner ? formatClientLabel(owner) : 'sin cliente'}. Al cerrar volveras a esta propiedad.`}
+          onClose={requestCloseAction}
+        >
           {activeAction === 'job' ? (
             <JobCreateForm
               key={`property-job-${property.id}`}
@@ -476,7 +471,7 @@ export function PropertyWorkspace({
               onDirtyChange={setHasActionDirty}
             />
           ) : null}
-        </section>
+        </ActionFlowOverlay>
       ) : null}
 
       {activeTab === 'summary' ? (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
@@ -261,20 +262,33 @@ export function InvoicesPage({
         </div>
 
         {isCreateFormVisible ? (
-          <InvoiceCreateForm
-            clients={clients}
-            properties={properties}
-            jobs={jobs}
-            quotes={quotes}
-            onCreated={handleInvoiceCreated}
-            prefill={createPrefill}
-            onCancel={() => {
-              setHasCreateFormDirty(false)
-              setShowCreateForm(false)
-              onPrefillConsumed()
+          <ActionFlowOverlay
+            isOpen={isCreateFormVisible}
+            title="Nueva factura"
+            description="La emision se abre en una superficie guiada. Al cerrar volveras al mismo punto de facturas."
+            onClose={() => {
+              runGuarded(() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+                onPrefillConsumed()
+              })
             }}
-            onDirtyChange={setHasCreateFormDirty}
-          />
+          >
+            <InvoiceCreateForm
+              clients={clients}
+              properties={properties}
+              jobs={jobs}
+              quotes={quotes}
+              onCreated={handleInvoiceCreated}
+              prefill={createPrefill}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+                onPrefillConsumed()
+              }}
+              onDirtyChange={setHasCreateFormDirty}
+            />
+          </ActionFlowOverlay>
         ) : null}
 
         {activeFilterLabel ? (

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientWorkspace } from '../features/clients/ClientWorkspace'
 import { ClientsList } from '../features/clients/ClientsList'
@@ -123,14 +124,26 @@ export function ClientsPage({
           </div>
 
           {showCreateForm ? (
-            <ClientCreateForm
-              onCreated={onClientCreated}
-              onCancel={() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
+            <ActionFlowOverlay
+              isOpen={showCreateForm}
+              title="Nuevo cliente"
+              description="Completa el alta sin perder el contexto de la cartera. Al cerrar volveras exactamente a esta vista."
+              onClose={() => {
+                runGuarded(() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                })
               }}
-              onDirtyChange={setHasCreateFormDirty}
-            />
+            >
+              <ClientCreateForm
+                onCreated={onClientCreated}
+                onCancel={() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </ActionFlowOverlay>
           ) : null}
 
           <div className="data-section">

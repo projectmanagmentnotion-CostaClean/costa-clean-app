@@ -18,6 +18,7 @@ import {
 } from '../../app/relationshipLabels'
 import { ClientDetailCard } from './ClientDetailCard'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
@@ -728,21 +729,12 @@ export function ClientWorkspace({
       </nav>
 
       {activeAction ? (
-        <section className="data-section cc-client-workspace__action-panel">
-          <div className="section-header page-header-actions">
-            <div>
-              <h2>{getActionTitle(activeAction)}</h2>
-              <p>La acción se guardará ya vinculada al cliente {formatClientLabel(client)}.</p>
-            </div>
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={requestCloseAction}
-            >
-              Cerrar acción
-            </button>
-          </div>
+        <ActionFlowOverlay
+          isOpen={Boolean(activeAction)}
+          title={getActionTitle(activeAction)}
+          description={`La accion se guardara ya vinculada al cliente ${formatClientLabel(client)}. Al cerrar volveras a este workspace.`}
+          onClose={requestCloseAction}
+        >
 
           {activeAction === 'property' ? (
             <PropertyCreateForm
@@ -821,7 +813,7 @@ export function ClientWorkspace({
               onDirtyChange={setHasActionDirty}
             />
           ) : null}
-        </section>
+        </ActionFlowOverlay>
       ) : null}
 
       {activeTab === 'summary' ? (

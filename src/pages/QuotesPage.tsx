@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
@@ -135,16 +136,28 @@ export function QuotesPage({
         </div>
 
         {showCreateForm ? (
-          <QuoteCreateForm
-            clients={clients}
-            properties={properties}
-            onCreated={handleQuoteCreated}
-            onCancel={() => {
-              setHasCreateFormDirty(false)
-              setShowCreateForm(false)
+          <ActionFlowOverlay
+            isOpen={showCreateForm}
+            title="Nuevo presupuesto"
+            description="Trabaja el presupuesto en una superficie dedicada y vuelve a la lista sin perder el contexto."
+            onClose={() => {
+              runGuarded(() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+              })
             }}
-            onDirtyChange={setHasCreateFormDirty}
-          />
+          >
+            <QuoteCreateForm
+              clients={clients}
+              properties={properties}
+              onCreated={handleQuoteCreated}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+              }}
+              onDirtyChange={setHasCreateFormDirty}
+            />
+          </ActionFlowOverlay>
         ) : null}
 
         {activeFilterLabel ? (

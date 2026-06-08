@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import type { ClientListItem } from '../features/clients/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -104,15 +105,27 @@ export function PropertiesPage({
           </div>
 
           {showCreateForm ? (
-            <PropertyCreateForm
-              clients={clients}
-              onCreated={onPropertyCreated}
-              onCancel={() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
+            <ActionFlowOverlay
+              isOpen={showCreateForm}
+              title="Nueva propiedad"
+              description="La alta se abre como flujo dedicado y al cerrar volveras a la cartera de propiedades en el mismo punto."
+              onClose={() => {
+                runGuarded(() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                })
               }}
-              onDirtyChange={setHasCreateFormDirty}
-            />
+            >
+              <PropertyCreateForm
+                clients={clients}
+                onCreated={onPropertyCreated}
+                onCancel={() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </ActionFlowOverlay>
           ) : null}
 
           <div className="data-section">

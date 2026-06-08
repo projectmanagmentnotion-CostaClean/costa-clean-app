@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { PaymentCreateForm } from '../features/payments/PaymentCreateForm'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
@@ -110,19 +111,31 @@ export function PaymentsPage({
       </div>
 
       {showCreateForm ? (
-        <PaymentCreateForm
-          invoices={invoices}
-          clients={clients}
-          properties={properties}
-          jobs={jobs}
-          quotes={quotes}
-          onCreated={handlePaymentCreated}
-          onCancel={() => {
-            setHasCreateFormDirty(false)
-            setShowCreateForm(false)
+        <ActionFlowOverlay
+          isOpen={showCreateForm}
+          title="Registrar cobro"
+          description="El cobro se registra en un flujo dedicado y al cerrar vuelves al mismo control de pagos."
+          onClose={() => {
+            runGuarded(() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+            })
           }}
-          onDirtyChange={setHasCreateFormDirty}
-        />
+        >
+          <PaymentCreateForm
+            invoices={invoices}
+            clients={clients}
+            properties={properties}
+            jobs={jobs}
+            quotes={quotes}
+            onCreated={handlePaymentCreated}
+            onCancel={() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+            }}
+            onDirtyChange={setHasCreateFormDirty}
+          />
+        </ActionFlowOverlay>
       ) : null}
 
       {activeFilterLabel ? (

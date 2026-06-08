@@ -198,7 +198,7 @@ export function InvoicesList({
                   },
                   {
                     key: 'document',
-                    label: 'Documento',
+                    label: 'Abrir documento',
                     onClick: () => onOpenDocument(invoice),
                   },
                 ]}

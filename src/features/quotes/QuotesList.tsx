@@ -169,7 +169,7 @@ export function QuotesList({
                   },
                   {
                     key: 'document',
-                    label: 'Documento',
+                    label: 'Abrir documento',
                     onClick: () => onOpenDocument(quote),
                   },
                 ]}

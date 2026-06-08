@@ -5,11 +5,9 @@ import { AppShell } from './app/AppShell'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
+import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
-
-const publicQuoteRequestPaths = new Set(['/quote-request', '/presupuesto'])
-const publicGymManualQuizPaths = new Set(['/manual-quiz', '/prueba-operativa-gimnasio', '/prueba-manual-gimnasio'])
 
 function isRecoverableAuthBootstrapError(message: string) {
   const normalizedMessage = message.trim().toLowerCase()
@@ -22,9 +20,9 @@ function isRecoverableAuthBootstrapError(message: string) {
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
-  const isPublicQuoteRequestPath = publicQuoteRequestPaths.has(pathname)
-  const isPublicGymManualQuizPath = publicGymManualQuizPaths.has(pathname)
-  const isPublicStandalonePath = isPublicQuoteRequestPath || isPublicGymManualQuizPath
+  const isPublicQuoteRequestStandalone = isPublicQuoteRequestPath(pathname)
+  const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
+  const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -145,11 +143,11 @@ function App() {
     }
   }, [isPublicStandalonePath])
 
-  if (isPublicQuoteRequestPath) {
+  if (isPublicQuoteRequestStandalone) {
     return <PublicQuoteRequestPage />
   }
 
-  if (isPublicGymManualQuizPath) {
+  if (isPublicGymManualQuizStandalone) {
     return <PublicGymManualQuizPage />
   }
 

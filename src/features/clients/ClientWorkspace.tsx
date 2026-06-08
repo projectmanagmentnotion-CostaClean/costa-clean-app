@@ -619,6 +619,9 @@ export function ClientWorkspace({
       },
     })
   }
+  const dedupedHeroActions = heroActions.filter(
+    (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
+  )
 
   return (
     <section className="cc-client-workspace">
@@ -693,7 +696,7 @@ export function ClientWorkspace({
           <strong>{nextStep.title}</strong>
           <small>{nextStep.detail}</small>
         </div>
-        <ActionGroup actions={heroActions} moreLabel="Mas acciones" />
+        <ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />
       </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones del cliente">

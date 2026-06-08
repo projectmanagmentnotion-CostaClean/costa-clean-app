@@ -285,6 +285,9 @@ export function PropertyWorkspace({
       },
     },
   ]
+  const dedupedHeroActions = heroActions.filter(
+    (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
+  )
 
   useEffect(() => {
     onPendingStateChange?.(Boolean(activeAction) || hasPendingDetailState)
@@ -376,7 +379,7 @@ export function PropertyWorkspace({
           <strong>{nextStep.title}</strong>
           <small>{nextStep.detail}</small>
         </div>
-        <ActionGroup actions={heroActions} moreLabel="Mas acciones" />
+        <ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />
       </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones de la propiedad">

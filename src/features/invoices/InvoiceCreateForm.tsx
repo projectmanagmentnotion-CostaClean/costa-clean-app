@@ -571,18 +571,17 @@ export function InvoiceCreateForm({
                 <span>La ruta principal es desde servicio. Las alternativas quedan disponibles como secundaria o excepcion administrativa.</span>
               </div>
 
-              <label className="form-field">
-                <span>Ruta principal</span>
-                <select
-                  value={form.origin_mode}
-                  onChange={(event) => updateField('origin_mode', event.target.value as InvoiceOriginMode)}
-                  disabled={isOriginLocked}
-                >
-                  <option value="job">Desde servicio</option>
-                  <option value="quote">Desde presupuesto aceptado</option>
-                  <option value="manual">Directa administrativa</option>
-                </select>
-              </label>
+              <div className="cc-detail-panel__next-step">
+                <span>{form.origin_mode === 'job' ? 'Ruta principal activa' : 'Ruta activa'}</span>
+                <strong>
+                  {form.origin_mode === 'job'
+                    ? 'Servicio -> factura'
+                    : form.origin_mode === 'quote'
+                      ? 'Presupuesto aceptado -> factura'
+                      : 'Factura directa administrativa'}
+                </strong>
+                <small>{getOriginDescription(form.origin_mode)}</small>
+              </div>
 
               {form.origin_mode === 'job' ? (
                 <>

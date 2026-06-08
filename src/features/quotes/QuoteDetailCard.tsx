@@ -380,10 +380,10 @@ function QuoteDetailCardContent({
     })
   } else if (hydratedQuote.status !== 'accepted') {
     headerActions.push({
-      key: 'accept-and-invoice',
-      label: 'Aceptar y facturar',
+      key: 'accept-quote-primary',
+      label: 'Aceptar presupuesto',
       tone: 'primary',
-      onClick: () => setPendingAcceptanceAction('invoice'),
+      onClick: () => setPendingAcceptanceAction('accept'),
     })
   } else {
     headerActions.push({
@@ -421,23 +421,19 @@ function QuoteDetailCardContent({
     })
   }
 
-  const statusActions: ActionGroupItem[] = []
-
   if (hydratedQuote.status !== 'accepted') {
-    statusActions.push({
-      key: 'accept-quote',
-      label: 'Aceptar presupuesto',
-      tone: 'primary',
-      onClick: () => setPendingAcceptanceAction('accept'),
-      disabled: isSaving || isLoadingLines || Boolean(linesError),
-    })
-    statusActions.push({
-      key: 'accept-quote-invoice',
-      label: 'Aceptar y convertir a factura',
+    headerActions.push({
+      key: 'accept-and-invoice',
+      label: 'Aceptar y facturar',
       onClick: () => setPendingAcceptanceAction('invoice'),
       disabled: isSaving || isLoadingLines || Boolean(linesError),
     })
   }
+  const dedupedHeaderActions = headerActions.filter(
+    (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
+  )
+
+  const statusActions: ActionGroupItem[] = []
 
   quoteStatusOptions
     .filter((status) => status !== hydratedQuote.status && status !== 'accepted')
@@ -458,7 +454,7 @@ function QuoteDetailCardContent({
         </div>
 
         <div className="cc-detail-panel__actions">
-          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
+          <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
         </div>
       </div>
 

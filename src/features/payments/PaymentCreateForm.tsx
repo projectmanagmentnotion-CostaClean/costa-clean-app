@@ -105,8 +105,14 @@ export function PaymentCreateForm({
   hideInvoiceCreateAction = false,
   originType = 'manual',
 }: PaymentCreateFormProps) {
+  const availableInvoices = useMemo(() => (
+    invoices.filter((invoice) => {
+      if (prefillInvoiceId && invoice.id === prefillInvoiceId) return true
+      return Number(invoice.outstanding_amount ?? invoice.total) > 0.009
+    })
+  ), [invoices, prefillInvoiceId])
   const [form, setForm] = useState<FormState>(() => buildInitialState({
-    prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(invoices),
+    prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
     prefillAmount,
     prefillPaymentMethod,
     prefillNotes,
@@ -118,17 +124,30 @@ export function PaymentCreateForm({
 
   useEffect(() => {
     setForm(buildInitialState({
-      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(invoices),
+      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
       prefillAmount,
       prefillPaymentMethod,
       prefillNotes,
     }))
-  }, [invoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
+  }, [availableInvoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
-    [invoices, form.invoice_id],
+    [form.invoice_id, invoices],
   )
+
+  useEffect(() => {
+    if (!selectedInvoice || prefillAmount) return
+
+    setForm((current) => {
+      if (current.amount.trim()) return current
+
+      return {
+        ...current,
+        amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
+      }
+    })
+  }, [prefillAmount, selectedInvoice])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({
@@ -202,7 +221,7 @@ export function PaymentCreateForm({
       await onCreated()
 
       setForm(buildInitialState({
-        prefillInvoiceId,
+        prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
         prefillAmount,
         prefillPaymentMethod,
         prefillNotes,
@@ -225,7 +244,7 @@ export function PaymentCreateForm({
         <p>{prefillInvoiceId ? description : 'El cobro debe nacer desde una factura abierta. Usa esta vista como control o resolución, no como punto de partida mental.'}</p>
       </div>
 
-      {invoices.length === 0 ? (
+      {availableInvoices.length === 0 ? (
         hideInvoiceCreateAction ? (
           <div className="empty-state">
             <strong>Falta la factura base</strong>
@@ -261,6 +280,7 @@ export function PaymentCreateForm({
             <div className="cc-detail-panel__next-step" style={{ marginBottom: '1rem' }}>
               <span>Factura origen</span>
               <strong>{formatInvoiceLabel(selectedInvoice)}</strong>
+              <small>Pendiente real {formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total))} EUR</small>
             </div>
           ) : null}
 
@@ -272,7 +292,7 @@ export function PaymentCreateForm({
               disabled={lockInvoiceSelection}
             >
               <option value="">Selecciona una factura</option>
-              {invoices.map((invoice) => (
+              {availableInvoices.map((invoice) => (
                 <option key={invoice.id} value={invoice.id}>
                   {formatInvoiceLabel(invoice)} - Pendiente {formatMoneyInput(Number(invoice.outstanding_amount ?? invoice.total))}
                 </option>

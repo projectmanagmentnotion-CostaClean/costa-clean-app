@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
-import { formatClientLabel, formatInvoiceLabel, formatJobLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
@@ -543,13 +543,11 @@ export function InvoiceDetailCard({
 
   if (invoice && invoice.status !== 'cancelled' && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009) {
     headerActions.push({
-      key: 'settle-transfer',
-      label: paymentSummary?.financialStatus === 'partially_paid'
-        ? 'Cobrar restante'
-        : 'Cobrar por transferencia',
+      key: 'register-payment-primary',
+      label: 'Registrar cobro',
       tone: 'primary',
-      onClick: () => void handleTransferSettlement(),
-      disabled: isSaving || !paymentSummary,
+      onClick: () => setPaymentActionMode('manual'),
+      disabled: isSaving,
     })
   } else if (invoice) {
     headerActions.push({
@@ -585,6 +583,9 @@ export function InvoiceDetailCard({
       },
     )
   }
+  const dedupedHeaderActions = headerActions.filter(
+    (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
+  )
 
   const paymentActions: ActionGroupItem[] = invoice ? [
     {
@@ -671,7 +672,7 @@ export function InvoiceDetailCard({
 
         {invoice ? (
           <div className="cc-detail-panel__actions">
-            <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
+            <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
           </div>
         ) : null}
       </div>
@@ -693,7 +694,7 @@ export function InvoiceDetailCard({
             <div className="cc-detail-panel__summary">
               <div className="cc-detail-panel__summary-card">
                 <span>Cliente</span>
-                <strong>{formatInvoiceLabel(invoice)}</strong>
+                <strong>{formatClientLabel({ client_id: invoice.client_id, client_display_code: invoice.client_display_code, client_name: invoice.client_name })}</strong>
                 <small>
                   {invoice.job_id
                     ? formatJobLabel({
@@ -969,6 +970,15 @@ export function InvoiceDetailCard({
                       lockInvoiceSelection
                       hideInvoiceCreateAction
                     />
+                    <div className="form-actions" style={{ marginTop: '0.75rem' }}>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => setPaymentActionMode(null)}
+                      >
+                        Cancelar cobro
+                      </button>
+                    </div>
                   </div>
                 ) : null}
 

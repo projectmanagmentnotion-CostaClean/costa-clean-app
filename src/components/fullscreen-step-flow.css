@@ -52,7 +52,9 @@
 }
 
 .cc-step-flow__mobile-summary,
-.cc-step-flow__mobile-side {
+.cc-step-flow__mobile-side,
+.cc-step-flow__mobile-hero,
+.cc-step-flow__mobile-progress {
   display: none;
 }
 
@@ -281,6 +283,128 @@
   min-width: 0;
 }
 
+.cc-step-flow__mobile-hero-copy,
+.cc-step-flow__mobile-hero-meta,
+.cc-step-flow__mobile-hero-status {
+  display: grid;
+}
+
+.cc-step-flow__mobile-hero-copy {
+  gap: 6px;
+  min-width: 0;
+}
+
+.cc-step-flow__mobile-hero-copy h2 {
+  margin: 0;
+  font-size: 1.18rem;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.cc-step-flow__mobile-hero-copy p {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.72);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.cc-step-flow__mobile-hero-meta {
+  gap: 2px;
+}
+
+.cc-step-flow__mobile-hero-meta span,
+.cc-step-flow__mobile-progress-label {
+  color: rgba(148, 163, 184, 0.88);
+}
+
+.cc-step-flow__mobile-hero-status {
+  justify-items: end;
+  gap: 8px;
+}
+
+.cc-step-flow__mobile-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cc-step-flow__mobile-state--complete {
+  background: rgba(45, 212, 191, 0.16);
+}
+
+.cc-step-flow__mobile-state--blocked {
+  background: rgba(251, 191, 36, 0.18);
+}
+
+.cc-step-flow__mobile-progress {
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scroll-snap-type: x proximity;
+}
+
+.cc-step-flow__mobile-progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 118px;
+  padding: 8px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 37, 0.56);
+  color: inherit;
+  text-align: left;
+  scroll-snap-align: start;
+}
+
+.cc-step-flow__mobile-progress-step:disabled {
+  cursor: default;
+}
+
+.cc-step-flow__mobile-progress-step--current {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: linear-gradient(135deg, rgba(10, 52, 78, 0.92), rgba(13, 28, 48, 0.96));
+}
+
+.cc-step-flow__mobile-progress-step--complete {
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.cc-step-flow__mobile-progress-step--blocked {
+  border-color: rgba(251, 191, 36, 0.34);
+  background: linear-gradient(135deg, rgba(66, 43, 12, 0.78), rgba(22, 18, 15, 0.9));
+}
+
+.cc-step-flow__mobile-progress-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cc-step-flow__mobile-progress-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 :root[data-theme="light"] .cc-step-flow {
   background: linear-gradient(180deg, rgba(251, 253, 255, 0.99), rgba(242, 247, 251, 0.99));
   border-color: rgba(14, 84, 114, 0.1);
@@ -301,7 +425,9 @@
 :root[data-theme="light"] .cc-step-flow__hero-stat,
 :root[data-theme="light"] .cc-step-flow__context-pill,
 :root[data-theme="light"] .cc-step-flow__mobile-summary,
-:root[data-theme="light"] .cc-step-flow__mobile-side {
+:root[data-theme="light"] .cc-step-flow__mobile-side,
+:root[data-theme="light"] .cc-step-flow__mobile-hero,
+:root[data-theme="light"] .cc-step-flow__mobile-progress-step {
   border-color: rgba(14, 84, 114, 0.1);
   background: rgba(255, 255, 255, 0.86);
 }
@@ -312,6 +438,16 @@
 }
 
 :root[data-theme="light"] .cc-step-flow__progress-step--blocked {
+  background: linear-gradient(135deg, rgba(255, 247, 221, 0.96), rgba(255, 252, 239, 0.98));
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+:root[data-theme="light"] .cc-step-flow__mobile-progress-step--current {
+  background: linear-gradient(135deg, rgba(230, 247, 255, 0.96), rgba(239, 248, 255, 0.98));
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+:root[data-theme="light"] .cc-step-flow__mobile-progress-step--blocked {
   background: linear-gradient(135deg, rgba(255, 247, 221, 0.96), rgba(255, 252, 239, 0.98));
   border-color: rgba(245, 158, 11, 0.3);
 }
@@ -363,23 +499,28 @@
   }
 
   .cc-step-flow__header {
-    gap: 14px;
-    padding-top: 16px;
-    padding-bottom: 14px;
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
 
-  .cc-step-flow__mobile-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 10px 12px;
+  .cc-step-flow__headline,
+  .cc-step-flow__progress,
+  .cc-step-flow__current-step {
+    display: none;
+  }
+
+  .cc-step-flow__mobile-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    padding: 12px;
     border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(15, 23, 37, 0.72);
   }
 
-  .cc-step-flow__mobile-summary-copy span,
+  .cc-step-flow__mobile-hero-meta span,
   .cc-step-flow__mobile-side-copy span,
   .cc-step-flow__mobile-side-toggle {
     color: rgba(148, 163, 184, 0.88);
@@ -389,29 +530,15 @@
     text-transform: uppercase;
   }
 
-  .cc-step-flow__mobile-summary-copy strong {
-    font-size: 0.9rem;
-    line-height: 1.2;
+  .cc-step-flow__mobile-hero-meta strong {
+    font-size: 0.92rem;
+    line-height: 1.22;
   }
 
-  .cc-step-flow__mobile-summary-copy small {
-    color: rgba(191, 219, 254, 0.72);
-    font-size: 0.74rem;
-    line-height: 1.32;
-  }
-
-  .cc-step-flow__mobile-summary-progress {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 58px;
-    min-height: 36px;
-    padding: 0 10px;
-    border-radius: 999px;
-    background: rgba(56, 189, 248, 0.12);
+  .cc-step-flow__mobile-hero-status strong {
     color: rgba(224, 242, 254, 0.96);
-    font-size: 0.8rem;
-    font-weight: 800;
+    font-size: 0.94rem;
+    line-height: 1;
   }
 
   .cc-step-flow__hero-meta {
@@ -444,44 +571,17 @@
     line-height: 1.42;
   }
 
-  .cc-step-flow__progress {
+  .cc-step-flow__meter {
+    height: 6px;
+  }
+
+  .cc-step-flow__mobile-progress {
     display: flex;
-    gap: 10px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-    scroll-snap-type: x proximity;
-  }
-
-  .cc-step-flow__progress-step {
-    min-width: 182px;
-    padding: 10px 12px;
-    scroll-snap-align: start;
-    gap: 10px;
-  }
-
-  .cc-step-flow__progress-copy small,
-  .cc-step-flow__progress-state {
-    font-size: 0.68rem;
-  }
-
-  .cc-step-flow__progress-copy small,
-  .cc-step-flow__progress-state {
-    display: none;
-  }
-
-  .cc-step-flow__current-step {
-    gap: 2px;
-    padding-top: 16px;
-    padding-bottom: 12px;
-  }
-
-  .cc-step-flow__current-step small {
-    font-size: 0.78rem;
-    line-height: 1.34;
   }
 
   .cc-step-flow__content {
     gap: 14px;
+    padding-top: 14px;
   }
 
   .cc-step-flow__mobile-side {
@@ -543,8 +643,25 @@
 }
 
 @media (max-width: 640px) {
-  .cc-step-flow__mobile-summary {
-    padding: 10px 11px;
+  .cc-step-flow__header {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .cc-step-flow__mobile-hero {
+    grid-template-columns: 1fr;
+    padding: 11px;
+  }
+
+  .cc-step-flow__mobile-hero-status {
+    grid-auto-flow: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .cc-step-flow__mobile-progress-step {
+    min-width: 110px;
+    padding: 8px 9px;
   }
 
   .cc-step-flow__content,

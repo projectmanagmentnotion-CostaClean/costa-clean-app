@@ -159,12 +159,13 @@
     position: sticky;
     top: 0;
     z-index: 2;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 8px;
     padding:
-      max(12px, calc(env(safe-area-inset-top, 0px) + 4px))
-      12px
-      10px;
-    align-items: stretch;
+      max(10px, calc(env(safe-area-inset-top, 0px) + 2px))
+      10px
+      8px;
+    align-items: center;
   }
 
   .cc-action-flow__topbar::before {
@@ -182,25 +183,25 @@
   }
 
   .cc-action-flow__eyebrow {
-    font-size: 0.62rem;
+    display: none;
   }
 
   .cc-action-flow__copy h2 {
-    font-size: 0.94rem;
+    font-size: 0.86rem;
+    line-height: 1.15;
   }
 
   .cc-action-flow__copy p {
-    font-size: 0.76rem;
-    line-height: 1.35;
+    display: none;
   }
 
   .cc-action-flow__dismiss {
-    min-height: 40px;
-    padding-inline: 14px;
+    min-height: 38px;
+    padding-inline: 12px;
   }
 
   .cc-action-flow__body {
-    padding: 12px;
+    padding: 10px;
   }
 
   .cc-action-flow__footer {
@@ -208,8 +209,8 @@
     bottom: 0;
     z-index: 2;
     padding:
+      8px
       10px
-      12px
-      calc(env(safe-area-inset-bottom, 0px) + 10px);
+      calc(env(safe-area-inset-bottom, 0px) + 8px);
   }
 }

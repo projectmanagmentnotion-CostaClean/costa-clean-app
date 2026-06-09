@@ -8,6 +8,7 @@ import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
 import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
+import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 
 function isRecoverableAuthBootstrapError(message: string) {
   const normalizedMessage = message.trim().toLowerCase()
@@ -23,6 +24,7 @@ function App() {
   const isPublicQuoteRequestStandalone = isPublicQuoteRequestPath(pathname)
   const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
   const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
+  const isDevStepFlowPreview = import.meta.env.DEV && pathname === '/dev/step-flow-preview'
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -60,7 +62,7 @@ function App() {
     let authCleanup: (() => void) | undefined
 
     async function bootstrapAuth() {
-      if (isPublicStandalonePath) {
+      if (isPublicStandalonePath || isDevStepFlowPreview) {
         if (isMounted) {
           setIsBooting(false)
         }
@@ -141,7 +143,7 @@ function App() {
         authCleanup()
       }
     }
-  }, [isPublicStandalonePath])
+  }, [isDevStepFlowPreview, isPublicStandalonePath])
 
   if (isPublicQuoteRequestStandalone) {
     return <PublicQuoteRequestPage />
@@ -149,6 +151,10 @@ function App() {
 
   if (isPublicGymManualQuizStandalone) {
     return <PublicGymManualQuizPage />
+  }
+
+  if (isDevStepFlowPreview) {
+    return <DevStepFlowPreviewPage />
   }
 
   if (isBooting) {

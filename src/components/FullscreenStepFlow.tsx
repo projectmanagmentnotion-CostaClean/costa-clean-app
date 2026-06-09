@@ -29,6 +29,13 @@ interface FullscreenStepFlowProps {
   contextItems?: FullscreenStepFlowContextItem[]
 }
 
+function getStepStateLabel(state: FullscreenStepState, isCurrent: boolean): string {
+  if (state === 'complete') return 'Listo'
+  if (state === 'blocked') return 'Bloqueado'
+  if (isCurrent) return 'En curso'
+  return 'Pendiente'
+}
+
 export function FullscreenStepFlow({
   eyebrow,
   title,
@@ -45,6 +52,8 @@ export function FullscreenStepFlow({
   const current = steps[currentStep]
   const completionRatio = ((currentStep + 1) / steps.length) * 100
   const remainingSteps = steps.length - (currentStep + 1)
+  const currentState = stepStates?.[currentStep] ?? 'current'
+  const currentStateLabel = getStepStateLabel(currentState, true)
 
   return (
     <section className="cc-step-flow">
@@ -72,13 +81,22 @@ export function FullscreenStepFlow({
           </div>
         </div>
 
-        <div className="cc-step-flow__mobile-summary" aria-label="Resumen movil del progreso">
-          <div className="cc-step-flow__mobile-summary-copy">
-            <span>Paso {currentStep + 1} de {steps.length}</span>
-            <strong>{current?.label}</strong>
-            <small>{remainingSteps === 0 ? 'Ultimo paso listo para cerrar' : `${remainingSteps} paso(s) restantes`}</small>
+        <div className="cc-step-flow__mobile-hero" aria-label="Resumen movil del progreso">
+          <div className="cc-step-flow__mobile-hero-copy">
+            <span className="cc-step-flow__eyebrow">{eyebrow}</span>
+            <h2>{title}</h2>
+            <div className="cc-step-flow__mobile-hero-meta">
+              <span>Paso {currentStep + 1} de {steps.length}</span>
+              <strong>{current?.label}</strong>
+            </div>
+            <p>{current?.description}</p>
           </div>
-          <span className="cc-step-flow__mobile-summary-progress">{Math.round(completionRatio)}%</span>
+          <div className="cc-step-flow__mobile-hero-status">
+            <span className={`cc-step-flow__mobile-state cc-step-flow__mobile-state--${currentState}`}>
+              {currentStateLabel}
+            </span>
+            <strong>{Math.round(completionRatio)}%</strong>
+          </div>
         </div>
 
         {contextItems.length > 0 ? (
@@ -94,6 +112,28 @@ export function FullscreenStepFlow({
 
         <div className="cc-step-flow__meter" aria-hidden="true">
           <span className="cc-step-flow__meter-bar" style={{ width: `${completionRatio}%` }} />
+        </div>
+
+        <div className="cc-step-flow__mobile-progress" aria-label="Progreso movil del flujo">
+          {steps.map((step, index) => {
+            const state = stepStates?.[index] ?? (
+              index < currentStep ? 'complete' : index === currentStep ? 'current' : 'pending'
+            )
+
+            return (
+              <button
+                key={`mobile-${step.id}`}
+                type="button"
+                className={`cc-step-flow__mobile-progress-step cc-step-flow__mobile-progress-step--${state}`}
+                onClick={() => onStepSelect?.(index)}
+                disabled={!onStepSelect}
+                aria-current={index === currentStep ? 'step' : undefined}
+              >
+                <span className="cc-step-flow__mobile-progress-index">{index + 1}</span>
+                <span className="cc-step-flow__mobile-progress-label">{step.label}</span>
+              </button>
+            )
+          })}
         </div>
 
         <div className="cc-step-flow__progress" aria-label="Progreso del flujo">
@@ -117,7 +157,7 @@ export function FullscreenStepFlow({
                   <small>{step.description}</small>
                 </span>
                 <span className={`cc-step-flow__progress-state cc-step-flow__progress-state--${state}`}>
-                  {state === 'complete' ? 'Listo' : state === 'blocked' ? 'Bloqueado' : index === currentStep ? 'Ahora' : 'Pendiente'}
+                  {getStepStateLabel(state, index === currentStep)}
                 </span>
               </button>
             )

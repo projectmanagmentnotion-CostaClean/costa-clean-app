@@ -2926,6 +2926,10 @@
     backdrop-filter: blur(22px);
   }
 
+  .cc-bottom-dock--mobile {
+    display: block !important;
+  }
+
   .cc-bottom-dock__scroll {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));

@@ -72,6 +72,15 @@ export function FullscreenStepFlow({
           </div>
         </div>
 
+        <div className="cc-step-flow__mobile-summary" aria-label="Resumen movil del progreso">
+          <div className="cc-step-flow__mobile-summary-copy">
+            <span>Paso {currentStep + 1} de {steps.length}</span>
+            <strong>{current?.label}</strong>
+            <small>{remainingSteps === 0 ? 'Ultimo paso listo para cerrar' : `${remainingSteps} paso(s) restantes`}</small>
+          </div>
+          <span className="cc-step-flow__mobile-summary-progress">{Math.round(completionRatio)}%</span>
+        </div>
+
         {contextItems.length > 0 ? (
           <div className="cc-step-flow__context-strip" aria-label="Contexto siempre visible">
             {contextItems.map((item) => (
@@ -125,6 +134,40 @@ export function FullscreenStepFlow({
           </div>
           <div className="cc-step-flow__content">
             {children}
+
+            {(contextItems.length > 0 || sideContent) ? (
+              <details className="cc-step-flow__mobile-side">
+                <summary className="cc-step-flow__mobile-side-summary">
+                  <div className="cc-step-flow__mobile-side-copy">
+                    <span>Contexto y apoyo</span>
+                    <strong>Ver resumen del flujo</strong>
+                  </div>
+                  <span className="cc-step-flow__mobile-side-toggle">Abrir</span>
+                </summary>
+
+                <div className="cc-step-flow__mobile-side-body">
+                  {contextItems.length > 0 ? (
+                    <section className="cc-step-flow__context cc-step-flow__context--mobile">
+                      <div className="cc-step-flow__context-head">
+                        <span>Contexto heredado</span>
+                        <strong>Visible sin salir del paso</strong>
+                      </div>
+                      <div className="cc-step-flow__context-list">
+                        {contextItems.map((item) => (
+                          <article key={`mobile-${item.label}-${item.value}`} className="cc-step-flow__context-card">
+                            <span>{item.label}</span>
+                            <strong>{item.value}</strong>
+                            {item.hint ? <small>{item.hint}</small> : null}
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+                  {sideContent}
+                </div>
+              </details>
+            ) : null}
           </div>
         </div>
 

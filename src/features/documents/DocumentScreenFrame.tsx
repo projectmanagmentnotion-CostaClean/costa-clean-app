@@ -135,6 +135,19 @@ const actionsStyle: CSSProperties = {
   justifyContent: 'flex-end',
 }
 
+const footerStyle: CSSProperties = {
+  position: 'sticky',
+  bottom: 0,
+  zIndex: 2,
+  display: 'flex',
+  gap: '0.75rem',
+  justifyContent: 'space-between',
+  padding: '0.75rem 0.85rem calc(env(safe-area-inset-bottom, 0px) + 0.85rem)',
+  background: 'rgba(8, 15, 28, 0.94)',
+  borderTop: '1px solid rgba(148, 163, 184, 0.16)',
+  backdropFilter: 'blur(18px)',
+}
+
 const contentStyle: CSSProperties = {
   flex: 1,
   minHeight: 0,
@@ -213,14 +226,14 @@ export function DocumentScreenFrame({
             </span>
           </button>
 
-          <button type="button" className="secondary-button cc-document-screen__action" onClick={onShare} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onShare} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <IosShareIcon />
               Compartir
             </span>
           </button>
 
-          <button type="button" className="secondary-button cc-document-screen__action" onClick={onPrint} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onPrint} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <PrintIcon />
               Imprimir
@@ -252,6 +265,15 @@ export function DocumentScreenFrame({
             </section>
           </div>
         </div>
+      </div>
+
+      <div className="cc-document-screen__footer" style={footerStyle}>
+        <button type="button" className="secondary-button cc-document-screen__footer-action" onClick={onClose}>
+          Volver
+        </button>
+        <button type="button" className="primary-button cc-document-screen__footer-action cc-document-screen__footer-action--primary" onClick={onSavePdf} disabled={isOutputDisabled}>
+          {isOutputDisabled ? 'Preparando...' : 'Guardar PDF'}
+        </button>
       </div>
     </div>
   )

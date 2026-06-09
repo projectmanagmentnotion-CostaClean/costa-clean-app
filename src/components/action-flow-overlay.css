@@ -43,6 +43,11 @@
   backdrop-filter: blur(18px);
 }
 
+.cc-action-flow__topbar::before {
+  content: "";
+  display: none;
+}
+
 .cc-action-flow__dismiss {
   min-height: 44px;
   padding-inline: 16px;
@@ -159,6 +164,17 @@
       max(12px, calc(env(safe-area-inset-top, 0px) + 4px))
       12px
       10px;
+    align-items: stretch;
+  }
+
+  .cc-action-flow__topbar::before {
+    display: block;
+    flex: 0 0 100%;
+    inline-size: 44px;
+    block-size: 4px;
+    margin: 0 auto 2px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.36);
   }
 
   .cc-action-flow__copy {
@@ -181,6 +197,10 @@
   .cc-action-flow__dismiss {
     min-height: 40px;
     padding-inline: 14px;
+  }
+
+  .cc-action-flow__body {
+    padding: 12px;
   }
 
   .cc-action-flow__footer {

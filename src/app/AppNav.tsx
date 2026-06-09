@@ -1,4 +1,5 @@
 import { useState, type ReactElement } from 'react'
+import { createPortal } from 'react-dom'
 import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
 import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
@@ -313,6 +314,124 @@ export function AppNav({
   const isMoreSectionActive = !bottomDockItems.some((item) => item.view === currentView)
   const mobileHeaderTitle = currentView === 'dashboard' ? 'Hoy' : currentViewLabel
   const shouldShowDesktopCurrent = !mobileViewport && !compactMobile
+  const canUsePortal = typeof document !== 'undefined'
+  const bottomDock = (
+    <>
+      <nav
+        className={
+          compactMobile
+            ? 'cc-bottom-dock cc-bottom-dock--mobile cc-bottom-dock--compact'
+            : 'cc-bottom-dock cc-bottom-dock--mobile'
+        }
+        aria-label="Navegacion rapida"
+      >
+        <div className="cc-bottom-dock__scroll">
+          {bottomDockItems.map((item) => {
+            const Icon = item.icon
+
+            return (
+              <button
+                key={item.view}
+                type="button"
+                className={
+                  currentView === item.view
+                    ? 'cc-bottom-dock__button is-active'
+                    : 'cc-bottom-dock__button'
+                }
+                onClick={() => onChangeView(item.view)}
+                aria-current={currentView === item.view ? 'page' : undefined}
+              >
+                <span className="cc-bottom-dock__icon" aria-hidden="true">
+                  <Icon />
+                </span>
+                <span className="cc-bottom-dock__label">{item.shortLabel}</span>
+              </button>
+            )
+          })}
+
+          <button
+            type="button"
+            className={isMoreMenuOpen || isMoreSectionActive ? 'cc-bottom-dock__button is-active' : 'cc-bottom-dock__button'}
+            onClick={() => setIsMoreMenuOpen((currentState) => !currentState)}
+            aria-expanded={isMoreMenuOpen}
+            aria-controls="cc-mobile-nav-more-sheet"
+            aria-label="Abrir mas modulos"
+          >
+            <span className="cc-bottom-dock__icon" aria-hidden="true">
+              <MoreIcon />
+            </span>
+            <span className="cc-bottom-dock__label">Mas</span>
+          </button>
+        </div>
+      </nav>
+
+      {isMoreMenuOpen ? (
+        <>
+          <button
+            type="button"
+            className="cc-mobile-nav-sheet__backdrop"
+            onClick={() => setIsMoreMenuOpen(false)}
+            aria-label="Cerrar menu de modulos"
+          />
+
+          <section
+            id="cc-mobile-nav-more-sheet"
+            className="cc-mobile-nav-sheet"
+            aria-label="Mas modulos"
+          >
+            <div className="cc-mobile-nav-sheet__handle" aria-hidden="true" />
+
+            <div className="cc-mobile-nav-sheet__header">
+              <div className="cc-mobile-nav-sheet__copy">
+                <span className="cc-mobile-nav-sheet__eyebrow">Navegacion</span>
+                <strong className="cc-mobile-nav-sheet__title">Mas modulos</strong>
+              </div>
+
+              <button
+                type="button"
+                className="cc-mobile-nav-sheet__close"
+                onClick={() => setIsMoreMenuOpen(false)}
+                aria-label="Cerrar menu de modulos"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="cc-mobile-nav-sheet__grid">
+              {mobileSecondaryItems.map((item) => {
+                const Icon = item.icon
+
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    className={
+                      currentView === item.view
+                        ? 'cc-mobile-nav-sheet__item is-active'
+                        : 'cc-mobile-nav-sheet__item'
+                    }
+                    onClick={() => {
+                      setIsMoreMenuOpen(false)
+                      onChangeView(item.view)
+                    }}
+                    aria-current={currentView === item.view ? 'page' : undefined}
+                  >
+                    <span className="cc-mobile-nav-sheet__item-icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <span className="cc-mobile-nav-sheet__item-copy">
+                      <span className="cc-mobile-nav-sheet__item-title">{item.shortLabel}</span>
+                      <span className="cc-mobile-nav-sheet__item-section">{item.section}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        </>
+      ) : null}
+    </>
+  )
 
   return (
     <>
@@ -438,119 +557,7 @@ export function AppNav({
         </div>
       </nav>
 
-      <nav
-        className={
-          compactMobile
-            ? 'cc-bottom-dock cc-bottom-dock--mobile cc-bottom-dock--compact'
-            : 'cc-bottom-dock cc-bottom-dock--mobile'
-        }
-        aria-label="Navegacion rapida"
-      >
-        <div className="cc-bottom-dock__scroll">
-          {bottomDockItems.map((item) => {
-            const Icon = item.icon
-
-            return (
-              <button
-                key={item.view}
-                type="button"
-                className={
-                  currentView === item.view
-                    ? 'cc-bottom-dock__button is-active'
-                    : 'cc-bottom-dock__button'
-                }
-                onClick={() => onChangeView(item.view)}
-                aria-current={currentView === item.view ? 'page' : undefined}
-              >
-                <span className="cc-bottom-dock__icon" aria-hidden="true">
-                  <Icon />
-                </span>
-                <span className="cc-bottom-dock__label">{item.shortLabel}</span>
-              </button>
-            )
-          })}
-
-          <button
-            type="button"
-            className={isMoreMenuOpen || isMoreSectionActive ? 'cc-bottom-dock__button is-active' : 'cc-bottom-dock__button'}
-            onClick={() => setIsMoreMenuOpen((currentState) => !currentState)}
-            aria-expanded={isMoreMenuOpen}
-            aria-controls="cc-mobile-nav-more-sheet"
-            aria-label="Abrir mas modulos"
-          >
-            <span className="cc-bottom-dock__icon" aria-hidden="true">
-              <MoreIcon />
-            </span>
-            <span className="cc-bottom-dock__label">Mas</span>
-          </button>
-        </div>
-      </nav>
-
-      {isMoreMenuOpen ? (
-        <>
-          <button
-            type="button"
-            className="cc-mobile-nav-sheet__backdrop"
-            onClick={() => setIsMoreMenuOpen(false)}
-            aria-label="Cerrar menu de modulos"
-          />
-
-          <section
-            id="cc-mobile-nav-more-sheet"
-            className="cc-mobile-nav-sheet"
-            aria-label="Mas modulos"
-          >
-            <div className="cc-mobile-nav-sheet__handle" aria-hidden="true" />
-
-            <div className="cc-mobile-nav-sheet__header">
-              <div className="cc-mobile-nav-sheet__copy">
-                <span className="cc-mobile-nav-sheet__eyebrow">Navegacion</span>
-                <strong className="cc-mobile-nav-sheet__title">Mas modulos</strong>
-              </div>
-
-              <button
-                type="button"
-                className="cc-mobile-nav-sheet__close"
-                onClick={() => setIsMoreMenuOpen(false)}
-                aria-label="Cerrar menu de modulos"
-              >
-                Cerrar
-              </button>
-            </div>
-
-            <div className="cc-mobile-nav-sheet__grid">
-              {mobileSecondaryItems.map((item) => {
-                const Icon = item.icon
-
-                return (
-                  <button
-                    key={item.view}
-                    type="button"
-                    className={
-                      currentView === item.view
-                        ? 'cc-mobile-nav-sheet__item is-active'
-                        : 'cc-mobile-nav-sheet__item'
-                    }
-                    onClick={() => {
-                      setIsMoreMenuOpen(false)
-                      onChangeView(item.view)
-                    }}
-                    aria-current={currentView === item.view ? 'page' : undefined}
-                  >
-                    <span className="cc-mobile-nav-sheet__item-icon" aria-hidden="true">
-                      <Icon />
-                    </span>
-                    <span className="cc-mobile-nav-sheet__item-copy">
-                      <span className="cc-mobile-nav-sheet__item-title">{item.shortLabel}</span>
-                      <span className="cc-mobile-nav-sheet__item-section">{item.section}</span>
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-        </>
-      ) : null}
+      {mobileViewport && canUsePortal ? createPortal(bottomDock, document.body) : bottomDock}
     </>
   )
 }

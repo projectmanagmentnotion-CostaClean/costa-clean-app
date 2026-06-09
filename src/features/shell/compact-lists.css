@@ -102,13 +102,13 @@
 }
 
 .cc-record-card__inline-action {
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.74rem;
   font-weight: 700;
   line-height: 1;
 }
@@ -154,6 +154,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 10px 22px rgba(2, 8, 23, 0.1);
   isolation: isolate;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
 .cc-operational-item.is-selected {
@@ -276,8 +281,8 @@
 }
 
 .cc-action-group__menu-item {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 42px;
+  padding: 0 14px;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -538,13 +543,13 @@
    ========================================================= */
 
 .cc-record-card__inline-action {
-  min-height: 28px;
-  padding: 0 10px;
+  min-height: 34px;
+  padding: 0 12px;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(226, 232, 240, 0.82);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -608,6 +613,56 @@
 
 .cc-operational-item__summary {
   max-width: 58ch;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .cc-record-card__footer-actions,
+  .cc-action-group,
+  .cc-workspace-browser__row-actions,
+  .cc-workspace-browser__detail-actions {
+    gap: 8px;
+  }
+
+  .cc-record-card__inline-action {
+    min-height: 40px;
+    padding: 0 14px;
+    font-size: 0.74rem;
+  }
+
+  .cc-action-group__menu {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
+
+  .cc-action-group__menu-item {
+    min-height: 44px;
+    font-size: 0.78rem;
+  }
+
+  .cc-operational-item {
+    gap: 9px;
+    padding: 12px;
+  }
+
+  .cc-operational-item__head {
+    gap: 8px;
+  }
+
+  .cc-operational-item__title {
+    font-size: 0.9rem;
+  }
+
+  .cc-operational-item__subtitle {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 .cc-operational-item__aside {

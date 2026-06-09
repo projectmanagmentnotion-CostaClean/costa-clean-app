@@ -206,28 +206,28 @@ export function DocumentScreenFrame({
         </div>
 
         <div className="cc-document-screen__actions" style={actionsStyle}>
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--close" onClick={onClose}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <BackChevronIcon />
               Volver
             </span>
           </button>
 
-          <button type="button" className="secondary-button" onClick={onShare} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action" onClick={onShare} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <IosShareIcon />
               Compartir
             </span>
           </button>
 
-          <button type="button" className="secondary-button" onClick={onPrint} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action" onClick={onPrint} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <PrintIcon />
               Imprimir
             </span>
           </button>
 
-          <button type="button" className="primary-button" onClick={onSavePdf} disabled={isOutputDisabled}>
+          <button type="button" className="primary-button cc-document-screen__action cc-document-screen__action--primary" onClick={onSavePdf} disabled={isOutputDisabled}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <DownloadIcon />
               Guardar

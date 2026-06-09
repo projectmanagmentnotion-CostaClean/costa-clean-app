@@ -56,13 +56,19 @@ export function ActionFlowOverlay({
             <p id="cc-action-flow-description">{description}</p>
           </div>
 
-          <button type="button" className="secondary-button" onClick={onClose}>
+          <button type="button" className="secondary-button cc-action-flow__dismiss" onClick={onClose}>
             Cerrar
           </button>
         </header>
 
         <div className="cc-action-flow__body">
           {children}
+        </div>
+
+        <div className="cc-action-flow__footer">
+          <button type="button" className="secondary-button cc-action-flow__dismiss cc-action-flow__dismiss--footer" onClick={onClose}>
+            Cerrar
+          </button>
         </div>
       </section>
     </div>

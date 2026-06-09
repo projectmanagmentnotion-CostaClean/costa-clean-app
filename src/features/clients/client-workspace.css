@@ -605,13 +605,50 @@
   }
 
   .cc-client-workspace__entity-grid--scrollable {
-    max-height: min(54vh, 620px);
+    max-height: none;
+    overflow: visible;
     padding-right: 0;
   }
 
   .cc-workspace-browser__list {
-    max-height: min(50vh, 560px);
+    max-height: none;
+    overflow: visible;
     padding-right: 0;
+  }
+
+  .cc-workspace-browser__row {
+    gap: 0.52rem;
+    padding: 0.74rem;
+  }
+
+  .cc-workspace-browser__row-copy strong {
+    font-size: 0.9rem;
+  }
+
+  .cc-workspace-browser__row-copy span,
+  .cc-workspace-browser__row-context,
+  .cc-workspace-browser__detail-context,
+  .cc-workspace-browser__detail-summary {
+    font-size: 0.76rem;
+  }
+
+  .cc-workspace-browser__row-meta span {
+    padding: 0.3rem 0.52rem;
+    font-size: 0.66rem;
+  }
+
+  .cc-workspace-browser__detail {
+    min-height: auto;
+    padding: 0.9rem;
+    border-radius: 0.96rem;
+  }
+
+  .cc-workspace-browser__detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-workspace-browser__detail-actions {
+    display: none;
   }
 }
 

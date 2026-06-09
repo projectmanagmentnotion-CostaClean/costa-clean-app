@@ -181,12 +181,14 @@ export function ListToolbar({
         </div>
       </div>
 
-      <SearchBar
-        label={searchLabel}
-        value={preferences.searchQuery}
-        onChange={(searchQuery) => updatePreferences((current) => ({ ...current, searchQuery }))}
-        placeholder={searchPlaceholder}
-      />
+      <div className="cc-list-toolbar__search">
+        <SearchBar
+          label={searchLabel}
+          value={preferences.searchQuery}
+          onChange={(searchQuery) => updatePreferences((current) => ({ ...current, searchQuery }))}
+          placeholder={searchPlaceholder}
+        />
+      </div>
 
       <details
         className="cc-list-toolbar__panel cc-collapsible-section"

@@ -224,6 +224,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   } = useShellNavigation()
   const [showScrollTop, setShowScrollTop] = useState(false)
   const [compactMobileNav, setCompactMobileNav] = useState(false)
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
@@ -275,6 +276,23 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       return []
     }
   })
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const mediaQuery = window.matchMedia('(max-width: 640px)')
+
+    const syncViewport = () => {
+      setIsMobileViewport(mediaQuery.matches)
+    }
+
+    syncViewport()
+    mediaQuery.addEventListener('change', syncViewport)
+
+    return () => {
+      mediaQuery.removeEventListener('change', syncViewport)
+    }
+  }, [])
+
   useEffect(() => {
     const handleScroll = () => {
       const scrollY = window.scrollY || window.pageYOffset || 0
@@ -1153,6 +1171,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         <AppNav
           currentView={currentView}
           onChangeView={navigateToView}
+          mobileViewport={isMobileViewport}
           compactMobile={compactMobileNav}
           syncStatus={syncStatus}
           alerts={automationAlerts}

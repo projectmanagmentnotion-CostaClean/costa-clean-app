@@ -10,6 +10,7 @@ import type { AutomationAlertItem } from '../features/automation/types'
 interface AppNavProps {
   currentView: AppView
   onChangeView: (view: AppView) => void
+  mobileViewport?: boolean
   compactMobile?: boolean
   syncStatus?: SyncStatus
   alerts?: AutomationAlertItem[]
@@ -293,6 +294,7 @@ const mobileSecondaryItems: Array<NavItemDefinition | { view: AppView; shortLabe
 export function AppNav({
   currentView,
   onChangeView,
+  mobileViewport = false,
   compactMobile = false,
   syncStatus = 'fresh',
   alerts = [],
@@ -309,30 +311,55 @@ export function AppNav({
   const currentViewMeta = topNavItems.find((item) => item.view === currentView)
   const backLabel = backTargetView ? 'Volver' : 'Inicio'
   const isMoreSectionActive = !bottomDockItems.some((item) => item.view === currentView)
+  const mobileHeaderTitle = currentView === 'dashboard' ? 'Hoy' : currentViewLabel
+  const shouldShowDesktopCurrent = !mobileViewport && !compactMobile
 
   return (
     <>
       <nav
         className={
-          compactMobile
-            ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--mobile-compact'
-            : 'cc-shell-nav cc-shell-nav--top-only'
+          mobileViewport
+            ? compactMobile
+              ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--iphone cc-shell-nav--mobile-compact'
+              : 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--iphone'
+            : compactMobile
+              ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--mobile-compact'
+              : 'cc-shell-nav cc-shell-nav--top-only'
         }
         aria-label="Navegacion principal"
       >
         <div className="cc-shell-nav__topline">
-          <div className="cc-shell-nav__brand">
-            <img
-              src="/branding/Costa_Clean-LOGO.png"
-              alt=""
-              className="cc-shell-nav__logo"
-              aria-hidden="true"
-            />
+          {mobileViewport ? (
+            <div className="cc-shell-nav__mobile-leading">
+              {currentView !== 'dashboard' ? (
+                <button
+                  type="button"
+                  className="cc-shell-nav__back cc-shell-nav__back--mobile"
+                  onClick={onBack ?? (() => onChangeView('dashboard'))}
+                  aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
+                >
+                  {backLabel}
+                </button>
+              ) : null}
 
-            <div className="cc-shell-nav__brand-copy">
-              <span className="cc-shell-nav__title">{compactMobile ? 'CostaClean' : 'CostaClean CRM'}</span>
+              <div className="cc-shell-nav__mobile-copy">
+                <span className="cc-shell-nav__mobile-title">{mobileHeaderTitle}</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="cc-shell-nav__brand">
+              <img
+                src="/branding/Costa_Clean-LOGO.png"
+                alt=""
+                className="cc-shell-nav__logo"
+                aria-hidden="true"
+              />
+
+              <div className="cc-shell-nav__brand-copy">
+                <span className="cc-shell-nav__title">{compactMobile ? 'CostaClean' : 'CostaClean CRM'}</span>
+              </div>
+            </div>
+          )}
 
           <div className="cc-shell-nav__actions">
             <div className="cc-shell-nav__utilities">
@@ -357,7 +384,7 @@ export function AppNav({
                 />
               ) : null}
 
-              {currentView !== 'dashboard' ? (
+              {!mobileViewport && currentView !== 'dashboard' ? (
                 <button
                   type="button"
                   className="cc-shell-nav__back"
@@ -369,7 +396,7 @@ export function AppNav({
               ) : null}
             </div>
 
-            {!compactMobile ? (
+            {shouldShowDesktopCurrent ? (
               <div className="cc-shell-nav__current" title={currentViewLabel}>
                 <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
                 <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>

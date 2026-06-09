@@ -5,7 +5,7 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
-import { InvoiceCreateForm } from '../features/invoices/InvoiceCreateForm'
+import { InvoiceCreateFlow } from '../features/invoices/InvoiceCreateFlow'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
@@ -274,12 +274,13 @@ export function InvoicesPage({
               })
             }}
           >
-            <InvoiceCreateForm
+            <InvoiceCreateFlow
               clients={clients}
               properties={properties}
               jobs={jobs}
               quotes={quotes}
-              onCreated={handleInvoiceCreated}
+              onRefreshData={onInvoiceCreated}
+              onCompleted={handleInvoiceCreated}
               prefill={createPrefill}
               onCancel={() => {
                 setHasCreateFormDirty(false)

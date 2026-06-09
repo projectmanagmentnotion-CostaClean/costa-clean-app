@@ -1,0 +1,365 @@
+.cc-step-flow {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  min-height: 100%;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(16, 25, 40, 0.96), rgba(10, 17, 30, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 56px rgba(2, 8, 23, 0.28);
+  overflow: hidden;
+}
+
+.cc-step-flow__header {
+  display: grid;
+  gap: 20px;
+  padding: 28px 28px 22px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.16), transparent 32%),
+    rgba(7, 13, 24, 0.88);
+}
+
+.cc-step-flow__headline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.cc-step-flow__intro {
+  display: grid;
+  gap: 8px;
+}
+
+.cc-step-flow__hero-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 10px;
+  min-width: min(420px, 100%);
+}
+
+.cc-step-flow__hero-stat,
+.cc-step-flow__context-pill {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 37, 0.58);
+}
+
+.cc-step-flow__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(148, 163, 184, 0.92);
+}
+
+.cc-step-flow__intro h2,
+.cc-step-flow__context-head strong,
+.cc-step-flow__current-step strong {
+  margin: 0;
+}
+
+.cc-step-flow__intro h2 {
+  font-size: clamp(1.6rem, 2vw, 2.3rem);
+  letter-spacing: -0.04em;
+}
+
+.cc-step-flow__intro p,
+.cc-step-flow__current-step small,
+.cc-step-flow__context-card small {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.74);
+  line-height: 1.55;
+}
+
+.cc-step-flow__progress {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.cc-step-flow__meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cc-step-flow__meter-bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(56, 189, 248, 0.8), rgba(45, 212, 191, 0.84));
+}
+
+.cc-step-flow__context-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.cc-step-flow__progress-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 37, 0.72);
+  color: inherit;
+  text-align: left;
+}
+
+.cc-step-flow__progress-step:disabled {
+  cursor: default;
+}
+
+.cc-step-flow__progress-step--current {
+  border-color: rgba(56, 189, 248, 0.42);
+  background: linear-gradient(135deg, rgba(10, 52, 78, 0.92), rgba(13, 28, 48, 0.96));
+}
+
+.cc-step-flow__progress-step--complete {
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.cc-step-flow__progress-step--blocked {
+  border-color: rgba(251, 191, 36, 0.34);
+  background: linear-gradient(135deg, rgba(66, 43, 12, 0.78), rgba(22, 18, 15, 0.9));
+}
+
+.cc-step-flow__progress-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cc-step-flow__progress-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.cc-step-flow__progress-copy strong,
+.cc-step-flow__context-card strong {
+  display: block;
+}
+
+.cc-step-flow__progress-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 78px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cc-step-flow__progress-state--complete {
+  background: rgba(45, 212, 191, 0.16);
+}
+
+.cc-step-flow__progress-state--blocked {
+  background: rgba(251, 191, 36, 0.18);
+}
+
+.cc-step-flow__progress-copy small,
+.cc-step-flow__current-step span,
+.cc-step-flow__context-head span,
+.cc-step-flow__context-card span {
+  color: rgba(148, 163, 184, 0.88);
+}
+
+.cc-step-flow__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.7fr);
+  gap: 0;
+  min-height: 0;
+}
+
+.cc-step-flow__main,
+.cc-step-flow__side {
+  min-height: 0;
+}
+
+.cc-step-flow__main {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-step-flow__current-step {
+  display: grid;
+  gap: 4px;
+  padding: 22px 28px 14px;
+}
+
+.cc-step-flow__content,
+.cc-step-flow__side {
+  overflow: auto;
+  padding: 0 28px 28px;
+}
+
+.cc-step-flow__content {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+}
+
+.cc-step-flow__side {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  padding-top: 22px;
+  background: rgba(8, 14, 24, 0.7);
+}
+
+.cc-step-flow__context,
+.cc-step-flow__footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-step-flow__context {
+  display: grid;
+  gap: 14px;
+  padding-top: 2px;
+}
+
+.cc-step-flow__context-head,
+.cc-step-flow__context-list {
+  display: grid;
+  gap: 8px;
+}
+
+.cc-step-flow__context-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(17, 24, 39, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cc-step-flow__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 28px;
+  background: rgba(7, 13, 24, 0.96);
+  backdrop-filter: blur(16px);
+}
+
+:root[data-theme="light"] .cc-step-flow {
+  background: linear-gradient(180deg, rgba(251, 253, 255, 0.99), rgba(242, 247, 251, 0.99));
+  border-color: rgba(14, 84, 114, 0.1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 24px 56px rgba(17, 73, 103, 0.14);
+}
+
+:root[data-theme="light"] .cc-step-flow__header {
+  border-bottom-color: rgba(14, 84, 114, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 32%),
+    rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="light"] .cc-step-flow__progress-step,
+:root[data-theme="light"] .cc-step-flow__context-card,
+:root[data-theme="light"] .cc-step-flow__hero-stat,
+:root[data-theme="light"] .cc-step-flow__context-pill {
+  border-color: rgba(14, 84, 114, 0.1);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+:root[data-theme="light"] .cc-step-flow__progress-step--current {
+  background: linear-gradient(135deg, rgba(230, 247, 255, 0.96), rgba(239, 248, 255, 0.98));
+  border-color: rgba(14, 165, 233, 0.3);
+}
+
+:root[data-theme="light"] .cc-step-flow__progress-step--blocked {
+  background: linear-gradient(135deg, rgba(255, 247, 221, 0.96), rgba(255, 252, 239, 0.98));
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+:root[data-theme="light"] .cc-step-flow__main {
+  border-right-color: rgba(14, 84, 114, 0.08);
+}
+
+:root[data-theme="light"] .cc-step-flow__side {
+  background: rgba(244, 249, 252, 0.84);
+}
+
+:root[data-theme="light"] .cc-step-flow__footer,
+:root[data-theme="light"] .cc-step-flow__context {
+  border-top-color: rgba(14, 84, 114, 0.08);
+}
+
+:root[data-theme="light"] .cc-step-flow__footer {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+@media (max-width: 980px) {
+  .cc-step-flow__headline {
+    flex-direction: column;
+  }
+
+  .cc-step-flow__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-step-flow__main {
+    border-right: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+}
+
+@media (max-width: 720px) {
+  .cc-step-flow {
+    border-radius: 20px;
+  }
+
+  .cc-step-flow__header,
+  .cc-step-flow__current-step,
+  .cc-step-flow__content,
+  .cc-step-flow__side,
+  .cc-step-flow__footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .cc-step-flow__header {
+    padding-top: 20px;
+    padding-bottom: 18px;
+  }
+
+  .cc-step-flow__hero-meta {
+    grid-template-columns: 1fr;
+    min-width: 0;
+  }
+
+  .cc-step-flow__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
-import { QuoteCreateForm } from '../features/quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../features/quotes/QuoteCreateFlow'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
 import { QuotesList } from '../features/quotes/QuotesList'
@@ -147,10 +147,11 @@ export function QuotesPage({
               })
             }}
           >
-            <QuoteCreateForm
+            <QuoteCreateFlow
               clients={clients}
               properties={properties}
-              onCreated={handleQuoteCreated}
+              onRefreshData={onQuoteCreated}
+              onCompleted={handleQuoteCreated}
               onCancel={() => {
                 setHasCreateFormDirty(false)
                 setShowCreateForm(false)

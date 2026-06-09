@@ -288,7 +288,7 @@ export function AppNav({
             />
 
             <div className="cc-shell-nav__brand-copy">
-              <span className="cc-shell-nav__title">CostaClean CRM</span>
+              <span className="cc-shell-nav__title">{compactMobile ? 'CostaClean' : 'CostaClean CRM'}</span>
             </div>
           </div>
 

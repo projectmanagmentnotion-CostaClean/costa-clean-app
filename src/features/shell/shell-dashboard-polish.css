@@ -2735,3 +2735,59 @@
     align-items: stretch;
   }
 }
+
+/* iPhone navbar hardening */
+
+.cc-shell-nav--mobile-compact .cc-shell-nav__brand-copy {
+  min-width: 0;
+}
+
+@media (max-width: 430px) {
+  .cc-shell-nav--mobile-compact {
+    padding: 8px 9px 10px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__topline {
+    gap: 7px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__brand {
+    gap: 8px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__title {
+    max-width: 118px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__actions,
+  .cc-shell-nav--mobile-compact .cc-shell-nav__utilities {
+    gap: 5px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__sync,
+  .cc-shell-nav--mobile-compact .cc-shell-nav__back,
+  .cc-shell-nav--mobile-compact .cc-theme-toggle,
+  .cc-shell-nav--mobile-compact .cc-alerts-bell__button {
+    min-height: 36px;
+    border-radius: 11px;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__sync,
+  .cc-shell-nav--mobile-compact .cc-shell-nav__back {
+    padding-inline: 10px;
+    font-size: 0.7rem;
+  }
+
+  .cc-shell-nav--mobile-compact .cc-shell-nav__back {
+    grid-column: span 1;
+  }
+}

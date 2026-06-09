@@ -35,14 +35,59 @@ export function WorkspaceRelationBrowser({
   items,
 }: WorkspaceRelationBrowserProps) {
   const [selectedId, setSelectedId] = useState<string | null>(items[0]?.id ?? null)
+  const [expandedId, setExpandedId] = useState<string | null>(items[0]?.id ?? null)
   const normalizedSelectedId = selectedId && items.some((item) => item.id === selectedId)
     ? selectedId
+    : (items[0]?.id ?? null)
+  const normalizedExpandedId = expandedId && items.some((item) => item.id === expandedId)
+    ? expandedId
     : (items[0]?.id ?? null)
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id === normalizedSelectedId) ?? items[0] ?? null,
     [items, normalizedSelectedId],
   )
+
+  function renderDetail(item: WorkspaceRelationItem, mode: 'inline' | 'aside') {
+    const isInline = mode === 'inline'
+
+    return (
+      <>
+        <div className={isInline ? 'cc-workspace-browser__detail-header cc-workspace-browser__detail-header--inline' : 'cc-workspace-browser__detail-header'}>
+          <div className="cc-workspace-browser__detail-copy">
+            <span className="cc-client-workspace__eyebrow">Situacion actual</span>
+            <h3>{item.title}</h3>
+            {item.subtitle ? <p>{item.subtitle}</p> : null}
+          </div>
+          {item.statusLabel ? <span className="lead-badge">{item.statusLabel}</span> : null}
+        </div>
+
+        {item.context ? <p className="cc-workspace-browser__detail-context">{item.context}</p> : null}
+        {item.detailSummary ? <p className="cc-workspace-browser__detail-summary">{item.detailSummary}</p> : null}
+
+        <div className="cc-workspace-browser__detail-grid">
+          {item.detailFields.map((field) => (
+            <div key={`${item.id}-${field.label}`} className="detail-row">
+              <span className="detail-label">{field.label}</span>
+              <strong>{field.value}</strong>
+            </div>
+          ))}
+        </div>
+
+        {item.detailBody ? (
+          <div className="cc-workspace-browser__detail-body">
+            {item.detailBody}
+          </div>
+        ) : null}
+
+        {item.actions?.length ? (
+          <div className={isInline ? 'cc-workspace-browser__detail-actions cc-workspace-browser__detail-actions--inline' : 'cc-workspace-browser__detail-actions'}>
+            <ActionGroup actions={item.actions} />
+          </div>
+        ) : null}
+      </>
+    )
+  }
 
   if (items.length === 0) {
     return (
@@ -60,6 +105,7 @@ export function WorkspaceRelationBrowser({
       <div className="cc-workspace-browser__list" role="listbox" aria-label={ariaLabel}>
         {items.map((item) => {
           const isSelected = item.id === selectedItem?.id
+          const isExpanded = item.id === normalizedExpandedId
 
           return (
             <article
@@ -70,7 +116,10 @@ export function WorkspaceRelationBrowser({
                 type="button"
                 className="cc-workspace-browser__row-main"
                 aria-pressed={isSelected}
-                onClick={() => setSelectedId(item.id)}
+                onClick={() => {
+                  setSelectedId(item.id)
+                  setExpandedId((current) => (current === item.id ? null : item.id))
+                }}
               >
                 <div className="cc-workspace-browser__row-head">
                   <div className="cc-workspace-browser__row-copy">
@@ -96,6 +145,12 @@ export function WorkspaceRelationBrowser({
                   <ActionGroup actions={item.actions} />
                 </div>
               ) : null}
+
+              {isSelected && isExpanded ? (
+                <div className="cc-workspace-browser__row-inline-detail">
+                  {renderDetail(item, 'inline')}
+                </div>
+              ) : null}
             </article>
           )
         })}
@@ -103,38 +158,7 @@ export function WorkspaceRelationBrowser({
 
       {selectedItem ? (
         <aside className="data-section cc-workspace-browser__detail">
-          <div className="cc-workspace-browser__detail-header">
-            <div className="cc-workspace-browser__detail-copy">
-              <span className="cc-client-workspace__eyebrow">Situacion actual</span>
-              <h3>{selectedItem.title}</h3>
-              {selectedItem.subtitle ? <p>{selectedItem.subtitle}</p> : null}
-            </div>
-            {selectedItem.statusLabel ? <span className="lead-badge">{selectedItem.statusLabel}</span> : null}
-          </div>
-
-          {selectedItem.context ? <p className="cc-workspace-browser__detail-context">{selectedItem.context}</p> : null}
-          {selectedItem.detailSummary ? <p className="cc-workspace-browser__detail-summary">{selectedItem.detailSummary}</p> : null}
-
-          <div className="cc-workspace-browser__detail-grid">
-            {selectedItem.detailFields.map((field) => (
-              <div key={`${selectedItem.id}-${field.label}`} className="detail-row">
-                <span className="detail-label">{field.label}</span>
-                <strong>{field.value}</strong>
-              </div>
-            ))}
-          </div>
-
-          {selectedItem.detailBody ? (
-            <div className="cc-workspace-browser__detail-body">
-              {selectedItem.detailBody}
-            </div>
-          ) : null}
-
-          {selectedItem.actions?.length ? (
-            <div className="cc-workspace-browser__detail-actions">
-              <ActionGroup actions={selectedItem.actions} />
-            </div>
-          ) : null}
+          {renderDetail(selectedItem, 'aside')}
         </aside>
       ) : null}
     </section>

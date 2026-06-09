@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
 import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
@@ -233,15 +233,51 @@ function PaymentsIcon() {
   )
 }
 
+function AlertsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M12 4.5a4.5 4.5 0 0 1 4.5 4.5v2.1c0 .8.2 1.58.58 2.28l1.1 2.03A1.1 1.1 0 0 1 17.2 17H6.8a1.1 1.1 0 0 1-.98-1.59l1.1-2.03c.38-.7.58-1.48.58-2.28V9A4.5 4.5 0 0 1 12 4.5Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 19a2.25 2.25 0 0 0 4 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
+function MoreIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+      <path
+        d="M12 6.75a1.5 1.5 0 1 0 0-.01M12 12a1.5 1.5 0 1 0 0-.01M12 17.25a1.5 1.5 0 1 0 0-.01"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 const navItems: NavItemDefinition[] = [
   { view: 'dashboard', shortLabel: 'Home', section: 'General', icon: HomeIcon, mobilePriority: true },
-  { view: 'leads', shortLabel: 'Leads', section: 'Comercial', icon: LeadsIcon, mobilePriority: true },
+  { view: 'leads', shortLabel: 'Leads', section: 'Comercial', icon: LeadsIcon, mobilePriority: false },
   { view: 'clients', shortLabel: 'Clientes', section: 'Base', icon: ClientsIcon, mobilePriority: true },
-  { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', icon: PropertiesIcon, mobilePriority: true },
-  { view: 'quotes', shortLabel: 'Presupuestos', section: 'Operaciones', icon: QuotesIcon, mobilePriority: true },
+  { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', icon: PropertiesIcon, mobilePriority: false },
+  { view: 'quotes', shortLabel: 'Presupuestos', section: 'Operaciones', icon: QuotesIcon, mobilePriority: false },
   { view: 'jobs', shortLabel: 'Servicios', section: 'Operaciones', icon: JobsIcon, mobilePriority: true },
   { view: 'invoices', shortLabel: 'Facturas', section: 'Finanzas', icon: InvoicesIcon, mobilePriority: true },
-  { view: 'payments', shortLabel: 'Cobros', section: 'Finanzas', icon: PaymentsIcon, mobilePriority: true },
+  { view: 'payments', shortLabel: 'Cobros', section: 'Finanzas', icon: PaymentsIcon, mobilePriority: false },
   { view: 'expenses', shortLabel: 'Gastos', section: 'Finanzas', icon: ExpensesIcon, mobilePriority: false },
   { view: 'quarterly_closing', shortLabel: 'Cierre trimestral', section: 'Cierre', icon: QuarterlyClosingIcon, mobilePriority: false },
   { view: 'annual_closing', shortLabel: 'Cierre anual', section: 'Cierre', icon: AnnualClosingIcon, mobilePriority: false },
@@ -249,6 +285,10 @@ const navItems: NavItemDefinition[] = [
 
 const bottomDockItems = navItems.filter((item) => item.mobilePriority)
 const topNavItems = navItems
+const mobileSecondaryItems: Array<NavItemDefinition | { view: AppView; shortLabel: string; section: string; icon: () => ReactElement }> = [
+  { view: 'alerts', shortLabel: 'Alertas', section: 'Control', icon: AlertsIcon },
+  ...navItems.filter((item) => !item.mobilePriority && item.view !== 'dashboard'),
+]
 
 export function AppNav({
   currentView,
@@ -264,9 +304,11 @@ export function AppNav({
   backTargetView = null,
   onBack,
 }: AppNavProps) {
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
   const currentViewLabel = currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)
   const currentViewMeta = topNavItems.find((item) => item.view === currentView)
   const backLabel = backTargetView ? 'Volver' : 'Inicio'
+  const isMoreSectionActive = !bottomDockItems.some((item) => item.view === currentView)
 
   return (
     <>
@@ -400,8 +442,88 @@ export function AppNav({
               </button>
             )
           })}
+
+          <button
+            type="button"
+            className={isMoreMenuOpen || isMoreSectionActive ? 'cc-bottom-dock__button is-active' : 'cc-bottom-dock__button'}
+            onClick={() => setIsMoreMenuOpen((currentState) => !currentState)}
+            aria-expanded={isMoreMenuOpen}
+            aria-controls="cc-mobile-nav-more-sheet"
+            aria-label="Abrir mas modulos"
+          >
+            <span className="cc-bottom-dock__icon" aria-hidden="true">
+              <MoreIcon />
+            </span>
+            <span className="cc-bottom-dock__label">Mas</span>
+          </button>
         </div>
       </nav>
+
+      {isMoreMenuOpen ? (
+        <>
+          <button
+            type="button"
+            className="cc-mobile-nav-sheet__backdrop"
+            onClick={() => setIsMoreMenuOpen(false)}
+            aria-label="Cerrar menu de modulos"
+          />
+
+          <section
+            id="cc-mobile-nav-more-sheet"
+            className="cc-mobile-nav-sheet"
+            aria-label="Mas modulos"
+          >
+            <div className="cc-mobile-nav-sheet__handle" aria-hidden="true" />
+
+            <div className="cc-mobile-nav-sheet__header">
+              <div className="cc-mobile-nav-sheet__copy">
+                <span className="cc-mobile-nav-sheet__eyebrow">Navegacion</span>
+                <strong className="cc-mobile-nav-sheet__title">Mas modulos</strong>
+              </div>
+
+              <button
+                type="button"
+                className="cc-mobile-nav-sheet__close"
+                onClick={() => setIsMoreMenuOpen(false)}
+                aria-label="Cerrar menu de modulos"
+              >
+                Cerrar
+              </button>
+            </div>
+
+            <div className="cc-mobile-nav-sheet__grid">
+              {mobileSecondaryItems.map((item) => {
+                const Icon = item.icon
+
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    className={
+                      currentView === item.view
+                        ? 'cc-mobile-nav-sheet__item is-active'
+                        : 'cc-mobile-nav-sheet__item'
+                    }
+                    onClick={() => {
+                      setIsMoreMenuOpen(false)
+                      onChangeView(item.view)
+                    }}
+                    aria-current={currentView === item.view ? 'page' : undefined}
+                  >
+                    <span className="cc-mobile-nav-sheet__item-icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <span className="cc-mobile-nav-sheet__item-copy">
+                      <span className="cc-mobile-nav-sheet__item-title">{item.shortLabel}</span>
+                      <span className="cc-mobile-nav-sheet__item-section">{item.section}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        </>
+      ) : null}
     </>
   )
 }

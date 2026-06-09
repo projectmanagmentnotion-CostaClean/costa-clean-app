@@ -2799,6 +2799,10 @@
   display: none;
 }
 
+.cc-mobile-shell-header {
+  display: none;
+}
+
 @media (max-width: 640px) {
   .app-shell {
     padding:
@@ -2814,38 +2818,40 @@
     border-radius: 26px;
   }
 
-  .cc-shell-nav--iphone {
+  .cc-shell-nav {
+    display: none !important;
+  }
+
+  .cc-mobile-shell-header {
+    display: block;
     position: sticky;
     top: max(2px, env(safe-area-inset-top, 0px));
     z-index: 80;
-    padding: 6px 4px 8px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    margin-bottom: 6px;
+    padding: 4px 2px 8px;
   }
 
-  .cc-shell-nav--iphone .cc-shell-nav__topline {
+  .cc-mobile-shell-header__row {
+    display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
     gap: 10px;
+    align-items: center;
   }
 
-  .cc-shell-nav__mobile-leading {
+  .cc-mobile-shell-header__leading {
     display: flex;
     align-items: center;
     gap: 10px;
     min-width: 0;
   }
 
-  .cc-shell-nav__mobile-copy {
+  .cc-mobile-shell-header__copy {
     display: grid;
-    min-width: 0;
+    gap: 1px;
+    min-width: 0; 
   }
 
-  .cc-shell-nav__mobile-title {
+  .cc-mobile-shell-header__title {
     font-family: var(--cc-font-display);
     font-size: 1rem;
     font-weight: 800;
@@ -2856,20 +2862,29 @@
     text-overflow: ellipsis;
   }
 
-  .cc-shell-nav--iphone .cc-shell-nav__actions {
-    max-width: none;
-    gap: 0;
+  .cc-mobile-shell-header__section {
+    color: rgba(148, 163, 184, 0.78);
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
   }
 
-  .cc-shell-nav--iphone .cc-shell-nav__utilities {
+  .cc-mobile-shell-header__actions {
+    display: flex;
+    align-items: center;
     gap: 6px;
   }
 
-  .cc-shell-nav--iphone .cc-shell-nav__sync,
-  .cc-shell-nav--iphone .cc-shell-nav__back,
-  .cc-shell-nav--iphone .cc-theme-toggle,
-  .cc-shell-nav--iphone .cc-alerts-bell__button {
+  .cc-mobile-shell-header__sync,
+  .cc-mobile-shell-header__back,
+  .cc-mobile-shell-header .cc-theme-toggle,
+  .cc-mobile-shell-header .cc-alerts-bell__button {
     min-height: 36px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.08);
     background: rgba(255, 255, 255, 0.04);
@@ -2878,9 +2893,18 @@
       0 8px 18px rgba(2, 8, 23, 0.1);
   }
 
-  .cc-shell-nav--iphone .cc-shell-nav__back {
+  .cc-mobile-shell-header__back {
     padding-inline: 12px;
     font-size: 0.74rem;
+    color: rgba(226, 232, 240, 0.94);
+  }
+
+  .cc-mobile-shell-header__sync-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: #67e8f9;
+    box-shadow: 0 0 0 4px rgba(103, 232, 249, 0.12);
   }
 
   .cc-shell-nav__sync span:last-child {
@@ -3099,6 +3123,26 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.96);
   }
 
+  :root[data-theme="light"] .cc-mobile-shell-header__title,
+  :root[data-theme="light"] .cc-mobile-shell-header__back,
+  :root[data-theme="light"] .cc-mobile-shell-header .cc-theme-toggle,
+  :root[data-theme="light"] .cc-mobile-shell-header .cc-alerts-bell__button,
+  :root[data-theme="light"] .cc-mobile-shell-header__sync {
+    color: #10263a;
+  }
+
+  :root[data-theme="light"] .cc-mobile-shell-header__section {
+    color: #5c768c;
+  }
+
+  :root[data-theme="light"] .cc-mobile-shell-header__sync,
+  :root[data-theme="light"] .cc-mobile-shell-header__back,
+  :root[data-theme="light"] .cc-mobile-shell-header .cc-theme-toggle,
+  :root[data-theme="light"] .cc-mobile-shell-header .cc-alerts-bell__button {
+    border-color: rgba(14, 84, 114, 0.1);
+    background: rgba(255, 255, 255, 0.84);
+  }
+
   :root[data-theme="light"] .cc-mobile-nav-sheet {
     border-color: rgba(11, 125, 176, 0.14);
     background:
@@ -3145,7 +3189,7 @@
     border-radius: 24px;
   }
 
-  .cc-shell-nav--iphone {
+  .cc-mobile-shell-header {
     padding-inline: 2px;
   }
 
@@ -3153,7 +3197,7 @@
     max-width: 110px;
   }
 
-  .cc-shell-nav__mobile-title {
+  .cc-mobile-shell-header__title {
     font-size: 0.94rem;
   }
 

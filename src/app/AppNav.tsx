@@ -315,6 +315,51 @@ export function AppNav({
   const mobileHeaderTitle = currentView === 'dashboard' ? 'Hoy' : currentViewLabel
   const shouldShowDesktopCurrent = !mobileViewport && !compactMobile
   const canUsePortal = typeof document !== 'undefined'
+  const mobileHeader = (
+    <header className="cc-mobile-shell-header" aria-label="Cabecera movil">
+      <div className="cc-mobile-shell-header__row">
+        <div className="cc-mobile-shell-header__leading">
+          {currentView !== 'dashboard' ? (
+            <button
+              type="button"
+              className="cc-mobile-shell-header__back"
+              onClick={onBack ?? (() => onChangeView('dashboard'))}
+              aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
+            >
+              {backLabel}
+            </button>
+          ) : null}
+
+          <div className="cc-mobile-shell-header__copy">
+            <span className="cc-mobile-shell-header__title">{mobileHeaderTitle}</span>
+            <span className="cc-mobile-shell-header__section">{currentViewMeta?.section ?? 'General'}</span>
+          </div>
+        </div>
+
+        <div className="cc-mobile-shell-header__actions">
+          <div
+            className={`cc-mobile-shell-header__sync cc-mobile-shell-header__sync--${syncStatus}`}
+            aria-live="polite"
+            aria-atomic="true"
+            title={getSyncStatusLabel(syncStatus)}
+          >
+            <span className="cc-mobile-shell-header__sync-dot" aria-hidden="true" />
+          </div>
+
+          {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
+
+          {onOpenAlert && onOpenAlertsCenter ? (
+            <AlertsBell
+              alerts={alerts}
+              reviewedAlertIds={reviewedAlertIds}
+              onOpenAlert={onOpenAlert}
+              onOpenAlertsCenter={onOpenAlertsCenter}
+            />
+          ) : null}
+        </div>
+      </div>
+    </header>
+  )
   const bottomDock = (
     <>
       <nav
@@ -435,37 +480,18 @@ export function AppNav({
 
   return (
     <>
-      <nav
-        className={
-          mobileViewport
-            ? compactMobile
-              ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--iphone cc-shell-nav--mobile-compact'
-              : 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--iphone'
-            : compactMobile
+      {mobileViewport ? (
+        mobileHeader
+      ) : (
+        <nav
+          className={
+            compactMobile
               ? 'cc-shell-nav cc-shell-nav--top-only cc-shell-nav--mobile-compact'
               : 'cc-shell-nav cc-shell-nav--top-only'
-        }
-        aria-label="Navegacion principal"
-      >
-        <div className="cc-shell-nav__topline">
-          {mobileViewport ? (
-            <div className="cc-shell-nav__mobile-leading">
-              {currentView !== 'dashboard' ? (
-                <button
-                  type="button"
-                  className="cc-shell-nav__back cc-shell-nav__back--mobile"
-                  onClick={onBack ?? (() => onChangeView('dashboard'))}
-                  aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
-                >
-                  {backLabel}
-                </button>
-              ) : null}
-
-              <div className="cc-shell-nav__mobile-copy">
-                <span className="cc-shell-nav__mobile-title">{mobileHeaderTitle}</span>
-              </div>
-            </div>
-          ) : (
+          }
+          aria-label="Navegacion principal"
+        >
+          <div className="cc-shell-nav__topline">
             <div className="cc-shell-nav__brand">
               <img
                 src="/branding/Costa_Clean-LOGO.png"
@@ -478,84 +504,84 @@ export function AppNav({
                 <span className="cc-shell-nav__title">{compactMobile ? 'CostaClean' : 'CostaClean CRM'}</span>
               </div>
             </div>
-          )}
 
-          <div className="cc-shell-nav__actions">
-            <div className="cc-shell-nav__utilities">
-              <div
-                className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
-                aria-live="polite"
-                aria-atomic="true"
-                title={getSyncStatusLabel(syncStatus)}
-              >
-                <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
-                <span>Sync</span>
+            <div className="cc-shell-nav__actions">
+              <div className="cc-shell-nav__utilities">
+                <div
+                  className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
+                  aria-live="polite"
+                  aria-atomic="true"
+                  title={getSyncStatusLabel(syncStatus)}
+                >
+                  <span className="cc-shell-nav__sync-dot" aria-hidden="true" />
+                  <span>Sync</span>
+                </div>
+
+                {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
+
+                {onOpenAlert && onOpenAlertsCenter ? (
+                  <AlertsBell
+                    alerts={alerts}
+                    reviewedAlertIds={reviewedAlertIds}
+                    onOpenAlert={onOpenAlert}
+                    onOpenAlertsCenter={onOpenAlertsCenter}
+                  />
+                ) : null}
+
+                {currentView !== 'dashboard' ? (
+                  <button
+                    type="button"
+                    className="cc-shell-nav__back"
+                    onClick={onBack ?? (() => onChangeView('dashboard'))}
+                    aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
+                  >
+                    {backLabel}
+                  </button>
+                ) : null}
               </div>
 
-              {onToggleTheme ? <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} /> : null}
-
-              {onOpenAlert && onOpenAlertsCenter ? (
-                <AlertsBell
-                  alerts={alerts}
-                  reviewedAlertIds={reviewedAlertIds}
-                  onOpenAlert={onOpenAlert}
-                  onOpenAlertsCenter={onOpenAlertsCenter}
-                />
-              ) : null}
-
-              {!mobileViewport && currentView !== 'dashboard' ? (
-                <button
-                  type="button"
-                  className="cc-shell-nav__back"
-                  onClick={onBack ?? (() => onChangeView('dashboard'))}
-                  aria-label={backTargetView ? `Volver a ${backTargetView === 'dashboard' ? 'Home' : getAppViewLabel(backTargetView)}` : 'Ir al inicio'}
-                >
-                  {backLabel}
-                </button>
+              {shouldShowDesktopCurrent ? (
+                <div className="cc-shell-nav__current" title={currentViewLabel}>
+                  <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
+                  <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
+                </div>
               ) : null}
             </div>
-
-            {shouldShowDesktopCurrent ? (
-              <div className="cc-shell-nav__current" title={currentViewLabel}>
-                <span className="cc-shell-nav__current-label">{currentViewMeta?.section ?? 'Vista'}</span>
-                <strong className="cc-shell-nav__current-value">{currentViewLabel}</strong>
-              </div>
-            ) : null}
           </div>
-        </div>
 
-        <div className="cc-shell-nav__rail" aria-label="Modulos">
-          <div className="cc-shell-nav__rail-scroll">
-            {topNavItems.map((item) => {
-              const Icon = item.icon
+          <div className="cc-shell-nav__rail" aria-label="Modulos">
+            <div className="cc-shell-nav__rail-scroll">
+              {topNavItems.map((item) => {
+                const Icon = item.icon
 
-              return (
-                <button
-                  key={item.view}
-                  type="button"
-                  className={
-                    currentView === item.view
-                      ? 'cc-shell-nav__rail-button is-active'
-                      : 'cc-shell-nav__rail-button'
-                  }
-                  onClick={() => onChangeView(item.view)}
-                  aria-current={currentView === item.view ? 'page' : undefined}
-                  title={`${item.shortLabel} - ${item.section}`}
-                  aria-label={`${item.shortLabel}, ${item.section}`}
-                >
-                  <span className="cc-shell-nav__rail-icon" aria-hidden="true">
-                    <Icon />
-                  </span>
-                  <span className="cc-shell-nav__rail-copy">
-                    <span className="cc-shell-nav__rail-title">{item.shortLabel}</span>
-                    <span className="cc-shell-nav__rail-section">{item.section}</span>
-                  </span>
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    className={
+                      currentView === item.view
+                        ? 'cc-shell-nav__rail-button is-active'
+                        : 'cc-shell-nav__rail-button'
+                    }
+                    onClick={() => onChangeView(item.view)}
+                    aria-current={currentView === item.view ? 'page' : undefined}
+                    title={`${item.shortLabel} - ${item.section}`}
+                    aria-label={`${item.shortLabel}, ${item.section}`}
+                  >
+                    <span className="cc-shell-nav__rail-icon" aria-hidden="true">
+                      <Icon />
+                    </span>
+                    <span className="cc-shell-nav__rail-copy">
+                      <span className="cc-shell-nav__rail-title">{item.shortLabel}</span>
+                      <span className="cc-shell-nav__rail-section">{item.section}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       {mobileViewport && canUsePortal ? createPortal(bottomDock, document.body) : bottomDock}
     </>

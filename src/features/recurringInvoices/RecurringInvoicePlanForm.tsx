@@ -6,7 +6,7 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
-import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
 import {
   buildQuoteLinePayloads,
@@ -363,10 +363,11 @@ export function RecurringInvoicePlanForm({
               isOpen={showQuoteCreate}
               onToggle={() => setShowQuoteCreate((current) => !current)}
             >
-              <QuoteCreateForm
+              <QuoteCreateFlow
                 clients={clients}
                 properties={properties}
-                onCreated={onSaved}
+                onRefreshData={onSaved}
+                onCompleted={async () => {}}
                 onDirtyChange={setIsDirty}
                 contextClientId={clientId}
                 contextPropertyId={form.property_id || null}

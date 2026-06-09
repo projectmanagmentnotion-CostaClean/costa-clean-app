@@ -18,6 +18,7 @@ import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
+import type { InvoiceListItem } from './types'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -29,6 +30,7 @@ interface InvoiceCreateFlowProps {
   onRefreshData: () => Promise<void>
   onCompleted: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
+  onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
   onCancel?: () => void
   onDirtyChange?: (isDirty: boolean) => void
 }
@@ -291,6 +293,7 @@ export function InvoiceCreateFlow({
   onRefreshData,
   onCompleted,
   prefill = null,
+  onCreatedInvoice,
   onCancel,
   onDirtyChange,
 }: InvoiceCreateFlowProps) {
@@ -548,6 +551,30 @@ export function InvoiceCreateFlow({
         linePayloads,
       )
 
+      await onCreatedInvoice?.({
+        id: invoiceId,
+        display_code: null,
+        invoice_number: null,
+        job_id: form.origin_mode === 'job' ? form.job_id : null,
+        quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
+        client_id: form.client_id,
+        client_display_code: selectedClient?.display_code ?? null,
+        issue_date: form.issue_date,
+        status: form.status,
+        subtotal: subtotalValue,
+        tax_amount: taxAmountValue,
+        total: totalValue,
+        notes: form.notes.trim() || null,
+        internal_notes: selectedQuote?.internal_notes ?? null,
+        pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+        client_name: selectedClient?.full_name ?? null,
+        property_id: form.property_id || null,
+        property_display_code: selectedProperty?.display_code ?? null,
+        property_name: selectedProperty?.name ?? null,
+        service_reference: selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : null,
+        service_description: selectedJob?.billing_concept ?? null,
+        lines: linePayloads,
+      })
       setIsDirty(false)
       await onCompleted()
     } catch (err) {

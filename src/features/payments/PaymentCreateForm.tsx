@@ -3,7 +3,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
-import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PropertyListItem } from '../properties/types'
@@ -284,12 +284,13 @@ export function PaymentCreateForm({
             isOpen={showInvoiceCreate}
             onToggle={() => setShowInvoiceCreate((current) => !current)}
           >
-            <InvoiceCreateForm
+            <InvoiceCreateFlow
               clients={clients}
               properties={properties}
               jobs={jobs}
               quotes={quotes}
-              onCreated={onCreated}
+              onRefreshData={onCreated}
+              onCompleted={async () => {}}
               onDirtyChange={setIsDirty}
               onCreatedInvoice={async (invoice) => {
                 setForm((current) => ({
@@ -336,15 +337,16 @@ export function PaymentCreateForm({
               isOpen={showInvoiceCreate}
               onToggle={() => setShowInvoiceCreate((current) => !current)}
             >
-              <InvoiceCreateForm
-                clients={clients}
-                properties={properties}
-                jobs={jobs}
-                quotes={quotes}
-                onCreated={onCreated}
-                onDirtyChange={setIsDirty}
-                onCreatedInvoice={async (invoice) => {
-                  setForm((current) => ({
+            <InvoiceCreateFlow
+              clients={clients}
+              properties={properties}
+              jobs={jobs}
+              quotes={quotes}
+              onRefreshData={onCreated}
+              onCompleted={async () => {}}
+              onDirtyChange={setIsDirty}
+              onCreatedInvoice={async (invoice) => {
+                setForm((current) => ({
                     ...current,
                     invoice_id: invoice.id,
                   }))

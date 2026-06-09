@@ -30,6 +30,7 @@ interface QuoteCreateFlowProps {
   onCompleted: () => Promise<void>
   contextClientId?: string | null
   contextPropertyId?: string | null
+  onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
   onCancel?: () => void
   onDirtyChange?: (isDirty: boolean) => void
 }
@@ -61,6 +62,7 @@ export function QuoteCreateFlow({
   onCompleted,
   contextClientId = null,
   contextPropertyId = null,
+  onCreatedQuote,
   onCancel,
   onDirtyChange,
 }: QuoteCreateFlowProps) {
@@ -222,6 +224,11 @@ export function QuoteCreateFlow({
         linePayloads,
       )
 
+      await onCreatedQuote?.({
+        id: quoteId,
+        client_id: form.client_id,
+        property_id: form.property_id || null,
+      })
       setIsDirty(false)
       await onCompleted()
     } catch (err) {

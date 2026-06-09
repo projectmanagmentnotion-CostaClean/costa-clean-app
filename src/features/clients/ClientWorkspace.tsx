@@ -26,7 +26,7 @@ import { clientWorkspaceTabs } from './useClientWorkspaceNavigation'
 import type { ClientListItem } from './types'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
-import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import type { JobListItem } from '../jobs/types'
 import { JobCreateForm } from '../jobs/JobCreateForm'
 import type { PaymentListItem } from '../payments/types'
@@ -34,7 +34,7 @@ import { PaymentCreateForm } from '../payments/PaymentCreateForm'
 import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { QuoteListItem } from '../quotes/types'
-import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import { RecurringInvoicePlanForm } from '../recurringInvoices/RecurringInvoicePlanForm'
 import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
 import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
@@ -534,6 +534,20 @@ export function ClientWorkspace({
     }),
     [client.id],
   )
+  const invoiceCreatePrefill = useMemo(
+    () => ({
+      request_id: createPrefillId(`client-invoice-${client.id}`),
+      origin_kind: 'manual' as const,
+      job_id: '',
+      quote_id: '',
+      client_id: client.id,
+      property_id: '',
+      notes: '',
+      lines: [],
+      title: client.display_code ?? client.id,
+    }),
+    [client.display_code, client.id],
+  )
   const heroActions: ActionGroupItem[] = []
 
   const openRecurringAction = () => {
@@ -762,25 +776,28 @@ export function ClientWorkspace({
           ) : null}
 
           {activeAction === 'quote' ? (
-            <QuoteCreateForm
+            <QuoteCreateFlow
               key={`quote-${client.id}`}
               clients={[client]}
               properties={relatedProperties}
               contextClientId={client.id}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleActionCreated}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
           {activeAction === 'invoice' ? (
-            <InvoiceCreateForm
+            <InvoiceCreateFlow
               key={`invoice-${client.id}`}
               clients={[client]}
               properties={relatedProperties}
               jobs={relatedJobs}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleActionCreated}
+              prefill={invoiceCreatePrefill}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

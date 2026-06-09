@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel, getPropertyTypeLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import type { InvoiceCreatePrefill } from '../invoices/invoiceCreatePrefill'
-import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import { JobCreateForm } from '../jobs/JobCreateForm'
@@ -16,7 +16,7 @@ import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
 import { propertyWorkspaceTabs } from './usePropertyWorkspaceNavigation'
-import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
 import { formatClientLabel, formatInvoiceLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../clients/types'
@@ -432,26 +432,28 @@ export function PropertyWorkspace({
           ) : null}
 
           {activeAction === 'quote' ? (
-            <QuoteCreateForm
+            <QuoteCreateFlow
               key={`property-quote-${property.id}`}
               clients={owner ? [owner] : clients}
               properties={[property]}
               contextClientId={property.client_id}
               contextPropertyId={property.id}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleActionCreated}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />
           ) : null}
 
           {activeAction === 'invoice' ? (
-            <InvoiceCreateForm
+            <InvoiceCreateFlow
               key={`property-invoice-${property.id}`}
               clients={owner ? [owner] : clients}
               properties={[property]}
               jobs={relatedJobs}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleActionCreated}
               prefill={invoicePrefill}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}

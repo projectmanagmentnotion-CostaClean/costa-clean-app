@@ -12,7 +12,8 @@ import {
   formatPropertyLabel,
   formatQuoteLabel,
 } from '../../app/relationshipLabels'
-import { InvoiceCreateForm } from '../invoices/InvoiceCreateForm'
+import { buildInvoiceCreatePrefillFromJob } from '../invoices/invoiceCreatePrefill'
+import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
@@ -195,6 +196,10 @@ export function JobWorkspace({
   const timelineItems = useMemo(
     () => buildJobTimelineItems({ job, quote, invoice, payments: relatedPayments }),
     [invoice, job, quote, relatedPayments],
+  )
+  const invoiceCreatePrefill = useMemo(
+    () => buildInvoiceCreatePrefillFromJob(job),
+    [job],
   )
   const heroActions: ActionGroupItem[] = []
 
@@ -401,12 +406,14 @@ export function JobWorkspace({
           onClose={requestCloseAction}
         >
           {activeAction === 'invoice' ? (
-            <InvoiceCreateForm
+            <InvoiceCreateFlow
               clients={client ? [client] : clients}
               properties={property ? [property] : properties}
               jobs={[job]}
               quotes={quote ? [quote] : []}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleActionCreated}
+              prefill={invoiceCreatePrefill}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

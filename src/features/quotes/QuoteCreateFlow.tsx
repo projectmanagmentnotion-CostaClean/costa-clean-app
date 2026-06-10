@@ -11,6 +11,11 @@ import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
 import {
+  completeContextualActionFlow,
+  completeFullViewActionFlow,
+  type FullViewActionFlowProps,
+} from '../shared/actionFlowLifecycle'
+import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
   createBlankQuoteLine,
@@ -23,16 +28,12 @@ import type { QuoteLineFormState } from './quoteLineUtils'
 import './QuoteCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
-interface QuoteCreateFlowProps {
+interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
-  onRefreshData: () => Promise<void>
-  onCompleted: () => Promise<void>
   contextClientId?: string | null
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
-  onCancel?: () => void
-  onDirtyChange?: (isDirty: boolean) => void
 }
 
 interface FormState {
@@ -230,7 +231,10 @@ export function QuoteCreateFlow({
         property_id: form.property_id || null,
       })
       setIsDirty(false)
-      await onCompleted()
+      await completeFullViewActionFlow({
+        onRefreshData,
+        onCompleted,
+      })
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Error desconocido creando el presupuesto.')
     } finally {
@@ -403,13 +407,18 @@ export function QuoteCreateFlow({
                     description="Se seleccionara automaticamente al guardarlo."
                     submitLabel="Guardar cliente y usarlo"
                     onCreatedClient={async (client) => {
-                      setForm((current) => ({
-                        ...current,
-                        client_id: client.id,
-                        property_id: '',
-                      }))
-                      setShowClientCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: client,
+                        applyCreated: async (createdClient) => {
+                          setForm((current) => ({
+                            ...current,
+                            client_id: createdClient.id,
+                            property_id: '',
+                          }))
+                        },
+                        closeSubflow: () => setShowClientCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>
@@ -493,12 +502,17 @@ export function QuoteCreateFlow({
                     description="La propiedad se guarda y vuelve seleccionada al instante."
                     submitLabel="Guardar propiedad y usarla"
                     onCreatedProperty={async (property) => {
-                      setForm((current) => ({
-                        ...current,
-                        property_id: property.id,
-                      }))
-                      setShowPropertyCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: property,
+                        applyCreated: async (createdProperty) => {
+                          setForm((current) => ({
+                            ...current,
+                            property_id: createdProperty.id,
+                          }))
+                        },
+                        closeSubflow: () => setShowPropertyCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>

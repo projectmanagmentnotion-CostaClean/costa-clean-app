@@ -8,6 +8,7 @@ import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
+import { completeContextualActionFlow } from '../shared/actionFlowLifecycle'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
@@ -372,13 +373,18 @@ export function RecurringInvoicePlanForm({
                 contextClientId={clientId}
                 contextPropertyId={form.property_id || null}
                 onCreatedQuote={async (quote) => {
-                  setForm((current) => ({
-                    ...current,
-                    quote_id: quote.id,
-                    property_id: quote.property_id ?? current.property_id,
-                  }))
-                  setIsDirty(true)
-                  setShowQuoteCreate(false)
+                  await completeContextualActionFlow({
+                    created: quote,
+                    applyCreated: async (createdQuote) => {
+                      setForm((current) => ({
+                        ...current,
+                        quote_id: createdQuote.id,
+                        property_id: createdQuote.property_id ?? current.property_id,
+                      }))
+                    },
+                    closeSubflow: () => setShowQuoteCreate(false),
+                    markDirty: () => setIsDirty(true),
+                  })
                 }}
               />
             </ContextualCreateSection>

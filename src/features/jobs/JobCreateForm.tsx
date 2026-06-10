@@ -7,8 +7,9 @@ import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
-import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
+import { completeContextualActionFlow } from '../shared/actionFlowLifecycle'
 import type { JobCreatePrefill } from './jobCreatePrefill'
 import type { JobListItem } from './types'
 
@@ -529,22 +530,28 @@ export function JobCreateForm({
                   isOpen={showQuoteCreate}
                   onToggle={() => setShowQuoteCreate((current) => !current)}
                 >
-                  <QuoteCreateForm
+                  <QuoteCreateFlow
                     clients={clients}
                     properties={properties}
-                    onCreated={onCreated}
+                    onRefreshData={onCreated}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     contextPropertyId={form.property_id || null}
                     onCreatedQuote={async (quote) => {
-                      setForm((current) => ({
-                        ...current,
-                        quote_id: quote.id,
-                        client_id: quote.client_id,
-                        property_id: quote.property_id ?? current.property_id,
-                      }))
-                      setIsDirty(true)
-                      setShowQuoteCreate(false)
+                      await completeContextualActionFlow({
+                        created: quote,
+                        applyCreated: async (createdQuote) => {
+                          setForm((current) => ({
+                            ...current,
+                            quote_id: createdQuote.id,
+                            client_id: createdQuote.client_id,
+                            property_id: createdQuote.property_id ?? current.property_id,
+                          }))
+                        },
+                        closeSubflow: () => setShowQuoteCreate(false),
+                        markDirty: () => setIsDirty(true),
+                      })
                     }}
                   />
                 </ContextualCreateSection>

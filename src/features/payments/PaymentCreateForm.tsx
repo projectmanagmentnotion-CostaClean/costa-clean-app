@@ -8,6 +8,7 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import { completeContextualActionFlow } from '../shared/actionFlowLifecycle'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 
 interface PaymentCreateFormProps {
@@ -293,12 +294,17 @@ export function PaymentCreateForm({
               onCompleted={async () => {}}
               onDirtyChange={setIsDirty}
               onCreatedInvoice={async (invoice) => {
-                setForm((current) => ({
-                  ...current,
-                  invoice_id: invoice.id,
-                }))
-                setIsDirty(true)
-                setShowInvoiceCreate(false)
+                await completeContextualActionFlow({
+                  created: invoice,
+                  applyCreated: async (createdInvoice) => {
+                    setForm((current) => ({
+                      ...current,
+                      invoice_id: createdInvoice.id,
+                    }))
+                  },
+                  closeSubflow: () => setShowInvoiceCreate(false),
+                  markDirty: () => setIsDirty(true),
+                })
               }}
             />
           </ContextualCreateSection>
@@ -346,12 +352,17 @@ export function PaymentCreateForm({
               onCompleted={async () => {}}
               onDirtyChange={setIsDirty}
               onCreatedInvoice={async (invoice) => {
-                setForm((current) => ({
-                    ...current,
-                    invoice_id: invoice.id,
-                  }))
-                  setIsDirty(true)
-                  setShowInvoiceCreate(false)
+                await completeContextualActionFlow({
+                  created: invoice,
+                  applyCreated: async (createdInvoice) => {
+                    setForm((current) => ({
+                      ...current,
+                      invoice_id: createdInvoice.id,
+                    }))
+                  },
+                  closeSubflow: () => setShowInvoiceCreate(false),
+                  markDirty: () => setIsDirty(true),
+                })
                 }}
               />
             </ContextualCreateSection>

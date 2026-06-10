@@ -14,25 +14,26 @@ import { JobCreateForm } from '../jobs/JobCreateForm'
 import type { JobListItem } from '../jobs/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
-import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
+import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
+import {
+  completeContextualActionFlow,
+  completeFullViewActionFlow,
+  type FullViewActionFlowProps,
+} from '../shared/actionFlowLifecycle'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
-interface InvoiceCreateFlowProps {
+interface InvoiceCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
-  onRefreshData: () => Promise<void>
-  onCompleted: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
   onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
-  onCancel?: () => void
-  onDirtyChange?: (isDirty: boolean) => void
 }
 
 type InvoiceOriginMode = 'job' | 'quote' | 'manual'
@@ -576,7 +577,10 @@ export function InvoiceCreateFlow({
         lines: linePayloads,
       })
       setIsDirty(false)
-      await onCompleted()
+      await completeFullViewActionFlow({
+        onRefreshData,
+        onCompleted,
+      })
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Error desconocido creando la factura.')
     } finally {
@@ -795,16 +799,21 @@ export function InvoiceCreateFlow({
                     onCreated={onRefreshData}
                     onDirtyChange={setIsDirty}
                     onCreatedJob={async (job) => {
-                      setForm((current) => ({
-                        ...current,
-                        origin_mode: 'job',
-                        job_id: job.id,
-                        client_id: job.client_id,
-                        property_id: job.property_id,
-                        quote_id: job.quote_id ?? '',
-                      }))
-                      setShowJobCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: job,
+                        applyCreated: async (createdJob) => {
+                          setForm((current) => ({
+                            ...current,
+                            origin_mode: 'job',
+                            job_id: createdJob.id,
+                            client_id: createdJob.client_id,
+                            property_id: createdJob.property_id,
+                            quote_id: createdJob.quote_id ?? '',
+                          }))
+                        },
+                        closeSubflow: () => setShowJobCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>
@@ -818,23 +827,29 @@ export function InvoiceCreateFlow({
                   isOpen={showQuoteCreate}
                   onToggle={() => setShowQuoteCreate((current) => !current)}
                 >
-                  <QuoteCreateForm
+                  <QuoteCreateFlow
                     clients={clients}
                     properties={properties}
-                    onCreated={onRefreshData}
+                    onRefreshData={onRefreshData}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     contextClientId={form.client_id || null}
                     contextPropertyId={form.property_id || null}
                     onCreatedQuote={async (quote) => {
-                      setForm((current) => ({
-                        ...current,
-                        origin_mode: 'quote',
-                        quote_id: quote.id,
-                        client_id: quote.client_id,
-                        property_id: quote.property_id ?? '',
-                      }))
-                      setShowQuoteCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: quote,
+                        applyCreated: async (createdQuote) => {
+                          setForm((current) => ({
+                            ...current,
+                            origin_mode: 'quote',
+                            quote_id: createdQuote.id,
+                            client_id: createdQuote.client_id,
+                            property_id: createdQuote.property_id ?? '',
+                          }))
+                        },
+                        closeSubflow: () => setShowQuoteCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>
@@ -926,13 +941,18 @@ export function InvoiceCreateFlow({
                     description="Se seleccionara automaticamente al guardarlo."
                     submitLabel="Guardar cliente y usarlo"
                     onCreatedClient={async (client) => {
-                      setForm((current) => ({
-                        ...current,
-                        client_id: client.id,
-                        property_id: '',
-                      }))
-                      setShowClientCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: client,
+                        applyCreated: async (createdClient) => {
+                          setForm((current) => ({
+                            ...current,
+                            client_id: createdClient.id,
+                            property_id: '',
+                          }))
+                        },
+                        closeSubflow: () => setShowClientCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>
@@ -955,12 +975,17 @@ export function InvoiceCreateFlow({
                     description="La propiedad quedara disponible de inmediato dentro del flujo."
                     submitLabel="Guardar propiedad y usarla"
                     onCreatedProperty={async (property) => {
-                      setForm((current) => ({
-                        ...current,
-                        property_id: property.id,
-                      }))
-                      setShowPropertyCreate(false)
-                      markDirty()
+                      await completeContextualActionFlow({
+                        created: property,
+                        applyCreated: async (createdProperty) => {
+                          setForm((current) => ({
+                            ...current,
+                            property_id: createdProperty.id,
+                          }))
+                        },
+                        closeSubflow: () => setShowPropertyCreate(false),
+                        markDirty,
+                      })
                     }}
                   />
                 </ContextualCreateSection>

@@ -113,6 +113,8 @@ export function ExpenseDetailCard({
   const [fiscalAssistiveNotice, setFiscalAssistiveNotice] = useState<string | null>(null)
   const [pendingReceiptAction, setPendingReceiptAction] = useState<'open' | 'delete' | null>(null)
   const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     expense_date: '',
     supplier_name: '',
@@ -140,6 +142,7 @@ export function ExpenseDetailCard({
       setSaveError(null)
       setSuccessMessage(null)
       setFiscalAssistiveNotice(null)
+      setIsDirty(false)
       setForm({
         expense_date: '',
         supplier_name: '',
@@ -165,6 +168,7 @@ export function ExpenseDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setFiscalAssistiveNotice(null)
+    setIsDirty(false)
     setForm({
       expense_date: expense.expense_date,
       supplier_name: expense.supplier_name ?? '',
@@ -186,14 +190,15 @@ export function ExpenseDetailCard({
   }, [expense])
 
   useEffect(() => {
-    onUnsavedChange?.(isEditing)
+    onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
-  }, [isEditing, onUnsavedChange])
+  }, [isDirty, onUnsavedChange])
 
   function updateField<K extends keyof EditFormState>(
     field: K,
     value: EditFormState[K],
   ) {
+    setIsDirty(true)
     setForm((current) => ({
       ...current,
       [field]: value,
@@ -283,6 +288,7 @@ export function ExpenseDetailCard({
       await onExpenseUpdated()
       setSuccessMessage('Gasto actualizado correctamente.')
       setIsEditing(false)
+      setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el gasto.'
@@ -440,9 +446,15 @@ export function ExpenseDetailCard({
               type="button"
               className="secondary-button"
               onClick={() => {
+                if (isEditing && isDirty) {
+                  setShowDiscardConfirm(true)
+                  return
+                }
+
                 setIsEditing((current) => !current)
                 setSaveError(null)
                 setSuccessMessage(null)
+                setIsDirty(false)
               }}
             >
               {isEditing ? 'Cancelar edición' : 'Editar gasto'}
@@ -671,6 +683,22 @@ export function ExpenseDetailCard({
                   onClick={recalculateAmounts}
                 >
                   Recalcular importes
+                </button>
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    if (isDirty) {
+                      setShowDiscardConfirm(true)
+                      return
+                    }
+
+                    setIsEditing(false)
+                    setIsDirty(false)
+                  }}
+                >
+                  Cancelar
                 </button>
 
                 <button type="submit" className="primary-button" disabled={isSaving}>
@@ -965,6 +993,20 @@ export function ExpenseDetailCard({
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={showDiscardConfirm}
+        title="Descartar cambios de gasto"
+        description="Has modificado este gasto. Si cierras ahora, perderas los cambios no guardados."
+        confirmLabel="Descartar cambios"
+        tone="warning"
+        onCancel={() => setShowDiscardConfirm(false)}
+        onConfirm={() => {
+          setShowDiscardConfirm(false)
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={pendingReceiptAction === 'open'}

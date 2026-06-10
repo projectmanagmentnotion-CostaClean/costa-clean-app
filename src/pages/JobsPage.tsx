@@ -4,7 +4,7 @@ import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
-import { JobCreateForm } from '../features/jobs/JobCreateForm'
+import { JobCreateFlow } from '../features/jobs/JobCreateFlow'
 import { JobsList } from '../features/jobs/JobsList'
 import { JobWorkspace } from '../features/jobs/JobWorkspace'
 import type { JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
@@ -95,8 +95,7 @@ export function JobsPage({
     })
   }
 
-  async function handleJobCreated() {
-    await onJobCreated()
+  async function handleJobFlowCompleted() {
     onPrefillConsumed()
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
@@ -152,11 +151,12 @@ export function JobsPage({
                 })
               }}
             >
-              <JobCreateForm
+              <JobCreateFlow
                 clients={clients}
                 properties={properties}
                 quotes={quotes}
-                onCreated={handleJobCreated}
+                onRefreshData={onJobCreated}
+                onCompleted={handleJobFlowCompleted}
                 prefill={createPrefill}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
@@ -164,7 +164,6 @@ export function JobsPage({
                   onPrefillConsumed()
                 }}
                 onDirtyChange={setHasCreateFormDirty}
-                onOpenCreatedJob={(jobId) => handleOpenWorkspace(jobId)}
               />
             </ActionFlowOverlay>
           ) : null}

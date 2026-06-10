@@ -17,7 +17,7 @@ import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
-import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
@@ -293,6 +293,11 @@ export function JobWorkspace({
     setHasActionDirty(false)
   }
 
+  async function handleFlowCompleted() {
+    setActiveAction(null)
+    setHasActionDirty(false)
+  }
+
   function openAction(action: JobWorkspaceAction) {
     setActiveAction(action)
     setHasActionDirty(false)
@@ -420,13 +425,14 @@ export function JobWorkspace({
           ) : null}
 
           {activeAction === 'payment' ? (
-            <PaymentCreateForm
+            <PaymentCreateFlow
               invoices={invoice ? [invoice] : []}
               clients={client ? [client] : clients}
               properties={property ? [property] : properties}
               jobs={[job]}
               quotes={quote ? [quote] : []}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

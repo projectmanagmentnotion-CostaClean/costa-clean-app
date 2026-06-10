@@ -27,10 +27,10 @@ import type { ClientListItem } from './types'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
+import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
-import { JobCreateForm } from '../jobs/JobCreateForm'
 import type { PaymentListItem } from '../payments/types'
-import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { QuoteListItem } from '../quotes/types'
@@ -498,6 +498,12 @@ export function ClientWorkspace({
     setHasActionDirty(false)
   }
 
+  async function handleFlowCompleted() {
+    setActiveAction(null)
+    setEditingRecurringPlanId(null)
+    setHasActionDirty(false)
+  }
+
   function requestCloseAction() {
     if (!hasActionDirty) {
       setActiveAction(null)
@@ -762,16 +768,16 @@ export function ClientWorkspace({
           ) : null}
 
           {activeAction === 'job' ? (
-            <JobCreateForm
+            <JobCreateFlow
               key={`job-${client.id}`}
               clients={[client]}
               properties={relatedProperties}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               prefill={jobCreatePrefill}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
-              onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
 
@@ -804,14 +810,15 @@ export function ClientWorkspace({
           ) : null}
 
           {activeAction === 'payment' ? (
-            <PaymentCreateForm
+            <PaymentCreateFlow
               key={`payment-${client.id}`}
               invoices={relatedInvoices}
               clients={[client]}
               properties={relatedProperties}
               jobs={relatedJobs}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

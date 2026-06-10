@@ -14,7 +14,7 @@ import {
   updateInvoiceStatus as updateInvoiceStatusRpc,
 } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
-import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
@@ -999,14 +999,14 @@ export function InvoiceDetailCard({
                       setHasPaymentFormDirty(false)
                     }}
                   >
-                    <PaymentCreateForm
+                    <PaymentCreateFlow
                       invoices={[invoice]}
                       clients={[]}
                       properties={[]}
                       jobs={[]}
                       quotes={[]}
-                      onCreated={async () => {
-                        await onInvoiceUpdated()
+                      onRefreshData={onInvoiceUpdated}
+                      onCompleted={async () => {
                         setPaymentActionMode(null)
                       }}
                       title={paymentActionMode === 'partial' ? 'Registrar cobro parcial' : 'Registrar cobro'}

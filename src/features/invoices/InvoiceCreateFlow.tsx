@@ -10,7 +10,7 @@ import { ClientBillingDetailsInlineForm } from '../clients/ClientBillingDetailsI
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
-import { JobCreateForm } from '../jobs/JobCreateForm'
+import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
@@ -792,11 +792,12 @@ export function InvoiceCreateFlow({
                   isOpen={showJobCreate}
                   onToggle={() => setShowJobCreate((current) => !current)}
                 >
-                  <JobCreateForm
+                  <JobCreateFlow
                     clients={clients}
                     properties={properties}
                     quotes={quotes}
-                    onCreated={onRefreshData}
+                    onRefreshData={onRefreshData}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     onCreatedJob={async (job) => {
                       await completeContextualActionFlow({

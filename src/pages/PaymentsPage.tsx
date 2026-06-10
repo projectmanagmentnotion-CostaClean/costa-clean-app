@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
-import { PaymentCreateForm } from '../features/payments/PaymentCreateForm'
+import { PaymentCreateFlow } from '../features/payments/PaymentCreateFlow'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
@@ -78,8 +78,7 @@ export function PaymentsPage({
     })
   }
 
-  async function handlePaymentCreated() {
-    await onPaymentCreated()
+  async function handlePaymentFlowCompleted() {
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
   }
@@ -122,13 +121,14 @@ export function PaymentsPage({
             })
           }}
         >
-          <PaymentCreateForm
+          <PaymentCreateFlow
             invoices={invoices}
             clients={clients}
             properties={properties}
             jobs={jobs}
             quotes={quotes}
-            onCreated={handlePaymentCreated}
+            onRefreshData={onPaymentCreated}
+            onCompleted={handlePaymentFlowCompleted}
             onCancel={() => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)

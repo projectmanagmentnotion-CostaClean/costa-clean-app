@@ -5,10 +5,10 @@ import type { InvoiceCreatePrefill } from '../invoices/invoiceCreatePrefill'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
-import { JobCreateForm } from '../jobs/JobCreateForm'
+import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobCreatePrefill } from '../jobs/jobCreatePrefill'
 import type { JobListItem } from '../jobs/types'
-import { PaymentCreateForm } from '../payments/PaymentCreateForm'
+import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PaymentListItem } from '../payments/types'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -303,6 +303,11 @@ export function PropertyWorkspace({
     setHasActionDirty(false)
   }
 
+  async function handleFlowCompleted() {
+    setActiveAction(null)
+    setHasActionDirty(false)
+  }
+
   function openAction(action: Exclude<PropertyWorkspaceAction, null>) {
     setActiveAction(action)
     setHasActionDirty(false)
@@ -418,16 +423,16 @@ export function PropertyWorkspace({
           onClose={requestCloseAction}
         >
           {activeAction === 'job' ? (
-            <JobCreateForm
+            <JobCreateFlow
               key={`property-job-${property.id}`}
               clients={owner ? [owner] : clients}
               properties={[property]}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               prefill={jobPrefill}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
-              onOpenCreatedJob={(jobId) => onOpenJobWorkspace(jobId)}
             />
           ) : null}
 
@@ -461,14 +466,15 @@ export function PropertyWorkspace({
           ) : null}
 
           {activeAction === 'payment' ? (
-            <PaymentCreateForm
+            <PaymentCreateFlow
               key={`property-payment-${property.id}`}
               invoices={relatedInvoices}
               clients={owner ? [owner] : clients}
               properties={[property]}
               jobs={relatedJobs}
               quotes={relatedQuotes}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

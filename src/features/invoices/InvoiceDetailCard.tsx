@@ -38,6 +38,10 @@ interface InvoiceDetailCardProps {
   onOpenPropertyWorkspace: (propertyId: string) => void
   onOpenQuoteDetail: (quoteId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  hideHeaderActions?: boolean
+  majorEditMode?: boolean
+  onRequestMajorEdit?: () => void
+  onMajorEditClose?: () => void
   emptyState?: {
     title: string
     description: string
@@ -284,6 +288,10 @@ export function InvoiceDetailCard({
   onOpenPropertyWorkspace,
   onOpenQuoteDetail,
   onUnsavedChange,
+  hideHeaderActions = false,
+  majorEditMode = false,
+  onRequestMajorEdit,
+  onMajorEditClose,
   emptyState,
 }: InvoiceDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -376,6 +384,11 @@ export function InvoiceDetailCard({
     onUnsavedChange?.(isDirty || hasPaymentFormDirty)
     return () => onUnsavedChange?.(false)
   }, [hasPaymentFormDirty, isDirty, onUnsavedChange])
+
+  useEffect(() => {
+    if (!invoice || !majorEditMode) return
+    setIsEditing(true)
+  }, [invoice, majorEditMode])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
@@ -530,7 +543,11 @@ export function InvoiceDetailCard({
 
       await onInvoiceUpdated()
       setSuccessMessage('Factura actualizada correctamente.')
-      setIsEditing(false)
+      if (majorEditMode) {
+        onMajorEditClose?.()
+      } else {
+        setIsEditing(false)
+      }
       setIsDirty(false)
     } catch (err) {
       const message =
@@ -581,29 +598,37 @@ export function InvoiceDetailCard({
         onClick: onOpenDocument,
       },
       {
-        key: 'edit-invoice',
-        label: isEditing ? 'Cancelar edicion' : 'Editar factura',
-        onClick: () => {
-          if (isEditing && isDirty) {
-            setShowDiscardConfirm(true)
-            return
-          }
-
-          setIsEditing((current) => !current)
-          setSaveError(null)
-          setSuccessMessage(null)
-          setPaymentActionMode(null)
-          setHasPaymentFormDirty(false)
-          setIsDirty(false)
-          resetFormFromInvoice()
-        },
-      },
-      {
         key: 'view-payments',
         label: 'Ver cobros',
         onClick: () => onViewPayments(invoice.id),
       },
     )
+  }
+
+  if (invoice && !hideHeaderActions) {
+    headerActions.push({
+      key: 'edit-invoice',
+      label: isEditing ? 'Cancelar edicion' : 'Editar factura',
+      onClick: () => {
+        if (onRequestMajorEdit && !majorEditMode) {
+          onRequestMajorEdit()
+          return
+        }
+
+        if (isEditing && isDirty) {
+          setShowDiscardConfirm(true)
+          return
+        }
+
+        setIsEditing((current) => !current)
+        setSaveError(null)
+        setSuccessMessage(null)
+        setPaymentActionMode(null)
+        setHasPaymentFormDirty(false)
+        setIsDirty(false)
+        resetFormFromInvoice()
+      },
+    })
   }
   const dedupedHeaderActions = headerActions.filter(
     (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
@@ -692,7 +717,7 @@ export function InvoiceDetailCard({
           <h2>Detalle de la factura</h2>
         </div>
 
-        {invoice ? (
+        {invoice && !hideHeaderActions ? (
           <div className="cc-detail-panel__actions">
             <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
           </div>
@@ -899,6 +924,11 @@ export function InvoiceDetailCard({
                   onClick={() => {
                     if (isDirty) {
                       setShowDiscardConfirm(true)
+                      return
+                    }
+
+                    if (majorEditMode) {
+                      onMajorEditClose?.()
                       return
                     }
 
@@ -1115,6 +1145,13 @@ export function InvoiceDetailCard({
           if (paymentActionMode) {
             setPaymentActionMode(null)
             setHasPaymentFormDirty(false)
+            return
+          }
+
+          if (majorEditMode) {
+            setIsDirty(false)
+            resetFormFromInvoice()
+            onMajorEditClose?.()
             return
           }
 

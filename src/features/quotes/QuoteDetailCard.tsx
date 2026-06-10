@@ -33,6 +33,10 @@ interface QuoteDetailCardProps {
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  hideHeaderActions?: boolean
+  majorEditMode?: boolean
+  onRequestMajorEdit?: () => void
+  onMajorEditClose?: () => void
 }
 
 interface EditFormState {
@@ -67,6 +71,10 @@ export function QuoteDetailCard({
   onOpenDocument,
   onCreateJobFromQuote,
   onUnsavedChange,
+  hideHeaderActions = false,
+  majorEditMode = false,
+  onRequestMajorEdit,
+  onMajorEditClose,
 }: QuoteDetailCardProps) {
   if (!quote) {
     return (
@@ -94,6 +102,10 @@ export function QuoteDetailCard({
       onOpenDocument={onOpenDocument}
       onCreateJobFromQuote={onCreateJobFromQuote}
       onUnsavedChange={onUnsavedChange}
+      hideHeaderActions={hideHeaderActions}
+      majorEditMode={majorEditMode}
+      onRequestMajorEdit={onRequestMajorEdit}
+      onMajorEditClose={onMajorEditClose}
     />
   )
 }
@@ -106,6 +118,10 @@ function QuoteDetailCardContent({
   onOpenDocument,
   onCreateJobFromQuote,
   onUnsavedChange,
+  hideHeaderActions,
+  majorEditMode,
+  onRequestMajorEdit,
+  onMajorEditClose,
 }: {
   quote: QuoteListItem
   clients: ClientListItem[]
@@ -114,6 +130,10 @@ function QuoteDetailCardContent({
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  hideHeaderActions: boolean
+  majorEditMode: boolean
+  onRequestMajorEdit?: () => void
+  onMajorEditClose?: () => void
 }) {
   const {
     quote: hydratedQuote,
@@ -155,6 +175,11 @@ function QuoteDetailCardContent({
     onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
   }, [isDirty, onUnsavedChange])
+
+  useEffect(() => {
+    if (!majorEditMode) return
+    setIsEditing(true)
+  }, [hydratedQuote.id, majorEditMode])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -353,7 +378,11 @@ function QuoteDetailCardContent({
 
       await onQuoteUpdated()
       setSuccessMessage('Presupuesto actualizado correctamente.')
-      setIsEditing(false)
+      if (majorEditMode) {
+        onMajorEditClose?.()
+      } else {
+        setIsEditing(false)
+      }
       setIsDirty(false)
     } catch (err) {
       const message =
@@ -408,10 +437,18 @@ function QuoteDetailCardContent({
       label: 'Abrir documento',
       onClick: onOpenDocument,
     },
-    {
+  )
+
+  if (!hideHeaderActions) {
+    headerActions.push({
       key: 'edit-quote',
       label: isEditing ? 'Cancelar edicion' : 'Editar presupuesto',
       onClick: () => {
+        if (onRequestMajorEdit && !majorEditMode) {
+          onRequestMajorEdit()
+          return
+        }
+
         if (isEditing && isDirty) {
           setShowDiscardConfirm(true)
           return
@@ -424,8 +461,8 @@ function QuoteDetailCardContent({
         resetFormFromQuote()
       },
       disabled: isLoadingLines || Boolean(linesError),
-    },
-  )
+    })
+  }
 
   if (!hydratedQuote.job_id) {
     headerActions.push({
@@ -467,9 +504,11 @@ function QuoteDetailCardContent({
           <h2>Detalle del presupuesto</h2>
         </div>
 
+        {!hideHeaderActions ? (
         <div className="cc-detail-panel__actions">
           <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
         </div>
+        ) : null}
       </div>
 
       <div className="lead-detail-card">
@@ -674,6 +713,11 @@ function QuoteDetailCardContent({
                     return
                   }
 
+                  if (majorEditMode) {
+                    onMajorEditClose?.()
+                    return
+                  }
+
                   setIsEditing(false)
                   setIsDirty(false)
                 }}
@@ -792,9 +836,14 @@ function QuoteDetailCardContent({
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
-          setIsEditing(false)
           setIsDirty(false)
           resetFormFromQuote()
+          if (majorEditMode) {
+            onMajorEditClose?.()
+            return
+          }
+
+          setIsEditing(false)
         }}
       />
 

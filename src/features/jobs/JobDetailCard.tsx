@@ -17,6 +17,10 @@ interface JobDetailCardProps {
   onJobUpdated: () => Promise<void>
   onCreateInvoiceFromJob: (job: JobListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  hideHeaderActions?: boolean
+  majorEditMode?: boolean
+  onRequestMajorEdit?: () => void
+  onMajorEditClose?: () => void
 }
 
 interface EditFormState {
@@ -75,6 +79,10 @@ export function JobDetailCard({
   onJobUpdated,
   onCreateInvoiceFromJob,
   onUnsavedChange,
+  hideHeaderActions = false,
+  majorEditMode = false,
+  onRequestMajorEdit,
+  onMajorEditClose,
 }: JobDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -145,6 +153,11 @@ export function JobDetailCard({
     onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
   }, [isDirty, onUnsavedChange])
+
+  useEffect(() => {
+    if (!job || !majorEditMode) return
+    setIsEditing(true)
+  }, [job, majorEditMode])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -268,7 +281,11 @@ export function JobDetailCard({
 
       await onJobUpdated()
       setSuccessMessage('Servicio actualizado correctamente.')
-      setIsEditing(false)
+      if (majorEditMode) {
+        onMajorEditClose?.()
+      } else {
+        setIsEditing(false)
+      }
       setIsDirty(false)
     } catch (err) {
       const message =
@@ -355,7 +372,7 @@ export function JobDetailCard({
           <h2>Detalle del servicio</h2>
         </div>
 
-        {job ? (
+        {job && !hideHeaderActions ? (
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button
               type="button"
@@ -369,6 +386,11 @@ export function JobDetailCard({
               type="button"
               className="secondary-button"
               onClick={() => {
+                if (onRequestMajorEdit && !majorEditMode) {
+                  onRequestMajorEdit()
+                  return
+                }
+
                 if (isEditing && isDirty) {
                   setShowDiscardConfirm(true)
                   return
@@ -551,6 +573,11 @@ export function JobDetailCard({
                       return
                     }
 
+                    if (majorEditMode) {
+                      onMajorEditClose?.()
+                      return
+                    }
+
                     setIsEditing(false)
                     setIsDirty(false)
                   }}
@@ -679,8 +706,13 @@ export function JobDetailCard({
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
-          setIsEditing(false)
           setIsDirty(false)
+          if (majorEditMode) {
+            onMajorEditClose?.()
+            return
+          }
+
+          setIsEditing(false)
         }}
       />
 

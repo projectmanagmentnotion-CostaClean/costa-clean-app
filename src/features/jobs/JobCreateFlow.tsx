@@ -6,7 +6,7 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
-import { PropertyCreateForm } from '../properties/PropertyCreateForm'
+import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
@@ -609,9 +609,10 @@ export function JobCreateFlow({
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate((current) => !current)}
                 >
-                  <PropertyCreateForm
+                  <PropertyCreateFlow
                     clients={clients}
-                    onCreated={onRefreshData}
+                    onRefreshData={onRefreshData}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para este servicio"

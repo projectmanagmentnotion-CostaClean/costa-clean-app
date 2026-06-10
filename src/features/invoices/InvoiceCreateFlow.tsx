@@ -12,7 +12,7 @@ import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
-import { PropertyCreateForm } from '../properties/PropertyCreateForm'
+import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
@@ -967,9 +967,10 @@ export function InvoiceCreateFlow({
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate((current) => !current)}
                 >
-                  <PropertyCreateForm
+                  <PropertyCreateFlow
                     clients={clients}
-                    onCreated={onRefreshData}
+                    onRefreshData={onRefreshData}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para esta factura"

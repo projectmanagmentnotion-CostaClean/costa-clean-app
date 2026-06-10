@@ -6,7 +6,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import { PropertiesList } from '../features/properties/PropertiesList'
-import { PropertyCreateForm } from '../features/properties/PropertyCreateForm'
+import { PropertyCreateFlow } from '../features/properties/PropertyCreateFlow'
 import { PropertyWorkspace } from '../features/properties/PropertyWorkspace'
 import { usePropertyWorkspaceNavigation } from '../features/properties/usePropertyWorkspaceNavigation'
 import type { PropertyListItem } from '../features/properties/types'
@@ -116,9 +116,13 @@ export function PropertiesPage({
                 })
               }}
             >
-              <PropertyCreateForm
+              <PropertyCreateFlow
                 clients={clients}
-                onCreated={onPropertyCreated}
+                onRefreshData={onPropertyCreated}
+                onCompleted={async () => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)

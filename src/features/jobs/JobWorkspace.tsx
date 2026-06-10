@@ -21,6 +21,7 @@ import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -157,6 +158,8 @@ export function JobWorkspace({
   const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
   const [hasPendingDetailState, setHasPendingDetailState] = useState(false)
   const [hasActionDirty, setHasActionDirty] = useState(false)
+  const [showMajorEdit, setShowMajorEdit] = useState(false)
+  const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
 
   const client = useMemo(
@@ -229,7 +232,7 @@ export function JobWorkspace({
       key: 'edit-job',
       label: 'Editar servicio',
       tone: 'primary',
-      onClick: () => onTabChange('operations'),
+      onClick: () => setShowMajorEdit(true),
     })
   }
 
@@ -284,8 +287,8 @@ export function JobWorkspace({
   )
 
   useEffect(() => {
-    onPendingStateChange?.(hasActionDirty || hasPendingDetailState)
-  }, [hasActionDirty, hasPendingDetailState, onPendingStateChange])
+    onPendingStateChange?.(hasActionDirty || hasPendingDetailState || hasMajorEditDirty)
+  }, [hasActionDirty, hasMajorEditDirty, hasPendingDetailState, onPendingStateChange])
 
   async function handleActionCreated() {
     await onRefresh()
@@ -440,6 +443,36 @@ export function JobWorkspace({
         </ActionFlowOverlay>
       ) : null}
 
+      <MajorEditFlowOverlay
+        isOpen={showMajorEdit}
+        title="Editar servicio"
+        description={`La edicion mayor se trabaja fuera de la card y al cerrar vuelves a ${formatJobLabel(job)}.`}
+        onClose={() => {
+          if (hasMajorEditDirty) {
+            setShowCloseActionConfirm(true)
+            return
+          }
+
+          setShowMajorEdit(false)
+        }}
+      >
+        <JobDetailCard
+          job={job}
+          clients={clients}
+          properties={properties}
+          quotes={quotes}
+          onJobUpdated={onRefresh}
+          onCreateInvoiceFromJob={() => openAction('invoice')}
+          onUnsavedChange={setHasMajorEditDirty}
+          hideHeaderActions
+          majorEditMode
+          onMajorEditClose={() => {
+            setShowMajorEdit(false)
+            setHasMajorEditDirty(false)
+          }}
+        />
+      </MajorEditFlowOverlay>
+
       {activeTab === 'summary' ? (
         <section className="cc-client-workspace__tab-panel cc-client-workspace__summary-grid">
           <article className="data-section">
@@ -508,6 +541,7 @@ export function JobWorkspace({
             onJobUpdated={onRefresh}
             onCreateInvoiceFromJob={() => openAction('invoice')}
             onUnsavedChange={setHasPendingDetailState}
+            onRequestMajorEdit={() => setShowMajorEdit(true)}
           />
         </section>
       ) : null}
@@ -634,6 +668,8 @@ export function JobWorkspace({
           setShowCloseActionConfirm(false)
           setActiveAction(null)
           setHasActionDirty(false)
+          setShowMajorEdit(false)
+          setHasMajorEditDirty(false)
         }}
       />
     </section>

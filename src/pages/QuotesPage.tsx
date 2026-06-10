@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { QuoteCreateFlow } from '../features/quotes/QuoteCreateFlow'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
@@ -39,14 +40,16 @@ export function QuotesPage({
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
   const selectedQuoteKey = selectedQuote?.id ?? null
 
-  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
   const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
   const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
@@ -161,6 +164,36 @@ export function QuotesPage({
           </ActionFlowOverlay>
         ) : null}
 
+        {selectedQuote ? (
+          <MajorEditFlowOverlay
+            isOpen={showMajorEdit}
+            title="Editar presupuesto"
+            description="La edicion mayor se resuelve fuera del panel de detalle y te devuelve al mismo presupuesto."
+            onClose={() => {
+              runGuarded(() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              })
+            }}
+          >
+            <QuoteDetailCard
+              quote={selectedQuote}
+              clients={clients}
+              properties={properties}
+              onQuoteUpdated={onQuoteCreated}
+              onOpenDocument={() => openQuoteDocument(selectedQuote)}
+              onCreateJobFromQuote={onCreateJobFromQuote}
+              onUnsavedChange={setHasMajorEditDirty}
+              hideHeaderActions
+              majorEditMode
+              onMajorEditClose={() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              }}
+            />
+          </MajorEditFlowOverlay>
+        ) : null}
+
         {activeFilterLabel ? (
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
@@ -203,6 +236,7 @@ export function QuotesPage({
               }}
               onCreateJobFromQuote={onCreateJobFromQuote}
               onUnsavedChange={setHasUnsavedDetailChanges}
+              onRequestMajorEdit={() => setShowMajorEdit(true)}
             />
           </div>
         </div>

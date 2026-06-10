@@ -32,10 +32,10 @@ import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PropertyListItem } from '../properties/types'
-import { PropertyCreateForm } from '../properties/PropertyCreateForm'
+import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
-import { RecurringInvoicePlanForm } from '../recurringInvoices/RecurringInvoicePlanForm'
+import { RecurringInvoicePlanFlow } from '../recurringInvoices/RecurringInvoicePlanFlow'
 import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
 import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
@@ -757,11 +757,12 @@ export function ClientWorkspace({
         >
 
           {activeAction === 'property' ? (
-            <PropertyCreateForm
+            <PropertyCreateFlow
               key={`property-${client.id}`}
               clients={[client]}
               contextClientId={client.id}
-              onCreated={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />
@@ -825,14 +826,15 @@ export function ClientWorkspace({
           ) : null}
 
           {activeAction === 'recurring' ? (
-            <RecurringInvoicePlanForm
+            <RecurringInvoicePlanFlow
               key={`recurring-${editingRecurringPlanId ?? client.id}`}
               clientId={client.id}
               clients={[client]}
               properties={relatedProperties}
               quotes={relatedQuotes}
               initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
-              onSaved={handleActionCreated}
+              onRefreshData={onRefresh}
+              onCompleted={handleFlowCompleted}
               onCancel={requestCloseAction}
               onDirtyChange={setHasActionDirty}
             />

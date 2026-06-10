@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
@@ -66,8 +67,10 @@ export function InvoicesPage({
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
+  const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
   const [visibleInvoices, setVisibleInvoices] = useState<InvoiceListItem[]>(invoices)
   const [bulkDialog, setBulkDialog] = useState<{
@@ -88,7 +91,7 @@ export function InvoicesPage({
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
-  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
   const paidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'paid').length
   const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
@@ -292,6 +295,41 @@ export function InvoicesPage({
           </ActionFlowOverlay>
         ) : null}
 
+        {detailInvoice ? (
+          <MajorEditFlowOverlay
+            isOpen={showMajorEdit}
+            title="Editar factura"
+            description="La edicion mayor se trabaja fuera de la card principal y conserva el contexto financiero."
+            onClose={() => {
+              runGuarded(() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              })
+            }}
+          >
+            <InvoiceDetailCard
+              invoice={detailInvoice}
+              jobs={jobs}
+              quotes={quotes}
+              payments={payments}
+              onInvoiceUpdated={onInvoiceCreated}
+              onOpenDocument={() => openInvoiceDocument(detailInvoice)}
+              onViewPayments={onViewPayments}
+              onOpenJobWorkspace={onOpenJobWorkspace}
+              onOpenClientWorkspace={onOpenClientWorkspace}
+              onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+              onOpenQuoteDetail={onOpenQuoteDetail}
+              onUnsavedChange={setHasMajorEditDirty}
+              hideHeaderActions
+              majorEditMode
+              onMajorEditClose={() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              }}
+            />
+          </MajorEditFlowOverlay>
+        ) : null}
+
         {activeFilterLabel ? (
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
@@ -393,6 +431,7 @@ export function InvoicesPage({
               onOpenPropertyWorkspace={onOpenPropertyWorkspace}
               onOpenQuoteDetail={onOpenQuoteDetail}
               onUnsavedChange={setHasUnsavedDetailChanges}
+              onRequestMajorEdit={() => setShowMajorEdit(true)}
               emptyState={detailEmptyState}
             />
           </div>

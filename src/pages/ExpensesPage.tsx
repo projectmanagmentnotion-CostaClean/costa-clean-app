@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
-import { ExpenseCreateForm } from '../features/expenses/ExpenseCreateForm'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { ExpenseCreateFlow } from '../features/expenses/ExpenseCreateFlow'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
 import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
@@ -35,12 +36,13 @@ export function ExpensesPage({
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
 
   const selectedExpense =
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
   const selectedExpenseKey = selectedExpense?.id ?? null
-  const hasPendingWork = showCreateForm || hasUnsavedDetailChanges
+  const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en gastos')
@@ -158,14 +160,27 @@ export function ExpensesPage({
       </section>
 
       {showCreateForm ? (
-        <section className="data-section cc-expenses-create-panel">
-          <div className="section-header">
-            <h2>Alta de gasto</h2>
-            <p>Crea un nuevo registro sin salir del flujo operativo.</p>
-          </div>
-
-          <ExpenseCreateForm onCreated={handleExpenseCreated} />
-        </section>
+        <ActionFlowOverlay
+          isOpen={showCreateForm}
+          title="Nuevo gasto"
+          description="El alta se resuelve en una superficie dedicada y al cerrar vuelves al mismo punto del modulo."
+          onClose={() => {
+            runGuarded(() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+            })
+          }}
+        >
+          <ExpenseCreateFlow
+            onRefreshData={onExpenseCreated}
+            onCompleted={handleExpenseCreated}
+            onCancel={() => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+            }}
+            onDirtyChange={setHasCreateFormDirty}
+          />
+        </ActionFlowOverlay>
       ) : null}
 
       {activeFilterLabel ? (

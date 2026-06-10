@@ -8,7 +8,7 @@ import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../co
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
-import { PropertyCreateForm } from '../properties/PropertyCreateForm'
+import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import {
   completeContextualActionFlow,
@@ -493,9 +493,10 @@ export function QuoteCreateFlow({
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate((current) => !current)}
                 >
-                  <PropertyCreateForm
+                  <PropertyCreateFlow
                     clients={clients}
-                    onCreated={onRefreshData}
+                    onRefreshData={onRefreshData}
+                    onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
                     contextClientId={form.client_id}
                     title="Nueva propiedad para este presupuesto"

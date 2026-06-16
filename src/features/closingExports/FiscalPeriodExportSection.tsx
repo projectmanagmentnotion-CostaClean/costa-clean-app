@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ClientListItem } from '../clients/types'
-import { getMonthOptions, type FiscalPeriodMode, type FiscalPeriodSelection } from '../closing/fiscalPeriods'
+import { FiscalPeriodSelector } from '../closing/FiscalPeriodSelector'
+import type { FiscalPeriodSelection } from '../closing/fiscalPeriods'
 import {
   buildFiscalPeriodExportData,
   buildFiscalPeriodIncidences,
@@ -14,7 +15,9 @@ import type { QuoteListItem } from '../quotes/types'
 
 interface FiscalPeriodExportSectionProps {
   availableYears: number[]
-  defaultSelection: FiscalPeriodSelection
+  defaultSelection?: FiscalPeriodSelection
+  selection?: FiscalPeriodSelection
+  onSelectionChange?: (selection: FiscalPeriodSelection) => void
   title: string
   description: string
   invoices: InvoiceListItem[]
@@ -25,6 +28,7 @@ interface FiscalPeriodExportSectionProps {
   properties: PropertyListItem[]
   closingSavedAt?: string | null
   closingNotes?: string | null
+  showSelector?: boolean
 }
 
 function formatCurrency(value: number): string {
@@ -34,11 +38,26 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
-const monthOptions = getMonthOptions()
+function createDefaultSelection(): FiscalPeriodSelection {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.getMonth() + 1
+
+  return {
+    mode: 'quarter',
+    year,
+    month,
+    quarter: Math.floor(now.getMonth() / 3) + 1,
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+  }
+}
 
 export function FiscalPeriodExportSection({
   availableYears,
   defaultSelection,
+  selection: controlledSelection,
+  onSelectionChange,
   title,
   description,
   invoices,
@@ -49,11 +68,25 @@ export function FiscalPeriodExportSection({
   properties,
   closingSavedAt = null,
   closingNotes = null,
+  showSelector = true,
 }: FiscalPeriodExportSectionProps) {
-  const [selection, setSelection] = useState<FiscalPeriodSelection>(defaultSelection)
+  const [internalSelection, setInternalSelection] = useState<FiscalPeriodSelection>(
+    defaultSelection ?? controlledSelection ?? createDefaultSelection(),
+  )
   const [isExporting, setIsExporting] = useState(false)
   const [exportResult, setExportResult] = useState<ManagerExportPackageResult | null>(null)
   const [exportError, setExportError] = useState<string | null>(null)
+  const selection = controlledSelection ?? internalSelection
+
+  function handleSelectionChange(nextSelection: FiscalPeriodSelection) {
+    if (!controlledSelection) {
+      setInternalSelection(nextSelection)
+    }
+
+    onSelectionChange?.(nextSelection)
+    setExportResult(null)
+    setExportError(null)
+  }
 
   const exportData = useMemo(
     () => buildFiscalPeriodExportData({
@@ -66,17 +99,6 @@ export function FiscalPeriodExportSection({
     [expenses, invoices, payments, quotes, selection],
   )
   const incidences = useMemo(() => buildFiscalPeriodIncidences(exportData), [exportData])
-
-  const yearOptions = useMemo(() => {
-    const values = new Set<number>([...availableYears, new Date().getFullYear(), selection.year])
-    return [...values].sort((left, right) => right - left)
-  }, [availableYears, selection.year])
-
-  function handleModeChange(mode: FiscalPeriodMode) {
-    setSelection((current) => ({ ...current, mode }))
-    setExportResult(null)
-    setExportError(null)
-  }
 
   async function handleDownload() {
     setIsExporting(true)
@@ -114,104 +136,25 @@ export function FiscalPeriodExportSection({
 
   return (
     <>
+      {showSelector ? (
+        <FiscalPeriodSelector
+          availableYears={availableYears}
+          selection={selection}
+          onChange={handleSelectionChange}
+          title={title}
+          description={description}
+        />
+      ) : null}
+
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>{title}</h2>
-            <p>{description}</p>
+            <h2>{showSelector ? 'Export fiscal' : title}</h2>
+            <p>{showSelector ? 'El paquete usa exactamente el mismo periodo activo del cierre.' : description}</p>
           </div>
           <button type="button" className="primary-button" onClick={handleDownload} disabled={isExporting}>
             {isExporting ? 'Generando ZIP...' : 'Descargar paquete ZIP'}
           </button>
-        </div>
-
-        <div className="cc-quarterly-pack-grid">
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Tipo de periodo</span>
-            <div className="cc-inline-toggle-group" role="tablist" aria-label="Selector de periodo fiscal">
-              {([
-                ['month', 'Mes'],
-                ['quarter', 'Trimestre'],
-                ['year', 'Año'],
-                ['custom', 'Personalizado'],
-              ] as const).map(([mode, label]) => (
-                <button
-                  key={mode}
-                  type="button"
-                  className={selection.mode === mode ? 'secondary-button is-active' : 'secondary-button'}
-                  onClick={() => handleModeChange(mode)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </article>
-
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Configuración</span>
-            <div className="cc-inline-form-grid">
-              <label className="cc-inline-field">
-                <span>Año</span>
-                <select
-                  value={selection.year}
-                  onChange={(event) => setSelection((current) => ({ ...current, year: Number(event.target.value) }))}
-                >
-                  {yearOptions.map((year) => (
-                    <option key={year} value={year}>{year}</option>
-                  ))}
-                </select>
-              </label>
-
-              {selection.mode === 'month' ? (
-                <label className="cc-inline-field">
-                  <span>Mes</span>
-                  <select
-                    value={selection.month}
-                    onChange={(event) => setSelection((current) => ({ ...current, month: Number(event.target.value) }))}
-                  >
-                    {monthOptions.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              {selection.mode === 'quarter' ? (
-                <label className="cc-inline-field">
-                  <span>Trimestre</span>
-                  <select
-                    value={selection.quarter}
-                    onChange={(event) => setSelection((current) => ({ ...current, quarter: Number(event.target.value) }))}
-                  >
-                    {[1, 2, 3, 4].map((quarter) => (
-                      <option key={quarter} value={quarter}>{`T${quarter}`}</option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              {selection.mode === 'custom' ? (
-                <>
-                  <label className="cc-inline-field">
-                    <span>Desde</span>
-                    <input
-                      type="date"
-                      value={selection.startDate}
-                      onChange={(event) => setSelection((current) => ({ ...current, startDate: event.target.value }))}
-                    />
-                  </label>
-                  <label className="cc-inline-field">
-                    <span>Hasta</span>
-                    <input
-                      type="date"
-                      value={selection.endDate}
-                      onChange={(event) => setSelection((current) => ({ ...current, endDate: event.target.value }))}
-                    />
-                  </label>
-                </>
-              ) : null}
-            </div>
-          </article>
         </div>
 
         {exportError ? (

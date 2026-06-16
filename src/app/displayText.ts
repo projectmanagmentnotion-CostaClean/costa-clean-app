@@ -3,8 +3,9 @@
 const appViewLabels: Record<AppView, string> = {
   dashboard: 'Inicio',
   alerts: 'Alertas',
-  quarterly_closing: 'Cierre trimestral',
-  annual_closing: 'Cierre anual',
+  fiscal_closing: 'Cierre fiscal',
+  quarterly_closing: 'Cierre fiscal',
+  annual_closing: 'Cierre fiscal',
   leads: 'Leads',
   clients: 'Clientes',
   properties: 'Propiedades',

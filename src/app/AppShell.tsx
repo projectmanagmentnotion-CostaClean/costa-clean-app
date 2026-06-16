@@ -53,12 +53,11 @@ import {
 } from '../features/dashboard/operationalControl'
 import { saveQuarterlyClosing } from '../features/quarterlyClosing/quarterlyClosingApi'
 import { buildQuarterlyClosingSnapshot } from '../features/quarterlyClosing/quarterlyClosingSummary'
-import type { QuarterlyClosingIncidence } from '../features/quarterlyClosing/types'
 import { saveAnnualClosing } from '../features/annualClosing/annualClosingApi'
 import { buildAnnualClosingSnapshot } from '../features/annualClosing/annualClosingSummary'
-import type { AnnualClosingIncidence } from '../features/annualClosing/types'
 import { buildAutomationAlerts } from '../features/automation/alertRules'
 import type { AutomationAlertItem } from '../features/automation/types'
+import { resolveFiscalPeriod } from '../features/closing/fiscalPeriods'
 import { buildRecurringPlanPersistenceInput } from '../features/recurringInvoices/planPersistence'
 import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../features/recurringInvoices/recurringInvoiceApi'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
@@ -83,8 +82,7 @@ const JobsPage = lazy(async () => ({ default: (await import('../pages/JobsPage')
 const InvoicesPage = lazy(async () => ({ default: (await import('../pages/InvoicesPage')).InvoicesPage }))
 const ExpensesPage = lazy(async () => ({ default: (await import('../pages/ExpensesPage')).ExpensesPage }))
 const PaymentsPage = lazy(async () => ({ default: (await import('../pages/PaymentsPage')).PaymentsPage }))
-const QuarterlyClosingPage = lazy(async () => ({ default: (await import('../pages/QuarterlyClosingPage')).QuarterlyClosingPage }))
-const AnnualClosingPage = lazy(async () => ({ default: (await import('../pages/AnnualClosingPage')).AnnualClosingPage }))
+const FiscalClosingPage = lazy(async () => ({ default: (await import('../pages/FiscalClosingPage')).FiscalClosingPage }))
 const AlertsCenterPage = lazy(async () => ({ default: (await import('../pages/AlertsCenterPage')).AlertsCenterPage }))
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
@@ -162,8 +160,9 @@ function ShellLoadingState({ currentView }: { currentView: AppView }) {
   const titleByView: Record<AppView, string> = {
     dashboard: 'Preparando panel de control',
     alerts: 'Preparando centro de alertas',
-    quarterly_closing: 'Preparando cierre trimestral',
-    annual_closing: 'Preparando cierre anual',
+    fiscal_closing: 'Preparando cierre fiscal',
+    quarterly_closing: 'Preparando cierre fiscal',
+    annual_closing: 'Preparando cierre fiscal',
     leads: 'Cargando leads',
     clients: 'Cargando clientes',
     properties: 'Cargando propiedades',
@@ -614,7 +613,6 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     quarterlyClosingSummaryByPeriod,
     availableClosingYears,
     annualClosingSummaryByYear,
-    availableAnnualClosingYears,
     currentFiscalYear,
     currentFiscalQuarter,
   } = useClosingSummaries({
@@ -734,130 +732,45 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     )
   }, [])
 
-  const handleQuarterlyClosingNavigation = useCallback((
-    view: AppView,
-    scope: QuarterlyClosingIncidence['scope'],
-    fiscalYear: number,
-    fiscalQuarter: number,
+  const handleFiscalClosingNavigation = useCallback((
+    view: 'invoices' | 'payments' | 'expenses',
+    scope: 'all' | 'pending' | 'closure' | 'missing_support' | 'pending_review' | 'risk',
+    selection: {
+      mode: 'month' | 'quarter' | 'year' | 'custom'
+      year: number
+      month: number
+      quarter: number
+      startDate: string
+      endDate: string
+    },
   ) => {
+    const period = resolveFiscalPeriod(selection)
+
     setModuleFilters((current) => {
-      if (scope === 'invoice_quarter_all') {
+      if (view === 'invoices') {
         return {
           ...current,
-          invoices: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
+          invoices: { type: 'period', period, scope: scope === 'pending' ? 'pending' : 'all' },
         }
       }
 
-      if (scope === 'invoice_quarter_pending') {
+      if (view === 'payments') {
         return {
           ...current,
-          invoices: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'pending' },
-        }
-      }
-
-      if (scope === 'payment_quarter_all') {
-        return {
-          ...current,
-          payments: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
-        }
-      }
-
-      if (scope === 'expense_quarter_all') {
-        return {
-          ...current,
-          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'all' },
-        }
-      }
-
-      if (scope === 'expense_quarter_closure') {
-        return {
-          ...current,
-          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'closure' },
-        }
-      }
-
-      if (scope === 'expense_quarter_missing_support') {
-        return {
-          ...current,
-          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'missing_support' },
-        }
-      }
-
-      if (scope === 'expense_quarter_pending_review') {
-        return {
-          ...current,
-          expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'pending_review' },
+          payments: { type: 'period', period, scope: 'all' },
         }
       }
 
       return {
         ...current,
-        expenses: { type: 'quarter', fiscalYear, fiscalQuarter, scope: 'risk' },
+        expenses: {
+          type: 'period',
+          period,
+          scope: scope === 'pending' ? 'all' : scope,
+        },
       }
     })
-    commitViewChange(view)
-  }, [commitViewChange])
 
-  const handleAnnualClosingNavigation = useCallback((
-    view: AppView,
-    scope: AnnualClosingIncidence['scope'],
-    fiscalYear: number,
-  ) => {
-    setModuleFilters((current) => {
-      if (scope === 'invoice_year_all') {
-        return {
-          ...current,
-          invoices: { type: 'year', fiscalYear, scope: 'all' },
-        }
-      }
-
-      if (scope === 'invoice_year_pending') {
-        return {
-          ...current,
-          invoices: { type: 'year', fiscalYear, scope: 'pending' },
-        }
-      }
-
-      if (scope === 'payment_year_all') {
-        return {
-          ...current,
-          payments: { type: 'year', fiscalYear, scope: 'all' },
-        }
-      }
-
-      if (scope === 'expense_year_all') {
-        return {
-          ...current,
-          expenses: { type: 'year', fiscalYear, scope: 'all' },
-        }
-      }
-
-      if (scope === 'expense_year_closure') {
-        return {
-          ...current,
-          expenses: { type: 'year', fiscalYear, scope: 'closure' },
-        }
-      }
-
-      if (scope === 'expense_year_missing_support') {
-        return {
-          ...current,
-          expenses: { type: 'year', fiscalYear, scope: 'missing_support' },
-        }
-      }
-
-      if (scope === 'expense_year_pending_review') {
-        return {
-          ...current,
-          expenses: { type: 'year', fiscalYear, scope: 'pending_review' },
-        }
-      }
-
-      return {
-        ...current,
-        expenses: { type: 'year', fiscalYear, scope: 'risk' },
-      }
-    })
     commitViewChange(view)
   }, [commitViewChange])
 
@@ -910,10 +823,39 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     await refreshClosings()
   }, [annualClosingSummaryByYear, refreshClosings])
 
-  const handleOpenQuarterFromAnnual = useCallback((fiscalYear: number, fiscalQuarter: number) => {
-    setQuarterlyClosingFocus({ fiscalYear, fiscalQuarter })
-    commitViewChange('quarterly_closing')
-  }, [commitViewChange])
+  const fiscalClosingAvailableYears = useMemo(
+    () => [...new Set([...availableClosingYears, ...annualClosingSummaryByYear.keys(), currentFiscalYear])].sort((left, right) => right - left),
+    [annualClosingSummaryByYear, availableClosingYears, currentFiscalYear],
+  )
+  const fiscalClosingInitialSelection = useMemo(() => {
+    if (currentView === 'annual_closing') {
+      return {
+        mode: 'year' as const,
+        year: currentFiscalYear,
+        month: 1,
+        quarter: 1,
+        startDate: `${currentFiscalYear}-01-01`,
+        endDate: `${currentFiscalYear}-12-31`,
+      }
+    }
+
+    const focusedYear = currentView === 'quarterly_closing'
+      ? quarterlyClosingFocus?.fiscalYear ?? currentFiscalYear
+      : currentFiscalYear
+    const focusedQuarter = currentView === 'quarterly_closing'
+      ? quarterlyClosingFocus?.fiscalQuarter ?? currentFiscalQuarter
+      : currentFiscalQuarter
+    const focusedMonth = ((focusedQuarter - 1) * 3) + 1
+
+    return {
+      mode: 'quarter' as const,
+      year: focusedYear,
+      month: focusedMonth,
+      quarter: focusedQuarter,
+      startDate: `${focusedYear}-01-01`,
+      endDate: `${focusedYear}-12-31`,
+    }
+  }, [currentFiscalQuarter, currentFiscalYear, currentView, quarterlyClosingFocus])
 
   const handleCreateJobFromQuote = useCallback((quote: QuoteListItem) => {
     const prefill = buildJobCreatePrefillFromQuote(quote)
@@ -1195,39 +1137,24 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onToggleReviewed={handleToggleReviewedAlert}
                   onOpenAlert={handleOpenAutomationAlert}
                 />
-              ) : currentView === 'annual_closing' ? (
-                <AnnualClosingPage
-                  availableYears={availableAnnualClosingYears}
-                  defaultFiscalYear={currentFiscalYear}
-                  summaryByYear={annualClosingSummaryByYear}
-                  closings={annualClosings}
+              ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
+                <FiscalClosingPage
+                  availableYears={fiscalClosingAvailableYears}
+                  initialSelection={fiscalClosingInitialSelection}
+                  quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}
+                  annualSummaryByYear={annualClosingSummaryByYear}
+                  quarterlyClosings={quarterlyClosings}
+                  annualClosings={annualClosings}
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
                   expenses={expenses}
                   quotes={quotesWithCodes}
                   clients={clientsWithContext}
                   properties={propertiesWithCodes}
-                  error={annualClosingError}
-                  onNavigateToIncidence={handleAnnualClosingNavigation}
-                  onOpenQuarter={handleOpenQuarterFromAnnual}
-                  onSaveClosing={handleSaveAnnualClosing}
-                />
-              ) : currentView === 'quarterly_closing' ? (
-                <QuarterlyClosingPage
-                  availableYears={availableClosingYears}
-                  defaultFiscalYear={quarterlyClosingFocus?.fiscalYear ?? currentFiscalYear}
-                  defaultFiscalQuarter={quarterlyClosingFocus?.fiscalQuarter ?? currentFiscalQuarter}
-                  summaryByPeriod={quarterlyClosingSummaryByPeriod}
-                  closings={quarterlyClosings}
-                  invoices={invoicesWithCodes}
-                  payments={paymentsWithCodes}
-                  expenses={expenses}
-                  quotes={quotesWithCodes}
-                  clients={clientsWithContext}
-                  properties={propertiesWithCodes}
-                  error={quarterlyClosingError}
-                  onNavigateToIncidence={handleQuarterlyClosingNavigation}
-                  onSaveClosing={handleSaveQuarterlyClosing}
+                  error={quarterlyClosingError ?? annualClosingError}
+                  onNavigateToIncidence={handleFiscalClosingNavigation}
+                  onSaveQuarterlyClosing={handleSaveQuarterlyClosing}
+                  onSaveAnnualClosing={handleSaveAnnualClosing}
                 />
               ) : currentView === 'dashboard' ? (
                 <HomePage

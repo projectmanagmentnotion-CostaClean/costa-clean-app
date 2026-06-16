@@ -1,6 +1,7 @@
 export const appViews = [
   'dashboard',
   'alerts',
+  'fiscal_closing',
   'quarterly_closing',
   'annual_closing',
   'leads',

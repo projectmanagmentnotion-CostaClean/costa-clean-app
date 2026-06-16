@@ -40,6 +40,8 @@ export interface ClosingQuarterBreakdownItem {
   unresolvedIncidenceCount: number
 }
 
+export type ClosingReadinessLevel = 'ready' | 'review' | 'blocked'
+
 export interface ClosingSummary {
   period: ResolvedFiscalPeriod
   snapshotMode: ClosingSnapshotMode
@@ -67,6 +69,12 @@ export interface ClosingSummary {
   totalVatSupported: number
   estimatedNetVatPayable: number
   readiness: 'ready' | 'issues'
+  readinessLevel: ClosingReadinessLevel
+  supportedClosureExpenseCount: number
+  validVatInvoiceSupportCount: number
+  closureDocumentCoverageRate: number
+  supportedVatCoverageRate: number
+  criticalIncidenceCount: number
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
   expenses: ExpenseListItem[]
@@ -219,6 +227,18 @@ function buildIncidences(summary: {
   ]
 }
 
+function getClosingReadinessLevel(input: {
+  missingSupportCount: number
+  missingValidVatInvoiceCount: number
+  pendingReviewCount: number
+  riskCount: number
+  pendingInvoiceCount: number
+}): ClosingReadinessLevel {
+  if (input.missingSupportCount > 0 || input.missingValidVatInvoiceCount > 0) return 'blocked'
+  if (input.pendingReviewCount > 0 || input.riskCount > 0 || input.pendingInvoiceCount > 0) return 'review'
+  return 'ready'
+}
+
 export function buildClosingSummary({
   selection,
   invoices,
@@ -241,6 +261,9 @@ export function buildClosingSummary({
   )
   const pendingReviewExpenses = closureExpenses.filter((expense) => needsFiscalReview(expense))
   const riskExpenses = closureExpenses.filter((expense) => hasMediumHighFiscalRisk(expense))
+  const supportedClosureExpenses = closureExpenses.filter(
+    (expense) => expense.document_support_status !== 'missing' && Boolean(expense.receipt_file_path),
+  )
 
   const invoicePaidById = new Map<string, number>()
   for (const payment of payments) {
@@ -295,6 +318,19 @@ export function buildClosingSummary({
   const totalVatSupported = baseSummary?.totalVatSupported ?? vatSummary.supportedVatTotal
   const estimatedNetVatPayable = baseSummary?.estimatedNetVatPayable ?? vatSummary.estimatedNetVatPayable
   const readiness = baseSummary?.readiness ?? (unresolvedIncidenceCount > 0 ? 'issues' : 'ready')
+  const readinessLevel = getClosingReadinessLevel({
+    missingSupportCount,
+    missingValidVatInvoiceCount,
+    pendingReviewCount,
+    riskCount,
+    pendingInvoiceCount,
+  })
+  const closureDocumentCoverageRate = closureExpenseCount > 0
+    ? Number(((supportedClosureExpenses.length / closureExpenseCount) * 100).toFixed(1))
+    : 100
+  const supportedVatCoverageRate = totalVatSupported > 0
+    ? Number(((estimatedDeductibleVat / totalVatSupported) * 100).toFixed(1))
+    : 100
 
   return {
     period,
@@ -323,6 +359,12 @@ export function buildClosingSummary({
     totalVatSupported,
     estimatedNetVatPayable,
     readiness,
+    readinessLevel,
+    supportedClosureExpenseCount: supportedClosureExpenses.length,
+    validVatInvoiceSupportCount: closureExpenseCount - missingValidVatInvoiceCount,
+    closureDocumentCoverageRate,
+    supportedVatCoverageRate,
+    criticalIncidenceCount: missingSupportCount + missingValidVatInvoiceCount,
     invoices: periodInvoices,
     payments: periodPayments,
     expenses: periodExpenses,

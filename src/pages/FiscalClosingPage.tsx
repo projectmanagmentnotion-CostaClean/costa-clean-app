@@ -5,6 +5,7 @@ import {
   buildClosingSummary,
   type ClosingIncidenceScope,
   type ClosingIncidenceView,
+  type ClosingReadinessLevel,
 } from '../features/closing/closingSummaryEngine'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
 import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
@@ -60,6 +61,30 @@ function getToneClass(tone: 'neutral' | 'warning' | 'danger'): string {
   if (tone === 'danger') return 'cc-quarterly-checklist__item--danger'
   if (tone === 'warning') return 'cc-quarterly-checklist__item--warning'
   return ''
+}
+
+function getReadinessCopy(level: ClosingReadinessLevel) {
+  if (level === 'ready') {
+    return {
+      label: 'Listo para exportar con confianza',
+      detail: 'La lectura fiscal operativa no detecta huecos documentales ni bloqueos prioritarios en este periodo.',
+      toneClass: 'cc-kpi-card--success',
+    }
+  }
+
+  if (level === 'blocked') {
+    return {
+      label: 'Cierre con bloqueos documentales',
+      detail: 'Hay huecos de soporte o de factura válida para IVA que conviene resolver antes de generar el pack gestor.',
+      toneClass: 'cc-kpi-card--warning',
+    }
+  }
+
+  return {
+    label: 'Cierre revisable antes de exportar',
+    detail: 'La base está construida, pero todavía hay puntos de revisión fiscal o saldos pendientes antes de entregar.',
+    toneClass: 'cc-kpi-card--warning',
+  }
 }
 
 export function FiscalClosingPage({
@@ -155,6 +180,11 @@ export function FiscalClosingPage({
       detail: 'El preset tiene snapshot persistido y no se detectan incidencias abiertas en el resumen actual.',
     }
   }, [persistedClosing, summary.readiness, summary.snapshotMode])
+
+  const readinessCopy = useMemo(
+    () => getReadinessCopy(summary.readinessLevel),
+    [summary.readinessLevel],
+  )
 
   async function handleSaveSnapshot() {
     if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {
@@ -267,6 +297,61 @@ export function FiscalClosingPage({
         </article>
       </section>
 
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Lectura fiscal central del periodo</h2>
+            <p>Lectura operativa para revisar el cierre. Los importes estimados orientan la validación interna, pero no sustituyen la liquidación fiscal definitiva.</p>
+          </div>
+        </div>
+
+        <div className="cc-kpi-grid cc-quarterly-metrics">
+          <article className="cc-kpi-card cc-kpi-card--finance cc-fiscal-closing__hero-card">
+            <span className="cc-kpi-label">Facturado fiscalmente</span>
+            <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal)}</strong>
+            <p className="cc-kpi-footnote">{summary.invoiceCount} factura(s) emitida(s) dentro del periodo activo.</p>
+          </article>
+          <article className="cc-kpi-card cc-kpi-card--finance cc-fiscal-closing__hero-card">
+            <span className="cc-kpi-label">IVA repercutido</span>
+            <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
+            <p className="cc-kpi-footnote">Base de IVA emitido según facturas del periodo.</p>
+          </article>
+          <article className="cc-kpi-card cc-fiscal-closing__hero-card">
+            <span className="cc-kpi-label">IVA deducible estimado</span>
+            <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
+            <p className="cc-kpi-footnote">Estimado según gastos con soporte y reglas fiscales ya modeladas.</p>
+          </article>
+          <article className={`cc-kpi-card cc-fiscal-closing__hero-card ${readinessCopy.toneClass}`}>
+            <span className="cc-kpi-label">IVA neto estimado</span>
+            <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
+            <p className="cc-kpi-footnote">IVA repercutido menos IVA deducible estimado para orientar la revisión.</p>
+          </article>
+        </div>
+
+        <div className="cc-kpi-grid cc-fiscal-closing__support-grid">
+          <article className={`cc-kpi-card ${readinessCopy.toneClass}`}>
+            <span className="cc-kpi-label">Estado del cierre</span>
+            <strong className="cc-kpi-value">{readinessCopy.label}</strong>
+            <p className="cc-kpi-footnote">{readinessCopy.detail}</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Cobertura documental</span>
+            <strong className="cc-kpi-value">{summary.closureDocumentCoverageRate}%</strong>
+            <p className="cc-kpi-footnote">{summary.supportedClosureExpenseCount} de {summary.closureExpenseCount} gasto(s) de cierre tienen soporte descargable.</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Soporte válido para IVA</span>
+            <strong className="cc-kpi-value">{summary.supportedVatCoverageRate}%</strong>
+            <p className="cc-kpi-footnote">{summary.validVatInvoiceSupportCount} gasto(s) con factura válida sobre la base soportada del periodo.</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Bloqueos críticos</span>
+            <strong className="cc-kpi-value">{summary.criticalIncidenceCount}</strong>
+            <p className="cc-kpi-footnote">Huecos documentales o fiscales que conviene cerrar antes de exportar.</p>
+          </article>
+        </div>
+      </section>
+
       <section className="cc-kpi-grid cc-quarterly-metrics">
         <article className="cc-kpi-card cc-kpi-card--finance">
           <span className="cc-kpi-label">Periodo</span>
@@ -286,7 +371,7 @@ export function FiscalClosingPage({
         <article className="cc-kpi-card cc-kpi-card--warning">
           <span className="cc-kpi-label">IVA neto estimado</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
-          <p className="cc-kpi-footnote">Lectura orientativa para revisión</p>
+          <p className="cc-kpi-footnote">Lectura orientativa, no liquidación fiscal definitiva</p>
         </article>
         <article className="cc-kpi-card">
           <span className="cc-kpi-label">Facturas</span>
@@ -307,6 +392,16 @@ export function FiscalClosingPage({
           <span className="cc-kpi-label">Incidencias</span>
           <strong className="cc-kpi-value">{summary.unresolvedIncidenceCount}</strong>
           <p className="cc-kpi-footnote">Pendientes de resolver antes de exportar</p>
+        </article>
+        <article className="cc-kpi-card">
+          <span className="cc-kpi-label">Sin soporte</span>
+          <strong className="cc-kpi-value">{summary.missingSupportCount}</strong>
+          <p className="cc-kpi-footnote">Gastos de cierre con huecos documentales descargables</p>
+        </article>
+        <article className="cc-kpi-card">
+          <span className="cc-kpi-label">A revisar</span>
+          <strong className="cc-kpi-value">{summary.pendingReviewCount + summary.riskCount}</strong>
+          <p className="cc-kpi-footnote">Revisión fiscal pendiente o riesgo medio/alto antes del pack</p>
         </article>
       </section>
 

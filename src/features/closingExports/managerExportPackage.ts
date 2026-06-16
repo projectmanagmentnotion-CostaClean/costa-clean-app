@@ -51,6 +51,9 @@ interface ExportSummaryMetrics {
   fiscal_review_count?: number
   fiscal_risk_count?: number
   missing_valid_vat_invoice_count?: number
+  supported_expense_count?: number
+  missing_support_count?: number
+  support_coverage_ratio?: number
 }
 
 interface ExportPackageInput {
@@ -354,10 +357,19 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
             <li>Cobros: ${input.payments.length}</li>
             <li>Gastos: ${input.expenses.length}</li>
             <li>Presupuestos administrativos: ${input.quotes.length}</li>
+            <li>Soportes descargables: ${input.summaryMetrics.supported_expense_count ?? Math.max(input.expenses.length - missingDocuments, 0)}</li>
             <li>Soportes faltantes o no descargables: ${missingDocuments}</li>
           </ul>
         </section>
       </div>
+      <section class="card">
+        <h2>Lectura previa a gestoría</h2>
+        <ul>
+          <li>Este paquete separa el núcleo fiscal de la trazabilidad administrativa.</li>
+          <li>Las cifras de IVA son una lectura operativa del periodo, no una liquidación definitiva.</li>
+          <li>Las incidencias abiertas viajan en carpeta separada para no ocultar huecos documentales o de revisión.</li>
+        </ul>
+      </section>
       <section class="card">
         <h2>Incidencias</h2>
         <ul>${incidenceRows || '<li>Sin incidencias abiertas en el paquete.</li>'}</ul>
@@ -406,7 +418,13 @@ function buildSummaryHtml(input: ExportPackageInput): string {
         <article class="card"><span class="label">Presupuestos administrativos</span><strong>${input.quotes.length}</strong><p>Separados del bloque puramente fiscal</p></article>
         <article class="card"><span class="label">Gastos a revisar</span><strong>${metrics.fiscal_review_count ?? fiscalSummary.needsReviewCount}</strong><p>Riesgo medio/alto: ${metrics.fiscal_risk_count ?? fiscalSummary.mediumHighRiskCount}</p></article>
         <article class="card"><span class="label">Sin factura valida IVA</span><strong>${metrics.missing_valid_vat_invoice_count ?? fiscalSummary.missingValidVatInvoiceCount}</strong><p>Requieren revision documental</p></article>
+        <article class="card"><span class="label">Soportes descargables</span><strong>${metrics.supported_expense_count ?? Math.max(input.expenses.length - (metrics.missing_support_count ?? 0), 0)}</strong><p>Cobertura documental: ${(metrics.support_coverage_ratio ?? 100).toFixed(1)}%</p></article>
+        <article class="card"><span class="label">Huecos documentales</span><strong>${metrics.missing_support_count ?? 0}</strong><p>Soportes faltantes o no descargables dentro del periodo</p></article>
       </div>
+      <section class="card" style="margin-top:16px;">
+        <h2>Cómo leer este resumen</h2>
+        <p>Las cifras fiscales sirven para revisión operativa del cierre. Donde se indica “estimado”, el dato orienta validación interna y preparación del pack, pero no reemplaza el criterio final de gestoría ni la liquidación oficial.</p>
+      </section>
     </main>
   </body>
 </html>`

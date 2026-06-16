@@ -34,6 +34,27 @@ export interface FiscalPeriodExportMetrics {
   fiscal_review_count: number
   fiscal_risk_count: number
   missing_valid_vat_invoice_count: number
+  supported_expense_count: number
+  missing_support_count: number
+  support_coverage_ratio: number
+}
+
+export interface FiscalPeriodDocumentHealth {
+  supportedExpenseCount: number
+  missingSupportCount: number
+  validVatInvoiceCount: number
+  reviewExpenseCount: number
+  riskExpenseCount: number
+  supportCoverageRatio: number
+  status: 'healthy' | 'review' | 'critical'
+}
+
+export interface FiscalPeriodPackGroup {
+  id: string
+  title: string
+  category: 'fiscal' | 'administrative'
+  count: number
+  detail: string
 }
 
 export interface FiscalPeriodExportData {
@@ -43,6 +64,8 @@ export interface FiscalPeriodExportData {
   expenses: ExpenseListItem[]
   quotes: QuoteListItem[]
   metrics: FiscalPeriodExportMetrics
+  documentHealth: FiscalPeriodDocumentHealth
+  packGroups: FiscalPeriodPackGroup[]
   warnings: string[]
 }
 
@@ -92,6 +115,72 @@ export function buildFiscalPeriodExportData(input: {
     const riskLevel = expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level
     return riskLevel === 'medium' || riskLevel === 'high'
   })
+  const supportedExpenses = expenses.filter(
+    (expense) => expense.document_support_status !== 'missing' && Boolean(expense.receipt_file_path),
+  )
+  const validVatInvoiceExpenses = expenses.filter(
+    (expense) => expense.document_support_status === 'invoice_valid' && Boolean(expense.receipt_file_path),
+  )
+  const supportCoverageRatio = expenses.length > 0
+    ? roundMoney((supportedExpenses.length / expenses.length) * 100)
+    : 100
+  const documentHealth: FiscalPeriodDocumentHealth = {
+    supportedExpenseCount: supportedExpenses.length,
+    missingSupportCount: missingSupportExpenses.length,
+    validVatInvoiceCount: validVatInvoiceExpenses.length,
+    reviewExpenseCount: pendingReviewExpenses.length,
+    riskExpenseCount: riskExpenses.length,
+    supportCoverageRatio,
+    status: missingSupportExpenses.length > 0
+      ? 'critical'
+      : pendingReviewExpenses.length > 0 || riskExpenses.length > 0
+        ? 'review'
+        : 'healthy',
+  }
+  const packGroups: FiscalPeriodPackGroup[] = [
+    {
+      id: 'fiscal_invoices',
+      title: 'Facturas emitidas',
+      category: 'fiscal',
+      count: invoices.length,
+      detail: `${invoices.length} factura(s) con impacto fiscal directo.`,
+    },
+    {
+      id: 'fiscal_payments',
+      title: 'Cobros',
+      category: 'fiscal',
+      count: payments.length,
+      detail: `${payments.length} cobro(s) para trazabilidad de recaudación y saldos.`,
+    },
+    {
+      id: 'fiscal_expenses',
+      title: 'Gastos y soportes',
+      category: 'fiscal',
+      count: expenses.length,
+      detail: `${supportedExpenses.length} con soporte descargable · ${missingSupportExpenses.length} con huecos documentales.`,
+    },
+    {
+      id: 'admin_quotes',
+      title: 'Presupuestos administrativos',
+      category: 'administrative',
+      count: quotes.length,
+      detail: 'Se incluyen aparte para trazabilidad comercial, sin mezclar el núcleo fiscal.',
+    },
+    {
+      id: 'admin_incidences',
+      title: 'Incidencias pendientes',
+      category: 'administrative',
+      count: missingSupportExpenses.length + pendingReviewExpenses.length + riskExpenses.length + pendingInvoices.length,
+      detail: 'Resumen de huecos previos a entrega o revisión final con gestoría.',
+    },
+    {
+      id: 'admin_review',
+      title: 'Revisión gestoría',
+      category: 'administrative',
+      count: 1,
+      detail: 'Checklist fiscal, IVA estimado y lectura documental del periodo.',
+    },
+  ]
 
   const warnings: string[] = []
 
@@ -135,7 +224,12 @@ export function buildFiscalPeriodExportData(input: {
       fiscal_review_count: vatSummary.expenseFiscalSummary.needsReviewCount,
       fiscal_risk_count: vatSummary.expenseFiscalSummary.mediumHighRiskCount,
       missing_valid_vat_invoice_count: vatSummary.expenseFiscalSummary.missingValidVatInvoiceCount,
+      supported_expense_count: supportedExpenses.length,
+      missing_support_count: missingSupportExpenses.length,
+      support_coverage_ratio: supportCoverageRatio,
     },
+    documentHealth,
+    packGroups,
     warnings,
   }
 }

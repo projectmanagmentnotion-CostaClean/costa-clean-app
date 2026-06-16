@@ -38,6 +38,30 @@ function formatCurrency(value: number): string {
   }).format(value)
 }
 
+function getDocumentHealthCopy(status: 'healthy' | 'review' | 'critical') {
+  if (status === 'healthy') {
+    return {
+      label: 'Pack listo para revisión',
+      detail: 'La cobertura documental del periodo es sana y el pack puede exportarse con buena trazabilidad.',
+      toneClass: 'cc-kpi-card--success',
+    }
+  }
+
+  if (status === 'critical') {
+    return {
+      label: 'Pack con huecos documentales',
+      detail: 'El ZIP sigue siendo exportable, pero conviene resolver soportes faltantes antes de compartirlo con gestoría.',
+      toneClass: 'cc-kpi-card--warning',
+    }
+  }
+
+  return {
+    label: 'Pack exportable con revisión previa',
+    detail: 'La estructura está lista, aunque todavía hay gastos a revisar o riesgos que conviene contextualizar antes de entregar.',
+    toneClass: 'cc-kpi-card--warning',
+  }
+}
+
 function createDefaultSelection(): FiscalPeriodSelection {
   const now = new Date()
   const year = now.getFullYear()
@@ -99,6 +123,18 @@ export function FiscalPeriodExportSection({
     [expenses, invoices, payments, quotes, selection],
   )
   const incidences = useMemo(() => buildFiscalPeriodIncidences(exportData), [exportData])
+  const documentHealthCopy = useMemo(
+    () => getDocumentHealthCopy(exportData.documentHealth.status),
+    [exportData.documentHealth.status],
+  )
+  const fiscalPackGroups = useMemo(
+    () => exportData.packGroups.filter((group) => group.category === 'fiscal'),
+    [exportData.packGroups],
+  )
+  const administrativePackGroups = useMemo(
+    () => exportData.packGroups.filter((group) => group.category === 'administrative'),
+    [exportData.packGroups],
+  )
 
   async function handleDownload() {
     setIsExporting(true)
@@ -181,7 +217,39 @@ export function FiscalPeriodExportSection({
             <strong>Observaciones del periodo</strong>
             <p>{exportData.warnings.join(' ')}</p>
           </div>
-        ) : null}
+          ) : null}
+        </section>
+
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Preflight del pack gestor</h2>
+            <p>Antes de descargar, esta vista deja claro qué entrará en el ZIP y con qué salud documental llegará a gestoría.</p>
+          </div>
+        </div>
+
+        <div className="cc-kpi-grid cc-quarterly-metrics">
+          <article className={`cc-kpi-card ${documentHealthCopy.toneClass}`}>
+            <span className="cc-kpi-label">Estado del pack</span>
+            <strong className="cc-kpi-value">{documentHealthCopy.label}</strong>
+            <p className="cc-kpi-footnote">{documentHealthCopy.detail}</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Cobertura documental</span>
+            <strong className="cc-kpi-value">{exportData.documentHealth.supportCoverageRatio}%</strong>
+            <p className="cc-kpi-footnote">{exportData.documentHealth.supportedExpenseCount} de {exportData.metrics.expense_count} gasto(s) con soporte descargable.</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Factura válida para IVA</span>
+            <strong className="cc-kpi-value">{exportData.documentHealth.validVatInvoiceCount}</strong>
+            <p className="cc-kpi-footnote">{exportData.metrics.missing_valid_vat_invoice_count} gasto(s) siguen sin cobertura válida para deducción.</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Incidencias abiertas</span>
+            <strong className="cc-kpi-value">{exportData.metrics.unresolved_incidence_count}</strong>
+            <p className="cc-kpi-footnote">Se exportan en carpeta separada para no perder trazabilidad de revisión.</p>
+          </article>
+        </div>
       </section>
 
       <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="KPIs del paquete fiscal por periodo">
@@ -225,13 +293,69 @@ export function FiscalPeriodExportSection({
           <strong className="cc-kpi-value">{exportData.metrics.quote_count}</strong>
           <p className="cc-kpi-footnote">Se exportan en carpeta separada para no mezclar lo fiscal</p>
         </article>
+        <article className="cc-kpi-card">
+          <span className="cc-kpi-label">Soportes descargables</span>
+          <strong className="cc-kpi-value">{exportData.metrics.supported_expense_count}</strong>
+          <p className="cc-kpi-footnote">{exportData.metrics.missing_support_count} gasto(s) siguen con huecos documentales.</p>
+        </article>
       </section>
 
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Estructura final del paquete</h2>
-            <p>Organización pensada para revisión interna o entrega directa al gestor.</p>
+            <h2>Qué entra en el pack</h2>
+            <p>Separación visual entre contenido fiscal duro y material administrativo o de trazabilidad.</p>
+          </div>
+        </div>
+
+        <div className="cc-quarterly-summary-grid">
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Contenido fiscal duro</h2>
+                <p>Lo que compone el núcleo fiscal del periodo y sustenta la lectura de IVA y saldos.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              <article className="cc-export-folder-item">
+                <strong>01_resumen</strong>
+                <p>Resumen HTML/JSON del periodo, con KPIs, rango seleccionado y notas asociadas al cierre si existen.</p>
+              </article>
+              {fiscalPackGroups.map((group) => (
+                <article key={group.id} className="cc-export-folder-item">
+                  <strong>{group.title}</strong>
+                  <p>{group.detail}</p>
+                </article>
+              ))}
+            </div>
+          </article>
+
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Trazabilidad y revisión</h2>
+                <p>Material administrativo y de control que acompaña el paquete sin contaminar la base puramente fiscal.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              {administrativePackGroups.map((group) => (
+                <article key={group.id} className="cc-export-folder-item">
+                  <strong>{group.title}</strong>
+                  <p>{group.detail}</p>
+                </article>
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Estructura final del ZIP</h2>
+            <p>La estructura actual del paquete se mantiene, pero ahora se explica antes de descargar para reducir incertidumbre.</p>
           </div>
         </div>
 

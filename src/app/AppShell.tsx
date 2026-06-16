@@ -1204,6 +1204,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
                   expenses={expenses}
+                  quotes={quotesWithCodes}
+                  clients={clientsWithContext}
+                  properties={propertiesWithCodes}
                   error={annualClosingError}
                   onNavigateToIncidence={handleAnnualClosingNavigation}
                   onOpenQuarter={handleOpenQuarterFromAnnual}
@@ -1219,6 +1222,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
                   expenses={expenses}
+                  quotes={quotesWithCodes}
+                  clients={clientsWithContext}
+                  properties={propertiesWithCodes}
                   error={quarterlyClosingError}
                   onNavigateToIncidence={handleQuarterlyClosingNavigation}
                   onSaveClosing={handleSaveQuarterlyClosing}

@@ -25,9 +25,11 @@ function buildQuarterlyBreakdown(
       collectedTotal: 0,
       outstandingTotal: 0,
       expensesTotal: 0,
+      outputVatTotal: 0,
       estimatedDeductibleBase: 0,
       estimatedDeductibleVat: 0,
       totalVatSupported: 0,
+      estimatedNetVatPayable: 0,
       incidences: [],
       readiness: 'ready' as const,
     }
@@ -38,6 +40,9 @@ function buildQuarterlyBreakdown(
       collected_total: quarterlySummary.collectedTotal,
       outstanding_total: quarterlySummary.outstandingTotal,
       expenses_total: quarterlySummary.expensesTotal,
+      output_vat_total: quarterlySummary.outputVatTotal,
+      estimated_deductible_vat: quarterlySummary.estimatedDeductibleVat,
+      estimated_net_vat_payable: quarterlySummary.estimatedNetVatPayable,
       unresolved_incidence_count: quarterlySummary.unresolvedIncidenceCount,
       quarterlySummary,
     }
@@ -66,9 +71,11 @@ export function buildAnnualClosingSummary(
   const collectedTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.collectedTotal, 0)
   const outstandingTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.outstandingTotal, 0)
   const expensesTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.expensesTotal, 0)
+  const outputVatTotal = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.outputVatTotal, 0)
   const estimatedDeductibleBase = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.estimatedDeductibleBase, 0)
   const estimatedDeductibleVat = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.estimatedDeductibleVat, 0)
   const totalVatSupported = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.totalVatSupported, 0)
+  const estimatedNetVatPayable = quarterlyBreakdown.reduce((sum, quarter) => sum + quarter.quarterlySummary.estimatedNetVatPayable, 0)
 
   return {
     fiscalYear,
@@ -88,9 +95,11 @@ export function buildAnnualClosingSummary(
     collectedTotal,
     outstandingTotal,
     expensesTotal,
+    outputVatTotal,
     estimatedDeductibleBase,
     estimatedDeductibleVat,
     totalVatSupported,
+    estimatedNetVatPayable,
     readiness:
       missingSupportCount > 0 ||
       pendingReviewCount > 0 ||
@@ -191,15 +200,20 @@ export function buildAnnualClosingSnapshot(summary: AnnualClosingSummary): Annua
       collected_total: summary.collectedTotal,
       outstanding_total: summary.outstandingTotal,
       expenses_total: summary.expensesTotal,
+      output_vat_total: summary.outputVatTotal,
       estimated_deductible_base: summary.estimatedDeductibleBase,
       estimated_deductible_vat: summary.estimatedDeductibleVat,
       total_vat_supported: summary.totalVatSupported,
+      estimated_net_vat_payable: summary.estimatedNetVatPayable,
       quarterly_breakdown: summary.quarterlyBreakdown.map((quarter) => ({
         fiscal_quarter: quarter.fiscal_quarter,
         invoiced_total: quarter.invoiced_total,
         collected_total: quarter.collected_total,
         outstanding_total: quarter.outstanding_total,
         expenses_total: quarter.expenses_total,
+        output_vat_total: quarter.output_vat_total,
+        estimated_deductible_vat: quarter.estimated_deductible_vat,
+        estimated_net_vat_payable: quarter.estimated_net_vat_payable,
         unresolved_incidence_count: quarter.unresolved_incidence_count,
       })),
     },

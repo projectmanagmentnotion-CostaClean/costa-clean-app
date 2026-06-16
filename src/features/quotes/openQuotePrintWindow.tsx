@@ -35,19 +35,12 @@ export function getQuoteDocumentTitle(
   return buildBrandedDocumentTitle('Presupuesto', getQuoteRef(quote), getClientName(quote, clients))
 }
 
-export function openQuotePrintWindow(
+export function buildQuotePrintDocumentHtml(
   quote: QuoteListItem,
   clients: ClientListItem[],
   properties: PropertyListItem[],
   intent: QuoteOutputIntent = 'print',
 ) {
-  const printWindow = window.open('', '_blank', 'width=1100,height=1400')
-
-  if (!printWindow) {
-    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
-    return
-  }
-
   const documentTitle = getQuoteDocumentTitle(quote, clients)
   const markup = renderToStaticMarkup(
     <QuoteDocumentA4
@@ -58,7 +51,7 @@ export function openQuotePrintWindow(
     />,
   )
 
-  const html = `<!doctype html>
+  return `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
@@ -80,6 +73,22 @@ export function openQuotePrintWindow(
     </script>
   </body>
 </html>`
+}
+
+export function openQuotePrintWindow(
+  quote: QuoteListItem,
+  clients: ClientListItem[],
+  properties: PropertyListItem[],
+  intent: QuoteOutputIntent = 'print',
+) {
+  const printWindow = window.open('', '_blank', 'width=1100,height=1400')
+
+  if (!printWindow) {
+    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+    return
+  }
+
+  const html = buildQuotePrintDocumentHtml(quote, clients, properties, intent)
 
   printWindow.document.open()
   printWindow.document.write(html)

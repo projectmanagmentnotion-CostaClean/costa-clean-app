@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
-import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
+import type { ClientListItem } from '../features/clients/types'
+import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
 import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
+import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
 import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
 import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
 import {
@@ -15,6 +17,8 @@ import {
 import { openInvoicePrintWindow } from '../features/invoices/openInvoicePrintWindow'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
+import type { PropertyListItem } from '../features/properties/types'
+import type { QuoteListItem } from '../features/quotes/types'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord, QuarterlyClosingSummary } from '../features/quarterlyClosing/types'
 
 type QuarterlyClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
@@ -28,6 +32,9 @@ interface QuarterlyClosingPageProps {
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
   expenses: ExpenseListItem[]
+  quotes: QuoteListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
   error: string | null
   onNavigateToIncidence: (view: AppView, scope: QuarterlyClosingIncidence['scope'], fiscalYear: number, fiscalQuarter: number) => void
   onSaveClosing: (input: { fiscalYear: number; fiscalQuarter: number; notes: string | null }) => Promise<void>
@@ -130,6 +137,9 @@ export function QuarterlyClosingPage({
   invoices,
   payments,
   expenses,
+  quotes,
+  clients,
+  properties,
   error,
   onNavigateToIncidence,
   onSaveClosing,
@@ -186,8 +196,6 @@ export function QuarterlyClosingPage({
     setSaveMessage(null)
     setSaveError(null)
     setDocumentActionError(null)
-    setExportResult(null)
-    setExportError(null)
     setAiSummaryResult(null)
     setAiSummaryError(null)
 
@@ -334,6 +342,15 @@ export function QuarterlyClosingPage({
     )
   }
 
+  const exportDefaultSelection = {
+    mode: 'quarter' as const,
+    year: selectedYear,
+    month: (selectedQuarter - 1) * 3 + 1,
+    quarter: selectedQuarter,
+    startDate: `${selectedYear}-${String((selectedQuarter - 1) * 3 + 1).padStart(2, '0')}-01`,
+    endDate: `${selectedYear}-${String(selectedQuarter * 3).padStart(2, '0')}-28`,
+  }
+
   const activeSummary = summary
   const uiStatus = getUiStatus(summary, closing)
   const savedSnapshot = closing?.snapshot_json?.metrics ?? null
@@ -401,35 +418,52 @@ export function QuarterlyClosingPage({
             invoice_count: savedSnapshot.invoice_count,
             payment_count: savedSnapshot.payment_count,
             expense_count: savedSnapshot.expense_count,
+            quote_count: quotes.filter((quote) => matchesDateQuarter(quote.created_at ?? '', selectedYear, selectedQuarter) && (quote.status !== 'draft' || quote.job_id || quote.invoice_id)).length,
             pending_invoice_count: savedSnapshot.pending_invoice_count,
             unresolved_incidence_count: savedSnapshot.unresolved_incidence_count,
             invoiced_total: savedSnapshot.invoiced_total,
             collected_total: savedSnapshot.collected_total,
             outstanding_total: savedSnapshot.outstanding_total,
             expenses_total: savedSnapshot.expenses_total,
+            total_vat_supported: savedSnapshot.total_vat_supported,
+            estimated_deductible_base: savedSnapshot.estimated_deductible_base,
+            estimated_deductible_vat: savedSnapshot.estimated_deductible_vat,
+            output_vat_total: savedSnapshot.output_vat_total,
+            estimated_net_vat_payable: savedSnapshot.estimated_net_vat_payable,
           }
         : {
             invoice_count: activeSummary.invoiceCount,
             payment_count: activeSummary.paymentCount,
             expense_count: activeSummary.expenseCount,
+            quote_count: quotes.filter((quote) => matchesDateQuarter(quote.created_at ?? '', selectedYear, selectedQuarter) && (quote.status !== 'draft' || quote.job_id || quote.invoice_id)).length,
             pending_invoice_count: activeSummary.pendingInvoiceCount,
             unresolved_incidence_count: activeSummary.unresolvedIncidenceCount,
             invoiced_total: activeSummary.invoicedTotal,
             collected_total: activeSummary.collectedTotal,
             outstanding_total: activeSummary.outstandingTotal,
             expenses_total: activeSummary.expensesTotal,
+            total_vat_supported: activeSummary.totalVatSupported,
+            estimated_deductible_base: activeSummary.estimatedDeductibleBase,
+            estimated_deductible_vat: activeSummary.estimatedDeductibleVat,
+            output_vat_total: activeSummary.outputVatTotal,
+            estimated_net_vat_payable: activeSummary.estimatedNetVatPayable,
           }
 
       const result = await downloadManagerExportPackage({
         scope: 'quarterly',
         label: `Cierre trimestral T${selectedQuarter} ${selectedYear}`,
         folderName: `CostaClean_Cierre_Trimestral_${selectedYear}_T${selectedQuarter}`,
+        periodStartDate: exportDefaultSelection.startDate,
+        periodEndDate: exportDefaultSelection.endDate,
         closingSavedAt: closing.closed_at,
         closingNotes: closing.notes,
         summaryMetrics,
         invoices: quarterInvoices,
         payments: quarterPayments,
         expenses: quarterExpenses,
+        quotes: quotes.filter((quote) => matchesDateQuarter(quote.created_at ?? '', selectedYear, selectedQuarter) && (quote.status !== 'draft' || quote.job_id || quote.invoice_id)),
+        clients,
+        properties,
         incidences: activeSummary.incidences,
       })
       setExportResult(result)
@@ -661,6 +695,24 @@ export function QuarterlyClosingPage({
               <span className="cc-kpi-label">Gastos del trimestre</span>
               <strong className="cc-kpi-value">{formatCurrency(summary.expensesTotal)}</strong>
               <p className="cc-kpi-footnote">{summary.expenseCount} gasto(s) registrados en el periodo</p>
+            </article>
+
+            <article className="cc-kpi-card cc-kpi-card--finance">
+              <span className="cc-kpi-label">IVA repercutido</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
+              <p className="cc-kpi-footnote">IVA según facturas emitidas en {getQuarterLabel(selectedYear, selectedQuarter)}</p>
+            </article>
+
+            <article className="cc-kpi-card">
+              <span className="cc-kpi-label">IVA deducible estimado</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
+              <p className="cc-kpi-footnote">Estimación operativa basada en gastos y soporte del trimestre</p>
+            </article>
+
+            <article className="cc-kpi-card cc-kpi-card--warning">
+              <span className="cc-kpi-label">IVA neto estimado</span>
+              <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
+              <p className="cc-kpi-footnote">IVA repercutido menos IVA deducible estimado. Cifra orientativa.</p>
             </article>
 
             <article className="cc-kpi-card">
@@ -1126,10 +1178,25 @@ export function QuarterlyClosingPage({
                 ))}
             </div>
           </section>
+          <FiscalPeriodExportSection
+            key={`quarter-export-${selectedYear}-${selectedQuarter}`}
+            availableYears={availableYears}
+            defaultSelection={exportDefaultSelection}
+            title="Generador fiscal por periodo"
+            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado sin depender solo del cierre trimestral guardado."
+            invoices={invoices}
+            payments={payments}
+            expenses={expenses}
+            quotes={quotes}
+            clients={clients}
+            properties={properties}
+            closingSavedAt={closing?.closed_at ?? null}
+            closingNotes={closing?.notes ?? null}
+          />
         </>
       ) : null}
 
-      {workspace === 'export_folder' && closing ? (
+      {workspace === 'export_folder' ? (
         <>
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
@@ -1165,8 +1232,8 @@ export function QuarterlyClosingPage({
               <article className="cc-quarterly-persistence__card">
                 <span className="cc-dashboard-panel__label">01 · Resumen</span>
                 <strong className="cc-dashboard-panel__value">{getQuarterLabel(selectedYear, selectedQuarter)}</strong>
-                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing.closed_at)}</p>
-                <p className="cc-dashboard-panel__text">Notas: {closing.notes?.trim() || 'Sin notas de cierre.'}</p>
+                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing?.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Notas: {closing?.notes?.trim() || 'Sin notas de cierre.'}</p>
               </article>
               <article className="cc-quarterly-persistence__card">
                 <span className="cc-dashboard-panel__label">02 · Facturas emitidas</span>
@@ -1404,6 +1471,22 @@ export function QuarterlyClosingPage({
                 ))}
             </div>
           </section>
+
+          <FiscalPeriodExportSection
+            key={`quarter-export-final-${selectedYear}-${selectedQuarter}`}
+            availableYears={availableYears}
+            defaultSelection={exportDefaultSelection}
+            title="Generador fiscal por periodo"
+            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado sin depender solo del cierre trimestral guardado."
+            invoices={invoices}
+            payments={payments}
+            expenses={expenses}
+            quotes={quotes}
+            clients={clients}
+            properties={properties}
+            closingSavedAt={closing?.closed_at ?? null}
+            closingNotes={closing?.notes ?? null}
+          />
         </>
       ) : null}
 

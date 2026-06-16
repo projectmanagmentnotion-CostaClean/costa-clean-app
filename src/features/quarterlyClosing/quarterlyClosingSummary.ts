@@ -4,6 +4,7 @@ import {
   hasMediumHighFiscalRisk,
   needsFiscalReview,
 } from '../expenses/fiscalIntelligenceSummary'
+import { buildFiscalVatSummary } from '../closing/fiscalVatSummary'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
@@ -58,6 +59,7 @@ export function buildQuarterlyClosingSummary(
     (expense) => hasMediumHighFiscalRisk(expense),
   )
   const fiscalSummary = buildExpenseFiscalSummary(quarterClosureExpenses)
+  const vatSummary = buildFiscalVatSummary(quarterInvoices, quarterClosureExpenses)
 
   const paidAmountByInvoiceId = new Map<string, number>()
   for (const payment of payments) {
@@ -99,9 +101,11 @@ export function buildQuarterlyClosingSummary(
       return sum + Math.max(invoiceTotal - paidAmount, 0)
     }, 0),
     expensesTotal: quarterExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0),
-    estimatedDeductibleBase: fiscalSummary.estimatedDeductibleBase,
-    estimatedDeductibleVat: fiscalSummary.estimatedDeductibleVat,
-    totalVatSupported: fiscalSummary.totalVatSupported,
+    outputVatTotal: vatSummary.outputVatTotal,
+    estimatedDeductibleBase: vatSummary.estimatedDeductibleBase,
+    estimatedDeductibleVat: vatSummary.estimatedDeductibleVat,
+    totalVatSupported: vatSummary.supportedVatTotal,
+    estimatedNetVatPayable: vatSummary.estimatedNetVatPayable,
     readiness:
       missingSupportExpenses.length > 0 ||
       pendingReviewExpenses.length > 0 ||
@@ -204,9 +208,11 @@ export function buildQuarterlyClosingSnapshot(summary: QuarterlyClosingSummary):
       collected_total: summary.collectedTotal,
       outstanding_total: summary.outstandingTotal,
       expenses_total: summary.expensesTotal,
+      output_vat_total: summary.outputVatTotal,
       estimated_deductible_base: summary.estimatedDeductibleBase,
       estimated_deductible_vat: summary.estimatedDeductibleVat,
       total_vat_supported: summary.totalVatSupported,
+      estimated_net_vat_payable: summary.estimatedNetVatPayable,
     },
   }
 }

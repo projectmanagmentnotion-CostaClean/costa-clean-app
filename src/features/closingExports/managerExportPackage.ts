@@ -1,3 +1,4 @@
+import type { ClientListItem } from '../clients/types'
 import { createExpenseReceiptSignedUrl } from '../expenses/expenseAttachmentsApi'
 import {
   getExpenseAiFiscalClassificationLabel,
@@ -17,8 +18,11 @@ import {
 import { buildInvoicePrintDocumentHtml } from '../invoices/openInvoicePrintWindow'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
+import type { PropertyListItem } from '../properties/types'
+import { buildQuotePrintDocumentHtml } from '../quotes/openQuotePrintWindow'
+import type { QuoteListItem } from '../quotes/types'
 
-type ExportScope = 'quarterly' | 'annual'
+type ExportScope = 'month' | 'quarterly' | 'annual' | 'custom'
 
 interface ExportIncidence {
   id: string
@@ -32,6 +36,7 @@ interface ExportSummaryMetrics {
   invoice_count: number
   payment_count: number
   expense_count: number
+  quote_count?: number
   pending_invoice_count: number
   unresolved_incidence_count: number
   invoiced_total: number
@@ -41,6 +46,8 @@ interface ExportSummaryMetrics {
   total_vat_supported?: number
   estimated_deductible_vat?: number
   estimated_deductible_base?: number
+  output_vat_total?: number
+  estimated_net_vat_payable?: number
   fiscal_review_count?: number
   fiscal_risk_count?: number
   missing_valid_vat_invoice_count?: number
@@ -50,12 +57,17 @@ interface ExportPackageInput {
   scope: ExportScope
   label: string
   folderName: string
+  periodStartDate: string
+  periodEndDate: string
   closingSavedAt: string | null
   closingNotes: string | null
   summaryMetrics: ExportSummaryMetrics
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
   expenses: ExpenseListItem[]
+  quotes: QuoteListItem[]
+  clients: ClientListItem[]
+  properties: PropertyListItem[]
   incidences: ExportIncidence[]
 }
 
@@ -95,7 +107,10 @@ function formatDate(value: string | null | undefined): string {
   const normalized = value.length > 10 ? value : `${value}T00:00:00`
   const date = new Date(normalized)
   if (Number.isNaN(date.getTime())) return value
-  return new Intl.DateTimeFormat('es-ES', { dateStyle: 'medium', timeStyle: value.length > 10 ? 'short' : undefined }).format(date)
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: value.length > 10 ? 'short' : undefined,
+  }).format(date)
 }
 
 function escapeHtml(value: string): string {
@@ -318,17 +333,18 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
   <body>
     <main>
       <h1>${escapeHtml(input.label)}</h1>
-      <p>Paquete de gestoría generado desde CostaClean CRM.</p>
+      <p>Paquete fiscal generado desde CostaClean CRM para el periodo ${escapeHtml(formatDate(input.periodStartDate))} - ${escapeHtml(formatDate(input.periodEndDate))}.</p>
       <div class="grid">
         <section class="card">
-          <h2>Contenido</h2>
+          <h2>Estructura</h2>
           <ul>
             <li><code>01_resumen</code></li>
             <li><code>02_facturas_emitidas</code></li>
             <li><code>03_cobros</code></li>
             <li><code>04_gastos_y_soportes</code></li>
-            <li><code>05_incidencias_pendientes</code></li>
-            <li><code>06_revision_gestoria</code></li>
+            <li><code>05_presupuestos_administrativos</code></li>
+            <li><code>06_incidencias_pendientes</code></li>
+            <li><code>07_revision_gestoria</code></li>
           </ul>
         </section>
         <section class="card">
@@ -337,7 +353,8 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
             <li>Facturas: ${input.invoices.length}</li>
             <li>Cobros: ${input.payments.length}</li>
             <li>Gastos: ${input.expenses.length}</li>
-            <li>Documentos/soportes faltantes: ${missingDocuments}</li>
+            <li>Presupuestos administrativos: ${input.quotes.length}</li>
+            <li>Soportes faltantes o no descargables: ${missingDocuments}</li>
           </ul>
         </section>
       </div>
@@ -353,6 +370,7 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
 function buildSummaryHtml(input: ExportPackageInput): string {
   const metrics = input.summaryMetrics
   const fiscalSummary = buildExpenseFiscalSummary(input.expenses)
+
   return `<!doctype html>
 <html lang="es">
   <head>
@@ -361,7 +379,7 @@ function buildSummaryHtml(input: ExportPackageInput): string {
     <title>${escapeHtml(input.label)} · Resumen</title>
     <style>
       body { font-family: Inter, Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #0f172a; }
-      main { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
+      main { max-width: 1120px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
       .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-top: 20px; }
       .card { border: 1px solid #dbe3ee; border-radius: 16px; padding: 16px; background: #fbfdff; }
       .label { display: block; font-size: 12px; text-transform: uppercase; color: #64748b; margin-bottom: 8px; }
@@ -372,17 +390,22 @@ function buildSummaryHtml(input: ExportPackageInput): string {
   <body>
     <main>
       <h1>${escapeHtml(input.label)}</h1>
+      <p>Periodo: ${escapeHtml(formatDate(input.periodStartDate))} - ${escapeHtml(formatDate(input.periodEndDate))}</p>
       <p>Cierre guardado: ${escapeHtml(formatDate(input.closingSavedAt))}</p>
-      <p>Notas: ${escapeHtml(input.closingNotes?.trim() || 'Sin notas de cierre.')}</p>
+      <p>Notas: ${escapeHtml(input.closingNotes?.trim() || 'Sin notas de cierre asociadas al paquete.')}</p>
       <div class="grid">
         <article class="card"><span class="label">Facturado</span><strong>${escapeHtml(formatCurrency(metrics.invoiced_total))}</strong><p>${metrics.invoice_count} factura(s)</p></article>
         <article class="card"><span class="label">Cobrado</span><strong>${escapeHtml(formatCurrency(metrics.collected_total))}</strong><p>${metrics.payment_count} cobro(s)</p></article>
         <article class="card"><span class="label">Pendiente</span><strong>${escapeHtml(formatCurrency(metrics.outstanding_total))}</strong><p>${metrics.pending_invoice_count} factura(s) abiertas</p></article>
         <article class="card"><span class="label">Gastos</span><strong>${escapeHtml(formatCurrency(metrics.expenses_total))}</strong><p>${metrics.expense_count} gasto(s)</p></article>
+        <article class="card"><span class="label">IVA repercutido</span><strong>${escapeHtml(formatCurrency(metrics.output_vat_total ?? 0))}</strong><p>Segun facturas emitidas del periodo</p></article>
         <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(metrics.total_vat_supported ?? fiscalSummary.totalVatSupported))}</strong><p>Base fiscal de revision</p></article>
-        <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_vat ?? fiscalSummary.estimatedDeductibleVat))}</strong><p>Estimacion asistiva, no cierre legal definitivo</p></article>
+        <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_vat ?? fiscalSummary.estimatedDeductibleVat))}</strong><p>Estimacion operativa, no liquidacion definitiva</p></article>
+        <article class="card"><span class="label">IVA neto estimado</span><strong>${escapeHtml(formatCurrency(metrics.estimated_net_vat_payable ?? 0))}</strong><p>IVA repercutido menos IVA deducible estimado</p></article>
         <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_base ?? fiscalSummary.estimatedDeductibleBase))}</strong><p>Segun campos fiscales disponibles</p></article>
+        <article class="card"><span class="label">Presupuestos administrativos</span><strong>${input.quotes.length}</strong><p>Separados del bloque puramente fiscal</p></article>
         <article class="card"><span class="label">Gastos a revisar</span><strong>${metrics.fiscal_review_count ?? fiscalSummary.needsReviewCount}</strong><p>Riesgo medio/alto: ${metrics.fiscal_risk_count ?? fiscalSummary.mediumHighRiskCount}</p></article>
+        <article class="card"><span class="label">Sin factura valida IVA</span><strong>${metrics.missing_valid_vat_invoice_count ?? fiscalSummary.missingValidVatInvoiceCount}</strong><p>Requieren revision documental</p></article>
       </div>
     </main>
   </body>
@@ -393,9 +416,9 @@ function buildFiscalReviewHtml(input: ExportPackageInput): string {
   const fiscalSummary = buildExpenseFiscalSummary(input.expenses)
   const rows = input.expenses
     .filter((expense) =>
-      needsFiscalReview(expense) ||
-      hasMediumHighFiscalRisk(expense) ||
-      !hasValidVatInvoiceSupport(expense),
+      needsFiscalReview(expense)
+      || hasMediumHighFiscalRisk(expense)
+      || !hasValidVatInvoiceSupport(expense),
     )
     .map((expense) => `
       <tr>
@@ -434,10 +457,10 @@ function buildFiscalReviewHtml(input: ExportPackageInput): string {
       <h1>Revision fiscal para gestoria</h1>
       <p>Vista de apoyo para revisar gastos, soporte documental, riesgo fiscal e importes deducibles estimados. Es una estimacion operativa y no sustituye la revision profesional.</p>
       <div class="grid">
+        <article class="card"><span class="label">IVA repercutido</span><strong>${escapeHtml(formatCurrency(input.summaryMetrics.output_vat_total ?? 0))}</strong></article>
         <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(fiscalSummary.totalVatSupported))}</strong></article>
         <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(fiscalSummary.estimatedDeductibleVat))}</strong></article>
-        <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(fiscalSummary.estimatedDeductibleBase))}</strong></article>
-        <article class="card"><span class="label">Puntos a revisar</span><strong>${fiscalSummary.needsReviewCount + fiscalSummary.mediumHighRiskCount + fiscalSummary.missingValidVatInvoiceCount}</strong></article>
+        <article class="card"><span class="label">IVA neto estimado</span><strong>${escapeHtml(formatCurrency((input.summaryMetrics.output_vat_total ?? 0) - fiscalSummary.estimatedDeductibleVat))}</strong></article>
       </div>
       <table>
         <thead>
@@ -462,7 +485,7 @@ async function buildExpenseEntries(expenses: ExpenseListItem[], rootFolder: stri
     const baseName = `gasto_${sanitizePathPart(expense.display_code ?? expense.id)}`
     const documentStatus = getExpenseDocumentSupportStatusLabel(expense.document_support_status)
     const reviewStatus = getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)
-    const riskStatus = getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)
+    const riskStatus = getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level)
 
     if (!expense.receipt_file_path) {
       missingDocuments += 1
@@ -485,7 +508,7 @@ async function buildExpenseEntries(expenses: ExpenseListItem[], rootFolder: stri
       const buffer = new Uint8Array(await response.arrayBuffer())
       const extension = getAttachmentExtension(expense.receipt_file_path) || '.bin'
       entries.push({
-        path: `${rootFolder}/04_gastos_y_soportes/adjuntos/${baseName}${extension}`,
+        path: `${rootFolder}/04_gastos_y_soportes/soportes/${baseName}${extension}`,
         data: buffer,
         date: new Date(),
       })
@@ -515,6 +538,8 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
     scope: input.scope,
     label: input.label,
     folder_name: input.folderName,
+    period_start_date: input.periodStartDate,
+    period_end_date: input.periodEndDate,
     closing_saved_at: input.closingSavedAt,
     notes: input.closingNotes,
     summary_metrics: input.summaryMetrics,
@@ -536,8 +561,9 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
       '02_facturas_emitidas',
       '03_cobros',
       '04_gastos_y_soportes',
-      '05_incidencias_pendientes',
-      '06_revision_gestoria',
+      '05_presupuestos_administrativos',
+      '06_incidencias_pendientes',
+      '07_revision_gestoria',
     ],
     incidences: input.incidences.map((incidence) => ({
       id: incidence.id,
@@ -557,30 +583,34 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   try {
     exportLogoSrc = await fetchAsDataUrl('/branding/logo-costa-clean-web.png')
   } catch {
-    // Keep the public path fallback for robustness in case the asset cannot be embedded.
+    // Keep fallback public path for robustness.
   }
 
   entries.push(makeTextEntry(`${rootFolder}/00_indice.html`, buildIndexHtml(input, 0)))
   entries.push(makeTextEntry(`${rootFolder}/01_resumen/resumen.html`, buildSummaryHtml(input)))
   entries.push(makeTextEntry(`${rootFolder}/01_resumen/resumen.json`, JSON.stringify({
     label: input.label,
+    period_start_date: input.periodStartDate,
+    period_end_date: input.periodEndDate,
     closing_saved_at: input.closingSavedAt,
     notes: input.closingNotes,
     metrics: input.summaryMetrics,
   }, null, 2)))
 
   const invoiceCsv = buildCsv(
-    ['invoice_ref', 'issue_date', 'client', 'status', 'total', 'document_file'],
+    ['invoice_ref', 'issue_date', 'client', 'status', 'subtotal', 'tax_amount', 'total', 'document_file'],
     input.invoices.map((invoice) => {
       const invoiceRef = invoice.invoice_number ?? invoice.display_code ?? invoice.id
       const fileName = `factura_${sanitizePathPart(invoiceRef)}.html`
       const invoiceHtml = buildInvoicePrintDocumentHtml(invoice, 'pdf', { logoSrc: exportLogoSrc })
-      entries.push(makeTextEntry(`${rootFolder}/02_facturas_emitidas/${fileName}`, invoiceHtml))
+      entries.push(makeTextEntry(`${rootFolder}/02_facturas_emitidas/documentos/${fileName}`, invoiceHtml))
       return [
         invoiceRef,
         invoice.issue_date,
         invoice.client_name ?? invoice.client_display_code ?? invoice.client_id,
         invoice.status,
+        Number(invoice.subtotal || 0).toFixed(2),
+        Number(invoice.tax_amount || 0).toFixed(2),
         Number(invoice.total || 0).toFixed(2),
         fileName,
       ]
@@ -643,6 +673,28 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   )
   entries.push(makeTextEntry(`${rootFolder}/04_gastos_y_soportes/gastos.csv`, expensesCsv))
 
+  const quotesCsv = buildCsv(
+    ['quote_ref', 'created_at', 'status', 'client', 'property', 'subtotal', 'tax_amount', 'total', 'document_file'],
+    input.quotes.map((quote) => {
+      const quoteRef = quote.display_code ?? quote.id
+      const fileName = `presupuesto_${sanitizePathPart(quoteRef)}.html`
+      const quoteHtml = buildQuotePrintDocumentHtml(quote, input.clients, input.properties, 'pdf')
+      entries.push(makeTextEntry(`${rootFolder}/05_presupuestos_administrativos/documentos/${fileName}`, quoteHtml))
+      return [
+        quoteRef,
+        quote.created_at ?? '',
+        quote.status,
+        quote.client_name ?? quote.client_display_code ?? quote.client_id ?? '',
+        quote.property_display_code ?? quote.property_id ?? '',
+        Number(quote.subtotal || 0).toFixed(2),
+        Number(quote.tax_amount || 0).toFixed(2),
+        Number(quote.total || 0).toFixed(2),
+        fileName,
+      ]
+    }),
+  )
+  entries.push(makeTextEntry(`${rootFolder}/05_presupuestos_administrativos/presupuestos.csv`, quotesCsv))
+
   const fiscalReviewSummary = buildExpenseFiscalSummary(input.expenses)
   const fiscalReviewCsv = buildCsv(
     [
@@ -660,9 +712,9 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     ],
     input.expenses
       .filter((expense) =>
-        needsFiscalReview(expense) ||
-        hasMediumHighFiscalRisk(expense) ||
-        !hasValidVatInvoiceSupport(expense),
+        needsFiscalReview(expense)
+        || hasMediumHighFiscalRisk(expense)
+        || !hasValidVatInvoiceSupport(expense),
       )
       .map((expense) => {
         const reasons = [
@@ -689,8 +741,10 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   const gestorReviewChecklist = buildCsv(
     ['check', 'status', 'count', 'detail'],
     [
+      ['iva_repercutido_total', 'informativo', (input.summaryMetrics.output_vat_total ?? 0).toFixed(2), 'IVA repercutido total segun facturas emitidas del periodo.'],
       ['iva_soportado_total', 'informativo', fiscalReviewSummary.totalVatSupported.toFixed(2), 'IVA soportado total en gastos del paquete.'],
-      ['iva_deducible_estimado', 'estimacion', fiscalReviewSummary.estimatedDeductibleVat.toFixed(2), 'Estimacion asistiva, no liquidacion definitiva.'],
+      ['iva_deducible_estimado', 'estimacion', fiscalReviewSummary.estimatedDeductibleVat.toFixed(2), 'Estimacion operativa, no liquidacion definitiva.'],
+      ['iva_neto_estimado', 'estimacion', ((input.summaryMetrics.output_vat_total ?? 0) - fiscalReviewSummary.estimatedDeductibleVat).toFixed(2), 'IVA repercutido menos IVA deducible estimado.'],
       ['base_deducible_estimada', 'estimacion', fiscalReviewSummary.estimatedDeductibleBase.toFixed(2), 'Base deducible estimada por campos fiscales y/o IA.'],
       ['gastos_requieren_revision', fiscalReviewSummary.needsReviewCount > 0 ? 'revisar' : 'ok', fiscalReviewSummary.needsReviewCount, 'Gastos pendientes o marcados por IA como requiere revision.'],
       ['gastos_riesgo_medio_alto', fiscalReviewSummary.mediumHighRiskCount > 0 ? 'revisar' : 'ok', fiscalReviewSummary.mediumHighRiskCount, 'Gastos con riesgo fiscal medio/alto.'],
@@ -698,10 +752,10 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
       ['gastos_sin_analisis_ia', fiscalReviewSummary.unanalyzedCount > 0 ? 'informativo' : 'ok', fiscalReviewSummary.unanalyzedCount, 'Gastos todavia no analizados fiscalmente por IA.'],
     ],
   )
-  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/resumen_revision_fiscal.html`, buildFiscalReviewHtml(input)))
-  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/gastos_revision_fiscal.csv`, fiscalReviewCsv))
-  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/checklist_gestoria.csv`, gestorReviewChecklist))
-  entries.push(makeTextEntry(`${rootFolder}/06_revision_gestoria/resumen_revision_fiscal.json`, JSON.stringify({
+  entries.push(makeTextEntry(`${rootFolder}/07_revision_gestoria/resumen_revision_fiscal.html`, buildFiscalReviewHtml(input)))
+  entries.push(makeTextEntry(`${rootFolder}/07_revision_gestoria/gastos_revision_fiscal.csv`, fiscalReviewCsv))
+  entries.push(makeTextEntry(`${rootFolder}/07_revision_gestoria/checklist_gestoria.csv`, gestorReviewChecklist))
+  entries.push(makeTextEntry(`${rootFolder}/07_revision_gestoria/resumen_revision_fiscal.json`, JSON.stringify({
     generated_at: new Date().toISOString(),
     assistive_notice: 'Estimacion operativa para revision. No sustituye asesoramiento fiscal ni revision de gestoria.',
     metrics: fiscalReviewSummary,
@@ -717,7 +771,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
       incidence.detail,
     ]),
   )
-  entries.push(makeTextEntry(`${rootFolder}/05_incidencias_pendientes/incidencias.csv`, incidenceCsv))
+  entries.push(makeTextEntry(`${rootFolder}/06_incidencias_pendientes/incidencias.csv`, incidenceCsv))
 
   const expenseAttachmentResult = await buildExpenseEntries(input.expenses, rootFolder)
   entries.push(...expenseAttachmentResult.entries)
@@ -744,6 +798,6 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     fileName,
     includedFiles: entries.length,
     missingDocuments: expenseAttachmentResult.missingDocuments,
-    warnings: manifestWarnings,
+    warnings: [...manifestWarnings, ...input.incidences.filter((incidence) => incidence.tone !== 'neutral').map((incidence) => `${incidence.label}: ${incidence.count}.`)],
   }
 }

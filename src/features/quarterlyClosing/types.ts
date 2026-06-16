@@ -31,9 +31,11 @@ export interface QuarterlyClosingMetricSnapshot {
   collected_total: number
   outstanding_total: number
   expenses_total: number
+  output_vat_total: number
   estimated_deductible_base: number
   estimated_deductible_vat: number
   total_vat_supported: number
+  estimated_net_vat_payable: number
 }
 
 export interface QuarterlyClosingSnapshot {
@@ -80,9 +82,11 @@ export interface QuarterlyClosingSummary {
   collectedTotal: number
   outstandingTotal: number
   expensesTotal: number
+  outputVatTotal: number
   estimatedDeductibleBase: number
   estimatedDeductibleVat: number
   totalVatSupported: number
+  estimatedNetVatPayable: number
   incidences: QuarterlyClosingIncidence[]
   readiness: 'ready' | 'issues'
 }

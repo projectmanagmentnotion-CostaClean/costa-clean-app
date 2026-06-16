@@ -9,6 +9,9 @@ export interface AnnualClosingQuarterBreakdown {
   collected_total: number
   outstanding_total: number
   expenses_total: number
+  output_vat_total: number
+  estimated_deductible_vat: number
+  estimated_net_vat_payable: number
   unresolved_incidence_count: number
 }
 
@@ -29,9 +32,11 @@ export interface AnnualClosingMetricSnapshot {
   collected_total: number
   outstanding_total: number
   expenses_total: number
+  output_vat_total: number
   estimated_deductible_base: number
   estimated_deductible_vat: number
   total_vat_supported: number
+  estimated_net_vat_payable: number
   quarterly_breakdown: AnnualClosingQuarterBreakdown[]
 }
 
@@ -88,9 +93,11 @@ export interface AnnualClosingSummary {
   collectedTotal: number
   outstandingTotal: number
   expensesTotal: number
+  outputVatTotal: number
   estimatedDeductibleBase: number
   estimatedDeductibleVat: number
   totalVatSupported: number
+  estimatedNetVatPayable: number
   readiness: 'ready' | 'issues'
   quarterlyBreakdown: Array<AnnualClosingQuarterBreakdown & { quarterlySummary: QuarterlyClosingSummary }>
   incidences: AnnualClosingIncidence[]

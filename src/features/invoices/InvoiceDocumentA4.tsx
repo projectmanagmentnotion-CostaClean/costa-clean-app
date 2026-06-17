@@ -1,5 +1,6 @@
 import './invoiceDocument.css'
 import { businessRules } from '../../app/businessRules'
+import { getStatusLabel } from '../../app/displayText'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
@@ -49,7 +50,7 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Factura desde presupuesto aceptado'
+  return invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Servicio realizado'
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {
@@ -158,20 +159,16 @@ export function InvoiceDocumentA4({
 
         <div className="cc-invoice-a4__doc-box">
           <div className="cc-invoice-a4__doc-row">
-            <span>Número</span>
-            <strong>{invoice.invoice_number ?? 'Sin número'}</strong>
+            <span>Numero</span>
+            <strong>{invoice.invoice_number ?? 'Sin numero'}</strong>
           </div>
           <div className="cc-invoice-a4__doc-row">
-            <span>Código interno</span>
-            <strong>{invoice.display_code ?? invoice.id}</strong>
-          </div>
-          <div className="cc-invoice-a4__doc-row">
-            <span>Fecha de emisión</span>
+            <span>Fecha de emision</span>
             <strong>{formatDate(invoice.issue_date)}</strong>
           </div>
           <div className="cc-invoice-a4__doc-row">
             <span>Estado</span>
-            <strong>{invoice.status}</strong>
+            <strong>{getStatusLabel(invoice.status)}</strong>
           </div>
         </div>
       </header>
@@ -179,7 +176,7 @@ export function InvoiceDocumentA4({
       <section className="cc-invoice-a4__parties">
         <div className="cc-invoice-a4__panel">
           <span className="cc-invoice-a4__label">Emisor</span>
-          <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+          <strong>VILMA TIBISAY GARCIA JIMENEZ</strong>
           <p>NIF: 60356434H</p>
           <p>C/Raval 35, 2-2</p>
           <p>08370 Barcelona</p>
@@ -192,10 +189,6 @@ export function InvoiceDocumentA4({
           {clientMeta.map((line) => (
             <p key={line}>{line}</p>
           ))}
-
-          {invoice.client_name && invoice.client_display_code ? (
-            <p>Ref. CRM: {invoice.client_display_code}</p>
-          ) : null}
         </div>
       </section>
 
@@ -207,9 +200,9 @@ export function InvoiceDocumentA4({
         </div>
 
         <div className="cc-invoice-a4__reference-card">
-          <span className="cc-invoice-a4__label">Propiedad / ubicación</span>
+          <span className="cc-invoice-a4__label">Propiedad / ubicacion</span>
           <strong>{invoice.property_name ?? invoice.property_display_code ?? 'Sin propiedad vinculada'}</strong>
-          <p>{invoice.property_address_line ?? 'Dirección ampliable en siguientes fases'}</p>
+          <p>{invoice.property_address_line ?? 'Direccion pendiente de ampliar'}</p>
         </div>
       </section>
 

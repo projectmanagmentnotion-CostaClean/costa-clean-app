@@ -15,7 +15,18 @@ export function buildBrandedDocumentTitle(
   const safeReference = sanitizeFilenamePart(reference)
   const safeClientName = sanitizeFilenamePart(clientName)
 
-  return `${kind} ${safeReference} - ${safeClientName} - CostaClean`
+  return [kind, safeReference, safeClientName].filter(Boolean).join(' - ')
+}
+
+export function buildCustomerDocumentFileStem(
+  kind: 'factura' | 'presupuesto',
+  reference: string,
+): string {
+  const safeReference = sanitizeFilenamePart(reference)
+    .replace(/\s+/g, '-')
+    .toLowerCase()
+
+  return safeReference ? `${kind}-${safeReference}` : kind
 }
 
 export async function shareDocumentSummary(

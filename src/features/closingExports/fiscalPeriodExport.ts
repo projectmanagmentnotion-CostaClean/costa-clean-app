@@ -7,8 +7,6 @@ import {
 } from '../closing/fiscalPeriods'
 import {
   getExpenseDocumentSupportStatusLabel,
-  getExpenseFiscalRiskLevelLabel,
-  getExpenseFiscalReviewStatusLabel,
   type ExpenseListItem,
 } from '../expenses/types'
 import type { InvoiceListItem } from '../invoices/types'
@@ -124,6 +122,7 @@ export function buildFiscalPeriodExportData(input: {
   const supportCoverageRatio = expenses.length > 0
     ? roundMoney((supportedExpenses.length / expenses.length) * 100)
     : 100
+
   const documentHealth: FiscalPeriodDocumentHealth = {
     supportedExpenseCount: supportedExpenses.length,
     missingSupportCount: missingSupportExpenses.length,
@@ -137,6 +136,7 @@ export function buildFiscalPeriodExportData(input: {
         ? 'review'
         : 'healthy',
   }
+
   const packGroups: FiscalPeriodPackGroup[] = [
     {
       id: 'fiscal_invoices',
@@ -150,35 +150,35 @@ export function buildFiscalPeriodExportData(input: {
       title: 'Cobros',
       category: 'fiscal',
       count: payments.length,
-      detail: `${payments.length} cobro(s) para trazabilidad de recaudación y saldos.`,
+      detail: `${payments.length} cobro(s) para trazabilidad de ingresos y saldos.`,
     },
     {
       id: 'fiscal_expenses',
       title: 'Gastos y soportes',
       category: 'fiscal',
       count: expenses.length,
-      detail: `${supportedExpenses.length} con soporte descargable · ${missingSupportExpenses.length} con huecos documentales.`,
+      detail: `${supportedExpenses.length} con soporte descargable · ${missingSupportExpenses.length} con documentacion pendiente.`,
     },
     {
       id: 'admin_quotes',
-      title: 'Presupuestos administrativos',
+      title: 'Presupuestos comerciales',
       category: 'administrative',
       count: quotes.length,
-      detail: 'Se incluyen aparte para trazabilidad comercial, sin mezclar el núcleo fiscal.',
+      detail: 'Se incluyen aparte como referencia de apoyo del periodo.',
     },
     {
       id: 'admin_incidences',
-      title: 'Incidencias pendientes',
+      title: 'Pendientes de revision',
       category: 'administrative',
       count: missingSupportExpenses.length + pendingReviewExpenses.length + riskExpenses.length + pendingInvoices.length,
-      detail: 'Resumen de huecos previos a entrega o revisión final con gestoría.',
+      detail: 'Reune la documentacion o validacion que conviene cerrar antes del cierre definitivo.',
     },
     {
       id: 'admin_review',
-      title: 'Revisión gestoría',
+      title: 'Resumen para gestoria',
       category: 'administrative',
       count: 1,
-      detail: 'Checklist fiscal, IVA estimado y lectura documental del periodo.',
+      detail: 'Incluye la sintesis fiscal y el listado de gastos que requieren verificacion.',
     },
   ]
 
@@ -189,7 +189,7 @@ export function buildFiscalPeriodExportData(input: {
   }
 
   if (pendingReviewExpenses.length > 0) {
-    warnings.push(`${pendingReviewExpenses.length} gasto(s) del periodo siguen pendientes de revisión fiscal.`)
+    warnings.push(`${pendingReviewExpenses.length} gasto(s) del periodo siguen pendientes de revision fiscal.`)
   }
 
   if (pendingInvoices.length > 0) {
@@ -252,7 +252,7 @@ export function buildFiscalPeriodIncidences(data: FiscalPeriodExportData) {
     },
     {
       id: 'period_expenses_missing_support',
-      label: 'Gastos sin justificante descargable',
+      label: 'Gastos con documentacion pendiente',
       detail: data.expenses
         .filter((expense) => expense.document_support_status === 'missing' || !expense.receipt_file_path)
         .map((expense) => `${expense.display_code ?? expense.id} · ${getExpenseDocumentSupportStatusLabel(expense.document_support_status)}`)
@@ -263,12 +263,12 @@ export function buildFiscalPeriodIncidences(data: FiscalPeriodExportData) {
     },
     {
       id: 'period_expenses_review',
-      label: 'Gastos con revisión o riesgo fiscal',
+      label: 'Gastos con revision fiscal pendiente',
       detail: data.expenses
         .filter((expense) => expense.fiscal_review_status === 'pending' || expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high' || expense.ai_fiscal_risk_level === 'medium' || expense.ai_fiscal_risk_level === 'high')
-        .map((expense) => `${expense.display_code ?? expense.id} · ${getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)} · riesgo ${getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()}`)
+        .map((expense) => `${expense.display_code ?? expense.id} · ${getExpenseDocumentSupportStatusLabel(expense.document_support_status)}`)
         .slice(0, 3)
-        .join(' | ') || 'Sin gastos prioritarios para revisión.',
+        .join(' | ') || 'Sin gastos prioritarios para revisar.',
       count: data.metrics.fiscal_review_count + data.metrics.fiscal_risk_count,
       tone: data.metrics.fiscal_review_count + data.metrics.fiscal_risk_count > 0 ? 'warning' as const : 'neutral' as const,
     },

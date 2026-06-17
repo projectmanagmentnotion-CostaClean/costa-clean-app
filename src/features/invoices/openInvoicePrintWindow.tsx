@@ -4,6 +4,7 @@ import { invoicePrintStyles } from './invoicePrintStyles'
 import type { InvoiceListItem } from './types'
 import {
   buildBrandedDocumentTitle,
+  buildCustomerDocumentFileStem,
   sanitizeFilenamePart,
 } from '../documents/utils'
 
@@ -19,11 +20,15 @@ function getClientName(invoice: InvoiceListItem): string {
 }
 
 function getInvoiceRef(invoice: InvoiceListItem): string {
-  return sanitizeFilenamePart(invoice.invoice_number ?? invoice.display_code ?? invoice.id)
+  return sanitizeFilenamePart(invoice.invoice_number ?? 'Sin numero')
 }
 
 export function getInvoiceDocumentTitle(invoice: InvoiceListItem): string {
   return buildBrandedDocumentTitle('Factura', getInvoiceRef(invoice), getClientName(invoice))
+}
+
+export function getInvoiceDocumentFileStem(invoice: InvoiceListItem): string {
+  return buildCustomerDocumentFileStem('factura', getInvoiceRef(invoice))
 }
 
 export function buildInvoicePrintDocumentHtml(

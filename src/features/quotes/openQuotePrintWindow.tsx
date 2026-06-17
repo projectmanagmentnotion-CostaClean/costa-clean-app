@@ -6,6 +6,7 @@ import { QuoteDocumentA4 } from './QuoteDocumentA4'
 import { invoicePrintStyles } from '../invoices/invoicePrintStyles'
 import {
   buildBrandedDocumentTitle,
+  buildCustomerDocumentFileStem,
   sanitizeFilenamePart,
 } from '../documents/utils'
 
@@ -33,6 +34,10 @@ export function getQuoteDocumentTitle(
   clients: ClientListItem[],
 ): string {
   return buildBrandedDocumentTitle('Presupuesto', getQuoteRef(quote), getClientName(quote, clients))
+}
+
+export function getQuoteDocumentFileStem(quote: QuoteListItem): string {
+  return buildCustomerDocumentFileStem('presupuesto', getQuoteRef(quote))
 }
 
 export function buildQuotePrintDocumentHtml(

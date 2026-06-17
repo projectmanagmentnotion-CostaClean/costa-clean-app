@@ -54,7 +54,7 @@ function buildClientName(
     || quote.lead_name
     || quote.lead_display_code
     || quote.client_id
-    || 'Lead sin cliente'
+    || 'Cliente'
 }
 
 function buildClientMeta(
@@ -66,7 +66,6 @@ function buildClientMeta(
   return [
     client?.phone,
     client?.email,
-    quote.lead_display_code ? `Lead: ${quote.lead_display_code}` : null,
   ].filter(Boolean) as string[]
 }
 
@@ -93,7 +92,7 @@ function buildPropertyAddress(
   properties: PropertyListItem[],
 ): string {
   const property = getProperty(quote, properties)
-  if (!quote.property_id) return 'Ubicación pendiente de concretar'
+  if (!quote.property_id) return 'Ubicacion pendiente de concretar'
 
   if (!property) {
     return quote.property_display_code ?? quote.property_id
@@ -199,13 +198,13 @@ export function QuoteDocumentA4({
           <div className="cc-invoice-a4__brand-copy">
             <span className="cc-invoice-a4__eyebrow">CostaClean BCN</span>
             <h1>PRESUPUESTO</h1>
-            <p>Propuesta comercial preparada para su revisión y aprobación.</p>
+            <p>Propuesta comercial preparada para su revision y aprobacion.</p>
           </div>
         </div>
 
         <div className="cc-invoice-a4__doc-box">
           <div className="cc-invoice-a4__doc-row">
-            <span>Referencia comercial</span>
+            <span>Referencia</span>
             <strong>{buildProposalReference(quote)}</strong>
           </div>
           <div className="cc-invoice-a4__doc-row">
@@ -214,10 +213,10 @@ export function QuoteDocumentA4({
           </div>
           <div className="cc-invoice-a4__doc-row">
             <span>Validez</span>
-            <strong>{businessRules.defaultQuoteValidityDays} días</strong>
+            <strong>{businessRules.defaultQuoteValidityDays} dias</strong>
           </div>
           <div className="cc-invoice-a4__doc-row">
-            <span>Revisión económica</span>
+            <span>Revision economica</span>
             <strong>Total estimado con IVA</strong>
           </div>
         </div>
@@ -226,7 +225,7 @@ export function QuoteDocumentA4({
       <section className="cc-invoice-a4__parties">
         <div className="cc-invoice-a4__panel">
           <span className="cc-invoice-a4__label">Emisor</span>
-          <strong>VILMA TIBISAY GARCÍA JIMÉNEZ</strong>
+          <strong>VILMA TIBISAY GARCIA JIMENEZ</strong>
           <p>NIF: 60356434H</p>
           <p>C/Raval 35, 2-2</p>
           <p>08370 Barcelona</p>
@@ -239,8 +238,6 @@ export function QuoteDocumentA4({
           {clientMeta.map((line) => (
             <p key={line}>{line}</p>
           ))}
-
-          {quote.client_display_code ? <p>Ref. CRM: {quote.client_display_code}</p> : null}
         </div>
       </section>
 
@@ -252,7 +249,7 @@ export function QuoteDocumentA4({
         </div>
 
         <div className="cc-invoice-a4__reference-card">
-          <span className="cc-invoice-a4__label">Propiedad / ubicación</span>
+          <span className="cc-invoice-a4__label">Propiedad / ubicacion</span>
           <strong>{propertyName}</strong>
           <p>{propertyAddress}</p>
         </div>
@@ -285,7 +282,7 @@ export function QuoteDocumentA4({
         <div className="cc-invoice-a4__notes">
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
             <span className="cc-invoice-a4__label">Condiciones comerciales</span>
-            <p>Validez del presupuesto: {businessRules.defaultQuoteValidityDays} días.</p>
+            <p>Validez del presupuesto: {businessRules.defaultQuoteValidityDays} dias.</p>
             <p>{businessRules.defaultQuoteLegalNote}</p>
           </div>
 
@@ -296,7 +293,7 @@ export function QuoteDocumentA4({
 
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
             <span className="cc-invoice-a4__label">Siguiente paso</span>
-            <p>La aceptación de este presupuesto permite planificar el servicio y emitir la factura posterior.</p>
+            <p>La aceptacion de este presupuesto permite planificar el servicio y emitir la factura posterior.</p>
           </div>
         </div>
 

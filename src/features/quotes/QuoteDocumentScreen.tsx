@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { getStatusLabel } from '../../app/displayText'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -17,6 +18,13 @@ interface QuoteDocumentScreenProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   onClose: () => void
+}
+
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(value)
 }
 
 export function QuoteDocumentScreen({
@@ -55,9 +63,9 @@ export function QuoteDocumentScreen({
   async function handleShare() {
     await shareDocumentSummary(
       documentTitle,
-      [`Total: ${hydratedQuote.total}`, `Estado: ${hydratedQuote.status}`],
+      [`Total: ${formatCurrency(hydratedQuote.total)}`, `Estado: ${getStatusLabel(hydratedQuote.status)}`],
       'Resumen del presupuesto copiado al portapapeles.',
-      'Compartir no está disponible en este dispositivo.',
+      'Compartir no esta disponible en este dispositivo.',
     )
   }
 
@@ -65,7 +73,7 @@ export function QuoteDocumentScreen({
     <>
       <DocumentScreenFrame
         title="Vista de presupuesto"
-        subtitle={quote.display_code ?? quote.id}
+        subtitle={quote.display_code ?? 'Documento'}
         previewTitle="Vista previa de presupuesto"
         previewClassName="data-section cc-doc-preview-panel cc-doc-preview-panel--quote cc-doc-preview-panel--screen"
         onClose={onClose}
@@ -76,12 +84,12 @@ export function QuoteDocumentScreen({
       >
         {isLoadingLines ? (
           <div className="empty-state cc-state-card cc-state-card--loading">
-            <strong>Cargando líneas de presupuesto</strong>
+            <strong>Cargando lineas de presupuesto</strong>
             <p>Preparando la vista previa con los conceptos reales.</p>
           </div>
         ) : linesError ? (
           <div className="empty-state">
-            <strong>No se pudieron cargar las líneas</strong>
+            <strong>No se pudieron cargar las lineas</strong>
             <p>{linesError}</p>
           </div>
         ) : (
@@ -96,8 +104,8 @@ export function QuoteDocumentScreen({
 
       <ConfirmDialog
         isOpen={Boolean(pendingOutputIntent)}
-        title={pendingOutputIntent === 'pdf' ? 'Abrir ventana para guardar PDF' : 'Abrir ventana de impresión'}
-        description="El navegador abrirá una nueva ventana o pestaña para preparar el presupuesto. Si el navegador bloquea ventanas emergentes, permite pop-ups para CostaClean CRM."
+        title={pendingOutputIntent === 'pdf' ? 'Abrir ventana para guardar PDF' : 'Abrir ventana de impresion'}
+        description="El navegador abrira una nueva ventana o pestana para preparar el presupuesto. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."
         confirmLabel={pendingOutputIntent === 'pdf' ? 'Abrir y guardar PDF' : 'Abrir e imprimir'}
         onCancel={() => setPendingOutputIntent(null)}
         onConfirm={handleConfirmOpenWindow}

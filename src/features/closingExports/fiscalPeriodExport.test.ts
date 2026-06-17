@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildFiscalPeriodExportData } from './fiscalPeriodExport'
+import { buildFiscalPeriodExportData, buildFiscalPeriodIncidences } from './fiscalPeriodExport'
 
 describe('buildFiscalPeriodExportData', () => {
   it('calcula totales y IVA estimado para un trimestre', () => {
@@ -111,5 +111,83 @@ describe('buildFiscalPeriodExportData', () => {
     expect(result.metrics.missing_support_count).toBe(0)
     expect(result.documentHealth.status).toBe('healthy')
     expect(result.packGroups.find((group) => group.id === 'fiscal_expenses')?.count).toBe(1)
+    expect(
+      result.packGroups.find((group) => group.id === 'fiscal_expenses')?.detail.includes('soporte descargable'),
+    ).toBe(true)
+    expect(result.packGroups.find((group) => group.id === 'admin_review')?.title).toBe('Resumen para gestoria')
+  })
+
+  it('resume incidencias con copy externo limpio', () => {
+    const result = buildFiscalPeriodExportData({
+      selection: {
+        mode: 'quarter',
+        year: 2026,
+        month: 1,
+        quarter: 1,
+        startDate: '',
+        endDate: '',
+      },
+      invoices: [],
+      payments: [],
+      expenses: [
+        {
+          id: 'exp-2',
+          display_code: 'EXP-2',
+          expense_date: '2026-01-21',
+          accounting_date: null,
+          due_date: null,
+          supplier_name: 'Proveedor 2',
+          supplier_tax_id: null,
+          category: 'materiales',
+          subcategory: null,
+          description: 'Producto',
+          document_type: 'factura',
+          reference_number: null,
+          payment_method: 'card',
+          payment_status: 'paid',
+          currency: 'EUR',
+          subtotal: 50,
+          tax_rate: 21,
+          tax_amount: 10.5,
+          total: 60.5,
+          is_deductible: true,
+          deductible_percentage: 100,
+          affects_quarterly_closure: true,
+          affects_annual_closure: true,
+          receipt_file_url: null,
+          receipt_file_path: null,
+          attachment_count: 0,
+          document_support_status: 'missing',
+          fiscal_review_status: 'pending',
+          fiscal_risk_level: 'high',
+          manager_note: 'interna',
+          ai_fiscal_classification: null,
+          ai_deductibility_percentage: null,
+          ai_vat_deductibility_percentage: null,
+          ai_estimated_deductible_base: null,
+          ai_estimated_deductible_vat: null,
+          ai_fiscal_confidence: null,
+          ai_fiscal_risk_level: null,
+          ai_fiscal_reasoning: null,
+          ai_fiscal_flags: null,
+          ai_fiscal_model: null,
+          ai_fiscal_analyzed_at: null,
+          ai_fiscal_source_version: null,
+          notes: null,
+          fiscal_year: 2026,
+          fiscal_quarter: 1,
+        },
+      ],
+      quotes: [],
+    })
+
+    const incidences = buildFiscalPeriodIncidences(result)
+
+    expect(
+      incidences.find((incidence) => incidence.id === 'period_expenses_missing_support')?.detail.includes('EXP-2 |'),
+    ).toBe(true)
+    expect(
+      incidences.find((incidence) => incidence.id === 'period_expenses_review')?.detail.includes('EXP-2 |'),
+    ).toBe(true)
   })
 })

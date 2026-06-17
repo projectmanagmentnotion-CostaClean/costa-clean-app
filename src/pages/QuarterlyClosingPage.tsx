@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
 import type { ClientListItem } from '../features/clients/types'
+import {
+  buildExternalAccountingPackageStem,
+  externalAccountingSectionPaths,
+} from '../features/closingExports/externalExportPolicy'
 import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
 import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
@@ -92,7 +96,7 @@ function getUiStatus(summary: QuarterlyClosingSummary, closing: QuarterlyClosing
     return {
       label: 'Guardado con incidencias',
       tone: 'warning',
-      detail: 'Existe snapshot guardado, pero aún hay puntos abiertos en el trimestre.',
+      detail: 'Existe snapshot guardado, pero aÃºn hay puntos abiertos en el trimestre.',
     }
   }
 
@@ -450,9 +454,10 @@ export function QuarterlyClosingPage({
           }
 
       const result = await downloadManagerExportPackage({
+        audience: 'accounting_external',
         scope: 'quarterly',
-        label: `Cierre trimestral T${selectedQuarter} ${selectedYear}`,
-        folderName: `CostaClean_Cierre_Trimestral_${selectedYear}_T${selectedQuarter}`,
+        label: `Paquete fiscal T${selectedQuarter} ${selectedYear}`,
+        folderName: buildExternalAccountingPackageStem(`T${selectedQuarter}-${selectedYear}`),
         periodStartDate: exportDefaultSelection.startDate,
         periodEndDate: exportDefaultSelection.endDate,
         closingSavedAt: closing.closed_at,
@@ -468,7 +473,7 @@ export function QuarterlyClosingPage({
       })
       setExportResult(result)
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'No se pudo generar el paquete de exportación trimestral.')
+      setExportError(err instanceof Error ? err.message : 'No se pudo generar el paquete externo trimestral.')
     } finally {
       setIsExporting(false)
     }
@@ -541,11 +546,11 @@ export function QuarterlyClosingPage({
       <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Cierre trimestral</h1>
-          <p>Panel operativo, pack gestor y dossier documental alineados con el cierre guardado del trimestre.</p>
+          <p>Panel operativo, paquete externo y dossier documental alineados con el cierre guardado del trimestre.</p>
         </div>
       </div>
 
-      <section className="cc-dashboard-block cc-quarterly-closing-shell" aria-label="Configuración de cierre trimestral">
+      <section className="cc-dashboard-block cc-quarterly-closing-shell" aria-label="ConfiguraciÃ³n de cierre trimestral">
         <div className="cc-dashboard-block__header cc-quarterly-closing-shell__header">
           <div className="cc-quarterly-closing-shell__intro">
             <h2>Periodo de cierre</h2>
@@ -598,7 +603,7 @@ export function QuarterlyClosingPage({
             onClick={() => setWorkspace('manager_pack')}
             disabled={!closing}
           >
-            Abrir pack gestor
+            Abrir paquete externo
           </button>
           <button
             type="button"
@@ -614,7 +619,7 @@ export function QuarterlyClosingPage({
             onClick={() => setWorkspace('export_folder')}
             disabled={!closing}
           >
-            Carpeta gestor
+            Carpeta exportable
           </button>
           <button
             type="button"
@@ -700,13 +705,13 @@ export function QuarterlyClosingPage({
             <article className="cc-kpi-card cc-kpi-card--finance">
               <span className="cc-kpi-label">IVA repercutido</span>
               <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
-              <p className="cc-kpi-footnote">IVA según facturas emitidas en {getQuarterLabel(selectedYear, selectedQuarter)}</p>
+              <p className="cc-kpi-footnote">IVA segÃºn facturas emitidas en {getQuarterLabel(selectedYear, selectedQuarter)}</p>
             </article>
 
             <article className="cc-kpi-card">
               <span className="cc-kpi-label">IVA deducible estimado</span>
               <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
-              <p className="cc-kpi-footnote">Estimación operativa basada en gastos y soporte del trimestre</p>
+              <p className="cc-kpi-footnote">EstimaciÃ³n operativa basada en gastos y soporte del trimestre</p>
             </article>
 
             <article className="cc-kpi-card cc-kpi-card--warning">
@@ -722,9 +727,9 @@ export function QuarterlyClosingPage({
             </article>
 
             <article className="cc-kpi-card">
-              <span className="cc-kpi-label">Pendientes de revisión</span>
+              <span className="cc-kpi-label">Pendientes de revisiÃ³n</span>
               <strong className="cc-kpi-value">{summary.pendingReviewCount}</strong>
-              <p className="cc-kpi-footnote">Registros con revisión fiscal aún abierta</p>
+              <p className="cc-kpi-footnote">Registros con revisiÃ³n fiscal aÃºn abierta</p>
             </article>
 
             <article className="cc-kpi-card">
@@ -744,7 +749,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Checklist de cierre</h2>
-                <p>Cada bloque abre el módulo correspondiente con el filtro ya aplicado al trimestre seleccionado.</p>
+                <p>Cada bloque abre el mÃ³dulo correspondiente con el filtro ya aplicado al trimestre seleccionado.</p>
               </div>
             </div>
 
@@ -769,7 +774,7 @@ export function QuarterlyClosingPage({
                   </div>
                   <div className="cc-quarterly-checklist__meta">
                     <span>{incidence.count}</span>
-                    <small>Ir al módulo</small>
+                    <small>Ir al mÃ³dulo</small>
                   </div>
                 </button>
               ))}
@@ -788,7 +793,7 @@ export function QuarterlyClosingPage({
               <article className="cc-quarterly-persistence__card">
                 <span className="cc-dashboard-panel__label">Estado guardado</span>
                 <strong className="cc-dashboard-panel__value">{uiStatus.label}</strong>
-                <p className="cc-dashboard-panel__text">Última actualización: {formatDateTime(closing?.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Ãšltima actualizaciÃ³n: {formatDateTime(closing?.closed_at)}</p>
                 <p className="cc-dashboard-panel__text">Periodo: {getQuarterLabel(selectedYear, selectedQuarter)}</p>
               </article>
 
@@ -813,18 +818,18 @@ export function QuarterlyClosingPage({
               </article>
 
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">Último snapshot</span>
+                <span className="cc-dashboard-panel__label">Ãšltimo snapshot</span>
                 <strong className="cc-dashboard-panel__value">
                   {savedSnapshot ? formatCurrency(savedSnapshot.invoiced_total) : 'Sin snapshot'}
                 </strong>
                 <p className="cc-dashboard-panel__text">
                   {savedSnapshot
                     ? `${savedSnapshot.invoice_count} factura(s), ${savedSnapshot.payment_count} cobro(s), ${savedSnapshot.expense_count} gasto(s).`
-                    : 'Todavía no se ha guardado un resumen persistido para este trimestre.'}
+                    : 'TodavÃ­a no se ha guardado un resumen persistido para este trimestre.'}
                 </p>
                 {savedSnapshot ? (
                   <p className="cc-dashboard-panel__text">
-                    Pendiente: {formatCurrency(savedSnapshot.outstanding_total)} · Incidencias: {savedSnapshot.unresolved_incidence_count}
+                    Pendiente: {formatCurrency(savedSnapshot.outstanding_total)} Â· Incidencias: {savedSnapshot.unresolved_incidence_count}
                   </p>
                 ) : null}
               </article>
@@ -839,7 +844,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Pack gestor trimestral</h2>
-                <p>Resumen ejecutivo y documental del cierre guardado para revisión de gestoría o dirección.</p>
+                <p>Resumen ejecutivo y documental del cierre guardado para revisiÃ³n de gestorÃ­a o direcciÃ³n.</p>
               </div>
             </div>
 
@@ -890,7 +895,7 @@ export function QuarterlyClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de facturas</span>
               <strong className="cc-dashboard-panel__value">{quarterInvoices.length}</strong>
               <p className="cc-dashboard-panel__text">Total emitido del trimestre: {formatCurrency(summary.invoicedTotal)}</p>
-              <p className="cc-dashboard-panel__text">Pendientes hoy: {summary.pendingInvoiceCount} · {formatCurrency(summary.outstandingTotal)}</p>
+              <p className="cc-dashboard-panel__text">Pendientes hoy: {summary.pendingInvoiceCount} Â· {formatCurrency(summary.outstandingTotal)}</p>
             </article>
 
             <article className="cc-quarterly-persistence__card">
@@ -904,7 +909,7 @@ export function QuarterlyClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de gastos</span>
               <strong className="cc-dashboard-panel__value">{quarterExpenses.length}</strong>
               <p className="cc-dashboard-panel__text">Total de gastos: {formatCurrency(summary.expensesTotal)}</p>
-              <p className="cc-dashboard-panel__text">Documentos presentes: {quarterExpenseDocumentsPresentCount} · sin soporte: {summary.missingSupportCount}</p>
+              <p className="cc-dashboard-panel__text">Documentos presentes: {quarterExpenseDocumentsPresentCount} Â· sin soporte: {summary.missingSupportCount}</p>
             </article>
           </section>
 
@@ -912,7 +917,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Incidencias abiertas y riesgos</h2>
-                <p>Lectura resumida del estado actual del trimestre para revisión de gestión.</p>
+                <p>Lectura resumida del estado actual del trimestre para revisiÃ³n de gestiÃ³n.</p>
               </div>
             </div>
 
@@ -954,7 +959,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Dossier documental trimestral</h2>
-                <p>Ordena documentos y evidencias del cierre guardado para revisión operativa y futura exportación.</p>
+                <p>Ordena documentos y evidencias del cierre guardado para revisiÃ³n operativa y futura exportaciÃ³n.</p>
               </div>
             </div>
 
@@ -1023,7 +1028,7 @@ export function QuarterlyClosingPage({
                           onNavigateToIncidence('invoices', 'invoice_quarter_all', selectedYear, selectedQuarter)
                         }
                       >
-                        Abrir módulo
+                        Abrir mÃ³dulo
                       </button>
                     </div>
                   </div>
@@ -1036,7 +1041,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Cobros del trimestre</h2>
-                <p>Resumen documental de cobros asociados al periodo para contraste rápido con facturación.</p>
+                <p>Resumen documental de cobros asociados al periodo para contraste rÃ¡pido con facturaciÃ³n.</p>
               </div>
             </div>
 
@@ -1046,8 +1051,8 @@ export function QuarterlyClosingPage({
                 <span>Fecha</span>
                 <span>Factura</span>
                 <span>Importe</span>
-                <span>Método</span>
-                <span>Observación</span>
+                <span>MÃ©todo</span>
+                <span>ObservaciÃ³n</span>
               </div>
 
               {quarterPayments.length === 0 ? (
@@ -1084,7 +1089,7 @@ export function QuarterlyClosingPage({
                 <span>Proveedor</span>
                 <span>Total</span>
                 <span>Soporte</span>
-                <span>Revisión</span>
+                <span>RevisiÃ³n</span>
                 <span>Acciones</span>
               </div>
 
@@ -1101,11 +1106,11 @@ export function QuarterlyClosingPage({
                     <span>{formatCurrency(expense.total)}</span>
                     <span>
                       {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                      {expense.receipt_file_path ? ' Â· adjunto disponible' : ' Â· sin adjunto'}
                     </span>
                     <span>
                       {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
-                      {' · '}
+                      {' Â· '}
                       riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
                     </span>
                     <div className="cc-quarterly-dossier-table__actions">
@@ -1139,8 +1144,8 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Incidencias y documentación pendiente</h2>
-                <p>Bloque final para detectar huecos documentales antes de una futura exportación/ZIP.</p>
+                <h2>Incidencias y documentaciÃ³n pendiente</h2>
+                <p>Bloque final para detectar huecos documentales antes de una futura exportaciÃ³n/ZIP.</p>
               </div>
             </div>
 
@@ -1183,7 +1188,7 @@ export function QuarterlyClosingPage({
             availableYears={availableYears}
             defaultSelection={exportDefaultSelection}
             title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado sin depender solo del cierre trimestral guardado."
+            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
             invoices={invoices}
             payments={payments}
             expenses={expenses}
@@ -1201,8 +1206,8 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Carpeta gestor trimestral</h2>
-                <p>Estructura lista para enviar al gestor, basada en el cierre guardado y preparada para una futura exportación ZIP.</p>
+                <h2>Carpeta exportable trimestral</h2>
+                <p>Estructura lista para compartir, basada en el cierre guardado y alineada con el paquete ZIP externo.</p>
               </div>
               <button type="button" className="primary-button" onClick={handleDownloadExportPackage} disabled={isExporting}>
                 {isExporting ? 'Generando ZIP...' : 'Descargar paquete ZIP'}
@@ -1220,7 +1225,7 @@ export function QuarterlyClosingPage({
               <div className="cc-alert cc-alert--success">
                 <strong>Paquete descargado</strong>
                 <p>
-                  {exportResult.fileName} · {exportResult.includedFiles} archivo(s) incluidos · {exportResult.missingDocuments} soporte(s) faltante(s).
+                  {exportResult.fileName} | {exportResult.includedFiles} archivo(s) incluidos | {exportResult.missingDocuments} soporte(s) faltante(s).
                 </p>
                 {exportResult.warnings.length > 0 ? (
                   <p>{exportResult.warnings.join(' ')}</p>
@@ -1230,36 +1235,36 @@ export function QuarterlyClosingPage({
 
             <div className="cc-export-folder-grid">
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">01 · Resumen</span>
+                <span className="cc-dashboard-panel__label">Resumen</span>
                 <strong className="cc-dashboard-panel__value">{getQuarterLabel(selectedYear, selectedQuarter)}</strong>
-                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing?.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Cierre guardado: {formatDateTime(closing?.closed_at)}</p>
                 <p className="cc-dashboard-panel__text">Notas: {closing?.notes?.trim() || 'Sin notas de cierre.'}</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">02 · Facturas emitidas</span>
+                <span className="cc-dashboard-panel__label">Facturas emitidas</span>
                 <strong className="cc-dashboard-panel__value">{quarterInvoices.length}</strong>
                 <p className="cc-dashboard-panel__text">Facturado: {formatCurrency(summary.invoicedTotal)}</p>
                 <p className="cc-dashboard-panel__text">Con acceso directo al PDF/documento de factura.</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">03 · Cobros</span>
+                <span className="cc-dashboard-panel__label">Cobros</span>
                 <strong className="cc-dashboard-panel__value">{quarterPayments.length}</strong>
                 <p className="cc-dashboard-panel__text">Cobrado: {formatCurrency(quarterPaymentsTotal)}</p>
-                <p className="cc-dashboard-panel__text">Movimientos listos para revisión rápida por gestoría.</p>
+                <p className="cc-dashboard-panel__text">Movimientos listos para revision rapida por gestoria.</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">04 · Gastos y soportes</span>
+                <span className="cc-dashboard-panel__label">Gastos y soportes</span>
                 <strong className="cc-dashboard-panel__value">{quarterExpenseDocumentsPresentCount}/{quarterExpenses.length}</strong>
                 <p className="cc-dashboard-panel__text">Adjuntos accesibles: {quarterExpenseDocumentsPresentCount}</p>
                 <p className="cc-dashboard-panel__text">Sin soporte: {quarterExpenseMissingDocuments.length}</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">05 · Incidencias</span>
+                <span className="cc-dashboard-panel__label">Pendientes</span>
                 <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
                 <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales/documentales.</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">06 · Revision gestoria</span>
+                <span className="cc-dashboard-panel__label">Resumen para gestoria</span>
                 <strong className="cc-dashboard-panel__value">{summary.fiscalReviewCount + summary.fiscalRiskCount}</strong>
                 <p className="cc-dashboard-panel__text">Checklist fiscal, IVA deducible estimado y gastos con riesgo.</p>
               </article>
@@ -1269,31 +1274,31 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Estructura preparada para exportación</h2>
-                <p>Nomenclatura y agrupación documental pensadas para una carpeta real de gestoría.</p>
+                <h2>Estructura preparada para exportacion</h2>
+                <p>La descarga replica el naming externo final y mantiene separadas las piezas compartibles de la revision interna.</p>
               </div>
             </div>
 
             <div className="cc-export-folder-list cc-bounded-list">
               <article className="cc-export-folder-item">
-                <strong>01_resumen_trimestral</strong>
-                <p>{`resumen_${selectedYear}_T${selectedQuarter}.json / pack gestor / snapshot del cierre guardado`}</p>
+                <strong>{externalAccountingSectionPaths.summary}</strong>
+                <p>Resumen del periodo con HTML y JSON externos.</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>02_facturas_emitidas</strong>
-                <p>{`${quarterInvoices.length} factura(s) con acceso a PDF y referencia documental existente`}</p>
+                <strong>{externalAccountingSectionPaths.invoices}</strong>
+                <p>{`${quarterInvoices.length} factura(s) con HTML imprimible y CSV resumen.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>03_cobros</strong>
-                <p>{`${quarterPayments.length} cobro(s) con fecha, factura vinculada, importe y método`}</p>
+                <strong>{externalAccountingSectionPaths.payments}</strong>
+                <p>{`${quarterPayments.length} cobro(s) con fecha, factura vinculada, importe y metodo.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>04_gastos_y_soportes</strong>
-                <p>{`${quarterExpenses.length} gasto(s) con soporte documental y estado de revisión`}</p>
+                <strong>{externalAccountingSectionPaths.expenses}</strong>
+                <p>{`${quarterExpenses.length} gasto(s) con soportes descargables y resumen limpio.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>05_incidencias_pendientes</strong>
-                <p>{`${summary.unresolvedIncidenceCount} incidencia(s) abiertas para completar antes del envío final`}</p>
+                <strong>{externalAccountingSectionPaths.pendingItems}</strong>
+                <p>{`${summary.unresolvedIncidenceCount} pendiente(s) abiertos para completar antes del envio final.`}</p>
               </article>
             </div>
           </section>
@@ -1301,14 +1306,14 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Facturas emitidas para gestor</h2>
-                <p>Listado orientado a exportación con naming claro y acceso al flujo PDF actual.</p>
+                <h2>Facturas emitidas exportables</h2>
+                <p>Listado orientado a exportacion con naming claro y acceso al flujo documental actual.</p>
               </div>
             </div>
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Fecha</span>
                 <span>Cliente</span>
                 <span>Total</span>
@@ -1324,7 +1329,7 @@ export function QuarterlyClosingPage({
               ) : (
                 quarterInvoices.map((invoice) => (
                   <div key={invoice.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`factura_${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
+                    <span>{`factura-${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
                     <span>{formatDateEs(invoice.issue_date)}</span>
                     <span>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</span>
                     <span>{formatCurrency(invoice.total)}</span>
@@ -1334,7 +1339,7 @@ export function QuarterlyClosingPage({
                         PDF
                       </button>
                       <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('invoices', 'invoice_quarter_all', selectedYear, selectedQuarter)}>
-                        Abrir módulo
+                        Abrir mÃ³dulo
                       </button>
                     </div>
                   </div>
@@ -1347,18 +1352,18 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Cobros para gestor</h2>
-                <p>Base compacta de revisión para la carpeta de cierre trimestral.</p>
+                <p>Base compacta de revisiÃ³n para la carpeta de cierre trimestral.</p>
               </div>
             </div>
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Fecha</span>
                 <span>Factura</span>
                 <span>Importe</span>
-                <span>Método</span>
-                <span>Observación</span>
+                <span>MÃ©todo</span>
+                <span>ObservaciÃ³n</span>
               </div>
 
               {quarterPayments.length === 0 ? (
@@ -1369,7 +1374,7 @@ export function QuarterlyClosingPage({
               ) : (
                 quarterPayments.map((payment) => (
                   <div key={payment.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`cobro_${payment.display_code ?? payment.id}`}</span>
+                    <span>{`cobro-${payment.display_code ?? payment.id}`}</span>
                     <span>{formatDateEs(payment.payment_date)}</span>
                     <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
                     <span>{formatCurrency(payment.amount)}</span>
@@ -1391,11 +1396,11 @@ export function QuarterlyClosingPage({
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Proveedor</span>
                 <span>Total</span>
                 <span>Soporte</span>
-                <span>Revisión</span>
+                <span>RevisiÃ³n</span>
                 <span>Acciones</span>
               </div>
 
@@ -1407,16 +1412,16 @@ export function QuarterlyClosingPage({
               ) : (
                 quarterExpenses.map((expense) => (
                   <div key={expense.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`gasto_${expense.display_code ?? expense.id}`}</span>
+                    <span>{`gasto-${expense.display_code ?? expense.id}`}</span>
                     <span>{expense.supplier_name}</span>
                     <span>{formatCurrency(expense.total)}</span>
                     <span>
                       {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                      {expense.receipt_file_path ? ' Â· adjunto disponible' : ' Â· sin adjunto'}
                     </span>
                     <span>
                       {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
-                      {' · '}
+                      {' Â· '}
                       riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
                     </span>
                     <div className="cc-quarterly-dossier-table__actions">
@@ -1444,8 +1449,8 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Incidencias y faltas de documentación</h2>
-                <p>Último bloque antes de una futura generación binaria del pack de gestoría.</p>
+                <h2>Incidencias y faltas de documentaciÃ³n</h2>
+                <p>Ãšltimo bloque antes de una futura generaciÃ³n binaria del pack de gestorÃ­a.</p>
               </div>
             </div>
 
@@ -1477,7 +1482,7 @@ export function QuarterlyClosingPage({
             availableYears={availableYears}
             defaultSelection={exportDefaultSelection}
             title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado sin depender solo del cierre trimestral guardado."
+            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
             invoices={invoices}
             payments={payments}
             expenses={expenses}
@@ -1496,7 +1501,7 @@ export function QuarterlyClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Resumen inteligente trimestral</h2>
-                <p>Interpretación asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del trimestre.</p>
+                <p>InterpretaciÃ³n asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del trimestre.</p>
               </div>
               <button type="button" className="primary-button" onClick={handleGenerateAiSummary} disabled={isGeneratingAiSummary}>
                 {isGeneratingAiSummary ? 'Generando resumen...' : aiSummaryResult ? 'Regenerar resumen' : 'Generar resumen'}
@@ -1505,7 +1510,7 @@ export function QuarterlyClosingPage({
 
             <div className="cc-alert cc-alert--warning">
               <strong>Texto asistivo generado por IA</strong>
-              <p>No modifica cálculos ni sustituye la revisión fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
+              <p>No modifica cÃ¡lculos ni sustituye la revisiÃ³n fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
             </div>
 
             {aiSummaryError ? (
@@ -1555,7 +1560,7 @@ export function QuarterlyClosingPage({
                     )) : <p className="cc-dashboard-panel__text">Sin alertas documentales adicionales.</p>}
                   </article>
                   <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestoría</span>
+                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestorÃ­a</span>
                     {aiSummaryResult.summary.suggested_manager_notes.length > 0 ? aiSummaryResult.summary.suggested_manager_notes.map((item, index) => (
                       <p key={`note-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
                     )) : <p className="cc-dashboard-panel__text">Sin notas sugeridas adicionales.</p>}
@@ -1615,7 +1620,7 @@ export function QuarterlyClosingPage({
               ) : (
                 topQuarterClientsByInvoiced.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.invoiceCount} factura(s)
                   </p>
                 ))
               )}
@@ -1628,7 +1633,7 @@ export function QuarterlyClosingPage({
               ) : (
                 topQuarterClientsByCollected.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.paymentCount} cobro(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.paymentCount} cobro(s)
                   </p>
                 ))
               )}
@@ -1641,7 +1646,7 @@ export function QuarterlyClosingPage({
               ) : (
                 quarterOutstandingClients.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.invoiceCount} factura(s)
                   </p>
                 ))
               )}
@@ -1651,8 +1656,8 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Desglose de gastos por categoría</h2>
-                <p>Lectura interna del mix de gasto del trimestre según las categorías actuales del CRM.</p>
+                <h2>Desglose de gastos por categorÃ­a</h2>
+                <p>Lectura interna del mix de gasto del trimestre segÃºn las categorÃ­as actuales del CRM.</p>
               </div>
             </div>
 
@@ -1667,7 +1672,7 @@ export function QuarterlyClosingPage({
                   <article key={item.category} className="cc-quarterly-persistence__card">
                     <span className="cc-dashboard-panel__label">{item.category}</span>
                     <strong className="cc-dashboard-panel__value">{formatCurrency(item.amount)}</strong>
-                    <p className="cc-dashboard-panel__text">{item.count} gasto(s) en la categoría</p>
+                    <p className="cc-dashboard-panel__text">{item.count} gasto(s) en la categorÃ­a</p>
                     <p className="cc-dashboard-panel__text">
                       {summary.expensesTotal > 0 ? `${((item.amount / summary.expensesTotal) * 100).toFixed(1)}% del gasto trimestral` : 'Sin peso relativo'}
                     </p>
@@ -1680,8 +1685,8 @@ export function QuarterlyClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Evolución mes a mes</h2>
-                <p>Comparativa ligera de facturación, cobro, gasto y margen simple dentro del trimestre.</p>
+                <h2>EvoluciÃ³n mes a mes</h2>
+                <p>Comparativa ligera de facturaciÃ³n, cobro, gasto y margen simple dentro del trimestre.</p>
               </div>
             </div>
 
@@ -1702,7 +1707,7 @@ export function QuarterlyClosingPage({
                   <span>{formatCurrency(month.collected)}</span>
                   <span>{formatCurrency(month.spent)}</span>
                   <span>{formatCurrency(month.margin)}</span>
-                  <span>{month.collected >= month.invoiced ? 'Caja acompasada' : 'Cobro por detrás'}</span>
+                  <span>{month.collected >= month.invoiced ? 'Caja acompasada' : 'Cobro por detrÃ¡s'}</span>
                 </div>
               ))}
             </div>
@@ -1713,7 +1718,7 @@ export function QuarterlyClosingPage({
       <ConfirmDialog
         isOpen={Boolean(pendingInvoicePdf)}
         title="Abrir PDF de factura"
-        description="El navegador abrirá una nueva ventana o pestaña para preparar el PDF de esta factura del cierre. Continúa solo si quieres generar el documento ahora."
+        description="El navegador abrirÃ¡ una nueva ventana o pestaÃ±a para preparar el PDF de esta factura del cierre. ContinÃºa solo si quieres generar el documento ahora."
         confirmLabel="Abrir PDF"
         onCancel={() => setPendingInvoicePdf(null)}
         onConfirm={handleConfirmInvoicePdf}
@@ -1722,7 +1727,7 @@ export function QuarterlyClosingPage({
       <ConfirmDialog
         isOpen={Boolean(pendingExpenseDocument)}
         title="Abrir soporte del gasto"
-        description="El soporte documental del gasto se abrirá en una nueva pestaña o ventana mediante un enlace temporal seguro."
+        description="El soporte documental del gasto se abrirÃ¡ en una nueva pestaÃ±a o ventana mediante un enlace temporal seguro."
         confirmLabel="Abrir soporte"
         onCancel={() => setPendingExpenseDocument(null)}
         onConfirm={handleConfirmExpenseDocument}
@@ -1730,3 +1735,23 @@ export function QuarterlyClosingPage({
     </section>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

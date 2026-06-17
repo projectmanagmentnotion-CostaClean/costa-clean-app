@@ -1,8 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useEffect, useMemo, useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
 import type { ClientListItem } from '../features/clients/types'
+import {
+  buildExternalAccountingPackageStem,
+  externalAccountingSectionPaths,
+} from '../features/closingExports/externalExportPolicy'
 import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
 import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
@@ -60,7 +64,7 @@ function getUiStatus(summary: AnnualClosingSummary, closing: AnnualClosingRecord
     return {
       label: 'Guardado con incidencias',
       tone: 'warning' as const,
-      detail: 'Existe snapshot anual guardado, pero todavía hay puntos abiertos en el ejercicio.',
+      detail: 'Existe snapshot anual guardado, pero todavÃ­a hay puntos abiertos en el ejercicio.',
     }
   }
 
@@ -422,9 +426,10 @@ export function AnnualClosingPage({
           }
 
       const result = await downloadManagerExportPackage({
+        audience: 'accounting_external',
         scope: 'annual',
-        label: `Cierre anual ${selectedYear}`,
-        folderName: `CostaClean_Cierre_Anual_${selectedYear}`,
+        label: `Paquete fiscal ${selectedYear}`,
+        folderName: buildExternalAccountingPackageStem(String(selectedYear)),
         periodStartDate: exportDefaultSelection.startDate,
         periodEndDate: exportDefaultSelection.endDate,
         closingSavedAt: closing.closed_at,
@@ -440,7 +445,7 @@ export function AnnualClosingPage({
       })
       setExportResult(result)
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'No se pudo generar el paquete de exportación anual.')
+      setExportError(err instanceof Error ? err.message : 'No se pudo generar el paquete externo anual.')
     } finally {
       setIsExporting(false)
     }
@@ -520,15 +525,15 @@ export function AnnualClosingPage({
       <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Cierre anual</h1>
-          <p>Panel operativo, pack gestor y dossier documental alineados con el cierre anual guardado.</p>
+          <p>Panel operativo, paquete externo y dossier documental alineados con el cierre anual guardado.</p>
         </div>
       </div>
 
-      <section className="cc-dashboard-block cc-quarterly-closing-shell" aria-label="Configuración de cierre anual">
+      <section className="cc-dashboard-block cc-quarterly-closing-shell" aria-label="ConfiguraciÃ³n de cierre anual">
         <div className="cc-dashboard-block__header">
           <div>
             <h2>Ejercicio de cierre</h2>
-            <p>Selecciona el año fiscal para revisar el estado anual consolidado y abrir su pack documental.</p>
+            <p>Selecciona el aÃ±o fiscal para revisar el estado anual consolidado y abrir su pack documental.</p>
           </div>
 
           <div className={`cc-quarterly-status-pill cc-quarterly-status-pill--${uiStatus.tone}`}>
@@ -565,7 +570,7 @@ export function AnnualClosingPage({
             onClick={() => setWorkspace('manager_pack')}
             disabled={!closing}
           >
-            Abrir pack gestor
+            Abrir paquete externo
           </button>
           <button
             type="button"
@@ -581,7 +586,7 @@ export function AnnualClosingPage({
             onClick={() => setWorkspace('export_folder')}
             disabled={!closing}
           >
-            Carpeta gestor
+            Carpeta exportable
           </button>
           <button
             type="button"
@@ -640,13 +645,13 @@ export function AnnualClosingPage({
         <>
       <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="Resumen anual">
         <article className="cc-kpi-card cc-kpi-card--finance">
-          <span className="cc-kpi-label">Facturado del año</span>
+          <span className="cc-kpi-label">Facturado del aÃ±o</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal)}</strong>
           <p className="cc-kpi-footnote">{summary.invoiceCount} factura(s) emitidas en {selectedYear}</p>
         </article>
 
         <article className="cc-kpi-card cc-kpi-card--success">
-          <span className="cc-kpi-label">Cobrado del año</span>
+          <span className="cc-kpi-label">Cobrado del aÃ±o</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.collectedTotal)}</strong>
           <p className="cc-kpi-footnote">{summary.paymentCount} cobro(s) registrados en el ejercicio</p>
         </article>
@@ -654,11 +659,11 @@ export function AnnualClosingPage({
         <article className="cc-kpi-card cc-kpi-card--warning">
           <span className="cc-kpi-label">Pendiente de cobro</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.outstandingTotal)}</strong>
-          <p className="cc-kpi-footnote">{summary.pendingInvoiceCount} factura(s) del año siguen abiertas</p>
+          <p className="cc-kpi-footnote">{summary.pendingInvoiceCount} factura(s) del aÃ±o siguen abiertas</p>
         </article>
 
         <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Gastos del año</span>
+          <span className="cc-kpi-label">Gastos del aÃ±o</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.expensesTotal)}</strong>
           <p className="cc-kpi-footnote">{summary.expenseCount} gasto(s) registrados en el ejercicio</p>
         </article>
@@ -672,7 +677,7 @@ export function AnnualClosingPage({
         <article className="cc-kpi-card">
           <span className="cc-kpi-label">IVA deducible estimado</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
-          <p className="cc-kpi-footnote">Estimación operativa consolidada del ejercicio</p>
+          <p className="cc-kpi-footnote">EstimaciÃ³n operativa consolidada del ejercicio</p>
         </article>
 
         <article className="cc-kpi-card cc-kpi-card--warning">
@@ -688,9 +693,9 @@ export function AnnualClosingPage({
         </article>
 
         <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Pendientes de revisión</span>
+          <span className="cc-kpi-label">Pendientes de revisiÃ³n</span>
           <strong className="cc-kpi-value">{summary.pendingReviewCount}</strong>
-          <p className="cc-kpi-footnote">Registros con revisión fiscal aún abierta</p>
+          <p className="cc-kpi-footnote">Registros con revisiÃ³n fiscal aÃºn abierta</p>
         </article>
 
         <article className="cc-kpi-card">
@@ -737,7 +742,7 @@ export function AnnualClosingPage({
         <div className="cc-dashboard-block__header">
           <div>
             <h2>Checklist anual</h2>
-            <p>Cada bloque abre el módulo correspondiente con el filtro ya aplicado al ejercicio seleccionado.</p>
+            <p>Cada bloque abre el mÃ³dulo correspondiente con el filtro ya aplicado al ejercicio seleccionado.</p>
           </div>
         </div>
 
@@ -755,7 +760,7 @@ export function AnnualClosingPage({
               </div>
               <div className="cc-quarterly-checklist__meta">
                 <span>{incidence.count}</span>
-                <small>Ir al módulo</small>
+                <small>Ir al mÃ³dulo</small>
               </div>
             </button>
           ))}
@@ -774,7 +779,7 @@ export function AnnualClosingPage({
           <article className="cc-quarterly-persistence__card">
             <span className="cc-dashboard-panel__label">Estado guardado</span>
             <strong className="cc-dashboard-panel__value">{uiStatus.label}</strong>
-            <p className="cc-dashboard-panel__text">Última actualización: {formatDateTime(closing?.closed_at)}</p>
+            <p className="cc-dashboard-panel__text">Ãšltima actualizaciÃ³n: {formatDateTime(closing?.closed_at)}</p>
             <p className="cc-dashboard-panel__text">Ejercicio: {selectedYear}</p>
           </article>
 
@@ -799,18 +804,18 @@ export function AnnualClosingPage({
           </article>
 
           <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Último snapshot</span>
+            <span className="cc-dashboard-panel__label">Ãšltimo snapshot</span>
             <strong className="cc-dashboard-panel__value">
               {savedSnapshot ? formatCurrency(savedSnapshot.invoiced_total) : 'Sin snapshot'}
             </strong>
             <p className="cc-dashboard-panel__text">
               {savedSnapshot
                 ? `${savedSnapshot.invoice_count} factura(s), ${savedSnapshot.payment_count} cobro(s), ${savedSnapshot.expense_count} gasto(s).`
-                : 'Todavía no se ha guardado un resumen persistido para este ejercicio.'}
+                : 'TodavÃ­a no se ha guardado un resumen persistido para este ejercicio.'}
             </p>
             {savedSnapshot ? (
               <p className="cc-dashboard-panel__text">
-                Trimestres incluidos: {savedSnapshot.quarterly_breakdown.length} · Incidencias: {savedSnapshot.unresolved_incidence_count}
+                Trimestres incluidos: {savedSnapshot.quarterly_breakdown.length} Â· Incidencias: {savedSnapshot.unresolved_incidence_count}
               </p>
             ) : null}
           </article>
@@ -825,7 +830,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Pack gestor anual</h2>
-                <p>Resumen ejecutivo y documental del ejercicio guardado para revisión de gestoría o dirección.</p>
+                <p>Resumen ejecutivo y documental del ejercicio guardado para revisiÃ³n de gestorÃ­a o direcciÃ³n.</p>
               </div>
             </div>
 
@@ -876,7 +881,7 @@ export function AnnualClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de facturas</span>
               <strong className="cc-dashboard-panel__value">{yearInvoices.length}</strong>
               <p className="cc-dashboard-panel__text">Total emitido del ejercicio: {formatCurrency(summary.invoicedTotal)}</p>
-              <p className="cc-dashboard-panel__text">Pendientes hoy: {summary.pendingInvoiceCount} · {formatCurrency(summary.outstandingTotal)}</p>
+              <p className="cc-dashboard-panel__text">Pendientes hoy: {summary.pendingInvoiceCount} Â· {formatCurrency(summary.outstandingTotal)}</p>
             </article>
             <article className="cc-quarterly-persistence__card">
               <span className="cc-dashboard-panel__label">Resumen de cobros</span>
@@ -888,7 +893,7 @@ export function AnnualClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de gastos</span>
               <strong className="cc-dashboard-panel__value">{yearExpenses.length}</strong>
               <p className="cc-dashboard-panel__text">Total de gastos: {formatCurrency(summary.expensesTotal)}</p>
-              <p className="cc-dashboard-panel__text">Documentos presentes: {yearExpenseDocumentsPresentCount} · sin soporte: {summary.missingSupportCount}</p>
+              <p className="cc-dashboard-panel__text">Documentos presentes: {yearExpenseDocumentsPresentCount} Â· sin soporte: {summary.missingSupportCount}</p>
             </article>
           </section>
 
@@ -896,7 +901,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Desglose trimestral del ejercicio</h2>
-                <p>Acceso rápido a cada trimestre consolidado desde el pack anual.</p>
+                <p>Acceso rÃ¡pido a cada trimestre consolidado desde el pack anual.</p>
               </div>
             </div>
 
@@ -922,7 +927,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Incidencias abiertas y riesgos</h2>
-                <p>Lectura resumida del estado actual del ejercicio para revisión de gestión.</p>
+                <p>Lectura resumida del estado actual del ejercicio para revisiÃ³n de gestiÃ³n.</p>
               </div>
             </div>
 
@@ -957,7 +962,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Dossier documental anual</h2>
-                <p>Ordena documentos y evidencias del ejercicio guardado para revisión operativa y futura exportación.</p>
+                <p>Ordena documentos y evidencias del ejercicio guardado para revisiÃ³n operativa y futura exportaciÃ³n.</p>
               </div>
             </div>
 
@@ -975,7 +980,7 @@ export function AnnualClosingPage({
               <article className="cc-quarterly-persistence__card">
                 <span className="cc-dashboard-panel__label">Incidencias documentales</span>
                 <strong className="cc-dashboard-panel__value">{yearExpenseMissingDocuments.length}</strong>
-                <p className="cc-dashboard-panel__text">Gastos del año con soporte ausente o insuficiente.</p>
+                <p className="cc-dashboard-panel__text">Gastos del aÃ±o con soporte ausente o insuficiente.</p>
               </article>
             </div>
           </section>
@@ -1001,7 +1006,7 @@ export function AnnualClosingPage({
               {yearInvoices.length === 0 ? (
                 <div className="empty-state">
                   <strong>Sin facturas en el ejercicio</strong>
-                  <p>No hay facturas emitidas en este año.</p>
+                  <p>No hay facturas emitidas en este aÃ±o.</p>
                 </div>
               ) : (
                 yearInvoices.map((invoice) => (
@@ -1020,7 +1025,7 @@ export function AnnualClosingPage({
                         className="secondary-button"
                         onClick={() => onNavigateToIncidence('invoices', 'invoice_year_all', selectedYear)}
                       >
-                        Abrir módulo
+                        Abrir mÃ³dulo
                       </button>
                     </div>
                   </div>
@@ -1033,7 +1038,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Cobros del ejercicio</h2>
-                <p>Resumen documental anual de cobros para contraste rápido con la facturación.</p>
+                <p>Resumen documental anual de cobros para contraste rÃ¡pido con la facturaciÃ³n.</p>
               </div>
             </div>
 
@@ -1043,14 +1048,14 @@ export function AnnualClosingPage({
                 <span>Fecha</span>
                 <span>Factura</span>
                 <span>Importe</span>
-                <span>Método</span>
-                <span>Observación</span>
+                <span>MÃ©todo</span>
+                <span>ObservaciÃ³n</span>
               </div>
 
               {yearPayments.length === 0 ? (
                 <div className="empty-state">
                   <strong>Sin cobros en el ejercicio</strong>
-                  <p>No hay movimientos de cobro registrados para este año.</p>
+                  <p>No hay movimientos de cobro registrados para este aÃ±o.</p>
                 </div>
               ) : (
                 yearPayments.map((payment) => (
@@ -1081,14 +1086,14 @@ export function AnnualClosingPage({
                 <span>Proveedor</span>
                 <span>Total</span>
                 <span>Soporte</span>
-                <span>Revisión</span>
+                <span>RevisiÃ³n</span>
                 <span>Acciones</span>
               </div>
 
               {yearExpenses.length === 0 ? (
                 <div className="empty-state">
                   <strong>Sin gastos en el ejercicio</strong>
-                  <p>No hay gastos registrados para este año.</p>
+                  <p>No hay gastos registrados para este aÃ±o.</p>
                 </div>
               ) : (
                 yearExpenses.map((expense) => (
@@ -1098,11 +1103,11 @@ export function AnnualClosingPage({
                     <span>{formatCurrency(expense.total)}</span>
                     <span>
                       {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                      {expense.receipt_file_path ? ' Â· adjunto disponible' : ' Â· sin adjunto'}
                     </span>
                     <span>
                       {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
-                      {' · '}
+                      {' Â· '}
                       riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
                     </span>
                     <div className="cc-quarterly-dossier-table__actions">
@@ -1134,8 +1139,8 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Incidencias y documentación pendiente</h2>
-                <p>Bloque final para detectar huecos documentales antes de una futura exportación/ZIP.</p>
+                <h2>Incidencias y documentaciÃ³n pendiente</h2>
+                <p>Bloque final para detectar huecos documentales antes de una futura exportaciÃ³n/ZIP.</p>
               </div>
             </div>
 
@@ -1171,7 +1176,7 @@ export function AnnualClosingPage({
             availableYears={availableYears}
             defaultSelection={exportDefaultSelection}
             title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado desde la base anual actual."
+            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado desde la base anual actual."
             invoices={invoices}
             payments={payments}
             expenses={expenses}
@@ -1189,8 +1194,8 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Carpeta gestor anual</h2>
-                <p>Estructura anual preparada para envío a gestoría y diseñada como base segura para una futura exportación ZIP.</p>
+                <h2>Carpeta exportable anual</h2>
+                <p>Estructura anual preparada para compartir con terceros y alineada con el paquete ZIP externo.</p>
               </div>
               <button type="button" className="primary-button" onClick={handleDownloadExportPackage} disabled={isExporting}>
                 {isExporting ? 'Generando ZIP...' : 'Descargar paquete ZIP'}
@@ -1208,7 +1213,7 @@ export function AnnualClosingPage({
               <div className="cc-alert cc-alert--success">
                 <strong>Paquete descargado</strong>
                 <p>
-                  {exportResult.fileName} · {exportResult.includedFiles} archivo(s) incluidos · {exportResult.missingDocuments} soporte(s) faltante(s).
+                  {exportResult.fileName} | {exportResult.includedFiles} archivo(s) incluidos | {exportResult.missingDocuments} soporte(s) faltante(s).
                 </p>
                 {exportResult.warnings.length > 0 ? (
                   <p>{exportResult.warnings.join(' ')}</p>
@@ -1218,33 +1223,33 @@ export function AnnualClosingPage({
 
             <div className="cc-export-folder-grid">
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">01 · Resumen anual</span>
+                <span className="cc-dashboard-panel__label">Resumen anual</span>
                 <strong className="cc-dashboard-panel__value">{selectedYear}</strong>
-                <p className="cc-dashboard-panel__text">Snapshot guardado: {formatDateTime(closing?.closed_at)}</p>
+                <p className="cc-dashboard-panel__text">Cierre guardado: {formatDateTime(closing?.closed_at)}</p>
                 <p className="cc-dashboard-panel__text">Notas: {closing?.notes?.trim() || 'Sin notas de cierre.'}</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">02 · Facturas</span>
+                <span className="cc-dashboard-panel__label">Facturas</span>
                 <strong className="cc-dashboard-panel__value">{yearInvoices.length}</strong>
                 <p className="cc-dashboard-panel__text">Facturado anual: {formatCurrency(summary.invoicedTotal)}</p>
                 <p className="cc-dashboard-panel__text">Acceso al flujo PDF/documental ya existente.</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">03 · Cobros</span>
+                <span className="cc-dashboard-panel__label">Cobros</span>
                 <strong className="cc-dashboard-panel__value">{yearPayments.length}</strong>
                 <p className="cc-dashboard-panel__text">Cobrado anual: {formatCurrency(yearPaymentsTotal)}</p>
-                <p className="cc-dashboard-panel__text">Listado listo para revisión y futura descarga.</p>
+                <p className="cc-dashboard-panel__text">Listado listo para revision y descarga externa.</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">04 · Gastos y soportes</span>
+                <span className="cc-dashboard-panel__label">Gastos y soportes</span>
                 <strong className="cc-dashboard-panel__value">{yearExpenseDocumentsPresentCount}/{yearExpenses.length}</strong>
                 <p className="cc-dashboard-panel__text">Adjuntos accesibles: {yearExpenseDocumentsPresentCount}</p>
                 <p className="cc-dashboard-panel__text">Sin soporte: {yearExpenseMissingDocuments.length}</p>
               </article>
               <article className="cc-quarterly-persistence__card">
-                <span className="cc-dashboard-panel__label">05 · Incidencias</span>
+                <span className="cc-dashboard-panel__label">Pendientes</span>
                 <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
-                <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales/documentales del año.</p>
+                <p className="cc-dashboard-panel__text">Pendiente de cobro e incidencias fiscales o documentales del ano.</p>
               </article>
             </div>
           </section>
@@ -1252,31 +1257,31 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Estructura preparada para exportación</h2>
-                <p>Patrón anual alineado con la carpeta trimestral y escalable a export binario posterior.</p>
+                <h2>Estructura preparada para exportacion</h2>
+                <p>La salida anual mantiene el mismo naming externo y la misma separacion entre material compartible y revision interna.</p>
               </div>
             </div>
 
             <div className="cc-export-folder-list cc-bounded-list">
               <article className="cc-export-folder-item">
-                <strong>01_resumen_anual</strong>
-                <p>{`resumen_${selectedYear}.json / pack gestor anual / snapshot persistido del cierre`}</p>
+                <strong>{externalAccountingSectionPaths.summary}</strong>
+                <p>Resumen anual con HTML y JSON externos.</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>02_facturas_emitidas</strong>
-                <p>{`${yearInvoices.length} factura(s) del ejercicio con acceso al PDF/documento actual`}</p>
+                <strong>{externalAccountingSectionPaths.invoices}</strong>
+                <p>{`${yearInvoices.length} factura(s) del ejercicio con HTML imprimible y CSV resumen.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>03_cobros</strong>
-                <p>{`${yearPayments.length} cobro(s) con factura vinculada, importe y método`}</p>
+                <strong>{externalAccountingSectionPaths.payments}</strong>
+                <p>{`${yearPayments.length} cobro(s) con factura vinculada, importe y metodo.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>04_gastos_y_soportes</strong>
-                <p>{`${yearExpenses.length} gasto(s) con soporte documental y estado de revisión`}</p>
+                <strong>{externalAccountingSectionPaths.expenses}</strong>
+                <p>{`${yearExpenses.length} gasto(s) con soportes descargables y resumen limpio.`}</p>
               </article>
               <article className="cc-export-folder-item">
-                <strong>05_incidencias_pendientes</strong>
-                <p>{`${summary.unresolvedIncidenceCount} incidencia(s) abiertas antes del envío final`}</p>
+                <strong>{externalAccountingSectionPaths.pendingItems}</strong>
+                <p>{`${summary.unresolvedIncidenceCount} pendiente(s) abiertos antes del envio final.`}</p>
               </article>
             </div>
           </section>
@@ -1284,14 +1289,14 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Facturas anuales para gestor</h2>
-                <p>Listado orientado a exportación con naming claro y acceso al PDF de factura.</p>
+                <h2>Facturas anuales exportables</h2>
+                <p>Listado orientado a exportacion con naming claro y acceso al documento de factura.</p>
               </div>
             </div>
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Fecha</span>
                 <span>Cliente</span>
                 <span>Total</span>
@@ -1307,7 +1312,7 @@ export function AnnualClosingPage({
               ) : (
                 yearInvoices.map((invoice) => (
                   <div key={invoice.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`factura_${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
+                    <span>{`factura-${invoice.invoice_number ?? invoice.display_code ?? invoice.id}`}</span>
                     <span>{formatDateEs(invoice.issue_date)}</span>
                     <span>{invoice.client_name ?? invoice.client_display_code ?? invoice.client_id}</span>
                     <span>{formatCurrency(invoice.total)}</span>
@@ -1317,7 +1322,7 @@ export function AnnualClosingPage({
                         PDF
                       </button>
                       <button type="button" className="secondary-button" onClick={() => onNavigateToIncidence('invoices', 'invoice_year_all', selectedYear)}>
-                        Abrir módulo
+                        Abrir mÃ³dulo
                       </button>
                     </div>
                   </div>
@@ -1330,18 +1335,18 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Cobros anuales para gestor</h2>
-                <p>Base compacta de revisión para la carpeta anual de cierre.</p>
+                <p>Base compacta de revisiÃ³n para la carpeta anual de cierre.</p>
               </div>
             </div>
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Fecha</span>
                 <span>Factura</span>
                 <span>Importe</span>
-                <span>Método</span>
-                <span>Observación</span>
+                <span>MÃ©todo</span>
+                <span>ObservaciÃ³n</span>
               </div>
 
               {yearPayments.length === 0 ? (
@@ -1352,7 +1357,7 @@ export function AnnualClosingPage({
               ) : (
                 yearPayments.map((payment) => (
                   <div key={payment.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`cobro_${payment.display_code ?? payment.id}`}</span>
+                    <span>{`cobro-${payment.display_code ?? payment.id}`}</span>
                     <span>{formatDateEs(payment.payment_date)}</span>
                     <span>{payment.invoice_number ?? payment.invoice_display_code ?? payment.invoice_id}</span>
                     <span>{formatCurrency(payment.amount)}</span>
@@ -1374,11 +1379,11 @@ export function AnnualClosingPage({
 
             <div className="cc-quarterly-dossier-table cc-bounded-list">
               <div className="cc-quarterly-dossier-table__head">
-                <span>Nombre carpeta</span>
+                <span>Nombre exportado</span>
                 <span>Proveedor</span>
                 <span>Total</span>
                 <span>Soporte</span>
-                <span>Revisión</span>
+                <span>RevisiÃ³n</span>
                 <span>Acciones</span>
               </div>
 
@@ -1390,16 +1395,16 @@ export function AnnualClosingPage({
               ) : (
                 yearExpenses.map((expense) => (
                   <div key={expense.id} className="cc-quarterly-dossier-table__row">
-                    <span>{`gasto_${expense.display_code ?? expense.id}`}</span>
+                    <span>{`gasto-${expense.display_code ?? expense.id}`}</span>
                     <span>{expense.supplier_name}</span>
                     <span>{formatCurrency(expense.total)}</span>
                     <span>
                       {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                      {expense.receipt_file_path ? ' · adjunto disponible' : ' · sin adjunto'}
+                      {expense.receipt_file_path ? ' Â· adjunto disponible' : ' Â· sin adjunto'}
                     </span>
                     <span>
                       {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
-                      {' · '}
+                      {' Â· '}
                       riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level).toLowerCase()}
                     </span>
                     <div className="cc-quarterly-dossier-table__actions">
@@ -1427,8 +1432,8 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Incidencias y faltas de documentación</h2>
-                <p>Bloque final para completar el ejercicio antes de una futura exportación binaria.</p>
+                <h2>Incidencias y faltas de documentaciÃ³n</h2>
+                <p>Bloque final para completar el ejercicio antes de una futura exportaciÃ³n binaria.</p>
               </div>
             </div>
 
@@ -1460,7 +1465,7 @@ export function AnnualClosingPage({
             availableYears={availableYears}
             defaultSelection={exportDefaultSelection}
             title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, año o rango personalizado desde la base anual actual."
+            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado desde la base anual actual."
             invoices={invoices}
             payments={payments}
             expenses={expenses}
@@ -1479,7 +1484,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Resumen inteligente anual</h2>
-                <p>Interpretación asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del ejercicio.</p>
+                <p>InterpretaciÃ³n asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del ejercicio.</p>
               </div>
               <button type="button" className="primary-button" onClick={handleGenerateAiSummary} disabled={isGeneratingAiSummary}>
                 {isGeneratingAiSummary ? 'Generando resumen...' : aiSummaryResult ? 'Regenerar resumen' : 'Generar resumen'}
@@ -1488,7 +1493,7 @@ export function AnnualClosingPage({
 
             <div className="cc-alert cc-alert--warning">
               <strong>Texto asistivo generado por IA</strong>
-              <p>No modifica cálculos ni sustituye la revisión fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
+              <p>No modifica cÃ¡lculos ni sustituye la revisiÃ³n fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
             </div>
 
             {aiSummaryError ? (
@@ -1538,7 +1543,7 @@ export function AnnualClosingPage({
                     )) : <p className="cc-dashboard-panel__text">Sin alertas documentales adicionales.</p>}
                   </article>
                   <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestoría</span>
+                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestorÃ­a</span>
                     {aiSummaryResult.summary.suggested_manager_notes.length > 0 ? aiSummaryResult.summary.suggested_manager_notes.map((item, index) => (
                       <p key={`note-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
                     )) : <p className="cc-dashboard-panel__text">Sin notas sugeridas adicionales.</p>}
@@ -1568,12 +1573,12 @@ export function AnnualClosingPage({
         <>
           <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="Estudio interno anual">
             <article className="cc-kpi-card cc-kpi-card--finance">
-              <span className="cc-kpi-label">Visión global anual</span>
+              <span className="cc-kpi-label">VisiÃ³n global anual</span>
               <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal)}</strong>
-              <p className="cc-kpi-footnote">Cobrado: {formatCurrency(summary.collectedTotal)} · pendiente: {formatCurrency(summary.outstandingTotal)}</p>
+              <p className="cc-kpi-footnote">Cobrado: {formatCurrency(summary.collectedTotal)} Â· pendiente: {formatCurrency(summary.outstandingTotal)}</p>
             </article>
             <article className="cc-kpi-card">
-              <span className="cc-kpi-label">Gastos del año</span>
+              <span className="cc-kpi-label">Gastos del aÃ±o</span>
               <strong className="cc-kpi-value">{formatCurrency(summary.expensesTotal)}</strong>
               <p className="cc-kpi-footnote">{summary.expenseCount} gasto(s) registrados</p>
             </article>
@@ -1615,11 +1620,11 @@ export function AnnualClosingPage({
               <span className="cc-dashboard-panel__label">Top clientes facturados</span>
               <strong className="cc-dashboard-panel__value">{topYearClientsByInvoiced.length}</strong>
               {topYearClientsByInvoiced.length === 0 ? (
-                <p className="cc-dashboard-panel__text">Sin clientes facturados este año.</p>
+                <p className="cc-dashboard-panel__text">Sin clientes facturados este aÃ±o.</p>
               ) : (
                 topYearClientsByInvoiced.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.invoiceCount} factura(s)
                   </p>
                 ))
               )}
@@ -1628,11 +1633,11 @@ export function AnnualClosingPage({
               <span className="cc-dashboard-panel__label">Top clientes cobrados</span>
               <strong className="cc-dashboard-panel__value">{topYearClientsByCollected.length}</strong>
               {topYearClientsByCollected.length === 0 ? (
-                <p className="cc-dashboard-panel__text">Sin cobros registrados este año.</p>
+                <p className="cc-dashboard-panel__text">Sin cobros registrados este aÃ±o.</p>
               ) : (
                 topYearClientsByCollected.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.paymentCount} cobro(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.paymentCount} cobro(s)
                   </p>
                 ))
               )}
@@ -1645,7 +1650,7 @@ export function AnnualClosingPage({
               ) : (
                 yearOutstandingClients.map((client, index) => (
                   <p key={`${client.label}-${index}`} className="cc-dashboard-panel__text">
-                    {index + 1}. {client.label}: {formatCurrency(client.amount)} · {client.invoiceCount} factura(s)
+                    {index + 1}. {client.label}: {formatCurrency(client.amount)} Â· {client.invoiceCount} factura(s)
                   </p>
                 ))
               )}
@@ -1655,8 +1660,8 @@ export function AnnualClosingPage({
           <section className="cc-dashboard-block">
             <div className="cc-dashboard-block__header">
               <div>
-                <h2>Desglose de gastos por categoría</h2>
-                <p>Mix anual de gasto según las categorías actuales registradas en el CRM.</p>
+                <h2>Desglose de gastos por categorÃ­a</h2>
+                <p>Mix anual de gasto segÃºn las categorÃ­as actuales registradas en el CRM.</p>
               </div>
             </div>
 
@@ -1671,7 +1676,7 @@ export function AnnualClosingPage({
                   <article key={item.category} className="cc-quarterly-persistence__card">
                     <span className="cc-dashboard-panel__label">{item.category}</span>
                     <strong className="cc-dashboard-panel__value">{formatCurrency(item.amount)}</strong>
-                    <p className="cc-dashboard-panel__text">{item.count} gasto(s) en la categoría</p>
+                    <p className="cc-dashboard-panel__text">{item.count} gasto(s) en la categorÃ­a</p>
                     <p className="cc-dashboard-panel__text">
                       {summary.expensesTotal > 0 ? `${((item.amount / summary.expensesTotal) * 100).toFixed(1)}% del gasto anual` : 'Sin peso relativo'}
                     </p>
@@ -1685,7 +1690,7 @@ export function AnnualClosingPage({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Comparativa mes a mes</h2>
-                <p>Serie compacta de facturación, cobro, gasto y margen simple a lo largo del año.</p>
+                <p>Serie compacta de facturaciÃ³n, cobro, gasto y margen simple a lo largo del aÃ±o.</p>
               </div>
             </div>
 
@@ -1706,7 +1711,7 @@ export function AnnualClosingPage({
                   <span>{formatCurrency(month.collected)}</span>
                   <span>{formatCurrency(month.spent)}</span>
                   <span>{formatCurrency(month.margin)}</span>
-                  <span>{month.collected >= month.invoiced ? 'Caja acompasada' : 'Cobro por detrás'}</span>
+                  <span>{month.collected >= month.invoiced ? 'Caja acompasada' : 'Cobro por detrÃ¡s'}</span>
                 </div>
               ))}
             </div>
@@ -1717,7 +1722,7 @@ export function AnnualClosingPage({
       <ConfirmDialog
         isOpen={Boolean(pendingInvoicePdf)}
         title="Abrir PDF de factura"
-        description="El navegador abrirá una nueva ventana o pestaña para preparar el PDF de esta factura del cierre. Continúa solo si quieres generar el documento ahora."
+        description="El navegador abrirÃ¡ una nueva ventana o pestaÃ±a para preparar el PDF de esta factura del cierre. ContinÃºa solo si quieres generar el documento ahora."
         confirmLabel="Abrir PDF"
         onCancel={() => setPendingInvoicePdf(null)}
         onConfirm={handleConfirmInvoicePdf}
@@ -1726,7 +1731,7 @@ export function AnnualClosingPage({
       <ConfirmDialog
         isOpen={Boolean(pendingExpenseDocument)}
         title="Abrir soporte del gasto"
-        description="El soporte documental del gasto se abrirá en una nueva pestaña o ventana mediante un enlace temporal seguro."
+        description="El soporte documental del gasto se abrirÃ¡ en una nueva pestaÃ±a o ventana mediante un enlace temporal seguro."
         confirmLabel="Abrir soporte"
         onCancel={() => setPendingExpenseDocument(null)}
         onConfirm={handleConfirmExpenseDocument}
@@ -1734,3 +1739,22 @@ export function AnnualClosingPage({
     </section>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

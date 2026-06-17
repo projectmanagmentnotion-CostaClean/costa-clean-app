@@ -24,6 +24,14 @@ import {
   getQuoteDocumentFileStem,
 } from '../quotes/openQuotePrintWindow'
 import type { QuoteListItem } from '../quotes/types'
+import {
+  buildExportedExpenseSupportStem,
+  buildExternalAccountingPackageStem,
+  buildExternalHtmlName,
+  buildExternalJsonName,
+  externalAccountingSectionPaths,
+  type ExportDeliveryAudience,
+} from './externalExportPolicy'
 
 type ExportScope = 'month' | 'quarterly' | 'annual' | 'custom'
 
@@ -60,6 +68,7 @@ interface ExportSummaryMetrics {
 }
 
 interface ExportPackageInput {
+  audience: ExportDeliveryAudience
   scope: ExportScope
   label: string
   folderName: string
@@ -98,35 +107,17 @@ interface IncludedSupportItem {
 }
 
 const encoder = new TextEncoder()
-
-const exportSectionPaths = {
-  cover: '00_guia_del_paquete',
-  summary: '01_resumen',
-  invoices: '02_facturas_emitidas',
-  payments: '03_cobros',
-  expenses: '04_gastos_y_soportes',
-  quotes: '05_presupuestos_comerciales',
-  pendingItems: '06_pendientes_de_revision',
-  accountantReview: '07_resumen_para_gestoria',
-} as const
-
-const exportSectionLabels = [
-  exportSectionPaths.summary,
-  exportSectionPaths.invoices,
-  exportSectionPaths.payments,
-  exportSectionPaths.expenses,
-  exportSectionPaths.quotes,
-  exportSectionPaths.pendingItems,
-  exportSectionPaths.accountantReview,
-]
+const exportSectionPaths = externalAccountingSectionPaths
+const exportSectionLabels = Object.values(exportSectionPaths)
 
 function sanitizePathPart(value: string): string {
   return value
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '_')
-    .replace(/_+/g, '_')
-    .replace(/^_|_$/g, '')
+    .replace(/[^a-zA-Z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase()
 }
 
 function formatCurrency(value: number): string {
@@ -365,7 +356,7 @@ function buildReviewReason(expense: ExpenseListItem): string {
 
 function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): string {
   const incidenceRows = input.incidences
-    .map((incidence) => `<li><strong>${escapeHtml(incidence.label)}:</strong> ${incidence.count} · ${escapeHtml(incidence.detail)}</li>`)
+    .map((incidence) => `<li><strong>${escapeHtml(incidence.label)}:</strong> ${incidence.count} - ${escapeHtml(incidence.detail)}</li>`)
     .join('')
 
   return `<!doctype html>
@@ -373,7 +364,7 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(input.folderName)}</title>
+    <title>${escapeHtml(input.label)}</title>
     <style>
       body { font-family: Inter, Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #0f172a; }
       main { max-width: 980px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
@@ -406,11 +397,11 @@ function buildIndexHtml(input: ExportPackageInput, missingDocuments: number): st
         </section>
       </div>
       <section class="card">
-        <h2>Lectura recomendada</h2>
+        <h2>Politica de salida externa</h2>
         <ul>
-          <li>La documentacion fiscal principal queda separada del material comercial y de revision.</li>
-          <li>Las cifras estimadas sirven como apoyo documental y deben confirmarse con el criterio final de gestoria.</li>
-          <li>Los pendientes se agrupan aparte para facilitar la revision completa del periodo.</li>
+          <li>Este paquete esta pensado para gestoria y terceros.</li>
+          <li>Los snapshots, notas internas y paneles operativos se mantienen solo dentro de la aplicacion.</li>
+          <li>La descarga incluye unicamente material con naming externo y contenido apto para compartir.</li>
         </ul>
       </section>
       <section class="card">
@@ -431,7 +422,7 @@ function buildSummaryHtml(input: ExportPackageInput): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(input.label)} · Resumen</title>
+    <title>${escapeHtml(input.label)} - Resumen</title>
     <style>
       body { font-family: Inter, Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #0f172a; }
       main { max-width: 1120px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
@@ -446,16 +437,15 @@ function buildSummaryHtml(input: ExportPackageInput): string {
     <main>
       <h1>${escapeHtml(input.label)}</h1>
       <p>Periodo: ${escapeHtml(formatPeriodRange(input.periodStartDate, input.periodEndDate))}</p>
-      <p>Resumen preparado: ${escapeHtml(formatDate(input.closingSavedAt))}</p>
       <div class="grid">
         <article class="card"><span class="label">Facturado</span><strong>${escapeHtml(formatCurrency(metrics.invoiced_total))}</strong><p>${metrics.invoice_count} factura(s)</p></article>
         <article class="card"><span class="label">Cobrado</span><strong>${escapeHtml(formatCurrency(metrics.collected_total))}</strong><p>${metrics.payment_count} cobro(s)</p></article>
         <article class="card"><span class="label">Pendiente</span><strong>${escapeHtml(formatCurrency(metrics.outstanding_total))}</strong><p>${metrics.pending_invoice_count} factura(s) abiertas</p></article>
         <article class="card"><span class="label">Gastos</span><strong>${escapeHtml(formatCurrency(metrics.expenses_total))}</strong><p>${metrics.expense_count} gasto(s)</p></article>
         <article class="card"><span class="label">IVA repercutido</span><strong>${escapeHtml(formatCurrency(metrics.output_vat_total ?? 0))}</strong><p>Segun facturas emitidas del periodo</p></article>
-        <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(metrics.total_vat_supported ?? fiscalSummary.totalVatSupported))}</strong><p>Documentacion validada del periodo</p></article>
+        <article class="card"><span class="label">IVA soportado</span><strong>${escapeHtml(formatCurrency(metrics.total_vat_supported ?? fiscalSummary.totalVatSupported))}</strong><p>Documentacion valida del periodo</p></article>
         <article class="card"><span class="label">IVA deducible estimado</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_vat ?? fiscalSummary.estimatedDeductibleVat))}</strong><p>Dato orientativo para revision</p></article>
-        <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_base ?? fiscalSummary.estimatedDeductibleBase))}</strong><p>Base asociada a los gastos revisables</p></article>
+        <article class="card"><span class="label">Base deducible estimada</span><strong>${escapeHtml(formatCurrency(metrics.estimated_deductible_base ?? fiscalSummary.estimatedDeductibleBase))}</strong><p>Base asociada a gastos revisables</p></article>
         <article class="card"><span class="label">Presupuestos de apoyo</span><strong>${input.quotes.length}</strong><p>Se adjuntan aparte del bloque fiscal principal</p></article>
         <article class="card"><span class="label">Gastos con revision</span><strong>${metrics.fiscal_review_count ?? fiscalSummary.needsReviewCount}</strong><p>${metrics.fiscal_risk_count ?? fiscalSummary.mediumHighRiskCount} con observacion fiscal</p></article>
         <article class="card"><span class="label">Soportes incluidos</span><strong>${metrics.supported_expense_count ?? Math.max(input.expenses.length - (metrics.missing_support_count ?? 0), 0)}</strong><p>Cobertura documental ${(metrics.support_coverage_ratio ?? 100).toFixed(1)}%</p></article>
@@ -491,7 +481,7 @@ function buildFiscalReviewHtml(input: ExportPackageInput): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(input.label)} · Revision</title>
+    <title>${escapeHtml(input.label)} - Revision</title>
     <style>
       body { font-family: Inter, Arial, sans-serif; margin: 0; padding: 24px; background: #f5f7fb; color: #0f172a; }
       main { max-width: 1120px; margin: 0 auto; background: #fff; border-radius: 20px; padding: 24px; border: 1px solid #dbe3ee; }
@@ -536,7 +526,7 @@ async function buildExpenseEntries(expenses: ExpenseListItem[], rootFolder: stri
 
   for (const expense of expenses) {
     const expenseRef = expense.display_code ?? expense.id
-    const baseName = `gasto_${sanitizePathPart(expenseRef)}`
+    const baseName = buildExportedExpenseSupportStem(expenseRef)
 
     if (!expense.receipt_file_path) {
       missingDocuments += 1
@@ -588,6 +578,7 @@ async function buildExpenseEntries(expenses: ExpenseListItem[], rootFolder: stri
 
 function buildManifest(input: ExportPackageInput, includedFiles: number, missingDocuments: number, warnings: string[]) {
   return {
+    audiencia: input.audience,
     paquete: input.label,
     periodo: {
       inicio: input.periodStartDate,
@@ -604,11 +595,19 @@ function buildManifest(input: ExportPackageInput, includedFiles: number, missing
       presupuestos_apoyo: input.quotes.length,
     },
     advertencias: warnings,
+    excluido_por_politica: [
+      'snapshots guardados',
+      'notas internas',
+      'payloads operativos internos',
+      'razonamiento interno de IA',
+    ],
   }
 }
 
 export async function downloadManagerExportPackage(input: ExportPackageInput): Promise<ManagerExportPackageResult> {
-  const rootFolder = sanitizePathPart(input.folderName) || 'paquete_fiscal'
+  const rootFolder = sanitizePathPart(
+    input.folderName || buildExternalAccountingPackageStem(input.label),
+  ) || buildExternalAccountingPackageStem(input.label)
   const entries: ZipEntry[] = []
   let exportLogoSrc = '/branding/logo-costa-clean-web.png'
 
@@ -618,9 +617,10 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     // Keep fallback public path for robustness.
   }
 
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.cover}.html`, buildIndexHtml(input, 0)))
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.summary}/resumen_periodo.html`, buildSummaryHtml(input)))
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.summary}/resumen_periodo.json`, JSON.stringify({
+  entries.push(makeTextEntry(`${rootFolder}/${buildExternalHtmlName('guia del paquete')}`, buildIndexHtml(input, 0)))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.summary}/${buildExternalHtmlName('resumen del periodo')}`, buildSummaryHtml(input)))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.summary}/${buildExternalJsonName('resumen del periodo')}`, JSON.stringify({
+    audiencia: input.audience,
     paquete: input.label,
     periodo: {
       inicio: input.periodStartDate,
@@ -641,8 +641,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     ['Factura', 'Fecha de emision', 'Cliente', 'Estado', 'Base imponible', 'IVA', 'Total', 'Documento'],
     input.invoices.map((invoice) => {
       const invoiceRef = invoice.invoice_number ?? 'Sin numero'
-      const fileStem = getInvoiceDocumentFileStem(invoice)
-      const fileName = `${fileStem}.html`
+      const fileName = `${getInvoiceDocumentFileStem(invoice)}.html`
       const invoiceHtml = buildInvoicePrintDocumentHtml(invoice, 'pdf', { logoSrc: exportLogoSrc })
       entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.invoices}/documentos/${fileName}`, invoiceHtml))
       return [
@@ -673,20 +672,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.payments}/cobros.csv`, paymentsCsv))
 
   const expensesCsv = buildCsv(
-    [
-      'Gasto',
-      'Fecha',
-      'Proveedor',
-      'Categoria',
-      'Base imponible',
-      'IVA',
-      'Total',
-      'Documento',
-      'Soporte',
-      'Base deducible estimada',
-      'IVA deducible estimado',
-      'Adjunto',
-    ],
+    ['Gasto', 'Fecha', 'Proveedor', 'Categoria', 'Base imponible', 'IVA', 'Total', 'Documento', 'Soporte', 'Base deducible estimada', 'IVA deducible estimado', 'Adjunto'],
     input.expenses.map((expense) => [
       expense.display_code ?? expense.id,
       expense.expense_date,
@@ -707,8 +693,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   const quotesCsv = buildCsv(
     ['Presupuesto', 'Fecha', 'Estado', 'Cliente', 'Propiedad', 'Base imponible', 'IVA', 'Total', 'Documento'],
     input.quotes.map((quote) => {
-      const fileStem = getQuoteDocumentFileStem(quote)
-      const fileName = `${fileStem}.html`
+      const fileName = `${getQuoteDocumentFileStem(quote)}.html`
       const quoteHtml = buildQuotePrintDocumentHtml(quote, input.clients, input.properties, 'pdf')
       entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.quotes}/documentos/${fileName}`, quoteHtml))
       return [
@@ -728,14 +713,7 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
 
   const fiscalReviewSummary = buildExpenseFiscalSummary(input.expenses)
   const fiscalReviewCsv = buildCsv(
-    [
-      'Gasto',
-      'Proveedor',
-      'Motivo de revision',
-      'Soporte',
-      'Base deducible estimada',
-      'IVA deducible estimado',
-    ],
+    ['Gasto', 'Proveedor', 'Motivo de revision', 'Soporte', 'Base deducible estimada', 'IVA deducible estimado'],
     input.expenses
       .filter((expense) =>
         needsFiscalReview(expense)
@@ -766,10 +744,11 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     ],
   )
 
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/resumen_gestoria.html`, buildFiscalReviewHtml(input)))
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/gastos_para_revision.csv`, fiscalReviewCsv))
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/resumen_gestoria.csv`, accountantSummaryCsv))
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/resumen_gestoria.json`, JSON.stringify({
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/${buildExternalHtmlName('resumen para gestoria')}`, buildFiscalReviewHtml(input)))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/gastos-para-revision.csv`, fiscalReviewCsv))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/resumen-para-gestoria.csv`, accountantSummaryCsv))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.accountantReview}/${buildExternalJsonName('resumen para gestoria')}`, JSON.stringify({
+    audiencia: input.audience,
     paquete: input.label,
     generado_el: new Date().toISOString(),
     periodo: {
@@ -789,20 +768,19 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
   }, null, 2)))
 
   const incidenceCsv = buildCsv(
-    ['Area', 'Detalle', 'Cantidad', 'Observacion'],
+    ['Area', 'Cantidad', 'Observacion'],
     input.incidences.map((incidence) => [
       incidence.label,
-      incidence.id,
       incidence.count,
       incidence.detail,
     ]),
   )
-  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.pendingItems}/pendientes_revision.csv`, incidenceCsv))
+  entries.push(makeTextEntry(`${rootFolder}/${exportSectionPaths.pendingItems}/pendientes-de-revision.csv`, incidenceCsv))
 
   const expenseAttachmentResult = await buildExpenseEntries(input.expenses, rootFolder)
   entries.push(...expenseAttachmentResult.entries)
   entries.push(makeTextEntry(
-    `${rootFolder}/${exportSectionPaths.expenses}/soportes_incluidos.json`,
+    `${rootFolder}/${exportSectionPaths.expenses}/${buildExternalJsonName('soportes incluidos')}`,
     JSON.stringify(expenseAttachmentResult.includedSupports, null, 2),
   ))
 
@@ -813,8 +791,8 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     expenseAttachmentResult.missingDocuments,
     manifestWarnings,
   )
-  entries.push(makeTextEntry(`${rootFolder}/00_resumen_paquete.json`, JSON.stringify(manifest, null, 2)))
-  entries[0] = makeTextEntry(`${rootFolder}/${exportSectionPaths.cover}.html`, buildIndexHtml(input, expenseAttachmentResult.missingDocuments))
+  entries.push(makeTextEntry(`${rootFolder}/${buildExternalJsonName('resumen del paquete')}`, JSON.stringify(manifest, null, 2)))
+  entries[0] = makeTextEntry(`${rootFolder}/${buildExternalHtmlName('guia del paquete')}`, buildIndexHtml(input, expenseAttachmentResult.missingDocuments))
 
   const zipBlob = buildStoredZip(entries)
   const fileName = `${rootFolder}.zip`

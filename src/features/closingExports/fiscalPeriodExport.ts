@@ -80,6 +80,13 @@ function filterRelevantQuotes(quotes: QuoteListItem[], period: ResolvedFiscalPer
   })
 }
 
+function buildExpenseIncidenceDetail(expenses: ExpenseListItem[]): string {
+  return expenses
+    .map((expense) => `${expense.display_code ?? expense.id} | ${getExpenseDocumentSupportStatusLabel(expense.document_support_status)}`)
+    .slice(0, 3)
+    .join(' | ')
+}
+
 export function buildFiscalPeriodExportData(input: {
   selection: FiscalPeriodSelection
   invoices: InvoiceListItem[]
@@ -157,7 +164,7 @@ export function buildFiscalPeriodExportData(input: {
       title: 'Gastos y soportes',
       category: 'fiscal',
       count: expenses.length,
-      detail: `${supportedExpenses.length} con soporte descargable · ${missingSupportExpenses.length} con documentacion pendiente.`,
+      detail: `${supportedExpenses.length} con soporte descargable | ${missingSupportExpenses.length} con documentacion pendiente.`,
     },
     {
       id: 'admin_quotes',
@@ -235,6 +242,17 @@ export function buildFiscalPeriodExportData(input: {
 }
 
 export function buildFiscalPeriodIncidences(data: FiscalPeriodExportData) {
+  const expensesWithMissingSupport = data.expenses.filter(
+    (expense) => expense.document_support_status === 'missing' || !expense.receipt_file_path,
+  )
+  const expensesNeedingReview = data.expenses.filter((expense) =>
+    expense.fiscal_review_status === 'pending'
+    || expense.fiscal_risk_level === 'medium'
+    || expense.fiscal_risk_level === 'high'
+    || expense.ai_fiscal_risk_level === 'medium'
+    || expense.ai_fiscal_risk_level === 'high',
+  )
+
   return [
     {
       id: 'period_invoices',
@@ -253,22 +271,14 @@ export function buildFiscalPeriodIncidences(data: FiscalPeriodExportData) {
     {
       id: 'period_expenses_missing_support',
       label: 'Gastos con documentacion pendiente',
-      detail: data.expenses
-        .filter((expense) => expense.document_support_status === 'missing' || !expense.receipt_file_path)
-        .map((expense) => `${expense.display_code ?? expense.id} · ${getExpenseDocumentSupportStatusLabel(expense.document_support_status)}`)
-        .slice(0, 3)
-        .join(' | ') || 'Sin incidencias documentales destacadas.',
-      count: data.expenses.filter((expense) => expense.document_support_status === 'missing' || !expense.receipt_file_path).length,
-      tone: data.expenses.some((expense) => expense.document_support_status === 'missing' || !expense.receipt_file_path) ? 'danger' as const : 'neutral' as const,
+      detail: buildExpenseIncidenceDetail(expensesWithMissingSupport) || 'Sin incidencias documentales destacadas.',
+      count: expensesWithMissingSupport.length,
+      tone: expensesWithMissingSupport.length > 0 ? 'danger' as const : 'neutral' as const,
     },
     {
       id: 'period_expenses_review',
       label: 'Gastos con revision fiscal pendiente',
-      detail: data.expenses
-        .filter((expense) => expense.fiscal_review_status === 'pending' || expense.fiscal_risk_level === 'medium' || expense.fiscal_risk_level === 'high' || expense.ai_fiscal_risk_level === 'medium' || expense.ai_fiscal_risk_level === 'high')
-        .map((expense) => `${expense.display_code ?? expense.id} · ${getExpenseDocumentSupportStatusLabel(expense.document_support_status)}`)
-        .slice(0, 3)
-        .join(' | ') || 'Sin gastos prioritarios para revisar.',
+      detail: buildExpenseIncidenceDetail(expensesNeedingReview) || 'Sin gastos prioritarios para revisar.',
       count: data.metrics.fiscal_review_count + data.metrics.fiscal_risk_count,
       tone: data.metrics.fiscal_review_count + data.metrics.fiscal_risk_count > 0 ? 'warning' as const : 'neutral' as const,
     },

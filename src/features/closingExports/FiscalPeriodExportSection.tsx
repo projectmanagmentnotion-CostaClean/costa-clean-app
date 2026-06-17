@@ -12,6 +12,11 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import {
+  buildExternalAccountingPackageStem,
+  externalAccountingSectionPaths,
+  getExportAudienceLabel,
+} from './externalExportPolicy'
 
 interface FiscalPeriodExportSectionProps {
   availableYears: number[]
@@ -41,8 +46,8 @@ function formatCurrency(value: number): string {
 function getDocumentHealthCopy(status: 'healthy' | 'review' | 'critical') {
   if (status === 'healthy') {
     return {
-      label: 'Paquete listo para revision',
-      detail: 'La cobertura documental del periodo permite compartir el dossier con buena trazabilidad.',
+      label: 'Paquete listo para compartir',
+      detail: 'La cobertura documental del periodo permite entregar el dossier con buena trazabilidad.',
       toneClass: 'cc-kpi-card--success',
     }
   }
@@ -50,14 +55,14 @@ function getDocumentHealthCopy(status: 'healthy' | 'review' | 'critical') {
   if (status === 'critical') {
     return {
       label: 'Paquete con documentacion pendiente',
-      detail: 'El ZIP puede descargarse, pero conviene completar soportes faltantes antes de entregarlo.',
+      detail: 'El ZIP puede descargarse, pero conviene completar soportes faltantes antes de compartirlo.',
       toneClass: 'cc-kpi-card--warning',
     }
   }
 
   return {
     label: 'Paquete listo con observaciones',
-    detail: 'La estructura externa esta lista, aunque todavia hay puntos que conviene revisar antes del cierre final.',
+    detail: 'La salida externa esta preparada, aunque todavia hay puntos a revisar antes del cierre final.',
     toneClass: 'cc-kpi-card--warning',
   }
 }
@@ -143,12 +148,13 @@ export function FiscalPeriodExportSection({
 
     try {
       const result = await downloadManagerExportPackage({
+        audience: 'accounting_external',
         scope:
           exportData.period.mode === 'quarter' ? 'quarterly'
             : exportData.period.mode === 'year' ? 'annual'
               : exportData.period.mode,
         label: `Paquete fiscal ${exportData.period.label}`,
-        folderName: `CostaClean_Paquete_Fiscal_${exportData.period.folderLabel}`,
+        folderName: buildExternalAccountingPackageStem(exportData.period.folderLabel),
         periodStartDate: exportData.period.startDate,
         periodEndDate: exportData.period.endDate,
         closingSavedAt,
@@ -164,7 +170,7 @@ export function FiscalPeriodExportSection({
       })
       setExportResult(result)
     } catch (error) {
-      setExportError(error instanceof Error ? error.message : 'No se pudo generar el paquete fiscal del periodo.')
+      setExportError(error instanceof Error ? error.message : 'No se pudo generar el paquete externo del periodo.')
     } finally {
       setIsExporting(false)
     }
@@ -185,8 +191,8 @@ export function FiscalPeriodExportSection({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>{showSelector ? 'Exportacion fiscal' : title}</h2>
-            <p>{showSelector ? 'El paquete usa exactamente el mismo periodo activo del cierre.' : description}</p>
+            <h2>{showSelector ? 'Paquete externo' : title}</h2>
+            <p>{showSelector ? 'La descarga usa exactamente el mismo periodo activo del cierre.' : description}</p>
           </div>
           <button type="button" className="primary-button" onClick={handleDownload} disabled={isExporting}>
             {isExporting ? 'Generando ZIP...' : 'Descargar paquete ZIP'}
@@ -204,7 +210,7 @@ export function FiscalPeriodExportSection({
           <div className="cc-alert cc-alert--success">
             <strong>Paquete descargado</strong>
             <p>
-              {exportResult.fileName} · {exportResult.includedFiles} archivo(s) incluidos · {exportResult.missingDocuments} soporte(s) pendiente(s).
+              {exportResult.fileName} - {exportResult.includedFiles} archivo(s) incluidos - {exportResult.missingDocuments} soporte(s) pendiente(s).
             </p>
             {exportResult.warnings.length > 0 ? (
               <p>{exportResult.warnings.join(' ')}</p>
@@ -223,8 +229,59 @@ export function FiscalPeriodExportSection({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
+            <h2>Destino y politica de salida</h2>
+            <p>La separacion entre material externo e interno queda resuelta antes de generar el ZIP.</p>
+          </div>
+        </div>
+
+        <div className="cc-quarterly-summary-grid">
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Material externo</h2>
+                <p>{getExportAudienceLabel('accounting_external')}.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              <article className="cc-export-folder-item">
+                <strong>Incluido</strong>
+                <p>Facturas, cobros, gastos, soportes, presupuestos de apoyo y resumen para gestoria.</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>Formato</strong>
+                <p>Solo nombres limpios, documentos compartibles y payloads reducidos a informacion util para terceros.</p>
+              </article>
+            </div>
+          </article>
+
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Material interno</h2>
+                <p>Se mantiene dentro de la aplicacion y no viaja en la descarga externa.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              <article className="cc-export-folder-item">
+                <strong>Excluido</strong>
+                <p>Snapshots persistidos, notas internas, paneles operativos, payloads internos y razonamiento interno de IA.</p>
+              </article>
+              <article className="cc-export-folder-item">
+                <strong>Motivo</strong>
+                <p>La descarga externa no debe mezclar revision operativa con material destinado a cliente, gestoria o terceros.</p>
+              </article>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
             <h2>Estado previo al envio</h2>
-            <p>Antes de descargar, esta vista deja claro que material entrara en el ZIP y con que salud documental llegara a gestoria.</p>
+            <p>Antes de descargar, esta vista resume que entra en el ZIP y con que salud documental llegara a terceros.</p>
           </div>
         </div>
 
@@ -247,16 +304,16 @@ export function FiscalPeriodExportSection({
           <article className="cc-kpi-card">
             <span className="cc-kpi-label">Pendientes abiertos</span>
             <strong className="cc-kpi-value">{exportData.metrics.unresolved_incidence_count}</strong>
-            <p className="cc-kpi-footnote">Se separan en una carpeta propia para facilitar la revision final.</p>
+            <p className="cc-kpi-footnote">Se agrupan en una carpeta propia para facilitar la revision final.</p>
           </article>
         </div>
       </section>
 
-      <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="KPIs del paquete fiscal por periodo">
+      <section className="cc-kpi-grid cc-quarterly-metrics" aria-label="KPIs del paquete externo por periodo">
         <article className="cc-kpi-card cc-kpi-card--finance">
           <span className="cc-kpi-label">Periodo activo</span>
           <strong className="cc-kpi-value">{exportData.period.label}</strong>
-          <p className="cc-kpi-footnote">{exportData.period.startDate} → {exportData.period.endDate}</p>
+          <p className="cc-kpi-footnote">{exportData.period.startDate} {'->'} {exportData.period.endDate}</p>
         </article>
         <article className="cc-kpi-card cc-kpi-card--finance">
           <span className="cc-kpi-label">IVA repercutido</span>
@@ -318,10 +375,6 @@ export function FiscalPeriodExportSection({
             </div>
 
             <div className="cc-export-folder-list cc-bounded-list">
-              <article className="cc-export-folder-item">
-                <strong>01_resumen</strong>
-                <p>Resumen del periodo en HTML y JSON para una lectura rapida del dossier.</p>
-              </article>
               {fiscalPackGroups.map((group) => (
                 <article key={group.id} className="cc-export-folder-item">
                   <strong>{group.title}</strong>
@@ -335,7 +388,7 @@ export function FiscalPeriodExportSection({
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Material de apoyo y revision</h2>
-                <p>Contenido complementario que acompana el dossier sin mezclarse con el bloque fiscal principal.</p>
+                <p>Contenido complementario que acompana el dossier sin mezclarse con material interno.</p>
               </div>
             </div>
 
@@ -355,37 +408,37 @@ export function FiscalPeriodExportSection({
         <div className="cc-dashboard-block__header">
           <div>
             <h2>Estructura final del ZIP</h2>
-            <p>La descarga conserva la utilidad del paquete actual, pero con una presentacion externa mas limpia y legible.</p>
+            <p>La descarga conserva la utilidad del paquete, pero con naming externo unificado y sin semantica interna.</p>
           </div>
         </div>
 
         <div className="cc-export-folder-list cc-bounded-list">
           <article className="cc-export-folder-item">
-            <strong>01_resumen</strong>
+            <strong>{externalAccountingSectionPaths.summary}</strong>
             <p>Resumen del periodo y sintesis de cifras clave.</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>02_facturas_emitidas</strong>
-            <p>{`${exportData.metrics.invoice_count} factura(s) con CSV resumen y documento HTML listo para imprimir o guardar como PDF.`}</p>
+            <strong>{externalAccountingSectionPaths.invoices}</strong>
+            <p>{`${exportData.metrics.invoice_count} factura(s) con CSV resumen y HTML listo para imprimir o guardar como PDF.`}</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>03_cobros</strong>
+            <strong>{externalAccountingSectionPaths.payments}</strong>
             <p>{`${exportData.metrics.payment_count} cobro(s) con CSV de seguimiento y referencia a la factura vinculada.`}</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>04_gastos_y_soportes</strong>
+            <strong>{externalAccountingSectionPaths.expenses}</strong>
             <p>{`${exportData.metrics.expense_count} gasto(s) con CSV limpio, JSON de soportes incluidos y adjuntos descargables cuando existen.`}</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>05_presupuestos_comerciales</strong>
+            <strong>{externalAccountingSectionPaths.quotes}</strong>
             <p>{`${exportData.metrics.quote_count} presupuesto(s) del periodo en carpeta separada como referencia comercial.`}</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>06_pendientes_de_revision</strong>
+            <strong>{externalAccountingSectionPaths.pendingItems}</strong>
             <p>{`${exportData.metrics.unresolved_incidence_count} pendiente(s) resumidos para cerrar huecos antes de la entrega final.`}</p>
           </article>
           <article className="cc-export-folder-item">
-            <strong>07_resumen_para_gestoria</strong>
+            <strong>{externalAccountingSectionPaths.accountantReview}</strong>
             <p>Resumen fiscal del periodo y listado de gastos que conviene revisar con mas detalle.</p>
           </article>
         </div>

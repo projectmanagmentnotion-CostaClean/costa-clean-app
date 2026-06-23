@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { AutomationAlertItem, AutomationAlertSeverity } from '../features/automation/types'
+import {
+  getAlertActionLabel,
+  getAlertBucket,
+  getAlertBucketMeta,
+  groupAlertsByBucket,
+} from '../features/automation/alertPresentation'
+import type { AutomationAlertItem } from '../features/automation/types'
 
 interface AlertsBellProps {
   alerts: AutomationAlertItem[]
@@ -29,12 +35,6 @@ function BellIcon() {
   )
 }
 
-function getSeverityLabel(severity: AutomationAlertSeverity): string {
-  if (severity === 'critical') return 'Critica'
-  if (severity === 'warning') return 'Prioritaria'
-  return 'Recordatorio'
-}
-
 export function AlertsBell({
   alerts,
   reviewedAlertIds,
@@ -45,7 +45,19 @@ export function AlertsBell({
   const rootRef = useRef<HTMLDivElement | null>(null)
   const reviewedIds = useMemo(() => new Set(reviewedAlertIds), [reviewedAlertIds])
   const activeAlerts = alerts.filter((alert) => !reviewedIds.has(alert.id))
-  const recentAlerts = activeAlerts.slice(0, 4)
+  const groupedAlerts = groupAlertsByBucket(activeAlerts)
+  const topAlerts = [
+    ...groupedAlerts.critical.slice(0, 2),
+    ...groupedAlerts.action.slice(0, 2),
+    ...groupedAlerts.follow_up.slice(0, 1),
+  ].slice(0, 5)
+  const bucketChips = (['critical', 'action', 'follow_up'] as const)
+    .map((bucket) => ({
+      bucket,
+      count: groupedAlerts[bucket].length,
+      meta: getAlertBucketMeta(bucket),
+    }))
+    .filter((entry) => entry.count > 0)
 
   useEffect(() => {
     if (!isOpen) return
@@ -101,33 +113,49 @@ export function AlertsBell({
         <div className="cc-alerts-bell__panel" role="dialog" aria-label="Alertas recientes">
           <div className="cc-alerts-bell__panel-header">
             <div>
-              <span>Alertas</span>
-              <strong>{activeAlerts.length} activas</strong>
+              <span>Centro rapido</span>
+              <strong>{activeAlerts.length} alerta(s) activas</strong>
             </div>
             <button type="button" className="secondary-button" onClick={handleOpenCenter}>
               Ver todas
             </button>
           </div>
 
-          {recentAlerts.length > 0 ? (
+          {bucketChips.length > 0 ? (
+            <div className="cc-alerts-bell__chips" aria-label="Resumen de prioridades">
+              {bucketChips.map((chip) => (
+                <span key={chip.bucket} className={`cc-alerts-bell__chip cc-alerts-bell__chip--${chip.bucket}`}>
+                  {chip.count} {chip.meta.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+
+          {topAlerts.length > 0 ? (
             <div className="cc-alerts-bell__list">
-              {recentAlerts.map((alert) => (
+              {topAlerts.map((alert) => {
+                const bucket = getAlertBucket(alert)
+                const bucketMeta = getAlertBucketMeta(bucket)
+
+                return (
                 <button
                   key={alert.id}
                   type="button"
-                  className={`cc-alerts-bell__item cc-alerts-bell__item--${alert.severity}`}
+                  className={`cc-alerts-bell__item cc-alerts-bell__item--${bucket}`}
                   onClick={() => handleOpenAlert(alert)}
                 >
-                  <span>{getSeverityLabel(alert.severity)}</span>
+                  <span>{bucketMeta.label}</span>
                   <strong>{alert.title}</strong>
                   <small>{alert.summary}</small>
+                  <em>{getAlertActionLabel(alert)}</em>
                 </button>
-              ))}
+                )
+              })}
             </div>
           ) : (
             <div className="cc-alerts-bell__empty">
               <strong>Sin alertas activas</strong>
-              <p>No hay incidencias pendientes con las reglas actuales.</p>
+              <p>No hay incidencias pendientes que requieran mover la cola ahora.</p>
             </div>
           )}
         </div>

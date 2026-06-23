@@ -1,15 +1,14 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
-import { InvoiceCreateFlow } from '../features/invoices/InvoiceCreateFlow'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
-import { InvoiceDocumentScreen } from '../features/invoices/InvoiceDocumentScreen'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -20,6 +19,11 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
 import type { PropertyListItem } from '../features/properties/types'
+import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
+
+const LazyInvoiceCreateFlow = lazy(async () => ({
+  default: (await import('../features/invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+}))
 
 interface InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -277,21 +281,30 @@ export function InvoicesPage({
               })
             }}
           >
-            <InvoiceCreateFlow
-              clients={clients}
-              properties={properties}
-              jobs={jobs}
-              quotes={quotes}
-              onRefreshData={onInvoiceCreated}
-              onCompleted={handleInvoiceCreated}
-              prefill={createPrefill}
-              onCancel={() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
-                onPrefillConsumed()
-              }}
-              onDirtyChange={setHasCreateFormDirty}
-            />
+            <Suspense
+              fallback={(
+                <DeferredContentFallback
+                  title="Cargando flujo de factura"
+                  description="Preparando el formulario completo de emision."
+                />
+              )}
+            >
+              <LazyInvoiceCreateFlow
+                clients={clients}
+                properties={properties}
+                jobs={jobs}
+                quotes={quotes}
+                onRefreshData={onInvoiceCreated}
+                onCompleted={handleInvoiceCreated}
+                prefill={createPrefill}
+                onCancel={() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  onPrefillConsumed()
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </Suspense>
           </ActionFlowOverlay>
         ) : null}
 
@@ -439,10 +452,19 @@ export function InvoicesPage({
       </section>
 
       {showDocumentScreen && detailInvoice ? (
-        <InvoiceDocumentScreen
-          invoice={detailInvoice}
-          onClose={() => setShowDocumentScreen(false)}
-        />
+        <Suspense
+          fallback={(
+            <DeferredContentFallback
+              title="Cargando documento de factura"
+              description="Preparando la vista documental y las acciones de salida."
+            />
+          )}
+        >
+          <LazyInvoiceDocumentScreen
+            invoice={detailInvoice}
+            onClose={() => setShowDocumentScreen(false)}
+          />
+        </Suspense>
       ) : null}
 
       <ConfirmDialog

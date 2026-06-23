@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs } from '../app/displayFormat'
 import { FiscalPeriodSelector } from '../features/closing/FiscalPeriodSelector'
 import {
@@ -8,7 +9,7 @@ import {
   type ClosingReadinessLevel,
 } from '../features/closing/closingSummaryEngine'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
-import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
+import { LazyFiscalPeriodExportSection } from '../features/closingExports/lazyFiscalPeriodExportSection'
 import type { AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
 import {
   getExpenseDocumentSupportStatusLabel,
@@ -508,22 +509,31 @@ export function FiscalClosingPage({
         </article>
       </section>
 
-      <FiscalPeriodExportSection
-        availableYears={availableYears}
-        selection={selection}
-        onSelectionChange={setSelection}
-        title="Exportar cierre fiscal"
-        description="Mismo periodo, mismo resumen y mismo contexto documental."
-        invoices={invoices}
-        payments={payments}
-        expenses={expenses}
-        quotes={quotes}
-        clients={clients}
-        properties={properties}
-        closingSavedAt={persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null}
-        closingNotes={notes.trim() || null}
-        showSelector={false}
-      />
+      <Suspense
+        fallback={(
+          <DeferredContentFallback
+            title="Cargando runtime de exportacion fiscal"
+            description="Preparando el bloque documental externo del periodo."
+          />
+        )}
+      >
+        <LazyFiscalPeriodExportSection
+          availableYears={availableYears}
+          selection={selection}
+          onSelectionChange={setSelection}
+          title="Exportar cierre fiscal"
+          description="Mismo periodo, mismo resumen y mismo contexto documental."
+          invoices={invoices}
+          payments={payments}
+          expenses={expenses}
+          quotes={quotes}
+          clients={clients}
+          properties={properties}
+          closingSavedAt={persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null}
+          closingNotes={notes.trim() || null}
+          showSelector={false}
+        />
+      </Suspense>
     </section>
   )
 }

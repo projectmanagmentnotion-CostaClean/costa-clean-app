@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
@@ -6,6 +6,7 @@ import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { DeferredContentFallback } from '../../components/DeferredContentFallback'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import {
@@ -14,7 +15,6 @@ import {
   updateInvoiceStatus as updateInvoiceStatusRpc,
 } from '../financial/financialWriteApi'
 import type { JobListItem } from '../jobs/types'
-import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
@@ -24,6 +24,10 @@ import {
   getInvoiceFinancialStatusLabel,
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
+
+const LazyPaymentCreateFlow = lazy(async () => ({
+  default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
+}))
 
 interface InvoiceDetailCardProps {
   invoice: InvoiceListItem | null
@@ -1029,35 +1033,37 @@ export function InvoiceDetailCard({
                       setHasPaymentFormDirty(false)
                     }}
                   >
-                    <PaymentCreateFlow
-                      invoices={[invoice]}
-                      clients={[]}
-                      properties={[]}
-                      jobs={[]}
-                      quotes={[]}
-                      onRefreshData={onInvoiceUpdated}
-                      onCompleted={async () => {
-                        setPaymentActionMode(null)
-                      }}
-                      title={paymentActionMode === 'partial' ? 'Registrar cobro parcial' : 'Registrar cobro'}
-                      description={
-                        paymentActionMode === 'partial'
-                          ? 'Registra un importe manual inferior o igual al pendiente real.'
-                          : 'Registra un cobro asociado a esta factura sin salir del detalle.'
-                      }
-                      submitLabel={paymentActionMode === 'partial' ? 'Guardar cobro parcial' : 'Guardar cobro'}
-                      prefillInvoiceId={invoice.id}
-                      prefillAmount={paymentActionMode === 'manual'
-                        ? formatMoneyInput(paymentSummary?.outstandingAmount ?? invoice.total)
-                        : ''}
-                      lockInvoiceSelection
-                      hideInvoiceCreateAction
-                      onCancel={() => {
-                        setPaymentActionMode(null)
-                        setHasPaymentFormDirty(false)
-                      }}
-                      onDirtyChange={setHasPaymentFormDirty}
-                    />
+                    <Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando el registro guiado del cobro." />}>
+                      <LazyPaymentCreateFlow
+                        invoices={[invoice]}
+                        clients={[]}
+                        properties={[]}
+                        jobs={[]}
+                        quotes={[]}
+                        onRefreshData={onInvoiceUpdated}
+                        onCompleted={async () => {
+                          setPaymentActionMode(null)
+                        }}
+                        title={paymentActionMode === 'partial' ? 'Registrar cobro parcial' : 'Registrar cobro'}
+                        description={
+                          paymentActionMode === 'partial'
+                            ? 'Registra un importe manual inferior o igual al pendiente real.'
+                            : 'Registra un cobro asociado a esta factura sin salir del detalle.'
+                        }
+                        submitLabel={paymentActionMode === 'partial' ? 'Guardar cobro parcial' : 'Guardar cobro'}
+                        prefillInvoiceId={invoice.id}
+                        prefillAmount={paymentActionMode === 'manual'
+                          ? formatMoneyInput(paymentSummary?.outstandingAmount ?? invoice.total)
+                          : ''}
+                        lockInvoiceSelection
+                        hideInvoiceCreateAction
+                        onCancel={() => {
+                          setPaymentActionMode(null)
+                          setHasPaymentFormDirty(false)
+                        }}
+                        onDirtyChange={setHasPaymentFormDirty}
+                      />
+                    </Suspense>
                   </ActionFlowOverlay>
                 ) : null}
 

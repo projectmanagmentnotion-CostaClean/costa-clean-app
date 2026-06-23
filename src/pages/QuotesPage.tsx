@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
-import { QuoteCreateFlow } from '../features/quotes/QuoteCreateFlow'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
-import { QuoteDocumentScreen } from '../features/quotes/QuoteDocumentScreen'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
+import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
+
+const LazyQuoteCreateFlow = lazy(async () => ({
+  default: (await import('../features/quotes/QuoteCreateFlow')).QuoteCreateFlow,
+}))
 
 interface QuotesPageProps {
   quotes: QuoteListItem[]
@@ -150,17 +154,26 @@ export function QuotesPage({
               })
             }}
           >
-            <QuoteCreateFlow
-              clients={clients}
-              properties={properties}
-              onRefreshData={onQuoteCreated}
-              onCompleted={handleQuoteCreated}
-              onCancel={() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
-              }}
-              onDirtyChange={setHasCreateFormDirty}
-            />
+            <Suspense
+              fallback={(
+                <DeferredContentFallback
+                  title="Cargando flujo de presupuesto"
+                  description="Preparando el formulario comercial completo."
+                />
+              )}
+            >
+              <LazyQuoteCreateFlow
+                clients={clients}
+                properties={properties}
+                onRefreshData={onQuoteCreated}
+                onCompleted={handleQuoteCreated}
+                onCancel={() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </Suspense>
           </ActionFlowOverlay>
         ) : null}
 
@@ -243,12 +256,21 @@ export function QuotesPage({
       </section>
 
       {showDocumentScreen && selectedQuote ? (
-        <QuoteDocumentScreen
-          quote={selectedQuote}
-          clients={clients}
-          properties={properties}
-          onClose={() => setShowDocumentScreen(false)}
-        />
+        <Suspense
+          fallback={(
+            <DeferredContentFallback
+              title="Cargando documento de presupuesto"
+              description="Preparando la vista documental y las acciones de salida."
+            />
+          )}
+        >
+          <LazyQuoteDocumentScreen
+            quote={selectedQuote}
+            clients={clients}
+            properties={properties}
+            onClose={() => setShowDocumentScreen(false)}
+          />
+        </Suspense>
       ) : null}
     </>
   )

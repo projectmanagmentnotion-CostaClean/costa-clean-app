@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import {
   formatCurrency,
   formatDateEs,
@@ -13,14 +13,13 @@ import {
   formatQuoteLabel,
 } from '../../app/relationshipLabels'
 import { buildInvoiceCreatePrefillFromJob } from '../invoices/invoiceCreatePrefill'
-import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
-import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import { buildJobTimelineItems, type RelationshipTimelineItem } from '../relationships/timeline'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { DeferredContentFallback } from '../../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -30,6 +29,14 @@ import type { JobListItem } from './types'
 import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
 import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+
+const LazyInvoiceCreateFlow = lazy(async () => ({
+  default: (await import('../invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+}))
+
+const LazyPaymentCreateFlow = lazy(async () => ({
+  default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
+}))
 
 type JobWorkspaceAction = 'invoice' | 'payment' | null
 
@@ -414,31 +421,35 @@ export function JobWorkspace({
           onClose={requestCloseAction}
         >
           {activeAction === 'invoice' ? (
-            <InvoiceCreateFlow
-              clients={client ? [client] : clients}
-              properties={property ? [property] : properties}
-              jobs={[job]}
-              quotes={quote ? [quote] : []}
-              onRefreshData={onRefresh}
-              onCompleted={handleActionCreated}
-              prefill={invoiceCreatePrefill}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando la accion financiera del servicio." />}>
+              <LazyInvoiceCreateFlow
+                clients={client ? [client] : clients}
+                properties={property ? [property] : properties}
+                jobs={[job]}
+                quotes={quote ? [quote] : []}
+                onRefreshData={onRefresh}
+                onCompleted={handleActionCreated}
+                prefill={invoiceCreatePrefill}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
 
           {activeAction === 'payment' ? (
-            <PaymentCreateFlow
-              invoices={invoice ? [invoice] : []}
-              clients={client ? [client] : clients}
-              properties={property ? [property] : properties}
-              jobs={[job]}
-              quotes={quote ? [quote] : []}
-              onRefreshData={onRefresh}
-              onCompleted={handleFlowCompleted}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando la accion de cobro del servicio." />}>
+              <LazyPaymentCreateFlow
+                invoices={invoice ? [invoice] : []}
+                clients={client ? [client] : clients}
+                properties={property ? [property] : properties}
+                jobs={[job]}
+                quotes={quote ? [quote] : []}
+                onRefreshData={onRefresh}
+                onCompleted={handleFlowCompleted}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
         </ActionFlowOverlay>
       ) : null}

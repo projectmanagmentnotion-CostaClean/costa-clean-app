@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import {
   formatCurrency,
   formatDateEs,
@@ -19,6 +19,7 @@ import {
 import { ClientDetailCard } from './ClientDetailCard'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { DeferredContentFallback } from '../../components/DeferredContentFallback'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
@@ -26,19 +27,31 @@ import { clientWorkspaceTabs } from './useClientWorkspaceNavigation'
 import type { ClientListItem } from './types'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
-import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
-import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
-import { PaymentCreateFlow } from '../payments/PaymentCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { QuoteListItem } from '../quotes/types'
-import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import { RecurringInvoicePlanFlow } from '../recurringInvoices/RecurringInvoicePlanFlow'
 import { generateInvoiceFromRecurringPlan } from '../recurringInvoices/recurringInvoiceApi'
 import { getRecurringFrequencyLabel, isRecurringPlanDue } from '../recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
+
+const LazyJobCreateFlow = lazy(async () => ({
+  default: (await import('../jobs/JobCreateFlow')).JobCreateFlow,
+}))
+
+const LazyQuoteCreateFlow = lazy(async () => ({
+  default: (await import('../quotes/QuoteCreateFlow')).QuoteCreateFlow,
+}))
+
+const LazyInvoiceCreateFlow = lazy(async () => ({
+  default: (await import('../invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+}))
+
+const LazyPaymentCreateFlow = lazy(async () => ({
+  default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
+}))
 
 type ClientWorkspaceAction = 'property' | 'job' | 'quote' | 'invoice' | 'payment' | 'recurring' | null
 
@@ -769,60 +782,68 @@ export function ClientWorkspace({
           ) : null}
 
           {activeAction === 'job' ? (
-            <JobCreateFlow
-              key={`job-${client.id}`}
-              clients={[client]}
-              properties={relatedProperties}
-              quotes={relatedQuotes}
-              onRefreshData={onRefresh}
-              onCompleted={handleFlowCompleted}
-              prefill={jobCreatePrefill}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de servicio" description="Preparando la accion guiada del cliente." />}>
+              <LazyJobCreateFlow
+                key={`job-${client.id}`}
+                clients={[client]}
+                properties={relatedProperties}
+                quotes={relatedQuotes}
+                onRefreshData={onRefresh}
+                onCompleted={handleFlowCompleted}
+                prefill={jobCreatePrefill}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
 
           {activeAction === 'quote' ? (
-            <QuoteCreateFlow
-              key={`quote-${client.id}`}
-              clients={[client]}
-              properties={relatedProperties}
-              contextClientId={client.id}
-              onRefreshData={onRefresh}
-              onCompleted={handleActionCreated}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de presupuesto" description="Preparando la accion comercial del cliente." />}>
+              <LazyQuoteCreateFlow
+                key={`quote-${client.id}`}
+                clients={[client]}
+                properties={relatedProperties}
+                contextClientId={client.id}
+                onRefreshData={onRefresh}
+                onCompleted={handleActionCreated}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
 
           {activeAction === 'invoice' ? (
-            <InvoiceCreateFlow
-              key={`invoice-${client.id}`}
-              clients={[client]}
-              properties={relatedProperties}
-              jobs={relatedJobs}
-              quotes={relatedQuotes}
-              onRefreshData={onRefresh}
-              onCompleted={handleActionCreated}
-              prefill={invoiceCreatePrefill}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando la accion financiera del cliente." />}>
+              <LazyInvoiceCreateFlow
+                key={`invoice-${client.id}`}
+                clients={[client]}
+                properties={relatedProperties}
+                jobs={relatedJobs}
+                quotes={relatedQuotes}
+                onRefreshData={onRefresh}
+                onCompleted={handleActionCreated}
+                prefill={invoiceCreatePrefill}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
 
           {activeAction === 'payment' ? (
-            <PaymentCreateFlow
-              key={`payment-${client.id}`}
-              invoices={relatedInvoices}
-              clients={[client]}
-              properties={relatedProperties}
-              jobs={relatedJobs}
-              quotes={relatedQuotes}
-              onRefreshData={onRefresh}
-              onCompleted={handleFlowCompleted}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando la accion de cobro del cliente." />}>
+              <LazyPaymentCreateFlow
+                key={`payment-${client.id}`}
+                invoices={relatedInvoices}
+                clients={[client]}
+                properties={relatedProperties}
+                jobs={relatedJobs}
+                quotes={relatedQuotes}
+                onRefreshData={onRefresh}
+                onCompleted={handleFlowCompleted}
+                onCancel={requestCloseAction}
+                onDirtyChange={setHasActionDirty}
+              />
+            </Suspense>
           ) : null}
 
           {activeAction === 'recurring' ? (

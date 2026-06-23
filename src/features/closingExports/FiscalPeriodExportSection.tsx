@@ -6,7 +6,7 @@ import {
   buildFiscalPeriodExportData,
   buildFiscalPeriodIncidences,
 } from './fiscalPeriodExport'
-import { downloadManagerExportPackage, type ManagerExportPackageResult } from './managerExportPackage'
+import type { ManagerExportPackageResult } from './managerExportPackage'
 import type { ExpenseListItem } from '../expenses/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
@@ -17,6 +17,7 @@ import {
   externalAccountingSectionPaths,
   getExportAudienceLabel,
 } from './externalExportPolicy'
+import { downloadManagerExportPackageOnDemand } from './exportPackageRuntime'
 
 interface FiscalPeriodExportSectionProps {
   availableYears: number[]
@@ -147,7 +148,7 @@ export function FiscalPeriodExportSection({
     setExportError(null)
 
     try {
-      const result = await downloadManagerExportPackage({
+      const result = await downloadManagerExportPackageOnDemand({
         audience: 'accounting_external',
         scope:
           exportData.period.mode === 'quarter' ? 'quarterly'

@@ -1,5 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+﻿import { Suspense, useEffect, useMemo, useState } from 'react'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
 import type { ClientListItem } from '../features/clients/types'
@@ -7,8 +8,9 @@ import {
   buildExternalAccountingPackageStem,
   externalAccountingSectionPaths,
 } from '../features/closingExports/externalExportPolicy'
-import { FiscalPeriodExportSection } from '../features/closingExports/FiscalPeriodExportSection'
-import { downloadManagerExportPackage, type ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
+import { LazyFiscalPeriodExportSection } from '../features/closingExports/lazyFiscalPeriodExportSection'
+import type { ManagerExportPackageResult } from '../features/closingExports/managerExportPackage'
+import { downloadManagerExportPackageOnDemand } from '../features/closingExports/exportPackageRuntime'
 import { createExpenseReceiptSignedUrl } from '../features/expenses/expenseAttachmentsApi'
 import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
 import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
@@ -18,7 +20,7 @@ import {
   getExpenseFiscalReviewStatusLabel,
   type ExpenseListItem,
 } from '../features/expenses/types'
-import { openInvoicePrintWindow } from '../features/invoices/openInvoicePrintWindow'
+import { openInvoiceDocumentOutput } from '../features/documents/documentOutputRuntime'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -394,10 +396,10 @@ export function QuarterlyClosingPage({
     }
   }
 
-  function handleConfirmInvoicePdf() {
+  async function handleConfirmInvoicePdf() {
     if (!pendingInvoicePdf) return
 
-    openInvoicePrintWindow(pendingInvoicePdf, 'pdf')
+    await openInvoiceDocumentOutput(pendingInvoicePdf, 'pdf')
     setPendingInvoicePdf(null)
   }
 
@@ -453,7 +455,7 @@ export function QuarterlyClosingPage({
             estimated_net_vat_payable: activeSummary.estimatedNetVatPayable,
           }
 
-      const result = await downloadManagerExportPackage({
+      const result = await downloadManagerExportPackageOnDemand({
         audience: 'accounting_external',
         scope: 'quarterly',
         label: `Paquete fiscal T${selectedQuarter} ${selectedYear}`,
@@ -1183,21 +1185,30 @@ export function QuarterlyClosingPage({
                 ))}
             </div>
           </section>
-          <FiscalPeriodExportSection
-            key={`quarter-export-${selectedYear}-${selectedQuarter}`}
-            availableYears={availableYears}
-            defaultSelection={exportDefaultSelection}
-            title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
-            invoices={invoices}
-            payments={payments}
-            expenses={expenses}
-            quotes={quotes}
-            clients={clients}
-            properties={properties}
-            closingSavedAt={closing?.closed_at ?? null}
-            closingNotes={closing?.notes ?? null}
-          />
+          <Suspense
+            fallback={(
+              <DeferredContentFallback
+                title="Cargando exportacion del trimestre"
+                description="Preparando el runtime documental externo."
+              />
+            )}
+          >
+            <LazyFiscalPeriodExportSection
+              key={`quarter-export-${selectedYear}-${selectedQuarter}`}
+              availableYears={availableYears}
+              defaultSelection={exportDefaultSelection}
+              title="Generador fiscal por periodo"
+              description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
+              invoices={invoices}
+              payments={payments}
+              expenses={expenses}
+              quotes={quotes}
+              clients={clients}
+              properties={properties}
+              closingSavedAt={closing?.closed_at ?? null}
+              closingNotes={closing?.notes ?? null}
+            />
+          </Suspense>
         </>
       ) : null}
 
@@ -1477,21 +1488,30 @@ export function QuarterlyClosingPage({
             </div>
           </section>
 
-          <FiscalPeriodExportSection
-            key={`quarter-export-final-${selectedYear}-${selectedQuarter}`}
-            availableYears={availableYears}
-            defaultSelection={exportDefaultSelection}
-            title="Generador fiscal por periodo"
-            description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
-            invoices={invoices}
-            payments={payments}
-            expenses={expenses}
-            quotes={quotes}
-            clients={clients}
-            properties={properties}
-            closingSavedAt={closing?.closed_at ?? null}
-            closingNotes={closing?.notes ?? null}
-          />
+          <Suspense
+            fallback={(
+              <DeferredContentFallback
+                title="Cargando exportador fiscal"
+                description="Preparando el bloque unificado de documentos y ZIP."
+              />
+            )}
+          >
+            <LazyFiscalPeriodExportSection
+              key={`quarter-export-final-${selectedYear}-${selectedQuarter}`}
+              availableYears={availableYears}
+              defaultSelection={exportDefaultSelection}
+              title="Generador fiscal por periodo"
+              description="Genera una carpeta fiscal completa por mes, trimestre, aÃ±o o rango personalizado sin depender solo del cierre trimestral guardado."
+              invoices={invoices}
+              payments={payments}
+              expenses={expenses}
+              quotes={quotes}
+              clients={clients}
+              properties={properties}
+              closingSavedAt={closing?.closed_at ?? null}
+              closingNotes={closing?.notes ?? null}
+            />
+          </Suspense>
         </>
       ) : null}
 
@@ -1721,7 +1741,7 @@ export function QuarterlyClosingPage({
         description="El navegador abrirÃ¡ una nueva ventana o pestaÃ±a para preparar el PDF de esta factura del cierre. ContinÃºa solo si quieres generar el documento ahora."
         confirmLabel="Abrir PDF"
         onCancel={() => setPendingInvoicePdf(null)}
-        onConfirm={handleConfirmInvoicePdf}
+        onConfirm={() => void handleConfirmInvoicePdf()}
       />
 
       <ConfirmDialog

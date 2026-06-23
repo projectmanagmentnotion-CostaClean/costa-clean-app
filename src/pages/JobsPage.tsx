@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
-import { JobCreateFlow } from '../features/jobs/JobCreateFlow'
 import { JobsList } from '../features/jobs/JobsList'
 import { JobWorkspace } from '../features/jobs/JobWorkspace'
 import type { JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
@@ -18,6 +18,10 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+
+const LazyJobCreateFlow = lazy(async () => ({
+  default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
+}))
 
 interface JobsPageProps {
   jobs: JobListItem[]
@@ -151,20 +155,29 @@ export function JobsPage({
                 })
               }}
             >
-              <JobCreateFlow
-                clients={clients}
-                properties={properties}
-                quotes={quotes}
-                onRefreshData={onJobCreated}
-                onCompleted={handleJobFlowCompleted}
-                prefill={createPrefill}
-                onCancel={() => {
-                  setHasCreateFormDirty(false)
-                  setShowCreateForm(false)
-                  onPrefillConsumed()
-                }}
-                onDirtyChange={setHasCreateFormDirty}
-              />
+              <Suspense
+                fallback={(
+                  <DeferredContentFallback
+                    title="Cargando flujo de servicio"
+                    description="Preparando el alta operativa completa."
+                  />
+                )}
+              >
+                <LazyJobCreateFlow
+                  clients={clients}
+                  properties={properties}
+                  quotes={quotes}
+                  onRefreshData={onJobCreated}
+                  onCompleted={handleJobFlowCompleted}
+                  prefill={createPrefill}
+                  onCancel={() => {
+                    setHasCreateFormDirty(false)
+                    setShowCreateForm(false)
+                    onPrefillConsumed()
+                  }}
+                  onDirtyChange={setHasCreateFormDirty}
+                />
+              </Suspense>
             </ActionFlowOverlay>
           ) : null}
 

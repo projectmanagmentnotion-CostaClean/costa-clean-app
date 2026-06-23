@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
-import { PaymentCreateFlow } from '../features/payments/PaymentCreateFlow'
+import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
@@ -12,6 +12,10 @@ import type { JobListItem } from '../features/jobs/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
+
+const LazyPaymentCreateFlow = lazy(async () => ({
+  default: (await import('../features/payments/PaymentCreateFlow')).PaymentCreateFlow,
+}))
 
 interface PaymentsPageProps {
   payments: PaymentListItem[]
@@ -121,20 +125,29 @@ export function PaymentsPage({
             })
           }}
         >
-          <PaymentCreateFlow
-            invoices={invoices}
-            clients={clients}
-            properties={properties}
-            jobs={jobs}
-            quotes={quotes}
-            onRefreshData={onPaymentCreated}
-            onCompleted={handlePaymentFlowCompleted}
-            onCancel={() => {
-              setHasCreateFormDirty(false)
-              setShowCreateForm(false)
-            }}
-            onDirtyChange={setHasCreateFormDirty}
-          />
+          <Suspense
+            fallback={(
+              <DeferredContentFallback
+                title="Cargando flujo de cobro"
+                description="Preparando el registro completo del cobro."
+              />
+            )}
+          >
+            <LazyPaymentCreateFlow
+              invoices={invoices}
+              clients={clients}
+              properties={properties}
+              jobs={jobs}
+              quotes={quotes}
+              onRefreshData={onPaymentCreated}
+              onCompleted={handlePaymentFlowCompleted}
+              onCancel={() => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+              }}
+              onDirtyChange={setHasCreateFormDirty}
+            />
+          </Suspense>
         </ActionFlowOverlay>
       ) : null}
 

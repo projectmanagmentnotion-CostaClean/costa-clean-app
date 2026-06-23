@@ -3,13 +3,11 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { getStatusLabel } from '../../app/displayText'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
-import {
-  getInvoiceDocumentTitle,
-  openInvoicePrintWindow,
-} from './openInvoicePrintWindow'
+import { getInvoiceDocumentTitle } from './openInvoicePrintWindow'
 import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
 import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
+import { openInvoiceDocumentOutput } from '../documents/documentOutputRuntime'
 
 interface InvoiceDocumentScreenProps {
   invoice: InvoiceListItem
@@ -47,10 +45,10 @@ export function InvoiceDocumentScreen({
     }
   }
 
-  function handleConfirmOpenWindow() {
+  async function handleConfirmOpenWindow() {
     if (!pendingOutputIntent) return
 
-    openInvoicePrintWindow(hydratedInvoice, pendingOutputIntent)
+    await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
     setPendingOutputIntent(null)
   }
 
@@ -97,7 +95,7 @@ export function InvoiceDocumentScreen({
         description="El navegador abrira una nueva ventana o pestana para preparar la factura. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."
         confirmLabel={pendingOutputIntent === 'pdf' ? 'Abrir y guardar PDF' : 'Abrir e imprimir'}
         onCancel={() => setPendingOutputIntent(null)}
-        onConfirm={handleConfirmOpenWindow}
+        onConfirm={() => void handleConfirmOpenWindow()}
       />
     </>
   )

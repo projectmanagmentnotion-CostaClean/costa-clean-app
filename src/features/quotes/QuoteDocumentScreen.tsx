@@ -5,13 +5,11 @@ import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteDocumentA4 } from './QuoteDocumentA4'
-import {
-  getQuoteDocumentTitle,
-  openQuotePrintWindow,
-} from './openQuotePrintWindow'
+import { getQuoteDocumentTitle } from './openQuotePrintWindow'
 import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
+import { openQuoteDocumentOutput } from '../documents/documentOutputRuntime'
 
 interface QuoteDocumentScreenProps {
   quote: QuoteListItem
@@ -53,10 +51,10 @@ export function QuoteDocumentScreen({
     }
   }
 
-  function handleConfirmOpenWindow() {
+  async function handleConfirmOpenWindow() {
     if (!pendingOutputIntent) return
 
-    openQuotePrintWindow(hydratedQuote, clients, properties, pendingOutputIntent)
+    await openQuoteDocumentOutput(hydratedQuote, clients, properties, pendingOutputIntent)
     setPendingOutputIntent(null)
   }
 
@@ -108,7 +106,7 @@ export function QuoteDocumentScreen({
         description="El navegador abrira una nueva ventana o pestana para preparar el presupuesto. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."
         confirmLabel={pendingOutputIntent === 'pdf' ? 'Abrir y guardar PDF' : 'Abrir e imprimir'}
         onCancel={() => setPendingOutputIntent(null)}
-        onConfirm={handleConfirmOpenWindow}
+        onConfirm={() => void handleConfirmOpenWindow()}
       />
     </>
   )

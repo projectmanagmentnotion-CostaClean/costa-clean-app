@@ -1,8 +1,10 @@
 ﻿import { Suspense, useEffect, useMemo, useState } from 'react'
-import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
+import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
+import { ClosingDocumentDialogs } from '../features/closing/ClosingDocumentDialogs'
+import '../features/ui/compactListStyles'
 import type { ClientListItem } from '../features/clients/types'
 import {
   buildExternalAccountingPackageStem,
@@ -1516,94 +1518,18 @@ export function QuarterlyClosingPage({
       ) : null}
 
       {workspace === 'ai_summary' && closing ? (
-        <>
-          <section className="cc-dashboard-block">
-            <div className="cc-dashboard-block__header">
-              <div>
-                <h2>Resumen inteligente trimestral</h2>
-                <p>InterpretaciÃ³n asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del trimestre.</p>
-              </div>
-              <button type="button" className="primary-button" onClick={handleGenerateAiSummary} disabled={isGeneratingAiSummary}>
-                {isGeneratingAiSummary ? 'Generando resumen...' : aiSummaryResult ? 'Regenerar resumen' : 'Generar resumen'}
-              </button>
-            </div>
-
-            <div className="cc-alert cc-alert--warning">
-              <strong>Texto asistivo generado por IA</strong>
-              <p>No modifica cÃ¡lculos ni sustituye la revisiÃ³n fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
-            </div>
-
-            {aiSummaryError ? (
-              <div className="cc-alert cc-alert--error">
-                <strong>No se pudo generar el resumen inteligente</strong>
-                <p>{aiSummaryError}</p>
-              </div>
-            ) : null}
-
-            {aiSummaryResult ? (
-              <>
-                <div className="cc-quarterly-pack-header">
-                  <article className="cc-quarterly-persistence__card">
-                    <span className="cc-dashboard-panel__label">Generado</span>
-                    <strong className="cc-dashboard-panel__value">{formatDateTime(aiSummaryResult.generated_at)}</strong>
-                    <p className="cc-dashboard-panel__text">Modelo utilizado: {aiSummaryResult.model}</p>
-                  </article>
-                  <article className="cc-quarterly-persistence__card">
-                    <span className="cc-dashboard-panel__label">Periodo</span>
-                    <strong className="cc-dashboard-panel__value">{getQuarterLabel(selectedYear, selectedQuarter)}</strong>
-                    <p className="cc-dashboard-panel__text">Estado del cierre: {uiStatus.label}</p>
-                  </article>
-                </div>
-
-                <section className="cc-dashboard-block">
-                  <div className="cc-dashboard-block__header">
-                    <div>
-                      <h2>Resumen ejecutivo</h2>
-                    </div>
-                  </div>
-                  <article className="cc-quarterly-persistence__card">
-                    <p className="cc-dashboard-panel__text">{aiSummaryResult.summary.executive_summary}</p>
-                  </article>
-                </section>
-
-                <section className="cc-quarterly-pack-grid">
-                  <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Riesgos e incidencias clave</span>
-                    {aiSummaryResult.summary.key_risks.length > 0 ? aiSummaryResult.summary.key_risks.map((item, index) => (
-                      <p key={`risk-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
-                    )) : <p className="cc-dashboard-panel__text">Sin riesgos destacados por la IA.</p>}
-                  </article>
-                  <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Alertas documentales</span>
-                    {aiSummaryResult.summary.documentation_warnings.length > 0 ? aiSummaryResult.summary.documentation_warnings.map((item, index) => (
-                      <p key={`doc-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
-                    )) : <p className="cc-dashboard-panel__text">Sin alertas documentales adicionales.</p>}
-                  </article>
-                  <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    <span className="cc-dashboard-panel__label">Notas sugeridas para gestorÃ­a</span>
-                    {aiSummaryResult.summary.suggested_manager_notes.length > 0 ? aiSummaryResult.summary.suggested_manager_notes.map((item, index) => (
-                      <p key={`note-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
-                    )) : <p className="cc-dashboard-panel__text">Sin notas sugeridas adicionales.</p>}
-                  </article>
-                </section>
-
-                <section className="cc-dashboard-block">
-                  <div className="cc-dashboard-block__header">
-                    <div>
-                      <h2>Siguientes acciones sugeridas</h2>
-                    </div>
-                  </div>
-                  <article className="cc-quarterly-persistence__card cc-bounded-list">
-                    {aiSummaryResult.summary.suggested_next_actions.length > 0 ? aiSummaryResult.summary.suggested_next_actions.map((item, index) => (
-                      <p key={`action-${index}`} className="cc-dashboard-panel__text">{index + 1}. {item}</p>
-                    )) : <p className="cc-dashboard-panel__text">Sin acciones sugeridas adicionales.</p>}
-                    <p className="cc-dashboard-panel__text">{aiSummaryResult.summary.assistive_notice}</p>
-                  </article>
-                </section>
-              </>
-            ) : null}
-          </section>
-        </>
+        <ClosingAiSummarySection
+          title="Resumen inteligente trimestral"
+          description="Interpretacion asistiva generada con IA a partir del cierre guardado y de los datos deterministas actuales del trimestre."
+          periodLabel="Periodo"
+          periodValueLabel={getQuarterLabel(selectedYear, selectedQuarter)}
+          closingStatusLabel={uiStatus.label}
+          isGenerating={isGeneratingAiSummary}
+          result={aiSummaryResult}
+          error={aiSummaryError}
+          onGenerate={handleGenerateAiSummary}
+          formatDateTime={formatDateTime}
+        />
       ) : null}
 
       {workspace === 'internal_study' ? (
@@ -1735,22 +1661,13 @@ export function QuarterlyClosingPage({
         </>
       ) : null}
 
-      <ConfirmDialog
-        isOpen={Boolean(pendingInvoicePdf)}
-        title="Abrir PDF de factura"
-        description="El navegador abrirÃ¡ una nueva ventana o pestaÃ±a para preparar el PDF de esta factura del cierre. ContinÃºa solo si quieres generar el documento ahora."
-        confirmLabel="Abrir PDF"
-        onCancel={() => setPendingInvoicePdf(null)}
-        onConfirm={() => void handleConfirmInvoicePdf()}
-      />
-
-      <ConfirmDialog
-        isOpen={Boolean(pendingExpenseDocument)}
-        title="Abrir soporte del gasto"
-        description="El soporte documental del gasto se abrirÃ¡ en una nueva pestaÃ±a o ventana mediante un enlace temporal seguro."
-        confirmLabel="Abrir soporte"
-        onCancel={() => setPendingExpenseDocument(null)}
-        onConfirm={handleConfirmExpenseDocument}
+      <ClosingDocumentDialogs
+        pendingInvoicePdf={pendingInvoicePdf}
+        pendingExpenseDocument={pendingExpenseDocument}
+        onCancelInvoicePdf={() => setPendingInvoicePdf(null)}
+        onConfirmInvoicePdf={() => void handleConfirmInvoicePdf()}
+        onCancelExpenseDocument={() => setPendingExpenseDocument(null)}
+        onConfirmExpenseDocument={handleConfirmExpenseDocument}
       />
     </section>
   )

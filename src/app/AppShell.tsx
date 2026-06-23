@@ -1,23 +1,21 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppNav } from './AppNav'
-import { Suspense, lazy } from 'react'
 import '../features/shell/shell-dashboard.css'
 import '../features/shell/shell-dashboard-polish.css'
 import '../features/shell/shell-dashboard-structure.css'
 import '../features/shell/detail-panels.css'
-import '../features/shell/document-views.css'
-import '../features/shell/document-density.css'
 import '../features/shell/forms-feedback-accessibility.css'
 import '../features/shell/compact-lists.css'
 import '../features/shell/qa-visual-fixes.css'
 import '../features/shell/status-badges.css'
-import '../features/clients/client-workspace.css'
-import type { AppView } from './navigation'
 import type { AppTheme } from './theme'
 import { useDashboardMetrics } from './dashboardMetrics'
 import { useClosingSummaries } from './useClosingSummaries'
 import { useShellNavigation } from './useShellNavigation'
 import { useAppData } from './useAppData'
+import { AppShellViewRenderer } from './AppShellViewRenderer'
+import { AppShellPages } from './AppShellPages'
+import { useShellViewportState } from './useShellViewportState'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -72,18 +70,6 @@ interface AppShellProps {
   theme: AppTheme
   onToggleTheme: () => void
 }
-
-const HomePage = lazy(async () => ({ default: (await import('../pages/HomePage')).HomePage }))
-const LeadsPage = lazy(async () => ({ default: (await import('../pages/LeadsPage')).LeadsPage }))
-const ClientsPage = lazy(async () => ({ default: (await import('../pages/ClientsPage')).ClientsPage }))
-const PropertiesPage = lazy(async () => ({ default: (await import('../pages/PropertiesPage')).PropertiesPage }))
-const QuotesPage = lazy(async () => ({ default: (await import('../pages/QuotesPage')).QuotesPage }))
-const JobsPage = lazy(async () => ({ default: (await import('../pages/JobsPage')).JobsPage }))
-const InvoicesPage = lazy(async () => ({ default: (await import('../pages/InvoicesPage')).InvoicesPage }))
-const ExpensesPage = lazy(async () => ({ default: (await import('../pages/ExpensesPage')).ExpensesPage }))
-const PaymentsPage = lazy(async () => ({ default: (await import('../pages/PaymentsPage')).PaymentsPage }))
-const FiscalClosingPage = lazy(async () => ({ default: (await import('../pages/FiscalClosingPage')).FiscalClosingPage }))
-const AlertsCenterPage = lazy(async () => ({ default: (await import('../pages/AlertsCenterPage')).AlertsCenterPage }))
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
   return [...(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? [])].sort(
@@ -156,58 +142,21 @@ function createDayKey(offsetDays = 0): string {
   return `${year}-${month}-${day}`
 }
 
-function ShellLoadingState({ currentView }: { currentView: AppView }) {
-  const titleByView: Record<AppView, string> = {
-    dashboard: 'Preparando panel de control',
-    alerts: 'Preparando centro de alertas',
-    fiscal_closing: 'Preparando cierre fiscal',
-    quarterly_closing: 'Preparando cierre fiscal',
-    annual_closing: 'Preparando cierre fiscal',
-    leads: 'Cargando leads',
-    clients: 'Cargando clientes',
-    properties: 'Cargando propiedades',
-    quotes: 'Cargando presupuestos',
-    jobs: 'Cargando servicios',
-    invoices: 'Cargando facturas',
-    expenses: 'Cargando gastos',
-    payments: 'Cargando cobros',
-  }
-
-  return (
-    <section className="cc-shell-loading" aria-live="polite" aria-busy="true">
-      <div className="cc-shell-loading__hero">
-        <div className="cc-shell-loading__eyebrow" />
-        <div className="cc-shell-loading__title" />
-        <div className="cc-shell-loading__text" />
-      </div>
-
-      <div className="cc-shell-loading__grid">
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
-        </article>
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--medium" />
-        </article>
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
-        </article>
-      </div>
-
-      <div className="empty-state cc-state-card cc-state-card--loading">
-        <strong>{titleByView[currentView]}</strong>
-        <p>Sincronizando datos y preparando la vista operativa.</p>
-      </div>
-    </section>
-  )
-}
 
 export function AppShell({ theme, onToggleTheme }: AppShellProps) {
+  const {
+    AlertsCenterPage,
+    ClientsPage,
+    ExpensesPage,
+    FiscalClosingPage,
+    HomePage,
+    InvoicesPage,
+    JobsPage,
+    LeadsPage,
+    PaymentsPage,
+    PropertiesPage,
+    QuotesPage,
+  } = AppShellPages
   const {
     currentView,
     unsavedChangesContext,
@@ -221,9 +170,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     navigateBack,
     setPendingGuardedAction,
   } = useShellNavigation()
-  const [showScrollTop, setShowScrollTop] = useState(false)
-  const [compactMobileNav, setCompactMobileNav] = useState(false)
-  const [isMobileViewport, setIsMobileViewport] = useState(false)
+  const { showScrollTop, compactMobileNav, isMobileViewport } = useShellViewportState()
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
@@ -275,37 +222,6 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       return []
     }
   })
-  useEffect(() => {
-    if (typeof window === 'undefined') return undefined
-
-    const mediaQuery = window.matchMedia('(max-width: 640px)')
-
-    const syncViewport = () => {
-      setIsMobileViewport(mediaQuery.matches)
-    }
-
-    syncViewport()
-    mediaQuery.addEventListener('change', syncViewport)
-
-    return () => {
-      mediaQuery.removeEventListener('change', syncViewport)
-    }
-  }, [])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollY = window.scrollY || window.pageYOffset || 0
-      setShowScrollTop(scrollY > 360)
-      setCompactMobileNav(scrollY > 96)
-    }
-
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
 
   useEffect(() => {
     try {
@@ -1126,10 +1042,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           onBack={navigateBack}
         />
         <div className="cc-shell-content">
-          {isInitialDataLoading ? (
-            <ShellLoadingState currentView={currentView} />
-          ) : (
-            <Suspense fallback={<ShellLoadingState currentView={currentView} />}>
+          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isInitialDataLoading}>
               {currentView === 'alerts' ? (
                 <AlertsCenterPage
                   alerts={automationAlerts}
@@ -1298,8 +1211,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   confirmNavigation={runWithNavigationGuard}
                 />
               )}
-            </Suspense>
-          )}
+          </AppShellViewRenderer>
         </div>
       </section>
       <button

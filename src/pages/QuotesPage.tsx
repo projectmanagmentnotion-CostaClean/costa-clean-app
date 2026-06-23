@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import '../features/documents/documentSurfaceStyles'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'

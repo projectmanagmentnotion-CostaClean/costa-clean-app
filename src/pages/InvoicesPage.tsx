@@ -1,4 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
+import '../features/documents/documentSurfaceStyles'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ConfirmDialog } from '../components/ConfirmDialog'

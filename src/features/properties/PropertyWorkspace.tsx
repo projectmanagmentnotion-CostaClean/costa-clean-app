@@ -11,6 +11,7 @@ import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrow
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
+import '../workspaces/workspaceSurfaceStyles'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
 import { propertyWorkspaceTabs } from './usePropertyWorkspaceNavigation'

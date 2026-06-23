@@ -652,6 +652,33 @@
   }
 }
 
+@media (max-width: 720px) {
+  .cc-client-workspace__next-step {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cc-client-workspace__tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    padding-bottom: 0.7rem;
+    scrollbar-width: thin;
+  }
+
+  .cc-client-workspace__tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 721px) {
+  .cc-workspace-browser__list,
+  .cc-client-workspace__entity-grid--scrollable {
+    max-height: min(56vh, 680px);
+  }
+}
+
 /* =========================================================
    Workspace consolidation
    Less hero, less decorative density, more operational focus

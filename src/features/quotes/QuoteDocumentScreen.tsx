@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { getStatusLabel } from '../../app/displayText'
+import '../documents/documentSurfaceStyles'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'

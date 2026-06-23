@@ -20,6 +20,7 @@ import { ClientDetailCard } from './ClientDetailCard'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
+import { WorkspaceScaffold } from '../../components/WorkspaceScaffold'
 import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrowser'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import type { ClientWorkspaceTab } from './useClientWorkspaceNavigation'
@@ -671,197 +672,176 @@ export function ClientWorkspace({
   const dedupedHeroActions = heroActions.filter(
     (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
   )
+  const workspaceTabs = clientWorkspaceTabs.map((tab) => ({
+    id: tab,
+    label: getWorkspaceTabLabel(tab),
+  }))
+  const metaCards = [
+    {
+      label: 'Contacto',
+      value: client.phone ?? 'Sin telefono',
+      detail: client.email ?? 'Sin email',
+    },
+    {
+      label: 'Ficha fiscal',
+      value: client.tax_id ?? 'Pendiente',
+      detail: client.billing_address ?? buildOriginLabel(client),
+    },
+  ]
+  const snapshotCards = [
+    {
+      label: 'Situacion actual',
+      value:
+        pendingBalance > 0.009
+          ? 'Cobro pendiente'
+          : nextJob
+            ? 'Con agenda activa'
+            : relatedProperties.length > 0
+              ? 'Sin siguiente visita'
+              : 'Sin propiedades',
+      detail: nextStep.detail,
+    },
+    {
+      label: 'Saldo pendiente',
+      value: formatCurrency(pendingBalance),
+      detail: pendingBalance > 0 ? 'Facturas con saldo abierto' : 'Sin saldo pendiente relevante',
+    },
+    {
+      label: 'Proximo servicio',
+      value: nextJob ? formatJobLabel(nextJob) : 'No programado',
+      detail: nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura',
+    },
+    {
+      label: 'Automatizacion',
+      value: dueRecurringPlans.length > 0 ? `${dueRecurringPlans.length} por emitir` : `${relatedRecurringPlans.length} plan(es)`,
+      detail:
+        latestIssuedRecurringPlan
+          ? `Ultima emision ${formatDateEs(latestIssuedRecurringPlan.last_issued_at ?? latestIssuedRecurringPlan.next_issue_date)}`
+          : 'Sin emisiones recurrentes previas',
+    },
+  ]
+  const actionOverlay = activeAction ? (
+    <ActionFlowOverlay
+      isOpen={Boolean(activeAction)}
+      title={getActionTitle(activeAction)}
+      description={`La accion se guardara ya vinculada al cliente ${formatClientLabel(client)}. Al cerrar volveras a este workspace.`}
+      onClose={requestCloseAction}
+    >
+      {activeAction === 'property' ? (
+        <PropertyCreateFlow
+          key={`property-${client.id}`}
+          clients={[client]}
+          contextClientId={client.id}
+          onRefreshData={onRefresh}
+          onCompleted={handleFlowCompleted}
+          onCancel={requestCloseAction}
+          onDirtyChange={setHasActionDirty}
+        />
+      ) : null}
+
+      {activeAction === 'job' ? (
+        <Suspense fallback={<DeferredContentFallback title="Cargando flujo de servicio" description="Preparando la accion guiada del cliente." />}>
+          <LazyJobCreateFlow
+            key={`job-${client.id}`}
+            clients={[client]}
+            properties={relatedProperties}
+            quotes={relatedQuotes}
+            onRefreshData={onRefresh}
+            onCompleted={handleFlowCompleted}
+            prefill={jobCreatePrefill}
+            onCancel={requestCloseAction}
+            onDirtyChange={setHasActionDirty}
+          />
+        </Suspense>
+      ) : null}
+
+      {activeAction === 'quote' ? (
+        <Suspense fallback={<DeferredContentFallback title="Cargando flujo de presupuesto" description="Preparando la accion comercial del cliente." />}>
+          <LazyQuoteCreateFlow
+            key={`quote-${client.id}`}
+            clients={[client]}
+            properties={relatedProperties}
+            contextClientId={client.id}
+            onRefreshData={onRefresh}
+            onCompleted={handleActionCreated}
+            onCancel={requestCloseAction}
+            onDirtyChange={setHasActionDirty}
+          />
+        </Suspense>
+      ) : null}
+
+      {activeAction === 'invoice' ? (
+        <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando la accion financiera del cliente." />}>
+          <LazyInvoiceCreateFlow
+            key={`invoice-${client.id}`}
+            clients={[client]}
+            properties={relatedProperties}
+            jobs={relatedJobs}
+            quotes={relatedQuotes}
+            onRefreshData={onRefresh}
+            onCompleted={handleActionCreated}
+            prefill={invoiceCreatePrefill}
+            onCancel={requestCloseAction}
+            onDirtyChange={setHasActionDirty}
+          />
+        </Suspense>
+      ) : null}
+
+      {activeAction === 'payment' ? (
+        <Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando la accion de cobro del cliente." />}>
+          <LazyPaymentCreateFlow
+            key={`payment-${client.id}`}
+            invoices={relatedInvoices}
+            clients={[client]}
+            properties={relatedProperties}
+            jobs={relatedJobs}
+            quotes={relatedQuotes}
+            onRefreshData={onRefresh}
+            onCompleted={handleFlowCompleted}
+            onCancel={requestCloseAction}
+            onDirtyChange={setHasActionDirty}
+          />
+        </Suspense>
+      ) : null}
+
+      {activeAction === 'recurring' ? (
+        <RecurringInvoicePlanFlow
+          key={`recurring-${editingRecurringPlanId ?? client.id}`}
+          clientId={client.id}
+          clients={[client]}
+          properties={relatedProperties}
+          quotes={relatedQuotes}
+          initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
+          onRefreshData={onRefresh}
+          onCompleted={handleFlowCompleted}
+          onCancel={requestCloseAction}
+          onDirtyChange={setHasActionDirty}
+        />
+      ) : null}
+    </ActionFlowOverlay>
+  ) : null
 
   return (
-    <section className="cc-client-workspace">
-      <div className="cc-client-workspace__topline">
-        <button type="button" className="secondary-button" onClick={onClose}>
-          Volver a cartera
-        </button>
-        <span className="cc-client-workspace__eyebrow">Workspace de cliente</span>
-      </div>
-
-      <header className="cc-client-workspace__hero">
-        <div className="cc-client-workspace__identity">
-          <div className="cc-client-workspace__identity-copy">
-            <span className="cc-client-workspace__kicker">Centro operativo</span>
-            <h1>{client.full_name}</h1>
-            <p>{formatClientLabel(client)} - {buildOriginLabel(client)}</p>
-          </div>
-
-          <div className="cc-client-workspace__status">
-            <span className="lead-badge">{getDisplayStatusLabel(client.status)}</span>
-            <span className="cc-client-workspace__status-meta">{client.tax_id ?? 'Sin NIF/CIF'}</span>
-          </div>
-        </div>
-
-        <div className="cc-client-workspace__meta">
-          <article className="cc-client-workspace__meta-card">
-            <span>Contacto</span>
-            <strong>{client.phone ?? 'Sin telefono'}</strong>
-            <small>{client.email ?? 'Sin email'}</small>
-          </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Ficha fiscal</span>
-            <strong>{client.tax_id ?? 'Pendiente'}</strong>
-            <small>{client.billing_address ?? buildOriginLabel(client)}</small>
-          </article>
-        </div>
-      </header>
-      <section className="cc-client-workspace__snapshot">
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Situacion actual</span>
-          <strong>
-            {pendingBalance > 0.009
-              ? 'Cobro pendiente'
-              : nextJob
-                ? 'Con agenda activa'
-                : relatedProperties.length > 0
-                  ? 'Sin siguiente visita'
-                  : 'Sin propiedades'}
-          </strong>
-          <small>{nextStep.detail}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Saldo pendiente</span>
-          <strong>{formatCurrency(pendingBalance)}</strong>
-          <small>{pendingBalance > 0 ? 'Facturas con saldo abierto' : 'Sin saldo pendiente relevante'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Proximo servicio</span>
-          <strong>{nextJob ? formatJobLabel(nextJob) : 'No programado'}</strong>
-          <small>{nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Automatizacion</span>
-          <strong>{dueRecurringPlans.length > 0 ? `${dueRecurringPlans.length} por emitir` : `${relatedRecurringPlans.length} plan(es)`}</strong>
-          <small>{latestIssuedRecurringPlan ? `Ultima emision ${formatDateEs(latestIssuedRecurringPlan.last_issued_at ?? latestIssuedRecurringPlan.next_issue_date)}` : 'Sin emisiones recurrentes previas'}</small>
-        </article>
-      </section>
-
-      <section className="cc-client-workspace__next-step">
-        <div>
-          <span>Siguiente paso recomendado</span>
-          <strong>{nextStep.title}</strong>
-          <small>{nextStep.detail}</small>
-        </div>
-        <ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />
-      </section>
-
-      <nav className="cc-client-workspace__tabs" aria-label="Secciones del cliente">
-        {clientWorkspaceTabs.map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            className={tab === activeTab ? 'cc-client-workspace__tab is-active' : 'cc-client-workspace__tab'}
-            onClick={() => onTabChange(tab)}
-          >
-            {getWorkspaceTabLabel(tab)}
-          </button>
-        ))}
-      </nav>
-
-      {activeAction ? (
-        <ActionFlowOverlay
-          isOpen={Boolean(activeAction)}
-          title={getActionTitle(activeAction)}
-          description={`La accion se guardara ya vinculada al cliente ${formatClientLabel(client)}. Al cerrar volveras a este workspace.`}
-          onClose={requestCloseAction}
-        >
-
-          {activeAction === 'property' ? (
-            <PropertyCreateFlow
-              key={`property-${client.id}`}
-              clients={[client]}
-              contextClientId={client.id}
-              onRefreshData={onRefresh}
-              onCompleted={handleFlowCompleted}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
-          ) : null}
-
-          {activeAction === 'job' ? (
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de servicio" description="Preparando la accion guiada del cliente." />}>
-              <LazyJobCreateFlow
-                key={`job-${client.id}`}
-                clients={[client]}
-                properties={relatedProperties}
-                quotes={relatedQuotes}
-                onRefreshData={onRefresh}
-                onCompleted={handleFlowCompleted}
-                prefill={jobCreatePrefill}
-                onCancel={requestCloseAction}
-                onDirtyChange={setHasActionDirty}
-              />
-            </Suspense>
-          ) : null}
-
-          {activeAction === 'quote' ? (
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de presupuesto" description="Preparando la accion comercial del cliente." />}>
-              <LazyQuoteCreateFlow
-                key={`quote-${client.id}`}
-                clients={[client]}
-                properties={relatedProperties}
-                contextClientId={client.id}
-                onRefreshData={onRefresh}
-                onCompleted={handleActionCreated}
-                onCancel={requestCloseAction}
-                onDirtyChange={setHasActionDirty}
-              />
-            </Suspense>
-          ) : null}
-
-          {activeAction === 'invoice' ? (
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando la accion financiera del cliente." />}>
-              <LazyInvoiceCreateFlow
-                key={`invoice-${client.id}`}
-                clients={[client]}
-                properties={relatedProperties}
-                jobs={relatedJobs}
-                quotes={relatedQuotes}
-                onRefreshData={onRefresh}
-                onCompleted={handleActionCreated}
-                prefill={invoiceCreatePrefill}
-                onCancel={requestCloseAction}
-                onDirtyChange={setHasActionDirty}
-              />
-            </Suspense>
-          ) : null}
-
-          {activeAction === 'payment' ? (
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando la accion de cobro del cliente." />}>
-              <LazyPaymentCreateFlow
-                key={`payment-${client.id}`}
-                invoices={relatedInvoices}
-                clients={[client]}
-                properties={relatedProperties}
-                jobs={relatedJobs}
-                quotes={relatedQuotes}
-                onRefreshData={onRefresh}
-                onCompleted={handleFlowCompleted}
-                onCancel={requestCloseAction}
-                onDirtyChange={setHasActionDirty}
-              />
-            </Suspense>
-          ) : null}
-
-          {activeAction === 'recurring' ? (
-            <RecurringInvoicePlanFlow
-              key={`recurring-${editingRecurringPlanId ?? client.id}`}
-              clientId={client.id}
-              clients={[client]}
-              properties={relatedProperties}
-              quotes={relatedQuotes}
-              initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
-              onRefreshData={onRefresh}
-              onCompleted={handleFlowCompleted}
-              onCancel={requestCloseAction}
-              onDirtyChange={setHasActionDirty}
-            />
-          ) : null}
-        </ActionFlowOverlay>
-      ) : null}
+    <WorkspaceScaffold
+      backLabel="Volver a cartera"
+      eyebrow="Workspace de cliente"
+      kicker="Centro operativo"
+      title={client.full_name}
+      subtitle={`${formatClientLabel(client)} - ${buildOriginLabel(client)}`}
+      statusBadge={<span className="lead-badge">{getDisplayStatusLabel(client.status)}</span>}
+      statusMeta={client.tax_id ?? 'Sin NIF/CIF'}
+      metaCards={metaCards}
+      snapshotCards={snapshotCards}
+      nextStepTitle={nextStep.title}
+      nextStepDetail={nextStep.detail}
+      heroActions={<ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />}
+      tabs={workspaceTabs}
+      activeTab={activeTab}
+      onTabChange={onTabChange}
+      tabAriaLabel="Secciones del cliente"
+      onClose={onClose}
+      overlay={actionOverlay}
+    >
 
       {activeTab === 'summary' ? (
         <div className="cc-client-workspace__tab-panel">
@@ -1382,6 +1362,6 @@ export function ClientWorkspace({
           setHasActionDirty(false)
         }}
       />
-    </section>
+    </WorkspaceScaffold>
   )
 }

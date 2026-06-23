@@ -1,6 +1,7 @@
 import type { InvoiceListItem } from './types'
 import { formatCurrency } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import '../documents/documentSurfaceStyles'
 import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { getStatusLabel } from '../../app/displayText'
+import '../documents/documentSurfaceStyles'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import { getInvoiceDocumentTitle } from './openInvoicePrintWindow'

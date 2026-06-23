@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { AppView } from './navigation'
 import type { SyncStatus } from './syncStatus'
+import {
+  filterDomainsByLoadedState,
+  getDomainsForScope,
+  getDomainsForView,
+  mergeDomains,
+  type AppDataDomain,
+} from './dataLoadingPlan'
 import {
   combineRefreshScopes,
   getRefreshScopeForTable,
@@ -78,8 +86,8 @@ function buildIntakeNotification(row: Record<string, unknown>): IntakeRealtimeNo
   }
 }
 
-export function useAppData() {
-  const [isInitialDataLoading, setIsInitialDataLoading] = useState(true)
+export function useAppData(currentView: AppView) {
+  const [isCurrentViewDataLoading, setIsCurrentViewDataLoading] = useState(true)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
   const [leads, setLeads] = useState<LeadListItem[]>([])
   const [leadDrafts, setLeadDrafts] = useState<LeadDraftRecord[]>([])
@@ -106,10 +114,12 @@ export function useAppData() {
   const [quarterlyClosingError, setQuarterlyClosingError] = useState<string | null>(null)
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
   const [intakeRealtimeNotifications, setIntakeRealtimeNotifications] = useState<IntakeRealtimeNotification[]>([])
+  const [loadedDomains, setLoadedDomains] = useState<AppDataDomain[]>([])
   const lastRefreshAtRef = useRef(0)
   const isRefreshingRef = useRef(false)
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
+  const pendingDomainRefreshRef = useRef<AppDataDomain[]>([])
   const seenIntakeRealtimeNotificationIdsRef = useRef<Set<string>>(new Set())
 
   const loadLeads = useCallback(async () => {
@@ -220,13 +230,49 @@ export function useAppData() {
     }
   }, [])
 
-  const runRefresh = useCallback(async (loaders: Array<() => Promise<void>>) => {
+  const domainLoaders = useMemo<Record<AppDataDomain, () => Promise<void>>>(() => ({
+    leads: loadLeads,
+    leadDrafts: loadLeadDrafts,
+    clients: loadClients,
+    properties: loadProperties,
+    quotes: loadQuotes,
+    jobs: loadJobs,
+    invoices: loadInvoices,
+    payments: loadPayments,
+    expenses: loadExpenses,
+    recurringInvoicePlans: loadRecurringInvoicePlans,
+    quarterlyClosings: loadQuarterlyClosings,
+    annualClosings: loadAnnualClosings,
+  }), [
+    loadAnnualClosings,
+    loadClients,
+    loadExpenses,
+    loadInvoices,
+    loadJobs,
+    loadLeadDrafts,
+    loadLeads,
+    loadPayments,
+    loadProperties,
+    loadQuarterlyClosings,
+    loadQuotes,
+    loadRecurringInvoicePlans,
+  ])
+
+  const markDomainsLoaded = useCallback((domains: Iterable<AppDataDomain>) => {
+    setLoadedDomains((current) => mergeDomains(current, domains))
+  }, [])
+
+  const runRefresh = useCallback(async (domains: AppDataDomain[]) => {
+    const domainsToRefresh = mergeDomains([], domains)
+    if (domainsToRefresh.length === 0) return
+
     if (!isBrowserOnline()) {
       setSyncStatus('offline')
       return
     }
 
     if (isRefreshingRef.current) {
+      pendingDomainRefreshRef.current = mergeDomains(pendingDomainRefreshRef.current, domainsToRefresh)
       return
     }
 
@@ -234,58 +280,60 @@ export function useAppData() {
     setSyncStatus('syncing')
 
     try {
-      await Promise.all(loaders.map((loader) => loader()))
+      await Promise.all(domainsToRefresh.map((domain) => domainLoaders[domain]()))
+      markDomainsLoaded(domainsToRefresh)
       lastRefreshAtRef.current = Date.now()
       setSyncStatus('fresh')
     } finally {
       isRefreshingRef.current = false
-    }
-  }, [])
 
-  const refreshAll = useCallback(async () => {
-    await runRefresh([
-      loadLeads,
-      loadLeadDrafts,
-      loadClients,
-      loadProperties,
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-      loadExpenses,
-      loadPayments,
-      loadRecurringInvoicePlans,
-      loadQuarterlyClosings,
-      loadAnnualClosings,
-    ])
-  }, [loadAnnualClosings, loadClients, loadExpenses, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadPayments, loadProperties, loadQuarterlyClosings, loadQuotes, loadRecurringInvoicePlans, runRefresh])
+      if (pendingDomainRefreshRef.current.length > 0) {
+        const queuedDomains = pendingDomainRefreshRef.current
+        pendingDomainRefreshRef.current = []
+        void runRefresh(queuedDomains)
+      }
+    }
+  }, [
+    domainLoaders,
+    markDomainsLoaded,
+  ])
+
+  const loadedDomainSet = useRef<Set<AppDataDomain>>(new Set<AppDataDomain>())
+
+  useEffect(() => {
+    loadedDomainSet.current = new Set(loadedDomains)
+  }, [loadedDomains])
+
+  const refreshDomains = useCallback(async (domains: AppDataDomain[]) => {
+    await runRefresh(domains)
+  }, [runRefresh])
 
   const refreshBilling = useCallback(async () => {
-    await runRefresh([
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-      loadPayments,
-      loadRecurringInvoicePlans,
-      loadExpenses,
-    ])
-  }, [loadExpenses, loadInvoices, loadJobs, loadPayments, loadQuotes, loadRecurringInvoicePlans, runRefresh])
+    const scopeDomains = getDomainsForScope('billing')
+    const activeViewDomains = new Set(getDomainsForView(currentView))
+    const domainsToRefresh = scopeDomains.filter(
+      (domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain),
+    )
+    await refreshDomains(domainsToRefresh)
+  }, [currentView, refreshDomains])
 
   const refreshOperations = useCallback(async () => {
-    await runRefresh([
-      loadLeads,
-      loadLeadDrafts,
-      loadClients,
-      loadProperties,
-      loadQuotes,
-      loadJobs,
-      loadInvoices,
-      loadRecurringInvoicePlans,
-    ])
-  }, [loadClients, loadInvoices, loadJobs, loadLeadDrafts, loadLeads, loadProperties, loadQuotes, loadRecurringInvoicePlans, runRefresh])
+    const scopeDomains = getDomainsForScope('operations')
+    const activeViewDomains = new Set(getDomainsForView(currentView))
+    const domainsToRefresh = scopeDomains.filter(
+      (domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain),
+    )
+    await refreshDomains(domainsToRefresh)
+  }, [currentView, refreshDomains])
 
   const refreshClosings = useCallback(async () => {
-    await runRefresh([loadQuarterlyClosings, loadAnnualClosings])
-  }, [loadAnnualClosings, loadQuarterlyClosings, runRefresh])
+    const scopeDomains = getDomainsForScope('closings')
+    const activeViewDomains = new Set(getDomainsForView(currentView))
+    const domainsToRefresh = scopeDomains.filter(
+      (domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain),
+    )
+    await refreshDomains(domainsToRefresh)
+  }, [currentView, refreshDomains])
 
   const reloadInvoicesAndPayments = useCallback(async () => {
     await refreshBilling()
@@ -297,17 +345,28 @@ export function useAppData() {
 
   useEffect(() => {
     let isMounted = true
+    const requiredDomains = getDomainsForView(currentView)
+    const missingDomains = requiredDomains.filter((domain) => !loadedDomainSet.current.has(domain))
 
-    void refreshAll().finally(() => {
+    if (missingDomains.length === 0) {
+      setIsCurrentViewDataLoading(false)
+      return () => {
+        isMounted = false
+      }
+    }
+
+    setIsCurrentViewDataLoading(true)
+
+    void refreshDomains(missingDomains).finally(() => {
       if (isMounted) {
-        setIsInitialDataLoading(false)
+        setIsCurrentViewDataLoading(false)
       }
     })
 
     return () => {
       isMounted = false
     }
-  }, [refreshAll])
+  }, [currentView, refreshDomains])
 
   const requestForegroundRefresh = useCallback(() => {
     if (!isBrowserOnline()) {
@@ -319,8 +378,10 @@ export function useAppData() {
       return
     }
 
-    void refreshAll()
-  }, [refreshAll])
+    const activeViewDomains = getDomainsForView(currentView)
+    const domainsToRefresh = filterDomainsByLoadedState(activeViewDomains, loadedDomainSet.current)
+    void refreshDomains(domainsToRefresh.length > 0 ? domainsToRefresh : activeViewDomains)
+  }, [currentView, refreshDomains])
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -330,7 +391,9 @@ export function useAppData() {
     }
 
     const handleOnline = () => {
-      void refreshAll()
+      const activeViewDomains = getDomainsForView(currentView)
+      const domainsToRefresh = filterDomainsByLoadedState(activeViewDomains, loadedDomainSet.current)
+      void refreshDomains(domainsToRefresh.length > 0 ? domainsToRefresh : activeViewDomains)
     }
 
     const handleOffline = () => {
@@ -350,26 +413,17 @@ export function useAppData() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [refreshAll, requestForegroundRefresh])
+  }, [currentView, refreshDomains, requestForegroundRefresh])
 
   const runScopedRefresh = useCallback((scope: RefreshScope) => {
-    if (scope === 'billing') {
-      void refreshBilling()
-      return
-    }
+    const scopeDomains = getDomainsForScope(scope)
+    const activeViewDomains = new Set(getDomainsForView(currentView))
+    const loadedScopeDomains = scope === 'all'
+      ? scopeDomains.filter((domain) => loadedDomainSet.current.has(domain))
+      : scopeDomains.filter((domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain))
 
-    if (scope === 'operations') {
-      void refreshOperations()
-      return
-    }
-
-    if (scope === 'closings') {
-      void refreshClosings()
-      return
-    }
-
-    void refreshAll()
-  }, [refreshAll, refreshBilling, refreshClosings, refreshOperations])
+    void refreshDomains(loadedScopeDomains)
+  }, [currentView, refreshDomains])
 
   const scheduleRealtimeRefresh = useCallback((scope: RefreshScope) => {
     if (!isBrowserOnline()) {
@@ -436,7 +490,7 @@ export function useAppData() {
   }, [pushIntakeRealtimeNotification, scheduleRealtimeRefresh])
 
   return {
-    isInitialDataLoading,
+    isCurrentViewDataLoading,
     syncStatus,
     leads,
     leadDrafts,

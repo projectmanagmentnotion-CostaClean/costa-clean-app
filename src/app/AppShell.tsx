@@ -177,7 +177,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
   const {
-    isInitialDataLoading,
+    isCurrentViewDataLoading,
     syncStatus,
     leads,
     leadDrafts,
@@ -209,7 +209,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     reloadLeadsAndClients,
     intakeRealtimeNotifications,
     dismissIntakeRealtimeNotification,
-  } = useAppData()
+  } = useAppData(currentView)
   const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
     if (typeof window === 'undefined') return []
 
@@ -1042,7 +1042,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           onBack={navigateBack}
         />
         <div className="cc-shell-content">
-          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isInitialDataLoading}>
+          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>
               {currentView === 'alerts' ? (
                 <AlertsCenterPage
                   alerts={automationAlerts}

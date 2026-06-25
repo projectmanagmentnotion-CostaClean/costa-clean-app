@@ -1,4 +1,5 @@
 import { Suspense, useEffect, useMemo, useState } from 'react'
+import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs } from '../app/displayFormat'
 import { FiscalPeriodSelector } from '../features/closing/FiscalPeriodSelector'
@@ -76,14 +77,14 @@ function getReadinessCopy(level: ClosingReadinessLevel) {
   if (level === 'blocked') {
     return {
       label: 'Cierre con bloqueos documentales',
-      detail: 'Hay huecos de soporte o de factura válida para IVA que conviene resolver antes de generar el pack gestor.',
+      detail: 'Hay huecos de soporte o de factura valida para IVA que conviene resolver antes de generar el pack gestor.',
       toneClass: 'cc-kpi-card--warning',
     }
   }
 
   return {
     label: 'Cierre revisable antes de exportar',
-    detail: 'La base está construida, pero todavía hay puntos de revisión fiscal o saldos pendientes antes de entregar.',
+    detail: 'La base esta construida, pero todavia hay puntos de revision fiscal o saldos pendientes antes de entregar.',
     toneClass: 'cc-kpi-card--warning',
   }
 }
@@ -111,6 +112,8 @@ export function FiscalClosingPage({
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [isDocumentReviewOpen, setIsDocumentReviewOpen] = useState(false)
+  const [isExportOpen, setIsExportOpen] = useState(false)
 
   useEffect(() => {
     setSelection(initialSelection)
@@ -163,7 +166,7 @@ export function FiscalClosingPage({
       return {
         label: 'Sin snapshot guardado',
         tone: 'neutral' as const,
-        detail: 'El resumen ya es operativo, pero todavía no se ha persistido el cierre de este preset.',
+        detail: 'El resumen ya es operativo, pero todavia no se ha persistido el cierre de este preset.',
       }
     }
 
@@ -171,7 +174,7 @@ export function FiscalClosingPage({
       return {
         label: 'Guardado con incidencias',
         tone: 'warning' as const,
-        detail: 'Existe snapshot persistido, pero todavía hay puntos abiertos antes de cerrar con tranquilidad.',
+        detail: 'Existe snapshot persistido, pero todavia hay puntos abiertos antes de cerrar con tranquilidad.',
       }
     }
 
@@ -186,6 +189,8 @@ export function FiscalClosingPage({
     () => getReadinessCopy(summary.readinessLevel),
     [summary.readinessLevel],
   )
+  const documentReviewCount = summary.missingSupportExpenses.length + summary.pendingReviewExpenses.length + summary.riskExpenses.length
+  const topIncidences = summary.incidences.slice(0, 4)
 
   async function handleSaveSnapshot() {
     if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {
@@ -233,7 +238,7 @@ export function FiscalClosingPage({
         <div>
           <span className="page-header__eyebrow">Cierre fiscal</span>
           <h1>Una sola vista para revisar, validar y exportar el periodo</h1>
-          <p>El periodo activo gobierna resumen fiscal, KPIs, incidencias, soportes y paquete gestor.</p>
+          <p>El periodo activo gobierna resumen fiscal, incidencias y decisiones. Revision documental y export viven fuera del lienzo principal.</p>
         </div>
       </header>
 
@@ -256,12 +261,12 @@ export function FiscalClosingPage({
           <strong className="cc-kpi-value">{statusCard.label}</strong>
           <p className="cc-dashboard-panel__text">{statusCard.detail}</p>
           <p className="cc-dashboard-panel__text">
-            Último guardado: {formatDateTime(persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null)}
+            Ultimo guardado: {formatDateTime(persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null)}
           </p>
         </article>
 
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Lectura fiscal rápida</span>
+          <span className="cc-dashboard-panel__label">Lectura fiscal rapida</span>
           <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
           <p className="cc-dashboard-panel__text">
             IVA repercutido {formatCurrency(summary.outputVatTotal)} · IVA deducible estimado {formatCurrency(summary.estimatedDeductibleVat)}
@@ -301,8 +306,8 @@ export function FiscalClosingPage({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Lectura fiscal central del periodo</h2>
-            <p>Lectura operativa para revisar el cierre. Los importes estimados orientan la validación interna, pero no sustituyen la liquidación fiscal definitiva.</p>
+            <h2>Estado y siguientes acciones</h2>
+            <p>La vista base se queda corta: estado, incidencias, revision documental y export, cada una con un proposito claro.</p>
           </div>
         </div>
 
@@ -315,95 +320,77 @@ export function FiscalClosingPage({
           <article className="cc-kpi-card cc-kpi-card--finance cc-fiscal-closing__hero-card">
             <span className="cc-kpi-label">IVA repercutido</span>
             <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
-            <p className="cc-kpi-footnote">Base de IVA emitido según facturas del periodo.</p>
+            <p className="cc-kpi-footnote">Base de IVA emitido segun facturas del periodo.</p>
           </article>
           <article className="cc-kpi-card cc-fiscal-closing__hero-card">
             <span className="cc-kpi-label">IVA deducible estimado</span>
             <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
-            <p className="cc-kpi-footnote">Estimado según gastos con soporte y reglas fiscales ya modeladas.</p>
+            <p className="cc-kpi-footnote">Estimado segun gastos con soporte y reglas fiscales ya modeladas.</p>
           </article>
           <article className={`cc-kpi-card cc-fiscal-closing__hero-card ${readinessCopy.toneClass}`}>
             <span className="cc-kpi-label">IVA neto estimado</span>
             <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
-            <p className="cc-kpi-footnote">IVA repercutido menos IVA deducible estimado para orientar la revisión.</p>
+            <p className="cc-kpi-footnote">IVA repercutido menos IVA deducible estimado para orientar la revision.</p>
           </article>
         </div>
 
-        <div className="cc-kpi-grid cc-fiscal-closing__support-grid">
-          <article className={`cc-kpi-card ${readinessCopy.toneClass}`}>
-            <span className="cc-kpi-label">Estado del cierre</span>
-            <strong className="cc-kpi-value">{readinessCopy.label}</strong>
-            <p className="cc-kpi-footnote">{readinessCopy.detail}</p>
+        <div className="cc-quarterly-pack-grid">
+          <article className={`cc-quarterly-persistence__card ${readinessCopy.toneClass}`}>
+            <span className="cc-dashboard-panel__label">Estado del cierre</span>
+            <strong className="cc-dashboard-panel__value">{readinessCopy.label}</strong>
+            <p className="cc-dashboard-panel__text">{readinessCopy.detail}</p>
           </article>
-          <article className="cc-kpi-card">
-            <span className="cc-kpi-label">Cobertura documental</span>
-            <strong className="cc-kpi-value">{summary.closureDocumentCoverageRate}%</strong>
-            <p className="cc-kpi-footnote">{summary.supportedClosureExpenseCount} de {summary.closureExpenseCount} gasto(s) de cierre tienen soporte descargable.</p>
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Cobertura documental</span>
+            <strong className="cc-dashboard-panel__value">{summary.closureDocumentCoverageRate}%</strong>
+            <p className="cc-dashboard-panel__text">{summary.supportedClosureExpenseCount} de {summary.closureExpenseCount} gasto(s) de cierre tienen soporte descargable.</p>
           </article>
-          <article className="cc-kpi-card">
-            <span className="cc-kpi-label">Soporte válido para IVA</span>
-            <strong className="cc-kpi-value">{summary.supportedVatCoverageRate}%</strong>
-            <p className="cc-kpi-footnote">{summary.validVatInvoiceSupportCount} gasto(s) con factura válida sobre la base soportada del periodo.</p>
-          </article>
-          <article className="cc-kpi-card">
-            <span className="cc-kpi-label">Bloqueos críticos</span>
-            <strong className="cc-kpi-value">{summary.criticalIncidenceCount}</strong>
-            <p className="cc-kpi-footnote">Huecos documentales o fiscales que conviene cerrar antes de exportar.</p>
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Bloqueos criticos</span>
+            <strong className="cc-dashboard-panel__value">{summary.criticalIncidenceCount}</strong>
+            <p className="cc-dashboard-panel__text">Huecos documentales o fiscales que conviene cerrar antes de exportar.</p>
           </article>
         </div>
-      </section>
 
-      <section className="cc-kpi-grid cc-quarterly-metrics">
-        <article className="cc-kpi-card cc-kpi-card--finance">
-          <span className="cc-kpi-label">Periodo</span>
-          <strong className="cc-kpi-value">{summary.period.label}</strong>
-          <p className="cc-kpi-footnote">{summary.period.startDate} → {summary.period.endDate}</p>
-        </article>
-        <article className="cc-kpi-card cc-kpi-card--finance">
-          <span className="cc-kpi-label">IVA repercutido</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
-          <p className="cc-kpi-footnote">Facturas emitidas del periodo</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">IVA deducible estimado</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
-          <p className="cc-kpi-footnote">Basado en gastos y soporte útil</p>
-        </article>
-        <article className="cc-kpi-card cc-kpi-card--warning">
-          <span className="cc-kpi-label">IVA neto estimado</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
-          <p className="cc-kpi-footnote">Lectura orientativa, no liquidación fiscal definitiva</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Facturas</span>
-          <strong className="cc-kpi-value">{summary.invoiceCount}</strong>
-          <p className="cc-kpi-footnote">Facturado: {formatCurrency(summary.invoicedTotal)}</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Cobros</span>
-          <strong className="cc-kpi-value">{summary.paymentCount}</strong>
-          <p className="cc-kpi-footnote">Cobrado: {formatCurrency(summary.collectedTotal)}</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Gastos</span>
-          <strong className="cc-kpi-value">{summary.expenseCount}</strong>
-          <p className="cc-kpi-footnote">Gasto: {formatCurrency(summary.expensesTotal)}</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Incidencias</span>
-          <strong className="cc-kpi-value">{summary.unresolvedIncidenceCount}</strong>
-          <p className="cc-kpi-footnote">Pendientes de resolver antes de exportar</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Sin soporte</span>
-          <strong className="cc-kpi-value">{summary.missingSupportCount}</strong>
-          <p className="cc-kpi-footnote">Gastos de cierre con huecos documentales descargables</p>
-        </article>
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">A revisar</span>
-          <strong className="cc-kpi-value">{summary.pendingReviewCount + summary.riskCount}</strong>
-          <p className="cc-kpi-footnote">Revisión fiscal pendiente o riesgo medio/alto antes del pack</p>
-        </article>
+        <div className="cc-quarterly-pack-grid">
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Revisar incidencias</span>
+            <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
+            <p className="cc-dashboard-panel__text">Abre solo lo que hoy bloquea el cierre o la entrega.</p>
+            <div className="cc-action-group">
+              {topIncidences.map((incidence) => (
+                <button
+                  key={incidence.id}
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selection)}
+                >
+                  {incidence.label}
+                </button>
+              ))}
+            </div>
+          </article>
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Revision documental</span>
+            <strong className="cc-dashboard-panel__value">{documentReviewCount}</strong>
+            <p className="cc-dashboard-panel__text">{summary.missingSupportCount} sin soporte · {summary.pendingReviewCount + summary.riskCount} en revision o riesgo fiscal.</p>
+            <div className="cc-action-group">
+              <button type="button" className="secondary-button" onClick={() => setIsDocumentReviewOpen(true)}>
+                Abrir revision documental
+              </button>
+            </div>
+          </article>
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Exportar</span>
+            <strong className="cc-dashboard-panel__value">{summary.period.label}</strong>
+            <p className="cc-dashboard-panel__text">El paquete gestor se abre en una surface dedicada y sale del lienzo principal.</p>
+            <div className="cc-action-group">
+              <button type="button" className="primary-button" onClick={() => setIsExportOpen(true)}>
+                Abrir exportacion fiscal
+              </button>
+            </div>
+          </article>
+        </div>
       </section>
 
       {summary.quarterBreakdown.length > 0 ? (
@@ -411,33 +398,38 @@ export function FiscalClosingPage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Desglose trimestral del ejercicio</h2>
-              <p>El cierre anual sigue apoyándose en los cuatro trimestres, pero ya vive dentro de la misma sección.</p>
+              <p>El cierre anual sigue apoyandose en los cuatro trimestres, pero ya no ocupa una lista larga abierta por defecto.</p>
             </div>
           </div>
 
-          <div className="cc-export-folder-list cc-bounded-list">
-            {summary.quarterBreakdown.map((quarter) => (
-              <article key={quarter.fiscalQuarter} className="cc-export-folder-item">
-                <strong>{`T${quarter.fiscalQuarter}`}</strong>
-                <p>
-                  Facturado {formatCurrency(quarter.invoicedTotal)} · IVA neto estimado {formatCurrency(quarter.estimatedNetVatPayable)} ·
-                  Incidencias {quarter.unresolvedIncidenceCount}
-                </p>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => setSelection((current) => ({
-                    ...current,
-                    mode: 'quarter',
-                    year: summary.fiscalYear,
-                    quarter: quarter.fiscalQuarter,
-                  }))}
-                >
-                  Abrir trimestre
-                </button>
-              </article>
-            ))}
-          </div>
+          <details className="cc-quarterly-persistence__card">
+            <summary className="cc-dashboard-panel__text" style={{ cursor: 'pointer' }}>
+              Ver desglose trimestral del ejercicio
+            </summary>
+            <div className="cc-export-folder-list cc-bounded-list" style={{ marginTop: '0.75rem' }}>
+              {summary.quarterBreakdown.map((quarter) => (
+                <article key={quarter.fiscalQuarter} className="cc-export-folder-item">
+                  <strong>{`T${quarter.fiscalQuarter}`}</strong>
+                  <p>
+                    Facturado {formatCurrency(quarter.invoicedTotal)} · IVA neto estimado {formatCurrency(quarter.estimatedNetVatPayable)} ·
+                    Incidencias {quarter.unresolvedIncidenceCount}
+                  </p>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => setSelection((current) => ({
+                      ...current,
+                      mode: 'quarter',
+                      year: summary.fiscalYear,
+                      quarter: quarter.fiscalQuarter,
+                    }))}
+                  >
+                    Abrir trimestre
+                  </button>
+                </article>
+              ))}
+            </div>
+          </details>
         </section>
       ) : null}
 
@@ -464,7 +456,7 @@ export function FiscalClosingPage({
                     className="secondary-button"
                     onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selection)}
                   >
-                    Abrir módulo
+                    Abrir modulo
                   </button>
                 </div>
               </article>
@@ -475,65 +467,140 @@ export function FiscalClosingPage({
         <article className="cc-dashboard-block">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Soportes y revisión documental</h2>
-              <p>Documentos faltantes y gastos prioritarios dentro del mismo periodo.</p>
+              <h2>Revision documental</h2>
+              <p>Los soportes y revisiones se resumen aqui, pero la lectura detallada se abre aparte.</p>
             </div>
           </div>
 
-          <div className="cc-export-folder-list cc-bounded-list">
-            {summary.missingSupportExpenses.length === 0 && summary.pendingReviewExpenses.length === 0 && summary.riskExpenses.length === 0 ? (
-              <article className="cc-export-folder-item">
-                <strong>Sin bloqueos documentales</strong>
-                <p>No se detectan gastos sin soporte ni revisiones fiscales prioritarias en el periodo activo.</p>
-              </article>
-            ) : null}
-
-            {summary.missingSupportExpenses.slice(0, 6).map((expense) => (
-              <article key={`missing-${expense.id}`} className="cc-export-folder-item">
-                <strong>{expense.display_code ?? expense.supplier_name}</strong>
-                <p>
-                  {expense.supplier_name} · {formatDateEs(expense.expense_date)} · {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
-                </p>
-              </article>
-            ))}
-
-            {summary.pendingReviewExpenses.slice(0, 6).map((expense) => (
-              <article key={`review-${expense.id}`} className="cc-export-folder-item">
-                <strong>{expense.display_code ?? expense.supplier_name}</strong>
-                <p>
-                  Revisión {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)} · riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()}
-                </p>
-              </article>
-            ))}
+          <div className="cc-quarterly-pack-grid">
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Sin soporte</span>
+              <strong className="cc-dashboard-panel__value">{summary.missingSupportCount}</strong>
+              <p className="cc-dashboard-panel__text">Gastos de cierre con huecos documentales descargables.</p>
+            </article>
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Revision o riesgo</span>
+              <strong className="cc-dashboard-panel__value">{summary.pendingReviewCount + summary.riskCount}</strong>
+              <p className="cc-dashboard-panel__text">Casos que conviene validar antes del pack gestor.</p>
+            </article>
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Surface dedicada</span>
+              <strong className="cc-dashboard-panel__value">Lista corta</strong>
+              <p className="cc-dashboard-panel__text">Separa revision documental del resto del cierre y de la exportacion.</p>
+              <div className="cc-action-group">
+                <button type="button" className="secondary-button" onClick={() => setIsDocumentReviewOpen(true)}>
+                  Abrir surface documental
+                </button>
+              </div>
+            </article>
           </div>
         </article>
       </section>
 
-      <Suspense
-        fallback={(
-          <DeferredContentFallback
-            title="Cargando runtime de exportacion fiscal"
-            description="Preparando el bloque documental externo del periodo."
-          />
-        )}
+      <ActionFlowOverlay
+        isOpen={isDocumentReviewOpen}
+        title="Revision documental del cierre"
+        description="Soportes faltantes y gastos a revisar en una superficie separada del resumen fiscal y de la exportacion."
+        onClose={() => setIsDocumentReviewOpen(false)}
       >
-        <LazyFiscalPeriodExportSection
-          availableYears={availableYears}
-          selection={selection}
-          onSelectionChange={setSelection}
-          title="Exportar cierre fiscal"
-          description="Mismo periodo, mismo resumen y mismo contexto documental."
-          invoices={invoices}
-          payments={payments}
-          expenses={expenses}
-          quotes={quotes}
-          clients={clients}
-          properties={properties}
-          closingSavedAt={persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null}
-          closingNotes={notes.trim() || null}
-          showSelector={false}
-        />
-      </Suspense>
+        <section className="cc-quarterly-summary-grid">
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Sin soporte</h2>
+                <p>Huecos documentales que siguen bloqueando la entrega limpia del periodo.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              {summary.missingSupportExpenses.length > 0 ? summary.missingSupportExpenses.map((expense) => (
+                <article key={`missing-${expense.id}`} className="cc-export-folder-item">
+                  <strong>{expense.display_code ?? expense.supplier_name}</strong>
+                  <p>
+                    {expense.supplier_name} · {formatDateEs(expense.expense_date)} · {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                  </p>
+                </article>
+              )) : (
+                <article className="cc-export-folder-item">
+                  <strong>Sin huecos documentales</strong>
+                  <p>No se detectan gastos del periodo sin soporte descargable.</p>
+                </article>
+              )}
+            </div>
+          </article>
+
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Revision y riesgo fiscal</h2>
+                <p>Casos que conviene validar antes de compartir el paquete con terceros.</p>
+              </div>
+            </div>
+
+            <div className="cc-export-folder-list cc-bounded-list">
+              {summary.pendingReviewExpenses.length === 0 && summary.riskExpenses.length === 0 ? (
+                <article className="cc-export-folder-item">
+                  <strong>Sin revision prioritaria</strong>
+                  <p>No hay gastos con revision pendiente ni riesgo medio o alto en el periodo activo.</p>
+                </article>
+              ) : null}
+
+              {summary.pendingReviewExpenses.map((expense) => (
+                <article key={`review-${expense.id}`} className="cc-export-folder-item">
+                  <strong>{expense.display_code ?? expense.supplier_name}</strong>
+                  <p>
+                    Revision {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)} · riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()}
+                  </p>
+                </article>
+              ))}
+
+              {summary.riskExpenses
+                .filter((expense) => !summary.pendingReviewExpenses.some((item) => item.id === expense.id))
+                .map((expense) => (
+                  <article key={`risk-${expense.id}`} className="cc-export-folder-item">
+                    <strong>{expense.display_code ?? expense.supplier_name}</strong>
+                    <p>
+                      Riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()} · {formatDateEs(expense.expense_date)}
+                    </p>
+                  </article>
+                ))}
+            </div>
+          </article>
+        </section>
+      </ActionFlowOverlay>
+
+      <ActionFlowOverlay
+        isOpen={isExportOpen}
+        title="Exportar cierre fiscal"
+        description="El paquete gestor se prepara fuera de la vista base para no competir con incidencias ni revision documental."
+        onClose={() => setIsExportOpen(false)}
+      >
+        <Suspense
+          fallback={(
+            <DeferredContentFallback
+              title="Cargando runtime de exportacion fiscal"
+              description="Preparando el bloque documental externo del periodo."
+            />
+          )}
+        >
+          <LazyFiscalPeriodExportSection
+            availableYears={availableYears}
+            selection={selection}
+            onSelectionChange={setSelection}
+            title="Exportar cierre fiscal"
+            description="Mismo periodo, mismo resumen y mismo contexto documental."
+            invoices={invoices}
+            payments={payments}
+            expenses={expenses}
+            quotes={quotes}
+            clients={clients}
+            properties={properties}
+            closingSavedAt={persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null}
+            closingNotes={notes.trim() || null}
+            showSelector={false}
+          />
+        </Suspense>
+      </ActionFlowOverlay>
     </section>
   )
 }

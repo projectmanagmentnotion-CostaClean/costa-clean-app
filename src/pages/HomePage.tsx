@@ -96,7 +96,7 @@ export function HomePage({
   const topIncident = operationalIncidents[0] ?? null
   const quickViewById = new Map(operationalQuickViews.map((view) => [view.id, view]))
   const urgentIncidents = operationalIncidents.filter((incident) => incident.severity !== 'info').slice(0, 4)
-  const followUpIncidents = operationalIncidents.filter((incident) => incident.severity === 'info').slice(0, 4)
+  const followUpIncidents = operationalIncidents.filter((incident) => incident.severity === 'info').slice(0, 3)
   const todayActionJobs = agenda.todayJobs.slice(0, 4)
   const nextActionJobs = agenda.tomorrowJobs.slice(0, 2)
   const pendingBillingView = quickViewById.get('pending-billing') ?? null
@@ -105,7 +105,6 @@ export function HomePage({
   const recurringDueView = quickViewById.get('recurring-due') ?? null
   const acceptedWithoutJobView = quickViewById.get('quotes-without-conversion') ?? null
   const missingFiscalView = quickViewById.get('clients-missing-fiscal') ?? null
-  const pendingBalanceView = quickViewById.get('clients-pending-balance') ?? null
   const overdueInternalView = quickViewById.get('overdue-internal') ?? null
   const followUpAlerts = alerts
     .filter((alert) => alert.ruleId === 'public_intake_lead_drafts_pending' || alert.ruleId === 'quarter_closing_reminder')
@@ -184,20 +183,6 @@ export function HomePage({
       detail: 'Venta aceptada que aun no se ha convertido en servicio.',
       tone: 'warning',
       onRun: () => onRunKpiAction('accepted_quotes_without_job'),
-    },
-    {
-      label: 'Recurrentes listas',
-      value: String(metrics.dueRecurringPlansCount),
-      detail: metrics.dueRecurringPlansCount > 0 ? 'Facturacion automatica lista para emitir.' : 'Sin emisiones recurrentes pendientes.',
-      tone: 'info',
-      onRun: () => recurringDueView ? onRunOperationalAction(recurringDueView.action) : onOpenView('clients'),
-    },
-    {
-      label: 'Clientes con saldo',
-      value: String(metrics.clientsWithPendingBalanceCount),
-      detail: 'Cartera viva con seguimiento de cobro abierto.',
-      tone: 'info',
-      onRun: () => pendingBalanceView ? onRunOperationalAction(pendingBalanceView.action) : onOpenView('clients'),
     },
   ]
 
@@ -483,8 +468,8 @@ export function HomePage({
 
             <article className="cc-dashboard-console-sidepanel">
               <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Recurrentes y revision</h3>
-                <p>Facturacion automatica y alertas suaves fuera del bloque critico.</p>
+                <h3>Recurrentes y siguiente cola</h3>
+                <p>Facturacion automatica, alertas suaves y proximos movimientos sin abrir otro bloque entero.</p>
               </div>
               <div className="cc-dashboard-console-alertlist cc-bounded-list">
                 {dueRecurringPlans.slice(0, 3).map((plan) => (
@@ -518,14 +503,6 @@ export function HomePage({
                   </div>
                 ) : null}
               </div>
-            </article>
-
-            <article className="cc-dashboard-console-sidepanel">
-              <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Lo siguiente</h3>
-                <p>Proximos movimientos y colas secundarias sin sacar foco de la vista.</p>
-              </div>
-
               <div className="cc-dashboard-console-footnotes">
                 {acceptedWithoutJobView ? (
                   <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(acceptedWithoutJobView)}>

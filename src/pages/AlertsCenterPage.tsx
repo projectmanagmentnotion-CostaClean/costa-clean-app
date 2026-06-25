@@ -37,6 +37,11 @@ export function AlertsCenterPage({
   const criticalCount = groupedAlerts.critical.length
   const actionCount = groupedAlerts.action.length
   const followUpCount = groupedAlerts.follow_up.length
+  const activeBuckets = [
+    ['critical', groupedAlerts.critical],
+    ['action', groupedAlerts.action],
+    ['follow_up', groupedAlerts.follow_up],
+  ] as const
 
   function renderAlertBucket(bucket: AlertBucket, bucketAlerts: AutomationAlertItem[]) {
     const bucketMeta = getAlertBucketMeta(bucket)
@@ -102,12 +107,7 @@ export function AlertsCenterPage({
               )
             })}
           </div>
-        ) : (
-          <div className="empty-state cc-state-card">
-            <strong>{bucketMeta.emptyTitle}</strong>
-            <p>{bucketMeta.emptyDescription}</p>
-          </div>
-        )}
+        ) : null}
       </section>
     )
   }
@@ -157,47 +157,55 @@ export function AlertsCenterPage({
         </article>
       </section>
 
-      {renderAlertBucket('critical', groupedAlerts.critical)}
-      {renderAlertBucket('action', groupedAlerts.action)}
-      {renderAlertBucket('follow_up', groupedAlerts.follow_up)}
+      {activeAlerts.length === 0 ? (
+        <section className="cc-dashboard-block">
+          <div className="empty-state cc-state-card">
+            <strong>Sin alertas activas</strong>
+            <p>No hay bloqueos ni seguimientos vivos en este momento.</p>
+          </div>
+        </section>
+      ) : null}
+
+      {activeBuckets
+        .filter(([, bucketAlerts]) => bucketAlerts.length > 0)
+        .map(([bucket, bucketAlerts]) => renderAlertBucket(bucket, bucketAlerts))}
 
       <section className="cc-dashboard-block">
-        <div className="cc-dashboard-block__header">
-          <div>
-            <h2>Revisadas</h2>
-            <p>Estado local de foco para sesiones largas sin perder el acceso al detalle.</p>
-          </div>
-        </div>
+        <details className="cc-quarterly-persistence__card">
+          <summary className="cc-dashboard-panel__text" style={{ cursor: 'pointer' }}>
+            Revisadas ({reviewedAlerts.length})
+          </summary>
 
-        {reviewedAlerts.length > 0 ? (
-          <div className="cc-alerts-list cc-alerts-list--reviewed cc-bounded-list">
-            {reviewedAlerts.map((alert) => (
-              <article key={alert.id} className="cc-alert-center-card cc-alert-center-card--reviewed">
-                <div className="cc-alert-center-card__header">
-                  <div>
-                    <span className="cc-alert-center-card__eyebrow">Revisada</span>
-                    <h3>{alert.title}</h3>
+          {reviewedAlerts.length > 0 ? (
+            <div className="cc-alerts-list cc-alerts-list--reviewed cc-bounded-list" style={{ marginTop: '0.75rem' }}>
+              {reviewedAlerts.map((alert) => (
+                <article key={alert.id} className="cc-alert-center-card cc-alert-center-card--reviewed">
+                  <div className="cc-alert-center-card__header">
+                    <div>
+                      <span className="cc-alert-center-card__eyebrow">Revisada</span>
+                      <h3>{alert.title}</h3>
+                    </div>
+                    <span className="cc-alert-center-card__badge">{alert.count}</span>
                   </div>
-                  <span className="cc-alert-center-card__badge">{alert.count}</span>
-                </div>
-                <p className="cc-alert-center-card__detail">{alert.summary}</p>
-                <div className="cc-alert-center-card__actions">
-                  <button type="button" className="secondary-button" onClick={() => onOpenAlert(alert)}>
-                    {getAlertActionLabel(alert)}
-                  </button>
-                  <button type="button" className="secondary-button" onClick={() => onToggleReviewed(alert.id)}>
-                    Reactivar
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state cc-state-card">
-            <strong>Sin alertas revisadas</strong>
-            <p>Las alertas marcadas como revisadas apareceran aqui mientras sigan activas.</p>
-          </div>
-        )}
+                  <p className="cc-alert-center-card__detail">{alert.summary}</p>
+                  <div className="cc-alert-center-card__actions">
+                    <button type="button" className="secondary-button" onClick={() => onOpenAlert(alert)}>
+                      {getAlertActionLabel(alert)}
+                    </button>
+                    <button type="button" className="secondary-button" onClick={() => onToggleReviewed(alert.id)}>
+                      Reactivar
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state cc-state-card" style={{ marginTop: '0.75rem' }}>
+              <strong>Sin alertas revisadas</strong>
+              <p>Las alertas marcadas como revisadas apareceran aqui mientras sigan activas.</p>
+            </div>
+          )}
+        </details>
       </section>
     </section>
   )

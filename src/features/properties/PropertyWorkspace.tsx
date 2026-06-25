@@ -381,11 +381,6 @@ export function PropertyWorkspace({
             <strong>{owner ? formatClientLabel(owner) : 'Sin cliente'}</strong>
             <small>{owner?.phone ?? owner?.email ?? 'Sin contacto principal'}</small>
           </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Ubicacion operativa</span>
-            <strong>{property.address || 'Sin direccion'}</strong>
-            <small>{[property.city, property.postal_code].filter(Boolean).join(' · ') || 'Sin ciudad ni codigo postal'}</small>
-          </article>
         </div>
       </header>
 
@@ -406,6 +401,21 @@ export function PropertyWorkspace({
           <small>{nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura'}</small>
         </article>
       </section>
+
+      <details className="cc-client-workspace__context-toggle">
+        <summary className="cc-client-workspace__context-toggle-summary">
+          <span>Contexto ampliado</span>
+          <strong>Ver ubicacion y detalle extendido</strong>
+        </summary>
+
+        <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
+          <article className="cc-client-workspace__meta-card">
+            <span>Ubicacion operativa</span>
+            <strong>{property.address || 'Sin direccion'}</strong>
+            <small>{[property.city, property.postal_code].filter(Boolean).join(' · ') || 'Sin ciudad ni codigo postal'}</small>
+          </article>
+        </div>
+      </details>
 
       <section className="cc-client-workspace__next-step">
         <div>

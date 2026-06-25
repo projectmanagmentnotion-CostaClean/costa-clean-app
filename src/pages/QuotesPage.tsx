@@ -5,6 +5,7 @@ import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
+import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
@@ -190,20 +191,20 @@ export function QuotesPage({
               })
             }}
           >
-            <QuoteDetailCard
+            <QuoteEditFlow
               quote={selectedQuote}
               clients={clients}
               properties={properties}
-              onQuoteUpdated={onQuoteCreated}
-              onOpenDocument={() => openQuoteDocument(selectedQuote)}
-              onCreateJobFromQuote={onCreateJobFromQuote}
-              onUnsavedChange={setHasMajorEditDirty}
-              hideHeaderActions
-              majorEditMode
-              onMajorEditClose={() => {
+              onRefreshData={onQuoteCreated}
+              onCompleted={async () => {
                 setShowMajorEdit(false)
                 setHasMajorEditDirty(false)
               }}
+              onCancel={() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              }}
+              onDirtyChange={setHasMajorEditDirty}
             />
           </MajorEditFlowOverlay>
         ) : null}

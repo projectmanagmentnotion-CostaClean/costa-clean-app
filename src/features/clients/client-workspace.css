@@ -122,6 +122,49 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
+.cc-client-workspace__context-toggle {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.72rem 0.82rem;
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+}
+
+.cc-client-workspace__context-toggle-summary {
+  display: grid;
+  gap: 0.16rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.cc-client-workspace__context-toggle-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-client-workspace__context-toggle-summary span {
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cc-client-workspace__context-toggle-summary strong {
+  font-size: 0.84rem;
+  line-height: 1.2;
+}
+
+.cc-client-workspace__context-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.55rem;
+}
+
+.cc-client-workspace__context-toggle-grid--meta {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
 .cc-client-workspace__next-step {
   display: flex;
   align-items: center;
@@ -855,6 +898,7 @@
 
 :root[data-theme="light"] .cc-client-workspace__meta-card,
 :root[data-theme="light"] .cc-client-workspace__snapshot-card,
+:root[data-theme="light"] .cc-client-workspace__context-toggle,
 :root[data-theme="light"] .cc-client-workspace__relationship-card,
 :root[data-theme="light"] .cc-client-workspace__nested-item,
 :root[data-theme="light"] .cc-client-workspace__timeline-item,
@@ -1027,6 +1071,22 @@
     order: 6;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.42rem;
+  }
+
+  .cc-client-workspace__context-toggle {
+    order: 6;
+    gap: 0.58rem;
+    padding: 0.68rem 0.74rem;
+    border-radius: 0.96rem;
+  }
+
+  .cc-client-workspace__context-toggle-summary strong {
+    font-size: 0.8rem;
+  }
+
+  .cc-client-workspace__context-toggle-grid,
+  .cc-client-workspace__context-toggle-grid--meta {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .cc-client-workspace__snapshot-card {

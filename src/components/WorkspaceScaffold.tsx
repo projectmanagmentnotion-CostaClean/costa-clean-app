@@ -61,6 +61,11 @@ export function WorkspaceScaffold<TTab extends string>({
   overlay,
   children,
 }: WorkspaceScaffoldProps<TTab>) {
+  const visibleMetaCards = metaCards.slice(0, 1)
+  const hiddenMetaCards = metaCards.slice(1)
+  const visibleSnapshotCards = snapshotCards.slice(0, 2)
+  const hiddenSnapshotCards = snapshotCards.slice(2)
+
   return (
     <section className="cc-client-workspace">
       <div className="cc-client-workspace__topline">
@@ -85,7 +90,7 @@ export function WorkspaceScaffold<TTab extends string>({
         </div>
 
         <div className="cc-client-workspace__meta">
-          {metaCards.map((card) => (
+          {visibleMetaCards.map((card) => (
             <article key={`${card.label}-${card.value}`} className="cc-client-workspace__meta-card">
               <span>{card.label}</span>
               <strong>{card.value}</strong>
@@ -96,7 +101,7 @@ export function WorkspaceScaffold<TTab extends string>({
       </header>
 
       <section className="cc-client-workspace__snapshot">
-        {snapshotCards.map((card) => (
+        {visibleSnapshotCards.map((card) => (
           <article key={`${card.label}-${card.value}`} className="cc-client-workspace__snapshot-card">
             <span>{card.label}</span>
             <strong>{card.value}</strong>
@@ -104,6 +109,39 @@ export function WorkspaceScaffold<TTab extends string>({
           </article>
         ))}
       </section>
+
+      {hiddenMetaCards.length > 0 || hiddenSnapshotCards.length > 0 ? (
+        <details className="cc-client-workspace__context-toggle">
+          <summary className="cc-client-workspace__context-toggle-summary">
+            <span>Contexto ampliado</span>
+            <strong>Ver contexto completo del workspace</strong>
+          </summary>
+
+          {hiddenMetaCards.length > 0 ? (
+            <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
+              {hiddenMetaCards.map((card) => (
+                <article key={`${card.label}-${card.value}`} className="cc-client-workspace__meta-card">
+                  <span>{card.label}</span>
+                  <strong>{card.value}</strong>
+                  <small>{card.detail}</small>
+                </article>
+              ))}
+            </div>
+          ) : null}
+
+          {hiddenSnapshotCards.length > 0 ? (
+            <div className="cc-client-workspace__context-toggle-grid">
+              {hiddenSnapshotCards.map((card) => (
+                <article key={`${card.label}-${card.value}`} className="cc-client-workspace__snapshot-card">
+                  <span>{card.label}</span>
+                  <strong>{card.value}</strong>
+                  <small>{card.detail}</small>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </details>
+      ) : null}
 
       <section className="cc-client-workspace__next-step">
         <div>

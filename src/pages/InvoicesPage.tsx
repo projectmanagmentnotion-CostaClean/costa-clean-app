@@ -10,6 +10,7 @@ import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -321,25 +322,20 @@ export function InvoicesPage({
               })
             }}
           >
-            <InvoiceDetailCard
+            <InvoiceEditFlow
               invoice={detailInvoice}
               jobs={jobs}
               quotes={quotes}
-              payments={payments}
-              onInvoiceUpdated={onInvoiceCreated}
-              onOpenDocument={() => openInvoiceDocument(detailInvoice)}
-              onViewPayments={onViewPayments}
-              onOpenJobWorkspace={onOpenJobWorkspace}
-              onOpenClientWorkspace={onOpenClientWorkspace}
-              onOpenPropertyWorkspace={onOpenPropertyWorkspace}
-              onOpenQuoteDetail={onOpenQuoteDetail}
-              onUnsavedChange={setHasMajorEditDirty}
-              hideHeaderActions
-              majorEditMode
-              onMajorEditClose={() => {
+              onRefreshData={onInvoiceCreated}
+              onCompleted={async () => {
                 setShowMajorEdit(false)
                 setHasMajorEditDirty(false)
               }}
+              onCancel={() => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+              }}
+              onDirtyChange={setHasMajorEditDirty}
             />
           </MajorEditFlowOverlay>
         ) : null}

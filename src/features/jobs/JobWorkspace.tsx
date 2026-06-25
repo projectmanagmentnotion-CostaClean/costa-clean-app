@@ -353,24 +353,6 @@ export function JobWorkspace({
             <strong>{client ? formatClientLabel(client) : formatClientLabel(job)}</strong>
             <small>{client?.phone ?? client?.email ?? 'Sin contacto principal'}</small>
           </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Propiedad</span>
-            <strong>
-              {property
-                ? formatPropertyLabel(property)
-                : formatPropertyLabel({
-                    id: job.property_id,
-                    display_code: job.property_display_code,
-                    name: job.property_name,
-                  })}
-            </strong>
-            <small>{property?.address ?? 'Sin direccion ampliada'}</small>
-          </article>
-          <article className="cc-client-workspace__meta-card">
-            <span>Facturacion</span>
-            <strong>{job.billing_concept?.trim() || 'Sin concepto definido'}</strong>
-            <small>{quote ? `Origen ${formatQuoteLabel(quote)}` : 'Servicio directo sin presupuesto origen'}</small>
-          </article>
         </div>
       </header>
 
@@ -391,6 +373,34 @@ export function JobWorkspace({
           <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
         </article>
       </section>
+
+      <details className="cc-client-workspace__context-toggle">
+        <summary className="cc-client-workspace__context-toggle-summary">
+          <span>Contexto ampliado</span>
+          <strong>Ver propiedad y facturacion extendida</strong>
+        </summary>
+
+        <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
+          <article className="cc-client-workspace__meta-card">
+            <span>Propiedad</span>
+            <strong>
+              {property
+                ? formatPropertyLabel(property)
+                : formatPropertyLabel({
+                    id: job.property_id,
+                    display_code: job.property_display_code,
+                    name: job.property_name,
+                  })}
+            </strong>
+            <small>{property?.address ?? 'Sin direccion ampliada'}</small>
+          </article>
+          <article className="cc-client-workspace__meta-card">
+            <span>Facturacion</span>
+            <strong>{job.billing_concept?.trim() || 'Sin concepto definido'}</strong>
+            <small>{quote ? `Origen ${formatQuoteLabel(quote)}` : 'Servicio directo sin presupuesto origen'}</small>
+          </article>
+        </div>
+      </details>
 
       <section className="cc-client-workspace__next-step">
         <div>

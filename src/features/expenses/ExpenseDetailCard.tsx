@@ -1,31 +1,21 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { updateExpense, updateExpenseAttachment } from './expenseApi'
+import { useEffect, useMemo, useState } from 'react'
+import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
+import { ExpenseEditFlow } from './ExpenseEditFlow'
+import { ExpenseFiscalReviewPanel } from './ExpenseFiscalReviewPanel'
+import { ExpenseSupportPanel } from './ExpenseSupportPanel'
 import {
-  createExpenseReceiptSignedUrl,
-  deleteExpenseReceipt,
-  uploadExpenseReceipt,
-} from './expenseAttachmentsApi'
-import {
-  analyzeExpenseFiscalIntelligence,
-  saveExpenseFiscalIntelligenceResult,
-} from './fiscalIntelligenceApi'
-import {
-  expenseCategories,
-  expenseDocumentSupportStatuses,
-  expenseDocumentTypes,
-  expenseFiscalReviewStatuses,
-  expenseFiscalRiskLevels,
-  expensePaymentStatuses,
   getExpenseCategoryLabel,
+  getExpenseAiFiscalClassificationLabel,
   getExpenseDocumentSupportStatusLabel,
   getExpenseDocumentTypeLabel,
-  getExpenseAiFiscalClassificationLabel,
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   getExpensePaymentStatusLabel,
   type ExpenseListItem,
 } from './types'
+import './expense-surfaces.css'
 
 interface ExpenseDetailCardProps {
   expense: ExpenseListItem | null
@@ -33,30 +23,15 @@ interface ExpenseDetailCardProps {
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
 }
 
-interface EditFormState {
-  expense_date: string
-  supplier_name: string
-  category: string
-  description: string
-  document_type: string
-  payment_status: string
-  subtotal: string
-  tax_rate: string
-  tax_amount: string
-  total: string
-  is_deductible: boolean
-  document_support_status: string
-  fiscal_review_status: string
-  fiscal_risk_level: string
-  manager_note: string
-  notes: string
-}
-
 function formatCurrency(value: number | null | undefined): string {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency: 'EUR',
   }).format(Number(value ?? 0))
+}
+
+function formatMoneyInput(value: number | null | undefined): string {
+  return Number(value ?? 0).toFixed(2)
 }
 
 function formatDateEs(value: string | null | undefined): string {
@@ -70,32 +45,36 @@ function formatDateEs(value: string | null | undefined): string {
   }).format(date)
 }
 
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
+function resolvePrimaryAction(expense: ExpenseListItem) {
+  if (!expense.receipt_file_path || expense.document_support_status === 'missing') {
+    return {
+      action: 'support',
+      label: 'Completar soporte',
+      detail: 'Falta el documento o no esta marcado como soporte valido.',
+    } as const
+  }
 
-function formatMoneyInput(value: number | null | undefined): string {
-  return Number(value ?? 0).toFixed(2)
-}
+  if (expense.fiscal_review_status === 'pending' || expense.fiscal_risk_level === 'high') {
+    return {
+      action: 'fiscal',
+      label: 'Resolver revision fiscal',
+      detail: 'La lectura fiscal sigue abierta o con riesgo alto.',
+    } as const
+  }
 
-function formatPercentage(value: number | null | undefined): string {
-  return `${Number(value ?? 0).toFixed(0)}%`
-}
+  if (!expense.ai_fiscal_classification) {
+    return {
+      action: 'fiscal',
+      label: 'Generar estimacion fiscal',
+      detail: 'Todavia no existe lectura asistida para este gasto.',
+    } as const
+  }
 
-function formatConfidence(value: number | null | undefined): string {
-  return `${Math.round(Number(value ?? 0) * 100)}%`
-}
-
-function getFileTypeLabel(filePath: string | null | undefined): string {
-  if (!filePath) return 'Sin documento'
-  const lower = filePath.toLowerCase()
-  if (lower.endsWith('.pdf')) return 'PDF'
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'Imagen JPG'
-  if (lower.endsWith('.png')) return 'Imagen PNG'
-  if (lower.endsWith('.webp')) return 'Imagen WEBP'
-  return 'Documento'
+  return {
+    action: 'edit',
+    label: 'Editar datos principales',
+    detail: 'Usa la superficie de edicion para ajustar importes o clasificacion.',
+  } as const
 }
 
 export function ExpenseDetailCard({
@@ -103,324 +82,39 @@ export function ExpenseDetailCard({
   onExpenseUpdated,
   onUnsavedChange,
 }: ExpenseDetailCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false)
-  const [isDeletingReceipt, setIsDeletingReceipt] = useState(false)
-  const [isAnalyzingFiscalIntelligence, setIsAnalyzingFiscalIntelligence] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [fiscalAssistiveNotice, setFiscalAssistiveNotice] = useState<string | null>(null)
-  const [pendingReceiptAction, setPendingReceiptAction] = useState<'open' | 'delete' | null>(null)
-  const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
-  const [isDirty, setIsDirty] = useState(false)
-  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
-  const [form, setForm] = useState<EditFormState>({
-    expense_date: '',
-    supplier_name: '',
-    category: 'otros',
-    description: '',
-    document_type: 'ticket',
-    payment_status: 'paid',
-    subtotal: '0.00',
-    tax_rate: '21.00',
-    tax_amount: '0.00',
-    total: '0.00',
-    is_deductible: true,
-    document_support_status: 'missing',
-    fiscal_review_status: 'pending',
-    fiscal_risk_level: 'medium',
-    manager_note: '',
-    notes: '',
-  })
-
-  const receiptInputRef = useRef<HTMLInputElement | null>(null)
+  const [showEditFlow, setShowEditFlow] = useState(false)
+  const [showSupportSurface, setShowSupportSurface] = useState(false)
+  const [showFiscalSurface, setShowFiscalSurface] = useState(false)
+  const [hasEditDirty, setHasEditDirty] = useState(false)
 
   useEffect(() => {
-    if (!expense) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setFiscalAssistiveNotice(null)
-      setIsDirty(false)
-      setForm({
-        expense_date: '',
-        supplier_name: '',
-        category: 'otros',
-        description: '',
-        document_type: 'ticket',
-        payment_status: 'paid',
-        subtotal: '0.00',
-        tax_rate: '21.00',
-        tax_amount: '0.00',
-        total: '0.00',
-        is_deductible: true,
-        document_support_status: 'missing',
-        fiscal_review_status: 'pending',
-        fiscal_risk_level: 'medium',
-        manager_note: '',
-        notes: '',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setFiscalAssistiveNotice(null)
-    setIsDirty(false)
-    setForm({
-      expense_date: expense.expense_date,
-      supplier_name: expense.supplier_name ?? '',
-      category: expense.category ?? 'otros',
-      description: expense.description ?? '',
-      document_type: expense.document_type ?? 'ticket',
-      payment_status: expense.payment_status ?? 'paid',
-      subtotal: formatMoneyInput(expense.subtotal),
-      tax_rate: formatMoneyInput(expense.tax_rate),
-      tax_amount: formatMoneyInput(expense.tax_amount),
-      total: formatMoneyInput(expense.total),
-      is_deductible: expense.is_deductible ?? true,
-      document_support_status: expense.document_support_status ?? 'missing',
-      fiscal_review_status: expense.fiscal_review_status ?? 'pending',
-      fiscal_risk_level: expense.fiscal_risk_level ?? 'medium',
-      manager_note: expense.manager_note ?? '',
-      notes: expense.notes ?? '',
-    })
-  }, [expense])
-
-  useEffect(() => {
-    onUnsavedChange?.(isDirty)
+    onUnsavedChange?.(hasEditDirty)
     return () => onUnsavedChange?.(false)
-  }, [isDirty, onUnsavedChange])
+  }, [hasEditDirty, onUnsavedChange])
 
-  function updateField<K extends keyof EditFormState>(
-    field: K,
-    value: EditFormState[K],
-  ) {
-    setIsDirty(true)
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }))
-  }
+  const primaryAction = useMemo(
+    () => (expense ? resolvePrimaryAction(expense) : null),
+    [expense],
+  )
 
-  function recalculateAmounts() {
-    const subtotal = parseDecimalInput(form.subtotal)
-    const taxRate = parseDecimalInput(form.tax_rate)
-
-    if (Number.isNaN(subtotal) || Number.isNaN(taxRate)) {
-      setSaveError('Para recalcular importes debes indicar una base y un IVA válidos.')
-      setSuccessMessage(null)
-      return
-    }
-
-    const taxAmount = Number(formatMoneyInput((subtotal * taxRate) / 100))
-    const total = Number(formatMoneyInput(subtotal + taxAmount))
-
-    updateField('tax_amount', formatMoneyInput(taxAmount))
-    updateField('total', formatMoneyInput(total))
-    setSaveError(null)
-  }
-
-  async function saveExpenseEdits(confirmedCancelledStatus = false) {
-    if (!expense) return
-
-    if (form.payment_status === 'cancelled' && expense.payment_status !== 'cancelled' && !confirmedCancelledStatus) {
-      setPendingCancelledFormSave(true)
-      return
-    }
-
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsSaving(true)
-
-    try {
-      if (!form.expense_date) {
-        setSaveError('Debes indicar la fecha del gasto.')
-        return
-      }
-
-      if (!form.supplier_name.trim()) {
-        setSaveError('Debes indicar el proveedor.')
-        return
-      }
-
-      if (!form.description.trim()) {
-        setSaveError('Debes indicar la descripción del gasto.')
-        return
-      }
-
-      const subtotal = parseDecimalInput(form.subtotal)
-      const taxRate = parseDecimalInput(form.tax_rate)
-      const taxAmount = parseDecimalInput(form.tax_amount)
-      const total = parseDecimalInput(form.total)
-
-      if (
-        Number.isNaN(subtotal) ||
-        Number.isNaN(taxRate) ||
-        Number.isNaN(taxAmount) ||
-        Number.isNaN(total)
-      ) {
-        setSaveError('Base, IVA %, IVA € y total deben ser números válidos.')
-        return
-      }
-
-      await updateExpense(expense.id, {
-        expense_date: form.expense_date,
-        supplier_name: form.supplier_name,
-        category: form.category,
-        description: form.description,
-        document_type: form.document_type,
-        payment_status: form.payment_status,
-        subtotal: Number(formatMoneyInput(subtotal)),
-        tax_rate: Number(formatMoneyInput(taxRate)),
-        tax_amount: Number(formatMoneyInput(taxAmount)),
-        total: Number(formatMoneyInput(total)),
-        is_deductible: form.is_deductible,
-        document_support_status: form.document_support_status,
-        fiscal_review_status: form.fiscal_review_status,
-        fiscal_risk_level: form.fiscal_risk_level,
-        manager_note: form.manager_note.trim() || null,
-        notes: form.notes.trim() || null,
-      })
-
-      await onExpenseUpdated()
-      setSuccessMessage('Gasto actualizado correctamente.')
-      setIsEditing(false)
-      setIsDirty(false)
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido actualizando el gasto.'
-      setSaveError(message)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    await saveExpenseEdits()
-  }
-
-  async function handleReceiptSelected(event: React.ChangeEvent<HTMLInputElement>) {
-    if (!expense) return
-
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsUploadingReceipt(true)
-
-    try {
-      const allowedTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png',
-        'image/webp',
-      ]
-
-      if (!allowedTypes.includes(file.type)) {
-        throw new Error('Solo se permiten archivos PDF, JPG, PNG o WEBP.')
-      }
-
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('El archivo supera el límite de 10 MB.')
-      }
-
-      if (expense.receipt_file_path) {
-        await deleteExpenseReceipt(expense.receipt_file_path)
-      }
-
-      const { filePath } = await uploadExpenseReceipt(expense.id, file)
-      await updateExpenseAttachment(expense.id, filePath)
-      await onExpenseUpdated()
-      setSuccessMessage('Documento adjuntado correctamente.')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido subiendo el documento.'
-      setSaveError(message)
-    } finally {
-      setIsUploadingReceipt(false)
-      if (receiptInputRef.current) {
-        receiptInputRef.current.value = ''
-      }
-    }
-  }
-
-  async function handleOpenReceipt() {
-    if (!expense?.receipt_file_path) return
-
-    setPendingReceiptAction('open')
-  }
-
-  async function openReceiptAfterConfirmation() {
-    if (!expense?.receipt_file_path) return
-
-    setSaveError(null)
-    setSuccessMessage(null)
-    setPendingReceiptAction(null)
-
-    try {
-      const signedUrl = await createExpenseReceiptSignedUrl(expense.receipt_file_path)
-      window.open(signedUrl, '_blank', 'noopener,noreferrer')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido abriendo el documento.'
-      setSaveError(message)
-    }
-  }
-
-  async function handleDeleteReceipt() {
-    if (!expense?.receipt_file_path) return
-
-    setPendingReceiptAction('delete')
-  }
-
-  async function deleteReceiptAfterConfirmation() {
-    if (!expense?.receipt_file_path) return
-
-    setSaveError(null)
-    setSuccessMessage(null)
-    setPendingReceiptAction(null)
-    setIsDeletingReceipt(true)
-
-    try {
-      await deleteExpenseReceipt(expense.receipt_file_path)
-      await updateExpenseAttachment(expense.id, null)
-      await onExpenseUpdated()
-      setSuccessMessage('Documento eliminado correctamente.')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido eliminando el documento.'
-      setSaveError(message)
-    } finally {
-      setIsDeletingReceipt(false)
-    }
-  }
-
-  async function handleAnalyzeFiscalIntelligence() {
-    if (!expense) return
-
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsAnalyzingFiscalIntelligence(true)
-
-    try {
-      const response = await analyzeExpenseFiscalIntelligence(expense)
-      await saveExpenseFiscalIntelligenceResult(expense.id, response)
-      setFiscalAssistiveNotice(response.result.assistive_notice)
-      await onExpenseUpdated()
-      setSuccessMessage('Estimacion fiscal actualizada correctamente.')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido generando la estimacion fiscal.'
-      setSaveError(message)
-    } finally {
-      setIsAnalyzingFiscalIntelligence(false)
-    }
-  }
+  const headerActions: ActionGroupItem[] = expense ? [
+    {
+      key: 'edit-expense',
+      label: 'Editar gasto',
+      tone: 'primary',
+      onClick: () => setShowEditFlow(true),
+    },
+    {
+      key: 'support-expense',
+      label: 'Gestionar soporte',
+      onClick: () => setShowSupportSurface(true),
+    },
+    {
+      key: 'fiscal-expense',
+      label: 'Revision fiscal',
+      onClick: () => setShowFiscalSurface(true),
+    },
+  ] : []
 
   return (
     <section className="data-section cc-expense-detail">
@@ -430,36 +124,7 @@ export function ExpenseDetailCard({
         </div>
 
         {expense ? (
-          <div className="form-actions cc-expense-detail__header-actions">
-            {!isEditing ? (
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => void handleAnalyzeFiscalIntelligence()}
-                disabled={isAnalyzingFiscalIntelligence}
-              >
-                {isAnalyzingFiscalIntelligence ? 'Analizando...' : 'Analizar fiscalmente'}
-              </button>
-            ) : null}
-
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                if (isEditing && isDirty) {
-                  setShowDiscardConfirm(true)
-                  return
-                }
-
-                setIsEditing((current) => !current)
-                setSaveError(null)
-                setSuccessMessage(null)
-                setIsDirty(false)
-              }}
-            >
-              {isEditing ? 'Cancelar edición' : 'Editar gasto'}
-            </button>
-          </div>
+          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
         ) : null}
       </div>
 
@@ -472,7 +137,7 @@ export function ExpenseDetailCard({
               </span>
               <h3 className="cc-expense-detail__title">{expense.description}</h3>
               <p className="cc-expense-detail__subtitle">
-                {expense.supplier_name} · {formatDateEs(expense.expense_date)}
+                {expense.supplier_name} / {formatDateEs(expense.expense_date)}
               </p>
             </div>
 
@@ -502,490 +167,178 @@ export function ExpenseDetailCard({
             </span>
           </div>
 
-          {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
-              <label className="form-field">
-                <span>Fecha *</span>
-                <input
-                  type="date"
-                  value={form.expense_date}
-                  onChange={(event) => updateField('expense_date', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Proveedor *</span>
-                <input
-                  value={form.supplier_name}
-                  onChange={(event) => updateField('supplier_name', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Categoría</span>
-                <select
-                  value={form.category}
-                  onChange={(event) => updateField('category', event.target.value)}
-                >
-                  {expenseCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {getExpenseCategoryLabel(category)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Tipo documento</span>
-                <select
-                  value={form.document_type}
-                  onChange={(event) => updateField('document_type', event.target.value)}
-                >
-                  {expenseDocumentTypes.map((documentType) => (
-                    <option key={documentType} value={documentType}>
-                      {getExpenseDocumentTypeLabel(documentType)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Descripción *</span>
-                <input
-                  value={form.description}
-                  onChange={(event) => updateField('description', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Base imponible *</span>
-                <input
-                  value={form.subtotal}
-                  onChange={(event) => updateField('subtotal', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>IVA %</span>
-                <input
-                  value={form.tax_rate}
-                  onChange={(event) => updateField('tax_rate', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field">
-                <span>IVA €</span>
-                <input
-                  value={form.tax_amount}
-                  onChange={(event) => updateField('tax_amount', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Total</span>
-                <input
-                  value={form.total}
-                  onChange={(event) => updateField('total', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Estado de pago</span>
-                <select
-                  value={form.payment_status}
-                  onChange={(event) => updateField('payment_status', event.target.value)}
-                >
-                  {expensePaymentStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getExpensePaymentStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Estado documental</span>
-                <select
-                  value={form.document_support_status}
-                  onChange={(event) => updateField('document_support_status', event.target.value)}
-                >
-                  {expenseDocumentSupportStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getExpenseDocumentSupportStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Revisión fiscal</span>
-                <select
-                  value={form.fiscal_review_status}
-                  onChange={(event) => updateField('fiscal_review_status', event.target.value)}
-                >
-                  {expenseFiscalReviewStatuses.map((status) => (
-                    <option key={status} value={status}>
-                      {getExpenseFiscalReviewStatusLabel(status)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Riesgo fiscal</span>
-                <select
-                  value={form.fiscal_risk_level}
-                  onChange={(event) => updateField('fiscal_risk_level', event.target.value)}
-                >
-                  {expenseFiscalRiskLevels.map((risk) => (
-                    <option key={risk} value={risk}>
-                      {getExpenseFiscalRiskLevelLabel(risk)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Nota para gestoría</span>
-                <textarea
-                  rows={3}
-                  value={form.manager_note}
-                  onChange={(event) => updateField('manager_note', event.target.value)}
-                />
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Notas internas</span>
-                <textarea
-                  rows={4}
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                />
-              </label>
-
-              <label className="checkbox-row">
-                <input
-                  type="checkbox"
-                  checked={form.is_deductible}
-                  onChange={(event) => updateField('is_deductible', event.target.checked)}
-                />
-                <span>Marcar como gasto deducible</span>
-              </label>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={recalculateAmounts}
-                >
-                  Recalcular importes
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    if (isDirty) {
-                      setShowDiscardConfirm(true)
-                      return
-                    }
-
-                    setIsEditing(false)
-                    setIsDirty(false)
-                  }}
-                >
-                  Cancelar
-                </button>
-
-                <button type="submit" className="primary-button" disabled={isSaving}>
-                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-                </button>
-              </div>
-
-              {saveError ? (
-                <div className="cc-alert cc-alert--error">
-                  <strong>No se pudo actualizar el gasto</strong>
-                  <p>{saveError}</p>
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
-                  <p>{successMessage}</p>
-                </div>
-              ) : null}
-            </form>
-          ) : (
-            <>
-              {saveError ? (
-                <div className="cc-alert cc-alert--error">
-                  <strong>No se pudo completar la operación</strong>
-                  <p>{saveError}</p>
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
-                  <p>{successMessage}</p>
-                </div>
-              ) : null}
-
-              <section className="cc-expense-detail__section">
-                <div className="cc-expense-detail__section-head">
-                  <h3>Resumen financiero</h3>
-                  <p>Importes y tipo de documento del gasto seleccionado.</p>
-                </div>
-
-                <div className="cc-expense-detail__metrics">
-                  <article className="cc-expense-metric">
-                    <span className="cc-expense-metric__label">Base imponible</span>
-                    <strong className="cc-expense-metric__value">
-                      {formatCurrency(expense.subtotal)}
-                    </strong>
-                  </article>
-                  <article className="cc-expense-metric">
-                    <span className="cc-expense-metric__label">IVA</span>
-                    <strong className="cc-expense-metric__value">
-                      {formatCurrency(expense.tax_amount)}
-                    </strong>
-                  </article>
-                  <article className="cc-expense-metric">
-                    <span className="cc-expense-metric__label">IVA %</span>
-                    <strong className="cc-expense-metric__value">
-                      {formatMoneyInput(expense.tax_rate)}%
-                    </strong>
-                  </article>
-                  <article className="cc-expense-metric">
-                    <span className="cc-expense-metric__label">Tipo documento</span>
-                    <strong className="cc-expense-metric__value">
-                      {getExpenseDocumentTypeLabel(expense.document_type)}
-                    </strong>
-                  </article>
-                </div>
-              </section>
-
-              <section className="cc-expense-detail__section">
-                <div className="cc-expense-detail__section-head">
-                  <h3>Documento adjunto</h3>
-                  <p>Control del ticket o factura vinculada a este gasto.</p>
-                </div>
-
-                <div className="cc-expense-detail__doc-grid">
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Estado</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
-                    </strong>
-                  </div>
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Tipo</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {getFileTypeLabel(expense.receipt_file_path)}
-                    </strong>
-                  </div>
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Adjuntos</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {expense.attachment_count ?? 0}
-                    </strong>
-                  </div>
-                </div>
-
-                <input
-                  ref={receiptInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-                  style={{ display: 'none' }}
-                  onChange={handleReceiptSelected}
-                />
-
-                <div className="form-actions">
+          {primaryAction ? (
+            <div className="cc-detail-panel__next-step cc-expense-review-surface__next-step">
+              <span>Siguiente paso recomendado</span>
+              <strong>{primaryAction.label}</strong>
+              <p>{primaryAction.detail}</p>
+              <div className="form-actions cc-expense-review-surface__section-action">
+                {primaryAction.action === 'support' ? (
                   <button
                     type="button"
                     className="primary-button"
-                    onClick={() => receiptInputRef.current?.click()}
-                    disabled={isUploadingReceipt}
+                    onClick={() => setShowSupportSurface(true)}
                   >
-                    {isUploadingReceipt ? 'Subiendo documento...' : 'Subir ticket / factura'}
+                    Abrir soporte
                   </button>
-
-                  {expense.receipt_file_path ? (
-                    <>
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={handleOpenReceipt}
-                      >
-                        Ver documento
-                      </button>
-
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={handleDeleteReceipt}
-                        disabled={isDeletingReceipt}
-                      >
-                        {isDeletingReceipt ? 'Eliminando...' : 'Eliminar documento'}
-                      </button>
-                    </>
-                  ) : null}
-                </div>
-              </section>
-
-              <section className="cc-expense-detail__section">
-                <div className="cc-expense-detail__section-head">
-                  <h3>Control fiscal</h3>
-                  <p>Datos clave para revisión, cierre y deducibilidad.</p>
-                </div>
-
-                <div className="cc-expense-detail__info-grid">
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Código</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {expense.display_code ?? expense.id}
-                    </strong>
-                  </div>
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Fecha</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {formatDateEs(expense.expense_date)}
-                    </strong>
-                  </div>
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Proveedor</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {expense.supplier_name}
-                    </strong>
-                  </div>
-                  <div className="cc-expense-detail__info-card">
-                    <span className="cc-expense-detail__info-label">Deducible</span>
-                    <strong className="cc-expense-detail__info-value">
-                      {expense.is_deductible ? 'Sí' : 'No'}
-                    </strong>
-                  </div>
-                </div>
-              </section>
-
-              <section className="cc-expense-detail__section cc-fiscal-intelligence-panel">
-                <div className="cc-expense-detail__section-head">
-                  <h3>Inteligencia fiscal</h3>
-                  <p>Estimacion asistida basada en los datos estructurados del gasto. No usa OCR.</p>
-                </div>
-
-                {expense.ai_fiscal_classification ? (
-                  <>
-                    <div className="cc-expense-detail__metrics cc-fiscal-intelligence-panel__metrics">
-                      <article className="cc-expense-metric">
-                        <span className="cc-expense-metric__label">Clasificacion</span>
-                        <strong className="cc-expense-metric__value">
-                          {getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)}
-                        </strong>
-                      </article>
-                      <article className="cc-expense-metric">
-                        <span className="cc-expense-metric__label">Deducibilidad estimada</span>
-                        <strong className="cc-expense-metric__value">
-                          {formatPercentage(expense.ai_deductibility_percentage)}
-                        </strong>
-                      </article>
-                      <article className="cc-expense-metric">
-                        <span className="cc-expense-metric__label">IVA deducible estimado</span>
-                        <strong className="cc-expense-metric__value">
-                          {formatPercentage(expense.ai_vat_deductibility_percentage)}
-                        </strong>
-                      </article>
-                      <article className="cc-expense-metric">
-                        <span className="cc-expense-metric__label">Confianza</span>
-                        <strong className="cc-expense-metric__value">
-                          {formatConfidence(expense.ai_fiscal_confidence)}
-                        </strong>
-                      </article>
-                    </div>
-
-                    <div className="cc-expense-detail__info-grid">
-                      <div className="cc-expense-detail__info-card">
-                        <span className="cc-expense-detail__info-label">Base deducible estimada</span>
-                        <strong className="cc-expense-detail__info-value">
-                          {formatCurrency(expense.ai_estimated_deductible_base)}
-                        </strong>
-                      </div>
-                      <div className="cc-expense-detail__info-card">
-                        <span className="cc-expense-detail__info-label">IVA deducible estimado</span>
-                        <strong className="cc-expense-detail__info-value">
-                          {formatCurrency(expense.ai_estimated_deductible_vat)}
-                        </strong>
-                      </div>
-                      <div className="cc-expense-detail__info-card">
-                        <span className="cc-expense-detail__info-label">Riesgo sugerido</span>
-                        <strong className="cc-expense-detail__info-value">
-                          {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level)}
-                        </strong>
-                      </div>
-                      <div className="cc-expense-detail__info-card">
-                        <span className="cc-expense-detail__info-label">Analizado</span>
-                        <strong className="cc-expense-detail__info-value">
-                          {expense.ai_fiscal_analyzed_at ? formatDateEs(expense.ai_fiscal_analyzed_at.slice(0, 10)) : 'Sin fecha'}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <article className="cc-expense-detail__note-card cc-fiscal-intelligence-panel__reasoning">
-                      <span className="cc-expense-detail__info-label">Motivo sugerido</span>
-                      <p>{expense.ai_fiscal_reasoning ?? 'Sin razonamiento registrado.'}</p>
-                    </article>
-
-                    {expense.ai_fiscal_flags?.length ? (
-                      <div className="cc-fiscal-intelligence-panel__flags" aria-label="Banderas fiscales sugeridas">
-                        {expense.ai_fiscal_flags.map((flag) => (
-                          <span key={flag} className="cc-expense-chip cc-expense-chip--risk">
-                            {flag.replaceAll('_', ' ')}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-
-                    <div className="cc-alert cc-alert--warning">
-                      <strong>Estimacion asistida</strong>
-                      <p>
-                        {fiscalAssistiveNotice ??
-                          'Estimacion orientativa basada en datos estructurados del gasto. No sustituye la revision de una gestoria ni constituye asesoramiento fiscal.'}
-                      </p>
-                    </div>
-                  </>
+                ) : primaryAction.action === 'fiscal' ? (
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setShowFiscalSurface(true)}
+                  >
+                    Abrir revision fiscal
+                  </button>
                 ) : (
-                  <div className="empty-state">
-                    <strong>Sin estimacion fiscal asistida</strong>
-                    <p>Usa Analizar fiscalmente para generar una estimacion prudente con datos estructurados del gasto.</p>
-                  </div>
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setShowEditFlow(true)}
+                  >
+                    Abrir edicion principal
+                  </button>
                 )}
-              </section>
+              </div>
+            </div>
+          ) : null}
 
-              {(expense.manager_note || expense.notes) ? (
-                <section className="cc-expense-detail__section">
-                  <div className="cc-expense-detail__section-head">
-                    <h3>Notas</h3>
-                    <p>Observaciones operativas e indicaciones para gestoría.</p>
-                  </div>
+          <section className="cc-expense-detail__section">
+            <div className="cc-expense-detail__section-head">
+              <h3>Resumen financiero</h3>
+              <p>La ficha base queda para revisar rapido, no para editarlo todo.</p>
+            </div>
 
-                  <div className="cc-expense-detail__notes">
-                    <article className="cc-expense-detail__note-card">
-                      <span className="cc-expense-detail__info-label">Nota gestoría</span>
-                      <p>{expense.manager_note ?? 'Sin nota'}</p>
-                    </article>
-                    <article className="cc-expense-detail__note-card">
-                      <span className="cc-expense-detail__info-label">Notas internas</span>
-                      <p>{expense.notes ?? 'Sin notas'}</p>
-                    </article>
-                  </div>
-                </section>
-              ) : null}
-            </>
-          )}
+            <div className="cc-expense-detail__metrics">
+              <article className="cc-expense-metric">
+                <span className="cc-expense-metric__label">Base imponible</span>
+                <strong className="cc-expense-metric__value">
+                  {formatCurrency(expense.subtotal)}
+                </strong>
+              </article>
+              <article className="cc-expense-metric">
+                <span className="cc-expense-metric__label">IVA</span>
+                <strong className="cc-expense-metric__value">
+                  {formatCurrency(expense.tax_amount)}
+                </strong>
+              </article>
+              <article className="cc-expense-metric">
+                <span className="cc-expense-metric__label">IVA %</span>
+                <strong className="cc-expense-metric__value">
+                  {formatMoneyInput(expense.tax_rate)}%
+                </strong>
+              </article>
+              <article className="cc-expense-metric">
+                <span className="cc-expense-metric__label">Tipo documento</span>
+                <strong className="cc-expense-metric__value">
+                  {getExpenseDocumentTypeLabel(expense.document_type)}
+                </strong>
+              </article>
+            </div>
+          </section>
+
+          <section className="cc-expense-detail__section">
+            <div className="cc-expense-detail__section-head">
+              <h3>Soporte documental</h3>
+              <p>Vista breve del documento, con gestion dedicada fuera del card.</p>
+            </div>
+
+            <div className="cc-expense-detail__doc-grid">
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Estado</span>
+                <strong className="cc-expense-detail__info-value">
+                  {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Soporte</span>
+                <strong className="cc-expense-detail__info-value">
+                  {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Adjuntos</span>
+                <strong className="cc-expense-detail__info-value">
+                  {expense.attachment_count ?? 0}
+                </strong>
+              </div>
+            </div>
+
+            <div className="form-actions cc-expense-review-surface__section-action">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowSupportSurface(true)}
+              >
+                Gestionar soporte
+              </button>
+            </div>
+          </section>
+
+          <section className="cc-expense-detail__section">
+            <div className="cc-expense-detail__section-head">
+              <h3>Revision fiscal</h3>
+              <p>Jerarquia clara entre estado manual y lectura asistida.</p>
+            </div>
+
+            <div className="cc-expense-detail__info-grid">
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Revision</span>
+                <strong className="cc-expense-detail__info-value">
+                  {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Riesgo manual</span>
+                <strong className="cc-expense-detail__info-value">
+                  {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Lectura asistida</span>
+                <strong className="cc-expense-detail__info-value">
+                  {expense.ai_fiscal_classification
+                    ? getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)
+                    : 'Sin estimacion'}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Deducible</span>
+                <strong className="cc-expense-detail__info-value">
+                  {expense.is_deductible ? 'Si' : 'No'}
+                </strong>
+              </div>
+            </div>
+
+            <div className="form-actions cc-expense-review-surface__section-action">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowFiscalSurface(true)}
+              >
+                Abrir revision fiscal
+              </button>
+            </div>
+          </section>
+
+          {(expense.manager_note || expense.notes) ? (
+            <section className="cc-expense-detail__section">
+              <div className="cc-expense-detail__section-head">
+                <h3>Notas</h3>
+                <p>Observaciones visibles sin obligar a entrar en la edicion.</p>
+              </div>
+
+              <div className="cc-expense-detail__notes">
+                <article className="cc-expense-detail__note-card">
+                  <span className="cc-expense-detail__info-label">Nota gestoria</span>
+                  <p>{expense.manager_note ?? 'Sin nota'}</p>
+                </article>
+                <article className="cc-expense-detail__note-card">
+                  <span className="cc-expense-detail__info-label">Notas internas</span>
+                  <p>{expense.notes ?? 'Sin notas'}</p>
+                </article>
+              </div>
+            </section>
+          ) : null}
         </div>
       ) : (
         <div className="empty-state">
@@ -994,53 +347,53 @@ export function ExpenseDetailCard({
         </div>
       )}
 
-      <ConfirmDialog
-        isOpen={showDiscardConfirm}
-        title="Descartar cambios de gasto"
-        description="Has modificado este gasto. Si cierras ahora, perderas los cambios no guardados."
-        confirmLabel="Descartar cambios"
-        tone="warning"
-        onCancel={() => setShowDiscardConfirm(false)}
-        onConfirm={() => {
-          setShowDiscardConfirm(false)
-          setIsEditing(false)
-          setIsDirty(false)
-        }}
-      />
+      {expense ? (
+        <MajorEditFlowOverlay
+          isOpen={showEditFlow}
+          title="Editar gasto"
+          description="La edicion principal se resuelve fuera de la ficha para evitar scroll y mezcla de responsabilidades."
+          onClose={() => {
+            setHasEditDirty(false)
+            setShowEditFlow(false)
+          }}
+        >
+          <ExpenseEditFlow
+            expense={expense}
+            onRefreshData={onExpenseUpdated}
+            onCompleted={async () => {
+              setHasEditDirty(false)
+              setShowEditFlow(false)
+            }}
+            onCancel={() => {
+              setHasEditDirty(false)
+              setShowEditFlow(false)
+            }}
+            onDirtyChange={setHasEditDirty}
+          />
+        </MajorEditFlowOverlay>
+      ) : null}
 
-      <ConfirmDialog
-        isOpen={pendingReceiptAction === 'open'}
-        title="Abrir documento del gasto"
-        description="El soporte del gasto se abrirá en una nueva pestaña o ventana mediante un enlace temporal seguro. Continúa solo si quieres revisar este documento ahora."
-        confirmLabel="Abrir documento"
-        onCancel={() => setPendingReceiptAction(null)}
-        onConfirm={() => void openReceiptAfterConfirmation()}
-      />
+      {expense ? (
+        <ActionFlowOverlay
+          isOpen={showSupportSurface}
+          title="Soporte documental"
+          description="Gestiona ticket, factura y archivo adjunto en una superficie separada del detalle y de la edicion."
+          onClose={() => setShowSupportSurface(false)}
+        >
+          <ExpenseSupportPanel expense={expense} onExpenseUpdated={onExpenseUpdated} />
+        </ActionFlowOverlay>
+      ) : null}
 
-      <ConfirmDialog
-        isOpen={pendingReceiptAction === 'delete'}
-        title="Eliminar documento adjunto"
-        description="Se eliminará el soporte documental vinculado a este gasto. Esta acción puede afectar la revisión fiscal si no subes un nuevo documento."
-        confirmLabel="Eliminar documento"
-        tone="warning"
-        isBusy={isDeletingReceipt}
-        onCancel={() => setPendingReceiptAction(null)}
-        onConfirm={() => void deleteReceiptAfterConfirmation()}
-      />
-
-      <ConfirmDialog
-        isOpen={pendingCancelledFormSave}
-        title="Guardar gasto como cancelado"
-        description="Vas a guardar la edición dejando el gasto en estado cancelado. Confirma solo si este gasto no debe contar como pagado o pendiente."
-        confirmLabel="Guardar como cancelado"
-        tone="warning"
-        isBusy={isSaving}
-        onCancel={() => setPendingCancelledFormSave(false)}
-        onConfirm={() => {
-          setPendingCancelledFormSave(false)
-          void saveExpenseEdits(true)
-        }}
-      />
+      {expense ? (
+        <ActionFlowOverlay
+          isOpen={showFiscalSurface}
+          title="Revision fiscal"
+          description="Revisa estado fiscal y lectura asistida sin ensuciar la ficha base del gasto."
+          onClose={() => setShowFiscalSurface(false)}
+        >
+          <ExpenseFiscalReviewPanel expense={expense} onExpenseUpdated={onExpenseUpdated} />
+        </ActionFlowOverlay>
+      ) : null}
     </section>
   )
 }

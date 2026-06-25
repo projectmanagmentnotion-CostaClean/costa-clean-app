@@ -115,7 +115,7 @@ export function ExpensesList({
       <div className="section-header cc-list-section__header">
         <div>
           <h2>Explorar gastos</h2>
-          <p>Proveedor, soporte fiscal y control documental en una sola lista.</p>
+          <p>Selecciona un gasto para revisarlo. La edicion y el soporte se resuelven en superficies aparte.</p>
         </div>
       </div>
 
@@ -222,8 +222,8 @@ export function ExpensesList({
                 type="button"
                 className={
                   isSelected
-                    ? 'cc-expense-item cc-record-card cc-record-card--expense is-selected'
-                    : 'cc-expense-item cc-record-card cc-record-card--expense'
+                    ? 'cc-expense-item cc-record-card cc-record-card--expense cc-record-card--compact is-selected'
+                    : 'cc-expense-item cc-record-card cc-record-card--expense cc-record-card--compact'
                 }
                 onClick={() => onSelectExpense(expense)}
               >
@@ -250,13 +250,12 @@ export function ExpensesList({
                     <span className="cc-record-card__meta-label">Soporte</span>
                     <span className="cc-record-card__meta-value">{getExpenseDocumentSupportStatusLabel(expense.document_support_status)}</span>
                   </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Revision</span>
-                    <span className="cc-record-card__meta-value">{getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}</span>
-                  </span>
                 </div>
 
                 <div className="cc-record-card__chips cc-expense-item__chips">
+                  <span className="cc-record-card__chip cc-expense-chip">
+                    {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
+                  </span>
                   <span className="cc-record-card__chip cc-expense-chip">
                     Riesgo {getExpenseFiscalRiskLevelLabel(expense.fiscal_risk_level)}
                   </span>

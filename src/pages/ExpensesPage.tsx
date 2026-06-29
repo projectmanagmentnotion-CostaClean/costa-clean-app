@@ -10,10 +10,15 @@ import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
 import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
 import type { ExpenseListItem } from '../features/expenses/types'
+import type { InvoiceListItem } from '../features/invoices/types'
+import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 
 interface ExpensesPageProps {
   expenses: ExpenseListItem[]
+  allExpenses: ExpenseListItem[]
+  quotes: QuoteListItem[]
+  invoices: InvoiceListItem[]
   error: string | null
   onExpenseCreated: () => Promise<void>
   activeFilterLabel: string | null
@@ -31,6 +36,9 @@ function formatCurrency(value: number): string {
 
 export function ExpensesPage({
   expenses,
+  allExpenses,
+  quotes,
+  invoices,
   error,
   onExpenseCreated,
   activeFilterLabel,
@@ -185,7 +193,9 @@ export function ExpensesPage({
           }}
         >
           <ExpenseCreateFlow
-            expenses={expenses}
+            expenses={allExpenses}
+            quotes={quotes}
+            invoices={invoices}
             onOpenExistingExpense={(expenseId) => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)
@@ -231,7 +241,9 @@ export function ExpensesPage({
         <div className="cc-master-layout__detail">
           <ExpenseDetailCard
             expense={selectedExpense}
-            expenses={expenses}
+            expenses={allExpenses}
+            quotes={quotes}
+            invoices={invoices}
             onExpenseUpdated={onExpenseCreated}
             onUnsavedChange={setHasUnsavedDetailChanges}
             onOpenExistingExpense={(expenseId) => setSelectedExpenseId(expenseId)}

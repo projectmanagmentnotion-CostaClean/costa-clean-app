@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
+import type { InvoiceListItem } from '../invoices/types'
+import type { QuoteListItem } from '../quotes/types'
 import { ExpenseEditFlow } from './ExpenseEditFlow'
 import { ExpenseFiscalReviewPanel } from './ExpenseFiscalReviewPanel'
 import { ExpenseSupportPanel } from './ExpenseSupportPanel'
@@ -20,6 +22,8 @@ import './expense-surfaces.css'
 interface ExpenseDetailCardProps {
   expense: ExpenseListItem | null
   expenses: ExpenseListItem[]
+  quotes: QuoteListItem[]
+  invoices: InvoiceListItem[]
   onExpenseUpdated: () => Promise<void>
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   onOpenExistingExpense?: (expenseId: string) => void
@@ -82,6 +86,8 @@ function resolvePrimaryAction(expense: ExpenseListItem) {
 export function ExpenseDetailCard({
   expense,
   expenses,
+  quotes,
+  invoices,
   onExpenseUpdated,
   onUnsavedChange,
   onOpenExistingExpense,
@@ -364,6 +370,8 @@ export function ExpenseDetailCard({
           <ExpenseEditFlow
             expense={expense}
             allExpenses={expenses}
+            quotes={quotes}
+            invoices={invoices}
             onOpenExistingExpense={onOpenExistingExpense}
             onRefreshData={onExpenseUpdated}
             onCompleted={async () => {

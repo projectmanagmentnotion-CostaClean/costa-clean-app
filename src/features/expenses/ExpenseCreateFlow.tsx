@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import { buildConceptMemoryIndex, getConceptSuggestions } from '../concepts/conceptMemory'
 import { findExpenseDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { InvoiceListItem } from '../invoices/types'
+import type { QuoteListItem } from '../quotes/types'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { createExpense } from './expenseApi'
@@ -27,6 +31,8 @@ interface ExpenseCreateFlowProps extends FullViewActionFlowProps {
   description?: string
   submitLabel?: string
   expenses?: ExpenseListItem[]
+  quotes?: QuoteListItem[]
+  invoices?: InvoiceListItem[]
   onOpenExistingExpense?: (expenseId: string) => void
 }
 
@@ -87,6 +93,8 @@ export function ExpenseCreateFlow({
   description = 'Alta fiscal y operativa en una superficie dedicada, sin formulario inline largo.',
   submitLabel = 'Guardar gasto',
   expenses = [],
+  quotes = [],
+  invoices = [],
   onOpenExistingExpense,
 }: ExpenseCreateFlowProps) {
   const [form, setForm] = useState<CreateFormState>(defaultFormState)
@@ -106,6 +114,18 @@ export function ExpenseCreateFlow({
   const taxRateValue = useMemo(() => parseDecimalInput(form.tax_rate || '0'), [form.tax_rate])
   const taxAmountValue = useMemo(() => parseDecimalInput(form.tax_amount || '0'), [form.tax_amount])
   const totalValue = useMemo(() => parseDecimalInput(form.total || '0'), [form.total])
+  const conceptMemoryIndex = useMemo(
+    () => buildConceptMemoryIndex({ quotes, invoices, expenses }),
+    [quotes, invoices, expenses],
+  )
+  const descriptionSuggestions = useMemo(
+    () => getConceptSuggestions(conceptMemoryIndex, {
+      query: form.description,
+      domain: 'expense',
+      limit: 6,
+    }),
+    [conceptMemoryIndex, form.description],
+  )
 
   const resolvedTaxAmount = Number.isNaN(subtotalValue) || Number.isNaN(taxRateValue)
     ? Number.NaN
@@ -371,6 +391,10 @@ export function ExpenseCreateFlow({
                 required
               />
             </label>
+            <ConceptSuggestions
+              suggestions={descriptionSuggestions}
+              onUseConcept={(suggestion) => updateField('description', suggestion.label)}
+            />
           </section>
         ) : null}
 

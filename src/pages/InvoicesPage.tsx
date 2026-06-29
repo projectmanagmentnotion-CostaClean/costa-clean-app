@@ -17,6 +17,7 @@ import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
+import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
@@ -33,10 +34,12 @@ const LazyInvoiceCreateFlow = lazy(async () => ({
 
 interface InvoicesPageProps {
   invoices: InvoiceListItem[]
+  allInvoices: InvoiceListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  expenses: ExpenseListItem[]
   payments: PaymentListItem[]
   error: string | null
   onInvoiceCreated: () => Promise<void>
@@ -55,10 +58,12 @@ interface InvoicesPageProps {
 
 export function InvoicesPage({
   invoices,
+  allInvoices,
   clients,
   properties,
   jobs,
   quotes,
+  expenses,
   payments,
   error,
   onInvoiceCreated,
@@ -309,7 +314,8 @@ export function InvoicesPage({
                 properties={properties}
                 jobs={jobs}
                 quotes={quotes}
-                invoices={invoices}
+                invoices={allInvoices}
+                expenses={expenses}
                 onRefreshData={onInvoiceCreated}
                 onCompleted={handleInvoiceCreated}
                 prefill={createPrefill}
@@ -355,7 +361,8 @@ export function InvoicesPage({
               invoice={detailInvoice}
               jobs={jobs}
               quotes={quotes}
-              allInvoices={invoices}
+              allInvoices={allInvoices}
+              expenses={expenses}
               onRefreshData={onInvoiceCreated}
               onOpenExistingInvoice={(invoiceId) => {
                 setShowMajorEdit(false)

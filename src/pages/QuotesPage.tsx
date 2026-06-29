@@ -13,6 +13,8 @@ import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
+import type { ExpenseListItem } from '../features/expenses/types'
+import type { InvoiceListItem } from '../features/invoices/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { formatCurrency } from '../app/displayFormat'
@@ -24,6 +26,9 @@ const LazyQuoteCreateFlow = lazy(async () => ({
 
 interface QuotesPageProps {
   quotes: QuoteListItem[]
+  allQuotes: QuoteListItem[]
+  invoices: InvoiceListItem[]
+  expenses: ExpenseListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   error: string | null
@@ -37,6 +42,9 @@ interface QuotesPageProps {
 
 export function QuotesPage({
   quotes,
+  allQuotes,
+  invoices,
+  expenses,
   clients,
   properties,
   error,
@@ -180,7 +188,9 @@ export function QuotesPage({
               <LazyQuoteCreateFlow
                 clients={clients}
                 properties={properties}
-                quotes={quotes}
+                quotes={allQuotes}
+                invoices={invoices}
+                expenses={expenses}
                 onRefreshData={onQuoteCreated}
                 onCompleted={handleQuoteCreated}
                 onOpenExistingQuote={(quoteId) => {
@@ -223,7 +233,9 @@ export function QuotesPage({
               quote={selectedQuote}
               clients={clients}
               properties={properties}
-              allQuotes={quotes}
+              allQuotes={allQuotes}
+              invoices={invoices}
+              expenses={expenses}
               onRefreshData={onQuoteCreated}
               onOpenExistingQuote={(quoteId) => {
                 setShowMajorEdit(false)

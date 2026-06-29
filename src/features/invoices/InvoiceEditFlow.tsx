@@ -5,8 +5,15 @@ import { formatClientLabel, formatJobLabel, formatQuoteLabel } from '../../app/r
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import {
+  buildConceptMemoryIndex,
+  getConceptSuggestions,
+  type ConceptSuggestion,
+} from '../concepts/conceptMemory'
 import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { ExpenseListItem } from '../expenses/types'
 import {
   saveInvoiceWithLines,
 } from '../financial/financialWriteApi'
@@ -30,6 +37,7 @@ interface InvoiceEditFlowProps extends FullViewActionFlowProps {
   description?: string
   submitLabel?: string
   allInvoices?: InvoiceListItem[]
+  expenses?: ExpenseListItem[]
   onOpenExistingInvoice?: (invoiceId: string) => void
 }
 
@@ -247,6 +255,7 @@ export function InvoiceEditFlow({
   description = 'La edicion principal se mueve a un flujo dedicado para que la card de factura se quede como panel de lectura y cobro.',
   submitLabel = 'Guardar cambios',
   allInvoices = [],
+  expenses = [],
   onOpenExistingInvoice,
 }: InvoiceEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
@@ -292,6 +301,10 @@ export function InvoiceEditFlow({
     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
   }, [quotes, selectedJob])
   const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
+  const conceptMemoryIndex = useMemo(
+    () => buildConceptMemoryIndex({ quotes, invoices: allInvoices, expenses }),
+    [quotes, allInvoices, expenses],
+  )
   const taxAmountValue = useMemo(
     () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
     [subtotalValue],
@@ -341,6 +354,39 @@ export function InvoiceEditFlow({
   function addLine() {
     setIsDirty(true)
     setLines((current) => [...current, createBlankLine()])
+  }
+
+  function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    updateLine(localId, 'concept', suggestion.label)
+  }
+
+  function applyStructuredSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    if (!suggestion.structuredSuggestion) {
+      applyConceptSuggestionToLine(localId, suggestion)
+      return
+    }
+
+    setIsDirty(true)
+    setLines((current) => current.map((line) => (
+      line.local_id === localId
+        ? {
+          ...line,
+          concept: suggestion.structuredSuggestion?.concept ?? suggestion.label,
+          quantity: suggestion.structuredSuggestion?.quantity ?? line.quantity,
+          unit: suggestion.structuredSuggestion?.unit ?? line.unit,
+          unit_price: suggestion.structuredSuggestion?.unit_price ?? line.unit_price,
+        }
+        : line
+    )))
+  }
+
+  function getSuggestionsForLine(query: string) {
+    return getConceptSuggestions(conceptMemoryIndex, {
+      query,
+      domain: 'invoice',
+      clientId: form.client_id || null,
+      limit: 6,
+    })
   }
 
   function syncFromJobQuote() {
@@ -696,6 +742,11 @@ export function InvoiceEditFlow({
                       required
                     />
                   </label>
+                  <ConceptSuggestions
+                    suggestions={getSuggestionsForLine(line.concept)}
+                    onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
+                    onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                  />
 
                   <label className="form-field">
                     <span>Cantidad</span>

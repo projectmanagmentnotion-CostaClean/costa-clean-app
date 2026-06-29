@@ -7,9 +7,17 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import {
+  buildConceptMemoryIndex,
+  getConceptSuggestions,
+  type ConceptSuggestion,
+} from '../concepts/conceptMemory'
 import { findQuoteDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { ExpenseListItem } from '../expenses/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import type { InvoiceListItem } from '../invoices/types'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import {
@@ -35,6 +43,8 @@ interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes?: QuoteListItem[]
+  invoices?: InvoiceListItem[]
+  expenses?: ExpenseListItem[]
   contextClientId?: string | null
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
@@ -69,6 +79,8 @@ export function QuoteCreateFlow({
   contextClientId = null,
   contextPropertyId = null,
   quotes = [],
+  invoices = [],
+  expenses = [],
   onCreatedQuote,
   onOpenExistingQuote,
   onCancel,
@@ -113,6 +125,10 @@ export function QuoteCreateFlow({
   )
 
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const conceptMemoryIndex = useMemo(
+    () => buildConceptMemoryIndex({ quotes, invoices, expenses }),
+    [quotes, invoices, expenses],
+  )
   const taxAmountValue = useMemo(
     () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
     [subtotalValue],
@@ -159,6 +175,39 @@ export function QuoteCreateFlow({
   function addLine() {
     markDirty()
     setLines((current) => [...current, createBlankQuoteLine()])
+  }
+
+  function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    updateLine(localId, 'concept', suggestion.label)
+  }
+
+  function applyStructuredSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    if (!suggestion.structuredSuggestion) {
+      applyConceptSuggestionToLine(localId, suggestion)
+      return
+    }
+
+    markDirty()
+    setLines((current) => current.map((line) => (
+      line.local_id === localId
+        ? {
+          ...line,
+          concept: suggestion.structuredSuggestion?.concept ?? suggestion.label,
+          quantity: suggestion.structuredSuggestion?.quantity ?? line.quantity,
+          unit: suggestion.structuredSuggestion?.unit ?? line.unit,
+          unit_price: suggestion.structuredSuggestion?.unit_price ?? line.unit_price,
+        }
+        : line
+    )))
+  }
+
+  function getSuggestionsForLine(query: string) {
+    return getConceptSuggestions(conceptMemoryIndex, {
+      query,
+      domain: 'quote',
+      clientId: form.client_id || null,
+      limit: 6,
+    })
   }
 
   function getStepError(stepIndex: number): string | null {
@@ -599,6 +648,11 @@ export function QuoteCreateFlow({
                       required
                     />
                   </label>
+                  <ConceptSuggestions
+                    suggestions={getSuggestionsForLine(line.concept)}
+                    onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
+                    onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                  />
 
                   <label className="form-field">
                     <span>Cantidad</span>

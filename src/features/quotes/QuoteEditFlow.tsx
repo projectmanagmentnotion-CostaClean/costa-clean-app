@@ -5,9 +5,17 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import {
+  buildConceptMemoryIndex,
+  getConceptSuggestions,
+  type ConceptSuggestion,
+} from '../concepts/conceptMemory'
 import { findQuoteDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { ExpenseListItem } from '../expenses/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
+import type { InvoiceListItem } from '../invoices/types'
 import { completeFullViewActionFlow, type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import {
   buildQuoteLinePayloads,
@@ -32,6 +40,8 @@ interface QuoteEditFlowProps extends FullViewActionFlowProps {
   description?: string
   submitLabel?: string
   allQuotes?: QuoteListItem[]
+  invoices?: InvoiceListItem[]
+  expenses?: ExpenseListItem[]
   onOpenExistingQuote?: (quoteId: string) => void
 }
 
@@ -77,6 +87,8 @@ export function QuoteEditFlow({
   description = 'La edicion principal vive en un flujo separado para no convertir la card de detalle en un formulario largo.',
   submitLabel = 'Guardar cambios',
   allQuotes = [],
+  invoices = [],
+  expenses = [],
   onOpenExistingQuote,
 }: QuoteEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
@@ -125,6 +137,10 @@ export function QuoteEditFlow({
     [form.property_id, properties],
   )
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const conceptMemoryIndex = useMemo(
+    () => buildConceptMemoryIndex({ quotes: allQuotes, invoices, expenses }),
+    [allQuotes, invoices, expenses],
+  )
   const taxAmountValue = useMemo(
     () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
     [subtotalValue],
@@ -167,6 +183,39 @@ export function QuoteEditFlow({
   function addLine() {
     setIsDirty(true)
     setLines((current) => [...current, createBlankQuoteLine()])
+  }
+
+  function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    updateLine(localId, 'concept', suggestion.label)
+  }
+
+  function applyStructuredSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    if (!suggestion.structuredSuggestion) {
+      applyConceptSuggestionToLine(localId, suggestion)
+      return
+    }
+
+    setIsDirty(true)
+    setLines((current) => current.map((line) => (
+      line.local_id === localId
+        ? {
+          ...line,
+          concept: suggestion.structuredSuggestion?.concept ?? suggestion.label,
+          quantity: suggestion.structuredSuggestion?.quantity ?? line.quantity,
+          unit: suggestion.structuredSuggestion?.unit ?? line.unit,
+          unit_price: suggestion.structuredSuggestion?.unit_price ?? line.unit_price,
+        }
+        : line
+    )))
+  }
+
+  function getSuggestionsForLine(query: string) {
+    return getConceptSuggestions(conceptMemoryIndex, {
+      query,
+      domain: 'quote',
+      clientId: form.client_id || null,
+      limit: 6,
+    })
   }
 
   function getStepError(stepIndex: number): string | null {
@@ -495,6 +544,11 @@ export function QuoteEditFlow({
                       required
                     />
                   </label>
+                  <ConceptSuggestions
+                    suggestions={getSuggestionsForLine(line.concept)}
+                    onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
+                    onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                  />
 
                   <label className="form-field">
                     <span>Cantidad</span>

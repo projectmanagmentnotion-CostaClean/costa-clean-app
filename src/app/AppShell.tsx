@@ -1130,6 +1130,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'quotes' ? (
                 <QuotesPage
                   quotes={filteredQuotes}
+                  allQuotes={quotesWithCodes}
+                  invoices={invoicesWithCodes}
+                  expenses={expenses}
                   clients={clientsWithContext}
                   properties={properties}
                   error={quoteError}
@@ -1164,10 +1167,12 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'invoices' ? (
                 <InvoicesPage
                   invoices={filteredInvoices}
+                  allInvoices={invoicesWithCodes}
                   clients={clientsWithContext}
                   properties={properties}
                   jobs={jobsWithCodes}
                   quotes={quotesWithCodes}
+                  expenses={expenses}
                   payments={paymentsWithCodes}
                   error={invoiceError}
                   onInvoiceCreated={refreshBilling}
@@ -1186,6 +1191,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
               ) : currentView === 'expenses' ? (
                 <ExpensesPage
                   expenses={filteredExpenses}
+                  allExpenses={expenses}
+                  quotes={quotesWithCodes}
+                  invoices={invoicesWithCodes}
                   error={expenseError}
                   onExpenseCreated={refreshBilling}
                   activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}

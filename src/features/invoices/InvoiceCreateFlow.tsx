@@ -9,8 +9,15 @@ import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../co
 import { ClientBillingDetailsInlineForm } from '../clients/ClientBillingDetailsInlineForm'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import {
+  buildConceptMemoryIndex,
+  getConceptSuggestions,
+  type ConceptSuggestion,
+} from '../concepts/conceptMemory'
 import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { ExpenseListItem } from '../expenses/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
@@ -35,6 +42,7 @@ interface InvoiceCreateFlowProps extends FullViewActionFlowProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   invoices?: InvoiceListItem[]
+  expenses?: ExpenseListItem[]
   prefill?: InvoiceCreatePrefill | null
   onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
   onOpenExistingInvoice?: (invoiceId: string) => void
@@ -296,6 +304,7 @@ export function InvoiceCreateFlow({
   jobs,
   quotes,
   invoices = [],
+  expenses = [],
   onRefreshData,
   onCompleted,
   prefill = null,
@@ -359,6 +368,10 @@ export function InvoiceCreateFlow({
   }, [form.origin_mode, form.quote_id, quotes, selectedJob])
 
   const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
+  const conceptMemoryIndex = useMemo(
+    () => buildConceptMemoryIndex({ quotes, invoices, expenses }),
+    [quotes, invoices, expenses],
+  )
   const taxAmountValue = useMemo(
     () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
     [subtotalValue],
@@ -470,6 +483,39 @@ export function InvoiceCreateFlow({
   function addLine() {
     markDirty()
     setLines((current) => [...current, createBlankLine()])
+  }
+
+  function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    updateLine(localId, 'concept', suggestion.label)
+  }
+
+  function applyStructuredSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
+    if (!suggestion.structuredSuggestion) {
+      applyConceptSuggestionToLine(localId, suggestion)
+      return
+    }
+
+    markDirty()
+    setLines((current) => current.map((line) => (
+      line.local_id === localId
+        ? {
+          ...line,
+          concept: suggestion.structuredSuggestion?.concept ?? suggestion.label,
+          quantity: suggestion.structuredSuggestion?.quantity ?? line.quantity,
+          unit: suggestion.structuredSuggestion?.unit ?? line.unit,
+          unit_price: suggestion.structuredSuggestion?.unit_price ?? line.unit_price,
+        }
+        : line
+    )))
+  }
+
+  function getSuggestionsForLine(query: string) {
+    return getConceptSuggestions(conceptMemoryIndex, {
+      query,
+      domain: 'invoice',
+      clientId: form.client_id || null,
+      limit: 6,
+    })
   }
 
   function getStepError(stepIndex: number): string | null {
@@ -888,6 +934,9 @@ export function InvoiceCreateFlow({
                   <QuoteCreateFlow
                     clients={clients}
                     properties={properties}
+                    quotes={quotes}
+                    invoices={invoices}
+                    expenses={expenses}
                     onRefreshData={onRefreshData}
                     onCompleted={async () => {}}
                     onDirtyChange={setIsDirty}
@@ -1128,6 +1177,11 @@ export function InvoiceCreateFlow({
                       required
                     />
                   </label>
+                  <ConceptSuggestions
+                    suggestions={getSuggestionsForLine(line.concept)}
+                    onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
+                    onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                  />
 
                   <label className="form-field">
                     <span>Cantidad</span>

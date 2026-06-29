@@ -11,14 +11,24 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
+import { normalizeLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import {
   completeContextualActionFlow,
   completeFullViewActionFlow,
   type FullViewActionFlowProps,
 } from '../shared/actionFlowLifecycle'
+import {
+  buildBillingLinePayloads,
+  calculateBillingLineSubtotal,
+  calculateBillingSubtotal,
+  createBlankBillingLine,
+  formatBillingLineSubtotalInput,
+  formatMoneyInput,
+  type BillingLineFormState,
+} from '../shared/billingLineDrafts'
 import type { JobCreatePrefill } from './jobCreatePrefill'
-import type { JobListItem } from './types'
+import type { JobBillingLineItem, JobListItem } from './types'
 import '../shared/fullscreen-create-flow.css'
 
 interface JobCreateFlowProps extends FullViewActionFlowProps {
@@ -38,10 +48,6 @@ interface FormState {
   scheduled_date: string
   status: string
   service_type: string
-  billing_concept: string
-  billing_quantity: string
-  billing_unit: string
-  billing_unit_price: string
   notes: string
 }
 
@@ -72,12 +78,6 @@ function getServiceTypeOptionLabel(value: string): string {
   }
 }
 
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
 function createDefaultFormState(): FormState {
   return {
     client_id: '',
@@ -86,10 +86,6 @@ function createDefaultFormState(): FormState {
     scheduled_date: '',
     status: 'scheduled',
     service_type: 'standard_cleaning',
-    billing_concept: getServiceTypeOptionLabel('standard_cleaning'),
-    billing_quantity: '1.00',
-    billing_unit: 'servicio',
-    billing_unit_price: '',
     notes: '',
   }
 }
@@ -103,8 +99,50 @@ function applyPrefillToForm(prefill: JobCreatePrefill): FormState {
     property_id: prefill.property_id,
     quote_id: prefill.quote_id,
     service_type: prefill.service_type ?? defaultState.service_type,
-    billing_concept: prefill.billing_concept || defaultState.billing_concept,
     notes: prefill.notes,
+  }
+}
+
+function buildInitialBillingLines(prefill: JobCreatePrefill | null): BillingLineFormState[] {
+  if (!prefill) {
+    return [createBlankBillingLine({ concept: getServiceTypeOptionLabel('standard_cleaning'), unit_price: '' })]
+  }
+
+  return [
+    createBlankBillingLine({
+      concept: prefill.billing_concept || getServiceTypeOptionLabel(prefill.service_type ?? 'standard_cleaning'),
+      unit_price: '',
+    }),
+  ]
+}
+
+function normalizeJobBillingLines(lines: BillingLineFormState[]): JobBillingLineItem[] | null {
+  const payloads = buildBillingLinePayloads(lines, (concept) => normalizeLineConcept(concept))
+  if (!payloads || payloads.length === 0) return null
+  return payloads
+}
+
+function buildJobBillingSummary(
+  lines: JobBillingLineItem[],
+  fallbackConcept: string,
+): Pick<JobListItem, 'billing_concept' | 'billing_quantity' | 'billing_unit' | 'billing_unit_price'> {
+  if (lines.length === 1) {
+    return {
+      billing_concept: lines[0].concept,
+      billing_quantity: lines[0].quantity,
+      billing_unit: lines[0].unit,
+      billing_unit_price: lines[0].unit_price,
+    }
+  }
+
+  const subtotal = lines.reduce((sum, line) => sum + line.line_subtotal, 0)
+  const firstConcept = lines[0]?.concept || fallbackConcept
+
+  return {
+    billing_concept: `${firstConcept} (+${lines.length - 1} linea(s))`,
+    billing_quantity: 1,
+    billing_unit: 'servicio',
+    billing_unit_price: subtotal,
   }
 }
 
@@ -140,6 +178,7 @@ export function JobCreateFlow({
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
+  const [billingLines, setBillingLines] = useState<BillingLineFormState[]>(() => buildInitialBillingLines(prefill))
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -196,6 +235,7 @@ export function JobCreateFlow({
   const nextStepLabel = selectedQuote
     ? 'Despues de guardar, el siguiente paso natural es crear factura desde este servicio.'
     : 'Despues de guardar, podras volver al contexto o pasar a facturacion cuando toque.'
+  const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
 
   useEffect(() => {
     if (!prefill || prefill.request_id === lastAppliedPrefillId) {
@@ -203,6 +243,7 @@ export function JobCreateFlow({
     }
 
     setForm(applyPrefillToForm(prefill))
+    setBillingLines(buildInitialBillingLines(prefill))
     setSubmitError(null)
     setIsDirty(false)
     setLastAppliedPrefillId(prefill.request_id)
@@ -215,11 +256,21 @@ export function JobCreateFlow({
       ...current,
       client_id: selectedQuote.client_id ?? current.client_id,
       property_id: selectedQuote.property_id ?? current.property_id,
-      billing_concept: current.billing_concept.trim()
-        ? current.billing_concept
-        : selectedQuote.lines?.[0]?.concept?.trim() || selectedQuote.quote_lines?.[0]?.concept?.trim() || current.billing_concept,
       notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
     }))
+
+    const inheritedConcept = selectedQuote.lines?.[0]?.concept?.trim() || selectedQuote.quote_lines?.[0]?.concept?.trim() || ''
+    if (!inheritedConcept) return
+
+    setBillingLines((current) => {
+      if (current.length !== 1 || current[0].concept.trim()) return current
+      return [
+        {
+          ...current[0],
+          concept: inheritedConcept,
+        },
+      ]
+    })
   }, [selectedQuote])
 
   function markDirty() {
@@ -243,16 +294,29 @@ export function JobCreateFlow({
         next.quote_id = ''
       }
 
-      if (field === 'service_type') {
-        const currentConcept = current.billing_concept.trim()
-        const previousServiceConcept = getServiceTypeOptionLabel(current.service_type)
-        if (!currentConcept || currentConcept === previousServiceConcept) {
-          next.billing_concept = getServiceTypeOptionLabel(String(value))
-        }
-      }
-
       return next
     })
+  }
+
+  function updateBillingLine<K extends keyof BillingLineFormState>(
+    localId: string,
+    field: K,
+    value: BillingLineFormState[K],
+  ) {
+    markDirty()
+    setBillingLines((current) => current.map((line) => (
+      line.local_id === localId ? { ...line, [field]: value } : line
+    )))
+  }
+
+  function removeBillingLine(localId: string) {
+    markDirty()
+    setBillingLines((current) => (current.length > 1 ? current.filter((line) => line.local_id !== localId) : current))
+  }
+
+  function addBillingLine() {
+    markDirty()
+    setBillingLines((current) => [...current, createBlankBillingLine({ unit_price: '' })])
   }
 
   function getStepError(stepIndex: number): string | null {
@@ -267,17 +331,9 @@ export function JobCreateFlow({
     }
 
     if (stepIndex === 2) {
-      const billingQuantity = parseDecimalInput(form.billing_quantity)
-      const billingUnitPrice = form.billing_unit_price.trim()
-        ? parseDecimalInput(form.billing_unit_price)
-        : null
-
-      if (Number.isNaN(billingQuantity) || billingQuantity <= 0) {
-        return 'La cantidad de facturacion debe ser mayor que 0.'
-      }
-
-      if (billingUnitPrice !== null && (Number.isNaN(billingUnitPrice) || billingUnitPrice < 0)) {
-        return 'El precio unitario debe estar vacio o ser mayor o igual que 0.'
+      const linePayloads = normalizeJobBillingLines(billingLines)
+      if (!linePayloads || linePayloads.length === 0) {
+        return 'Necesitas al menos una linea valida con concepto, cantidad y precio.'
       }
     }
 
@@ -325,22 +381,17 @@ export function JobCreateFlow({
         return
       }
 
-      const billingQuantity = parseDecimalInput(form.billing_quantity)
-      const billingUnitPrice = form.billing_unit_price.trim()
-        ? parseDecimalInput(form.billing_unit_price)
-        : null
-
-      if (Number.isNaN(billingQuantity) || billingQuantity <= 0) {
+      const normalizedBillingLines = normalizeJobBillingLines(billingLines)
+      if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
         setCurrentStep(2)
-        setSubmitError('La cantidad de facturacion debe ser mayor que 0.')
+        setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
 
-      if (billingUnitPrice !== null && (Number.isNaN(billingUnitPrice) || billingUnitPrice < 0)) {
-        setCurrentStep(2)
-        setSubmitError('El precio unitario debe estar vacio o ser mayor o igual que 0.')
-        return
-      }
+      const billingSummary = buildJobBillingSummary(
+        normalizedBillingLines,
+        getServiceTypeOptionLabel(form.service_type),
+      )
 
       const jobId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -362,10 +413,10 @@ export function JobCreateFlow({
           scheduled_date: form.scheduled_date,
           status: form.status,
           service_type: form.service_type,
-          billing_concept: form.billing_concept.trim() || null,
-          billing_quantity: billingQuantity,
-          billing_unit: form.billing_unit.trim() || 'servicio',
-          billing_unit_price: billingUnitPrice,
+          billing_concept: billingSummary.billing_concept,
+          billing_quantity: billingSummary.billing_quantity,
+          billing_unit: billingSummary.billing_unit,
+          billing_unit_price: billingSummary.billing_unit_price,
           notes: form.notes.trim() || null,
         }),
       })
@@ -390,10 +441,11 @@ export function JobCreateFlow({
         scheduled_date: form.scheduled_date,
         status: form.status,
         service_type: form.service_type,
-        billing_concept: form.billing_concept.trim() || null,
-        billing_quantity: billingQuantity,
-        billing_unit: form.billing_unit.trim() || 'servicio',
-        billing_unit_price: billingUnitPrice,
+        billing_concept: billingSummary.billing_concept,
+        billing_quantity: billingSummary.billing_quantity,
+        billing_unit: billingSummary.billing_unit,
+        billing_unit_price: billingSummary.billing_unit_price,
+        billing_lines: normalizedBillingLines,
         notes: form.notes.trim() || null,
       }
 
@@ -478,16 +530,16 @@ export function JobCreateFlow({
         <span className="cc-step-flow__eyebrow">Base de facturacion</span>
         <div className="cc-create-flow__summary-list">
           <div className="cc-create-flow__summary-item">
-            <span>Cantidad</span>
-            <strong>{form.billing_quantity || 'Pendiente'}</strong>
+            <span>Lineas</span>
+            <strong>{billingLines.length}</strong>
           </div>
           <div className="cc-create-flow__summary-item">
-            <span>Unidad</span>
-            <strong>{form.billing_unit || 'servicio'}</strong>
+            <span>Concepto base</span>
+            <strong>{billingLines[0]?.concept.trim() || 'Pendiente'}</strong>
           </div>
           <div className="cc-create-flow__summary-item">
-            <span>Precio unitario</span>
-            <strong>{form.billing_unit_price.trim() || 'Se definira despues'}</strong>
+            <span>Total estimado</span>
+            <strong>{formatMoneyInput(billingSubtotal)} €</strong>
           </div>
         </div>
       </section>
@@ -812,57 +864,90 @@ export function JobCreateFlow({
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Base de facturacion pendiente' : 'Base de facturacion lista'}</span>
-                <strong>{currentStepError ?? 'Cantidad, unidad, concepto y notas ya no bloquean el guardado.'}</strong>
+                <strong>{currentStepError ?? `${billingLines.length} linea(s) listas para reutilizar al facturar este servicio.`}</strong>
               </div>
             </article>
 
-            <div className="cc-create-flow__grid">
-              <label className="form-field form-field-full">
-                <span>Concepto de facturacion</span>
-                <input
-                  value={form.billing_concept}
-                  onChange={(event) => updateField('billing_concept', event.target.value)}
-                  placeholder="Descripcion profesional que se mostrara en factura"
-                />
-              </label>
+            <label className="form-field form-field-full">
+              <span>Notas operativas</span>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                placeholder="Notas operativas del servicio"
+                rows={4}
+              />
+            </label>
 
-              <label className="form-field">
-                <span>Cantidad *</span>
-                <input
-                  value={form.billing_quantity}
-                  onChange={(event) => updateField('billing_quantity', event.target.value)}
-                  required
-                />
-              </label>
+            <div className="cc-create-flow__line-list">
+              {billingLines.map((line, index) => (
+                <article key={line.local_id} className="cc-create-flow__line-card">
+                  <label className="form-field form-field-full">
+                    <span>Concepto {index + 1}</span>
+                    <input
+                      value={line.concept}
+                      onChange={(event) => updateBillingLine(line.local_id, 'concept', event.target.value)}
+                      placeholder="Descripcion profesional que se mostrara en factura"
+                      required
+                    />
+                  </label>
 
-              <label className="form-field">
-                <span>Unidad *</span>
-                <input
-                  value={form.billing_unit}
-                  onChange={(event) => updateField('billing_unit', event.target.value)}
-                  placeholder="servicio, hora, m2..."
-                  required
-                />
-              </label>
+                  <label className="form-field">
+                    <span>Cantidad</span>
+                    <input
+                      value={line.quantity}
+                      onChange={(event) => updateBillingLine(line.local_id, 'quantity', event.target.value)}
+                      required
+                    />
+                  </label>
 
-              <label className="form-field">
-                <span>Precio unitario</span>
-                <input
-                  value={form.billing_unit_price}
-                  onChange={(event) => updateField('billing_unit_price', event.target.value)}
-                  placeholder="Opcional"
-                />
-              </label>
+                  <label className="form-field">
+                    <span>Unidad</span>
+                    <input
+                      value={line.unit}
+                      onChange={(event) => updateBillingLine(line.local_id, 'unit', event.target.value)}
+                      placeholder="servicio, hora, m2..."
+                      required
+                    />
+                  </label>
 
-              <label className="form-field form-field-full">
-                <span>Notas operativas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  placeholder="Notas operativas del servicio"
-                  rows={4}
-                />
-              </label>
+                  <label className="form-field">
+                    <span>Precio unitario</span>
+                    <input
+                      value={line.unit_price}
+                      onChange={(event) => updateBillingLine(line.local_id, 'unit_price', event.target.value)}
+                      required
+                    />
+                  </label>
+
+                  <label className="form-field">
+                    <span>Importe</span>
+                    <input value={formatBillingLineSubtotalInput(line)} readOnly />
+                  </label>
+
+                  <div className="cc-create-flow__line-actions">
+                    <small className="cc-create-flow__helper">
+                      {Number.isNaN(calculateBillingLineSubtotal(line)) ? 'Revisa cantidad o precio.' : 'Linea lista para reutilizar.'}
+                    </small>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => removeBillingLine(line.local_id)}
+                      disabled={billingLines.length === 1}
+                    >
+                      Quitar linea
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="cc-create-flow__microactions">
+              <strong>Microacciones</strong>
+              <div className="cc-create-flow__microactions-row">
+                <button type="button" className="secondary-button" onClick={addBillingLine}>
+                  Añadir linea
+                </button>
+              </div>
             </div>
           </section>
         ) : null}
@@ -901,10 +986,35 @@ export function JobCreateFlow({
               </article>
               <article className="cc-create-flow__review-card">
                 <span>Facturacion</span>
-                <strong>{form.billing_concept.trim() || 'Sin concepto'}</strong>
-                <small>{`${form.billing_quantity || '0'} ${form.billing_unit || 'servicio'}`}</small>
+                <strong>{billingLines.length} linea(s)</strong>
+                <small>{`Total ${formatMoneyInput(billingSubtotal)} €`}</small>
               </article>
             </div>
+
+            {billingLines.map((line, index) => (
+              <article key={line.local_id} className="cc-create-flow__panel">
+                <strong>Línea {index + 1}</strong>
+                <small>{line.concept.trim() || 'Sin concepto'}</small>
+                <div className="cc-create-flow__summary-list">
+                  <div className="cc-create-flow__summary-item">
+                    <span>Cantidad</span>
+                    <strong>{line.quantity}</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Unidad</span>
+                    <strong>{line.unit}</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Precio</span>
+                    <strong>{line.unit_price} €</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Importe</span>
+                    <strong>{formatBillingLineSubtotalInput(line)} €</strong>
+                  </div>
+                </div>
+              </article>
+            ))}
 
             {submitError ? (
               <div className="cc-alert cc-alert--error">

@@ -1,4 +1,14 @@
-﻿export interface JobListItem {
+export interface JobBillingLineItem {
+  id?: string
+  sort_order?: number
+  concept: string
+  quantity: number
+  unit: string
+  unit_price: number
+  line_subtotal: number
+}
+
+export interface JobListItem {
   id: string
   display_code: string | null
   client_id: string
@@ -17,5 +27,6 @@
   billing_quantity?: number | null
   billing_unit?: string | null
   billing_unit_price?: number | null
+  billing_lines?: JobBillingLineItem[] | null
   notes?: string | null
 }

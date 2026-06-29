@@ -31,6 +31,18 @@ import {
   completeFullViewActionFlow,
   type FullViewActionFlowProps,
 } from '../shared/actionFlowLifecycle'
+import {
+  buildBillingLinePayloads,
+  calculateBillingLineSubtotal,
+  calculateBillingSubtotal,
+  createBlankBillingLine,
+  createLocalId,
+  formatBillingLineSubtotalInput,
+  formatMoneyInput,
+  formatQuantityInput,
+  roundMoney,
+  type BillingLineFormState,
+} from '../shared/billingLineDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import './InvoiceCreateFlow.css'
@@ -59,14 +71,6 @@ interface FormState {
   issue_date: string
   status: string
   notes: string
-}
-
-interface LineFormState {
-  local_id: string
-  concept: string
-  quantity: string
-  unit: string
-  unit_price: string
 }
 
 interface LinePayload {
@@ -101,41 +105,7 @@ function todayLocalDate(): string {
   return `${year}-${month}-${day}`
 }
 
-function createLocalId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function roundMoney(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-function formatMoneyInput(value: number): string {
-  return roundMoney(value).toFixed(2)
-}
-
-function formatQuantityInput(value: number): string {
-  return roundMoney(value).toFixed(2)
-}
-
-function createBlankLine(): LineFormState {
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: '',
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: '0.00',
-  }
-}
+type LineFormState = BillingLineFormState
 
 function createDefaultFormState(): FormState {
   return {
@@ -177,6 +147,27 @@ function getJobBillingLine(job: JobListItem | null): LineFormState | null {
   }
 }
 
+function getJobBillingLines(job: JobListItem | null): LineFormState[] | null {
+  if (!job) return null
+
+  if (job.billing_lines?.length) {
+    const normalized = job.billing_lines
+      .filter((line) => Number.isFinite(line.quantity) && line.quantity > 0 && Number.isFinite(line.unit_price) && line.unit_price >= 0)
+      .map((line) => ({
+        local_id: createLocalId('LINE-DRAFT'),
+        concept: normalizeLineConcept(line.concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
+        quantity: formatQuantityInput(line.quantity),
+        unit: line.unit?.trim() || 'servicio',
+        unit_price: formatMoneyInput(line.unit_price),
+      }))
+
+    if (normalized.length > 0) return normalized
+  }
+
+  const singleLine = getJobBillingLine(job)
+  return singleLine ? [singleLine] : null
+}
+
 function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
   if (!quote) return null
 
@@ -197,7 +188,7 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
 
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
   if (prefill.lines.length === 0) {
-    return [createBlankLine()]
+    return [createBlankBillingLine()]
   }
 
   return prefill.lines.map((line) => ({
@@ -228,51 +219,14 @@ function applyPrefillToForm(prefill: InvoiceCreatePrefill): FormState {
   }
 }
 
-function calculateLineSubtotal(line: LineFormState): number {
-  const quantity = parseDecimalInput(line.quantity)
-  const unitPrice = parseDecimalInput(line.unit_price)
-  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return Number.NaN
-  return roundMoney(quantity * unitPrice)
-}
-
-function formatLineSubtotalInput(line: LineFormState): string {
-  const lineSubtotal = calculateLineSubtotal(line)
-  return Number.isNaN(lineSubtotal) ? '' : formatMoneyInput(lineSubtotal)
-}
-
-function calculateSubtotal(lines: LineFormState[]): number {
-  return roundMoney(lines.reduce((sum, line) => {
-    const lineSubtotal = calculateLineSubtotal(line)
-    return Number.isNaN(lineSubtotal) ? sum : sum + lineSubtotal
-  }, 0))
-}
-
 function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePayload[] | null {
-  const payloads: LinePayload[] = []
-
-  for (const [index, line] of lines.entries()) {
-    const concept = normalizeLineConcept(line.concept)
-    const quantity = parseDecimalInput(line.quantity)
-    const unitPrice = parseDecimalInput(line.unit_price)
-    const lineSubtotal = calculateLineSubtotal(line)
-
-    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || !Number.isFinite(lineSubtotal)) {
-      return null
-    }
-
-    payloads.push({
-      id: createLocalId('INVOICE-LINE'),
-      invoice_id: invoiceId,
-      sort_order: index + 1,
-      concept,
-      quantity: roundMoney(quantity),
-      unit: line.unit.trim() || 'servicio',
-      unit_price: roundMoney(unitPrice),
-      line_subtotal: lineSubtotal,
-    })
-  }
-
-  return payloads
+  const payloads = buildBillingLinePayloads(lines, (concept) => normalizeLineConcept(concept))
+  if (!payloads) return null
+  return payloads.map((line) => ({
+    ...line,
+    id: createLocalId('INVOICE-LINE'),
+    invoice_id: invoiceId,
+  }))
 }
 
 function getOriginDescription(originMode: InvoiceOriginMode): string {
@@ -314,7 +268,8 @@ export function InvoiceCreateFlow({
   onDirtyChange,
 }: InvoiceCreateFlowProps) {
   const [form, setForm] = useState<FormState>(() => (prefill ? applyPrefillToForm(prefill) : createDefaultFormState()))
-  const [lines, setLines] = useState<LineFormState[]>(() => (prefill ? buildLinesFromPrefill(prefill) : [createBlankLine()]))
+  const [lines, setLines] = useState<LineFormState[]>(() => (prefill ? buildLinesFromPrefill(prefill) : [createBlankBillingLine()]))
+  const [contextualJob, setContextualJob] = useState<JobListItem | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -353,10 +308,10 @@ export function InvoiceCreateFlow({
     () => properties.find((property) => property.id === form.property_id) ?? null,
     [properties, form.property_id],
   )
-  const selectedJob = useMemo(
-    () => jobs.find((job) => job.id === form.job_id) ?? null,
-    [jobs, form.job_id],
-  )
+  const selectedJob = useMemo(() => {
+    if (contextualJob?.id === form.job_id) return contextualJob
+    return jobs.find((job) => job.id === form.job_id) ?? null
+  }, [contextualJob, jobs, form.job_id])
   const selectedQuote = useMemo(() => {
     if (form.origin_mode === 'job') {
       if (!selectedJob?.quote_id) return null
@@ -367,7 +322,7 @@ export function InvoiceCreateFlow({
     return quotes.find((quote) => quote.id === form.quote_id) ?? null
   }, [form.origin_mode, form.quote_id, quotes, selectedJob])
 
-  const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
+  const subtotalValue = useMemo(() => calculateBillingSubtotal(lines), [lines])
   const conceptMemoryIndex = useMemo(
     () => buildConceptMemoryIndex({ quotes, invoices, expenses }),
     [quotes, invoices, expenses],
@@ -389,7 +344,7 @@ export function InvoiceCreateFlow({
   }, [isDirty, onDirtyChange])
 
   useEffect(() => {
-    if (!selectedJob || form.origin_mode !== 'job') return
+      if (!selectedJob || form.origin_mode !== 'job') return
 
     setForm((current) => ({
       ...current,
@@ -399,7 +354,7 @@ export function InvoiceCreateFlow({
       notes: current.notes.trim() ? current.notes : selectedJob.quote_id ? buildVisibleInvoiceNotes() : '',
     }))
 
-    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(selectedQuote) ?? createBlankLine()])
+    setLines(getJobBillingLines(selectedJob) ?? [getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
   }, [form.origin_mode, selectedJob, selectedQuote])
 
   useEffect(() => {
@@ -412,7 +367,7 @@ export function InvoiceCreateFlow({
       notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
     }))
 
-    setLines([getQuoteBillingLine(selectedQuote) ?? createBlankLine()])
+    setLines([getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
   }, [form.origin_mode, selectedQuote])
 
   useEffect(() => {
@@ -432,6 +387,9 @@ export function InvoiceCreateFlow({
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     markDirty()
+    if ((field === 'origin_mode' && value !== 'job') || (field === 'job_id' && contextualJob?.id !== value)) {
+      setContextualJob(null)
+    }
     setForm((current) => {
       const next = {
         ...current,
@@ -482,7 +440,7 @@ export function InvoiceCreateFlow({
 
   function addLine() {
     markDirty()
-    setLines((current) => [...current, createBlankLine()])
+    setLines((current) => [...current, createBlankBillingLine()])
   }
 
   function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
@@ -818,6 +776,7 @@ export function InvoiceCreateFlow({
               await completeContextualActionFlow({
                 created: job,
                 applyCreated: async (createdJob) => {
+                  setContextualJob(createdJob)
                   setForm((current) => ({
                     ...current,
                     origin_mode: 'job',
@@ -1264,12 +1223,12 @@ export function InvoiceCreateFlow({
 
                   <label className="form-field">
                     <span>Importe</span>
-                    <input value={formatLineSubtotalInput(line)} readOnly />
+                    <input value={formatBillingLineSubtotalInput(line)} readOnly />
                   </label>
 
                   <div className="cc-create-flow__line-actions">
                     <small className="cc-create-flow__helper">
-                      {Number.isNaN(calculateLineSubtotal(line)) ? 'Revisa cantidad o precio.' : 'Linea lista para emitir.'}
+                      {Number.isNaN(calculateBillingLineSubtotal(line)) ? 'Revisa cantidad o precio.' : 'Linea lista para emitir.'}
                     </small>
                     <button
                       type="button"
@@ -1353,7 +1312,7 @@ export function InvoiceCreateFlow({
                   </div>
                   <div className="cc-create-flow__summary-item">
                     <span>Importe</span>
-                    <strong>{formatLineSubtotalInput(line)} €</strong>
+                    <strong>{formatBillingLineSubtotalInput(line)} €</strong>
                   </div>
                 </div>
               </article>

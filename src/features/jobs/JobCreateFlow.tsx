@@ -6,6 +6,8 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { findJobDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
@@ -23,8 +25,10 @@ interface JobCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
+  jobs?: JobListItem[]
   prefill?: JobCreatePrefill | null
   onCreatedJob?: (job: JobListItem) => void | Promise<void>
+  onOpenExistingJob?: (jobId: string) => void
 }
 
 interface FormState {
@@ -124,10 +128,12 @@ export function JobCreateFlow({
   clients,
   properties,
   quotes,
+  jobs = [],
   onRefreshData,
   onCompleted,
   prefill = null,
   onCreatedJob,
+  onOpenExistingJob,
   onCancel,
   onDirtyChange,
 }: JobCreateFlowProps) {
@@ -143,6 +149,7 @@ export function JobCreateFlow({
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findJobDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -295,7 +302,7 @@ export function JobCreateFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function handleSave() {
+  async function handleSave(skipDuplicateCheck = false) {
     setSubmitError(null)
 
     for (let index = 0; index < jobSteps.length - 1; index += 1) {
@@ -388,6 +395,14 @@ export function JobCreateFlow({
         billing_unit: form.billing_unit.trim() || 'servicio',
         billing_unit_price: billingUnitPrice,
         notes: form.notes.trim() || null,
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findJobDuplicateGroups(nextCreatedJob, jobs)
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       await onCreatedJob?.(nextCreatedJob)
@@ -498,7 +513,7 @@ export function JobCreateFlow({
           {jobNextLabels[currentStep]}
         </button>
       ) : (
-        <button type="button" className="primary-button" disabled={isSubmitting} onClick={handleSave}>
+        <button type="button" className="primary-button" disabled={isSubmitting} onClick={() => void handleSave()}>
           {isSubmitting ? 'Guardando...' : 'Guardar servicio'}
         </button>
       )}
@@ -860,6 +875,26 @@ export function JobCreateFlow({
           </section>
         ) : null}
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible servicio duplicado"
+        description="Hemos encontrado coincidencias por cliente, propiedad, fecha o tipo de servicio. Revisa antes de guardar un servicio nuevo."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(jobId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingJob?.(jobId)
+        }}
+        onUseRecord={(jobId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingJob?.(jobId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSave(true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

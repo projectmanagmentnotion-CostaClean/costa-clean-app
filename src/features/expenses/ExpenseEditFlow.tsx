@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
+import { findExpenseDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { updateExpense } from './expenseApi'
@@ -25,6 +27,8 @@ interface ExpenseEditFlowProps extends FullViewActionFlowProps {
   title?: string
   description?: string
   submitLabel?: string
+  allExpenses?: ExpenseListItem[]
+  onOpenExistingExpense?: (expenseId: string) => void
 }
 
 interface EditFormState {
@@ -93,6 +97,8 @@ export function ExpenseEditFlow({
   title = 'Editar gasto',
   description = 'La edicion principal vive en un flujo dedicado para evitar scroll largo dentro del detalle.',
   submitLabel = 'Guardar cambios',
+  allExpenses = [],
+  onOpenExistingExpense,
 }: ExpenseEditFlowProps) {
   const [form, setForm] = useState<EditFormState>(() => buildFormState(expense))
   const [currentStep, setCurrentStep] = useState(0)
@@ -100,6 +106,7 @@ export function ExpenseEditFlow({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
 
   useEffect(() => {
     setForm(buildFormState(expense))
@@ -144,7 +151,7 @@ export function ExpenseEditFlow({
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>, skipDuplicateCheck = false) {
     event.preventDefault()
     setError(null)
     setIsSaving(true)
@@ -174,6 +181,33 @@ export function ExpenseEditFlow({
       const finalTotal = Number.isNaN(totalValue)
         ? Number(formatMoneyInput(subtotalValue + finalTaxAmount))
         : Number(formatMoneyInput(totalValue))
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findExpenseDuplicateGroups({
+          ...expense,
+          expense_date: form.expense_date,
+          supplier_name: form.supplier_name,
+          category: form.category,
+          description: form.description,
+          document_type: form.document_type,
+          payment_status: form.payment_status,
+          subtotal: Number(formatMoneyInput(subtotalValue)),
+          tax_rate: Number(formatMoneyInput(taxRateValue)),
+          tax_amount: finalTaxAmount,
+          total: finalTotal,
+          is_deductible: form.is_deductible,
+          document_support_status: form.document_support_status,
+          fiscal_review_status: form.fiscal_review_status,
+          fiscal_risk_level: form.fiscal_risk_level,
+          manager_note: form.manager_note.trim() || null,
+          notes: form.notes.trim() || null,
+        }, allExpenses)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
 
       await updateExpense(expense.id, {
         expense_date: form.expense_date,
@@ -502,6 +536,26 @@ export function ExpenseEditFlow({
           )}
         </div>
       </form>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible gasto duplicado"
+        description="La version editada coincide con otro gasto existente por proveedor, fecha, concepto o importe. Revisa antes de guardar."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(expenseId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingExpense?.(expenseId)
+        }}
+        onUseRecord={(expenseId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingExpense?.(expenseId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSubmit({ preventDefault() {} } as FormEvent<HTMLFormElement>, true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

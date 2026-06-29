@@ -2,6 +2,9 @@ import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildJobDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
@@ -67,6 +70,7 @@ export function JobsPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const {
     activeJobId,
     activeTab,
@@ -79,6 +83,7 @@ export function JobsPage({
     () => jobs.find((job) => job.id === activeJobId) ?? null,
     [activeJobId, jobs],
   )
+  const duplicateGroups = useMemo(() => buildJobDuplicateGroups(jobs), [jobs])
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
@@ -142,6 +147,15 @@ export function JobsPage({
             </button>
           </div>
 
+          {duplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${duplicateGroups.length} grupo(s) de posibles servicios duplicados`}
+              description="Se han detectado coincidencias operativas por cliente, propiedad, fecha y tipo de servicio. Revísalas sin ensuciar la agenda principal."
+              actionLabel="Revisar duplicados"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
           {isCreateFormVisible ? (
             <ActionFlowOverlay
               isOpen={isCreateFormVisible}
@@ -167,9 +181,16 @@ export function JobsPage({
                   clients={clients}
                   properties={properties}
                   quotes={quotes}
+                  jobs={jobs}
                   onRefreshData={onJobCreated}
                   onCompleted={handleJobFlowCompleted}
                   prefill={createPrefill}
+                  onOpenExistingJob={(jobId) => {
+                    setHasCreateFormDirty(false)
+                    setShowCreateForm(false)
+                    onPrefillConsumed()
+                    handleOpenWorkspace(jobId)
+                  }}
                   onCancel={() => {
                     setHasCreateFormDirty(false)
                     setShowCreateForm(false)
@@ -202,6 +223,18 @@ export function JobsPage({
               onSelectJob={(job) => handleOpenWorkspace(job.id)}
             />
           </div>
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Revisión de servicios duplicados"
+            description="Estas coincidencias ya existen en la agenda operativa. Úsalas para evitar dobles programaciones o servicios repetidos."
+            groups={duplicateGroups}
+            onClose={() => setShowDuplicateReview(false)}
+            onOpenRecord={(jobId) => {
+              setShowDuplicateReview(false)
+              handleOpenWorkspace(jobId)
+            }}
+          />
         </>
       ) : (
         <JobWorkspace

@@ -5,6 +5,8 @@ import { formatClientLabel, formatJobLabel, formatQuoteLabel } from '../../app/r
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import {
   saveInvoiceWithLines,
 } from '../financial/financialWriteApi'
@@ -27,6 +29,8 @@ interface InvoiceEditFlowProps extends FullViewActionFlowProps {
   title?: string
   description?: string
   submitLabel?: string
+  allInvoices?: InvoiceListItem[]
+  onOpenExistingInvoice?: (invoiceId: string) => void
 }
 
 interface EditFormState {
@@ -242,6 +246,8 @@ export function InvoiceEditFlow({
   title = 'Editar factura',
   description = 'La edicion principal se mueve a un flujo dedicado para que la card de factura se quede como panel de lectura y cobro.',
   submitLabel = 'Guardar cambios',
+  allInvoices = [],
+  onOpenExistingInvoice,
 }: InvoiceEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
     job_id: invoice.job_id ?? '',
@@ -256,6 +262,7 @@ export function InvoiceEditFlow({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findInvoiceDuplicateGroups>>([])
 
   useEffect(() => {
     setForm({
@@ -381,7 +388,7 @@ export function InvoiceEditFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function handleSave() {
+  async function handleSave(skipDuplicateCheck = false) {
     for (let index = 0; index < invoiceEditSteps.length - 1; index += 1) {
       const stepError = getStepError(index)
       if (stepError) {
@@ -401,6 +408,30 @@ export function InvoiceEditFlow({
         setCurrentStep(1)
         setError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findInvoiceDuplicateGroups({
+          ...invoice,
+          job_id: form.job_id || null,
+          issue_date: form.issue_date,
+          status: form.status,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
+          billing_concept: linePayloads[0]?.concept ?? invoice.billing_concept ?? null,
+          billing_quantity: linePayloads[0]?.quantity ?? invoice.billing_quantity ?? null,
+          billing_unit: linePayloads[0]?.unit ?? invoice.billing_unit ?? null,
+          billing_unit_price: linePayloads[0]?.unit_price ?? invoice.billing_unit_price ?? null,
+          invoice_lines: linePayloads,
+          lines: linePayloads,
+        }, allInvoices)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       await saveInvoiceWithLines(
@@ -787,6 +818,26 @@ export function InvoiceEditFlow({
           </div>
         ) : null}
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible factura duplicada"
+        description="La version editada coincide con otra factura existente por origen, fecha o importe. Revisa antes de guardar."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(invoiceId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingInvoice?.(invoiceId)
+        }}
+        onUseRecord={(invoiceId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingInvoice?.(invoiceId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSave(true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

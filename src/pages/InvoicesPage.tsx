@@ -6,6 +6,9 @@ import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildInvoiceDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
@@ -86,6 +89,7 @@ export function InvoicesPage({
   } | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [listState, setListState] = useState({
     visibleCount: invoices.length,
     totalCount: invoices.length,
@@ -107,6 +111,7 @@ export function InvoicesPage({
   const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
   const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
   const cancelEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status === 'draft' || invoice.status === 'issued')
+  const duplicateGroups = buildInvoiceDuplicateGroups(invoices)
 
   const detailEmptyState = error
     ? {
@@ -296,9 +301,16 @@ export function InvoicesPage({
                 properties={properties}
                 jobs={jobs}
                 quotes={quotes}
+                invoices={invoices}
                 onRefreshData={onInvoiceCreated}
                 onCompleted={handleInvoiceCreated}
                 prefill={createPrefill}
+                onOpenExistingInvoice={(invoiceId) => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  onPrefillConsumed()
+                  setSelectedInvoiceId(invoiceId)
+                }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
@@ -308,6 +320,15 @@ export function InvoicesPage({
               />
             </Suspense>
           </ActionFlowOverlay>
+        ) : null}
+
+        {duplicateGroups.length > 0 ? (
+          <DuplicateNotice
+            title={`${duplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
+            description="Se han detectado coincidencias por referencia, servicio origen o contexto de emisión. Revísalas desde una surface corta antes de seguir emitiendo."
+            actionLabel="Revisar duplicados"
+            onAction={() => setShowDuplicateReview(true)}
+          />
         ) : null}
 
         {detailInvoice ? (
@@ -326,7 +347,13 @@ export function InvoicesPage({
               invoice={detailInvoice}
               jobs={jobs}
               quotes={quotes}
+              allInvoices={invoices}
               onRefreshData={onInvoiceCreated}
+              onOpenExistingInvoice={(invoiceId) => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+                setSelectedInvoiceId(invoiceId)
+              }}
               onCompleted={async () => {
                 setShowMajorEdit(false)
                 setHasMajorEditDirty(false)
@@ -447,6 +474,19 @@ export function InvoicesPage({
           </div>
         </div>
       </section>
+
+      <DuplicateReviewOverlay
+        isOpen={showDuplicateReview}
+        title="Revisión de facturas duplicadas"
+        description="Estas coincidencias ya existen en el módulo. Revísalas para evitar dobles emisiones o referencias repetidas."
+        groups={duplicateGroups}
+        onClose={() => setShowDuplicateReview(false)}
+        onOpenRecord={(invoiceId) => {
+          setShowDuplicateReview(false)
+          setSelectedInvoiceId(invoiceId)
+          setShowDocumentScreen(false)
+        }}
+      />
 
       {showDocumentScreen && detailInvoice ? (
         <Suspense

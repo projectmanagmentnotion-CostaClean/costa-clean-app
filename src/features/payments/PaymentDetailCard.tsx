@@ -4,17 +4,21 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { findPaymentDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
+  payments: PaymentListItem[]
   invoices: InvoiceListItem[]
   onPaymentUpdated: () => Promise<void>
   onOpenInvoiceDetail: (invoiceId: string) => void
   onOpenClientWorkspace: (clientId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  onOpenExistingPayment?: (paymentId: string) => void
 }
 
 interface EditFormState {
@@ -47,11 +51,13 @@ function getPaymentMethodOptionLabel(value: string): string {
 
 export function PaymentDetailCard({
   payment,
+  payments,
   invoices,
   onPaymentUpdated,
   onOpenInvoiceDetail,
   onOpenClientWorkspace,
   onUnsavedChange,
+  onOpenExistingPayment,
 }: PaymentDetailCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -59,6 +65,7 @@ export function PaymentDetailCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPaymentDuplicateGroups>>([])
   const [form, setForm] = useState<EditFormState>({
     invoice_id: '',
     payment_date: '',
@@ -164,6 +171,22 @@ export function PaymentDetailCard({
         return
       }
 
+      const duplicateGroups = findPaymentDuplicateGroups({
+        ...payment,
+        invoice_id: form.invoice_id,
+        invoice_display_code: selectedInvoice?.display_code ?? payment.invoice_display_code ?? null,
+        invoice_number: selectedInvoice?.invoice_number ?? payment.invoice_number ?? null,
+        payment_date: form.payment_date,
+        amount: Number(formatMoneyInput(amount)),
+        payment_method: form.payment_method || null,
+        notes: form.notes.trim() || null,
+      }, payments)
+
+      if (duplicateGroups.length > 0) {
+        setPendingDuplicateGroups(duplicateGroups)
+        return
+      }
+
       await savePaymentAndRefreshInvoice({
         id: payment.id,
         invoice_id: form.invoice_id,
@@ -257,8 +280,46 @@ export function PaymentDetailCard({
             <div className="cc-detail-panel__next-step">
               <span>Siguiente paso recomendado</span>
               <strong>{paymentNextStep}</strong>
-            </div>
-          ) : null}
+        </div>
+      ) : null}
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible cobro duplicado"
+        description="La edicion actual coincide con otro cobro existente por factura, fecha, importe o metodo. Revisa antes de guardar."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(paymentId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPayment?.(paymentId)
+        }}
+        onUseRecord={(paymentId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPayment?.(paymentId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void savePaymentAndRefreshInvoice({
+            id: payment?.id ?? '',
+            invoice_id: form.invoice_id,
+            payment_date: form.payment_date,
+            amount: Number(formatMoneyInput(parseDecimalInput(form.amount))),
+            payment_method: form.payment_method || null,
+            origin_type: payment?.origin_type ?? 'manual',
+            notes: form.notes.trim() || null,
+          }).then(async () => {
+            await onPaymentUpdated()
+            setSuccessMessage('Pago actualizado correctamente.')
+            setIsEditing(false)
+            setIsDirty(false)
+          }).catch((err) => {
+            const message = err instanceof Error ? err.message : 'Error desconocido actualizando el pago.'
+            setSaveError(message)
+          }).finally(() => {
+            setIsSaving(false)
+          })
+        }}
+      />
 
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>

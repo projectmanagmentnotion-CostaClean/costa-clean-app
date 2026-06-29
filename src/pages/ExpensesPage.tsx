@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildExpenseDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { ExpenseCreateFlow } from '../features/expenses/ExpenseCreateFlow'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
@@ -38,11 +41,13 @@ export function ExpensesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
 
   const selectedExpense =
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
   const selectedExpenseKey = selectedExpense?.id ?? null
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
+  const duplicateGroups = useMemo(() => buildExpenseDuplicateGroups(expenses), [expenses])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en gastos')
@@ -172,6 +177,12 @@ export function ExpensesPage({
           }}
         >
           <ExpenseCreateFlow
+            expenses={expenses}
+            onOpenExistingExpense={(expenseId) => {
+              setHasCreateFormDirty(false)
+              setShowCreateForm(false)
+              setSelectedExpenseId(expenseId)
+            }}
             onRefreshData={onExpenseCreated}
             onCompleted={handleExpenseCreated}
             onCancel={() => {
@@ -181,6 +192,15 @@ export function ExpensesPage({
             onDirtyChange={setHasCreateFormDirty}
           />
         </ActionFlowOverlay>
+      ) : null}
+
+      {duplicateGroups.length > 0 ? (
+        <DuplicateNotice
+          title={`${duplicateGroups.length} grupo(s) de posibles gastos duplicados`}
+          description="Se han detectado coincidencias por proveedor, referencia, fecha o importe. Revísalas desde una surface específica antes de seguir cargando gastos parecidos."
+          actionLabel="Revisar duplicados"
+          onAction={() => setShowDuplicateReview(true)}
+        />
       ) : null}
 
       {activeFilterLabel ? (
@@ -203,11 +223,25 @@ export function ExpensesPage({
         <div className="cc-master-layout__detail">
           <ExpenseDetailCard
             expense={selectedExpense}
+            expenses={expenses}
             onExpenseUpdated={onExpenseCreated}
             onUnsavedChange={setHasUnsavedDetailChanges}
+            onOpenExistingExpense={(expenseId) => setSelectedExpenseId(expenseId)}
           />
         </div>
       </div>
+
+      <DuplicateReviewOverlay
+        isOpen={showDuplicateReview}
+        title="Revisión de gastos duplicados"
+        description="Estas coincidencias ya existen en el módulo y conviene revisarlas antes de seguir guardando soportes o importes parecidos."
+        groups={duplicateGroups}
+        onClose={() => setShowDuplicateReview(false)}
+        onOpenRecord={(expenseId) => {
+          setShowDuplicateReview(false)
+          setSelectedExpenseId(expenseId)
+        }}
+      />
     </section>
   )
 }

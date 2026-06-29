@@ -19,8 +19,10 @@ import './expense-surfaces.css'
 
 interface ExpenseDetailCardProps {
   expense: ExpenseListItem | null
+  expenses: ExpenseListItem[]
   onExpenseUpdated: () => Promise<void>
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
+  onOpenExistingExpense?: (expenseId: string) => void
 }
 
 function formatCurrency(value: number | null | undefined): string {
@@ -79,8 +81,10 @@ function resolvePrimaryAction(expense: ExpenseListItem) {
 
 export function ExpenseDetailCard({
   expense,
+  expenses,
   onExpenseUpdated,
   onUnsavedChange,
+  onOpenExistingExpense,
 }: ExpenseDetailCardProps) {
   const [showEditFlow, setShowEditFlow] = useState(false)
   const [showSupportSurface, setShowSupportSurface] = useState(false)
@@ -359,6 +363,8 @@ export function ExpenseDetailCard({
         >
           <ExpenseEditFlow
             expense={expense}
+            allExpenses={expenses}
+            onOpenExistingExpense={onOpenExistingExpense}
             onRefreshData={onExpenseUpdated}
             onCompleted={async () => {
               setHasEditDirty(false)

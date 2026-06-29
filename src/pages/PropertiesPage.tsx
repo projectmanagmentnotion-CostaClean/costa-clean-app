@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildPropertyDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { ClientListItem } from '../features/clients/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
@@ -48,6 +51,7 @@ export function PropertiesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const {
     activePropertyId,
     activeTab,
@@ -59,6 +63,7 @@ export function PropertiesPage({
     () => properties.find((property) => property.id === activePropertyId) ?? null,
     [activePropertyId, properties],
   )
+  const duplicateGroups = useMemo(() => buildPropertyDuplicateGroups(properties), [properties])
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
@@ -104,6 +109,15 @@ export function PropertiesPage({
             </button>
           </div>
 
+          {duplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${duplicateGroups.length} grupo(s) de posibles propiedades duplicadas`}
+              description="Se han detectado coincidencias por dirección o por inmueble repetido dentro del mismo cliente. Revísalas desde una surface específica."
+              actionLabel="Revisar duplicados"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
           {showCreateForm ? (
             <ActionFlowOverlay
               isOpen={showCreateForm}
@@ -118,10 +132,16 @@ export function PropertiesPage({
             >
               <PropertyCreateFlow
                 clients={clients}
+                properties={properties}
                 onRefreshData={onPropertyCreated}
                 onCompleted={async () => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                }}
+                onOpenExistingProperty={(propertyId) => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  openPropertyWorkspace(propertyId)
                 }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
@@ -152,6 +172,18 @@ export function PropertiesPage({
               }}
             />
           </div>
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Revisión de propiedades duplicadas"
+            description="Estas coincidencias ya existen en la cartera de inmuebles. Revísalas antes de seguir creando nuevas direcciones parecidas."
+            groups={duplicateGroups}
+            onClose={() => setShowDuplicateReview(false)}
+            onOpenRecord={(propertyId) => {
+              setShowDuplicateReview(false)
+              openPropertyWorkspace(propertyId)
+            }}
+          />
         </>
       ) : (
         <PropertyWorkspace

@@ -2,6 +2,9 @@ import { Suspense, lazy, useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildPaymentDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
 import { PaymentsList } from '../features/payments/PaymentsList'
 import type { PaymentListItem } from '../features/payments/types'
@@ -54,11 +57,13 @@ export function PaymentsPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
 
   const selectedPayment =
     payments.find((payment) => payment.id === selectedPaymentId) ?? payments[0] ?? null
   const selectedPaymentKey = selectedPayment?.id ?? null
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
+  const duplicateGroups = buildPaymentDuplicateGroups(payments)
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
@@ -139,8 +144,14 @@ export function PaymentsPage({
               properties={properties}
               jobs={jobs}
               quotes={quotes}
+              payments={payments}
               onRefreshData={onPaymentCreated}
               onCompleted={handlePaymentFlowCompleted}
+              onOpenExistingPayment={(paymentId) => {
+                setHasCreateFormDirty(false)
+                setShowCreateForm(false)
+                setSelectedPaymentId(paymentId)
+              }}
               onCancel={() => {
                 setHasCreateFormDirty(false)
                 setShowCreateForm(false)
@@ -149,6 +160,15 @@ export function PaymentsPage({
             />
           </Suspense>
         </ActionFlowOverlay>
+      ) : null}
+
+      {duplicateGroups.length > 0 ? (
+        <DuplicateNotice
+          title={`${duplicateGroups.length} grupo(s) de posibles cobros duplicados`}
+          description="Se han detectado coincidencias por factura, fecha, importe o método. Revísalas sin ensuciar el control principal de cobros."
+          actionLabel="Revisar duplicados"
+          onAction={() => setShowDuplicateReview(true)}
+        />
       ) : null}
 
       {activeFilterLabel ? (
@@ -172,14 +192,28 @@ export function PaymentsPage({
         <div className="cc-master-layout__detail">
           <PaymentDetailCard
             payment={selectedPayment}
+            payments={payments}
             invoices={invoices}
             onPaymentUpdated={onPaymentCreated}
             onOpenInvoiceDetail={onOpenInvoiceDetail}
             onOpenClientWorkspace={onOpenClientWorkspace}
             onUnsavedChange={setHasUnsavedDetailChanges}
+            onOpenExistingPayment={(paymentId) => setSelectedPaymentId(paymentId)}
           />
         </div>
       </div>
+
+      <DuplicateReviewOverlay
+        isOpen={showDuplicateReview}
+        title="Revisión de cobros duplicados"
+        description="Estas coincidencias ya existen en el módulo y conviene revisarlas antes de seguir registrando cobros parecidos."
+        groups={duplicateGroups}
+        onClose={() => setShowDuplicateReview(false)}
+        onOpenRecord={(paymentId) => {
+          setShowDuplicateReview(false)
+          setSelectedPaymentId(paymentId)
+        }}
+      />
     </section>
   )
 }

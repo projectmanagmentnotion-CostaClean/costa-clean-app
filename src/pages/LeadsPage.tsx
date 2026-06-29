@@ -1,11 +1,14 @@
 import { useMemo, useState } from 'react'
+import { getStatusLabel } from '../app/displayText'
+import type { ClientListItem } from '../features/clients/types'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildLeadDuplicateGroups } from '../features/duplicates/duplicateEngine'
+import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
 import type { LeadListItem } from '../features/leads/types'
-import type { LeadDraftRecord } from '../features/leadDrafts/types'
-import type { ClientListItem } from '../features/clients/types'
-import { getStatusLabel } from '../app/displayText'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
@@ -52,6 +55,7 @@ export function LeadsPage({
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeadStatusFilter>('all')
   const [showArchived, setShowArchived] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
 
   const filteredLeads = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase()
@@ -108,6 +112,7 @@ export function LeadsPage({
   const newLeadsCount = leads.filter((lead) => lead.status === 'new' && !lead.archived_at).length
   const quotedLeadsCount = leads.filter((lead) => lead.status === 'quoted' && !lead.archived_at).length
   const wonLeadsCount = leads.filter((lead) => lead.status === 'won' && !lead.archived_at).length
+  const duplicateGroups = useMemo(() => buildLeadDuplicateGroups(leads), [leads])
 
   return (
     <section className="page-section cc-master-page">
@@ -148,7 +153,25 @@ export function LeadsPage({
         </div>
       </div>
 
-      {showCreateForm ? <LeadCreateForm onCreated={onLeadCreated} /> : null}
+      {duplicateGroups.length > 0 ? (
+        <DuplicateNotice
+          title={`${duplicateGroups.length} grupo(s) de posibles leads duplicados`}
+          description="Se han detectado coincidencias por teléfono, email o contexto comercial. Revísalas desde una surface corta antes de seguir ampliando el pipeline."
+          actionLabel="Revisar duplicados"
+          onAction={() => setShowDuplicateReview(true)}
+        />
+      ) : null}
+
+      {showCreateForm ? (
+        <LeadCreateForm
+          onCreated={onLeadCreated}
+          existingLeads={leads}
+          onOpenExistingLead={(leadId) => {
+            setShowCreateForm(false)
+            setSelectedLeadId(leadId)
+          }}
+        />
+      ) : null}
 
       <section className="data-section cc-filters-block">
         <details
@@ -249,6 +272,18 @@ export function LeadsPage({
           />
         </div>
       </div>
+
+      <DuplicateReviewOverlay
+        isOpen={showDuplicateReview}
+        title="Revisión de leads duplicados"
+        description="Estas coincidencias ya existen en la app. Úsalas para decidir si conviene unificar o seguir tratando cada lead por separado."
+        groups={duplicateGroups}
+        onClose={() => setShowDuplicateReview(false)}
+        onOpenRecord={(leadId) => {
+          setShowDuplicateReview(false)
+          setSelectedLeadId(leadId)
+        }}
+      />
     </section>
   )
 }

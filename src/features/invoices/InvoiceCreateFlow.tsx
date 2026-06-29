@@ -9,6 +9,8 @@ import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../co
 import { ClientBillingDetailsInlineForm } from '../clients/ClientBillingDetailsInlineForm'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import type { JobListItem } from '../jobs/types'
@@ -32,8 +34,10 @@ interface InvoiceCreateFlowProps extends FullViewActionFlowProps {
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  invoices?: InvoiceListItem[]
   prefill?: InvoiceCreatePrefill | null
   onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
+  onOpenExistingInvoice?: (invoiceId: string) => void
 }
 
 type InvoiceOriginMode = 'job' | 'quote' | 'manual'
@@ -291,10 +295,12 @@ export function InvoiceCreateFlow({
   properties,
   jobs,
   quotes,
+  invoices = [],
   onRefreshData,
   onCompleted,
   prefill = null,
   onCreatedInvoice,
+  onOpenExistingInvoice,
   onCancel,
   onDirtyChange,
 }: InvoiceCreateFlowProps) {
@@ -310,6 +316,7 @@ export function InvoiceCreateFlow({
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findInvoiceDuplicateGroups>>([])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -509,7 +516,7 @@ export function InvoiceCreateFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function handleSave() {
+  async function handleSave(skipDuplicateCheck = false) {
     setSubmitError(null)
 
     for (let index = 0; index < invoiceSteps.length - 1; index += 1) {
@@ -531,6 +538,56 @@ export function InvoiceCreateFlow({
         setCurrentStep(2)
         setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findInvoiceDuplicateGroups({
+          id: invoiceId,
+          display_code: null,
+          invoice_number: null,
+          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_display_code: selectedJob?.display_code ?? null,
+          quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
+          quote_display_code: selectedQuote?.display_code ?? null,
+          client_id: form.client_id,
+          client_display_code: selectedClient?.display_code ?? null,
+          client_label: selectedClient?.full_name ?? null,
+          issue_date: form.issue_date,
+          status: form.status,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
+          internal_notes: selectedQuote?.internal_notes ?? null,
+          pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+          payment_status: 'pending',
+          paid_amount: 0,
+          outstanding_amount: totalValue,
+          payment_count: 0,
+          last_payment_date: null,
+          last_payment_method: null,
+          last_payment_origin_type: null,
+          client_name: selectedClient?.full_name ?? null,
+          client_phone: selectedClient?.phone ?? null,
+          client_email: selectedClient?.email ?? null,
+          property_id: form.property_id || null,
+          property_display_code: selectedProperty?.display_code ?? null,
+          property_name: selectedProperty?.name ?? null,
+          property_address_line: selectedProperty?.address ?? null,
+          service_reference: selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : null,
+          service_description: selectedJob?.billing_concept ?? null,
+          billing_concept: linePayloads[0]?.concept ?? null,
+          billing_quantity: linePayloads[0]?.quantity ?? null,
+          billing_unit: linePayloads[0]?.unit ?? null,
+          billing_unit_price: linePayloads[0]?.unit_price ?? null,
+          invoice_lines: linePayloads,
+          lines: linePayloads,
+        }, invoices)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       await saveInvoiceWithLines(
@@ -687,7 +744,7 @@ export function InvoiceCreateFlow({
             {invoiceNextLabels[currentStep]}
           </button>
         ) : (
-          <button type="button" className="primary-button" onClick={handleSave} disabled={isSubmitting}>
+          <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={isSubmitting}>
             {isSubmitting ? 'Guardando...' : 'Emitir factura'}
           </button>
         )}
@@ -1206,6 +1263,26 @@ export function InvoiceCreateFlow({
         ) : null}
 
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible factura duplicada"
+        description="Hemos encontrado coincidencias por origen, cliente, fecha o importe. Revisa antes de emitir una factura nueva."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(invoiceId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingInvoice?.(invoiceId)
+        }}
+        onUseRecord={(invoiceId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingInvoice?.(invoiceId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSave(true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

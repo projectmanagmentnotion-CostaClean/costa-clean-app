@@ -4,6 +4,9 @@ import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildQuoteDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
 import { QuotesList } from '../features/quotes/QuotesList'
@@ -50,6 +53,7 @@ export function QuotesPage({
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
@@ -59,6 +63,7 @@ export function QuotesPage({
   const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
   const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
   const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
+  const duplicateGroups = buildQuoteDuplicateGroups(quotes)
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
@@ -167,8 +172,14 @@ export function QuotesPage({
               <LazyQuoteCreateFlow
                 clients={clients}
                 properties={properties}
+                quotes={quotes}
                 onRefreshData={onQuoteCreated}
                 onCompleted={handleQuoteCreated}
+                onOpenExistingQuote={(quoteId) => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  setSelectedQuoteId(quoteId)
+                }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
@@ -177,6 +188,15 @@ export function QuotesPage({
               />
             </Suspense>
           </ActionFlowOverlay>
+        ) : null}
+
+        {duplicateGroups.length > 0 ? (
+          <DuplicateNotice
+            title={`${duplicateGroups.length} grupo(s) de posibles presupuestos duplicados`}
+            description="Se han detectado coincidencias por cliente, propiedad y contexto económico. Revísalas desde una surface dedicada."
+            actionLabel="Revisar duplicados"
+            onAction={() => setShowDuplicateReview(true)}
+          />
         ) : null}
 
         {selectedQuote ? (
@@ -195,7 +215,13 @@ export function QuotesPage({
               quote={selectedQuote}
               clients={clients}
               properties={properties}
+              allQuotes={quotes}
               onRefreshData={onQuoteCreated}
+              onOpenExistingQuote={(quoteId) => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+                setSelectedQuoteId(quoteId)
+              }}
               onCompleted={async () => {
                 setShowMajorEdit(false)
                 setHasMajorEditDirty(false)
@@ -256,6 +282,19 @@ export function QuotesPage({
           </div>
         </div>
       </section>
+
+      <DuplicateReviewOverlay
+        isOpen={showDuplicateReview}
+        title="Revisión de presupuestos duplicados"
+        description="Estas coincidencias ya existen en la app y conviene resolverlas antes de seguir creando o editando propuestas parecidas."
+        groups={duplicateGroups}
+        onClose={() => setShowDuplicateReview(false)}
+        onOpenRecord={(quoteId) => {
+          setShowDuplicateReview(false)
+          setSelectedQuoteId(quoteId)
+          setShowDocumentScreen(false)
+        }}
+      />
 
       {showDocumentScreen && selectedQuote ? (
         <Suspense

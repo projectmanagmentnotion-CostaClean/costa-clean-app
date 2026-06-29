@@ -1,5 +1,8 @@
-﻿import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { getSupabaseClient } from '../../lib/supabase'
+import { findLeadDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import type { LeadListItem } from './types'
 
 function getServiceTypeLabel(value: string): string {
   switch (value) {
@@ -28,6 +31,8 @@ function getPropertyTypeLabel(value: string): string {
 
 interface LeadCreateFormProps {
   onCreated: () => Promise<void>
+  existingLeads?: LeadListItem[]
+  onOpenExistingLead?: (leadId: string) => void
 }
 
 interface FormState {
@@ -52,11 +57,16 @@ const initialFormState: FormState = {
   notes: '',
 }
 
-export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
+export function LeadCreateForm({
+  onCreated,
+  existingLeads = [],
+  onOpenExistingLead,
+}: LeadCreateFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findLeadDuplicateGroups>>([])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setForm((current) => ({
@@ -65,10 +75,24 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
     }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function submitLead(skipDuplicateReview = false) {
     setSubmitError(null)
     setSuccessMessage(null)
+
+    if (!skipDuplicateReview) {
+      const duplicateGroups = findLeadDuplicateGroups({
+        id: 'LEAD-DRAFT',
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim() || null,
+        city: form.city.trim() || null,
+      }, existingLeads)
+
+      if (duplicateGroups.length > 0) {
+        setPendingDuplicateGroups(duplicateGroups)
+        return
+      }
+    }
 
     const { client, error } = getSupabaseClient()
 
@@ -115,6 +139,11 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await submitLead()
   }
 
   return (
@@ -283,8 +312,26 @@ export function LeadCreateForm({ onCreated }: LeadCreateFormProps) {
           </div>
         </aside>
       </form>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible lead duplicado"
+        description="Antes de crear un nuevo lead, revisa si ya existe un contacto equivalente en el pipeline."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={onOpenExistingLead ? (leadId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingLead(leadId)
+        } : undefined}
+        onUseRecord={onOpenExistingLead ? (leadId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingLead(leadId)
+        } : undefined}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void submitLead(true)
+        }}
+      />
     </section>
   )
 }
-
-

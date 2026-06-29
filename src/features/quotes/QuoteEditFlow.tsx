@@ -5,6 +5,8 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { findQuoteDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import { completeFullViewActionFlow, type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import {
@@ -29,6 +31,8 @@ interface QuoteEditFlowProps extends FullViewActionFlowProps {
   title?: string
   description?: string
   submitLabel?: string
+  allQuotes?: QuoteListItem[]
+  onOpenExistingQuote?: (quoteId: string) => void
 }
 
 interface EditFormState {
@@ -72,6 +76,8 @@ export function QuoteEditFlow({
   title = 'Editar presupuesto',
   description = 'La edicion principal vive en un flujo separado para no convertir la card de detalle en un formulario largo.',
   submitLabel = 'Guardar cambios',
+  allQuotes = [],
+  onOpenExistingQuote,
 }: QuoteEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
     client_id: quote.client_id ?? null,
@@ -86,6 +92,7 @@ export function QuoteEditFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showRejectedConfirm, setShowRejectedConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
 
   useEffect(() => {
     setForm({
@@ -195,7 +202,7 @@ export function QuoteEditFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function persistQuote(confirmedRejected = false) {
+  async function persistQuote(confirmedRejected = false, skipDuplicateCheck = false) {
     if (form.status === 'rejected' && quote.status !== 'rejected' && !confirmedRejected) {
       setShowRejectedConfirm(true)
       return
@@ -211,6 +218,26 @@ export function QuoteEditFlow({
         setCurrentStep(1)
         setError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findQuoteDuplicateGroups({
+          ...quote,
+          client_id: form.client_id,
+          property_id: form.property_id || null,
+          status: form.status,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
+          quote_lines: linePayloads,
+          lines: linePayloads,
+        }, allQuotes)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       await saveQuoteWithLines(
@@ -590,6 +617,26 @@ export function QuoteEditFlow({
           </div>
         ) : null}
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible presupuesto duplicado"
+        description="La edicion actual se parece mucho a otro presupuesto ya existente. Revisa la coincidencia antes de guardar."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(quoteId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingQuote?.(quoteId)
+        }}
+        onUseRecord={(quoteId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingQuote?.(quoteId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void persistQuote(false, true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

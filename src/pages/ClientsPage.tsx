@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
+import { buildClientDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientWorkspace } from '../features/clients/ClientWorkspace'
 import { ClientsList } from '../features/clients/ClientsList'
@@ -54,6 +57,7 @@ export function ClientsPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const {
     activeClientId,
     activeTab,
@@ -66,6 +70,7 @@ export function ClientsPage({
     () => clients.find((client) => client.id === activeClientId) ?? null,
     [activeClientId, clients],
   )
+  const duplicateGroups = useMemo(() => buildClientDuplicateGroups(clients), [clients])
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
@@ -123,6 +128,15 @@ export function ClientsPage({
             </button>
           </div>
 
+          {duplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${duplicateGroups.length} grupo(s) de posibles clientes duplicados`}
+              description="Se han detectado coincidencias por NIF/CIF, teléfono, email o ficha fiscal. Revísalas sin ensuciar la lista principal."
+              actionLabel="Revisar duplicados"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
           {showCreateForm ? (
             <ActionFlowOverlay
               isOpen={showCreateForm}
@@ -137,6 +151,12 @@ export function ClientsPage({
             >
               <ClientCreateForm
                 onCreated={onClientCreated}
+                existingClients={clients}
+                onOpenExistingClient={(clientId) => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  handleOpenWorkspace(clientId)
+                }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
@@ -161,6 +181,18 @@ export function ClientsPage({
               onSelectClient={(client) => handleOpenWorkspace(client.id)}
             />
           </div>
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Revisión de clientes duplicados"
+            description="Estas coincidencias ya existen en la cartera y conviene resolverlas antes de crear o editar más fichas."
+            groups={duplicateGroups}
+            onClose={() => setShowDuplicateReview(false)}
+            onOpenRecord={(clientId) => {
+              setShowDuplicateReview(false)
+              handleOpenWorkspace(clientId)
+            }}
+          />
         </>
       ) : (
         <ClientWorkspace

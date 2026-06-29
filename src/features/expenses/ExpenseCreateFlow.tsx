@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { findExpenseDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { createExpense } from './expenseApi'
@@ -17,12 +19,15 @@ import {
   getExpenseFiscalReviewStatusLabel,
   getExpenseFiscalRiskLevelLabel,
   getExpensePaymentStatusLabel,
+  type ExpenseListItem,
 } from './types'
 
 interface ExpenseCreateFlowProps extends FullViewActionFlowProps {
   title?: string
   description?: string
   submitLabel?: string
+  expenses?: ExpenseListItem[]
+  onOpenExistingExpense?: (expenseId: string) => void
 }
 
 interface CreateFormState {
@@ -81,6 +86,8 @@ export function ExpenseCreateFlow({
   title = 'Nuevo gasto',
   description = 'Alta fiscal y operativa en una superficie dedicada, sin formulario inline largo.',
   submitLabel = 'Guardar gasto',
+  expenses = [],
+  onOpenExistingExpense,
 }: ExpenseCreateFlowProps) {
   const [form, setForm] = useState<CreateFormState>(defaultFormState)
   const [currentStep, setCurrentStep] = useState(0)
@@ -88,6 +95,7 @@ export function ExpenseCreateFlow({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -125,7 +133,7 @@ export function ExpenseCreateFlow({
     setError(null)
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>, skipDuplicateCheck = false) {
     event.preventDefault()
     setError(null)
     setIsSaving(true)
@@ -158,6 +166,60 @@ export function ExpenseCreateFlow({
 
       const finalTaxAmount = Number.isNaN(taxAmountValue) ? resolvedTaxAmount : Number(formatMoneyInput(taxAmountValue))
       const finalTotal = Number.isNaN(totalValue) ? Number(formatMoneyInput(subtotalValue + finalTaxAmount)) : Number(formatMoneyInput(totalValue))
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findExpenseDuplicateGroups({
+          id: `EXPENSE-DRAFT-${Date.now()}`,
+          display_code: null,
+          expense_number: null,
+          expense_date: form.expense_date,
+          accounting_date: null,
+          due_date: null,
+          supplier_name: form.supplier_name,
+          supplier_tax_id: null,
+          category: form.category,
+          subcategory: null,
+          description: form.description,
+          document_type: form.document_type,
+          reference_number: null,
+          payment_method: null,
+          payment_status: form.payment_status,
+          currency: 'EUR',
+          subtotal: Number(formatMoneyInput(subtotalValue)),
+          tax_rate: Number(formatMoneyInput(taxRateValue)),
+          tax_amount: finalTaxAmount,
+          total: finalTotal,
+          is_deductible: form.is_deductible,
+          deductible_percentage: 100,
+          affects_quarterly_closure: true,
+          affects_annual_closure: true,
+          receipt_file_url: null,
+          receipt_file_path: null,
+          attachment_count: 0,
+          document_support_status: form.document_support_status,
+          fiscal_review_status: form.fiscal_review_status,
+          fiscal_risk_level: form.fiscal_risk_level,
+          manager_note: form.manager_note.trim() || null,
+          ai_fiscal_classification: null,
+          ai_deductibility_percentage: null,
+          ai_vat_deductibility_percentage: null,
+          ai_estimated_deductible_base: null,
+          ai_estimated_deductible_vat: null,
+          ai_fiscal_confidence: null,
+          ai_fiscal_risk_level: null,
+          ai_fiscal_reasoning: null,
+          ai_fiscal_flags: null,
+          ai_fiscal_model: null,
+          ai_fiscal_analyzed_at: null,
+          ai_fiscal_source_version: null,
+          notes: form.notes.trim() || null,
+        }, expenses)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
 
       await createExpense({
         expense_date: form.expense_date,
@@ -473,6 +535,26 @@ export function ExpenseCreateFlow({
           )}
         </div>
       </form>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible gasto duplicado"
+        description="Este gasto coincide con otro por proveedor, fecha, concepto o importe. Revisa antes de guardarlo."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(expenseId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingExpense?.(expenseId)
+        }}
+        onUseRecord={(expenseId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingExpense?.(expenseId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSubmit({ preventDefault() {} } as FormEvent<HTMLFormElement>, true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

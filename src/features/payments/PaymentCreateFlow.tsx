@@ -4,6 +4,8 @@ import { formatClientLabel, formatInvoiceLabel, formatJobLabel, formatPropertyLa
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { findPaymentDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { getInvoiceFinancialStatusLabel, getPaymentOriginLabel } from '../invoices/paymentState'
 import type { InvoiceListItem } from '../invoices/types'
@@ -18,6 +20,7 @@ import {
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
 import type { ClientListItem } from '../clients/types'
 import '../shared/fullscreen-create-flow.css'
+import type { PaymentListItem } from './types'
 
 interface PaymentCreateFlowProps extends FullViewActionFlowProps {
   invoices: InvoiceListItem[]
@@ -25,6 +28,7 @@ interface PaymentCreateFlowProps extends FullViewActionFlowProps {
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  payments?: PaymentListItem[]
   title?: string
   description?: string
   submitLabel?: string
@@ -35,6 +39,7 @@ interface PaymentCreateFlowProps extends FullViewActionFlowProps {
   lockInvoiceSelection?: boolean
   hideInvoiceCreateAction?: boolean
   originType?: 'manual' | 'transfer_auto'
+  onOpenExistingPayment?: (paymentId: string) => void
 }
 
 interface FormState {
@@ -108,6 +113,7 @@ export function PaymentCreateFlow({
   properties,
   jobs,
   quotes,
+  payments = [],
   onRefreshData,
   onCompleted,
   title = 'Registrar cobro',
@@ -120,6 +126,7 @@ export function PaymentCreateFlow({
   lockInvoiceSelection = false,
   hideInvoiceCreateAction = false,
   originType = 'manual',
+  onOpenExistingPayment,
   onCancel,
   onDirtyChange,
 }: PaymentCreateFlowProps) {
@@ -142,6 +149,7 @@ export function PaymentCreateFlow({
   const [showInvoiceCreate, setShowInvoiceCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPaymentDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -255,7 +263,7 @@ export function PaymentCreateFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function handleSave() {
+  async function handleSave(skipDuplicateCheck = false) {
     setSubmitError(null)
 
     for (let index = 0; index < paymentSteps.length - 1; index += 1) {
@@ -299,6 +307,27 @@ export function PaymentCreateFlow({
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? `PAYMENT-${crypto.randomUUID()}`
           : `PAYMENT-${Date.now()}`
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findPaymentDuplicateGroups({
+          id: paymentId,
+          display_code: null,
+          invoice_id: form.invoice_id,
+          invoice_display_code: selectedInvoice?.display_code ?? null,
+          invoice_number: selectedInvoice?.invoice_number ?? null,
+          payment_date: form.payment_date,
+          created_at: null,
+          amount: Number(formatMoneyInput(amount)),
+          payment_method: form.payment_method || null,
+          origin_type: originType,
+          notes: form.notes.trim() || null,
+        }, payments)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
 
       await savePaymentAndRefreshInvoice({
         id: paymentId,
@@ -420,7 +449,7 @@ export function PaymentCreateFlow({
           {paymentNextLabels[currentStep]}
         </button>
       ) : (
-        <button type="button" className="primary-button" disabled={isSubmitting} onClick={handleSave}>
+        <button type="button" className="primary-button" disabled={isSubmitting} onClick={() => void handleSave()}>
           {isSubmitting ? 'Registrando...' : submitLabel}
         </button>
       )}
@@ -664,6 +693,26 @@ export function PaymentCreateFlow({
           </section>
         ) : null}
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible cobro duplicado"
+        description="Este cobro coincide con otro por factura, fecha, importe o metodo. Revisa antes de registrarlo."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(paymentId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPayment?.(paymentId)
+        }}
+        onUseRecord={(paymentId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPayment?.(paymentId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSave(true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

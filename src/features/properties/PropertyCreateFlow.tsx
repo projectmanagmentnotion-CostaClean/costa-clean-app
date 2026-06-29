@@ -3,6 +3,8 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
@@ -11,11 +13,13 @@ import type { PropertyListItem } from './types'
 
 interface PropertyCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
+  properties?: PropertyListItem[]
   contextClientId?: string | null
   onCreatedProperty?: (property: PropertyListItem) => void | Promise<void>
   title?: string
   description?: string
   submitLabel?: string
+  onOpenExistingProperty?: (propertyId: string) => void
 }
 
 interface FormState {
@@ -53,6 +57,7 @@ const defaultFormState: FormState = {
 
 export function PropertyCreateFlow({
   clients,
+  properties = [],
   onRefreshData,
   onCompleted,
   contextClientId = null,
@@ -62,6 +67,7 @@ export function PropertyCreateFlow({
   title = 'Nueva propiedad',
   description = 'Alta corta y guiada para inmuebles, con cliente heredado y bloque operativo claro.',
   submitLabel = 'Guardar propiedad',
+  onOpenExistingProperty,
 }: PropertyCreateFlowProps) {
   const contextualClient = useMemo(
     () => (contextClientId ? clients.find((client) => client.id === contextClientId) ?? null : null),
@@ -76,6 +82,7 @@ export function PropertyCreateFlow({
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPropertyDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -107,8 +114,7 @@ export function PropertyCreateFlow({
     }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function submitProperty(skipDuplicateReview = false) {
     setSubmitError(null)
     setIsSubmitting(true)
 
@@ -134,6 +140,27 @@ export function PropertyCreateFlow({
       if (!form.address.trim()) {
         setSubmitError('Debes indicar la direccion operativa de la propiedad.')
         return
+      }
+
+      if (!skipDuplicateReview) {
+        const duplicateGroups = findPropertyDuplicateGroups({
+          id: 'PROPERTY-DRAFT',
+          display_code: null,
+          client_id: form.client_id,
+          client_display_code: contextualClient?.display_code ?? null,
+          client_name: contextualClient?.full_name ?? clients.find((client) => client.id === form.client_id)?.full_name ?? null,
+          name: form.name.trim(),
+          property_type: form.property_type,
+          address: form.address.trim(),
+          city: form.city.trim() || null,
+          postal_code: form.postal_code.trim() || null,
+          notes: form.notes.trim() || null,
+        }, properties)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       const propertyId =
@@ -188,6 +215,11 @@ export function PropertyCreateFlow({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await submitProperty()
   }
 
   function requestCancel() {
@@ -279,6 +311,7 @@ export function PropertyCreateFlow({
                 <ClientCreateForm
                   onCreated={onRefreshData}
                   onDirtyChange={setIsDirty}
+                  existingClients={clients}
                   title="Nuevo cliente en contexto"
                   description="Al guardarlo, quedara seleccionado automaticamente aqui."
                   submitLabel="Guardar cliente y usarlo"
@@ -396,6 +429,26 @@ export function PropertyCreateFlow({
         onConfirm={() => {
           setShowCancelConfirm(false)
           onCancel?.()
+        }}
+      />
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible propiedad duplicada"
+        description="Antes de crear otra propiedad, revisa si el inmueble ya existe con la misma dirección o el mismo cliente."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={onOpenExistingProperty ? (propertyId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingProperty(propertyId)
+        } : undefined}
+        onUseRecord={onOpenExistingProperty ? (propertyId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingProperty(propertyId)
+        } : undefined}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void submitProperty(true)
         }}
       />
     </FullscreenStepFlow>

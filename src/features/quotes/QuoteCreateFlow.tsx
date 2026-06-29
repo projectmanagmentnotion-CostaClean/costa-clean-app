@@ -7,6 +7,8 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { findQuoteDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
@@ -25,15 +27,18 @@ import {
   roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
+import type { QuoteListItem } from './types'
 import './QuoteCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
 interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
+  quotes?: QuoteListItem[]
   contextClientId?: string | null
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
+  onOpenExistingQuote?: (quoteId: string) => void
 }
 
 interface FormState {
@@ -63,7 +68,9 @@ export function QuoteCreateFlow({
   onCompleted,
   contextClientId = null,
   contextPropertyId = null,
+  quotes = [],
   onCreatedQuote,
+  onOpenExistingQuote,
   onCancel,
   onDirtyChange,
 }: QuoteCreateFlowProps) {
@@ -81,6 +88,7 @@ export function QuoteCreateFlow({
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -186,7 +194,7 @@ export function QuoteCreateFlow({
     setCurrentStep(boundedStep)
   }
 
-  async function handleSave() {
+  async function handleSave(skipDuplicateCheck = false) {
     setSubmitError(null)
 
     for (let index = 0; index < quoteSteps.length - 1; index += 1) {
@@ -208,6 +216,38 @@ export function QuoteCreateFlow({
         setCurrentStep(2)
         setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findQuoteDuplicateGroups({
+          id: quoteId,
+          display_code: null,
+          lead_id: null,
+          lead_display_code: null,
+          lead_name: null,
+          client_id: form.client_id,
+          client_display_code: selectedClient?.display_code ?? null,
+          client_name: selectedClient?.full_name ?? null,
+          property_id: form.property_id || null,
+          property_display_code: selectedProperty?.display_code ?? null,
+          status: form.status,
+          job_id: null,
+          invoice_id: null,
+          subtotal: subtotalValue,
+          tax_amount: taxAmountValue,
+          total: totalValue,
+          notes: form.notes.trim() || null,
+          internal_notes: null,
+          pricing_metadata: null,
+          created_at: new Date().toISOString(),
+          quote_lines: linePayloads,
+          lines: linePayloads,
+        }, quotes)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
       }
 
       await saveQuoteWithLines(
@@ -337,7 +377,7 @@ export function QuoteCreateFlow({
             {quoteNextLabels[currentStep]}
           </button>
         ) : (
-          <button type="button" className="primary-button" onClick={handleSave} disabled={isSubmitting}>
+          <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={isSubmitting}>
             {isSubmitting ? 'Guardando...' : 'Guardar presupuesto'}
           </button>
         )}
@@ -682,6 +722,26 @@ export function QuoteCreateFlow({
         ) : null}
 
       </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible presupuesto duplicado"
+        description="Hemos encontrado coincidencias por cliente, propiedad o importe reciente. Revisa antes de guardar un presupuesto nuevo."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(quoteId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingQuote?.(quoteId)
+        }}
+        onUseRecord={(quoteId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingQuote?.(quoteId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void handleSave(true)
+        }}
+      />
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

@@ -1,7 +1,9 @@
-﻿import { useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { useEffect } from 'react'
 import { getStatusLabel } from '../../app/displayText'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { findClientDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ClientListItem } from './types'
 
 interface ClientCreateFormProps {
@@ -12,6 +14,8 @@ interface ClientCreateFormProps {
   title?: string
   description?: string
   submitLabel?: string
+  existingClients?: ClientListItem[]
+  onOpenExistingClient?: (clientId: string) => void
 }
 
 interface FormState {
@@ -40,6 +44,8 @@ export function ClientCreateForm({
   title = 'Nuevo cliente',
   description,
   submitLabel = 'Guardar cliente',
+  existingClients = [],
+  onOpenExistingClient,
 }: ClientCreateFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -47,6 +53,7 @@ export function ClientCreateForm({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findClientDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -61,13 +68,30 @@ export function ClientCreateForm({
     }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function submitClient(skipDuplicateReview = false) {
     setSubmitError(null)
     setSuccessMessage(null)
     setIsSubmitting(true)
 
     try {
+      if (!skipDuplicateReview) {
+        const duplicateGroups = findClientDuplicateGroups({
+          id: 'CLIENT-DRAFT',
+          full_name: form.full_name.trim(),
+          phone: form.phone.trim() || null,
+          email: form.email.trim() || null,
+          tax_id: form.tax_id.trim() || null,
+          billing_address: form.billing_address.trim() || null,
+          status: form.status,
+          source_lead_id: null,
+        }, existingClients)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
@@ -129,6 +153,11 @@ export function ClientCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await submitClient()
   }
 
   function requestCancel() {
@@ -246,8 +275,26 @@ export function ClientCreateForm({
           onCancel?.()
         }}
       />
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible cliente duplicado"
+        description="Antes de crear otra ficha, revisa si ya existe un cliente que puedas reutilizar."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={onOpenExistingClient ? (clientId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingClient(clientId)
+        } : undefined}
+        onUseRecord={onOpenExistingClient ? (clientId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingClient(clientId)
+        } : undefined}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void submitClient(true)
+        }}
+      />
     </section>
   )
 }
-
-

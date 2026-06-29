@@ -9,6 +9,7 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
+import { ExpenseSupportFieldset } from './ExpenseSupportFieldset'
 import { updateExpense } from './expenseApi'
 import {
   expenseCategories,
@@ -296,6 +297,11 @@ export function ExpenseEditFlow({
           value: Number.isNaN(resolvedTotal) ? 'Pendiente' : formatCurrency(resolvedTotal),
           hint: 'Lectura inmediata del impacto economico',
         },
+        {
+          label: 'Soporte',
+          value: expense.receipt_file_path ? 'Documento cargado' : getExpenseDocumentSupportStatusLabel(form.document_support_status),
+          hint: expense.receipt_file_path ? 'Puedes reemplazarlo dentro del flow' : 'Sigue faltando soporte cargado',
+        },
       ]}
       sideContent={(
         <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
@@ -374,6 +380,16 @@ export function ExpenseEditFlow({
                 ))}
               </select>
             </label>
+
+            <div className="form-field form-field-full">
+              <ExpenseSupportFieldset
+                expense={expense}
+                documentType={form.document_type}
+                documentSupportStatus={form.document_support_status}
+                onDocumentSupportStatusChange={(status) => updateField('document_support_status', status)}
+                onExpenseUpdated={onRefreshData}
+              />
+            </div>
 
             <label className="form-field form-field-full">
               <span>Descripcion *</span>

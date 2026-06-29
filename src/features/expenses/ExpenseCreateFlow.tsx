@@ -9,7 +9,9 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
-import { createExpense } from './expenseApi'
+import { createExpense, updateExpenseAttachment } from './expenseApi'
+import { uploadExpenseReceipt } from './expenseAttachmentsApi'
+import { ExpenseSupportFieldset } from './ExpenseSupportFieldset'
 import {
   expenseCategories,
   expenseDocumentSupportStatuses,
@@ -104,6 +106,7 @@ export function ExpenseCreateFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
+  const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -241,7 +244,7 @@ export function ExpenseCreateFlow({
         }
       }
 
-      await createExpense({
+      const createdExpenseId = await createExpense({
         expense_date: form.expense_date,
         supplier_name: form.supplier_name,
         category: form.category,
@@ -260,7 +263,13 @@ export function ExpenseCreateFlow({
         notes: form.notes.trim() || null,
       })
 
+      if (pendingReceiptFile) {
+        const { filePath } = await uploadExpenseReceipt(createdExpenseId, pendingReceiptFile)
+        await updateExpenseAttachment(createdExpenseId, filePath)
+      }
+
       setIsDirty(false)
+      setPendingReceiptFile(null)
       await completeFullViewActionFlow({ onRefreshData, onCompleted })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido creando el gasto.'
@@ -302,6 +311,11 @@ export function ExpenseCreateFlow({
           label: 'Total previsto',
           value: Number.isNaN(resolvedTotal) ? 'Pendiente' : `${formatMoneyInput(resolvedTotal)} EUR`,
           hint: 'Se recalcula desde base e IVA',
+        },
+        {
+          label: 'Soporte',
+          value: pendingReceiptFile ? 'Preparado' : getExpenseDocumentSupportStatusLabel(form.document_support_status),
+          hint: pendingReceiptFile ? 'Se subira con el alta final' : 'Estado documental visible',
         },
       ]}
       sideContent={(
@@ -381,6 +395,19 @@ export function ExpenseCreateFlow({
                 ))}
               </select>
             </label>
+
+            <div className="form-field form-field-full">
+              <ExpenseSupportFieldset
+                pendingFile={pendingReceiptFile}
+                documentType={form.document_type}
+                documentSupportStatus={form.document_support_status}
+                onPendingFileChange={(file) => {
+                  setIsDirty(true)
+                  setPendingReceiptFile(file)
+                }}
+                onDocumentSupportStatusChange={(status) => updateField('document_support_status', status)}
+              />
+            </div>
 
             <label className="form-field form-field-full">
               <span>Descripcion *</span>

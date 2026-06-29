@@ -118,7 +118,7 @@ export async function listExpenses(): Promise<ExpenseListItem[]> {
   return (data ?? []) as unknown as ExpenseListItem[]
 }
 
-export async function createExpense(input: ExpenseUpsertInput): Promise<void> {
+export async function createExpense(input: ExpenseUpsertInput): Promise<string> {
   const { client, error } = getSupabaseClient()
 
   if (error || !client) {
@@ -145,6 +145,8 @@ export async function createExpense(input: ExpenseUpsertInput): Promise<void> {
     newValues: payload,
     metadata: { operation: 'create' },
   })
+
+  return String(data?.id ?? '')
 }
 
 export async function updateExpense(

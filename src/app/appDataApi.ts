@@ -17,6 +17,8 @@ import { getSupabaseClient } from '../lib/supabase'
 import { getSupabasePublicEnv } from '../lib/supabaseEnv'
 import { fetchSupabaseRestList } from '../lib/supabaseRest'
 
+type JobLineRecord = NonNullable<JobListItem['billing_lines']>[number] & { job_id: string }
+
 function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
   const linesByInvoiceId = new Map<string, NonNullable<InvoiceListItem['lines']>>()
 
@@ -87,6 +89,22 @@ export async function listClients(): Promise<ClientListItem[]> {
   return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id&order=created_at.desc')
 }
 
+function groupJobLines(lines: JobLineRecord[]) {
+  const linesByJobId = new Map<string, NonNullable<JobListItem['billing_lines']>>()
+
+  for (const line of lines) {
+    const currentLines = linesByJobId.get(line.job_id) ?? []
+    currentLines.push(line)
+    linesByJobId.set(line.job_id, currentLines)
+  }
+
+  for (const jobLines of linesByJobId.values()) {
+    jobLines.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0))
+  }
+
+  return linesByJobId
+}
+
 export async function listProperties(): Promise<PropertyListItem[]> {
   return fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,property_type,address,city,postal_code,notes&order=created_at.desc')
 }
@@ -96,7 +114,29 @@ export async function listQuotes(): Promise<QuoteListItem[]> {
 }
 
 export async function listJobs(): Promise<JobListItem[]> {
-  return fetchSupabaseRestList<JobListItem>('jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc')
+  const loadedJobs = await fetchSupabaseRestList<JobListItem>('jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc')
+
+  try {
+    const jobLines = await fetchSupabaseRestList<JobLineRecord>('job_lines?select=id,job_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc')
+    const linesByJobId = groupJobLines(jobLines)
+
+    return loadedJobs.map((job) => ({
+      ...job,
+      billing_lines: linesByJobId.get(job.id) ?? [],
+    }))
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    const hasRecoverableSchemaMismatch = message.includes('REST 400') || message.includes('job_lines')
+
+    if (!hasRecoverableSchemaMismatch) {
+      throw error
+    }
+
+    return loadedJobs.map((job) => ({
+      ...job,
+      billing_lines: [],
+    }))
+  }
 }
 
 export async function listInvoices(): Promise<InvoiceListItem[]> {

@@ -26,6 +26,7 @@ import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { JobDetailCard } from './JobDetailCard'
+import { getJobBillingDisplayConcept } from './jobBilling'
 import type { JobListItem } from './types'
 import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
 import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
@@ -338,7 +339,7 @@ export function JobWorkspace({
         <div className="cc-client-workspace__identity">
           <div className="cc-client-workspace__identity-copy">
             <span className="cc-client-workspace__kicker">Operacion viva</span>
-            <h1>{job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)}</h1>
+            <h1>{getJobBillingDisplayConcept(job) || getServiceTypeLabel(job.service_type)}</h1>
             <p>{formatJobLabel(job)} · {formatDateEs(job.scheduled_date)}</p>
           </div>
 
@@ -397,7 +398,7 @@ export function JobWorkspace({
           </article>
           <article className="cc-client-workspace__meta-card">
             <span>Facturacion</span>
-            <strong>{job.billing_concept?.trim() || 'Sin concepto definido'}</strong>
+            <strong>{getJobBillingDisplayConcept(job) || 'Sin concepto definido'}</strong>
             <small>{quote ? `Origen ${formatQuoteLabel(quote)}` : 'Servicio directo sin presupuesto origen'}</small>
           </article>
         </div>

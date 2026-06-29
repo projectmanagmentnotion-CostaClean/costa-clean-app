@@ -51,6 +51,13 @@ export const domainEntities: DomainEntityDefinition[] = [
     module: 'jobs',
   },
   {
+    key: 'job_lines',
+    label: 'Líneas de servicio',
+    description: 'Detalle interno de conceptos, cantidades y precios del servicio.',
+    phase: 'v2',
+    module: 'jobs',
+  },
+  {
     key: 'invoices',
     label: 'Facturas',
     description: 'Facturas emitidas a partir de servicios o presupuestos.',

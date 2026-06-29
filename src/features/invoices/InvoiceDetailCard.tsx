@@ -1,6 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
@@ -14,6 +14,7 @@ import {
   settleInvoiceByTransfer,
   updateInvoiceStatus as updateInvoiceStatusRpc,
 } from '../financial/financialWriteApi'
+import { getJobBillingDraftLines } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
@@ -156,30 +157,6 @@ function getFormLinesFromInvoice(invoice: InvoiceListItem): LineFormState[] {
   }
 
   return [getFallbackLineFromInvoice(invoice)]
-}
-
-function getJobBillingLine(job: JobListItem | null): LineFormState | null {
-  if (!job) return null
-
-  const quantity = Number(job.billing_quantity)
-  const unitPrice = Number(job.billing_unit_price)
-
-  if (
-    !Number.isFinite(quantity) ||
-    !Number.isFinite(unitPrice) ||
-    quantity <= 0 ||
-    unitPrice < 0
-  ) {
-    return null
-  }
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(job.billing_concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
-    quantity: formatQuantityInput(quantity),
-    unit: job.billing_unit?.trim() || 'servicio',
-    unit_price: formatMoneyInput(unitPrice),
-  }
 }
 
 function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
@@ -443,7 +420,8 @@ export function InvoiceDetailCard({
       client_id: selectedJob.client_id,
       notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
-    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
+    const jobLines = getJobBillingDraftLines(selectedJob)
+    setLines(jobLines.length > 0 ? jobLines : [getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
   }
 
   async function updateInvoiceStatus(nextStatus: string) {

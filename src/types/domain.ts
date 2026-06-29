@@ -5,6 +5,7 @@
   | 'properties'
   | 'quotes'
   | 'quote_lines'
+  | 'job_lines'
   | 'jobs'
   | 'invoices'
   | 'payments'

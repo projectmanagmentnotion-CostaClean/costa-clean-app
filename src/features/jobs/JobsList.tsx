@@ -4,6 +4,7 @@ import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { matchesSearchQuery } from '../documents/search'
 import type { JobListItem } from './types'
+import { getJobBillingDisplayConcept } from './jobBilling'
 import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { OperationalListItem } from '../../components/OperationalListItem'
 
@@ -17,7 +18,7 @@ interface JobsListProps {
 }
 
 function getJobPrimaryReference(job: JobListItem): string {
-  return job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)
+  return getJobBillingDisplayConcept(job) || getServiceTypeLabel(job.service_type)
 }
 
 export function JobsList({

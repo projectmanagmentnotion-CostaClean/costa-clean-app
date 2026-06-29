@@ -38,6 +38,12 @@ export const domainRelationships: DomainRelationshipDefinition[] = [
     description: 'Un presupuesto aceptado puede generar uno o varios servicios.',
   },
   {
+    from: 'jobs',
+    to: 'job_lines',
+    type: 'one-to-many',
+    description: 'Un servicio puede tener una o varias líneas facturables.',
+  },
+  {
     from: 'properties',
     to: 'jobs',
     type: 'one-to-many',

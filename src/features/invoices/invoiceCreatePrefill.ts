@@ -1,4 +1,5 @@
 import { getServiceTypeLabel } from '../../app/displayFormat'
+import { getJobBillingLines } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import { simplifyLineConcept } from '../quotes/lineConcepts'
 
@@ -37,25 +38,13 @@ function formatDecimalInput(value: number): string {
   return value.toFixed(2)
 }
 
-function buildBillingLine(job: JobListItem): InvoiceCreatePrefillLine | null {
-  const quantity = Number(job.billing_quantity)
-  const unitPrice = Number(job.billing_unit_price)
-
-  if (
-    !Number.isFinite(quantity) ||
-    !Number.isFinite(unitPrice) ||
-    quantity <= 0 ||
-    unitPrice < 0
-  ) {
-    return null
-  }
-
-  return {
-    concept: simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
-    quantity: formatDecimalInput(quantity),
-    unit: normalizeBillingUnit(job.billing_unit),
-    unit_price: formatDecimalInput(unitPrice),
-  }
+function buildBillingLines(job: JobListItem): InvoiceCreatePrefillLine[] {
+  return getJobBillingLines(job).map((line) => ({
+    concept: simplifyLineConcept(line.concept || job.billing_concept || getServiceTypeLabel(job.service_type)),
+    quantity: formatDecimalInput(line.quantity),
+    unit: normalizeBillingUnit(line.unit),
+    unit_price: formatDecimalInput(line.unit_price),
+  }))
 }
 
 function buildInvoiceNotes(job: JobListItem): string {
@@ -73,7 +62,7 @@ export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreat
     return null
   }
 
-  const billingLine = buildBillingLine(job)
+  const billingLines = buildBillingLines(job)
 
   return {
     request_id: createPrefillId(),
@@ -83,7 +72,7 @@ export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreat
     client_id: job.client_id,
     property_id: job.property_id,
     notes: buildInvoiceNotes(job),
-    lines: billingLine ? [billingLine] : [],
+    lines: billingLines,
     title: job.display_code ?? job.id,
   }
 }

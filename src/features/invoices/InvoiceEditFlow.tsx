@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel, formatJobLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -17,10 +17,22 @@ import type { ExpenseListItem } from '../expenses/types'
 import {
   saveInvoiceWithLines,
 } from '../financial/financialWriteApi'
+import { getJobBillingDraftLines } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import type { QuoteListItem } from '../quotes/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import { completeFullViewActionFlow, type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
+import {
+  buildBillingLinePayloads,
+  calculateBillingSubtotal,
+  createBlankBillingLine,
+  createLocalId,
+  formatBillingLineSubtotalInput,
+  formatMoneyInput,
+  formatQuantityInput,
+  roundMoney,
+  type BillingLineFormState,
+} from '../shared/billingLineDrafts'
 import {
   buildInvoicePaymentMeta,
   buildInvoicePaymentSummary,
@@ -49,13 +61,7 @@ interface EditFormState {
   notes: string
 }
 
-interface LineFormState {
-  local_id: string
-  concept: string
-  quantity: string
-  unit: string
-  unit_price: string
-}
+type LineFormState = BillingLineFormState
 
 interface LinePayload {
   id: string
@@ -73,42 +79,6 @@ const invoiceEditSteps = [
   { id: 'lines', label: 'Lineas e importes', description: 'Edita conceptos e importes en un bloque aislado.' },
   { id: 'review', label: 'Revision final', description: 'Valida lectura financiera y referencias antes de guardar.' },
 ]
-
-function createLocalId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}-${crypto.randomUUID()}`
-  }
-
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`
-}
-
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function roundMoney(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100
-}
-
-function formatMoneyInput(value: number): string {
-  return roundMoney(value).toFixed(2)
-}
-
-function formatQuantityInput(value: number): string {
-  return roundMoney(value).toFixed(2)
-}
-
-function createBlankLine(): LineFormState {
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: '',
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: '0.00',
-  }
-}
 
 function lineItemToFormLine(line: InvoiceLineItem): LineFormState {
   return {
@@ -151,25 +121,6 @@ function getFormLinesFromInvoice(invoice: InvoiceListItem): LineFormState[] {
   return [getFallbackLineFromInvoice(invoice)]
 }
 
-function getJobBillingLine(job: JobListItem | null): LineFormState | null {
-  if (!job) return null
-
-  const quantity = Number(job.billing_quantity)
-  const unitPrice = Number(job.billing_unit_price)
-
-  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice) || quantity <= 0 || unitPrice < 0) {
-    return null
-  }
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(job.billing_concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
-    quantity: formatQuantityInput(quantity),
-    unit: job.billing_unit?.trim() || 'servicio',
-    unit_price: formatMoneyInput(unitPrice),
-  }
-}
-
 function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
   if (!quote) return null
 
@@ -188,51 +139,14 @@ function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null 
   }
 }
 
-function calculateLineSubtotal(line: LineFormState): number {
-  const quantity = parseDecimalInput(line.quantity)
-  const unitPrice = parseDecimalInput(line.unit_price)
-  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice)) return Number.NaN
-  return roundMoney(quantity * unitPrice)
-}
-
-function formatLineSubtotalInput(line: LineFormState): string {
-  const lineSubtotal = calculateLineSubtotal(line)
-  return Number.isNaN(lineSubtotal) ? '' : formatMoneyInput(lineSubtotal)
-}
-
-function calculateSubtotal(lines: LineFormState[]): number {
-  return roundMoney(lines.reduce((sum, line) => {
-    const lineSubtotal = calculateLineSubtotal(line)
-    return Number.isNaN(lineSubtotal) ? sum : sum + lineSubtotal
-  }, 0))
-}
-
 function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePayload[] | null {
-  const payloads: LinePayload[] = []
-
-  for (const [index, line] of lines.entries()) {
-    const concept = normalizeLineConcept(line.concept)
-    const quantity = parseDecimalInput(line.quantity)
-    const unitPrice = parseDecimalInput(line.unit_price)
-    const lineSubtotal = calculateLineSubtotal(line)
-
-    if (!concept || !Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || !Number.isFinite(lineSubtotal)) {
-      return null
-    }
-
-    payloads.push({
-      id: createLocalId('INVOICE-LINE'),
-      invoice_id: invoiceId,
-      sort_order: index + 1,
-      concept,
-      quantity: roundMoney(quantity),
-      unit: line.unit.trim() || 'servicio',
-      unit_price: roundMoney(unitPrice),
-      line_subtotal: lineSubtotal,
-    })
-  }
-
-  return payloads
+  const payloads = buildBillingLinePayloads(lines, (concept) => normalizeLineConcept(concept))
+  if (!payloads) return null
+  return payloads.map((line) => ({
+    ...line,
+    id: createLocalId('INVOICE-LINE'),
+    invoice_id: invoiceId,
+  }))
 }
 
 function buildVisibleInvoiceNotes(): string {
@@ -300,7 +214,7 @@ export function InvoiceEditFlow({
     if (!selectedJob?.quote_id) return null
     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
   }, [quotes, selectedJob])
-  const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
+  const subtotalValue = useMemo(() => calculateBillingSubtotal(lines), [lines])
   const conceptMemoryIndex = useMemo(
     () => buildConceptMemoryIndex({ quotes, invoices: allInvoices, expenses }),
     [quotes, allInvoices, expenses],
@@ -353,7 +267,7 @@ export function InvoiceEditFlow({
 
   function addLine() {
     setIsDirty(true)
-    setLines((current) => [...current, createBlankLine()])
+    setLines((current) => [...current, createBlankBillingLine()])
   }
 
   function applyConceptSuggestionToLine(localId: string, suggestion: ConceptSuggestion) {
@@ -398,7 +312,8 @@ export function InvoiceEditFlow({
       client_id: selectedJob.client_id,
       notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
-    setLines([getJobBillingLine(selectedJob) ?? getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
+    const jobLines = getJobBillingDraftLines(selectedJob)
+    setLines(jobLines.length > 0 ? jobLines : [getQuoteBillingLine(linkedQuote) ?? createBlankBillingLine()])
   }
 
   function getStepError(stepIndex: number): string | null {
@@ -777,7 +692,7 @@ export function InvoiceEditFlow({
 
                   <label className="form-field">
                     <span>Importe</span>
-                    <input value={formatLineSubtotalInput(line)} readOnly />
+                    <input value={formatBillingLineSubtotalInput(line)} readOnly />
                   </label>
 
                   <div className="cc-create-flow__line-actions">
@@ -854,7 +769,7 @@ export function InvoiceEditFlow({
                   </div>
                   <div className="cc-create-flow__summary-item">
                     <span>Importe</span>
-                    <strong>{formatLineSubtotalInput(line)} EUR</strong>
+                    <strong>{formatBillingLineSubtotalInput(line)} EUR</strong>
                   </div>
                 </div>
               </article>

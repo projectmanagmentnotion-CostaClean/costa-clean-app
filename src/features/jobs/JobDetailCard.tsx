@@ -4,6 +4,16 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import {
+  buildBillingLinePayloads,
+  calculateBillingLineSubtotal,
+  calculateBillingSubtotal,
+  createBlankBillingLine,
+  formatBillingLineSubtotalInput,
+  type BillingLineFormState,
+} from '../shared/billingLineDrafts'
+import { getJobBillingDisplayConcept, getJobBillingDraftLines, getJobBillingLines, getJobBillingDisplaySummary } from './jobBilling'
+import { buildJobBillingSummary, saveJobWithLines } from './jobWriteApi'
 import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -49,18 +59,12 @@ function getServiceTypeOptionLabel(value: string): string {
   }
 }
 
-function parseDecimalInput(value: string): number {
-  const normalized = value.trim().replace(',', '.')
-  const parsed = Number(normalized)
-  return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
 function normalizeBillingUnit(value: string | null | undefined): string {
   return value === 'service' ? 'servicio' : value ?? 'servicio'
 }
 
 function getJobPrimaryReference(job: JobListItem): string {
-  return job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)
+  return getJobBillingDisplayConcept(job)
 }
 
 function getJobSecondaryReference(job: JobListItem): string {
@@ -92,6 +96,7 @@ export function JobDetailCard({
   const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [billingLines, setBillingLines] = useState<BillingLineFormState[]>([createBlankBillingLine()])
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     property_id: '',
@@ -112,6 +117,7 @@ export function JobDetailCard({
       setSaveError(null)
       setSuccessMessage(null)
       setIsDirty(false)
+      setBillingLines([createBlankBillingLine()])
       setForm({
         client_id: '',
         property_id: '',
@@ -132,6 +138,7 @@ export function JobDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setIsDirty(false)
+    setBillingLines(getJobBillingDraftLines(job))
     setForm({
       client_id: job.client_id,
       property_id: job.property_id,
@@ -168,6 +175,7 @@ export function JobDetailCard({
     if (!form.client_id) return []
     return quotes.filter((quote) => quote.client_id === form.client_id)
   }, [quotes, form.client_id])
+  const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -185,16 +193,25 @@ export function JobDetailCard({
         next.quote_id = ''
       }
 
-      if (field === 'service_type') {
-        const currentConcept = current.billing_concept.trim()
-        const previousServiceConcept = getServiceTypeOptionLabel(current.service_type)
-        if (!currentConcept || currentConcept === previousServiceConcept) {
-          next.billing_concept = getServiceTypeOptionLabel(String(value))
-        }
-      }
-
       return next
     })
+  }
+
+  function updateBillingLine<K extends keyof BillingLineFormState>(localId: string, field: K, value: BillingLineFormState[K]) {
+    setIsDirty(true)
+    setBillingLines((current) => current.map((line) => (
+      line.local_id === localId ? { ...line, [field]: value } : line
+    )))
+  }
+
+  function removeBillingLine(localId: string) {
+    setIsDirty(true)
+    setBillingLines((current) => (current.length > 1 ? current.filter((line) => line.local_id !== localId) : current))
+  }
+
+  function addBillingLine() {
+    setIsDirty(true)
+    setBillingLines((current) => [...current, createBlankBillingLine()])
   }
 
   async function saveJobEdits(confirmedCancelledStatus = false) {
@@ -210,14 +227,6 @@ export function JobDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSaveError('Debes seleccionar un cliente.')
         return
@@ -233,51 +242,37 @@ export function JobDetailCard({
         return
       }
 
-      const billingQuantity = parseDecimalInput(form.billing_quantity)
-      const billingUnitPrice = form.billing_unit_price.trim()
-        ? parseDecimalInput(form.billing_unit_price)
-        : null
-
-      if (Number.isNaN(billingQuantity) || billingQuantity <= 0) {
-        setSaveError('La cantidad de facturación debe ser mayor que 0.')
+      const normalizedBillingLines = buildBillingLinePayloads(billingLines, (concept) => concept.trim())
+      if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
+        setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
-
-      if (billingUnitPrice !== null && (Number.isNaN(billingUnitPrice) || billingUnitPrice < 0)) {
-        setSaveError('El precio unitario debe estar vacío o ser mayor o igual que 0.')
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/jobs?id=eq.${encodeURIComponent(job.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            client_id: form.client_id,
-            property_id: form.property_id,
-            quote_id: form.quote_id || null,
-            scheduled_date: form.scheduled_date,
-            status: form.status,
-            service_type: form.service_type,
-            billing_concept: form.billing_concept.trim() || null,
-            billing_quantity: billingQuantity,
-            billing_unit: form.billing_unit.trim() || 'servicio',
-            billing_unit_price: billingUnitPrice,
-            notes: form.notes.trim() || null,
-          }),
-        },
+      const billingSummary = buildJobBillingSummary(
+        normalizedBillingLines,
+        getServiceTypeOptionLabel(form.service_type),
       )
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+      await saveJobWithLines(
+        {
+          id: job.id,
+          client_id: form.client_id,
+          property_id: form.property_id,
+          quote_id: form.quote_id || null,
+          scheduled_date: form.scheduled_date,
+          status: form.status,
+          service_type: form.service_type,
+          billing_concept: billingSummary.billing_concept,
+          billing_quantity: billingSummary.billing_quantity,
+          billing_unit: billingSummary.billing_unit,
+          billing_unit_price: billingSummary.billing_unit_price,
+          notes: form.notes.trim() || null,
+        },
+        normalizedBillingLines.map((line, index) => ({
+          ...line,
+          id: line.id || `JOB-LINE-${job.id}-${index + 1}`,
+          job_id: job.id,
+        })),
+      )
 
       await onJobUpdated()
       setSuccessMessage('Servicio actualizado correctamente.')
@@ -400,6 +395,7 @@ export function JobDetailCard({
                 setSaveError(null)
                 setSuccessMessage(null)
                 setIsDirty(false)
+                setBillingLines(getJobBillingDraftLines(job))
                 setForm({
                   client_id: job.client_id,
                   property_id: job.property_id,
@@ -518,43 +514,6 @@ export function JobDetailCard({
               </label>
 
               <label className="form-field form-field-full">
-                <span>Concepto de facturación</span>
-                <input
-                  value={form.billing_concept}
-                  onChange={(event) => updateField('billing_concept', event.target.value)}
-                  placeholder="Descripción profesional que se mostrará en factura"
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Cantidad de facturación *</span>
-                <input
-                  value={form.billing_quantity}
-                  onChange={(event) => updateField('billing_quantity', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Unidad de facturación *</span>
-                <input
-                  value={form.billing_unit}
-                  onChange={(event) => updateField('billing_unit', event.target.value)}
-                  placeholder="servicio, hora, m²..."
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Precio unitario</span>
-                <input
-                  value={form.billing_unit_price}
-                  onChange={(event) => updateField('billing_unit_price', event.target.value)}
-                  placeholder="Opcional"
-                />
-              </label>
-
-              <label className="form-field form-field-full">
                 <span>Notas</span>
                 <textarea
                   value={form.notes}
@@ -562,6 +521,77 @@ export function JobDetailCard({
                   rows={4}
                 />
               </label>
+
+              <div className="cc-create-flow__line-list form-field-full">
+                {billingLines.map((line, index) => (
+                  <article key={line.local_id} className="cc-create-flow__line-card">
+                    <label className="form-field form-field-full">
+                      <span>Concepto {index + 1}</span>
+                      <input
+                        value={line.concept}
+                        onChange={(event) => updateBillingLine(line.local_id, 'concept', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Cantidad</span>
+                      <input
+                        value={line.quantity}
+                        onChange={(event) => updateBillingLine(line.local_id, 'quantity', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Unidad</span>
+                      <input
+                        value={line.unit}
+                        onChange={(event) => updateBillingLine(line.local_id, 'unit', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Precio unitario</span>
+                      <input
+                        value={line.unit_price}
+                        onChange={(event) => updateBillingLine(line.local_id, 'unit_price', event.target.value)}
+                        required
+                      />
+                    </label>
+
+                    <label className="form-field">
+                      <span>Importe</span>
+                      <input value={formatBillingLineSubtotalInput(line)} readOnly />
+                    </label>
+
+                    <div className="cc-create-flow__line-actions">
+                      <small className="cc-create-flow__helper">
+                        {Number.isNaN(calculateBillingLineSubtotal(line)) ? 'Revisa cantidad o precio.' : 'Linea lista para guardar.'}
+                      </small>
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => removeBillingLine(line.local_id)}
+                        disabled={billingLines.length === 1}
+                      >
+                        Quitar linea
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+
+              <div className="cc-create-flow__microactions form-field-full">
+                <strong>Microacciones</strong>
+                <div className="cc-create-flow__microactions-row">
+                  <button type="button" className="secondary-button" onClick={addBillingLine}>
+                    Añadir linea
+                  </button>
+                  <small className="cc-create-flow__helper">Total actual {billingSubtotal.toFixed(2)} €</small>
+                </div>
+              </div>
 
               <div className="form-actions">
                 <button
@@ -654,11 +684,11 @@ export function JobDetailCard({
               </div>
               <div className="detail-row">
                 <span className="detail-label">Concepto de facturación</span>
-                <strong>{job.billing_concept ?? getServiceTypeLabel(job.service_type)}</strong>
+                <strong>{getJobBillingDisplayConcept(job)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Cantidad de facturación</span>
-                <strong>{job.billing_quantity ?? 1}</strong>
+                <strong>{getJobBillingDisplaySummary(job)}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Unidad de facturación</span>
@@ -673,6 +703,31 @@ export function JobDetailCard({
                 <strong>{job.notes ?? 'Sin notas'}</strong>
               </div>
             </div>
+
+            {getJobBillingLines(job).map((line, index) => (
+              <article key={line.id ?? `${job.id}-line-${index + 1}`} className="cc-create-flow__panel" style={{ marginTop: '0.75rem' }}>
+                <strong>Línea {index + 1}</strong>
+                <small>{line.concept}</small>
+                <div className="cc-create-flow__summary-list">
+                  <div className="cc-create-flow__summary-item">
+                    <span>Cantidad</span>
+                    <strong>{line.quantity}</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Unidad</span>
+                    <strong>{line.unit}</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Precio</span>
+                    <strong>{line.unit_price}</strong>
+                  </div>
+                  <div className="cc-create-flow__summary-item">
+                    <span>Importe</span>
+                    <strong>{line.line_subtotal}</strong>
+                  </div>
+                </div>
+              </article>
+            ))}
             </>
           )}
 

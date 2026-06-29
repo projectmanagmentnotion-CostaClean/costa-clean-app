@@ -4,6 +4,7 @@ import type { AppView } from '../app/navigation'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
+import { getJobBillingDisplayConcept } from '../features/jobs/jobBilling'
 import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel } from '../app/displayFormat'
@@ -373,7 +374,7 @@ export function HomePage({
                     onClick={() => onOpenJobWorkspace(job.id)}
                   >
                     <div className="cc-dashboard-console-job__top">
-                      <strong>{job.billing_concept?.trim() || job.display_code || job.id}</strong>
+                      <strong>{getJobBillingDisplayConcept(job)}</strong>
                       <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
                     </div>
                     <p>{job.client_name ?? job.client_display_code} · {job.property_name ?? job.property_display_code}</p>
@@ -396,7 +397,7 @@ export function HomePage({
                   <span className="cc-dashboard-console-subqueue__label">Despues de hoy</span>
                   {nextActionJobs.map((job) => (
                     <button key={job.id} type="button" className="cc-dashboard-console-subqueue__item" onClick={() => onOpenJobWorkspace(job.id)}>
-                      <strong>{job.billing_concept?.trim() || job.display_code || job.id}</strong>
+                      <strong>{getJobBillingDisplayConcept(job)}</strong>
                       <span>{formatDateEs(job.scheduled_date)}</span>
                     </button>
                   ))}

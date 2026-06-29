@@ -106,6 +106,20 @@ export const entitySchemas: EntitySchemaDefinition[] = [
     ],
   },
   {
+    entity: 'job_lines',
+    label: 'Líneas de servicio',
+    fields: [
+      { key: 'id', label: 'ID', type: 'string', required: true, description: 'Identificador único de la línea.' },
+      { key: 'job_id', label: 'Servicio', type: 'relation', required: true, description: 'Servicio al que pertenece la línea.' },
+      { key: 'sort_order', label: 'Orden', type: 'number', required: true, description: 'Orden visual dentro del servicio.' },
+      { key: 'concept', label: 'Concepto', type: 'text', required: true, description: 'Descripción facturable de la línea.' },
+      { key: 'quantity', label: 'Cantidad', type: 'number', required: true, description: 'Cantidad, horas o unidades.' },
+      { key: 'unit', label: 'Unidad', type: 'string', required: true, description: 'Unidad de medida de la línea.' },
+      { key: 'unit_price', label: 'Precio unitario', type: 'currency', required: true, description: 'Precio unitario aplicado.' },
+      { key: 'line_subtotal', label: 'Importe', type: 'currency', required: true, description: 'Importe total de la línea.' },
+    ],
+  },
+  {
     entity: 'invoices',
     label: 'Facturas',
     fields: [

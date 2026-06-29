@@ -9,6 +9,7 @@ export const realtimeTables = [
   'quotes',
   'quote_lines',
   'jobs',
+  'job_lines',
   'invoices',
   'invoice_lines',
   'payments',

@@ -312,6 +312,99 @@ export function RecurringInvoicePlanFlow({
     setShowCancelConfirm(true)
   }
 
+  const activeContextualFlow = currentStep === 0
+    ? showClientCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Debes crear el cliente antes de seguir"
+          description="Completa primero el cliente y volveras al plan con ese contexto ya fijado."
+          isOpen
+          onToggle={() => setShowClientCreate(false)}
+        >
+          <ClientCreateForm
+            onCreated={onRefreshData}
+            onDirtyChange={setIsDirty}
+            title="Nuevo cliente en contexto"
+            description="Al guardarlo, quedara seleccionado automaticamente en el plan."
+            submitLabel="Guardar cliente y usarlo"
+            onCreatedClient={async (client) => {
+              setForm((current) => ({
+                ...current,
+                client_id: client.id,
+              }))
+              setIsDirty(true)
+              setShowClientCreate(false)
+            }}
+          />
+        </ContextualCreateSection>
+      ) : showPropertyCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear propiedad"
+          title="Debes crear la propiedad antes de seguir"
+          description="Completa ahora la propiedad y volveras al plan con ella ya seleccionada."
+          isOpen
+          onToggle={() => setShowPropertyCreate(false)}
+        >
+          <PropertyCreateFlow
+            clients={clients}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            contextClientId={form.client_id || null}
+            title="Nueva propiedad para recurrencia"
+            description="La propiedad quedara lista para vincularse a este plan recurrente."
+            submitLabel="Guardar propiedad y usarla"
+            onCreatedProperty={async (property) => {
+              await completeContextualActionFlow({
+                created: property,
+                applyCreated: async (createdProperty) => {
+                  setForm((current) => ({
+                    ...current,
+                    property_id: createdProperty.id,
+                    quote_id: '',
+                  }))
+                },
+                closeSubflow: () => setShowPropertyCreate(false),
+                markDirty: () => setIsDirty(true),
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : showQuoteCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear presupuesto"
+          title="Debes crear el presupuesto antes de seguir"
+          description="Completa primero el presupuesto y volveras al plan con esa referencia ya enlazada."
+          isOpen
+          onToggle={() => setShowQuoteCreate(false)}
+        >
+          <QuoteCreateFlow
+            clients={clients}
+            properties={properties}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            contextClientId={form.client_id || null}
+            contextPropertyId={form.property_id || null}
+            onCreatedQuote={async (quote) => {
+              await completeContextualActionFlow({
+                created: quote,
+                applyCreated: async (createdQuote) => {
+                  setForm((current) => ({
+                    ...current,
+                    quote_id: createdQuote.id,
+                    property_id: createdQuote.property_id ?? current.property_id,
+                  }))
+                },
+                closeSubflow: () => setShowQuoteCreate(false),
+                markDirty: () => setIsDirty(true),
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : null
+    : null
+
   return (
     <>
       <FullscreenStepFlow
@@ -360,6 +453,8 @@ export function RecurringInvoicePlanFlow({
       <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
         {currentStep === 0 ? (
           <section className="cc-form-shell__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <div className="cc-form-shell__section-head">
               <strong>Contexto base</strong>
               <span>Define que se automatiza y sobre que cliente o propiedad se apoyara.</span>
@@ -387,23 +482,9 @@ export function RecurringInvoicePlanFlow({
                 title="Falta el cliente base"
                 description="Resuelve el cliente dentro del mismo flujo sin perder lo ya configurado."
                 isOpen={showClientCreate}
-                onToggle={() => setShowClientCreate((current) => !current)}
+                onToggle={() => setShowClientCreate(true)}
               >
-                <ClientCreateForm
-                  onCreated={onRefreshData}
-                  onDirtyChange={setIsDirty}
-                  title="Nuevo cliente en contexto"
-                  description="Al guardarlo, quedara seleccionado automaticamente en el plan."
-                  submitLabel="Guardar cliente y usarlo"
-                  onCreatedClient={async (client) => {
-                    setForm((current) => ({
-                      ...current,
-                      client_id: client.id,
-                    }))
-                    setIsDirty(true)
-                    setShowClientCreate(false)
-                  }}
-                />
+                <></>
               </ContextualCreateSection>
             ) : null}
 
@@ -437,32 +518,9 @@ export function RecurringInvoicePlanFlow({
               title="Propiedad en contexto"
               description="Si el plan necesita un inmueble nuevo, crealo aqui y sigue sin romper el flujo."
               isOpen={showPropertyCreate}
-              onToggle={() => setShowPropertyCreate((current) => !current)}
+              onToggle={() => setShowPropertyCreate(true)}
             >
-              <PropertyCreateFlow
-                clients={clients}
-                onRefreshData={onRefreshData}
-                onCompleted={async () => {}}
-                onDirtyChange={setIsDirty}
-                contextClientId={form.client_id || null}
-                title="Nueva propiedad para recurrencia"
-                description="La propiedad quedara lista para vincularse a este plan recurrente."
-                submitLabel="Guardar propiedad y usarla"
-                onCreatedProperty={async (property) => {
-                  await completeContextualActionFlow({
-                    created: property,
-                    applyCreated: async (createdProperty) => {
-                      setForm((current) => ({
-                        ...current,
-                        property_id: createdProperty.id,
-                        quote_id: '',
-                      }))
-                    },
-                    closeSubflow: () => setShowPropertyCreate(false),
-                    markDirty: () => setIsDirty(true),
-                  })
-                }}
-              />
+              <></>
             </ContextualCreateSection>
 
             <label className="form-field">
@@ -485,32 +543,12 @@ export function RecurringInvoicePlanFlow({
               title="Presupuesto en contexto"
               description="Genera un presupuesto de referencia sin abandonar la automatizacion."
               isOpen={showQuoteCreate}
-              onToggle={() => setShowQuoteCreate((current) => !current)}
+              onToggle={() => setShowQuoteCreate(true)}
             >
-              <QuoteCreateFlow
-                clients={clients}
-                properties={properties}
-                onRefreshData={onRefreshData}
-                onCompleted={async () => {}}
-                onDirtyChange={setIsDirty}
-                contextClientId={form.client_id || null}
-                contextPropertyId={form.property_id || null}
-                onCreatedQuote={async (quote) => {
-                  await completeContextualActionFlow({
-                    created: quote,
-                    applyCreated: async (createdQuote) => {
-                      setForm((current) => ({
-                        ...current,
-                        quote_id: createdQuote.id,
-                        property_id: createdQuote.property_id ?? current.property_id,
-                      }))
-                    },
-                    closeSubflow: () => setShowQuoteCreate(false),
-                    markDirty: () => setIsDirty(true),
-                  })
-                }}
-              />
+              <></>
             </ContextualCreateSection>
+              </>
+            )}
           </section>
         ) : null}
 

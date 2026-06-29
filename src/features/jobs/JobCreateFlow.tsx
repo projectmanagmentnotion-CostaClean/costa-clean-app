@@ -520,6 +520,109 @@ export function JobCreateFlow({
     </div>
   )
 
+  const activeContextualFlow = currentStep === 0
+    ? (
+        showClientCreate ? (
+          <ContextualCreateSection
+            actionLabel="Crear cliente"
+            title="Debes crear el cliente antes de seguir"
+            description="Completa primero el alta del cliente y volveras al servicio con ese contexto ya fijado."
+            isOpen
+            onToggle={() => setShowClientCreate(false)}
+          >
+            <ClientCreateForm
+              onCreated={onRefreshData}
+              onDirtyChange={setIsDirty}
+              title="Nuevo cliente para este servicio"
+              description="El cliente quedara fijado y el servicio seguira en este mismo punto."
+              submitLabel="Guardar cliente y usarlo"
+              onCreatedClient={async (client) => {
+                await completeContextualActionFlow({
+                  created: client,
+                  applyCreated: async (createdClient) => {
+                    setForm((current) => ({
+                      ...current,
+                      client_id: createdClient.id,
+                      property_id: '',
+                      quote_id: '',
+                    }))
+                  },
+                  closeSubflow: () => setShowClientCreate(false),
+                  markDirty,
+                })
+              }}
+            />
+          </ContextualCreateSection>
+        ) : form.client_id && showPropertyCreate ? (
+          <ContextualCreateSection
+            actionLabel="Crear propiedad"
+            title="Debes crear la propiedad antes de seguir"
+            description="Completa la propiedad en una surface limpia y volveras al servicio con ella ya seleccionada."
+            isOpen
+            onToggle={() => setShowPropertyCreate(false)}
+          >
+            <PropertyCreateFlow
+              clients={clients}
+              onRefreshData={onRefreshData}
+              onCompleted={async () => {}}
+              onDirtyChange={setIsDirty}
+              contextClientId={form.client_id}
+              title="Nueva propiedad para este servicio"
+              description="La propiedad quedara lista para seguir con la programacion del servicio."
+              submitLabel="Guardar propiedad y usarla"
+              onCreatedProperty={async (property) => {
+                await completeContextualActionFlow({
+                  created: property,
+                  applyCreated: async (createdProperty) => {
+                    setForm((current) => ({
+                      ...current,
+                      property_id: createdProperty.id,
+                      quote_id: '',
+                    }))
+                  },
+                  closeSubflow: () => setShowPropertyCreate(false),
+                  markDirty,
+                })
+              }}
+            />
+          </ContextualCreateSection>
+        ) : form.client_id && showQuoteCreate ? (
+          <ContextualCreateSection
+            actionLabel="Crear presupuesto"
+            title="Debes crear el presupuesto antes de seguir"
+            description="Completa el presupuesto como accion principal y volveras al servicio con el origen ya resuelto."
+            isOpen
+            onToggle={() => setShowQuoteCreate(false)}
+          >
+            <QuoteCreateFlow
+              clients={clients}
+              properties={properties}
+              onRefreshData={onRefreshData}
+              onCompleted={async () => {}}
+              onDirtyChange={setIsDirty}
+              contextClientId={form.client_id}
+              contextPropertyId={form.property_id || null}
+              onCreatedQuote={async (quote) => {
+                await completeContextualActionFlow({
+                  created: quote,
+                  applyCreated: async (createdQuote) => {
+                    setForm((current) => ({
+                      ...current,
+                      quote_id: createdQuote.id,
+                      client_id: createdQuote.client_id,
+                      property_id: createdQuote.property_id ?? current.property_id,
+                    }))
+                  },
+                  closeSubflow: () => setShowQuoteCreate(false),
+                  markDirty,
+                })
+              }}
+            />
+          </ContextualCreateSection>
+        ) : null
+      )
+    : null
+
   return (
     <>
       <FullscreenStepFlow
@@ -536,6 +639,8 @@ export function JobCreateFlow({
       >
         {currentStep === 0 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Fija el origen real del servicio</strong>
@@ -569,34 +674,13 @@ export function JobCreateFlow({
 
               {!isClientLocked ? (
                 <ContextualCreateSection
-                  actionLabel="Crear cliente en este flujo"
+                  actionLabel="Crear cliente"
                   title="Cliente pendiente"
-                  description="Si el servicio nace sobre un cliente nuevo, lo creas aqui sin perder el resto del flujo."
+                  description="Para seguir con este servicio necesitas fijar antes un cliente o crearlo ahora."
                   isOpen={showClientCreate}
-                  onToggle={() => setShowClientCreate((current) => !current)}
+                  onToggle={() => setShowClientCreate(true)}
                 >
-                  <ClientCreateForm
-                    onCreated={onRefreshData}
-                    onDirtyChange={setIsDirty}
-                    title="Nuevo cliente para este servicio"
-                    description="El cliente quedara fijado y el servicio seguira en este mismo punto."
-                    submitLabel="Guardar cliente y usarlo"
-                    onCreatedClient={async (client) => {
-                      await completeContextualActionFlow({
-                        created: client,
-                        applyCreated: async (createdClient) => {
-                          setForm((current) => ({
-                            ...current,
-                            client_id: createdClient.id,
-                            property_id: '',
-                            quote_id: '',
-                          }))
-                        },
-                        closeSubflow: () => setShowClientCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
@@ -618,36 +702,13 @@ export function JobCreateFlow({
 
               {form.client_id && !isPropertyLocked ? (
                 <ContextualCreateSection
-                  actionLabel="Crear propiedad en este flujo"
+                  actionLabel="Crear propiedad"
                   title="Propiedad pendiente"
-                  description="La propiedad se da de alta dentro del mismo servicio y vuelve ya seleccionada."
+                  description="Si la propiedad aun no existe, creala ahora y el servicio retomara este paso con ella ya resuelta."
                   isOpen={showPropertyCreate}
-                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                  onToggle={() => setShowPropertyCreate(true)}
                 >
-                  <PropertyCreateFlow
-                    clients={clients}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    contextClientId={form.client_id}
-                    title="Nueva propiedad para este servicio"
-                    description="La propiedad quedara lista para seguir con la programacion del servicio."
-                    submitLabel="Guardar propiedad y usarla"
-                    onCreatedProperty={async (property) => {
-                      await completeContextualActionFlow({
-                        created: property,
-                        applyCreated: async (createdProperty) => {
-                          setForm((current) => ({
-                            ...current,
-                            property_id: createdProperty.id,
-                            quote_id: '',
-                          }))
-                        },
-                        closeSubflow: () => setShowPropertyCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
@@ -673,39 +734,18 @@ export function JobCreateFlow({
 
               {form.client_id && !isQuoteLocked ? (
                 <ContextualCreateSection
-                  actionLabel="Crear presupuesto en este flujo"
+                  actionLabel="Crear presupuesto"
                   title="Presupuesto en contexto"
-                  description="Si aun no existe el presupuesto aceptado, lo creas aqui y lo usas como origen del servicio."
+                  description="Si falta el presupuesto aceptado, crealo primero y despues retoma el servicio con ese origen ya vinculado."
                   isOpen={showQuoteCreate}
-                  onToggle={() => setShowQuoteCreate((current) => !current)}
+                  onToggle={() => setShowQuoteCreate(true)}
                 >
-                  <QuoteCreateFlow
-                    clients={clients}
-                    properties={properties}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    contextClientId={form.client_id}
-                    contextPropertyId={form.property_id || null}
-                    onCreatedQuote={async (quote) => {
-                      await completeContextualActionFlow({
-                        created: quote,
-                        applyCreated: async (createdQuote) => {
-                          setForm((current) => ({
-                            ...current,
-                            quote_id: createdQuote.id,
-                            client_id: createdQuote.client_id,
-                            property_id: createdQuote.property_id ?? current.property_id,
-                          }))
-                        },
-                        closeSubflow: () => setShowQuoteCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
             </div>
+              </>
+            )}
           </section>
         ) : null}
 

@@ -85,7 +85,8 @@
 .cc-create-flow__grid > .form-field-full,
 .cc-create-flow__grid > .cc-create-flow__panel,
 .cc-create-flow__grid > .cc-alert,
-.cc-create-flow__grid > .cc-create-flow__microactions {
+.cc-create-flow__grid > .cc-create-flow__microactions,
+.cc-create-flow__grid > .cc-contextual-create {
   grid-column: 1 / -1;
 }
 

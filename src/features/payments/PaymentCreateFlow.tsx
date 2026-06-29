@@ -456,6 +456,39 @@ export function PaymentCreateFlow({
     </div>
   )
 
+  const activeContextualFlow = currentStep === 0 && !hideInvoiceCreateAction && showInvoiceCreate ? (
+    <ContextualCreateSection
+      actionLabel="Crear factura"
+      title="Debes crear la factura antes de seguir"
+      description="Completa primero la factura y volveras al cobro con ese contexto ya fijado."
+      isOpen
+      onToggle={() => setShowInvoiceCreate(false)}
+    >
+      <InvoiceCreateFlow
+        clients={clients}
+        properties={properties}
+        jobs={jobs}
+        quotes={quotes}
+        onRefreshData={onRefreshData}
+        onCompleted={async () => {}}
+        onDirtyChange={setIsDirty}
+        onCreatedInvoice={async (invoice) => {
+          await completeContextualActionFlow({
+            created: invoice,
+            applyCreated: async (createdInvoice) => {
+              setForm((current) => ({
+                ...current,
+                invoice_id: createdInvoice.id,
+              }))
+            },
+            closeSubflow: () => setShowInvoiceCreate(false),
+            markDirty,
+          })
+        }}
+      />
+    </ContextualCreateSection>
+  ) : null
+
   return (
     <>
       <FullscreenStepFlow
@@ -472,6 +505,8 @@ export function PaymentCreateFlow({
       >
         {currentStep === 0 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Fija la factura origen</strong>
@@ -525,37 +560,18 @@ export function PaymentCreateFlow({
 
               {!hideInvoiceCreateAction ? (
                 <ContextualCreateSection
-                  actionLabel={availableInvoices.length === 0 ? 'Crear factura en este flujo' : 'Crear factura excepcional'}
+                  actionLabel={availableInvoices.length === 0 ? 'Crear factura' : 'Crear factura excepcional'}
                   title="Falta la factura base"
-                  description="Si el cobro no puede arrancar desde una factura existente, la creas aqui y vuelves con el contexto fijado."
+                  description="Si el cobro no puede arrancar desde una factura existente, creala primero y despues vuelve con el contexto ya fijado."
                   isOpen={showInvoiceCreate}
-                  onToggle={() => setShowInvoiceCreate((current) => !current)}
+                  onToggle={() => setShowInvoiceCreate(true)}
                 >
-                  <InvoiceCreateFlow
-                    clients={clients}
-                    properties={properties}
-                    jobs={jobs}
-                    quotes={quotes}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    onCreatedInvoice={async (invoice) => {
-                      await completeContextualActionFlow({
-                        created: invoice,
-                        applyCreated: async (createdInvoice) => {
-                          setForm((current) => ({
-                            ...current,
-                            invoice_id: createdInvoice.id,
-                          }))
-                        },
-                        closeSubflow: () => setShowInvoiceCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
             </div>
+              </>
+            )}
           </section>
         ) : null}
 

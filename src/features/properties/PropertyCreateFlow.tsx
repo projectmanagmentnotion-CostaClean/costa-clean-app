@@ -278,6 +278,33 @@ export function PropertyCreateFlow({
         </ContextualCreateSection>
       ) : (
         <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
+          {showClientCreate ? (
+            <ContextualCreateSection
+              actionLabel="Crear cliente"
+              title="Debes crear el cliente antes de seguir"
+              description="Completa primero el cliente y volveras a la propiedad con ese contexto ya fijado."
+              isOpen
+              onToggle={() => setShowClientCreate(false)}
+            >
+              <ClientCreateForm
+                onCreated={onRefreshData}
+                onDirtyChange={setIsDirty}
+                existingClients={clients}
+                title="Nuevo cliente en contexto"
+                description="Al guardarlo, quedara seleccionado automaticamente aqui."
+                submitLabel="Guardar cliente y usarlo"
+                onCreatedClient={async (client) => {
+                  setForm((current) => ({
+                    ...current,
+                    client_id: client.id,
+                  }))
+                  setIsDirty(true)
+                  setShowClientCreate(false)
+                }}
+              />
+            </ContextualCreateSection>
+          ) : (
+            <>
           <section className="cc-form-shell__section">
             <div className="cc-form-shell__section-head">
               <strong>Base del inmueble</strong>
@@ -306,24 +333,9 @@ export function PropertyCreateFlow({
                 title="Falta el cliente"
                 description="Abre un subflujo corto para resolver el propietario sin perder lo ya escrito."
                 isOpen={showClientCreate}
-                onToggle={() => setShowClientCreate((current) => !current)}
+                onToggle={() => setShowClientCreate(true)}
               >
-                <ClientCreateForm
-                  onCreated={onRefreshData}
-                  onDirtyChange={setIsDirty}
-                  existingClients={clients}
-                  title="Nuevo cliente en contexto"
-                  description="Al guardarlo, quedara seleccionado automaticamente aqui."
-                  submitLabel="Guardar cliente y usarlo"
-                  onCreatedClient={async (client) => {
-                    setForm((current) => ({
-                      ...current,
-                      client_id: client.id,
-                    }))
-                    setIsDirty(true)
-                    setShowClientCreate(false)
-                  }}
-                />
+                <></>
               </ContextualCreateSection>
             ) : null}
 
@@ -416,6 +428,8 @@ export function PropertyCreateFlow({
               {isSubmitting ? 'Guardando...' : submitLabel}
             </button>
           </div>
+            </>
+          )}
         </form>
       )}
 

@@ -1,7 +1,6 @@
 .cc-contextual-create {
   display: grid;
   gap: 0;
-  padding: 0;
   border: 1px solid rgba(125, 211, 252, 0.22);
   border-radius: 22px;
   background:
@@ -17,11 +16,12 @@
 
 .cc-contextual-create__header,
 .cc-contextual-create__copy,
-.cc-contextual-create__body {
+.cc-contextual-create__takeover-head {
   display: grid;
 }
 
-.cc-contextual-create__header {
+.cc-contextual-create__header,
+.cc-contextual-create__takeover-head {
   gap: 12px;
   padding: 16px 18px;
 }
@@ -54,45 +54,48 @@
   line-height: 1.55;
 }
 
-.cc-contextual-create__body {
-  gap: 0;
-  padding: 18px;
-  border-top: 1px solid rgba(125, 211, 252, 0.16);
-  background:
-    linear-gradient(180deg, rgba(6, 13, 24, 0.28), rgba(6, 13, 24, 0.08));
-}
-
-.cc-contextual-create.is-open .cc-contextual-create__header {
-  background: rgba(10, 18, 31, 0.24);
-}
-
 .secondary-button--quiet {
   border-style: dashed;
 }
 
-:root[data-theme="light"] .cc-contextual-create__body {
-  border-top-color: rgba(11, 131, 180, 0.12);
-  background:
-    linear-gradient(180deg, rgba(244, 250, 253, 0.92), rgba(249, 252, 254, 0.74));
+.cc-contextual-create--takeover {
+  gap: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
 }
 
-:root[data-theme="light"] .cc-contextual-create.is-open .cc-contextual-create__header {
-  background: rgba(255, 255, 255, 0.46);
+.cc-contextual-create__takeover-head {
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(10, 23, 40, 0.42), rgba(10, 23, 40, 0.18));
+}
+
+.cc-contextual-create__takeover-body {
+  display: grid;
+  gap: 0;
+}
+
+:root[data-theme="light"] .cc-contextual-create__takeover-head {
+  border-color: rgba(11, 131, 180, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(243, 249, 253, 0.88));
 }
 
 @media (min-width: 720px) {
-  .cc-contextual-create__header {
+  .cc-contextual-create__header,
+  .cc-contextual-create__takeover-head {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
   }
 }
 
 @media (max-width: 640px) {
-  .cc-contextual-create__header {
-    padding: 14px;
-  }
-
-  .cc-contextual-create__body {
+  .cc-contextual-create__header,
+  .cc-contextual-create__takeover-head {
     padding: 14px;
   }
 }

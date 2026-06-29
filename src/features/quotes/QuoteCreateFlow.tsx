@@ -434,6 +434,72 @@ export function QuoteCreateFlow({
     </>
   )
 
+  const activeContextualFlow = currentStep === 0
+    ? showClientCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Debes crear el cliente antes de seguir"
+          description="Completa primero el cliente y volveras al presupuesto con ese contexto ya fijado."
+          isOpen
+          onToggle={() => setShowClientCreate(false)}
+        >
+          <ClientCreateForm
+            onCreated={onRefreshData}
+            onDirtyChange={setIsDirty}
+            title="Nuevo cliente para este presupuesto"
+            description="Se seleccionara automaticamente al guardarlo."
+            submitLabel="Guardar cliente y usarlo"
+            onCreatedClient={async (client) => {
+              await completeContextualActionFlow({
+                created: client,
+                applyCreated: async (createdClient) => {
+                  setForm((current) => ({
+                    ...current,
+                    client_id: createdClient.id,
+                    property_id: '',
+                  }))
+                },
+                closeSubflow: () => setShowClientCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : null
+    : currentStep === 1 && form.client_id && showPropertyCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear propiedad"
+          title="Debes crear la propiedad antes de seguir"
+          description="Completa ahora la propiedad y volveras al presupuesto con ella ya seleccionada."
+          isOpen
+          onToggle={() => setShowPropertyCreate(false)}
+        >
+          <PropertyCreateFlow
+            clients={clients}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            contextClientId={form.client_id}
+            title="Nueva propiedad para este presupuesto"
+            description="La propiedad se guarda y vuelve seleccionada al instante."
+            submitLabel="Guardar propiedad y usarla"
+            onCreatedProperty={async (property) => {
+              await completeContextualActionFlow({
+                created: property,
+                applyCreated: async (createdProperty) => {
+                  setForm((current) => ({
+                    ...current,
+                    property_id: createdProperty.id,
+                  }))
+                },
+                closeSubflow: () => setShowPropertyCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : null
+
   return (
     <>
       <FullscreenStepFlow
@@ -450,6 +516,8 @@ export function QuoteCreateFlow({
       >
         {currentStep === 0 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Fija el cliente primero</strong>
@@ -483,33 +551,13 @@ export function QuoteCreateFlow({
 
               {!contextClientId ? (
                 <ContextualCreateSection
-                  actionLabel="Crear cliente en este flujo"
+                  actionLabel="Crear cliente"
                   title="Cliente pendiente"
-                  description="Si el cliente no existe, se crea aqui y el presupuesto continua sin salir del fullscreen."
+                  description="Para seguir con este presupuesto necesitas fijar antes un cliente o crearlo ahora."
                   isOpen={showClientCreate}
-                  onToggle={() => setShowClientCreate((current) => !current)}
+                  onToggle={() => setShowClientCreate(true)}
                 >
-                  <ClientCreateForm
-                    onCreated={onRefreshData}
-                    onDirtyChange={setIsDirty}
-                    title="Nuevo cliente para este presupuesto"
-                    description="Se seleccionara automaticamente al guardarlo."
-                    submitLabel="Guardar cliente y usarlo"
-                    onCreatedClient={async (client) => {
-                      await completeContextualActionFlow({
-                        created: client,
-                        applyCreated: async (createdClient) => {
-                          setForm((current) => ({
-                            ...current,
-                            client_id: createdClient.id,
-                            property_id: '',
-                          }))
-                        },
-                        closeSubflow: () => setShowClientCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
@@ -529,11 +577,15 @@ export function QuoteCreateFlow({
                 </article>
               ) : null}
             </div>
+              </>
+            )}
           </section>
         ) : null}
 
         {currentStep === 1 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
               <strong>Completa datos comerciales sin abandonar la accion</strong>
@@ -576,35 +628,13 @@ export function QuoteCreateFlow({
 
               {form.client_id && !contextPropertyId ? (
                 <ContextualCreateSection
-                  actionLabel="Crear propiedad en este flujo"
+                  actionLabel="Crear propiedad"
                   title="Propiedad pendiente"
                   description="Añadela ahora y quedara enlazada al presupuesto sin perder progreso."
                   isOpen={showPropertyCreate}
-                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                  onToggle={() => setShowPropertyCreate(true)}
                 >
-                  <PropertyCreateFlow
-                    clients={clients}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    contextClientId={form.client_id}
-                    title="Nueva propiedad para este presupuesto"
-                    description="La propiedad se guarda y vuelve seleccionada al instante."
-                    submitLabel="Guardar propiedad y usarla"
-                    onCreatedProperty={async (property) => {
-                      await completeContextualActionFlow({
-                        created: property,
-                        applyCreated: async (createdProperty) => {
-                          setForm((current) => ({
-                            ...current,
-                            property_id: createdProperty.id,
-                          }))
-                        },
-                        closeSubflow: () => setShowPropertyCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
@@ -618,6 +648,8 @@ export function QuoteCreateFlow({
                 />
               </label>
             </div>
+              </>
+            )}
           </section>
         ) : null}
 

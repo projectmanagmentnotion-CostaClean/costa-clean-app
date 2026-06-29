@@ -798,6 +798,143 @@ export function InvoiceCreateFlow({
     </>
   )
 
+  const activeContextualFlow = currentStep === 0
+    ? form.origin_mode === 'job' && showJobCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear servicio"
+          title="Debes crear el servicio antes de seguir"
+          description="Completa el servicio como accion principal y volveras a la factura con la ruta ya resuelta."
+          isOpen
+          onToggle={() => setShowJobCreate(false)}
+        >
+          <JobCreateFlow
+            clients={clients}
+            properties={properties}
+            quotes={quotes}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            onCreatedJob={async (job) => {
+              await completeContextualActionFlow({
+                created: job,
+                applyCreated: async (createdJob) => {
+                  setForm((current) => ({
+                    ...current,
+                    origin_mode: 'job',
+                    job_id: createdJob.id,
+                    client_id: createdJob.client_id,
+                    property_id: createdJob.property_id,
+                    quote_id: createdJob.quote_id ?? '',
+                  }))
+                },
+                closeSubflow: () => setShowJobCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : form.origin_mode === 'quote' && showQuoteCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear presupuesto"
+          title="Debes crear el presupuesto antes de seguir"
+          description="Completa primero el presupuesto y volveras a la factura con ese origen ya vinculado."
+          isOpen
+          onToggle={() => setShowQuoteCreate(false)}
+        >
+          <QuoteCreateFlow
+            clients={clients}
+            properties={properties}
+            quotes={quotes}
+            invoices={invoices}
+            expenses={expenses}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            contextClientId={form.client_id || null}
+            contextPropertyId={form.property_id || null}
+            onCreatedQuote={async (quote) => {
+              await completeContextualActionFlow({
+                created: quote,
+                applyCreated: async (createdQuote) => {
+                  setForm((current) => ({
+                    ...current,
+                    origin_mode: 'quote',
+                    quote_id: createdQuote.id,
+                    client_id: createdQuote.client_id,
+                    property_id: createdQuote.property_id ?? '',
+                  }))
+                },
+                closeSubflow: () => setShowQuoteCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : null
+    : currentStep === 1 && form.origin_mode === 'manual' && showClientCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear cliente"
+          title="Debes crear el cliente antes de seguir"
+          description="Completa primero el cliente y volveras a la factura con su ficha ya fijada."
+          isOpen
+          onToggle={() => setShowClientCreate(false)}
+        >
+          <ClientCreateForm
+            onCreated={onRefreshData}
+            onDirtyChange={setIsDirty}
+            title="Nuevo cliente para esta factura"
+            description="Se seleccionara automaticamente al guardarlo."
+            submitLabel="Guardar cliente y usarlo"
+            onCreatedClient={async (client) => {
+              await completeContextualActionFlow({
+                created: client,
+                applyCreated: async (createdClient) => {
+                  setForm((current) => ({
+                    ...current,
+                    client_id: createdClient.id,
+                    property_id: '',
+                  }))
+                },
+                closeSubflow: () => setShowClientCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : currentStep === 1 && form.origin_mode === 'manual' && form.client_id && showPropertyCreate ? (
+        <ContextualCreateSection
+          actionLabel="Crear propiedad"
+          title="Debes crear la propiedad antes de seguir"
+          description="Completa ahora la propiedad y volveras a la factura con ella ya seleccionada."
+          isOpen
+          onToggle={() => setShowPropertyCreate(false)}
+        >
+          <PropertyCreateFlow
+            clients={clients}
+            onRefreshData={onRefreshData}
+            onCompleted={async () => {}}
+            onDirtyChange={setIsDirty}
+            contextClientId={form.client_id}
+            title="Nueva propiedad para esta factura"
+            description="La propiedad quedara disponible de inmediato dentro del flujo."
+            submitLabel="Guardar propiedad y usarla"
+            onCreatedProperty={async (property) => {
+              await completeContextualActionFlow({
+                created: property,
+                applyCreated: async (createdProperty) => {
+                  setForm((current) => ({
+                    ...current,
+                    property_id: createdProperty.id,
+                  }))
+                },
+                closeSubflow: () => setShowPropertyCreate(false),
+                markDirty,
+              })
+            }}
+          />
+        </ContextualCreateSection>
+      ) : null
+
   return (
     <>
       <FullscreenStepFlow
@@ -814,6 +951,8 @@ export function InvoiceCreateFlow({
       >
         {currentStep === 0 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Escoge la ruta correcta antes de facturar</strong>
@@ -889,84 +1028,37 @@ export function InvoiceCreateFlow({
 
               {form.origin_mode === 'job' ? (
                 <ContextualCreateSection
-                  actionLabel="Crear servicio en este flujo"
+                  actionLabel="Crear servicio"
                   title="Servicio pendiente"
-                  description="Si el servicio todavia no existe, crealo aqui y vuelve a la ruta principal sin salir del fullscreen."
+                  description="Si falta el servicio base, crealo primero y despues vuelve a la factura con esa ruta ya resuelta."
                   isOpen={showJobCreate}
-                  onToggle={() => setShowJobCreate((current) => !current)}
+                  onToggle={() => setShowJobCreate(true)}
                 >
-                  <JobCreateFlow
-                    clients={clients}
-                    properties={properties}
-                    quotes={quotes}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    onCreatedJob={async (job) => {
-                      await completeContextualActionFlow({
-                        created: job,
-                        applyCreated: async (createdJob) => {
-                          setForm((current) => ({
-                            ...current,
-                            origin_mode: 'job',
-                            job_id: createdJob.id,
-                            client_id: createdJob.client_id,
-                            property_id: createdJob.property_id,
-                            quote_id: createdJob.quote_id ?? '',
-                          }))
-                        },
-                        closeSubflow: () => setShowJobCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
               {form.origin_mode === 'quote' ? (
                 <ContextualCreateSection
-                  actionLabel="Crear presupuesto en este flujo"
+                  actionLabel="Crear presupuesto"
                   title="Presupuesto pendiente"
-                  description="Crea el presupuesto aceptable dentro de la misma superficie y usalo de inmediato como origen."
+                  description="Si falta el presupuesto aceptado, crealo primero y despues retoma la factura con ese origen ya vinculado."
                   isOpen={showQuoteCreate}
-                  onToggle={() => setShowQuoteCreate((current) => !current)}
+                  onToggle={() => setShowQuoteCreate(true)}
                 >
-                  <QuoteCreateFlow
-                    clients={clients}
-                    properties={properties}
-                    quotes={quotes}
-                    invoices={invoices}
-                    expenses={expenses}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    contextClientId={form.client_id || null}
-                    contextPropertyId={form.property_id || null}
-                    onCreatedQuote={async (quote) => {
-                      await completeContextualActionFlow({
-                        created: quote,
-                        applyCreated: async (createdQuote) => {
-                          setForm((current) => ({
-                            ...current,
-                            origin_mode: 'quote',
-                            quote_id: createdQuote.id,
-                            client_id: createdQuote.client_id,
-                            property_id: createdQuote.property_id ?? '',
-                          }))
-                        },
-                        closeSubflow: () => setShowQuoteCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
             </div>
+              </>
+            )}
           </section>
         ) : null}
 
         {currentStep === 1 ? (
           <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
               <strong>Confirma facturacion y ficha fiscal</strong>
@@ -1035,67 +1127,25 @@ export function InvoiceCreateFlow({
 
               {form.origin_mode === 'manual' ? (
                 <ContextualCreateSection
-                  actionLabel="Crear cliente en este flujo"
+                  actionLabel="Crear cliente"
                   title="Cliente pendiente"
-                  description="Crea el cliente sin perder lineas, fecha ni contexto del documento."
+                  description="Para seguir con esta factura necesitas fijar antes un cliente o crearlo ahora."
                   isOpen={showClientCreate}
-                  onToggle={() => setShowClientCreate((current) => !current)}
+                  onToggle={() => setShowClientCreate(true)}
                 >
-                  <ClientCreateForm
-                    onCreated={onRefreshData}
-                    onDirtyChange={setIsDirty}
-                    title="Nuevo cliente para esta factura"
-                    description="Se seleccionara automaticamente al guardarlo."
-                    submitLabel="Guardar cliente y usarlo"
-                    onCreatedClient={async (client) => {
-                      await completeContextualActionFlow({
-                        created: client,
-                        applyCreated: async (createdClient) => {
-                          setForm((current) => ({
-                            ...current,
-                            client_id: createdClient.id,
-                            property_id: '',
-                          }))
-                        },
-                        closeSubflow: () => setShowClientCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
               {form.origin_mode === 'manual' && form.client_id ? (
                 <ContextualCreateSection
-                  actionLabel="Crear propiedad en este flujo"
+                  actionLabel="Crear propiedad"
                   title="Propiedad pendiente"
-                  description="Si necesitas asociar una propiedad, se crea aqui mismo y vuelve ya seleccionada."
+                  description="Si necesitas asociar una propiedad, creala primero y despues retoma esta factura con ella ya resuelta."
                   isOpen={showPropertyCreate}
-                  onToggle={() => setShowPropertyCreate((current) => !current)}
+                  onToggle={() => setShowPropertyCreate(true)}
                 >
-                  <PropertyCreateFlow
-                    clients={clients}
-                    onRefreshData={onRefreshData}
-                    onCompleted={async () => {}}
-                    onDirtyChange={setIsDirty}
-                    contextClientId={form.client_id}
-                    title="Nueva propiedad para esta factura"
-                    description="La propiedad quedara disponible de inmediato dentro del flujo."
-                    submitLabel="Guardar propiedad y usarla"
-                    onCreatedProperty={async (property) => {
-                      await completeContextualActionFlow({
-                        created: property,
-                        applyCreated: async (createdProperty) => {
-                          setForm((current) => ({
-                            ...current,
-                            property_id: createdProperty.id,
-                          }))
-                        },
-                        closeSubflow: () => setShowPropertyCreate(false),
-                        markDirty,
-                      })
-                    }}
-                  />
+                  <></>
                 </ContextualCreateSection>
               ) : null}
 
@@ -1137,6 +1187,8 @@ export function InvoiceCreateFlow({
                 </article>
               ) : null}
             </div>
+              </>
+            )}
           </section>
         ) : null}
 

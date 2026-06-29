@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildExpenseDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { ExpenseCreateFlow } from '../features/expenses/ExpenseCreateFlow'
@@ -47,7 +48,14 @@ export function ExpensesPage({
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
   const selectedExpenseKey = selectedExpense?.id ?? null
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
-  const duplicateGroups = useMemo(() => buildExpenseDuplicateGroups(expenses), [expenses])
+  const rawDuplicateGroups = useMemo(() => buildExpenseDuplicateGroups(expenses), [expenses])
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en gastos')
@@ -236,6 +244,10 @@ export function ExpensesPage({
         title="Revisión de gastos duplicados"
         description="Estas coincidencias ya existen en el módulo y conviene revisarlas antes de seguir guardando soportes o importes parecidos."
         groups={duplicateGroups}
+        reviewStateByGroupId={reviewStateByGroupId}
+        onMarkReviewed={markReviewed}
+        onIgnoreGroup={ignoreGroup}
+        onReopenGroup={reopenGroup}
         onClose={() => setShowDuplicateReview(false)}
         onOpenRecord={(expenseId) => {
           setShowDuplicateReview(false)

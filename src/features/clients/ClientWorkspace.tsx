@@ -58,6 +58,7 @@ type ClientWorkspaceAction = 'property' | 'job' | 'quote' | 'invoice' | 'payment
 
 interface ClientWorkspaceProps {
   client: ClientListItem
+  allClients: ClientListItem[]
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
@@ -811,9 +812,14 @@ export function ClientWorkspace({
           clients={[client]}
           properties={relatedProperties}
           quotes={relatedQuotes}
+          plans={recurringInvoicePlans}
           initialPlan={relatedRecurringPlans.find((plan) => plan.id === editingRecurringPlanId) ?? null}
           onRefreshData={onRefresh}
           onCompleted={handleFlowCompleted}
+          onOpenExistingPlan={(planId) => {
+            setEditingRecurringPlanId(planId)
+            setHasActionDirty(false)
+          }}
           onCancel={requestCloseAction}
           onDirtyChange={setHasActionDirty}
         />

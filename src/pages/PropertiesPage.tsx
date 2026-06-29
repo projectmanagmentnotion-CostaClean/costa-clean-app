@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildPropertyDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { ClientListItem } from '../features/clients/types'
@@ -63,7 +64,24 @@ export function PropertiesPage({
     () => properties.find((property) => property.id === activePropertyId) ?? null,
     [activePropertyId, properties],
   )
-  const duplicateGroups = useMemo(() => buildPropertyDuplicateGroups(properties), [properties])
+  const rawDuplicateGroups = useMemo(() => buildPropertyDuplicateGroups(properties), [properties])
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
+  const activePropertyDuplicateGroups = useMemo(
+    () => activeProperty
+      ? duplicateGroups.filter((group) => group.records.some((record) => record.recordId === activeProperty.id))
+      : [],
+    [activeProperty, duplicateGroups],
+  )
+  const activePropertyImportantDuplicateGroups = useMemo(
+    () => activePropertyDuplicateGroups.filter((group) => group.severity === 'exact' || group.severity === 'strong'),
+    [activePropertyDuplicateGroups],
+  )
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
@@ -178,6 +196,10 @@ export function PropertiesPage({
             title="Revisión de propiedades duplicadas"
             description="Estas coincidencias ya existen en la cartera de inmuebles. Revísalas antes de seguir creando nuevas direcciones parecidas."
             groups={duplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
             onClose={() => setShowDuplicateReview(false)}
             onOpenRecord={(propertyId) => {
               setShowDuplicateReview(false)
@@ -186,28 +208,52 @@ export function PropertiesPage({
           />
         </>
       ) : (
-        <PropertyWorkspace
-          property={activeProperty}
-          clients={clients}
-          jobs={jobs}
-          quotes={quotes}
-          invoices={invoices}
-          payments={payments}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onClose={() => {
-            runGuarded(() => {
-              setHasPendingWorkspaceState(false)
-              closePropertyWorkspace()
-            })
-          }}
-          onRefresh={onPropertyCreated}
-          onOpenClientWorkspace={onOpenClientWorkspace}
-          onOpenJobWorkspace={onOpenJobWorkspace}
-          onOpenQuoteDetail={onOpenQuoteDetail}
-          onOpenInvoiceDetail={onOpenInvoiceDetail}
-          onPendingStateChange={setHasPendingWorkspaceState}
-        />
+        <>
+          {activePropertyImportantDuplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${activePropertyImportantDuplicateGroups.length} coincidencia(s) importante(s) en esta propiedad`}
+              description="La direccion o el contexto del inmueble activo coincide con otra propiedad relevante."
+              actionLabel="Revisar coincidencias"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
+          <PropertyWorkspace
+            property={activeProperty}
+            allProperties={properties}
+            clients={clients}
+            jobs={jobs}
+            quotes={quotes}
+            invoices={invoices}
+            payments={payments}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onClose={() => {
+              runGuarded(() => {
+                setHasPendingWorkspaceState(false)
+                closePropertyWorkspace()
+              })
+            }}
+            onRefresh={onPropertyCreated}
+            onOpenClientWorkspace={onOpenClientWorkspace}
+            onOpenJobWorkspace={onOpenJobWorkspace}
+            onOpenQuoteDetail={onOpenQuoteDetail}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onPendingStateChange={setHasPendingWorkspaceState}
+          />
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Coincidencias de esta propiedad"
+            description="Estas coincidencias afectan al inmueble activo. Puedes revisarlas y dejar trazabilidad minima sin fusionar datos."
+            groups={activePropertyDuplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
+            onClose={() => setShowDuplicateReview(false)}
+          />
+        </>
       )}
     </section>
   )

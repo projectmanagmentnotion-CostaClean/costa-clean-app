@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
-import { buildClientDuplicateGroups } from '../features/duplicates/duplicateEngine'
+import { buildClientDuplicateGroups, buildRecurringPlanDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { ClientCreateForm } from '../features/clients/ClientCreateForm'
 import { ClientWorkspace } from '../features/clients/ClientWorkspace'
 import { ClientsList } from '../features/clients/ClientsList'
@@ -58,6 +59,7 @@ export function ClientsPage({
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
+  const [showRecurringDuplicateReview, setShowRecurringDuplicateReview] = useState(false)
   const {
     activeClientId,
     activeTab,
@@ -70,7 +72,44 @@ export function ClientsPage({
     () => clients.find((client) => client.id === activeClientId) ?? null,
     [activeClientId, clients],
   )
-  const duplicateGroups = useMemo(() => buildClientDuplicateGroups(clients), [clients])
+  const rawDuplicateGroups = useMemo(() => buildClientDuplicateGroups(clients), [clients])
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
+  const rawRecurringDuplicateGroups = useMemo(
+    () => buildRecurringPlanDuplicateGroups(recurringInvoicePlans),
+    [recurringInvoicePlans],
+  )
+  const {
+    visibleGroups: recurringDuplicateGroups,
+    reviewStateByGroupId: recurringReviewStateByGroupId,
+    markReviewed: markRecurringReviewed,
+    ignoreGroup: ignoreRecurringGroup,
+    reopenGroup: reopenRecurringGroup,
+  } = useDuplicateResolution(rawRecurringDuplicateGroups)
+  const activeClientDuplicateGroups = useMemo(
+    () => activeClient
+      ? duplicateGroups.filter((group) => group.records.some((record) => record.recordId === activeClient.id))
+      : [],
+    [activeClient, duplicateGroups],
+  )
+  const activeClientImportantDuplicateGroups = useMemo(
+    () => activeClientDuplicateGroups.filter((group) => group.severity === 'exact' || group.severity === 'strong'),
+    [activeClientDuplicateGroups],
+  )
+  const activeClientRecurringDuplicateGroups = useMemo(
+    () => activeClient
+      ? recurringDuplicateGroups.filter((group) => group.records.some((record) => {
+        const plan = recurringInvoicePlans.find((item) => item.id === record.recordId)
+        return plan?.client_id === activeClient.id
+      }))
+      : [],
+    [activeClient, recurringDuplicateGroups, recurringInvoicePlans],
+  )
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
   useEffect(() => {
@@ -187,6 +226,10 @@ export function ClientsPage({
             title="Revisión de clientes duplicados"
             description="Estas coincidencias ya existen en la cartera y conviene resolverlas antes de crear o editar más fichas."
             groups={duplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
             onClose={() => setShowDuplicateReview(false)}
             onOpenRecord={(clientId) => {
               setShowDuplicateReview(false)
@@ -195,29 +238,78 @@ export function ClientsPage({
           />
         </>
       ) : (
-        <ClientWorkspace
-          client={activeClient}
-          properties={properties}
-          jobs={jobs}
-          quotes={quotes}
-          invoices={invoices}
-          payments={payments}
-          recurringInvoicePlans={recurringInvoicePlans}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onClose={() => {
-            runGuarded(() => {
-              setHasPendingWorkspaceState(false)
-              closeClientWorkspace()
-            })
-          }}
-          onRefresh={onClientCreated}
-          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
-          onOpenJobWorkspace={onOpenJobWorkspace}
-          onOpenQuoteDetail={onOpenQuoteDetail}
-          onOpenInvoiceDetail={onOpenInvoiceDetail}
-          onPendingStateChange={setHasPendingWorkspaceState}
-        />
+        <>
+          {activeClientImportantDuplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${activeClientImportantDuplicateGroups.length} coincidencia(s) importante(s) en este cliente`}
+              description="La ficha activa coincide con otro cliente relevante. Revisa el caso antes de seguir ampliando actividad sobre esta cuenta."
+              actionLabel="Revisar coincidencias"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
+          {activeClientRecurringDuplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${activeClientRecurringDuplicateGroups.length} plan(es) recurrente(s) con posible duplicado`}
+              description="Este cliente tiene automatizaciones recurrentes que parecen repetidas por propiedad, cadencia o plantilla."
+              actionLabel="Revisar recurrentes"
+              onAction={() => setShowRecurringDuplicateReview(true)}
+            />
+          ) : null}
+
+          <ClientWorkspace
+            client={activeClient}
+            allClients={clients}
+            properties={properties}
+            jobs={jobs}
+            quotes={quotes}
+            invoices={invoices}
+            payments={payments}
+            recurringInvoicePlans={recurringInvoicePlans}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onClose={() => {
+              runGuarded(() => {
+                setHasPendingWorkspaceState(false)
+                closeClientWorkspace()
+              })
+            }}
+            onRefresh={onClientCreated}
+            onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+            onOpenJobWorkspace={onOpenJobWorkspace}
+            onOpenQuoteDetail={onOpenQuoteDetail}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onPendingStateChange={setHasPendingWorkspaceState}
+          />
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Coincidencias del cliente en este workspace"
+            description="Estas coincidencias afectan a la ficha activa. Puedes marcarlas como revisadas o indicar que no son duplicados."
+            groups={activeClientDuplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
+            onClose={() => setShowDuplicateReview(false)}
+            onOpenRecord={(clientId) => {
+              setShowDuplicateReview(false)
+              handleOpenWorkspace(clientId)
+            }}
+          />
+
+          <DuplicateReviewOverlay
+            isOpen={showRecurringDuplicateReview}
+            title="Coincidencias recurrentes de este cliente"
+            description="Estas automatizaciones parecen repetidas por cliente, propiedad, cadencia o importe plantilla."
+            groups={activeClientRecurringDuplicateGroups}
+            reviewStateByGroupId={recurringReviewStateByGroupId}
+            onMarkReviewed={markRecurringReviewed}
+            onIgnoreGroup={ignoreRecurringGroup}
+            onReopenGroup={reopenRecurringGroup}
+            onClose={() => setShowRecurringDuplicateReview(false)}
+          />
+        </>
       )}
     </section>
   )

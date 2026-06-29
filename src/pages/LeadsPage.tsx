@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { getStatusLabel } from '../app/displayText'
 import type { ClientListItem } from '../features/clients/types'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildLeadDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { LeadDraftRecord } from '../features/leadDrafts/types'
@@ -112,7 +113,14 @@ export function LeadsPage({
   const newLeadsCount = leads.filter((lead) => lead.status === 'new' && !lead.archived_at).length
   const quotedLeadsCount = leads.filter((lead) => lead.status === 'quoted' && !lead.archived_at).length
   const wonLeadsCount = leads.filter((lead) => lead.status === 'won' && !lead.archived_at).length
-  const duplicateGroups = useMemo(() => buildLeadDuplicateGroups(leads), [leads])
+  const rawDuplicateGroups = useMemo(() => buildLeadDuplicateGroups(leads), [leads])
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
 
   return (
     <section className="page-section cc-master-page">
@@ -278,6 +286,10 @@ export function LeadsPage({
         title="Revisión de leads duplicados"
         description="Estas coincidencias ya existen en la app. Úsalas para decidir si conviene unificar o seguir tratando cada lead por separado."
         groups={duplicateGroups}
+        reviewStateByGroupId={reviewStateByGroupId}
+        onMarkReviewed={markReviewed}
+        onIgnoreGroup={ignoreGroup}
+        onReopenGroup={reopenGroup}
         onClose={() => setShowDuplicateReview(false)}
         onOpenRecord={(leadId) => {
           setShowDuplicateReview(false)

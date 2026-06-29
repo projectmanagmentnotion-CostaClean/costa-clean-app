@@ -3,6 +3,7 @@ import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildPaymentDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { PaymentDetailCard } from '../features/payments/PaymentDetailCard'
@@ -63,7 +64,14 @@ export function PaymentsPage({
     payments.find((payment) => payment.id === selectedPaymentId) ?? payments[0] ?? null
   const selectedPaymentKey = selectedPayment?.id ?? null
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
-  const duplicateGroups = buildPaymentDuplicateGroups(payments)
+  const rawDuplicateGroups = buildPaymentDuplicateGroups(payments)
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
@@ -208,6 +216,10 @@ export function PaymentsPage({
         title="Revisión de cobros duplicados"
         description="Estas coincidencias ya existen en el módulo y conviene revisarlas antes de seguir registrando cobros parecidos."
         groups={duplicateGroups}
+        reviewStateByGroupId={reviewStateByGroupId}
+        onMarkReviewed={markReviewed}
+        onIgnoreGroup={ignoreGroup}
+        onReopenGroup={reopenGroup}
         onClose={() => setShowDuplicateReview(false)}
         onOpenRecord={(paymentId) => {
           setShowDuplicateReview(false)

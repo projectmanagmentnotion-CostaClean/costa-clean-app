@@ -41,6 +41,7 @@ type PropertyWorkspaceAction = 'job' | 'quote' | 'invoice' | 'payment' | null
 
 interface PropertyWorkspaceProps {
   property: PropertyListItem
+  allProperties: PropertyListItem[]
   clients: ClientListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]

@@ -3,6 +3,7 @@ import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildJobDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { NavigationGuard } from '../app/navigationGuard'
@@ -83,7 +84,24 @@ export function JobsPage({
     () => jobs.find((job) => job.id === activeJobId) ?? null,
     [activeJobId, jobs],
   )
-  const duplicateGroups = useMemo(() => buildJobDuplicateGroups(jobs), [jobs])
+  const rawDuplicateGroups = useMemo(() => buildJobDuplicateGroups(jobs), [jobs])
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
+  const activeJobDuplicateGroups = useMemo(
+    () => activeJob
+      ? duplicateGroups.filter((group) => group.records.some((record) => record.recordId === activeJob.id))
+      : [],
+    [activeJob, duplicateGroups],
+  )
+  const activeJobImportantDuplicateGroups = useMemo(
+    () => activeJobDuplicateGroups.filter((group) => group.severity === 'exact' || group.severity === 'strong'),
+    [activeJobDuplicateGroups],
+  )
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
 
@@ -229,6 +247,10 @@ export function JobsPage({
             title="Revisión de servicios duplicados"
             description="Estas coincidencias ya existen en la agenda operativa. Úsalas para evitar dobles programaciones o servicios repetidos."
             groups={duplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
             onClose={() => setShowDuplicateReview(false)}
             onOpenRecord={(jobId) => {
               setShowDuplicateReview(false)
@@ -237,28 +259,52 @@ export function JobsPage({
           />
         </>
       ) : (
-        <JobWorkspace
-          job={activeJob}
-          clients={clients}
-          properties={properties}
-          quotes={quotes}
-          invoices={invoices}
-          payments={payments}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onClose={() => {
-            runGuarded(() => {
-              setHasPendingWorkspaceState(false)
-              closeJobWorkspace()
-            })
-          }}
-          onRefresh={onJobCreated}
-          onOpenClientWorkspace={onOpenClientWorkspace}
-          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
-          onOpenQuoteDetail={onOpenQuoteDetail}
-          onOpenInvoiceDetail={onOpenInvoiceDetail}
-          onPendingStateChange={setHasPendingWorkspaceState}
-        />
+        <>
+          {activeJobImportantDuplicateGroups.length > 0 ? (
+            <DuplicateNotice
+              title={`${activeJobImportantDuplicateGroups.length} coincidencia(s) importante(s) en este servicio`}
+              description="El servicio activo se parece demasiado a otra programacion ya existente."
+              actionLabel="Revisar coincidencias"
+              onAction={() => setShowDuplicateReview(true)}
+            />
+          ) : null}
+
+          <JobWorkspace
+            job={activeJob}
+            allJobs={jobs}
+            clients={clients}
+            properties={properties}
+            quotes={quotes}
+            invoices={invoices}
+            payments={payments}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            onClose={() => {
+              runGuarded(() => {
+                setHasPendingWorkspaceState(false)
+                closeJobWorkspace()
+              })
+            }}
+            onRefresh={onJobCreated}
+            onOpenClientWorkspace={onOpenClientWorkspace}
+            onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+            onOpenQuoteDetail={onOpenQuoteDetail}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onPendingStateChange={setHasPendingWorkspaceState}
+          />
+
+          <DuplicateReviewOverlay
+            isOpen={showDuplicateReview}
+            title="Coincidencias de este servicio"
+            description="Estas coincidencias afectan al servicio activo. Puedes revisarlas y dejar trazabilidad minima sin bloquear la operativa."
+            groups={activeJobDuplicateGroups}
+            reviewStateByGroupId={reviewStateByGroupId}
+            onMarkReviewed={markReviewed}
+            onIgnoreGroup={ignoreGroup}
+            onReopenGroup={reopenGroup}
+            onClose={() => setShowDuplicateReview(false)}
+          />
+        </>
       )}
     </section>
   )

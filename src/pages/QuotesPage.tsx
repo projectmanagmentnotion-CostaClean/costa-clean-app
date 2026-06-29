@@ -5,6 +5,7 @@ import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildQuoteDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
@@ -63,7 +64,14 @@ export function QuotesPage({
   const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
   const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
   const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
-  const duplicateGroups = buildQuoteDuplicateGroups(quotes)
+  const rawDuplicateGroups = buildQuoteDuplicateGroups(quotes)
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
@@ -288,6 +296,10 @@ export function QuotesPage({
         title="Revisión de presupuestos duplicados"
         description="Estas coincidencias ya existen en la app y conviene resolverlas antes de seguir creando o editando propuestas parecidas."
         groups={duplicateGroups}
+        reviewStateByGroupId={reviewStateByGroupId}
+        onMarkReviewed={markReviewed}
+        onIgnoreGroup={ignoreGroup}
+        onReopenGroup={reopenGroup}
         onClose={() => setShowDuplicateReview(false)}
         onOpenRecord={(quoteId) => {
           setShowDuplicateReview(false)

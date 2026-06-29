@@ -43,6 +43,7 @@ type JobWorkspaceAction = 'invoice' | 'payment' | null
 
 interface JobWorkspaceProps {
   job: JobListItem
+  allJobs: JobListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]

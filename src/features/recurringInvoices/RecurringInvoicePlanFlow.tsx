@@ -6,6 +6,8 @@ import { ContextualCreateSection } from '../../components/ContextualCreateSectio
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
+import { findRecurringPlanDuplicateGroups } from '../duplicates/duplicateEngine'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
@@ -36,7 +38,9 @@ interface RecurringInvoicePlanFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
+  plans?: RecurringInvoicePlanListItem[]
   initialPlan?: RecurringInvoicePlanListItem | null
+  onOpenExistingPlan?: (planId: string) => void
 }
 
 interface FormState {
@@ -104,9 +108,11 @@ export function RecurringInvoicePlanFlow({
   clients,
   properties,
   quotes,
+  plans = [],
   onRefreshData,
   onCompleted,
   initialPlan = null,
+  onOpenExistingPlan,
   onCancel,
   onDirtyChange,
 }: RecurringInvoicePlanFlowProps) {
@@ -132,6 +138,7 @@ export function RecurringInvoicePlanFlow({
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findRecurringPlanDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -202,8 +209,7 @@ export function RecurringInvoicePlanFlow({
     ))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function persistPlan(skipDuplicateCheck = false) {
     setSubmitError(null)
     setIsSubmitting(true)
 
@@ -235,16 +241,22 @@ export function RecurringInvoicePlanFlow({
         return
       }
 
-      await saveRecurringInvoicePlan({
+      const nextPlan: RecurringInvoicePlanListItem = {
         id: initialPlan?.id ?? createLocalId('RECURRING-PLAN'),
         client_id: form.client_id,
+        client_display_code: selectedClient?.display_code ?? null,
+        client_name: selectedClient?.full_name ?? null,
         property_id: form.property_id || null,
+        property_display_code: selectedProperty?.display_code ?? null,
+        property_name: selectedProperty?.name ?? null,
         quote_id: form.quote_id || null,
+        quote_display_code: selectedQuote?.display_code ?? null,
         title: form.title.trim(),
         frequency: form.frequency,
         status: form.status,
         default_invoice_status: form.default_invoice_status,
         next_issue_date: form.next_issue_date,
+        last_issued_at: initialPlan?.last_issued_at ?? null,
         tax_rate: parsedTaxRate,
         notes: form.notes.trim() || null,
         internal_notes: form.internal_notes.trim() || null,
@@ -261,6 +273,18 @@ export function RecurringInvoicePlanFlow({
           unit_price: line.unit_price,
           line_subtotal: line.line_subtotal,
         })),
+      }
+
+      if (!skipDuplicateCheck) {
+        const duplicateGroups = findRecurringPlanDuplicateGroups(nextPlan, plans)
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
+
+      await saveRecurringInvoicePlan({
+        ...nextPlan,
       })
 
       setIsDirty(false)
@@ -271,6 +295,11 @@ export function RecurringInvoicePlanFlow({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await persistPlan()
   }
 
   function requestCancel() {
@@ -284,7 +313,8 @@ export function RecurringInvoicePlanFlow({
   }
 
   return (
-    <FullscreenStepFlow
+    <>
+      <FullscreenStepFlow
       eyebrow="Recurrencia"
       title={initialPlan ? 'Editar automatizacion recurrente' : 'Nueva automatizacion recurrente'}
       description="Planifica facturas repetitivas con cliente, propiedad, frecuencia y plantilla real de lineas."
@@ -705,6 +735,27 @@ export function RecurringInvoicePlanFlow({
           onCancel?.()
         }}
       />
-    </FullscreenStepFlow>
+      </FullscreenStepFlow>
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible automatizacion recurrente duplicada"
+        description="Hemos encontrado planes parecidos por cliente, propiedad, cadencia o plantilla. Revisa antes de guardar una automatizacion nueva."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={(planId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPlan?.(planId)
+        }}
+        onUseRecord={(planId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingPlan?.(planId)
+        }}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void persistPlan(true)
+        }}
+      />
+    </>
   )
 }

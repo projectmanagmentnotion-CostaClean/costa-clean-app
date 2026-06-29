@@ -7,6 +7,7 @@ import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
+import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildInvoiceDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import type { ClientListItem } from '../features/clients/types'
@@ -111,7 +112,14 @@ export function InvoicesPage({
   const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
   const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
   const cancelEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status === 'draft' || invoice.status === 'issued')
-  const duplicateGroups = buildInvoiceDuplicateGroups(invoices)
+  const rawDuplicateGroups = buildInvoiceDuplicateGroups(invoices)
+  const {
+    visibleGroups: duplicateGroups,
+    reviewStateByGroupId,
+    markReviewed,
+    ignoreGroup,
+    reopenGroup,
+  } = useDuplicateResolution(rawDuplicateGroups)
 
   const detailEmptyState = error
     ? {
@@ -480,6 +488,10 @@ export function InvoicesPage({
         title="Revisión de facturas duplicadas"
         description="Estas coincidencias ya existen en el módulo. Revísalas para evitar dobles emisiones o referencias repetidas."
         groups={duplicateGroups}
+        reviewStateByGroupId={reviewStateByGroupId}
+        onMarkReviewed={markReviewed}
+        onIgnoreGroup={ignoreGroup}
+        onReopenGroup={reopenGroup}
         onClose={() => setShowDuplicateReview(false)}
         onOpenRecord={(invoiceId) => {
           setShowDuplicateReview(false)

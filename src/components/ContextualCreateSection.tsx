@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { NestedFlowSurfaceContext } from './NestedFlowSurfaceContext'
 import './contextual-create.css'
 
 interface ContextualCreateSectionProps {
@@ -22,6 +23,7 @@ export function ContextualCreateSection({
     <section className={isOpen ? 'cc-contextual-create is-open' : 'cc-contextual-create'}>
       <div className="cc-contextual-create__header">
         <div className="cc-contextual-create__copy">
+          <span className="cc-contextual-create__eyebrow">Subpaso contextual</span>
           <strong>{title}</strong>
           <p>{description}</p>
         </div>
@@ -38,7 +40,9 @@ export function ContextualCreateSection({
 
       {isOpen ? (
         <div className="cc-contextual-create__body">
-          {children}
+          <NestedFlowSurfaceContext.Provider value={true}>
+            {children}
+          </NestedFlowSurfaceContext.Provider>
         </div>
       ) : null}
     </section>

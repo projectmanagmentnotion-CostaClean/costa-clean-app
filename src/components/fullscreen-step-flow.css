@@ -405,6 +405,79 @@
   font-weight: 700;
 }
 
+.cc-step-flow--nested {
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.cc-step-flow--nested .cc-step-flow__header {
+  gap: 14px;
+  padding: 0 0 18px;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.cc-step-flow--nested .cc-step-flow__hero-meta,
+.cc-step-flow--nested .cc-step-flow__side,
+.cc-step-flow--nested .cc-create-flow__hero-card {
+  display: none;
+}
+
+.cc-step-flow--nested .cc-step-flow__headline {
+  gap: 14px;
+}
+
+.cc-step-flow--nested .cc-step-flow__intro {
+  gap: 6px;
+}
+
+.cc-step-flow--nested .cc-step-flow__intro h2 {
+  font-size: clamp(1.3rem, 1.6vw, 1.7rem);
+}
+
+.cc-step-flow--nested .cc-step-flow__intro p {
+  max-width: 72ch;
+}
+
+.cc-step-flow--nested .cc-step-flow__layout {
+  grid-template-columns: 1fr;
+}
+
+.cc-step-flow--nested .cc-step-flow__main {
+  border-right: 0;
+}
+
+.cc-step-flow--nested .cc-step-flow__current-step {
+  padding: 0 0 12px;
+}
+
+.cc-step-flow--nested .cc-step-flow__content {
+  gap: 16px;
+  padding: 0;
+  overflow: visible;
+}
+
+.cc-step-flow--nested .cc-step-flow__footer {
+  position: static;
+  padding: 18px 0 0;
+  border-top-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  backdrop-filter: none;
+}
+
+:root[data-theme="light"] .cc-step-flow--nested .cc-step-flow__header {
+  background: transparent;
+}
+
+:root[data-theme="light"] .cc-step-flow--nested .cc-step-flow__footer {
+  background: transparent;
+  border-top-color: rgba(14, 84, 114, 0.1);
+}
+
 :root[data-theme="light"] .cc-step-flow {
   background: linear-gradient(180deg, rgba(251, 253, 255, 0.99), rgba(242, 247, 251, 0.99));
   border-color: rgba(14, 84, 114, 0.1);
@@ -639,6 +712,25 @@
     gap: 10px;
     padding-top: 14px;
     padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  }
+
+  .cc-step-flow--nested .cc-step-flow__header {
+    padding: 0 0 14px;
+  }
+
+  .cc-step-flow--nested .cc-step-flow__mobile-hero {
+    display: grid;
+    border-radius: 14px;
+  }
+
+  .cc-step-flow--nested .cc-step-flow__content,
+  .cc-step-flow--nested .cc-step-flow__footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .cc-step-flow--nested .cc-step-flow__footer {
+    padding-bottom: 0;
   }
 }
 

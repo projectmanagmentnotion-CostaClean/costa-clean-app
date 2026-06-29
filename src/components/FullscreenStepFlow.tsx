@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react'
+import { useContext, type ReactNode } from 'react'
+import { NestedFlowSurfaceContext } from './NestedFlowSurfaceContext'
 import './fullscreen-step-flow.css'
 
 export interface FullscreenStepFlowStep {
@@ -49,14 +50,17 @@ export function FullscreenStepFlow({
   footerContent,
   contextItems = [],
 }: FullscreenStepFlowProps) {
+  const isNested = useContext(NestedFlowSurfaceContext)
   const current = steps[currentStep]
   const completionRatio = ((currentStep + 1) / steps.length) * 100
   const remainingSteps = steps.length - (currentStep + 1)
   const currentState = stepStates?.[currentStep] ?? 'current'
   const currentStateLabel = getStepStateLabel(currentState, true)
+  const shouldShowSideContent = !isNested && Boolean(sideContent)
+  const shouldShowMobileSide = Boolean(contextItems.length > 0 || shouldShowSideContent)
 
   return (
-    <section className="cc-step-flow">
+    <section className={isNested ? 'cc-step-flow cc-step-flow--nested' : 'cc-step-flow'}>
       <header className="cc-step-flow__header">
         <div className="cc-step-flow__headline">
           <div className="cc-step-flow__intro">
@@ -175,7 +179,7 @@ export function FullscreenStepFlow({
           <div className="cc-step-flow__content">
             {children}
 
-            {(contextItems.length > 0 || sideContent) ? (
+            {shouldShowMobileSide ? (
               <details className="cc-step-flow__mobile-side">
                 <summary className="cc-step-flow__mobile-side-summary">
                   <div className="cc-step-flow__mobile-side-copy">
@@ -204,7 +208,7 @@ export function FullscreenStepFlow({
                     </section>
                   ) : null}
 
-                  {sideContent}
+                  {shouldShowSideContent ? sideContent : null}
                 </div>
               </details>
             ) : null}
@@ -230,7 +234,7 @@ export function FullscreenStepFlow({
             </section>
           ) : null}
 
-          {sideContent}
+          {shouldShowSideContent ? sideContent : null}
         </aside>
       </div>
 

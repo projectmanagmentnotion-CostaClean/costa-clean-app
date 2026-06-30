@@ -1,11 +1,15 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
+import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
+import { VisualKpiCard } from '../components/VisualKpiCard'
+import { formatCurrency } from '../app/displayFormat'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -78,6 +82,19 @@ export function InvoicesPage({
   onUnsavedChange,
   confirmNavigation,
 }: InvoicesPageProps) {
+  function getInvoiceOutstandingAmount(invoice: InvoiceListItem) {
+    return Math.max(Number(invoice.outstanding_amount ?? invoice.total ?? 0), 0)
+  }
+
+  function getInvoicePaidAmount(invoice: InvoiceListItem) {
+    const derivedPaidAmount = Number(invoice.total ?? 0) - getInvoiceOutstandingAmount(invoice)
+    return Math.max(Number(invoice.paid_amount ?? derivedPaidAmount), 0)
+  }
+
+  function sumMoney(values: number[]) {
+    return Math.round((values.reduce((sum, value) => sum + value, 0) + Number.EPSILON) * 100) / 100
+  }
+
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
@@ -107,8 +124,6 @@ export function InvoicesPage({
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
-  const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
-  const paidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'paid').length
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
   const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
@@ -123,6 +138,62 @@ export function InvoicesPage({
     ignoreGroup,
     reopenGroup,
   } = useDuplicateResolution(rawDuplicateGroups)
+  const draftInvoices = invoices.filter((invoice) => invoice.status === 'draft')
+  const collectibleInvoices = invoices.filter((invoice) => invoice.status !== 'draft' && invoice.status !== 'cancelled')
+  const openCollectionInvoices = collectibleInvoices.filter((invoice) => getInvoiceOutstandingAmount(invoice) > 0.009)
+  const partiallyCollectedInvoices = openCollectionInvoices.filter((invoice) => getInvoicePaidAmount(invoice) > 0.009)
+  const pendingCollectionAmount = sumMoney(openCollectionInvoices.map((invoice) => getInvoiceOutstandingAmount(invoice)))
+  const collectedAmount = sumMoney(collectibleInvoices.map((invoice) => getInvoicePaidAmount(invoice)))
+  const headerTargetInvoice = (
+    selectedInvoice
+    && selectedInvoice.status !== 'draft'
+    && selectedInvoice.status !== 'cancelled'
+    && getInvoiceOutstandingAmount(selectedInvoice) > 0.009
+  )
+    ? selectedInvoice
+    : openCollectionInvoices[0] ?? null
+  const collectionChecklistItems: ActionChecklistItem[] = [
+    {
+      id: 'open-balance',
+      state: openCollectionInvoices.length > 0 ? 'warning' : 'done',
+      label: `${openCollectionInvoices.length} factura(s) con saldo abierto`,
+      description: openCollectionInvoices.length > 0
+        ? 'La cola principal del modulo sigue siendo cobrar o cerrar el saldo pendiente real.'
+        : 'No hay facturas emitidas con saldo pendiente visible.',
+      action: headerTargetInvoice ? {
+        label: 'Abrir cobro pendiente',
+        onClick: () => onViewPayments(headerTargetInvoice.id),
+      } : undefined,
+    },
+    {
+      id: 'partial-collection',
+      state: partiallyCollectedInvoices.length > 0 ? 'warning' : 'done',
+      label: `${partiallyCollectedInvoices.length} cobro(s) parcial(es)`,
+      description: partiallyCollectedInvoices.length > 0
+        ? 'Conviene revisar estas facturas antes de considerar el expediente cerrado.'
+        : 'No hay facturas parcialmente cobradas ahora mismo.',
+    },
+    {
+      id: 'drafts',
+      state: draftInvoices.length > 0 ? 'pending' : 'done',
+      label: `${draftInvoices.length} borrador(es) por emitir`,
+      description: draftInvoices.length > 0
+        ? 'Quedan visibles, pero no compiten con la prioridad principal de cobro.'
+        : 'No quedan borradores dominando la lectura principal.',
+    },
+    {
+      id: 'duplicates',
+      state: duplicateGroups.length > 0 ? 'warning' : 'done',
+      label: `${duplicateGroups.length} grupo(s) duplicado(s) potencial(es)`,
+      description: duplicateGroups.length > 0
+        ? 'Hay coincidencias que conviene limpiar antes de seguir emitiendo o regularizando cobros.'
+        : 'No hay duplicidades activas dominando el control de facturas.',
+      action: duplicateGroups.length > 0 ? {
+        label: 'Revisar duplicados',
+        onClick: () => setShowDuplicateReview(true),
+      } : undefined,
+    },
+  ]
 
   const detailEmptyState = error
     ? {
@@ -237,51 +308,75 @@ export function InvoicesPage({
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
-        <div className="section-header page-header-actions cc-master-page__hero">
-          <div className="cc-module-hero__body">
-            <span className="cc-module-hero__eyebrow">Cobro y documento</span>
-            <h1>Facturas</h1>
-            <p>
-              La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
-            </p>
+        <ExecutiveHeader
+          eyebrow="Facturacion y cobro"
+          title="Facturas"
+          summary="Saldo pendiente, cobro registrado, facturas abiertas y borradores en una sola lectura. El cobro manda; la emision directa sigue disponible, pero en segundo nivel."
+          statusLabel={openCollectionInvoices.length > 0 ? `${openCollectionInvoices.length} abiertas` : 'Cobro al dia'}
+          statusTone={openCollectionInvoices.length > 0 ? 'warning' : 'success'}
+          primaryAction={headerTargetInvoice ? {
+            label: 'Abrir cobro pendiente',
+            onClick: () => onViewPayments(headerTargetInvoice.id),
+          } : undefined}
+          secondaryAction={{
+            label: isCreateFormVisible ? 'Cerrar formulario' : 'Nueva factura',
+            onClick: () => {
+              if (isCreateFormVisible) {
+                runGuarded(() => {
+                  setShowCreateForm(false)
+                  onPrefillConsumed()
+                })
+                return
+              }
 
-            <div className="cc-module-hero__meta" aria-label="Resumen operativo de facturas">
-              <span className="cc-module-hero__metric">
-                <strong>{invoices.length}</strong>
-                <span>registros</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{issuedInvoicesCount}</strong>
-                <span>emitidas</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{paidInvoicesCount}</strong>
-                <span>pagadas</span>
-              </span>
-            </div>
-          </div>
+              setShowCreateForm(true)
+            },
+          }}
+          metricLabel="Pendiente de cobro"
+          metricValue={formatCurrency(pendingCollectionAmount)}
+          metricHint={openCollectionInvoices.length > 0
+            ? `${openCollectionInvoices.length} factura(s) emitida(s) siguen con saldo abierto real.`
+            : 'No hay saldo emitido pendiente visible en primer nivel.'}
+        >
+          <ActionChecklist items={collectionChecklistItems} compact />
+        </ExecutiveHeader>
 
-          <div className="cc-module-hero__actions">
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => {
-                if (isCreateFormVisible) {
-                  runGuarded(() => {
-                    setShowCreateForm(false)
-                    onPrefillConsumed()
-                  })
-                  return
-                }
-
-                setShowCreateForm(true)
-              }}
-            >
-              {isCreateFormVisible ? 'Cerrar formulario' : 'Nueva factura'}
-            </button>
-          </div>
+        <div className="cc-kpi-grid cc-kpi-grid--compact">
+          <VisualKpiCard
+            label="Pendiente de cobro"
+            value={formatCurrency(pendingCollectionAmount)}
+            hint="Saldo abierto derivado del estado financiero real de las facturas emitidas."
+            tone={pendingCollectionAmount > 0.009 ? 'warning' : 'success'}
+            priority="primary"
+            badgeLabel={pendingCollectionAmount > 0.009 ? 'Prioridad' : 'Controlado'}
+            action={headerTargetInvoice ? { label: 'Abrir', onClick: () => onViewPayments(headerTargetInvoice.id) } : undefined}
+          />
+          <VisualKpiCard
+            label="Cobrado registrado"
+            value={formatCurrency(collectedAmount)}
+            hint="Suma de cobros ya reflejados en factura. No incluye previsiones ni caja futura."
+            tone="success"
+            priority="compact"
+          />
+          <VisualKpiCard
+            label="Facturas abiertas"
+            value={String(openCollectionInvoices.length)}
+            hint="Facturas emitidas con saldo pendiente hoy."
+            tone={openCollectionInvoices.length > 0 ? 'warning' : 'success'}
+            priority="compact"
+          />
+          <VisualKpiCard
+            label="Borradores por emitir"
+            value={String(draftInvoices.length)}
+            hint="Pendientes de emision. Siguen visibles sin competir con la cola de cobro."
+            tone={draftInvoices.length > 0 ? 'info' : 'neutral'}
+            priority="compact"
+          />
         </div>
+        {/*
+              La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
 
+        */}
         {isCreateFormVisible ? (
           <ActionFlowOverlay
             isOpen={isCreateFormVisible}

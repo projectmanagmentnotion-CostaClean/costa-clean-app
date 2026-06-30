@@ -1,7 +1,10 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
+import { VisualKpiCard } from '../components/VisualKpiCard'
+import { formatCurrency } from '../app/displayFormat'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -54,6 +57,10 @@ export function PaymentsPage({
   onUnsavedChange,
   confirmNavigation,
 }: PaymentsPageProps) {
+  function sumMoney(values: number[]) {
+    return Math.round((values.reduce((sum, value) => sum + value, 0) + Number.EPSILON) * 100) / 100
+  }
+
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
@@ -72,6 +79,19 @@ export function PaymentsPage({
     ignoreGroup,
     reopenGroup,
   } = useDuplicateResolution(rawDuplicateGroups)
+  const totalCollectedAmount = useMemo(
+    () => sumMoney(payments.map((payment) => Number(payment.amount ?? 0))),
+    [payments],
+  )
+  const invoicesWithPaymentsCount = useMemo(
+    () => new Set(payments.map((payment) => payment.invoice_id)).size,
+    [payments],
+  )
+  const manualPaymentsCount = useMemo(
+    () => payments.filter((payment) => (payment.origin_type ?? 'manual') === 'manual').length,
+    [payments],
+  )
+  const paymentsTargetInvoiceId = selectedPayment?.invoice_id ?? payments[0]?.invoice_id ?? null
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
@@ -102,6 +122,56 @@ export function PaymentsPage({
 
   return (
     <section className="page-section cc-master-page">
+      <ExecutiveHeader
+        eyebrow="Control auxiliar de cobros"
+        title="Pagos"
+        summary="Registro, trazabilidad y revision de cobros ya vinculados a factura. Esta vista acompana a Facturas y no compite con su prioridad principal."
+        statusLabel={duplicateGroups.length > 0 ? `${duplicateGroups.length} duplicado(s) potencial(es)` : 'Control auxiliar'}
+        statusTone={duplicateGroups.length > 0 ? 'warning' : 'info'}
+        primaryAction={{
+          label: showCreateForm ? 'Cerrar formulario' : 'Registrar cobro',
+          onClick: () => {
+            if (showCreateForm) {
+              runGuarded(() => setShowCreateForm(false))
+              return
+            }
+
+            setShowCreateForm(true)
+          },
+        }}
+        secondaryAction={paymentsTargetInvoiceId ? {
+          label: 'Abrir factura vinculada',
+          onClick: () => onOpenInvoiceDetail(paymentsTargetInvoiceId),
+        } : undefined}
+        metricLabel="Cobro registrado"
+        metricValue={formatCurrency(totalCollectedAmount)}
+        metricHint="Importe ya registrado en pagos. No representa previsiones ni conciliacion bancaria."
+      />
+
+      <div className="cc-kpi-grid cc-kpi-grid--compact">
+        <VisualKpiCard
+          label="Cobros registrados"
+          value={String(payments.length)}
+          hint="Volumen total de cobros persistidos y disponibles para auditoria interna."
+          tone="info"
+          priority="compact"
+        />
+        <VisualKpiCard
+          label="Facturas con cobro"
+          value={String(invoicesWithPaymentsCount)}
+          hint="Facturas distintas que ya tienen al menos un cobro asociado."
+          tone="success"
+          priority="compact"
+        />
+        <VisualKpiCard
+          label="Registro manual"
+          value={String(manualPaymentsCount)}
+          hint="Cobros introducidos manualmente. El resto viene de regularizacion o automatismo existente."
+          tone="neutral"
+          priority="compact"
+        />
+      </div>
+      {/*
       <div className="section-header page-header-actions cc-master-page__hero">
         <div>
           <h1>Pagos</h1>
@@ -125,6 +195,7 @@ export function PaymentsPage({
           {showCreateForm ? 'Cerrar formulario' : 'Registrar cobro'}
         </button>
       </div>
+      */}
 
       {showCreateForm ? (
         <ActionFlowOverlay

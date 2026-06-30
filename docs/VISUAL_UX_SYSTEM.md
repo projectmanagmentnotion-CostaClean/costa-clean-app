@@ -185,10 +185,31 @@ El color comunica estado. No debe usarse como decoracion gratuita.
 - `ActionChecklist` para pendientes reales.
 - `CollapsibleDetailSection` para desglose e incidencias.
 
+## Invoices and Payments Pattern
+
 ### Facturas
 
-Uso recomendado futuro:
-`ExecutiveHeader` + `VisualKpiCard` + `SeverityBadge` para cobro pendiente, vencidas y listas para emitir.
+Uso recomendado:
+`ExecutiveHeader` + `VisualKpiCard` + `ActionChecklist` para pendiente de cobro, cobrado registrado, facturas abiertas y borradores por emitir.
+
+Reglas:
+
+- La prioridad principal es el cobro pendiente real, no el volumen decorativo.
+- Maximo 4 KPIs arriba.
+- No elevar `vencidas`, morosidad ni previsiones de caja si no existe `due_date` fiable ni reconciliacion real.
+- La accion dominante debe abrir cobro o seguimiento de una factura abierta.
+- La emision directa puede existir, pero en segundo nivel visual.
+
+### Pagos
+
+Uso recomendado:
+`ExecutiveHeader` ligero + `VisualKpiCard` compactas para auditoria de cobros registrados.
+
+Reglas:
+
+- `Pagos` es modulo auxiliar y no debe competir con `Facturas`.
+- Mostrar solo trazabilidad real: cobros registrados, facturas con cobro y origen manual/automatico si existe.
+- No presentar conciliacion bancaria, previsiones ni salud de caja si el sistema no lo soporta de forma fiable.
 
 ### Presupuestos
 

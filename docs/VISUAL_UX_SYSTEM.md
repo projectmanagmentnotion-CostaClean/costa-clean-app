@@ -211,20 +211,96 @@ Reglas:
 - Mostrar solo trazabilidad real: cobros registrados, facturas con cobro y origen manual/automatico si existe.
 - No presentar conciliacion bancaria, previsiones ni salud de caja si el sistema no lo soporta de forma fiable.
 
+## Quotes Pattern
+
 ### Presupuestos
 
-Uso recomendado futuro:
-`ExecutiveHeader` + `VisualKpiCard` + `ActionChecklist` para seguimiento y conversion.
+Uso recomendado:
+`ExecutiveHeader` + `VisualKpiCard` + `ProgressMetric` + `ActionChecklist`.
+
+Reglas:
+
+- La prioridad principal es convertir aceptados reales a operativa.
+- Estados reales usados: `draft`, `sent`, `accepted`, `rejected`, `expired`.
+- Solo elevar `aceptados sin convertir`, `aceptados sin factura` o `enviados por seguir` cuando existan con dato real.
+- El valor destacado puede ser `potencial bloqueado` solo sobre aceptados sin servicio o total aceptado visible.
+- No inventar forecast comercial, scoring ni tasa de conversion global si la base no es madura.
+
+## Jobs Pattern
 
 ### Servicios
 
-Uso recomendado futuro:
-`ExecutiveHeader` + `ActionChecklist` + `WorkspaceSummary` ligero para trabajo sin facturar o sin cerrar.
+Uso recomendado:
+`ExecutiveHeader` + `VisualKpiCard` + `ActionChecklist`.
+
+Reglas:
+
+- La lectura principal es agenda de hoy, operativa abierta y trabajo completado sin facturar.
+- Estados reales usados: `scheduled`, `in_progress`, `completed`, `cancelled`.
+- `Trabajo sin facturar` solo si existe `invoice_id` o ausencia fiable de factura vinculada.
+- `Servicios de hoy` solo si `scheduled_date` existe y es util.
+- No inventar horas reales, coste laboral, payroll ni margen por servicio.
+
+## Expenses Pattern
 
 ### Gastos
 
-Uso recomendado futuro:
-`ExecutiveHeader` + `VisualKpiCard` + `SeverityBadge` + `ProgressMetric` para soporte, revision y riesgo.
+Uso recomendado:
+`ExecutiveHeader` + `VisualKpiCard` + `ProgressMetric` + `ActionChecklist`.
+
+Reglas:
+
+- La prioridad principal es soporte documental y revision fiscal interna.
+- Los indicadores superiores deben salir de `document_support_status`, `fiscal_review_status`, `fiscal_risk_level` y resumen determinista.
+- Copy prudente: `deducible estimado`, `requiere revision`, `riesgo fiscal interno`.
+- No afirmar deducibilidad definitiva, IVA definitivo ni cierre validado.
+
+## Clients and Properties Pattern
+
+### Clientes
+
+Uso recomendado:
+`ExecutiveHeader` compacto + `VisualKpiCard` compactas solo si empujan una accion real.
+
+Reglas:
+
+- Es un directorio operativo, no un dashboard principal.
+- Solo elevar saldo pendiente, planes recurrentes vencidos o volumen operativo si cambian la accion siguiente.
+- La CTA principal puede abrir un workspace con pendiente real o crear cliente nuevo.
+
+### Propiedades
+
+Uso recomendado:
+`ExecutiveHeader` compacto + `VisualKpiCard` compactas.
+
+Reglas:
+
+- La pantalla debe actuar como acceso rapido a workspace, no como tablero decorativo.
+- Solo elevar servicios, presupuestos, facturas o saldo pendiente si ya existen relaciones reales.
+- Evitar KPIs que no cambian una accion.
+
+## Fiscal Integral Report Pattern
+
+Uso recomendado:
+Bloque interno dentro de `FiscalClosingPage` apoyado en `VisualKpiCard` + `ActionChecklist`.
+
+Reglas:
+
+- El informe integral usa datos deterministas, readiness, warnings, `missingDataFlags` y notas IA bajo demanda.
+- La IA interpreta, no recalcula importes.
+- Debe incluir aviso de validacion profesional.
+- Si la exportacion externa no soporta una nueva salida sin riesgo, se mejora la vista interna antes que forzar PDF nuevo.
+
+## Simple Trends Pattern
+
+Uso recomendado:
+Solo cuando hay series historicas reales y la visualizacion aporta una decision clara.
+
+Reglas:
+
+- Sin librerias nuevas.
+- Sin prediccion, forecast ni causalidad asistiva.
+- Si la serie no es suficientemente robusta para una lectura operativa, documentar el limite y no pintar graficos falsos.
 
 ## Fiscal Closing Pattern
 

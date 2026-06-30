@@ -1,9 +1,13 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
+import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { MajorEditFlowOverlay } from '../components/MajorEditFlowOverlay'
+import { ProgressMetric } from '../components/ProgressMetric'
+import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -12,6 +16,7 @@ import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
+import { formatCurrency } from '../app/displayFormat'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -68,8 +73,17 @@ export function QuotesPage({
   const selectedQuoteKey = selectedQuote?.id ?? null
 
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
-  const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
-  const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
+  const sentQuotes = quotes.filter((quote) => quote.status === 'sent')
+  const acceptedQuotes = quotes.filter((quote) => quote.status === 'accepted')
+  const acceptedWithoutJob = acceptedQuotes.filter((quote) => !quote.job_id)
+  const acceptedWithoutInvoice = acceptedQuotes.filter((quote) => !quote.invoice_id)
+  const commercialPendingQuotes = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent')
+  const acceptedConvertedQuotes = acceptedQuotes.filter((quote) => Boolean(quote.job_id))
+  const acceptedWithoutJobValue = acceptedWithoutJob.reduce((sum, quote) => sum + Number(quote.total ?? 0), 0)
+  const acceptedTotalValue = acceptedQuotes.reduce((sum, quote) => sum + Number(quote.total ?? 0), 0)
+  const funnelPercent = acceptedQuotes.length > 0
+    ? Math.round((acceptedConvertedQuotes.length / acceptedQuotes.length) * 100)
+    : 0
   const rawDuplicateGroups = buildQuoteDuplicateGroups(quotes)
   const {
     visibleGroups: duplicateGroups,
@@ -78,6 +92,57 @@ export function QuotesPage({
     ignoreGroup,
     reopenGroup,
   } = useDuplicateResolution(rawDuplicateGroups)
+  const actionTargetQuote = acceptedWithoutJob[0] ?? acceptedWithoutInvoice[0] ?? sentQuotes[0] ?? selectedQuote ?? null
+  const quoteChecklistItems: ActionChecklistItem[] = [
+    {
+      id: 'accepted-without-job',
+      state: acceptedWithoutJob.length > 0 ? 'warning' : 'done',
+      label: `${acceptedWithoutJob.length} aceptado(s) sin servicio`,
+      description: acceptedWithoutJob.length > 0
+        ? 'Son presupuestos ya ganados que siguen sin pasar a operativa.'
+        : 'No quedan aceptados pendientes de convertir a servicio.',
+      action: acceptedWithoutJob[0] ? {
+        label: 'Crear servicio',
+        onClick: () => onCreateJobFromQuote(acceptedWithoutJob[0]),
+      } : undefined,
+    },
+    {
+      id: 'accepted-without-invoice',
+      state: acceptedWithoutInvoice.length > 0 ? 'pending' : 'done',
+      label: `${acceptedWithoutInvoice.length} aceptado(s) sin factura`,
+      description: acceptedWithoutInvoice.length > 0
+        ? 'Requieren abrir el presupuesto y decidir si ya toca facturar.'
+        : 'No quedan aceptados sin enlace de factura visible.',
+      action: acceptedWithoutInvoice[0] ? {
+        label: 'Abrir presupuesto',
+        onClick: () => setSelectedQuoteId(acceptedWithoutInvoice[0].id),
+      } : undefined,
+    },
+    {
+      id: 'follow-up',
+      state: sentQuotes.length > 0 ? 'warning' : 'done',
+      label: `${sentQuotes.length} enviado(s) por seguir`,
+      description: sentQuotes.length > 0
+        ? 'Siguen en decision comercial y conviene empujarlos antes de que se enfrien.'
+        : 'No hay propuestas enviadas dominando la cola comercial.',
+      action: sentQuotes[0] ? {
+        label: 'Abrir enviado',
+        onClick: () => setSelectedQuoteId(sentQuotes[0].id),
+      } : undefined,
+    },
+    {
+      id: 'duplicates',
+      state: duplicateGroups.length > 0 ? 'warning' : 'done',
+      label: `${duplicateGroups.length} duplicado(s) potencial(es)`,
+      description: duplicateGroups.length > 0
+        ? 'Conviene limpiar coincidencias antes de seguir generando propuestas parecidas.'
+        : 'No hay duplicidades activas dominando la conversion.',
+      action: duplicateGroups.length > 0 ? {
+        label: 'Revisar duplicados',
+        onClick: () => setShowDuplicateReview(true),
+      } : undefined,
+    },
+  ]
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
@@ -117,46 +182,88 @@ export function QuotesPage({
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
-        <div className="section-header page-header-actions cc-master-page__hero">
-          <div className="cc-module-hero__body">
-            <span className="cc-module-hero__eyebrow">Propuesta y conversion</span>
-            <h1>Presupuestos</h1>
-            <p>
-              Gestiona propuestas comerciales y abre el documento del presupuesto seleccionado.
-            </p>
+        <ExecutiveHeader
+          eyebrow="Propuesta y conversion"
+          title="Presupuestos"
+          summary="Seguimiento comercial, aceptaciones ganadas y conversion a operativa en una sola lectura. Lo prioritario es mover aceptados sin convertir y propuestas enviadas que siguen abiertas."
+          statusLabel={acceptedWithoutJob.length > 0 ? `${acceptedWithoutJob.length} sin convertir` : 'Conversion estable'}
+          statusTone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
+          primaryAction={acceptedWithoutJob[0] ? {
+            label: 'Ver aceptados sin convertir',
+            onClick: () => setSelectedQuoteId(acceptedWithoutJob[0].id),
+          } : {
+            label: showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto',
+            onClick: () => {
+              if (showCreateForm) {
+                runGuarded(() => setShowCreateForm(false))
+                return
+              }
 
-            <div className="cc-module-hero__meta" aria-label="Resumen operativo de presupuestos">
-              <span className="cc-module-hero__metric">
-                <strong>{quotes.length}</strong>
-                <span>registros</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{draftQuotesCount}</strong>
-                <span>borradores</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{acceptedQuotesCount}</strong>
-                <span>aceptados</span>
-              </span>
-            </div>
-          </div>
-
-          <div className="cc-module-hero__actions">
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => {
+              setShowCreateForm(true)
+            },
+          }}
+          secondaryAction={acceptedWithoutJob[0]
+            ? {
+              label: showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto',
+              onClick: () => {
                 if (showCreateForm) {
                   runGuarded(() => setShowCreateForm(false))
                   return
                 }
 
                 setShowCreateForm(true)
-              }}
-            >
-              {showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto'}
-            </button>
+              },
+            }
+            : undefined}
+          metricLabel="Potencial bloqueado"
+          metricValue={formatCurrency(acceptedWithoutJobValue)}
+          metricHint={acceptedWithoutJob.length > 0
+            ? 'Importe aceptado que todavia no se ha convertido en servicio.'
+            : 'No hay importe aceptado bloqueado por falta de servicio.'}
+        >
+          <div className="cc-fiscal-closing-header-progress">
+            <ProgressMetric
+              label="Aceptado -> servicio"
+              value={`${funnelPercent}%`}
+              percent={funnelPercent}
+              tone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
+              hint={`${acceptedConvertedQuotes.length} de ${acceptedQuotes.length} aceptado(s) ya tienen servicio.`}
+            />
+            <ActionChecklist items={quoteChecklistItems} compact />
           </div>
+        </ExecutiveHeader>
+
+        <div className="cc-kpi-grid cc-kpi-grid--compact">
+          <VisualKpiCard
+            label="Pendientes de seguimiento"
+            value={String(commercialPendingQuotes.length)}
+            hint="Borradores y enviados que siguen pidiendo decision comercial."
+            tone={commercialPendingQuotes.length > 0 ? 'warning' : 'neutral'}
+            priority="compact"
+            action={actionTargetQuote ? { label: 'Abrir', onClick: () => setSelectedQuoteId(actionTargetQuote.id) } : undefined}
+          />
+          <VisualKpiCard
+            label="Aceptados"
+            value={String(acceptedQuotes.length)}
+            hint="Propuestas ya ganadas y listas para pasar a operativa o facturacion."
+            tone="success"
+            priority="compact"
+          />
+          <VisualKpiCard
+            label="Aceptados sin convertir"
+            value={String(acceptedWithoutJob.length)}
+            hint="Aceptados que siguen sin servicio generado."
+            tone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
+            priority="compact"
+            badgeLabel={acceptedWithoutJob.length > 0 ? 'Accion' : 'Cubierto'}
+          />
+          <VisualKpiCard
+            label="Valor aceptado"
+            value={formatCurrency(acceptedTotalValue)}
+            hint="Suma de presupuestos aceptados con importe real visible."
+            tone="info"
+            priority="compact"
+          />
         </div>
 
         {showCreateForm ? (

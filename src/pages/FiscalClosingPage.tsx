@@ -20,6 +20,7 @@ import type { ClosingDeterministicWarning } from '../features/closing/closingDet
 import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
 import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
+import { buildFiscalPeriodExportData } from '../features/closingExports/fiscalPeriodExport'
 import { LazyFiscalPeriodExportSection } from '../features/closingExports/lazyFiscalPeriodExportSection'
 import type { AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
 import {
@@ -232,6 +233,16 @@ export function FiscalClosingPage({
   ]
   const readinessPercent = Math.round((readinessCriteria.reduce((sum, value) => sum + value, 0) / readinessCriteria.length) * 100)
   const dominantReviewTone: SeverityTone = summary.criticalIncidenceCount > 0 ? 'critical' : summary.unresolvedIncidenceCount > 0 ? 'warning' : 'success'
+  const integralReportData = useMemo(
+    () => buildFiscalPeriodExportData({
+      selection,
+      invoices,
+      payments,
+      expenses,
+      quotes,
+    }),
+    [expenses, invoices, payments, quotes, selection],
+  )
   const mainCta = summary.unresolvedIncidenceCount > 0
     ? {
         label: 'Revisar pendientes',
@@ -721,6 +732,136 @@ export function FiscalClosingPage({
           </div>
         </CollapsibleDetailSection>
       ) : null}
+
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Informe integral del periodo</h2>
+            <p>Vista interna de preparacion fiscal y financiera basada en datos deterministas, warnings visibles y notas asistivas separadas de cualquier validacion profesional definitiva.</p>
+          </div>
+        </div>
+
+        <div className="cc-fiscal-closing-primary-grid">
+          <VisualKpiCard
+            label="Estado del periodo"
+            value={fiscalSummary.readinessLabel}
+            hint="Lectura interna del paquete antes de exportar o compartir."
+            tone={getReadinessTone(fiscalSummary.readiness)}
+            priority="primary"
+            badgeLabel="Readiness"
+          >
+            <p className="cc-fiscal-closing-card__note">Preparacion interna {readinessPercent}% y confianza {getConfidenceLabel(fiscalSummary.confidenceLevel).toLowerCase()}.</p>
+          </VisualKpiCard>
+
+          <VisualKpiCard
+            label="Resumen financiero"
+            value={formatCurrency(integralReportData.metrics.invoiced_total)}
+            hint={`Cobrado ${formatCurrency(integralReportData.metrics.collected_total)} · pendiente ${formatCurrency(integralReportData.metrics.outstanding_total)}.`}
+            tone={integralReportData.metrics.outstanding_total > 0.009 ? 'warning' : 'success'}
+            priority="primary"
+            badgeLabel="Determinista"
+          >
+            <p className="cc-fiscal-closing-card__note">No recalcula caja futura ni margen neto definitivo.</p>
+          </VisualKpiCard>
+
+          <VisualKpiCard
+            label="Resumen IVA"
+            value={formatCurrency(integralReportData.metrics.estimated_net_vat_payable)}
+            hint={`IVA repercutido ${formatCurrency(integralReportData.metrics.output_vat_total)} · IVA deducible estimado ${formatCurrency(integralReportData.metrics.estimated_deductible_vat)}.`}
+            tone={integralReportData.metrics.missing_valid_vat_invoice_count > 0 ? 'warning' : 'success'}
+            priority="primary"
+            badgeLabel="Estimado"
+          >
+            <p className="cc-fiscal-closing-card__note">Cifra orientativa. Requiere validacion profesional.</p>
+          </VisualKpiCard>
+        </div>
+
+        <div className="cc-fiscal-closing-two-column" style={{ marginTop: '1rem' }}>
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Checklist y fuentes</h2>
+                <p>Facturas, cobros, gastos, presupuestos de apoyo y limites del paquete en un solo bloque corto.</p>
+              </div>
+            </div>
+            <div className="cc-quarterly-persistence__card">
+              <ActionChecklist
+                compact
+                items={[
+                  {
+                    id: 'integral-invoices',
+                    state: integralReportData.metrics.invoice_count > 0 ? 'done' : 'info',
+                    label: `${integralReportData.metrics.invoice_count} factura(s) incluidas`,
+                    description: 'Base determinista de facturacion del periodo.',
+                  },
+                  {
+                    id: 'integral-payments',
+                    state: integralReportData.metrics.payment_count > 0 ? 'done' : 'info',
+                    label: `${integralReportData.metrics.payment_count} cobro(s) incluidos`,
+                    description: 'Trazabilidad real de cobros registrados dentro del periodo.',
+                  },
+                  {
+                    id: 'integral-expenses',
+                    state: integralReportData.metrics.expense_count > 0 ? 'done' : 'info',
+                    label: `${integralReportData.metrics.expense_count} gasto(s) incluidos`,
+                    description: `${integralReportData.metrics.supported_expense_count} con soporte visible y ${integralReportData.metrics.missing_support_count} pendientes.`,
+                  },
+                  {
+                    id: 'integral-quotes',
+                    state: integralReportData.metrics.quote_count > 0 ? 'info' : 'done',
+                    label: `${integralReportData.metrics.quote_count} presupuesto(s) de apoyo`,
+                    description: 'Se usan como contexto comercial del periodo, no como cifra fiscal dura.',
+                  },
+                ]}
+              />
+            </div>
+          </article>
+
+          <article className="cc-dashboard-block">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Warnings y limites</h2>
+                <p>La lectura interna distingue revision pendiente, datos insuficientes y validacion profesional.</p>
+              </div>
+            </div>
+            <div className="cc-quarterly-persistence__card cc-bounded-list">
+              <ActionChecklist
+                compact
+                items={[
+                  {
+                    id: 'integral-warnings',
+                    state: integralReportData.warnings.length > 0 ? 'warning' : 'done',
+                    label: `${integralReportData.warnings.length} warning(s) del periodo`,
+                    description: integralReportData.warnings[0] ?? 'No hay warnings principales abiertos en la exportacion del periodo.',
+                  },
+                  {
+                    id: 'integral-missing-data',
+                    state: fiscalSummary.missingDataFlags.length > 0 ? 'critical' : 'done',
+                    label: `${fiscalSummary.missingDataFlags.length} limite(s) visibles`,
+                    description: fiscalSummary.missingDataFlags[0]
+                      ? getMissingDataFlagLabel(fiscalSummary.missingDataFlags[0])
+                      : 'No hay limites estructurales dominando la lectura principal.',
+                  },
+                  {
+                    id: 'integral-ai',
+                    state: aiSummaryResult ? 'info' : 'pending',
+                    label: aiSummaryResult ? 'Notas IA disponibles' : 'Notas IA bajo demanda',
+                    description: aiSummaryResult
+                      ? aiSummaryResult.summary.executiveSummary
+                      : 'La IA interpreta el resumen cerrado del periodo, pero no recalcula importes ni sustituye validacion profesional.',
+                  },
+                  {
+                    id: 'integral-validation',
+                    state: 'warning',
+                    label: 'Validacion profesional requerida',
+                    description: 'El informe sirve para preparacion interna y entrega ordenada, no como asesoría fiscal definitiva.',
+                  },
+                ]}
+              />
+            </div>
+          </article>
+        </div>
+      </section>
 
       {summary.snapshotMode ? (
         <ClosingAiSummarySection

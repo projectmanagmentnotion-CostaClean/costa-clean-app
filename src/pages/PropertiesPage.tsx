@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
+import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -15,6 +17,7 @@ import { PropertyWorkspace } from '../features/properties/PropertyWorkspace'
 import { usePropertyWorkspaceNavigation } from '../features/properties/usePropertyWorkspaceNavigation'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { formatCurrency } from '../app/displayFormat'
 
 interface PropertiesPageProps {
   properties: PropertyListItem[]
@@ -83,6 +86,33 @@ export function PropertiesPage({
     [activePropertyDuplicateGroups],
   )
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
+  const invoicePaidById = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const payment of payments) {
+      totals.set(payment.invoice_id, (totals.get(payment.invoice_id) ?? 0) + Number(payment.amount ?? 0))
+    }
+    return totals
+  }, [payments])
+  const propertyPendingBalances = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const invoice of invoices) {
+      if (!invoice.property_id || invoice.status === 'cancelled') continue
+      const paidAmount = Number(invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0)
+      const pendingAmount = Math.max(Number(invoice.total ?? 0) - paidAmount, 0)
+      if (pendingAmount <= 0.009) continue
+      totals.set(invoice.property_id, (totals.get(invoice.property_id) ?? 0) + pendingAmount)
+    }
+    return totals
+  }, [invoicePaidById, invoices])
+  const propertiesWithPendingBalance = useMemo(
+    () => properties.filter((property) => (propertyPendingBalances.get(property.id) ?? 0) > 0.009),
+    [properties, propertyPendingBalances],
+  )
+  const propertiesWithJobs = useMemo(
+    () => new Set(jobs.map((job) => job.property_id)).size,
+    [jobs],
+  )
+  const topPendingProperty = propertiesWithPendingBalance[0] ?? null
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en propiedades')
@@ -105,26 +135,78 @@ export function PropertiesPage({
     <section className="page-section cc-master-page">
       {!activeProperty ? (
         <>
-          <div className="section-header page-header-actions cc-master-page__hero">
-            <div>
-              <h1>Propiedades</h1>
-              <p>La cartera de inmuebles ahora funciona como punto de entrada a workspaces persistentes por propiedad.</p>
-            </div>
-
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => {
+          <ExecutiveHeader
+            eyebrow="Directorio de contexto"
+            title="Propiedades"
+            summary="Directorio compacto para abrir workspaces por inmueble y entrar rapido en servicios, presupuestos, facturas o cobros cuando ya existen. No compite con Home ni con los modulos de decision principal."
+            statusLabel={propertiesWithPendingBalance.length > 0 ? `${propertiesWithPendingBalance.length} con saldo abierto` : 'Directorio estable'}
+            statusTone={propertiesWithPendingBalance.length > 0 ? 'warning' : 'info'}
+            primaryAction={topPendingProperty ? {
+              label: 'Abrir propiedad con pendiente',
+              onClick: () => {
+                runGuarded(() => {
+                  setShowCreateForm(false)
+                  openPropertyWorkspace(topPendingProperty.id)
+                })
+              },
+            } : {
+              label: showCreateForm ? 'Cerrar formulario' : 'Nueva propiedad',
+              onClick: () => {
                 if (showCreateForm) {
                   runGuarded(() => setShowCreateForm(false))
                   return
                 }
 
                 setShowCreateForm(true)
-              }}
-            >
-              {showCreateForm ? 'Cerrar formulario' : 'Nueva propiedad'}
-            </button>
+              },
+            }}
+            secondaryAction={topPendingProperty ? {
+              label: showCreateForm ? 'Cerrar formulario' : 'Nueva propiedad',
+              onClick: () => {
+                if (showCreateForm) {
+                  runGuarded(() => setShowCreateForm(false))
+                  return
+                }
+
+                setShowCreateForm(true)
+              },
+            } : undefined}
+            metricLabel="Saldo abierto visible"
+            metricValue={formatCurrency(propertiesWithPendingBalance.reduce((sum, property) => sum + Number(propertyPendingBalances.get(property.id) ?? 0), 0))}
+            metricHint={propertiesWithPendingBalance.length > 0
+              ? 'Importe agregado de propiedades con facturas pendientes visibles.'
+              : 'No hay propiedades con saldo abierto dominando la cartera.'}
+          />
+
+          <div className="cc-kpi-grid cc-kpi-grid--compact">
+            <VisualKpiCard
+              label="Propiedades"
+              value={String(properties.length)}
+              hint="Volumen del directorio activo de inmuebles."
+              tone="info"
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Con servicios"
+              value={String(propertiesWithJobs)}
+              hint="Propiedades con operativa real ya conectada."
+              tone="neutral"
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Con saldo pendiente"
+              value={String(propertiesWithPendingBalance.length)}
+              hint="Inmuebles que ya requieren abrir facturas o cobros."
+              tone={propertiesWithPendingBalance.length > 0 ? 'warning' : 'success'}
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Con presupuestos"
+              value={String(new Set(quotes.map((quote) => quote.property_id).filter(Boolean)).size)}
+              hint="Propiedades que ya tienen actividad comercial enlazada."
+              tone="info"
+              priority="compact"
+            />
           </div>
 
           {duplicateGroups.length > 0 ? (

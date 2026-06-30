@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
+import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -18,6 +20,8 @@ import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { formatCurrency } from '../app/displayFormat'
+import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 
 interface ClientsPageProps {
@@ -111,6 +115,37 @@ export function ClientsPage({
     [activeClient, recurringDuplicateGroups, recurringInvoicePlans],
   )
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
+  const invoicePaidById = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const payment of payments) {
+      totals.set(payment.invoice_id, (totals.get(payment.invoice_id) ?? 0) + Number(payment.amount ?? 0))
+    }
+    return totals
+  }, [payments])
+  const clientPendingBalances = useMemo(() => {
+    const totals = new Map<string, number>()
+    for (const invoice of invoices) {
+      if (!invoice.client_id || invoice.status === 'cancelled') continue
+      const paidAmount = Number(invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0)
+      const pendingAmount = Math.max(Number(invoice.total ?? 0) - paidAmount, 0)
+      if (pendingAmount <= 0.009) continue
+      totals.set(invoice.client_id, (totals.get(invoice.client_id) ?? 0) + pendingAmount)
+    }
+    return totals
+  }, [invoicePaidById, invoices])
+  const clientsWithPendingBalance = useMemo(
+    () => clients.filter((client) => (clientPendingBalances.get(client.id) ?? 0) > 0.009),
+    [clientPendingBalances, clients],
+  )
+  const dueRecurringPlans = useMemo(
+    () => recurringInvoicePlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)),
+    [recurringInvoicePlans],
+  )
+  const clientsWithJobs = useMemo(
+    () => new Set(jobs.map((job) => job.client_id)).size,
+    [jobs],
+  )
+  const topPendingClient = clientsWithPendingBalance[0] ?? null
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en clientes')
@@ -145,26 +180,73 @@ export function ClientsPage({
     <section className="page-section cc-master-page">
       {!activeClient ? (
         <>
-          <div className="section-header page-header-actions cc-master-page__hero">
-            <div>
-              <h1>Clientes</h1>
-              <p>La cartera ahora funciona como punto de entrada a workspaces de cliente persistentes.</p>
-            </div>
-
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => {
+          <ExecutiveHeader
+            eyebrow="Directorio operativo"
+            title="Clientes"
+            summary="Entrada rapida a workspaces, seguimiento comercial y saldo abierto visible solo cuando cambia la siguiente accion. Este modulo queda como superficie de acceso y contexto, no como dashboard pesado."
+            statusLabel={clientsWithPendingBalance.length > 0 ? `${clientsWithPendingBalance.length} con saldo abierto` : 'Directorio estable'}
+            statusTone={clientsWithPendingBalance.length > 0 ? 'warning' : 'info'}
+            primaryAction={topPendingClient ? {
+              label: 'Abrir cliente con pendiente',
+              onClick: () => handleOpenWorkspace(topPendingClient.id, 'invoices'),
+            } : {
+              label: showCreateForm ? 'Cerrar formulario' : 'Nuevo cliente',
+              onClick: () => {
                 if (showCreateForm) {
                   runGuarded(() => setShowCreateForm(false))
                   return
                 }
 
                 setShowCreateForm(true)
-              }}
-            >
-              {showCreateForm ? 'Cerrar formulario' : 'Nuevo cliente'}
-            </button>
+              },
+            }}
+            secondaryAction={topPendingClient ? {
+              label: showCreateForm ? 'Cerrar formulario' : 'Nuevo cliente',
+              onClick: () => {
+                if (showCreateForm) {
+                  runGuarded(() => setShowCreateForm(false))
+                  return
+                }
+
+                setShowCreateForm(true)
+              },
+            } : undefined}
+            metricLabel="Saldo abierto visible"
+            metricValue={formatCurrency(clientsWithPendingBalance.reduce((sum, client) => sum + Number(clientPendingBalances.get(client.id) ?? 0), 0))}
+            metricHint={clientsWithPendingBalance.length > 0
+              ? 'Importe agregado por cliente con factura pendiente visible.'
+              : 'No hay clientes con saldo abierto dominando el directorio.'}
+          />
+
+          <div className="cc-kpi-grid cc-kpi-grid--compact">
+            <VisualKpiCard
+              label="Clientes activos"
+              value={String(clients.filter((client) => client.status !== 'inactive').length)}
+              hint="Cartera visible con ficha activa en el directorio."
+              tone="info"
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Con saldo pendiente"
+              value={String(clientsWithPendingBalance.length)}
+              hint="Clientes que ya requieren abrir facturas o cobros."
+              tone={clientsWithPendingBalance.length > 0 ? 'warning' : 'success'}
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Con servicios"
+              value={String(clientsWithJobs)}
+              hint="Clientes con operativa real ya conectada a servicios."
+              tone="neutral"
+              priority="compact"
+            />
+            <VisualKpiCard
+              label="Planes recurrentes vencidos"
+              value={String(dueRecurringPlans.length)}
+              hint="Automatizaciones activas que ya piden revision o emision."
+              tone={dueRecurringPlans.length > 0 ? 'warning' : 'neutral'}
+              priority="compact"
+            />
           </div>
 
           {duplicateGroups.length > 0 ? (

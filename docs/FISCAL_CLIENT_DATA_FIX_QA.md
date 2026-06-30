@@ -115,3 +115,7 @@ Cuando existe conflicto:
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+
+## Auditoria relacionada
+
+- Ver tambien `docs/CLIENT_WRITE_AUDIT_FIX_QA.md` para el cierre estructural de todas las escrituras de clientes y la eliminacion del patron inseguro con `.single()`.

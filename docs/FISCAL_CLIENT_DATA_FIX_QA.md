@@ -119,3 +119,11 @@ Cuando existe conflicto:
 ## Auditoria relacionada
 
 - Ver tambien `docs/CLIENT_WRITE_AUDIT_FIX_QA.md` para el cierre estructural de todas las escrituras de clientes y la eliminacion del patron inseguro con `.single()`.
+- Ver tambien `docs/CLIENT_FISCAL_BACKFILL_APPLIED_QA.md` para la corrida real del backfill sobre facturas emitidas/pagadas ya existentes.
+
+## Cierre posterior del backfill real
+
+- Se ejecuto una auditoria real posterior sobre `clients` e `invoices`.
+- Resultado: 43 facturas `issued`/`paid`, 43 con `client_id` y 0 con snapshot fiscal estructurado en `pricing_metadata`.
+- No se aplicaron cambios a clientes historicos porque no existia fuente estructurada suficiente para hacerlo sin inventar datos.
+- La utilidad de backfill quedo reforzada para soportar updates parciales seguros y forzar `status: active` solo en clientes realmente actualizados.

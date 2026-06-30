@@ -1,20 +1,26 @@
 import type { InvoiceListItem } from '../invoices/types'
 import { extractInvoiceFiscalSnapshot, getClientFiscalData, normalizeClientFiscalData, type ClientFiscalMissingField } from './clientFiscalData'
-import { updateClientFiscalData } from './clientWriteApi'
+import { applyClientFiscalBackfillRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
 
 interface BackfillInvoiceCandidate {
   invoiceId: string
+  fiscal_name: string | null
   tax_id: string | null
   billing_address: string | null
 }
+
+export type ClientFiscalBackfillAppliedField = 'full_name' | 'tax_id' | 'billing_address' | 'status'
 
 export interface ClientFiscalBackfillUpdate {
   clientId: string
   clientLabel: string
   missingFields: ClientFiscalMissingField[]
+  nextFullName: string | null
   nextTaxId: string | null
   nextBillingAddress: string | null
+  nextStatus: 'active'
+  appliedFields: ClientFiscalBackfillAppliedField[]
   sourceInvoiceIds: string[]
 }
 
@@ -40,7 +46,9 @@ export interface ClientFiscalBackfillPlan {
 }
 
 export interface ClientFiscalBackfillResult {
-  updatedClients: Array<{ clientId: string; clientLabel: string }>
+  reviewedInvoices: number
+  invoicesWithoutStructuredFiscalData: string[]
+  updatedClients: Array<{ clientId: string; clientLabel: string; appliedFields: ClientFiscalBackfillAppliedField[] }>
   skippedClients: ClientFiscalBackfillSkipped[]
   conflicts: ClientFiscalBackfillConflict[]
 }
@@ -55,12 +63,13 @@ export function extractFiscalDataFromInvoice(invoice: InvoiceListItem): Backfill
 
   const normalized = normalizeClientFiscalData(snapshot)
 
-  if (!normalized.tax_id && !normalized.billing_address) {
+  if (!normalized.tax_id && !normalized.billing_address && !normalized.fiscal_name) {
     return null
   }
 
   return {
     invoiceId: invoice.id,
+    fiscal_name: normalized.fiscal_name,
     tax_id: normalized.tax_id,
     billing_address: normalized.billing_address,
   }
@@ -68,6 +77,19 @@ export function extractFiscalDataFromInvoice(invoice: InvoiceListItem): Backfill
 
 function uniqueNonEmpty(values: Array<string | null>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value)))]
+}
+
+function normalizeComparableName(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null
+
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+
+  return normalized || null
 }
 
 export function buildClientFiscalBackfillPlan(
@@ -91,6 +113,9 @@ export function buildClientFiscalBackfillPlan(
 
   for (const client of clients) {
     const fiscalData = getClientFiscalData(client)
+    const currentFullName = client.full_name.trim() || null
+    const currentComparableName = normalizeComparableName(currentFullName)
+
     if (fiscalData.isComplete) {
       plan.skipped.push({
         clientId: client.id,
@@ -128,6 +153,13 @@ export function buildClientFiscalBackfillPlan(
 
     const taxCandidates = !fiscalData.taxId ? uniqueNonEmpty(candidates.map((candidate) => candidate.tax_id)) : []
     const addressCandidates = !fiscalData.billingAddress ? uniqueNonEmpty(candidates.map((candidate) => candidate.billing_address)) : []
+    const nameCandidates = !currentComparableName
+      ? uniqueNonEmpty(candidates.map((candidate) => candidate.fiscal_name))
+      : uniqueNonEmpty(
+          candidates
+            .map((candidate) => candidate.fiscal_name)
+            .filter((value) => normalizeComparableName(value) === currentComparableName),
+        )
 
     if (taxCandidates.length > 1) {
       plan.conflicts.push({
@@ -153,20 +185,22 @@ export function buildClientFiscalBackfillPlan(
       continue
     }
 
+    const nextFullName = currentFullName ?? nameCandidates[0] ?? null
     const nextTaxId = fiscalData.taxId ?? taxCandidates[0] ?? null
     const nextBillingAddress = fiscalData.billingAddress ?? addressCandidates[0] ?? null
+    const appliedFields: ClientFiscalBackfillAppliedField[] = []
 
-    if ((fiscalData.taxId ?? nextTaxId) === null && (fiscalData.billingAddress ?? nextBillingAddress) === null) {
-      plan.skipped.push({
-        clientId: client.id,
-        clientLabel: client.full_name,
-        reason: 'no_structured_fiscal_data',
-        sourceInvoiceIds: candidates.map((candidate) => candidate.invoiceId),
-      })
-      continue
+    if (!currentFullName && nextFullName) {
+      appliedFields.push('full_name')
+    }
+    if (!fiscalData.taxId && nextTaxId) {
+      appliedFields.push('tax_id')
+    }
+    if (!fiscalData.billingAddress && nextBillingAddress) {
+      appliedFields.push('billing_address')
     }
 
-    if (nextTaxId === fiscalData.taxId && nextBillingAddress === fiscalData.billingAddress) {
+    if (appliedFields.length === 0) {
       plan.skipped.push({
         clientId: client.id,
         clientLabel: client.full_name,
@@ -180,8 +214,11 @@ export function buildClientFiscalBackfillPlan(
       clientId: client.id,
       clientLabel: client.full_name,
       missingFields: fiscalData.missingFields,
+      nextFullName,
       nextTaxId,
       nextBillingAddress,
+      nextStatus: 'active',
+      appliedFields: [...appliedFields, 'status'],
       sourceInvoiceIds: candidates.map((candidate) => candidate.invoiceId),
     })
   }
@@ -198,24 +235,46 @@ export function summarizeClientFiscalBackfill(plan: ClientFiscalBackfillPlan) {
 }
 
 export async function applyClientFiscalBackfill(plan: ClientFiscalBackfillPlan): Promise<ClientFiscalBackfillResult> {
-  const updatedClients: Array<{ clientId: string; clientLabel: string }> = []
+  const updatedClients: Array<{ clientId: string; clientLabel: string; appliedFields: ClientFiscalBackfillAppliedField[] }> = []
 
   for (const update of plan.updates) {
-    if (!update.nextTaxId || !update.nextBillingAddress) {
+    const payload: {
+      full_name?: string
+      tax_id?: string | null
+      billing_address?: string | null
+      status: 'active'
+    } = {
+      status: update.nextStatus,
+    }
+
+    if (update.appliedFields.includes('full_name') && update.nextFullName) {
+      payload.full_name = update.nextFullName
+    }
+    if (update.appliedFields.includes('tax_id')) {
+      payload.tax_id = update.nextTaxId
+    }
+    if (update.appliedFields.includes('billing_address')) {
+      payload.billing_address = update.nextBillingAddress
+    }
+
+    if (Object.keys(payload).length === 1) {
       continue
     }
 
-    await updateClientFiscalData(update.clientId, {
-      tax_id: update.nextTaxId,
-      billing_address: update.nextBillingAddress,
-    })
+    await applyClientFiscalBackfillRecord(update.clientId, payload)
     updatedClients.push({
       clientId: update.clientId,
       clientLabel: update.clientLabel,
+      appliedFields: update.appliedFields,
     })
   }
 
   return {
+    reviewedInvoices: plan.updates.reduce((total, update) => total + update.sourceInvoiceIds.length, 0)
+      + plan.skipped.reduce((total, skip) => total + skip.sourceInvoiceIds.length, 0),
+    invoicesWithoutStructuredFiscalData: plan.skipped
+      .filter((skip) => skip.reason === 'no_structured_fiscal_data')
+      .flatMap((skip) => skip.sourceInvoiceIds),
     updatedClients,
     skippedClients: plan.skipped,
     conflicts: plan.conflicts,

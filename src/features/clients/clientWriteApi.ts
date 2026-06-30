@@ -292,6 +292,25 @@ export async function updateClientFiscalData(
   })
 }
 
+export async function applyClientFiscalBackfillRecord(
+  clientId: string,
+  input: Pick<ClientRecordInput, 'tax_id' | 'billing_address' | 'full_name' | 'status'>,
+): Promise<ClientListItem> {
+  const fiscalData = normalizeClientFiscalData(input)
+  const payload: ClientRecordInput = {}
+
+  if ('tax_id' in input) payload.tax_id = fiscalData.tax_id
+  if ('billing_address' in input) payload.billing_address = fiscalData.billing_address
+  if (typeof input.full_name === 'string') payload.full_name = input.full_name.trim()
+  if (typeof input.status === 'string') payload.status = input.status
+
+  if (Object.keys(payload).length === 0) {
+    throw new Error('No hay cambios validos para aplicar en el backfill fiscal.')
+  }
+
+  return updateClientRecord(clientId, payload)
+}
+
 export const __clientWriteApiTestUtils = {
   buildClientPayload,
   maskTaxId,

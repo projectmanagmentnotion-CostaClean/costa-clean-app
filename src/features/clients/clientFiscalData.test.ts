@@ -130,6 +130,8 @@ describe('client fiscal backfill', () => {
       clientLabel: 'Miguel Angel Flores Novoa',
       nextTaxId: '45962701F',
       nextBillingAddress: 'Avinguda de Lloret de Dalt, 10',
+      nextStatus: 'active',
+      appliedFields: ['tax_id', 'billing_address', 'status'],
     })
     expect(summarizeClientFiscalBackfill(plan)).toMatchObject({
       updatableClients: 1,
@@ -172,6 +174,46 @@ describe('client fiscal backfill', () => {
       clientId: 'client-1',
       clientLabel: 'Miguel Angel Flores Novoa',
       field: 'billing_address',
+    })
+  })
+
+  it('fills only the missing address and keeps the existing tax id untouched', () => {
+    const client = createClient({
+      tax_id: '45962701F',
+      status: 'inactive',
+    })
+    const invoice = createInvoice({
+      pricing_metadata: {
+        client_fiscal_snapshot: {
+          client_id: 'client-1',
+          fiscal_name: 'Miguel Angel Flores Novoa',
+          tax_id: 'DIFFERENT',
+          billing_address: 'Avinguda de Lloret de Dalt, 10',
+        },
+      },
+    })
+
+    const plan = buildClientFiscalBackfillPlan([client], [invoice])
+
+    expect(plan.updates).toHaveLength(1)
+    expect(plan.updates[0]).toMatchObject({
+      nextTaxId: '45962701F',
+      nextBillingAddress: 'Avinguda de Lloret de Dalt, 10',
+      nextStatus: 'active',
+      appliedFields: ['billing_address', 'status'],
+    })
+  })
+
+  it('skips invoices without a structured snapshot even if they are paid', () => {
+    const client = createClient()
+    const plan = buildClientFiscalBackfillPlan([client], [createInvoice({ pricing_metadata: null, status: 'paid' })])
+
+    expect(plan.updates).toHaveLength(0)
+    expect(plan.skipped).toHaveLength(1)
+    expect(plan.skipped[0]).toMatchObject({
+      clientId: 'client-1',
+      reason: 'no_structured_fiscal_data',
+      sourceInvoiceIds: ['invoice-1'],
     })
   })
 })

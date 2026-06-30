@@ -17,7 +17,6 @@ import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
-import { formatCurrency } from '../app/displayFormat'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
@@ -71,7 +70,6 @@ export function QuotesPage({
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const draftQuotesCount = quotes.filter((quote) => quote.status === 'draft').length
   const acceptedQuotesCount = quotes.filter((quote) => quote.status === 'accepted').length
-  const selectedQuoteTotal = selectedQuote ? selectedQuote.total : null
   const rawDuplicateGroups = buildQuoteDuplicateGroups(quotes)
   const {
     visibleGroups: duplicateGroups,
@@ -127,7 +125,7 @@ export function QuotesPage({
               Gestiona propuestas comerciales y abre el documento del presupuesto seleccionado.
             </p>
 
-            <div className="cc-module-hero__meta" aria-label="Resumen del modulo presupuestos">
+            <div className="cc-module-hero__meta" aria-label="Resumen operativo de presupuestos">
               <span className="cc-module-hero__metric">
                 <strong>{quotes.length}</strong>
                 <span>registros</span>
@@ -139,10 +137,6 @@ export function QuotesPage({
               <span className="cc-module-hero__metric">
                 <strong>{acceptedQuotesCount}</strong>
                 <span>aceptados</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{selectedQuoteTotal !== null ? formatCurrency(selectedQuoteTotal) : ' - '}</strong>
-                <span>seleccionado</span>
               </span>
             </div>
           </div>
@@ -258,11 +252,6 @@ export function QuotesPage({
         {activeFilterLabel ? (
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
-
-        <div className="cc-page-mode-strip">
-          <span className="cc-page-mode-strip__pill cc-page-mode-strip__pill--active">Gestion</span>
-          <span className="cc-page-mode-strip__text">Lista y detalle para trabajar el presupuesto</span>
-        </div>
 
         <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">

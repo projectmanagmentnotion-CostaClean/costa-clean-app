@@ -306,32 +306,9 @@ export function FiscalClosingPage({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Estado y siguientes acciones</h2>
-            <p>La vista base se queda corta: estado, incidencias, revision documental y export, cada una con un proposito claro.</p>
+            <h2>Acciones del periodo</h2>
+            <p>La lectura principal queda en revisar incidencias, resolver soporte y exportar sin repetir el mismo contexto arriba y abajo.</p>
           </div>
-        </div>
-
-        <div className="cc-kpi-grid cc-quarterly-metrics">
-          <article className="cc-kpi-card cc-kpi-card--finance cc-fiscal-closing__hero-card">
-            <span className="cc-kpi-label">Facturado fiscalmente</span>
-            <strong className="cc-kpi-value">{formatCurrency(summary.invoicedTotal)}</strong>
-            <p className="cc-kpi-footnote">{summary.invoiceCount} factura(s) emitida(s) dentro del periodo activo.</p>
-          </article>
-          <article className="cc-kpi-card cc-kpi-card--finance cc-fiscal-closing__hero-card">
-            <span className="cc-kpi-label">IVA repercutido</span>
-            <strong className="cc-kpi-value">{formatCurrency(summary.outputVatTotal)}</strong>
-            <p className="cc-kpi-footnote">Base de IVA emitido segun facturas del periodo.</p>
-          </article>
-          <article className="cc-kpi-card cc-fiscal-closing__hero-card">
-            <span className="cc-kpi-label">IVA deducible estimado</span>
-            <strong className="cc-kpi-value">{formatCurrency(summary.estimatedDeductibleVat)}</strong>
-            <p className="cc-kpi-footnote">Estimado segun gastos con soporte y reglas fiscales ya modeladas.</p>
-          </article>
-          <article className={`cc-kpi-card cc-fiscal-closing__hero-card ${readinessCopy.toneClass}`}>
-            <span className="cc-kpi-label">IVA neto estimado</span>
-            <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
-            <p className="cc-kpi-footnote">IVA repercutido menos IVA deducible estimado para orientar la revision.</p>
-          </article>
         </div>
 
         <div className="cc-quarterly-pack-grid">

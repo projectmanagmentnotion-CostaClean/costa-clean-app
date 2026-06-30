@@ -281,19 +281,9 @@ export function PropertyWorkspace({
       onClick: () => openAction(nextStep.action),
     },
     {
-      key: 'new-quote',
-      label: 'Nuevo presupuesto',
-      onClick: () => openAction('quote'),
-    },
-    {
       key: 'new-invoice',
       label: 'Nueva factura',
       onClick: () => openAction('invoice'),
-    },
-    {
-      key: 'register-payment',
-      label: 'Registrar cobro',
-      onClick: () => openAction('payment'),
     },
     {
       key: 'edit-property',
@@ -302,6 +292,16 @@ export function PropertyWorkspace({
         onTabChange('summary')
         setEditRequestToken((current) => current + 1)
       },
+    },
+    {
+      key: 'new-quote',
+      label: 'Nuevo presupuesto',
+      onClick: () => openAction('quote'),
+    },
+    {
+      key: 'register-payment',
+      label: 'Registrar cobro',
+      onClick: () => openAction('payment'),
     },
   ]
   const dedupedHeroActions = heroActions.filter(
@@ -391,16 +391,6 @@ export function PropertyWorkspace({
           <strong>{pendingBalance > 0.009 ? 'Cobro pendiente' : nextJob ? 'Con agenda activa' : 'Sin agenda futura'}</strong>
           <small>{pendingBalance > 0.009 ? 'La prioridad es cerrar el saldo abierto.' : nextJob ? `Siguiente servicio ${formatDateEs(nextJob.scheduled_date)}` : 'Conviene programar el siguiente servicio.'}</small>
         </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Saldo pendiente</span>
-          <strong>{formatCurrency(pendingBalance)}</strong>
-          <small>{pendingBalance > 0 ? 'Facturas con cobro pendiente' : 'Sin saldo pendiente relevante'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Proximo servicio</span>
-          <strong>{nextJob ? formatJobLabel(nextJob) : 'No programado'}</strong>
-          <small>{nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura'}</small>
-        </article>
       </section>
 
       <details className="cc-client-workspace__context-toggle">
@@ -410,6 +400,16 @@ export function PropertyWorkspace({
         </summary>
 
         <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Saldo pendiente</span>
+            <strong>{formatCurrency(pendingBalance)}</strong>
+            <small>{pendingBalance > 0 ? 'Facturas con cobro pendiente' : 'Sin saldo pendiente relevante'}</small>
+          </article>
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Proximo servicio</span>
+            <strong>{nextJob ? formatJobLabel(nextJob) : 'No programado'}</strong>
+            <small>{nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura'}</small>
+          </article>
           <article className="cc-client-workspace__meta-card">
             <span>Ubicacion operativa</span>
             <strong>{property.address || 'Sin direccion'}</strong>

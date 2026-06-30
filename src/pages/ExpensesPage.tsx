@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
@@ -27,13 +27,6 @@ interface ExpensesPageProps {
   confirmNavigation?: NavigationGuard
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-ES', {
-    style: 'currency',
-    currency: 'EUR',
-  }).format(value)
-}
-
 export function ExpensesPage({
   expenses,
   allExpenses,
@@ -56,7 +49,7 @@ export function ExpensesPage({
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
   const selectedExpenseKey = selectedExpense?.id ?? null
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges
-  const rawDuplicateGroups = useMemo(() => buildExpenseDuplicateGroups(expenses), [expenses])
+  const rawDuplicateGroups = buildExpenseDuplicateGroups(expenses)
   const {
     visibleGroups: duplicateGroups,
     reviewStateByGroupId,
@@ -87,19 +80,7 @@ export function ExpensesPage({
     })
   }
 
-  const summary = useMemo(() => {
-    const totalAmount = expenses.reduce(
-      (sum, expense) => sum + Number(expense.total ?? 0),
-      0,
-    )
-    const fiscalSummary = buildExpenseFiscalSummary(expenses)
-
-    return {
-      totalItems: expenses.length,
-      totalAmount,
-      fiscalSummary,
-    }
-  }, [expenses])
+  const fiscalSummary = buildExpenseFiscalSummary(expenses)
 
   async function handleExpenseCreated() {
     await onExpenseCreated()
@@ -109,9 +90,25 @@ export function ExpensesPage({
   return (
     <section className="page-section cc-master-page cc-expenses-page">
       <div className="section-header page-header-actions cc-master-page__hero cc-expenses-hero">
-        <div>
+        <div className="cc-module-hero__body">
+          <span className="cc-module-hero__eyebrow">Soporte y revision fiscal</span>
           <h1>Gastos</h1>
-          <p>Control operativo, fiscal y documental con lectura rapida en movil.</p>
+          <p>Entra rapido a la lista, resuelve soporte o revision y deja el resto fuera del foco principal.</p>
+
+          <div className="cc-module-hero__meta" aria-label="Resumen operativo de gastos">
+            <span className="cc-module-hero__metric">
+              <strong>{expenses.length}</strong>
+              <span>registros</span>
+            </span>
+            <span className="cc-module-hero__metric">
+              <strong>{fiscalSummary.needsReviewCount}</strong>
+              <span>en revision</span>
+            </span>
+            <span className="cc-module-hero__metric">
+              <strong>{fiscalSummary.mediumHighRiskCount}</strong>
+              <span>riesgo medio/alto</span>
+            </span>
+          </div>
         </div>
 
         <button
@@ -129,56 +126,6 @@ export function ExpensesPage({
           {showCreateForm ? 'Cerrar formulario' : 'Nuevo gasto'}
         </button>
       </div>
-
-      <section className="cc-kpi-grid cc-expenses-summary" aria-label="Resumen de gastos">
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Registros</span>
-          <strong className="cc-kpi-value">{summary.totalItems}</strong>
-          <p className="cc-kpi-footnote">Gastos disponibles en el modulo</p>
-        </article>
-
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Importe total</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.totalAmount)}</strong>
-          <p className="cc-kpi-footnote">Suma total de los gastos cargados</p>
-        </article>
-
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">IVA soportado total</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.totalVatSupported)}</strong>
-          <p className="cc-kpi-footnote">IVA registrado en gastos</p>
-        </article>
-
-        <article className="cc-kpi-card cc-kpi-card--finance">
-          <span className="cc-kpi-label">IVA deducible estimado</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.estimatedDeductibleVat)}</strong>
-          <p className="cc-kpi-footnote">Estimacion asistida, no definitiva</p>
-        </article>
-
-        <article className="cc-kpi-card cc-kpi-card--finance">
-          <span className="cc-kpi-label">Base deducible estimada</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.fiscalSummary.estimatedDeductibleBase)}</strong>
-          <p className="cc-kpi-footnote">Usa IA si existe y fallback manual</p>
-        </article>
-
-        <article className="cc-kpi-card cc-kpi-card--warning">
-          <span className="cc-kpi-label">Requiere revision</span>
-          <strong className="cc-kpi-value">{summary.fiscalSummary.needsReviewCount}</strong>
-          <p className="cc-kpi-footnote">Pendientes o marcados por estimacion</p>
-        </article>
-
-        <article className="cc-kpi-card cc-kpi-card--warning">
-          <span className="cc-kpi-label">Riesgo fiscal</span>
-          <strong className="cc-kpi-value">{summary.fiscalSummary.mediumHighRiskCount}</strong>
-          <p className="cc-kpi-footnote">Gastos con riesgo medio/alto</p>
-        </article>
-
-        <article className="cc-kpi-card">
-          <span className="cc-kpi-label">Sin factura valida IVA</span>
-          <strong className="cc-kpi-value">{summary.fiscalSummary.missingValidVatInvoiceCount}</strong>
-          <p className="cc-kpi-footnote">Revisar antes de deducir IVA</p>
-        </article>
-      </section>
 
       {showCreateForm ? (
         <ActionFlowOverlay

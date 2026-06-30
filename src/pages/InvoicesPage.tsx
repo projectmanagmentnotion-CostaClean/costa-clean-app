@@ -24,7 +24,6 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
-import { formatCurrency } from '../app/displayFormat'
 import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
 
@@ -110,7 +109,6 @@ export function InvoicesPage({
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const issuedInvoicesCount = invoices.filter((invoice) => invoice.status === 'issued').length
   const paidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'paid').length
-  const selectedInvoiceTotal = selectedInvoice ? selectedInvoice.total : null
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
   const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
@@ -247,7 +245,7 @@ export function InvoicesPage({
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
             </p>
 
-            <div className="cc-module-hero__meta" aria-label="Resumen del modulo facturas">
+            <div className="cc-module-hero__meta" aria-label="Resumen operativo de facturas">
               <span className="cc-module-hero__metric">
                 <strong>{invoices.length}</strong>
                 <span>registros</span>
@@ -259,10 +257,6 @@ export function InvoicesPage({
               <span className="cc-module-hero__metric">
                 <strong>{paidInvoicesCount}</strong>
                 <span>pagadas</span>
-              </span>
-              <span className="cc-module-hero__metric">
-                <strong>{selectedInvoiceTotal !== null ? formatCurrency(selectedInvoiceTotal) : ' - '}</strong>
-                <span>seleccionada</span>
               </span>
             </div>
           </div>
@@ -434,11 +428,6 @@ export function InvoicesPage({
             <p>{bulkFeedback}</p>
           </div>
         ) : null}
-
-        <div className="cc-page-mode-strip">
-          <span className="cc-page-mode-strip__pill cc-page-mode-strip__pill--active">Gestion</span>
-          <span className="cc-page-mode-strip__text">Lista y detalle para emitir, revisar y actualizar</span>
-        </div>
 
         <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">

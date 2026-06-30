@@ -107,11 +107,28 @@ export function ExpenseDetailCard({
     [expense],
   )
 
-  const headerActions: ActionGroupItem[] = expense ? [
+  const headerActions: ActionGroupItem[] = expense && primaryAction ? [
+    {
+      key: `primary-${primaryAction.action}`,
+      label: primaryAction.label,
+      tone: 'primary',
+      onClick: () => {
+        if (primaryAction.action === 'support') {
+          setShowSupportSurface(true)
+          return
+        }
+
+        if (primaryAction.action === 'fiscal') {
+          setShowFiscalSurface(true)
+          return
+        }
+
+        setShowEditFlow(true)
+      },
+    },
     {
       key: 'edit-expense',
       label: 'Editar gasto',
-      tone: 'primary',
       onClick: () => setShowEditFlow(true),
     },
     {
@@ -182,33 +199,6 @@ export function ExpenseDetailCard({
               <span>Siguiente paso recomendado</span>
               <strong>{primaryAction.label}</strong>
               <p>{primaryAction.detail}</p>
-              <div className="form-actions cc-expense-review-surface__section-action">
-                {primaryAction.action === 'support' ? (
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setShowSupportSurface(true)}
-                  >
-                    Abrir soporte
-                  </button>
-                ) : primaryAction.action === 'fiscal' ? (
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setShowFiscalSurface(true)}
-                  >
-                    Abrir revision fiscal
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setShowEditFlow(true)}
-                  >
-                    Abrir edicion principal
-                  </button>
-                )}
-              </div>
             </div>
           ) : null}
 
@@ -272,16 +262,6 @@ export function ExpenseDetailCard({
                 </strong>
               </div>
             </div>
-
-            <div className="form-actions cc-expense-review-surface__section-action">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowSupportSurface(true)}
-              >
-                Gestionar soporte
-              </button>
-            </div>
           </section>
 
           <section className="cc-expense-detail__section">
@@ -317,16 +297,6 @@ export function ExpenseDetailCard({
                   {expense.is_deductible ? 'Si' : 'No'}
                 </strong>
               </div>
-            </div>
-
-            <div className="form-actions cc-expense-review-surface__section-action">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => setShowFiscalSurface(true)}
-              >
-                Abrir revision fiscal
-              </button>
             </div>
           </section>
 

@@ -280,6 +280,12 @@ export function JobWorkspace({
     })
   }
 
+  heroActions.push({
+    key: 'edit-job-secondary',
+    label: 'Editar servicio',
+    onClick: () => setShowMajorEdit(true),
+  })
+
   heroActions.push(
     {
       key: 'open-client',
@@ -364,16 +370,6 @@ export function JobWorkspace({
           <strong>{operationalSignal.label}</strong>
           <small>{operationalSignal.detail}</small>
         </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Factura</span>
-          <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente de emitir'}</strong>
-          <small>{invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Todavia no emitida'}</small>
-        </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Saldo</span>
-          <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
-          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
-        </article>
       </section>
 
       <details className="cc-client-workspace__context-toggle">
@@ -383,6 +379,16 @@ export function JobWorkspace({
         </summary>
 
         <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Factura</span>
+            <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente de emitir'}</strong>
+            <small>{invoice && paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Todavia no emitida'}</small>
+          </article>
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Saldo</span>
+            <strong>{invoice ? formatCurrency(outstanding) : 'Sin factura'}</strong>
+            <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'No aplica todavia'}</small>
+          </article>
           <article className="cc-client-workspace__meta-card">
             <span>Propiedad</span>
             <strong>

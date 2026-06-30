@@ -619,11 +619,6 @@ export function ClientWorkspace({
 
   heroActions.push(
     {
-      key: 'secondary-property',
-      label: 'Nueva propiedad',
-      onClick: () => openAction('property'),
-    },
-    {
       key: 'secondary-job',
       label: 'Nuevo servicio',
       onClick: () => openAction('job'),
@@ -632,16 +627,6 @@ export function ClientWorkspace({
       key: 'secondary-quote',
       label: 'Nuevo presupuesto',
       onClick: () => openAction('quote'),
-    },
-    {
-      key: 'secondary-invoice',
-      label: 'Nueva factura',
-      onClick: () => openAction('invoice'),
-    },
-    {
-      key: 'secondary-recurring',
-      label: 'Automatizar factura',
-      onClick: openRecurringAction,
     },
     {
       key: 'secondary-payment',

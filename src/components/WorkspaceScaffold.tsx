@@ -61,10 +61,10 @@ export function WorkspaceScaffold<TTab extends string>({
   overlay,
   children,
 }: WorkspaceScaffoldProps<TTab>) {
-  const visibleMetaCards = metaCards.slice(0, 1)
+  const visibleMetaCards = metaCards.slice(0, 0)
   const hiddenMetaCards = metaCards.slice(1)
-  const visibleSnapshotCards = snapshotCards.slice(0, 2)
-  const hiddenSnapshotCards = snapshotCards.slice(2)
+  const visibleSnapshotCards = snapshotCards.slice(0, 1)
+  const hiddenSnapshotCards = snapshotCards.slice(1)
 
   return (
     <section className="cc-client-workspace">
@@ -89,15 +89,17 @@ export function WorkspaceScaffold<TTab extends string>({
           </div>
         </div>
 
-        <div className="cc-client-workspace__meta">
-          {visibleMetaCards.map((card) => (
-            <article key={`${card.label}-${card.value}`} className="cc-client-workspace__meta-card">
-              <span>{card.label}</span>
-              <strong>{card.value}</strong>
-              <small>{card.detail}</small>
-            </article>
-          ))}
-        </div>
+        {visibleMetaCards.length > 0 ? (
+          <div className="cc-client-workspace__meta">
+            {visibleMetaCards.map((card) => (
+              <article key={`${card.label}-${card.value}`} className="cc-client-workspace__meta-card">
+                <span>{card.label}</span>
+                <strong>{card.value}</strong>
+                <small>{card.detail}</small>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </header>
 
       <section className="cc-client-workspace__snapshot">

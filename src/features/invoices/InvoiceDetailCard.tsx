@@ -555,15 +555,7 @@ export function InvoiceDetailCard({
         : 'La factura ya esta cubierta. Revisa cobros o documento solo si necesitas trazabilidad.'
   const headerActions: ActionGroupItem[] = []
 
-  if (invoice && invoice.status !== 'cancelled' && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009) {
-    headerActions.push({
-      key: 'register-payment-primary',
-      label: 'Registrar cobro',
-      tone: 'primary',
-      onClick: () => setPaymentActionMode('manual'),
-      disabled: isSaving,
-    })
-  } else if (invoice) {
+  if (invoice) {
     headerActions.push({
       key: 'open-document-primary',
       label: 'Abrir documento',
@@ -574,11 +566,6 @@ export function InvoiceDetailCard({
 
   if (invoice) {
     headerActions.push(
-      {
-        key: 'open-document',
-        label: 'Abrir documento',
-        onClick: onOpenDocument,
-      },
       {
         key: 'view-payments',
         label: 'Ver cobros',

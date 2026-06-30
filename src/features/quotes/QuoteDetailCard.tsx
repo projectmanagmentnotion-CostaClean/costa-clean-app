@@ -431,14 +431,6 @@ function QuoteDetailCardContent({
     })
   }
 
-  headerActions.push(
-    {
-      key: 'open-document',
-      label: 'Abrir documento',
-      onClick: onOpenDocument,
-    },
-  )
-
   if (!hideHeaderActions) {
     headerActions.push({
       key: 'edit-quote',
@@ -464,7 +456,7 @@ function QuoteDetailCardContent({
     })
   }
 
-  if (!hydratedQuote.job_id) {
+  if (!hydratedQuote.job_id && hydratedQuote.status === 'accepted') {
     headerActions.push({
       key: 'create-job',
       label: 'Crear servicio',
@@ -745,7 +737,7 @@ function QuoteDetailCardContent({
           </form>
         ) : (
           <>
-            {statusActions.length > 0 ? (
+            {statusActions.length > 0 && hydratedQuote.status === 'accepted' ? (
               <div className="form-actions cc-detail-panel__status-actions" style={{ marginBottom: '1rem' }}>
                 <ActionGroup actions={statusActions} moreLabel="Gestionar estado" />
               </div>

@@ -76,6 +76,28 @@ describe('clientWriteApi test utils', () => {
 
     expect(wrapped.message).toBe('No se pudo actualizar el cliente. Revisa la conexion o permisos y vuelve a intentarlo.')
   })
+
+  it('builds a clean update payload without undefined fields', () => {
+    expect(__clientWriteApiTestUtils.buildClientPayload({
+      full_name: ' Miguel Angel Flores Castillo ',
+      phone: ' 674269480 ',
+      email: '',
+      tax_id: ' 52755379a ',
+      billing_address: ' Avinguda de Lloret de Dalt, 10 ',
+      status: 'active',
+    })).toMatchObject({
+      full_name: 'Miguel Angel Flores Castillo',
+      phone: '674269480',
+      email: null,
+      tax_id: '52755379A',
+      billing_address: 'Avinguda de Lloret de Dalt, 10',
+      status: 'active',
+    })
+  })
+
+  it('masks tax ids in diagnostic logs', () => {
+    expect(__clientWriteApiTestUtils.maskTaxId('52755379A')).toBe('5275***9A')
+  })
 })
 
 describe('client fiscal normalization stays aligned with writes', () => {

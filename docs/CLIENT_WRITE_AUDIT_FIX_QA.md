@@ -125,3 +125,7 @@ Validaciones ejecutadas:
 
 - No se pudo hacer QA manual autenticado completo desde navegador embebido sin sesion real del CRM.
 - El backfill sigue siendo utilidad interna sin UI, por diseno deliberado de bajo riesgo.
+
+## Diagnostico posterior
+
+- Ver tambien `docs/CLIENT_WRITE_REAL_DIAGNOSTIC_QA.md` para la evidencia live de que schema e `id` eran correctos y el fallo restante estaba en la ruta autenticada anterior frente a la exposicion real de `clients`.

@@ -1,17 +1,23 @@
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
 import { normalizeClientFiscalData } from './clientFiscalData'
 import type { ClientListItem } from './types'
 
 const clientSelectFields = 'id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id'
 
-function getClientOrThrow() {
-  const { client, error } = getSupabaseClient()
+interface SupabaseRestError {
+  code?: string
+  details?: string | null
+  hint?: string | null
+  message?: string
+}
 
-  if (!client) {
-    throw new Error(error ?? 'No se pudo inicializar Supabase.')
+function getRestConfigOrThrow() {
+  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Faltan las variables de entorno de Supabase.')
   }
 
-  return client
+  return { supabaseUrl, supabaseAnonKey }
 }
 
 function normalizeClientId(clientId: string): string {
@@ -56,6 +62,166 @@ function toClientWriteError(
   return new Error(fallbackMessage)
 }
 
+function maskTaxId(value: string | null | undefined): string | null {
+  if (!value) return null
+  if (value.length <= 4) return '****'
+  return `${value.slice(0, 4)}***${value.slice(-2)}`
+}
+
+function buildClientWriteHeaders(supabaseAnonKey: string) {
+  return {
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${supabaseAnonKey}`,
+    'Content-Type': 'application/json',
+    Prefer: 'return=representation',
+  }
+}
+
+function logClientWriteDebug(payload: {
+  operation: 'create' | 'update'
+  clientId: string | null
+  payload: ClientRecordInput
+  result?: {
+    ok: boolean
+    rows?: number
+    error?: SupabaseRestError | null
+  }
+}) {
+  if (!import.meta.env.DEV) return
+
+  const maskedPayload = {
+    ...payload.payload,
+    tax_id: maskTaxId(payload.payload.tax_id),
+    billing_address: payload.payload.billing_address ? '[masked]' : payload.payload.billing_address,
+  }
+
+  const baseLog = {
+    operation: payload.operation,
+    table: 'clients',
+    clientId: payload.clientId,
+    payloadKeys: Object.keys(payload.payload),
+    payloadPreview: maskedPayload,
+  }
+
+  if (!payload.result) {
+    console.debug('[clientWriteApi]', baseLog)
+    return
+  }
+
+  console.warn('[clientWriteApi]', {
+    ...baseLog,
+    result: payload.result,
+  })
+}
+
+async function parseSupabaseError(response: Response): Promise<SupabaseRestError> {
+  const fallbackError: SupabaseRestError = {
+    message: response.statusText || 'Error desconocido de Supabase.',
+  }
+
+  try {
+    const rawBody = await response.text()
+    if (!rawBody.trim()) {
+      return fallbackError
+    }
+
+    try {
+      return JSON.parse(rawBody) as SupabaseRestError
+    } catch {
+      return {
+        ...fallbackError,
+        message: rawBody,
+      }
+    }
+  } catch {
+    return fallbackError
+  }
+}
+
+function toSupabaseErrorMessage(
+  error: SupabaseRestError,
+  fallbackMessage: string,
+): string {
+  return error.message || fallbackMessage
+}
+
+function buildClientPayload(input: ClientRecordInput): ClientRecordInput {
+  const fiscalData = normalizeClientFiscalData({
+    tax_id: input.tax_id,
+    billing_address: input.billing_address,
+    fiscal_name: input.full_name,
+  })
+  const payload: ClientRecordInput = {}
+
+  if (typeof input.full_name === 'string') payload.full_name = input.full_name.trim()
+  if ('phone' in input) payload.phone = input.phone?.trim() || null
+  if ('email' in input) payload.email = input.email?.trim() || null
+  if ('tax_id' in input) payload.tax_id = fiscalData.tax_id
+  if ('billing_address' in input) payload.billing_address = fiscalData.billing_address
+  if (typeof input.status === 'string') payload.status = input.status
+  if ('source_lead_id' in input) payload.source_lead_id = input.source_lead_id ?? null
+
+  return payload
+}
+
+async function executeClientRestWrite({
+  operation,
+  clientId,
+  method,
+  payload,
+}: {
+  operation: 'create' | 'update'
+  clientId: string | null
+  method: 'POST' | 'PATCH'
+  payload: ClientRecordInput
+}): Promise<ClientListItem> {
+  const { supabaseUrl, supabaseAnonKey } = getRestConfigOrThrow()
+  const targetUrl = method === 'POST'
+    ? `${supabaseUrl}/rest/v1/clients?select=${encodeURIComponent(clientSelectFields)}`
+    : `${supabaseUrl}/rest/v1/clients?id=eq.${encodeURIComponent(normalizeClientId(clientId ?? ''))}&select=${encodeURIComponent(clientSelectFields)}`
+
+  logClientWriteDebug({ operation, clientId, payload })
+
+  const response = await fetch(targetUrl, {
+    method,
+    headers: buildClientWriteHeaders(supabaseAnonKey),
+    body: JSON.stringify(payload),
+  })
+
+  if (!response.ok) {
+    const error = await parseSupabaseError(response)
+    logClientWriteDebug({
+      operation,
+      clientId,
+      payload,
+      result: { ok: false, error },
+    })
+    throw new Error(toSupabaseErrorMessage(
+      error,
+      operation === 'create'
+        ? 'No se pudo crear el cliente.'
+        : 'No se pudo actualizar el cliente.',
+    ))
+  }
+
+  const rows = ((await response.json()) as ClientListItem[]) ?? []
+  logClientWriteDebug({
+    operation,
+    clientId,
+    payload,
+    result: { ok: true, rows: rows.length },
+  })
+
+  return normalizeReturnedClientRows(rows, {
+    emptyMessage: operation === 'create'
+      ? 'No se pudo confirmar el cliente creado. Revisa permisos o vuelve a intentarlo.'
+      : 'No se actualizo ningun cliente. Puede ser un problema de permisos o identificador.',
+    multipleMessage: operation === 'create'
+      ? 'Se recibieron varios clientes al crear la ficha. Revisa la escritura antes de continuar.'
+      : 'La actualizacion del cliente devolvio varias filas. Revisa el filtro antes de continuar.',
+  })
+}
+
 interface ClientRecordInput {
   id?: string
   full_name?: string
@@ -69,33 +235,22 @@ interface ClientRecordInput {
 
 export async function createClientRecord(input: Required<Pick<ClientRecordInput, 'id' | 'full_name' | 'status'>> & ClientRecordInput): Promise<ClientListItem> {
   try {
-    const client = getClientOrThrow()
-    const fiscalData = normalizeClientFiscalData({
+    const payload = buildClientPayload({
+      id: normalizeClientId(input.id),
+      full_name: input.full_name,
+      phone: input.phone ?? null,
+      email: input.email ?? null,
       tax_id: input.tax_id ?? null,
       billing_address: input.billing_address ?? null,
-      fiscal_name: input.full_name,
+      status: input.status,
+      source_lead_id: input.source_lead_id ?? null,
     })
-    const { data, error } = await client
-      .from('clients')
-      .insert({
-        id: normalizeClientId(input.id),
-        full_name: input.full_name.trim(),
-        phone: input.phone ?? null,
-        email: input.email ?? null,
-        tax_id: fiscalData.tax_id,
-        billing_address: fiscalData.billing_address,
-        status: input.status,
-        source_lead_id: input.source_lead_id ?? null,
-      })
-      .select(clientSelectFields)
 
-    if (error) {
-      throw new Error(error.message || 'No se pudo crear el cliente.')
-    }
-
-    return normalizeReturnedClientRows(data as ClientListItem[] | null, {
-      emptyMessage: 'No se pudo confirmar el cliente creado. Revisa permisos o vuelve a intentarlo.',
-      multipleMessage: 'Se recibieron varios clientes al crear la ficha. Revisa la escritura antes de continuar.',
+    return await executeClientRestWrite({
+      operation: 'create',
+      clientId: payload.id ?? null,
+      method: 'POST',
+      payload,
     })
   } catch (error) {
     throw toClientWriteError(error, 'No se pudo crear el cliente. Revisa la conexion o permisos y vuelve a intentarlo.')
@@ -108,35 +263,13 @@ export async function updateClientRecord(
 ): Promise<ClientListItem> {
   try {
     const normalizedClientId = normalizeClientId(clientId)
-    const client = getClientOrThrow()
-    const fiscalData = normalizeClientFiscalData({
-      tax_id: input.tax_id,
-      billing_address: input.billing_address,
-      fiscal_name: input.full_name,
-    })
-    const payload: ClientRecordInput = {}
+    const payload = buildClientPayload(input)
 
-    if (typeof input.full_name === 'string') payload.full_name = input.full_name.trim()
-    if ('phone' in input) payload.phone = input.phone ?? null
-    if ('email' in input) payload.email = input.email ?? null
-    if ('tax_id' in input) payload.tax_id = fiscalData.tax_id
-    if ('billing_address' in input) payload.billing_address = fiscalData.billing_address
-    if (typeof input.status === 'string') payload.status = input.status
-    if ('source_lead_id' in input) payload.source_lead_id = input.source_lead_id ?? null
-
-    const { data, error } = await client
-      .from('clients')
-      .update(payload)
-      .eq('id', normalizedClientId)
-      .select(clientSelectFields)
-
-    if (error) {
-      throw new Error(error.message || 'No se pudo actualizar el cliente.')
-    }
-
-    return normalizeReturnedClientRows(data as ClientListItem[] | null, {
-      emptyMessage: 'No se pudo actualizar el cliente. Revisa la conexion o permisos y vuelve a intentarlo.',
-      multipleMessage: 'La actualizacion del cliente devolvio varias filas. Revisa el filtro antes de continuar.',
+    return await executeClientRestWrite({
+      operation: 'update',
+      clientId: normalizedClientId,
+      method: 'PATCH',
+      payload,
     })
   } catch (error) {
     throw toClientWriteError(error, 'No se pudo actualizar el cliente. Revisa la conexion o permisos y vuelve a intentarlo.')
@@ -160,6 +293,8 @@ export async function updateClientFiscalData(
 }
 
 export const __clientWriteApiTestUtils = {
+  buildClientPayload,
+  maskTaxId,
   normalizeClientId,
   normalizeReturnedClientRows,
   toClientWriteError,

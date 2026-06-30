@@ -176,11 +176,17 @@ export function FiscalClosingPage({
     }).format(date)
   }
 
-  function getConfidenceLabel(value: 'high' | 'medium' | 'low'): string {
-    if (value === 'high') return 'Alta'
-    if (value === 'medium') return 'Media'
-    return 'Baja'
-  }
+function getConfidenceLabel(value: 'high' | 'medium' | 'low'): string {
+  if (value === 'high') return 'Alta'
+  if (value === 'medium') return 'Media'
+  return 'Baja'
+}
+
+function getWarningSeverityLabel(value: 'critical' | 'warning' | 'info'): string {
+  if (value === 'critical') return 'Critico'
+  if (value === 'warning') return 'Requiere revision'
+  return 'Informativo'
+}
 
   async function handleSaveSnapshot() {
     if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {
@@ -392,7 +398,7 @@ export function FiscalClosingPage({
               <span className="cc-dashboard-panel__label">Warnings principales</span>
               {topWarnings.length > 0 ? topWarnings.map((warning) => (
                 <p key={warning.id} className="cc-dashboard-panel__text">
-                  <strong>{warning.title}.</strong> {warning.description}
+                  <strong>{getWarningSeverityLabel(warning.severity)} · {warning.title}.</strong> {warning.description}
                 </p>
               )) : (
                 <p className="cc-dashboard-panel__text">Sin warnings estructurados en el periodo.</p>

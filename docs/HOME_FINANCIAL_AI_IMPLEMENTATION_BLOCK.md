@@ -72,7 +72,10 @@ Se implemento una nueva Home operativa con jerarquia mas corta y accionable, y u
 - `npm run lint`
 - `npm run build`
 - `npm run test`
+- Todas ejecutadas correctamente sobre el bloque implementado.
 
 ## 10. Commit generado
 
-Pendiente de registrar en el momento de escribir este documento. Se actualiza con el hash final en el cierre del bloque.
+- Commit final: `fccfb2a`
+- Mensaje: `feat: simplify home and add fiscal analysis readiness`
+- Push confirmado a `origin/main`

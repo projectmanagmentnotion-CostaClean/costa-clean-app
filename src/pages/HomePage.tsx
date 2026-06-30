@@ -307,8 +307,8 @@ export function HomePage({
             <strong className="cc-dashboard-header__meta-value">{metrics.jobsScheduledTodayCount} servicio(s)</strong>
           </div>
           <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Dinero pendiente</span>
-            <strong className="cc-dashboard-header__meta-value">{formatCurrency(metrics.outstandingReceivablesTotal)}</strong>
+            <span className="cc-dashboard-header__meta-label">Revision fiscal</span>
+            <strong className="cc-dashboard-header__meta-value">{fiscalRiskCount}</strong>
           </div>
           <div className="cc-dashboard-header__meta-card">
             <span className="cc-dashboard-header__meta-label">Alertas criticas</span>
@@ -424,7 +424,7 @@ export function HomePage({
               <div>
                 <span className="cc-dashboard-console-workpanel__eyebrow">Siguiente paso</span>
                 <h3>Despues de hoy</h3>
-                <p>Lo siguiente que entra cuando cierres el bloque actual.</p>
+                <p>La siguiente cola inmediata sin abrir otra pantalla larga.</p>
               </div>
 
               {nextActionJobs.length > 0 ? (

@@ -55,7 +55,7 @@ export function ClosingAiSummarySection({
 
       <div className="cc-alert cc-alert--warning">
         <strong>Interpretacion asistiva</strong>
-        <p>La IA solo redacta y prioriza. No recalcula IVA, importes ni conclusiones fiscales definitivas.</p>
+        <p>La IA solo redacta y prioriza. No recalcula IVA, importes ni conclusiones fiscales definitivas y requiere validacion profesional.</p>
       </div>
 
       {error ? (

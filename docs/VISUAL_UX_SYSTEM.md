@@ -204,3 +204,67 @@ Uso recomendado futuro:
 
 Uso recomendado futuro:
 `ExecutiveHeader` + `VisualKpiCard` + `SeverityBadge` + `ProgressMetric` para soporte, revision y riesgo.
+
+## Fiscal Closing Pattern
+
+Estructura recomendada:
+
+- Header ejecutivo en dos columnas.
+- Tres cards principales maximo: estado del paquete, IVA a ingresar estimado, elementos por revisar.
+- Metricas secundarias compactas debajo.
+- Checklist y warnings en un segundo nivel claro.
+- IA asistiva y detalles colapsables mas abajo.
+
+Cards principales:
+
+- `Estado del paquete`: readiness label, preparacion interna, hint corto y severidad.
+- `IVA a ingresar estimado`: cifra dominante, badge `Estimado` y copy prudente.
+- `Elementos por revisar`: volumen de pendientes y CTA real a la revision.
+
+Cards secundarias:
+
+- IVA repercutido.
+- IVA deducible estimado.
+- Cobertura documental.
+- Facturas incluidas.
+- Cobros incluidos.
+- Gastos incluidos.
+- Soportes IVA pendientes, si aplica.
+
+Uso de `ProgressMetric`:
+
+- Preparacion interna del cierre.
+- Cobertura documental.
+- Solo con datos reales o con indicador interno explicitamente marcado como tal.
+
+Uso de `ActionChecklist`:
+
+- Facturas incluidas.
+- Cobros incluidos.
+- Gastos incluidos.
+- Soportes descargables.
+- Soportes pendientes.
+- Validacion IVA pendiente.
+- Snapshot o paquete preparado cuando exista una accion real.
+
+Uso de `CollapsibleDetailSection`:
+
+- Datos insuficientes.
+- Desglose trimestral.
+- Incidencias completas.
+- Riesgos o detalles largos de IA.
+
+Copy prudente fiscal:
+
+- Usar `IVA a ingresar estimado`.
+- Usar `preparacion interna`.
+- Usar `requiere validacion profesional`.
+- Presentar la IA como `ayuda interna de preparacion`.
+
+No debe afirmarse:
+
+- IVA definitivo.
+- Deducibilidad definitiva.
+- Cierre fiscal definitivo.
+- Margen neto definitivo.
+- Payroll real, horas reales o coste laboral completo.

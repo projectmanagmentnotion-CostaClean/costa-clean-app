@@ -87,11 +87,11 @@ function getWarningSeverityLabel(value: 'critical' | 'warning' | 'info'): string
 function getMissingDataFlagLabel(flag: string): string {
   if (flag === 'no_hours_module') return 'No existe modulo fiable de horas reales'
   if (flag === 'no_payroll_module') return 'No existe modulo fiable de payroll real'
-  if (flag === 'missing_expense_support') return 'Faltan soportes documentales en gastos'
-  if (flag === 'pending_expense_review') return 'Hay gastos pendientes de revision fiscal'
-  if (flag === 'missing_snapshot') return 'Todavia no hay snapshot persistido para este preset'
+  if (flag === 'missing_expense_support') return 'Documentacion pendiente'
+  if (flag === 'pending_expense_review') return 'Gastos pendientes de revision fiscal'
+  if (flag === 'missing_snapshot') return 'Snapshot todavia no guardado'
   if (flag === 'insufficient_period_data') return 'El periodo no tiene base suficiente para una lectura solida'
-  if (flag === 'unverified_vat_deductibility') return 'La deducibilidad del IVA sigue sin validacion definitiva'
+  if (flag === 'unverified_vat_deductibility') return 'Validacion IVA pendiente'
   return flag
 }
 
@@ -192,7 +192,6 @@ export function FiscalClosingPage({
     if (!summary.snapshotMode) {
       return {
         label: 'Vista exploratoria',
-        tone: 'neutral' as const,
         detail: 'Mes y rango personalizado usan el mismo motor de cierre, pero no generan snapshot persistido.',
       }
     }
@@ -200,7 +199,6 @@ export function FiscalClosingPage({
     if (!persistedClosing) {
       return {
         label: 'Sin snapshot guardado',
-        tone: 'neutral' as const,
         detail: 'El resumen ya es operativo, pero todavia no se ha persistido el cierre de este preset.',
       }
     }
@@ -208,30 +206,48 @@ export function FiscalClosingPage({
     if (summary.readiness === 'issues' || persistedClosing.status === 'issues') {
       return {
         label: 'Guardado con incidencias',
-        tone: 'warning' as const,
         detail: 'Existe snapshot persistido, pero todavia hay puntos abiertos antes de cerrar con tranquilidad.',
       }
     }
 
     return {
       label: 'Preparado y guardado',
-      tone: 'success' as const,
       detail: 'El preset tiene snapshot persistido y no se detectan incidencias abiertas en el resumen actual.',
     }
   }, [persistedClosing, summary.readiness, summary.snapshotMode])
 
-  const documentReviewCount = summary.missingSupportExpenses.length + summary.pendingReviewExpenses.length + summary.riskExpenses.length
   const topIncidences = summary.incidences.slice(0, 4)
   const fiscalSummary = summary.deterministicSummary
   const topWarnings = fiscalSummary.warnings.slice(0, 4)
   const closureExpenseCount = fiscalSummary.sourceCounts.closureExpenses
   const supportedExpenseCount = Math.max(closureExpenseCount - fiscalSummary.expensesWithoutSupportCount, 0)
   const supportCoveragePercent = closureExpenseCount > 0 ? Math.round((supportedExpenseCount / closureExpenseCount) * 100) : 100
-  const warningTone = topWarnings.some((warning) => warning.severity === 'critical')
-    ? 'critical'
-    : topWarnings.some((warning) => warning.severity === 'warning')
-      ? 'warning'
-      : 'info'
+  const readinessCriteria = [
+    summary.snapshotMode ? Number(Boolean(persistedClosing)) : 1,
+    Number(fiscalSummary.expensesWithoutSupportCount === 0),
+    Number(summary.missingValidVatInvoiceCount === 0),
+    Number(fiscalSummary.expensesPendingReviewCount + fiscalSummary.expensesMediumHighRiskCount === 0),
+    Number(fiscalSummary.pendingInvoicesCount === 0),
+    Number(fiscalSummary.completedJobsWithoutInvoiceCount === 0),
+  ]
+  const readinessPercent = Math.round((readinessCriteria.reduce((sum, value) => sum + value, 0) / readinessCriteria.length) * 100)
+  const dominantReviewTone: SeverityTone = summary.criticalIncidenceCount > 0 ? 'critical' : summary.unresolvedIncidenceCount > 0 ? 'warning' : 'success'
+  const mainCta = summary.unresolvedIncidenceCount > 0
+    ? {
+        label: 'Revisar pendientes',
+        onClick: () => {
+          const primaryIncidence = topIncidences[0]
+          if (!primaryIncidence) {
+            setIsDocumentReviewOpen(true)
+            return
+          }
+          onNavigateToIncidence(primaryIncidence.view, primaryIncidence.scope, selection)
+        },
+      }
+    : {
+        label: 'Preparar paquete fiscal',
+        onClick: () => setIsExportOpen(true),
+      }
 
   function formatDateTime(value: string | null | undefined): string {
     if (!value) return 'Sin guardar'
@@ -327,8 +343,72 @@ export function FiscalClosingPage({
 
   const checklistItems: ActionChecklistItem[] = [
     {
+      id: 'invoices',
+      state: fiscalSummary.sourceCounts.invoices > 0 ? 'done' : 'info',
+      label: 'Facturas incluidas',
+      description: `${fiscalSummary.sourceCounts.invoices} factura(s) entran en el periodo activo.`,
+      action: fiscalSummary.sourceCounts.invoices > 0 ? {
+        label: 'Abrir facturas',
+        onClick: () => onNavigateToIncidence('invoices', 'all', selection),
+      } : undefined,
+    },
+    {
+      id: 'payments',
+      state: fiscalSummary.sourceCounts.payments > 0 ? 'done' : 'info',
+      label: 'Cobros incluidos',
+      description: `${fiscalSummary.sourceCounts.payments} cobro(s) registrados en el periodo.`,
+      action: fiscalSummary.sourceCounts.payments > 0 ? {
+        label: 'Abrir cobros',
+        onClick: () => onNavigateToIncidence('payments', 'all', selection),
+      } : undefined,
+    },
+    {
+      id: 'expenses',
+      state: closureExpenseCount > 0 ? 'done' : 'info',
+      label: 'Gastos incluidos',
+      description: `${closureExpenseCount} gasto(s) afectan al cierre de este periodo.`,
+      action: closureExpenseCount > 0 ? {
+        label: 'Abrir gastos',
+        onClick: () => onNavigateToIncidence('expenses', 'closure', selection),
+      } : undefined,
+    },
+    {
+      id: 'downloadable-support',
+      state: fiscalSummary.expensesWithoutSupportCount > 0 ? 'pending' : 'done',
+      label: 'Soportes descargables',
+      description: `${supportedExpenseCount} de ${closureExpenseCount} gastos de cierre tienen soporte utilizable.`,
+      action: closureExpenseCount > 0 ? {
+        label: 'Abrir revision documental',
+        onClick: () => setIsDocumentReviewOpen(true),
+      } : undefined,
+    },
+    {
+      id: 'support',
+      state: fiscalSummary.expensesWithoutSupportCount > 0 ? 'critical' : 'done',
+      label: fiscalSummary.expensesWithoutSupportCount > 0 ? 'Soportes pendientes' : 'Sin soportes pendientes',
+      description: fiscalSummary.expensesWithoutSupportCount > 0
+        ? `${fiscalSummary.expensesWithoutSupportCount} gasto(s) siguen sin soporte descargable.`
+        : 'No se detectan huecos documentales en el periodo.',
+      action: fiscalSummary.expensesWithoutSupportCount > 0 ? {
+        label: 'Abrir revision documental',
+        onClick: () => setIsDocumentReviewOpen(true),
+      } : undefined,
+    },
+    {
+      id: 'vat-support',
+      state: summary.missingValidVatInvoiceCount > 0 ? 'warning' : 'done',
+      label: summary.missingValidVatInvoiceCount > 0 ? 'Validacion IVA pendiente' : 'Soporte IVA suficiente',
+      description: summary.missingValidVatInvoiceCount > 0
+        ? `${summary.missingValidVatInvoiceCount} gasto(s) siguen sin soporte IVA valido.`
+        : 'No hay gastos pendientes de validar para el IVA estimado.',
+      action: summary.missingValidVatInvoiceCount > 0 ? {
+        label: 'Abrir gastos',
+        onClick: () => onNavigateToIncidence('expenses', 'missing_support', selection),
+      } : undefined,
+    },
+    {
       id: 'snapshot',
-      state: persistedClosing ? 'done' as const : summary.snapshotMode ? 'warning' as const : 'info' as const,
+      state: persistedClosing ? 'done' : summary.snapshotMode ? 'warning' : 'info',
       label: persistedClosing ? 'Snapshot guardado' : summary.snapshotMode ? 'Guardar snapshot del periodo' : 'Rango exploratorio',
       description: persistedClosing
         ? `Actualizado ${formatDateTime(persistedClosing.updated_at ?? persistedClosing.closed_at ?? null)}.`
@@ -340,71 +420,41 @@ export function FiscalClosingPage({
         onClick: handleSaveSnapshot,
       } : undefined,
     },
-    {
-      id: 'support',
-      state: fiscalSummary.expensesWithoutSupportCount > 0 ? 'critical' as const : 'done' as const,
-      label: fiscalSummary.expensesWithoutSupportCount > 0 ? 'Completar soportes de gasto' : 'Soporte documental cubierto',
-      description: fiscalSummary.expensesWithoutSupportCount > 0
-        ? `${fiscalSummary.expensesWithoutSupportCount} gasto(s) siguen sin soporte descargable.`
-        : 'No se detectan huecos documentales en el periodo.',
-      action: fiscalSummary.expensesWithoutSupportCount > 0 ? {
-        label: 'Abrir revision documental',
-        onClick: () => setIsDocumentReviewOpen(true),
-      } : undefined,
-    },
-    {
-      id: 'fiscal-review',
-      state: fiscalSummary.expensesPendingReviewCount + fiscalSummary.expensesMediumHighRiskCount > 0 ? 'warning' as const : 'done' as const,
-      label: fiscalSummary.expensesPendingReviewCount + fiscalSummary.expensesMediumHighRiskCount > 0
-        ? 'Cerrar revision fiscal pendiente'
-        : 'Revision fiscal sin alertas principales',
-      description: `${fiscalSummary.expensesPendingReviewCount} pendiente(s) de revision y ${fiscalSummary.expensesMediumHighRiskCount} con riesgo medio o alto.`,
-      action: fiscalSummary.expensesPendingReviewCount + fiscalSummary.expensesMediumHighRiskCount > 0 ? {
-        label: 'Abrir gastos',
-        onClick: () => onNavigateToIncidence('expenses', 'pending_review', selection),
-      } : undefined,
-    },
-    {
-      id: 'collections',
-      state: fiscalSummary.pendingInvoicesCount + fiscalSummary.completedJobsWithoutInvoiceCount > 0 ? 'warning' as const : 'done' as const,
-      label: fiscalSummary.pendingInvoicesCount + fiscalSummary.completedJobsWithoutInvoiceCount > 0
-        ? 'Resolver cobro o facturacion pendiente'
-        : 'Cobro y facturacion sin bloqueos principales',
-      description: `${fiscalSummary.pendingInvoicesCount} factura(s) abiertas y ${fiscalSummary.completedJobsWithoutInvoiceCount} servicio(s) sin factura.`,
-      action: fiscalSummary.pendingInvoicesCount + fiscalSummary.completedJobsWithoutInvoiceCount > 0 ? {
-        label: 'Abrir incidencias',
-        onClick: () => onNavigateToIncidence('invoices', 'pending', selection),
-      } : undefined,
-    },
-  ].slice(0, 5)
+  ]
 
   return (
-    <section className="dashboard-page">
+    <section className="dashboard-page cc-fiscal-closing-page">
       <ExecutiveHeader
         eyebrow="Cierre fiscal"
         title="Centro de cierre del periodo"
-        summary="Estado, IVA neto estimado, cobertura documental y siguientes pasos en una sola lectura. La revision documental y la exportacion viven fuera del lienzo principal."
+        summary="Estado del periodo, preparacion interna, IVA a ingresar estimado y siguientes pasos en una sola lectura. Requiere validacion profesional antes de tratarlo como cierre definitivo."
         statusLabel={fiscalSummary.readinessLabel}
         statusTone={getReadinessTone(fiscalSummary.readiness)}
-        primaryAction={{
-          label: 'Abrir revision documental',
-          onClick: () => setIsDocumentReviewOpen(true),
-        }}
+        primaryAction={mainCta}
         secondaryAction={{
           label: 'Abrir exportacion fiscal',
           onClick: () => setIsExportOpen(true),
         }}
-        metricLabel="Periodo activo"
-        metricValue={fiscalSummary.period.label}
-        metricHint={`Confianza ${getConfidenceLabel(fiscalSummary.confidenceLevel).toLowerCase()} y snapshot ${persistedClosing ? 'guardado' : 'pendiente'}.`}
+        metricLabel="IVA a ingresar estimado"
+        metricValue={formatCurrency(fiscalSummary.estimatedNetVatPayable)}
+        metricHint="IVA repercutido menos IVA deducible estimado. Requiere validacion profesional."
       >
-        <InsightPanel
-          title="Lectura rapida"
-          tone={getReadinessTone(fiscalSummary.readiness)}
-          insight={fiscalSummary.readinessLabel}
-          implication={fiscalSummary.confidenceNotes[0] ?? statusCard.detail}
-          action={topWarnings[0]?.recommendedAction ?? 'Revisar checklist, resolver bloqueos y validar antes de exportar.'}
-        />
+        <div className="cc-fiscal-closing-header-progress">
+          <ProgressMetric
+            label="Preparacion interna"
+            value={`${readinessPercent}%`}
+            percent={readinessPercent}
+            tone={getReadinessTone(fiscalSummary.readiness)}
+            hint="Indicador interno basado en snapshot, soporte, validacion IVA y pendientes reales."
+          />
+          <InsightPanel
+            title="Lectura rapida"
+            tone={getReadinessTone(fiscalSummary.readiness)}
+            insight={`${fiscalSummary.period.label} · ${fiscalSummary.readinessLabel}`}
+            implication={fiscalSummary.confidenceNotes[0] ?? statusCard.detail}
+            action={topWarnings[0]?.recommendedAction ?? 'Revisar checklist, resolver bloqueos y validar antes de exportar.'}
+          />
+        </div>
       </ExecutiveHeader>
 
       {error ? (
@@ -423,93 +473,219 @@ export function FiscalClosingPage({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Informe del periodo</h2>
-            <p>La lectura fiscal y financiera sale de un resumen determinista unico. La IA solo interpreta este bloque, no calcula cifras nuevas.</p>
+            <h2>Lectura principal del cierre</h2>
+            <p>Tres tarjetas dominan la pantalla: estado del paquete, IVA a ingresar estimado y elementos por revisar.</p>
           </div>
         </div>
 
-        <div className="cc-kpi-grid cc-kpi-grid--compact">
+        <div className="cc-fiscal-closing-primary-grid">
           <VisualKpiCard
-            label="Facturado"
-            value={formatCurrency(fiscalSummary.totalInvoiced)}
-            hint={`${fiscalSummary.sourceCounts.invoices} factura(s) en el periodo`}
+            label="Estado del paquete"
+            value={fiscalSummary.readinessLabel}
+            hint={statusCard.detail}
+            tone={getReadinessTone(fiscalSummary.readiness)}
+            priority="primary"
+            badgeLabel="Preparacion interna"
+            className="cc-fiscal-closing-card--state"
+            action={{ label: mainCta.label, onClick: mainCta.onClick }}
+            progress={{
+              label: 'Preparacion',
+              value: `${readinessPercent}%`,
+              percent: readinessPercent,
+              hint: 'Indicador interno basado en snapshot, soporte, revision y pendientes.',
+            }}
+          >
+            <p className="cc-fiscal-closing-card__note">
+              Confianza {getConfidenceLabel(fiscalSummary.confidenceLevel).toLowerCase()} y snapshot {persistedClosing ? 'guardado' : 'pendiente'}.
+            </p>
+          </VisualKpiCard>
+
+          <VisualKpiCard
+            label="IVA a ingresar estimado"
+            value={formatCurrency(fiscalSummary.estimatedNetVatPayable)}
+            hint="IVA repercutido menos IVA deducible estimado."
+            tone={summary.missingValidVatInvoiceCount > 0 ? 'warning' : 'success'}
+            priority="primary"
+            badgeLabel="Estimado"
+            className="cc-fiscal-closing-card--vat"
+          >
+            <p className="cc-fiscal-closing-card__note">No es un importe definitivo. Requiere validacion profesional.</p>
+          </VisualKpiCard>
+
+          <VisualKpiCard
+            label="Elementos por revisar"
+            value={String(summary.unresolvedIncidenceCount)}
+            hint={`${topWarnings.length} warning(s) principales y ${fiscalSummary.missingDataFlags.length} limite(s) visibles.`}
+            tone={dominantReviewTone}
+            priority="primary"
+            badgeLabel={dominantReviewTone === 'critical' ? 'Dominan bloqueos' : summary.unresolvedIncidenceCount > 0 ? 'Revision abierta' : 'Controlado'}
+            className="cc-fiscal-closing-card--review"
+            action={{ label: 'Revisar pendientes', onClick: mainCta.onClick }}
+          >
+            <div className="cc-fiscal-closing-card__split">
+              <strong>{fiscalSummary.expensesWithoutSupportCount} sin soporte · {summary.missingValidVatInvoiceCount} sin soporte IVA.</strong>
+              <strong>{fiscalSummary.pendingInvoicesCount} factura(s) pendientes · {fiscalSummary.completedJobsWithoutInvoiceCount} servicio(s) sin factura.</strong>
+            </div>
+          </VisualKpiCard>
+        </div>
+      </section>
+
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Metricas secundarias</h2>
+            <p>Contexto financiero y documental de apoyo con menos peso visual que el estado, el IVA estimado y los pendientes.</p>
+          </div>
+        </div>
+
+        <div className="cc-fiscal-closing-secondary-grid">
+          <VisualKpiCard
+            label="IVA repercutido"
+            value={formatCurrency(fiscalSummary.outputVatTotal)}
+            hint="IVA salido de facturas del periodo."
             tone="info"
             priority="compact"
           />
           <VisualKpiCard
-            label="Cobrado"
-            value={formatCurrency(fiscalSummary.totalCollected)}
-            hint={`${fiscalSummary.sourceCounts.payments} cobro(s) registrados`}
+            label="IVA deducible estimado"
+            value={formatCurrency(fiscalSummary.estimatedDeductibleVat)}
+            hint="Estimado solo con soporte disponible y revision interna."
             tone="success"
             priority="compact"
           />
           <VisualKpiCard
-            label="Pendiente"
-            value={formatCurrency(fiscalSummary.totalOutstanding)}
-            hint={`${fiscalSummary.pendingInvoicesCount} factura(s) abiertas`}
-            tone={fiscalSummary.pendingInvoicesCount > 0 ? 'warning' : 'neutral'}
+            label="Cobertura documental"
+            value={`${Math.round(summary.closureDocumentCoverageRate)}%`}
+            hint="Soportes descargables sobre gastos que afectan al cierre."
+            tone={supportCoveragePercent >= 100 ? 'success' : supportCoveragePercent >= 70 ? 'warning' : 'critical'}
             priority="compact"
-            badgeLabel={fiscalSummary.pendingInvoicesCount > 0 ? 'Seguimiento' : 'Controlado'}
+            className="cc-fiscal-closing-support-card"
+            progress={{
+              label: 'Cobertura',
+              value: String(supportedExpenseCount),
+              max: String(closureExpenseCount),
+              percent: summary.closureDocumentCoverageRate,
+              hint: closureExpenseCount > 0 ? 'Progreso real sobre gastos de cierre.' : 'No hay gastos de cierre en este periodo.',
+            }}
           />
           <VisualKpiCard
-            label="Gastos"
-            value={formatCurrency(fiscalSummary.totalExpenses)}
-            hint={`${fiscalSummary.sourceCounts.expenses} gasto(s) en el periodo`}
+            label="Facturas incluidas"
+            value={String(fiscalSummary.sourceCounts.invoices)}
+            hint="Base de facturacion incluida en el calculo."
+            tone="info"
+            priority="compact"
+          />
+          <VisualKpiCard
+            label="Cobros incluidos"
+            value={String(fiscalSummary.sourceCounts.payments)}
+            hint="Cobros con fecha dentro del periodo activo."
+            tone="success"
+            priority="compact"
+          />
+          <VisualKpiCard
+            label="Gastos incluidos"
+            value={String(closureExpenseCount)}
+            hint="Gastos marcados como relevantes para este cierre."
             tone="neutral"
             priority="compact"
           />
           <VisualKpiCard
-            label="IVA neto estimado"
-            value={formatCurrency(fiscalSummary.estimatedNetVatPayable)}
-            hint="Basado solo en facturas y soporte validado"
-            tone={fiscalSummary.readiness === 'ready' ? 'success' : 'warning'}
+            label="Gastos sin soporte IVA"
+            value={String(summary.missingValidVatInvoiceCount)}
+            hint="Registros que todavia no sostienen la deducibilidad estimada."
+            tone={summary.missingValidVatInvoiceCount > 0 ? 'warning' : 'success'}
             priority="compact"
-          />
-          <VisualKpiCard
-            label="Incidencias abiertas"
-            value={String(fiscalSummary.openIncidencesCount)}
-            hint={`${fiscalSummary.warnings.length} warning(s) estructurados`}
-            tone={fiscalSummary.openIncidencesCount > 0 ? warningTone : 'neutral'}
-            priority="compact"
-            badgeLabel={fiscalSummary.openIncidencesCount > 0 ? 'Activas' : 'Limpio'}
+            badgeLabel={summary.missingValidVatInvoiceCount > 0 ? 'Pendiente' : 'Cubierto'}
           />
         </div>
       </section>
 
+      <section className="cc-fiscal-closing-two-column">
+        <article className="cc-dashboard-block">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Checklist de cierre</h2>
+              <p>Facturas, cobros, gastos, soportes, validacion IVA y estado del snapshot en una sola columna accionable.</p>
+            </div>
+          </div>
+          <div className="cc-quarterly-persistence__card">
+            <ActionChecklist items={checklistItems} compact />
+          </div>
+        </article>
+
+        <article className="cc-dashboard-block">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Warnings que dominan</h2>
+              <p>Lo critico se resume arriba. El detalle completo queda colapsado para no competir con el primer nivel.</p>
+            </div>
+          </div>
+          <div className="cc-quarterly-persistence__card cc-bounded-list">
+            {topWarnings.length > 0 ? (
+              <ActionChecklist
+                compact
+                items={topWarnings.map((warning) => ({
+                  id: warning.id,
+                  state: warning.severity === 'critical' ? 'critical' : warning.severity === 'warning' ? 'warning' : 'info',
+                  label: `${getWarningSeverityLabel(warning.severity)} · ${warning.title}`,
+                  description: `${warning.description} ${warning.recommendedAction}`,
+                  action: getWarningNavigationTarget(warning) ? {
+                    label: 'Abrir modulo',
+                    onClick: () => {
+                      const target = getWarningNavigationTarget(warning)
+                      if (!target) return
+                      onNavigateToIncidence(target.view, target.scope, selection)
+                    },
+                  } : undefined,
+                }))}
+              />
+            ) : <p className="cc-dashboard-panel__text">Sin warnings estructurados en el periodo.</p>}
+
+            {fiscalSummary.missingDataFlags.length > 0 ? (
+              <div className="cc-fiscal-closing-inline-list">
+                {fiscalSummary.missingDataFlags.map((flag) => (
+                  <div key={flag} className="cc-fiscal-closing-inline-item">
+                    <span className="cc-dashboard-panel__text">{getMissingDataFlagLabel(flag)}</span>
+                    <SeverityBadge
+                      label={flag === 'no_hours_module' || flag === 'no_payroll_module' ? 'Limite real' : 'Afecta analisis'}
+                      tone={flag === 'missing_expense_support' || flag === 'insufficient_period_data' ? 'critical' : 'warning'}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </article>
+      </section>
+
       <section className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Readiness y confianza</span>
+          <span className="cc-dashboard-panel__label">Preparacion y contexto</span>
           <div className="cc-action-group" style={{ alignItems: 'center' }}>
-            <strong className="cc-kpi-value">{fiscalSummary.readinessLabel}</strong>
+            <strong className="cc-dashboard-panel__value">{fiscalSummary.period.label}</strong>
             <SeverityBadge label={`Confianza ${getConfidenceLabel(fiscalSummary.confidenceLevel)}`} tone={getConfidenceTone(fiscalSummary.confidenceLevel)} />
           </div>
-          <p className="cc-dashboard-panel__text">{statusCard.detail}</p>
+          <p className="cc-dashboard-panel__text">Preparacion interna {readinessPercent}% · cobertura documental {Math.round(summary.closureDocumentCoverageRate)}%.</p>
           <div className="cc-quarterly-checklist">
             <ProgressMetric
-              label="Cobertura documental"
-              value={String(supportedExpenseCount)}
-              max={String(closureExpenseCount)}
-              percent={supportCoveragePercent}
-              tone={supportCoveragePercent >= 100 ? 'success' : supportCoveragePercent >= 70 ? 'warning' : 'critical'}
-              hint={closureExpenseCount > 0 ? 'Basada en gastos que afectan al cierre del periodo.' : 'No hay gastos de cierre en este periodo.'}
+              label="Preparacion interna"
+              value={`${readinessPercent}%`}
+              percent={readinessPercent}
+              tone={getReadinessTone(fiscalSummary.readiness)}
+              hint="Indicador interno basado solo en datos ya disponibles."
             />
             <ProgressMetric
-              label="Cierre listo para revision"
-              value={`${Math.max(0, 100 - Math.min(fiscalSummary.openIncidencesCount * 12, 100))}%`}
-              percent={Math.max(0, 100 - Math.min(fiscalSummary.openIncidencesCount * 12, 100))}
-              tone={getReadinessTone(fiscalSummary.readiness)}
-              hint="Indicador visual interno basado en incidencias abiertas y soporte del periodo."
+              label="Cobertura documental"
+              value={`${Math.round(summary.closureDocumentCoverageRate)}%`}
+              percent={summary.closureDocumentCoverageRate}
+              tone={supportCoveragePercent >= 100 ? 'success' : supportCoveragePercent >= 70 ? 'warning' : 'critical'}
+              hint="Mide soportes disponibles sobre gastos que afectan al cierre."
             />
           </div>
         </article>
 
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Checklist accionable</span>
-          <ActionChecklist items={checklistItems} compact />
-        </article>
-
-        <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Snapshot y notas</span>
+          <span className="cc-dashboard-panel__label">Paquete y snapshot</span>
           <textarea
             className="cc-notes-textarea"
             rows={4}
@@ -527,65 +703,23 @@ export function FiscalClosingPage({
                 Snapshot no disponible para este rango
               </button>
             )}
+            <button type="button" className="secondary-button" onClick={() => setIsExportOpen(true)}>
+              Preparar paquete fiscal
+            </button>
           </div>
           {saveMessage ? <p className="cc-dashboard-panel__text">{saveMessage}</p> : null}
           {saveError ? <p className="cc-dashboard-panel__text">{saveError}</p> : null}
         </article>
       </section>
 
-      {topWarnings.length > 0 || fiscalSummary.missingDataFlags.length > 0 ? (
-        <section className="cc-dashboard-block">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Alertas de cierre</h2>
-              <p>Warnings estructurados, datos faltantes y limites reales antes de exportar o pedir interpretacion asistiva.</p>
-            </div>
+      {fiscalSummary.insufficientDataNotes.length > 0 ? (
+        <CollapsibleDetailSection title="Datos insuficientes" count={fiscalSummary.insufficientDataNotes.length} tone="critical">
+          <div className="cc-quarterly-checklist">
+            {fiscalSummary.insufficientDataNotes.map((note, index) => (
+              <p key={`note-${index}`} className="cc-dashboard-panel__text">{note}</p>
+            ))}
           </div>
-
-          <div className="cc-quarterly-pack-grid">
-            <article className="cc-quarterly-persistence__card cc-bounded-list">
-              <span className="cc-dashboard-panel__label">Warnings principales</span>
-              {topWarnings.length > 0 ? (
-                <ActionChecklist
-                  compact
-                  items={topWarnings.map((warning) => ({
-                    id: warning.id,
-                    state: warning.severity === 'critical' ? 'critical' : warning.severity === 'warning' ? 'warning' : 'info',
-                    label: `${getWarningSeverityLabel(warning.severity)} · ${warning.title}`,
-                    description: `${warning.description} ${warning.recommendedAction}`,
-                    action: getWarningNavigationTarget(warning) ? {
-                      label: 'Abrir modulo',
-                      onClick: () => {
-                        const target = getWarningNavigationTarget(warning)
-                        if (!target) return
-                        onNavigateToIncidence(target.view, target.scope, selection)
-                      },
-                    } : undefined,
-                  }))}
-                />
-              ) : <p className="cc-dashboard-panel__text">Sin warnings estructurados en el periodo.</p>}
-            </article>
-            <article className="cc-quarterly-persistence__card cc-bounded-list">
-              <span className="cc-dashboard-panel__label">Datos faltantes y limites</span>
-              {fiscalSummary.missingDataFlags.length > 0 ? (
-                <div className="cc-quarterly-checklist">
-                  {fiscalSummary.missingDataFlags.map((flag) => (
-                    <div key={flag} className="cc-action-group" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="cc-dashboard-panel__text">{getMissingDataFlagLabel(flag)}</span>
-                      <SeverityBadge
-                        label={flag === 'no_hours_module' || flag === 'no_payroll_module' ? 'Limite real' : 'Afecta analisis'}
-                        tone={flag === 'missing_expense_support' || flag === 'insufficient_period_data' ? 'critical' : 'warning'}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : <p className="cc-dashboard-panel__text">Sin flags de datos faltantes.</p>}
-              {fiscalSummary.insufficientDataNotes.map((note, index) => (
-                <p key={`note-${index}`} className="cc-dashboard-panel__text">{note}</p>
-              ))}
-            </article>
-          </div>
-        </section>
+        </CollapsibleDetailSection>
       ) : null}
 
       {summary.snapshotMode ? (
@@ -602,55 +736,6 @@ export function FiscalClosingPage({
           formatDateTime={formatDateTime}
         />
       ) : null}
-
-      <section className="cc-dashboard-block">
-        <div className="cc-dashboard-block__header">
-          <div>
-            <h2>Acciones del periodo</h2>
-            <p>La lectura principal queda en revisar incidencias, resolver soporte y exportar sin repetir el mismo contexto arriba y abajo.</p>
-          </div>
-        </div>
-
-        <div className="cc-quarterly-pack-grid">
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Revisar incidencias</span>
-            <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
-            <p className="cc-dashboard-panel__text">Abre solo lo que hoy bloquea el cierre o la entrega.</p>
-            <div className="cc-action-group">
-              {topIncidences.map((incidence) => (
-                <button
-                  key={incidence.id}
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selection)}
-                >
-                  {incidence.label}
-                </button>
-              ))}
-            </div>
-          </article>
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Revision documental</span>
-            <strong className="cc-dashboard-panel__value">{documentReviewCount}</strong>
-            <p className="cc-dashboard-panel__text">{summary.missingSupportCount} sin soporte · {summary.pendingReviewCount + summary.riskCount} en revision o riesgo fiscal.</p>
-            <div className="cc-action-group">
-              <button type="button" className="secondary-button" onClick={() => setIsDocumentReviewOpen(true)}>
-                Abrir revision documental
-              </button>
-            </div>
-          </article>
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Exportar</span>
-            <strong className="cc-dashboard-panel__value">{summary.period.label}</strong>
-            <p className="cc-dashboard-panel__text">El paquete gestor se abre en una surface dedicada y sale del lienzo principal.</p>
-            <div className="cc-action-group">
-              <button type="button" className="primary-button" onClick={() => setIsExportOpen(true)}>
-                Abrir exportacion fiscal
-              </button>
-            </div>
-          </article>
-        </div>
-      </section>
 
       {summary.quarterBreakdown.length > 0 ? (
         <section className="cc-dashboard-block">

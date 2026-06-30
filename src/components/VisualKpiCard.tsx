@@ -22,6 +22,7 @@ interface VisualKpiCardProps {
   hint?: string
   tone?: SeverityTone
   priority?: 'primary' | 'secondary' | 'compact'
+  className?: string
   badgeLabel?: string
   progress?: VisualKpiCardProgress
   action?: VisualKpiCardAction
@@ -34,17 +35,19 @@ export function VisualKpiCard({
   hint,
   tone = 'neutral',
   priority = 'secondary',
+  className,
   badgeLabel,
   progress,
   action,
   children,
 }: VisualKpiCardProps) {
-  const className = [
+  const resolvedClassName = [
     'cc-kpi-card',
     'cc-visual-kpi-card',
     `cc-visual-kpi-card--${priority}`,
     `cc-visual-kpi-card--${tone}`,
     action ? 'cc-kpi-card--actionable' : '',
+    className,
   ].filter(Boolean).join(' ')
 
   const content = (
@@ -80,14 +83,14 @@ export function VisualKpiCard({
 
   if (action) {
     return (
-      <button type="button" className={className} onClick={action.onClick}>
+      <button type="button" className={resolvedClassName} onClick={action.onClick}>
         {content}
       </button>
     )
   }
 
   return (
-    <article className={className}>
+    <article className={resolvedClassName}>
       {content}
     </article>
   )

@@ -115,6 +115,11 @@ Fecha: 2026-06-30
 - Por esa limitacion, el sprint no podia completar clientes historicos sin inventar datos.
 - La corrida real se cerro en modo seguro: auditada, no destructiva y sin cambios sobre datos productivos.
 
+## Referencia posterior
+
+- Ver tambien `docs/CLIENT_FISCAL_MANUAL_BACKFILL_APPLIED_QA.md`.
+- Ese sprint posterior completo manualmente 8 clientes existentes usando una tabla fiscal aportada por el usuario, sin tocar nombres ni crear clientes nuevos.
+
 ## Validaciones ejecutadas
 
 - `npm run lint`

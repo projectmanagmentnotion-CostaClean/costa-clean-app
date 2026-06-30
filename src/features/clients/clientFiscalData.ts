@@ -1,5 +1,5 @@
-import type { InvoiceListItem } from '../invoices/types'
-import type { ClientListItem } from './types'
+import type { InvoiceListItem } from '../invoices/types.ts'
+import type { ClientListItem } from './types.ts'
 
 export type ClientFiscalMissingField = 'tax_id' | 'billing_address'
 
@@ -24,13 +24,14 @@ export interface InvoiceFiscalSnapshot extends NormalizedClientFiscalInput {
 
 function normalizeSingleLineText(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return null
-  const normalized = value.replace(/\s+/g, ' ').trim()
+  const normalized = value.replace(/[’`´]/g, "'").replace(/\s+/g, ' ').trim()
   return normalized ? normalized : null
 }
 
 function normalizeMultilineText(value: string | null | undefined): string | null {
   if (typeof value !== 'string') return null
   const normalized = value
+    .replace(/[’`´]/g, "'")
     .replace(/\r\n/g, '\n')
     .split('\n')
     .map((line) => line.replace(/[ \t]+/g, ' ').trim())

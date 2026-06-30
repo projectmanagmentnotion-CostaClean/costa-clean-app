@@ -1,6 +1,6 @@
-import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
-import { normalizeClientFiscalData } from './clientFiscalData'
-import type { ClientListItem } from './types'
+import { getSupabasePublicEnv } from '../../lib/supabaseEnv.ts'
+import { normalizeClientFiscalData } from './clientFiscalData.ts'
+import type { ClientListItem } from './types.ts'
 
 const clientSelectFields = 'id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id'
 
@@ -87,7 +87,8 @@ function logClientWriteDebug(payload: {
     error?: SupabaseRestError | null
   }
 }) {
-  if (!import.meta.env.DEV) return
+  const isDevRuntime = typeof import.meta !== 'undefined' && typeof import.meta.env === 'object' && Boolean(import.meta.env?.DEV)
+  if (!isDevRuntime) return
 
   const maskedPayload = {
     ...payload.payload,

@@ -48,11 +48,11 @@ describe('client fiscal data', () => {
   it('normalizes tax id and billing address consistently', () => {
     expect(normalizeClientFiscalData({
       tax_id: ' 45962701f ',
-      billing_address: '  Avinguda   de Lloret de Dalt, 10 \n  Barcelona  ',
+      billing_address: "  Avinguda   d’Acces Costa Brava, 10 \n  Barcelona  ",
       fiscal_name: '  Miguel   Angel Flores  ',
     })).toMatchObject({
       tax_id: '45962701F',
-      billing_address: 'Avinguda de Lloret de Dalt, 10\nBarcelona',
+      billing_address: "Avinguda d'Acces Costa Brava, 10\nBarcelona",
       fiscal_name: 'Miguel Angel Flores',
     })
   })

@@ -293,13 +293,13 @@
 }
 
 .cc-master-layout {
-  gap: 24px;
+  gap: 28px;
   align-items: start;
 }
 
 .cc-master-layout__list,
 .cc-master-layout__detail {
-  padding: 10px;
+  padding: 12px;
 }
 
 .cc-doc-preview-panel {
@@ -340,6 +340,12 @@
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
   color: var(--text);
+  min-height: 42px;
+  padding-inline: 14px;
+  border-radius: 15px;
+  font-size: 0.84rem;
+  font-weight: 650;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .primary-button:hover,
@@ -2033,7 +2039,7 @@
 
 .cc-dashboard-block__header,
 .section-header {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .cc-dashboard-block__header h2,
@@ -2054,7 +2060,7 @@
 .cc-dashboard-stat-strip,
 .cc-kpi-grid,
 .cc-dashboard-secondary-grid {
-  gap: 10px;
+  gap: 14px;
 }
 
 .cc-dashboard-alert__label,
@@ -3251,7 +3257,7 @@
 }
 
 .cc-dashboard-stack--decision {
-  gap: 0.82rem;
+  gap: 1rem;
 }
 
 .cc-dashboard-console-hero--decision,
@@ -3262,7 +3268,7 @@
 .cc-dashboard-console-quickactions,
 .cc-dashboard-console-actionlist {
   display: grid;
-  gap: 0.78rem;
+  gap: 1rem;
 }
 
 .cc-dashboard-console-hero__grid--decision {
@@ -3290,8 +3296,8 @@
 
 .cc-dashboard-console-kpi {
   display: grid;
-  gap: 0.3rem;
-  padding: 0.78rem;
+  gap: 0.4rem;
+  padding: 0.94rem;
 }
 
 .cc-dashboard-console-kpi span,

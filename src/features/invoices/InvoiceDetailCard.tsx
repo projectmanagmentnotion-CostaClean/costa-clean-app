@@ -553,6 +553,11 @@ export function InvoiceDetailCard({
       : (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009
         ? 'El siguiente paso natural es registrar o cerrar el cobro pendiente.'
         : 'La factura ya esta cubierta. Revisa cobros o documento solo si necesitas trazabilidad.'
+  const shouldShowPaymentPrimary = Boolean(
+    invoice
+    && invoice.status !== 'cancelled'
+    && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009,
+  )
   const headerActions: ActionGroupItem[] = []
 
   if (invoice) {
@@ -747,6 +752,18 @@ export function InvoiceDetailCard({
             <div className="cc-detail-panel__next-step">
               <span>Siguiente paso recomendado</span>
               <strong>{invoiceNextStep}</strong>
+              {shouldShowPaymentPrimary ? (
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="primary-button"
+                    onClick={() => setPaymentActionMode('manual')}
+                    disabled={isSaving}
+                  >
+                    Registrar cobro
+                  </button>
+                </div>
+              ) : null}
             </div>
           ) : null}
 

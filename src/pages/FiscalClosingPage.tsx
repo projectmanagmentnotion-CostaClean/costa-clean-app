@@ -7,7 +7,6 @@ import {
   buildClosingSummary,
   type ClosingIncidenceScope,
   type ClosingIncidenceView,
-  type ClosingReadinessLevel,
 } from '../features/closing/closingSummaryEngine'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
 import { LazyFiscalPeriodExportSection } from '../features/closingExports/lazyFiscalPeriodExportSection'
@@ -63,30 +62,6 @@ function getToneClass(tone: 'neutral' | 'warning' | 'danger'): string {
   if (tone === 'danger') return 'cc-quarterly-checklist__item--danger'
   if (tone === 'warning') return 'cc-quarterly-checklist__item--warning'
   return ''
-}
-
-function getReadinessCopy(level: ClosingReadinessLevel) {
-  if (level === 'ready') {
-    return {
-      label: 'Listo para exportar con confianza',
-      detail: 'La lectura fiscal operativa no detecta huecos documentales ni bloqueos prioritarios en este periodo.',
-      toneClass: 'cc-kpi-card--success',
-    }
-  }
-
-  if (level === 'blocked') {
-    return {
-      label: 'Cierre con bloqueos documentales',
-      detail: 'Hay huecos de soporte o de factura valida para IVA que conviene resolver antes de generar el pack gestor.',
-      toneClass: 'cc-kpi-card--warning',
-    }
-  }
-
-  return {
-    label: 'Cierre revisable antes de exportar',
-    detail: 'La base esta construida, pero todavia hay puntos de revision fiscal o saldos pendientes antes de entregar.',
-    toneClass: 'cc-kpi-card--warning',
-  }
 }
 
 export function FiscalClosingPage({
@@ -185,10 +160,6 @@ export function FiscalClosingPage({
     }
   }, [persistedClosing, summary.readiness, summary.snapshotMode])
 
-  const readinessCopy = useMemo(
-    () => getReadinessCopy(summary.readinessLevel),
-    [summary.readinessLevel],
-  )
   const documentReviewCount = summary.missingSupportExpenses.length + summary.pendingReviewExpenses.length + summary.riskExpenses.length
   const topIncidences = summary.incidences.slice(0, 4)
 
@@ -312,24 +283,6 @@ export function FiscalClosingPage({
         </div>
 
         <div className="cc-quarterly-pack-grid">
-          <article className={`cc-quarterly-persistence__card ${readinessCopy.toneClass}`}>
-            <span className="cc-dashboard-panel__label">Estado del cierre</span>
-            <strong className="cc-dashboard-panel__value">{readinessCopy.label}</strong>
-            <p className="cc-dashboard-panel__text">{readinessCopy.detail}</p>
-          </article>
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Cobertura documental</span>
-            <strong className="cc-dashboard-panel__value">{summary.closureDocumentCoverageRate}%</strong>
-            <p className="cc-dashboard-panel__text">{summary.supportedClosureExpenseCount} de {summary.closureExpenseCount} gasto(s) de cierre tienen soporte descargable.</p>
-          </article>
-          <article className="cc-quarterly-persistence__card">
-            <span className="cc-dashboard-panel__label">Bloqueos criticos</span>
-            <strong className="cc-dashboard-panel__value">{summary.criticalIncidenceCount}</strong>
-            <p className="cc-dashboard-panel__text">Huecos documentales o fiscales que conviene cerrar antes de exportar.</p>
-          </article>
-        </div>
-
-        <div className="cc-quarterly-pack-grid">
           <article className="cc-quarterly-persistence__card">
             <span className="cc-dashboard-panel__label">Revisar incidencias</span>
             <strong className="cc-dashboard-panel__value">{summary.unresolvedIncidenceCount}</strong>
@@ -441,37 +394,6 @@ export function FiscalClosingPage({
           </div>
         </article>
 
-        <article className="cc-dashboard-block">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Revision documental</h2>
-              <p>Los soportes y revisiones se resumen aqui, pero la lectura detallada se abre aparte.</p>
-            </div>
-          </div>
-
-          <div className="cc-quarterly-pack-grid">
-            <article className="cc-quarterly-persistence__card">
-              <span className="cc-dashboard-panel__label">Sin soporte</span>
-              <strong className="cc-dashboard-panel__value">{summary.missingSupportCount}</strong>
-              <p className="cc-dashboard-panel__text">Gastos de cierre con huecos documentales descargables.</p>
-            </article>
-            <article className="cc-quarterly-persistence__card">
-              <span className="cc-dashboard-panel__label">Revision o riesgo</span>
-              <strong className="cc-dashboard-panel__value">{summary.pendingReviewCount + summary.riskCount}</strong>
-              <p className="cc-dashboard-panel__text">Casos que conviene validar antes del pack gestor.</p>
-            </article>
-            <article className="cc-quarterly-persistence__card">
-              <span className="cc-dashboard-panel__label">Surface dedicada</span>
-              <strong className="cc-dashboard-panel__value">Lista corta</strong>
-              <p className="cc-dashboard-panel__text">Separa revision documental del resto del cierre y de la exportacion.</p>
-              <div className="cc-action-group">
-                <button type="button" className="secondary-button" onClick={() => setIsDocumentReviewOpen(true)}>
-                  Abrir surface documental
-                </button>
-              </div>
-            </article>
-          </div>
-        </article>
       </section>
 
       <ActionFlowOverlay

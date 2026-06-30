@@ -406,21 +406,40 @@ function QuoteDetailCardContent({
     : hydratedQuote.job_id
       ? 'El presupuesto ya genero servicio. Revisa la operativa asociada o abre el documento para compartirlo.'
       : 'El presupuesto ya esta aceptado. El siguiente paso natural es crear el servicio.'
+  const quoteNextStepActions: ActionGroupItem[] = []
   const headerActions: ActionGroupItem[] = []
 
   if (hydratedQuote.status === 'accepted' && !hydratedQuote.job_id) {
-    headerActions.push({
-      key: 'create-job-primary',
+    quoteNextStepActions.push({
+      key: 'next-step-create-job',
       label: 'Crear servicio',
       tone: 'primary',
       onClick: handleCreateJobFromQuote,
     })
-  } else if (hydratedQuote.status !== 'accepted') {
     headerActions.push({
-      key: 'accept-quote-primary',
+      key: 'open-document-primary',
+      label: 'Abrir documento',
+      tone: 'primary',
+      onClick: onOpenDocument,
+    })
+  } else if (hydratedQuote.status !== 'accepted') {
+    quoteNextStepActions.push({
+      key: 'next-step-accept',
       label: 'Aceptar presupuesto',
       tone: 'primary',
       onClick: () => setPendingAcceptanceAction('accept'),
+    })
+    quoteNextStepActions.push({
+      key: 'next-step-invoice',
+      label: 'Aceptar y facturar',
+      onClick: () => setPendingAcceptanceAction('invoice'),
+      disabled: isSaving || isLoadingLines || Boolean(linesError),
+    })
+    headerActions.push({
+      key: 'open-document-primary',
+      label: 'Abrir documento',
+      tone: 'primary',
+      onClick: onOpenDocument,
     })
   } else {
     headerActions.push({
@@ -456,22 +475,6 @@ function QuoteDetailCardContent({
     })
   }
 
-  if (!hydratedQuote.job_id && hydratedQuote.status === 'accepted') {
-    headerActions.push({
-      key: 'create-job',
-      label: 'Crear servicio',
-      onClick: handleCreateJobFromQuote,
-    })
-  }
-
-  if (hydratedQuote.status !== 'accepted') {
-    headerActions.push({
-      key: 'accept-and-invoice',
-      label: 'Aceptar y facturar',
-      onClick: () => setPendingAcceptanceAction('invoice'),
-      disabled: isSaving || isLoadingLines || Boolean(linesError),
-    })
-  }
   const dedupedHeaderActions = headerActions.filter(
     (action, index, actions) => actions.findIndex((candidate) => candidate.label === action.label) === index,
   )
@@ -538,6 +541,11 @@ function QuoteDetailCardContent({
           <div className="cc-detail-panel__next-step">
             <span>Siguiente paso recomendado</span>
             <strong>{quoteNextStep}</strong>
+            {quoteNextStepActions.length > 0 ? (
+              <div className="form-actions">
+                <ActionGroup actions={quoteNextStepActions} moreLabel="Mas acciones" />
+              </div>
+            ) : null}
           </div>
         ) : null}
 

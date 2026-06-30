@@ -1,4 +1,8 @@
 import type { AppView } from '../app/navigation'
+import { ExecutiveHeader } from '../components/ExecutiveHeader'
+import { InsightPanel } from '../components/InsightPanel'
+import type { SeverityTone } from '../components/SeverityBadge'
+import { VisualKpiCard } from '../components/VisualKpiCard'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
@@ -164,7 +168,7 @@ export function HomePage({
       value: formatCurrency(metrics.outstandingReceivablesTotal),
       detail: `${metrics.pendingInvoicesCount} factura(s) siguen abiertas.`,
       badge: urgentCollectionsCount > 0 ? 'Seguimiento' : 'Controlado',
-      tone: 'warning',
+      tone: 'warning' as SeverityTone,
       onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
@@ -172,7 +176,7 @@ export function HomePage({
       value: String(metrics.completedJobsWithoutInvoiceCount),
       detail: 'Servicios ya ejecutados que aun no pasan a factura.',
       badge: metrics.completedJobsWithoutInvoiceOlderThan2DaysCount > 0 ? 'Fuera de plazo' : 'Pendiente',
-      tone: 'warning',
+      tone: 'warning' as SeverityTone,
       onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
     },
     {
@@ -180,7 +184,7 @@ export function HomePage({
       value: String(metrics.jobsScheduledTodayCount),
       detail: metrics.jobsScheduledTodayCount > 0 ? 'Agenda inmediata para ejecutar.' : 'Sin carga operativa para hoy.',
       badge: metrics.jobsScheduledTomorrowCount > 0 ? `Manana ${metrics.jobsScheduledTomorrowCount}` : 'Hoy',
-      tone: 'info',
+      tone: 'info' as SeverityTone,
       onRun: () => onRunKpiAction('jobs_today'),
     },
     {
@@ -188,7 +192,7 @@ export function HomePage({
       value: String(fiscalRiskCount),
       detail: 'Gastos sin soporte, pendientes de revision o con riesgo fiscal.',
       badge: metrics.expensesMissingValidVatInvoiceCount > 0 ? 'Documental' : 'Revision',
-      tone: 'warning',
+      tone: 'warning' as SeverityTone,
       onRun: () => onOpenView('fiscal_closing'),
     },
   ]
@@ -292,30 +296,32 @@ export function HomePage({
 
   return (
     <section className="cc-dashboard-page">
-      <header className="cc-dashboard-header cc-dashboard-header--decision">
-        <div className="cc-dashboard-header__copy">
-          <span className="cc-page-topline__eyebrow">Centro operativo</span>
-          <h1 className="cc-page-topline__title">Que hago ahora</h1>
-          <p className="cc-page-topline__text">
-            Dinero pendiente, trabajo bloqueado, agenda inmediata y revision fiscal/documental en una sola lectura corta.
-          </p>
-        </div>
-
-        <div className="cc-dashboard-header__meta cc-dashboard-header__meta--decision" aria-label="Resumen rapido">
-          <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Hoy</span>
-            <strong className="cc-dashboard-header__meta-value">{metrics.jobsScheduledTodayCount} servicio(s)</strong>
-          </div>
-          <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Revision fiscal</span>
-            <strong className="cc-dashboard-header__meta-value">{fiscalRiskCount}</strong>
-          </div>
-          <div className="cc-dashboard-header__meta-card">
-            <span className="cc-dashboard-header__meta-label">Alertas criticas</span>
-            <strong className="cc-dashboard-header__meta-value">{criticalAlertsCount}</strong>
-          </div>
-        </div>
-      </header>
+      <ExecutiveHeader
+        eyebrow="Centro operativo"
+        title="Que hago ahora"
+        summary="Dinero pendiente, trabajo bloqueado, agenda inmediata y revision fiscal/documental en una sola lectura corta."
+        statusLabel={criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Operativa estable'}
+        statusTone={criticalAlertsCount > 0 ? 'critical' : 'success'}
+        primaryAction={{
+          label: homePrimaryAction.label,
+          onClick: homePrimaryAction.onRun,
+        }}
+        secondaryAction={{
+          label: homePrimaryAction.secondaryLabel,
+          onClick: homePrimaryAction.onSecondaryRun,
+        }}
+        metricLabel="Hoy"
+        metricValue={`${metrics.jobsScheduledTodayCount} servicio(s)`}
+        metricHint={fiscalRiskCount > 0 ? `${fiscalRiskCount} punto(s) de revision fiscal o documental.` : 'Sin ruido fiscal dominante en primer nivel.'}
+      >
+        <InsightPanel
+          title="Prioridad principal"
+          tone={criticalAlertsCount > 0 ? 'critical' : urgentCollectionsCount > 0 ? 'warning' : 'info'}
+          insight={homePrimaryAction.summary}
+          implication={homePrimaryAction.detail}
+          action={homePrimaryAction.label}
+        />
+      </ExecutiveHeader>
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
         <section className="cc-dashboard-block cc-dashboard-console-hero cc-dashboard-console-hero--decision">
@@ -363,17 +369,16 @@ export function HomePage({
 
           <div className="cc-dashboard-console-kpis">
             {decisionKpis.map((kpi) => (
-              <button
+              <VisualKpiCard
                 key={kpi.label}
-                type="button"
-                className={`cc-dashboard-console-kpi cc-dashboard-console-kpi--${kpi.tone}`}
-                onClick={kpi.onRun}
-              >
-                <span>{kpi.label}</span>
-                <em className="cc-dashboard-console-kpi__badge">{kpi.badge}</em>
-                <strong>{kpi.value}</strong>
-                <p>{kpi.detail}</p>
-              </button>
+                label={kpi.label}
+                value={kpi.value}
+                hint={kpi.detail}
+                badgeLabel={kpi.badge}
+                tone={kpi.tone}
+                priority="compact"
+                action={{ label: 'Abrir', onClick: kpi.onRun }}
+              />
             ))}
           </div>
         </section>

@@ -731,14 +731,9 @@ export function InvoiceDetailCard({
                 </small>
               </div>
               <div className="cc-detail-panel__summary-card">
-                <span>Emision</span>
-                <strong>{formatDateEs(invoice.issue_date)}</strong>
-                <small>{displayLines.length} linea(s)</small>
-              </div>
-              <div className="cc-detail-panel__summary-card">
                 <span>Total</span>
                 <strong>{formatCurrency(invoice.total)}</strong>
-                <small>{formatCurrency(invoice.tax_amount)} IVA</small>
+                <small>{formatDateEs(invoice.issue_date)} · {displayLines.length} linea(s)</small>
               </div>
               <div className="cc-detail-panel__summary-card">
                 <span>Estado financiero</span>
@@ -1066,16 +1061,8 @@ export function InvoiceDetailCard({
                   <strong>{getInvoiceServiceReference(invoice)}</strong>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Cliente</span>
-                  <strong>{formatClientLabel({ client_id: invoice.client_id, client_display_code: invoice.client_display_code, client_name: invoice.client_name })}</strong>
-                </div>
-                <div className="detail-row">
                   <span className="detail-label">Fecha de emision</span>
                   <strong>{formatDateEs(invoice.issue_date)}</strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Cobro</span>
-                  <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Lineas</span>
@@ -1083,10 +1070,6 @@ export function InvoiceDetailCard({
                     {displayLines.slice(0, 2).map((line) => `${line.concept} · ${formatLineSubtotalDisplay(line)}`).join(' | ')}
                     {displayLines.length > 2 ? ` | +${displayLines.length - 2} linea(s)` : ''}
                   </strong>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Total</span>
-                  <strong>{formatCurrency(invoice.total)}</strong>
                 </div>
                 <div className="detail-row">
                   <span className="detail-label">Notas</span>

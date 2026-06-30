@@ -47,17 +47,6 @@ interface FiscalClosingPageProps {
   onSaveAnnualClosing: (input: { fiscalYear: number; notes: string | null }) => Promise<void>
 }
 
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return 'Sin guardar'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Sin guardar'
-
-  return new Intl.DateTimeFormat('es-ES', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date)
-}
-
 function getToneClass(tone: 'neutral' | 'warning' | 'danger'): string {
   if (tone === 'danger') return 'cc-quarterly-checklist__item--danger'
   if (tone === 'warning') return 'cc-quarterly-checklist__item--warning'
@@ -228,24 +217,22 @@ export function FiscalClosingPage({
 
       <section className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Estado del cierre</span>
+          <span className="cc-dashboard-panel__label">Estado del periodo</span>
           <strong className="cc-kpi-value">{statusCard.label}</strong>
           <p className="cc-dashboard-panel__text">{statusCard.detail}</p>
           <p className="cc-dashboard-panel__text">
-            Ultimo guardado: {formatDateTime(persistedClosing?.closed_at ?? persistedClosing?.updated_at ?? null)}
+            IVA neto estimado {formatCurrency(summary.estimatedNetVatPayable)} · {summary.unresolvedIncidenceCount} incidencia(s) abierta(s)
           </p>
         </article>
 
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Lectura fiscal rapida</span>
-          <strong className="cc-kpi-value">{formatCurrency(summary.estimatedNetVatPayable)}</strong>
+          <span className="cc-dashboard-panel__label">Estado documental</span>
+          <strong className="cc-kpi-value">{documentReviewCount}</strong>
           <p className="cc-dashboard-panel__text">
-            IVA repercutido {formatCurrency(summary.outputVatTotal)} · IVA deducible estimado {formatCurrency(summary.estimatedDeductibleVat)}
+            {summary.missingSupportCount} sin soporte · {summary.pendingReviewCount + summary.riskCount} en revision o riesgo fiscal.
           </p>
           <p className="cc-dashboard-panel__text">
-            {summary.readiness === 'issues'
-              ? `${summary.unresolvedIncidenceCount} incidencia(s) abierta(s) antes de exportar.`
-              : 'Sin incidencias prioritarias detectadas para este periodo.'}
+            Abrir esta revision sigue siendo opcional desde el bloque de acciones.
           </p>
         </article>
 
@@ -363,38 +350,31 @@ export function FiscalClosingPage({
         </section>
       ) : null}
 
-      <section className="cc-quarterly-summary-grid">
-        <article className="cc-dashboard-block">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Incidencias del cierre</h2>
-              <p>Lo que falta revisar antes de exportar o guardar el preset.</p>
-            </div>
-          </div>
-
-          <div className="cc-quarterly-checklist">
-            {summary.incidences.map((incidence) => (
-              <article key={incidence.id} className={`cc-quarterly-checklist__item ${getToneClass(incidence.tone)}`}>
-                <div>
-                  <strong>{incidence.label}</strong>
-                  <p>{incidence.detail}</p>
-                </div>
-                <div className="cc-action-group">
-                  <span className="lead-badge">{incidence.count}</span>
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selection)}
-                  >
-                    Abrir modulo
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </article>
-
-      </section>
+      <details className="cc-quarterly-persistence__card">
+        <summary className="cc-dashboard-panel__text" style={{ cursor: 'pointer' }}>
+          Ver incidencias completas del cierre
+        </summary>
+        <div className="cc-quarterly-checklist" style={{ marginTop: '0.75rem' }}>
+          {summary.incidences.map((incidence) => (
+            <article key={incidence.id} className={`cc-quarterly-checklist__item ${getToneClass(incidence.tone)}`}>
+              <div>
+                <strong>{incidence.label}</strong>
+                <p>{incidence.detail}</p>
+              </div>
+              <div className="cc-action-group">
+                <span className="lead-badge">{incidence.count}</span>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => onNavigateToIncidence(incidence.view, incidence.scope, selection)}
+                >
+                  Abrir modulo
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+      </details>
 
       <ActionFlowOverlay
         isOpen={isDocumentReviewOpen}

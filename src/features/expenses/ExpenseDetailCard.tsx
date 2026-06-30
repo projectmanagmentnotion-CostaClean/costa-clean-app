@@ -83,6 +83,27 @@ function resolvePrimaryAction(expense: ExpenseListItem) {
   } as const
 }
 
+function openPrimaryActionSurface(
+  primaryAction: ReturnType<typeof resolvePrimaryAction>,
+  handlers: {
+    openSupport: () => void
+    openFiscal: () => void
+    openEdit: () => void
+  },
+) {
+  if (primaryAction.action === 'support') {
+    handlers.openSupport()
+    return
+  }
+
+  if (primaryAction.action === 'fiscal') {
+    handlers.openFiscal()
+    return
+  }
+
+  handlers.openEdit()
+}
+
 export function ExpenseDetailCard({
   expense,
   expenses,
@@ -108,24 +129,6 @@ export function ExpenseDetailCard({
   )
 
   const headerActions: ActionGroupItem[] = expense && primaryAction ? [
-    {
-      key: `primary-${primaryAction.action}`,
-      label: primaryAction.label,
-      tone: 'primary',
-      onClick: () => {
-        if (primaryAction.action === 'support') {
-          setShowSupportSurface(true)
-          return
-        }
-
-        if (primaryAction.action === 'fiscal') {
-          setShowFiscalSurface(true)
-          return
-        }
-
-        setShowEditFlow(true)
-      },
-    },
     {
       key: 'edit-expense',
       label: 'Editar gasto',
@@ -199,12 +202,25 @@ export function ExpenseDetailCard({
               <span>Siguiente paso recomendado</span>
               <strong>{primaryAction.label}</strong>
               <p>{primaryAction.detail}</p>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => openPrimaryActionSurface(primaryAction, {
+                    openSupport: () => setShowSupportSurface(true),
+                    openFiscal: () => setShowFiscalSurface(true),
+                    openEdit: () => setShowEditFlow(true),
+                  })}
+                >
+                  {primaryAction.label}
+                </button>
+              </div>
             </div>
           ) : null}
 
           <section className="cc-expense-detail__section">
             <div className="cc-expense-detail__section-head">
-              <h3>Resumen financiero</h3>
+              <h3>Lectura base</h3>
               <p>La ficha base queda para revisar rapido, no para editarlo todo.</p>
             </div>
 
@@ -216,65 +232,60 @@ export function ExpenseDetailCard({
                 </strong>
               </article>
               <article className="cc-expense-metric">
-                <span className="cc-expense-metric__label">IVA</span>
+                <span className="cc-expense-metric__label">Soporte</span>
                 <strong className="cc-expense-metric__value">
-                  {formatCurrency(expense.tax_amount)}
+                  {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
                 </strong>
               </article>
               <article className="cc-expense-metric">
-                <span className="cc-expense-metric__label">IVA %</span>
+                <span className="cc-expense-metric__label">Revision</span>
                 <strong className="cc-expense-metric__value">
-                  {formatMoneyInput(expense.tax_rate)}%
+                  {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
                 </strong>
               </article>
               <article className="cc-expense-metric">
-                <span className="cc-expense-metric__label">Tipo documento</span>
+                <span className="cc-expense-metric__label">Deducible</span>
                 <strong className="cc-expense-metric__value">
-                  {getExpenseDocumentTypeLabel(expense.document_type)}
+                  {expense.is_deductible ? 'Si' : 'No'}
                 </strong>
               </article>
             </div>
           </section>
 
-          <section className="cc-expense-detail__section">
-            <div className="cc-expense-detail__section-head">
-              <h3>Soporte documental</h3>
-              <p>Vista breve del documento, con gestion dedicada fuera del card.</p>
-            </div>
+          <details className="cc-expense-detail__context-toggle">
+            <summary className="cc-expense-detail__context-toggle-summary">
+              Ver contexto documental y fiscal completo
+            </summary>
 
-            <div className="cc-expense-detail__doc-grid">
+            <div className="cc-expense-detail__context-grid">
               <div className="cc-expense-detail__info-card">
-                <span className="cc-expense-detail__info-label">Estado</span>
+                <span className="cc-expense-detail__info-label">IVA</span>
                 <strong className="cc-expense-detail__info-value">
-                  {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
+                  {formatCurrency(expense.tax_amount)}
                 </strong>
               </div>
               <div className="cc-expense-detail__info-card">
-                <span className="cc-expense-detail__info-label">Soporte</span>
+                <span className="cc-expense-detail__info-label">IVA %</span>
                 <strong className="cc-expense-detail__info-value">
-                  {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                  {formatMoneyInput(expense.tax_rate)}%
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Tipo documento</span>
+                <strong className="cc-expense-detail__info-value">
+                  {getExpenseDocumentTypeLabel(expense.document_type)}
+                </strong>
+              </div>
+              <div className="cc-expense-detail__info-card">
+                <span className="cc-expense-detail__info-label">Estado documento</span>
+                <strong className="cc-expense-detail__info-value">
+                  {expense.receipt_file_path ? 'Documento cargado' : 'Sin documento'}
                 </strong>
               </div>
               <div className="cc-expense-detail__info-card">
                 <span className="cc-expense-detail__info-label">Adjuntos</span>
                 <strong className="cc-expense-detail__info-value">
                   {expense.attachment_count ?? 0}
-                </strong>
-              </div>
-            </div>
-          </section>
-
-          <section className="cc-expense-detail__section">
-            <div className="cc-expense-detail__section-head">
-              <h3>Revision fiscal</h3>
-              <p>Jerarquia clara entre estado manual y lectura asistida.</p>
-            </div>
-
-            <div className="cc-expense-detail__info-grid">
-              <div className="cc-expense-detail__info-card">
-                <span className="cc-expense-detail__info-label">Revision</span>
-                <strong className="cc-expense-detail__info-value">
-                  {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)}
                 </strong>
               </div>
               <div className="cc-expense-detail__info-card">
@@ -291,34 +302,20 @@ export function ExpenseDetailCard({
                     : 'Sin estimacion'}
                 </strong>
               </div>
-              <div className="cc-expense-detail__info-card">
-                <span className="cc-expense-detail__info-label">Deducible</span>
-                <strong className="cc-expense-detail__info-value">
-                  {expense.is_deductible ? 'Si' : 'No'}
-                </strong>
-              </div>
-            </div>
-          </section>
-
-          {(expense.manager_note || expense.notes) ? (
-            <section className="cc-expense-detail__section">
-              <div className="cc-expense-detail__section-head">
-                <h3>Notas</h3>
-                <p>Observaciones visibles sin obligar a entrar en la edicion.</p>
-              </div>
-
-              <div className="cc-expense-detail__notes">
+              {expense.manager_note ? (
                 <article className="cc-expense-detail__note-card">
                   <span className="cc-expense-detail__info-label">Nota gestoria</span>
-                  <p>{expense.manager_note ?? 'Sin nota'}</p>
+                  <p>{expense.manager_note}</p>
                 </article>
+              ) : null}
+              {expense.notes ? (
                 <article className="cc-expense-detail__note-card">
                   <span className="cc-expense-detail__info-label">Notas internas</span>
-                  <p>{expense.notes ?? 'Sin notas'}</p>
+                  <p>{expense.notes}</p>
                 </article>
-              </div>
-            </section>
-          ) : null}
+              ) : null}
+            </div>
+          </details>
         </div>
       ) : (
         <div className="empty-state">

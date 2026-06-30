@@ -527,12 +527,12 @@ function QuoteDetailCardContent({
             <div className="cc-detail-panel__summary-card">
               <span>Propiedad</span>
               <strong>{propertyLabel}</strong>
-              <small>{hydratedQuote.job_id ? 'Servicio ya generado' : 'Todavia sin servicio asociado'}</small>
+              <small>{displayLines.length} linea(s)</small>
             </div>
             <div className="cc-detail-panel__summary-card">
               <span>Total</span>
               <strong>{formatCurrency(hydratedQuote.total)}</strong>
-              <small>{displayLines.length} linea(s)</small>
+              <small>{hydratedQuote.job_id ? 'Servicio ya generado' : 'Todavia sin servicio asociado'}</small>
             </div>
           </div>
         ) : null}
@@ -758,23 +758,8 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Cliente</span>
-              <strong>{clientLabel}</strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Estado</span>
-              <strong>{getStatusLabel(hydratedQuote.status)}</strong>
-            </div>
-
-            <div className="detail-row">
               <span className="detail-label">Lead origen</span>
               <strong>{hydratedQuote.lead_display_code ?? hydratedQuote.lead_id ?? 'Sin lead vinculado'}</strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Propiedad</span>
-              <strong>{propertyLabel}</strong>
             </div>
 
             <div className="detail-row">
@@ -788,16 +773,6 @@ function QuoteDetailCardContent({
                 {displayLines.slice(0, 2).map((line) => `${line.concept} · ${formatQuoteLineSubtotalDisplay(line)}`).join(' | ')}
                 {displayLines.length > 2 ? ` | +${displayLines.length - 2} linea(s)` : ''}
               </strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Subtotal</span>
-              <strong>{formatCurrency(hydratedQuote.subtotal)}</strong>
-            </div>
-
-            <div className="detail-row">
-              <span className="detail-label">Total</span>
-              <strong>{formatCurrency(hydratedQuote.total)}</strong>
             </div>
 
             <div className="detail-row">

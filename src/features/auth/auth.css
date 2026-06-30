@@ -265,6 +265,46 @@
   }
 }
 
+@media (min-width: 901px) and (max-height: 820px) {
+  .auth-page {
+    padding:
+      max(14px, env(safe-area-inset-top))
+      18px
+      max(14px, env(safe-area-inset-bottom));
+  }
+
+  .auth-card {
+    gap: 18px;
+    padding: 22px 24px;
+    border-radius: 28px;
+  }
+
+  .auth-brand__logo {
+    width: min(100%, 200px);
+  }
+
+  .auth-header {
+    gap: 8px;
+  }
+
+  .auth-header h1 {
+    font-size: clamp(1.9rem, 3.2vw, 2.4rem);
+  }
+
+  .auth-header p {
+    line-height: 1.5;
+  }
+
+  .auth-form {
+    gap: 12px;
+  }
+
+  .auth-field input,
+  .auth-submit {
+    min-height: 52px;
+  }
+}
+
 @media (max-width: 900px) {
   .auth-card {
     width: 100%;

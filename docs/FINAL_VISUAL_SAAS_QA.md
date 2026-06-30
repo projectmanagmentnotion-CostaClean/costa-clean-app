@@ -34,8 +34,9 @@ Fecha: 2026-06-30
 
 ## QA navegador
 
-- No ejecutado en esta fase.
-- Esta nota cubre auditoria de codigo, jerarquia de layout y validacion por `lint`, `build` y `test`.
+- QA responsive ejecutado despues en navegador local.
+- Ver [RELEASE_CANDIDATE_VISUAL_QA.md](/C:/Users/USUARIO/costa-clean-app/docs/RELEASE_CANDIDATE_VISUAL_QA.md) para el cierre final y sus limitaciones reales.
+- La pasada final detecto y corrigio un scroll vertical residual en login desktop bajo.
 
 ## Recomendaciones futuras
 

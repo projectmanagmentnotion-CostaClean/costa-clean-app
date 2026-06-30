@@ -23,6 +23,12 @@ function renderSummaryList(items: string[], emptyLabel: string, keyPrefix: strin
   ))
 }
 
+function getConfidenceLabel(value: 'high' | 'medium' | 'low') {
+  if (value === 'high') return 'Alta'
+  if (value === 'medium') return 'Media'
+  return 'Baja'
+}
+
 export function ClosingAiSummarySection({
   title,
   description,
@@ -48,8 +54,8 @@ export function ClosingAiSummarySection({
       </div>
 
       <div className="cc-alert cc-alert--warning">
-        <strong>Texto asistivo generado por IA</strong>
-        <p>No modifica calculos ni sustituye la revision fiscal o contable. Solo interpreta los datos ya validados por la app.</p>
+        <strong>Interpretacion asistiva</strong>
+        <p>La IA solo redacta y prioriza. No recalcula IVA, importes ni conclusiones fiscales definitivas.</p>
       </div>
 
       {error ? (
@@ -61,7 +67,7 @@ export function ClosingAiSummarySection({
 
       {result ? (
         <>
-          <div className="cc-quarterly-pack-header">
+          <div className="cc-quarterly-pack-grid">
             <article className="cc-quarterly-persistence__card">
               <span className="cc-dashboard-panel__label">Generado</span>
               <strong className="cc-dashboard-panel__value">{formatDateTime(result.generated_at)}</strong>
@@ -72,6 +78,11 @@ export function ClosingAiSummarySection({
               <strong className="cc-dashboard-panel__value">{periodValueLabel}</strong>
               <p className="cc-dashboard-panel__text">Estado del cierre: {closingStatusLabel}</p>
             </article>
+            <article className="cc-quarterly-persistence__card">
+              <span className="cc-dashboard-panel__label">Confianza declarada</span>
+              <strong className="cc-dashboard-panel__value">{getConfidenceLabel(result.summary.confidenceLevel)}</strong>
+              <p className="cc-dashboard-panel__text">La IA debe respetar el nivel de confianza del resumen determinista.</p>
+            </article>
           </div>
 
           <section className="cc-dashboard-block">
@@ -81,34 +92,35 @@ export function ClosingAiSummarySection({
               </div>
             </div>
             <article className="cc-quarterly-persistence__card">
-              <p className="cc-dashboard-panel__text">{result.summary.executive_summary}</p>
+              <p className="cc-dashboard-panel__text">{result.summary.executiveSummary}</p>
+              {renderSummaryList(result.summary.confidenceNotes, 'Sin notas adicionales de confianza.', 'confidence')}
             </article>
           </section>
 
           <section className="cc-quarterly-pack-grid">
             <article className="cc-quarterly-persistence__card cc-bounded-list">
-              <span className="cc-dashboard-panel__label">Riesgos e incidencias clave</span>
-              {renderSummaryList(result.summary.key_risks, 'Sin riesgos destacados por la IA.', 'risk')}
+              <span className="cc-dashboard-panel__label">Riesgos clave</span>
+              {renderSummaryList(result.summary.keyRisks, 'Sin riesgos destacados por la IA.', 'risk')}
             </article>
             <article className="cc-quarterly-persistence__card cc-bounded-list">
-              <span className="cc-dashboard-panel__label">Alertas documentales</span>
-              {renderSummaryList(result.summary.documentation_warnings, 'Sin alertas documentales adicionales.', 'doc')}
+              <span className="cc-dashboard-panel__label">Datos faltantes</span>
+              {renderSummaryList(result.summary.missingDataNotes, 'Sin datos faltantes adicionales destacados.', 'missing')}
             </article>
             <article className="cc-quarterly-persistence__card cc-bounded-list">
-              <span className="cc-dashboard-panel__label">Notas sugeridas para gestoria</span>
-              {renderSummaryList(result.summary.suggested_manager_notes, 'Sin notas sugeridas adicionales.', 'note')}
+              <span className="cc-dashboard-panel__label">Notas para gestoria</span>
+              {renderSummaryList(result.summary.accountantNotes, 'Sin notas sugeridas adicionales.', 'accounting')}
             </article>
           </section>
 
-          <section className="cc-dashboard-block">
-            <div className="cc-dashboard-block__header">
-              <div>
-                <h2>Siguientes acciones sugeridas</h2>
-              </div>
-            </div>
+          <section className="cc-quarterly-pack-grid">
             <article className="cc-quarterly-persistence__card cc-bounded-list">
-              {renderSummaryList(result.summary.suggested_next_actions, 'Sin acciones sugeridas adicionales.', 'action')}
-              <p className="cc-dashboard-panel__text">{result.summary.assistive_notice}</p>
+              <span className="cc-dashboard-panel__label">Recomendaciones</span>
+              {renderSummaryList(result.summary.recommendedActions, 'Sin recomendaciones adicionales.', 'recommendation')}
+            </article>
+            <article className="cc-quarterly-persistence__card cc-bounded-list">
+              <span className="cc-dashboard-panel__label">Siguientes pasos</span>
+              {renderSummaryList(result.summary.nextSteps, 'Sin siguientes pasos adicionales.', 'next')}
+              <p className="cc-dashboard-panel__text">{result.summary.assistantNotice}</p>
             </article>
           </section>
         </>

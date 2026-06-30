@@ -1,10 +1,13 @@
 export interface ClosingIntelligenceSummary {
-  executive_summary: string
-  key_risks: string[]
-  documentation_warnings: string[]
-  suggested_manager_notes: string[]
-  suggested_next_actions: string[]
-  assistive_notice: string
+  executiveSummary: string
+  keyRisks: string[]
+  recommendedActions: string[]
+  missingDataNotes: string[]
+  confidenceLevel: 'high' | 'medium' | 'low'
+  confidenceNotes: string[]
+  assistantNotice: string
+  accountantNotes: string[]
+  nextSteps: string[]
 }
 
 export interface ClosingIntelligenceResponse {
@@ -12,4 +15,3 @@ export interface ClosingIntelligenceResponse {
   generated_at: string
   model: string
 }
-

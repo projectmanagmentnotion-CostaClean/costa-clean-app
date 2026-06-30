@@ -3281,7 +3281,7 @@
 }
 
 .cc-dashboard-console-kpis {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .cc-dashboard-console-kpi,
@@ -3316,6 +3316,14 @@
   line-height: 1.1;
 }
 
+.cc-dashboard-console-kpi__badge {
+  margin: 0;
+  color: rgba(191, 219, 254, 0.82);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .cc-dashboard-console-kpi p,
 .cc-dashboard-console-action p,
 .cc-dashboard-console-quickaction span,
@@ -3336,7 +3344,7 @@
 
 .cc-dashboard-console-operating-grid,
 .cc-dashboard-console-support-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .cc-dashboard-console-actionlist {

@@ -2,12 +2,15 @@ import { Suspense, useEffect, useMemo, useState } from 'react'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs } from '../app/displayFormat'
+import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
 import { FiscalPeriodSelector } from '../features/closing/FiscalPeriodSelector'
 import {
   buildClosingSummary,
   type ClosingIncidenceScope,
   type ClosingIncidenceView,
 } from '../features/closing/closingSummaryEngine'
+import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
+import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
 import { LazyFiscalPeriodExportSection } from '../features/closingExports/lazyFiscalPeriodExportSection'
 import type { AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
@@ -18,6 +21,7 @@ import {
   type ExpenseListItem,
 } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
@@ -35,6 +39,7 @@ interface FiscalClosingPageProps {
   payments: PaymentListItem[]
   expenses: ExpenseListItem[]
   quotes: QuoteListItem[]
+  jobs: JobListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   error: string | null
@@ -64,6 +69,7 @@ export function FiscalClosingPage({
   payments,
   expenses,
   quotes,
+  jobs,
   clients,
   properties,
   error,
@@ -78,6 +84,9 @@ export function FiscalClosingPage({
   const [saveError, setSaveError] = useState<string | null>(null)
   const [isDocumentReviewOpen, setIsDocumentReviewOpen] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
+  const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false)
+  const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
+  const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
   useEffect(() => {
     setSelection(initialSelection)
@@ -89,9 +98,10 @@ export function FiscalClosingPage({
     payments,
     expenses,
     quotes,
+    jobs,
     quarterlySummaryByPeriod,
     annualSummaryByYear,
-  }), [annualSummaryByYear, expenses, invoices, payments, quarterlySummaryByPeriod, quotes, selection])
+  }), [annualSummaryByYear, expenses, invoices, jobs, payments, quarterlySummaryByPeriod, quotes, selection])
 
   const quarterlyClosing = useMemo(
     () => (
@@ -115,6 +125,8 @@ export function FiscalClosingPage({
     setNotes(persistedClosing?.notes ?? '')
     setSaveMessage(null)
     setSaveError(null)
+    setAiSummaryResult(null)
+    setAiSummaryError(null)
   }, [persistedClosing, selection])
 
   const statusCard = useMemo(() => {
@@ -151,6 +163,24 @@ export function FiscalClosingPage({
 
   const documentReviewCount = summary.missingSupportExpenses.length + summary.pendingReviewExpenses.length + summary.riskExpenses.length
   const topIncidences = summary.incidences.slice(0, 4)
+  const fiscalSummary = summary.deterministicSummary
+  const topWarnings = fiscalSummary.warnings.slice(0, 4)
+
+  function formatDateTime(value: string | null | undefined): string {
+    if (!value) return 'Sin guardar'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return 'Sin guardar'
+    return new Intl.DateTimeFormat('es-ES', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(date)
+  }
+
+  function getConfidenceLabel(value: 'high' | 'medium' | 'low'): string {
+    if (value === 'high') return 'Alta'
+    if (value === 'medium') return 'Media'
+    return 'Baja'
+  }
 
   async function handleSaveSnapshot() {
     if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {
@@ -192,6 +222,48 @@ export function FiscalClosingPage({
     }
   }
 
+  async function handleGenerateAiSummary() {
+    if (!summary.snapshotMode) return
+
+    setIsGeneratingAiSummary(true)
+    setAiSummaryResult(null)
+    setAiSummaryError(null)
+
+    try {
+      const result = await generateClosingIntelligenceSummary({
+        scope: summary.snapshotMode === 'annual' ? 'annual' : 'quarterly',
+        payload: {
+          period: fiscalSummary.period,
+          deterministicSummary: fiscalSummary,
+          warnings: fiscalSummary.warnings,
+          readiness: {
+            status: fiscalSummary.readiness,
+            label: fiscalSummary.readinessLabel,
+          },
+          confidence: {
+            level: fiscalSummary.confidenceLevel,
+            notes: fiscalSummary.confidenceNotes,
+          },
+          missingDataFlags: fiscalSummary.missingDataFlags,
+          breakdowns: summary.quarterBreakdown.length > 0 ? { quarters: summary.quarterBreakdown } : null,
+          snapshot: persistedClosing
+            ? {
+                status: persistedClosing.status,
+                closed_at: persistedClosing.closed_at,
+                updated_at: persistedClosing.updated_at ?? null,
+                notes: persistedClosing.notes,
+              }
+            : null,
+        },
+      })
+      setAiSummaryResult(result)
+    } catch (generationError) {
+      setAiSummaryError(generationError instanceof Error ? generationError.message : 'No se pudo generar el resumen asistivo.')
+    } finally {
+      setIsGeneratingAiSummary(false)
+    }
+  }
+
   return (
     <section className="dashboard-page">
       <header className="page-header">
@@ -215,24 +287,69 @@ export function FiscalClosingPage({
         onChange={setSelection}
       />
 
+      <section className="cc-dashboard-block">
+        <div className="cc-dashboard-block__header">
+          <div>
+            <h2>Informe del periodo</h2>
+            <p>La lectura fiscal y financiera sale de un resumen determinista unico. La IA solo interpreta este bloque, no calcula cifras nuevas.</p>
+          </div>
+        </div>
+
+        <div className="cc-kpi-grid cc-kpi-grid--compact">
+          <article className="cc-kpi-card cc-kpi-card--finance">
+            <span className="cc-kpi-label">Facturado</span>
+            <strong className="cc-kpi-value">{formatCurrency(fiscalSummary.totalInvoiced)}</strong>
+            <p className="cc-kpi-footnote">{fiscalSummary.sourceCounts.invoices} factura(s) en el periodo</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Cobrado</span>
+            <strong className="cc-kpi-value">{formatCurrency(fiscalSummary.totalCollected)}</strong>
+            <p className="cc-kpi-footnote">{fiscalSummary.sourceCounts.payments} cobro(s) registrados</p>
+          </article>
+          <article className="cc-kpi-card cc-kpi-card--warning">
+            <span className="cc-kpi-label">Pendiente</span>
+            <strong className="cc-kpi-value">{formatCurrency(fiscalSummary.totalOutstanding)}</strong>
+            <p className="cc-kpi-footnote">{fiscalSummary.pendingInvoicesCount} factura(s) abiertas</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Gastos</span>
+            <strong className="cc-kpi-value">{formatCurrency(fiscalSummary.totalExpenses)}</strong>
+            <p className="cc-kpi-footnote">{fiscalSummary.sourceCounts.expenses} gasto(s) en el periodo</p>
+          </article>
+          <article className="cc-kpi-card cc-kpi-card--warning">
+            <span className="cc-kpi-label">IVA neto estimado</span>
+            <strong className="cc-kpi-value">{formatCurrency(fiscalSummary.estimatedNetVatPayable)}</strong>
+            <p className="cc-kpi-footnote">Basado solo en facturas y soporte validado</p>
+          </article>
+          <article className="cc-kpi-card">
+            <span className="cc-kpi-label">Incidencias abiertas</span>
+            <strong className="cc-kpi-value">{fiscalSummary.openIncidencesCount}</strong>
+            <p className="cc-kpi-footnote">{fiscalSummary.warnings.length} warning(s) estructurados</p>
+          </article>
+        </div>
+      </section>
+
       <section className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Estado del periodo</span>
-          <strong className="cc-kpi-value">{statusCard.label}</strong>
-          <p className="cc-dashboard-panel__text">{statusCard.detail}</p>
+          <span className="cc-dashboard-panel__label">Readiness y confianza</span>
+          <strong className="cc-kpi-value">{fiscalSummary.readinessLabel}</strong>
+          <p className="cc-dashboard-panel__text">Confianza {getConfidenceLabel(fiscalSummary.confidenceLevel).toLowerCase()} · {statusCard.label.toLowerCase()}</p>
           <p className="cc-dashboard-panel__text">
-            IVA neto estimado {formatCurrency(summary.estimatedNetVatPayable)} · {summary.unresolvedIncidenceCount} incidencia(s) abierta(s)
+            {fiscalSummary.confidenceNotes[0] ?? statusCard.detail}
           </p>
         </article>
 
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Estado documental</span>
-          <strong className="cc-kpi-value">{documentReviewCount}</strong>
+          <span className="cc-dashboard-panel__label">Checklist accionable</span>
+          <strong className="cc-kpi-value">{fiscalSummary.period.label}</strong>
           <p className="cc-dashboard-panel__text">
-            {summary.missingSupportCount} sin soporte · {summary.pendingReviewCount + summary.riskCount} en revision o riesgo fiscal.
+            {fiscalSummary.expensesWithoutSupportCount} sin soporte · {fiscalSummary.expensesPendingReviewCount + fiscalSummary.expensesMediumHighRiskCount} en revision o riesgo.
           </p>
           <p className="cc-dashboard-panel__text">
-            Abrir esta revision sigue siendo opcional desde el bloque de acciones.
+            {fiscalSummary.pendingInvoicesCount} factura(s) pendientes · {fiscalSummary.completedJobsWithoutInvoiceCount} servicio(s) sin factura · {fiscalSummary.acceptedQuotesWithoutJobCount} presupuesto(s) sin convertir.
+          </p>
+          <p className="cc-dashboard-panel__text">
+            Snapshot {persistedClosing ? 'guardado' : 'no guardado'} · Actualizado {formatDateTime(persistedClosing?.updated_at ?? persistedClosing?.closed_at ?? null)}.
           </p>
         </article>
 
@@ -260,6 +377,56 @@ export function FiscalClosingPage({
           {saveError ? <p className="cc-dashboard-panel__text">{saveError}</p> : null}
         </article>
       </section>
+
+      {topWarnings.length > 0 || fiscalSummary.missingDataFlags.length > 0 ? (
+        <section className="cc-dashboard-block">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Alertas de cierre</h2>
+              <p>Warnings estructurados, datos faltantes y limites reales antes de exportar o pedir interpretacion asistiva.</p>
+            </div>
+          </div>
+
+          <div className="cc-quarterly-pack-grid">
+            <article className="cc-quarterly-persistence__card cc-bounded-list">
+              <span className="cc-dashboard-panel__label">Warnings principales</span>
+              {topWarnings.length > 0 ? topWarnings.map((warning) => (
+                <p key={warning.id} className="cc-dashboard-panel__text">
+                  <strong>{warning.title}.</strong> {warning.description}
+                </p>
+              )) : (
+                <p className="cc-dashboard-panel__text">Sin warnings estructurados en el periodo.</p>
+              )}
+            </article>
+            <article className="cc-quarterly-persistence__card cc-bounded-list">
+              <span className="cc-dashboard-panel__label">Datos faltantes y limites</span>
+              {fiscalSummary.missingDataFlags.length > 0 ? fiscalSummary.missingDataFlags.map((flag) => (
+                <p key={flag} className="cc-dashboard-panel__text">{flag}</p>
+              )) : (
+                <p className="cc-dashboard-panel__text">Sin flags de datos faltantes.</p>
+              )}
+              {fiscalSummary.insufficientDataNotes.map((note, index) => (
+                <p key={`note-${index}`} className="cc-dashboard-panel__text">{note}</p>
+              ))}
+            </article>
+          </div>
+        </section>
+      ) : null}
+
+      {summary.snapshotMode ? (
+        <ClosingAiSummarySection
+          title="Interpretacion asistiva del cierre"
+          description="La IA recibe el resumen determinista, warnings, readiness, confianza y datos faltantes del periodo activo."
+          periodLabel="Periodo"
+          periodValueLabel={fiscalSummary.period.label}
+          closingStatusLabel={fiscalSummary.readinessLabel}
+          isGenerating={isGeneratingAiSummary}
+          result={aiSummaryResult}
+          error={aiSummaryError}
+          onGenerate={handleGenerateAiSummary}
+          formatDateTime={formatDateTime}
+        />
+      ) : null}
 
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">

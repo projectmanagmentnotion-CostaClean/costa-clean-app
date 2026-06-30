@@ -1,8 +1,12 @@
 import type { AnnualClosingSummary } from '../annualClosing/types'
+import {
+  buildClosingDeterministicSummary,
+  type ClosingDeterministicSummary,
+} from './closingDeterministicSummary'
 import type { ExpenseListItem } from '../expenses/types'
 import { buildFiscalVatSummary } from './fiscalVatSummary'
-import { hasMediumHighFiscalRisk, needsFiscalReview } from '../expenses/fiscalIntelligenceSummary'
 import type { InvoiceListItem } from '../invoices/types'
+import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { QuarterlyClosingSummary } from '../quarterlyClosing/types'
@@ -80,12 +84,14 @@ export interface ClosingSummary {
   expenses: ExpenseListItem[]
   closureExpenses: ExpenseListItem[]
   quotes: QuoteListItem[]
+  jobs: JobListItem[]
   pendingInvoices: InvoiceListItem[]
   missingSupportExpenses: ExpenseListItem[]
   pendingReviewExpenses: ExpenseListItem[]
   riskExpenses: ExpenseListItem[]
   incidences: ClosingSummaryIncidence[]
   quarterBreakdown: ClosingQuarterBreakdownItem[]
+  deterministicSummary: ClosingDeterministicSummary
 }
 
 interface BuildClosingSummaryInput {
@@ -94,6 +100,7 @@ interface BuildClosingSummaryInput {
   payments: PaymentListItem[]
   expenses: ExpenseListItem[]
   quotes: QuoteListItem[]
+  jobs: JobListItem[]
   quarterlySummaryByPeriod: Map<string, QuarterlyClosingSummary>
   annualSummaryByYear: Map<number, AnnualClosingSummary>
 }
@@ -121,18 +128,6 @@ function isExpenseWithinPeriod(expense: ExpenseListItem, period: ResolvedFiscalP
   }
 
   return isDateWithinFiscalPeriod(expense.expense_date, period)
-}
-
-function getClosurePredicate(period: ResolvedFiscalPeriod) {
-  if (period.mode === 'quarter') {
-    return (expense: ExpenseListItem) => expense.affects_quarterly_closure
-  }
-
-  if (period.mode === 'year') {
-    return (expense: ExpenseListItem) => expense.affects_annual_closure
-  }
-
-  return (expense: ExpenseListItem) => expense.affects_quarterly_closure || expense.affects_annual_closure
 }
 
 function buildQuarterBreakdown(summary: AnnualClosingSummary | undefined): ClosingQuarterBreakdownItem[] {
@@ -245,6 +240,7 @@ export function buildClosingSummary({
   payments,
   expenses,
   quotes,
+  jobs,
   quarterlySummaryByPeriod,
   annualSummaryByYear,
 }: BuildClosingSummaryInput): ClosingSummary {
@@ -253,28 +249,26 @@ export function buildClosingSummary({
   const periodPayments = payments.filter((payment) => isDateWithinFiscalPeriod(payment.payment_date, period))
   const periodExpenses = expenses.filter((expense) => isExpenseWithinPeriod(expense, period))
   const periodQuotes = quotes.filter((quote) => isDateWithinFiscalPeriod(quote.created_at ?? null, period))
-  const closureExpenses = periodExpenses.filter(getClosurePredicate(period))
-  const missingSupportExpenses = closureExpenses.filter(
-    (expense) =>
-      expense.document_support_status === 'missing' ||
-      (!expense.receipt_file_path && expense.document_support_status !== 'invoice_valid'),
-  )
-  const pendingReviewExpenses = closureExpenses.filter((expense) => needsFiscalReview(expense))
-  const riskExpenses = closureExpenses.filter((expense) => hasMediumHighFiscalRisk(expense))
+  const periodJobs = jobs.filter((job) => isDateWithinFiscalPeriod(job.scheduled_date, period))
+  const deterministic = buildClosingDeterministicSummary({
+    period,
+    invoices,
+    payments,
+    expenses,
+    quotes,
+    jobs,
+    hasPersistedSnapshot: false,
+  })
+  const {
+    closureExpenses,
+    pendingInvoices,
+    missingSupportExpenses,
+    pendingReviewExpenses,
+    riskExpenses,
+  } = deterministic.collections
   const supportedClosureExpenses = closureExpenses.filter(
     (expense) => expense.document_support_status !== 'missing' && Boolean(expense.receipt_file_path),
   )
-
-  const invoicePaidById = new Map<string, number>()
-  for (const payment of payments) {
-    invoicePaidById.set(payment.invoice_id, (invoicePaidById.get(payment.invoice_id) ?? 0) + Number(payment.amount || 0))
-  }
-
-  const pendingInvoices = periodInvoices.filter((invoice) => {
-    const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
-    return Math.max(Number(invoice.total || 0) - paidAmount, 0) > 0.009
-  })
-
   const vatSummary = buildFiscalVatSummary(periodInvoices, closureExpenses)
   const fallbackFiscalYear = Number(period.startDate.slice(0, 4))
   const fallbackFiscalQuarter = period.mode === 'quarter'
@@ -297,20 +291,15 @@ export function buildClosingSummary({
   const missingSupportCount = baseSummary?.missingSupportCount ?? missingSupportExpenses.length
   const pendingReviewCount = baseSummary?.pendingReviewCount ?? pendingReviewExpenses.length
   const riskCount = baseSummary?.riskCount ?? riskExpenses.length
-  const fiscalReviewCount = baseSummary?.fiscalReviewCount ?? vatSummary.expenseFiscalSummary.needsReviewCount
-  const fiscalRiskCount = baseSummary?.fiscalRiskCount ?? vatSummary.expenseFiscalSummary.mediumHighRiskCount
-  const missingValidVatInvoiceCount = baseSummary?.missingValidVatInvoiceCount ?? vatSummary.expenseFiscalSummary.missingValidVatInvoiceCount
+  const fiscalReviewCount = baseSummary?.fiscalReviewCount ?? deterministic.expenseFiscalSummary.needsReviewCount
+  const fiscalRiskCount = baseSummary?.fiscalRiskCount ?? deterministic.expenseFiscalSummary.mediumHighRiskCount
+  const missingValidVatInvoiceCount = baseSummary?.missingValidVatInvoiceCount ?? deterministic.expenseFiscalSummary.missingValidVatInvoiceCount
   const pendingInvoiceCount = baseSummary?.pendingInvoiceCount ?? pendingInvoices.length
   const unresolvedIncidenceCount = baseSummary?.unresolvedIncidenceCount
     ?? (missingSupportCount + pendingReviewCount + riskCount + missingValidVatInvoiceCount + pendingInvoiceCount)
   const invoicedTotal = baseSummary?.invoicedTotal ?? Number(periodInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0).toFixed(2))
   const collectedTotal = baseSummary?.collectedTotal ?? Number(periodPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0).toFixed(2))
-  const outstandingTotal = baseSummary?.outstandingTotal ?? Number(
-    pendingInvoices.reduce((sum, invoice) => {
-      const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
-      return sum + Math.max(Number(invoice.total || 0) - paidAmount, 0)
-    }, 0).toFixed(2),
-  )
+  const outstandingTotal = baseSummary?.outstandingTotal ?? deterministic.summary.totalOutstanding
   const expensesTotal = baseSummary?.expensesTotal ?? Number(periodExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0).toFixed(2))
   const outputVatTotal = baseSummary?.outputVatTotal ?? vatSummary.outputVatTotal
   const estimatedDeductibleBase = baseSummary?.estimatedDeductibleBase ?? vatSummary.estimatedDeductibleBase
@@ -370,6 +359,7 @@ export function buildClosingSummary({
     expenses: periodExpenses,
     closureExpenses,
     quotes: periodQuotes,
+    jobs: periodJobs,
     pendingInvoices,
     missingSupportExpenses,
     pendingReviewExpenses,
@@ -384,5 +374,36 @@ export function buildClosingSummary({
       riskCount,
     }, period.label),
     quarterBreakdown: buildQuarterBreakdown(annualSummary),
+    deterministicSummary: {
+      ...deterministic.summary,
+      period: {
+        ...deterministic.summary.period,
+        fiscalYear: baseSummary?.fiscalYear ?? fallbackFiscalYear,
+        fiscalQuarter: quarterSummary?.fiscalQuarter ?? fallbackFiscalQuarter,
+      },
+      totalInvoiced: invoicedTotal,
+      totalCollected: collectedTotal,
+      totalOutstanding: outstandingTotal,
+      totalExpenses: expensesTotal,
+      outputVatTotal,
+      supportedVatTotal: totalVatSupported,
+      estimatedDeductibleBase,
+      estimatedDeductibleVat,
+      estimatedNetVatPayable,
+      pendingInvoicesCount: pendingInvoiceCount,
+      expensesWithoutSupportCount: missingSupportCount,
+      expensesPendingReviewCount: pendingReviewCount,
+      expensesMediumHighRiskCount: riskCount,
+      openIncidencesCount: unresolvedIncidenceCount,
+      sourceCounts: {
+        ...deterministic.summary.sourceCounts,
+        invoices: invoiceCount,
+        payments: paymentCount,
+        expenses: expenseCount,
+        closureExpenses: closureExpenseCount,
+        quotes: periodQuotes.length,
+        jobs: periodJobs.length,
+      },
+    },
   }
 }

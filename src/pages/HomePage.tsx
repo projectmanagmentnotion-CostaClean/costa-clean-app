@@ -1,5 +1,3 @@
-import { getAlertActionLabel, getAlertImpactCopy } from '../features/automation/alertPresentation'
-import type { AutomationAlertItem } from '../features/automation/types'
 import type { AppView } from '../app/navigation'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
@@ -7,8 +5,8 @@ import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceN
 import { getJobBillingDisplayConcept } from '../features/jobs/jobBilling'
 import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
-import { formatCurrency, formatDateEs, getDisplayStatusLabel } from '../app/displayFormat'
-import { formatRecurringPlanLabel } from '../app/relationshipLabels'
+import { formatCurrency, formatDateEs } from '../app/displayFormat'
+import type { AutomationAlertItem } from '../features/automation/types'
 
 interface HomePageProps {
   metrics: {
@@ -80,14 +78,10 @@ interface HomePageProps {
 export function HomePage({
   metrics,
   agenda,
-  clientBalanceLeaders,
-  dueRecurringPlans,
   onOpenJobWorkspace,
-  onOpenClientWorkspace,
   onOpenView,
   onRunKpiAction,
   alerts,
-  onOpenAlert,
   operationalIncidents,
   operationalQuickViews,
   onRunOperationalAction,
@@ -96,20 +90,17 @@ export function HomePage({
   const urgentCollectionsCount = metrics.unpaidInvoicesOlderThan7DaysCount + metrics.partiallyPaidInvoicesCount
   const topIncident = operationalIncidents[0] ?? null
   const quickViewById = new Map(operationalQuickViews.map((view) => [view.id, view]))
-  const urgentIncidents = operationalIncidents.filter((incident) => incident.severity !== 'info').slice(0, 4)
+  const urgentIncidents = operationalIncidents.filter((incident) => incident.severity !== 'info').slice(0, 3)
   const followUpIncidents = operationalIncidents.filter((incident) => incident.severity === 'info').slice(0, 3)
-  const todayActionJobs = agenda.todayJobs.slice(0, 4)
+  const todayActionJobs = agenda.todayJobs.slice(0, 3)
   const nextActionJobs = agenda.tomorrowJobs.slice(0, 2)
   const pendingBillingView = quickViewById.get('pending-billing') ?? null
   const pendingCollectionsView = quickViewById.get('pending-collections') ?? null
   const partialCollectionsView = quickViewById.get('partial-collections') ?? null
-  const recurringDueView = quickViewById.get('recurring-due') ?? null
   const acceptedWithoutJobView = quickViewById.get('quotes-without-conversion') ?? null
   const missingFiscalView = quickViewById.get('clients-missing-fiscal') ?? null
   const overdueInternalView = quickViewById.get('overdue-internal') ?? null
-  const followUpAlerts = alerts
-    .filter((alert) => alert.ruleId === 'public_intake_lead_drafts_pending' || alert.ruleId === 'quarter_closing_reminder')
-    .slice(0, 3)
+  const fiscalRiskCount = metrics.expensesMissingValidVatInvoiceCount + metrics.fiscalReviewExpensesCount + metrics.fiscalRiskExpensesCount
 
   const homePrimaryAction = topIncident
     ? {
@@ -118,7 +109,7 @@ export function HomePage({
         summary: topIncident.summary,
         detail: topIncident.detail,
         onRun: () => onRunOperationalAction(topIncident.primaryAction),
-        secondaryLabel: topIncident.secondaryAction?.label ?? 'Ver alertas',
+        secondaryLabel: topIncident.secondaryAction?.label ?? 'Abrir alertas',
         onSecondaryRun: () => (
           topIncident.secondaryAction
             ? onRunOperationalAction(topIncident.secondaryAction)
@@ -129,93 +120,167 @@ export function HomePage({
       ? {
           eyebrow: 'Prioridad principal',
           label: 'Facturar servicios pendientes',
-          summary: `${metrics.completedJobsWithoutInvoiceCount} servicio(s) completados sin factura`,
+          summary: `${metrics.completedJobsWithoutInvoiceCount} servicio(s) completados siguen sin factura`,
           detail: 'Conviene cerrar hoy el paso de servicio a factura para no bloquear ingreso.',
           onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-          secondaryLabel: 'Ver servicios de hoy',
-          onSecondaryRun: () => onRunKpiAction('jobs_today'),
+          secondaryLabel: 'Ver trabajo sin facturar',
+          onSecondaryRun: () => onRunKpiAction('completed_jobs_without_invoice'),
         }
       : urgentCollectionsCount > 0
         ? {
             eyebrow: 'Prioridad principal',
             label: 'Revisar cobros pendientes',
             summary: `${urgentCollectionsCount} factura(s) requieren seguimiento`,
-            detail: 'Prioriza las facturas vencidas y las parciales antes de abrir mas frentes.',
+            detail: 'La operativa esta estable; el siguiente impacto viene de mover cobro y seguimiento.',
             onRun: () => onRunKpiAction('outstanding_invoices'),
-            secondaryLabel: 'Abrir alertas',
-            onSecondaryRun: () => onOpenView('alerts'),
+            secondaryLabel: 'Abrir cierre fiscal',
+            onSecondaryRun: () => onOpenView('fiscal_closing'),
           }
         : {
             eyebrow: 'Prioridad principal',
-            label: 'Atender agenda de hoy',
-            summary: `${metrics.jobsScheduledTodayCount} servicio(s) previstos hoy`,
-            detail: 'La operativa esta estable; conviene empezar por agenda y siguiente accion.',
-            onRun: () => onRunKpiAction('jobs_today'),
-            secondaryLabel: 'Ver siguiente cola',
-            onSecondaryRun: () => onOpenView('alerts'),
+            label: metrics.outstandingReceivablesTotal > 0 ? 'Ver pendientes de cobro' : 'Nueva factura',
+            summary: metrics.outstandingReceivablesTotal > 0
+              ? `${formatCurrency(metrics.outstandingReceivablesTotal)} siguen pendientes de cobro`
+              : 'No hay bloqueo dominante y la siguiente accion util es avanzar facturacion.',
+            detail: metrics.outstandingReceivablesTotal > 0
+              ? 'Sin un bloqueo dominante, conviene atacar caja abierta antes de abrir mas frentes.'
+              : 'La operativa esta limpia y el mejor siguiente paso es abrir una factura o revisar facturacion del dia.',
+            onRun: () => (metrics.outstandingReceivablesTotal > 0 ? onRunKpiAction('outstanding_invoices') : onOpenView('invoices')),
+            secondaryLabel: 'Abrir cierre fiscal',
+            onSecondaryRun: () => onOpenView('fiscal_closing'),
           }
 
-  const moneyQueue = [pendingBillingView, overdueInternalView, pendingCollectionsView, partialCollectionsView].filter(Boolean)
+  const moneyQueue = [
+    pendingCollectionsView,
+    pendingBillingView,
+    acceptedWithoutJobView,
+    overdueInternalView,
+    partialCollectionsView,
+  ].filter(Boolean).slice(0, 4)
+
   const decisionKpis = [
     {
-      label: 'Pendiente de facturar',
-      value: String(metrics.completedJobsWithoutInvoiceCount),
-      detail: 'Servicios ya ejecutados que aun no pasan a factura.',
-      tone: 'warning',
-      onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-    },
-    {
-      label: 'Pendiente de cobrar',
+      label: 'Pendiente de cobro',
       value: formatCurrency(metrics.outstandingReceivablesTotal),
       detail: `${metrics.pendingInvoicesCount} factura(s) siguen abiertas.`,
+      badge: urgentCollectionsCount > 0 ? 'Seguimiento' : 'Controlado',
       tone: 'warning',
       onRun: () => onRunKpiAction('outstanding_invoices'),
+    },
+    {
+      label: 'Trabajo sin facturar',
+      value: String(metrics.completedJobsWithoutInvoiceCount),
+      detail: 'Servicios ya ejecutados que aun no pasan a factura.',
+      badge: metrics.completedJobsWithoutInvoiceOlderThan2DaysCount > 0 ? 'Fuera de plazo' : 'Pendiente',
+      tone: 'warning',
+      onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
     },
     {
       label: 'Servicios hoy',
       value: String(metrics.jobsScheduledTodayCount),
       detail: metrics.jobsScheduledTodayCount > 0 ? 'Agenda inmediata para ejecutar.' : 'Sin carga operativa para hoy.',
+      badge: metrics.jobsScheduledTomorrowCount > 0 ? `Manana ${metrics.jobsScheduledTomorrowCount}` : 'Hoy',
       tone: 'info',
       onRun: () => onRunKpiAction('jobs_today'),
     },
     {
-      label: 'Presupuestos sin convertir',
-      value: String(metrics.acceptedQuotesWithoutJobCount),
-      detail: 'Venta aceptada que aun no se ha convertido en servicio.',
+      label: 'Riesgo fiscal o documental',
+      value: String(fiscalRiskCount),
+      detail: 'Gastos sin soporte, pendientes de revision o con riesgo fiscal.',
+      badge: metrics.expensesMissingValidVatInvoiceCount > 0 ? 'Documental' : 'Revision',
       tone: 'warning',
-      onRun: () => onRunKpiAction('accepted_quotes_without_job'),
+      onRun: () => onOpenView('fiscal_closing'),
     },
   ]
 
-  const quickActions = [
-    {
-      title: 'Nuevo presupuesto',
-      detail: 'Abrir propuesta comercial.',
-      tone: 'primary',
-      onRun: () => onOpenView('quotes'),
-    },
-    {
-      title: 'Nuevo servicio',
-      detail: 'Crear trabajo operativo.',
-      tone: 'default',
-      onRun: () => onOpenView('jobs'),
-    },
+  const primaryQuickActions = [
     {
       title: 'Nueva factura',
       detail: 'Emitir o revisar facturacion.',
-      tone: 'default',
       onRun: () => onOpenView('invoices'),
     },
     {
-      title: 'Registrar cobro',
-      detail: 'Ir a cobros del periodo.',
-      tone: 'default',
-      onRun: () => onOpenView('payments'),
+      title: 'Ver pendientes de cobro',
+      detail: 'Abrir facturas abiertas del periodo.',
+      onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
-      title: 'Cierre fiscal',
-      detail: 'Revisar periodo y exporte.',
-      tone: 'default',
+      title: 'Nuevo presupuesto',
+      detail: 'Abrir propuesta comercial.',
+      onRun: () => onOpenView('quotes'),
+    },
+    {
+      title: 'Ver trabajo sin facturar',
+      detail: 'Ir a servicios completados pendientes.',
+      onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
+    },
+  ]
+
+  const secondaryQuickActions = [
+    {
+      title: 'Nuevo servicio',
+      detail: 'Crear trabajo operativo.',
+      onRun: () => onOpenView('jobs'),
+    },
+    {
+      title: 'Nuevo gasto',
+      detail: 'Registrar gasto del periodo.',
+      onRun: () => onOpenView('expenses'),
+    },
+    {
+      title: 'Revisar cierre fiscal',
+      detail: 'Abrir periodo y readiness.',
+      onRun: () => onOpenView('fiscal_closing'),
+    },
+    {
+      title: 'Ver gastos por revisar',
+      detail: 'Abrir revision fiscal pendiente.',
+      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
+    },
+  ]
+
+  const operationalQueue = [
+    ...urgentIncidents.map((incident) => ({
+      id: incident.id,
+      title: incident.title,
+      detail: incident.summary,
+      actionLabel: incident.primaryAction.label,
+      onRun: () => onRunOperationalAction(incident.primaryAction),
+      tone: incident.severity,
+    })),
+    ...todayActionJobs.map((job) => ({
+      id: job.id,
+      title: getJobBillingDisplayConcept(job),
+      detail: `${job.client_name ?? job.client_display_code ?? 'Cliente'} · ${formatDateEs(job.scheduled_date)}`,
+      actionLabel: 'Abrir servicio',
+      onRun: () => onOpenJobWorkspace(job.id),
+      tone: 'info' as const,
+    })),
+  ].slice(0, 5)
+
+  const fiscalReviewItems = [
+    {
+      label: 'Gastos pendientes de revisar',
+      value: String(metrics.fiscalReviewExpensesCount),
+      detail: 'Casos marcados para revision fiscal.',
+      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
+    },
+    {
+      label: 'Gastos sin soporte o IVA valido',
+      value: String(metrics.expensesMissingValidVatInvoiceCount),
+      detail: 'Soporte documental debil para el periodo.',
+      onRun: () => onRunKpiAction('expenses_missing_valid_vat_invoice'),
+    },
+    {
+      label: 'Riesgo fiscal medio o alto',
+      value: String(metrics.fiscalRiskExpensesCount),
+      detail: 'Registros con riesgo fiscal activo.',
+      onRun: () => onRunKpiAction('expenses_fiscal_medium_high_risk'),
+    },
+    {
+      label: 'Preparar cierre',
+      value: 'Accion',
+      detail: 'Abrir readiness y resumen del periodo.',
       onRun: () => onOpenView('fiscal_closing'),
     },
   ]
@@ -225,24 +290,6 @@ export function HomePage({
     onRunOperationalAction(view.action)
   }
 
-  function renderIncidentButton(incident: OperationalIncident) {
-    return (
-      <button
-        key={incident.id}
-        type="button"
-        className={`cc-dashboard-console-action cc-dashboard-console-action--${incident.severity}`}
-        onClick={() => onRunOperationalAction(incident.primaryAction)}
-      >
-        <div className="cc-dashboard-console-action__top">
-          <span>{incident.severity === 'critical' ? 'Critico' : 'Accion requerida'}</span>
-          <strong>{incident.primaryAction.label}</strong>
-        </div>
-        <h3>{incident.title}</h3>
-        <p>{incident.summary}</p>
-      </button>
-    )
-  }
-
   return (
     <section className="cc-dashboard-page">
       <header className="cc-dashboard-header cc-dashboard-header--decision">
@@ -250,7 +297,7 @@ export function HomePage({
           <span className="cc-page-topline__eyebrow">Centro operativo</span>
           <h1 className="cc-page-topline__title">Que hago ahora</h1>
           <p className="cc-page-topline__text">
-            Prioridad del dia, dinero bloqueado, agenda inmediata y seguimientos que no conviene dejar caer.
+            Dinero pendiente, trabajo bloqueado, agenda inmediata y revision fiscal/documental en una sola lectura corta.
           </p>
         </div>
 
@@ -293,8 +340,8 @@ export function HomePage({
 
             <article className="cc-dashboard-console-sidepanel cc-dashboard-console-sidepanel--decision">
               <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Dinero y conversion</h3>
-                <p>Las colas que mas cambian caja y ritmo operativo.</p>
+                <h3>Dinero pendiente o bloqueado</h3>
+                <p>Una sola lectura para caja abierta, trabajo sin facturar y conversion atascada.</p>
               </div>
               <div className="cc-dashboard-console-lanes">
                 {moneyQueue.map((view) => (
@@ -323,6 +370,7 @@ export function HomePage({
                 onClick={kpi.onRun}
               >
                 <span>{kpi.label}</span>
+                <em className="cc-dashboard-console-kpi__badge">{kpi.badge}</em>
                 <strong>{kpi.value}</strong>
                 <p>{kpi.detail}</p>
               </button>
@@ -333,68 +381,55 @@ export function HomePage({
         <section className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Cola operativa corta</h2>
-              <p>Lo mas importante para mover trabajo, dinero y proximo paso sin leer media pantalla.</p>
+              <h2>Cola operativa de hoy</h2>
+              <p>Maximo cinco items visibles para abrir el siguiente paso sin convertir el Home en una lista larga.</p>
             </div>
           </div>
 
           <div className="cc-dashboard-console-operating-grid">
             <article className="cc-dashboard-console-workpanel">
               <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Accion requerida</span>
-                <h3>Lo que bloquea hoy</h3>
-                <p>{urgentIncidents.length > 0 ? 'Ataca primero estas incidencias operativas.' : 'No hay bloqueos duros fuera de la cola de dinero.'}</p>
+                <span className="cc-dashboard-console-workpanel__eyebrow">Accion inmediata</span>
+                <h3>Lo que toca mover ahora</h3>
+                <p>Trabajo, incidencias y agenda en una sola cola corta.</p>
               </div>
 
-              {urgentIncidents.length > 0 ? (
+              {operationalQueue.length > 0 ? (
                 <div className="cc-dashboard-console-actionlist cc-bounded-list">
-                  {urgentIncidents.map((incident) => renderIncidentButton(incident))}
+                  {operationalQueue.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`cc-dashboard-console-action cc-dashboard-console-action--${item.tone}`}
+                      onClick={item.onRun}
+                    >
+                      <div className="cc-dashboard-console-action__top">
+                        <span>{item.tone === 'critical' ? 'Critico' : item.tone === 'warning' ? 'Accion requerida' : 'Agenda'}</span>
+                        <strong>{item.actionLabel}</strong>
+                      </div>
+                      <h3>{item.title}</h3>
+                      <p>{item.detail}</p>
+                    </button>
+                  ))}
                 </div>
               ) : (
                 <div className="empty-state">
-                  <strong>Sin bloqueos urgentes</strong>
-                  <p>La prioridad puede pasar a agenda, cobro o seguimiento comercial.</p>
+                  <strong>Sin cola operativa inmediata</strong>
+                  <p>No hay incidencias ni servicios urgentes visibles para hoy.</p>
                 </div>
               )}
             </article>
 
             <article className="cc-dashboard-console-workpanel">
               <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Agenda inmediata</span>
-                <h3>Hoy y lo siguiente</h3>
-                <p>Servicios listos para abrir y siguiente paso despues de cerrar hoy.</p>
-              </div>
-
-              <div className="cc-dashboard-console-joblist cc-bounded-list">
-                {todayActionJobs.map((job) => (
-                  <button
-                    key={job.id}
-                    type="button"
-                    className="cc-dashboard-console-job"
-                    onClick={() => onOpenJobWorkspace(job.id)}
-                  >
-                    <div className="cc-dashboard-console-job__top">
-                      <strong>{getJobBillingDisplayConcept(job)}</strong>
-                      <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
-                    </div>
-                    <p>{job.client_name ?? job.client_display_code} · {job.property_name ?? job.property_display_code}</p>
-                    <div className="cc-dashboard-console-job__meta">
-                      <span>{formatDateEs(job.scheduled_date)}</span>
-                      <span>Abrir servicio</span>
-                    </div>
-                  </button>
-                ))}
-                {todayActionJobs.length === 0 ? (
-                  <div className="empty-state">
-                    <strong>Sin agenda de hoy</strong>
-                    <p>No hay servicios agendados para hoy.</p>
-                  </div>
-                ) : null}
+                <span className="cc-dashboard-console-workpanel__eyebrow">Siguiente paso</span>
+                <h3>Despues de hoy</h3>
+                <p>Lo siguiente que entra cuando cierres el bloque actual.</p>
               </div>
 
               {nextActionJobs.length > 0 ? (
                 <div className="cc-dashboard-console-subqueue">
-                  <span className="cc-dashboard-console-subqueue__label">Despues de hoy</span>
+                  <span className="cc-dashboard-console-subqueue__label">Proximos servicios</span>
                   {nextActionJobs.map((job) => (
                     <button key={job.id} type="button" className="cc-dashboard-console-subqueue__item" onClick={() => onOpenJobWorkspace(job.id)}>
                       <strong>{getJobBillingDisplayConcept(job)}</strong>
@@ -402,22 +437,60 @@ export function HomePage({
                     </button>
                   ))}
                 </div>
-              ) : null}
+              ) : (
+                <div className="empty-state">
+                  <strong>Sin siguiente cola inmediata</strong>
+                  <p>No hay servicios proximos criticos cargados despues de hoy.</p>
+                </div>
+              )}
+            </article>
+          </div>
+        </section>
+
+        <section className="cc-dashboard-block cc-dashboard-console-section">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Acciones rapidas</h2>
+              <p>Primero las cuatro acciones dominantes. Debajo, accesos secundarios mas discretos.</p>
+            </div>
+          </div>
+
+          <div className="cc-dashboard-console-support-grid">
+            <article className="cc-dashboard-console-workpanel">
+              <div>
+                <span className="cc-dashboard-console-workpanel__eyebrow">Principales</span>
+                <h3>Crear o mover ahora</h3>
+                <p>Las acciones primarias dominan visualmente porque suelen abrir el siguiente paso real.</p>
+              </div>
+
+              <div className="cc-dashboard-console-quickactions">
+                {primaryQuickActions.map((action) => (
+                  <button
+                    key={action.title}
+                    type="button"
+                    className="cc-dashboard-console-quickaction cc-dashboard-console-quickaction--primary"
+                    onClick={action.onRun}
+                  >
+                    <strong>{action.title}</strong>
+                    <span>{action.detail}</span>
+                  </button>
+                ))}
+              </div>
             </article>
 
             <article className="cc-dashboard-console-workpanel">
               <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Accesos utiles</span>
-                <h3>Acciones rapidas</h3>
-                <p>Pocas acciones, pero las que de verdad deberian estar a mano.</p>
+                <span className="cc-dashboard-console-workpanel__eyebrow">Secundarias</span>
+                <h3>Accesos utiles</h3>
+                <p>Quedan a mano, pero no compiten con dinero bloqueado ni con la prioridad principal.</p>
               </div>
 
               <div className="cc-dashboard-console-quickactions">
-                {quickActions.map((action) => (
+                {secondaryQuickActions.map((action) => (
                   <button
                     key={action.title}
                     type="button"
-                    className={action.tone === 'primary' ? 'cc-dashboard-console-quickaction cc-dashboard-console-quickaction--primary' : 'cc-dashboard-console-quickaction'}
+                    className="cc-dashboard-console-quickaction"
                     onClick={action.onRun}
                   >
                     <strong>{action.title}</strong>
@@ -432,95 +505,51 @@ export function HomePage({
         <section className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Seguimiento y contexto</h2>
-              <p>Lo que conviene vigilar sin convertir el home en una pared de widgets.</p>
+              <h2>Revision fiscal y documental</h2>
+              <p>Una banda breve de alerta para decidir si toca revisar gastos o preparar cierre, sin meter el informe completo en Home.</p>
             </div>
           </div>
 
           <div className="cc-dashboard-console-support-grid">
             <article className="cc-dashboard-console-sidepanel">
               <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Clientes con dinero pendiente</h3>
-                <p>Abre directamente la cartera mas expuesta.</p>
+                <h3>Riesgo del periodo</h3>
+                <p>Lo minimo necesario para detectar si el cierre o el soporte requieren una pasada rapida.</p>
               </div>
-              <div className="cc-dashboard-console-clientlist cc-bounded-list">
-                {clientBalanceLeaders.map((entry) => (
+
+              <div className="cc-dashboard-console-alertlist cc-bounded-list">
+                {fiscalReviewItems.map((item) => (
                   <button
-                    key={entry.clientId}
+                    key={item.label}
                     type="button"
-                    className="cc-dashboard-console-client"
-                    onClick={() => onOpenClientWorkspace(entry.clientId, 'payments')}
+                    className="cc-dashboard-console-alert"
+                    onClick={item.onRun}
                   >
-                    <div className="cc-dashboard-console-client__top">
-                      <strong>{entry.clientLabel}</strong>
-                      <span>{formatCurrency(entry.pendingAmount)}</span>
-                    </div>
-                    <p>{entry.pendingInvoices} factura(s) abiertas</p>
+                    <span>{item.value}</span>
+                    <strong>{item.label}</strong>
+                    <p>{item.detail}</p>
                   </button>
                 ))}
-                {clientBalanceLeaders.length === 0 ? (
-                  <div className="empty-state">
-                    <strong>Sin cartera pendiente relevante</strong>
-                    <p>No hay clientes con saldo abierto para seguimiento inmediato.</p>
-                  </div>
-                ) : null}
               </div>
             </article>
 
             <article className="cc-dashboard-console-sidepanel">
               <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Recurrentes y siguiente cola</h3>
-                <p>Facturacion automatica, alertas suaves y proximos movimientos sin abrir otro bloque entero.</p>
+                <h3>Seguimiento corto</h3>
+                <p>Contexto auxiliar que conviene tener visible, pero sin robar protagonismo.</p>
               </div>
-              <div className="cc-dashboard-console-alertlist cc-bounded-list">
-                {dueRecurringPlans.slice(0, 3).map((plan) => (
-                  <button
-                    key={plan.id}
-                    type="button"
-                    className="cc-dashboard-console-alert"
-                    onClick={() => onOpenClientWorkspace(plan.client_id, 'invoices')}
-                  >
-                    <span>Recurrente lista</span>
-                    <strong>{formatRecurringPlanLabel(plan)}</strong>
-                    <p>{plan.property_name ?? plan.client_name ?? 'Plan recurrente'} · {formatDateEs(plan.next_issue_date)}</p>
-                  </button>
-                ))}
-                {followUpAlerts.map((alert) => (
-                  <button
-                    key={alert.id}
-                    type="button"
-                    className="cc-dashboard-console-alert"
-                    onClick={() => onOpenAlert(alert)}
-                  >
-                    <span>{getAlertActionLabel(alert)}</span>
-                    <strong>{alert.title}</strong>
-                    <p>{getAlertImpactCopy(alert)}</p>
-                  </button>
-                ))}
-                {dueRecurringPlans.length === 0 && followUpAlerts.length === 0 ? (
-                  <div className="empty-state">
-                    <strong>Sin seguimientos de sistema</strong>
-                    <p>No hay recurrentes listas ni recordatorios operativos suaves.</p>
-                  </div>
-                ) : null}
-              </div>
+
               <div className="cc-dashboard-console-footnotes">
-                {acceptedWithoutJobView ? (
-                  <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(acceptedWithoutJobView)}>
-                    <strong>{acceptedWithoutJobView.label}</strong>
-                    <span>{acceptedWithoutJobView.summary}</span>
-                  </button>
-                ) : null}
                 {missingFiscalView ? (
                   <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(missingFiscalView)}>
                     <strong>{missingFiscalView.label}</strong>
                     <span>{missingFiscalView.summary}</span>
                   </button>
                 ) : null}
-                {recurringDueView ? (
-                  <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(recurringDueView)}>
-                    <strong>{recurringDueView.label}</strong>
-                    <span>{recurringDueView.summary}</span>
+                {acceptedWithoutJobView ? (
+                  <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(acceptedWithoutJobView)}>
+                    <strong>{acceptedWithoutJobView.label}</strong>
+                    <span>{acceptedWithoutJobView.summary}</span>
                   </button>
                 ) : null}
                 {followUpIncidents.map((incident) => (

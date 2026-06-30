@@ -1062,6 +1062,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   payments={paymentsWithCodes}
                   expenses={expenses}
                   quotes={quotesWithCodes}
+                  jobs={jobsWithCodes}
                   clients={clientsWithContext}
                   properties={propertiesWithCodes}
                   error={quarterlyClosingError ?? annualClosingError}

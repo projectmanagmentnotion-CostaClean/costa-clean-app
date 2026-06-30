@@ -2,32 +2,47 @@ const outputSchema = {
   type: 'object',
   additionalProperties: false,
   required: [
-    'executive_summary',
-    'key_risks',
-    'documentation_warnings',
-    'suggested_manager_notes',
-    'suggested_next_actions',
-    'assistive_notice',
+    'executiveSummary',
+    'keyRisks',
+    'recommendedActions',
+    'missingDataNotes',
+    'confidenceLevel',
+    'confidenceNotes',
+    'assistantNotice',
+    'accountantNotes',
+    'nextSteps',
   ],
   properties: {
-    executive_summary: { type: 'string' },
-    key_risks: {
+    executiveSummary: { type: 'string' },
+    keyRisks: {
       type: 'array',
       items: { type: 'string' },
     },
-    documentation_warnings: {
+    recommendedActions: {
       type: 'array',
       items: { type: 'string' },
     },
-    suggested_manager_notes: {
+    missingDataNotes: {
       type: 'array',
       items: { type: 'string' },
     },
-    suggested_next_actions: {
+    confidenceLevel: {
+      type: 'string',
+      enum: ['high', 'medium', 'low'],
+    },
+    confidenceNotes: {
       type: 'array',
       items: { type: 'string' },
     },
-    assistive_notice: { type: 'string' },
+    assistantNotice: { type: 'string' },
+    accountantNotes: {
+      type: 'array',
+      items: { type: 'string' },
+    },
+    nextSteps: {
+      type: 'array',
+      items: { type: 'string' },
+    },
   },
 }
 
@@ -60,7 +75,10 @@ function buildSystemPrompt(scope) {
     'Sé sobrio, profesional y útil para revisión de gestoría/propietario.',
     'La salida debe ser estrictamente JSON válido que cumpla el schema.',
     'Las listas deben ser breves, concretas y accionables.',
-    'En assistive_notice deja claro que el texto es interpretativo y no sustituye la revisión fiscal/contable.',
+    'Si faltan datos, dilo de forma explícita como dato insuficiente y no tapes la carencia.',
+    'Respeta el resumen determinista como única fuente de cifras.',
+    'No presentes estimaciones como verdad fiscal definitiva.',
+    'En assistantNotice deja claro que el texto es interpretativo y no sustituye la revisión fiscal/contable.',
   ].join(' ')
 }
 
@@ -138,4 +156,3 @@ export default async function handler(req, res) {
     })
   }
 }
-

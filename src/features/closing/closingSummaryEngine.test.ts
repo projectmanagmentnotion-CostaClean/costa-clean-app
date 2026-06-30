@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ExpenseListItem } from '../expenses/types'
 import type { InvoiceListItem } from '../invoices/types'
+import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import { buildClosingSummary } from './closingSummaryEngine'
 import type { FiscalPeriodSelection } from './fiscalPeriods'
@@ -82,6 +83,20 @@ function createExpense(overrides: Partial<ExpenseListItem> = {}): ExpenseListIte
   }
 }
 
+function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
+  return {
+    id: 'job-1',
+    display_code: 'JOB-1',
+    client_id: 'client-1',
+    property_id: 'property-1',
+    quote_id: null,
+    scheduled_date: '2026-01-15',
+    status: 'completed',
+    service_type: 'limpieza',
+    ...overrides,
+  }
+}
+
 describe('buildClosingSummary', () => {
   it('mantiene la lógica trimestral basada en fiscal year / fiscal quarter para gastos', () => {
     const selection: FiscalPeriodSelection = {
@@ -105,6 +120,7 @@ describe('buildClosingSummary', () => {
         }),
       ],
       quotes: [],
+      jobs: [createJob()],
       quarterlySummaryByPeriod: new Map(),
       annualSummaryByYear: new Map(),
     })
@@ -134,6 +150,7 @@ describe('buildClosingSummary', () => {
       payments: [createPayment({ payment_date: '2026-02-12' })],
       expenses: [createExpense({ expense_date: '2026-02-14' })],
       quotes: [],
+      jobs: [createJob({ scheduled_date: '2026-02-11' })],
       quarterlySummaryByPeriod: new Map(),
       annualSummaryByYear: new Map(),
     })

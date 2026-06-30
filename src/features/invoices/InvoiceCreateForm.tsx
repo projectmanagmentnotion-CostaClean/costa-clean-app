@@ -4,6 +4,7 @@ import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabe
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { buildInvoicePricingMetadataWithClientFiscalSnapshot } from '../clients/clientFiscalData'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
@@ -248,6 +249,10 @@ export function InvoiceCreateForm({
     () => roundMoney(subtotalValue + taxAmountValue),
     [subtotalValue, taxAmountValue],
   )
+  const pricingMetadataWithFiscalSnapshot = useMemo(
+    () => buildInvoicePricingMetadataWithClientFiscalSnapshot(selectedQuote?.pricing_metadata ?? null, selectedClient),
+    [selectedClient, selectedQuote],
+  )
   const isOriginLocked = Boolean(prefill?.job_id || prefill?.quote_id)
 
   useEffect(() => {
@@ -404,7 +409,7 @@ export function InvoiceCreateForm({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+          pricing_metadata: pricingMetadataWithFiscalSnapshot,
         },
         linePayloads,
       )
@@ -425,7 +430,7 @@ export function InvoiceCreateForm({
         total: totalValue,
         notes: form.notes.trim() || null,
         internal_notes: selectedQuote?.internal_notes ?? null,
-        pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+        pricing_metadata: pricingMetadataWithFiscalSnapshot,
         client_name: selectedClient?.full_name ?? null,
         property_id: form.property_id || null,
         property_display_code: selectedProperty?.display_code ?? null,

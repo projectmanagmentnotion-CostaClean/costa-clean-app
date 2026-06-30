@@ -7,6 +7,11 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { ClientBillingDetailsInlineForm } from '../clients/ClientBillingDetailsInlineForm'
+import {
+  buildInvoicePricingMetadataWithClientFiscalSnapshot,
+  getClientFiscalData,
+  getClientFiscalIssueMessage,
+} from '../clients/clientFiscalData'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
@@ -240,14 +245,6 @@ function getOriginDescription(originMode: InvoiceOriginMode): string {
   }
 }
 
-function getClientFiscalIssue(client: ClientListItem | null): string | null {
-  if (!client) return null
-  if (!client.tax_id?.trim() || !client.billing_address?.trim()) {
-    return 'Faltan NIF/CIF o direccion de facturacion en la ficha del cliente.'
-  }
-  return null
-}
-
 function renderSummaryValue(value: string | null | undefined, fallback = 'Pendiente') {
   return value && value.trim() ? value : fallback
 }
@@ -336,7 +333,23 @@ export function InvoiceCreateFlow({
     [subtotalValue, taxAmountValue],
   )
   const isOriginLocked = Boolean(prefill?.job_id || prefill?.quote_id)
-  const clientFiscalIssue = getClientFiscalIssue(selectedClient)
+  const clientFiscalData = useMemo(() => getClientFiscalData(selectedClient), [selectedClient])
+  const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
+  const pricingMetadataWithFiscalSnapshot = useMemo(
+    () => buildInvoicePricingMetadataWithClientFiscalSnapshot(selectedQuote?.pricing_metadata ?? null, selectedClient),
+    [selectedClient, selectedQuote],
+  )
+
+  useEffect(() => {
+    if (currentStep !== 1 || clientFiscalIssue) return
+
+    setSubmitError((current) => {
+      if (!current) return null
+      return current.includes('NIF/CIF') || current.includes('direccion de facturacion')
+        ? null
+        : current
+    })
+  }, [clientFiscalIssue, currentStep])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -563,7 +576,7 @@ export function InvoiceCreateFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+          pricing_metadata: pricingMetadataWithFiscalSnapshot,
           payment_status: 'pending',
           paid_amount: 0,
           outstanding_amount: totalValue,
@@ -608,7 +621,7 @@ export function InvoiceCreateFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+          pricing_metadata: pricingMetadataWithFiscalSnapshot,
         },
         linePayloads,
       )
@@ -628,7 +641,7 @@ export function InvoiceCreateFlow({
         total: totalValue,
         notes: form.notes.trim() || null,
         internal_notes: selectedQuote?.internal_notes ?? null,
-        pricing_metadata: selectedQuote?.pricing_metadata ?? null,
+        pricing_metadata: pricingMetadataWithFiscalSnapshot,
         client_name: selectedClient?.full_name ?? null,
         property_id: form.property_id || null,
         property_display_code: selectedProperty?.display_code ?? null,
@@ -1114,11 +1127,11 @@ export function InvoiceCreateFlow({
                   <div className="cc-create-flow__summary-list">
                     <div className="cc-create-flow__summary-item">
                       <span>NIF / CIF</span>
-                      <strong>{renderSummaryValue(selectedClient.tax_id)}</strong>
+                      <strong>{renderSummaryValue(clientFiscalData.taxId)}</strong>
                     </div>
                     <div className="cc-create-flow__summary-item">
                       <span>Direccion</span>
-                      <strong>{renderSummaryValue(selectedClient.billing_address)}</strong>
+                      <strong>{renderSummaryValue(clientFiscalData.billingAddress)}</strong>
                     </div>
                   </div>
                   {clientFiscalIssue ? (
@@ -1140,6 +1153,7 @@ export function InvoiceCreateFlow({
                     client={selectedClient}
                     onSaved={async (updatedClient) => {
                       await onRefreshData()
+                      setSubmitError(null)
                       setForm((current) => ({ ...current, client_id: updatedClient.id }))
                     }}
                   />

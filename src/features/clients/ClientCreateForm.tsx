@@ -4,6 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { findClientDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import { createClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
 
 interface ClientCreateFormProps {
@@ -92,48 +93,13 @@ export function ClientCreateForm({
         }
       }
 
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       const clientId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? `CLIENT-${crypto.randomUUID()}`
           : `CLIENT-${Date.now()}`
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/clients`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: clientId,
-          full_name: form.full_name.trim(),
-          phone: form.phone.trim() || null,
-          email: form.email.trim() || null,
-          tax_id: form.tax_id.trim() || null,
-          billing_address: form.billing_address.trim() || null,
-          status: form.status,
-          source_lead_id: null,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      await onCreated()
-      await onCreatedClient?.({
+      const createdClient = await createClientRecord({
         id: clientId,
-        display_code: null,
         full_name: form.full_name.trim(),
         phone: form.phone.trim() || null,
         email: form.email.trim() || null,
@@ -142,6 +108,9 @@ export function ClientCreateForm({
         status: form.status,
         source_lead_id: null,
       })
+
+      await onCreated()
+      await onCreatedClient?.(createdClient)
       setForm(initialFormState)
       setIsDirty(false)
       setSuccessMessage('Cliente creado correctamente.')

@@ -17,6 +17,7 @@ import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import { updateClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
 
 interface ClientDetailCardProps {
@@ -203,40 +204,14 @@ export function ClientDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/clients?id=eq.${encodeURIComponent(client.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            full_name: form.full_name.trim(),
-            phone: form.phone.trim() || null,
-            email: form.email.trim() || null,
-            tax_id: form.tax_id.trim() || null,
-            billing_address: form.billing_address.trim() || null,
-            status: nextStatus,
-          }),
-        },
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
+      await updateClientRecord(client.id, {
+        full_name: form.full_name.trim(),
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        tax_id: form.tax_id.trim() || null,
+        billing_address: form.billing_address.trim() || null,
+        status: nextStatus,
+      })
       await onClientUpdated()
       setSuccessMessage(
         nextStatus === 'inactive'

@@ -256,3 +256,10 @@ o:
 - si aun falla con sesion, aplicar o corregir policy/grants reales en Supabase
 - seguimiento DB/RLS posterior:
   - `docs/JOB_LINES_RLS_SELECT_FIX_QA.md`
+
+## Seguimiento UX posterior
+
+- Este fix resolvio el corte `appData -> editor`, pero aun quedaba una capa UX:
+  - si el save entraba bien y el refresh devolvia un `job` stale, la card podia sentirse inconsistente aunque la DB ya estuviera correcta
+- Seguimiento aplicado:
+  - `docs/JOB_EDITOR_LIVE_SAVE_UX_QA.md`

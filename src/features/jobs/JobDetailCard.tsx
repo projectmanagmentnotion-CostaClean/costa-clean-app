@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
@@ -13,6 +13,13 @@ import {
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
 import { getJobBillingDisplayConcept, getJobBillingDraftLines, getJobBillingLines, getJobBillingDisplaySummary } from './jobBilling'
+import {
+  appendBillingLine,
+  buildJobEditorValidation,
+  buildOptimisticJobAfterSave,
+  shouldShowJobLineDebug,
+  type JobEditorRefreshResult,
+} from './jobEditorLiveState'
 import { getPersistedJobLines } from './jobEditableLines'
 import { buildJobBillingSummary, saveJobWithLines } from './jobWriteApi'
 import type { JobListItem } from './types'
@@ -25,7 +32,7 @@ interface JobDetailCardProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes: QuoteListItem[]
-  onJobUpdated: () => Promise<void>
+  onJobUpdated: (optimisticJob?: JobListItem) => Promise<JobEditorRefreshResult>
   onCreateInvoiceFromJob: (job: JobListItem) => void
   onCreateSimilarJob?: (job: JobListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
@@ -56,6 +63,8 @@ interface JobEditorDebugState {
   lastSubmitConcepts: string[]
 }
 
+type SaveState = 'idle' | 'saving' | 'refreshing' | 'saved' | 'refresh_warning' | 'error'
+
 function getServiceTypeOptionLabel(value: string): string {
   switch (value) {
     case 'standard_cleaning': return 'Limpieza estándar'
@@ -84,6 +93,63 @@ function getJobSecondaryReference(job: JobListItem): string {
   ].join(' · ')
 }
 
+function createEmptyFormState(): EditFormState {
+  return {
+    client_id: '',
+    property_id: '',
+    quote_id: '',
+    scheduled_date: '',
+    status: 'scheduled',
+    service_type: 'standard_cleaning',
+    billing_concept: '',
+    billing_quantity: '1',
+    billing_unit: 'servicio',
+    billing_unit_price: '',
+    notes: '',
+  }
+}
+
+function createDebugStateFromJob(job: JobListItem | null): JobEditorDebugState {
+  if (!job) {
+    return {
+      source: 'unknown',
+      initialEditableLines: 0,
+      lastSubmitPayloadLines: null,
+      lastSubmitConcepts: [],
+    }
+  }
+
+  const initialBillingLines = getJobBillingDraftLines(job)
+  const hasPersistedBillingLines = Boolean(job.billing_lines?.length || job.billingLines?.length || job.job_lines?.length)
+
+  return {
+    source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
+    initialEditableLines: initialBillingLines.length,
+    lastSubmitPayloadLines: null,
+    lastSubmitConcepts: [],
+  }
+}
+
+function createFormStateFromJob(job: JobListItem | null): EditFormState {
+  if (!job) return createEmptyFormState()
+
+  return {
+    client_id: job.client_id,
+    property_id: job.property_id,
+    quote_id: job.quote_id ?? '',
+    scheduled_date: job.scheduled_date,
+    status: job.status,
+    service_type: job.service_type,
+    billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
+    billing_quantity: String(job.billing_quantity ?? 1),
+    billing_unit: normalizeBillingUnit(job.billing_unit),
+    billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
+      ? ''
+      : String(job.billing_unit_price),
+    notes: job.notes ?? '',
+  }
+}
+
 export function JobDetailCard({
   job,
   clients,
@@ -98,8 +164,8 @@ export function JobDetailCard({
   onRequestMajorEdit,
   onMajorEditClose,
 }: JobDetailCardProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+  const [isInlineEditing, setIsInlineEditing] = useState(false)
+  const [saveState, setSaveState] = useState<SaveState>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingCancelledStatusUpdate, setPendingCancelledStatusUpdate] = useState<string | null>(null)
@@ -107,57 +173,33 @@ export function JobDetailCard({
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [billingLines, setBillingLines] = useState<BillingLineFormState[]>([createBlankBillingLine()])
-  const [debugState, setDebugState] = useState<JobEditorDebugState>({
-    source: 'unknown',
-    initialEditableLines: 0,
-    lastSubmitPayloadLines: null,
-    lastSubmitConcepts: [],
-  })
-  const [form, setForm] = useState<EditFormState>({
-    client_id: '',
-    property_id: '',
-    quote_id: '',
-    scheduled_date: '',
-    status: 'scheduled',
-    service_type: 'standard_cleaning',
-    billing_concept: '',
-    billing_quantity: '1',
-    billing_unit: 'servicio',
-    billing_unit_price: '',
-    notes: '',
-  })
+  const [debugState, setDebugState] = useState<JobEditorDebugState>(createDebugStateFromJob(job))
+  const [form, setForm] = useState<EditFormState>(createFormStateFromJob(job))
+  const lineInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const previousJobIdRef = useRef<string | null>(job?.id ?? null)
+  const pendingFocusLineIdRef = useRef<string | null>(null)
+  const isEditing = majorEditMode || isInlineEditing
+  const isSaving = saveState === 'saving' || saveState === 'refreshing'
 
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (!job) {
-      setIsEditing(false)
+      previousJobIdRef.current = null
+      setIsInlineEditing(false)
+      setSaveState('idle')
       setSaveError(null)
       setSuccessMessage(null)
       setIsDirty(false)
       setBillingLines([createBlankBillingLine()])
-      setDebugState({
-        source: 'unknown',
-        initialEditableLines: 0,
-        lastSubmitPayloadLines: null,
-        lastSubmitConcepts: [],
-      })
-      setForm({
-        client_id: '',
-        property_id: '',
-        quote_id: '',
-        scheduled_date: '',
-        status: 'scheduled',
-        service_type: 'standard_cleaning',
-        billing_concept: '',
-        billing_quantity: '1',
-        billing_unit: 'servicio',
-        billing_unit_price: '',
-        notes: '',
-      })
+      setDebugState(createDebugStateFromJob(null))
+      setForm(createEmptyFormState())
       return
     }
 
     const initialBillingLines = getJobBillingDraftLines(job)
-    const hasPersistedBillingLines = Boolean(job.billing_lines?.length)
+    const hasPersistedBillingLines = Boolean(job.billing_lines?.length || job.billingLines?.length || job.job_lines?.length)
+    const isSameJob = previousJobIdRef.current === job.id
+    previousJobIdRef.current = job.id
 
     if (import.meta.env.DEV) {
       console.info('[JobDetailCard] open edit job', {
@@ -173,33 +215,32 @@ export function JobDetailCard({
       })
     }
 
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setBillingLines(initialBillingLines)
-    setDebugState({
+    setDebugState((current) => ({
       source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
       initialEditableLines: initialBillingLines.length,
-      lastSubmitPayloadLines: null,
-      lastSubmitConcepts: [],
-    })
-    setForm({
-      client_id: job.client_id,
-      property_id: job.property_id,
-      quote_id: job.quote_id ?? '',
-      scheduled_date: job.scheduled_date,
-      status: job.status,
-      service_type: job.service_type,
-      billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
-      billing_quantity: String(job.billing_quantity ?? 1),
-      billing_unit: normalizeBillingUnit(job.billing_unit),
-      billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
-        ? ''
-        : String(job.billing_unit_price),
-      notes: job.notes ?? '',
-    })
-  }, [job])
+      lastSubmitPayloadLines: current.lastSubmitPayloadLines,
+      lastSubmitConcepts: current.lastSubmitConcepts,
+    }))
+
+    if (!isSameJob) {
+      setIsInlineEditing(false)
+      setSaveState('idle')
+      setSaveError(null)
+      setSuccessMessage(null)
+      setIsDirty(false)
+      setBillingLines(initialBillingLines)
+      setForm(createFormStateFromJob(job))
+      return
+    }
+
+    if (isEditing && isDirty) {
+      return
+    }
+
+    setBillingLines(initialBillingLines)
+    setForm(createFormStateFromJob(job))
+  }, [isDirty, isEditing, job])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     onUnsavedChange?.(isDirty)
@@ -207,9 +248,15 @@ export function JobDetailCard({
   }, [isDirty, onUnsavedChange])
 
   useEffect(() => {
-    if (!job || !majorEditMode) return
-    setIsEditing(true)
-  }, [job, majorEditMode])
+    if (!pendingFocusLineIdRef.current) return
+
+    const nextInput = lineInputRefs.current[pendingFocusLineIdRef.current]
+    if (!nextInput) return
+
+    nextInput.focus()
+    nextInput.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    pendingFocusLineIdRef.current = null
+  }, [billingLines])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -225,14 +272,37 @@ export function JobDetailCard({
   const appDataJobLinesDebug = typeof window !== 'undefined'
     ? window.__COSTA_CLEAN_JOB_LINES_DEBUG__ ?? null
     : null
-  const showJobLineDebug = import.meta.env.DEV || (
-    typeof window !== 'undefined' && window.location.search.includes('debugJobLines=1')
+  const showJobLineDebug = shouldShowJobLineDebug(
+    typeof window !== 'undefined' ? window.location.search : '',
+    import.meta.env.DEV,
   )
+  const validation = useMemo(
+    () => buildJobEditorValidation(billingLines, form),
+    [billingLines, form],
+  )
+
+  function clearTransientFeedback() {
+    if (saveState === 'saved' || saveState === 'refresh_warning') {
+      setSaveState('idle')
+      setSuccessMessage(null)
+    }
+    if (saveState === 'error' && saveError) {
+      setSaveState('idle')
+      setSaveError(null)
+    }
+  }
+
+  function resetEditorFromJob(nextJob: JobListItem) {
+    setBillingLines(getJobBillingDraftLines(nextJob))
+    setDebugState(createDebugStateFromJob(nextJob))
+    setForm(createFormStateFromJob(nextJob))
+  }
 
   function updateField<K extends keyof EditFormState>(
     field: K,
     value: EditFormState[K],
   ) {
+    clearTransientFeedback()
     setIsDirty(true)
     setForm((current) => {
       const next = {
@@ -250,6 +320,7 @@ export function JobDetailCard({
   }
 
   function updateBillingLine<K extends keyof BillingLineFormState>(localId: string, field: K, value: BillingLineFormState[K]) {
+    clearTransientFeedback()
     setIsDirty(true)
     setBillingLines((current) => current.map((line) => (
       line.local_id === localId ? { ...line, [field]: value } : line
@@ -257,13 +328,19 @@ export function JobDetailCard({
   }
 
   function removeBillingLine(localId: string) {
+    clearTransientFeedback()
     setIsDirty(true)
     setBillingLines((current) => (current.length > 1 ? current.filter((line) => line.local_id !== localId) : current))
   }
 
   function addBillingLine() {
+    clearTransientFeedback()
     setIsDirty(true)
-    setBillingLines((current) => [...current, createBlankBillingLine()])
+    setBillingLines((current) => {
+      const next = appendBillingLine(current)
+      pendingFocusLineIdRef.current = next[next.length - 1]?.local_id ?? null
+      return next
+    })
   }
 
   async function saveJobEdits(confirmedCancelledStatus = false) {
@@ -276,26 +353,18 @@ export function JobDetailCard({
 
     setSaveError(null)
     setSuccessMessage(null)
-    setIsSaving(true)
+    setSaveState('saving')
 
     try {
-      if (!form.client_id) {
-        setSaveError('Debes seleccionar un cliente.')
-        return
-      }
-
-      if (!form.property_id) {
-        setSaveError('Debes seleccionar una propiedad.')
-        return
-      }
-
-      if (!form.scheduled_date) {
-        setSaveError('Debes indicar la fecha programada.')
+      if (validation.blockingMessage) {
+        setSaveState('error')
+        setSaveError(validation.blockingMessage)
         return
       }
 
       const normalizedBillingLines = buildBillingLinePayloads(billingLines, (concept) => concept.trim())
       if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
+        setSaveState('error')
         setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
@@ -317,6 +386,17 @@ export function JobDetailCard({
         normalizedBillingLines,
         getServiceTypeOptionLabel(form.service_type),
       )
+      const savedLines = normalizedBillingLines.map((line, index) => ({
+        ...line,
+        id: line.id || `JOB-LINE-${job.id}-${index + 1}`,
+        job_id: job.id,
+      }))
+      const optimisticJob = buildOptimisticJobAfterSave({
+        job,
+        form,
+        lines: savedLines,
+        billingSummary,
+      })
 
       await saveJobWithLines(
         {
@@ -333,27 +413,23 @@ export function JobDetailCard({
           billing_unit_price: billingSummary.billing_unit_price,
           notes: form.notes.trim() || null,
         },
-        normalizedBillingLines.map((line, index) => ({
-          ...line,
-          id: line.id || `JOB-LINE-${job.id}-${index + 1}`,
-          job_id: job.id,
-        })),
+        savedLines,
       )
 
-      await onJobUpdated()
-      setSuccessMessage('Servicio actualizado correctamente.')
-      if (majorEditMode) {
-        onMajorEditClose?.()
-      } else {
-        setIsEditing(false)
-      }
+      setSaveState('refreshing')
+      setSuccessMessage('Guardando servicio y refrescando vista...')
+      const refreshResult = await onJobUpdated(optimisticJob)
+      const refreshedJobLines = getJobBillingDraftLines(refreshResult.job)
+      setBillingLines(refreshedJobLines)
+      setForm(createFormStateFromJob(refreshResult.job))
+      setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
+      setSuccessMessage(refreshResult.message)
       setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el servicio.'
+      setSaveState('error')
       setSaveError(message)
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -367,13 +443,14 @@ export function JobDetailCard({
 
     setSaveError(null)
     setSuccessMessage(null)
-    setIsSaving(true)
+    setSaveState('saving')
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
       if (!supabaseUrl || !supabaseAnonKey) {
+        setSaveState('error')
         setSaveError('Faltan las variables de entorno de Supabase.')
         return
       }
@@ -393,19 +470,29 @@ export function JobDetailCard({
 
       if (!response.ok) {
         const errorText = await response.text()
+        setSaveState('error')
         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
         return
       }
 
-      await onJobUpdated()
-      setSuccessMessage(`Estado del servicio actualizado a ${getStatusLabel(nextStatus)}.`)
-      setIsEditing(false)
+      setSaveState('refreshing')
+      setSuccessMessage('Actualizando estado y refrescando vista...')
+      const refreshResult = await onJobUpdated({
+        ...job,
+        status: nextStatus,
+      })
+      setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
+      setSuccessMessage(
+        refreshResult.status === 'synced'
+          ? `Estado del servicio actualizado a ${getStatusLabel(nextStatus)}.`
+          : `${getStatusLabel(nextStatus)} guardado. La vista mantiene el estado local mientras llega el refresco.`,
+      )
+      setIsInlineEditing(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el estado del servicio.'
+      setSaveState('error')
       setSaveError(message)
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -467,34 +554,12 @@ export function JobDetailCard({
                   return
                 }
 
-                setIsEditing((current) => !current)
+                setIsInlineEditing((current) => !current)
+                setSaveState('idle')
                 setSaveError(null)
                 setSuccessMessage(null)
                 setIsDirty(false)
-                const nextBillingLines = getJobBillingDraftLines(job)
-                const hasPersistedBillingLines = Boolean(job.billing_lines?.length)
-                setBillingLines(nextBillingLines)
-                setDebugState({
-                  source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
-                  initialEditableLines: nextBillingLines.length,
-                  lastSubmitPayloadLines: null,
-                  lastSubmitConcepts: [],
-                })
-                setForm({
-                  client_id: job.client_id,
-                  property_id: job.property_id,
-                  quote_id: job.quote_id ?? '',
-                  scheduled_date: job.scheduled_date,
-                  status: job.status,
-                  service_type: job.service_type,
-                  billing_concept: job.billing_concept ?? getServiceTypeOptionLabel(job.service_type),
-                  billing_quantity: String(job.billing_quantity ?? 1),
-                  billing_unit: normalizeBillingUnit(job.billing_unit),
-                  billing_unit_price: job.billing_unit_price === null || job.billing_unit_price === undefined
-                    ? ''
-                    : String(job.billing_unit_price),
-                  notes: job.notes ?? '',
-                })
+                resetEditorFromJob(job)
               }}
             >
               {isEditing ? 'Cancelar edición' : 'Editar servicio'}
@@ -665,7 +730,11 @@ export function JobDetailCard({
                     <label className="form-field form-field-full">
                       <span>Concepto {index + 1}</span>
                       <input
+                        ref={(node) => {
+                          lineInputRefs.current[line.local_id] = node
+                        }}
                         value={line.concept}
+                        placeholder="Ej. Limpieza general, cristales, lavanderia..."
                         onChange={(event) => updateBillingLine(line.local_id, 'concept', event.target.value)}
                         required
                       />
@@ -707,11 +776,16 @@ export function JobDetailCard({
                       <small className="cc-create-flow__helper">
                         {Number.isNaN(calculateBillingLineSubtotal(line)) ? 'Revisa cantidad o precio.' : 'Linea lista para guardar.'}
                       </small>
+                      {validation.lineWarnings[line.local_id]?.length ? (
+                        <small className="cc-create-flow__helper" style={{ color: '#b42318' }}>
+                          {validation.lineWarnings[line.local_id].join(' ')}
+                        </small>
+                      ) : null}
                       <button
                         type="button"
                         className="secondary-button"
                         onClick={() => removeBillingLine(line.local_id)}
-                        disabled={billingLines.length === 1}
+                        disabled={billingLines.length === 1 || isSaving}
                       >
                         Quitar linea
                       </button>
@@ -723,12 +797,19 @@ export function JobDetailCard({
               <div className="cc-create-flow__microactions form-field-full">
                 <strong>Microacciones</strong>
                 <div className="cc-create-flow__microactions-row">
-                  <button type="button" className="secondary-button" onClick={addBillingLine}>
+                  <button type="button" className="secondary-button" onClick={addBillingLine} disabled={isSaving}>
                     Añadir linea
                   </button>
-                  <small className="cc-create-flow__helper">Total actual {billingSubtotal.toFixed(2)} €</small>
+                  <small className="cc-create-flow__helper">Total actual {billingSubtotal.toFixed(2)} EUR</small>
                 </div>
               </div>
+
+              {validation.globalWarnings.map((warning) => (
+                <div key={warning} className="cc-alert cc-alert--warning">
+                  <strong>Revisa el servicio antes de guardar</strong>
+                  <p>{warning}</p>
+                </div>
+              ))}
 
               {showJobLineDebug ? (
                 <div className="cc-create-flow__panel form-field-full" style={{ marginTop: '0.75rem' }}>
@@ -826,20 +907,42 @@ export function JobDetailCard({
                     }
 
                     if (majorEditMode) {
+                      setSaveState('idle')
+                      setSaveError(null)
+                      setSuccessMessage(null)
+                      resetEditorFromJob(job)
                       onMajorEditClose?.()
                       return
                     }
 
-                    setIsEditing(false)
+                    setIsInlineEditing(false)
+                    setSaveState('idle')
+                    setSaveError(null)
+                    setSuccessMessage(null)
                     setIsDirty(false)
+                    resetEditorFromJob(job)
                   }}
                 >
                   Cancelar
                 </button>
                 <button type="submit" className="primary-button" disabled={isSaving}>
-                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+                  {saveState === 'refreshing' ? 'Refrescando vista...' : saveState === 'saving' ? 'Guardando cambios...' : 'Guardar cambios'}
                 </button>
               </div>
+
+              {saveState === 'saving' ? (
+                <div className="cc-alert cc-alert--warning">
+                  <strong>Guardando servicio</strong>
+                  <p>Se estan enviando las lineas y el resumen del servicio.</p>
+                </div>
+              ) : null}
+
+              {saveState === 'refreshing' ? (
+                <div className="cc-alert cc-alert--warning">
+                  <strong>Refrescando vista</strong>
+                  <p>{successMessage ?? 'El servicio ya se guardo. Esperando a que el refresh confirme la version remota.'}</p>
+                </div>
+              ) : null}
 
               {saveError ? (
                 <div className="cc-alert cc-alert--error">
@@ -848,9 +951,9 @@ export function JobDetailCard({
                 </div>
               ) : null}
 
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
+              {successMessage && (saveState === 'saved' || saveState === 'refresh_warning') ? (
+                <div className={`cc-alert ${saveState === 'refresh_warning' ? 'cc-alert--warning' : 'cc-alert--success'}`}>
+                  <strong>{saveState === 'refresh_warning' ? 'Guardado con refresh pendiente' : 'Operacion correcta'}</strong>
                   <p>{successMessage}</p>
                 </div>
               ) : null}
@@ -960,9 +1063,9 @@ export function JobDetailCard({
             </div>
           ) : null}
 
-          {!isEditing && successMessage ? (
-            <div className="cc-alert cc-alert--success">
-              <strong>Operación correcta</strong>
+          {!isEditing && successMessage && (saveState === 'saved' || saveState === 'refresh_warning') ? (
+            <div className={`cc-alert ${saveState === 'refresh_warning' ? 'cc-alert--warning' : 'cc-alert--success'}`}>
+              <strong>{saveState === 'refresh_warning' ? 'Guardado con refresh pendiente' : 'Operación correcta'}</strong>
               <p>{successMessage}</p>
             </div>
           ) : null}
@@ -984,12 +1087,18 @@ export function JobDetailCard({
         onConfirm={() => {
           setShowDiscardConfirm(false)
           setIsDirty(false)
+          setSaveState('idle')
+          setSaveError(null)
+          setSuccessMessage(null)
+          if (job) {
+            resetEditorFromJob(job)
+          }
           if (majorEditMode) {
             onMajorEditClose?.()
             return
           }
 
-          setIsEditing(false)
+          setIsInlineEditing(false)
         }}
       />
 

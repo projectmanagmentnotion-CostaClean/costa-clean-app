@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import {
   formatCurrency,
   formatDateEs,
@@ -26,6 +26,7 @@ import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { JobDetailCard } from './JobDetailCard'
+import { resolveJobAfterRefresh, type JobEditorRefreshResult } from './jobEditorLiveState'
 import { getJobBillingDisplayConcept } from './jobBilling'
 import type { JobListItem } from './types'
 import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
@@ -167,30 +168,37 @@ export function JobWorkspace({
   onCreateSimilarJob,
   onPendingStateChange,
 }: JobWorkspaceProps) {
+  const [jobOverride, setJobOverride] = useState<JobListItem | null>(null)
   const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
   const [hasPendingDetailState, setHasPendingDetailState] = useState(false)
   const [hasActionDirty, setHasActionDirty] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
+  const remoteJobRef = useRef(job)
+  const liveJob = jobOverride?.id === job.id ? jobOverride : job
+
+  useEffect(() => {
+    remoteJobRef.current = job
+  }, [job])
 
   const client = useMemo(
-    () => clients.find((entry) => entry.id === job.client_id) ?? null,
-    [clients, job.client_id],
+    () => clients.find((entry) => entry.id === liveJob.client_id) ?? null,
+    [clients, liveJob.client_id],
   )
   const property = useMemo(
-    () => properties.find((entry) => entry.id === job.property_id) ?? null,
-    [job.property_id, properties],
+    () => properties.find((entry) => entry.id === liveJob.property_id) ?? null,
+    [liveJob.property_id, properties],
   )
   const quote = useMemo(
-    () => (job.quote_id ? quotes.find((entry) => entry.id === job.quote_id) ?? null : null),
-    [job.quote_id, quotes],
+    () => (liveJob.quote_id ? quotes.find((entry) => entry.id === liveJob.quote_id) ?? null : null),
+    [liveJob.quote_id, quotes],
   )
   const invoice = useMemo(
     () =>
-      invoices.find((entry) => entry.job_id === job.id)
-      ?? (job.invoice_id ? invoices.find((entry) => entry.id === job.invoice_id) ?? null : null),
-    [invoices, job.id, job.invoice_id],
+      invoices.find((entry) => entry.job_id === liveJob.id)
+      ?? (liveJob.invoice_id ? invoices.find((entry) => entry.id === liveJob.invoice_id) ?? null : null),
+    [invoices, liveJob.id, liveJob.invoice_id],
   )
   const relatedPayments = useMemo(
     () => (invoice ? payments.filter((payment) => payment.invoice_id === invoice.id) : []),
@@ -205,16 +213,16 @@ export function JobWorkspace({
     [invoice, relatedPayments],
   )
   const outstanding = paymentSummary?.outstandingAmount ?? 0
-  const nextStep = getRecommendedNextStep(job, invoice, paymentSummary)
-  const operationalSignal = getOperationalSignal(job, invoice, outstanding)
-  const primaryAction = getJobPrimaryAction(job, invoice, outstanding)
+  const nextStep = getRecommendedNextStep(liveJob, invoice, paymentSummary)
+  const operationalSignal = getOperationalSignal(liveJob, invoice, outstanding)
+  const primaryAction = getJobPrimaryAction(liveJob, invoice, outstanding)
   const timelineItems = useMemo(
-    () => buildJobTimelineItems({ job, quote, invoice, payments: relatedPayments }),
-    [invoice, job, quote, relatedPayments],
+    () => buildJobTimelineItems({ job: liveJob, quote, invoice, payments: relatedPayments }),
+    [invoice, liveJob, quote, relatedPayments],
   )
   const invoiceCreatePrefill = useMemo(
-    () => buildInvoiceCreatePrefillFromJob(job),
-    [job],
+    () => buildInvoiceCreatePrefillFromJob(liveJob),
+    [liveJob],
   )
   const heroActions: ActionGroupItem[] = []
 
@@ -292,12 +300,12 @@ export function JobWorkspace({
     {
       key: 'open-client',
       label: 'Abrir cliente',
-      onClick: () => onOpenClientWorkspace(job.client_id),
+      onClick: () => onOpenClientWorkspace(liveJob.client_id),
     },
     {
       key: 'open-property',
       label: 'Abrir propiedad',
-      onClick: () => onOpenPropertyWorkspace(job.property_id),
+      onClick: () => onOpenPropertyWorkspace(liveJob.property_id),
     },
   )
   const dedupedHeroActions = heroActions.filter(
@@ -307,6 +315,24 @@ export function JobWorkspace({
   useEffect(() => {
     onPendingStateChange?.(hasActionDirty || hasPendingDetailState || hasMajorEditDirty)
   }, [hasActionDirty, hasMajorEditDirty, hasPendingDetailState, onPendingStateChange])
+
+  async function handleJobRefresh(optimisticJob?: JobListItem): Promise<JobEditorRefreshResult> {
+    const baseJob = optimisticJob ?? liveJob
+
+    if (optimisticJob) {
+      setJobOverride(optimisticJob)
+    }
+
+    await onRefresh()
+    await new Promise((resolve) => window.setTimeout(resolve, 0))
+
+    const resolved = resolveJobAfterRefresh({
+      optimisticJob: baseJob,
+      remoteJob: remoteJobRef.current?.id === baseJob.id ? remoteJobRef.current : null,
+    })
+    setJobOverride(resolved.job)
+    return resolved
+  }
 
   async function handleActionCreated() {
     await onRefresh()
@@ -347,20 +373,20 @@ export function JobWorkspace({
         <div className="cc-client-workspace__identity">
           <div className="cc-client-workspace__identity-copy">
             <span className="cc-client-workspace__kicker">Operacion viva</span>
-            <h1>{getJobBillingDisplayConcept(job) || getServiceTypeLabel(job.service_type)}</h1>
-            <p>{formatJobLabel(job)} · {formatDateEs(job.scheduled_date)}</p>
+            <h1>{getJobBillingDisplayConcept(liveJob) || getServiceTypeLabel(liveJob.service_type)}</h1>
+            <p>{formatJobLabel(liveJob)} · {formatDateEs(liveJob.scheduled_date)}</p>
           </div>
 
           <div className="cc-client-workspace__status">
-            <span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>
-            <span className="cc-client-workspace__status-meta">{job.display_code ?? job.id}</span>
+            <span className="lead-badge">{getDisplayStatusLabel(liveJob.status)}</span>
+            <span className="cc-client-workspace__status-meta">{liveJob.display_code ?? liveJob.id}</span>
           </div>
         </div>
 
         <div className="cc-client-workspace__meta">
           <article className="cc-client-workspace__meta-card">
             <span>Cliente</span>
-            <strong>{client ? formatClientLabel(client) : formatClientLabel(job)}</strong>
+            <strong>{client ? formatClientLabel(client) : formatClientLabel(liveJob)}</strong>
             <small>{client?.phone ?? client?.email ?? 'Sin contacto principal'}</small>
           </article>
         </div>
@@ -397,16 +423,16 @@ export function JobWorkspace({
               {property
                 ? formatPropertyLabel(property)
                 : formatPropertyLabel({
-                    id: job.property_id,
-                    display_code: job.property_display_code,
-                    name: job.property_name,
+                    id: liveJob.property_id,
+                    display_code: liveJob.property_display_code,
+                    name: liveJob.property_name,
                   })}
             </strong>
             <small>{property?.address ?? 'Sin direccion ampliada'}</small>
           </article>
           <article className="cc-client-workspace__meta-card">
             <span>Facturacion</span>
-            <strong>{getJobBillingDisplayConcept(job) || 'Sin concepto definido'}</strong>
+            <strong>{getJobBillingDisplayConcept(liveJob) || 'Sin concepto definido'}</strong>
             <small>{quote ? `Origen ${formatQuoteLabel(quote)}` : 'Servicio directo sin presupuesto origen'}</small>
           </article>
         </div>
@@ -438,7 +464,7 @@ export function JobWorkspace({
         <ActionFlowOverlay
           isOpen={Boolean(activeAction)}
           title={activeAction === 'invoice' ? 'Nueva factura' : 'Registrar cobro'}
-          description={`La accion se guardara vinculada a ${formatJobLabel(job)}. Al cerrar volveras a este servicio.`}
+          description={`La accion se guardara vinculada a ${formatJobLabel(liveJob)}. Al cerrar volveras a este servicio.`}
           onClose={requestCloseAction}
         >
           {activeAction === 'invoice' ? (
@@ -446,7 +472,7 @@ export function JobWorkspace({
               <LazyInvoiceCreateFlow
                 clients={client ? [client] : clients}
                 properties={property ? [property] : properties}
-                jobs={[job]}
+                jobs={[liveJob]}
                 quotes={quote ? [quote] : []}
                 onRefreshData={onRefresh}
                 onCompleted={handleActionCreated}
@@ -463,7 +489,7 @@ export function JobWorkspace({
                 invoices={invoice ? [invoice] : []}
                 clients={client ? [client] : clients}
                 properties={property ? [property] : properties}
-                jobs={[job]}
+                jobs={[liveJob]}
                 quotes={quote ? [quote] : []}
                 onRefreshData={onRefresh}
                 onCompleted={handleFlowCompleted}
@@ -478,7 +504,7 @@ export function JobWorkspace({
       <MajorEditFlowOverlay
         isOpen={showMajorEdit}
         title="Editar servicio"
-        description={`La edicion mayor se trabaja fuera de la card y al cerrar vuelves a ${formatJobLabel(job)}.`}
+        description={`La edicion mayor se trabaja fuera de la card y al cerrar vuelves a ${formatJobLabel(liveJob)}.`}
         onClose={() => {
           if (hasMajorEditDirty) {
             setShowCloseActionConfirm(true)
@@ -489,11 +515,11 @@ export function JobWorkspace({
         }}
       >
         <JobDetailCard
-          job={job}
+          job={liveJob}
           clients={clients}
           properties={properties}
           quotes={quotes}
-          onJobUpdated={onRefresh}
+          onJobUpdated={handleJobRefresh}
           onCreateInvoiceFromJob={() => openAction('invoice')}
           onCreateSimilarJob={onCreateSimilarJob}
           onUnsavedChange={setHasMajorEditDirty}
@@ -567,11 +593,11 @@ export function JobWorkspace({
       {activeTab === 'operations' ? (
         <section className="cc-client-workspace__tab-panel">
           <JobDetailCard
-            job={job}
+            job={liveJob}
             clients={clients}
             properties={properties}
             quotes={quotes}
-            onJobUpdated={onRefresh}
+            onJobUpdated={handleJobRefresh}
             onCreateInvoiceFromJob={() => openAction('invoice')}
             onCreateSimilarJob={onCreateSimilarJob}
             onUnsavedChange={setHasPendingDetailState}
@@ -663,7 +689,7 @@ export function JobWorkspace({
             <div className="cc-client-workspace__notes">
               <article className="cc-client-workspace__note-card">
                 <span>Servicio</span>
-                <strong>{formatJobLabel(job)}</strong>
+                <strong>{formatJobLabel(liveJob)}</strong>
                 <p>{job.notes?.trim() || 'Sin notas operativas registradas.'}</p>
               </article>
               {property?.notes?.trim() ? (

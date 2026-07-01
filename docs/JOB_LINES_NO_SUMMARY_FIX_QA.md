@@ -110,3 +110,4 @@ order by sort_order asc;
 - No hice QA autenticada en navegador en este turno.
 - No ejecute SQL directo desde este entorno.
 - Si existen servicios antiguos con `billing_concept` resumido pero `job_lines` correctas, ahora la UI deberia mostrar el primer concepto real y conservar todas las lineas al refacturar o duplicar.
+- Seguimiento posterior: ver `docs/JOB_EDIT_REAL_LINES_FIX_QA.md`. El resumen textual ya estaba corregido, pero faltaba normalizar `job_lines` reales al entrar en el editor para no caer por error en el fallback legacy de una sola linea.

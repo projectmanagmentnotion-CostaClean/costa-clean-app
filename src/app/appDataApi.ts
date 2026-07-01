@@ -17,7 +17,16 @@ import { getSupabaseClient } from '../lib/supabase'
 import { getSupabasePublicEnv } from '../lib/supabaseEnv'
 import { fetchSupabaseRestList } from '../lib/supabaseRest'
 
-type JobLineRecord = NonNullable<JobListItem['billing_lines']>[number] & { job_id: string }
+type JobLineRecord = {
+  id?: string
+  job_id: string
+  sort_order?: number | string | null
+  concept: string
+  quantity: number | string
+  unit: string
+  unit_price: number | string
+  line_subtotal: number | string
+}
 
 function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
   const linesByInvoiceId = new Map<string, NonNullable<InvoiceListItem['lines']>>()
@@ -93,8 +102,15 @@ function groupJobLines(lines: JobLineRecord[]) {
   const linesByJobId = new Map<string, NonNullable<JobListItem['billing_lines']>>()
 
   for (const line of lines) {
+    const normalizedLine = {
+      ...line,
+      sort_order: line.sort_order === null || line.sort_order === undefined ? undefined : Number(line.sort_order),
+      quantity: Number(line.quantity),
+      unit_price: Number(line.unit_price),
+      line_subtotal: Number(line.line_subtotal),
+    }
     const currentLines = linesByJobId.get(line.job_id) ?? []
-    currentLines.push(line)
+    currentLines.push(normalizedLine)
     linesByJobId.set(line.job_id, currentLines)
   }
 

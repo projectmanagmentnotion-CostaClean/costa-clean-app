@@ -136,11 +136,24 @@ export function JobDetailCard({
       return
     }
 
+    const initialBillingLines = getJobBillingDraftLines(job)
+    const hasPersistedBillingLines = Boolean(job.billing_lines?.length)
+
+    if (import.meta.env.DEV) {
+      console.info('[JobDetailCard] initial billing lines', {
+        jobId: job.id,
+        displayCode: job.display_code ?? null,
+        billingLinesFromJob: job.billing_lines?.length ?? 0,
+        initialLines: initialBillingLines.length,
+        source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
+      })
+    }
+
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
     setIsDirty(false)
-    setBillingLines(getJobBillingDraftLines(job))
+    setBillingLines(initialBillingLines)
     setForm({
       client_id: job.client_id,
       property_id: job.property_id,

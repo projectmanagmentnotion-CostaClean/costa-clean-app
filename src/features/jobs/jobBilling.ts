@@ -9,12 +9,33 @@ import {
 } from '../shared/billingLineDrafts'
 import type { JobBillingLineItem, JobListItem } from './types'
 
+function normalizeJobBillingLine(line: JobBillingLineItem): JobBillingLineItem | null {
+  const quantity = Number(line.quantity)
+  const unitPrice = Number(line.unit_price)
+  const lineSubtotal = Number(line.line_subtotal)
+
+  if (!Number.isFinite(quantity) || quantity <= 0 || !Number.isFinite(unitPrice) || unitPrice < 0) {
+    return null
+  }
+
+  return {
+    ...line,
+    sort_order: line.sort_order === undefined ? undefined : Number(line.sort_order),
+    quantity,
+    unit_price: unitPrice,
+    line_subtotal: Number.isFinite(lineSubtotal)
+      ? lineSubtotal
+      : Math.round((quantity * unitPrice + Number.EPSILON) * 100) / 100,
+  }
+}
+
 export function getJobBillingLines(job: JobListItem | null): JobBillingLineItem[] {
   if (!job) return []
 
   if (job.billing_lines?.length) {
     return [...job.billing_lines]
-      .filter((line) => Number.isFinite(line.quantity) && line.quantity > 0 && Number.isFinite(line.unit_price) && line.unit_price >= 0)
+      .map(normalizeJobBillingLine)
+      .filter((line): line is JobBillingLineItem => Boolean(line))
       .sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0))
   }
 

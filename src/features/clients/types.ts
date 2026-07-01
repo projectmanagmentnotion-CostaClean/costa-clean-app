@@ -8,6 +8,8 @@ export interface ClientListItem {
   tax_id: string | null
   billing_address: string | null
   status: string
+  archived_at?: string | null
+  deleted_at?: string | null
   source_lead_id: string | null
   source_lead_display_code?: string | null
   source_lead_name?: string | null

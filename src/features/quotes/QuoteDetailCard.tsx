@@ -24,6 +24,8 @@ import {
   roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
+import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface QuoteDetailCardProps {
   quote: QuoteListItem | null
@@ -154,6 +156,9 @@ function QuoteDetailCardContent({
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [showTrashConfirm, setShowTrashConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     client_id: null,
     property_id: '',
@@ -341,6 +346,51 @@ function QuoteDetailCardContent({
     void updateQuoteStatus(nextStatus)
   }
 
+  async function handleArchiveQuote() {
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    try {
+      await patchLifecycleEntity('quotes', hydratedQuote.id, { archived_at: new Date().toISOString() })
+      await onQuoteUpdated()
+      setSuccessMessage('Presupuesto archivado correctamente.')
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo archivar el presupuesto.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleRestoreQuote() {
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    try {
+      await patchLifecycleEntity('quotes', hydratedQuote.id, { archived_at: null, deleted_at: null })
+      await onQuoteUpdated()
+      setSuccessMessage('Presupuesto restaurado correctamente.')
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo restaurar el presupuesto.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleTrashQuote() {
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    try {
+      await patchLifecycleEntity('quotes', hydratedQuote.id, { deleted_at: new Date().toISOString() })
+      await onQuoteUpdated()
+      setSuccessMessage('Borrador movido a papelera.')
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'No se pudo mover el borrador a papelera.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function saveQuoteEdits(confirmedRejectedStatus = false) {
     if (form.status === 'rejected' && hydratedQuote.status !== 'rejected' && !confirmedRejectedStatus) {
       setPendingRejectedFormSave(true)
@@ -456,6 +506,28 @@ function QuoteDetailCardContent({
   }
 
   if (!hideHeaderActions) {
+    headerActions.push(
+      isArchivedEntity(hydratedQuote)
+        ? {
+            key: 'restore-quote',
+            label: 'Restaurar presupuesto',
+            onClick: () => setShowRestoreConfirm(true),
+          }
+        : {
+            key: 'archive-quote',
+            label: 'Archivar presupuesto',
+            onClick: () => setShowArchiveConfirm(true),
+          },
+    )
+
+    if (hydratedQuote.status === 'draft') {
+      headerActions.push({
+        key: 'trash-quote',
+        label: 'Mover borrador a papelera',
+        onClick: () => setShowTrashConfirm(true),
+      })
+    }
+
     if (onCreateSimilarQuote) {
       headerActions.push({
         key: 'duplicate-quote',
@@ -872,6 +944,48 @@ function QuoteDetailCardContent({
         onConfirm={() => {
           setPendingRejectedFormSave(false)
           void saveQuoteEdits(true)
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showArchiveConfirm}
+        title="Archivar presupuesto"
+        description="El presupuesto dejara de aparecer en el seguimiento comercial activo."
+        confirmLabel="Archivar presupuesto"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowArchiveConfirm(false)}
+        onConfirm={() => {
+          setShowArchiveConfirm(false)
+          void handleArchiveQuote()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showRestoreConfirm}
+        title="Restaurar presupuesto"
+        description="El presupuesto volvera a las vistas comerciales activas."
+        confirmLabel="Restaurar presupuesto"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowRestoreConfirm(false)}
+        onConfirm={() => {
+          setShowRestoreConfirm(false)
+          void handleRestoreQuote()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showTrashConfirm}
+        title="Eliminar borrador"
+        description="Esta accion movera el borrador a papelera."
+        confirmLabel="Mover a papelera"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowTrashConfirm(false)}
+        onConfirm={() => {
+          setShowTrashConfirm(false)
+          void handleTrashQuote()
         }}
       />
     </section>

@@ -27,6 +27,8 @@ import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { useToast } from '../../shared/toasts/useToast'
+import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface JobDetailCardProps {
   job: JobListItem | null
@@ -172,6 +174,9 @@ export function JobDetailCard({
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [pendingCancelledStatusUpdate, setPendingCancelledStatusUpdate] = useState<string | null>(null)
   const [pendingCancelledFormSave, setPendingCancelledFormSave] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [showTrashConfirm, setShowTrashConfirm] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [billingLines, setBillingLines] = useState<BillingLineFormState[]>([createBlankBillingLine()])
@@ -579,6 +584,69 @@ export function JobDetailCard({
     void updateJobStatus(nextStatus)
   }
 
+  async function handleArchiveJob() {
+    if (!job) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setSaveState('saving')
+    const toastId = toast.loading('Archivando servicio...', 'Saldra de la agenda operativa activa.')
+
+    try {
+      await patchLifecycleEntity('jobs', job.id, { archived_at: new Date().toISOString() })
+      const refreshResult = await onJobUpdated({ ...job, archived_at: new Date().toISOString() })
+      setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
+      setSuccessMessage('Servicio archivado. Ya no aparece en la agenda activa.')
+      toast.update(toastId, { type: 'success', title: 'Servicio archivado', description: 'Ya no aparece en la agenda activa.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo archivar el servicio.'
+      setSaveState('error')
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo archivar', description: message, persistent: true })
+    }
+  }
+
+  async function handleRestoreJob() {
+    if (!job) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setSaveState('saving')
+    const toastId = toast.loading('Restaurando servicio...', 'Volvera al circuito operativo.')
+
+    try {
+      await patchLifecycleEntity('jobs', job.id, { archived_at: null, deleted_at: null })
+      const refreshResult = await onJobUpdated({ ...job, archived_at: null, deleted_at: null })
+      setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
+      setSuccessMessage('Servicio restaurado correctamente.')
+      toast.update(toastId, { type: 'success', title: 'Servicio restaurado', description: 'Vuelve a estar disponible.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo restaurar el servicio.'
+      setSaveState('error')
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo restaurar', description: message, persistent: true })
+    }
+  }
+
+  async function handleTrashJob() {
+    if (!job) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setSaveState('saving')
+    const toastId = toast.loading('Moviendo servicio a papelera...', 'Quedara oculto de las vistas diarias.')
+
+    try {
+      await patchLifecycleEntity('jobs', job.id, { deleted_at: new Date().toISOString() })
+      const refreshResult = await onJobUpdated({ ...job, deleted_at: new Date().toISOString() })
+      setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
+      setSuccessMessage('Servicio movido a papelera.')
+      toast.update(toastId, { type: 'success', title: 'Servicio en papelera', description: 'Queda oculto de las vistas diarias.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo mover el servicio a papelera.'
+      setSaveState('error')
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo mover a papelera', description: message, persistent: true })
+    }
+  }
+
   return (
     <section className="data-section">
       <div className="section-header page-header-actions">
@@ -603,6 +671,34 @@ export function JobDetailCard({
                 onClick={() => onCreateSimilarJob(job)}
               >
                 Crear servicio como este
+              </button>
+            ) : null}
+
+            {isArchivedEntity(job) ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowRestoreConfirm(true)}
+              >
+                Restaurar servicio
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowArchiveConfirm(true)}
+              >
+                Archivar servicio
+              </button>
+            )}
+
+            {!job.invoice_id ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setShowTrashConfirm(true)}
+              >
+                Mover a papelera
               </button>
             ) : null}
 
@@ -1190,6 +1286,48 @@ export function JobDetailCard({
         onConfirm={() => {
           setPendingCancelledFormSave(false)
           void saveJobEdits(true)
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showArchiveConfirm}
+        title="Archivar servicio"
+        description="Este servicio dejara de aparecer en la agenda activa. Podras revisarlo desde los archivados."
+        confirmLabel="Archivar servicio"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowArchiveConfirm(false)}
+        onConfirm={() => {
+          setShowArchiveConfirm(false)
+          void handleArchiveJob()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showRestoreConfirm}
+        title="Restaurar servicio"
+        description="El servicio volvera a estar visible en los flujos operativos."
+        confirmLabel="Restaurar servicio"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowRestoreConfirm(false)}
+        onConfirm={() => {
+          setShowRestoreConfirm(false)
+          void handleRestoreJob()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showTrashConfirm}
+        title="Mover servicio a papelera"
+        description="Solo deberias usar esta accion en servicios sin factura asociada. Quedara oculto de las vistas diarias."
+        confirmLabel="Mover a papelera"
+        tone="warning"
+        isBusy={isSaving}
+        onCancel={() => setShowTrashConfirm(false)}
+        onConfirm={() => {
+          setShowTrashConfirm(false)
+          void handleTrashJob()
         }}
       />
     </section>

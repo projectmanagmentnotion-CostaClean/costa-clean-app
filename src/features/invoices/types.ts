@@ -11,6 +11,10 @@ export interface InvoiceListItem {
   client_label?: string | null
   issue_date: string
   status: string
+  archived_at?: string | null
+  deleted_at?: string | null
+  cancelled_at?: string | null
+  cancel_reason?: string | null
   subtotal: number
   tax_amount: number
   total: number
@@ -33,6 +37,7 @@ export interface InvoiceListItem {
   property_display_code?: string | null
   property_name?: string | null
   property_address_line?: string | null
+  updated_at?: string | null
 
   service_reference?: string | null
   service_description?: string | null

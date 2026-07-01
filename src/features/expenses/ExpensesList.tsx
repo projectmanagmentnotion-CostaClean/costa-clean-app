@@ -21,6 +21,7 @@ import {
   hasZeroEstimatedDeductibleVat,
   needsFiscalReview,
 } from './fiscalIntelligenceSummary'
+import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface ExpensesListProps {
   expenses: ExpenseListItem[]
@@ -54,6 +55,7 @@ export function ExpensesList({
   onSelectExpense,
 }: ExpensesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('expense_date', 'desc', {
+    lifecycle: 'active',
     category: 'all',
     support: 'all',
     review: 'all',
@@ -65,6 +67,9 @@ export function ExpensesList({
 
   const filteredExpenses = useMemo(() => {
     return expenses.filter((expense) =>
+      (preferences.filters.lifecycle === 'all'
+        || (preferences.filters.lifecycle === 'active' && !isArchivedEntity(expense) && !isDeletedEntity(expense))
+        || (preferences.filters.lifecycle === 'archived' && isArchivedEntity(expense) && !isDeletedEntity(expense))) &&
       (preferences.filters.category === 'all' || expense.category === preferences.filters.category) &&
       (preferences.filters.support === 'all' || expense.document_support_status === preferences.filters.support) &&
       (preferences.filters.review === 'all' || expense.fiscal_review_status === preferences.filters.review) &&
@@ -135,6 +140,16 @@ export function ExpensesList({
         ]}
         defaultPreferences={defaultPreferences}
         filters={[
+          {
+            key: 'lifecycle',
+            label: 'Vista',
+            value: preferences.filters.lifecycle ?? 'active',
+            options: [
+              { value: 'active', label: 'Activos' },
+              { value: 'all', label: 'Todos' },
+              { value: 'archived', label: 'Archivados' },
+            ],
+          },
           {
             key: 'category',
             label: 'Categoria',

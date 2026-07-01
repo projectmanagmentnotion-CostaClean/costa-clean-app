@@ -8,6 +8,7 @@ import type { InvoiceListItem } from './types'
 import { applySortDirection, compareDate, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { getInvoiceFinancialStatusLabel } from './paymentState'
 import { OperationalListItem } from '../../components/OperationalListItem'
+import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -38,16 +39,29 @@ export function InvoicesList({
   onOpenDocument,
   onStateChange,
 }: InvoicesListProps) {
-  const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'all' }), [])
+  const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredInvoices = useMemo(() => {
+    const lifecycleFilter = preferences.filters.status ?? 'pending'
     return invoices.filter((invoice) =>
-      (
-        preferences.filters.status === 'all'
-        || (preferences.filters.status === 'draft' && invoice.status === 'draft')
-        || (preferences.filters.status !== 'draft' && (invoice.payment_status ?? invoice.status) === preferences.filters.status)
-      ) &&
+      (() => {
+        const archived = isArchivedEntity(invoice)
+        const deleted = isDeletedEntity(invoice)
+        const cancelled = isCancelledEntity(invoice)
+        const outstanding = (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009
+
+        if (lifecycleFilter === 'all') return !deleted
+        if (lifecycleFilter === 'archived') return archived && !deleted
+        if (lifecycleFilter === 'cancelled') return cancelled && !archived && !deleted
+        if (deleted || archived || cancelled) return false
+        if (lifecycleFilter === 'pending') return outstanding
+        if (lifecycleFilter === 'issued') return invoice.status === 'issued'
+        if (lifecycleFilter === 'draft') return invoice.status === 'draft'
+        if (lifecycleFilter === 'paid') return invoice.payment_status === 'paid' || invoice.status === 'paid'
+        if (lifecycleFilter === 'partially_paid') return invoice.payment_status === 'partially_paid'
+        return (invoice.payment_status ?? invoice.status) === lifecycleFilter
+      })() &&
       matchesSearchQuery(preferences.searchQuery, [
         invoice.display_code,
         invoice.id,
@@ -122,11 +136,13 @@ export function InvoicesList({
           value: preferences.filters.status ?? 'all',
           options: [
             { value: 'all', label: 'Todos' },
+            { value: 'pending', label: 'Pendientes' },
+            { value: 'issued', label: 'Emitidas' },
             { value: 'draft', label: 'Borrador' },
-            { value: 'pending', label: 'Pendiente' },
             { value: 'partially_paid', label: 'Parcialmente cobrada' },
             { value: 'paid', label: 'Cobrada' },
-            { value: 'cancelled', label: 'Cancelada' },
+            { value: 'cancelled', label: 'Anuladas' },
+            { value: 'archived', label: 'Archivadas' },
           ],
         }]}
         onChange={setPreferences}

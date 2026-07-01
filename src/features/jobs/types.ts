@@ -21,6 +21,10 @@ export interface JobListItem {
   quote_display_code?: string | null
   scheduled_date: string
   status: string
+  archived_at?: string | null
+  deleted_at?: string | null
+  cancelled_at?: string | null
+  cancel_reason?: string | null
   invoice_id?: string | null
   service_type: string
   billing_concept?: string | null
@@ -31,4 +35,5 @@ export interface JobListItem {
   billingLines?: JobBillingLineItem[] | null
   job_lines?: JobBillingLineItem[] | null
   notes?: string | null
+  updated_at?: string | null
 }

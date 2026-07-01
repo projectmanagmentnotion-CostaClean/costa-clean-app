@@ -27,6 +27,8 @@ import {
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
+import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -267,6 +269,10 @@ export function InvoiceDetailCard({
   const [isDirty, setIsDirty] = useState(false)
   const [hasPaymentFormDirty, setHasPaymentFormDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showTrashConfirm, setShowTrashConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -443,7 +449,100 @@ export function InvoiceDetailCard({
   }
 
   function requestInvoiceStatusUpdate(nextStatus: string) {
+    if (nextStatus === 'cancelled') {
+      setShowCancelConfirm(true)
+      return
+    }
+
     void updateInvoiceStatus(nextStatus)
+  }
+
+  async function handleArchiveInvoice() {
+    if (!invoice) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    const toastId = toast.loading('Archivando factura...', 'Seguira disponible en el historico.')
+
+    try {
+      await patchLifecycleEntity('invoices', invoice.id, { archived_at: new Date().toISOString() })
+      await onInvoiceUpdated()
+      setSuccessMessage('Factura archivada. Sigue disponible en el historico.')
+      toast.update(toastId, { type: 'success', title: 'Factura archivada', description: 'Sigue disponible en el historico.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo archivar la factura.'
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo archivar', description: message, persistent: true })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleRestoreInvoice() {
+    if (!invoice) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    const toastId = toast.loading('Restaurando factura...', 'Volvera a estar visible.')
+
+    try {
+      await patchLifecycleEntity('invoices', invoice.id, { archived_at: null, deleted_at: null })
+      await onInvoiceUpdated()
+      setSuccessMessage('Factura restaurada correctamente.')
+      toast.update(toastId, { type: 'success', title: 'Factura restaurada', description: 'Vuelve a estar visible.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo restaurar la factura.'
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo restaurar', description: message, persistent: true })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleCancelInvoice() {
+    if (!invoice) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    const toastId = toast.loading('Anulando factura...', 'Se mantendra en el historico fiscal.')
+
+    try {
+      await patchLifecycleEntity('invoices', invoice.id, {
+        status: 'cancelled',
+        cancelled_at: new Date().toISOString(),
+        cancel_reason: 'Anulada desde la gestion operativa',
+      })
+      await onInvoiceUpdated()
+      setSuccessMessage('Factura anulada. Se mantiene en el historico fiscal.')
+      toast.update(toastId, { type: 'success', title: 'Factura anulada', description: 'Se mantiene en el historico fiscal.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo anular la factura.'
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo anular', description: message, persistent: true })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  async function handleTrashInvoice() {
+    if (!invoice) return
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    const toastId = toast.loading('Moviendo borrador a papelera...', 'Quedara oculto de las vistas principales.')
+
+    try {
+      await patchLifecycleEntity('invoices', invoice.id, { deleted_at: new Date().toISOString() })
+      await onInvoiceUpdated()
+      setSuccessMessage('Factura borrador movida a papelera.')
+      toast.update(toastId, { type: 'success', title: 'Borrador en papelera', description: 'Queda oculto de las vistas principales.' })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'No se pudo mover el borrador a papelera.'
+      setSaveError(message)
+      toast.update(toastId, { type: 'error', title: 'No se pudo mover a papelera', description: message, persistent: true })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   async function handleTransferSettlement() {
@@ -631,6 +730,30 @@ export function InvoiceDetailCard({
       label: 'Crear factura como esta',
       onClick: () => onCreateSimilarInvoice(invoice),
     })
+  }
+
+  if (invoice) {
+    headerActions.push(
+      isArchivedEntity(invoice)
+        ? {
+            key: 'restore-invoice',
+            label: 'Restaurar factura',
+            onClick: () => setShowRestoreConfirm(true),
+          }
+        : {
+            key: 'archive-invoice',
+            label: 'Archivar factura',
+            onClick: () => setShowArchiveConfirm(true),
+          },
+    )
+
+    if (invoice.status === 'draft') {
+      headerActions.push({
+        key: 'trash-invoice',
+        label: 'Mover borrador a papelera',
+        onClick: () => setShowTrashConfirm(true),
+      })
+    }
   }
 
   if (invoice && !hideHeaderActions) {
@@ -1183,6 +1306,58 @@ export function InvoiceDetailCard({
           setIsEditing(false)
           setIsDirty(false)
           resetFormFromInvoice()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showArchiveConfirm}
+        title="Archivar factura"
+        description="La factura seguira disponible en el historico, pero no dominara las vistas principales."
+        confirmLabel="Archivar factura"
+        tone="warning"
+        onCancel={() => setShowArchiveConfirm(false)}
+        onConfirm={() => {
+          setShowArchiveConfirm(false)
+          void handleArchiveInvoice()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showRestoreConfirm}
+        title="Restaurar factura"
+        description="La factura volvera a las vistas operativas."
+        confirmLabel="Restaurar factura"
+        tone="warning"
+        onCancel={() => setShowRestoreConfirm(false)}
+        onConfirm={() => {
+          setShowRestoreConfirm(false)
+          void handleRestoreInvoice()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showCancelConfirm}
+        title="Anular factura emitida"
+        description="Esta factura quedara marcada como anulada en el historico fiscal. No se eliminara."
+        confirmLabel="Anular factura"
+        tone="warning"
+        onCancel={() => setShowCancelConfirm(false)}
+        onConfirm={() => {
+          setShowCancelConfirm(false)
+          void handleCancelInvoice()
+        }}
+      />
+
+      <ConfirmDialog
+        isOpen={showTrashConfirm}
+        title="Eliminar borrador"
+        description="Esta accion movera el borrador a papelera."
+        confirmLabel="Mover a papelera"
+        tone="warning"
+        onCancel={() => setShowTrashConfirm(false)}
+        onConfirm={() => {
+          setShowTrashConfirm(false)
+          void handleTrashInvoice()
         }}
       />
     </section>

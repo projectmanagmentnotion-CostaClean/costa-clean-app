@@ -27,6 +27,8 @@ const statusLabels: Record<string, string> = {
   partially_paid: 'Parcialmente cobrada',
   paid: 'Pagada',
   cancelled: 'Cancelada',
+  archived: 'Archivado',
+  deleted: 'En papelera',
   new: 'Nuevo',
   contacted: 'Contactado',
   quoted: 'Presupuestado',

@@ -11,6 +11,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../shared/lifecycle/entityLifecycle'
 
 export type InvoiceModuleFilter =
   | 'pending'
@@ -303,77 +304,79 @@ export function getPaymentFilterLabel(filter: PaymentModuleFilter | null): strin
 }
 
 export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceModuleFilter | null): InvoiceListItem[] {
+  const visibleInvoices = invoices.filter((invoice) => !isArchivedEntity(invoice) && !isDeletedEntity(invoice))
   if (filter === 'pending') {
-    return invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+    return visibleInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
   }
 
   if (filter === 'partially_paid') {
-    return invoices.filter((invoice) => invoice.payment_status === 'partially_paid')
+    return visibleInvoices.filter((invoice) => invoice.payment_status === 'partially_paid')
   }
 
   if (filter === 'current_month') {
     const currentMonthKey = getCurrentMonthKey()
-    return invoices.filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
+    return visibleInvoices.filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
   }
 
   if (filter === 'unpaid_older_7d') {
-    return invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7))
+    return visibleInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice) && isOlderThanDays(invoice.issue_date, 7))
   }
 
   if (filter?.type === 'invoice') {
-    return invoices.filter((invoice) => invoice.id === filter.invoiceId)
+    return visibleInvoices.filter((invoice) => invoice.id === filter.invoiceId)
   }
 
   if (filter?.type === 'quarter') {
-    const quarterInvoices = invoices.filter((invoice) =>
+    const quarterInvoices = visibleInvoices.filter((invoice) =>
       matchesDateQuarter(invoice.issue_date, filter.fiscalYear, filter.fiscalQuarter),
     )
 
     if (filter.scope === 'pending') {
-      return quarterInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+      return quarterInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
     }
 
     return quarterInvoices
   }
 
   if (filter?.type === 'year') {
-    const yearInvoices = invoices.filter((invoice) =>
+    const yearInvoices = visibleInvoices.filter((invoice) =>
       matchesDateYear(invoice.issue_date, filter.fiscalYear),
     )
 
     if (filter.scope === 'pending') {
-      return yearInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+      return yearInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
     }
 
     return yearInvoices
   }
 
   if (filter?.type === 'period') {
-    const periodInvoices = invoices.filter((invoice) =>
+    const periodInvoices = visibleInvoices.filter((invoice) =>
       isDateWithinFiscalPeriod(invoice.issue_date, filter.period),
     )
 
     if (filter.scope === 'pending') {
-      return periodInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+      return periodInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
     }
 
     return periodInvoices
   }
 
-  return invoices
+  return visibleInvoices
 }
 
 export function applyQuoteFilter(quotes: QuoteListItem[], filter: QuoteModuleFilter | null): QuoteListItem[] {
+  const visibleQuotes = quotes.filter((quote) => !isArchivedEntity(quote) && !isDeletedEntity(quote))
   if (filter === 'open') {
-    return quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent')
+    return visibleQuotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent')
   }
 
   if (filter === 'accepted_without_job') {
-    return quotes.filter((quote) => quote.status === 'accepted' && !quote.job_id)
+    return visibleQuotes.filter((quote) => quote.status === 'accepted' && !quote.job_id)
   }
 
   if (filter === 'accepted_without_job_3d') {
-    return quotes.filter(
+    return visibleQuotes.filter(
       (quote) =>
         quote.status === 'accepted' &&
         !quote.job_id &&
@@ -382,88 +385,90 @@ export function applyQuoteFilter(quotes: QuoteListItem[], filter: QuoteModuleFil
   }
 
   if (filter === 'sent_older_5d') {
-    return quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5))
+    return visibleQuotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5))
   }
 
   if (filter?.type === 'quote') {
-    return quotes.filter((quote) => quote.id === filter.quoteId)
+    return visibleQuotes.filter((quote) => quote.id === filter.quoteId)
   }
 
-  return quotes
+  return visibleQuotes
 }
 
 export function applyJobFilter(jobs: JobListItem[], filter: JobModuleFilter | null): JobListItem[] {
+  const visibleJobs = jobs.filter((job) => !isArchivedEntity(job) && !isDeletedEntity(job))
   if (filter === 'scheduled') {
-    return jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress')
+    return visibleJobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress')
   }
 
   if (filter === 'completed_without_invoice') {
-    return jobs.filter((job) => job.status === 'completed' && !job.invoice_id)
+    return visibleJobs.filter((job) => job.status === 'completed' && !job.invoice_id)
   }
 
   if (filter === 'completed_without_invoice_2d') {
-    return jobs.filter((job) => job.status === 'completed' && !job.invoice_id && isOlderThanDays(job.scheduled_date, 2))
+    return visibleJobs.filter((job) => job.status === 'completed' && !job.invoice_id && isOlderThanDays(job.scheduled_date, 2))
   }
 
   if (filter === 'today') {
     const todayKey = createDayKey(0)
-    return jobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && job.status !== 'cancelled')
+    return visibleJobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && !isCancelledEntity(job))
   }
 
   if (filter === 'tomorrow') {
     const tomorrowKey = createDayKey(1)
-    return jobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && job.status !== 'cancelled')
+    return visibleJobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && !isCancelledEntity(job))
   }
 
   if (filter === 'upcoming') {
     const tomorrowKey = createDayKey(1)
-    return jobs.filter((job) => {
+    return visibleJobs.filter((job) => {
       const jobDate = getDateValue(job.scheduled_date)
       const tomorrowDate = getDateValue(tomorrowKey)
       if (!jobDate || !tomorrowDate) return false
-      return jobDate > tomorrowDate && job.status !== 'completed' && job.status !== 'cancelled'
+      return jobDate > tomorrowDate && job.status !== 'completed' && !isCancelledEntity(job)
     })
   }
 
-  return jobs
+  return visibleJobs
 }
 
 export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseModuleFilter | null): ExpenseListItem[] {
+  const visibleExpenses = expenses.filter((expense) => !isArchivedEntity(expense) && !isDeletedEntity(expense))
   if (filter === 'missing_receipt') {
-    return expenses.filter((expense) => !expense.receipt_file_path || expense.document_support_status === 'missing')
+    return visibleExpenses.filter((expense) => !expense.receipt_file_path || expense.document_support_status === 'missing')
   }
 
   if (filter === 'pending_review') {
-    return expenses.filter((expense) => expense.fiscal_review_status === 'pending')
+    return visibleExpenses.filter((expense) => expense.fiscal_review_status === 'pending')
   }
 
   if (filter === 'current_month') {
     const currentMonthKey = getCurrentMonthKey()
-    return expenses.filter((expense) => getMonthKey(expense.expense_date) === currentMonthKey)
+    return visibleExpenses.filter((expense) => getMonthKey(expense.expense_date) === currentMonthKey)
   }
 
   if (filter === 'fiscal_requires_review') {
-    return expenses.filter((expense) => needsFiscalReview(expense))
+    return visibleExpenses.filter((expense) => needsFiscalReview(expense))
   }
 
   if (filter === 'fiscal_medium_high_risk') {
-    return expenses.filter((expense) => hasMediumHighFiscalRisk(expense))
+    return visibleExpenses.filter((expense) => hasMediumHighFiscalRisk(expense))
   }
 
   if (filter === 'vat_zero_estimate') {
-    return expenses.filter((expense) => hasZeroEstimatedDeductibleVat(expense))
+    return visibleExpenses.filter((expense) => hasZeroEstimatedDeductibleVat(expense))
   }
 
   if (filter === 'missing_valid_vat_invoice') {
-    return expenses.filter((expense) => !hasValidVatInvoiceSupport(expense))
+    return visibleExpenses.filter((expense) => !hasValidVatInvoiceSupport(expense))
   }
 
   if (filter?.type === 'classification') {
-    return expenses.filter((expense) => expense.ai_fiscal_classification === filter.classification)
+    return visibleExpenses.filter((expense) => expense.ai_fiscal_classification === filter.classification)
   }
 
   if (filter?.type === 'quarter') {
-    const quarterExpenses = expenses.filter((expense) =>
+    const quarterExpenses = visibleExpenses.filter((expense) =>
       matchesExpenseQuarter(expense, filter.fiscalYear, filter.fiscalQuarter),
     )
 
@@ -496,7 +501,7 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
   }
 
   if (filter?.type === 'year') {
-    const yearExpenses = expenses.filter((expense) =>
+    const yearExpenses = visibleExpenses.filter((expense) =>
       matchesExpenseYear(expense, filter.fiscalYear),
     )
 
@@ -529,7 +534,7 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
   }
 
   if (filter?.type === 'period') {
-    const periodExpenses = expenses.filter((expense) =>
+    const periodExpenses = visibleExpenses.filter((expense) =>
       isExpenseWithinResolvedPeriod(expense, filter.period),
     )
     const periodClosureExpenses = periodExpenses.filter((expense) =>
@@ -563,7 +568,7 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
     return periodExpenses
   }
 
-  return expenses
+  return visibleExpenses
 }
 
 export function applyPaymentFilter(payments: PaymentListItem[], filter: PaymentModuleFilter | null): PaymentListItem[] {

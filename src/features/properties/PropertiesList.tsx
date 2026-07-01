@@ -4,6 +4,7 @@ import { getPropertyTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { matchesSearchQuery } from '../documents/search'
 import type { PropertyListItem } from './types'
+import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface PropertiesListProps {
   properties: PropertyListItem[]
@@ -22,6 +23,8 @@ export function PropertiesList({
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) =>
+      !isArchivedEntity(property) &&
+      !isDeletedEntity(property) &&
       matchesSearchQuery(searchQuery, [
         property.name,
         property.display_code,

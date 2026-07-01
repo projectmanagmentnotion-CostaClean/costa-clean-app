@@ -7,6 +7,7 @@ import type { JobListItem } from './types'
 import { getJobBillingDisplayConcept } from './jobBilling'
 import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { OperationalListItem } from '../../components/OperationalListItem'
+import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface JobsListProps {
   jobs: JobListItem[]
@@ -29,12 +30,25 @@ export function JobsList({
   onOpenQuoteDetail,
   onOpenInvoiceDetail,
 }: JobsListProps) {
-  const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'all' }), [])
+  const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'active' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredJobs = useMemo(() => {
+    const lifecycleFilter = preferences.filters.status ?? 'active'
     return jobs.filter((job) =>
-      (preferences.filters.status === 'all' || job.status === preferences.filters.status) &&
+      (() => {
+        const archived = isArchivedEntity(job)
+        const deleted = isDeletedEntity(job)
+        const cancelled = isCancelledEntity(job)
+        const active = !archived && !deleted && !cancelled
+
+        if (lifecycleFilter === 'all') return true
+        if (lifecycleFilter === 'active') return active
+        if (lifecycleFilter === 'uninvoiced') return active && job.status === 'completed' && !job.invoice_id
+        if (lifecycleFilter === 'cancelled') return cancelled && !deleted
+        if (lifecycleFilter === 'archived') return archived && !deleted
+        return job.status === lifecycleFilter
+      })() &&
       matchesSearchQuery(preferences.searchQuery, [
         job.display_code,
         job.id,
@@ -97,10 +111,13 @@ export function JobsList({
           value: preferences.filters.status ?? 'all',
           options: [
             { value: 'all', label: 'Todos' },
+            { value: 'active', label: 'Activos' },
+            { value: 'uninvoiced', label: 'Sin facturar' },
             { value: 'scheduled', label: 'Programado' },
             { value: 'in_progress', label: 'En curso' },
             { value: 'completed', label: 'Completado' },
             { value: 'cancelled', label: 'Cancelado' },
+            { value: 'archived', label: 'Archivados' },
           ],
         }]}
         onChange={setPreferences}

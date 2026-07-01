@@ -192,6 +192,10 @@ export interface ExpenseListItem {
 
   created_at?: string
   updated_at?: string
+  archived_at?: string | null
+  deleted_at?: string | null
+  cancelled_at?: string | null
+  cancel_reason?: string | null
 }
 
 export interface ExpenseUpsertInput {

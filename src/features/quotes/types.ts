@@ -10,6 +10,10 @@ export interface QuoteListItem {
   property_id: string | null
   property_display_code?: string | null
   status: string
+  archived_at?: string | null
+  deleted_at?: string | null
+  cancelled_at?: string | null
+  cancel_reason?: string | null
   job_id?: string | null
   invoice_id?: string | null
   subtotal: number
@@ -19,6 +23,7 @@ export interface QuoteListItem {
   internal_notes?: string | null
   pricing_metadata?: Record<string, unknown> | null
   created_at?: string
+  updated_at?: string
   quote_lines?: QuoteLineItem[]
   lines?: QuoteLineItem[]
 }

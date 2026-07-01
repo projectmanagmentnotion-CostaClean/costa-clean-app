@@ -160,6 +160,7 @@ function buildClientPayload(input: ClientRecordInput): ClientRecordInput {
   if ('tax_id' in input) payload.tax_id = fiscalData.tax_id
   if ('billing_address' in input) payload.billing_address = fiscalData.billing_address
   if (typeof input.status === 'string') payload.status = input.status
+  if ('archived_at' in input) payload.archived_at = input.archived_at ?? null
   if ('source_lead_id' in input) payload.source_lead_id = input.source_lead_id ?? null
 
   return payload
@@ -231,6 +232,7 @@ interface ClientRecordInput {
   tax_id?: string | null
   billing_address?: string | null
   status?: string
+  archived_at?: string | null
   source_lead_id?: string | null
 }
 

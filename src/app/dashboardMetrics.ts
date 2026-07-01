@@ -10,6 +10,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
+import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../shared/lifecycle/entityLifecycle'
 
 function getExpenseMonthKey(dateValue: string): string | null {
   if (!dateValue) return null
@@ -94,39 +95,46 @@ export function useDashboardMetrics({
   recurringInvoicePlans,
 }: UseDashboardMetricsInput) {
   return useMemo(() => {
+    const visibleLeads = leads.filter((lead) => !isArchivedEntity(lead) && !isDeletedEntity(lead))
+    const visibleClients = clients.filter((client) => !isArchivedEntity(client) && !isDeletedEntity(client) && client.status !== 'inactive')
+    const visibleProperties = properties.filter((property) => !isArchivedEntity(property) && !isDeletedEntity(property))
+    const visibleQuotes = quotes.filter((quote) => !isArchivedEntity(quote) && !isDeletedEntity(quote))
+    const visibleJobs = jobs.filter((job) => !isArchivedEntity(job) && !isDeletedEntity(job))
+    const visibleInvoices = invoices.filter((invoice) => !isArchivedEntity(invoice) && !isDeletedEntity(invoice))
+    const visibleExpenses = expenses.filter((expense) => !isArchivedEntity(expense) && !isDeletedEntity(expense))
     const invoicePaidById = new Map<string, number>()
     for (const payment of payments) {
       const currentPaid = invoicePaidById.get(payment.invoice_id) ?? 0
       invoicePaidById.set(payment.invoice_id, currentPaid + Number(payment.amount || 0))
     }
 
-    const invoiceIdsWithLinks = new Set(invoices.map((invoice) => invoice.job_id))
-    const quoteIdsWithJobs = new Set(jobs.map((job) => job.quote_id).filter(Boolean))
-    const openQuotesCount = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
-    const scheduledJobsCount = jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
-    const pendingInvoicesCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled').length
-    const partiallyPaidInvoicesCount = invoices.filter((invoice) => invoice.payment_status === 'partially_paid').length
-    const completedJobsWithoutInvoiceCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
-    const acceptedQuotesWithoutJobCount = quotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
-    const unpaidInvoicesOlderThan7DaysCount = invoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled' && isOlderThanDays(invoice.issue_date, 7)).length
-    const sentQuotesOlderThan5DaysCount = quotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
-    const completedJobsWithoutInvoiceOlderThan2DaysCount = jobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
+    const invoiceIdsWithLinks = new Set(visibleInvoices.map((invoice) => invoice.job_id))
+    const quoteIdsWithJobs = new Set(visibleJobs.map((job) => job.quote_id).filter(Boolean))
+    const openQuotesCount = visibleQuotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent').length
+    const scheduledJobsCount = visibleJobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress').length
+    const pendingInvoicesCount = visibleInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice)).length
+    const partiallyPaidInvoicesCount = visibleInvoices.filter((invoice) => invoice.payment_status === 'partially_paid').length
+    const completedJobsWithoutInvoiceCount = visibleJobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id)).length
+    const acceptedQuotesWithoutJobCount = visibleQuotes.filter((quote) => quote.status === 'accepted' && !quoteIdsWithJobs.has(quote.id)).length
+    const unpaidInvoicesOlderThan7DaysCount = visibleInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice) && isOlderThanDays(invoice.issue_date, 7)).length
+    const sentQuotesOlderThan5DaysCount = visibleQuotes.filter((quote) => quote.status === 'sent' && isOlderThanDays(quote.created_at ?? '', 5)).length
+    const completedJobsWithoutInvoiceOlderThan2DaysCount = visibleJobs.filter((job) => job.status === 'completed' && !invoiceIdsWithLinks.has(job.id) && isOlderThanDays(job.scheduled_date, 2)).length
     const dueRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'active' && isRecurringPlanDue(plan.next_issue_date)).length
     const pausedRecurringPlansCount = recurringInvoicePlans.filter((plan) => plan.status === 'paused').length
-    const totalInvoiced = invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
+    const totalInvoiced = visibleInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const totalCollected = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-    const totalExpenses = expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
-    const expensesWithReceiptCount = expenses.filter((expense) => Boolean(expense.receipt_file_path)).length
-    const expensesWithoutReceiptCount = expenses.filter((expense) => !expense.receipt_file_path).length
-    const deductibleExpensesCount = expenses.filter((expense) => expense.is_deductible).length
-    const expenseFiscalSummary = buildExpenseFiscalSummary(expenses)
+    const totalExpenses = visibleExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)
+    const expensesWithReceiptCount = visibleExpenses.filter((expense) => Boolean(expense.receipt_file_path)).length
+    const expensesWithoutReceiptCount = visibleExpenses.filter((expense) => !expense.receipt_file_path).length
+    const deductibleExpensesCount = visibleExpenses.filter((expense) => expense.is_deductible).length
+    const expenseFiscalSummary = buildExpenseFiscalSummary(visibleExpenses)
 
     const now = new Date()
     const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
     const currentQuarterKey = `${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`
     const todayKey = createDayKey(0)
     const tomorrowKey = createDayKey(1)
-    const invoicedThisMonthTotal = invoices
+    const invoicedThisMonthTotal = visibleInvoices
       .filter((invoice) => getMonthKey(invoice.issue_date) === currentMonthKey)
       .reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)
     const collectedThisMonthTotal = payments
@@ -143,40 +151,40 @@ export function useDashboardMetrics({
       return sum + remainingAmount
     }, 0)
 
-    const expensesThisMonthTotal = expenses
+    const expensesThisMonthTotal = visibleExpenses
       .filter((expense) => getExpenseMonthKey(expense.expense_date) === currentMonthKey)
       .reduce((sum, expense) => sum + Number(expense.total || 0), 0)
 
-    const expensesThisQuarterTotal = expenses
+    const expensesThisQuarterTotal = visibleExpenses
       .filter((expense) => getExpenseQuarterKey(expense.expense_date) === currentQuarterKey)
       .reduce((sum, expense) => sum + Number(expense.total || 0), 0)
 
-    const jobsScheduledTodayCount = jobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && job.status !== 'cancelled').length
-    const jobsScheduledTomorrowCount = jobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && job.status !== 'cancelled').length
+    const jobsScheduledTodayCount = visibleJobs.filter((job) => getDateKey(job.scheduled_date) === todayKey && !isCancelledEntity(job)).length
+    const jobsScheduledTomorrowCount = visibleJobs.filter((job) => getDateKey(job.scheduled_date) === tomorrowKey && !isCancelledEntity(job)).length
     const clientsWithPendingBalanceCount = new Set(
-      invoices
-        .filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && invoice.status !== 'cancelled')
+      visibleInvoices
+        .filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
         .map((invoice) => invoice.client_id),
     ).size
-    const clientsMissingFiscalDataCount = clients.filter(
+    const clientsMissingFiscalDataCount = visibleClients.filter(
       (client) => !client.tax_id?.trim() || !client.billing_address?.trim(),
     ).length
-    const propertyAnomalyCount = properties.filter((property) => {
-      const hasJobMismatch = jobs.some((job) => job.property_id === property.id && job.client_id !== property.client_id)
-      const hasQuoteMismatch = quotes.some((quote) => quote.property_id === property.id && quote.client_id && quote.client_id !== property.client_id)
-      const hasInvoiceMismatch = invoices.some((invoice) => invoice.property_id === property.id && invoice.client_id !== property.client_id)
+    const propertyAnomalyCount = visibleProperties.filter((property) => {
+      const hasJobMismatch = visibleJobs.some((job) => job.property_id === property.id && job.client_id !== property.client_id)
+      const hasQuoteMismatch = visibleQuotes.some((quote) => quote.property_id === property.id && quote.client_id && quote.client_id !== property.client_id)
+      const hasInvoiceMismatch = visibleInvoices.some((invoice) => invoice.property_id === property.id && invoice.client_id !== property.client_id)
       return hasJobMismatch || hasQuoteMismatch || hasInvoiceMismatch
     }).length
 
     return {
-      leadsCount: leads.length,
-      clientsCount: clients.length,
-      propertiesCount: properties.length,
-      quotesCount: quotes.length,
-      jobsCount: jobs.length,
-      invoicesCount: invoices.length,
+      leadsCount: visibleLeads.length,
+      clientsCount: visibleClients.length,
+      propertiesCount: visibleProperties.length,
+      quotesCount: visibleQuotes.length,
+      jobsCount: visibleJobs.length,
+      invoicesCount: visibleInvoices.length,
       paymentsCount: payments.length,
-      expensesCount: expenses.length,
+      expensesCount: visibleExpenses.length,
       openQuotesCount,
       scheduledJobsCount,
       pendingInvoicesCount,

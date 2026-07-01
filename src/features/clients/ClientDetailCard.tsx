@@ -19,6 +19,7 @@ import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { updateClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
+import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface ClientDetailCardProps {
   client: ClientListItem | null
@@ -211,6 +212,7 @@ export function ClientDetailCard({
         tax_id: form.tax_id.trim() || null,
         billing_address: form.billing_address.trim() || null,
         status: nextStatus,
+        archived_at: nextStatus === 'inactive' ? new Date().toISOString() : null,
       })
       await onClientUpdated()
       setSuccessMessage(
@@ -283,7 +285,15 @@ export function ClientDetailCard({
               >
                 Archivar cliente
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => void persistClient('active')}
+              >
+                Restaurar cliente
+              </button>
+            )}
 
             <button
               type="button"
@@ -465,6 +475,10 @@ export function ClientDetailCard({
               <div className="detail-row">
                 <span className="detail-label">Estado</span>
                 <strong>{getDisplayStatusLabel(client.status)}</strong>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Archivado</span>
+                <strong>{isArchivedEntity(client) ? 'Si' : 'No'}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Lead origen</span>

@@ -3,6 +3,7 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { SearchBar } from '../../components/SearchBar'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
+import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface ClientsListProps {
   clients: ClientListItem[]
@@ -21,6 +22,9 @@ export function ClientsList({
 
   const filteredClients = useMemo(() => {
     return clients.filter((client) =>
+      !isArchivedEntity(client) &&
+      !isDeletedEntity(client) &&
+      client.status !== 'inactive' &&
       matchesSearchQuery(searchQuery, [
         client.full_name,
         client.display_code,

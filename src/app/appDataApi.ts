@@ -123,7 +123,7 @@ export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
 }
 
 export async function listClients(): Promise<ClientListItem[]> {
-  return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id&order=created_at.desc')
+  return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,archived_at,deleted_at,source_lead_id&order=created_at.desc')
 }
 
 export function groupJobLines(lines: JobLineRecord[]) {
@@ -194,15 +194,15 @@ export function buildJobLinesDebugPayload(input: {
 }
 
 export async function listProperties(): Promise<PropertyListItem[]> {
-  return fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,property_type,address,city,postal_code,notes&order=created_at.desc')
+  return fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,status,archived_at,deleted_at,property_type,address,city,postal_code,notes&order=created_at.desc')
 }
 
 export async function listQuotes(): Promise<QuoteListItem[]> {
-  return fetchSupabaseRestList<QuoteListItem>('quotes?select=id,display_code,lead_id,client_id,property_id,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata,created_at&order=created_at.desc')
+  return fetchSupabaseRestList<QuoteListItem>('quotes?select=id,display_code,lead_id,client_id,property_id,status,archived_at,deleted_at,cancelled_at,cancel_reason,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata,created_at,updated_at&order=created_at.desc')
 }
 
 export async function listJobs(): Promise<JobListItem[]> {
-  const loadedJobs = await fetchSupabaseRestList<JobListItem>('jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc')
+  const loadedJobs = await fetchSupabaseRestList<JobListItem>('jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,archived_at,deleted_at,cancelled_at,cancel_reason,updated_at,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc')
   const sampleJob = loadedJobs.find((job) => job.display_code === 'JOB-0052') ?? null
   let accessToken: string | null = null
   let sessionError: string | null = null
@@ -269,7 +269,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
 
   try {
     loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>(
-      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc',
+      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,archived_at,deleted_at,cancelled_at,cancel_reason,updated_at,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc',
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
@@ -289,7 +289,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
       Pick<InvoiceListItem, 'id' | 'display_code' | 'invoice_number' | 'job_id' | 'client_id' | 'issue_date' | 'status' | 'subtotal' | 'tax_amount' | 'total' | 'notes'>
       & { quote_id?: string | null }
     >[number]>(
-      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,issue_date,status,subtotal,tax_amount,total,notes&order=created_at.desc',
+      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,issue_date,status,archived_at,deleted_at,cancelled_at,cancel_reason,updated_at,subtotal,tax_amount,total,notes&order=created_at.desc',
     )
 
     loadedInvoices = legacyInvoices.map((invoice) => ({

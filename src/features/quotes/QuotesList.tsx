@@ -9,6 +9,7 @@ import { applySortDirection, compareNumber, compareText, createDefaultPreference
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
 import { OperationalListItem } from '../../components/OperationalListItem'
+import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -46,12 +47,22 @@ export function QuotesList({
   onSelectQuote,
   onOpenDocument,
 }: QuotesListProps) {
-  const defaultPreferences = useMemo(() => createDefaultPreferences('code', 'desc', { status: 'all' }), [])
+  const defaultPreferences = useMemo(() => createDefaultPreferences('code', 'desc', { status: 'active' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredQuotes = useMemo(() => {
+    const lifecycleFilter = preferences.filters.status ?? 'active'
     return quotes.filter((quote) =>
-      (preferences.filters.status === 'all' || quote.status === preferences.filters.status) &&
+      (() => {
+        const archived = isArchivedEntity(quote)
+        const deleted = isDeletedEntity(quote)
+
+        if (lifecycleFilter === 'all') return !deleted
+        if (lifecycleFilter === 'archived') return archived && !deleted
+        if (deleted || archived) return false
+        if (lifecycleFilter === 'active') return quote.status === 'draft' || quote.status === 'sent' || quote.status === 'accepted'
+        return quote.status === lifecycleFilter
+      })() &&
       matchesSearchQuery(preferences.searchQuery, [
         quote.display_code,
         buildClientDisplay(quote, clients),
@@ -113,11 +124,13 @@ export function QuotesList({
           value: preferences.filters.status ?? 'all',
           options: [
             { value: 'all', label: 'Todos' },
+            { value: 'active', label: 'Activos' },
             { value: 'draft', label: 'Borrador' },
             { value: 'sent', label: 'Enviado' },
             { value: 'accepted', label: 'Aceptado' },
             { value: 'rejected', label: 'Rechazado' },
             { value: 'expired', label: 'Vencido' },
+            { value: 'archived', label: 'Archivados' },
           ],
         }]}
         onChange={setPreferences}

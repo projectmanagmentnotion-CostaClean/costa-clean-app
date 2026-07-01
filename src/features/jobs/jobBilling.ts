@@ -57,11 +57,7 @@ export function getJobBillingDisplayConcept(job: JobListItem): string {
     return job.billing_concept?.trim() || getServiceTypeLabel(job.service_type)
   }
 
-  if (lines.length === 1) {
-    return lines[0].concept
-  }
-
-  return `${lines[0].concept} (+${lines.length - 1} linea(s))`
+  return lines[0].concept
 }
 
 export function getJobBillingDisplaySummary(job: JobListItem): string {

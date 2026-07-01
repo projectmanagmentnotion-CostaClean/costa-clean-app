@@ -56,3 +56,8 @@
 5. Confirmar que reaparecen las 3 líneas.
 6. Editar el servicio y guardar de nuevo.
 7. Confirmar que la factura derivada sigue heredando todas las líneas.
+
+## Seguimiento posterior
+
+- El fix de autenticacion quedó resuelto en `c356c27`, pero seguia pendiente una simplificacion visual y de adapter en conceptos de servicio.
+- Ese segundo bug se corrigio en `docs/JOB_LINES_NO_SUMMARY_FIX_QA.md`: ahora el concepto principal ya no guarda ni muestra `(+N linea(s))` cuando existen `job_lines` reales.

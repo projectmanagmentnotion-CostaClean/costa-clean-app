@@ -199,7 +199,7 @@ export function buildJobBillingSummary(lines: JobBillingLineItem[], fallbackConc
   const firstConcept = lines[0]?.concept || fallbackConcept
 
   return {
-    billing_concept: `${firstConcept} (+${lines.length - 1} linea(s))`,
+    billing_concept: firstConcept,
     billing_quantity: 1,
     billing_unit: 'servicio',
     billing_unit_price: Math.round((subtotal + Number.EPSILON) * 100) / 100,

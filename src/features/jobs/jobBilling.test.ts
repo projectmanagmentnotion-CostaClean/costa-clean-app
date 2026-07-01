@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getJobBillingLines } from './jobBilling'
+import { getJobBillingDisplayConcept, getJobBillingLines } from './jobBilling'
 import type { JobListItem } from './types'
 
 function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
@@ -53,6 +53,49 @@ describe('jobBilling', () => {
     expect(lines[0].concept).toBe('Limpieza general')
     expect(lines[1].concept).toBe('Cristales')
     expect(lines[0].line_subtotal).toBe(80)
+  })
+
+  it('does not generate a summary concept when persisted billing_lines exist', () => {
+    const job = createJob({
+      billing_concept: 'Limpieza estandar (+2 linea(s))',
+      billing_lines: [
+        {
+          id: 'line-1',
+          sort_order: 1,
+          concept: 'Limpieza general',
+          quantity: 2,
+          unit: 'hora',
+          unit_price: 40,
+          line_subtotal: 80,
+        },
+        {
+          id: 'line-2',
+          sort_order: 2,
+          concept: 'Cristales',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 25,
+          line_subtotal: 25,
+        },
+        {
+          id: 'line-3',
+          sort_order: 3,
+          concept: 'Sabanas/toallas',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 10,
+          line_subtotal: 10,
+        },
+      ],
+    })
+
+    const lines = getJobBillingLines(job)
+
+    expect(lines).toHaveLength(3)
+    expect(lines[0].concept).toBe('Limpieza general')
+    expect(lines[1].concept).toBe('Cristales')
+    expect(lines[2].concept).toBe('Sabanas/toallas')
+    expect(getJobBillingDisplayConcept(job)).toBe('Limpieza general')
   })
 
   it('falls back to legacy summary only when there are no persisted lines', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { buildExpenseCreatePrefillFromExpense } from './expenses/expenseCreatePrefill'
+import { buildInvoiceCreatePrefillFromJob } from './invoices/invoiceCreatePrefill'
 import { buildInvoiceCreatePrefillFromInvoice } from './invoices/invoiceDuplicatePrefill'
 import { buildJobCreatePrefillFromJob, buildJobCreatePrefillFromQuote } from './jobs/jobCreatePrefill'
 import { buildQuoteCreatePrefillFromQuote } from './quotes/quoteCreatePrefill'
@@ -109,5 +110,43 @@ describe('entity creation prefills', () => {
     expect(jobPrefill?.quote_id).toBe('')
     expect(expensePrefill.document_type).toBe('factura')
     expect(expensePrefill.description).toBe('Compra')
+  })
+
+  it('preserves all persisted job lines when creating job and invoice prefills', () => {
+    const job = {
+      id: 'job-1',
+      client_id: 'client-1',
+      property_id: 'property-1',
+      service_type: 'standard_cleaning',
+      notes: 'Notas',
+      billing_concept: 'Limpieza estandar (+2 linea(s))',
+      billing_lines: [
+        { concept: 'Limpieza general', quantity: 2, unit: 'hora', unit_price: 50, line_subtotal: 100 },
+        { concept: 'Cristales', quantity: 1, unit: 'servicio', unit_price: 25, line_subtotal: 25 },
+        { concept: 'Sabanas/toallas', quantity: 1, unit: 'servicio', unit_price: 15, line_subtotal: 15 },
+      ],
+    }
+
+    const jobPrefill = buildJobCreatePrefillFromJob(job)
+    const invoicePrefill = buildInvoiceCreatePrefillFromJob({
+      ...job,
+      display_code: 'JOB-1',
+      quote_id: null,
+      scheduled_date: '2026-07-01',
+      status: 'completed',
+      billing_quantity: 1,
+      billing_unit: 'servicio',
+      billing_unit_price: 140,
+      notes: 'Notas',
+    })
+
+    expect(jobPrefill?.billing_lines).toHaveLength(3)
+    expect(jobPrefill?.billing_lines?.[0]).toMatchObject({ concept: 'Limpieza general' })
+    expect(jobPrefill?.billing_lines?.[1]).toMatchObject({ concept: 'Cristales' })
+    expect(jobPrefill?.billing_lines?.[2]).toMatchObject({ concept: 'Sabanas/toallas' })
+    expect(invoicePrefill?.lines).toHaveLength(3)
+    expect(invoicePrefill?.lines?.[0]).toMatchObject({ concept: 'Limpieza general' })
+    expect(invoicePrefill?.lines?.[1]).toMatchObject({ concept: 'Cristales' })
+    expect(invoicePrefill?.lines?.[2]).toMatchObject({ concept: 'Sabanas/toallas' })
   })
 })

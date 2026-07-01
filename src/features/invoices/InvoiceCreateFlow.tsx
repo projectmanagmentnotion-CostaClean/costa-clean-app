@@ -25,6 +25,7 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ExpenseListItem } from '../expenses/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
+import { getJobBillingDisplayConcept } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
@@ -557,7 +558,7 @@ export function InvoiceCreateFlow({
           property_name: selectedProperty?.name ?? null,
           property_address_line: selectedProperty?.address ?? null,
           service_reference: selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : null,
-          service_description: selectedJob?.billing_concept ?? null,
+          service_description: selectedJob ? getJobBillingDisplayConcept(selectedJob) : null,
           billing_concept: linePayloads[0]?.concept ?? null,
           billing_quantity: linePayloads[0]?.quantity ?? null,
           billing_unit: linePayloads[0]?.unit ?? null,
@@ -612,7 +613,7 @@ export function InvoiceCreateFlow({
         property_display_code: selectedProperty?.display_code ?? null,
         property_name: selectedProperty?.name ?? null,
         service_reference: selectedJob ? formatJobLabel(selectedJob) : selectedQuote ? formatQuoteLabel(selectedQuote) : null,
-        service_description: selectedJob?.billing_concept ?? null,
+        service_description: selectedJob ? getJobBillingDisplayConcept(selectedJob) : null,
         lines: linePayloads,
       })
       setIsDirty(false)

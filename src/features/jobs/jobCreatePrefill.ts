@@ -69,6 +69,9 @@ export function buildJobCreatePrefillFromJob(job: {
     return null
   }
 
+  const persistedLines = job.billing_lines ?? []
+  const firstLineConcept = persistedLines[0]?.concept?.trim() || job.billing_concept?.trim() || ''
+
   return {
     request_id: createPrefillId(),
     origin_kind: 'job',
@@ -76,9 +79,9 @@ export function buildJobCreatePrefillFromJob(job: {
     property_id: job.property_id,
     quote_id: '',
     notes: job.notes?.trim() || '',
-    billing_concept: job.billing_concept?.trim() || '',
+    billing_concept: firstLineConcept,
     service_type: job.service_type,
-    billing_lines: (job.billing_lines ?? []).map((line) => ({
+    billing_lines: persistedLines.map((line) => ({
       concept: line.concept,
       quantity: Number(line.quantity).toFixed(2),
       unit: line.unit?.trim() || 'servicio',

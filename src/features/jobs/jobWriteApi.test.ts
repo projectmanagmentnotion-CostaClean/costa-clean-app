@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildJobLinePayloads,
+  buildJobBillingSummary,
   buildSaveJobWithLinesRpcRequest,
   getJobSaveErrorMessage,
   getJobSaveSessionErrorMessage,
@@ -54,11 +55,29 @@ describe('jobWriteApi', () => {
         {
           id: 'line-1',
           job_id: 'job-1',
+          concept: 'Limpieza general',
+          quantity: 2,
+          unit: 'hora',
+          unit_price: 40,
+          line_subtotal: 80,
+        },
+        {
+          id: 'line-2',
+          job_id: 'job-1',
           concept: 'Cristales',
           quantity: 1,
           unit: 'servicio',
           unit_price: 25,
           line_subtotal: 25,
+        },
+        {
+          id: 'line-3',
+          job_id: 'job-1',
+          concept: 'Sabanas/toallas',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 15,
+          line_subtotal: 15,
         },
       ],
     })
@@ -78,20 +97,73 @@ describe('jobWriteApi', () => {
         {
           id: 'line-1',
           job_id: 'job-1',
+          concept: 'Limpieza general',
+          quantity: 2,
+          unit: 'hora',
+          unit_price: 40,
+          line_subtotal: 80,
+        },
+        {
+          id: 'line-2',
+          job_id: 'job-1',
           concept: 'Cristales',
           quantity: 1,
           unit: 'servicio',
           unit_price: 25,
           line_subtotal: 25,
         },
+        {
+          id: 'line-3',
+          job_id: 'job-1',
+          concept: 'Sabanas/toallas',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 15,
+          line_subtotal: 15,
+        },
       ],
     }))
+    const parsedBody = JSON.parse(request.init.body)
+    expect(parsedBody.p_lines).toHaveLength(3)
   })
 
   it('returns the expected session message when there is no active token', () => {
     expect(getJobSaveSessionErrorMessage()).toBe(
       'Tu sesion no esta activa para guardar servicios. Vuelve a iniciar sesion y repite el guardado.',
     )
+  })
+
+  it('keeps the first real concept in billing_concept while preserving the multi-line total', () => {
+    const summary = buildJobBillingSummary([
+      {
+        concept: 'Limpieza general',
+        quantity: 2,
+        unit: 'hora',
+        unit_price: 40,
+        line_subtotal: 80,
+      },
+      {
+        concept: 'Cristales',
+        quantity: 1,
+        unit: 'servicio',
+        unit_price: 25,
+        line_subtotal: 25,
+      },
+      {
+        concept: 'Sabanas/toallas',
+        quantity: 1,
+        unit: 'servicio',
+        unit_price: 10,
+        line_subtotal: 10,
+      },
+    ], 'Limpieza estandar')
+
+    expect(summary).toMatchObject({
+      billing_concept: 'Limpieza general',
+      billing_quantity: 1,
+      billing_unit: 'servicio',
+      billing_unit_price: 115,
+    })
   })
 
   it('translates Supabase auth write errors into a user-facing session message', () => {

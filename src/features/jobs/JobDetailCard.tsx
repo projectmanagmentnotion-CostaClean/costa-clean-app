@@ -220,6 +220,9 @@ export function JobDetailCard({
     return quotes.filter((quote) => quote.client_id === form.client_id)
   }, [quotes, form.client_id])
   const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
+  const showJobLineDebug = import.meta.env.DEV || (
+    typeof window !== 'undefined' && window.location.search.includes('debugJobLines=1')
+  )
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -508,13 +511,6 @@ export function JobDetailCard({
 
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
-              {import.meta.env.DEV ? (
-                <div className="cc-alert cc-alert--warning" style={{ marginBottom: '1rem' }}>
-                  <strong>DEV TRACE - componente: JobDetailCard/EditForm</strong>
-                  <p>DEV: true | job.billing_lines: {job.billing_lines?.length ?? 0} | stateLines: {billingLines.length}</p>
-                </div>
-              ) : null}
-
               <label className="form-field">
                 <span>Cliente *</span>
                 <select
@@ -606,6 +602,51 @@ export function JobDetailCard({
               </label>
 
               <div className="cc-create-flow__line-list form-field-full">
+                {showJobLineDebug ? (
+                  <>
+                    <div
+                      style={{
+                        border: '2px solid #ff3b30',
+                        background: 'rgba(255,59,48,0.18)',
+                        color: '#fff',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        marginBottom: '12px',
+                        fontWeight: 800,
+                      }}
+                    >
+                      DEV TRACE ACTIVO - COMPONENTE REAL: JobDetailCard.tsx - JOB EDITOR LINES
+                    </div>
+                    <pre
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        background: 'rgba(0,0,0,0.35)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        lineHeight: 1.5,
+                        color: '#fff',
+                        margin: '0 0 12px',
+                      }}
+                    >
+                      {JSON.stringify({
+                        component: 'JobDetailCard.tsx',
+                        jobId: job.id,
+                        displayCode: job.display_code,
+                        billingLinesLength: job.billing_lines?.length ?? 0,
+                        billingLinesConcepts: (job.billing_lines ?? []).map((line) => line.concept),
+                        editableLinesLength: billingLines.length,
+                        editableLinesConcepts: billingLines.map((line) => line.concept),
+                        importMetaDev: import.meta.env.DEV,
+                        debugJobLinesFlag: typeof window !== 'undefined'
+                          ? window.location.search.includes('debugJobLines=1')
+                          : false,
+                      }, null, 2)}
+                    </pre>
+                  </>
+                ) : null}
+
                 {billingLines.map((line, index) => (
                   <article key={line.local_id} className="cc-create-flow__line-card">
                     <label className="form-field form-field-full">
@@ -676,7 +717,7 @@ export function JobDetailCard({
                 </div>
               </div>
 
-              {import.meta.env.DEV ? (
+              {showJobLineDebug ? (
                 <div className="cc-create-flow__panel form-field-full" style={{ marginTop: '0.75rem' }}>
                   <strong>Debug lineas servicio</strong>
                   <small>Componente: JobDetailCard/EditForm</small>

@@ -112,6 +112,10 @@ Todos quedan solo en DEV.
   - `[JobDetailCard] initial billing lines`
   - `[JobDetailCard] submit lines`
   - `[jobWriteApi] rpc p_lines`
+- Para la visibilidad del editor real, el debug ya no depende solo de `import.meta.env.DEV`.
+- Si el usuario abre un runtime donde DEV sea false, puede forzarlo con `?debugJobLines=1`.
+- Seguimiento detallado del bloqueo visual:
+  - `docs/JOB_EDITOR_DEBUG_VISIBILITY_BLOCKER_QA.md`
 
 ## SQL de verificacion
 

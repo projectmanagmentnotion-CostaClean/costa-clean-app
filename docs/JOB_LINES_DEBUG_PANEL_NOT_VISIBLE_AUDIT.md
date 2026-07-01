@@ -7,24 +7,24 @@
 ## Hallazgo principal
 
 - El panel visible `Debug lineas servicio` no aparecia para el usuario.
-- La causa inmediata no era CSS ni un helper equivocado: el panel no estaba publicado en `origin/main`.
-- El ultimo commit publicado seguia siendo `df66cd6`, y el panel estaba solo como cambio local sin commitear en `src/features/jobs/JobDetailCard.tsx`.
+- La causa inmediata ya no es un componente equivocado.
+- La pantalla real si corresponde a `src/features/jobs/JobDetailCard.tsx`.
+- El bloqueo de visibilidad estaba en la condicion de render del debug:
+  - antes dependia solo de `import.meta.env.DEV`
+  - ahora tambien puede activarse con `?debugJobLines=1`
 
 ## Estado git verificado
 
 - Branch: `main`
-- Commit visible al iniciar este sprint:
-  - `df66cd6 fix: keep editable job line state expanded`
-  - `5d18ff5 fix: load real job lines in editor`
-  - `268213c fix: preserve job lines in forms and billing`
-  - `c356c27 fix: authenticate job line save rpc`
-- Habia cambios sin commitear en:
-  - `src/features/jobs/JobDetailCard.tsx`
+- Commit visible al abrir este sprint bloqueante:
+  - `f52e10f fix: trace actual job editor line state`
+- `git status` limpio en local al empezar este sprint.
 
 ## El debug existia o no
 
-- Si, existia en codigo local.
-- No existia en el build publicado que el usuario estaba probando.
+- Si, existia en codigo fuente publicado.
+- El texto seguia presente en `src/features/jobs/JobDetailCard.tsx`.
+- Si no aparecia en la pantalla real, el runtime del usuario no estaba entrando por la condicion `import.meta.env.DEV`.
 
 ## Archivo y componente real identificados
 
@@ -56,16 +56,27 @@
 
 ## Por que no se veia el debug
 
-1. El panel estaba solo en cambios locales, no en el ultimo commit publicado.
-2. Por tanto, el usuario seguia viendo un build sin ese panel.
-3. Ademas, la marca visible estaba mas abajo del formulario; para evitar otra duda se anadio una traza DEV imposible de pasar por alto al inicio del form.
+1. El editor real si es `JobDetailCard`.
+2. El panel anterior estaba condicionado solo por `import.meta.env.DEV`.
+3. Si el usuario estaba viendo `vite preview`, un build ya generado o un proceso viejo sin reiniciar, esa condicion podia ser `false`.
+4. Ademas, el panel inferior quedaba mas abajo del bloque de lineas.
+5. Para bloquear esa ambiguedad se movio un trace minimo justo encima de `Concepto 1` y se anadio activacion por query string.
 
 ## Instrumentacion visible aplicada
 
 - En `JobDetailCard.tsx` se deja ahora:
-  - banner superior:
-    - `DEV TRACE - componente: JobDetailCard/EditForm`
-    - `DEV: true | job.billing_lines: N | stateLines: M`
+  - banner rojo inline sobre la primera linea editable:
+    - `DEV TRACE ACTIVO - COMPONENTE REAL: JobDetailCard.tsx - JOB EDITOR LINES`
+  - bloque JSON inline con:
+    - `component`
+    - `jobId`
+    - `displayCode`
+    - `billingLinesLength`
+    - `billingLinesConcepts`
+    - `editableLinesLength`
+    - `editableLinesConcepts`
+    - `importMetaDev`
+    - `debugJobLinesFlag`
   - panel inferior:
     - `Debug lineas servicio`
     - `job.billing_lines`
@@ -76,11 +87,14 @@
     - `fallbackLegacy`
     - conceptos de job/state/submit
 
+- Condicion final:
+  - `import.meta.env.DEV || window.location.search.includes('debugJobLines=1')`
+
 ## Valores que debe ver ahora el usuario
 
-Al abrir `JOB-0052` en entorno DEV, dentro del editor debe aparecer:
+Al abrir `JOB-0052`, dentro del editor debe aparecer:
 
-- `DEV TRACE - componente: JobDetailCard/EditForm`
+- `DEV TRACE ACTIVO - COMPONENTE REAL: JobDetailCard.tsx - JOB EDITOR LINES`
 - `Debug lineas servicio`
 
 Y dentro del panel:
@@ -96,8 +110,10 @@ Y dentro del panel:
 - No se aplico otro fix funcional de lineas todavia.
 - Este sprint cerro la auditoria de visibilidad:
   - confirmar componente real
-  - confirmar que el debug estaba sin publicar
-  - publicar una traza visible en el componente correcto
+  - confirmar que el debug si estaba en el componente correcto
+  - demostrar que el bloqueo era la condicion `import.meta.env.DEV`
+  - publicar una traza visible justo encima de `Concepto 1`
+  - habilitar activacion por `?debugJobLines=1`
 
 ## Tests
 

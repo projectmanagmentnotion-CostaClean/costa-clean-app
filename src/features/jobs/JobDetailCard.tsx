@@ -13,6 +13,7 @@ import {
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
 import { getJobBillingDisplayConcept, getJobBillingDraftLines, getJobBillingLines, getJobBillingDisplaySummary } from './jobBilling'
+import { getPersistedJobLines } from './jobEditableLines'
 import { buildJobBillingSummary, saveJobWithLines } from './jobWriteApi'
 import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
@@ -220,6 +221,10 @@ export function JobDetailCard({
     return quotes.filter((quote) => quote.client_id === form.client_id)
   }, [quotes, form.client_id])
   const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
+  const persistedJobLines = useMemo(() => getPersistedJobLines(job), [job])
+  const appDataJobLinesDebug = typeof window !== 'undefined'
+    ? window.__COSTA_CLEAN_JOB_LINES_DEBUG__ ?? null
+    : null
   const showJobLineDebug = import.meta.env.DEV || (
     typeof window !== 'undefined' && window.location.search.includes('debugJobLines=1')
   )
@@ -634,10 +639,18 @@ export function JobDetailCard({
                         component: 'JobDetailCard.tsx',
                         jobId: job.id,
                         displayCode: job.display_code,
-                        billingLinesLength: job.billing_lines?.length ?? 0,
-                        billingLinesConcepts: (job.billing_lines ?? []).map((line) => line.concept),
+                        billingLinesLength: persistedJobLines.length,
+                        billingLinesConcepts: persistedJobLines.map((line) => line.concept),
                         editableLinesLength: billingLines.length,
                         editableLinesConcepts: billingLines.map((line) => line.concept),
+                        jobKeys: Object.keys(job ?? {}),
+                        billing_lines_length: Array.isArray(job.billing_lines) ? job.billing_lines.length : 'not-array',
+                        billingLines_length: Array.isArray(job.billingLines) ? job.billingLines.length : 'not-array',
+                        job_lines_length: Array.isArray(job.job_lines) ? job.job_lines.length : 'not-array',
+                        rawBillingLinesSample: job.billing_lines?.slice?.(0, 3) ?? null,
+                        rawBillingLinesCamelSample: job.billingLines?.slice?.(0, 3) ?? null,
+                        rawJobLinesSample: job.job_lines?.slice?.(0, 3) ?? null,
+                        appDataJobLinesDebug,
                         importMetaDev: import.meta.env.DEV,
                         debugJobLinesFlag: typeof window !== 'undefined'
                           ? window.location.search.includes('debugJobLines=1')
@@ -732,7 +745,15 @@ export function JobDetailCard({
                     </div>
                     <div className="cc-create-flow__summary-item">
                       <span>job.billing_lines</span>
-                      <strong>{job.billing_lines?.length ?? 0}</strong>
+                      <strong>{Array.isArray(job.billing_lines) ? job.billing_lines.length : 0}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>job.billingLines</span>
+                      <strong>{Array.isArray(job.billingLines) ? job.billingLines.length : 0}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>job.job_lines</span>
+                      <strong>{Array.isArray(job.job_lines) ? job.job_lines.length : 0}</strong>
                     </div>
                     <div className="cc-create-flow__summary-item">
                       <span>initialEditableLines</span>
@@ -756,7 +777,7 @@ export function JobDetailCard({
                     </div>
                   </div>
                   <p className="cc-create-flow__helper">
-                    conceptos job: {(job.billing_lines ?? []).map((line) => line.concept).join(' | ') || 'sin lineas'}
+                    conceptos job: {persistedJobLines.map((line) => line.concept).join(' | ') || 'sin lineas'}
                   </p>
                   <p className="cc-create-flow__helper">
                     conceptos state: {billingLines.map((line) => line.concept || '[vacio]').join(' | ') || 'sin lineas'}
@@ -764,9 +785,26 @@ export function JobDetailCard({
                   <p className="cc-create-flow__helper">
                     conceptos submit: {debugState.lastSubmitConcepts.join(' | ') || 'sin submit'}
                   </p>
-                  {(job.billing_lines?.length ?? 0) > 1 && billingLines.length === 1 ? (
+                  {appDataJobLinesDebug ? (
+                    <pre
+                      style={{
+                        whiteSpace: 'pre-wrap',
+                        background: 'rgba(0,0,0,0.25)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        lineHeight: 1.45,
+                        color: '#fff',
+                        margin: '0.5rem 0 0',
+                      }}
+                    >
+                      {JSON.stringify(appDataJobLinesDebug, null, 2)}
+                    </pre>
+                  ) : null}
+                  {persistedJobLines.length > 1 && billingLines.length === 1 ? (
                     <p className="cc-create-flow__helper" style={{ color: '#b42318' }}>
-                      Invariante rota: job tiene {(job.billing_lines?.length ?? 0)} lineas pero el formulario renderiza 1.
+                      Invariante rota: job tiene {persistedJobLines.length} lineas pero el formulario renderiza 1.
                     </p>
                   ) : null}
                   {billingLines.length > 1 && debugState.lastSubmitPayloadLines === 1 ? (

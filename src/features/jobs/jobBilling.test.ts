@@ -144,6 +144,38 @@ describe('jobBilling', () => {
     expect(draftLines[2]).toMatchObject({ concept: 'Sabanas/toallas', quantity: '1.00', unit_price: '15.00' })
   })
 
+  it('supports camelCase billingLines if the job shape drifts before reaching the editor', () => {
+    const job = createJob({
+      billing_lines: undefined,
+      billingLines: [
+        {
+          id: 'line-1',
+          sort_order: 1,
+          concept: 'Limpieza general',
+          quantity: 2,
+          unit: 'hora',
+          unit_price: 40,
+          line_subtotal: 80,
+        },
+        {
+          id: 'line-2',
+          sort_order: 2,
+          concept: 'Cristales',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 25,
+          line_subtotal: 25,
+        },
+      ],
+    })
+
+    const lines = getJobBillingLines(job)
+
+    expect(lines).toHaveLength(2)
+    expect(lines[0].concept).toBe('Limpieza general')
+    expect(lines[1].concept).toBe('Cristales')
+  })
+
   it('falls back to legacy summary only when there are no persisted lines', () => {
     const lines = getJobBillingLines(createJob({
       billing_lines: [],

@@ -28,5 +28,7 @@ export interface JobListItem {
   billing_unit?: string | null
   billing_unit_price?: number | null
   billing_lines?: JobBillingLineItem[] | null
+  billingLines?: JobBillingLineItem[] | null
+  job_lines?: JobBillingLineItem[] | null
   notes?: string | null
 }

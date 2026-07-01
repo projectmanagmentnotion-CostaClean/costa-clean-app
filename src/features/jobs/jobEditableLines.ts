@@ -10,6 +10,21 @@ import {
 } from '../shared/billingLineDrafts'
 import type { JobBillingLineItem, JobListItem } from './types'
 
+export function getPersistedJobLines(job: JobListItem | null): JobBillingLineItem[] {
+  if (!job) {
+    return []
+  }
+
+  const rawCandidates = [job.billing_lines, job.billingLines, job.job_lines]
+  const nonEmptyCandidate = rawCandidates.find((candidate) => Array.isArray(candidate) && candidate.length > 0)
+  if (nonEmptyCandidate) {
+    return nonEmptyCandidate
+  }
+
+  const emptyCandidate = rawCandidates.find(Array.isArray)
+  return emptyCandidate ?? []
+}
+
 function normalizeEditableJobLine(line: JobBillingLineItem): JobBillingLineItem | null {
   const quantity = Number(line.quantity)
   const unitPrice = Number(line.unit_price)
@@ -69,7 +84,7 @@ export function buildEditableJobLinesFromJob(job: JobListItem | null): BillingLi
     return buildLegacyEditableLine(null)
   }
 
-  const normalizedLines = normalizeEditableJobLines(job.billing_lines)
+  const normalizedLines = normalizeEditableJobLines(getPersistedJobLines(job))
   if (normalizedLines.length > 0) {
     return normalizedLines.map((line) => ({
       local_id: line.id || createLocalId('LINE-DRAFT'),

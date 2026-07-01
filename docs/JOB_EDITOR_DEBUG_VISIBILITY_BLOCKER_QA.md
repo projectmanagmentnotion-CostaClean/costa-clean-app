@@ -131,6 +131,8 @@ Separacion repo vs deploy:
 - Para comprobar que el dominio sirve el build correcto se anadio tambien una marca global por `?debugBuild=1`.
 - Ver seguimiento de publicacion en:
   - `docs/ONLINE_DEPLOY_VERSION_QA.md`
+- Una vez visible el panel en produccion, el siguiente diagnostico de lectura de `job_lines` quedo documentado en:
+  - `docs/JOB_LINES_APPDATA_TO_EDITOR_FIX_QA.md`
 
 ## Valores que debe copiar el usuario
 

@@ -1,5 +1,17 @@
 import { getSupabasePublicEnv } from './supabaseEnv'
 
+export class SupabaseRestError extends Error {
+  path: string
+  status: number
+
+  constructor(path: string, status: number, detail: string) {
+    super(`REST ${status}: ${detail}`)
+    this.name = 'SupabaseRestError'
+    this.path = path
+    this.status = status
+  }
+}
+
 function getRestConfig() {
   const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
 
@@ -10,11 +22,19 @@ function getRestConfig() {
   return { supabaseUrl, supabaseAnonKey }
 }
 
-export async function fetchSupabaseRestList<T>(path: string): Promise<T[]> {
+interface FetchSupabaseRestListOptions {
+  accessToken?: string | null
+}
+
+export async function fetchSupabaseRestListDetailed<T>(
+  path: string,
+  options: FetchSupabaseRestListOptions = {},
+): Promise<{ rows: T[]; status: number }> {
   const { supabaseUrl, supabaseAnonKey } = getRestConfig()
+  const bearerToken = options.accessToken?.trim() || supabaseAnonKey
   const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
     method: 'GET',
-    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${supabaseAnonKey}` },
+    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${bearerToken}` },
   })
 
   if (!response.ok) {
@@ -36,8 +56,19 @@ export async function fetchSupabaseRestList<T>(path: string): Promise<T[]> {
       detail = response.statusText
     }
 
-    throw new Error(`REST ${response.status}: ${detail}`)
+    throw new SupabaseRestError(path, response.status, detail)
   }
 
-  return ((await response.json()) as T[]) ?? []
+  return {
+    rows: ((await response.json()) as T[]) ?? [],
+    status: response.status,
+  }
+}
+
+export async function fetchSupabaseRestList<T>(
+  path: string,
+  options: FetchSupabaseRestListOptions = {},
+): Promise<T[]> {
+  const { rows } = await fetchSupabaseRestListDetailed<T>(path, options)
+  return rows
 }

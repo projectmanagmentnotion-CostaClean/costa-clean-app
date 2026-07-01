@@ -15,7 +15,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { getSupabaseClient } from '../lib/supabase'
 import { getSupabasePublicEnv } from '../lib/supabaseEnv'
-import { fetchSupabaseRestList } from '../lib/supabaseRest'
+import { fetchSupabaseRestList, fetchSupabaseRestListDetailed, SupabaseRestError } from '../lib/supabaseRest'
 
 type JobLineRecord = {
   id?: string
@@ -26,6 +26,34 @@ type JobLineRecord = {
   unit: string
   unit_price: number | string
   line_subtotal: number | string
+}
+
+export type JobLinesDebugPayload = {
+  authMode: 'session' | 'anon'
+  attachedPropertyName: 'billing_lines'
+  groupedJobIds: string[]
+  jobCount: number
+  jobLinesError: string | null
+  jobLinesFetchStatus: number | null
+  jobLinesRawCount: number
+  jobLinesRestPath: string
+  sampleForJob0052: JobLineRecord[]
+  sampleJobId: string | null
+  sessionError: string | null
+}
+
+export const jobLinesRestPath = 'job_lines?select=id,job_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc'
+
+function shouldExposeJobLinesDebug() {
+  return typeof window !== 'undefined' && window.location.search.includes('debugJobLines=1')
+}
+
+function writeJobLinesDebug(payload: JobLinesDebugPayload) {
+  if (!shouldExposeJobLinesDebug()) {
+    return
+  }
+
+  window.__COSTA_CLEAN_JOB_LINES_DEBUG__ = payload
 }
 
 function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
@@ -98,7 +126,7 @@ export async function listClients(): Promise<ClientListItem[]> {
   return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id&order=created_at.desc')
 }
 
-function groupJobLines(lines: JobLineRecord[]) {
+export function groupJobLines(lines: JobLineRecord[]) {
   const linesByJobId = new Map<string, NonNullable<JobListItem['billing_lines']>>()
 
   for (const line of lines) {
@@ -133,6 +161,38 @@ function groupJobLines(lines: JobLineRecord[]) {
   return linesByJobId
 }
 
+export function attachJobLinesToJobs(loadedJobs: JobListItem[], linesByJobId: Map<string, NonNullable<JobListItem['billing_lines']>>) {
+  return loadedJobs.map((job) => ({
+    ...job,
+    billing_lines: linesByJobId.get(job.id) ?? [],
+  }))
+}
+
+export function buildJobLinesDebugPayload(input: {
+  accessToken: string | null
+  loadedJobs: JobListItem[]
+  sampleJobId: string | null
+  sessionError: string | null
+  jobLines: JobLineRecord[]
+  jobLinesFetchStatus: number | null
+  jobLinesError: string | null
+  linesByJobId?: Map<string, NonNullable<JobListItem['billing_lines']>>
+}): JobLinesDebugPayload {
+  return {
+    authMode: input.accessToken ? 'session' : 'anon',
+    attachedPropertyName: 'billing_lines',
+    groupedJobIds: input.linesByJobId ? [...input.linesByJobId.keys()] : [],
+    jobCount: input.loadedJobs.length,
+    jobLinesError: input.jobLinesError,
+    jobLinesFetchStatus: input.jobLinesFetchStatus,
+    jobLinesRawCount: input.jobLines.length,
+    jobLinesRestPath,
+    sampleForJob0052: input.sampleJobId ? input.jobLines.filter((line) => line.job_id === input.sampleJobId).slice(0, 3) : [],
+    sampleJobId: input.sampleJobId,
+    sessionError: input.sessionError,
+  }
+}
+
 export async function listProperties(): Promise<PropertyListItem[]> {
   return fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,property_type,address,city,postal_code,notes&order=created_at.desc')
 }
@@ -143,27 +203,64 @@ export async function listQuotes(): Promise<QuoteListItem[]> {
 
 export async function listJobs(): Promise<JobListItem[]> {
   const loadedJobs = await fetchSupabaseRestList<JobListItem>('jobs?select=id,display_code,client_id,property_id,quote_id,scheduled_date,status,service_type,billing_concept,billing_quantity,billing_unit,billing_unit_price,notes&order=created_at.desc')
+  const sampleJob = loadedJobs.find((job) => job.display_code === 'JOB-0052') ?? null
+  let accessToken: string | null = null
+  let sessionError: string | null = null
+
+  const { client, error } = getSupabaseClient()
+  if (error || !client) {
+    sessionError = error ?? 'No se pudo crear el cliente de Supabase.'
+  } else {
+    const {
+      data: { session },
+      error: authError,
+    } = await client.auth.getSession()
+
+    if (authError) {
+      sessionError = authError.message
+    } else {
+      accessToken = session?.access_token ?? null
+    }
+  }
 
   try {
-    const jobLines = await fetchSupabaseRestList<JobLineRecord>('job_lines?select=id,job_id,sort_order,concept,quantity,unit,unit_price,line_subtotal,created_at&order=sort_order.asc')
+    const jobLinesResponse = await fetchSupabaseRestListDetailed<JobLineRecord>(
+      jobLinesRestPath,
+      { accessToken },
+    )
+    const jobLines = jobLinesResponse.rows
     const linesByJobId = groupJobLines(jobLines)
-
-    return loadedJobs.map((job) => ({
-      ...job,
-      billing_lines: linesByJobId.get(job.id) ?? [],
+    writeJobLinesDebug(buildJobLinesDebugPayload({
+      accessToken,
+      loadedJobs,
+      sampleJobId: sampleJob?.id ?? null,
+      sessionError,
+      jobLines,
+      jobLinesFetchStatus: jobLinesResponse.status,
+      jobLinesError: null,
+      linesByJobId,
     }))
+
+    return attachJobLinesToJobs(loadedJobs, linesByJobId)
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    const hasRecoverableSchemaMismatch = message.includes('REST 400') || message.includes('job_lines')
+    const hasRecoverableJobLinesFailure = message.includes('REST') || message.includes('job_lines')
 
-    if (!hasRecoverableSchemaMismatch) {
+    writeJobLinesDebug(buildJobLinesDebugPayload({
+      accessToken,
+      loadedJobs,
+      sampleJobId: sampleJob?.id ?? null,
+      sessionError,
+      jobLines: [],
+      jobLinesFetchStatus: error instanceof SupabaseRestError ? error.status : null,
+      jobLinesError: error instanceof Error ? error.message : 'Error desconocido cargando job_lines.',
+    }))
+
+    if (!hasRecoverableJobLinesFailure) {
       throw error
     }
 
-    return loadedJobs.map((job) => ({
-      ...job,
-      billing_lines: [],
-    }))
+    return attachJobLinesToJobs(loadedJobs, new Map())
   }
 }
 

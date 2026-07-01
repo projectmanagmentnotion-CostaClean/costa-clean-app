@@ -118,6 +118,8 @@ Todos quedan solo en DEV.
   - `docs/JOB_EDITOR_DEBUG_VISIBILITY_BLOCKER_QA.md`
 - Seguimiento especifico de publicacion online y version servida:
   - `docs/ONLINE_DEPLOY_VERSION_QA.md`
+- Seguimiento especifico del corte de lectura `appData -> editor`:
+  - `docs/JOB_LINES_APPDATA_TO_EDITOR_FIX_QA.md`
 
 ## SQL de verificacion
 
@@ -158,3 +160,4 @@ group by j.id;
 - Si apareciera otro editor de servicio fuera de `JobDetailCard`, debera reutilizar el mismo helper editable.
 - Seguimiento de visibilidad: ver `docs/JOB_LINES_DEBUG_PANEL_NOT_VISIBLE_AUDIT.md`. El panel debug anterior no estaba publicado en `origin/main`, asi que el usuario seguia probando un build sin ese trazado visible.
 - A fecha 2026-07-01 tambien quedo confirmado que el usuario estaba mirando el dominio online y no el entorno local, asi que parte del bloqueo visible podia venir de un build no publicado todavia y no de una regresion nueva de la logica de lineas.
+- A fecha 2026-07-01 el siguiente cuello real ya no era el editor en si, sino la lectura de `job_lines` en `appDataApi` con bearer `anon` y fallback silencioso a `billing_lines: []` para `JOB-0052`.

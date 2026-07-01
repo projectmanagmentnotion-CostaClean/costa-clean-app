@@ -1,14 +1,15 @@
 import { getServiceTypeLabel } from '../../app/displayFormat'
 import { normalizeLineConcept } from '../quotes/lineConcepts'
 import { createLocalId, formatQuantityInput } from '../shared/billingLineDrafts'
-import { buildEditableJobLinesFromJob, normalizeEditableJobLines } from './jobEditableLines'
+import { buildEditableJobLinesFromJob, getPersistedJobLines, normalizeEditableJobLines } from './jobEditableLines'
 import type { JobBillingLineItem, JobListItem } from './types'
 
 export function getJobBillingLines(job: JobListItem | null): JobBillingLineItem[] {
   if (!job) return []
 
-  if (job.billing_lines?.length) {
-    return normalizeEditableJobLines(job.billing_lines)
+  const persistedLines = getPersistedJobLines(job)
+  if (persistedLines.length) {
+    return normalizeEditableJobLines(persistedLines)
   }
 
   const quantity = Number(job.billing_quantity)

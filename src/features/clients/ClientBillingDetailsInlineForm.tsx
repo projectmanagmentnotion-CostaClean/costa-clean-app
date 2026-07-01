@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { normalizeClientFiscalData } from './clientFiscalData'
 import { updateClientFiscalData } from './clientWriteApi'
 import type { ClientListItem } from './types'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface ClientBillingDetailsInlineFormProps {
   client: ClientListItem
@@ -17,6 +18,7 @@ export function ClientBillingDetailsInlineForm({
   client,
   onSaved,
 }: ClientBillingDetailsInlineFormProps) {
+  const toast = useToast()
   const [form, setForm] = useState<FormState>({
     tax_id: client.tax_id ?? '',
     billing_address: client.billing_address ?? '',
@@ -47,6 +49,7 @@ export function ClientBillingDetailsInlineForm({
     setError(null)
     setSuccessMessage(null)
     setIsSaving(true)
+    const toastId = toast.loading('Guardando datos fiscales...', 'Actualizando la ficha del cliente.')
 
     try {
       const normalizedFiscalData = normalizeClientFiscalData(form)
@@ -55,6 +58,12 @@ export function ClientBillingDetailsInlineForm({
 
       if (!taxId || !billingAddress) {
         setError('Debes completar NIF/CIF y direccion de facturacion.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo completar la ficha fiscal',
+          description: 'Debes completar NIF/CIF y direccion de facturacion.',
+          persistent: true,
+        })
         return
       }
 
@@ -68,8 +77,20 @@ export function ClientBillingDetailsInlineForm({
       })
       await onSaved(updatedClient)
       setSuccessMessage('Datos fiscales guardados correctamente.')
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Ficha fiscal actualizada',
+        description: 'El cliente ya tiene NIF/CIF y direccion fiscal guardados.',
+      })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo completar la ficha fiscal.')
+      const message = err instanceof Error ? err.message : 'No se pudo completar la ficha fiscal.'
+      setError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo completar la ficha fiscal',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSaving(false)
     }

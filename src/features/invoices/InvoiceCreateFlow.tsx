@@ -52,6 +52,7 @@ import {
 import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
+import { useToast } from '../../shared/toasts/useToast'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -228,6 +229,7 @@ export function InvoiceCreateFlow({
   onCancel,
   onDirtyChange,
 }: InvoiceCreateFlowProps) {
+  const toast = useToast()
   const [form, setForm] = useState<FormState>(() => (prefill ? applyPrefillToForm(prefill) : createDefaultFormState()))
   const [lines, setLines] = useState<LineFormState[]>(() => (prefill ? buildLinesFromPrefill(prefill) : [createBlankBillingLine()]))
   const [contextualJob, setContextualJob] = useState<JobListItem | null>(null)
@@ -507,11 +509,19 @@ export function InvoiceCreateFlow({
       if (error) {
         setCurrentStep(index)
         setSubmitError(error)
+        toast.error(
+          index === 1 && clientFiscalIssue
+            ? 'No se puede emitir factura'
+            : 'No se pudo completar el flujo',
+          error,
+          { persistent: true },
+        )
         return
       }
     }
 
     setIsSubmitting(true)
+    const toastId = toast.loading('Guardando factura...', 'Validando lineas y datos fiscales del cliente.')
 
     try {
       const invoiceId = createLocalId('INVOICE')
@@ -520,6 +530,12 @@ export function InvoiceCreateFlow({
       if (!linePayloads || linePayloads.length === 0) {
         setCurrentStep(2)
         setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.',
+          persistent: true,
+        })
         return
       }
 
@@ -592,6 +608,15 @@ export function InvoiceCreateFlow({
         linePayloads,
       )
 
+      toast.update(toastId, {
+        type: 'success',
+        title: clientFiscalIssue ? 'Factura creada con datos fiscales incompletos' : 'Factura creada',
+        description: clientFiscalIssue
+          ? 'La factura se creo, pero falta NIF/CIF o direccion fiscal del cliente.'
+          : 'La factura incluye lineas y snapshot fiscal del cliente.',
+        persistent: Boolean(clientFiscalIssue),
+      })
+
       await onCreatedInvoice?.({
         id: invoiceId,
         display_code: null,
@@ -622,7 +647,14 @@ export function InvoiceCreateFlow({
         onCompleted,
       })
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Error desconocido creando la factura.')
+      const message = err instanceof Error ? err.message : 'Error desconocido creando la factura.'
+      setSubmitError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo crear la factura',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSubmitting(false)
     }

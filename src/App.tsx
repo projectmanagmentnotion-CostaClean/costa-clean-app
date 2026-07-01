@@ -11,6 +11,7 @@ import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publi
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
+import { ToastProvider } from './shared/toasts/ToastProvider'
 
 function isRecoverableAuthBootstrapError(message: string) {
   const normalizedMessage = message.trim().toLowerCase()
@@ -150,10 +151,10 @@ function App() {
 
   function renderWithBuildInfo(content: ReactNode) {
     return (
-      <>
+      <ToastProvider>
         {content}
         {showBuildInfo ? <BuildInfoBadge /> : null}
-      </>
+      </ToastProvider>
     )
   }
 

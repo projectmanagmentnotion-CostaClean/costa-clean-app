@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { buildClientFiscalBackfillPlan, extractFiscalDataFromInvoice, summarizeClientFiscalBackfill } from './clientFiscalBackfill'
 import {
   buildInvoicePricingMetadataWithClientFiscalSnapshot,
+  getInvoiceFiscalDisplayData,
   getClientFiscalData,
   getClientFiscalIssueMessage,
   normalizeClientFiscalData,
@@ -86,6 +87,29 @@ describe('client fiscal data', () => {
         fiscal_name: 'Miguel Angel Flores Novoa',
         source: 'client_record',
       },
+    })
+  })
+
+  it('prefers the invoice fiscal snapshot over dynamic client fields for document rendering', () => {
+    const display = getInvoiceFiscalDisplayData(createInvoice({
+      client_name: 'Cliente dinamico',
+      client_email: 'cliente@example.com',
+      pricing_metadata: {
+        client_fiscal_snapshot: {
+          client_id: 'client-1',
+          fiscal_name: 'Cliente fiscal',
+          tax_id: '45962701F',
+          billing_address: 'Avinguda de Lloret de Dalt, 10',
+        },
+      },
+    }))
+
+    expect(display).toMatchObject({
+      clientName: 'Cliente fiscal',
+      taxId: '45962701F',
+      billingAddress: 'Avinguda de Lloret de Dalt, 10',
+      email: 'cliente@example.com',
+      source: 'snapshot',
     })
   })
 })

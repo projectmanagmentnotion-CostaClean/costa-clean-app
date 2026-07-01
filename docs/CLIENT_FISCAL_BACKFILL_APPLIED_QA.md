@@ -119,6 +119,9 @@ Fecha: 2026-06-30
 
 - Ver tambien `docs/CLIENT_FISCAL_MANUAL_BACKFILL_APPLIED_QA.md`.
 - Ese sprint posterior completo manualmente 8 clientes existentes usando una tabla fiscal aportada por el usuario, sin tocar nombres ni crear clientes nuevos.
+- Seguimiento de render documental posterior:
+  - `docs/GLOBAL_TOASTS_AND_INVOICE_FISCAL_QA.md`
+  - a fecha 2026-07-01 el documento de factura ya prioriza `pricing_metadata.client_fiscal_snapshot` para mostrar `NIF/CIF` y direccion fiscal en preview/PDF cuando ese snapshot existe.
 
 ## Validaciones ejecutadas
 

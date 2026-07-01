@@ -26,6 +26,7 @@ import {
   getInvoiceFinancialStatusLabel,
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
+import { useToast } from '../../shared/toasts/useToast'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -257,6 +258,7 @@ export function InvoiceDetailCard({
   onMajorEditClose,
   emptyState,
 }: InvoiceDetailCardProps) {
+  const toast = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -413,16 +415,28 @@ export function InvoiceDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setIsSaving(true)
+    const toastId = toast.loading('Actualizando factura...', 'Guardando el nuevo estado administrativo.')
 
     try {
       await updateInvoiceStatusRpc(invoice.id, nextStatus)
 
       await onInvoiceUpdated()
       setSuccessMessage(`Estado administrativo de la factura actualizado a ${getStatusLabel(nextStatus)}.`)
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Factura actualizada',
+        description: `Estado administrativo de la factura actualizado a ${getStatusLabel(nextStatus)}.`,
+      })
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el estado de la factura.'
       setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo actualizar la factura',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSaving(false)
     }
@@ -438,6 +452,7 @@ export function InvoiceDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setIsSaving(true)
+    const toastId = toast.loading('Registrando cobro...', 'Sincronizando la factura con el pago por transferencia.')
 
     try {
       const result = await settleInvoiceByTransfer(invoice.id)
@@ -445,6 +460,11 @@ export function InvoiceDetailCard({
 
       if (!result.created_payment) {
         setSuccessMessage('La factura ya estaba completamente cubierta por cobros reales. No se creó otro cobro.')
+        toast.update(toastId, {
+          type: 'info',
+          title: 'Factura ya cubierta',
+          description: 'No se creo otro cobro porque la factura ya estaba completamente cubierta.',
+        })
         return
       }
 
@@ -453,10 +473,23 @@ export function InvoiceDetailCard({
           ? 'Se registró por transferencia el importe restante y la factura quedó cobrada.'
           : 'Se registró el cobro por transferencia con el importe pendiente exacto.',
       )
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Cobro registrado',
+        description: paymentSummary.financialStatus === 'partially_paid'
+          ? 'Se registro por transferencia el importe restante y la factura quedo cobrada.'
+          : 'Se registro el cobro por transferencia con el importe pendiente exacto.',
+      })
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido registrando el cobro por transferencia.'
       setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo registrar el cobro',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSaving(false)
     }
@@ -468,15 +501,28 @@ export function InvoiceDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setIsSaving(true)
+    const toastId = toast.loading('Guardando factura...', 'Actualizando lineas y datos administrativos.')
 
     try {
       if (!form.client_id) {
         setSaveError('No se pudo resolver el cliente de la factura.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo actualizar la factura',
+          description: 'No se pudo resolver el cliente de la factura.',
+          persistent: true,
+        })
         return
       }
 
       if (!form.issue_date) {
         setSaveError('Debes indicar la fecha de emision.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo actualizar la factura',
+          description: 'Debes indicar la fecha de emision.',
+          persistent: true,
+        })
         return
       }
 
@@ -484,6 +530,12 @@ export function InvoiceDetailCard({
 
       if (!linePayloads || linePayloads.length === 0) {
         setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo actualizar la factura',
+          description: 'Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.',
+          persistent: true,
+        })
         return
       }
 
@@ -508,6 +560,11 @@ export function InvoiceDetailCard({
 
       await onInvoiceUpdated()
       setSuccessMessage('Factura actualizada correctamente.')
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Factura actualizada',
+        description: 'Las lineas y el documento quedaron actualizados.',
+      })
       if (majorEditMode) {
         onMajorEditClose?.()
       } else {
@@ -519,6 +576,12 @@ export function InvoiceDetailCard({
         err instanceof Error ? err.message : 'Error desconocido actualizando la factura.'
 
       setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo actualizar la factura',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSaving(false)
     }

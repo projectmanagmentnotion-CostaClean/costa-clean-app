@@ -4,7 +4,8 @@ import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabe
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
-import { buildInvoicePricingMetadataWithClientFiscalSnapshot } from '../clients/clientFiscalData'
+import { buildInvoicePricingMetadataWithClientFiscalSnapshot, getClientFiscalData, getClientFiscalIssueMessage } from '../clients/clientFiscalData'
+import { ClientBillingDetailsInlineForm } from '../clients/ClientBillingDetailsInlineForm'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
@@ -26,6 +27,7 @@ import {
 import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface InvoiceCreateFormProps {
   clients: ClientListItem[]
@@ -162,6 +164,7 @@ export function InvoiceCreateForm({
   onCancel,
   onDirtyChange,
 }: InvoiceCreateFormProps) {
+  const toast = useToast()
   const [form, setForm] = useState<FormState>(() => (
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
@@ -179,6 +182,7 @@ export function InvoiceCreateForm({
   const [showSecondaryRoutes, setShowSecondaryRoutes] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [showClientFiscalInline, setShowClientFiscalInline] = useState(false)
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -233,6 +237,8 @@ export function InvoiceCreateForm({
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(selectedQuote?.pricing_metadata ?? null, selectedClient),
     [selectedClient, selectedQuote],
   )
+  const clientFiscalData = useMemo(() => getClientFiscalData(selectedClient), [selectedClient])
+  const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
   const isOriginLocked = Boolean(prefill?.job_id || prefill?.quote_id)
 
   useEffect(() => {
@@ -344,25 +350,61 @@ export function InvoiceCreateForm({
     setSubmitError(null)
     setSuccessMessage(null)
     setIsSubmitting(true)
+    const toastId = toast.loading('Guardando factura...', 'Validando lineas y datos fiscales del cliente.')
 
     try {
       if (form.origin_mode === 'job' && !form.job_id) {
         setSubmitError('Debes seleccionar un servicio.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Debes seleccionar un servicio.',
+          persistent: true,
+        })
         return
       }
 
       if (form.origin_mode === 'quote' && !form.quote_id) {
         setSubmitError('Debes seleccionar un presupuesto.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Debes seleccionar un presupuesto.',
+          persistent: true,
+        })
         return
       }
 
       if (!form.client_id) {
         setSubmitError('Debes seleccionar un cliente.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Debes seleccionar un cliente.',
+          persistent: true,
+        })
+        return
+      }
+
+      if (clientFiscalIssue) {
+        setSubmitError(clientFiscalIssue)
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se puede emitir factura',
+          description: 'Completa el NIF/CIF y la direccion fiscal del cliente.',
+          persistent: true,
+        })
         return
       }
 
       if (!form.issue_date) {
         setSubmitError('Debes indicar la fecha de emision.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Debes indicar la fecha de emision.',
+          persistent: true,
+        })
         return
       }
 
@@ -374,6 +416,12 @@ export function InvoiceCreateForm({
 
       if (!linePayloads || linePayloads.length === 0) {
         setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo crear la factura',
+          description: 'Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.',
+          persistent: true,
+        })
         return
       }
 
@@ -426,11 +474,22 @@ export function InvoiceCreateForm({
       setLines([createBlankBillingLine()])
       setIsDirty(false)
       setSuccessMessage('Factura creada correctamente.')
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Factura creada',
+        description: 'La factura incluye lineas y datos fiscales del cliente.',
+      })
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido creando la factura.'
 
       setSubmitError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo crear la factura',
+        description: message,
+        persistent: true,
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -885,6 +944,36 @@ export function InvoiceCreateForm({
                 <strong>{selectedClient ? formatClientLabel(selectedClient) : 'Cliente pendiente'}</strong>
                 <small>{selectedProperty ? formatPropertyLabel(selectedProperty) : 'Sin propiedad fija'}</small>
               </div>
+
+              {selectedClient ? (
+                <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+                  <span>Ficha fiscal</span>
+                  <strong>{clientFiscalData.taxId ? `NIF/CIF: ${clientFiscalData.taxId}` : 'NIF/CIF pendiente'}</strong>
+                  <small>{clientFiscalData.billingAddress ?? 'Direccion fiscal pendiente'}</small>
+                  {clientFiscalIssue ? (
+                    <>
+                      <div className="cc-alert cc-alert--warning">
+                        <strong>No se puede emitir todavia</strong>
+                        <p>{clientFiscalIssue}</p>
+                      </div>
+                      <button type="button" className="secondary-button" onClick={() => setShowClientFiscalInline((current) => !current)}>
+                        {showClientFiscalInline ? 'Ocultar ficha fiscal' : 'Completar ficha fiscal'}
+                      </button>
+                      {showClientFiscalInline ? (
+                        <ClientBillingDetailsInlineForm
+                          client={selectedClient}
+                          onSaved={async (updatedClient) => {
+                            await onCreated()
+                            setSubmitError(null)
+                            setForm((current) => ({ ...current, client_id: updatedClient.id }))
+                            setShowClientFiscalInline(false)
+                          }}
+                        />
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
                 <span>Salida</span>

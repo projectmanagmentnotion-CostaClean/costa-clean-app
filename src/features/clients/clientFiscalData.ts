@@ -20,7 +20,15 @@ export interface ClientFiscalData {
 export interface InvoiceFiscalSnapshot extends NormalizedClientFiscalInput {
   client_id: string | null
   captured_at: string
-  source: 'client_record'
+  source: 'client_record' | 'client_backfill'
+}
+
+export interface InvoiceFiscalDisplayData {
+  clientName: string | null
+  taxId: string | null
+  billingAddress: string | null
+  email: string | null
+  source: 'snapshot' | 'dynamic'
 }
 
 function normalizeSingleLineText(value: string | null | undefined): string | null {
@@ -173,5 +181,29 @@ export function extractInvoiceFiscalSnapshot(invoice: Pick<InvoiceListItem, 'cli
         ? rawSnapshot.capturedAt
         : new Date(0).toISOString(),
     source: 'client_record',
+  }
+}
+
+export function getInvoiceFiscalDisplayData(
+  invoice: Pick<InvoiceListItem, 'client_id' | 'client_name' | 'client_email' | 'pricing_metadata'>,
+): InvoiceFiscalDisplayData {
+  const snapshot = extractInvoiceFiscalSnapshot(invoice)
+
+  if (snapshot) {
+    return {
+      clientName: snapshot.fiscal_name ?? invoice.client_name ?? null,
+      taxId: snapshot.tax_id,
+      billingAddress: snapshot.billing_address,
+      email: invoice.client_email ?? null,
+      source: 'snapshot',
+    }
+  }
+
+  return {
+    clientName: invoice.client_name ?? null,
+    taxId: null,
+    billingAddress: null,
+    email: invoice.client_email ?? null,
+    source: 'dynamic',
   }
 }

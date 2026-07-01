@@ -26,6 +26,7 @@ import type { JobListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface JobDetailCardProps {
   job: JobListItem | null
@@ -164,6 +165,7 @@ export function JobDetailCard({
   onRequestMajorEdit,
   onMajorEditClose,
 }: JobDetailCardProps) {
+  const toast = useToast()
   const [isInlineEditing, setIsInlineEditing] = useState(false)
   const [saveState, setSaveState] = useState<SaveState>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -354,11 +356,18 @@ export function JobDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setSaveState('saving')
+    const toastId = toast.loading('Guardando servicio...', 'Enviando lineas y resumen del servicio.')
 
     try {
       if (validation.blockingMessage) {
         setSaveState('error')
         setSaveError(validation.blockingMessage)
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo guardar el servicio',
+          description: validation.blockingMessage,
+          persistent: true,
+        })
         return
       }
 
@@ -366,6 +375,12 @@ export function JobDetailCard({
       if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
         setSaveState('error')
         setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo guardar el servicio',
+          description: 'Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.',
+          persistent: true,
+        })
         return
       }
       setDebugState((current) => ({
@@ -418,18 +433,36 @@ export function JobDetailCard({
 
       setSaveState('refreshing')
       setSuccessMessage('Guardando servicio y refrescando vista...')
+      toast.update(toastId, {
+        type: 'info',
+        title: 'Servicio guardado',
+        description: 'Actualizando datos en pantalla...',
+        persistent: true,
+      })
       const refreshResult = await onJobUpdated(optimisticJob)
       const refreshedJobLines = getJobBillingDraftLines(refreshResult.job)
       setBillingLines(refreshedJobLines)
       setForm(createFormStateFromJob(refreshResult.job))
       setSaveState(refreshResult.status === 'synced' ? 'saved' : 'refresh_warning')
       setSuccessMessage(refreshResult.message)
+      toast.update(toastId, {
+        type: refreshResult.status === 'synced' ? 'success' : 'warning',
+        title: refreshResult.status === 'synced' ? 'Servicio guardado' : 'Guardado con refresh pendiente',
+        description: refreshResult.message,
+        persistent: refreshResult.status !== 'synced',
+      })
       setIsDirty(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el servicio.'
       setSaveState('error')
       setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo guardar el servicio',
+        description: `${message} Tus lineas siguen en pantalla.`,
+        persistent: true,
+      })
     }
   }
 
@@ -444,6 +477,7 @@ export function JobDetailCard({
     setSaveError(null)
     setSuccessMessage(null)
     setSaveState('saving')
+    const toastId = toast.loading('Actualizando estado del servicio...', 'Guardando el nuevo estado operativo.')
 
     try {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -452,6 +486,12 @@ export function JobDetailCard({
       if (!supabaseUrl || !supabaseAnonKey) {
         setSaveState('error')
         setSaveError('Faltan las variables de entorno de Supabase.')
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo actualizar el estado',
+          description: 'Faltan las variables de entorno de Supabase.',
+          persistent: true,
+        })
         return
       }
 
@@ -472,11 +512,23 @@ export function JobDetailCard({
         const errorText = await response.text()
         setSaveState('error')
         setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se pudo actualizar el estado',
+          description: `REST ${response.status}: ${errorText || response.statusText}`,
+          persistent: true,
+        })
         return
       }
 
       setSaveState('refreshing')
       setSuccessMessage('Actualizando estado y refrescando vista...')
+      toast.update(toastId, {
+        type: 'info',
+        title: 'Estado guardado',
+        description: 'Actualizando datos en pantalla...',
+        persistent: true,
+      })
       const refreshResult = await onJobUpdated({
         ...job,
         status: nextStatus,
@@ -487,12 +539,26 @@ export function JobDetailCard({
           ? `Estado del servicio actualizado a ${getStatusLabel(nextStatus)}.`
           : `${getStatusLabel(nextStatus)} guardado. La vista mantiene el estado local mientras llega el refresco.`,
       )
+      toast.update(toastId, {
+        type: refreshResult.status === 'synced' ? 'success' : 'warning',
+        title: refreshResult.status === 'synced' ? 'Estado actualizado' : 'Estado guardado con refresh pendiente',
+        description: refreshResult.status === 'synced'
+          ? `Estado del servicio actualizado a ${getStatusLabel(nextStatus)}.`
+          : `${getStatusLabel(nextStatus)} guardado. La vista mantiene el estado local mientras llega el refresco.`,
+        persistent: refreshResult.status !== 'synced',
+      })
       setIsInlineEditing(false)
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el estado del servicio.'
       setSaveState('error')
       setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo actualizar el estado',
+        description: message,
+        persistent: true,
+      })
     }
   }
 

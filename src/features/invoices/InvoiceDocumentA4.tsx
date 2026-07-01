@@ -1,6 +1,7 @@
 import './invoiceDocument.css'
 import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
+import { getInvoiceFiscalDisplayData } from '../clients/clientFiscalData'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
@@ -42,11 +43,27 @@ function formatCurrency(value: number): string {
 }
 
 function buildClientTitle(invoice: InvoiceListItem): string {
-  return invoice.client_name?.trim() || invoice.client_display_code || invoice.client_id
+  const fiscalData = getInvoiceFiscalDisplayData(invoice)
+  return fiscalData.clientName?.trim() || invoice.client_display_code || invoice.client_id
 }
 
 function buildClientMeta(invoice: InvoiceListItem): string[] {
-  return [invoice.client_phone, invoice.client_email].filter(Boolean) as string[]
+  const fiscalData = getInvoiceFiscalDisplayData(invoice)
+  const lines: string[] = []
+
+  if (fiscalData.taxId) {
+    lines.push(`NIF/CIF: ${fiscalData.taxId}`)
+  }
+
+  if (fiscalData.billingAddress) {
+    lines.push(...fiscalData.billingAddress.split('\n'))
+  }
+
+  if (fiscalData.email) {
+    lines.push(fiscalData.email)
+  }
+
+  return lines
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {

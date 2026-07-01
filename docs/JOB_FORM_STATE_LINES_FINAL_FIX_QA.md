@@ -150,3 +150,4 @@ group by j.id;
   4. confirmar `line_count = 4`
   5. reabrir y ver 4 bloques
 - Si apareciera otro editor de servicio fuera de `JobDetailCard`, debera reutilizar el mismo helper editable.
+- Seguimiento de visibilidad: ver `docs/JOB_LINES_DEBUG_PANEL_NOT_VISIBLE_AUDIT.md`. El panel debug anterior no estaba publicado en `origin/main`, asi que el usuario seguia probando un build sin ese trazado visible.

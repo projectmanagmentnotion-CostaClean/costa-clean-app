@@ -107,3 +107,4 @@ group by j.id;
 - No ejecute SQL directo desde este entorno.
 - Si aparece otro path de edicion que no pase por `JobDetailCard -> getJobBillingDraftLines`, habra que alinearlo con la misma normalizacion.
 - Seguimiento posterior: ver `docs/JOB_FORM_STATE_LINES_FINAL_FIX_QA.md`. El fix de normalizacion era necesario, pero el cierre definitivo exige tratar el estado editable como fuente propia, separada de helpers de display y con logs DEV del conteo real hasta la RPC.
+- Seguimiento de trazabilidad visible: ver `docs/JOB_LINES_DEBUG_PANEL_NOT_VISIBLE_AUDIT.md`. La auditoria posterior confirmo que el panel visible seguia sin publicarse, aunque el componente real si era `JobDetailCard`.

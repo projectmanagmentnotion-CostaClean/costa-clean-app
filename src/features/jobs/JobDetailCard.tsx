@@ -48,6 +48,13 @@ interface EditFormState {
   notes: string
 }
 
+interface JobEditorDebugState {
+  source: 'billing_lines' | 'legacy' | 'unknown'
+  initialEditableLines: number
+  lastSubmitPayloadLines: number | null
+  lastSubmitConcepts: string[]
+}
+
 function getServiceTypeOptionLabel(value: string): string {
   switch (value) {
     case 'standard_cleaning': return 'Limpieza estándar'
@@ -99,6 +106,12 @@ export function JobDetailCard({
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [billingLines, setBillingLines] = useState<BillingLineFormState[]>([createBlankBillingLine()])
+  const [debugState, setDebugState] = useState<JobEditorDebugState>({
+    source: 'unknown',
+    initialEditableLines: 0,
+    lastSubmitPayloadLines: null,
+    lastSubmitConcepts: [],
+  })
   const [form, setForm] = useState<EditFormState>({
     client_id: '',
     property_id: '',
@@ -120,6 +133,12 @@ export function JobDetailCard({
       setSuccessMessage(null)
       setIsDirty(false)
       setBillingLines([createBlankBillingLine()])
+      setDebugState({
+        source: 'unknown',
+        initialEditableLines: 0,
+        lastSubmitPayloadLines: null,
+        lastSubmitConcepts: [],
+      })
       setForm({
         client_id: '',
         property_id: '',
@@ -158,6 +177,12 @@ export function JobDetailCard({
     setSuccessMessage(null)
     setIsDirty(false)
     setBillingLines(initialBillingLines)
+    setDebugState({
+      source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
+      initialEditableLines: initialBillingLines.length,
+      lastSubmitPayloadLines: null,
+      lastSubmitConcepts: [],
+    })
     setForm({
       client_id: job.client_id,
       property_id: job.property_id,
@@ -266,6 +291,11 @@ export function JobDetailCard({
         setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
+      setDebugState((current) => ({
+        ...current,
+        lastSubmitPayloadLines: normalizedBillingLines.length,
+        lastSubmitConcepts: normalizedBillingLines.map((line) => line.concept),
+      }))
       if (import.meta.env.DEV) {
         console.info('[JobDetailCard] submit lines', {
           jobId: job.id,
@@ -433,7 +463,15 @@ export function JobDetailCard({
                 setSaveError(null)
                 setSuccessMessage(null)
                 setIsDirty(false)
-                setBillingLines(getJobBillingDraftLines(job))
+                const nextBillingLines = getJobBillingDraftLines(job)
+                const hasPersistedBillingLines = Boolean(job.billing_lines?.length)
+                setBillingLines(nextBillingLines)
+                setDebugState({
+                  source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
+                  initialEditableLines: nextBillingLines.length,
+                  lastSubmitPayloadLines: null,
+                  lastSubmitConcepts: [],
+                })
                 setForm({
                   client_id: job.client_id,
                   property_id: job.property_id,
@@ -470,6 +508,13 @@ export function JobDetailCard({
 
           {isEditing ? (
             <form className="lead-form" onSubmit={handleSubmit}>
+              {import.meta.env.DEV ? (
+                <div className="cc-alert cc-alert--warning" style={{ marginBottom: '1rem' }}>
+                  <strong>DEV TRACE - componente: JobDetailCard/EditForm</strong>
+                  <p>DEV: true | job.billing_lines: {job.billing_lines?.length ?? 0} | stateLines: {billingLines.length}</p>
+                </div>
+              ) : null}
+
               <label className="form-field">
                 <span>Cliente *</span>
                 <select
@@ -630,6 +675,66 @@ export function JobDetailCard({
                   <small className="cc-create-flow__helper">Total actual {billingSubtotal.toFixed(2)} €</small>
                 </div>
               </div>
+
+              {import.meta.env.DEV ? (
+                <div className="cc-create-flow__panel form-field-full" style={{ marginTop: '0.75rem' }}>
+                  <strong>Debug lineas servicio</strong>
+                  <small>Componente: JobDetailCard/EditForm</small>
+                  <div className="cc-create-flow__summary-list">
+                    <div className="cc-create-flow__summary-item">
+                      <span>Job</span>
+                      <strong>{job.display_code ?? job.id}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>Fuente</span>
+                      <strong>{debugState.source}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>job.billing_lines</span>
+                      <strong>{job.billing_lines?.length ?? 0}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>initialEditableLines</span>
+                      <strong>{debugState.initialEditableLines}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>stateLines</span>
+                      <strong>{billingLines.length}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>renderedLines</span>
+                      <strong>{billingLines.length}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>Ultimo submit p_lines</span>
+                      <strong>{debugState.lastSubmitPayloadLines ?? 'sin submit'}</strong>
+                    </div>
+                    <div className="cc-create-flow__summary-item">
+                      <span>fallbackLegacy</span>
+                      <strong>{debugState.source === 'legacy' ? 'si' : 'no'}</strong>
+                    </div>
+                  </div>
+                  <p className="cc-create-flow__helper">
+                    conceptos job: {(job.billing_lines ?? []).map((line) => line.concept).join(' | ') || 'sin lineas'}
+                  </p>
+                  <p className="cc-create-flow__helper">
+                    conceptos state: {billingLines.map((line) => line.concept || '[vacio]').join(' | ') || 'sin lineas'}
+                  </p>
+                  <p className="cc-create-flow__helper">
+                    conceptos submit: {debugState.lastSubmitConcepts.join(' | ') || 'sin submit'}
+                  </p>
+                  {(job.billing_lines?.length ?? 0) > 1 && billingLines.length === 1 ? (
+                    <p className="cc-create-flow__helper" style={{ color: '#b42318' }}>
+                      Invariante rota: job tiene {(job.billing_lines?.length ?? 0)} lineas pero el formulario renderiza 1.
+                    </p>
+                  ) : null}
+                  {billingLines.length > 1 && debugState.lastSubmitPayloadLines === 1 ? (
+                    <p className="cc-create-flow__helper" style={{ color: '#b42318' }}>
+                      Invariante rota: el submit compacto lineas.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="form-actions">
                 <button

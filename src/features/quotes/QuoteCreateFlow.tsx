@@ -35,6 +35,7 @@ import {
   roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
+import type { QuoteCreatePrefill } from './quoteCreatePrefill'
 import type { QuoteListItem } from './types'
 import './QuoteCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
@@ -45,6 +46,7 @@ interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   quotes?: QuoteListItem[]
   invoices?: InvoiceListItem[]
   expenses?: ExpenseListItem[]
+  prefill?: QuoteCreatePrefill | null
   contextClientId?: string | null
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
@@ -81,18 +83,29 @@ export function QuoteCreateFlow({
   quotes = [],
   invoices = [],
   expenses = [],
+  prefill = null,
   onCreatedQuote,
   onOpenExistingQuote,
   onCancel,
   onDirtyChange,
 }: QuoteCreateFlowProps) {
-  const [form, setForm] = useState<FormState>({
-    client_id: contextClientId ?? '',
-    property_id: contextPropertyId ?? '',
+  const [form, setForm] = useState<FormState>(() => ({
+    client_id: prefill?.client_id ?? contextClientId ?? '',
+    property_id: prefill?.property_id ?? contextPropertyId ?? '',
     status: 'draft',
-    notes: '',
-  })
-  const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
+    notes: prefill?.notes ?? '',
+  }))
+  const [lines, setLines] = useState<QuoteLineFormState[]>(() => (
+    prefill?.lines?.length
+      ? prefill.lines.map((line) => ({
+        local_id: createLocalId('QUOTE-LINE-DRAFT'),
+        concept: line.concept,
+        quantity: line.quantity,
+        unit: line.unit,
+        unit_price: line.unit_price,
+      }))
+      : [createBlankQuoteLine()]
+  ))
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -101,11 +114,38 @@ export function QuoteCreateFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
+  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
+
+  useEffect(() => {
+    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
+
+    setForm({
+      client_id: prefill.client_id || contextClientId || '',
+      property_id: prefill.property_id || contextPropertyId || '',
+      status: 'draft',
+      notes: prefill.notes,
+    })
+    setLines(
+      prefill.lines.length > 0
+        ? prefill.lines.map((line) => ({
+          local_id: createLocalId('QUOTE-LINE-DRAFT'),
+          concept: line.concept,
+          quantity: line.quantity,
+          unit: line.unit,
+          unit_price: line.unit_price,
+        }))
+        : [createBlankQuoteLine()],
+    )
+    setCurrentStep(0)
+    setSubmitError(null)
+    setIsDirty(false)
+    setLastAppliedPrefillId(prefill.request_id)
+  }, [contextClientId, contextPropertyId, lastAppliedPrefillId, prefill])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {

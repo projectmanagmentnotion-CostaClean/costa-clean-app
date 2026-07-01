@@ -48,6 +48,7 @@ import {
   roundMoney,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import './InvoiceCreateFlow.css'
@@ -133,25 +134,6 @@ function buildVisibleInvoiceNotes(): string {
   ].join('\n')
 }
 
-function getJobBillingLine(job: JobListItem | null): LineFormState | null {
-  if (!job) return null
-
-  const quantity = Number(job.billing_quantity)
-  const unitPrice = Number(job.billing_unit_price)
-
-  if (!Number.isFinite(quantity) || !Number.isFinite(unitPrice) || quantity <= 0 || unitPrice < 0) {
-    return null
-  }
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(job.billing_concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
-    quantity: formatQuantityInput(quantity),
-    unit: job.billing_unit?.trim() || 'servicio',
-    unit_price: formatMoneyInput(unitPrice),
-  }
-}
-
 function getJobBillingLines(job: JobListItem | null): LineFormState[] | null {
   if (!job) return null
 
@@ -169,26 +151,7 @@ function getJobBillingLines(job: JobListItem | null): LineFormState[] | null {
     if (normalized.length > 0) return normalized
   }
 
-  const singleLine = getJobBillingLine(job)
-  return singleLine ? [singleLine] : null
-}
-
-function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
-  if (!quote) return null
-
-  const subtotal = Number(quote.subtotal)
-  if (!Number.isFinite(subtotal) || subtotal < 0) return null
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(
-      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept,
-      simplifyLineConcept(quote.notes, `Servicio segun presupuesto ${quote.display_code ?? quote.id}`),
-    ),
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: formatMoneyInput(subtotal),
-  }
+  return null
 }
 
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
@@ -367,7 +330,8 @@ export function InvoiceCreateFlow({
       notes: current.notes.trim() ? current.notes : selectedJob.quote_id ? buildVisibleInvoiceNotes() : '',
     }))
 
-    setLines(getJobBillingLines(selectedJob) ?? [getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
+    setLines(getJobBillingLines(selectedJob) ?? (quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()]))
   }, [form.origin_mode, selectedJob, selectedQuote])
 
   useEffect(() => {
@@ -380,7 +344,8 @@ export function InvoiceCreateFlow({
       notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
     }))
 
-    setLines([getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
+    setLines(quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
   }, [form.origin_mode, selectedQuote])
 
   useEffect(() => {

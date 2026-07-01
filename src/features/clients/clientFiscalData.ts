@@ -19,6 +19,7 @@ export interface ClientFiscalData {
 
 export interface InvoiceFiscalSnapshot extends NormalizedClientFiscalInput {
   client_id: string | null
+  captured_at: string
   source: 'client_record'
 }
 
@@ -115,6 +116,7 @@ export function buildInvoiceFiscalSnapshot(
   return {
     ...normalized,
     client_id: client.id,
+    captured_at: new Date().toISOString(),
     source: 'client_record',
   }
 }
@@ -165,6 +167,11 @@ export function extractInvoiceFiscalSnapshot(invoice: Pick<InvoiceListItem, 'cli
       : typeof rawSnapshot.clientId === 'string'
         ? rawSnapshot.clientId
         : invoice.client_id,
+    captured_at: typeof rawSnapshot.captured_at === 'string'
+      ? rawSnapshot.captured_at
+      : typeof rawSnapshot.capturedAt === 'string'
+        ? rawSnapshot.capturedAt
+        : new Date(0).toISOString(),
     source: 'client_record',
   }
 }

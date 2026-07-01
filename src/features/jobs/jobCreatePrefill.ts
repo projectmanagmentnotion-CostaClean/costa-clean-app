@@ -2,13 +2,19 @@ import type { QuoteListItem } from '../quotes/types'
 
 export interface JobCreatePrefill {
   request_id: string
-  origin_kind: 'client' | 'property' | 'quote'
+  origin_kind: 'client' | 'property' | 'quote' | 'job'
   client_id: string
   property_id: string
   quote_id: string
   notes: string
   billing_concept: string
   service_type?: string
+  billing_lines?: Array<{
+    concept: string
+    quantity: string
+    unit: string
+    unit_price: string
+  }>
 }
 
 function createPrefillId(): string {
@@ -24,7 +30,8 @@ export function buildJobCreatePrefillFromQuote(quote: QuoteListItem): JobCreateP
     return null
   }
 
-  const firstLineConcept = quote.lines?.[0]?.concept?.trim() || quote.quote_lines?.[0]?.concept?.trim() || ''
+  const persistedLines = quote.lines?.length ? quote.lines : quote.quote_lines ?? []
+  const firstLineConcept = persistedLines[0]?.concept?.trim() || ''
 
   return {
     request_id: createPrefillId(),
@@ -35,5 +42,47 @@ export function buildJobCreatePrefillFromQuote(quote: QuoteListItem): JobCreateP
     notes: quote.notes?.trim() || '',
     billing_concept: firstLineConcept,
     service_type: 'standard_cleaning',
+    billing_lines: persistedLines.map((line) => ({
+      concept: line.concept,
+      quantity: Number(line.quantity).toFixed(2),
+      unit: line.unit?.trim() || 'servicio',
+      unit_price: Number(line.unit_price).toFixed(2),
+    })),
+  }
+}
+
+export function buildJobCreatePrefillFromJob(job: {
+  id: string
+  client_id: string
+  property_id: string
+  notes?: string | null
+  service_type: string
+  billing_concept?: string | null
+  billing_lines?: Array<{
+    concept: string
+    quantity: number
+    unit: string | null
+    unit_price: number
+  }> | null
+}): JobCreatePrefill | null {
+  if (!job.client_id || !job.property_id) {
+    return null
+  }
+
+  return {
+    request_id: createPrefillId(),
+    origin_kind: 'job',
+    client_id: job.client_id,
+    property_id: job.property_id,
+    quote_id: '',
+    notes: job.notes?.trim() || '',
+    billing_concept: job.billing_concept?.trim() || '',
+    service_type: job.service_type,
+    billing_lines: (job.billing_lines ?? []).map((line) => ({
+      concept: line.concept,
+      quantity: Number(line.quantity).toFixed(2),
+      unit: line.unit?.trim() || 'servicio',
+      unit_price: Number(line.unit_price).toFixed(2),
+    })),
   }
 }

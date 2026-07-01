@@ -14,7 +14,7 @@ import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceN
 import type { PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { JobsList } from '../features/jobs/JobsList'
 import { JobWorkspace } from '../features/jobs/JobWorkspace'
-import type { JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
+import { buildJobCreatePrefillFromJob, type JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
 import type { JobListItem } from '../features/jobs/types'
 import { formatCurrency } from '../app/displayFormat'
 import {
@@ -74,6 +74,7 @@ export function JobsPage({
 }: JobsPageProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [localCreatePrefill, setLocalCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
@@ -107,7 +108,8 @@ export function JobsPage({
     () => activeJobDuplicateGroups.filter((group) => group.severity === 'exact' || group.severity === 'strong'),
     [activeJobDuplicateGroups],
   )
-  const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
+  const effectiveCreatePrefill = localCreatePrefill ?? createPrefill
+  const isCreateFormVisible = showCreateForm || Boolean(effectiveCreatePrefill)
   const hasPendingWork = hasCreateFormDirty || hasPendingWorkspaceState
   const todayJobs = useMemo(
     () => jobs.filter((job) => job.scheduled_date === today && job.status !== 'cancelled'),
@@ -199,6 +201,7 @@ export function JobsPage({
 
   async function handleJobFlowCompleted() {
     onPrefillConsumed()
+    setLocalCreatePrefill(null)
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
   }
@@ -206,6 +209,7 @@ export function JobsPage({
   function handleOpenWorkspace(jobId: string, tab: JobWorkspaceTab = 'summary') {
     runGuarded(() => {
       setShowCreateForm(false)
+      setLocalCreatePrefill(null)
       onPrefillConsumed()
       openJobWorkspace(jobId, tab)
     })
@@ -233,6 +237,7 @@ export function JobsPage({
                 if (isCreateFormVisible) {
                   runGuarded(() => {
                     setShowCreateForm(false)
+                    setLocalCreatePrefill(null)
                     onPrefillConsumed()
                   })
                   return
@@ -247,6 +252,7 @@ export function JobsPage({
                 if (isCreateFormVisible) {
                   runGuarded(() => {
                     setShowCreateForm(false)
+                    setLocalCreatePrefill(null)
                     onPrefillConsumed()
                   })
                   return
@@ -314,6 +320,7 @@ export function JobsPage({
                 runGuarded(() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                  setLocalCreatePrefill(null)
                   onPrefillConsumed()
                 })
               }}
@@ -333,16 +340,18 @@ export function JobsPage({
                   jobs={jobs}
                   onRefreshData={onJobCreated}
                   onCompleted={handleJobFlowCompleted}
-                  prefill={createPrefill}
+                  prefill={effectiveCreatePrefill}
                   onOpenExistingJob={(jobId) => {
                     setHasCreateFormDirty(false)
                     setShowCreateForm(false)
+                    setLocalCreatePrefill(null)
                     onPrefillConsumed()
                     handleOpenWorkspace(jobId)
                   }}
                   onCancel={() => {
                     setHasCreateFormDirty(false)
                     setShowCreateForm(false)
+                    setLocalCreatePrefill(null)
                     onPrefillConsumed()
                   }}
                   onDirtyChange={setHasCreateFormDirty}
@@ -421,6 +430,14 @@ export function JobsPage({
             onOpenPropertyWorkspace={onOpenPropertyWorkspace}
             onOpenQuoteDetail={onOpenQuoteDetail}
             onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onCreateSimilarJob={(targetJob) => {
+              const prefill = buildJobCreatePrefillFromJob(targetJob)
+              if (!prefill) return
+              setLocalCreatePrefill(prefill)
+              setHasPendingWorkspaceState(false)
+              closeJobWorkspace()
+              setShowCreateForm(true)
+            }}
             onPendingStateChange={setHasPendingWorkspaceState}
           />
 

@@ -12,6 +12,7 @@ import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildQuoteDuplicateGroups } from '../features/duplicates/duplicateEngine'
+import { buildQuoteCreatePrefillFromQuote, type QuoteCreatePrefill } from '../features/quotes/quoteCreatePrefill'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
 import { QuotesList } from '../features/quotes/QuotesList'
@@ -67,6 +68,7 @@ export function QuotesPage({
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
+  const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(null)
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
@@ -170,6 +172,7 @@ export function QuotesPage({
     await onQuoteCreated()
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
+    setCreatePrefill(null)
   }
 
   function openQuoteDocument(targetQuote: QuoteListItem) {
@@ -195,7 +198,10 @@ export function QuotesPage({
             label: showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto',
             onClick: () => {
               if (showCreateForm) {
-                runGuarded(() => setShowCreateForm(false))
+                runGuarded(() => {
+                  setShowCreateForm(false)
+                  setCreatePrefill(null)
+                })
                 return
               }
 
@@ -207,7 +213,10 @@ export function QuotesPage({
               label: showCreateForm ? 'Cerrar formulario' : 'Nuevo presupuesto',
               onClick: () => {
                 if (showCreateForm) {
-                  runGuarded(() => setShowCreateForm(false))
+                  runGuarded(() => {
+                    setShowCreateForm(false)
+                    setCreatePrefill(null)
+                  })
                   return
                 }
 
@@ -271,12 +280,13 @@ export function QuotesPage({
             isOpen={showCreateForm}
             title="Nuevo presupuesto"
             description="Trabaja el presupuesto en una superficie dedicada y vuelve a la lista sin perder el contexto."
-            onClose={() => {
-              runGuarded(() => {
-                setHasCreateFormDirty(false)
-                setShowCreateForm(false)
-              })
-            }}
+              onClose={() => {
+                runGuarded(() => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  setCreatePrefill(null)
+                })
+              }}
           >
             <Suspense
               fallback={(
@@ -292,16 +302,19 @@ export function QuotesPage({
                 quotes={allQuotes}
                 invoices={invoices}
                 expenses={expenses}
+                prefill={createPrefill}
                 onRefreshData={onQuoteCreated}
                 onCompleted={handleQuoteCreated}
                 onOpenExistingQuote={(quoteId) => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                  setCreatePrefill(null)
                   setSelectedQuoteId(quoteId)
                 }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                  setCreatePrefill(null)
                 }}
                 onDirtyChange={setHasCreateFormDirty}
               />
@@ -392,6 +405,12 @@ export function QuotesPage({
                 }
               }}
               onCreateJobFromQuote={onCreateJobFromQuote}
+              onCreateSimilarQuote={(quote) => {
+                const prefill = buildQuoteCreatePrefillFromQuote(quote)
+                if (!prefill) return
+                setCreatePrefill(prefill)
+                setShowCreateForm(true)
+              }}
               onUnsavedChange={setHasUnsavedDetailChanges}
               onRequestMajorEdit={() => setShowMajorEdit(true)}
             />

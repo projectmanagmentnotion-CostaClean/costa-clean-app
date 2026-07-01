@@ -26,6 +26,7 @@ interface JobDetailCardProps {
   quotes: QuoteListItem[]
   onJobUpdated: () => Promise<void>
   onCreateInvoiceFromJob: (job: JobListItem) => void
+  onCreateSimilarJob?: (job: JobListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   hideHeaderActions?: boolean
   majorEditMode?: boolean
@@ -82,6 +83,7 @@ export function JobDetailCard({
   quotes,
   onJobUpdated,
   onCreateInvoiceFromJob,
+  onCreateSimilarJob,
   onUnsavedChange,
   hideHeaderActions = false,
   majorEditMode = false,
@@ -376,6 +378,16 @@ export function JobDetailCard({
             >
               Crear factura desde servicio
             </button>
+
+            {onCreateSimilarJob ? (
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => onCreateSimilarJob(job)}
+              >
+                Crear servicio como este
+              </button>
+            ) : null}
 
             <button
               type="button"

@@ -17,6 +17,7 @@ import { buildInvoiceDuplicateGroups } from '../features/duplicates/duplicateEng
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
+import { buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import { InvoicesList } from '../features/invoices/InvoicesList'
@@ -99,6 +100,7 @@ export function InvoicesPage({
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
+  const [localCreatePrefill, setLocalCreatePrefill] = useState<InvoiceCreatePrefill | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
@@ -122,7 +124,8 @@ export function InvoicesPage({
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
   const selectedInvoiceKey = selectedInvoice?.id ?? null
-  const isCreateFormVisible = showCreateForm || Boolean(createPrefill)
+  const effectiveCreatePrefill = localCreatePrefill ?? createPrefill
+  const isCreateFormVisible = showCreateForm || Boolean(effectiveCreatePrefill)
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
@@ -239,6 +242,7 @@ export function InvoicesPage({
   async function handleInvoiceCreated() {
     await onInvoiceCreated()
     onPrefillConsumed()
+    setLocalCreatePrefill(null)
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
   }
@@ -324,6 +328,7 @@ export function InvoicesPage({
               if (isCreateFormVisible) {
                 runGuarded(() => {
                   setShowCreateForm(false)
+                  setLocalCreatePrefill(null)
                   onPrefillConsumed()
                 })
                 return
@@ -386,6 +391,7 @@ export function InvoicesPage({
               runGuarded(() => {
                 setHasCreateFormDirty(false)
                 setShowCreateForm(false)
+                setLocalCreatePrefill(null)
                 onPrefillConsumed()
               })
             }}
@@ -407,16 +413,18 @@ export function InvoicesPage({
                 expenses={expenses}
                 onRefreshData={onInvoiceCreated}
                 onCompleted={handleInvoiceCreated}
-                prefill={createPrefill}
+                prefill={effectiveCreatePrefill}
                 onOpenExistingInvoice={(invoiceId) => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                  setLocalCreatePrefill(null)
                   onPrefillConsumed()
                   setSelectedInvoiceId(invoiceId)
                 }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
+                  setLocalCreatePrefill(null)
                   onPrefillConsumed()
                 }}
                 onDirtyChange={setHasCreateFormDirty}
@@ -562,6 +570,10 @@ export function InvoicesPage({
                 }
               }}
               onViewPayments={onViewPayments}
+              onCreateSimilarInvoice={(invoice) => {
+                setLocalCreatePrefill(buildInvoiceCreatePrefillFromInvoice(invoice))
+                setShowCreateForm(true)
+              }}
               onOpenJobWorkspace={onOpenJobWorkspace}
               onOpenClientWorkspace={onOpenClientWorkspace}
               onOpenPropertyWorkspace={onOpenPropertyWorkspace}

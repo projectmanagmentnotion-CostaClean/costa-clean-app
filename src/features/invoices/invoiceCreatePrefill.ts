@@ -40,7 +40,7 @@ function formatDecimalInput(value: number): string {
 
 function buildBillingLines(job: JobListItem): InvoiceCreatePrefillLine[] {
   return getJobBillingLines(job).map((line) => ({
-    concept: simplifyLineConcept(line.concept || job.billing_concept || getServiceTypeLabel(job.service_type)),
+    concept: line.concept || simplifyLineConcept(job.billing_concept || getServiceTypeLabel(job.service_type)),
     quantity: formatDecimalInput(line.quantity),
     unit: normalizeBillingUnit(line.unit),
     unit_price: formatDecimalInput(line.unit_price),

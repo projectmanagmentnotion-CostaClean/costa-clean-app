@@ -14,7 +14,7 @@ import type { JobListItem } from '../jobs/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateForm } from '../quotes/QuoteCreateForm'
-import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
+import { normalizeLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import {
   buildBillingLinePayloads,
@@ -23,6 +23,7 @@ import {
   formatBillingLineSubtotalInput,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 
@@ -97,27 +98,6 @@ function buildVisibleInvoiceNotes(): string {
     'Condiciones economicas aplicadas segun presupuesto aceptado.',
     'Precios sin IVA.',
   ].join('\n')
-}
-
-function getQuoteBillingLine(quote: QuoteListItem | null): BillingLineFormState | null {
-  if (!quote) return null
-
-  const subtotal = Number(quote.subtotal)
-  if (!Number.isFinite(subtotal) || subtotal < 0) return null
-
-  return {
-    local_id: createBlankBillingLine().local_id,
-    concept: normalizeLineConcept(
-      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept,
-      simplifyLineConcept(
-        quote.notes,
-        `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
-      ),
-    ),
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: formatMoneyInput(subtotal),
-  }
 }
 
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): BillingLineFormState[] {
@@ -272,7 +252,8 @@ export function InvoiceCreateForm({
     }))
 
     const jobLines = getJobBillingDraftLines(selectedJob)
-    setLines(jobLines.length > 0 ? jobLines : [getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
+    setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
   }, [form.origin_mode, selectedJob, selectedQuote])
 
   useEffect(() => {
@@ -285,7 +266,8 @@ export function InvoiceCreateForm({
       notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
     }))
 
-    setLines([getQuoteBillingLine(selectedQuote) ?? createBlankBillingLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
+    setLines(quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
   }, [form.origin_mode, selectedQuote])
 
   useEffect(() => {

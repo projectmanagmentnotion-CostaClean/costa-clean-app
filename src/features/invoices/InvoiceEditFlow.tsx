@@ -33,6 +33,7 @@ import {
   roundMoney,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import {
   buildInvoicePaymentMeta,
   buildInvoicePaymentSummary,
@@ -119,24 +120,6 @@ function getFormLinesFromInvoice(invoice: InvoiceListItem): LineFormState[] {
   }
 
   return [getFallbackLineFromInvoice(invoice)]
-}
-
-function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
-  if (!quote) return null
-
-  const subtotal = Number(quote.subtotal)
-  if (!Number.isFinite(subtotal) || subtotal < 0) return null
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(
-      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept,
-      simplifyLineConcept(quote.notes, `Servicio segun presupuesto ${quote.display_code ?? quote.id}`),
-    ),
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: formatMoneyInput(subtotal),
-  }
 }
 
 function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePayload[] | null {
@@ -313,7 +296,8 @@ export function InvoiceEditFlow({
       notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
     const jobLines = getJobBillingDraftLines(selectedJob)
-    setLines(jobLines.length > 0 ? jobLines : [getQuoteBillingLine(linkedQuote) ?? createBlankBillingLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(linkedQuote)
+    setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
   }
 
   function getStepError(stepIndex: number): string | null {

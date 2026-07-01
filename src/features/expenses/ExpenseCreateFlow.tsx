@@ -10,6 +10,7 @@ import type { QuoteListItem } from '../quotes/types'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { createExpense, updateExpenseAttachment } from './expenseApi'
+import type { ExpenseCreatePrefill } from './expenseCreatePrefill'
 import { uploadExpenseReceipt } from './expenseAttachmentsApi'
 import { ExpenseSupportFieldset } from './ExpenseSupportFieldset'
 import {
@@ -35,6 +36,7 @@ interface ExpenseCreateFlowProps extends FullViewActionFlowProps {
   expenses?: ExpenseListItem[]
   quotes?: QuoteListItem[]
   invoices?: InvoiceListItem[]
+  prefill?: ExpenseCreatePrefill | null
   onOpenExistingExpense?: (expenseId: string) => void
 }
 
@@ -86,6 +88,14 @@ function formatMoneyInput(value: number): string {
   return value.toFixed(2)
 }
 
+function todayLocalDate(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const day = String(now.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 export function ExpenseCreateFlow({
   onRefreshData,
   onCompleted,
@@ -97,9 +107,26 @@ export function ExpenseCreateFlow({
   expenses = [],
   quotes = [],
   invoices = [],
+  prefill = null,
   onOpenExistingExpense,
 }: ExpenseCreateFlowProps) {
-  const [form, setForm] = useState<CreateFormState>(defaultFormState)
+  const [form, setForm] = useState<CreateFormState>(() => ({
+    ...defaultFormState,
+    expense_date: todayLocalDate(),
+    supplier_name: prefill?.supplier_name ?? defaultFormState.supplier_name,
+    category: prefill?.category ?? defaultFormState.category,
+    description: prefill?.description ?? defaultFormState.description,
+    document_type: prefill?.document_type ?? defaultFormState.document_type,
+    payment_status: prefill?.payment_status ?? defaultFormState.payment_status,
+    subtotal: prefill?.subtotal ?? defaultFormState.subtotal,
+    tax_rate: prefill?.tax_rate ?? defaultFormState.tax_rate,
+    tax_amount: prefill?.tax_amount ?? defaultFormState.tax_amount,
+    total: prefill?.total ?? defaultFormState.total,
+    document_support_status: 'missing',
+    fiscal_review_status: 'pending',
+    fiscal_risk_level: 'medium',
+    notes: prefill?.notes ?? defaultFormState.notes,
+  }))
   const [currentStep, setCurrentStep] = useState(0)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -107,11 +134,39 @@ export function ExpenseCreateFlow({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
   const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
+  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
+
+  useEffect(() => {
+    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
+
+    setForm({
+      ...defaultFormState,
+      expense_date: todayLocalDate(),
+      supplier_name: prefill.supplier_name,
+      category: prefill.category,
+      description: prefill.description,
+      document_type: prefill.document_type,
+      payment_status: prefill.payment_status,
+      subtotal: prefill.subtotal,
+      tax_rate: prefill.tax_rate,
+      tax_amount: prefill.tax_amount,
+      total: prefill.total,
+      document_support_status: 'missing',
+      fiscal_review_status: 'pending',
+      fiscal_risk_level: 'medium',
+      notes: prefill.notes,
+    })
+    setCurrentStep(0)
+    setPendingReceiptFile(null)
+    setError(null)
+    setIsDirty(false)
+    setLastAppliedPrefillId(prefill.request_id)
+  }, [lastAppliedPrefillId, prefill])
 
   const subtotalValue = useMemo(() => parseDecimalInput(form.subtotal || '0'), [form.subtotal])
   const taxRateValue = useMemo(() => parseDecimalInput(form.tax_rate || '0'), [form.tax_rate])

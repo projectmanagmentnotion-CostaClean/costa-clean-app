@@ -59,7 +59,7 @@ export function createBlankQuoteLine(): QuoteLineFormState {
   }
 }
 
-function buildFallbackConcept(
+export function buildFallbackConcept(
   quote: QuoteListItem,
   properties: PropertyListItem[],
 ): string {

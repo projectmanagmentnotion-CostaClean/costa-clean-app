@@ -25,6 +25,7 @@ interface ExpenseDetailCardProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   onExpenseUpdated: () => Promise<void>
+  onCreateSimilarExpense?: (expense: ExpenseListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   onOpenExistingExpense?: (expenseId: string) => void
 }
@@ -110,6 +111,7 @@ export function ExpenseDetailCard({
   quotes,
   invoices,
   onExpenseUpdated,
+  onCreateSimilarExpense,
   onUnsavedChange,
   onOpenExistingExpense,
 }: ExpenseDetailCardProps) {
@@ -129,6 +131,11 @@ export function ExpenseDetailCard({
   )
 
   const headerActions: ActionGroupItem[] = expense && primaryAction ? [
+    ...(onCreateSimilarExpense ? [{
+      key: 'duplicate-expense',
+      label: 'Crear gasto como este',
+      onClick: () => onCreateSimilarExpense(expense),
+    } satisfies ActionGroupItem] : []),
     {
       key: 'edit-expense',
       label: 'Editar gasto',

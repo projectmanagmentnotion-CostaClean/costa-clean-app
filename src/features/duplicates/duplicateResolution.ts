@@ -39,10 +39,18 @@ function writeDuplicateResolutionMap(nextMap: DuplicateResolutionMap) {
   }
 }
 
-export function buildDuplicateResolutionKey<TRecord>(group: DuplicateGroup<TRecord>) {
-  const recordIds = [...group.records].map((record) => record.recordId).sort().join('::')
+export function buildDuplicatePairResolutionKeys<TRecord>(group: DuplicateGroup<TRecord>) {
+  const recordIds = [...group.records].map((record) => record.recordId).sort()
   const reasonCodes = [...group.reasons].map((reason) => reason.code).sort().join('::')
-  return `${group.entityType}__${recordIds}__${reasonCodes}`
+  const keys: string[] = []
+
+  for (let index = 0; index < recordIds.length; index += 1) {
+    for (let cursor = index + 1; cursor < recordIds.length; cursor += 1) {
+      keys.push(`${group.entityType}__${recordIds[index]}__${recordIds[cursor]}__${reasonCodes}`)
+    }
+  }
+
+  return keys
 }
 
 export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRecord>>) {
@@ -53,9 +61,9 @@ export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRe
   }, [resolutionMap])
 
   const resolutionKeyByGroupId = useMemo(() => {
-    const map = new Map<string, string>()
+    const map = new Map<string, string[]>()
     for (const group of groups) {
-      map.set(group.groupId, buildDuplicateResolutionKey(group))
+      map.set(group.groupId, buildDuplicatePairResolutionKeys(group))
     }
     return map
   }, [groups])
@@ -64,9 +72,24 @@ export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRe
     const nextState: Record<string, 'open' | DuplicateResolutionStatus> = {}
 
     for (const group of groups) {
-      const resolutionKey = resolutionKeyByGroupId.get(group.groupId)
-      const storedState = resolutionKey ? resolutionMap[resolutionKey]?.status : undefined
-      nextState[group.groupId] = storedState ?? 'open'
+      const resolutionKeys = resolutionKeyByGroupId.get(group.groupId) ?? []
+      const statuses = resolutionKeys
+        .map((resolutionKey) => resolutionMap[resolutionKey]?.status)
+        .filter((status): status is DuplicateResolutionStatus => Boolean(status))
+
+      if (resolutionKeys.length === 0 || statuses.length === 0) {
+        nextState[group.groupId] = 'open'
+        continue
+      }
+
+      const allIgnored = statuses.length === resolutionKeys.length && statuses.every((status) => status === 'ignored')
+      if (allIgnored) {
+        nextState[group.groupId] = 'ignored'
+        continue
+      }
+
+      const allResolved = statuses.length === resolutionKeys.length && statuses.every((status) => status === 'reviewed' || status === 'ignored')
+      nextState[group.groupId] = allResolved ? 'reviewed' : 'open'
     }
 
     return nextState
@@ -90,22 +113,29 @@ export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRe
   )
 
   function updateGroupState(groupId: string, status: DuplicateResolutionStatus | null) {
-    const resolutionKey = resolutionKeyByGroupId.get(groupId)
-    if (!resolutionKey) return
+    const resolutionKeys = resolutionKeyByGroupId.get(groupId)
+    if (!resolutionKeys || resolutionKeys.length === 0) return
 
     setResolutionMap((current) => {
       if (status === null) {
         const next = { ...current }
-        delete next[resolutionKey]
+        for (const resolutionKey of resolutionKeys) {
+          delete next[resolutionKey]
+        }
         return next
       }
 
-      return {
-        ...current,
-        [resolutionKey]: {
+      const next = { ...current }
+      const updatedAt = new Date().toISOString()
+      for (const resolutionKey of resolutionKeys) {
+        next[resolutionKey] = {
           status,
-          updatedAt: new Date().toISOString(),
-        },
+          updatedAt,
+        }
+      }
+
+      return {
+        ...next,
       }
     })
   }

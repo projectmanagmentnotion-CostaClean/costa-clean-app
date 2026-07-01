@@ -8,11 +8,13 @@ import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { findJobDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import { saveJobWithLines, buildJobBillingSummary } from './jobWriteApi'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
 import { normalizeLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import {
   completeContextualActionFlow,
   completeFullViewActionFlow,
@@ -108,6 +110,15 @@ function buildInitialBillingLines(prefill: JobCreatePrefill | null): BillingLine
     return [createBlankBillingLine({ concept: getServiceTypeOptionLabel('standard_cleaning'), unit_price: '' })]
   }
 
+  if (prefill.billing_lines?.length) {
+    return prefill.billing_lines.map((line) => createBlankBillingLine({
+      concept: line.concept,
+      quantity: line.quantity,
+      unit: line.unit,
+      unit_price: line.unit_price,
+    }))
+  }
+
   return [
     createBlankBillingLine({
       concept: prefill.billing_concept || getServiceTypeOptionLabel(prefill.service_type ?? 'standard_cleaning'),
@@ -120,30 +131,6 @@ function normalizeJobBillingLines(lines: BillingLineFormState[]): JobBillingLine
   const payloads = buildBillingLinePayloads(lines, (concept) => normalizeLineConcept(concept))
   if (!payloads || payloads.length === 0) return null
   return payloads
-}
-
-function buildJobBillingSummary(
-  lines: JobBillingLineItem[],
-  fallbackConcept: string,
-): Pick<JobListItem, 'billing_concept' | 'billing_quantity' | 'billing_unit' | 'billing_unit_price'> {
-  if (lines.length === 1) {
-    return {
-      billing_concept: lines[0].concept,
-      billing_quantity: lines[0].quantity,
-      billing_unit: lines[0].unit,
-      billing_unit_price: lines[0].unit_price,
-    }
-  }
-
-  const subtotal = lines.reduce((sum, line) => sum + line.line_subtotal, 0)
-  const firstConcept = lines[0]?.concept || fallbackConcept
-
-  return {
-    billing_concept: `${firstConcept} (+${lines.length - 1} linea(s))`,
-    billing_quantity: 1,
-    billing_unit: 'servicio',
-    billing_unit_price: subtotal,
-  }
 }
 
 function getOriginSummary(prefill: JobCreatePrefill | null, hasSelectedQuote: boolean): string {
@@ -259,18 +246,7 @@ export function JobCreateFlow({
       notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
     }))
 
-    const inheritedConcept = selectedQuote.lines?.[0]?.concept?.trim() || selectedQuote.quote_lines?.[0]?.concept?.trim() || ''
-    if (!inheritedConcept) return
-
-    setBillingLines((current) => {
-      if (current.length !== 1 || current[0].concept.trim()) return current
-      return [
-        {
-          ...current[0],
-          concept: inheritedConcept,
-        },
-      ]
-    })
+    setBillingLines(getBillingDraftLinesFromQuote(selectedQuote))
   }, [selectedQuote])
 
   function markDirty() {
@@ -373,14 +349,6 @@ export function JobCreateFlow({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       const normalizedBillingLines = normalizeJobBillingLines(billingLines)
       if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
         setCurrentStep(2)
@@ -398,14 +366,8 @@ export function JobCreateFlow({
           ? `JOB-${crypto.randomUUID()}`
           : `JOB-${Date.now()}`
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/jobs`, {
-        method: 'POST',
-        headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      await saveJobWithLines(
+        {
           id: jobId,
           client_id: form.client_id,
           property_id: form.property_id,
@@ -418,14 +380,13 @@ export function JobCreateFlow({
           billing_unit: billingSummary.billing_unit,
           billing_unit_price: billingSummary.billing_unit_price,
           notes: form.notes.trim() || null,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+        },
+        normalizedBillingLines.map((line, index) => ({
+          ...line,
+          id: line.id || `JOB-LINE-${jobId}-${index + 1}`,
+          job_id: jobId,
+        })),
+      )
 
       const nextCreatedJob: JobListItem = {
         id: jobId,

@@ -58,6 +58,7 @@ interface JobWorkspaceProps {
   onOpenPropertyWorkspace: (propertyId: string) => void
   onOpenQuoteDetail: (quoteId: string) => void
   onOpenInvoiceDetail: (invoiceId: string) => void
+  onCreateSimilarJob?: (job: JobListItem) => void
   onPendingStateChange?: (hasPendingState: boolean) => void
 }
 
@@ -163,6 +164,7 @@ export function JobWorkspace({
   onOpenPropertyWorkspace,
   onOpenQuoteDetail,
   onOpenInvoiceDetail,
+  onCreateSimilarJob,
   onPendingStateChange,
 }: JobWorkspaceProps) {
   const [activeAction, setActiveAction] = useState<JobWorkspaceAction>(null)
@@ -493,6 +495,7 @@ export function JobWorkspace({
           quotes={quotes}
           onJobUpdated={onRefresh}
           onCreateInvoiceFromJob={() => openAction('invoice')}
+          onCreateSimilarJob={onCreateSimilarJob}
           onUnsavedChange={setHasMajorEditDirty}
           hideHeaderActions
           majorEditMode
@@ -570,6 +573,7 @@ export function JobWorkspace({
             quotes={quotes}
             onJobUpdated={onRefresh}
             onCreateInvoiceFromJob={() => openAction('invoice')}
+            onCreateSimilarJob={onCreateSimilarJob}
             onUnsavedChange={setHasPendingDetailState}
             onRequestMajorEdit={() => setShowMajorEdit(true)}
           />

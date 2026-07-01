@@ -9,6 +9,7 @@ import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildExpenseDuplicateGroups } from '../features/duplicates/duplicateEngine'
+import { buildExpenseCreatePrefillFromExpense, type ExpenseCreatePrefill } from '../features/expenses/expenseCreatePrefill'
 import { ExpenseCreateFlow } from '../features/expenses/ExpenseCreateFlow'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
@@ -49,6 +50,7 @@ export function ExpensesPage({
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
+  const [createPrefill, setCreatePrefill] = useState<ExpenseCreatePrefill | null>(null)
 
   const selectedExpense =
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
@@ -134,6 +136,8 @@ export function ExpensesPage({
   async function handleExpenseCreated() {
     await onExpenseCreated()
     setShowCreateForm(false)
+    setHasCreateFormDirty(false)
+    setCreatePrefill(null)
   }
 
   return (
@@ -148,7 +152,10 @@ export function ExpensesPage({
           label: showCreateForm ? 'Cerrar formulario' : 'Nuevo gasto',
           onClick: () => {
             if (showCreateForm) {
-              runGuarded(() => setShowCreateForm(false))
+              runGuarded(() => {
+                setShowCreateForm(false)
+                setCreatePrefill(null)
+              })
               return
             }
 
@@ -217,6 +224,7 @@ export function ExpensesPage({
             runGuarded(() => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)
+              setCreatePrefill(null)
             })
           }}
         >
@@ -224,9 +232,11 @@ export function ExpensesPage({
             expenses={allExpenses}
             quotes={quotes}
             invoices={invoices}
+            prefill={createPrefill}
             onOpenExistingExpense={(expenseId) => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)
+              setCreatePrefill(null)
               setSelectedExpenseId(expenseId)
             }}
             onRefreshData={onExpenseCreated}
@@ -234,6 +244,7 @@ export function ExpensesPage({
             onCancel={() => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)
+              setCreatePrefill(null)
             }}
             onDirtyChange={setHasCreateFormDirty}
           />
@@ -273,6 +284,10 @@ export function ExpensesPage({
             quotes={quotes}
             invoices={invoices}
             onExpenseUpdated={onExpenseCreated}
+            onCreateSimilarExpense={(expense) => {
+              setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense))
+              setShowCreateForm(true)
+            }}
             onUnsavedChange={setHasUnsavedDetailChanges}
             onOpenExistingExpense={(expenseId) => setSelectedExpenseId(expenseId)}
           />

@@ -8,6 +8,7 @@ import type { ClientListItem } from '../clients/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import { normalizeLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import { completeContextualActionFlow } from '../shared/actionFlowLifecycle'
@@ -86,6 +87,15 @@ function applyPrefillToForm(prefill: JobCreatePrefill): FormState {
 }
 
 function buildInitialBillingLines(prefill: JobCreatePrefill | null): BillingLineFormState[] {
+  if (prefill?.billing_lines?.length) {
+    return prefill.billing_lines.map((line) => createBlankBillingLine({
+      concept: line.concept,
+      quantity: line.quantity,
+      unit: line.unit,
+      unit_price: line.unit_price,
+    }))
+  }
+
   return [
     createBlankBillingLine({
       concept: prefill?.billing_concept || getServiceTypeOptionLabel(prefill?.service_type ?? 'standard_cleaning'),
@@ -205,13 +215,7 @@ export function JobCreateForm({
       notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
     }))
 
-    const inheritedConcept = selectedQuote.lines?.[0]?.concept?.trim() || selectedQuote.quote_lines?.[0]?.concept?.trim() || ''
-    if (!inheritedConcept) return
-
-    setBillingLines((current) => {
-      if (current.length !== 1 || current[0].concept.trim()) return current
-      return [{ ...current[0], concept: inheritedConcept }]
-    })
+    setBillingLines(getBillingDraftLinesFromQuote(selectedQuote))
   }, [selectedQuote])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {

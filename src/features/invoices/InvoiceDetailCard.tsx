@@ -19,6 +19,7 @@ import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import {
   buildInvoicePaymentMeta,
   buildInvoicePaymentSummary,
@@ -38,6 +39,7 @@ interface InvoiceDetailCardProps {
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
   onViewPayments: (invoiceId: string) => void
+  onCreateSimilarInvoice?: (invoice: InvoiceListItem) => void
   onOpenJobWorkspace: (jobId: string) => void
   onOpenClientWorkspace: (clientId: string) => void
   onOpenPropertyWorkspace: (propertyId: string) => void
@@ -159,27 +161,6 @@ function getFormLinesFromInvoice(invoice: InvoiceListItem): LineFormState[] {
   return [getFallbackLineFromInvoice(invoice)]
 }
 
-function getQuoteBillingLine(quote: QuoteListItem | null): LineFormState | null {
-  if (!quote) return null
-
-  const subtotal = Number(quote.subtotal)
-  if (!Number.isFinite(subtotal) || subtotal < 0) return null
-
-  return {
-    local_id: createLocalId('LINE-DRAFT'),
-    concept: normalizeLineConcept(
-      quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept,
-      simplifyLineConcept(
-        quote.notes,
-        `Servicio segun presupuesto ${quote.display_code ?? quote.id}`,
-      ),
-    ),
-    quantity: '1.00',
-    unit: 'servicio',
-    unit_price: formatMoneyInput(subtotal),
-  }
-}
-
 function calculateLineSubtotal(line: LineFormState): number {
   const quantity = parseDecimalInput(line.quantity)
   const unitPrice = parseDecimalInput(line.unit_price)
@@ -264,6 +245,7 @@ export function InvoiceDetailCard({
   onInvoiceUpdated,
   onOpenDocument,
   onViewPayments,
+  onCreateSimilarInvoice,
   onOpenJobWorkspace,
   onOpenClientWorkspace,
   onOpenPropertyWorkspace,
@@ -421,7 +403,8 @@ export function InvoiceDetailCard({
       notes: current.notes.trim() ? current.notes : linkedQuote ? buildVisibleInvoiceNotes() : '',
     }))
     const jobLines = getJobBillingDraftLines(selectedJob)
-    setLines(jobLines.length > 0 ? jobLines : [getQuoteBillingLine(linkedQuote) ?? createBlankLine()])
+    const quoteLines = getBillingDraftLinesFromQuote(linkedQuote)
+    setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankLine()])
   }
 
   async function updateInvoiceStatus(nextStatus: string) {
@@ -577,6 +560,14 @@ export function InvoiceDetailCard({
         onClick: () => onViewPayments(invoice.id),
       },
     )
+  }
+
+  if (invoice && onCreateSimilarInvoice) {
+    headerActions.push({
+      key: 'duplicate-invoice',
+      label: 'Crear factura como esta',
+      onClick: () => onCreateSimilarInvoice(invoice),
+    })
   }
 
   if (invoice && !hideHeaderActions) {

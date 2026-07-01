@@ -32,6 +32,7 @@ interface QuoteDetailCardProps {
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onCreateSimilarQuote?: (quote: QuoteListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   hideHeaderActions?: boolean
   majorEditMode?: boolean
@@ -70,6 +71,7 @@ export function QuoteDetailCard({
   onQuoteUpdated,
   onOpenDocument,
   onCreateJobFromQuote,
+  onCreateSimilarQuote,
   onUnsavedChange,
   hideHeaderActions = false,
   majorEditMode = false,
@@ -101,6 +103,7 @@ export function QuoteDetailCard({
       onQuoteUpdated={onQuoteUpdated}
       onOpenDocument={onOpenDocument}
       onCreateJobFromQuote={onCreateJobFromQuote}
+      onCreateSimilarQuote={onCreateSimilarQuote}
       onUnsavedChange={onUnsavedChange}
       hideHeaderActions={hideHeaderActions}
       majorEditMode={majorEditMode}
@@ -117,6 +120,7 @@ function QuoteDetailCardContent({
   onQuoteUpdated,
   onOpenDocument,
   onCreateJobFromQuote,
+  onCreateSimilarQuote,
   onUnsavedChange,
   hideHeaderActions,
   majorEditMode,
@@ -129,6 +133,7 @@ function QuoteDetailCardContent({
   onQuoteUpdated: () => Promise<void>
   onOpenDocument: () => void
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onCreateSimilarQuote?: (quote: QuoteListItem) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean) => void
   hideHeaderActions: boolean
   majorEditMode: boolean
@@ -451,6 +456,14 @@ function QuoteDetailCardContent({
   }
 
   if (!hideHeaderActions) {
+    if (onCreateSimilarQuote) {
+      headerActions.push({
+        key: 'duplicate-quote',
+        label: 'Crear presupuesto como este',
+        onClick: () => onCreateSimilarQuote(hydratedQuote),
+      })
+    }
+
     headerActions.push({
       key: 'edit-quote',
       label: isEditing ? 'Cancelar edicion' : 'Editar presupuesto',

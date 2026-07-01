@@ -1,0 +1,76 @@
+import { describe, expect, it } from 'vitest'
+import { getJobBillingLines } from './jobBilling'
+import type { JobListItem } from './types'
+
+function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
+  return {
+    id: 'job-1',
+    display_code: 'JOB-001',
+    client_id: 'client-1',
+    property_id: 'property-1',
+    quote_id: null,
+    scheduled_date: '2026-07-01',
+    status: 'scheduled',
+    service_type: 'standard_cleaning',
+    billing_concept: 'Resumen legacy',
+    billing_quantity: 1,
+    billing_unit: 'servicio',
+    billing_unit_price: 90,
+    billing_lines: [],
+    notes: null,
+    ...overrides,
+  }
+}
+
+describe('jobBilling', () => {
+  it('uses persisted job_lines in stable sort order when they exist', () => {
+    const lines = getJobBillingLines(createJob({
+      billing_quantity: 999,
+      billing_unit_price: 999,
+      billing_lines: [
+        {
+          id: 'line-2',
+          sort_order: 2,
+          concept: 'Cristales',
+          quantity: 1,
+          unit: 'servicio',
+          unit_price: 25,
+          line_subtotal: 25,
+        },
+        {
+          id: 'line-1',
+          sort_order: 1,
+          concept: 'Limpieza general',
+          quantity: 2,
+          unit: 'hora',
+          unit_price: 40,
+          line_subtotal: 80,
+        },
+      ],
+    }))
+
+    expect(lines).toHaveLength(2)
+    expect(lines[0].concept).toBe('Limpieza general')
+    expect(lines[1].concept).toBe('Cristales')
+    expect(lines[0].line_subtotal).toBe(80)
+  })
+
+  it('falls back to legacy summary only when there are no persisted lines', () => {
+    const lines = getJobBillingLines(createJob({
+      billing_lines: [],
+      billing_concept: 'Servicio legacy',
+      billing_quantity: 3,
+      billing_unit: 'hora',
+      billing_unit_price: 30,
+    }))
+
+    expect(lines).toHaveLength(1)
+    expect(lines[0]).toMatchObject({
+      concept: 'Servicio legacy',
+      quantity: 3,
+      unit: 'hora',
+      unit_price: 30,
+      line_subtotal: 90,
+    })
+  })
+})

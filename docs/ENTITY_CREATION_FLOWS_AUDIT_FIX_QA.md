@@ -107,3 +107,4 @@
 
 - Verificar en entorno con base actualizada los flujos manuales: servicio multi-linea -> refresco -> factura, presupuesto multi-linea -> conversion, duplicado descartado -> refresco.
 - Si existe algun create path de factura fuera de `InvoiceCreateForm`, `InvoiceCreateFlow`, `InvoiceEditFlow` o `InvoiceDetailCard`, revisar que use los mismos helpers nuevos.
+- Resultado DB relacionado: ver `docs/SUPABASE_JOB_LINES_RPC_QA.md`. A fecha 2026-07-01 la base real ya responde con tabla `job_lines` y RPC `save_job_with_lines`, pero la prueba de escritura autenticada con 3 lineas siguio pendiente desde terminal por falta de credenciales de sesion reutilizables y acceso SQL directo.

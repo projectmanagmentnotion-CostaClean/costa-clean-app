@@ -116,6 +116,8 @@ Todos quedan solo en DEV.
 - Si el usuario abre un runtime donde DEV sea false, puede forzarlo con `?debugJobLines=1`.
 - Seguimiento detallado del bloqueo visual:
   - `docs/JOB_EDITOR_DEBUG_VISIBILITY_BLOCKER_QA.md`
+- Seguimiento especifico de publicacion online y version servida:
+  - `docs/ONLINE_DEPLOY_VERSION_QA.md`
 
 ## SQL de verificacion
 
@@ -155,3 +157,4 @@ group by j.id;
   5. reabrir y ver 4 bloques
 - Si apareciera otro editor de servicio fuera de `JobDetailCard`, debera reutilizar el mismo helper editable.
 - Seguimiento de visibilidad: ver `docs/JOB_LINES_DEBUG_PANEL_NOT_VISIBLE_AUDIT.md`. El panel debug anterior no estaba publicado en `origin/main`, asi que el usuario seguia probando un build sin ese trazado visible.
+- A fecha 2026-07-01 tambien quedo confirmado que el usuario estaba mirando el dominio online y no el entorno local, asi que parte del bloqueo visible podia venir de un build no publicado todavia y no de una regresion nueva de la logica de lineas.

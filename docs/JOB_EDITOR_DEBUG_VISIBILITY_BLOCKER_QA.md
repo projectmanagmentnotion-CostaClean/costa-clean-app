@@ -31,6 +31,7 @@ Resultado:
 - `git branch --show-current`: `main`
 - `git log --oneline -10` incluye:
   - `f52e10f fix: trace actual job editor line state`
+  - `5ed738d chore: force visible job editor line trace`
 
 ## Resultado de grep del debug
 
@@ -79,6 +80,8 @@ Conclusion:
 - En `JobDetailCard.tsx` estaba condicionado por `import.meta.env.DEV`.
 - Si el usuario abre una sesion con `vite preview`, un build ya compilado o un proceso sin reiniciar, `import.meta.env.DEV` puede ser `false` aunque el codigo local ya este en `f52e10f`.
 - Por tanto, el problema bloqueante de visibilidad no apuntaba a Supabase ni a un editor equivocado; apuntaba a la condicion de render del debug.
+- Ademas, el usuario estaba validando `https://app.costacleanbcn.com`, no el runtime local.
+- En 2026-07-01 quedo confirmado que el dominio online podia ir por detras del repo local si el ultimo build no estaba publicado o no era el que el usuario tenia abierto.
 
 ## Marca visible anadida
 
@@ -122,6 +125,12 @@ O la URL real que este usando el usuario, anadiendo:
 ```text
 ?debugJobLines=1
 ```
+
+Separacion repo vs deploy:
+
+- Para comprobar que el dominio sirve el build correcto se anadio tambien una marca global por `?debugBuild=1`.
+- Ver seguimiento de publicacion en:
+  - `docs/ONLINE_DEPLOY_VERSION_QA.md`
 
 ## Valores que debe copiar el usuario
 

@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import './App.css'
 import { AppShell } from './app/AppShell'
+import { BuildInfoBadge } from './app/BuildInfoBadge'
+import { shouldShowBuildInfo } from './app/buildInfo'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
@@ -25,6 +27,7 @@ function App() {
   const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
   const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
   const isDevStepFlowPreview = import.meta.env.DEV && pathname === '/dev/step-flow-preview'
+  const showBuildInfo = shouldShowBuildInfo()
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -145,20 +148,29 @@ function App() {
     }
   }, [isDevStepFlowPreview, isPublicStandalonePath])
 
+  function renderWithBuildInfo(content: ReactNode) {
+    return (
+      <>
+        {content}
+        {showBuildInfo ? <BuildInfoBadge /> : null}
+      </>
+    )
+  }
+
   if (isPublicQuoteRequestStandalone) {
-    return <PublicQuoteRequestPage />
+    return renderWithBuildInfo(<PublicQuoteRequestPage />)
   }
 
   if (isPublicGymManualQuizStandalone) {
-    return <PublicGymManualQuizPage />
+    return renderWithBuildInfo(<PublicGymManualQuizPage />)
   }
 
   if (isDevStepFlowPreview) {
-    return <DevStepFlowPreviewPage />
+    return renderWithBuildInfo(<DevStepFlowPreviewPage />)
   }
 
   if (isBooting) {
-    return (
+    return renderWithBuildInfo(
       <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
         <div className="cc-boot-screen__wave" aria-hidden="true" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--one" />
@@ -192,7 +204,7 @@ function App() {
   }
 
   if (bootError) {
-    return (
+    return renderWithBuildInfo(
       <main className="auth-page">
         <section className="auth-card">
           <div className="auth-header">
@@ -206,10 +218,10 @@ function App() {
   }
 
   if (!session) {
-    return <AuthPage onSignedIn={() => undefined} />
+    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} />)
   }
 
-  return (
+  return renderWithBuildInfo(
     <div className="cc-app-shell-enter">
       <AppShell theme={theme} onToggleTheme={toggleTheme} />
       {themeFeedback ? (

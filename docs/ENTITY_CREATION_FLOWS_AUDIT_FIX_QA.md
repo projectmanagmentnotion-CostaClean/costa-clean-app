@@ -60,18 +60,18 @@
 ## Como se arreglaron facturas y snapshot fiscal
 
 - Las rutas de factura desde servicio/presupuesto/detail/edit ahora consumen listas de lineas completas mediante `getBillingDraftLinesFromQuote`.
-- Se eliminó la reconstruccion de una sola linea desde `subtotal` cuando el presupuesto ya tiene detalle persistido.
-- El snapshot fiscal de cliente mantiene la estructura previa y ahora añade `captured_at` para fijar el momento de emision.
+- Se elimino la reconstruccion de una sola linea desde `subtotal` cuando el presupuesto ya tiene detalle persistido.
+- El snapshot fiscal de cliente mantiene la estructura previa y ahora anade `captured_at` para fijar el momento de emision.
 - Las acciones "crear factura como esta" abren un formulario nuevo en modo manual y fuerzan snapshot fiscal nuevo al guardar.
 
 ## Como se revisaron presupuestos
 
-- Se añadió prefill de "crear presupuesto como este" copiando cliente, propiedad, notas y lineas completas.
+- Se anadio prefill de "crear presupuesto como este" copiando cliente, propiedad, notas y lineas completas.
 - `QuoteCreateFlow` acepta prefills y siempre arranca en `draft`, sin copiar estados finales.
 
 ## Como se revisaron gastos
 
-- Se añadió prefill de "crear gasto como este" copiando proveedor, categoria, descripcion e importes.
+- Se anadio prefill de "crear gasto como este" copiando proveedor, categoria, descripcion e importes.
 - El nuevo gasto no copia adjuntos ni soporte previo; arranca con soporte `missing`, revision fiscal `pending` y riesgo `medium`.
 
 ## Como se arreglaron duplicados
@@ -81,7 +81,7 @@
 
 ## Como queda memoria y sugerencias
 
-- Las sugerencias siguen siendo opt-in; no se añadió ninguna sobreescritura automatica de texto manual.
+- Las sugerencias siguen siendo opt-in; no se anadio ninguna sobreescritura automatica de texto manual.
 - Los nuevos adapters solo leen lineas historicas reales y no fusionan conceptos durante el prefill.
 
 ## Como funciona "crear como esta"
@@ -91,7 +91,7 @@
 - Gasto: desde detalle de gasto, abre alta nueva sin adjuntos ni estados fiscales definitivos.
 - Servicio: desde detalle/workspace de servicio, abre alta nueva con cliente, propiedad, tipo y lineas completas, pero sin ids ni estados finales heredados.
 
-## Tests añadidos
+## Tests anadidos
 
 - Preservacion de lineas completas desde presupuesto hacia drafts de facturacion.
 - Generacion estable de claves de resolucion de duplicados por par.
@@ -100,7 +100,7 @@
 ## QA manual y limitaciones
 
 - QA automatizada completada con `npm run lint`, `npm run test` y `npm run build`.
-- No se ejecutó QA manual en navegador dentro de este turno.
+- No se ejecuto QA manual en navegador dentro de este turno.
 - La migracion SQL de `job_lines` sigue siendo un requisito externo: si una base no tiene `save_job_with_lines` o `job_lines`, la persistencia real seguira bloqueada fuera del repo.
 
 ## Pendientes reales
@@ -108,3 +108,4 @@
 - Verificar en entorno con base actualizada los flujos manuales: servicio multi-linea -> refresco -> factura, presupuesto multi-linea -> conversion, duplicado descartado -> refresco.
 - Si existe algun create path de factura fuera de `InvoiceCreateForm`, `InvoiceCreateFlow`, `InvoiceEditFlow` o `InvoiceDetailCard`, revisar que use los mismos helpers nuevos.
 - Resultado DB relacionado: ver `docs/SUPABASE_JOB_LINES_RPC_QA.md`. A fecha 2026-07-01 la base real ya responde con tabla `job_lines` y RPC `save_job_with_lines`, pero la prueba de escritura autenticada con 3 lineas siguio pendiente desde terminal por falta de credenciales de sesion reutilizables y acceso SQL directo.
+- Resultado auth/write path relacionado: ver `docs/JOB_SAVE_AUTH_FIX_QA.md`. A fecha 2026-07-01 el cliente ya fuerza bearer token de sesion activa al guardar servicios y devuelve un error explicito de sesion cuando ese token no existe o Supabase lo rechaza.

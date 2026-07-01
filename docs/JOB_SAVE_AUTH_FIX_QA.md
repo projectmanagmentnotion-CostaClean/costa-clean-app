@@ -61,3 +61,4 @@
 
 - El fix de autenticacion quedó resuelto en `c356c27`, pero seguia pendiente una simplificacion visual y de adapter en conceptos de servicio.
 - Ese segundo bug se corrigio en `docs/JOB_LINES_NO_SUMMARY_FIX_QA.md`: ahora el concepto principal ya no guarda ni muestra `(+N linea(s))` cuando existen `job_lines` reales.
+- Seguimiento final: ver `docs/JOB_FORM_STATE_LINES_FINAL_FIX_QA.md`. La autenticacion ya estaba bien, pero hacia falta comprobar con logs DEV que el editor mantuviera el array real de lineas y que la RPC recibiera `p_lines.length` completo.

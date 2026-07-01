@@ -118,6 +118,18 @@ function groupJobLines(lines: JobLineRecord[]) {
     jobLines.sort((left, right) => Number(left.sort_order ?? 0) - Number(right.sort_order ?? 0))
   }
 
+  if (import.meta.env.DEV) {
+    const jobsWithLines = [...linesByJobId.entries()].filter(([, jobLines]) => jobLines.length > 0)
+    console.info('[appDataApi] jobs billing lines grouped', {
+      jobsWithLines: jobsWithLines.length,
+      sample: jobsWithLines.slice(0, 3).map(([jobId, jobLines]) => ({
+        jobId,
+        lineCount: jobLines.length,
+        concepts: jobLines.map((line) => line.concept),
+      })),
+    })
+  }
+
   return linesByJobId
 }
 

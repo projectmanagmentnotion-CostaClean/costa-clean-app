@@ -106,3 +106,4 @@ group by j.id;
 - No hice QA autenticada en navegador en este turno.
 - No ejecute SQL directo desde este entorno.
 - Si aparece otro path de edicion que no pase por `JobDetailCard -> getJobBillingDraftLines`, habra que alinearlo con la misma normalizacion.
+- Seguimiento posterior: ver `docs/JOB_FORM_STATE_LINES_FINAL_FIX_QA.md`. El fix de normalizacion era necesario, pero el cierre definitivo exige tratar el estado editable como fuente propia, separada de helpers de display y con logs DEV del conteo real hasta la RPC.

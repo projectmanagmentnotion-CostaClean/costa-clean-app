@@ -140,10 +140,14 @@ export function JobDetailCard({
     const hasPersistedBillingLines = Boolean(job.billing_lines?.length)
 
     if (import.meta.env.DEV) {
-      console.info('[JobDetailCard] initial billing lines', {
+      console.info('[JobDetailCard] open edit job', {
         jobId: job.id,
         displayCode: job.display_code ?? null,
-        billingLinesFromJob: job.billing_lines?.length ?? 0,
+        billingLinesOnJob: job.billing_lines?.length ?? 0,
+      })
+      console.info('[JobDetailCard] initial billing lines', {
+        jobId: job.id,
+        incomingBillingLines: job.billing_lines?.length ?? 0,
         initialLines: initialBillingLines.length,
         source: hasPersistedBillingLines ? 'billing_lines' : 'legacy',
       })
@@ -261,6 +265,15 @@ export function JobDetailCard({
       if (!normalizedBillingLines || normalizedBillingLines.length === 0) {
         setSaveError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
+      }
+      if (import.meta.env.DEV) {
+        console.info('[JobDetailCard] submit lines', {
+          jobId: job.id,
+          stateLines: billingLines.length,
+          payloadLines: normalizedBillingLines.length,
+          concepts: normalizedBillingLines.map((line) => line.concept),
+          total: billingSubtotal,
+        })
       }
       const billingSummary = buildJobBillingSummary(
         normalizedBillingLines,

@@ -158,6 +158,13 @@ export async function saveJobWithLines(
     has_session: true,
     line_summary: getLineDebugSummary(lines),
   })
+  if (isDevMode()) {
+    console.info('[jobWriteApi] rpc p_lines', {
+      jobId: jobRecord.id ?? null,
+      pLinesLength: lines.length,
+      concepts: lines.map((line) => ((line as JsonRecord).concept ?? null)),
+    })
+  }
 
   const request = buildSaveJobWithLinesRpcRequest({
     supabaseUrl,

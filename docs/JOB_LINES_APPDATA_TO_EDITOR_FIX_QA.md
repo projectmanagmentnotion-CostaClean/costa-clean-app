@@ -254,3 +254,5 @@ o:
 - verificar online con sesion autenticada real
 - confirmar si la base real permite `SELECT` a `authenticated` sobre `job_lines`
 - si aun falla con sesion, aplicar o corregir policy/grants reales en Supabase
+- seguimiento DB/RLS posterior:
+  - `docs/JOB_LINES_RLS_SELECT_FIX_QA.md`

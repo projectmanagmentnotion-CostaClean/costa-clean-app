@@ -12,6 +12,9 @@ interface SavedInvoiceReadback {
   issue_date: string
 }
 
+const SAVE_INVOICE_WITH_RESULT_RPC = 'save_invoice_with_lines_v2'
+const SAVE_INVOICE_READBACK_RETRY_DELAYS_MS = [0, 150, 400]
+
 function getClientOrThrow() {
   const { client, error } = getSupabaseClient()
 
@@ -61,6 +64,47 @@ function normalizeSavedInvoiceRows(
   }
 
   return rows
+}
+
+function isMissingSaveInvoiceResultRpcError(message: string): boolean {
+  return message.includes(SAVE_INVOICE_WITH_RESULT_RPC)
+    && (
+      message.includes('Could not find the function')
+      || message.includes('schema cache')
+      || message.includes('PGRST')
+    )
+}
+
+async function readSavedInvoiceWithRetries(
+  client: ReturnType<typeof getClientOrThrow>,
+  invoiceId: string,
+): Promise<SavedInvoiceReadback> {
+  let lastError: Error | null = null
+
+  for (const delayMs of SAVE_INVOICE_READBACK_RETRY_DELAYS_MS) {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+
+    const { data: savedInvoiceRows, error: savedInvoiceError } = await client
+      .from('invoices')
+      .select('id,display_code,invoice_number,status,issue_date')
+      .eq('id', invoiceId)
+      .maybeSingle()
+
+    if (savedInvoiceError) {
+      lastError = new Error(savedInvoiceError.message || 'No se pudo leer la factura guardada.')
+      continue
+    }
+
+    try {
+      return normalizeSavedInvoiceRows(savedInvoiceRows as SavedInvoiceReadback | SavedInvoiceReadback[] | null)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('No se pudo leer la factura guardada.')
+    }
+  }
+
+  throw lastError ?? new Error('No se pudo leer la factura guardada.')
 }
 
 export async function saveQuoteWithLines(
@@ -148,24 +192,28 @@ export async function saveInvoiceWithLines(
 }> {
   const invoiceRecord = invoice as JsonRecord
   const client = getClientOrThrow()
+  let savedInvoice: SavedInvoiceReadback
 
-  await callFinancialRpc(
-    'save_invoice_with_lines',
-    { p_invoice: invoice, p_lines: lines },
-    'No se pudo guardar la factura y sus lineas.',
-  )
+  try {
+    const savedInvoiceResult = await callFinancialRpcForResult<SavedInvoiceReadback | SavedInvoiceReadback[] | null>(
+      SAVE_INVOICE_WITH_RESULT_RPC,
+      { p_invoice: invoice, p_lines: lines },
+      'No se pudo guardar la factura y sus lineas.',
+    )
+    savedInvoice = normalizeSavedInvoiceRows(savedInvoiceResult)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (!isMissingSaveInvoiceResultRpcError(message)) {
+      throw error
+    }
 
-  const { data: savedInvoiceRows, error: savedInvoiceError } = await client
-    .from('invoices')
-    .select('id,display_code,invoice_number,status,issue_date')
-    .eq('id', String(invoiceRecord.id ?? ''))
-    .maybeSingle()
-
-  if (savedInvoiceError) {
-    throw new Error(savedInvoiceError?.message || 'No se pudo leer la factura guardada.')
+    await callFinancialRpc(
+      'save_invoice_with_lines',
+      { p_invoice: invoice, p_lines: lines },
+      'No se pudo guardar la factura y sus lineas.',
+    )
+    savedInvoice = await readSavedInvoiceWithRetries(client, String(invoiceRecord.id ?? ''))
   }
-
-  const savedInvoice = normalizeSavedInvoiceRows(savedInvoiceRows as SavedInvoiceReadback | SavedInvoiceReadback[] | null)
 
   await recordAuditEvent({
     entityType: 'invoice',
@@ -184,7 +232,9 @@ export async function saveInvoiceWithLines(
 }
 
 export const __financialWriteApiTestUtils = {
+  isMissingSaveInvoiceResultRpcError,
   normalizeSavedInvoiceRows,
+  readSavedInvoiceWithRetries,
 }
 
 export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise<void> {

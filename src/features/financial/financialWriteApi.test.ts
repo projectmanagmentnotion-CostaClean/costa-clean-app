@@ -23,4 +23,13 @@ describe('financialWriteApi test utils', () => {
       expect(error instanceof Error ? error.message : null).toBe('No se pudo leer la factura guardada.')
     }
   })
+
+  it('detects missing save_invoice_with_lines_v2 RPC errors for fallback', () => {
+    expect(__financialWriteApiTestUtils.isMissingSaveInvoiceResultRpcError(
+      'Could not find the function public.save_invoice_with_lines_v2 in the schema cache',
+    )).toBe(true)
+    expect(__financialWriteApiTestUtils.isMissingSaveInvoiceResultRpcError(
+      'No se pudo leer la factura guardada.',
+    )).toBe(false)
+  })
 })

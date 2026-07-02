@@ -234,10 +234,19 @@ export function InvoicesPage({
       ? buildInvoiceNumber(numberingAudit.year, firstGap.from)
       : `${buildInvoiceNumber(numberingAudit.year, firstGap.from)} a ${buildInvoiceNumber(numberingAudit.year, firstGap.to)}`
   }, [numberingAudit])
-  const numberingRegularizationCandidate = useMemo(
-    () => allInvoices.find((invoice) => invoice.display_code === 'INV-0050' || invoice.invoice_number === '2026-050') ?? null,
-    [allInvoices],
-  )
+  const numberingRegularizationCandidate = useMemo(() => {
+    const firstGap = numberingAudit.gaps[0]
+    if (!firstGap) return null
+    const firstPostGapNumber = buildInvoiceNumber(numberingAudit.year, firstGap.to + 1)
+    return allInvoices.find((invoice) => invoice.invoice_number === firstPostGapNumber) ?? null
+  }, [allInvoices, numberingAudit])
+  const numberingRegularizationHint = useMemo(() => {
+    const firstGap = numberingAudit.gaps[0]
+    if (!firstGap || !numberingRegularizationCandidate) return null
+    const targetDisplayCode = `INV-${String(firstGap.from).padStart(4, '0')}`
+    const candidateLabel = numberingRegularizationCandidate.display_code ?? numberingRegularizationCandidate.invoice_number ?? numberingRegularizationCandidate.id
+    return `${candidateLabel} puede regularizarse a ${targetDisplayCode} / ${buildInvoiceNumber(numberingAudit.year, firstGap.from)} si todavia no fue enviada.`
+  }, [numberingAudit, numberingRegularizationCandidate])
   const showInvoiceFiscalDebug = shouldShowInvoiceFiscalDebug()
   const [isFiscalBackfillBusy, setIsFiscalBackfillBusy] = useState(false)
   const [showBlockedFiscalInvoices, setShowBlockedFiscalInvoices] = useState(false)
@@ -580,9 +589,7 @@ export function InvoicesPage({
           reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
             ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
             : null}
-          regularizationHint={numberingAudit.hasBlockingGaps && numberingRegularizationCandidate
-            ? 'INV-0050 puede regularizarse a INV-0045 si todavia no fue enviada.'
-            : null}
+          regularizationHint={numberingAudit.hasBlockingGaps ? numberingRegularizationHint : null}
         />
         {/*
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.

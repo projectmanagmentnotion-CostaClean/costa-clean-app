@@ -132,4 +132,16 @@ describe('InvoicesPage fiscal control', () => {
       value: originalWindow,
     })
   })
+
+  it('renders a generic regularization hint for the first post-gap invoice', () => {
+    const html = renderInvoicesPage(
+      [
+        createInvoice({ id: 'invoice-45', display_code: 'INV-0045', invoice_number: '2026-045' }),
+        createInvoice({ id: 'invoice-51', display_code: 'INV-0051', invoice_number: '2026-051' }),
+      ],
+      [createClient()],
+    )
+
+    expect(html.includes('INV-0051 puede regularizarse a INV-0046 / 2026-046 si todavia no fue enviada.')).toBe(true)
+  })
 })

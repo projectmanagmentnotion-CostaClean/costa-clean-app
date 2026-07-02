@@ -32,4 +32,49 @@ describe('financialWriteApi test utils', () => {
       'No se pudo leer la factura guardada.',
     )).toBe(false)
   })
+
+  it('fails when Supabase confirms a different fiscal number than expected', () => {
+    try {
+      __financialWriteApiTestUtils.assertSavedInvoiceNumberingMatchesExpectation(
+        {
+          pricing_metadata: {
+            expected_invoice_number: '2026-049',
+            expected_display_code: 'INV-0049',
+          },
+        },
+        {
+          id: 'invoice-49',
+          display_code: 'INV-0050',
+          invoice_number: '2026-050',
+          status: 'issued',
+          issue_date: '2026-07-02',
+        },
+      )
+      throw new Error('expected error')
+    } catch (error) {
+      expect(error instanceof Error ? error.message : null).toBe(
+        'La factura se guardo con numeracion distinta a la esperada. Esperado 2026-049 y Supabase devolvio 2026-050.',
+      )
+    }
+  })
+
+  it('accepts the saved invoice when numbering matches the expectation', () => {
+    __financialWriteApiTestUtils.assertSavedInvoiceNumberingMatchesExpectation(
+      {
+        pricing_metadata: {
+          expected_invoice_number: '2026-049',
+          expected_display_code: 'INV-0049',
+        },
+      },
+      {
+        id: 'invoice-49',
+        display_code: 'INV-0049',
+        invoice_number: '2026-049',
+        status: 'issued',
+        issue_date: '2026-07-02',
+      },
+    )
+
+    expect(true).toBe(true)
+  })
 })

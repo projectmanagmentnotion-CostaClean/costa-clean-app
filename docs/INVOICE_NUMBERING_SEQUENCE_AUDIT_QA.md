@@ -240,3 +240,16 @@ order by created_at asc;
 - Emitir una factura nueva y confirmar:
   - borrador sin numero
   - emitida con `2026-050 / INV-0050`
+
+## Cierre final post-0053
+
+- Estado actual verificado por lectura REST:
+  - `2026-045` a `2026-048` existen
+  - no hay huecos entre el minimo y el maximo fiscal emitido de 2026
+  - siguiente numero calculado: `2026-049 / INV-0049`
+- Estado actual verificado en repo:
+  - `invoiceNumbering.ts` ya sugiere el primer hueco si existe
+  - los flujos reales de emision escriben `expected_invoice_number` y `expected_display_code`
+  - `financialWriteApi.ts` ahora bloquea si la DB devuelve numeracion distinta a la esperada
+- Riesgo residual:
+  - falta la prueba manual de emision controlada para confirmar `0049` desde UI autenticada

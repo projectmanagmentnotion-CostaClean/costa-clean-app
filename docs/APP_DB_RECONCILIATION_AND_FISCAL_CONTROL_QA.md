@@ -132,3 +132,18 @@
 - Este cierre corrige el falso success en repo.
 - La persistencia batch real en produccion requiere aplicar `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql` si el entorno sigue bloqueando el update REST bajo RLS.
 - La verificacion final del backfill sigue dependiendo de una sesion autenticada y de la SQL aplicada.
+
+## Cierre final post-0053
+
+- Reconciliacion actual observada:
+  - build online `24c8d8e`
+  - DB fiscal sin huecos hasta `2026-048`
+  - `48/48` facturas con `client_fiscal_snapshot`
+- Control de escritura:
+  - el frontend no inserta ni actualiza `invoices` directamente en los paths reales de emision
+  - los flujos reales pasan por `saveInvoiceWithLines()`
+  - la capa de escritura contrasta numero esperado vs numero persistido antes de confirmar la operacion
+- Verificacion SQL que sigue recomendada en Supabase:
+  - funciones `find_first_missing_invoice_sequence`, `sync_invoice_numbering`, `save_invoice_with_lines_v2`, `build_client_fiscal_snapshot`, `ensure_invoice_pricing_metadata`, `assert_invoice_numbering_regular`
+  - trigger real sobre `public.invoices`
+  - emision manual de `0049` para cierre operativo definitivo

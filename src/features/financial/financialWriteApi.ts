@@ -15,6 +15,10 @@ interface SavedInvoiceReadback {
 const SAVE_INVOICE_WITH_RESULT_RPC = 'save_invoice_with_lines_v2'
 const SAVE_INVOICE_READBACK_RETRY_DELAYS_MS = [0, 150, 400]
 
+function isPlainRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function getClientOrThrow() {
   const { client, error } = getSupabaseClient()
 
@@ -73,6 +77,31 @@ function isMissingSaveInvoiceResultRpcError(message: string): boolean {
       || message.includes('schema cache')
       || message.includes('PGRST')
     )
+}
+
+function assertSavedInvoiceNumberingMatchesExpectation(
+  invoiceRecord: JsonRecord,
+  savedInvoice: SavedInvoiceReadback,
+): void {
+  const pricingMetadata = isPlainRecord(invoiceRecord.pricing_metadata) ? invoiceRecord.pricing_metadata : null
+  const expectedInvoiceNumber = typeof pricingMetadata?.expected_invoice_number === 'string'
+    ? pricingMetadata.expected_invoice_number.trim()
+    : ''
+  const expectedDisplayCode = typeof pricingMetadata?.expected_display_code === 'string'
+    ? pricingMetadata.expected_display_code.trim()
+    : ''
+
+  if (expectedInvoiceNumber && savedInvoice.invoice_number !== expectedInvoiceNumber) {
+    throw new Error(
+      `La factura se guardo con numeracion distinta a la esperada. Esperado ${expectedInvoiceNumber} y Supabase devolvio ${savedInvoice.invoice_number ?? 'sin numero fiscal'}.`,
+    )
+  }
+
+  if (expectedDisplayCode && savedInvoice.display_code !== expectedDisplayCode) {
+    throw new Error(
+      `La factura se guardo con codigo interno distinto al esperado. Esperado ${expectedDisplayCode} y Supabase devolvio ${savedInvoice.display_code ?? 'sin codigo interno'}.`,
+    )
+  }
 }
 
 async function readSavedInvoiceWithRetries(
@@ -215,6 +244,8 @@ export async function saveInvoiceWithLines(
     savedInvoice = await readSavedInvoiceWithRetries(client, String(invoiceRecord.id ?? ''))
   }
 
+  assertSavedInvoiceNumberingMatchesExpectation(invoiceRecord, savedInvoice)
+
   await recordAuditEvent({
     entityType: 'invoice',
     entityId: String(invoiceRecord.id ?? ''),
@@ -232,6 +263,7 @@ export async function saveInvoiceWithLines(
 }
 
 export const __financialWriteApiTestUtils = {
+  assertSavedInvoiceNumberingMatchesExpectation,
   isMissingSaveInvoiceResultRpcError,
   normalizeSavedInvoiceRows,
   readSavedInvoiceWithRetries,

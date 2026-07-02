@@ -108,3 +108,38 @@ Desde este entorno no habia:
 - sesion autenticada reutilizable en el navegador interno para operar Supabase
 
 Por tanto se pudo auditar la DB por lectura REST, pero no aplicar SQL directamente.
+
+## Cierre final post-0053
+
+- Build verificado en produccion:
+  - `https://app.costacleanbcn.com/?debugBuild=1`
+  - resultado visible: `build 24c8d8e`
+- Repo verificado:
+  - `main`
+  - `HEAD = 24c8d8e`
+  - working tree limpio
+- DB leida por REST:
+  - `INV-0045 / 2026-045` existe y viene de `INV-0050`
+  - `INV-0046 / 2026-046` existe y viene de `INV-0051`
+  - `INV-0047 / 2026-047` existe y viene de `INV-0052`
+  - `INV-0048 / 2026-048` existe y viene de `INV-0053`
+  - `0050-0053` ya no aparecen como numeros activos
+- Estado fiscal:
+  - `total_invoices = 48`
+  - `with_snapshot = 48`
+  - `without_snapshot = 0`
+- Secuencia:
+  - `huecos = 0`
+  - ultimo emitido `2026-048 / INV-0048`
+  - siguiente sugerido `2026-049 / INV-0049`
+- StepFlow:
+  - emite por `saveInvoiceWithLines()`
+  - `saveInvoiceWithLines()` intenta `save_invoice_with_lines_v2`
+  - solo cae al legacy si `v2` no existe en schema cache
+  - desde este cierre valida `expected_invoice_number` y `expected_display_code` contra la respuesta persistida de Supabase y bloquea si no coinciden
+- SQL legacy:
+  - la version con `max + 1` sigue localizada en `sql/20260702_stabilize_invoice_numbering_sequence.sql`
+  - la version gap-aware de repo esta en `sql/20260702_fix_invoice_save_readback_and_gap_sequence.sql`
+- Pendiente fuera de esta auditoria:
+  - no se emitio una factura nueva desde Codex
+  - la prueba final recomendada sigue siendo emitir manualmente `INV-0049 / 2026-049` desde StepFlow y confirmar despues `INV-0050 / 2026-050` como siguiente

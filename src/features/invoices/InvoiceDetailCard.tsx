@@ -9,6 +9,8 @@ import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { buildInvoicePricingMetadataWithClientFiscalSnapshot, getClientFiscalIssueMessage } from '../clients/clientFiscalData'
+import type { ClientListItem } from '../clients/types'
 import {
   saveInvoiceWithLines,
   settleInvoiceByTransfer,
@@ -29,6 +31,8 @@ import type { InvoiceLineItem, InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { backfillSingleInvoiceFiscalSnapshot } from './invoiceFiscalSnapshotApi'
+import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } from './invoiceFiscalSnapshot'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -36,6 +40,7 @@ const LazyPaymentCreateFlow = lazy(async () => ({
 
 interface InvoiceDetailCardProps {
   invoice: InvoiceListItem | null
+  clients: ClientListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   payments: PaymentListItem[]
@@ -242,6 +247,7 @@ function buildLinePayloads(lines: LineFormState[], invoiceId: string): LinePaylo
 
 export function InvoiceDetailCard({
   invoice,
+  clients,
   jobs,
   quotes,
   payments,
@@ -291,6 +297,14 @@ export function InvoiceDetailCard({
     if (!selectedJob?.quote_id) return null
     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
   }, [quotes, selectedJob])
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === form.client_id) ?? null,
+    [clients, form.client_id],
+  )
+  const invoiceClient = useMemo(
+    () => clients.find((client) => client.id === invoice?.client_id) ?? null,
+    [clients, invoice?.client_id],
+  )
 
   const subtotalValue = useMemo(() => calculateSubtotal(lines), [lines])
   const taxAmountValue = useMemo(
@@ -300,6 +314,13 @@ export function InvoiceDetailCard({
   const totalValue = useMemo(
     () => roundMoney(subtotalValue + taxAmountValue),
     [subtotalValue, taxAmountValue],
+  )
+  const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
+  const hasCompleteFiscalSnapshot = invoice ? hasCompleteInvoiceFiscalSnapshot(invoice) : false
+  const canBackfillFiscalSnapshot = invoice ? canBackfillInvoiceFiscalSnapshot(invoice, invoiceClient) : false
+  const pricingMetadataWithFiscalSnapshot = useMemo(
+    () => buildInvoicePricingMetadataWithClientFiscalSnapshot(invoice?.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null, selectedClient),
+    [invoice?.pricing_metadata, linkedQuote, selectedClient],
   )
 
   const displayLines = useMemo(() => {
@@ -415,6 +436,46 @@ export function InvoiceDetailCard({
     setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankLine()])
   }
 
+  async function handleFiscalSnapshotBackfill() {
+    if (!invoice) return
+
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsSaving(true)
+    const toastId = toast.loading('Completando datos fiscales...', 'Guardando snapshot fiscal en la factura.')
+
+    try {
+      const updated = await backfillSingleInvoiceFiscalSnapshot(invoice, invoiceClient)
+      if (!updated) {
+        toast.update(toastId, {
+          type: 'info',
+          title: 'Sin cambios',
+          description: 'La factura ya tenia snapshot fiscal completo o el cliente sigue incompleto.',
+        })
+        return
+      }
+
+      await onInvoiceUpdated()
+      setSuccessMessage('Snapshot fiscal completado en la factura.')
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Datos fiscales completados',
+        description: 'La factura ya conserva su snapshot fiscal para PDF y emision.',
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo completar el snapshot fiscal.'
+      setSaveError(message)
+      toast.update(toastId, {
+        type: 'error',
+        title: 'No se pudo completar el snapshot fiscal',
+        description: message,
+        persistent: true,
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   async function updateInvoiceStatus(nextStatus: string) {
     if (!invoice || invoice.status === nextStatus) return
 
@@ -424,6 +485,12 @@ export function InvoiceDetailCard({
     const toastId = toast.loading('Actualizando factura...', 'Guardando el nuevo estado administrativo.')
 
     try {
+      if (nextStatus !== 'draft' && !hasCompleteInvoiceFiscalSnapshot(invoice)) {
+        throw new Error(canBackfillInvoiceFiscalSnapshot(invoice, invoiceClient)
+          ? 'La factura necesita completar su snapshot fiscal antes de emitirse. Usa "Completar ahora".'
+          : 'Faltan NIF/CIF o direccion fiscal en el cliente. Completa la ficha antes de emitir.')
+      }
+
       await updateInvoiceStatusRpc(invoice.id, nextStatus)
 
       await onInvoiceUpdated()
@@ -625,6 +692,17 @@ export function InvoiceDetailCard({
         return
       }
 
+      if (form.status !== 'draft' && clientFiscalIssue) {
+        setSaveError(clientFiscalIssue)
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se puede emitir factura',
+          description: 'Completa el NIF/CIF y la direccion fiscal del cliente antes de emitir.',
+          persistent: true,
+        })
+        return
+      }
+
       const linePayloads = buildLinePayloads(lines, invoice.id)
 
       if (!linePayloads || linePayloads.length === 0) {
@@ -652,7 +730,7 @@ export function InvoiceDetailCard({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: invoice.internal_notes ?? linkedQuote?.internal_notes ?? null,
-          pricing_metadata: invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null,
+          pricing_metadata: pricingMetadataWithFiscalSnapshot,
         },
         linePayloads,
       )
@@ -938,6 +1016,28 @@ export function InvoiceDetailCard({
                   </button>
                 </div>
               ) : null}
+            </div>
+          ) : null}
+
+          {!hasCompleteFiscalSnapshot ? (
+            <div className={`cc-alert ${canBackfillFiscalSnapshot ? 'cc-alert--warning' : 'cc-alert--error'}`}>
+              <strong>{canBackfillFiscalSnapshot ? 'Factura reparable' : 'Factura sin datos fiscales completos'}</strong>
+              <p>
+                {canBackfillFiscalSnapshot
+                  ? 'Esta factura aun no conserva snapshot fiscal completo, pero se puede completar desde la ficha actual del cliente.'
+                  : 'No hay snapshot fiscal completo y el cliente sigue sin NIF/CIF o direccion fiscal. La emision debe quedar bloqueada.'}
+              </p>
+              <div className="form-actions">
+                {canBackfillFiscalSnapshot ? (
+                  <button type="button" className="secondary-button" onClick={() => void handleFiscalSnapshotBackfill()} disabled={isSaving}>
+                    Completar ahora
+                  </button>
+                ) : (
+                  <button type="button" className="secondary-button" onClick={() => onOpenClientWorkspace(invoice.client_id)} disabled={isSaving}>
+                    Abrir cliente
+                  </button>
+                )}
+              </div>
             </div>
           ) : null}
 

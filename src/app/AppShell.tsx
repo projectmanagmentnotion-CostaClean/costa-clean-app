@@ -16,6 +16,7 @@ import { useAppData } from './useAppData'
 import { AppShellViewRenderer } from './AppShellViewRenderer'
 import { AppShellPages } from './AppShellPages'
 import { useShellViewportState } from './useShellViewportState'
+import { DataHealthDebugPanel } from './DataHealthDebugPanel'
 import {
   applyExpenseFilter,
   applyInvoiceFilter,
@@ -200,6 +201,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     invoiceError,
     expenseError,
     paymentError,
+    recurringInvoicePlanError,
     quarterlyClosingError,
     annualClosingError,
     refreshBilling,
@@ -1043,6 +1045,22 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         />
         <div className="cc-shell-content">
           <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>
+              <DataHealthDebugPanel
+                domainErrors={{
+                  leads: leadError,
+                  leadDrafts: leadDraftError,
+                  clients: clientError,
+                  properties: propertyError,
+                  quotes: quoteError,
+                  jobs: jobError,
+                  invoices: invoiceError,
+                  expenses: expenseError,
+                  payments: paymentError,
+                  recurringInvoicePlans: recurringInvoicePlanError,
+                  quarterlyClosings: quarterlyClosingError,
+                  annualClosings: annualClosingError,
+                }}
+              />
               {currentView === 'alerts' ? (
                 <AlertsCenterPage
                   alerts={automationAlerts}

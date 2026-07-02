@@ -475,7 +475,7 @@ export function InvoiceCreateFlow({
     if (stepIndex === 1) {
       if (!form.client_id) return 'Debes tener un cliente seleccionado.'
       if (!form.issue_date) return 'Debes indicar la fecha de emision.'
-      if (clientFiscalIssue) return clientFiscalIssue
+      if (form.status !== 'draft' && clientFiscalIssue) return clientFiscalIssue
       return null
     }
 
@@ -623,17 +623,13 @@ export function InvoiceCreateFlow({
 
       toast.update(toastId, {
         type: 'success',
-        title: form.status === 'draft'
-          ? 'Factura creada como borrador'
-          : clientFiscalIssue
-            ? 'Factura emitida con datos fiscales incompletos'
-            : 'Factura emitida',
-        description: clientFiscalIssue
-          ? `La factura se guardo con numero ${savedInvoice.invoice_number ?? 'pendiente'} pero falta NIF/CIF o direccion fiscal del cliente.`
-          : form.status === 'draft'
-            ? 'El borrador no consume numero fiscal definitivo.'
-            : `Factura emitida con numero ${savedInvoice.invoice_number ?? 'pendiente'}.`,
-        persistent: Boolean(clientFiscalIssue),
+        title: form.status === 'draft' ? 'Factura creada como borrador' : 'Factura emitida',
+        description: form.status === 'draft'
+          ? clientFiscalIssue
+            ? 'Borrador guardado con datos fiscales incompletos. Completa la ficha del cliente antes de emitir.'
+            : 'El borrador no consume numero fiscal definitivo.'
+          : `Factura emitida con numero ${savedInvoice.invoice_number ?? 'pendiente'}.`,
+        persistent: form.status === 'draft' && Boolean(clientFiscalIssue),
       })
 
       await onCreatedInvoice?.({

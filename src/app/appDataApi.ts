@@ -168,6 +168,19 @@ export function attachJobLinesToJobs(loadedJobs: JobListItem[], linesByJobId: Ma
   }))
 }
 
+export function hydrateLegacyProperties(
+  properties: Array<
+    Pick<PropertyListItem, 'id' | 'display_code' | 'client_id' | 'name' | 'property_type' | 'address' | 'city' | 'postal_code' | 'notes'>
+  >,
+): PropertyListItem[] {
+  return properties.map((property) => ({
+    ...property,
+    status: 'active',
+    archived_at: null,
+    deleted_at: null,
+  }))
+}
+
 export function buildJobLinesDebugPayload(input: {
   accessToken: string | null
   loadedJobs: JobListItem[]
@@ -194,7 +207,28 @@ export function buildJobLinesDebugPayload(input: {
 }
 
 export async function listProperties(): Promise<PropertyListItem[]> {
-  return fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,status,archived_at,deleted_at,property_type,address,city,postal_code,notes&order=created_at.desc')
+  try {
+    return await fetchSupabaseRestList<PropertyListItem>('properties?select=id,display_code,client_id,name,status,archived_at,deleted_at,property_type,address,city,postal_code,notes&order=created_at.desc')
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    const hasRecoverableSchemaMismatch =
+      message.includes('REST 400')
+      && (
+        message.includes('properties.status')
+        || message.includes('properties.archived_at')
+        || message.includes('properties.deleted_at')
+      )
+
+    if (!hasRecoverableSchemaMismatch) {
+      throw error
+    }
+
+    const legacyProperties = await fetchSupabaseRestList<Array<
+      Pick<PropertyListItem, 'id' | 'display_code' | 'client_id' | 'name' | 'property_type' | 'address' | 'city' | 'postal_code' | 'notes'>
+    >[number]>('properties?select=id,display_code,client_id,name,property_type,address,city,postal_code,notes&order=created_at.desc')
+
+    return hydrateLegacyProperties(legacyProperties)
+  }
 }
 
 export async function listQuotes(): Promise<QuoteListItem[]> {

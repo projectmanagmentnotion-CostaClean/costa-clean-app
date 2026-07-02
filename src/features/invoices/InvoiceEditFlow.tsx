@@ -5,6 +5,8 @@ import { formatClientLabel, formatJobLabel, formatQuoteLabel } from '../../app/r
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { buildInvoicePricingMetadataWithClientFiscalSnapshot, getClientFiscalIssueMessage } from '../clients/clientFiscalData'
+import type { ClientListItem } from '../clients/types'
 import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
 import {
   buildConceptMemoryIndex,
@@ -45,6 +47,7 @@ import '../shared/fullscreen-create-flow.css'
 
 interface InvoiceEditFlowProps extends FullViewActionFlowProps {
   invoice: InvoiceListItem
+  clients: ClientListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   title?: string
@@ -143,6 +146,7 @@ function buildVisibleInvoiceNotes(): string {
 
 export function InvoiceEditFlow({
   invoice,
+  clients,
   jobs,
   quotes,
   onRefreshData,
@@ -194,6 +198,10 @@ export function InvoiceEditFlow({
     () => jobs.find((job) => job.id === form.job_id) ?? null,
     [form.job_id, jobs],
   )
+  const selectedClient = useMemo(
+    () => clients.find((client) => client.id === form.client_id) ?? null,
+    [clients, form.client_id],
+  )
   const linkedQuote = useMemo(() => {
     if (!selectedJob?.quote_id) return null
     return quotes.find((quote) => quote.id === selectedJob.quote_id) ?? null
@@ -221,6 +229,11 @@ export function InvoiceEditFlow({
     [allInvoices, currentIssueYear],
   )
   const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
+  const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
+  const pricingMetadataWithFiscalSnapshot = useMemo(
+    () => buildInvoicePricingMetadataWithClientFiscalSnapshot(invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null, selectedClient),
+    [invoice.pricing_metadata, linkedQuote, selectedClient],
+  )
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
@@ -312,6 +325,10 @@ export function InvoiceEditFlow({
       return 'Debes indicar la fecha de emision.'
     }
 
+    if (stepIndex === 0 && form.status !== 'draft' && clientFiscalIssue) {
+      return clientFiscalIssue
+    }
+
     if (stepIndex === 1) {
       const linePayloads = buildLinePayloads(lines, invoice.id)
       if (!linePayloads || linePayloads.length === 0) {
@@ -400,7 +417,7 @@ export function InvoiceEditFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: invoice.internal_notes ?? linkedQuote?.internal_notes ?? null,
-          pricing_metadata: invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null,
+          pricing_metadata: pricingMetadataWithFiscalSnapshot,
         },
         linePayloads,
       )
@@ -482,6 +499,18 @@ export function InvoiceEditFlow({
           <span className="cc-step-flow__eyebrow">Numeracion</span>
           <strong>{numberingAudit.nextSuggestedInvoiceNumber}</strong>
           <small>{numberingGapMessage}</small>
+        </section>
+      ) : null}
+
+      {clientFiscalIssue ? (
+        <section className="cc-create-flow__summary-card">
+          <span className="cc-step-flow__eyebrow">Control fiscal</span>
+          <strong>{form.status === 'draft' ? 'Borrador permitido' : 'Emision bloqueada'}</strong>
+          <small>
+            {form.status === 'draft'
+              ? 'Puedes guardar el borrador, pero no emitirlo hasta completar NIF/CIF y direccion fiscal.'
+              : clientFiscalIssue}
+          </small>
         </section>
       ) : null}
     </>

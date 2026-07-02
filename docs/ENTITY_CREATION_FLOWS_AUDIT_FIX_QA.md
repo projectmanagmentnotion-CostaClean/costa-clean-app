@@ -63,6 +63,11 @@
 - Se elimino la reconstruccion de una sola linea desde `subtotal` cuando el presupuesto ya tiene detalle persistido.
 - El snapshot fiscal de cliente mantiene la estructura previa y ahora anade `captured_at` para fijar el momento de emision.
 - Las acciones "crear factura como esta" abren un formulario nuevo en modo manual y fuerzan snapshot fiscal nuevo al guardar.
+- Seguimiento posterior 2026-07-02:
+  - el borrador ya no queda bloqueado por ficha fiscal incompleta
+  - emitir o reemitir sigue bloqueado sin `tax_id` y `billing_address`
+  - el detalle y la pagina de facturas ya incluyen auditoria/backfill de snapshots fiscales historicos
+  - ver `docs/INVOICE_FISCAL_SNAPSHOT_AUDIT_BACKFILL_QA.md`
 
 ## Como se revisaron presupuestos
 

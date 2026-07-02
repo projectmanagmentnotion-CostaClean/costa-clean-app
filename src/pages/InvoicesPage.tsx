@@ -14,12 +14,20 @@ import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
 import { buildInvoiceDuplicateGroups } from '../features/duplicates/duplicateEngine'
+import { useToast } from '../shared/toasts/useToast'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
+import {
+  buildInvoiceFiscalAudit,
+  buildInvoiceFiscalBlockedEntries,
+  describeInvoiceFiscalMissingFields,
+  shouldShowInvoiceFiscalDebug,
+} from '../features/invoices/invoiceFiscalSnapshot'
+import { backfillInvoiceFiscalSnapshots } from '../features/invoices/invoiceFiscalSnapshotApi'
 import { InvoiceNumberingControlCard } from '../features/invoices/InvoiceNumberingControlCard'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from '../features/invoices/invoiceNumbering'
@@ -85,6 +93,7 @@ export function InvoicesPage({
   onUnsavedChange,
   confirmNavigation,
 }: InvoicesPageProps) {
+  const toast = useToast()
   function getInvoiceOutstandingAmount(invoice: InvoiceListItem) {
     return Math.max(Number(invoice.outstanding_amount ?? invoice.total ?? 0), 0)
   }
@@ -210,6 +219,17 @@ export function InvoicesPage({
     () => buildInvoiceNumberingAudit(allInvoices, numberingAuditYear),
     [allInvoices, numberingAuditYear],
   )
+  const invoiceFiscalAudit = useMemo(
+    () => buildInvoiceFiscalAudit(allInvoices, clients),
+    [allInvoices, clients],
+  )
+  const blockedFiscalEntries = useMemo(
+    () => buildInvoiceFiscalBlockedEntries(invoiceFiscalAudit.entries),
+    [invoiceFiscalAudit.entries],
+  )
+  const showInvoiceFiscalDebug = shouldShowInvoiceFiscalDebug()
+  const [isFiscalBackfillBusy, setIsFiscalBackfillBusy] = useState(false)
+  const [showBlockedFiscalInvoices, setShowBlockedFiscalInvoices] = useState(false)
 
   const detailEmptyState = error
     ? {
@@ -322,6 +342,40 @@ export function InvoicesPage({
     }
   }
 
+  async function handleFiscalBackfill() {
+    setIsFiscalBackfillBusy(true)
+    const toastId = toast.loading('Completando datos fiscales...', 'Actualizando snapshots fiscales reparables.')
+
+    try {
+      const result = await backfillInvoiceFiscalSnapshots(allInvoices, clients)
+      await onInvoiceCreated()
+      toast.update(toastId, {
+        type: 'success',
+        title: 'Datos fiscales completados',
+        description: `Se completaron ${result.updated} factura(s) reparables.`,
+        persistent: false,
+      })
+      if (result.blocked > 0) {
+        setShowBlockedFiscalInvoices(true)
+        toast.warning(
+          'Hay facturas con cliente incompleto',
+          `Quedan ${result.blocked} factura(s) bloqueadas por falta de NIF/CIF o direccion fiscal.`,
+          { persistent: true },
+        )
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudo completar el backfill fiscal.'
+      toast.update(toastId, {
+        type: 'error',
+        title: 'Backfill fiscal fallido',
+        description: message,
+        persistent: true,
+      })
+    } finally {
+      setIsFiscalBackfillBusy(false)
+    }
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -390,6 +444,84 @@ export function InvoicesPage({
             tone={draftInvoices.length > 0 ? 'info' : 'neutral'}
             priority="compact"
           />
+        </div>
+
+        <div className="cc-alert cc-alert--info">
+          <strong>Control fiscal de facturas</strong>
+          <p>Completas: {invoiceFiscalAudit.summary.complete}</p>
+          <p>Reparables desde cliente: {invoiceFiscalAudit.summary.reparable}</p>
+          <p>Incompletas: {invoiceFiscalAudit.summary.incomplete}</p>
+          <p>Base auditada: {invoiceFiscalAudit.summary.total} facturas.</p>
+          <div className="form-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => {
+                setShowBlockedFiscalInvoices((current) => !current)
+                const firstIncomplete = invoiceFiscalAudit.entries.find((entry) => entry.status === 'incomplete')?.invoice
+                if (firstIncomplete) {
+                  setSelectedInvoiceId(firstIncomplete.id)
+                }
+              }}
+              disabled={invoiceFiscalAudit.summary.incomplete === 0}
+            >
+              Revisar incompletas
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void handleFiscalBackfill()}
+              disabled={isFiscalBackfillBusy || invoiceFiscalAudit.summary.reparable === 0}
+            >
+              {isFiscalBackfillBusy ? 'Completando...' : 'Completar reparables'}
+            </button>
+          </div>
+          {showInvoiceFiscalDebug ? (
+            <pre className="cc-debug-pre">
+              {JSON.stringify({
+                totalInvoices: invoiceFiscalAudit.summary.total,
+                complete: invoiceFiscalAudit.summary.complete,
+                repairable: invoiceFiscalAudit.summary.reparable,
+                blocked: invoiceFiscalAudit.summary.incomplete,
+                canRunBackfill: invoiceFiscalAudit.summary.reparable > 0 && !isFiscalBackfillBusy,
+              }, null, 2)}
+            </pre>
+          ) : null}
+          {showBlockedFiscalInvoices && blockedFiscalEntries.length > 0 ? (
+            <div className="cc-inline-stack" style={{ marginTop: '0.75rem' }}>
+              {blockedFiscalEntries.map((entry) => (
+                <div key={entry.invoiceId} className="cc-alert cc-alert--warning">
+                  <strong>{entry.displayCode ?? entry.invoiceNumber ?? entry.invoiceId}</strong>
+                  <p>
+                    {entry.invoiceNumber ? `Numero ${entry.invoiceNumber}. ` : ''}
+                    Cliente: {entry.clientLabel}. {describeInvoiceFiscalMissingFields(entry.missingFields)}.
+                  </p>
+                  <div className="form-actions">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => {
+                        setSelectedInvoiceId(entry.invoiceId)
+                      }}
+                    >
+                      Abrir factura
+                    </button>
+                    {entry.clientId ? (
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={() => {
+                          onOpenClientWorkspace(entry.clientId!, 'summary')
+                        }}
+                      >
+                        Abrir cliente
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <InvoiceNumberingControlCard
@@ -487,6 +619,7 @@ export function InvoicesPage({
           >
             <InvoiceEditFlow
               invoice={detailInvoice}
+              clients={clients}
               jobs={jobs}
               quotes={quotes}
               allInvoices={allInvoices}
@@ -591,6 +724,7 @@ export function InvoicesPage({
           <div className="cc-master-layout__detail">
             <InvoiceDetailCard
               invoice={detailInvoice}
+              clients={clients}
               jobs={jobs}
               quotes={quotes}
               payments={payments}

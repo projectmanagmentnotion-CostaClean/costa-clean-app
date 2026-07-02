@@ -386,7 +386,7 @@ export function InvoiceCreateForm({
         return
       }
 
-      if (clientFiscalIssue) {
+      if (form.status !== 'draft' && clientFiscalIssue) {
         setSubmitError(clientFiscalIssue)
         toast.update(toastId, {
           type: 'error',
@@ -478,8 +478,11 @@ export function InvoiceCreateForm({
         type: 'success',
         title: form.status === 'draft' ? 'Factura creada como borrador' : 'Factura emitida',
         description: form.status === 'draft'
-          ? 'El borrador no consume numero fiscal definitivo.'
+          ? clientFiscalIssue
+            ? 'Borrador guardado con datos fiscales incompletos. Completa la ficha del cliente antes de emitir.'
+            : 'El borrador no consume numero fiscal definitivo.'
           : `Factura emitida con numero ${savedInvoice.invoice_number ?? 'pendiente'}.`,
+        persistent: form.status === 'draft' && Boolean(clientFiscalIssue),
       })
     } catch (err) {
       const message =

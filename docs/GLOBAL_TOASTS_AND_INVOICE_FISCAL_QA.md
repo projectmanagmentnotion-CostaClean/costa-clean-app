@@ -89,6 +89,18 @@ API disponible:
 - Ver auditoria completa:
   - `docs/INVOICE_NUMBERING_SEQUENCE_AUDIT_QA.md`
 
+## Seguimiento posterior de snapshot fiscal
+
+- En el sprint de 2026-07-02 se ajusto la regla final:
+  - el `draft` puede guardarse aunque falte ficha fiscal
+  - la emision sigue bloqueada hasta tener `tax_id` y `billing_address`
+- Se anadio control operativo y backfill autenticado:
+  - `src/features/invoices/invoiceFiscalSnapshot.ts`
+  - `src/features/invoices/invoiceFiscalSnapshotApi.ts`
+  - `src/pages/InvoicesPage.tsx`
+- Auditoria completa:
+  - `docs/INVOICE_FISCAL_SNAPSHOT_AUDIT_BACKFILL_QA.md`
+
 ## Como se muestran success/warning/error/loading
 
 - Al iniciar una accion importante:

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { attachJobLinesToJobs, buildJobLinesDebugPayload, groupJobLines } from './appDataApi'
+import { attachJobLinesToJobs, buildJobLinesDebugPayload, groupJobLines, hydrateLegacyProperties } from './appDataApi'
 import type { JobListItem } from '../features/jobs/types'
+import type { PropertyListItem } from '../features/properties/types'
 
 function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
   return {
@@ -23,6 +24,33 @@ function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
 }
 
 describe('appDataApi helpers', () => {
+  it('hydrates legacy properties without lifecycle/status columns', () => {
+    const legacyProperties: Array<
+      Pick<PropertyListItem, 'id' | 'display_code' | 'client_id' | 'name' | 'property_type' | 'address' | 'city' | 'postal_code' | 'notes'>
+    > = [
+      {
+        id: 'property-1',
+        display_code: 'PROP-001',
+        client_id: 'client-1',
+        name: 'Piso Eixample',
+        property_type: 'flat',
+        address: 'Calle Mallorca 20',
+        city: 'Barcelona',
+        postal_code: '08029',
+        notes: null,
+      },
+    ]
+
+    const hydrated = hydrateLegacyProperties(legacyProperties)
+    expect(hydrated).toHaveLength(1)
+    expect(hydrated[0]).toMatchObject({
+      id: 'property-1',
+      status: 'active',
+      archived_at: null,
+      deleted_at: null,
+    })
+  })
+
   it('attaches grouped job_lines to the matching job id', () => {
     const jobs = [createJob()]
     const linesByJobId = groupJobLines([

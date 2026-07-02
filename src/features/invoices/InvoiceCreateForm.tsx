@@ -28,12 +28,15 @@ import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
+import { buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
+import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 
 interface InvoiceCreateFormProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   jobs: JobListItem[]
   quotes: QuoteListItem[]
+  invoices?: InvoiceListItem[]
   onCreated: () => Promise<void>
   prefill?: InvoiceCreatePrefill | null
   onCreatedInvoice?: (invoice: InvoiceListItem) => void | Promise<void>
@@ -158,6 +161,7 @@ export function InvoiceCreateForm({
   properties,
   jobs,
   quotes,
+  invoices = [],
   onCreated,
   prefill = null,
   onCreatedInvoice,
@@ -236,6 +240,20 @@ export function InvoiceCreateForm({
   const pricingMetadataWithFiscalSnapshot = useMemo(
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(selectedQuote?.pricing_metadata ?? null, selectedClient),
     [selectedClient, selectedQuote],
+  )
+  const currentIssueYear = getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear()
+  const numberingAudit = useMemo(
+    () => buildInvoiceNumberingAudit(invoices, currentIssueYear),
+    [currentIssueYear, invoices],
+  )
+  const pricingMetadataForSave = useMemo(
+    () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
+      sourceFlow: 'invoice_form_legacy',
+      writeApiVersion: 'save_invoice_with_lines_v2',
+      expectedInvoiceNumber: form.status !== 'draft' ? numberingAudit.nextSuggestedInvoiceNumber : null,
+      expectedDisplayCode: form.status !== 'draft' ? numberingAudit.nextSuggestedDisplayCode : null,
+    }),
+    [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
   )
   const clientFiscalData = useMemo(() => getClientFiscalData(selectedClient), [selectedClient])
   const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
@@ -439,7 +457,7 @@ export function InvoiceCreateForm({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: pricingMetadataWithFiscalSnapshot,
+          pricing_metadata: pricingMetadataForSave,
         },
         linePayloads,
       )
@@ -460,7 +478,7 @@ export function InvoiceCreateForm({
         total: totalValue,
         notes: form.notes.trim() || null,
         internal_notes: selectedQuote?.internal_notes ?? null,
-        pricing_metadata: pricingMetadataWithFiscalSnapshot,
+        pricing_metadata: pricingMetadataForSave,
         client_name: selectedClient?.full_name ?? null,
         property_id: form.property_id || null,
         property_display_code: selectedProperty?.display_code ?? null,

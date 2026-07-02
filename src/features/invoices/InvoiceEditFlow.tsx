@@ -43,6 +43,7 @@ import {
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
+import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 import '../shared/fullscreen-create-flow.css'
 
 interface InvoiceEditFlowProps extends FullViewActionFlowProps {
@@ -233,6 +234,15 @@ export function InvoiceEditFlow({
   const pricingMetadataWithFiscalSnapshot = useMemo(
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null, selectedClient),
     [invoice.pricing_metadata, linkedQuote, selectedClient],
+  )
+  const pricingMetadataForSave = useMemo(
+    () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
+      sourceFlow: 'invoice_edit_flow',
+      writeApiVersion: 'save_invoice_with_lines_v2',
+      expectedInvoiceNumber: form.status !== 'draft' ? numberingAudit.nextSuggestedInvoiceNumber : null,
+      expectedDisplayCode: form.status !== 'draft' ? numberingAudit.nextSuggestedDisplayCode : null,
+    }),
+    [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
   )
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
@@ -425,7 +435,7 @@ export function InvoiceEditFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: invoice.internal_notes ?? linkedQuote?.internal_notes ?? null,
-          pricing_metadata: pricingMetadataWithFiscalSnapshot,
+          pricing_metadata: pricingMetadataForSave,
         },
         linePayloads,
       )

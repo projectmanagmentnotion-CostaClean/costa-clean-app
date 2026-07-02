@@ -34,6 +34,7 @@ import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 import { backfillSingleInvoiceFiscalSnapshot } from './invoiceFiscalSnapshotApi'
 import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } from './invoiceFiscalSnapshot'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
+import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -343,6 +344,15 @@ export function InvoiceDetailCard({
   const numberingAudit = useMemo(
     () => buildInvoiceNumberingAudit(allInvoices, numberingAuditYear),
     [allInvoices, numberingAuditYear],
+  )
+  const pricingMetadataForSave = useMemo(
+    () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
+      sourceFlow: 'invoice_detail_card',
+      writeApiVersion: 'save_invoice_with_lines_v2',
+      expectedInvoiceNumber: form.status !== 'draft' ? numberingAudit.nextSuggestedInvoiceNumber : null,
+      expectedDisplayCode: form.status !== 'draft' ? numberingAudit.nextSuggestedDisplayCode : null,
+    }),
+    [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
   )
 
   useEffect(() => {
@@ -754,7 +764,7 @@ export function InvoiceDetailCard({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: invoice.internal_notes ?? linkedQuote?.internal_notes ?? null,
-          pricing_metadata: pricingMetadataWithFiscalSnapshot,
+          pricing_metadata: pricingMetadataForSave,
         },
         linePayloads,
       )

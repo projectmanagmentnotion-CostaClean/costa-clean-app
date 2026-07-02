@@ -25,7 +25,25 @@ La incidencia no es un unico bug. Son dos fallos de rollout simultaneos:
 
 2. La app publica sigue en build `5c99060`.
    - Esa build todavia no incluye el cambio local para intentar `save_invoice_with_lines_v2`.
-   - Por eso el StepFlow puede seguir mostrando `No se pudo leer la factura guardada.` despues de escribir.
+  - Por eso el StepFlow puede seguir mostrando `No se pudo leer la factura guardada.` despues de escribir.
+
+## Funcion vieja exacta detectada
+
+La funcion vieja que explica saltos como `0047 -> 0053` ya esta localizada en repo:
+
+- archivo: `sql/20260702_stabilize_invoice_numbering_sequence.sql`
+- funcion: `public.sync_invoice_numbering()`
+- logica legacy exacta:
+
+```sql
+select coalesce(max(public.extract_invoice_fiscal_sequence(invoice_number, v_year)), 0) + 1
+into v_sequence
+from public.invoices
+where id <> new.id
+  and public.extract_invoice_fiscal_sequence(invoice_number, v_year) is not null;
+```
+
+Esa implementacion usa `max + 1`, no el primer hueco disponible. Si produccion emitio `INV-0053 / 2026-053` cuando el siguiente hueco real era `INV-0048 / 2026-048`, entonces la base seguia ejecutando esta version o una equivalente todavia no sustituida por la version gap-aware.
 
 ## Matriz de entradas auditadas
 

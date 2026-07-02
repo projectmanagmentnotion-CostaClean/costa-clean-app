@@ -54,6 +54,7 @@ import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
+import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -312,6 +313,15 @@ export function InvoiceCreateFlow({
     [currentIssueYear, invoices],
   )
   const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
+  const pricingMetadataForSave = useMemo(
+    () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
+      sourceFlow: 'invoice_stepflow',
+      writeApiVersion: 'save_invoice_with_lines_v2',
+      expectedInvoiceNumber: form.status !== 'draft' ? numberingAudit.nextSuggestedInvoiceNumber : null,
+      expectedDisplayCode: form.status !== 'draft' ? numberingAudit.nextSuggestedDisplayCode : null,
+    }),
+    [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
+  )
 
   useEffect(() => {
     if (currentStep !== 1 || clientFiscalIssue) return
@@ -572,7 +582,7 @@ export function InvoiceCreateFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: pricingMetadataWithFiscalSnapshot,
+          pricing_metadata: pricingMetadataForSave,
           payment_status: 'pending',
           paid_amount: 0,
           outstanding_amount: totalValue,
@@ -617,7 +627,7 @@ export function InvoiceCreateFlow({
           total: totalValue,
           notes: form.notes.trim() || null,
           internal_notes: selectedQuote?.internal_notes ?? null,
-          pricing_metadata: pricingMetadataWithFiscalSnapshot,
+          pricing_metadata: pricingMetadataForSave,
         },
         linePayloads,
       )
@@ -648,7 +658,7 @@ export function InvoiceCreateFlow({
         total: totalValue,
         notes: form.notes.trim() || null,
         internal_notes: selectedQuote?.internal_notes ?? null,
-        pricing_metadata: pricingMetadataWithFiscalSnapshot,
+        pricing_metadata: pricingMetadataForSave,
         client_name: selectedClient?.full_name ?? null,
         property_id: form.property_id || null,
         property_display_code: selectedProperty?.display_code ?? null,

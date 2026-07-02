@@ -65,6 +65,12 @@
 - La IA sigue siendo ayuda interna de preparacion y no una conclusion fiscal definitiva.
 - Algunas listas operativas siguen viviendo en overlays o detalles colapsables para no sobrecargar el primer nivel.
 
+## Nota posterior sobre numeracion fiscal
+
+- Desde 2026-07-02 existe una auditoria especifica de secuencia en:
+  - `docs/INVOICE_NUMBERING_SEQUENCE_AUDIT_QA.md`
+- El cierre fiscal depende de `invoice_number` como referencia documental, asi que los huecos `2026-043` a `2026-047` deben tratarse como incidencia administrativa hasta decision explicita del usuario.
+
 ## QA pendiente
 
 - No se ha hecho verificacion visual real en navegador desktop/mobile en este sprint.

@@ -37,6 +37,7 @@ export interface InvoiceListItem {
   property_display_code?: string | null
   property_name?: string | null
   property_address_line?: string | null
+  created_at?: string | null
   updated_at?: string | null
 
   service_reference?: string | null

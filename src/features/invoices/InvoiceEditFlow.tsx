@@ -40,6 +40,7 @@ import {
   getInvoiceFinancialStatusLabel,
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
+import { buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import '../shared/fullscreen-create-flow.css'
 
 interface InvoiceEditFlowProps extends FullViewActionFlowProps {
@@ -214,6 +215,12 @@ export function InvoiceEditFlow({
     () => buildInvoicePaymentSummary(invoice, []),
     [invoice],
   )
+  const currentIssueYear = getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear()
+  const numberingAudit = useMemo(
+    () => buildInvoiceNumberingAudit(allInvoices, currentIssueYear),
+    [allInvoices, currentIssueYear],
+  )
+  const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
@@ -469,6 +476,14 @@ export function InvoiceEditFlow({
           </div>
         </div>
       </section>
+
+      {form.status !== 'draft' && numberingGapMessage ? (
+        <section className="cc-create-flow__summary-card">
+          <span className="cc-step-flow__eyebrow">Numeracion</span>
+          <strong>{numberingAudit.nextSuggestedInvoiceNumber}</strong>
+          <small>{numberingGapMessage}</small>
+        </section>
+      ) : null}
     </>
   )
 

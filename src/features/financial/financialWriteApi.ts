@@ -113,14 +113,32 @@ export async function saveLeadQuoteWithLines({
 export async function saveInvoiceWithLines(
   invoice: JsonPayload,
   lines: JsonPayload[],
-): Promise<void> {
+): Promise<{
+  id: string
+  display_code: string | null
+  invoice_number: string | null
+  status: string
+  issue_date: string
+}> {
   const invoiceRecord = invoice as JsonRecord
+  const client = getClientOrThrow()
 
   await callFinancialRpc(
     'save_invoice_with_lines',
     { p_invoice: invoice, p_lines: lines },
     'No se pudo guardar la factura y sus lineas.',
   )
+
+  const { data: savedInvoice, error: savedInvoiceError } = await client
+    .from('invoices')
+    .select('id,display_code,invoice_number,status,issue_date')
+    .eq('id', String(invoiceRecord.id ?? ''))
+    .single()
+
+  if (savedInvoiceError || !savedInvoice) {
+    throw new Error(savedInvoiceError?.message || 'No se pudo leer la factura guardada.')
+  }
+
   await recordAuditEvent({
     entityType: 'invoice',
     entityId: String(invoiceRecord.id ?? ''),
@@ -133,6 +151,14 @@ export async function saveInvoiceWithLines(
       has_internal_notes: Boolean(invoiceRecord.internal_notes),
     },
   })
+
+  return savedInvoice as {
+    id: string
+    display_code: string | null
+    invoice_number: string | null
+    status: string
+    issue_date: string
+  }
 }
 
 export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise<void> {

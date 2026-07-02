@@ -638,7 +638,7 @@ export function InvoiceDetailCard({
         return
       }
 
-      await saveInvoiceWithLines(
+      const savedInvoice = await saveInvoiceWithLines(
         {
           id: invoice.id,
           job_id: form.job_id || null,
@@ -662,7 +662,9 @@ export function InvoiceDetailCard({
       toast.update(toastId, {
         type: 'success',
         title: 'Factura actualizada',
-        description: 'Las lineas y el documento quedaron actualizados.',
+        description: savedInvoice.status === 'draft'
+          ? 'El borrador sigue sin consumir numero fiscal definitivo.'
+          : `Las lineas y el documento quedaron actualizados con numero ${savedInvoice.invoice_number ?? 'pendiente'}.`,
       })
       if (majorEditMode) {
         onMajorEditClose?.()

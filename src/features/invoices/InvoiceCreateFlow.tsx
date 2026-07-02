@@ -53,6 +53,7 @@ import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
+import { buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -305,6 +306,12 @@ export function InvoiceCreateFlow({
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(selectedQuote?.pricing_metadata ?? null, selectedClient),
     [selectedClient, selectedQuote],
   )
+  const currentIssueYear = getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear()
+  const numberingAudit = useMemo(
+    () => buildInvoiceNumberingAudit(invoices, currentIssueYear),
+    [currentIssueYear, invoices],
+  )
+  const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
 
   useEffect(() => {
     if (currentStep !== 1 || clientFiscalIssue) return
@@ -524,6 +531,12 @@ export function InvoiceCreateFlow({
     const toastId = toast.loading('Guardando factura...', 'Validando lineas y datos fiscales del cliente.')
 
     try {
+      if (form.status !== 'draft' && numberingGapMessage) {
+        toast.warning('Revision de numeracion', `${numberingGapMessage} Revisa antes de emitir.`, {
+          persistent: true,
+        })
+      }
+
       const invoiceId = createLocalId('INVOICE')
       const linePayloads = buildLinePayloads(lines, invoiceId)
 
@@ -589,7 +602,7 @@ export function InvoiceCreateFlow({
         }
       }
 
-      await saveInvoiceWithLines(
+      const savedInvoice = await saveInvoiceWithLines(
         {
           id: invoiceId,
           job_id: form.origin_mode === 'job' ? form.job_id : null,
@@ -610,23 +623,29 @@ export function InvoiceCreateFlow({
 
       toast.update(toastId, {
         type: 'success',
-        title: clientFiscalIssue ? 'Factura creada con datos fiscales incompletos' : 'Factura creada',
+        title: form.status === 'draft'
+          ? 'Factura creada como borrador'
+          : clientFiscalIssue
+            ? 'Factura emitida con datos fiscales incompletos'
+            : 'Factura emitida',
         description: clientFiscalIssue
-          ? 'La factura se creo, pero falta NIF/CIF o direccion fiscal del cliente.'
-          : 'La factura incluye lineas y snapshot fiscal del cliente.',
+          ? `La factura se guardo con numero ${savedInvoice.invoice_number ?? 'pendiente'} pero falta NIF/CIF o direccion fiscal del cliente.`
+          : form.status === 'draft'
+            ? 'El borrador no consume numero fiscal definitivo.'
+            : `Factura emitida con numero ${savedInvoice.invoice_number ?? 'pendiente'}.`,
         persistent: Boolean(clientFiscalIssue),
       })
 
       await onCreatedInvoice?.({
         id: invoiceId,
-        display_code: null,
-        invoice_number: null,
+        display_code: savedInvoice.display_code,
+        invoice_number: savedInvoice.invoice_number,
         job_id: form.origin_mode === 'job' ? form.job_id : null,
         quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
         client_id: form.client_id,
         client_display_code: selectedClient?.display_code ?? null,
         issue_date: form.issue_date,
-        status: form.status,
+        status: savedInvoice.status,
         subtotal: subtotalValue,
         tax_amount: taxAmountValue,
         total: totalValue,
@@ -724,7 +743,14 @@ export function InvoiceCreateFlow({
           <li>La ruta principal debe salir de un servicio cuando exista.</li>
           <li>La ficha fiscal del cliente debe quedar completa antes de emitir.</li>
           <li>Las lineas se validan antes de permitir la emision final.</li>
+          <li>Proximo numero sugerido: {numberingAudit.nextSuggestedInvoiceNumber}.</li>
         </ul>
+        {form.status !== 'draft' && numberingGapMessage ? (
+          <div className="cc-alert cc-alert--warning" style={{ marginTop: '1rem' }}>
+            <strong>Revision de numeracion</strong>
+            <p>{numberingGapMessage} La siguiente emision sugerida es {numberingAudit.nextSuggestedInvoiceNumber}.</p>
+          </div>
+        ) : null}
       </section>
     </>
   )

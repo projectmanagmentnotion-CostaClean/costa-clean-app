@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
@@ -20,7 +20,9 @@ import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePre
 import { buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
+import { InvoiceNumberingControlCard } from '../features/invoices/InvoiceNumberingControlCard'
 import { InvoicesList } from '../features/invoices/InvoicesList'
+import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from '../features/invoices/invoiceNumbering'
 import { settleInvoiceByTransfer, updateInvoiceStatus, refreshInvoicePaymentStatus } from '../features/financial/financialWriteApi'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -197,6 +199,17 @@ export function InvoicesPage({
       } : undefined,
     },
   ]
+  const numberingAuditYear = useMemo(() => {
+    const years = allInvoices
+      .map((invoice) => getInvoiceIssueYear(invoice.issue_date))
+      .filter((value): value is number => value !== null)
+      .sort((left, right) => right - left)
+    return years[0] ?? new Date().getFullYear()
+  }, [allInvoices])
+  const numberingAudit = useMemo(
+    () => buildInvoiceNumberingAudit(allInvoices, numberingAuditYear),
+    [allInvoices, numberingAuditYear],
+  )
 
   const detailEmptyState = error
     ? {
@@ -378,6 +391,24 @@ export function InvoicesPage({
             priority="compact"
           />
         </div>
+
+        <InvoiceNumberingControlCard
+          audit={numberingAudit}
+          onReviewSequence={() => {
+            const targetNumber = numberingAudit.lastIssuedInvoice?.invoice_number
+            const targetCode = numberingAudit.lastIssuedInvoice?.display_code
+            const firstGap = numberingAudit.gaps[0]
+            const firstPostGapNumber = firstGap ? buildInvoiceNumber(numberingAudit.year, firstGap.to + 1) : null
+            const anomalyInvoice = allInvoices.find((invoice) => (
+              (targetNumber && invoice.invoice_number === targetNumber)
+              || (targetCode && invoice.display_code === targetCode)
+            )) ?? allInvoices.find((invoice) => firstPostGapNumber && invoice.invoice_number === firstPostGapNumber) ?? allInvoices[0]
+
+            if (anomalyInvoice) {
+              setSelectedInvoiceId(anomalyInvoice.id)
+            }
+          }}
+        />
         {/*
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
 

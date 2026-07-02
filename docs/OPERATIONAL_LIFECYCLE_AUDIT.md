@@ -39,3 +39,11 @@ Fecha: 2026-07-01
 
 - Aplicar `sql/20260701_operational_lifecycle_foundation.sql` en la base real.
 - Verificar que las politicas/RPC activos en Supabase coincidan con esta version.
+
+## Relacion con numeracion de facturas
+
+- La regla operativa final queda asi:
+  - borrador en papelera o borrador activo no debe consumir numero fiscal
+  - factura emitida, pagada o anulada conserva numero
+- La migracion de numeracion preparada para eso es:
+  - `sql/20260702_stabilize_invoice_numbering_sequence.sql`

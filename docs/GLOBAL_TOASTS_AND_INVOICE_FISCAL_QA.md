@@ -79,6 +79,16 @@ API disponible:
 - Ficha fiscal inline:
   - `src/features/clients/ClientBillingDetailsInlineForm.tsx`
 
+## Seguimiento posterior de numeracion
+
+- En el sprint de 2026-07-02 los toasts de factura se ampliaron para numeracion:
+  - borrador:
+    - informa que no consume numero fiscal definitivo
+  - emitida:
+    - muestra el `invoice_number` real guardado
+- Ver auditoria completa:
+  - `docs/INVOICE_NUMBERING_SEQUENCE_AUDIT_QA.md`
+
 ## Como se muestran success/warning/error/loading
 
 - Al iniciar una accion importante:

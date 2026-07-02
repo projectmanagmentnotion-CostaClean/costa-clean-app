@@ -197,6 +197,18 @@ order by created_at asc;
 - Tratar `2026-050` como siguiente numeracion segura por defecto.
 - Solo abrir una regularizacion manual de `43-47` si el usuario confirma que fiscalmente corresponde documentar/anular/rehacer ese tramo.
 
+## Decision posterior del usuario
+
+- El usuario confirmo despues que `INV-0048 / 2026-048` y `INV-0049 / 2026-049` no fueron enviadas al cliente.
+- Con esa confirmacion ya no se trata como incidencia cerrada en `050` por defecto.
+- La regularizacion propuesta pasa a ser:
+  - `048 -> 043`
+  - `049 -> 044`
+- Ver patch preparado:
+  - `sql/20260702_regularize_unsent_invoice_numbers_0048_0049.sql`
+- Ver QA especifica:
+  - `docs/INVOICE_NUMBERING_REGULARIZATION_0048_0049_QA.md`
+
 ## Lo que requiere confirmacion del usuario
 
 - Si `2026-048` y `2026-049` fueron emitidas/entregadas al cliente sin posibilidad de renumeracion.

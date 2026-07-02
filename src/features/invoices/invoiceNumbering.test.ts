@@ -73,4 +73,17 @@ describe('invoiceNumbering', () => {
 
     expect(audit.outOfSyncEntries).toHaveLength(1)
   })
+
+  it('suggests 45 after regularizing 48 and 49 down to 43 and 44', () => {
+    const audit = buildInvoiceNumberingAudit([
+      createInvoice({ display_code: 'INV-0042', invoice_number: '2026-042', status: 'paid' }),
+      createInvoice({ display_code: 'INV-0043', invoice_number: '2026-043', status: 'paid' }),
+      createInvoice({ display_code: 'INV-0044', invoice_number: '2026-044', status: 'issued' }),
+    ], 2026)
+
+    expect(audit.gaps).toHaveLength(0)
+    expect(audit.nextSuggestedSequence).toBe(45)
+    expect(audit.nextSuggestedInvoiceNumber).toBe('2026-045')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-0045')
+  })
 })

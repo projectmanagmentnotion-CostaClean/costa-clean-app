@@ -50,14 +50,18 @@ La incidencia no es un unico bug. Son dos fallos de rollout simultaneos:
 - `sql/20260702_fix_invoice_save_readback_and_gap_sequence.sql`
   - agrega `find_first_missing_invoice_sequence`
   - agrega `save_invoice_with_lines_v2`
-- `sql/20260702_harden_invoice_emission_paths.sql`
-  - hace autoritativa la capa SQL
+- `sql/20260702_harden_invoice_emission_core.sql`
+  - hace autoritativa la capa SQL para facturas normales
   - agrega `build_client_fiscal_snapshot`
   - agrega `ensure_invoice_pricing_metadata`
   - agrega `assert_invoice_numbering_regular`
   - endurece `save_invoice_with_lines`
   - endurece `accept_quote_workflow`
-  - endurece `generate_invoice_from_recurring_plan`
+- `sql/20260702_harden_invoice_emission_recurring_optional.sql`
+  - redefine `generate_invoice_from_recurring_plan` solo si existe `public.recurring_invoice_plans`
+- `sql/20260702_harden_invoice_emission_paths.sql`
+  - primer intento combinado
+  - queda supersedido para aplicar en entornos sin tabla recurrente
 - `sql/20260702_regularize_unsent_invoice_0052_to_0047.sql`
   - regularizacion idempotente de `0052 -> 0047`
 
@@ -66,10 +70,11 @@ La incidencia no es un unico bug. Son dos fallos de rollout simultaneos:
 El sprint no puede darse por cerrado hasta hacer estas acciones sobre Supabase real:
 
 1. aplicar `sql/20260702_fix_invoice_save_readback_and_gap_sequence.sql`
-2. aplicar `sql/20260702_harden_invoice_emission_paths.sql`
-3. aplicar `sql/20260702_regularize_unsent_invoice_0052_to_0047.sql`
-4. volver a auditar `0045` a `0052`
-5. confirmar:
+2. aplicar `sql/20260702_harden_invoice_emission_core.sql`
+3. aplicar `sql/20260702_harden_invoice_emission_recurring_optional.sql` solo si el producto usa recurrentes y la tabla existe
+4. aplicar `sql/20260702_regularize_unsent_invoice_0052_to_0047.sql`
+5. volver a auditar `0045` a `0052`
+6. confirmar:
    - `huecos = 0`
    - `INV-0047 / 2026-047` existe
    - `INV-0052 / 2026-052` ya no existe como numero activo

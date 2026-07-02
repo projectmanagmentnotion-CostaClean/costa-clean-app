@@ -12,11 +12,29 @@ interface SavedInvoiceReadback {
   issue_date: string
 }
 
+interface InvoiceNumberingMismatchDetails {
+  expectedDisplayCode: string | null
+  expectedInvoiceNumber: string | null
+  invoiceId: string
+  persistedDisplayCode: string | null
+  persistedInvoiceNumber: string | null
+}
+
 const SAVE_INVOICE_WITH_RESULT_RPC = 'save_invoice_with_lines_v2'
 const SAVE_INVOICE_READBACK_RETRY_DELAYS_MS = [0, 150, 400]
 
 function isPlainRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+export class InvoiceNumberingMismatchError extends Error {
+  readonly details: InvoiceNumberingMismatchDetails
+
+  constructor(message: string, details: InvoiceNumberingMismatchDetails) {
+    super(message)
+    this.name = 'InvoiceNumberingMismatchError'
+    this.details = details
+  }
 }
 
 function getClientOrThrow() {
@@ -79,6 +97,13 @@ function isMissingSaveInvoiceResultRpcError(message: string): boolean {
     )
 }
 
+function sanitizeInvoicePayloadForWrite(invoice: JsonPayload): JsonRecord {
+  const invoiceRecord = isPlainRecord(invoice) ? { ...invoice } : {}
+  delete invoiceRecord.invoice_number
+  delete invoiceRecord.display_code
+  return invoiceRecord
+}
+
 function assertSavedInvoiceNumberingMatchesExpectation(
   invoiceRecord: JsonRecord,
   savedInvoice: SavedInvoiceReadback,
@@ -92,14 +117,28 @@ function assertSavedInvoiceNumberingMatchesExpectation(
     : ''
 
   if (expectedInvoiceNumber && savedInvoice.invoice_number !== expectedInvoiceNumber) {
-    throw new Error(
+    throw new InvoiceNumberingMismatchError(
       `La factura se guardo con numeracion distinta a la esperada. Esperado ${expectedInvoiceNumber} y Supabase devolvio ${savedInvoice.invoice_number ?? 'sin numero fiscal'}.`,
+      {
+        invoiceId: String(invoiceRecord.id ?? ''),
+        expectedInvoiceNumber,
+        expectedDisplayCode: expectedDisplayCode || null,
+        persistedInvoiceNumber: savedInvoice.invoice_number,
+        persistedDisplayCode: savedInvoice.display_code,
+      },
     )
   }
 
   if (expectedDisplayCode && savedInvoice.display_code !== expectedDisplayCode) {
-    throw new Error(
+    throw new InvoiceNumberingMismatchError(
       `La factura se guardo con codigo interno distinto al esperado. Esperado ${expectedDisplayCode} y Supabase devolvio ${savedInvoice.display_code ?? 'sin codigo interno'}.`,
+      {
+        invoiceId: String(invoiceRecord.id ?? ''),
+        expectedInvoiceNumber: expectedInvoiceNumber || null,
+        expectedDisplayCode,
+        persistedInvoiceNumber: savedInvoice.invoice_number,
+        persistedDisplayCode: savedInvoice.display_code,
+      },
     )
   }
 }
@@ -219,14 +258,14 @@ export async function saveInvoiceWithLines(
   status: string
   issue_date: string
 }> {
-  const invoiceRecord = invoice as JsonRecord
+  const invoiceRecord = sanitizeInvoicePayloadForWrite(invoice)
   const client = getClientOrThrow()
   let savedInvoice: SavedInvoiceReadback
 
   try {
     const savedInvoiceResult = await callFinancialRpcForResult<SavedInvoiceReadback | SavedInvoiceReadback[] | null>(
       SAVE_INVOICE_WITH_RESULT_RPC,
-      { p_invoice: invoice, p_lines: lines },
+      { p_invoice: invoiceRecord, p_lines: lines },
       'No se pudo guardar la factura y sus lineas.',
     )
     savedInvoice = normalizeSavedInvoiceRows(savedInvoiceResult)
@@ -238,7 +277,7 @@ export async function saveInvoiceWithLines(
 
     await callFinancialRpc(
       'save_invoice_with_lines',
-      { p_invoice: invoice, p_lines: lines },
+      { p_invoice: invoiceRecord, p_lines: lines },
       'No se pudo guardar la factura y sus lineas.',
     )
     savedInvoice = await readSavedInvoiceWithRetries(client, String(invoiceRecord.id ?? ''))
@@ -267,6 +306,7 @@ export const __financialWriteApiTestUtils = {
   isMissingSaveInvoiceResultRpcError,
   normalizeSavedInvoiceRows,
   readSavedInvoiceWithRetries,
+  sanitizeInvoicePayloadForWrite,
 }
 
 export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise<void> {

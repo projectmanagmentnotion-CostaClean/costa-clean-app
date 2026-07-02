@@ -253,3 +253,20 @@ order by created_at asc;
   - `financialWriteApi.ts` ahora bloquea si la DB devuelve numeracion distinta a la esperada
 - Riesgo residual:
   - falta la prueba manual de emision controlada para confirmar `0049` desde UI autenticada
+
+## Incidencia 0054
+
+- Caso real observado:
+  - secuencia visual correcta en UI
+  - mismatch detectado al guardar
+  - persistencia final incorrecta `INV-0054 / 2026-054`
+- Blindaje nuevo en repo:
+  - `financialWriteApi.ts` elimina `invoice_number` y `display_code` del payload normal antes del RPC
+  - si Supabase devuelve numeracion distinta, el error incluye la factura creada para facilitar regularizacion
+  - `sql/20260702_enforce_authoritative_invoice_numbering.sql` obliga a que la DB asigne el siguiente hueco real en inserts que consumen numeracion
+- Regularizacion preparada:
+  - `sql/20260702_regularize_unsent_invoice_0054_to_0049.sql`
+- Cierre pendiente:
+  - aplicar SQL en Supabase
+  - confirmar `INV-0049 / 2026-049`
+  - emitir prueba real y confirmar `INV-0050 / 2026-050`

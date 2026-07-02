@@ -23,7 +23,7 @@ import {
 import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ExpenseListItem } from '../expenses/types'
-import { saveInvoiceWithLines } from '../financial/financialWriteApi'
+import { InvoiceNumberingMismatchError, saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import { getJobBillingDisplayConcept } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
@@ -673,7 +673,14 @@ export function InvoiceCreateFlow({
         onCompleted,
       })
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Error desconocido creando la factura.'
+      if (err instanceof InvoiceNumberingMismatchError) {
+        await onRefreshData?.()
+      }
+      const message = err instanceof InvoiceNumberingMismatchError
+        ? `${err.message} La factura creada quedo como ${err.details.persistedDisplayCode ?? err.details.invoiceId}. Refresca la lista y regularizala antes de reintentar.`
+        : err instanceof Error
+          ? err.message
+          : 'Error desconocido creando la factura.'
       setSubmitError(message)
       toast.update(toastId, {
         type: 'error',

@@ -12,6 +12,7 @@ import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { buildInvoicePricingMetadataWithClientFiscalSnapshot, getClientFiscalIssueMessage } from '../clients/clientFiscalData'
 import type { ClientListItem } from '../clients/types'
 import {
+  InvoiceNumberingMismatchError,
   saveInvoiceWithLines,
   settleInvoiceByTransfer,
   updateInvoiceStatus as updateInvoiceStatusRpc,
@@ -785,8 +786,15 @@ export function InvoiceDetailCard({
       }
       setIsDirty(false)
     } catch (err) {
+      if (err instanceof InvoiceNumberingMismatchError) {
+        await onInvoiceUpdated()
+      }
       const message =
-        err instanceof Error ? err.message : 'Error desconocido actualizando la factura.'
+        err instanceof InvoiceNumberingMismatchError
+          ? `${err.message} La factura persistida quedo como ${err.details.persistedDisplayCode ?? err.details.invoiceId}. Regularizala antes de continuar.`
+          : err instanceof Error
+            ? err.message
+            : 'Error desconocido actualizando la factura.'
 
       setSaveError(message)
       toast.update(toastId, {

@@ -77,4 +77,26 @@ describe('financialWriteApi test utils', () => {
 
     expect(true).toBe(true)
   })
+
+  it('removes invoice numbering columns before calling the invoice write RPC', () => {
+    const sanitized = __financialWriteApiTestUtils.sanitizeInvoicePayloadForWrite({
+      id: 'invoice-49',
+      display_code: 'INV-0054',
+      invoice_number: '2026-054',
+      status: 'issued',
+      pricing_metadata: {
+        expected_invoice_number: '2026-049',
+      },
+    })
+
+    expect(sanitized).toMatchObject({
+      id: 'invoice-49',
+      status: 'issued',
+      pricing_metadata: {
+        expected_invoice_number: '2026-049',
+      },
+    })
+    expect('invoice_number' in sanitized).toBe(false)
+    expect('display_code' in sanitized).toBe(false)
+  })
 })

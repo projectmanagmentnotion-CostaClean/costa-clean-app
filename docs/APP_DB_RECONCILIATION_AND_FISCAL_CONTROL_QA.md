@@ -147,3 +147,18 @@
   - funciones `find_first_missing_invoice_sequence`, `sync_invoice_numbering`, `save_invoice_with_lines_v2`, `build_client_fiscal_snapshot`, `ensure_invoice_pricing_metadata`, `assert_invoice_numbering_regular`
   - trigger real sobre `public.invoices`
   - emision manual de `0049` para cierre operativo definitivo
+
+## Incidencia 0054 y reconciliacion pendiente
+
+- La reconciliacion app ↔ DB sigue incompleta mientras Supabase no aplique:
+  - `sql/20260702_enforce_authoritative_invoice_numbering.sql`
+  - `sql/20260702_regularize_unsent_invoice_0054_to_0049.sql`
+- Motivo:
+  - el frontend ya detecta mismatch y no persiste numeracion en el payload normal
+  - aun asi la DB real acepto/persistio `2026-054`
+  - eso demuestra desalineacion entre repo y write layer efectiva en Supabase
+- Resultado esperado tras aplicar:
+  - `INV-0049 / 2026-049` regularizada desde `INV-0054 / 2026-054`
+  - siguiente real `INV-0050 / 2026-050`
+  - huecos `0`
+  - `without_snapshot = 0`

@@ -17,6 +17,7 @@ import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ExpenseListItem } from '../expenses/types'
 import {
+  InvoiceNumberingMismatchError,
   saveInvoiceWithLines,
 } from '../financial/financialWriteApi'
 import { getJobBillingDraftLines } from '../jobs/jobBilling'
@@ -443,7 +444,16 @@ export function InvoiceEditFlow({
       setIsDirty(false)
       await completeFullViewActionFlow({ onRefreshData, onCompleted })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido actualizando la factura.')
+      if (err instanceof InvoiceNumberingMismatchError) {
+        await onRefreshData?.()
+      }
+      setError(
+        err instanceof InvoiceNumberingMismatchError
+          ? `${err.message} La factura persistida quedo como ${err.details.persistedDisplayCode ?? err.details.invoiceId}. Regularizala antes de seguir editando.`
+          : err instanceof Error
+            ? err.message
+            : 'Error desconocido actualizando la factura.',
+      )
     } finally {
       setIsSaving(false)
     }

@@ -21,6 +21,8 @@ export interface InvoiceNumberingAudit {
   year: number
   lastIssuedSequence: number | null
   lastIssuedInvoice: InvoiceNumberingIssueEntry | null
+  firstMissingSequence: number | null
+  hasBlockingGaps: boolean
   nextSuggestedSequence: number
   nextSuggestedInvoiceNumber: string
   nextSuggestedDisplayCode: string
@@ -133,7 +135,9 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
   }
 
   const lastIssued = fiscalInvoices.at(-1) ?? null
-  const nextSuggestedSequence = (lastIssued?.fiscalSequence ?? 0) + 1
+  const firstMissingSequence = gaps[0]?.from ?? null
+  const hasBlockingGaps = gaps.length > 0
+  const nextSuggestedSequence = firstMissingSequence ?? ((lastIssued?.fiscalSequence ?? 0) + 1)
   const draftsWithReservedNumbers = invoices
     .filter((invoice) => invoice.status === 'draft' && (invoice.invoice_number || invoice.display_code))
     .map(toIssueEntry)
@@ -146,6 +150,8 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
     year,
     lastIssuedSequence: lastIssued?.fiscalSequence ?? null,
     lastIssuedInvoice: lastIssued ? toIssueEntry(lastIssued.invoice) : null,
+    firstMissingSequence,
+    hasBlockingGaps,
     nextSuggestedSequence,
     nextSuggestedInvoiceNumber: buildInvoiceNumber(year, nextSuggestedSequence),
     nextSuggestedDisplayCode: buildInvoiceDisplayCode(nextSuggestedSequence),
@@ -162,7 +168,8 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
 
 export function describeInvoiceNumberingGap(audit: InvoiceNumberingAudit): string | null {
   const firstGap = audit.gaps[0]
-  const nextRealSequence = firstGap ? firstGap.to + 1 : null
-  if (!firstGap || nextRealSequence === null) return null
-  return `Se detecto un salto entre ${buildInvoiceNumber(audit.year, firstGap.from - 1)} y ${buildInvoiceNumber(audit.year, nextRealSequence)}.`
+  if (!firstGap) return null
+  const previousSequence = firstGap.from - 1
+  const nextRealSequence = firstGap.to + 1
+  return `Hay huecos en la numeracion fiscal entre ${buildInvoiceNumber(audit.year, previousSequence)} y ${buildInvoiceNumber(audit.year, nextRealSequence)}.`
 }

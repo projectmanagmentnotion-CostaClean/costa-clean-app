@@ -57,4 +57,23 @@ describe('InvoiceDocumentA4', () => {
     expect(html.includes('NIF/CIF: 45962701F')).toBe(true)
     expect(html.includes('<p>45962701F</p>')).toBe(false)
   })
+
+  it('renders the client name from snapshot.name when fiscal_name is absent', () => {
+    const html = renderToStaticMarkup(
+      <InvoiceDocumentA4
+        invoice={createInvoice({
+          pricing_metadata: {
+            client_fiscal_snapshot: {
+              client_id: 'client-1',
+              name: 'Nombre fiscal desde name',
+              tax_id: '45962701F',
+              billing_address: 'Avinguda de Lloret de Dalt, 10',
+            },
+          },
+        })}
+      />,
+    )
+
+    expect(html.includes('Nombre fiscal desde name')).toBe(true)
+  })
 })

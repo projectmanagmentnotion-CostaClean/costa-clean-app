@@ -40,10 +40,12 @@ describe('invoiceNumbering', () => {
     ], 2026)
 
     expect(JSON.stringify(audit.gaps)).toBe(JSON.stringify([{ from: 43, to: 47 }]))
-    expect(audit.nextSuggestedSequence).toBe(50)
-    expect(audit.nextSuggestedInvoiceNumber).toBe('2026-050')
-    expect(audit.nextSuggestedDisplayCode).toBe('INV-0050')
-    expect(describeInvoiceNumberingGap(audit)).toBe('Se detecto un salto entre 2026-042 y 2026-048.')
+    expect(audit.hasBlockingGaps).toBe(true)
+    expect(audit.firstMissingSequence).toBe(43)
+    expect(audit.nextSuggestedSequence).toBe(43)
+    expect(audit.nextSuggestedInvoiceNumber).toBe('2026-043')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-0043')
+    expect(describeInvoiceNumberingGap(audit)).toBe('Hay huecos en la numeracion fiscal entre 2026-042 y 2026-048.')
   })
 
   it('does not let draft invoices without number consume the next fiscal sequence', () => {
@@ -82,8 +84,23 @@ describe('invoiceNumbering', () => {
     ], 2026)
 
     expect(audit.gaps).toHaveLength(0)
+    expect(audit.hasBlockingGaps).toBe(false)
     expect(audit.nextSuggestedSequence).toBe(45)
     expect(audit.nextSuggestedInvoiceNumber).toBe('2026-045')
     expect(audit.nextSuggestedDisplayCode).toBe('INV-0045')
+  })
+
+  it('blocks the sequence at 45 when 43, 44 and 50 already exist', () => {
+    const audit = buildInvoiceNumberingAudit([
+      createInvoice({ display_code: 'INV-0043', invoice_number: '2026-043', status: 'paid' }),
+      createInvoice({ display_code: 'INV-0044', invoice_number: '2026-044', status: 'paid' }),
+      createInvoice({ display_code: 'INV-0050', invoice_number: '2026-050', status: 'issued' }),
+    ], 2026)
+
+    expect(JSON.stringify(audit.gaps)).toBe(JSON.stringify([{ from: 45, to: 49 }]))
+    expect(audit.firstMissingSequence).toBe(45)
+    expect(audit.nextSuggestedInvoiceNumber).toBe('2026-045')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-0045')
+    expect(describeInvoiceNumberingGap(audit)).toBe('Hay huecos en la numeracion fiscal entre 2026-044 y 2026-050.')
   })
 })

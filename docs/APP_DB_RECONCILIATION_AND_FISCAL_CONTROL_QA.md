@@ -77,6 +77,23 @@
 - Si Supabase no confirma ninguna actualizacion, la UI muestra:
   - `No se guardaron cambios`
   - `El backfill detecto facturas reparables, pero Supabase no confirmo ninguna actualizacion.`
+- La capa fiscal del frontend ya no depende de `clients.fiscal_name`.
+- El snapshot ahora admite `name` y `fiscal_name`.
+- El PDF y la vista documental priorizan `snapshot.fiscal_name || snapshot.name`.
+- La RPC nueva normaliza `pricing_metadata` corrupto cuando llega como array.
+
+## Numeracion fiscal 0050
+
+- Nuevo escenario reportado:
+  - `2026-044` existe
+  - `2026-045` a `2026-049` faltan
+  - `2026-050 / INV-0050` existe
+- Decision en repo:
+  - no seguir sugiriendo `2026-051` mientras haya huecos
+  - bloquear emision no borrador si quedan huecos fiscales
+  - dejar preparada regularizacion segura `0050 -> 0045`
+- SQL preparada:
+  - `sql/20260702_fix_invoice_fiscal_metadata_and_numbering_0050.sql`
 
 ## Recurrentes
 

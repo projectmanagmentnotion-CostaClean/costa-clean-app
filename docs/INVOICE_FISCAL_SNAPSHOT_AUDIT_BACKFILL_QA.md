@@ -39,6 +39,20 @@
   - bajo RLS eso podia devolver `error = null` aunque no se hubiera actualizado ninguna fila visible
   - la UI contaba como exito las facturas detectadas como reparables, no las filas realmente confirmadas por Supabase
 
+## Segunda causa real detectada despues
+
+- La tabla `public.clients` no tiene columna `fiscal_name`.
+- Las columnas reales auditadas para el cliente son:
+  - `full_name`
+  - `tax_id`
+  - `billing_address`
+  - `email`
+- Ademas, varias facturas quedaron con `pricing_metadata` como `array`, no como objeto JSONB.
+- En ese estado, aunque dentro del array hubiese wrappers con snapshot, la comprobacion:
+  - `pricing_metadata ? 'client_fiscal_snapshot'`
+  seguia devolviendo `false`.
+- Por eso el panel podia seguir mostrando pendientes aunque hubiera datos fiscales anidados en estructuras corruptas.
+
 ## Cambios implementados
 
 - `src/features/clients/clientFiscalData.ts`
@@ -55,6 +69,11 @@
   - solo cuenta como reparada una factura cuyo `client_fiscal_snapshot` queda confirmado
   - ya no reporta success si Supabase no confirma ninguna actualizacion
   - mantiene auditoria de escritura en fallback REST
+- `src/features/clients/clientFiscalData.ts`
+  - acepta `snapshot.fiscal_name || snapshot.name`
+  - ignora snapshots corruptos anidados dentro de arrays
+- `src/features/invoices/InvoiceDocumentA4.tsx`
+  - prioriza `fiscal_name` y, si no existe, `name`
 - `src/features/invoices/InvoiceCreateFlow.tsx`
   - permite guardar borrador con ficha fiscal incompleta
   - mantiene bloqueo al emitir si faltan datos fiscales
@@ -134,9 +153,11 @@
 - Alcance:
   - `security definer`
   - exige `public.require_authenticated_financial_write()`
+  - normaliza `pricing_metadata` array/null/scalar a objeto antes del backfill
+  - usa `clients.full_name` como `name` y `fiscal_name`
   - rellena solo facturas sin snapshot
   - no toca numeracion, importes, lineas ni estados
-  - devuelve `repaired / blocked / failed` e ids para la UI
+  - devuelve `normalized / repaired / blocked / failed` e ids para la UI
 
 ## Verificacion final esperada
 

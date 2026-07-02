@@ -112,6 +112,51 @@ describe('client fiscal data', () => {
       source: 'snapshot',
     })
   })
+
+  it('falls back to snapshot.name when fiscal_name is not present', () => {
+    const display = getInvoiceFiscalDisplayData(createInvoice({
+      client_name: 'Cliente dinamico',
+      pricing_metadata: {
+        client_fiscal_snapshot: {
+          client_id: 'client-1',
+          name: 'Cliente desde name',
+          tax_id: '45962701F',
+          billing_address: 'Avinguda de Lloret de Dalt, 10',
+        },
+      },
+    }))
+
+    expect(display).toMatchObject({
+      clientName: 'Cliente desde name',
+      taxId: '45962701F',
+      billingAddress: 'Avinguda de Lloret de Dalt, 10',
+      source: 'snapshot',
+    })
+  })
+
+  it('ignores corrupt fiscal snapshots nested inside pricing_metadata arrays', () => {
+    const display = getInvoiceFiscalDisplayData(createInvoice({
+      client_name: 'Cliente dinamico',
+      pricing_metadata: [
+        null,
+        {
+          client_fiscal_snapshot: {
+            client_id: 'client-1',
+            fiscal_name: 'No deberia contar',
+            tax_id: '45962701F',
+            billing_address: 'Avinguda de Lloret de Dalt, 10',
+          },
+        },
+      ] as unknown as Record<string, unknown>,
+    }))
+
+    expect(display).toMatchObject({
+      clientName: 'Cliente dinamico',
+      taxId: null,
+      billingAddress: null,
+      source: 'dynamic',
+    })
+  })
 })
 
 describe('client fiscal backfill', () => {

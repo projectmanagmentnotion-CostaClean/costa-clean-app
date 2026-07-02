@@ -33,6 +33,7 @@ import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 import { backfillSingleInvoiceFiscalSnapshot } from './invoiceFiscalSnapshotApi'
 import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } from './invoiceFiscalSnapshot'
+import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -44,6 +45,7 @@ interface InvoiceDetailCardProps {
   jobs: JobListItem[]
   quotes: QuoteListItem[]
   payments: PaymentListItem[]
+  allInvoices?: InvoiceListItem[]
   onInvoiceUpdated: () => Promise<void>
   onOpenDocument: () => void
   onViewPayments: (invoiceId: string) => void
@@ -251,6 +253,7 @@ export function InvoiceDetailCard({
   jobs,
   quotes,
   payments,
+  allInvoices = [],
   onInvoiceUpdated,
   onOpenDocument,
   onViewPayments,
@@ -335,6 +338,11 @@ export function InvoiceDetailCard({
   const paymentSummary = useMemo(
     () => invoice ? buildInvoicePaymentSummary(invoice, invoicePayments) : null,
     [invoice, invoicePayments],
+  )
+  const numberingAuditYear = useMemo(() => getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear(), [form.issue_date])
+  const numberingAudit = useMemo(
+    () => buildInvoiceNumberingAudit(allInvoices, numberingAuditYear),
+    [allInvoices, numberingAuditYear],
   )
 
   useEffect(() => {
@@ -698,6 +706,22 @@ export function InvoiceDetailCard({
           type: 'error',
           title: 'No se puede emitir factura',
           description: 'Completa el NIF/CIF y la direccion fiscal del cliente antes de emitir.',
+          persistent: true,
+        })
+        return
+      }
+
+      if (form.status !== 'draft' && numberingAudit.hasBlockingGaps) {
+        const gapLabel = numberingAudit.gaps.map((gap) => (
+          gap.from === gap.to
+            ? buildInvoiceNumber(numberingAudit.year, gap.from)
+            : `${buildInvoiceNumber(numberingAudit.year, gap.from)} a ${buildInvoiceNumber(numberingAudit.year, gap.to)}`
+        )).join(' | ')
+        setSaveError(`No se puede emitir factura. Hay huecos en la numeracion fiscal: ${gapLabel}. Regulariza la secuencia antes de emitir.`)
+        toast.update(toastId, {
+          type: 'error',
+          title: 'No se puede emitir factura',
+          description: `Hay huecos en la numeracion fiscal: ${gapLabel}. Regulariza la secuencia antes de emitir.`,
           persistent: true,
         })
         return

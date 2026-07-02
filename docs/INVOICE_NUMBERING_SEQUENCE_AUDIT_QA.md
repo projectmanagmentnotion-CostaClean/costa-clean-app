@@ -218,6 +218,24 @@ order by created_at asc;
 
 - Aplicar en Supabase la migracion:
   - `sql/20260702_stabilize_invoice_numbering_sequence.sql`
+
+## Escenario critico posterior
+
+- En el siguiente sprint aparecio un caso nuevo:
+  - `INV-0050 / 2026-050` existe
+  - `INV-0045` a `INV-0049` faltan
+- A partir de este punto la app ya no debe sugerir `2026-051` como siguiente numero mientras haya huecos.
+- Regla nueva en repo:
+  - si `audit.gaps.length > 0`, el siguiente numero seguro pasa a ser el primer hueco
+  - la emision no borrador queda bloqueada hasta regularizar
+  - `Revisar secuencia` debe avisar del salto y enfocar la incidencia real
+
+## Regularizacion preparada para 0050
+
+- SQL preparada:
+  - `sql/20260702_fix_invoice_fiscal_metadata_and_numbering_0050.sql`
+- QA especifica:
+  - `docs/INVOICE_NUMBERING_REGULARIZATION_0050_QA.md`
 - Verificar en la DB real que los defaults/triggers antiguos no contradicen esta version.
 - Emitir una factura nueva y confirmar:
   - borrador sin numero

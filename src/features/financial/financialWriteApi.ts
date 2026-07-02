@@ -4,6 +4,14 @@ import { recordAuditEvent } from '../auditTrail/auditTrailApi'
 type JsonRecord = Record<string, unknown>
 type JsonPayload = object
 
+interface SavedInvoiceReadback {
+  id: string
+  display_code: string | null
+  invoice_number: string | null
+  status: string
+  issue_date: string
+}
+
 function getClientOrThrow() {
   const { client, error } = getSupabaseClient()
 
@@ -35,6 +43,24 @@ async function callFinancialRpcForResult<T>(
   }
 
   return data as T
+}
+
+function normalizeSavedInvoiceRows(
+  rows: SavedInvoiceReadback[] | SavedInvoiceReadback | null,
+): SavedInvoiceReadback {
+  if (!rows) {
+    throw new Error('No se pudo leer la factura guardada.')
+  }
+
+  if (Array.isArray(rows)) {
+    if (rows.length !== 1) {
+      throw new Error('La factura se guardo, pero Supabase no devolvio una unica fila confirmada.')
+    }
+
+    return rows[0]
+  }
+
+  return rows
 }
 
 export async function saveQuoteWithLines(
@@ -129,15 +155,17 @@ export async function saveInvoiceWithLines(
     'No se pudo guardar la factura y sus lineas.',
   )
 
-  const { data: savedInvoice, error: savedInvoiceError } = await client
+  const { data: savedInvoiceRows, error: savedInvoiceError } = await client
     .from('invoices')
     .select('id,display_code,invoice_number,status,issue_date')
     .eq('id', String(invoiceRecord.id ?? ''))
-    .single()
+    .maybeSingle()
 
-  if (savedInvoiceError || !savedInvoice) {
+  if (savedInvoiceError) {
     throw new Error(savedInvoiceError?.message || 'No se pudo leer la factura guardada.')
   }
+
+  const savedInvoice = normalizeSavedInvoiceRows(savedInvoiceRows as SavedInvoiceReadback | SavedInvoiceReadback[] | null)
 
   await recordAuditEvent({
     entityType: 'invoice',
@@ -152,13 +180,11 @@ export async function saveInvoiceWithLines(
     },
   })
 
-  return savedInvoice as {
-    id: string
-    display_code: string | null
-    invoice_number: string | null
-    status: string
-    issue_date: string
-  }
+  return savedInvoice
+}
+
+export const __financialWriteApiTestUtils = {
+  normalizeSavedInvoiceRows,
 }
 
 export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise<void> {

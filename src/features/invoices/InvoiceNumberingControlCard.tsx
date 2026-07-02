@@ -3,11 +3,15 @@ import { buildInvoiceNumber, describeInvoiceNumberingGap, type InvoiceNumberingA
 interface InvoiceNumberingControlCardProps {
   audit: InvoiceNumberingAudit
   onReviewSequence?: () => void
+  reviewHint?: string | null
+  regularizationHint?: string | null
 }
 
 export function InvoiceNumberingControlCard({
   audit,
   onReviewSequence,
+  reviewHint,
+  regularizationHint,
 }: InvoiceNumberingControlCardProps) {
   const firstGapMessage = describeInvoiceNumberingGap(audit)
 
@@ -55,7 +59,9 @@ export function InvoiceNumberingControlCard({
       {firstGapMessage ? (
         <div className="cc-alert cc-alert--warning" style={{ marginTop: '1rem' }}>
           <strong>Revision de numeracion</strong>
-          <p>{firstGapMessage} La siguiente factura no debe reutilizar esos huecos sin auditoria.</p>
+          <p>{firstGapMessage} No emitas nuevas facturas hasta regularizar la secuencia.</p>
+          {reviewHint ? <p>{reviewHint}</p> : null}
+          {regularizationHint ? <p>{regularizationHint}</p> : null}
         </div>
       ) : null}
 

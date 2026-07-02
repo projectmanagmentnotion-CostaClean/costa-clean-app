@@ -53,7 +53,7 @@ import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
-import { buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
+import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -475,6 +475,13 @@ export function InvoiceCreateFlow({
     if (stepIndex === 1) {
       if (!form.client_id) return 'Debes tener un cliente seleccionado.'
       if (!form.issue_date) return 'Debes indicar la fecha de emision.'
+      if (form.status !== 'draft' && numberingAudit.hasBlockingGaps) {
+        return `No se puede emitir factura. Hay huecos en la numeracion fiscal: ${numberingAudit.gaps.map((gap) => (
+          gap.from === gap.to
+            ? buildInvoiceNumber(numberingAudit.year, gap.from)
+            : `${buildInvoiceNumber(numberingAudit.year, gap.from)} a ${buildInvoiceNumber(numberingAudit.year, gap.to)}`
+        )).join(' | ')}. Regulariza la secuencia antes de emitir.`
+      }
       if (form.status !== 'draft' && clientFiscalIssue) return clientFiscalIssue
       return null
     }
@@ -531,12 +538,6 @@ export function InvoiceCreateFlow({
     const toastId = toast.loading('Guardando factura...', 'Validando lineas y datos fiscales del cliente.')
 
     try {
-      if (form.status !== 'draft' && numberingGapMessage) {
-        toast.warning('Revision de numeracion', `${numberingGapMessage} Revisa antes de emitir.`, {
-          persistent: true,
-        })
-      }
-
       const invoiceId = createLocalId('INVOICE')
       const linePayloads = buildLinePayloads(lines, invoiceId)
 
@@ -744,7 +745,7 @@ export function InvoiceCreateFlow({
         {form.status !== 'draft' && numberingGapMessage ? (
           <div className="cc-alert cc-alert--warning" style={{ marginTop: '1rem' }}>
             <strong>Revision de numeracion</strong>
-            <p>{numberingGapMessage} La siguiente emision sugerida es {numberingAudit.nextSuggestedInvoiceNumber}.</p>
+            <p>{numberingGapMessage} La siguiente emision segura seria {numberingAudit.nextSuggestedInvoiceNumber} despues de regularizar.</p>
           </div>
         ) : null}
       </section>

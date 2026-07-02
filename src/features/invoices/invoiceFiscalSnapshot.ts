@@ -44,7 +44,7 @@ function isNonEmpty(value: string | null | undefined): value is string {
 export function validateClientFiscalSnapshot(snapshot: InvoiceFiscalSnapshot | null | undefined): InvoiceFiscalSnapshotValidation {
   const missingFields: Array<'name' | 'tax_id' | 'billing_address'> = []
 
-  if (!snapshot || !isNonEmpty(snapshot.fiscal_name)) missingFields.push('name')
+  if (!snapshot || (!isNonEmpty(snapshot.fiscal_name) && !isNonEmpty(snapshot.name))) missingFields.push('name')
   if (!snapshot || !isNonEmpty(snapshot.tax_id)) missingFields.push('tax_id')
   if (!snapshot || !isNonEmpty(snapshot.billing_address)) missingFields.push('billing_address')
 
@@ -95,6 +95,7 @@ export function backfillInvoiceFiscalSnapshot(
       source,
     }),
     client_id: client.id,
+    name: currentSnapshot?.name ?? currentSnapshot?.fiscal_name ?? normalizedClient.fiscal_name,
     fiscal_name: currentSnapshot?.fiscal_name ?? normalizedClient.fiscal_name,
     tax_id: currentSnapshot?.tax_id ?? normalizedClient.tax_id,
     billing_address: currentSnapshot?.billing_address ?? normalizedClient.billing_address,

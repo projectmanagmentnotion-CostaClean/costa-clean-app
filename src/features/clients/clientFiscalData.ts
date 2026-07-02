@@ -19,6 +19,7 @@ export interface ClientFiscalData {
 
 export interface InvoiceFiscalSnapshot extends NormalizedClientFiscalInput {
   client_id: string | null
+  name?: string | null
   email?: string | null
   captured_at: string
   source: 'client_record' | 'client_backfill' | 'manual_fix'
@@ -125,6 +126,7 @@ export function buildInvoiceFiscalSnapshot(
   return {
     ...normalized,
     client_id: client.id,
+    name: normalized.fiscal_name,
     email: normalizeSingleLineText(client.email),
     captured_at: new Date().toISOString(),
     source: 'client_record',
@@ -162,8 +164,13 @@ export function extractInvoiceFiscalSnapshot(invoice: Pick<InvoiceListItem, 'cli
     taxId: typeof rawSnapshot.taxId === 'string' ? rawSnapshot.taxId : null,
     billing_address: typeof rawSnapshot.billing_address === 'string' ? rawSnapshot.billing_address : null,
     billingAddress: typeof rawSnapshot.billingAddress === 'string' ? rawSnapshot.billingAddress : null,
-    fiscal_name: typeof rawSnapshot.fiscal_name === 'string' ? rawSnapshot.fiscal_name : null,
-    fiscalName: typeof rawSnapshot.fiscalName === 'string' ? rawSnapshot.fiscalName : null,
+    fiscal_name: typeof rawSnapshot.fiscal_name === 'string'
+      ? rawSnapshot.fiscal_name
+      : typeof rawSnapshot.fiscalName === 'string'
+        ? rawSnapshot.fiscalName
+        : typeof rawSnapshot.name === 'string'
+          ? rawSnapshot.name
+          : null,
   })
 
   if (!normalized.tax_id && !normalized.billing_address && !normalized.fiscal_name) {
@@ -177,6 +184,9 @@ export function extractInvoiceFiscalSnapshot(invoice: Pick<InvoiceListItem, 'cli
       : typeof rawSnapshot.clientId === 'string'
         ? rawSnapshot.clientId
         : invoice.client_id,
+    name: typeof rawSnapshot.name === 'string'
+      ? normalizeSingleLineText(rawSnapshot.name)
+      : normalized.fiscal_name,
     email: typeof rawSnapshot.email === 'string' ? normalizeSingleLineText(rawSnapshot.email) : null,
     captured_at: typeof rawSnapshot.captured_at === 'string'
       ? rawSnapshot.captured_at
@@ -194,7 +204,7 @@ export function getInvoiceFiscalDisplayData(
 
   if (snapshot) {
     return {
-      clientName: snapshot.fiscal_name ?? invoice.client_name ?? null,
+      clientName: snapshot.fiscal_name ?? snapshot.name ?? invoice.client_name ?? null,
       taxId: snapshot.tax_id,
       billingAddress: snapshot.billing_address,
       email: snapshot.email ?? invoice.client_email ?? null,

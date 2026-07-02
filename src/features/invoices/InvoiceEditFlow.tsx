@@ -42,7 +42,7 @@ import {
   getInvoiceFinancialStatusLabel,
 } from './paymentState'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
-import { buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
+import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import '../shared/fullscreen-create-flow.css'
 
 interface InvoiceEditFlowProps extends FullViewActionFlowProps {
@@ -323,6 +323,14 @@ export function InvoiceEditFlow({
   function getStepError(stepIndex: number): string | null {
     if (stepIndex === 0 && !form.issue_date) {
       return 'Debes indicar la fecha de emision.'
+    }
+
+    if (stepIndex === 0 && form.status !== 'draft' && numberingAudit.hasBlockingGaps) {
+      return `No se puede emitir factura. Hay huecos en la numeracion fiscal: ${numberingAudit.gaps.map((gap) => (
+        gap.from === gap.to
+          ? buildInvoiceNumber(numberingAudit.year, gap.from)
+          : `${buildInvoiceNumber(numberingAudit.year, gap.from)} a ${buildInvoiceNumber(numberingAudit.year, gap.to)}`
+      )).join(' | ')}. Regulariza la secuencia antes de emitir.`
     }
 
     if (stepIndex === 0 && form.status !== 'draft' && clientFiscalIssue) {

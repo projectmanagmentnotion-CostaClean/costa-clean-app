@@ -227,6 +227,17 @@ export function InvoicesPage({
     () => buildInvoiceFiscalBlockedEntries(invoiceFiscalAudit.entries),
     [invoiceFiscalAudit.entries],
   )
+  const numberingGapMessage = useMemo(() => {
+    const firstGap = numberingAudit.gaps[0]
+    if (!firstGap) return null
+    return firstGap.from === firstGap.to
+      ? buildInvoiceNumber(numberingAudit.year, firstGap.from)
+      : `${buildInvoiceNumber(numberingAudit.year, firstGap.from)} a ${buildInvoiceNumber(numberingAudit.year, firstGap.to)}`
+  }, [numberingAudit])
+  const numberingRegularizationCandidate = useMemo(
+    () => allInvoices.find((invoice) => invoice.display_code === 'INV-0050' || invoice.invoice_number === '2026-050') ?? null,
+    [allInvoices],
+  )
   const showInvoiceFiscalDebug = shouldShowInvoiceFiscalDebug()
   const [isFiscalBackfillBusy, setIsFiscalBackfillBusy] = useState(false)
   const [showBlockedFiscalInvoices, setShowBlockedFiscalInvoices] = useState(false)
@@ -387,6 +398,34 @@ export function InvoicesPage({
     }
   }
 
+  async function handleReviewSequence() {
+    await onInvoiceCreated()
+
+    if (numberingAudit.hasBlockingGaps) {
+      toast.warning(
+        'Secuencia con saltos',
+        `Hay huecos entre ${buildInvoiceNumber(numberingAudit.year, numberingAudit.gaps[0].from - 1)} y ${buildInvoiceNumber(numberingAudit.year, numberingAudit.gaps[0].to + 1)}. No emitas nuevas facturas hasta regularizar.`,
+        { persistent: true },
+      )
+
+      const firstPostGapNumber = buildInvoiceNumber(numberingAudit.year, numberingAudit.gaps[0].to + 1)
+      const anomalyInvoice = allInvoices.find((invoice) => (
+        invoice.invoice_number === firstPostGapNumber
+        || invoice.display_code === numberingRegularizationCandidate?.display_code
+      )) ?? numberingRegularizationCandidate ?? allInvoices[0]
+
+      if (anomalyInvoice) {
+        setSelectedInvoiceId(anomalyInvoice.id)
+      }
+      return
+    }
+
+    toast.success(
+      'Secuencia revisada',
+      'No hay saltos ni duplicados.',
+    )
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -537,20 +576,13 @@ export function InvoicesPage({
 
         <InvoiceNumberingControlCard
           audit={numberingAudit}
-          onReviewSequence={() => {
-            const targetNumber = numberingAudit.lastIssuedInvoice?.invoice_number
-            const targetCode = numberingAudit.lastIssuedInvoice?.display_code
-            const firstGap = numberingAudit.gaps[0]
-            const firstPostGapNumber = firstGap ? buildInvoiceNumber(numberingAudit.year, firstGap.to + 1) : null
-            const anomalyInvoice = allInvoices.find((invoice) => (
-              (targetNumber && invoice.invoice_number === targetNumber)
-              || (targetCode && invoice.display_code === targetCode)
-            )) ?? allInvoices.find((invoice) => firstPostGapNumber && invoice.invoice_number === firstPostGapNumber) ?? allInvoices[0]
-
-            if (anomalyInvoice) {
-              setSelectedInvoiceId(anomalyInvoice.id)
-            }
-          }}
+          onReviewSequence={() => void handleReviewSequence()}
+          reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
+            ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
+            : null}
+          regularizationHint={numberingAudit.hasBlockingGaps && numberingRegularizationCandidate
+            ? 'INV-0050 puede regularizarse a INV-0045 si todavia no fue enviada.'
+            : null}
         />
         {/*
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
@@ -739,6 +771,7 @@ export function InvoicesPage({
               jobs={jobs}
               quotes={quotes}
               payments={payments}
+              allInvoices={allInvoices}
               onInvoiceUpdated={onInvoiceCreated}
               onOpenDocument={() => {
                 if (detailInvoice) {

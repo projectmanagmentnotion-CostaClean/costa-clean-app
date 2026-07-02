@@ -21,6 +21,7 @@
 - Panel `Control fiscal de facturas` en `src/pages/InvoicesPage.tsx`
 - Backfill autenticado en `src/features/invoices/invoiceFiscalSnapshotApi.ts`
 - Helpers y auditoria fiscal en `src/features/invoices/invoiceFiscalSnapshot.ts`
+- RPC batch segura en `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql`
 
 ## Por que no se veia el panel fiscal
 
@@ -44,6 +45,13 @@
 - `Revisar incompletas`
 - `Completar reparables`
 
+## Bug adicional detectado tras el despliegue
+
+- El panel ya visible en `7acf8fa` calculaba bien `42` reparables y `2` bloqueadas.
+- El backfill mostraba success, pero no escribia snapshots en Supabase.
+- La causa real fue un `update` REST sin `select()` ni confirmacion de fila escrita.
+- Bajo RLS, eso podia devolver `error = null` y dejar `pricing_metadata` intacto.
+
 ## Debug opcional
 
 - `?debugDataHealth=1`
@@ -60,6 +68,15 @@
   "canRunBackfill": true
 }
 ```
+
+## Solucion aplicada
+
+- La app intenta primero `backfill_invoice_fiscal_snapshots()` si existe.
+- Si la RPC no existe, usa fallback REST con read-after-write por factura.
+- Solo hay success si `repaired > 0`.
+- Si Supabase no confirma ninguna actualizacion, la UI muestra:
+  - `No se guardaron cambios`
+  - `El backfill detecto facturas reparables, pero Supabase no confirmo ninguna actualizacion.`
 
 ## Recurrentes
 
@@ -88,11 +105,13 @@
 1. `/?debugBuild=1&debugDataHealth=1`
 2. Entrar en Facturas con `?debugInvoiceFiscal=1`
 3. Ver `Control fiscal de facturas`
-4. Ejecutar `Completar reparables`
-5. Confirmar que solo siguen bloqueadas las facturas con cliente incompleto
+4. Aplicar `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql` en Supabase
+5. Ejecutar `Completar reparables`
+6. Confirmar que el panel pasa a `42 completas / 0 reparables / 2 incompletas`
+7. Confirmar por SQL que existen `42` snapshots reales
 
 ## Limites reales del cierre
 
-- Este cierre no confirma por si solo que el backfill ya se ejecuto en produccion.
-- Este cierre no confirma por si solo que la build publica ya dejo atras `4fa759d`.
-- Ambas comprobaciones dependen del commit/push y del deploy resultante.
+- Este cierre corrige el falso success en repo.
+- La persistencia batch real en produccion requiere aplicar `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql` si el entorno sigue bloqueando el update REST bajo RLS.
+- La verificacion final del backfill sigue dependiendo de una sesion autenticada y de la SQL aplicada.

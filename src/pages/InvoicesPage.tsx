@@ -348,13 +348,24 @@ export function InvoicesPage({
 
     try {
       const result = await backfillInvoiceFiscalSnapshots(allInvoices, clients)
+      if (result.repaired === 0 && result.expectedRepairable > 0) {
+        throw new Error('No se guardaron cambios. El backfill detecto facturas reparables, pero Supabase no confirmo ninguna actualizacion.')
+      }
+
       await onInvoiceCreated()
       toast.update(toastId, {
         type: 'success',
         title: 'Datos fiscales completados',
-        description: `Se completaron ${result.updated} factura(s) reparables.`,
+        description: `Se completaron ${result.repaired} factura(s) reparables.`,
         persistent: false,
       })
+      if (result.failed > 0) {
+        toast.warning(
+          'Hay facturas sin confirmar',
+          `Supabase no confirmo ${result.failed} actualizacion(es) durante el backfill.`,
+          { persistent: true },
+        )
+      }
       if (result.blocked > 0) {
         setShowBlockedFiscalInvoices(true)
         toast.warning(

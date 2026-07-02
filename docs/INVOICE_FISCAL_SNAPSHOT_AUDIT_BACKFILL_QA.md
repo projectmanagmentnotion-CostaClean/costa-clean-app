@@ -27,6 +27,18 @@
   - reparables desde cliente: `42`
   - bloqueadas por cliente incompleto: `2`
 
+## Bug confirmado en produccion
+
+- Build visible con panel fiscal: `7acf8fa`
+- Tras pulsar `Completar reparables`:
+  - la UI mostraba toast success
+  - el panel seguia en `0 completas / 42 reparables / 2 bloqueadas`
+  - SQL seguia confirmando `with_snapshot = 0`
+- Causa exacta encontrada:
+  - `src/features/invoices/invoiceFiscalSnapshotApi.ts` usaba `update(...).eq('id', ...)` sin `select()` ni read-after-write
+  - bajo RLS eso podia devolver `error = null` aunque no se hubiera actualizado ninguna fila visible
+  - la UI contaba como exito las facturas detectadas como reparables, no las filas realmente confirmadas por Supabase
+
 ## Cambios implementados
 
 - `src/features/clients/clientFiscalData.ts`
@@ -38,8 +50,11 @@
   - construye bloqueos compactos
   - expone `shouldShowInvoiceFiscalDebug()`
 - `src/features/invoices/invoiceFiscalSnapshotApi.ts`
-  - hace backfill autenticado
-  - escribe auditoria sobre `pricing_metadata`
+  - intenta primero la RPC `backfill_invoice_fiscal_snapshots`
+  - si la RPC no existe, cae a REST con `select('id,pricing_metadata').maybeSingle()`
+  - solo cuenta como reparada una factura cuyo `client_fiscal_snapshot` queda confirmado
+  - ya no reporta success si Supabase no confirma ninguna actualizacion
+  - mantiene auditoria de escritura en fallback REST
 - `src/features/invoices/InvoiceCreateFlow.tsx`
   - permite guardar borrador con ficha fiscal incompleta
   - mantiene bloqueo al emitir si faltan datos fiscales
@@ -72,9 +87,10 @@
 
 - `Completar reparables`
   - muestra toast loading: `Completando datos fiscales...`
-  - ejecuta backfill autenticado
-  - muestra toast success con el total reparado
+  - ejecuta backfill autenticado con verificacion de escritura real
+  - muestra toast success solo si `repaired > 0`
   - si quedan bloqueadas, muestra toast warning separado
+  - si Supabase no confirma ninguna actualizacion, muestra error y no falsea el exito
 - `Revisar incompletas`
   - selecciona una factura bloqueada
   - abre una lista compacta con:
@@ -109,6 +125,33 @@
 - No sobreescribe un snapshot ya completo.
 - No inventa datos si el cliente sigue incompleto.
 
+## SQL nueva para produccion
+
+- Archivo:
+  - `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql`
+- Crea:
+  - `public.backfill_invoice_fiscal_snapshots()`
+- Alcance:
+  - `security definer`
+  - exige `public.require_authenticated_financial_write()`
+  - rellena solo facturas sin snapshot
+  - no toca numeracion, importes, lineas ni estados
+  - devuelve `repaired / blocked / failed` e ids para la UI
+
+## Verificacion final esperada
+
+- Antes del fix:
+  - `complete: 0`
+  - `repairable: 42`
+  - `blocked: 2`
+- Despues de ejecutar el backfill con RPC aplicada:
+  - `complete: 42`
+  - `repairable: 0`
+  - `blocked: 2`
+- SQL esperada:
+  - `with_snapshot: 42`
+  - `without_snapshot: 2`
+
 ## Tests
 
 - `src/features/invoices/invoiceFiscalSnapshot.test.ts`
@@ -118,7 +161,11 @@
   - no sobreescribe snapshots completos
   - construye bloqueos compactos
   - activa debug solo con query param
-- `src/pages/InvoicesPage.test.tsx`
+- `src/features/invoices/invoiceFiscalSnapshotApi.test.ts`
+  - no cuenta writes REST sin fila confirmada
+  - exige `client_fiscal_snapshot` en read-after-write
+  - usa RPC si existe y fallback REST si no
+- `src/pages/InvoicesPage.test.ts`
   - renderiza el panel real
   - muestra `Completar reparables`
   - muestra `Revisar incompletas`
@@ -127,5 +174,6 @@
 ## Limite real de este QA
 
 - Este documento no afirma que las `42` facturas reparables ya se hayan escrito en base.
-- El backfill queda implementado y listo para ejecutarse desde UI autenticada.
-- La ejecucion real del backfill debe confirmarse en una sesion autenticada despues del deploy correcto.
+- El repo deja de falsear el exito aunque la DB no escriba.
+- La persistencia batch robusta en produccion depende de aplicar `sql/20260702_backfill_invoice_fiscal_snapshots_rpc.sql`.
+- La ejecucion real del backfill debe confirmarse en una sesion autenticada despues del deploy y de aplicar esa SQL.

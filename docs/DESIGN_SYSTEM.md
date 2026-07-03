@@ -85,6 +85,11 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSSelect`
 - `DSBadge`
 - `DSTag`
+- `DSListControlBar`
+- `DSSearchInput`
+- `DSFilterChip`
+- `DSSortMenu`
+- `DSActiveFilters`
 - `DSPageHeader`
 - `DSSectionHeader`
 - `DSEmptyState`
@@ -102,6 +107,8 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSBadge` -> `SeverityBadge`
 - `DSLoadingState` -> `DeferredContentFallback`
 - `DSConfirmDialog` -> `ConfirmDialog`
+- `DSSearchInput` -> `SearchBar`
+- `DSListControlBar` -> `ListToolbar`
 
 ### Compatibilidad basada en clases existentes
 
@@ -119,8 +126,35 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSSectionHeader`
 - `DSSkeleton`
 - `DSBottomActionBar`
+- `DSFilterChip`
+- `DSSortMenu`
+- `DSActiveFilters`
 
 Estas piezas nuevas no cambian imports existentes ni fuerzan migracion masiva.
+
+## Patron de listas consolidado
+
+Sprint 9A suma una base oficial para listas operativas:
+
+- `DSListControlBar`
+- `DSSearchInput`
+- `DSFilterChip`
+- `DSSortMenu`
+- `DSActiveFilters`
+
+Regla:
+
+- una lista = una sola barra de control
+- la barra debe concentrar busqueda, filtros, orden y reset
+- `ListToolbar` sigue vivo como wrapper compatible para modulos ya integrados
+
+Superficies ya alineadas:
+
+- `ClientsList`
+- `PropertiesList`
+- `LeadsPage`
+- `QuotesList` via wrapper
+- `InvoicesList` via wrapper seguro
 
 ## Reglas de uso
 
@@ -163,3 +197,4 @@ Tampoco se tocaron:
 2. Aplicar primero a superficies pequenas o nuevas, no a modulos criticos.
 3. En Sprint 4+, estudiar limpieza de duplicacion de tokens en `src/index.css` sin mezclarlo con cambios funcionales.
 4. En Sprint 5+, migrar headers, states y form primitives por modulo de forma incremental.
+5. Reusar el patron de listas en servicios, cobros, gastos y modulos auxiliares antes de crear toolbars ad hoc nuevas.

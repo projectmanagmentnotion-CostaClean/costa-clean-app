@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getStatusLabel } from '../app/displayText'
+import { ListToolbar, type ListPreferences } from '../components/ListToolbar'
 import type { ClientListItem } from '../features/clients/types'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
@@ -9,6 +10,8 @@ import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import { LeadCreateForm } from '../features/leads/LeadCreateForm'
 import { LeadDetailCard } from '../features/leads/LeadDetailCard'
 import { LeadsList } from '../features/leads/LeadsList'
+import { compareText, createDefaultPreferences } from '../features/lists/listPreferences'
+import { applyTextSearch, recentFirstSort } from '../features/lists/utils'
 import type { LeadListItem } from '../features/leads/types'
 
 interface LeadsPageProps {
@@ -19,8 +22,6 @@ interface LeadsPageProps {
   onLeadCreated: () => Promise<void>
   onLeadConverted: () => Promise<void>
 }
-
-type LeadStatusFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost'
 
 const visibleLeadDraftStatuses = new Set<LeadDraftRecord['status']>([
   'new',
@@ -51,42 +52,48 @@ export function LeadsPage({
   onLeadConverted,
 }: LeadsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<LeadStatusFilter>('all')
-  const [showArchived, setShowArchived] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
+  const defaultPreferences = useMemo(() => createDefaultPreferences('recent', 'desc', {
+    status: 'all',
+    scope: 'active',
+  }), [])
+  const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredLeads = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase()
+    const statusFilter = preferences.filters.status ?? 'all'
+    const scope = preferences.filters.scope ?? 'active'
 
     return leads.filter((lead) => {
-      const matchesArchived = showArchived ? true : !lead.archived_at
-      if (!matchesArchived) return false
+      const isArchived = Boolean(lead.archived_at)
+      const isDeleted = Boolean(lead.deleted_at)
 
-      const matchesStatus =
-        statusFilter === 'all' ? true : lead.status === statusFilter
-      if (!matchesStatus) return false
+      if (isDeleted) return false
+      if (scope === 'active' && isArchived) return false
+      if (scope === 'archived' && !isArchived) return false
+      if (statusFilter !== 'all' && lead.status !== statusFilter) return false
 
-      if (!normalizedSearch) return true
-
-      const searchableText = [
+      return applyTextSearch(preferences.searchQuery, [
         lead.full_name,
         lead.phone,
-        lead.email ?? '',
-        lead.city ?? '',
+        lead.email,
+        lead.city,
         lead.id,
+        lead.display_code,
         lead.status,
         getStatusLabel(lead.status),
-        lead.archived_at ? 'archivado' : '',
-      ]
-        .join(' ')
-        .toLowerCase()
+        isArchived ? 'archivado' : 'activo',
+      ])
+    }).sort((left, right) => {
+      const comparison = preferences.sortField === 'name'
+        ? compareText(left.full_name, right.full_name)
+        : preferences.sortField === 'city'
+          ? compareText(left.city, right.city)
+          : recentFirstSort(left.display_code ?? left.id, right.display_code ?? right.id)
 
-      return searchableText.includes(normalizedSearch)
+      return preferences.sortDirection === 'asc' ? comparison : -comparison
     })
-  }, [leads, searchTerm, statusFilter, showArchived])
+  }, [leads, preferences])
 
   const selectedLead =
     filteredLeads.find((lead) => lead.id === selectedLeadId) ?? filteredLeads[0] ?? null
@@ -108,7 +115,6 @@ export function LeadsPage({
   const selectedLeadAlreadyConverted = selectedLead
     ? convertedLeadIds.has(selectedLead.id)
     : false
-  const hasActiveFilters = Boolean(searchTerm || statusFilter !== 'all' || showArchived)
   const visibleLeadsCount = filteredLeads.length
   const newLeadsCount = leads.filter((lead) => lead.status === 'new' && !lead.archived_at).length
   const quotedLeadsCount = leads.filter((lead) => lead.status === 'quoted' && !lead.archived_at).length
@@ -182,82 +188,45 @@ export function LeadsPage({
       ) : null}
 
       <section className="data-section cc-filters-block">
-        <details
-          className="cc-filters-panel cc-collapsible-section"
-          open={showFilters}
-          onToggle={(event) => setShowFilters(event.currentTarget.open)}
-        >
-          <summary className="cc-filters-panel__summary cc-collapsible-section__summary">
-            <div className="cc-filters-panel__copy">
-              <strong>Busqueda y filtros</strong>
-              <span>
-                {hasActiveFilters
-                  ? 'Filtros activos en leads'
-                  : 'Ocultos para mantener la vista compacta'}
-              </span>
-            </div>
-            {hasActiveFilters ? <span className="cc-filters-panel__badge">Activos</span> : null}
-          </summary>
-
-          <div className="filters-grid">
-            <label className="form-field filter-field-wide">
-              <span>Buscar</span>
-              <input
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Ej. Marta, 600123123, Barcelona..."
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Estado</span>
-              <select
-                value={statusFilter}
-                onChange={(event) =>
-                  setStatusFilter(event.target.value as LeadStatusFilter)
-                }
-              >
-                <option value="all">Todos</option>
-                <option value="new">{getStatusLabel('new')}</option>
-                <option value="contacted">{getStatusLabel('contacted')}</option>
-                <option value="quoted">{getStatusLabel('quoted')}</option>
-                <option value="won">{getStatusLabel('won')}</option>
-                <option value="lost">{getStatusLabel('lost')}</option>
-              </select>
-            </label>
-          </div>
-
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={showArchived}
-              onChange={(event) => setShowArchived(event.target.checked)}
-            />
-            <span>Mostrar leads archivados</span>
-          </label>
-
-          {hasActiveFilters ? (
-            <div className="cc-filters-panel__actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setSearchTerm('')
-                  setStatusFilter('all')
-                  setShowArchived(false)
-                }}
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          ) : null}
-        </details>
-
-        <div className="results-bar">
-          <span>
-            {filteredLeads.length} resultado(s) de {leads.length} lead(s)
-          </span>
-        </div>
+        <ListToolbar
+          storageKey="costaclean-list-preferences-leads"
+          searchLabel="Buscar lead"
+          searchPlaceholder="Nombre, codigo, telefono, email, ciudad o estado"
+          resultCount={filteredLeads.length}
+          totalCount={leads.length}
+          sortOptions={[
+            { value: 'recent', label: 'Recientes' },
+            { value: 'name', label: 'Nombre' },
+            { value: 'city', label: 'Ciudad' },
+          ]}
+          defaultPreferences={defaultPreferences}
+          filters={[
+            {
+              key: 'status',
+              label: 'Estado',
+              value: preferences.filters.status ?? 'all',
+              options: [
+                { value: 'all', label: 'Todos' },
+                { value: 'new', label: getStatusLabel('new') },
+                { value: 'contacted', label: getStatusLabel('contacted') },
+                { value: 'quoted', label: getStatusLabel('quoted') },
+                { value: 'won', label: getStatusLabel('won') },
+                { value: 'lost', label: getStatusLabel('lost') },
+              ],
+            },
+            {
+              key: 'scope',
+              label: 'Vista',
+              value: preferences.filters.scope ?? 'active',
+              options: [
+                { value: 'active', label: 'Activos' },
+                { value: 'archived', label: 'Archivados' },
+                { value: 'all', label: 'Todos' },
+              ],
+            },
+          ]}
+          onChange={setPreferences}
+        />
       </section>
 
       <div className="cc-master-layout cc-master-layout--list-first">

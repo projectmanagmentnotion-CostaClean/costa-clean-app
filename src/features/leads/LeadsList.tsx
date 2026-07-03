@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
-import { SearchBar } from '../../components/SearchBar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { getStatusLabel } from '../../app/displayText'
-import { matchesSearchQuery } from '../documents/search'
 import type { LeadListItem } from './types'
 
 interface LeadsListProps {
@@ -17,22 +16,6 @@ export function LeadsList({
   selectedLeadId,
   onSelectLead,
 }: LeadsListProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const filteredLeads = useMemo(() => {
-    return leads.filter((lead) =>
-      matchesSearchQuery(searchQuery, [
-        lead.full_name,
-        lead.display_code,
-        lead.id,
-        lead.phone,
-        lead.email,
-        lead.city,
-        lead.status,
-      ]),
-    )
-  }, [leads, searchQuery])
-
   return (
     <section className="data-section cc-module-list-section">
       <div className="section-header cc-list-section__header">
@@ -41,35 +24,17 @@ export function LeadsList({
           <p>Entrada comercial, contacto y paso a conversion.</p>
         </div>
         <span className="cc-list-section__count">
-          {filteredLeads.length} / {leads.length}
+          {leads.length} / {leads.length}
         </span>
       </div>
 
-      <SearchBar
-        label="Buscar lead"
-        value={searchQuery}
-        onChange={setSearchQuery}
-        placeholder="Nombre, código, teléfono, email, ciudad o estado"
-      />
-
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando leads</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando leads" description={error} />
       ) : leads.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay leads</strong>
-          <p>Todavía no existen registros en la tabla leads.</p>
-        </div>
-      ) : filteredLeads.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos leads que coincidan con tu búsqueda.</p>
-        </div>
+        <DSEmptyState title="No hay leads" description="Todavia no existen registros en la tabla leads." />
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
-          {filteredLeads.map((lead) => {
+          {leads.map((lead) => {
             const isSelected = lead.id === selectedLeadId
 
             return (

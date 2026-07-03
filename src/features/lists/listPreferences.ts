@@ -1,4 +1,4 @@
-import type { ListPreferences } from '../../components/ListToolbar'
+import type { ListControlState as ListPreferences } from './types'
 
 export function compareText(left: string | null | undefined, right: string | null | undefined): number {
   return (left ?? '').localeCompare(right ?? '', 'es', { numeric: true, sensitivity: 'base' })

@@ -154,6 +154,21 @@ Focus:
 - relationship visibility
 - safe editing boundaries
 
+## Sprint 9A: Global Filters, Sorting, And List Organization
+
+Objective:
+
+Standardize the search, filter, sort, and result-reading pattern across operational lists without touching persistence, routes, or business rules.
+
+Focus:
+
+- one control surface per list
+- recent-first defaults when the module contract supports it
+- visible active filters and quick reset
+- mobile-first compact controls
+- reuse over duplicate toolbars
+- zero backend coupling for list state
+
 ## Sprint 10: Services / Quick Logging
 
 Objective:

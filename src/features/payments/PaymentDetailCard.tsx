@@ -4,6 +4,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import { findPaymentDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { PaymentListItem } from './types'
@@ -256,15 +258,11 @@ export function PaymentDetailCard({
 
   return (
     <section className="data-section cc-detail-panel cc-detail-panel--payment">
-      <div className="section-header page-header-actions">
-        <div>
-          <h2>Detalle del pago</h2>
-        </div>
-
-        {payment ? (
-          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
-        ) : null}
-      </div>
+      <DSSectionHeader
+        title="Detalle del cobro"
+        description={payment ? 'Consulta contexto, factura vinculada y siguiente paso recomendado antes de editar este cobro.' : 'Selecciona un cobro para abrir su contexto y sus acciones seguras.'}
+        actions={payment ? <ActionGroup actions={headerActions} moreLabel="Mas acciones" /> : null}
+      />
 
       {payment ? (
         <div className="lead-detail-card">
@@ -483,10 +481,10 @@ export function PaymentDetailCard({
           />
         </div>
       ) : (
-        <div className="empty-state">
-          <strong>Ningún pago seleccionado</strong>
-          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
-        </div>
+        <DSEmptyState
+          title="Ningun cobro seleccionado"
+          description="Abre un cobro del listado para revisar su factura asociada, metodo y notas."
+        />
       )}
     </section>
   )

@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import { matchesSearchQuery } from '../documents/search'
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import type { PaymentListItem } from './types'
@@ -58,12 +61,10 @@ export function PaymentsList({
 
   return (
     <section className="data-section cc-module-list-section">
-      <div className="section-header cc-list-section__header">
-        <div>
-          <h2>Pagos</h2>
-          <p>Cobros registrados y trazabilidad de factura asociada.</p>
-        </div>
-      </div>
+      <DSSectionHeader
+        title="Cobros registrados"
+        description="Revisa cobros ya guardados y abre su factura asociada sin mezclar esta bandeja auxiliar con el workspace principal de facturas."
+      />
 
       <ListToolbar
         storageKey="costaclean-list-preferences-payments"
@@ -95,20 +96,17 @@ export function PaymentsList({
       />
 
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando pagos</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando pagos" description={error} />
       ) : payments.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay pagos</strong>
-          <p>Todavia no existen pagos registrados en el sistema.</p>
-        </div>
+        <DSEmptyState
+          title="Todavia no hay cobros registrados"
+          description="Cuando exista un cobro guardado aparecera aqui con su factura asociada y metodo de pago."
+        />
       ) : filteredPayments.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos pagos que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState
+          title="Sin resultados"
+          description="Ajusta la busqueda o limpia filtros para volver a ver cobros del periodo."
+        />
       ) : (
         <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de cobros">
           {filteredPayments.map((payment) => {

@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import { matchesSearchQuery } from '../documents/search'
 import {
   expenseCategories,
@@ -117,12 +120,10 @@ export function ExpensesList({
 
   return (
     <section className="data-section cc-module-list-section cc-expenses-list-section">
-      <div className="section-header cc-list-section__header">
-        <div>
-          <h2>Explorar gastos</h2>
-          <p>Selecciona un gasto para revisarlo. La edicion y el soporte se resuelven en superficies aparte.</p>
-        </div>
-      </div>
+      <DSSectionHeader
+        title="Bandeja de revision"
+        description="Selecciona un gasto para revisar soporte, riesgo y contexto fiscal sin mezclar la ficha base con la edicion completa."
+      />
 
       <ListToolbar
         storageKey="costaclean-list-preferences-expenses"
@@ -212,20 +213,17 @@ export function ExpensesList({
       />
 
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando gastos</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando gastos" description={error} />
       ) : expenses.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay gastos</strong>
-          <p>Todavia no existen registros en la tabla expenses.</p>
-        </div>
+        <DSEmptyState
+          title="Todavia no hay gastos cargados"
+          description="Cuando exista un gasto guardado aparecera aqui con su soporte, proveedor y riesgo visible."
+        />
       ) : filteredExpenses.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos gastos que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState
+          title="Sin resultados"
+          description="Prueba otra combinacion de filtros o limpia el enfoque fiscal para recuperar la bandeja."
+        />
       ) : (
         <div className="cc-expenses-list cc-record-list cc-bounded-list">
           {filteredExpenses.map((expense) => {

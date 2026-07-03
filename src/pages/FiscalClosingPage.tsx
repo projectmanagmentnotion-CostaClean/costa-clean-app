@@ -9,6 +9,7 @@ import { ProgressMetric } from '../components/ProgressMetric'
 import { SeverityBadge, type SeverityTone } from '../components/SeverityBadge'
 import { VisualKpiCard } from '../components/VisualKpiCard'
 import { formatCurrency, formatDateEs } from '../app/displayFormat'
+import { DSErrorState } from '../design-system/components/DSErrorState'
 import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
 import { FiscalPeriodSelector } from '../features/closing/FiscalPeriodSelector'
 import {
@@ -469,10 +470,7 @@ export function FiscalClosingPage({
       </ExecutiveHeader>
 
       {error ? (
-        <div className="cc-alert cc-alert--error">
-          <strong>No se pudo cargar la base del cierre</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="No se pudo cargar la base del cierre" description={error} />
       ) : null}
 
       <FiscalPeriodSelector
@@ -485,7 +483,7 @@ export function FiscalClosingPage({
         <div className="cc-dashboard-block__header">
           <div>
             <h2>Lectura principal del cierre</h2>
-            <p>Tres tarjetas dominan la pantalla: estado del paquete, IVA a ingresar estimado y elementos por revisar.</p>
+            <p>Primero decide si el periodo esta listo, cuanto riesgo queda abierto y si el IVA estimado ya se puede revisar con calma.</p>
           </div>
         </div>
 
@@ -544,8 +542,8 @@ export function FiscalClosingPage({
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Metricas secundarias</h2>
-            <p>Contexto financiero y documental de apoyo con menos peso visual que el estado, el IVA estimado y los pendientes.</p>
+            <h2>Base del periodo</h2>
+            <p>Contexto financiero y documental de apoyo con menos peso visual que el estado, el snapshot y los pendientes.</p>
           </div>
         </div>
 
@@ -615,7 +613,7 @@ export function FiscalClosingPage({
         <article className="cc-dashboard-block">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Checklist de cierre</h2>
+              <h2>Checklist prioritario</h2>
               <p>Facturas, cobros, gastos, soportes, validacion IVA y estado del snapshot en una sola columna accionable.</p>
             </div>
           </div>
@@ -628,7 +626,7 @@ export function FiscalClosingPage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Warnings que dominan</h2>
-              <p>Lo critico se resume arriba. El detalle completo queda colapsado para no competir con el primer nivel.</p>
+              <p>Lo critico se resume aqui. El detalle completo queda colapsado para no competir con la decision principal del periodo.</p>
             </div>
           </div>
           <div className="cc-quarterly-persistence__card cc-bounded-list">
@@ -671,12 +669,18 @@ export function FiscalClosingPage({
 
       <section className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
-          <span className="cc-dashboard-panel__label">Preparacion y contexto</span>
+          <span className="cc-dashboard-panel__label">Siguiente decision</span>
           <div className="cc-action-group" style={{ alignItems: 'center' }}>
-            <strong className="cc-dashboard-panel__value">{fiscalSummary.period.label}</strong>
+            <strong className="cc-dashboard-panel__value">
+              {summary.unresolvedIncidenceCount > 0
+                ? 'Resolver pendientes antes de exportar'
+                : persistedClosing
+                  ? 'Paquete listo para preparar'
+                  : 'Guardar snapshot del periodo'}
+            </strong>
             <SeverityBadge label={`Confianza ${getConfidenceLabel(fiscalSummary.confidenceLevel)}`} tone={getConfidenceTone(fiscalSummary.confidenceLevel)} />
           </div>
-          <p className="cc-dashboard-panel__text">Preparacion interna {readinessPercent}% · cobertura documental {Math.round(summary.closureDocumentCoverageRate)}%.</p>
+          <p className="cc-dashboard-panel__text">{topWarnings[0]?.recommendedAction ?? statusCard.detail}</p>
           <div className="cc-quarterly-checklist">
             <ProgressMetric
               label="Preparacion interna"

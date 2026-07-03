@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import type { InvoiceListItem } from '../invoices/types'
 import type { QuoteListItem } from '../quotes/types'
 import { ExpenseEditFlow } from './ExpenseEditFlow'
@@ -155,15 +157,11 @@ export function ExpenseDetailCard({
 
   return (
     <section className="data-section cc-expense-detail">
-      <div className="section-header page-header-actions">
-        <div>
-          <h2>Detalle del gasto</h2>
-        </div>
-
-        {expense ? (
-          <ActionGroup actions={headerActions} moreLabel="Mas acciones" />
-        ) : null}
-      </div>
+      <DSSectionHeader
+        title="Detalle del gasto"
+        description={expense ? 'La ficha base prioriza soporte, revision y siguiente accion antes de abrir superficies de edicion.' : 'Selecciona un gasto para revisar su contexto documental y fiscal.'}
+        actions={expense ? <ActionGroup actions={headerActions} moreLabel="Mas acciones" /> : null}
+      />
 
       {expense ? (
         <div className="cc-expense-detail-card">
@@ -325,10 +323,10 @@ export function ExpenseDetailCard({
           </details>
         </div>
       ) : (
-        <div className="empty-state">
-          <strong>Ningún gasto seleccionado</strong>
-          <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
-        </div>
+        <DSEmptyState
+          title="Ningun gasto seleccionado"
+          description="Abre un gasto del listado para revisar soporte, riesgo y contexto fiscal del registro."
+        />
       )}
 
       {expense ? (

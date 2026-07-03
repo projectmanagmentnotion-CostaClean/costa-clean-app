@@ -9,11 +9,11 @@ El repo ya tiene una base reutilizable en `src/components/FullscreenStepFlow.tsx
 - `src/components/FullscreenStepFlow.tsx` queda reconocido como base oficial unica del sistema StepFlow.
 - `src/features/stepflow/` se crea como fachada tipada y punto de entrada estable para futuras migraciones.
 - No se crea un segundo motor paralelo.
-- `src/features/publicIntake/PublicQuoteRequestForm.tsx` sigue pendiente de migracion y no se toca en este sprint.
+- `src/features/publicIntake/PublicQuoteRequestForm.tsx` queda migrado en Sprint 6 al motor oficial `FullscreenStepFlow`.
 
 | Flujo | Modulo | Archivos relacionados | Por que necesita StepFlow | Riesgo de migracion | Pasos sugeridos | Sprint recomendado |
 | --- | --- | --- | --- | --- | --- | --- |
-| Alta publica de presupuesto | Public intake | `src/features/publicIntake/PublicQuoteRequestForm.tsx`, `src/pages/PublicQuoteRequestPage.tsx` | Ya es secuencial y de cara publica. Debe unificarse con el patron general para reducir duplicacion de estados, progreso y validacion. | medio | Extraer contrato comun de pasos, estados y footer; migrar sin tocar API ni payload | Sprint 6 y 3 |
+| Alta publica de presupuesto | Public intake | `src/features/publicIntake/PublicQuoteRequestForm.tsx`, `src/pages/PublicQuoteRequestPage.tsx`, `api/public-quote-request.js`, `src/features/publicIntake/intakePipeline.mjs` | Ya era secuencial y de cara publica. Sprint 6 la migra al StepFlow oficial para unificar progreso, revision y success sin tocar payload ni pipeline. | medio | Completado: migracion visual completa sobre `FullscreenStepFlow`, manteniendo contratos y compatibilidad legacy | Sprint 6 completado |
 | Crear presupuesto | Presupuestos | `src/features/quotes/QuoteCreateFlow.tsx`, `QuoteCreateForm.tsx` | Flujo comercial largo con review, duplicados y relaciones. Ya usa base StepFlow, pero sigue siendo muy especifico y grande. | medio | Estandarizar step config, validacion, review y success | Sprint 7 y 3 |
 | Editar presupuesto | Presupuestos | `src/features/quotes/QuoteEditFlow.tsx` | Misma familia de complejidad que create. Mantener dos motores paralelos aumentaria drift. | medio | Compartir contrato con create flow y separar logica de dominio de presentacion | Sprint 7 y 3 |
 | Crear servicio | Servicios | `src/features/jobs/JobCreateFlow.tsx`, `JobCreateForm.tsx` | Flujo operativo largo con relaciones, facturacion y duplicados. | medio | Reusar step contracts comunes para contexto, review, duplicados y guardado | Sprint 10 y 3 |

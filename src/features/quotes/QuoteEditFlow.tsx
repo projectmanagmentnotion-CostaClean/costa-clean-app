@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { formatCurrency } from '../../app/displayFormat'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -16,17 +15,20 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ExpenseListItem } from '../expenses/types'
 import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import type { InvoiceListItem } from '../invoices/types'
-import { completeFullViewActionFlow, type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
+import { type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
   createBlankQuoteLine,
-  formatMoneyInput,
   formatQuoteLineSubtotalInput,
   getFormLinesFromQuote,
   roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
+import {
+  getQuoteCommercialSummary,
+  getQuoteCustomerFacingTotalNote,
+} from './quoteCommercialPresentation'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -43,6 +45,7 @@ interface QuoteEditFlowProps extends FullViewActionFlowProps {
   invoices?: InvoiceListItem[]
   expenses?: ExpenseListItem[]
   onOpenExistingQuote?: (quoteId: string) => void
+  onOpenDocumentForQuote?: (quoteId: string) => void
 }
 
 interface EditFormState {
@@ -52,11 +55,29 @@ interface EditFormState {
   notes: string
 }
 
+interface QuoteEditSuccessState {
+  quoteId: string
+}
+
 const quoteEditSteps = [
-  { id: 'context', label: 'Contexto comercial', description: 'Cliente, propiedad, estado y notas visibles.' },
-  { id: 'lines', label: 'Lineas e importes', description: 'Edita alcance, cantidades y precios sin mezclar otras tareas.' },
+  { id: 'context', label: 'Cliente o lead', description: 'Confirma el contexto comercial antes de tocar el resto.' },
+  { id: 'service', label: 'Tipo de servicio', description: 'Ajusta el alcance base sin mezclar importes.' },
+  { id: 'property', label: 'Inmueble', description: 'Revisa la propiedad vinculada o deja claro si no aplica.' },
+  { id: 'conditions', label: 'Condiciones', description: 'Estado y notas visibles antes de recalcular la estimacion.' },
+  { id: 'estimate', label: 'Estimacion', description: 'Edita cantidades, unidades y precio final sin IVA.' },
   { id: 'review', label: 'Revision final', description: 'Confirma la lectura final antes de guardar.' },
-]
+  { id: 'success', label: 'Confirmacion', description: 'Presupuesto actualizado y siguientes acciones.' },
+] as { id: string; label: string; description: string }[]
+
+const stepIndexById = {
+  context: 0,
+  service: 1,
+  property: 2,
+  conditions: 3,
+  estimate: 4,
+  review: 5,
+  success: 6,
+} as const
 
 function buildClientSummaryLabel(quote: QuoteListItem, clients: ClientListItem[]): string {
   const client = clients.find((item) => item.id === quote.client_id)
@@ -75,6 +96,10 @@ function buildPropertySummaryLabel(quote: QuoteListItem, properties: PropertyLis
   return property?.name?.trim() || quote.property_display_code || quote.property_id
 }
 
+function hasAtLeastOneConcept(lines: QuoteLineFormState[]): boolean {
+  return lines.some((line) => line.concept.trim().length > 0)
+}
+
 export function QuoteEditFlow({
   quote,
   clients,
@@ -90,6 +115,7 @@ export function QuoteEditFlow({
   invoices = [],
   expenses = [],
   onOpenExistingQuote,
+  onOpenDocumentForQuote,
 }: QuoteEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
     client_id: quote.client_id ?? null,
@@ -98,13 +124,14 @@ export function QuoteEditFlow({
     notes: quote.notes ?? '',
   })
   const [lines, setLines] = useState<QuoteLineFormState[]>(getFormLinesFromQuote(quote, properties))
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState<number>(stepIndexById.context)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showRejectedConfirm, setShowRejectedConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
+  const [successState, setSuccessState] = useState<QuoteEditSuccessState | null>(null)
 
   useEffect(() => {
     setForm({
@@ -114,9 +141,10 @@ export function QuoteEditFlow({
       notes: quote.notes ?? '',
     })
     setLines(getFormLinesFromQuote(quote, properties))
-    setCurrentStep(0)
+    setCurrentStep(stepIndexById.context)
     setError(null)
     setIsDirty(false)
+    setSuccessState(null)
   }, [properties, quote])
 
   useEffect(() => {
@@ -137,31 +165,24 @@ export function QuoteEditFlow({
     [form.property_id, properties],
   )
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const taxAmountValue = useMemo(() => roundMoney(subtotalValue * businessRules.defaultTaxRate), [subtotalValue])
+  const totalValue = useMemo(() => roundMoney(subtotalValue + taxAmountValue), [subtotalValue, taxAmountValue])
+  const commercialSummary = useMemo(
+    () => getQuoteCommercialSummary({ subtotal: subtotalValue, taxAmount: taxAmountValue, total: totalValue }),
+    [subtotalValue, taxAmountValue, totalValue],
+  )
   const conceptMemoryIndex = useMemo(
     () => buildConceptMemoryIndex({ quotes: allQuotes, invoices, expenses }),
     [allQuotes, invoices, expenses],
-  )
-  const taxAmountValue = useMemo(
-    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
-    [subtotalValue],
-  )
-  const totalValue = useMemo(
-    () => roundMoney(subtotalValue + taxAmountValue),
-    [subtotalValue, taxAmountValue],
   )
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
     setForm((current) => {
-      const next = {
-        ...current,
-        [field]: value,
-      }
-
+      const next = { ...current, [field]: value }
       if (field === 'client_id') {
         next.property_id = ''
       }
-
       return next
     })
   }
@@ -175,9 +196,7 @@ export function QuoteEditFlow({
 
   function removeLine(localId: string) {
     setIsDirty(true)
-    setLines((current) => (
-      current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
-    ))
+    setLines((current) => (current.length > 1 ? current.filter((line) => line.local_id !== localId) : current))
   }
 
   function addLine() {
@@ -219,11 +238,15 @@ export function QuoteEditFlow({
   }
 
   function getStepError(stepIndex: number): string | null {
-    if (stepIndex === 0 && !form.client_id && !quote.lead_id) {
+    if (stepIndex === stepIndexById.context && !form.client_id && !quote.lead_id) {
       return 'El presupuesto necesita cliente o lead vinculado.'
     }
 
-    if (stepIndex === 1) {
+    if (stepIndex === stepIndexById.service && !hasAtLeastOneConcept(lines)) {
+      return 'Necesitas al menos un concepto principal antes de seguir.'
+    }
+
+    if (stepIndex === stepIndexById.estimate) {
       const linePayloads = buildQuoteLinePayloads(lines, quote.id)
       if (!linePayloads || linePayloads.length === 0) {
         return 'Necesitas al menos una linea valida con concepto, cantidad y precio.'
@@ -234,7 +257,8 @@ export function QuoteEditFlow({
   }
 
   function goToStep(nextStep: number) {
-    const boundedStep = Math.max(0, Math.min(quoteEditSteps.length - 1, nextStep))
+    const maxStep = successState ? stepIndexById.success : stepIndexById.review
+    const boundedStep = Math.max(0, Math.min(maxStep, nextStep))
 
     if (boundedStep > currentStep) {
       for (let index = 0; index < boundedStep; index += 1) {
@@ -264,7 +288,7 @@ export function QuoteEditFlow({
       const linePayloads = buildQuoteLinePayloads(lines, quote.id)
 
       if (!linePayloads || linePayloads.length === 0) {
-        setCurrentStep(1)
+        setCurrentStep(stepIndexById.estimate)
         setError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
@@ -306,8 +330,10 @@ export function QuoteEditFlow({
         linePayloads,
       )
 
+      await onRefreshData()
       setIsDirty(false)
-      await completeFullViewActionFlow({ onRefreshData, onCompleted })
+      setSuccessState({ quoteId: quote.id })
+      setCurrentStep(stepIndexById.success)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido actualizando el presupuesto.')
     } finally {
@@ -316,7 +342,7 @@ export function QuoteEditFlow({
   }
 
   async function handleSave() {
-    for (let index = 0; index < quoteEditSteps.length - 1; index += 1) {
+    for (let index = 0; index <= stepIndexById.estimate; index += 1) {
       const stepError = getStepError(index)
       if (stepError) {
         setCurrentStep(index)
@@ -350,14 +376,22 @@ export function QuoteEditFlow({
       hint: selectedProperty ? formatPropertyLabel(selectedProperty) : buildPropertySummaryLabel(quote, properties),
     },
     {
-      label: 'Total',
-      value: formatCurrency(totalValue),
-      hint: `${lines.length} linea(s) en edicion`,
+      label: commercialSummary.totalLabel,
+      value: commercialSummary.totalValue,
+      hint: commercialSummary.totalNote,
     },
   ]
 
-  const currentStepError = getStepError(currentStep)
-  const stepStates = quoteEditSteps.map((_, index) => {
+  const currentStepError = successState ? null : getStepError(currentStep)
+  const stepStates = quoteEditSteps.map((step, index) => {
+    if (successState) {
+      if (index < stepIndexById.success) return 'complete'
+      if (index === stepIndexById.success) return 'current'
+      return 'pending'
+    }
+
+    if (step.id === 'success') return 'pending'
+
     const stepError = getStepError(index)
     if (index < currentStep) return stepError ? 'blocked' : 'complete'
     if (index === currentStep && stepError) return 'blocked'
@@ -365,7 +399,29 @@ export function QuoteEditFlow({
     return 'pending'
   }) as ('complete' | 'current' | 'blocked' | 'pending')[]
 
-  const sideContent = (
+  const sideContent = successState ? (
+    <>
+      <section className="cc-create-flow__summary-card">
+        <span className="cc-step-flow__eyebrow">Cambios guardados</span>
+        <strong>{quote.display_code ?? successState.quoteId}</strong>
+        <small>El presupuesto se actualizo sin enviar correos, WhatsApps ni documentos automaticamente.</small>
+      </section>
+
+      <section className="cc-create-flow__summary-card">
+        <span className="cc-step-flow__eyebrow">Siguiente paso</span>
+        <div className="cc-create-flow__summary-list">
+          <div className="cc-create-flow__summary-item">
+            <span>Documento</span>
+            <strong>{onOpenDocumentForQuote ? 'Listo para abrir' : 'Disponible desde el detalle'}</strong>
+          </div>
+          <div className="cc-create-flow__summary-item">
+            <span>Conversion</span>
+            <strong>Se mantiene desde el workspace del presupuesto</strong>
+          </div>
+        </div>
+      </section>
+    </>
+  ) : (
     <>
       <section className="cc-create-flow__summary-card">
         <span className="cc-step-flow__eyebrow">Lectura rapida</span>
@@ -374,33 +430,65 @@ export function QuoteEditFlow({
       </section>
 
       <section className="cc-create-flow__summary-card">
-        <span className="cc-step-flow__eyebrow">Totales</span>
+        <span className="cc-step-flow__eyebrow">Lectura economica</span>
         <div className="cc-create-flow__totals">
           <div className="cc-create-flow__totals-row">
-            <span>Subtotal</span>
-            <strong>{formatMoneyInput(subtotalValue)} EUR</strong>
+            <span>{commercialSummary.subtotalLabel}</span>
+            <strong>{commercialSummary.subtotalValue}</strong>
           </div>
           <div className="cc-create-flow__totals-row">
-            <span>IVA</span>
-            <strong>{formatMoneyInput(taxAmountValue)} EUR</strong>
+            <span>{commercialSummary.taxLabel}</span>
+            <strong>{commercialSummary.taxValue}</strong>
           </div>
           <div className="cc-create-flow__totals-row cc-create-flow__totals-row--grand">
-            <span>Total</span>
-            <strong>{formatMoneyInput(totalValue)} EUR</strong>
+            <span>{commercialSummary.totalLabel}</span>
+            <strong>{commercialSummary.totalValue}</strong>
           </div>
         </div>
+        <small>{commercialSummary.totalNote}</small>
       </section>
     </>
   )
 
-  const footerContent = (
+  const footerContent = successState ? (
+    <>
+      <div className="cc-create-flow__footer-meta">
+        <strong>Presupuesto actualizado</strong>
+        <small className="cc-create-flow__helper">Elige la siguiente accion sin mezclar guardado con conversion ni documentacion.</small>
+      </div>
+
+      <div className="cc-create-flow__footer-actions">
+        <button type="button" className="secondary-button" onClick={() => void onCompleted()}>
+          Cerrar
+        </button>
+        {onOpenDocumentForQuote ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onOpenDocumentForQuote(successState.quoteId)}
+          >
+            Abrir documento
+          </button>
+        ) : null}
+        {onOpenExistingQuote ? (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => onOpenExistingQuote(successState.quoteId)}
+          >
+            Ver presupuesto
+          </button>
+        ) : null}
+      </div>
+    </>
+  ) : (
     <>
       <div className="cc-create-flow__footer-meta">
         <strong>{quoteEditSteps[currentStep].label}</strong>
         <small className="cc-create-flow__helper">
-          {currentStep < quoteEditSteps.length - 1
-            ? 'La edicion mayor avanza por bloques para evitar scroll largo dentro del detalle.'
-            : 'Al guardar vuelves al mismo presupuesto y la card sigue centrada en lectura y acciones.'}
+          {currentStep < stepIndexById.review
+            ? 'La edicion avanza por bloques para evitar scroll largo y decisiones mezcladas.'
+            : 'La revision final confirma cambios antes de guardarlos.'}
         </small>
       </div>
 
@@ -414,13 +502,13 @@ export function QuoteEditFlow({
           type="button"
           className="secondary-button"
           onClick={() => goToStep(currentStep - 1)}
-          disabled={currentStep === 0}
+          disabled={currentStep === stepIndexById.context}
         >
           Atras
         </button>
-        {currentStep < quoteEditSteps.length - 1 ? (
+        {currentStep < stepIndexById.review ? (
           <button type="button" className="primary-button" onClick={() => goToStep(currentStep + 1)}>
-            Siguiente
+            Continuar
           </button>
         ) : (
           <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={isSaving}>
@@ -440,24 +528,24 @@ export function QuoteEditFlow({
         steps={quoteEditSteps}
         currentStep={currentStep}
         stepStates={stepStates}
-        onStepSelect={goToStep}
+        onStepSelect={successState ? undefined : goToStep}
         contextItems={contextItems}
         sideContent={sideContent}
         footerContent={footerContent}
       >
-        {currentStep === 0 ? (
+        {currentStep === stepIndexById.context ? (
           <section className="cc-create-flow__section">
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
-              <strong>Contexto comercial y estado</strong>
-              <small>Cliente, propiedad y estado quedan juntos para cerrar la lectura base sin mezclar lineas.</small>
+              <strong>Contexto comercial y propiedad</strong>
+              <small>Primero confirmas cliente o lead, para no mezclar identidad con importes.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Contexto pendiente' : 'Contexto listo'}</span>
-                <strong>{currentStepError ?? 'Puedes pasar a lineas e importes sin rehacer contexto.'}</strong>
+                <strong>{currentStepError ?? 'Puedes seguir con el alcance del servicio sin perder trazabilidad.'}</strong>
               </div>
             </article>
 
@@ -476,60 +564,23 @@ export function QuoteEditFlow({
                   ))}
                 </select>
               </label>
-
-              <label className="form-field">
-                <span>Propiedad</span>
-                <select
-                  value={form.property_id}
-                  onChange={(event) => updateField('property_id', event.target.value)}
-                >
-                  <option value="">Sin propiedad</option>
-                  {availableProperties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {formatPropertyLabel(property)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Estado</span>
-                <select
-                  value={form.status}
-                  onChange={(event) => updateField('status', event.target.value)}
-                >
-                  {quoteStatusOptions.map((status) => (
-                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Notas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  rows={5}
-                  placeholder="Notas comerciales o de alcance"
-                />
-              </label>
             </div>
           </section>
         ) : null}
 
-        {currentStep === 1 ? (
+        {currentStep === stepIndexById.service ? (
           <section className="cc-create-flow__section">
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
-              <strong>Edita lineas sin ruido alrededor</strong>
-              <small>Las microacciones de anadir o quitar viven aqui, aisladas de estados, relaciones y conversiones.</small>
+              <strong>Ajusta el alcance base</strong>
+              <small>Los conceptos principales se afinan aqui. El precio queda para su paso propio.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
-                <span>{currentStepError ? 'Lineas pendientes' : 'Lineas listas'}</span>
-                <strong>{currentStepError ?? `${lines.length} linea(s) preparadas para la revision final.`}</strong>
+                <span>{currentStepError ? 'Servicio pendiente' : 'Servicio listo'}</span>
+                <strong>{currentStepError ?? `${lines.length} concepto(s) preparados para la estimacion.`}</strong>
               </div>
             </article>
 
@@ -549,6 +600,122 @@ export function QuoteEditFlow({
                     onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
                     onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
                   />
+                  <div className="cc-create-flow__line-actions">
+                    <small className="cc-create-flow__helper">Aqui solo fijamos el alcance. Cantidades y precio vienen despues.</small>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => removeLine(line.local_id)}
+                      disabled={lines.length === 1}
+                    >
+                      Quitar concepto
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="cc-create-flow__microactions">
+              <strong>Microacciones</strong>
+              <div className="cc-create-flow__microactions-row">
+                <button type="button" className="secondary-button" onClick={addLine}>
+                  Anadir concepto
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.property ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 3</span>
+              <strong>Confirma el inmueble</strong>
+              <small>La propiedad queda separada del resto para no mezclar ubicacion con seguimiento comercial.</small>
+            </article>
+
+            <div className="cc-create-flow__grid">
+              <label className="form-field">
+                <span>Propiedad</span>
+                <select
+                  value={form.property_id}
+                  onChange={(event) => updateField('property_id', event.target.value)}
+                >
+                  <option value="">Sin propiedad</option>
+                  {availableProperties.map((property) => (
+                    <option key={property.id} value={property.id}>
+                      {formatPropertyLabel(property)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.conditions ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 4</span>
+              <strong>Condiciones y seguimiento</strong>
+              <small>Estado y notas se editan juntos, separados de lineas y conversiones.</small>
+            </article>
+
+            <div className="cc-create-flow__grid">
+              <label className="form-field">
+                <span>Estado</span>
+                <select
+                  value={form.status}
+                  onChange={(event) => updateField('status', event.target.value)}
+                >
+                  {quoteStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
+                </select>
+              </label>
+
+              <article className="cc-create-flow__panel">
+                <strong>{commercialSummary.totalLabel}</strong>
+                <small>{getQuoteCustomerFacingTotalNote()}</small>
+              </article>
+
+              <label className="form-field form-field-full">
+                <span>Notas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  rows={5}
+                  placeholder="Notas comerciales o de alcance"
+                />
+              </label>
+            </div>
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.estimate ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 5</span>
+              <strong>Recalcula la estimacion</strong>
+              <small>Ahora si completas cantidades, unidades y precio final sin IVA del presupuesto.</small>
+            </article>
+
+            <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
+              <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
+              <div className="cc-create-flow__status-copy">
+                <span>{currentStepError ? 'Estimacion pendiente' : 'Estimacion lista'}</span>
+                <strong>{currentStepError ?? `${lines.length} linea(s) preparadas para revision final.`}</strong>
+              </div>
+            </article>
+
+            <div className="cc-create-flow__line-list">
+              {lines.map((line, index) => (
+                <article key={line.local_id} className="cc-create-flow__line-card">
+                  <article className="cc-create-flow__panel form-field-full">
+                    <span className="cc-create-flow__summary-label">Concepto {index + 1}</span>
+                    <strong>{line.concept || 'Concepto pendiente'}</strong>
+                    <small>Si necesitas reescribir el alcance, vuelve al paso anterior.</small>
+                  </article>
 
                   <label className="form-field">
                     <span>Cantidad</span>
@@ -581,46 +748,25 @@ export function QuoteEditFlow({
                     <span>Importe</span>
                     <input value={formatQuoteLineSubtotalInput(line)} readOnly />
                   </label>
-
-                  <div className="cc-create-flow__line-actions">
-                    <small className="cc-create-flow__helper">La linea se guarda exactamente como la dejes aqui.</small>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => removeLine(line.local_id)}
-                      disabled={lines.length === 1}
-                    >
-                      Quitar linea
-                    </button>
-                  </div>
                 </article>
               ))}
-            </div>
-
-            <div className="cc-create-flow__microactions">
-              <strong>Microacciones</strong>
-              <div className="cc-create-flow__microactions-row">
-                <button type="button" className="secondary-button" onClick={addLine}>
-                  Anadir linea
-                </button>
-              </div>
             </div>
           </section>
         ) : null}
 
-        {currentStep === 2 ? (
+        {currentStep === stepIndexById.review ? (
           <section className="cc-create-flow__section">
             <article className="cc-create-flow__hero-card">
-              <span className="cc-step-flow__eyebrow">Paso 3</span>
+              <span className="cc-step-flow__eyebrow">Paso 6</span>
               <strong>Revision final antes de guardar</strong>
-              <small>Se confirma el documento sin perder foco ni volver al scroll largo de la card.</small>
+              <small>Se confirma el documento sin mezclar todavia conversion, documento ni facturacion.</small>
             </article>
 
             <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
               <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
               <div className="cc-create-flow__status-copy">
                 <span>Documento listo</span>
-                <strong>La card de detalle seguira reservada para lectura, estados y acciones.</strong>
+                <strong>Ya puedes guardar la edicion manteniendo contexto, lineas y seguimiento comercial.</strong>
               </div>
             </article>
 
@@ -633,9 +779,26 @@ export function QuoteEditFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{lines.length} linea(s)</small>
+                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.totalLabel}</span>
+                <strong>{commercialSummary.totalValue}</strong>
+                <small>{commercialSummary.totalNote}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.taxLabel}</span>
+                <strong>{commercialSummary.taxValue}</strong>
+                <small>{commercialSummary.taxNote}</small>
               </article>
             </div>
+
+            {form.notes.trim() ? (
+              <article className="cc-create-flow__panel">
+                <strong>Notas comerciales</strong>
+                <small>{form.notes.trim()}</small>
+              </article>
+            ) : null}
 
             {lines.map((line, index) => (
               <article key={line.local_id} className="cc-create-flow__panel">
@@ -651,7 +814,7 @@ export function QuoteEditFlow({
                     <strong>{line.unit}</strong>
                   </div>
                   <div className="cc-create-flow__summary-item">
-                    <span>Precio</span>
+                    <span>Precio unitario</span>
                     <strong>{line.unit_price} EUR</strong>
                   </div>
                   <div className="cc-create-flow__summary-item">
@@ -661,6 +824,55 @@ export function QuoteEditFlow({
                 </div>
               </article>
             ))}
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.success && successState ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 7</span>
+              <strong>Presupuesto actualizado</strong>
+              <small>La edicion ya termino. Ahora decides la siguiente accion relevante.</small>
+            </article>
+
+            <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
+              <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
+              <div className="cc-create-flow__status-copy">
+                <span>Cambios guardados</span>
+                <strong>{quote.display_code ?? successState.quoteId} actualizado con revision final completada.</strong>
+              </div>
+            </article>
+
+            <div className="cc-create-flow__review-grid">
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.totalLabel}</span>
+                <strong>{commercialSummary.totalValue}</strong>
+                <small>{commercialSummary.totalNote}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>Documento</span>
+                <strong>{onOpenDocumentForQuote ? 'Listo para abrir' : 'Disponible desde el detalle'}</strong>
+                <small>No se genera ni envia automaticamente.</small>
+              </article>
+            </div>
+
+            <article className="cc-create-flow__panel">
+              <strong>Siguientes acciones recomendadas</strong>
+              <div className="cc-create-flow__summary-list">
+                <div className="cc-create-flow__summary-item">
+                  <span>Ver presupuesto</span>
+                  <strong>Workspace y acciones del detalle</strong>
+                </div>
+                <div className="cc-create-flow__summary-item">
+                  <span>Documento</span>
+                  <strong>PDF o impresion manual desde la vista documental</strong>
+                </div>
+                <div className="cc-create-flow__summary-item">
+                  <span>Facturacion</span>
+                  <strong>Solo desde acciones explicitas del workspace</strong>
+                </div>
+              </div>
+            </article>
           </section>
         ) : null}
 

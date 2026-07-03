@@ -10,6 +10,10 @@ import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from './types'
 import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import {
+  formatQuoteCustomerFacingTotal,
+  getQuoteCustomerFacingTotalLabel,
+} from './quoteCommercialPresentation'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -114,7 +118,7 @@ export function QuotesList({
           { value: 'code', label: 'Codigo' },
           { value: 'client', label: 'Cliente' },
           { value: 'property', label: 'Propiedad' },
-          { value: 'total', label: 'Importe total' },
+          { value: 'total', label: getQuoteCustomerFacingTotalLabel() },
           { value: 'status', label: 'Estado' },
         ]}
         defaultPreferences={defaultPreferences}
@@ -166,12 +170,25 @@ export function QuotesList({
                 title={formatQuoteLabel({ ...quote, client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null, property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null })}
                 subtitle={propertyLabel}
                 status={<span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>}
-                aside={<strong className="cc-record-card__amount">{formatCurrency(quote.total)}</strong>}
+                aside={(
+                  <strong className="cc-record-card__amount">
+                    {formatQuoteCustomerFacingTotal({
+                      subtotal: Number(quote.subtotal || 0),
+                      total: Number(quote.total || 0),
+                    })}
+                  </strong>
+                )}
                 summary={clientLabel}
-                chips={[`Base ${formatCurrency(quote.subtotal)}`, propertyLabel]}
+                chips={[`${getQuoteCustomerFacingTotalLabel()} ${formatQuoteCustomerFacingTotal({ subtotal: Number(quote.subtotal || 0), total: Number(quote.total || 0) })}`, propertyLabel]}
                 meta={[
                   { label: 'Base', value: formatCurrency(quote.subtotal) },
-                  { label: 'Total', value: formatCurrency(quote.total) },
+                  {
+                    label: getQuoteCustomerFacingTotalLabel(),
+                    value: formatQuoteCustomerFacingTotal({
+                      subtotal: Number(quote.subtotal || 0),
+                      total: Number(quote.total || 0),
+                    }),
+                  },
                 ]}
                 actions={[
                   {

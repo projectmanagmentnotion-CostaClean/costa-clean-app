@@ -15,9 +15,9 @@ import { buildQuoteDuplicateGroups } from '../features/duplicates/duplicateEngin
 import { buildQuoteCreatePrefillFromQuote, type QuoteCreatePrefill } from '../features/quotes/quoteCreatePrefill'
 import { QuoteDetailCard } from '../features/quotes/QuoteDetailCard'
 import { QuoteEditFlow } from '../features/quotes/QuoteEditFlow'
+import { formatQuoteCustomerFacingTotal, getQuoteCustomerFacingTotalValue } from '../features/quotes/quoteCommercialPresentation'
 import { QuotesList } from '../features/quotes/QuotesList'
 import type { QuoteListItem } from '../features/quotes/types'
-import { formatCurrency } from '../app/displayFormat'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
@@ -81,8 +81,20 @@ export function QuotesPage({
   const acceptedWithoutInvoice = acceptedQuotes.filter((quote) => !quote.invoice_id)
   const commercialPendingQuotes = quotes.filter((quote) => quote.status === 'draft' || quote.status === 'sent')
   const acceptedConvertedQuotes = acceptedQuotes.filter((quote) => Boolean(quote.job_id))
-  const acceptedWithoutJobValue = acceptedWithoutJob.reduce((sum, quote) => sum + Number(quote.total ?? 0), 0)
-  const acceptedTotalValue = acceptedQuotes.reduce((sum, quote) => sum + Number(quote.total ?? 0), 0)
+  const acceptedWithoutJobValue = acceptedWithoutJob.reduce(
+    (sum, quote) => sum + getQuoteCustomerFacingTotalValue({
+      subtotal: Number(quote.subtotal ?? 0),
+      total: Number(quote.total ?? 0),
+    }),
+    0,
+  )
+  const acceptedTotalValue = acceptedQuotes.reduce(
+    (sum, quote) => sum + getQuoteCustomerFacingTotalValue({
+      subtotal: Number(quote.subtotal ?? 0),
+      total: Number(quote.total ?? 0),
+    }),
+    0,
+  )
   const funnelPercent = acceptedQuotes.length > 0
     ? Math.round((acceptedConvertedQuotes.length / acceptedQuotes.length) * 100)
     : 0
@@ -225,7 +237,7 @@ export function QuotesPage({
             }
             : undefined}
           metricLabel="Potencial bloqueado"
-          metricValue={formatCurrency(acceptedWithoutJobValue)}
+          metricValue={formatQuoteCustomerFacingTotal({ subtotal: acceptedWithoutJobValue, total: acceptedWithoutJobValue })}
           metricHint={acceptedWithoutJob.length > 0
             ? 'Importe aceptado que todavia no se ha convertido en servicio.'
             : 'No hay importe aceptado bloqueado por falta de servicio.'}
@@ -268,7 +280,7 @@ export function QuotesPage({
           />
           <VisualKpiCard
             label="Valor aceptado"
-            value={formatCurrency(acceptedTotalValue)}
+            value={formatQuoteCustomerFacingTotal({ subtotal: acceptedTotalValue, total: acceptedTotalValue })}
             hint="Suma de presupuestos aceptados con importe real visible."
             tone="info"
             priority="compact"
@@ -310,6 +322,13 @@ export function QuotesPage({
                   setShowCreateForm(false)
                   setCreatePrefill(null)
                   setSelectedQuoteId(quoteId)
+                }}
+                onOpenDocumentForQuote={(quoteId) => {
+                  setHasCreateFormDirty(false)
+                  setShowCreateForm(false)
+                  setCreatePrefill(null)
+                  setSelectedQuoteId(quoteId)
+                  setShowDocumentScreen(true)
                 }}
                 onCancel={() => {
                   setHasCreateFormDirty(false)
@@ -355,6 +374,12 @@ export function QuotesPage({
                 setShowMajorEdit(false)
                 setHasMajorEditDirty(false)
                 setSelectedQuoteId(quoteId)
+              }}
+              onOpenDocumentForQuote={(quoteId) => {
+                setShowMajorEdit(false)
+                setHasMajorEditDirty(false)
+                setSelectedQuoteId(quoteId)
+                setShowDocumentScreen(true)
               }}
               onCompleted={async () => {
                 setShowMajorEdit(false)

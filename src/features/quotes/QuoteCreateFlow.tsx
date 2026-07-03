@@ -20,21 +20,20 @@ import { saveQuoteWithLines } from '../financial/financialWriteApi'
 import type { InvoiceListItem } from '../invoices/types'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
-import {
-  completeContextualActionFlow,
-  completeFullViewActionFlow,
-  type FullViewActionFlowProps,
-} from '../shared/actionFlowLifecycle'
+import { completeContextualActionFlow, type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
   createBlankQuoteLine,
   createLocalId,
-  formatMoneyInput,
   formatQuoteLineSubtotalInput,
   roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
+import {
+  getQuoteCommercialSummary,
+  getQuoteCustomerFacingTotalNote,
+} from './quoteCommercialPresentation'
 import type { QuoteCreatePrefill } from './quoteCreatePrefill'
 import type { QuoteListItem } from './types'
 import './QuoteCreateFlow.css'
@@ -51,6 +50,7 @@ interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   contextPropertyId?: string | null
   onCreatedQuote?: (quote: { id: string; client_id: string; property_id: string | null }) => void | Promise<void>
   onOpenExistingQuote?: (quoteId: string) => void
+  onOpenDocumentForQuote?: (quoteId: string) => void
 }
 
 interface FormState {
@@ -60,18 +60,49 @@ interface FormState {
   notes: string
 }
 
-const quoteSteps = [
-  { id: 'client', label: 'Cliente y contexto', description: 'Fija el cliente y hereda la propiedad si ya existe.' },
-  { id: 'commercial', label: 'Datos comerciales', description: 'Estado, propiedad y notas clave del presupuesto.' },
-  { id: 'lines', label: 'Lineas e importes', description: 'Compone el alcance comercial con importes claros.' },
-  { id: 'review', label: 'Revision final', description: 'Confirma el presupuesto antes de guardarlo.' },
-]
+interface QuoteCreateSuccessState {
+  quoteId: string
+  clientId: string
+  propertyId: string | null
+}
 
-const quoteNextLabels = [
-  'Definir datos comerciales',
-  'Preparar lineas',
-  'Ir a revision final',
-]
+const quoteSteps = [
+  { id: 'client', label: 'Cliente o lead', description: 'Fija primero el contexto comercial que hereda el presupuesto.' },
+  { id: 'service', label: 'Tipo de servicio', description: 'Define el alcance base con los conceptos principales.' },
+  { id: 'property', label: 'Inmueble', description: 'Vincula la propiedad cuando aplique para no perder trazabilidad.' },
+  { id: 'conditions', label: 'Condiciones', description: 'Estado comercial y notas visibles antes de estimar.' },
+  { id: 'estimate', label: 'Estimacion', description: 'Completa cantidades, unidades y precio final sin IVA.' },
+  { id: 'review', label: 'Revision final', description: 'Confirma el presupuesto antes de guardarlo.' },
+  { id: 'success', label: 'Confirmacion', description: 'Presupuesto guardado y siguientes acciones.' },
+] as { id: string; label: string; description: string }[]
+
+const stepIndexById = {
+  client: 0,
+  service: 1,
+  property: 2,
+  conditions: 3,
+  estimate: 4,
+  review: 5,
+  success: 6,
+} as const
+
+function hasAtLeastOneConcept(lines: QuoteLineFormState[]): boolean {
+  return lines.some((line) => line.concept.trim().length > 0)
+}
+
+function createInitialLines(prefill: QuoteCreatePrefill | null): QuoteLineFormState[] {
+  if (!prefill?.lines?.length) {
+    return [createBlankQuoteLine()]
+  }
+
+  return prefill.lines.map((line) => ({
+    local_id: createLocalId('QUOTE-LINE-DRAFT'),
+    concept: line.concept,
+    quantity: line.quantity,
+    unit: line.unit,
+    unit_price: line.unit_price,
+  }))
+}
 
 export function QuoteCreateFlow({
   clients,
@@ -86,6 +117,7 @@ export function QuoteCreateFlow({
   prefill = null,
   onCreatedQuote,
   onOpenExistingQuote,
+  onOpenDocumentForQuote,
   onCancel,
   onDirtyChange,
 }: QuoteCreateFlowProps) {
@@ -95,18 +127,8 @@ export function QuoteCreateFlow({
     status: 'draft',
     notes: prefill?.notes ?? '',
   }))
-  const [lines, setLines] = useState<QuoteLineFormState[]>(() => (
-    prefill?.lines?.length
-      ? prefill.lines.map((line) => ({
-        local_id: createLocalId('QUOTE-LINE-DRAFT'),
-        concept: line.concept,
-        quantity: line.quantity,
-        unit: line.unit,
-        unit_price: line.unit_price,
-      }))
-      : [createBlankQuoteLine()]
-  ))
-  const [currentStep, setCurrentStep] = useState(0)
+  const [lines, setLines] = useState<QuoteLineFormState[]>(() => createInitialLines(prefill))
+  const [currentStep, setCurrentStep] = useState<number>(stepIndexById.client)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [showClientCreate, setShowClientCreate] = useState(false)
@@ -115,6 +137,7 @@ export function QuoteCreateFlow({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
+  const [successState, setSuccessState] = useState<QuoteCreateSuccessState | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -130,28 +153,16 @@ export function QuoteCreateFlow({
       status: 'draft',
       notes: prefill.notes,
     })
-    setLines(
-      prefill.lines.length > 0
-        ? prefill.lines.map((line) => ({
-          local_id: createLocalId('QUOTE-LINE-DRAFT'),
-          concept: line.concept,
-          quantity: line.quantity,
-          unit: line.unit,
-          unit_price: line.unit_price,
-        }))
-        : [createBlankQuoteLine()],
-    )
-    setCurrentStep(0)
+    setLines(createInitialLines(prefill))
+    setCurrentStep(stepIndexById.client)
     setSubmitError(null)
     setIsDirty(false)
+    setSuccessState(null)
     setLastAppliedPrefillId(prefill.request_id)
   }, [contextClientId, contextPropertyId, lastAppliedPrefillId, prefill])
 
   const availableProperties = useMemo(() => {
-    if (!form.client_id) {
-      return []
-    }
-
+    if (!form.client_id) return []
     return properties.filter((property) => property.client_id === form.client_id)
   }, [properties, form.client_id])
 
@@ -165,17 +176,15 @@ export function QuoteCreateFlow({
   )
 
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
+  const taxAmountValue = useMemo(() => roundMoney(subtotalValue * businessRules.defaultTaxRate), [subtotalValue])
+  const totalValue = useMemo(() => roundMoney(subtotalValue + taxAmountValue), [subtotalValue, taxAmountValue])
+  const commercialSummary = useMemo(
+    () => getQuoteCommercialSummary({ subtotal: subtotalValue, taxAmount: taxAmountValue, total: totalValue }),
+    [subtotalValue, taxAmountValue, totalValue],
+  )
   const conceptMemoryIndex = useMemo(
     () => buildConceptMemoryIndex({ quotes, invoices, expenses }),
     [quotes, invoices, expenses],
-  )
-  const taxAmountValue = useMemo(
-    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
-    [subtotalValue],
-  )
-  const totalValue = useMemo(
-    () => roundMoney(subtotalValue + taxAmountValue),
-    [subtotalValue, taxAmountValue],
   )
 
   function markDirty() {
@@ -185,15 +194,10 @@ export function QuoteCreateFlow({
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     markDirty()
     setForm((current) => {
-      const next = {
-        ...current,
-        [field]: value,
-      }
-
+      const next = { ...current, [field]: value }
       if (field === 'client_id') {
         next.property_id = contextPropertyId ?? ''
       }
-
       return next
     })
   }
@@ -207,9 +211,7 @@ export function QuoteCreateFlow({
 
   function removeLine(localId: string) {
     markDirty()
-    setLines((current) => (
-      current.length > 1 ? current.filter((line) => line.local_id !== localId) : current
-    ))
+    setLines((current) => (current.length > 1 ? current.filter((line) => line.local_id !== localId) : current))
   }
 
   function addLine() {
@@ -251,11 +253,15 @@ export function QuoteCreateFlow({
   }
 
   function getStepError(stepIndex: number): string | null {
-    if (stepIndex === 0 && !form.client_id) {
+    if (stepIndex === stepIndexById.client && !form.client_id) {
       return 'Debes seleccionar o crear un cliente antes de seguir.'
     }
 
-    if (stepIndex === 2) {
+    if (stepIndex === stepIndexById.service && !hasAtLeastOneConcept(lines)) {
+      return 'Necesitas al menos un concepto principal antes de seguir.'
+    }
+
+    if (stepIndex === stepIndexById.estimate) {
       const payloads = buildQuoteLinePayloads(lines, 'DRAFT-QUOTE')
       if (!payloads || payloads.length === 0) {
         return 'Necesitas al menos una linea valida con concepto, cantidad y precio.'
@@ -266,7 +272,8 @@ export function QuoteCreateFlow({
   }
 
   function goToStep(nextStep: number) {
-    const boundedStep = Math.max(0, Math.min(quoteSteps.length - 1, nextStep))
+    const maxStep = successState ? stepIndexById.success : stepIndexById.review
+    const boundedStep = Math.max(0, Math.min(maxStep, nextStep))
 
     if (boundedStep > currentStep) {
       for (let index = 0; index < boundedStep; index += 1) {
@@ -286,7 +293,7 @@ export function QuoteCreateFlow({
   async function handleSave(skipDuplicateCheck = false) {
     setSubmitError(null)
 
-    for (let index = 0; index < quoteSteps.length - 1; index += 1) {
+    for (let index = 0; index <= stepIndexById.estimate; index += 1) {
       const error = getStepError(index)
       if (error) {
         setCurrentStep(index)
@@ -302,7 +309,7 @@ export function QuoteCreateFlow({
       const linePayloads = buildQuoteLinePayloads(lines, quoteId)
 
       if (!linePayloads || linePayloads.length === 0) {
-        setCurrentStep(2)
+        setCurrentStep(stepIndexById.estimate)
         setSubmitError('Cada linea debe tener concepto, cantidad mayor que 0 y precio unitario valido.')
         return
       }
@@ -359,11 +366,15 @@ export function QuoteCreateFlow({
         client_id: form.client_id,
         property_id: form.property_id || null,
       })
+      await onRefreshData()
+
       setIsDirty(false)
-      await completeFullViewActionFlow({
-        onRefreshData,
-        onCompleted,
+      setSuccessState({
+        quoteId,
+        clientId: form.client_id,
+        propertyId: form.property_id || null,
       })
+      setCurrentStep(stepIndexById.success)
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Error desconocido creando el presupuesto.')
     } finally {
@@ -377,8 +388,23 @@ export function QuoteCreateFlow({
       onCancel()
       return
     }
-
     setShowCancelConfirm(true)
+  }
+
+  function resetForAnotherQuote() {
+    setForm({
+      client_id: contextClientId ?? '',
+      property_id: contextPropertyId ?? '',
+      status: 'draft',
+      notes: '',
+    })
+    setLines([createBlankQuoteLine()])
+    setCurrentStep(stepIndexById.client)
+    setSubmitError(null)
+    setSuccessState(null)
+    setIsDirty(false)
+    setShowClientCreate(false)
+    setShowPropertyCreate(false)
   }
 
   const contextItems: FullscreenStepFlowContextItem[] = [
@@ -388,19 +414,27 @@ export function QuoteCreateFlow({
       hint: selectedProperty ? formatPropertyLabel(selectedProperty) : 'Sin propiedad asociada',
     },
     {
-      label: 'Estado inicial',
+      label: 'Estado',
       value: getStatusOptionLabel(form.status),
-      hint: 'Se puede ajustar antes de guardarlo.',
+      hint: 'Se puede ajustar antes de guardar.',
     },
     {
-      label: 'Totales',
-      value: `${formatMoneyInput(totalValue)} €`,
-      hint: `${lines.length} linea(s) preparadas`,
+      label: commercialSummary.totalLabel,
+      value: commercialSummary.totalValue,
+      hint: commercialSummary.totalNote,
     },
   ]
 
-  const currentStepError = getStepError(currentStep)
-  const stepStates = quoteSteps.map((_, index) => {
+  const currentStepError = successState ? null : getStepError(currentStep)
+  const stepStates = quoteSteps.map((step, index) => {
+    if (successState) {
+      if (index < stepIndexById.success) return 'complete'
+      if (index === stepIndexById.success) return 'current'
+      return 'pending'
+    }
+
+    if (step.id === 'success') return 'pending'
+
     const error = getStepError(index)
     if (index < currentStep) return error ? 'blocked' : 'complete'
     if (index === currentStep && error) return 'blocked'
@@ -408,7 +442,29 @@ export function QuoteCreateFlow({
     return 'pending'
   }) as ('complete' | 'current' | 'blocked' | 'pending')[]
 
-  const sideContent = (
+  const sideContent = successState ? (
+    <>
+      <section className="cc-create-flow__summary-card">
+        <span className="cc-step-flow__eyebrow">Presupuesto guardado</span>
+        <strong>{successState.quoteId}</strong>
+        <small>El flujo ya dejo creado el presupuesto sin enviar emails ni mensajes automaticamente.</small>
+      </section>
+
+      <section className="cc-create-flow__summary-card">
+        <span className="cc-step-flow__eyebrow">Siguientes acciones</span>
+        <div className="cc-create-flow__summary-list">
+          <div className="cc-create-flow__summary-item">
+            <span>Documento</span>
+            <strong>{onOpenDocumentForQuote ? 'Listo para abrir' : 'Disponible desde el detalle'}</strong>
+          </div>
+          <div className="cc-create-flow__summary-item">
+            <span>Mensajes</span>
+            <strong>No se envia nada automaticamente</strong>
+          </div>
+        </div>
+      </section>
+    </>
+  ) : (
     <>
       <section className="cc-create-flow__summary-card">
         <span className="cc-step-flow__eyebrow">Ruta comercial</span>
@@ -417,64 +473,99 @@ export function QuoteCreateFlow({
       </section>
 
       <section className="cc-create-flow__summary-card">
-        <span className="cc-step-flow__eyebrow">Totales</span>
+        <span className="cc-step-flow__eyebrow">Lectura economica</span>
         <div className="cc-create-flow__totals">
           <div className="cc-create-flow__totals-row">
-            <span>Subtotal</span>
-            <strong>{formatMoneyInput(subtotalValue)} €</strong>
+            <span>{commercialSummary.subtotalLabel}</span>
+            <strong>{commercialSummary.subtotalValue}</strong>
           </div>
           <div className="cc-create-flow__totals-row">
-            <span>IVA</span>
-            <strong>{formatMoneyInput(taxAmountValue)} €</strong>
+            <span>{commercialSummary.taxLabel}</span>
+            <strong>{commercialSummary.taxValue}</strong>
           </div>
           <div className="cc-create-flow__totals-row cc-create-flow__totals-row--grand">
-            <span>Total</span>
-            <strong>{formatMoneyInput(totalValue)} €</strong>
+            <span>{commercialSummary.totalLabel}</span>
+            <strong>{commercialSummary.totalValue}</strong>
           </div>
         </div>
+        <small>{commercialSummary.totalNote}</small>
       </section>
     </>
   )
 
-  const footerContent = (
+  const footerContent = successState ? (
+    <>
+      <div className="cc-create-flow__footer-meta">
+        <strong>Presupuesto listo</strong>
+        <small className="cc-create-flow__helper">Confirma la siguiente accion sin salir de la orquestacion segura del flujo.</small>
+      </div>
+
+      <div className="cc-create-flow__footer-actions">
+        <button type="button" className="secondary-button" onClick={() => void onCompleted()}>
+          Cerrar
+        </button>
+        <button type="button" className="secondary-button" onClick={resetForAnotherQuote}>
+          Crear otro
+        </button>
+        {onOpenDocumentForQuote ? (
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onOpenDocumentForQuote(successState.quoteId)}
+          >
+            Abrir documento
+          </button>
+        ) : null}
+        {onOpenExistingQuote ? (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => onOpenExistingQuote(successState.quoteId)}
+          >
+            Ver presupuesto
+          </button>
+        ) : null}
+      </div>
+    </>
+  ) : (
     <>
       <div className="cc-create-flow__footer-meta">
         <strong>{quoteSteps[currentStep].label}</strong>
         <small className="cc-create-flow__helper">
-          {currentStep < quoteSteps.length - 1
-            ? 'El flujo avanza solo cuando lo esencial del paso ya esta resuelto.'
-            : 'Al guardar, vuelves al mismo contexto de presupuestos sin romper la vista base.'}
+          {currentStep < stepIndexById.review
+            ? 'Cada paso resuelve una sola decision antes de avanzar.'
+            : 'La revision final confirma importes, notas y contexto antes de guardar.'}
         </small>
       </div>
 
       <div className="cc-create-flow__footer-actions">
         {onCancel ? (
           <button type="button" className="secondary-button" onClick={requestCancel}>
-            Cancelar
+            Cerrar
           </button>
         ) : null}
         <button
           type="button"
           className="secondary-button"
           onClick={() => goToStep(currentStep - 1)}
-          disabled={currentStep === 0}
+          disabled={currentStep === stepIndexById.client}
         >
           Atras
         </button>
-        {currentStep < quoteSteps.length - 1 ? (
+        {currentStep < stepIndexById.review ? (
           <button type="button" className="primary-button" onClick={() => goToStep(currentStep + 1)}>
-            {quoteNextLabels[currentStep]}
+            Continuar
           </button>
         ) : (
           <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : 'Guardar presupuesto'}
+            {isSubmitting ? 'Guardando...' : 'Crear presupuesto'}
           </button>
         )}
       </div>
     </>
   )
 
-  const activeContextualFlow = currentStep === 0
+  const activeContextualFlow = currentStep === stepIndexById.client
     ? showClientCreate ? (
         <ContextualCreateSection
           actionLabel="Crear cliente"
@@ -506,7 +597,7 @@ export function QuoteCreateFlow({
           />
         </ContextualCreateSection>
       ) : null
-    : currentStep === 1 && form.client_id && showPropertyCreate ? (
+    : currentStep === stepIndexById.property && form.client_id && showPropertyCreate ? (
         <ContextualCreateSection
           actionLabel="Crear propiedad"
           title="Debes crear la propiedad antes de seguir"
@@ -545,167 +636,96 @@ export function QuoteCreateFlow({
       <FullscreenStepFlow
         eyebrow="Propuesta comercial"
         title="Nuevo presupuesto"
-        description="El presupuesto se construye en una superficie dedicada, con pasos amplios y contexto siempre visible."
+        description="El presupuesto se construye por etapas, con revision final y confirmacion propia antes de volver al listado."
         steps={quoteSteps}
         currentStep={currentStep}
         stepStates={stepStates}
-        onStepSelect={goToStep}
+        onStepSelect={successState ? undefined : goToStep}
         contextItems={contextItems}
         sideContent={sideContent}
         footerContent={footerContent}
       >
-        {currentStep === 0 ? (
+        {currentStep === stepIndexById.client ? (
           <section className="cc-create-flow__section">
             {activeContextualFlow ? activeContextualFlow : (
               <>
-            <article className="cc-create-flow__hero-card">
-              <span className="cc-step-flow__eyebrow">Paso 1</span>
-              <strong>Fija el cliente primero</strong>
-              <small>El resto del flujo hereda la propiedad y mantiene la trazabilidad comercial desde el inicio.</small>
-            </article>
+                <article className="cc-create-flow__hero-card">
+                  <span className="cc-step-flow__eyebrow">Paso 1</span>
+                  <strong>Fija el cliente primero</strong>
+                  <small>Todo el presupuesto hereda este contexto para conservar trazabilidad hacia servicio y factura.</small>
+                </article>
 
-            <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
-              <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
-              <div className="cc-create-flow__status-copy">
-                <span>{currentStepError ? 'Falta contexto base' : 'Contexto listo'}</span>
-                <strong>{currentStepError ?? 'El cliente ya esta fijado para seguir con datos comerciales.'}</strong>
-              </div>
-            </article>
-
-            <div className="cc-create-flow__grid">
-              <label className="form-field form-field-full">
-                <span>Cliente *</span>
-                <select
-                  value={form.client_id}
-                  onChange={(event) => updateField('client_id', event.target.value)}
-                  disabled={Boolean(contextClientId)}
-                >
-                  {!contextClientId ? <option value="">Selecciona un cliente</option> : null}
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {formatClientLabel(client)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              {!contextClientId ? (
-                <ContextualCreateSection
-                  actionLabel="Crear cliente"
-                  title="Cliente pendiente"
-                  description="Para seguir con este presupuesto necesitas fijar antes un cliente o crearlo ahora."
-                  isOpen={showClientCreate}
-                  onToggle={() => setShowClientCreate(true)}
-                >
-                  <></>
-                </ContextualCreateSection>
-              ) : null}
-
-              {selectedClient ? (
-                <article className="cc-create-flow__panel">
-                  <strong>Cliente en contexto</strong>
-                  <div className="cc-create-flow__summary-list">
-                    <div className="cc-create-flow__summary-item">
-                      <span>Cliente</span>
-                      <strong>{formatClientLabel(selectedClient)}</strong>
-                    </div>
-                    <div className="cc-create-flow__summary-item">
-                      <span>Propiedades disponibles</span>
-                      <strong>{availableProperties.length}</strong>
-                    </div>
+                <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
+                  <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
+                  <div className="cc-create-flow__status-copy">
+                    <span>{currentStepError ? 'Falta contexto base' : 'Contexto listo'}</span>
+                    <strong>{currentStepError ?? 'El cliente ya esta fijado para seguir con el alcance comercial.'}</strong>
                   </div>
                 </article>
-              ) : null}
-            </div>
+
+                <div className="cc-create-flow__grid">
+                  <label className="form-field form-field-full">
+                    <span>Cliente *</span>
+                    <select
+                      value={form.client_id}
+                      onChange={(event) => updateField('client_id', event.target.value)}
+                      disabled={Boolean(contextClientId)}
+                    >
+                      {!contextClientId ? <option value="">Selecciona un cliente</option> : null}
+                      {clients.map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {formatClientLabel(client)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {!contextClientId ? (
+                    <ContextualCreateSection
+                      actionLabel="Crear cliente"
+                      title="Cliente pendiente"
+                      description="Para seguir con este presupuesto necesitas fijar antes un cliente o crearlo ahora."
+                      isOpen={showClientCreate}
+                      onToggle={() => setShowClientCreate(true)}
+                    >
+                      <></>
+                    </ContextualCreateSection>
+                  ) : null}
+
+                  {selectedClient ? (
+                    <article className="cc-create-flow__panel">
+                      <strong>Cliente en contexto</strong>
+                      <div className="cc-create-flow__summary-list">
+                        <div className="cc-create-flow__summary-item">
+                          <span>Cliente</span>
+                          <strong>{formatClientLabel(selectedClient)}</strong>
+                        </div>
+                        <div className="cc-create-flow__summary-item">
+                          <span>Propiedades disponibles</span>
+                          <strong>{availableProperties.length}</strong>
+                        </div>
+                      </div>
+                    </article>
+                  ) : null}
+                </div>
               </>
             )}
           </section>
         ) : null}
 
-        {currentStep === 1 ? (
+        {currentStep === stepIndexById.service ? (
           <section className="cc-create-flow__section">
-            {activeContextualFlow ? activeContextualFlow : (
-              <>
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
-              <strong>Completa datos comerciales sin abandonar la accion</strong>
-              <small>La propiedad y el estado se resuelven aqui. Si falta una propiedad, la creas dentro del mismo flujo.</small>
+              <strong>Define el alcance base</strong>
+              <small>Primero fijamos los conceptos del servicio. El detalle economico llega despues, en su propio paso.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
-                <span>{currentStepError ? 'Paso pendiente' : 'Paso listo'}</span>
-                <strong>{currentStepError ?? 'Estado, propiedad y notas ya no bloquean el avance.'}</strong>
-              </div>
-            </article>
-
-            <div className="cc-create-flow__grid">
-              <label className="form-field">
-                <span>Propiedad</span>
-                <select
-                  value={form.property_id}
-                  onChange={(event) => updateField('property_id', event.target.value)}
-                  disabled={Boolean(contextPropertyId)}
-                >
-                  {!contextPropertyId ? <option value="">Sin propiedad</option> : null}
-                  {availableProperties.map((property) => (
-                    <option key={property.id} value={property.id}>
-                      {formatPropertyLabel(property)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Estado</span>
-                <select value={form.status} onChange={(event) => updateField('status', event.target.value)}>
-                  {quoteStatusOptions.map((status) => (
-                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
-                  ))}
-                </select>
-              </label>
-
-              {form.client_id && !contextPropertyId ? (
-                <ContextualCreateSection
-                  actionLabel="Crear propiedad"
-                  title="Propiedad pendiente"
-                  description="Añadela ahora y quedara enlazada al presupuesto sin perder progreso."
-                  isOpen={showPropertyCreate}
-                  onToggle={() => setShowPropertyCreate(true)}
-                >
-                  <></>
-                </ContextualCreateSection>
-              ) : null}
-
-              <label className="form-field form-field-full">
-                <span>Notas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  rows={4}
-                  placeholder="Condiciones, alcance o notas comerciales"
-                />
-              </label>
-            </div>
-              </>
-            )}
-          </section>
-        ) : null}
-
-        {currentStep === 2 ? (
-          <section className="cc-create-flow__section">
-            <article className="cc-create-flow__hero-card">
-              <span className="cc-step-flow__eyebrow">Paso 3</span>
-              <strong>Construye las lineas del presupuesto</strong>
-              <small>Las microacciones viven junto a las lineas, no perdidas en otra zona del overlay.</small>
-            </article>
-
-            <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
-              <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
-              <div className="cc-create-flow__status-copy">
-                <span>{currentStepError ? 'Lineas pendientes' : 'Lineas listas'}</span>
-                <strong>{currentStepError ?? `${lines.length} linea(s) preparadas para revision.`}</strong>
+                <span>{currentStepError ? 'Servicio pendiente' : 'Servicio listo'}</span>
+                <strong>{currentStepError ?? `${lines.length} concepto(s) preparados para la estimacion.`}</strong>
               </div>
             </article>
 
@@ -720,11 +740,151 @@ export function QuoteCreateFlow({
                       required
                     />
                   </label>
+
                   <ConceptSuggestions
                     suggestions={getSuggestionsForLine(line.concept)}
                     onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
                     onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
                   />
+
+                  <div className="cc-create-flow__line-actions">
+                    <small className="cc-create-flow__helper">Aqui solo decides el alcance base. Cantidades y precio vienen en la estimacion.</small>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => removeLine(line.local_id)}
+                      disabled={lines.length === 1}
+                    >
+                      Quitar concepto
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <div className="cc-create-flow__microactions">
+              <strong>Microacciones</strong>
+              <div className="cc-create-flow__microactions-row">
+                <button type="button" className="secondary-button" onClick={addLine}>
+                  Anadir concepto
+                </button>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.property ? (
+          <section className="cc-create-flow__section">
+            {activeContextualFlow ? activeContextualFlow : (
+              <>
+                <article className="cc-create-flow__hero-card">
+                  <span className="cc-step-flow__eyebrow">Paso 3</span>
+                  <strong>Relaciona el inmueble</strong>
+                  <small>La propiedad no siempre es obligatoria, pero conviene fijarla ahora si ya existe.</small>
+                </article>
+
+                <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
+                  <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
+                  <div className="cc-create-flow__status-copy">
+                    <span>Contexto operativo</span>
+                    <strong>{selectedProperty ? 'La propiedad ya queda vinculada al presupuesto.' : 'Puedes continuar sin propiedad o crearla ahora.'}</strong>
+                  </div>
+                </article>
+
+                <div className="cc-create-flow__grid">
+                  <label className="form-field">
+                    <span>Propiedad</span>
+                    <select
+                      value={form.property_id}
+                      onChange={(event) => updateField('property_id', event.target.value)}
+                      disabled={Boolean(contextPropertyId)}
+                    >
+                      {!contextPropertyId ? <option value="">Sin propiedad</option> : null}
+                      {availableProperties.map((property) => (
+                        <option key={property.id} value={property.id}>
+                          {formatPropertyLabel(property)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {form.client_id && !contextPropertyId ? (
+                    <ContextualCreateSection
+                      actionLabel="Crear propiedad"
+                      title="Propiedad pendiente"
+                      description="Anadela ahora y quedara enlazada al presupuesto sin perder progreso."
+                      isOpen={showPropertyCreate}
+                      onToggle={() => setShowPropertyCreate(true)}
+                    >
+                      <></>
+                    </ContextualCreateSection>
+                  ) : null}
+                </div>
+              </>
+            )}
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.conditions ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 4</span>
+              <strong>Define condiciones y seguimiento</strong>
+              <small>El estado comercial y las notas quedan juntos para no mezclarlos con lineas ni relaciones.</small>
+            </article>
+
+            <div className="cc-create-flow__grid">
+              <label className="form-field">
+                <span>Estado</span>
+                <select value={form.status} onChange={(event) => updateField('status', event.target.value)}>
+                  {quoteStatusOptions.map((status) => (
+                    <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
+                  ))}
+                </select>
+              </label>
+
+              <article className="cc-create-flow__panel">
+                <strong>{commercialSummary.totalLabel}</strong>
+                <small>{getQuoteCustomerFacingTotalNote()}</small>
+              </article>
+
+              <label className="form-field form-field-full">
+                <span>Notas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  rows={5}
+                  placeholder="Condiciones, alcance, exclusiones o notas comerciales"
+                />
+              </label>
+            </div>
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.estimate ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 5</span>
+              <strong>Completa la estimacion</strong>
+              <small>Ahora si: cantidades, unidades y precio final del presupuesto, manteniendo la nota comercial sin IVA.</small>
+            </article>
+
+            <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
+              <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
+              <div className="cc-create-flow__status-copy">
+                <span>{currentStepError ? 'Estimacion pendiente' : 'Estimacion lista'}</span>
+                <strong>{currentStepError ?? `${lines.length} linea(s) preparadas para revision final.`}</strong>
+              </div>
+            </article>
+
+            <div className="cc-create-flow__line-list">
+              {lines.map((line, index) => (
+                <article key={line.local_id} className="cc-create-flow__line-card">
+                  <article className="cc-create-flow__panel form-field-full">
+                    <span className="cc-create-flow__summary-label">Concepto {index + 1}</span>
+                    <strong>{line.concept || 'Concepto pendiente'}</strong>
+                    <small>Si necesitas reescribir el alcance, vuelve al paso de tipo de servicio.</small>
+                  </article>
 
                   <label className="form-field">
                     <span>Cantidad</span>
@@ -757,46 +917,25 @@ export function QuoteCreateFlow({
                     <span>Importe</span>
                     <input value={formatQuoteLineSubtotalInput(line)} readOnly />
                   </label>
-
-                  <div className="cc-create-flow__line-actions">
-                    <small className="cc-create-flow__helper">Cada linea se guarda exactamente como la escribes.</small>
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => removeLine(line.local_id)}
-                      disabled={lines.length === 1}
-                    >
-                      Quitar linea
-                    </button>
-                  </div>
                 </article>
               ))}
-            </div>
-
-            <div className="cc-create-flow__microactions">
-              <strong>Microacciones</strong>
-              <div className="cc-create-flow__microactions-row">
-                <button type="button" className="secondary-button" onClick={addLine}>
-                  Añadir linea
-                </button>
-              </div>
             </div>
           </section>
         ) : null}
 
-        {currentStep === 3 ? (
+        {currentStep === stepIndexById.review ? (
           <section className="cc-create-flow__section">
             <article className="cc-create-flow__hero-card">
-              <span className="cc-step-flow__eyebrow">Paso 4</span>
-              <strong>Revisa el presupuesto antes de guardar</strong>
-              <small>Si detectamos un bloqueo, te devolvemos al paso correcto sin perder lineas ni notas.</small>
+              <span className="cc-step-flow__eyebrow">Paso 6</span>
+              <strong>Revision final obligatoria</strong>
+              <small>Confirmas contexto, condiciones y precio final antes de crear el presupuesto.</small>
             </article>
 
             <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
               <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
               <div className="cc-create-flow__status-copy">
-                <span>Documento listo</span>
-                <strong>Ya puedes guardar el presupuesto con su trazabilidad completa.</strong>
+                <span>Presupuesto listo</span>
+                <strong>El flujo esta preparado para guardar sin enviar documentos ni mensajes automaticamente.</strong>
               </div>
             </article>
 
@@ -809,13 +948,30 @@ export function QuoteCreateFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{lines.length} linea(s)</small>
+                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.totalLabel}</span>
+                <strong>{commercialSummary.totalValue}</strong>
+                <small>{commercialSummary.totalNote}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.taxLabel}</span>
+                <strong>{commercialSummary.taxValue}</strong>
+                <small>{commercialSummary.taxNote}</small>
               </article>
             </div>
 
+            {form.notes.trim() ? (
+              <article className="cc-create-flow__panel">
+                <strong>Notas comerciales</strong>
+                <small>{form.notes.trim()}</small>
+              </article>
+            ) : null}
+
             {lines.map((line, index) => (
               <article key={line.local_id} className="cc-create-flow__panel">
-                <strong>Línea {index + 1}</strong>
+                <strong>Linea {index + 1}</strong>
                 <small>{line.concept || 'Concepto pendiente'}</small>
                 <div className="cc-create-flow__summary-list">
                   <div className="cc-create-flow__summary-item">
@@ -827,16 +983,69 @@ export function QuoteCreateFlow({
                     <strong>{line.unit}</strong>
                   </div>
                   <div className="cc-create-flow__summary-item">
-                    <span>Precio</span>
-                    <strong>{line.unit_price} €</strong>
+                    <span>Precio unitario</span>
+                    <strong>{line.unit_price} EUR</strong>
                   </div>
                   <div className="cc-create-flow__summary-item">
                     <span>Importe</span>
-                    <strong>{formatQuoteLineSubtotalInput(line)} €</strong>
+                    <strong>{formatQuoteLineSubtotalInput(line)} EUR</strong>
                   </div>
                 </div>
               </article>
             ))}
+          </section>
+        ) : null}
+
+        {currentStep === stepIndexById.success && successState ? (
+          <section className="cc-create-flow__section">
+            <article className="cc-create-flow__hero-card">
+              <span className="cc-step-flow__eyebrow">Paso 7</span>
+              <strong>Presupuesto creado</strong>
+              <small>La creacion ya termino. Ahora eliges la siguiente accion sin duplicar botones primarios.</small>
+            </article>
+
+            <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
+              <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
+              <div className="cc-create-flow__status-copy">
+                <span>Registro completado</span>
+                <strong>Presupuesto {successState.quoteId} guardado con contexto, lineas y revision final.</strong>
+              </div>
+            </article>
+
+            <div className="cc-create-flow__review-grid">
+              <article className="cc-create-flow__review-card">
+                <span>Cliente</span>
+                <strong>{selectedClient ? formatClientLabel(selectedClient) : successState.clientId}</strong>
+                <small>{selectedProperty ? formatPropertyLabel(selectedProperty) : 'Sin propiedad asociada'}</small>
+              </article>
+              <article className="cc-create-flow__review-card">
+                <span>{commercialSummary.totalLabel}</span>
+                <strong>{commercialSummary.totalValue}</strong>
+                <small>{commercialSummary.totalNote}</small>
+              </article>
+            </div>
+
+            <article className="cc-create-flow__panel">
+              <strong>Siguientes acciones recomendadas</strong>
+              <div className="cc-create-flow__summary-list">
+                <div className="cc-create-flow__summary-item">
+                  <span>Ver detalle</span>
+                  <strong>Workspace del presupuesto</strong>
+                </div>
+                <div className="cc-create-flow__summary-item">
+                  <span>Documento</span>
+                  <strong>{onOpenDocumentForQuote ? 'Listo para abrir' : 'Disponible desde el detalle'}</strong>
+                </div>
+                <div className="cc-create-flow__summary-item">
+                  <span>Mensajes</span>
+                  <strong>No se envia nada automaticamente</strong>
+                </div>
+                <div className="cc-create-flow__summary-item">
+                  <span>Facturacion</span>
+                  <strong>Se decide despues, nunca automaticamente</strong>
+                </div>
+              </div>
+            </article>
           </section>
         ) : null}
 
@@ -846,7 +1055,6 @@ export function QuoteCreateFlow({
             <p>{submitError}</p>
           </div>
         ) : null}
-
       </FullscreenStepFlow>
 
       <DuplicateReviewOverlay
@@ -872,7 +1080,7 @@ export function QuoteCreateFlow({
       <ConfirmDialog
         isOpen={showCancelConfirm}
         title="Descartar presupuesto en curso"
-        description="Si cierras ahora, perderas las lineas y notas del presupuesto en este fullscreen flow."
+        description="Si cierras ahora, perderas el progreso no guardado del presupuesto."
         confirmLabel="Descartar cambios"
         tone="warning"
         onCancel={() => setShowCancelConfirm(false)}
@@ -881,6 +1089,7 @@ export function QuoteCreateFlow({
           onCancel?.()
         }}
       />
+
     </>
   )
 }

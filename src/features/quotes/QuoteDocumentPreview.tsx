@@ -1,12 +1,12 @@
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
-import { formatCurrency } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import '../documents/documentSurfaceStyles'
 import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { QuoteDocumentA4 } from './QuoteDocumentA4'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
+import { formatQuoteCustomerFacingTotal } from './quoteCommercialPresentation'
 
 interface QuoteDocumentPreviewProps {
   quote: QuoteListItem | null
@@ -70,7 +70,12 @@ function QuoteDocumentPreviewContent({
         </div>
         <div className="cc-doc-preview-panel__meta" aria-label="Resumen del documento">
           <span className={`lead-badge cc-status-badge cc-status-badge--${hydratedQuote.status}`}>{getStatusLabel(hydratedQuote.status)}</span>
-          <span className="cc-doc-preview-panel__pill">{formatCurrency(hydratedQuote.total)}</span>
+          <span className="cc-doc-preview-panel__pill">
+            {formatQuoteCustomerFacingTotal({
+              subtotal: Number(hydratedQuote.subtotal || 0),
+              total: Number(hydratedQuote.total || 0),
+            })}
+          </span>
         </div>
       </div>
 

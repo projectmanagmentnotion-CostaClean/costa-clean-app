@@ -5,6 +5,10 @@ import type { QuoteLineItem, QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { normalizeLineConcept, simplifyLineConcept } from './lineConcepts'
+import {
+  getQuoteCommercialSummary,
+  getQuoteCustomerFacingTotalLabel,
+} from './quoteCommercialPresentation'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -184,6 +188,11 @@ export function QuoteDocumentA4({
   const propertyAddress = buildPropertyAddress(quote, properties)
   const documentLines = getDocumentLines(quote, properties)
   const primaryConcept = documentLines[0]?.concept || 'Servicio de limpieza'
+  const commercialSummary = getQuoteCommercialSummary({
+    subtotal: Number(quote.subtotal || 0),
+    taxAmount: Number(quote.tax_amount || 0),
+    total: Number(quote.total || 0),
+  })
 
   return (
     <article className={articleClassName}>
@@ -217,7 +226,7 @@ export function QuoteDocumentA4({
           </div>
           <div className="cc-invoice-a4__doc-row">
             <span>Revision economica</span>
-            <strong>Total estimado con IVA</strong>
+            <strong>{getQuoteCustomerFacingTotalLabel()}</strong>
           </div>
         </div>
       </header>
@@ -299,19 +308,20 @@ export function QuoteDocumentA4({
 
         <aside className="cc-invoice-a4__totals">
           <div className="cc-invoice-a4__total-row">
-            <span>Base estimada</span>
-            <strong>{formatCurrency(quote.subtotal)}</strong>
+            <span>{commercialSummary.subtotalLabel}</span>
+            <strong>{commercialSummary.subtotalValue}</strong>
           </div>
 
           <div className="cc-invoice-a4__total-row">
-            <span>IVA ({businessRules.defaultTaxRate * 100}%)</span>
-            <strong>{formatCurrency(quote.tax_amount ?? 0)}</strong>
+            <span>{commercialSummary.taxLabel}</span>
+            <strong>{commercialSummary.taxValue}</strong>
           </div>
 
           <div className="cc-invoice-a4__total-row cc-invoice-a4__total-row--grand">
-            <span>Total presupuesto</span>
-            <strong>{formatCurrency(quote.total)}</strong>
+            <span>{commercialSummary.totalLabel}</span>
+            <strong>{commercialSummary.totalValue}</strong>
           </div>
+          <p className="cc-invoice-a4__footnote">{commercialSummary.totalNote}</p>
         </aside>
       </section>
     </article>

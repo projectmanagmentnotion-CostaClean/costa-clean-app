@@ -3279,6 +3279,20 @@
   gap: 1rem;
 }
 
+.cc-dashboard-page--focus .cc-visual-executive-header {
+  gap: 0.9rem;
+}
+
+.cc-dashboard-page--focus .cc-visual-executive-header__main {
+  gap: 0.72rem;
+}
+
+.cc-dashboard-page--focus .cc-visual-executive-header__summary {
+  max-width: 58ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
 .cc-dashboard-console-hero--decision,
 .cc-dashboard-console-hero__grid--decision,
 .cc-dashboard-console-operating-grid,
@@ -3421,6 +3435,10 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.cc-dashboard-console-quickactions--compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .cc-dashboard-console-quickaction {
   display: grid;
   gap: 0.22rem;
@@ -3506,9 +3524,14 @@
 }
 
 @media (max-width: 720px) {
+  .cc-dashboard-page--focus .cc-visual-executive-header {
+    padding: 1.15rem 1.05rem;
+  }
+
   .cc-dashboard-header__meta--decision,
   .cc-dashboard-console-kpis,
-  .cc-dashboard-console-hero__grid--decision {
+  .cc-dashboard-console-hero__grid--decision,
+  .cc-dashboard-console-quickactions--compact {
     grid-template-columns: minmax(0, 1fr);
   }
 

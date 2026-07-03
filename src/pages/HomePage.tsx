@@ -1,8 +1,7 @@
 import type { AppView } from '../app/navigation'
-import { ExecutiveHeader } from '../components/ExecutiveHeader'
-import { InsightPanel } from '../components/InsightPanel'
 import type { SeverityTone } from '../components/SeverityBadge'
 import { VisualKpiCard } from '../components/VisualKpiCard'
+import { DSEmptyState, DSPageHeader } from '../design-system/components'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
@@ -79,6 +78,25 @@ interface HomePageProps {
   onRunOperationalAction: (action: OperationalAction) => void
 }
 
+interface HomePrimaryAction {
+  primaryKey: string
+  secondaryKey: string
+  eyebrow: string
+  label: string
+  summary: string
+  detail: string
+  onRun: () => void
+  secondaryLabel: string
+  onSecondaryRun: () => void
+}
+
+interface HomeQuickAction {
+  key: string
+  title: string
+  detail: string
+  onRun: () => void
+}
+
 export function HomePage({
   metrics,
   agenda,
@@ -86,11 +104,15 @@ export function HomePage({
   onOpenView,
   onRunKpiAction,
   alerts,
+  onOpenAlert,
   operationalIncidents,
   operationalQuickViews,
   onRunOperationalAction,
 }: HomePageProps) {
   const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
+  const priorityAlerts = alerts
+    .filter((alert) => alert.severity === 'critical' || alert.severity === 'warning')
+    .slice(0, 3)
   const urgentCollectionsCount = metrics.unpaidInvoicesOlderThan7DaysCount + metrics.partiallyPaidInvoicesCount
   const topIncident = operationalIncidents[0] ?? null
   const quickViewById = new Map(operationalQuickViews.map((view) => [view.id, view]))
@@ -106,8 +128,10 @@ export function HomePage({
   const overdueInternalView = quickViewById.get('overdue-internal') ?? null
   const fiscalRiskCount = metrics.expensesMissingValidVatInvoiceCount + metrics.fiscalReviewExpensesCount + metrics.fiscalRiskExpensesCount
 
-  const homePrimaryAction = topIncident
+  const homePrimaryAction: HomePrimaryAction = topIncident
     ? {
+        primaryKey: `incident:${topIncident.id}`,
+        secondaryKey: topIncident.secondaryAction ? `incident-secondary:${topIncident.id}` : 'alerts',
         eyebrow: topIncident.severity === 'critical' ? 'Bloqueo principal' : 'Prioridad principal',
         label: topIncident.primaryAction.label,
         summary: topIncident.summary,
@@ -122,6 +146,8 @@ export function HomePage({
       }
     : metrics.completedJobsWithoutInvoiceCount > 0
       ? {
+          primaryKey: 'completed-jobs-without-invoice',
+          secondaryKey: 'completed-jobs-without-invoice',
           eyebrow: 'Prioridad principal',
           label: 'Facturar servicios pendientes',
           summary: `${metrics.completedJobsWithoutInvoiceCount} servicio(s) completados siguen sin factura`,
@@ -132,6 +158,8 @@ export function HomePage({
         }
       : urgentCollectionsCount > 0
         ? {
+            primaryKey: 'outstanding-invoices',
+            secondaryKey: 'fiscal-closing',
             eyebrow: 'Prioridad principal',
             label: 'Revisar cobros pendientes',
             summary: `${urgentCollectionsCount} factura(s) requieren seguimiento`,
@@ -141,6 +169,8 @@ export function HomePage({
             onSecondaryRun: () => onOpenView('fiscal_closing'),
           }
         : {
+            primaryKey: metrics.outstandingReceivablesTotal > 0 ? 'outstanding-invoices' : 'new-invoice',
+            secondaryKey: 'fiscal-closing',
             eyebrow: 'Prioridad principal',
             label: metrics.outstandingReceivablesTotal > 0 ? 'Ver pendientes de cobro' : 'Nueva factura',
             summary: metrics.outstandingReceivablesTotal > 0
@@ -149,7 +179,11 @@ export function HomePage({
             detail: metrics.outstandingReceivablesTotal > 0
               ? 'Sin un bloqueo dominante, conviene atacar caja abierta antes de abrir mas frentes.'
               : 'La operativa esta limpia y el mejor siguiente paso es abrir una factura o revisar facturacion del dia.',
-            onRun: () => (metrics.outstandingReceivablesTotal > 0 ? onRunKpiAction('outstanding_invoices') : onOpenView('invoices')),
+            onRun: () => (
+              metrics.outstandingReceivablesTotal > 0
+                ? onRunKpiAction('outstanding_invoices')
+                : onOpenView('invoices')
+            ),
             secondaryLabel: 'Abrir cierre fiscal',
             onSecondaryRun: () => onOpenView('fiscal_closing'),
           }
@@ -160,7 +194,7 @@ export function HomePage({
     acceptedWithoutJobView,
     overdueInternalView,
     partialCollectionsView,
-  ].filter(Boolean).slice(0, 4)
+  ].filter(Boolean).slice(0, 3)
 
   const decisionKpis = [
     {
@@ -187,61 +221,65 @@ export function HomePage({
       tone: 'info' as SeverityTone,
       onRun: () => onRunKpiAction('jobs_today'),
     },
-    {
-      label: 'Riesgo fiscal o documental',
-      value: String(fiscalRiskCount),
-      detail: 'Gastos sin soporte, pendientes de revision o con riesgo fiscal.',
-      badge: metrics.expensesMissingValidVatInvoiceCount > 0 ? 'Documental' : 'Revision',
-      tone: 'warning' as SeverityTone,
-      onRun: () => onOpenView('fiscal_closing'),
-    },
   ]
 
-  const primaryQuickActions = [
+  const primaryQuickActions: HomeQuickAction[] = [
     {
+      key: 'new-invoice',
       title: 'Nueva factura',
       detail: 'Emitir o revisar facturacion.',
       onRun: () => onOpenView('invoices'),
     },
     {
+      key: 'outstanding-invoices',
       title: 'Ver pendientes de cobro',
       detail: 'Abrir facturas abiertas del periodo.',
       onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
+      key: 'new-quote',
       title: 'Nuevo presupuesto',
       detail: 'Abrir propuesta comercial.',
       onRun: () => onOpenView('quotes'),
     },
     {
+      key: 'completed-jobs-without-invoice',
       title: 'Ver trabajo sin facturar',
       detail: 'Ir a servicios completados pendientes.',
       onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
     },
   ]
 
-  const secondaryQuickActions = [
+  const secondaryQuickActions: HomeQuickAction[] = [
     {
+      key: 'new-job',
       title: 'Nuevo servicio',
       detail: 'Crear trabajo operativo.',
       onRun: () => onOpenView('jobs'),
     },
     {
+      key: 'new-expense',
       title: 'Nuevo gasto',
       detail: 'Registrar gasto del periodo.',
       onRun: () => onOpenView('expenses'),
     },
     {
+      key: 'fiscal-closing',
       title: 'Revisar cierre fiscal',
       detail: 'Abrir periodo y readiness.',
       onRun: () => onOpenView('fiscal_closing'),
     },
     {
+      key: 'expenses-review',
       title: 'Ver gastos por revisar',
       detail: 'Abrir revision fiscal pendiente.',
       onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
     },
   ]
+
+  const compactQuickActions = [...primaryQuickActions, ...secondaryQuickActions]
+    .filter((action) => action.key !== homePrimaryAction.primaryKey && action.key !== homePrimaryAction.secondaryKey)
+    .slice(0, 4)
 
   const operationalQueue = [
     ...urgentIncidents.map((incident) => ({
@@ -260,7 +298,7 @@ export function HomePage({
       onRun: () => onOpenJobWorkspace(job.id),
       tone: 'info' as const,
     })),
-  ].slice(0, 5)
+  ].slice(0, 4)
 
   const fiscalReviewItems = [
     {
@@ -281,12 +319,6 @@ export function HomePage({
       detail: 'Registros con riesgo fiscal activo.',
       onRun: () => onRunKpiAction('expenses_fiscal_medium_high_risk'),
     },
-    {
-      label: 'Preparar cierre',
-      value: 'Accion',
-      detail: 'Abrir readiness y resumen del periodo.',
-      onRun: () => onOpenView('fiscal_closing'),
-    },
   ]
 
   function runQuickView(view: OperationalQuickView | null) {
@@ -294,34 +326,47 @@ export function HomePage({
     onRunOperationalAction(view.action)
   }
 
+  const supportFootnotes = [
+    ...priorityAlerts.map((alert) => ({
+      key: `alert:${alert.id}`,
+      title: alert.title,
+      detail: alert.summary,
+      onRun: () => onOpenAlert(alert),
+    })),
+    ...(missingFiscalView ? [{
+      key: `quick-view:${missingFiscalView.id}`,
+      title: missingFiscalView.label,
+      detail: missingFiscalView.summary,
+      onRun: () => runQuickView(missingFiscalView),
+    }] : []),
+    ...(acceptedWithoutJobView ? [{
+      key: `quick-view:${acceptedWithoutJobView.id}`,
+      title: acceptedWithoutJobView.label,
+      detail: acceptedWithoutJobView.summary,
+      onRun: () => runQuickView(acceptedWithoutJobView),
+    }] : []),
+    ...followUpIncidents.map((incident) => ({
+      key: `follow-up:${incident.id}`,
+      title: incident.title,
+      detail: incident.summary,
+      onRun: () => onRunOperationalAction(incident.primaryAction),
+    })),
+  ].slice(0, 4)
+
+  const shouldShowAlertBand = priorityAlerts.length > 0 || fiscalRiskCount > 0 || supportFootnotes.length > 0
+
   return (
-    <section className="cc-dashboard-page">
-      <ExecutiveHeader
+    <section className="cc-dashboard-page cc-dashboard-page--focus">
+      <DSPageHeader
         eyebrow="Centro operativo"
-        title="Que hago ahora"
-        summary="Dinero pendiente, trabajo bloqueado, agenda inmediata y revision fiscal/documental en una sola lectura corta."
+        title="Inicio"
+        summary="Empieza por una sola prioridad, revisa la cola inmediata y deja el resto del contexto en segundo plano."
         statusLabel={criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Operativa estable'}
         statusTone={criticalAlertsCount > 0 ? 'critical' : 'success'}
-        primaryAction={{
-          label: homePrimaryAction.label,
-          onClick: homePrimaryAction.onRun,
-        }}
-        secondaryAction={{
-          label: homePrimaryAction.secondaryLabel,
-          onClick: homePrimaryAction.onSecondaryRun,
-        }}
         metricLabel="Hoy"
         metricValue={`${metrics.jobsScheduledTodayCount} servicio(s)`}
         metricHint={fiscalRiskCount > 0 ? `${fiscalRiskCount} punto(s) de revision fiscal o documental.` : 'Sin ruido fiscal dominante en primer nivel.'}
-      >
-        <InsightPanel
-          title="Prioridad principal"
-          tone={criticalAlertsCount > 0 ? 'critical' : urgentCollectionsCount > 0 ? 'warning' : 'info'}
-          insight={homePrimaryAction.summary}
-          implication={homePrimaryAction.detail}
-          action={homePrimaryAction.label}
-        />
-      </ExecutiveHeader>
+      />
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
         <section className="cc-dashboard-block cc-dashboard-console-hero cc-dashboard-console-hero--decision">
@@ -347,7 +392,7 @@ export function HomePage({
             <article className="cc-dashboard-console-sidepanel cc-dashboard-console-sidepanel--decision">
               <div className="cc-dashboard-console-sidepanel__header">
                 <h3>Dinero pendiente o bloqueado</h3>
-                <p>Una sola lectura para caja abierta, trabajo sin facturar y conversion atascada.</p>
+                <p>Solo los tres frentes que mas suelen mover caja o desbloquear conversion.</p>
               </div>
               <div className="cc-dashboard-console-lanes">
                 {moneyQueue.map((view) => (
@@ -386,8 +431,8 @@ export function HomePage({
         <section className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Cola operativa de hoy</h2>
-              <p>Maximo cinco items visibles para abrir el siguiente paso sin convertir el Home en una lista larga.</p>
+              <h2>En marcha hoy</h2>
+              <p>Una cola corta para abrir el siguiente paso real sin transformar Inicio en una lista pesada.</p>
             </div>
           </div>
 
@@ -418,10 +463,10 @@ export function HomePage({
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">
-                  <strong>Sin cola operativa inmediata</strong>
-                  <p>No hay incidencias ni servicios urgentes visibles para hoy.</p>
-                </div>
+                <DSEmptyState
+                  title="Sin cola operativa inmediata"
+                  description="No hay incidencias ni servicios urgentes visibles para hoy."
+                />
               )}
             </article>
 
@@ -443,10 +488,10 @@ export function HomePage({
                   ))}
                 </div>
               ) : (
-                <div className="empty-state">
-                  <strong>Sin siguiente cola inmediata</strong>
-                  <p>No hay servicios proximos criticos cargados despues de hoy.</p>
-                </div>
+                <DSEmptyState
+                  title="Sin siguiente cola inmediata"
+                  description="No hay servicios proximos criticos cargados despues de hoy."
+                />
               )}
             </article>
           </div>
@@ -455,123 +500,105 @@ export function HomePage({
         <section className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Acciones rapidas</h2>
-              <p>Primero las cuatro acciones dominantes. Debajo, accesos secundarios mas discretos.</p>
+              <h2>Accesos rapidos</h2>
+              <p>Solo accesos utiles que no duplican la prioridad principal ya visible arriba.</p>
             </div>
           </div>
 
-          <div className="cc-dashboard-console-support-grid">
-            <article className="cc-dashboard-console-workpanel">
-              <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Principales</span>
-                <h3>Crear o mover ahora</h3>
-                <p>Las acciones primarias dominan visualmente porque suelen abrir el siguiente paso real.</p>
-              </div>
+          <article className="cc-dashboard-console-workpanel">
+            <div>
+              <span className="cc-dashboard-console-workpanel__eyebrow">Minimas</span>
+              <h3>Crear o revisar sin ruido</h3>
+              <p>Accesos rapidos cercanos, pero sin competir con la decision principal del dia.</p>
+            </div>
 
-              <div className="cc-dashboard-console-quickactions">
-                {primaryQuickActions.map((action) => (
-                  <button
-                    key={action.title}
-                    type="button"
-                    className="cc-dashboard-console-quickaction cc-dashboard-console-quickaction--primary"
-                    onClick={action.onRun}
-                  >
-                    <strong>{action.title}</strong>
-                    <span>{action.detail}</span>
-                  </button>
-                ))}
-              </div>
-            </article>
-
-            <article className="cc-dashboard-console-workpanel">
-              <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Secundarias</span>
-                <h3>Accesos utiles</h3>
-                <p>Quedan a mano, pero no compiten con dinero bloqueado ni con la prioridad principal.</p>
-              </div>
-
-              <div className="cc-dashboard-console-quickactions">
-                {secondaryQuickActions.map((action) => (
-                  <button
-                    key={action.title}
-                    type="button"
-                    className="cc-dashboard-console-quickaction"
-                    onClick={action.onRun}
-                  >
-                    <strong>{action.title}</strong>
-                    <span>{action.detail}</span>
-                  </button>
-                ))}
-              </div>
-            </article>
-          </div>
+            <div className="cc-dashboard-console-quickactions cc-dashboard-console-quickactions--compact">
+              {compactQuickActions.map((action, index) => (
+                <button
+                  key={action.key}
+                  type="button"
+                  className={index < 2 ? 'cc-dashboard-console-quickaction cc-dashboard-console-quickaction--primary' : 'cc-dashboard-console-quickaction'}
+                  onClick={action.onRun}
+                >
+                  <strong>{action.title}</strong>
+                  <span>{action.detail}</span>
+                </button>
+              ))}
+            </div>
+          </article>
         </section>
 
-        <section className="cc-dashboard-block cc-dashboard-console-section">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Revision fiscal y documental</h2>
-              <p>Una banda breve de alerta para decidir si toca revisar gastos o preparar cierre, sin meter el informe completo en Home.</p>
-            </div>
-          </div>
-
-          <div className="cc-dashboard-console-support-grid">
-            <article className="cc-dashboard-console-sidepanel">
-              <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Riesgo del periodo</h3>
-                <p>Lo minimo necesario para detectar si el cierre o el soporte requieren una pasada rapida.</p>
+        {shouldShowAlertBand ? (
+          <section className="cc-dashboard-block cc-dashboard-console-section">
+            <div className="cc-dashboard-block__header">
+              <div>
+                <h2>Alertas y revision</h2>
+                <p>Solo señales que justifican revisar soporte, alertas o cierre sin abrir el informe completo.</p>
               </div>
+            </div>
 
-              <div className="cc-dashboard-console-alertlist cc-bounded-list">
-                {fiscalReviewItems.map((item) => (
+            <div className="cc-dashboard-console-support-grid">
+              <article className="cc-dashboard-console-sidepanel">
+                <div className="cc-dashboard-console-sidepanel__header">
+                  <h3>Riesgo del periodo</h3>
+                  <p>Lectura corta para saber si el cierre o el soporte requieren una pasada rapida.</p>
+                </div>
+
+                <div className="cc-dashboard-console-alertlist cc-bounded-list">
+                  {fiscalReviewItems.map((item) => (
+                    <button
+                      key={item.label}
+                      type="button"
+                      className="cc-dashboard-console-alert"
+                      onClick={item.onRun}
+                    >
+                      <span>{item.value}</span>
+                      <strong>{item.label}</strong>
+                      <p>{item.detail}</p>
+                    </button>
+                  ))}
                   <button
-                    key={item.label}
                     type="button"
                     className="cc-dashboard-console-alert"
-                    onClick={item.onRun}
+                    onClick={() => onOpenView('fiscal_closing')}
                   >
-                    <span>{item.value}</span>
-                    <strong>{item.label}</strong>
-                    <p>{item.detail}</p>
+                    <span>Accion</span>
+                    <strong>Preparar cierre</strong>
+                    <p>Abrir readiness y resumen del periodo.</p>
                   </button>
-                ))}
-              </div>
-            </article>
+                </div>
+              </article>
 
-            <article className="cc-dashboard-console-sidepanel">
-              <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Seguimiento corto</h3>
-                <p>Contexto auxiliar que conviene tener visible, pero sin robar protagonismo.</p>
-              </div>
+              <article className="cc-dashboard-console-sidepanel">
+                <div className="cc-dashboard-console-sidepanel__header">
+                  <h3>Seguimiento corto</h3>
+                  <p>Alertas importantes y contexto auxiliar sin duplicar la cola operativa principal.</p>
+                </div>
 
-              <div className="cc-dashboard-console-footnotes">
-                {missingFiscalView ? (
-                  <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(missingFiscalView)}>
-                    <strong>{missingFiscalView.label}</strong>
-                    <span>{missingFiscalView.summary}</span>
-                  </button>
-                ) : null}
-                {acceptedWithoutJobView ? (
-                  <button type="button" className="cc-dashboard-console-footnote" onClick={() => runQuickView(acceptedWithoutJobView)}>
-                    <strong>{acceptedWithoutJobView.label}</strong>
-                    <span>{acceptedWithoutJobView.summary}</span>
-                  </button>
-                ) : null}
-                {followUpIncidents.map((incident) => (
-                  <button
-                    key={incident.id}
-                    type="button"
-                    className="cc-dashboard-console-footnote"
-                    onClick={() => onRunOperationalAction(incident.primaryAction)}
-                  >
-                    <strong>{incident.title}</strong>
-                    <span>{incident.summary}</span>
-                  </button>
-                ))}
-              </div>
-            </article>
-          </div>
-        </section>
+                {supportFootnotes.length > 0 ? (
+                  <div className="cc-dashboard-console-footnotes">
+                    {supportFootnotes.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        className="cc-dashboard-console-footnote"
+                        onClick={item.onRun}
+                      >
+                        <strong>{item.title}</strong>
+                        <span>{item.detail}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <DSEmptyState
+                    title="Sin alertas importantes"
+                    description="No hay alertas ni seguimientos auxiliares que necesiten protagonismo ahora mismo."
+                  />
+                )}
+              </article>
+            </div>
+          </section>
+        ) : null}
       </div>
     </section>
   )

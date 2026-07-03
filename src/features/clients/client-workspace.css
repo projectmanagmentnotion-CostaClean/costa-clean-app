@@ -215,6 +215,12 @@
 .cc-client-workspace__tabs {
   border-bottom: 1px solid var(--card-border);
   padding-bottom: 0.55rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cc-client-workspace__tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .cc-client-workspace__tab {
@@ -700,6 +706,12 @@
   .cc-client-workspace__next-step {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .cc-client-workspace__next-step .cc-action-group,
+  .cc-client-workspace__next-step .form-actions {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .cc-client-workspace__tabs {

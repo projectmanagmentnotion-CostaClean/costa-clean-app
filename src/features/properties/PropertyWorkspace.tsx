@@ -382,6 +382,23 @@ export function PropertyWorkspace({
             <strong>{owner ? formatClientLabel(owner) : 'Sin cliente'}</strong>
             <small>{owner?.phone ?? owner?.email ?? 'Sin contacto principal'}</small>
           </article>
+          <article className="cc-client-workspace__meta-card">
+            <span>Documento o agenda dominante</span>
+            <strong>
+              {latestInvoice
+                ? formatInvoiceLabel(latestInvoice)
+                : nextJob
+                  ? formatJobLabel(nextJob)
+                  : 'Sin documento dominante'}
+            </strong>
+            <small>
+              {latestInvoice
+                ? 'La ultima factura marca la lectura financiera inmediata.'
+                : nextJob
+                  ? `Proximo servicio ${formatDateEs(nextJob.scheduled_date)}`
+                  : 'Todavia no hay agenda ni documento que marque prioridad.'}
+            </small>
+          </article>
         </div>
       </header>
 

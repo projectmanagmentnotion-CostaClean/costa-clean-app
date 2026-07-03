@@ -706,6 +706,8 @@ export function ClientWorkspace({
           : 'Sin emisiones recurrentes previas',
     },
   ]
+  const visiblePropertyFocusItems = relatedProperties.slice(0, 3)
+  const visibleRecurringPlans = relatedRecurringPlans.slice(0, 3)
   const actionOverlay = activeAction ? (
     <ActionFlowOverlay
       isOpen={Boolean(activeAction)}
@@ -889,7 +891,7 @@ export function ClientWorkspace({
                         : 'Aun no hay historico suficiente para una prioridad documental.'}
                   </small>
                 </article>
-                {relatedProperties.slice(0, 3).map((property) => (
+                {visiblePropertyFocusItems.map((property) => (
                   <article key={property.id} className="cc-client-workspace__focus-card">
                     <span>Propiedad viva</span>
                     <strong>{formatPropertyLabel(property)}</strong>
@@ -898,7 +900,12 @@ export function ClientWorkspace({
                     </small>
                   </article>
                 ))}
-                {relatedProperties.length === 0 ? <p>Este cliente aun no tiene propiedades vinculadas.</p> : null}
+                {relatedProperties.length === 0 ? (
+                  <div className="cc-client-workspace__focus-empty">
+                    <strong>Sin propiedades vinculadas</strong>
+                    <p>Crea la primera propiedad para convertir esta ficha en contexto operativo real.</p>
+                  </div>
+                ) : null}
               </div>
             </article>
             <article className="data-section">
@@ -907,7 +914,7 @@ export function ClientWorkspace({
                 <p>Planes activos y emisiones que siguen vivas hoy.</p>
               </div>
               <div className="cc-client-workspace__focus-list">
-                {relatedRecurringPlans.slice(0, 3).map((plan) => (
+                {visibleRecurringPlans.map((plan) => (
                   <article key={plan.id} className="cc-client-workspace__focus-card">
                     <span>Plan recurrente</span>
                     <strong>{formatRecurringPlanLabel(plan)}</strong>
@@ -916,7 +923,12 @@ export function ClientWorkspace({
                     </small>
                   </article>
                 ))}
-                {relatedRecurringPlans.length === 0 ? <p>Este cliente aun no tiene automatizaciones recurrentes.</p> : null}
+                {relatedRecurringPlans.length === 0 ? (
+                  <div className="cc-client-workspace__focus-empty">
+                    <strong>Sin automatizaciones recurrentes</strong>
+                    <p>Cuando el cliente tenga una rutina estable, convendrá preparar la automatización desde aquí.</p>
+                  </div>
+                ) : null}
               </div>
             </article>
           </section>

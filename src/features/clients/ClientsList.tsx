@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { SearchBar } from '../../components/SearchBar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { matchesSearchQuery } from '../documents/search'
 import type { ClientListItem } from './types'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
@@ -52,21 +54,19 @@ export function ClientsList({
         placeholder="Nombre, codigo interno, telefono, email o estado"
       />
 
+      {!error && clients.length > 0 ? (
+        <div className="cc-directory-list__summary">
+          <strong>{filteredClients.length} visibles</strong>
+          <p>{searchQuery.trim() ? 'Filtro activo sobre la cartera operativa.' : 'La lista prioriza cartera activa y deja fuera archivados e inactivos.'}</p>
+        </div>
+      ) : null}
+
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando clientes</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando clientes" description={error} />
       ) : clients.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay clientes</strong>
-          <p>Todavia no existen registros en la tabla clients.</p>
-        </div>
+        <DSEmptyState title="No hay clientes" description="Todavia no existen registros en la tabla clients." />
       ) : filteredClients.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos clientes que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState title="Sin resultados" description="No encontramos clientes que coincidan con tu busqueda." />
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
           {filteredClients.map((client) => {

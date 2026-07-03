@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
-import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { VisualKpiCard } from '../components/VisualKpiCard'
+import '../features/clients/clients-properties-polish.css'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -23,6 +23,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import { formatCurrency } from '../app/displayFormat'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
+import { DSPageHeader } from '../design-system/components/DSPageHeader'
 
 interface ClientsPageProps {
   clients: ClientListItem[]
@@ -180,7 +181,7 @@ export function ClientsPage({
     <section className="page-section cc-master-page">
       {!activeClient ? (
         <>
-          <ExecutiveHeader
+          <DSPageHeader
             eyebrow="Directorio operativo"
             title="Clientes"
             summary="Entrada rapida a workspaces, seguimiento comercial y saldo abierto visible solo cuando cambia la siguiente accion. Este modulo queda como superficie de acceso y contexto, no como dashboard pesado."
@@ -287,11 +288,11 @@ export function ClientsPage({
             </ActionFlowOverlay>
           ) : null}
 
-          <div className="data-section">
+          <div className="data-section cc-directory-page__list-shell">
             <div className="section-header page-header-actions">
               <div>
                 <h2>Directorio de clientes</h2>
-                <p>Haz clic en una tarjeta para abrir su workspace operativo completo.</p>
+                <p>Abre una ficha para ver identidad, propiedades, documentos y siguiente accion sin saturar la portada.</p>
               </div>
             </div>
 

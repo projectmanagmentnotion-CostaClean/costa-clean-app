@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import { SearchBar } from '../../components/SearchBar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { getPropertyTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { matchesSearchQuery } from '../documents/search'
@@ -58,21 +60,19 @@ export function PropertiesList({
         placeholder="Nombre, direccion, codigo interno, cliente, tipo, ciudad o nota"
       />
 
+      {!error && properties.length > 0 ? (
+        <div className="cc-directory-list__summary">
+          <strong>{filteredProperties.length} visibles</strong>
+          <p>{searchQuery.trim() ? 'Filtro activo sobre inmuebles y ubicaciones.' : 'La lista muestra solo propiedades activas y evita ruido de archivados.'}</p>
+        </div>
+      ) : null}
+
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando propiedades</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando propiedades" description={error} />
       ) : properties.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay propiedades</strong>
-          <p>Todavia no existen registros en la tabla properties.</p>
-        </div>
+        <DSEmptyState title="No hay propiedades" description="Todavia no existen registros en la tabla properties." />
       ) : filteredProperties.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos propiedades que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState title="Sin resultados" description="No encontramos propiedades que coincidan con tu busqueda." />
       ) : (
         <div className="lead-list cc-record-list cc-bounded-list">
           {filteredProperties.map((property) => {

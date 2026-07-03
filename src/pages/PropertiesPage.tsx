@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
-import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { VisualKpiCard } from '../components/VisualKpiCard'
+import '../features/clients/clients-properties-polish.css'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -18,6 +18,7 @@ import { usePropertyWorkspaceNavigation } from '../features/properties/useProper
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import { formatCurrency } from '../app/displayFormat'
+import { DSPageHeader } from '../design-system/components/DSPageHeader'
 
 interface PropertiesPageProps {
   properties: PropertyListItem[]
@@ -135,7 +136,7 @@ export function PropertiesPage({
     <section className="page-section cc-master-page">
       {!activeProperty ? (
         <>
-          <ExecutiveHeader
+          <DSPageHeader
             eyebrow="Directorio de contexto"
             title="Propiedades"
             summary="Directorio compacto para abrir workspaces por inmueble y entrar rapido en servicios, presupuestos, facturas o cobros cuando ya existen. No compite con Home ni con los modulos de decision principal."
@@ -252,11 +253,11 @@ export function PropertiesPage({
             </ActionFlowOverlay>
           ) : null}
 
-          <div className="data-section">
+          <div className="data-section cc-directory-page__list-shell">
             <div className="section-header page-header-actions">
               <div>
                 <h2>Directorio de propiedades</h2>
-                <p>Abre una propiedad para ver su estado operativo, documental y financiero en contexto.</p>
+                <p>Abre un inmueble para revisar cliente, agenda, documentos y cobro sin perder contexto operativo.</p>
               </div>
             </div>
 

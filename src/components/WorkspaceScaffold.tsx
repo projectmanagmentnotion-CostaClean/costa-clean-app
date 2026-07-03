@@ -61,7 +61,7 @@ export function WorkspaceScaffold<TTab extends string>({
   overlay,
   children,
 }: WorkspaceScaffoldProps<TTab>) {
-  const visibleMetaCards = metaCards.slice(0, 0)
+  const visibleMetaCards = metaCards.slice(0, 1)
   const hiddenMetaCards = metaCards.slice(1)
   const visibleSnapshotCards = snapshotCards.slice(0, 1)
   const hiddenSnapshotCards = snapshotCards.slice(1)

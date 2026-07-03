@@ -1,4 +1,5 @@
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { formatRecurringPlanLabel } from '../../app/relationshipLabels'
 import type { ClientWorkspaceTab } from '../clients/useClientWorkspaceNavigation'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
@@ -40,10 +41,10 @@ export function DashboardOperationalFocus({
           </div>
 
           {clientBalanceLeaders.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin saldo abierto</strong>
-              <p>No hay clientes con facturas pendientes relevantes.</p>
-            </div>
+            <DSEmptyState
+              title="Sin saldo abierto"
+              description="No hay clientes con facturas pendientes relevantes."
+            />
           ) : (
             <div className="cc-agenda-list">
               {clientBalanceLeaders.map((entry) => (
@@ -82,10 +83,10 @@ export function DashboardOperationalFocus({
           </div>
 
           {dueRecurringPlans.length === 0 ? (
-            <div className="empty-state">
-              <strong>Sin planes listos</strong>
-              <p>No hay automatizaciones recurrentes activas para emitir hoy.</p>
-            </div>
+            <DSEmptyState
+              title="Sin planes listos"
+              description="No hay automatizaciones recurrentes activas para emitir hoy."
+            />
           ) : (
             <div className="cc-agenda-list">
               {dueRecurringPlans.map((plan) => (

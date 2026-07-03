@@ -3,6 +3,9 @@ import { formatCurrency } from '../../app/displayFormat'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import type { ClientListItem } from '../clients/types'
 import { matchesSearchQuery } from '../documents/search'
 import { applySortDirection, compareNumber, compareText, createDefaultPreferences } from '../lists/listPreferences'
@@ -98,15 +101,15 @@ export function QuotesList({
 
   return (
     <section className="data-section cc-module-list-section">
-      <div className="section-header cc-list-section__header">
-        <div>
-          <h2>Presupuestos</h2>
-          <p>Seguimiento comercial y conversion operativa.</p>
-        </div>
-        <span className="cc-list-section__count">
-          {filteredQuotes.length} / {quotes.length}
-        </span>
-      </div>
+      <DSSectionHeader
+        title="Presupuestos"
+        description="Seguimiento comercial y conversion operativa con una sola bandeja de lectura clara."
+        actions={(
+          <span className="cc-list-section__count">
+            {filteredQuotes.length} / {quotes.length}
+          </span>
+        )}
+      />
 
       <ListToolbar
         storageKey="costaclean-list-preferences-quotes"
@@ -141,20 +144,17 @@ export function QuotesList({
       />
 
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando presupuestos</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando presupuestos" description={error} />
       ) : quotes.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay presupuestos</strong>
-          <p>Todavia no existen presupuestos registrados en el sistema.</p>
-        </div>
+        <DSEmptyState
+          title="Todavia no hay presupuestos registrados"
+          description="Cuando exista un presupuesto guardado aparecera aqui con su estado comercial y acceso al documento."
+        />
       ) : filteredQuotes.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos presupuestos que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState
+          title="Sin resultados"
+          description="No encontramos presupuestos que coincidan con tu busqueda y los filtros activos."
+        />
       ) : (
         <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de presupuestos">
           {filteredQuotes.map((quote) => {

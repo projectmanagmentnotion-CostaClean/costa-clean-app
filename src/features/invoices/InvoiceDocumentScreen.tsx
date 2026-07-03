@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
-import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { getStatusLabel } from '../../app/displayText'
+import { DSConfirmDialog } from '../../design-system/components/DSConfirmDialog'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSLoadingState } from '../../design-system/components/DSLoadingState'
 import '../documents/documentSurfaceStyles'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
@@ -76,21 +78,18 @@ export function InvoiceDocumentScreen({
         isOutputDisabled={isLoadingLines || Boolean(linesError)}
       >
         {isLoadingLines ? (
-          <div className="empty-state cc-state-card cc-state-card--loading">
-            <strong>Cargando lineas de factura</strong>
-            <p>Preparando la vista previa con los conceptos reales.</p>
-          </div>
+          <DSLoadingState
+            title="Cargando lineas de factura"
+            description="Preparando la vista previa con los conceptos reales."
+          />
         ) : linesError ? (
-          <div className="empty-state">
-            <strong>No se pudieron cargar las lineas</strong>
-            <p>{linesError}</p>
-          </div>
+          <DSErrorState title="No se pudieron cargar las lineas" description={linesError} />
         ) : (
           <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
         )}
       </DocumentScreenFrame>
 
-      <ConfirmDialog
+      <DSConfirmDialog
         isOpen={Boolean(pendingOutputIntent)}
         title={pendingOutputIntent === 'pdf' ? 'Abrir ventana para guardar PDF' : 'Abrir ventana de impresion'}
         description="El navegador abrira una nueva ventana o pestana para preparar la factura. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."

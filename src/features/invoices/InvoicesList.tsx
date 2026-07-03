@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import { matchesSearchQuery } from '../documents/search'
 import { getStatusLabel } from '../../app/displayText'
 import { formatCurrency } from '../../app/displayFormat'
@@ -106,15 +109,15 @@ export function InvoicesList({
 
   return (
     <section className="data-section cc-module-list-section">
-      <div className="section-header cc-list-section__header">
-        <div>
-          <h2>Facturas</h2>
-          <p>Emision, cobro y trazabilidad documental.</p>
-        </div>
-        <span className="cc-list-section__count">
-          {filteredInvoices.length} / {invoices.length}
-        </span>
-      </div>
+      <DSSectionHeader
+        title="Facturas"
+        description="Emision, cobro y trazabilidad documental con una sola bandeja de lectura operativa."
+        actions={(
+          <span className="cc-list-section__count">
+            {filteredInvoices.length} / {invoices.length}
+          </span>
+        )}
+      />
 
       <ListToolbar
         storageKey="costaclean-list-preferences-invoices"
@@ -149,24 +152,19 @@ export function InvoicesList({
       />
 
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando facturas</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando facturas" description={error} />
       ) : invoices.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay facturas</strong>
-          <p>Todavia no existen facturas registradas en el sistema.</p>
-        </div>
+        <DSEmptyState
+          title="Todavia no hay facturas registradas"
+          description="Cuando exista una factura guardada aparecera aqui con su estado de cobro y su acceso documental."
+        />
       ) : filteredInvoices.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>
-            {preferences.searchQuery.trim()
-              ? `No encontramos facturas para "${preferences.searchQuery.trim()}" con los filtros activos.`
-              : 'No encontramos facturas con los filtros activos.'}
-          </p>
-        </div>
+        <DSEmptyState
+          title="Sin resultados"
+          description={preferences.searchQuery.trim()
+            ? `No encontramos facturas para "${preferences.searchQuery.trim()}" con los filtros activos.`
+            : 'No encontramos facturas con los filtros activos.'}
+        />
       ) : (
         <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de facturas">
           {filteredInvoices.map((invoice) => {

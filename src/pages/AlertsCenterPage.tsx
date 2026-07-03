@@ -12,6 +12,7 @@ import { ExecutiveHeader } from '../components/ExecutiveHeader'
 import { InsightPanel } from '../components/InsightPanel'
 import { SeverityBadge, type SeverityTone } from '../components/SeverityBadge'
 import { VisualKpiCard } from '../components/VisualKpiCard'
+import { DSEmptyState } from '../design-system/components/DSEmptyState'
 import type { AutomationAlertItem } from '../features/automation/types'
 
 interface AlertsCenterPageProps {
@@ -191,10 +192,10 @@ export function AlertsCenterPage({
 
       {activeAlerts.length === 0 ? (
         <section className="cc-dashboard-block">
-          <div className="empty-state cc-state-card">
-            <strong>Sin alertas activas</strong>
-            <p>No hay bloqueos ni seguimientos vivos en este momento.</p>
-          </div>
+          <DSEmptyState
+            title="Sin alertas activas"
+            description="No hay bloqueos ni seguimientos vivos en este momento."
+          />
         </section>
       ) : null}
 
@@ -229,9 +230,11 @@ export function AlertsCenterPage({
               ))}
             </div>
           ) : (
-            <div className="empty-state cc-state-card" style={{ marginTop: '0.75rem' }}>
-              <strong>Sin alertas revisadas</strong>
-              <p>Las alertas marcadas como revisadas apareceran aqui mientras sigan activas.</p>
+            <div style={{ marginTop: '0.75rem' }}>
+              <DSEmptyState
+                title="Sin alertas revisadas"
+                description="Las alertas marcadas como revisadas apareceran aqui mientras sigan activas."
+              />
             </div>
           )}
         </CollapsibleDetailSection>

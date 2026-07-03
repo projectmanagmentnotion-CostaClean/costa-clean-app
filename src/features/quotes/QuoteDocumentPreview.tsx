@@ -2,6 +2,9 @@ import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import { getStatusLabel } from '../../app/displayText'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSLoadingState } from '../../design-system/components/DSLoadingState'
 import '../documents/documentSurfaceStyles'
 import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { QuoteDocumentA4 } from './QuoteDocumentA4'
@@ -29,10 +32,10 @@ export function QuoteDocumentPreview({
           </div>
         </div>
 
-        <div className="empty-state">
-          <strong>No hay presupuesto para previsualizar</strong>
-          <p>Selecciona un presupuesto en el listado para ver el documento.</p>
-        </div>
+        <DSEmptyState
+          title="No hay presupuesto para previsualizar"
+          description="Selecciona un presupuesto en el listado para ver el documento."
+        />
       </section>
     )
   }
@@ -82,15 +85,12 @@ function QuoteDocumentPreviewContent({
       <div className="cc-doc-preview-panel__viewport">
         <DocumentThumbnail>
           {isLoadingLines ? (
-            <div className="empty-state cc-state-card cc-state-card--loading">
-              <strong>Cargando lineas de presupuesto</strong>
-              <p>Preparando la vista previa con los conceptos reales.</p>
-            </div>
+            <DSLoadingState
+              title="Cargando lineas de presupuesto"
+              description="Preparando la vista previa con los conceptos reales."
+            />
           ) : linesError ? (
-            <div className="empty-state">
-              <strong>No se pudieron cargar las lineas</strong>
-              <p>{linesError}</p>
-            </div>
+            <DSErrorState title="No se pudieron cargar las lineas" description={linesError} />
           ) : (
             <QuoteDocumentA4
               quote={hydratedQuote}

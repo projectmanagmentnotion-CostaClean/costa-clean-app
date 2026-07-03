@@ -164,6 +164,15 @@ Superficies ya alineadas:
 4. Mantener `Facturas`, `financialWriteApi`, `auth`, `Supabase`, rutas y shell critico fuera de cualquier migracion visual directa en esta fase.
 5. Introducir nuevos componentes de design system solo para primitives o layout helpers, no para encapsular reglas de negocio.
 
+## Reglas de estados y feedback
+
+- `DSEmptyState`: usarlo cuando falten datos, resultados o contexto; debe explicar que falta y cual es la siguiente accion recomendada.
+- `DSErrorState`: usarlo para errores visibles al usuario con copy humana; evitar mensajes tecnicos crudos salvo que sean la unica pista util.
+- `DSLoadingState`: usarlo en cargas estructurales o previews diferidos; preferir contexto claro frente a spinners sin texto.
+- `DSConfirmDialog`: wrapper preferido para acciones destructivas, irreversibles o de salida documental; no anadir confirmaciones innecesarias a acciones ligeras.
+- `FeedbackDialog` existente sigue siendo valido para exito/error puntual cuando la accion ya vive en ese patron, pero nuevas superficies deben priorizar primitives DS o toasts del sistema ya existente.
+- Warnings fiscales, mismatch y riesgos criticos no deben suavizarse: la consistencia de feedback no puede ocultar severidad real.
+
 ## Que NO se migro todavia
 
 - `Dashboard`

@@ -1,4 +1,5 @@
 import { formatDateEs, getDisplayStatusLabel } from '../../app/displayFormat'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import type { JobListItem } from '../jobs/types'
 import type { DashboardKpiActionId } from './kpiActions'
 
@@ -59,10 +60,7 @@ function AgendaColumn({
       </div>
 
       {jobs.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin servicios</strong>
-          <p>{emptyText}</p>
-        </div>
+        <DSEmptyState title="Sin servicios" description={emptyText} />
       ) : (
         <div className="cc-agenda-list">
           {jobs.map((job) => (

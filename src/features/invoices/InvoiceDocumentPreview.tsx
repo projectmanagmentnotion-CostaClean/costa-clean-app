@@ -1,6 +1,9 @@
 import type { InvoiceListItem } from './types'
 import { formatCurrency } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { DSLoadingState } from '../../design-system/components/DSLoadingState'
 import '../documents/documentSurfaceStyles'
 import { DocumentThumbnail } from '../documents/DocumentThumbnail'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
@@ -23,10 +26,10 @@ export function InvoiceDocumentPreview({
           </div>
         </div>
 
-        <div className="empty-state">
-          <strong>No hay factura para previsualizar</strong>
-          <p>Selecciona una factura en el listado para ver el documento.</p>
-        </div>
+        <DSEmptyState
+          title="No hay factura para previsualizar"
+          description="Selecciona una factura en el listado para ver el documento."
+        />
       </section>
     )
   }
@@ -61,15 +64,12 @@ function InvoiceDocumentPreviewContent({
       <div className="cc-doc-preview-panel__viewport">
         <DocumentThumbnail>
           {isLoadingLines ? (
-            <div className="empty-state cc-state-card cc-state-card--loading">
-              <strong>Cargando lineas de factura</strong>
-              <p>Preparando la vista previa con los conceptos reales.</p>
-            </div>
+            <DSLoadingState
+              title="Cargando lineas de factura"
+              description="Preparando la vista previa con los conceptos reales."
+            />
           ) : linesError ? (
-            <div className="empty-state">
-              <strong>No se pudieron cargar las lineas</strong>
-              <p>{linesError}</p>
-            </div>
+            <DSErrorState title="No se pudieron cargar las lineas" description={linesError} />
           ) : (
             <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
           )}

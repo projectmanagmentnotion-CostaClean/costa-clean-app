@@ -1,4 +1,5 @@
 import type { OperationalAction, OperationalIncident } from './operationalControl'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 
 interface DashboardIncidentsProps {
   incidents: OperationalIncident[]
@@ -26,10 +27,10 @@ export function DashboardIncidents({ incidents, onRunAction }: DashboardIncident
       </div>
 
       {visibleIncidents.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin incidencias operativas activas</strong>
-          <p>La operativa diaria no presenta bloqueos o seguimientos prioritarios.</p>
-        </div>
+        <DSEmptyState
+          title="Sin incidencias operativas activas"
+          description="La operativa diaria no presenta bloqueos o seguimientos prioritarios."
+        />
       ) : (
         <div className="cc-dashboard-incident-list">
           {visibleIncidents.map((incident) => (

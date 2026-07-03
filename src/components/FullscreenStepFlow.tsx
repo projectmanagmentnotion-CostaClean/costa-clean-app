@@ -1,36 +1,18 @@
-import { useContext, type ReactNode } from 'react'
+import { useContext } from 'react'
+import type {
+  StepFlowStatus,
+  StepFlowStep,
+  StepFlowSummaryItem,
+  StepFlowSurfaceProps,
+} from '../features/stepflow/types'
 import { NestedFlowSurfaceContext } from './NestedFlowSurfaceContext'
 import './fullscreen-step-flow.css'
 
-export interface FullscreenStepFlowStep {
-  id: string
-  label: string
-  description: string
-}
+export type FullscreenStepFlowStep = StepFlowStep
+export type FullscreenStepFlowContextItem = StepFlowSummaryItem
+export type FullscreenStepFlowProps = StepFlowSurfaceProps
 
-export interface FullscreenStepFlowContextItem {
-  label: string
-  value: string
-  hint?: string
-}
-
-type FullscreenStepState = 'complete' | 'current' | 'blocked' | 'pending'
-
-interface FullscreenStepFlowProps {
-  eyebrow: string
-  title: string
-  description: string
-  steps: FullscreenStepFlowStep[]
-  currentStep: number
-  stepStates?: FullscreenStepState[]
-  onStepSelect?: (stepIndex: number) => void
-  children: ReactNode
-  sideContent?: ReactNode
-  footerContent?: ReactNode
-  contextItems?: FullscreenStepFlowContextItem[]
-}
-
-function getStepStateLabel(state: FullscreenStepState, isCurrent: boolean): string {
+function getStepStateLabel(state: StepFlowStatus, isCurrent: boolean): string {
   if (state === 'complete') return 'Listo'
   if (state === 'blocked') return 'Bloqueado'
   if (isCurrent) return 'En curso'

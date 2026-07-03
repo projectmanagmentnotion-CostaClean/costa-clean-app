@@ -4,6 +4,13 @@
 
 El repo ya tiene una base reutilizable en `src/components/FullscreenStepFlow.tsx`. No parte de cero. El problema actual es que cada flujo grande sigue implementando mucha logica de orquestacion por separado, y algunos flujos step-based aun no usan el mismo motor.
 
+## Decision oficial tomada en Sprint 3
+
+- `src/components/FullscreenStepFlow.tsx` queda reconocido como base oficial unica del sistema StepFlow.
+- `src/features/stepflow/` se crea como fachada tipada y punto de entrada estable para futuras migraciones.
+- No se crea un segundo motor paralelo.
+- `src/features/publicIntake/PublicQuoteRequestForm.tsx` sigue pendiente de migracion y no se toca en este sprint.
+
 | Flujo | Modulo | Archivos relacionados | Por que necesita StepFlow | Riesgo de migracion | Pasos sugeridos | Sprint recomendado |
 | --- | --- | --- | --- | --- | --- | --- |
 | Alta publica de presupuesto | Public intake | `src/features/publicIntake/PublicQuoteRequestForm.tsx`, `src/pages/PublicQuoteRequestPage.tsx` | Ya es secuencial y de cara publica. Debe unificarse con el patron general para reducir duplicacion de estados, progreso y validacion. | medio | Extraer contrato comun de pasos, estados y footer; migrar sin tocar API ni payload | Sprint 6 y 3 |

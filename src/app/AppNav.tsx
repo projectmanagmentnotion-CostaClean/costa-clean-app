@@ -32,6 +32,11 @@ interface NavItemDefinition {
   mobilePriority?: boolean
 }
 
+interface NavSection<TItem extends { section: string }> {
+  section: string
+  items: TItem[]
+}
+
 function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
@@ -251,7 +256,7 @@ function MoreIcon() {
 }
 
 const navItems: NavItemDefinition[] = [
-  { view: 'dashboard', shortLabel: 'Home', section: 'General', icon: HomeIcon, mobilePriority: true },
+  { view: 'dashboard', shortLabel: 'Inicio', section: 'General', icon: HomeIcon, mobilePriority: true },
   { view: 'leads', shortLabel: 'Leads', section: 'Comercial', icon: LeadsIcon, mobilePriority: false },
   { view: 'clients', shortLabel: 'Clientes', section: 'Base', icon: ClientsIcon, mobilePriority: true },
   { view: 'properties', shortLabel: 'Inmuebles', section: 'Base', icon: PropertiesIcon, mobilePriority: false },
@@ -270,6 +275,35 @@ const mobileSecondaryItems: Array<NavItemDefinition | { view: AppView; shortLabe
   ...navItems.filter((item) => !item.mobilePriority && item.view !== 'dashboard'),
 ]
 
+function groupNavItems<TItem extends { section: string }>(items: TItem[]): NavSection<TItem>[] {
+  const sections = new Map<string, TItem[]>()
+
+  items.forEach((item) => {
+    const sectionItems = sections.get(item.section)
+
+    if (sectionItems) {
+      sectionItems.push(item)
+      return
+    }
+
+    sections.set(item.section, [item])
+  })
+
+  return Array.from(sections.entries()).map(([section, sectionItems]) => ({
+    section,
+    items: sectionItems,
+  }))
+}
+
+function isNavItemActive(itemView: AppView, currentView: AppView) {
+  if (itemView === currentView) {
+    return true
+  }
+
+  return itemView === 'fiscal_closing'
+    && (currentView === 'annual_closing' || currentView === 'quarterly_closing')
+}
+
 export function AppNav({
   currentView,
   onChangeView,
@@ -286,11 +320,13 @@ export function AppNav({
   onBack,
 }: AppNavProps) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
-  const currentViewLabel = currentView === 'dashboard' ? 'Home' : getAppViewLabel(currentView)
+  const currentViewLabel = currentView === 'dashboard' ? 'Inicio' : getAppViewLabel(currentView)
   const currentViewMeta = topNavItems.find((item) => item.view === currentView)
     ?? ((currentView === 'annual_closing' || currentView === 'quarterly_closing')
       ? topNavItems.find((item) => item.view === 'fiscal_closing')
       : undefined)
+  const desktopNavSections = groupNavItems(topNavItems)
+  const mobileSecondarySections = groupNavItems(mobileSecondaryItems)
   const backLabel = backTargetView ? 'Volver' : 'Inicio'
   const isMoreSectionActive = !bottomDockItems.some((item) => item.view === currentView)
   const mobileHeaderTitle = currentView === 'dashboard' ? 'Hoy' : currentViewLabel
@@ -357,15 +393,15 @@ export function AppNav({
 
             return (
               <button
-                key={item.view}
-                type="button"
-                className={
-                  currentView === item.view
-                    ? 'cc-bottom-dock__button is-active'
-                    : 'cc-bottom-dock__button'
-                }
+              key={item.view}
+              type="button"
+              className={
+                isNavItemActive(item.view, currentView)
+                  ? 'cc-bottom-dock__button is-active'
+                  : 'cc-bottom-dock__button'
+              }
                 onClick={() => onChangeView(item.view)}
-                aria-current={currentView === item.view ? 'page' : undefined}
+                aria-current={isNavItemActive(item.view, currentView) ? 'page' : undefined}
               >
                 <span className="cc-bottom-dock__icon" aria-hidden="true">
                   <Icon />
@@ -423,35 +459,40 @@ export function AppNav({
               </button>
             </div>
 
-            <div className="cc-mobile-nav-sheet__grid">
-              {mobileSecondaryItems.map((item) => {
-                const Icon = item.icon
+            <div className="cc-mobile-nav-sheet__sections">
+              {mobileSecondarySections.map((section) => (
+                <section key={section.section} className="cc-mobile-nav-sheet__section" aria-label={section.section}>
+                  <span className="cc-mobile-nav-sheet__section-label">{section.section}</span>
 
-                return (
-                  <button
-                    key={item.view}
-                    type="button"
-                    className={
-                      currentView === item.view
-                        ? 'cc-mobile-nav-sheet__item is-active'
-                        : 'cc-mobile-nav-sheet__item'
-                    }
-                    onClick={() => {
-                      setIsMoreMenuOpen(false)
-                      onChangeView(item.view)
-                    }}
-                    aria-current={currentView === item.view ? 'page' : undefined}
-                  >
-                    <span className="cc-mobile-nav-sheet__item-icon" aria-hidden="true">
-                      <Icon />
-                    </span>
-                    <span className="cc-mobile-nav-sheet__item-copy">
-                      <span className="cc-mobile-nav-sheet__item-title">{item.shortLabel}</span>
-                      <span className="cc-mobile-nav-sheet__item-section">{item.section}</span>
-                    </span>
-                  </button>
-                )
-              })}
+                  <div className="cc-mobile-nav-sheet__grid">
+                    {section.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive = isNavItemActive(item.view, currentView)
+
+                      return (
+                        <button
+                          key={item.view}
+                          type="button"
+                          className={isActive ? 'cc-mobile-nav-sheet__item is-active' : 'cc-mobile-nav-sheet__item'}
+                          onClick={() => {
+                            setIsMoreMenuOpen(false)
+                            onChangeView(item.view)
+                          }}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          <span className="cc-mobile-nav-sheet__item-icon" aria-hidden="true">
+                            <Icon />
+                          </span>
+                          <span className="cc-mobile-nav-sheet__item-copy">
+                            <span className="cc-mobile-nav-sheet__item-title">{item.shortLabel}</span>
+                            <span className="cc-mobile-nav-sheet__item-section">{item.section}</span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           </section>
         </>
@@ -532,33 +573,38 @@ export function AppNav({
 
           <div className="cc-shell-nav__rail" aria-label="Modulos">
             <div className="cc-shell-nav__rail-scroll">
-              {topNavItems.map((item) => {
-                const Icon = item.icon
+              {desktopNavSections.map((section) => (
+                <section key={section.section} className="cc-shell-nav__rail-group" aria-label={section.section}>
+                  <span className="cc-shell-nav__rail-group-label">{section.section}</span>
 
-                return (
-                  <button
-                    key={item.view}
-                    type="button"
-                    className={
-                      currentView === item.view
-                        ? 'cc-shell-nav__rail-button is-active'
-                        : 'cc-shell-nav__rail-button'
-                    }
-                    onClick={() => onChangeView(item.view)}
-                    aria-current={currentView === item.view ? 'page' : undefined}
-                    title={`${item.shortLabel} - ${item.section}`}
-                    aria-label={`${item.shortLabel}, ${item.section}`}
-                  >
-                    <span className="cc-shell-nav__rail-icon" aria-hidden="true">
-                      <Icon />
-                    </span>
-                    <span className="cc-shell-nav__rail-copy">
-                      <span className="cc-shell-nav__rail-title">{item.shortLabel}</span>
-                      <span className="cc-shell-nav__rail-section">{item.section}</span>
-                    </span>
-                  </button>
-                )
-              })}
+                  <div className="cc-shell-nav__rail-group-items">
+                    {section.items.map((item) => {
+                      const Icon = item.icon
+                      const isActive = isNavItemActive(item.view, currentView)
+
+                      return (
+                        <button
+                          key={item.view}
+                          type="button"
+                          className={isActive ? 'cc-shell-nav__rail-button is-active' : 'cc-shell-nav__rail-button'}
+                          onClick={() => onChangeView(item.view)}
+                          aria-current={isActive ? 'page' : undefined}
+                          title={`${item.shortLabel} - ${item.section}`}
+                          aria-label={`${item.shortLabel}, ${item.section}`}
+                        >
+                          <span className="cc-shell-nav__rail-icon" aria-hidden="true">
+                            <Icon />
+                          </span>
+                          <span className="cc-shell-nav__rail-copy">
+                            <span className="cc-shell-nav__rail-title">{item.shortLabel}</span>
+                            <span className="cc-shell-nav__rail-section">{item.section}</span>
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           </div>
         </nav>

@@ -2,7 +2,7 @@
 
 | ID | Modulo | Pantalla/archivo | Problema UX | Severidad | Impacto | Recomendacion | Sprint recomendado |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| UX-001 | Shell | `src/app/AppNav.tsx` | Navegacion real basada en `?view=` y no en rutas expresivas. Es funcional, pero hace menos legible el mapa mental del producto y complica coherencia futura entre shell y estados profundos. | media | Riesgo de navegacion menos transparente y deuda de evolucion | Mantener en Sprint 2 como hallazgo, tratar en Sprint 4 al revisar shell/navigation | Sprint 4 |
+| UX-001 | Shell | `src/app/AppNav.tsx`, `src/app/useShellNavigation.ts` | Navegacion real basada en `?view=` y no en rutas expresivas. Sprint 4 ordena la capa visual y la jerarquia del shell, pero el mecanismo sigue siendo un query-param router interno por compatibilidad. | media | Riesgo de navegacion menos transparente y deuda de evolucion | Mantener la limpieza visual actual y posponer cualquier cambio de mecanismo a un sprint tecnico separado | Sprint tecnico separado |
 | UX-002 | Dashboard | `src/pages/HomePage.tsx` | Pantalla fuerte, pero muy densa: hero, KPIs, cola operativa, acciones rapidas y revision fiscal conviven en una sola vista alta. | alta | Primer scroll cargado, especialmente en movil | Reducir densidad y reforzar prioridad principal sin perder la cola corta | Sprint 5 |
 | UX-003 | Cierre fiscal | `src/pages/FiscalClosingPage.tsx` | Vista muy completa, pero larga y con varios bloques de igual peso. La lectura sigue siendo potente, aunque el primer viewport no siempre mantiene una sola decision. | alta | Cansancio cognitivo y exceso de scroll | Mantener motor y contenido, reorganizar por capas y colapsar mejor | Sprint 11 |
 | UX-004 | Leads | `src/pages/LeadsPage.tsx` | Usa hero y filtros colapsables, pero sigue siendo mas list/filter-first que decision-first. | media | Menor claridad de siguiente paso comercial | Introducir header mas ejecutivo y CTA orientada a seguimiento real | Sprint 5 o 7 |
@@ -18,9 +18,11 @@
 | UX-014 | Modulos legacy | `src/pages/AnnualClosingPage.tsx`, `src/pages/QuarterlyClosingPage.tsx` | Existen pantallas grandes que no son la superficie viva principal. | media | Ruido de implementacion y riesgo de duplicar criterios UX | Mantener documentadas y decidir su retiro o absorcion | Sprint 4 |
 | UX-015 | Repo hygiene | `src/pages/*.bak-*` | Archivos backup versionados dentro de paginas reales. No rompen UX viva, pero si elevan ruido y riesgo de tocar el archivo incorrecto. | media | Riesgo de mantenimiento y auditoria mas lenta | Limpiar en sprint tecnico separado, nunca mezclado con cambio visual | Sprint tecnico separado |
 | UX-016 | Tokens / estilos base | `src/index.css` | Existen bloques `:root` y redefiniciones visuales superpuestas del sistema de tokens. No rompe la app, pero complica la trazabilidad del design system y aumenta el riesgo de drift visual. | media | Mayor coste de mantenimiento y coherencia visual mas fragil | Consolidar tokens en sprint tecnico separado una vez la capa DS este adoptada | Sprint tecnico separado |
+| UX-017 | Shell / navegacion | `src/app/AppNav.tsx`, `src/app/navigation.ts`, `src/app/modules.ts` | Hay drift entre vistas vivas y modulos declarados: `annual_closing` y `quarterly_closing` viven como alias de cierre fiscal, mientras `kpis` y `settings` siguen declarados fuera de la navegacion viva. | media | Riesgo de confusion en auditoria, copy y futuras ampliaciones del shell | Mantener alias documentados, no activar modulos no vivos sin sprint propio y retirar drift solo con auditoria dedicada | Sprint tecnico separado |
 
 ## Notas de lectura
 
 - La mayor deuda real no es "la app no tiene UX moderna". La mayor deuda real es inconsistencia entre modulos que ya tienen buenas piezas.
 - Los problemas mas serios se concentran en densidad, mezcla de intenciones y repeticion de patrones grandes.
 - Facturas merece tratamiento aislado por seguridad operativa, no solo por UX.
+- Sprint 4 deja resuelto el estado visual activo del area de cierre fiscal dentro del shell y ordena la navegacion por secciones sin cambiar `?view=` ni activar modulos nuevos.

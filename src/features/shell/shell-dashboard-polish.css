@@ -3070,6 +3070,24 @@
     gap: 10px;
   }
 
+  .cc-mobile-nav-sheet__sections {
+    display: grid;
+    gap: 14px;
+  }
+
+  .cc-mobile-nav-sheet__section {
+    display: grid;
+    gap: 9px;
+  }
+
+  .cc-mobile-nav-sheet__section-label {
+    color: rgba(148, 163, 184, 0.8);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
   .cc-mobile-nav-sheet__item {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -3168,6 +3186,7 @@
   }
 
   :root[data-theme="light"] .cc-mobile-nav-sheet__eyebrow,
+  :root[data-theme="light"] .cc-mobile-nav-sheet__section-label,
   :root[data-theme="light"] .cc-mobile-nav-sheet__item-section {
     color: #5c768c;
   }

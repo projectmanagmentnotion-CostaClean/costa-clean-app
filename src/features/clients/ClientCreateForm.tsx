@@ -93,18 +93,12 @@ export function ClientCreateForm({
         }
       }
 
-      const clientId =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? `CLIENT-${crypto.randomUUID()}`
-          : `CLIENT-${Date.now()}`
-
       const createdClient = await createClientRecord({
-        id: clientId,
-        full_name: form.full_name.trim(),
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        tax_id: form.tax_id.trim() || null,
-        billing_address: form.billing_address.trim() || null,
+        full_name: form.full_name,
+        phone: form.phone,
+        email: form.email,
+        tax_id: form.tax_id,
+        billing_address: form.billing_address,
         status: form.status,
         source_lead_id: null,
       })

@@ -3,6 +3,31 @@
 ## Fecha
 
 - 2026-07-02
+- 2026-07-03
+
+## Actualizacion 2026-07-03: reconciliacion de creacion de clientes
+
+- Incidencia productiva observada:
+  - `No se pudo crear el cliente`
+  - `null value in column "id" of relation "clients" violates not-null constraint`
+- Causa real en repo:
+  - `ClientCreateForm` si pasaba `id`
+  - `createClientRecord()` reconstruia el payload
+  - `buildClientPayload()` descartaba `id`
+  - el `POST /rest/v1/clients` terminaba saliendo sin identificador
+- Evidencia DB real:
+  - `GET /rest/v1/clients?select=id&limit=1` confirmo ids tipo `HIST-CLIENT-...`
+  - `POST /rest/v1/clients` sin `id` devolvio `23502` en produccion
+- Fix aplicado en repo:
+  - nueva capa `src/features/clients/clientIdentity.ts`
+  - `createClientRecord()` genera `CLIENT-${uuid}` si falta `id`
+  - `createClientRecord()` preserva ids historicos/importados
+  - `ClientCreateForm` ya no construye payload DB manual ni genera ids
+- Safety net SQL:
+  - no aplicado en este sprint
+  - recomendado solo si el equipo quiere doble proteccion DB + app
+- Documento detallado:
+  - `docs/CLIENT_CREATION_DB_AUDIT_QA.md`
 
 ## Que se aplico manualmente en Supabase
 

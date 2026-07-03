@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeClientFiscalData } from './clientFiscalData'
-import { __clientWriteApiTestUtils } from './clientWriteApi'
+import { __clientWriteApiTestUtils, createClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
 
 function createClient(overrides: Partial<ClientListItem> = {}): ClientListItem {
@@ -95,8 +95,143 @@ describe('clientWriteApi test utils', () => {
     })
   })
 
+  it('keeps the id inside create payloads sent to Supabase', () => {
+    expect(__clientWriteApiTestUtils.buildClientPayload({
+      id: 'CLIENT-123',
+      full_name: ' Miguel Angel Flores Castillo ',
+      status: 'active',
+    })).toMatchObject({
+      id: 'CLIENT-123',
+      full_name: 'Miguel Angel Flores Castillo',
+      status: 'active',
+    })
+  })
+
   it('masks tax ids in diagnostic logs', () => {
     expect(__clientWriteApiTestUtils.maskTaxId('52755379A')).toBe('5275***9A')
+  })
+
+  it('generates a client id automatically when a create call does not provide one', async () => {
+    let fetchCallCount = 0
+    let requestBody = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async (_input, init) => {
+      fetchCallCount += 1
+      requestBody = String(init?.body ?? '')
+
+      return new Response(JSON.stringify([createClient({
+        id: 'CLIENT-generated',
+        full_name: 'Cristian Fernandez Perpinan',
+        phone: '937655484',
+        email: 'laboral@gmail.com',
+        tax_id: 'B09775578',
+        billing_address: 'carrer de Mar 96, Malgrat de Mar',
+        status: 'active',
+      })]), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const processLike = globalThis as { process?: { env?: Record<string, string | undefined> } }
+    processLike.process = processLike.process ?? { env: {} }
+    processLike.process.env = processLike.process.env ?? {}
+    processLike.process.env.VITE_SUPABASE_URL = 'https://example.supabase.co'
+    processLike.process.env.VITE_SUPABASE_ANON_KEY = 'anon-key'
+
+    try {
+      await createClientRecord({
+        full_name: '  Cristian Fernandez Perpinan  ',
+        phone: ' 937655484 ',
+        email: ' laboral@gmail.com ',
+        tax_id: ' b09775578 ',
+        billing_address: ' carrer de Mar 96, Malgrat de Mar ',
+      })
+
+      const payload = JSON.parse(requestBody) as Record<string, unknown>
+      expect(fetchCallCount).toBe(1)
+      expect(/^CLIENT-/.test(String(payload.id ?? ''))).toBe(true)
+      expect(payload.full_name).toBe('Cristian Fernandez Perpinan')
+      expect(payload.status).toBe('active')
+      expect(payload.tax_id).toBe('B09775578')
+      expect(payload.billing_address).toBe('carrer de Mar 96, Malgrat de Mar')
+    } finally {
+      globalThis.fetch = originalFetch
+      delete processLike.process.env.VITE_SUPABASE_URL
+      delete processLike.process.env.VITE_SUPABASE_ANON_KEY
+    }
+  })
+
+  it('preserves provided historical ids during create writes', async () => {
+    let requestBody = ''
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async (_input, init) => {
+      requestBody = String(init?.body ?? '')
+
+      return new Response(JSON.stringify([createClient({
+        id: 'HIST-CLIENT-LEGACY',
+        full_name: 'Cliente historico',
+        status: 'active',
+      })]), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+
+    const processLike = globalThis as { process?: { env?: Record<string, string | undefined> } }
+    processLike.process = processLike.process ?? { env: {} }
+    processLike.process.env = processLike.process.env ?? {}
+    processLike.process.env.VITE_SUPABASE_URL = 'https://example.supabase.co'
+    processLike.process.env.VITE_SUPABASE_ANON_KEY = 'anon-key'
+
+    try {
+      await createClientRecord({
+        id: 'HIST-CLIENT-LEGACY',
+        full_name: 'Cliente historico',
+        status: 'active',
+      })
+
+      const payload = JSON.parse(requestBody) as Record<string, unknown>
+      expect(payload.id).toBe('HIST-CLIENT-LEGACY')
+    } finally {
+      globalThis.fetch = originalFetch
+      delete processLike.process.env.VITE_SUPABASE_URL
+      delete processLike.process.env.VITE_SUPABASE_ANON_KEY
+    }
+  })
+
+  it('translates id constraint failures into a useful message', async () => {
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = async () => new Response(JSON.stringify({
+      code: '23502',
+      message: 'null value in column "id" of relation "clients" violates not-null constraint',
+    }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const processLike = globalThis as { process?: { env?: Record<string, string | undefined> } }
+    processLike.process = processLike.process ?? { env: {} }
+    processLike.process.env = processLike.process.env ?? {}
+    processLike.process.env.VITE_SUPABASE_URL = 'https://example.supabase.co'
+    processLike.process.env.VITE_SUPABASE_ANON_KEY = 'anon-key'
+
+    try {
+      try {
+        await createClientRecord({
+          id: 'CLIENT-failing',
+          full_name: 'Cliente roto',
+          status: 'active',
+        })
+        throw new Error('expected error')
+      } catch (error) {
+        expect(error instanceof Error ? error.message : null).toBe('No se pudo crear el cliente porque falta identificador interno.')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+      delete processLike.process.env.VITE_SUPABASE_URL
+      delete processLike.process.env.VITE_SUPABASE_ANON_KEY
+    }
   })
 })
 

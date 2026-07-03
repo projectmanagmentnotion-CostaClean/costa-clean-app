@@ -1,4 +1,10 @@
 import { getSupabasePublicEnv } from '../../lib/supabaseEnv.ts'
+import {
+  createClientId,
+  normalizeClientInput,
+  normalizeClientStatus,
+  trimNullable,
+} from './clientIdentity.ts'
 import { normalizeClientFiscalData } from './clientFiscalData.ts'
 import type { ClientListItem } from './types.ts'
 
@@ -143,6 +149,14 @@ function toSupabaseErrorMessage(
   error: SupabaseRestError,
   fallbackMessage: string,
 ): string {
+  if (
+    error.code === '23502'
+    && typeof error.message === 'string'
+    && error.message.includes('column "id"')
+  ) {
+    return 'No se pudo crear el cliente porque falta identificador interno.'
+  }
+
   return error.message || fallbackMessage
 }
 
@@ -154,14 +168,15 @@ function buildClientPayload(input: ClientRecordInput): ClientRecordInput {
   })
   const payload: ClientRecordInput = {}
 
+  if (typeof input.id === 'string') payload.id = normalizeClientId(input.id)
   if (typeof input.full_name === 'string') payload.full_name = input.full_name.trim()
-  if ('phone' in input) payload.phone = input.phone?.trim() || null
-  if ('email' in input) payload.email = input.email?.trim() || null
+  if ('phone' in input) payload.phone = trimNullable(input.phone)
+  if ('email' in input) payload.email = trimNullable(input.email)
   if ('tax_id' in input) payload.tax_id = fiscalData.tax_id
   if ('billing_address' in input) payload.billing_address = fiscalData.billing_address
-  if (typeof input.status === 'string') payload.status = input.status
+  if ('status' in input) payload.status = normalizeClientStatus(input.status)
   if ('archived_at' in input) payload.archived_at = input.archived_at ?? null
-  if ('source_lead_id' in input) payload.source_lead_id = input.source_lead_id ?? null
+  if ('source_lead_id' in input) payload.source_lead_id = trimNullable(input.source_lead_id)
 
   return payload
 }
@@ -236,10 +251,10 @@ interface ClientRecordInput {
   source_lead_id?: string | null
 }
 
-export async function createClientRecord(input: Required<Pick<ClientRecordInput, 'id' | 'full_name' | 'status'>> & ClientRecordInput): Promise<ClientListItem> {
+export async function createClientRecord(input: ClientRecordInput): Promise<ClientListItem> {
   try {
-    const payload = buildClientPayload({
-      id: normalizeClientId(input.id),
+    const normalizedInput = normalizeClientInput({
+      id: input.id ?? createClientId(),
       full_name: input.full_name,
       phone: input.phone ?? null,
       email: input.email ?? null,
@@ -248,10 +263,11 @@ export async function createClientRecord(input: Required<Pick<ClientRecordInput,
       status: input.status,
       source_lead_id: input.source_lead_id ?? null,
     })
+    const payload = buildClientPayload(normalizedInput)
 
     return await executeClientRestWrite({
       operation: 'create',
-      clientId: payload.id ?? null,
+      clientId: normalizedInput.id,
       method: 'POST',
       payload,
     })
@@ -316,8 +332,12 @@ export async function applyClientFiscalBackfillRecord(
 
 export const __clientWriteApiTestUtils = {
   buildClientPayload,
+  createClientId,
   maskTaxId,
+  normalizeClientInput,
+  normalizeClientStatus,
   normalizeClientId,
   normalizeReturnedClientRows,
+  trimNullable,
   toClientWriteError,
 }

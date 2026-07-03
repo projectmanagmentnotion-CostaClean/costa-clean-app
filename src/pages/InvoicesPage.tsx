@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
+import '../features/invoices/invoiceWorkspace.css'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
@@ -472,7 +473,7 @@ export function InvoicesPage({
           <ActionChecklist items={collectionChecklistItems} compact />
         </ExecutiveHeader>
 
-        <div className="cc-kpi-grid cc-kpi-grid--compact">
+        <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
           <VisualKpiCard
             label="Pendiente de cobro"
             value={formatCurrency(pendingCollectionAmount)}
@@ -505,92 +506,107 @@ export function InvoicesPage({
           />
         </div>
 
-        <div className="cc-alert cc-alert--info">
-          <strong>Control fiscal de facturas</strong>
-          <p>Completas: {invoiceFiscalAudit.summary.complete}</p>
-          <p>Reparables desde cliente: {invoiceFiscalAudit.summary.reparable}</p>
-          <p>Incompletas: {invoiceFiscalAudit.summary.incomplete}</p>
-          <p>Base auditada: {invoiceFiscalAudit.summary.total} facturas.</p>
-          <div className="form-actions">
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => {
-                setShowBlockedFiscalInvoices((current) => !current)
-                const firstIncomplete = invoiceFiscalAudit.entries.find((entry) => entry.status === 'incomplete')?.invoice
-                if (firstIncomplete) {
-                  setSelectedInvoiceId(firstIncomplete.id)
-                }
-              }}
-              disabled={invoiceFiscalAudit.summary.incomplete === 0}
-            >
-              Revisar incompletas
-            </button>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={() => void handleFiscalBackfill()}
-              disabled={isFiscalBackfillBusy || invoiceFiscalAudit.summary.reparable === 0}
-            >
-              {isFiscalBackfillBusy ? 'Completando...' : 'Completar reparables'}
-            </button>
-          </div>
-          {showInvoiceFiscalDebug ? (
-            <pre className="cc-debug-pre">
-              {JSON.stringify({
-                totalInvoices: invoiceFiscalAudit.summary.total,
-                complete: invoiceFiscalAudit.summary.complete,
-                repairable: invoiceFiscalAudit.summary.reparable,
-                blocked: invoiceFiscalAudit.summary.incomplete,
-                canRunBackfill: invoiceFiscalAudit.summary.reparable > 0 && !isFiscalBackfillBusy,
-              }, null, 2)}
-            </pre>
-          ) : null}
-          {showBlockedFiscalInvoices && blockedFiscalEntries.length > 0 ? (
-            <div className="cc-inline-stack" style={{ marginTop: '0.75rem' }}>
-              {blockedFiscalEntries.map((entry) => (
-                <div key={entry.invoiceId} className="cc-alert cc-alert--warning">
-                  <strong>{entry.displayCode ?? entry.invoiceNumber ?? entry.invoiceId}</strong>
-                  <p>
-                    {entry.invoiceNumber ? `Numero ${entry.invoiceNumber}. ` : ''}
-                    Cliente: {entry.clientLabel}. {describeInvoiceFiscalMissingFields(entry.missingFields)}.
-                  </p>
-                  <div className="form-actions">
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      onClick={() => {
-                        setSelectedInvoiceId(entry.invoiceId)
-                      }}
-                    >
-                      Abrir factura
-                    </button>
-                    {entry.clientId ? (
-                      <button
-                        type="button"
-                        className="secondary-button"
-                        onClick={() => {
-                          onOpenClientWorkspace(entry.clientId!, 'summary')
-                        }}
-                      >
-                        Abrir cliente
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              ))}
+        <div className="cc-invoice-workspace__control-grid">
+          <section className="data-section cc-invoice-workspace__support-card">
+            <div className="section-header">
+              <div>
+                <h2>Control fiscal</h2>
+                <p>Mantiene visibles las facturas bloqueadas o reparables sin mezclarlas con el cobro diario.</p>
+              </div>
             </div>
-          ) : null}
-        </div>
 
-        <InvoiceNumberingControlCard
-          audit={numberingAudit}
-          onReviewSequence={() => void handleReviewSequence()}
-          reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
-            ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
-            : null}
-          regularizationHint={numberingAudit.hasBlockingGaps ? numberingRegularizationHint : null}
-        />
+            <div className="cc-alert cc-alert--info cc-invoice-workspace__support-alert">
+              <strong>Auditoria fiscal de facturas</strong>
+              <div className="cc-invoice-workspace__support-metrics">
+                <p>Completas: {invoiceFiscalAudit.summary.complete}</p>
+                <p>Reparables desde cliente: {invoiceFiscalAudit.summary.reparable}</p>
+                <p>Incompletas: {invoiceFiscalAudit.summary.incomplete}</p>
+                <p>Base auditada: {invoiceFiscalAudit.summary.total} facturas.</p>
+              </div>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setShowBlockedFiscalInvoices((current) => !current)
+                    const firstIncomplete = invoiceFiscalAudit.entries.find((entry) => entry.status === 'incomplete')?.invoice
+                    if (firstIncomplete) {
+                      setSelectedInvoiceId(firstIncomplete.id)
+                    }
+                  }}
+                  disabled={invoiceFiscalAudit.summary.incomplete === 0}
+                >
+                  Revisar incompletas
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => void handleFiscalBackfill()}
+                  disabled={isFiscalBackfillBusy || invoiceFiscalAudit.summary.reparable === 0}
+                >
+                  {isFiscalBackfillBusy ? 'Completando...' : 'Completar reparables'}
+                </button>
+              </div>
+              {showInvoiceFiscalDebug ? (
+                <pre className="cc-debug-pre">
+                  {JSON.stringify({
+                    totalInvoices: invoiceFiscalAudit.summary.total,
+                    complete: invoiceFiscalAudit.summary.complete,
+                    repairable: invoiceFiscalAudit.summary.reparable,
+                    blocked: invoiceFiscalAudit.summary.incomplete,
+                    canRunBackfill: invoiceFiscalAudit.summary.reparable > 0 && !isFiscalBackfillBusy,
+                  }, null, 2)}
+                </pre>
+              ) : null}
+              {showBlockedFiscalInvoices && blockedFiscalEntries.length > 0 ? (
+                <div className="cc-inline-stack cc-invoice-workspace__blocked-list">
+                  {blockedFiscalEntries.map((entry) => (
+                    <div key={entry.invoiceId} className="cc-alert cc-alert--warning">
+                      <strong>{entry.displayCode ?? entry.invoiceNumber ?? entry.invoiceId}</strong>
+                      <p>
+                        {entry.invoiceNumber ? `Numero ${entry.invoiceNumber}. ` : ''}
+                        Cliente: {entry.clientLabel}. {describeInvoiceFiscalMissingFields(entry.missingFields)}.
+                      </p>
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => {
+                            setSelectedInvoiceId(entry.invoiceId)
+                          }}
+                        >
+                          Abrir factura
+                        </button>
+                        {entry.clientId ? (
+                          <button
+                            type="button"
+                            className="secondary-button"
+                            onClick={() => {
+                              onOpenClientWorkspace(entry.clientId!, 'summary')
+                            }}
+                          >
+                            Abrir cliente
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <div className="cc-invoice-workspace__support-card">
+            <InvoiceNumberingControlCard
+              audit={numberingAudit}
+              onReviewSequence={() => void handleReviewSequence()}
+              reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
+                ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
+                : null}
+              regularizationHint={numberingAudit.hasBlockingGaps ? numberingRegularizationHint : null}
+            />
+          </div>
+        </div>
         {/*
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
 
@@ -646,6 +662,8 @@ export function InvoicesPage({
           </ActionFlowOverlay>
         ) : null}
 
+        <div className="cc-invoice-workspace__workspace-notices">
+
         {duplicateGroups.length > 0 ? (
           <DuplicateNotice
             title={`${duplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
@@ -654,6 +672,8 @@ export function InvoicesPage({
             onAction={() => setShowDuplicateReview(true)}
           />
         ) : null}
+
+        </div>
 
         {detailInvoice ? (
           <MajorEditFlowOverlay
@@ -746,7 +766,7 @@ export function InvoicesPage({
           </div>
         ) : null}
 
-        <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
+        <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace cc-invoice-workspace__layout">
           <div className="cc-master-layout__list">
             <InvoicesList
               invoices={invoices}

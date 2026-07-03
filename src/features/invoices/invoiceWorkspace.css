@@ -1,0 +1,88 @@
+.cc-invoice-workspace__kpis {
+  margin-bottom: 1rem;
+}
+
+.cc-invoice-workspace__control-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.cc-invoice-workspace__support-card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cc-invoice-workspace__support-alert {
+  height: 100%;
+}
+
+.cc-invoice-workspace__support-metrics {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.cc-invoice-workspace__support-metrics p {
+  margin: 0;
+}
+
+.cc-invoice-workspace__blocked-list {
+  margin-top: 0.75rem;
+}
+
+.cc-invoice-workspace__workspace-notices {
+  margin-bottom: 1rem;
+}
+
+.cc-invoice-workspace__layout {
+  align-items: start;
+}
+
+.cc-invoice-detail-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.cc-invoice-detail-card__section {
+  margin-bottom: 0;
+}
+
+.cc-invoice-detail-card__action-row {
+  margin-top: 1rem;
+}
+
+.cc-invoice-detail-card__action-block {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.16);
+}
+
+.cc-invoice-detail-card__action-copy strong,
+.cc-invoice-detail-card__action-copy p {
+  margin: 0;
+}
+
+.cc-invoice-detail-card__action-copy p {
+  color: rgba(226, 232, 240, 0.72);
+}
+
+:root[data-theme="light"] .cc-invoice-detail-card__action-block {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(248, 250, 252, 0.92);
+}
+
+:root[data-theme="light"] .cc-invoice-detail-card__action-copy p {
+  color: rgba(71, 85, 105, 0.86);
+}
+
+@media (max-width: 900px) {
+  .cc-invoice-workspace__control-grid {
+    grid-template-columns: 1fr;
+  }
+}

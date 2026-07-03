@@ -23,6 +23,7 @@ import type { PaymentListItem } from '../payments/types'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
+import './invoiceWorkspace.css'
 import {
   buildInvoicePaymentMeta,
   buildInvoicePaymentSummary,
@@ -831,7 +832,7 @@ export function InvoiceDetailCard({
     headerActions.push({
       key: 'open-document-primary',
       label: 'Abrir documento',
-      tone: 'primary',
+      tone: shouldShowPaymentPrimary ? 'default' : 'primary',
       onClick: onOpenDocument,
     })
   }
@@ -998,7 +999,7 @@ export function InvoiceDetailCard({
       </div>
 
       {invoice ? (
-        <div className="lead-detail-card">
+        <div className="lead-detail-card cc-invoice-detail-card">
           <div className="lead-detail-header">
             <div className="cc-detail-panel__identity">
               <span className="cc-detail-panel__eyebrow">Workspace financiero</span>
@@ -1265,11 +1266,11 @@ export function InvoiceDetailCard({
             </form>
           ) : (
             <>
-              <section className="data-section" style={{ marginBottom: '1rem' }}>
+              <section className="data-section cc-invoice-detail-card__section cc-invoice-detail-card__section--payments">
                 <div className="section-header page-header-actions">
                   <div>
-                    <h2>Bloque de cobro</h2>
-                    <p>El estado financiero se deriva solo de los cobros reales asociados.</p>
+                    <h2>Cobro y conciliacion</h2>
+                    <p>El estado financiero se deriva solo de los cobros reales asociados a la factura.</p>
                   </div>
                 </div>
 
@@ -1304,14 +1305,8 @@ export function InvoiceDetailCard({
                   </div>
                 </div>
 
-              {relationActions.length > 0 ? (
-                <div className="form-actions" style={{ marginTop: '1rem' }}>
-                  <ActionGroup actions={relationActions} moreLabel="Mas relaciones" />
-                </div>
-              ) : null}
-
               {paymentActions.length > 0 ? (
-                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                <div className="form-actions cc-invoice-detail-card__action-row">
                   <ActionGroup actions={paymentActions} moreLabel="Mas cobros" />
                 </div>
               ) : null}
@@ -1365,12 +1360,43 @@ export function InvoiceDetailCard({
                   </ActionFlowOverlay>
                 ) : null}
 
+              </section>
+
+              <section className="data-section cc-invoice-detail-card__section">
+                <div className="section-header page-header-actions">
+                  <div>
+                    <h2>Documento y gestion</h2>
+                    <p>Acciones administrativas y de contexto que no deben competir con el cobro principal.</p>
+                  </div>
+                </div>
+
+                <div className="cc-invoice-detail-card__action-block">
+                  <div className="cc-invoice-detail-card__action-copy">
+                    <strong>Documento y archivo</strong>
+                    <p>Abre el documento, edita con cautela o mueve la factura al historico desde las acciones superiores.</p>
+                  </div>
+                </div>
+
+                {relationActions.length > 0 ? (
+                  <div className="form-actions cc-invoice-detail-card__action-row">
+                    <ActionGroup actions={relationActions} moreLabel="Mas relaciones" />
+                  </div>
+                ) : null}
+
                 {statusActions.length > 0 ? (
-                  <div className="form-actions cc-detail-panel__status-actions" style={{ marginTop: '1rem' }}>
+                  <div className="form-actions cc-detail-panel__status-actions cc-invoice-detail-card__action-row">
                     <ActionGroup actions={statusActions} moreLabel="Estado admin." />
                   </div>
                 ) : null}
               </section>
+
+              <section className="data-section cc-invoice-detail-card__section">
+                <div className="section-header page-header-actions">
+                  <div>
+                    <h2>Contexto de factura</h2>
+                    <p>Referencia fiscal, servicio y contenido visible de la factura seleccionada.</p>
+                  </div>
+                </div>
 
 <div className="lead-detail-grid cc-detail-panel__grid">
                 <div className="detail-row">
@@ -1397,6 +1423,7 @@ export function InvoiceDetailCard({
                   <strong>{invoice.notes ?? 'Sin notas'}</strong>
                 </div>
               </div>
+              </section>
             </>
           )}
         </div>

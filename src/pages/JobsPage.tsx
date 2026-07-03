@@ -75,6 +75,7 @@ export function JobsPage({
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [localCreatePrefill, setLocalCreatePrefill] = useState<JobCreatePrefill | null>(null)
+  const [recentCreatedJob, setRecentCreatedJob] = useState<JobListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasPendingWorkspaceState, setHasPendingWorkspaceState] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
@@ -209,6 +210,7 @@ export function JobsPage({
   function handleOpenWorkspace(jobId: string, tab: JobWorkspaceTab = 'summary') {
     runGuarded(() => {
       setShowCreateForm(false)
+      setRecentCreatedJob(null)
       setLocalCreatePrefill(null)
       onPrefillConsumed()
       openJobWorkspace(jobId, tab)
@@ -222,45 +224,43 @@ export function JobsPage({
           <ExecutiveHeader
             eyebrow="Agenda y ejecucion"
             title="Servicios"
-            summary="Agenda de hoy, trabajo pendiente y servicios completados sin facturar en una sola lectura. La prioridad real es ejecutar lo inmediato y convertir a factura lo ya terminado."
+            summary="Agenda diaria, servicios abiertos y trabajo listo para facturar en una sola lectura. El alta rapida vive en el mismo modulo, pero la prioridad sigue siendo ejecutar y cerrar el siguiente paso operativo."
             statusLabel={completedUninvoicedJobs.length > 0 ? `${completedUninvoicedJobs.length} sin facturar` : 'Operativa estable'}
             statusTone={completedUninvoicedJobs.length > 0 ? 'warning' : todayJobs.length > 0 ? 'info' : 'success'}
-            primaryAction={completedUninvoicedJobs[0] ? {
-              label: 'Ver trabajo sin facturar',
-              onClick: () => handleOpenWorkspace(completedUninvoicedJobs[0].id, 'billing'),
-            } : todayJobs[0] ? {
-              label: 'Abrir servicios de hoy',
-              onClick: () => handleOpenWorkspace(todayJobs[0].id),
-            } : {
-              label: isCreateFormVisible ? 'Cerrar formulario' : 'Nuevo servicio',
+            primaryAction={{
+              label: isCreateFormVisible ? 'Cerrar alta' : 'Registrar servicio',
               onClick: () => {
                 if (isCreateFormVisible) {
                   runGuarded(() => {
                     setShowCreateForm(false)
+                    setRecentCreatedJob(null)
                     setLocalCreatePrefill(null)
                     onPrefillConsumed()
                   })
                   return
                 }
 
+                setRecentCreatedJob(null)
                 setShowCreateForm(true)
               },
             }}
-            secondaryAction={completedUninvoicedJobs[0] || todayJobs[0] ? {
-              label: isCreateFormVisible ? 'Cerrar formulario' : 'Nuevo servicio',
+            secondaryAction={completedUninvoicedJobs[0] ? {
+              label: 'Ver listo para facturar',
+              onClick: () => handleOpenWorkspace(completedUninvoicedJobs[0].id, 'billing'),
+            } : todayJobs[0] ? {
+              label: 'Abrir agenda de hoy',
+              onClick: () => handleOpenWorkspace(todayJobs[0].id),
+            } : {
+              label: 'Ver pendientes',
               onClick: () => {
-                if (isCreateFormVisible) {
-                  runGuarded(() => {
-                    setShowCreateForm(false)
-                    setLocalCreatePrefill(null)
-                    onPrefillConsumed()
-                  })
-                  return
+                const nextPendingJob = pendingJobs[0] ?? upcomingJobs[0] ?? null
+                if (nextPendingJob) {
+                  handleOpenWorkspace(nextPendingJob.id)
+                } else {
+                  setShowCreateForm(true)
                 }
-
-                setShowCreateForm(true)
               },
-            } : undefined}
+            }}
             metricLabel="Trabajo sin facturar"
             metricValue={formatCurrency(completedUninvoicedValue)}
             metricHint={completedUninvoicedJobs.length > 0
@@ -293,14 +293,32 @@ export function JobsPage({
               priority="compact"
               badgeLabel={completedUninvoicedJobs.length > 0 ? 'Caja bloqueada' : 'Cubierto'}
             />
-            <VisualKpiCard
-              label="Proximos servicios"
-              value={String(upcomingJobs.length)}
-              hint="Agenda futura con fecha programada posterior a hoy."
-              tone="info"
-              priority="compact"
-            />
           </div>
+
+          {recentCreatedJob ? (
+            <section className="data-section cc-list-section__header">
+              <div>
+                <h2>Servicio creado</h2>
+                <p>{`Se ha guardado ${recentCreatedJob.display_code ?? recentCreatedJob.id}. Puedes abrirlo ahora o seguir registrando agenda.`}</p>
+              </div>
+              <div className="page-header-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() => handleOpenWorkspace(recentCreatedJob.id)}
+                >
+                  Abrir servicio
+                </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => setRecentCreatedJob(null)}
+                >
+                  Seguir
+                </button>
+              </div>
+            </section>
+          ) : null}
 
           {duplicateGroups.length > 0 ? (
             <DuplicateNotice
@@ -341,6 +359,9 @@ export function JobsPage({
                   onRefreshData={onJobCreated}
                   onCompleted={handleJobFlowCompleted}
                   prefill={effectiveCreatePrefill}
+                  onCreatedJob={async (createdJob) => {
+                    setRecentCreatedJob(createdJob)
+                  }}
                   onOpenExistingJob={(jobId) => {
                     setHasCreateFormDirty(false)
                     setShowCreateForm(false)

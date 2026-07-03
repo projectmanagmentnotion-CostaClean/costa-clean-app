@@ -56,10 +56,10 @@ interface FormState {
 type JobOriginMode = 'quote' | 'direct'
 
 const jobSteps = [
-  { id: 'origin', label: 'Origen y contexto', description: 'Fija cliente, propiedad y presupuesto si ya existen.' },
-  { id: 'schedule', label: 'Servicio y programacion', description: 'Define fecha, estado operativo y tipo de servicio.' },
-  { id: 'billing', label: 'Operacion y facturacion', description: 'Prepara base de facturacion y notas clave.' },
-  { id: 'review', label: 'Revision y siguiente paso', description: 'Confirma el servicio y el siguiente movimiento natural.' },
+  { id: 'origin', label: 'Contexto', description: 'Fija cliente, propiedad y origen si ya existen.' },
+  { id: 'schedule', label: 'Agenda', description: 'Define fecha, estado operativo y tipo de servicio.' },
+  { id: 'billing', label: 'Base de cobro', description: 'Prepara lineas y detalles que luego se reutilizaran al facturar.' },
+  { id: 'review', label: 'Revision', description: 'Confirma el servicio y el siguiente movimiento natural.' },
 ]
 
 const jobNextLabels = [
@@ -473,7 +473,7 @@ export function JobCreateFlow({
   const sideContent = (
     <>
       <section className="cc-create-flow__summary-card">
-        <span className="cc-step-flow__eyebrow">Resultado esperado</span>
+        <span className="cc-step-flow__eyebrow">Salida rapida</span>
         <div className="cc-create-flow__summary-list">
           <div className="cc-create-flow__summary-item">
             <span>Modelo</span>
@@ -527,7 +527,7 @@ export function JobCreateFlow({
         </button>
       ) : (
         <button type="button" className="primary-button" disabled={isSubmitting} onClick={() => void handleSave()}>
-          {isSubmitting ? 'Guardando...' : 'Guardar servicio'}
+          {isSubmitting ? 'Guardando...' : 'Guardar y volver'}
         </button>
       )}
     </div>
@@ -810,6 +810,25 @@ export function JobCreateFlow({
                 </select>
               </label>
             </div>
+
+            <details className="cc-collapsible-section">
+              <summary className="cc-collapsible-section__summary">
+                <div className="cc-list-toolbar__panel-copy">
+                  <strong>Notas operativas</strong>
+                  <span>Solo si necesitas dejar contexto adicional para la ejecucion.</span>
+                </div>
+              </summary>
+
+              <label className="form-field form-field-full">
+                <span>Notas operativas</span>
+                <textarea
+                  value={form.notes}
+                  onChange={(event) => updateField('notes', event.target.value)}
+                  placeholder="Acceso, equipo, observaciones o detalle que convenga dejar listo."
+                  rows={4}
+                />
+              </label>
+            </details>
           </section>
         ) : null}
 
@@ -829,15 +848,11 @@ export function JobCreateFlow({
               </div>
             </article>
 
-            <label className="form-field form-field-full">
-              <span>Notas operativas</span>
-              <textarea
-                value={form.notes}
-                onChange={(event) => updateField('notes', event.target.value)}
-                placeholder="Notas operativas del servicio"
-                rows={4}
-              />
-            </label>
+            <article className="cc-create-flow__review-card">
+              <span>Total estimado</span>
+              <strong>{`${formatMoneyInput(billingSubtotal)} €`}</strong>
+              <small>{`${billingLines.length} linea(s) preparadas para reutilizar al facturar.`}</small>
+            </article>
 
             <div className="cc-create-flow__line-list">
               {billingLines.map((line, index) => (
@@ -903,7 +918,7 @@ export function JobCreateFlow({
             </div>
 
             <div className="cc-create-flow__microactions">
-              <strong>Microacciones</strong>
+              <strong>Lineas de facturacion</strong>
               <div className="cc-create-flow__microactions-row">
                 <button type="button" className="secondary-button" onClick={addBillingLine}>
                   Añadir linea

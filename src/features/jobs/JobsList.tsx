@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react'
 import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { DSEmptyState } from '../../design-system/components/DSEmptyState'
+import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
-import { matchesSearchQuery } from '../documents/search'
 import type { JobListItem } from './types'
 import { getJobBillingDisplayConcept } from './jobBilling'
 import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
+import { applyTextSearch } from '../lists/utils'
 import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 
@@ -30,6 +32,7 @@ export function JobsList({
   onOpenQuoteDetail,
   onOpenInvoiceDetail,
 }: JobsListProps) {
+  const today = new Date().toISOString().slice(0, 10)
   const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'active' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
@@ -41,15 +44,24 @@ export function JobsList({
         const deleted = isDeletedEntity(job)
         const cancelled = isCancelledEntity(job)
         const active = !archived && !deleted && !cancelled
+        const isToday = job.scheduled_date === today
+        const isPending = job.status === 'scheduled'
+        const hasAlert = active && (
+          (job.status === 'completed' && !job.invoice_id) ||
+          (job.scheduled_date < today && (job.status === 'scheduled' || job.status === 'in_progress'))
+        )
 
         if (lifecycleFilter === 'all') return true
         if (lifecycleFilter === 'active') return active
+        if (lifecycleFilter === 'today') return active && isToday
+        if (lifecycleFilter === 'pending') return active && isPending
+        if (lifecycleFilter === 'alert') return hasAlert
         if (lifecycleFilter === 'uninvoiced') return active && job.status === 'completed' && !job.invoice_id
         if (lifecycleFilter === 'cancelled') return cancelled && !deleted
         if (lifecycleFilter === 'archived') return archived && !deleted
         return job.status === lifecycleFilter
       })() &&
-      matchesSearchQuery(preferences.searchQuery, [
+      applyTextSearch(preferences.searchQuery, [
         job.display_code,
         job.id,
         job.client_name,
@@ -80,7 +92,7 @@ export function JobsList({
               : compareDate(left.scheduled_date, right.scheduled_date)
       return applySortDirection(comparison, preferences.sortDirection)
     })
-  }, [jobs, preferences])
+  }, [jobs, preferences, today])
 
   return (
     <section className="data-section cc-module-list-section">
@@ -110,34 +122,38 @@ export function JobsList({
           label: 'Estado',
           value: preferences.filters.status ?? 'all',
           options: [
-            { value: 'all', label: 'Todos' },
-            { value: 'active', label: 'Activos' },
-            { value: 'uninvoiced', label: 'Sin facturar' },
-            { value: 'scheduled', label: 'Programado' },
-            { value: 'in_progress', label: 'En curso' },
-            { value: 'completed', label: 'Completado' },
-            { value: 'cancelled', label: 'Cancelado' },
-            { value: 'archived', label: 'Archivados' },
-          ],
+                { value: 'all', label: 'Todos' },
+                { value: 'active', label: 'Activos' },
+                { value: 'today', label: 'Hoy' },
+                { value: 'pending', label: 'Pendientes' },
+                { value: 'in_progress', label: 'En curso' },
+                { value: 'completed', label: 'Completados' },
+                { value: 'alert', label: 'Con alerta' },
+                { value: 'uninvoiced', label: 'Sin facturar' },
+                { value: 'cancelled', label: 'Cancelado' },
+                { value: 'archived', label: 'Archivados' },
+              ],
         }]}
         onChange={setPreferences}
       />
 
+      {!error && jobs.length > 0 ? (
+        <div className="cc-directory-list__summary">
+          <strong>{filteredJobs.length} visibles</strong>
+          <p>
+            {preferences.searchQuery.trim()
+              ? 'Vista afinada sobre agenda, ejecucion y facturacion operativa.'
+              : 'La lista prioriza agenda activa y deja el resto bajo demanda para no ensuciar la lectura diaria.'}
+          </p>
+        </div>
+      ) : null}
+
       {error ? (
-        <div className="empty-state">
-          <strong>Error cargando servicios</strong>
-          <p>{error}</p>
-        </div>
+        <DSErrorState title="Error cargando servicios" description={error} />
       ) : jobs.length === 0 ? (
-        <div className="empty-state">
-          <strong>No hay servicios</strong>
-          <p>Todavia no existen registros en la tabla jobs.</p>
-        </div>
+        <DSEmptyState title="No hay servicios" description="Todavia no existen registros en la tabla jobs." />
       ) : filteredJobs.length === 0 ? (
-        <div className="empty-state">
-          <strong>Sin resultados</strong>
-          <p>No encontramos servicios que coincidan con tu busqueda.</p>
-        </div>
+        <DSEmptyState title="Sin resultados" description="No encontramos servicios que coincidan con tu busqueda y filtros activos." />
       ) : (
         <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de servicios">
           {filteredJobs.map((job) => {

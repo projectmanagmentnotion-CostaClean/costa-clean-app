@@ -389,6 +389,19 @@ export function JobWorkspace({
             <strong>{client ? formatClientLabel(client) : formatClientLabel(liveJob)}</strong>
             <small>{client?.phone ?? client?.email ?? 'Sin contacto principal'}</small>
           </article>
+          <article className="cc-client-workspace__meta-card">
+            <span>Propiedad</span>
+            <strong>
+              {property
+                ? formatPropertyLabel(property)
+                : formatPropertyLabel({
+                    id: liveJob.property_id,
+                    display_code: liveJob.property_display_code,
+                    name: liveJob.property_name,
+                  })}
+            </strong>
+            <small>{property?.address ?? 'Sin direccion ampliada'}</small>
+          </article>
         </div>
       </header>
 
@@ -398,12 +411,22 @@ export function JobWorkspace({
           <strong>{operationalSignal.label}</strong>
           <small>{operationalSignal.detail}</small>
         </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Agenda</span>
+          <strong>{formatDateEs(liveJob.scheduled_date)}</strong>
+          <small>{getDisplayStatusLabel(liveJob.status)}</small>
+        </article>
+        <article className="cc-client-workspace__snapshot-card">
+          <span>Facturacion</span>
+          <strong>{invoice ? formatCurrency(outstanding) : 'Pendiente de emitir'}</strong>
+          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'La siguiente accion natural es preparar factura cuando toque.'}</small>
+        </article>
       </section>
 
       <details className="cc-client-workspace__context-toggle">
         <summary className="cc-client-workspace__context-toggle-summary">
           <span>Contexto ampliado</span>
-          <strong>Ver propiedad y facturacion extendida</strong>
+          <strong>Ver origen, propiedad y facturacion extendida</strong>
         </summary>
 
         <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">

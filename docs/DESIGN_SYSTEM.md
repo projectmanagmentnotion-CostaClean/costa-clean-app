@@ -1,0 +1,165 @@
+# Design System
+
+## Objetivo
+
+Este sprint crea una base de design system reusable y compatible sobre componentes ya vivos del repo. No migra modulos productivos completos ni cambia logica funcional.
+
+## Estructura creada
+
+- `src/design-system/index.ts`
+- `src/design-system/tokens/`
+  - `design-system-tokens.css`
+  - `tokens.ts`
+  - `index.ts`
+- `src/design-system/components/`
+  - `design-system.css`
+  - `DSButton.tsx`
+  - `DSCard.tsx`
+  - `DSInput.tsx`
+  - `DSTextarea.tsx`
+  - `DSSelect.tsx`
+  - `DSBadge.tsx`
+  - `DSTag.tsx`
+  - `DSPageHeader.tsx`
+  - `DSSectionHeader.tsx`
+  - `DSEmptyState.tsx`
+  - `DSErrorState.tsx`
+  - `DSLoadingState.tsx`
+  - `DSSkeleton.tsx`
+  - `DSConfirmDialog.tsx`
+  - `index.ts`
+- `src/design-system/layout/`
+  - `DSBottomActionBar.tsx`
+  - `ds-layout.css`
+
+## Tokens disponibles
+
+La capa nueva no inventa otro universo visual. Referencia el sistema actual de variables ya presente en `src/index.css`.
+
+### Spacing
+
+- `dsSpacing`
+- CSS vars `--ds-space-1` a `--ds-space-9`
+
+### Radius
+
+- `dsRadius`
+- CSS vars `--ds-radius-xs` a `--ds-radius-pill`
+
+### Typography
+
+- `dsTypography`
+- `--ds-font-display`
+- `--ds-font-size-caption`
+- `--ds-font-size-body`
+- `--ds-font-size-title`
+- `--ds-font-size-hero`
+
+### Shadows
+
+- `dsShadows`
+- `--ds-shadow-sm`
+- `--ds-shadow-md`
+- `--ds-shadow-lg`
+- `--ds-shadow-shell`
+
+### Motion
+
+- `dsMotion`
+- `--ds-motion-fast`
+- `--ds-motion-base`
+- `--ds-motion-slow`
+- `--ds-motion-spring`
+
+### Semantic colors
+
+- `dsColors`
+- Todas las referencias apuntan a variables existentes como `--cc-color-brand`, `--cc-color-surface`, `--cc-color-danger`, etc.
+
+## Componentes disponibles
+
+- `DSButton`
+- `DSCard`
+- `DSInput`
+- `DSTextarea`
+- `DSSelect`
+- `DSBadge`
+- `DSTag`
+- `DSPageHeader`
+- `DSSectionHeader`
+- `DSEmptyState`
+- `DSErrorState`
+- `DSLoadingState`
+- `DSSkeleton`
+- `DSBottomActionBar`
+- `DSConfirmDialog`
+
+## Equivalencias con componentes actuales
+
+### Wrappers directos
+
+- `DSPageHeader` -> `ExecutiveHeader`
+- `DSBadge` -> `SeverityBadge`
+- `DSLoadingState` -> `DeferredContentFallback`
+- `DSConfirmDialog` -> `ConfirmDialog`
+
+### Compatibilidad basada en clases existentes
+
+- `DSButton` reutiliza `primary-button` y `secondary-button`
+- `DSEmptyState` reutiliza `empty-state`
+- `DSErrorState` reutiliza `cc-alert cc-alert--error`
+
+### Piezas nuevas ligeras
+
+- `DSCard`
+- `DSInput`
+- `DSTextarea`
+- `DSSelect`
+- `DSTag`
+- `DSSectionHeader`
+- `DSSkeleton`
+- `DSBottomActionBar`
+
+Estas piezas nuevas no cambian imports existentes ni fuerzan migracion masiva.
+
+## Reglas de uso
+
+1. Preferir wrappers si ya existe un equivalente maduro.
+2. No duplicar componentes de dominio como `VisualKpiCard`, `ActionChecklist` o `FullscreenStepFlow`.
+3. Usar tokens `ds*` o `--ds-*` en nuevas piezas de UI antes de crear nuevos valores hardcoded.
+4. Mantener `Facturas`, `financialWriteApi`, `auth`, `Supabase`, rutas y shell critico fuera de cualquier migracion visual directa en esta fase.
+5. Introducir nuevos componentes de design system solo para primitives o layout helpers, no para encapsular reglas de negocio.
+
+## Que NO se migro todavia
+
+- `Dashboard`
+- `Intake publico`
+- `Presupuestos`
+- `Facturas`
+- `Clientes`
+- `Servicios`
+- `Finanzas`
+- `AppShell`
+- imports existentes del repo
+
+Tampoco se tocaron:
+
+- `Supabase`
+- `auth`
+- rutas
+- `financialWriteApi`
+- numeracion de facturas
+- `appDataApi`
+
+## Hallazgos reales relacionados con la fundacion
+
+- El repo ya tenia una base fuerte de variables y clases reutilizables en `src/index.css`, `src/App.css`, `src/components/visual-ux-system.css` y `src/features/shell/*.css`.
+- Existe duplicacion historica de bloques `:root` y redefiniciones visuales dentro de `src/index.css`. No se corrige en este sprint, pero debe tratarse como higiene futura.
+- `ExecutiveHeader`, `SeverityBadge`, `ConfirmDialog` y `DeferredContentFallback` ya eran buenos candidatos a wrapper en lugar de reemplazo.
+
+## Proximos pasos recomendados
+
+1. Usar esta capa en Sprint 3 para helpers de StepFlow y estados comunes.
+2. Aplicar primero a superficies pequenas o nuevas, no a modulos criticos.
+3. En Sprint 4+, estudiar limpieza de duplicacion de tokens en `src/index.css` sin mezclarlo con cambios funcionales.
+4. En Sprint 5+, migrar headers, states y form primitives por modulo de forma incremental.

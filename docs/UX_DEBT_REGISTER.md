@@ -17,6 +17,7 @@
 | UX-013 | Auth | `src/features/auth/AuthPage.tsx` | Pantalla cuidada, pero todavia aislada del resto de contratos de estados y componentes comunes. | baja | Baja friccion, deuda limitada | Alinear tokens y estados visuales cuando exista design system base | Sprint 2 |
 | UX-014 | Modulos legacy | `src/pages/AnnualClosingPage.tsx`, `src/pages/QuarterlyClosingPage.tsx` | Existen pantallas grandes que no son la superficie viva principal. | media | Ruido de implementacion y riesgo de duplicar criterios UX | Mantener documentadas y decidir su retiro o absorcion | Sprint 4 |
 | UX-015 | Repo hygiene | `src/pages/*.bak-*` | Archivos backup versionados dentro de paginas reales. No rompen UX viva, pero si elevan ruido y riesgo de tocar el archivo incorrecto. | media | Riesgo de mantenimiento y auditoria mas lenta | Limpiar en sprint tecnico separado, nunca mezclado con cambio visual | Sprint tecnico separado |
+| UX-016 | Tokens / estilos base | `src/index.css` | Existen bloques `:root` y redefiniciones visuales superpuestas del sistema de tokens. No rompe la app, pero complica la trazabilidad del design system y aumenta el riesgo de drift visual. | media | Mayor coste de mantenimiento y coherencia visual mas fragil | Consolidar tokens en sprint tecnico separado una vez la capa DS este adoptada | Sprint tecnico separado |
 
 ## Notas de lectura
 

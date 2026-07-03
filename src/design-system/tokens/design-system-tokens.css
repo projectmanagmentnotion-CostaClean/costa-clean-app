@@ -1,0 +1,58 @@
+:root {
+  --ds-space-1: var(--space-1);
+  --ds-space-2: var(--space-2);
+  --ds-space-3: var(--space-3);
+  --ds-space-4: var(--space-4);
+  --ds-space-5: var(--space-5);
+  --ds-space-6: var(--space-6);
+  --ds-space-7: var(--space-7);
+  --ds-space-8: var(--space-8);
+  --ds-space-9: var(--space-9);
+
+  --ds-radius-xs: var(--radius-xs);
+  --ds-radius-sm: var(--radius-sm);
+  --ds-radius-md: var(--radius-md);
+  --ds-radius-lg: var(--radius-lg);
+  --ds-radius-xl: var(--radius-xl);
+  --ds-radius-2xl: var(--radius-2xl);
+  --ds-radius-pill: var(--radius-pill);
+
+  --ds-font-body: inherit;
+  --ds-font-display: var(--cc-font-display);
+  --ds-font-size-caption: 0.78rem;
+  --ds-font-size-body: 0.95rem;
+  --ds-font-size-title: clamp(1.4rem, 2.4vw, 2rem);
+  --ds-font-size-hero: clamp(1.9rem, 4vw, 3rem);
+  --ds-line-height-tight: 1.1;
+  --ds-line-height-body: 1.55;
+  --ds-letter-spacing-caps: 0.08em;
+
+  --ds-shadow-sm: var(--cc-control-shadow);
+  --ds-shadow-md: var(--shadow-soft);
+  --ds-shadow-lg: var(--shadow);
+  --ds-shadow-shell: var(--shadow-shell);
+
+  --ds-motion-fast: var(--motion-fast);
+  --ds-motion-base: var(--motion-base);
+  --ds-motion-slow: var(--motion-slow);
+  --ds-motion-spring: var(--motion-spring);
+
+  --ds-color-bg: var(--cc-color-background);
+  --ds-color-surface: var(--cc-color-surface);
+  --ds-color-surface-raised: var(--cc-color-surface-raised);
+  --ds-color-surface-solid: var(--cc-color-surface-solid);
+  --ds-color-text: var(--cc-color-text);
+  --ds-color-text-muted: var(--cc-color-text-muted);
+  --ds-color-border: var(--cc-color-border);
+  --ds-color-border-strong: var(--cc-color-border-strong);
+  --ds-color-brand: var(--cc-color-brand);
+  --ds-color-brand-strong: var(--cc-color-brand-strong);
+  --ds-color-brand-soft: var(--cc-color-brand-soft);
+  --ds-color-success: var(--cc-color-success);
+  --ds-color-success-soft: var(--cc-color-success-soft);
+  --ds-color-warning: var(--cc-color-warning);
+  --ds-color-warning-soft: var(--cc-color-warning-soft);
+  --ds-color-danger: var(--cc-color-danger);
+  --ds-color-danger-soft: var(--cc-color-danger-soft);
+  --ds-color-focus: var(--cc-color-focus);
+}

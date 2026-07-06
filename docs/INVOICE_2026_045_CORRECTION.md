@@ -8,7 +8,8 @@
 
 ## Factura auditada
 
-- numero y `display_code`: `2026-045`
+- `invoice_number`: `2026-045`
+- `display_code` real persistido: `INV-0045`
 - cliente: `FUSTERIA PINEDA MAR SL`
 - servicio o referencia: `JOB-0068 · PRO-0007 · FUSTERIA PINEDA MAR SL`
 - estado visual actual: `Emitida`
@@ -59,6 +60,41 @@ Ademas, para el caso conocido `2026-045`, el editor ofrece `Aplicar correccion c
 - IVA esperado `68,04 EUR`
 - total esperado `392,04 EUR`
 
+## Intento de aplicacion real
+
+Fecha del intento: `2026-07-06T18:34:58.1921019+02:00`
+
+Metodo intentado:
+
+- script operativo `node scripts/ops/correct-invoice-2026-045.mjs --apply`
+- write path real por RPC `save_invoice_with_lines_v2`
+- fallback preparado a `save_invoice_with_lines`
+
+Precondiciones reales verificadas antes del write:
+
+- una sola factura con `invoice_number = 2026-045`
+- `display_code` persistido actual `INV-0045`
+- cliente real `FUSTERIA PINEDA MAR SL`
+- linea objetivo encontrada: `limpieza de taller`
+- cantidad actual `1`
+- `unit_price` `18,00 EUR`
+- `line_subtotal` actual `18,00 EUR`
+- subtotal actual `234,00 EUR`
+- IVA actual `49,14 EUR`
+- total actual `283,14 EUR`
+- sin pagos asociados
+- `pricing_metadata.renumbered_reason` contiene `Factura creada pero no enviada`
+
+Resultado del intento:
+
+- el RPC devolvio `Authentication required for financial writes.`
+- la correccion **no** quedo aplicada en datos reales en este turno
+- no se creo nueva factura
+- no se creo rectificativa
+- no cambio `invoice_number`
+- no cambio `display_code`
+- no se modifico ninguna otra factura
+
 ## Archivos tocados
 
 - `src/features/invoices/InvoiceEditFlow.tsx`
@@ -87,6 +123,9 @@ Ademas, para el caso conocido `2026-045`, el editor ofrece `Aplicar correccion c
 - auditoria del guardado en `InvoiceEditFlow`
 - confirmacion de que `saveInvoiceWithLines` elimina `invoice_number` y `display_code` del payload
 - confirmacion de que el mismatch solo se dispara cuando se envian expectativas nuevas de numeracion
+- lectura real de Supabase con `.env.local`
+- verificacion de que la factura sigue en `234,00 / 49,14 / 283,14` antes del intento de escritura
+- intento real de escritura por RPC bloqueado por autenticacion
 - `npm run lint` OK
 - `npm run build` OK
-- pendiente de verificacion funcional en entorno con datos reales para confirmar que la factura persistida queda actualizada como `2026-045`
+- pendiente de autenticacion real para poder aplicar la correccion y confirmar persistencia final

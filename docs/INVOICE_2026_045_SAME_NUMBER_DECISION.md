@@ -9,7 +9,7 @@
 ## Decision aplicada
 
 - se mantiene el mismo `invoice_number`
-- se mantiene el mismo `display_code`
+- se mantiene el mismo `display_code` persistido (`INV-0045`)
 - no se crea una factura nueva
 - no se crea rectificativa
 - no se reutiliza numeracion nueva
@@ -77,3 +77,4 @@ Valores corregidos esperados:
 - `npm run lint`
 - `npm run build`
 - revision de `git status`
+- intento real de write por RPC bloqueado por autenticacion

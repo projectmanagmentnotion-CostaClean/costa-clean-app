@@ -76,10 +76,7 @@ export function DSListControlBar({
 
   const toolbarState = activeSummaryBits.length > 0
     ? activeSummaryBits.join(' / ')
-    : `Orden base: ${buildSortLabel(sortOptions, state.sortField)}`
-  const toolbarCaption = hasActiveControls
-    ? 'Solo queda visible lo que cambia la lectura de esta lista.'
-    : 'Busqueda, orden y filtros en segundo plano hasta que hagan falta.'
+    : buildSortLabel(sortOptions, state.sortField)
 
   const activeFilterItems: Array<{ key: string; label: string }> = []
 
@@ -110,11 +107,13 @@ export function DSListControlBar({
     <div className="cc-list-toolbar">
       <div className="cc-list-toolbar__overview">
         <div className="cc-list-toolbar__intro">
-          <span className="cc-list-toolbar__eyebrow">Vista de lista</span>
+          <span className="cc-list-toolbar__eyebrow">Lista</span>
           <strong className="cc-list-toolbar__headline">
             {resultCount} visibles de {totalCount}
           </strong>
-          <span className="cc-list-toolbar__caption">{toolbarCaption}</span>
+          <span className="cc-list-toolbar__caption">
+            {hasActiveControls ? 'Filtros activos' : 'Controles compactos'}
+          </span>
         </div>
 
         <div className="cc-list-toolbar__actions">
@@ -140,9 +139,9 @@ export function DSListControlBar({
       >
         <summary className="cc-list-toolbar__panel-summary cc-collapsible-section__summary">
           <div className="cc-list-toolbar__panel-copy">
-            <strong>Ajustar lista</strong>
+            <strong>Filtros y orden</strong>
             <span>
-              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Controles ocultos para leer mejor'}
+              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Abrir controles'}
             </span>
           </div>
           {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Afinada</span> : <span className="cc-list-toolbar__panel-badge is-muted">Base</span>}

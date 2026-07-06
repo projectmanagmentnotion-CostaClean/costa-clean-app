@@ -36,6 +36,9 @@
   --ds-motion-base: var(--motion-base);
   --ds-motion-slow: var(--motion-slow);
   --ds-motion-spring: var(--motion-spring);
+  --ds-density-compact: 0.88;
+  --ds-density-comfortable: 1;
+  --ds-density-spacious: 1.14;
 
   --ds-color-bg: var(--cc-color-background);
   --ds-color-surface: var(--cc-color-surface);

@@ -24,7 +24,7 @@
   justify-content: center;
   gap: 0.55rem;
   min-height: max(var(--control-height-md), 44px);
-  padding: 0.78rem 1.12rem;
+  padding: 0.72rem 1rem;
   border-radius: var(--ds-radius-pill);
   border: 1px solid transparent;
   font-weight: 700;
@@ -36,6 +36,18 @@
     border-color var(--ds-motion-base),
     box-shadow var(--ds-motion-base),
     color var(--ds-motion-base);
+}
+
+.ds-button--sm {
+  padding: 0.64rem 0.9rem;
+}
+
+.ds-button--md {
+  padding: 0.72rem 1rem;
+}
+
+.ds-button--lg {
+  padding: 0.84rem 1.16rem;
 }
 
 .ds-button:focus-visible {

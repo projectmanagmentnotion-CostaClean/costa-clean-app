@@ -67,11 +67,11 @@ interface QuoteCreateSuccessState {
 }
 
 const quoteSteps = [
-  { id: 'client', label: 'Cliente o lead', description: 'Fija primero el contexto comercial que hereda el presupuesto.' },
-  { id: 'service', label: 'Tipo de servicio', description: 'Define el alcance base con los conceptos principales.' },
-  { id: 'property', label: 'Inmueble', description: 'Vincula la propiedad cuando aplique para no perder trazabilidad.' },
-  { id: 'conditions', label: 'Condiciones', description: 'Estado comercial y notas visibles antes de estimar.' },
-  { id: 'estimate', label: 'Estimacion', description: 'Completa cantidades, unidades y precio final sin IVA.' },
+  { id: 'client', label: 'Cliente o lead', description: 'Fija el contexto comercial.' },
+  { id: 'service', label: 'Tipo de servicio', description: 'Define el alcance base.' },
+  { id: 'property', label: 'Inmueble', description: 'Vincula la propiedad si aplica.' },
+  { id: 'conditions', label: 'Condiciones', description: 'Estado y notas antes de estimar.' },
+  { id: 'estimate', label: 'Estimacion', description: 'Cantidades, unidades y precio sin IVA.' },
   { id: 'review', label: 'Revision final', description: 'Confirma el presupuesto antes de guardarlo.' },
   { id: 'success', label: 'Confirmacion', description: 'Presupuesto guardado y siguientes acciones.' },
 ] as { id: string; label: string; description: string }[]
@@ -636,7 +636,7 @@ export function QuoteCreateFlow({
       <FullscreenStepFlow
         eyebrow="Propuesta comercial"
         title="Nuevo presupuesto"
-        description="El presupuesto se construye por etapas, con revision final y confirmacion propia antes de volver al listado."
+        description="Resuelve cliente, alcance, importe y revision sin mezclar decisiones."
         steps={quoteSteps}
         currentStep={currentStep}
         stepStates={stepStates}
@@ -652,14 +652,14 @@ export function QuoteCreateFlow({
                 <article className="cc-create-flow__hero-card">
                   <span className="cc-step-flow__eyebrow">Paso 1</span>
                   <strong>Fija el cliente primero</strong>
-                  <small>Todo el presupuesto hereda este contexto para conservar trazabilidad hacia servicio y factura.</small>
+                  <small>El resto del flujo hereda este contexto.</small>
                 </article>
 
                 <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
                   <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
                   <div className="cc-create-flow__status-copy">
                     <span>{currentStepError ? 'Falta contexto base' : 'Contexto listo'}</span>
-                    <strong>{currentStepError ?? 'El cliente ya esta fijado para seguir con el alcance comercial.'}</strong>
+                    <strong>{currentStepError ?? 'Cliente listo para seguir.'}</strong>
                   </div>
                 </article>
 
@@ -684,7 +684,7 @@ export function QuoteCreateFlow({
                     <ContextualCreateSection
                       actionLabel="Crear cliente"
                       title="Cliente pendiente"
-                      description="Para seguir con este presupuesto necesitas fijar antes un cliente o crearlo ahora."
+                      description="Fija o crea el cliente para seguir."
                       isOpen={showClientCreate}
                       onToggle={() => setShowClientCreate(true)}
                     >
@@ -718,14 +718,14 @@ export function QuoteCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
               <strong>Define el alcance base</strong>
-              <small>Primero fijamos los conceptos del servicio. El detalle economico llega despues, en su propio paso.</small>
+                  <small>Primero alcance. El precio viene despues.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Servicio pendiente' : 'Servicio listo'}</span>
-                <strong>{currentStepError ?? `${lines.length} concepto(s) preparados para la estimacion.`}</strong>
+                    <strong>{currentStepError ?? `${lines.length} concepto(s) listos.`}</strong>
               </div>
             </article>
 
@@ -748,7 +748,7 @@ export function QuoteCreateFlow({
                   />
 
                   <div className="cc-create-flow__line-actions">
-                    <small className="cc-create-flow__helper">Aqui solo decides el alcance base. Cantidades y precio vienen en la estimacion.</small>
+                    <small className="cc-create-flow__helper">Aqui solo defines el alcance.</small>
                     <button
                       type="button"
                       className="secondary-button"
@@ -763,7 +763,7 @@ export function QuoteCreateFlow({
             </div>
 
             <div className="cc-create-flow__microactions">
-              <strong>Microacciones</strong>
+                <strong>Acciones</strong>
               <div className="cc-create-flow__microactions-row">
                 <button type="button" className="secondary-button" onClick={addLine}>
                   Anadir concepto

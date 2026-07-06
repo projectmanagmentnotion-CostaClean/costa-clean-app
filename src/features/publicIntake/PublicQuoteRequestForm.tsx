@@ -28,49 +28,49 @@ const steps: StepConfig[] = [
     id: 'contact',
     label: 'Contacto',
     title: 'Datos de contacto',
-    helper: 'Solo lo imprescindible para poder responderte con una propuesta revisada.',
+    helper: 'Solo lo necesario para responderte.',
     description: 'Quien solicita el presupuesto y como podemos localizarle.',
   },
   {
     id: 'service',
     label: 'Servicio',
     title: 'Tipo de servicio',
-    helper: 'Elige el tipo de limpieza y la frecuencia que mejor encajan con tu caso.',
+    helper: 'Elige servicio y frecuencia.',
     description: 'Servicio principal y frecuencia prevista.',
   },
   {
     id: 'property',
     label: 'Propiedad',
     title: 'Datos de la propiedad',
-    helper: 'Una aproximacion es suficiente para calcular tiempo, equipo y desplazamiento.',
+    helper: 'Una aproximacion basta para estimar.',
     description: 'Tipo de inmueble, tamano y rasgos basicos.',
   },
   {
     id: 'schedule',
     label: 'Fecha',
     title: 'Fecha, urgencia y disponibilidad',
-    helper: 'Nos sirve para valorar agenda, prioridad y zona antes de preparar tu presupuesto.',
+    helper: 'Sirve para agenda, prioridad y zona.',
     description: 'Cuando lo necesitas y en que zona se realizaria el servicio.',
   },
   {
     id: 'details',
     label: 'Detalles',
     title: 'Detalles adicionales',
-    helper: 'Anade contexto util y dinos por que canal prefieres recibir la propuesta.',
+    helper: 'Anade contexto y canal de respuesta.',
     description: 'Notas, antecedentes y preferencia de respuesta.',
   },
   {
     id: 'review',
     label: 'Revision',
     title: 'Revision final',
-    helper: 'Revisa los datos antes de enviarlos. Todavia no se ha generado ni enviado nada automaticamente.',
+    helper: 'Revisa antes de enviar. No se genera nada automaticamente.',
     description: 'Confirmacion final antes de registrar la solicitud.',
   },
   {
     id: 'success',
     label: 'Confirmacion',
     title: 'Solicitud recibida',
-    helper: 'Todo ha quedado registrado para revision manual por parte de Costa Clean.',
+    helper: 'Queda registrada para revision manual.',
     description: 'Siguiente paso y expectativa de respuesta.',
   },
 ]
@@ -481,7 +481,7 @@ export function PublicQuoteRequestForm() {
       <FullscreenStepFlow
         eyebrow="Presupuesto publico"
         title="Cuentanos que necesitas"
-        description="Te guiaremos paso a paso para recoger solo lo necesario, revisar la solicitud y dejarla lista para revision manual."
+        description="Te guiaremos paso a paso para recoger lo necesario y dejar la solicitud lista para revision manual."
         steps={steps.map((step) => ({
           id: step.id,
           label: step.label,
@@ -797,8 +797,8 @@ export function PublicQuoteRequestForm() {
               ) : null}
 
               <div className="cc-public-intake-review-note">
-                <strong>Revision obligatoria antes de enviar</strong>
-                <p>Confirmaras estos datos y luego Costa Clean revisara manualmente la solicitud antes de responder.</p>
+                <strong>Revisa antes de enviar</strong>
+                <p>Confirma estos datos. La solicitud se revisa manualmente.</p>
               </div>
 
               {reviewGroups.map((group) => (
@@ -822,7 +822,7 @@ export function PublicQuoteRequestForm() {
           {currentStep.id === 'success' ? (
             <div className="cc-public-intake-success" role="status">
               <strong>Solicitud recibida</strong>
-              <p>{submitState.success?.message ?? 'Hemos registrado tu solicitud para revision manual.'}</p>
+              <p>{submitState.success?.message ?? 'Solicitud registrada para revision manual.'}</p>
               <div className="cc-public-intake-success__meta">
                 <article>
                   <span>Canal de contacto</span>
@@ -833,12 +833,12 @@ export function PublicQuoteRequestForm() {
                   <strong>{submitState.success?.leadDraftId ?? 'Pendiente'}</strong>
                 </article>
                 <article>
-                  <span>Que ocurre ahora</span>
-                  <strong>Revision manual y respuesta posterior</strong>
+                  <span>Siguiente paso</span>
+                  <strong>Revision manual</strong>
                 </article>
               </div>
               <p className="cc-public-intake-success__next">
-                Revisaremos alcance, zona y disponibilidad. La respuesta llegara por el canal que has indicado.
+                Revisaremos alcance, zona y disponibilidad. Te responderemos por el canal elegido.
               </p>
             </div>
           ) : null}

@@ -19,10 +19,10 @@
   z-index: 1;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  width: min(1180px, calc(100vw - 28px));
-  height: min(calc(100vh - 28px), 980px);
-  margin: 14px;
-  border-radius: 28px;
+  width: min(1160px, calc(100vw - 24px));
+  height: min(calc(100vh - 24px), 960px);
+  margin: 12px;
+  border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
     linear-gradient(180deg, rgba(10, 18, 32, 0.98), rgba(8, 14, 26, 0.98));
@@ -37,7 +37,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
+  padding: 14px 16px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(7, 12, 23, 0.92);
   backdrop-filter: blur(18px);
@@ -55,7 +55,7 @@
 
 .cc-action-flow__copy {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -69,27 +69,27 @@
 
 .cc-action-flow__copy h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.96rem;
   letter-spacing: -0.02em;
 }
 
 .cc-action-flow__copy p {
   margin: 0;
-  max-width: 70ch;
+  max-width: 62ch;
   color: rgba(191, 219, 254, 0.72);
-  font-size: 0.84rem;
-  line-height: 1.45;
+  font-size: 0.8rem;
+  line-height: 1.35;
 }
 
 .cc-action-flow__body {
   min-height: 0;
   overflow: auto;
-  padding: 18px;
+  padding: 14px 16px 16px;
 }
 
 .cc-action-flow__footer {
   display: none;
-  padding: 0 18px calc(env(safe-area-inset-bottom, 0px) + 18px);
+  padding: 0 16px calc(env(safe-area-inset-bottom, 0px) + 14px);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   background: rgba(7, 12, 23, 0.94);
   backdrop-filter: blur(18px);
@@ -141,16 +141,16 @@
   }
 
   .cc-action-flow__topbar {
-    padding: 14px 14px 12px;
+    padding: 12px 12px 10px;
   }
 
   .cc-action-flow__body {
-    padding: 14px;
+    padding: 12px;
   }
 
   .cc-action-flow__footer {
     display: block;
-    padding-inline: 14px;
+    padding-inline: 12px;
   }
 }
 
@@ -187,7 +187,7 @@
   }
 
   .cc-action-flow__copy h2 {
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     line-height: 1.15;
   }
 
@@ -201,7 +201,7 @@
   }
 
   .cc-action-flow__body {
-    padding: 10px;
+    padding: 10px 10px 12px;
   }
 
   .cc-action-flow__footer {

@@ -46,6 +46,12 @@ export const dsMotion = {
   spring: 'var(--ds-motion-spring)',
 } as const
 
+export const dsDensity = {
+  compact: 'var(--ds-density-compact)',
+  comfortable: 'var(--ds-density-comfortable)',
+  spacious: 'var(--ds-density-spacious)',
+} as const
+
 export const dsColors = {
   background: 'var(--ds-color-bg)',
   surface: 'var(--ds-color-surface)',

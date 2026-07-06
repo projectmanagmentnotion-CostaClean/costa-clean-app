@@ -950,7 +950,7 @@ export function InvoiceCreateFlow({
       <FullscreenStepFlow
         eyebrow="Documento de cobro"
         title="Nueva factura"
-        description="La accion se resuelve en pasos claros, con contexto visible y sin perder la vista de facturas al cerrar."
+        description="Resuelve origen, facturacion, lineas y revision sin mezclar acciones sensibles."
         steps={invoiceSteps}
         currentStep={currentStep}
         stepStates={stepStates}
@@ -966,14 +966,14 @@ export function InvoiceCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Escoge la ruta correcta antes de facturar</strong>
-              <small>La aplicacion hereda cliente, propiedad y base economica desde el origen cuando la ruta lo permite.</small>
+              <small>Cuando se puede, el origen hereda el contexto.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Paso bloqueado' : 'Paso listo'}</span>
-                <strong>{currentStepError ?? 'La ruta ya tiene el contexto minimo para continuar.'}</strong>
+                <strong>{currentStepError ?? 'Ruta lista para seguir.'}</strong>
               </div>
               {!currentStepError && form.origin_mode === 'manual' ? <small>Ruta excepcional activa</small> : null}
             </article>
@@ -1032,7 +1032,7 @@ export function InvoiceCreateFlow({
               {form.origin_mode === 'manual' ? (
                 <article className="cc-create-flow__panel">
                   <strong>Factura administrativa</strong>
-                  <small>Solo pide lo minimo: cliente, propiedad opcional, fecha y lineas. La ficha fiscal se revisa en el siguiente paso.</small>
+                  <small>Solo pide cliente, propiedad opcional, fecha y lineas.</small>
                 </article>
               ) : null}
 
@@ -1079,7 +1079,7 @@ export function InvoiceCreateFlow({
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Falta completar facturacion' : 'Facturacion lista'}</span>
-                <strong>{currentStepError ?? 'Cliente, fecha y ficha fiscal estan listos para emitir.'}</strong>
+                <strong>{currentStepError ?? 'Cliente, fecha y ficha fiscal listos.'}</strong>
               </div>
             </article>
 
@@ -1178,7 +1178,7 @@ export function InvoiceCreateFlow({
                       <p>{clientFiscalIssue}</p>
                     </div>
                   ) : (
-                    <p className="cc-create-flow__helper">La ficha fiscal ya permite emitir sin salir de este flujo.</p>
+                    <p className="cc-create-flow__helper">La ficha fiscal ya permite emitir.</p>
                   )}
                 </article>
               ) : null}
@@ -1208,7 +1208,7 @@ export function InvoiceCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 3</span>
               <strong>Valida lineas e importes antes de emitir</strong>
-              <small>La lectura es corta y cada linea se corrige sin scroll infinito ni cambios desperdigados.</small>
+              <small>Corrige cada linea sin mezclar otras acciones.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>

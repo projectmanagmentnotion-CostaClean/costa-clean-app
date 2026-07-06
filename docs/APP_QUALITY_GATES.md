@@ -68,6 +68,14 @@ These gates define the minimum quality bar for any future app work. A change sho
 - SVG charts stay lightweight, data-honest, and tied to existing metrics.
 - Scroll-based motion remains `once`, subtle, and non-blocking unless a dedicated sprint explicitly widens scope.
 
+## Density Gate
+
+- StepFlow, overlays y barras sticky deben priorizar compactacion antes que nuevos elementos.
+- Ningun header compartido debe duplicar la misma idea en tres bloques de copy.
+- La compactacion no puede bajar objetivos tactiles por debajo de `44px`.
+- Reducir texto es obligatorio cuando el mismo mensaje ya aparece en titulo, estado y footer.
+- Facturas y dominios criticos solo pueden compactarse a nivel visual, nunca alterando señales de warning.
+
 ## GSAP Plugin Gate
 
 - Plugins are loaded through the shared motion layer, never ad hoc in business modules.

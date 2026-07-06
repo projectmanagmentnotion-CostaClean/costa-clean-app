@@ -82,7 +82,7 @@ interface LinePayload {
 }
 
 const invoiceEditSteps = [
-  { id: 'context', label: 'Contexto y emision', description: 'Servicio, fecha, estado y notas visibles.' },
+  { id: 'context', label: 'Contexto y emision', description: 'Servicio, fecha, estado y notas.' },
   { id: 'lines', label: 'Lineas e importes', description: 'Edita conceptos e importes en un bloque aislado.' },
   { id: 'review', label: 'Revision final', description: 'Valida lectura financiera y referencias antes de guardar.' },
 ]
@@ -156,7 +156,7 @@ export function InvoiceEditFlow({
   onCancel,
   onDirtyChange,
   title = 'Editar factura',
-  description = 'La edicion principal se mueve a un flujo dedicado para que la card de factura se quede como panel de lectura y cobro.',
+  description = 'Edita la factura sin mezclar lectura, cobro y formulario largo.',
   submitLabel = 'Guardar cambios',
   allInvoices = [],
   expenses = [],
@@ -550,8 +550,8 @@ export function InvoiceEditFlow({
         <strong>{invoiceEditSteps[currentStep].label}</strong>
         <small className="cc-create-flow__helper">
           {currentStep < invoiceEditSteps.length - 1
-            ? 'La edicion mayor queda fuera de la card para no mezclar cobro, lectura y formulario largo.'
-            : 'Al guardar vuelves al mismo detalle y el bloque de cobro sigue intacto en la card.'}
+            ? 'Edicion separada del bloque de cobro.'
+            : 'Al guardar vuelves al detalle.'}
         </small>
       </div>
 
@@ -601,14 +601,14 @@ export function InvoiceEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Contexto de emision y referencia operativa</strong>
-              <small>Servicio, fecha, estado y notas quedan concentrados en un bloque corto y util.</small>
+              <small>Servicio, fecha, estado y notas en un solo bloque.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Contexto pendiente' : 'Contexto listo'}</span>
-                <strong>{currentStepError ?? 'La emision ya esta preparada para pasar a lineas e importes.'}</strong>
+                <strong>{currentStepError ?? 'Contexto listo para revisar lineas.'}</strong>
               </div>
             </article>
 
@@ -675,7 +675,7 @@ export function InvoiceEditFlow({
               </article>
 
               <div className="cc-create-flow__microactions">
-                <strong>Microacciones</strong>
+                <strong>Acciones</strong>
                 <div className="cc-create-flow__microactions-row">
                   <button type="button" className="secondary-button" onClick={syncFromJobQuote} disabled={!selectedJob}>
                     Traer datos del servicio o presupuesto
@@ -691,7 +691,7 @@ export function InvoiceEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
               <strong>Lineas y precios sin scroll mixto</strong>
-              <small>Las correcciones de conceptos e importes viven solas, sin competir con cobros o relaciones.</small>
+              <small>Corrige conceptos e importes sin mezclar cobro ni relaciones.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
@@ -767,7 +767,7 @@ export function InvoiceEditFlow({
             </div>
 
             <div className="cc-create-flow__microactions">
-              <strong>Microacciones</strong>
+                <strong>Acciones</strong>
               <div className="cc-create-flow__microactions-row">
                 <button type="button" className="secondary-button" onClick={addLine}>
                   Anadir linea

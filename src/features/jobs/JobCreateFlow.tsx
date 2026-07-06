@@ -641,7 +641,7 @@ export function JobCreateFlow({
       <FullscreenStepFlow
         eyebrow="Operacion guiada"
         title="Nuevo servicio"
-        description="Convierte el servicio en una accion fullview real, con contexto heredado y base de facturacion lista."
+        description="Resuelve contexto, agenda, base de cobro y revision en un flujo corto."
         steps={jobSteps}
         currentStep={currentStep}
         stepStates={stepStates}
@@ -657,7 +657,7 @@ export function JobCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Fija el origen real del servicio</strong>
-              <small>Cliente, propiedad y presupuesto se heredan cuando existen. Si falta algo, lo resuelves aqui mismo.</small>
+              <small>Si falta algo, lo resuelves aqui mismo.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
@@ -689,7 +689,7 @@ export function JobCreateFlow({
                 <ContextualCreateSection
                   actionLabel="Crear cliente"
                   title="Cliente pendiente"
-                  description="Para seguir con este servicio necesitas fijar antes un cliente o crearlo ahora."
+                  description="Fija o crea el cliente para seguir."
                   isOpen={showClientCreate}
                   onToggle={() => setShowClientCreate(true)}
                 >
@@ -717,7 +717,7 @@ export function JobCreateFlow({
                 <ContextualCreateSection
                   actionLabel="Crear propiedad"
                   title="Propiedad pendiente"
-                  description="Si la propiedad aun no existe, creala ahora y el servicio retomara este paso con ella ya resuelta."
+                  description="Si falta la propiedad, creala y sigue."
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate(true)}
                 >
@@ -749,7 +749,7 @@ export function JobCreateFlow({
                 <ContextualCreateSection
                   actionLabel="Crear presupuesto"
                   title="Presupuesto en contexto"
-                  description="Si falta el presupuesto aceptado, crealo primero y despues retoma el servicio con ese origen ya vinculado."
+                  description="Si falta el presupuesto, crealo y sigue."
                   isOpen={showQuoteCreate}
                   onToggle={() => setShowQuoteCreate(true)}
                 >

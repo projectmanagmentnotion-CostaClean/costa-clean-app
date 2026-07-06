@@ -24,6 +24,12 @@
 - `Home` ya usa charts SVG y reveals sutiles; cualquier extension futura debe mantener dato real, CTA clara y fallback seguro sin convertir Inicio en una landing decorativa.
 - `ScrollTrigger` queda limitado a reveals `once` del dashboard; no debe expandirse a listas densas, shell global ni dominios criticos sin sprint separado.
 
+## Riesgos nuevos de Motion Phase 3
+
+- `FullscreenStepFlow` ya admite transicion GSAP compartida; cualquier ampliacion futura debe seguir animando la superficie y no los campos de formulario de forma individual o repetitiva.
+- `ActionFlowOverlay` y `ConfirmDialog` ya tienen entrada comun; no deben recibir timelines mas largas ni cierres retrasados que bloqueen la accion del usuario.
+- La compactacion de copy no puede suavizar warnings fiscales, mismatch o estados bloqueados en facturas.
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

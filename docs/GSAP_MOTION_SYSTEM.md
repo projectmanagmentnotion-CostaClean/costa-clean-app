@@ -219,6 +219,28 @@ Regla:
 - motion minima, sobria y no invasiva
 - nunca maquillar warnings o incertidumbre fiscal con transiciones llamativas
 
+## 15. Motion Phase 3 aplicado
+
+Superficies oficialmente habilitadas en esta fase:
+
+- `FullscreenStepFlow`
+- `ActionFlowOverlay`
+- `ConfirmDialog`
+
+Patron aprobado:
+
+- StepFlow: `stepTransition`
+- overlay grande: `sheetEnter`
+- dialogo de confirmacion: `modalEnter`
+- backdrop: `fadeIn`
+
+Reglas adicionales:
+
+- animar la superficie, no cada input
+- mantener duraciones cortas, entre `0.18` y `0.24`
+- no retrasar CTA ni validaciones
+- si el flujo muestra warnings fiscales o bloqueos, la motion no puede competir visualmente con ellos
+
 ## 15. Checklist de QA para cada animacion
 
 - ¿ayuda a entender una transicion real?

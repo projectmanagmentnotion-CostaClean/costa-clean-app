@@ -1,4 +1,7 @@
-import { useContext, useId } from 'react'
+import { useContext, useId, useRef } from 'react'
+import { gsap, useGSAP } from '../design-system/motion'
+import { createMotionPreset, getReducedMotionSetVars } from '../design-system/motion/motionPresets'
+import { useReducedMotion } from '../design-system/motion/useReducedMotion'
 import type {
   StepFlowStatus,
   StepFlowStep,
@@ -33,6 +36,11 @@ export function FullscreenStepFlow({
   contextItems = [],
 }: FullscreenStepFlowProps) {
   const isNested = useContext(NestedFlowSurfaceContext)
+  const surfaceRef = useRef<HTMLElement | null>(null)
+  const currentStepRef = useRef<HTMLDivElement | null>(null)
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  const footerRef = useRef<HTMLElement | null>(null)
+  const prefersReducedMotion = useReducedMotion()
   const titleId = useId()
   const descriptionId = useId()
   const currentStepId = useId()
@@ -44,8 +52,32 @@ export function FullscreenStepFlow({
   const shouldShowSideContent = !isNested && Boolean(sideContent)
   const shouldShowMobileSide = Boolean(contextItems.length > 0 || shouldShowSideContent)
 
+  useGSAP(() => {
+    if (!surfaceRef.current || !currentStepRef.current || !contentRef.current) return
+
+    const targets = footerRef.current
+      ? [currentStepRef.current, contentRef.current, footerRef.current]
+      : [currentStepRef.current, contentRef.current]
+
+    if (prefersReducedMotion) {
+      gsap.set(targets, getReducedMotionSetVars())
+      return
+    }
+
+    const stepMotion = createMotionPreset('stepTransition', {
+      duration: currentStep === 0 ? 0.22 : 0.2,
+      x: currentStep === 0 ? 12 : 10,
+    })
+
+    gsap.fromTo(targets, stepMotion.from, {
+      ...stepMotion.to,
+      stagger: 0.03,
+    })
+  }, { dependencies: [currentStep, prefersReducedMotion], scope: surfaceRef, revertOnUpdate: true })
+
   return (
     <section
+      ref={surfaceRef}
       className={isNested ? 'cc-step-flow cc-step-flow--nested' : 'cc-step-flow'}
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
@@ -74,7 +106,7 @@ export function FullscreenStepFlow({
           </div>
         </div>
 
-        <div className="cc-step-flow__mobile-hero" aria-label="Resumen movil del progreso">
+          <div className="cc-step-flow__mobile-hero" aria-label="Resumen movil del progreso">
           <div className="cc-step-flow__mobile-hero-copy">
             <span className="cc-step-flow__eyebrow">{eyebrow}</span>
             <h2>{title}</h2>
@@ -82,7 +114,7 @@ export function FullscreenStepFlow({
               <span>Paso {currentStep + 1} de {steps.length}</span>
               <strong>{current?.label}</strong>
             </div>
-            <p>{current?.description}</p>
+            {current?.description ? <p>{current.description}</p> : null}
           </div>
           <div className="cc-step-flow__mobile-hero-status">
             <span className={`cc-step-flow__mobile-state cc-step-flow__mobile-state--${currentState}`}>
@@ -163,6 +195,7 @@ export function FullscreenStepFlow({
       <div className="cc-step-flow__layout">
         <div className="cc-step-flow__main">
           <div
+            ref={currentStepRef}
             className="cc-step-flow__current-step"
             id={currentStepId}
             role="status"
@@ -173,15 +206,15 @@ export function FullscreenStepFlow({
             <strong>{current?.label}</strong>
             <small>{current?.description}</small>
           </div>
-          <div className="cc-step-flow__content">
+          <div ref={contentRef} className="cc-step-flow__content">
             {children}
 
             {shouldShowMobileSide ? (
               <details className="cc-step-flow__mobile-side">
                 <summary className="cc-step-flow__mobile-side-summary" aria-describedby={currentStepId}>
                   <div className="cc-step-flow__mobile-side-copy">
-                    <span>Contexto y apoyo</span>
-                    <strong>Ver resumen del flujo</strong>
+                    <span>Resumen</span>
+                    <strong>Ver contexto</strong>
                   </div>
                   <span className="cc-step-flow__mobile-side-toggle">Abrir</span>
                 </summary>
@@ -191,7 +224,7 @@ export function FullscreenStepFlow({
                     <section className="cc-step-flow__context cc-step-flow__context--mobile">
                       <div className="cc-step-flow__context-head">
                         <span>Contexto heredado</span>
-                        <strong>Visible sin salir del paso</strong>
+                        <strong>Visible en este paso</strong>
                       </div>
                       <div className="cc-step-flow__context-list">
                         {contextItems.map((item) => (
@@ -217,7 +250,7 @@ export function FullscreenStepFlow({
             <section className="cc-step-flow__context">
               <div className="cc-step-flow__context-head">
                 <span>Contexto heredado</span>
-                <strong>Visible durante todo el flujo</strong>
+                <strong>Visible durante el flujo</strong>
               </div>
               <div className="cc-step-flow__context-list">
                 {contextItems.map((item) => (
@@ -236,7 +269,7 @@ export function FullscreenStepFlow({
       </div>
 
       {footerContent ? (
-        <footer className="cc-step-flow__footer">
+        <footer ref={footerRef} className="cc-step-flow__footer">
           {footerContent}
         </footer>
       ) : null}

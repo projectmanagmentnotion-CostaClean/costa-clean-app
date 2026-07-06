@@ -57,6 +57,7 @@ Current types:
 - mobile collapsible context area
 - sticky footer area for primary actions
 - nested mode support through `NestedFlowSurfaceContext`
+- reduced-motion-safe GSAP transition between steps
 
 It does not own:
 
@@ -223,6 +224,14 @@ Current limitations of the engine:
 - no built-in accessibility helpers for step announcements beyond native semantics
 - no built-in analytics or step transition instrumentation
 - no built-in summary schema beyond generic `sideContent` and `contextItems`
+
+## Density rules added in Motion Phase 3
+
+- el header debe abrir el flujo, no competir con el formulario
+- el paso actual debe resumirse en una sola linea principal y una ayuda corta
+- el resumen movil debe hablar de contexto, no repetir todo el hero
+- los footers deben acercar la accion primaria al cierre del paso
+- la motion del paso debe animar la superficie, no el contenido campo por campo
 
 Current repo-level limitation:
 

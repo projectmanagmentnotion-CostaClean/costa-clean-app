@@ -218,6 +218,20 @@ Objective:
 
 Verify that the transformed app works credibly on mobile and meets accessibility expectations.
 
+## Motion Phase 3: StepFlow, Overlays, And Density Polish
+
+Objective:
+
+Compact the shared full-screen flows and overlay surfaces, adding only functional GSAP transitions with reduced-motion safety.
+
+Focus:
+
+- shared StepFlow density
+- overlay and dialog entrance motion
+- compact sticky action bars
+- copy reduction in long multi-step flows
+- preservation of critical invoice and fiscal signals
+
 Focus:
 
 - keyboard and focus behavior

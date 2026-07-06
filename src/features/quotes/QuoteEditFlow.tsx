@@ -60,11 +60,11 @@ interface QuoteEditSuccessState {
 }
 
 const quoteEditSteps = [
-  { id: 'context', label: 'Cliente o lead', description: 'Confirma el contexto comercial antes de tocar el resto.' },
-  { id: 'service', label: 'Tipo de servicio', description: 'Ajusta el alcance base sin mezclar importes.' },
-  { id: 'property', label: 'Inmueble', description: 'Revisa la propiedad vinculada o deja claro si no aplica.' },
-  { id: 'conditions', label: 'Condiciones', description: 'Estado y notas visibles antes de recalcular la estimacion.' },
-  { id: 'estimate', label: 'Estimacion', description: 'Edita cantidades, unidades y precio final sin IVA.' },
+  { id: 'context', label: 'Cliente o lead', description: 'Confirma el contexto.' },
+  { id: 'service', label: 'Tipo de servicio', description: 'Ajusta el alcance base.' },
+  { id: 'property', label: 'Inmueble', description: 'Revisa la propiedad si aplica.' },
+  { id: 'conditions', label: 'Condiciones', description: 'Estado y notas antes de recalcular.' },
+  { id: 'estimate', label: 'Estimacion', description: 'Cantidades, unidades y precio sin IVA.' },
   { id: 'review', label: 'Revision final', description: 'Confirma la lectura final antes de guardar.' },
   { id: 'success', label: 'Confirmacion', description: 'Presupuesto actualizado y siguientes acciones.' },
 ] as { id: string; label: string; description: string }[]
@@ -109,7 +109,7 @@ export function QuoteEditFlow({
   onCancel,
   onDirtyChange,
   title = 'Editar presupuesto',
-  description = 'La edicion principal vive en un flujo separado para no convertir la card de detalle en un formulario largo.',
+  description = 'Edita el presupuesto sin convertir el detalle en un formulario largo.',
   submitLabel = 'Guardar cambios',
   allQuotes = [],
   invoices = [],
@@ -416,7 +416,7 @@ export function QuoteEditFlow({
           </div>
           <div className="cc-create-flow__summary-item">
             <span>Conversion</span>
-            <strong>Se mantiene desde el workspace del presupuesto</strong>
+            <strong>Disponible desde el workspace</strong>
           </div>
         </div>
       </section>
@@ -487,8 +487,8 @@ export function QuoteEditFlow({
         <strong>{quoteEditSteps[currentStep].label}</strong>
         <small className="cc-create-flow__helper">
           {currentStep < stepIndexById.review
-            ? 'La edicion avanza por bloques para evitar scroll largo y decisiones mezcladas.'
-            : 'La revision final confirma cambios antes de guardarlos.'}
+            ? 'Edicion por bloques.'
+            : 'Revisa antes de guardar.'}
         </small>
       </div>
 
@@ -538,14 +538,14 @@ export function QuoteEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 1</span>
               <strong>Contexto comercial y propiedad</strong>
-              <small>Primero confirmas cliente o lead, para no mezclar identidad con importes.</small>
+              <small>Confirma identidad antes del resto.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
               <div className="cc-create-flow__status-copy">
                 <span>{currentStepError ? 'Contexto pendiente' : 'Contexto listo'}</span>
-                <strong>{currentStepError ?? 'Puedes seguir con el alcance del servicio sin perder trazabilidad.'}</strong>
+                <strong>{currentStepError ?? 'Contexto listo.'}</strong>
               </div>
             </article>
 
@@ -573,7 +573,7 @@ export function QuoteEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 2</span>
               <strong>Ajusta el alcance base</strong>
-              <small>Los conceptos principales se afinan aqui. El precio queda para su paso propio.</small>
+              <small>Primero alcance. El precio va aparte.</small>
             </article>
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
@@ -601,7 +601,7 @@ export function QuoteEditFlow({
                     onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
                   />
                   <div className="cc-create-flow__line-actions">
-                    <small className="cc-create-flow__helper">Aqui solo fijamos el alcance. Cantidades y precio vienen despues.</small>
+                    <small className="cc-create-flow__helper">Aqui solo ajustas el alcance.</small>
                     <button
                       type="button"
                       className="secondary-button"

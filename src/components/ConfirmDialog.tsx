@@ -1,5 +1,8 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { gsap, useGSAP } from '../design-system/motion'
+import { createMotionPreset, getReducedMotionSetVars } from '../design-system/motion/motionPresets'
+import { useReducedMotion } from '../design-system/motion/useReducedMotion'
 
 interface ConfirmDialogProps {
   isOpen: boolean
@@ -25,6 +28,9 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null)
+  const overlayRef = useRef<HTMLDivElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
     if (!isOpen) return
@@ -49,11 +55,28 @@ export function ConfirmDialog({
     }
   }, [isBusy, isOpen, onCancel])
 
+  useGSAP(() => {
+    if (!isOpen || !overlayRef.current || !panelRef.current) return
+
+    if (prefersReducedMotion) {
+      gsap.set(overlayRef.current, { autoAlpha: 1 })
+      gsap.set(panelRef.current, getReducedMotionSetVars())
+      return
+    }
+
+    const overlayMotion = createMotionPreset('fadeIn', { duration: 0.18 })
+    const panelMotion = createMotionPreset('modalEnter', { duration: 0.22, scale: 0.98, y: 8 })
+
+    gsap.fromTo(overlayRef.current, overlayMotion.from, overlayMotion.to)
+    gsap.fromTo(panelRef.current, panelMotion.from, panelMotion.to)
+  }, { dependencies: [isOpen, prefersReducedMotion], scope: overlayRef, revertOnUpdate: true })
+
   if (!isOpen) return null
 
   const dialog = (
-    <div className="cc-confirm-dialog" role="presentation" onMouseDown={isBusy ? undefined : onCancel}>
+    <div ref={overlayRef} className="cc-confirm-dialog" role="presentation" onMouseDown={isBusy ? undefined : onCancel}>
       <div
+        ref={panelRef}
         className={`cc-confirm-dialog__panel cc-confirm-dialog__panel--${tone}`}
         role="dialog"
         aria-modal="true"

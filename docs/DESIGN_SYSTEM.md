@@ -71,6 +71,13 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `--ds-motion-slow`
 - `--ds-motion-spring`
 
+### Density
+
+- `dsDensity`
+- `--ds-density-compact`
+- `--ds-density-comfortable`
+- `--ds-density-spacious`
+
 ### Motion / GSAP foundation
 
 - `src/design-system/motion/gsap.ts`
@@ -209,6 +216,13 @@ Superficies ya alineadas:
 - Toda animacion debe respetar `prefers-reduced-motion`.
 - No registrar `ScrollTrigger` globalmente sin sprint especifico.
 - Las animaciones compartidas deben ser cortas, sobrias y no bloquear la interaccion.
+
+## Reglas de densidad
+
+- Compactar primero shells, headers, side summaries y footers antes de tocar formularios de negocio.
+- Reducir microcopy repetida antes de ocultar datos utiles.
+- Mantener targets tactiles de `44px` incluso cuando la UI se compacte.
+- Un bloque compacto sigue necesitando una accion primaria clara.
 
 ## GSAP plugins approved usage
 

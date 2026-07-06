@@ -107,7 +107,7 @@ export function ClientCreateForm({
       await onCreatedClient?.(createdClient)
       setForm(initialFormState)
       setIsDirty(false)
-      setSuccessMessage('Cliente creado correctamente.')
+      setSuccessMessage('Cliente creado.')
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido creando el cliente.'
@@ -229,7 +229,7 @@ export function ClientCreateForm({
       <ConfirmDialog
         isOpen={showCancelConfirm}
         title="Descartar cliente en curso"
-        description="Has empezado a completar este cliente. Si cierras ahora, perderas los cambios no guardados."
+        description="Si cierras ahora, perderas los cambios no guardados."
         confirmLabel="Descartar cambios"
         tone="warning"
         onCancel={() => setShowCancelConfirm(false)}

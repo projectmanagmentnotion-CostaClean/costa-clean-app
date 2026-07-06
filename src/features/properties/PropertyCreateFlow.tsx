@@ -65,7 +65,7 @@ export function PropertyCreateFlow({
   onCancel,
   onDirtyChange,
   title = 'Nueva propiedad',
-  description = 'Alta corta y guiada para inmuebles, con cliente heredado y bloque operativo claro.',
+  description = 'Alta corta para inmueble, cliente y direccion.',
   submitLabel = 'Guardar propiedad',
   onOpenExistingProperty,
 }: PropertyCreateFlowProps) {
@@ -246,9 +246,9 @@ export function PropertyCreateFlow({
       contextItems={contextItems}
       sideContent={(
         <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
-          <span>Resultado esperado</span>
+          <span>Resultado</span>
           <strong>{form.name.trim() || 'Nueva propiedad'}</strong>
-          <small>{form.address.trim() || 'Sin direccion todavia'}</small>
+          <small>{form.address.trim() || 'Sin direccion'}</small>
         </div>
       )}
     >
@@ -256,7 +256,7 @@ export function PropertyCreateFlow({
         <ContextualCreateSection
           actionLabel="Crear cliente"
           title="Falta el cliente base"
-          description="Crea el cliente sin salir del flujo y quedara seleccionado automaticamente."
+          description="Crea el cliente y seguiremos aqui."
           isOpen={showClientCreate}
           onToggle={() => setShowClientCreate((current) => !current)}
         >
@@ -264,7 +264,7 @@ export function PropertyCreateFlow({
             onCreated={onRefreshData}
             onDirtyChange={setIsDirty}
             title="Nuevo cliente en contexto"
-            description="Guarda el cliente y vuelve directamente al alta de propiedad."
+            description="Guarda y vuelve al alta."
             submitLabel="Guardar cliente y volver"
             onCreatedClient={async (client) => {
               setForm((current) => ({
@@ -308,7 +308,7 @@ export function PropertyCreateFlow({
           <section className="cc-form-shell__section">
             <div className="cc-form-shell__section-head">
               <strong>Base del inmueble</strong>
-              <span>Cliente propietario, nombre interno y tipologia.</span>
+              <span>Cliente, nombre interno y tipologia.</span>
             </div>
 
             <label className="form-field">
@@ -369,7 +369,7 @@ export function PropertyCreateFlow({
           <section className="cc-form-shell__section">
             <div className="cc-form-shell__section-head">
               <strong>Datos operativos</strong>
-              <span>Direccion real y notas que luego heredaran servicios y presupuestos.</span>
+              <span>Direccion y notas operativas.</span>
             </div>
 
             <label className="form-field form-field-full">

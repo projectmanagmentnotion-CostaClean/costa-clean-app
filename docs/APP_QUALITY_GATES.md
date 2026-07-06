@@ -65,6 +65,8 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Animations do not block interaction or obscure data.
 - Motion does not create ambiguity in critical business states, amounts, numbering, or fiscal warnings.
 - Large lists, dense modules, and critical domains avoid uncontrolled stagger or decorative transitions.
+- SVG charts stay lightweight, data-honest, and tied to existing metrics.
+- Scroll-based motion remains `once`, subtle, and non-blocking unless a dedicated sprint explicitly widens scope.
 
 ## GSAP Plugin Gate
 

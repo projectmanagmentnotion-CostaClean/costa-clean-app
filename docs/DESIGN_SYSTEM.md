@@ -220,6 +220,24 @@ Superficies ya alineadas:
 - `Observer` y `Draggable` quedan preparados, pero restringidos a casos aislados y no criticos.
 - `ScrollSmoother`, `InertiaPlugin`, `Physics2DPlugin`, `PhysicsPropsPlugin`, `PixiPlugin`, `EaselPlugin`, `GSDevTools`, `ScrambleTextPlugin` y `TextPlugin` quedan pospuestos o prohibidos por ahora.
 
+## Patron de SVG charts animados
+
+Para dashboards ligeros:
+
+- usar SVG nativo
+- encapsular la card en un wrapper como `HomeGsapChartCard`
+- usar `drawSvgPath()` solo con fallback seguro
+- usar `useGSAP` y `useGsapEntrance` a traves de la capa compartida
+- limitar el chart a una lectura corta y accionable
+
+Reglas:
+
+- no usar charts decorativos sin decision asociada
+- no animar importes como contadores
+- no introducir librerias externas de charts
+- no usar canvas si SVG resuelve el caso
+- reduced motion debe renderizar el estado final
+
 ## Que NO se migro todavia
 
 - `Dashboard`

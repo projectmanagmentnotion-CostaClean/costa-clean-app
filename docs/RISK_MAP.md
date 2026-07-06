@@ -19,6 +19,11 @@
 | Shell central | `AppShell.tsx` concentra wiring, prefills, filtros, alertas y navegacion. Cualquier toque tiene radio de impacto amplio y el shell sigue dependiendo de aliases visuales (`fiscal_closing` frente a `annual_closing` y `quarterly_closing`) sobre `?view=`. | alta | `src/app/AppShell.tsx`, `src/app/useShellNavigation.ts`, `src/app/AppShellViewRenderer.tsx`, `src/app/AppNav.tsx`, `src/app/navigation.ts` | Orquestacion cross-module, prefills, filtros, guardas de navegacion, cambio del mecanismo `?view=` o de aliases vivos | Reducir presion sobre este archivo via patrones visuales y documentacion; cualquier refactor del router interno requiere sprint tecnico separado |
 | Legacy views y backups | Hay paginas legacy no montadas y backups `.bak-*` en `src/pages/`. | media | `src/pages/AnnualClosingPage.tsx`, `src/pages/QuarterlyClosingPage.tsx`, `src/pages/*.bak-*` | Borrar o mover sin auditoria, tocar archivo equivocado por confusion | Registrar y tratar en sprint tecnico de higiene, separado del rediseño |
 
+## Riesgos nuevos de Motion Phase 2
+
+- `Home` ya usa charts SVG y reveals sutiles; cualquier extension futura debe mantener dato real, CTA clara y fallback seguro sin convertir Inicio en una landing decorativa.
+- `ScrollTrigger` queda limitado a reveals `once` del dashboard; no debe expandirse a listas densas, shell global ni dominios criticos sin sprint separado.
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

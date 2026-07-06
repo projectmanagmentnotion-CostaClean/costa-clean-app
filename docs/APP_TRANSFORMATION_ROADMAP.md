@@ -278,11 +278,11 @@ Objective:
 
 Audit plugin availability in the real package, add safe registration helpers, define approved usage, and document policy before productive adoption.
 
-### Motion Phase 2: Animate Shared Primitives
+### Motion Phase 2: Home GSAP Dashboard
 
 Objective:
 
-Adopt motion first in shared primitives, state surfaces, small cards, and safe reusable containers.
+Apply controlled GSAP motion to Home/Inicio using quick actions, KPI surfaces, lightweight SVG charts, and subtle section reveals without touching business logic.
 
 ### Motion Phase 3: Animate StepFlow And Overlays
 
@@ -301,3 +301,12 @@ Introduce limited motion into dashboards and list surfaces without adding noise 
 Objective:
 
 Audit cleanup, reduced motion, accessibility, interaction safety, and runtime cost before broadening motion adoption further.
+
+## Motion Status Snapshot
+
+As of Motion Phase 2:
+
+- Motion Phase 1 is completed.
+- Motion Phase 1B is completed.
+- Motion Phase 2 is completed on `Home` as the first productive surface.
+- Motion Phase 3 through Motion Phase 5 remain pending.

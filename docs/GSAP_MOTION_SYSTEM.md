@@ -237,17 +237,37 @@ Regla:
 
 - GSAP foundation and manual
 
+### Motion Phase 1B
+
+- plugin audit and safe registration layer
+
 ### Motion Phase 2
 
-- animate shared primitives
+- Home GSAP dashboard
+
+Surface currently covered:
+
+- `src/pages/HomePage.tsx`
+- quick actions panel
+- KPI decision grid
+- lightweight SVG charts
+- subtle section reveal via `ScrollTrigger`
+
+Rules applied:
+
+- no chart libraries
+- no premium install requirement
+- `DrawSVG` fallback mandatory
+- reduced motion mandatory
+- no motion over critical business data semantics
 
 ### Motion Phase 3
 
-- animate StepFlow and overlays
+- StepFlow motion
 
 ### Motion Phase 4
 
-- animate dashboards/lists safely
+- list/card microinteractions
 
 ### Motion Phase 5
 

@@ -1,13 +1,21 @@
 import type { AppView } from '../app/navigation'
 import type { SeverityTone } from '../components/SeverityBadge'
-import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DSEmptyState, DSPageHeader } from '../design-system/components'
+import { useGsapEntrance } from '../design-system/motion'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
+import { HomeFiscalKpiGrid, type HomeFiscalKpiItem } from '../features/dashboard/components/HomeFiscalKpiGrid'
+import { HomeGsapChartCard } from '../features/dashboard/components/HomeGsapChartCard'
+import { HomeQuickActionsPanel, type HomeQuickActionItem } from '../features/dashboard/components/HomeQuickActionsPanel'
+import { SvgBarChart } from '../features/dashboard/components/SvgBarChart'
+import { SvgLineChart } from '../features/dashboard/components/SvgLineChart'
+import { SvgRadialProgress } from '../features/dashboard/components/SvgRadialProgress'
+import { HomeMotionSection } from '../features/dashboard/motion/HomeMotionSection'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { getJobBillingDisplayConcept } from '../features/jobs/jobBilling'
 import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
+import '../features/dashboard/home-gsap-dashboard.css'
 import { formatCurrency, formatDateEs } from '../app/displayFormat'
 import type { AutomationAlertItem } from '../features/automation/types'
 
@@ -90,13 +98,6 @@ interface HomePrimaryAction {
   onSecondaryRun: () => void
 }
 
-interface HomeQuickAction {
-  key: string
-  title: string
-  detail: string
-  onRun: () => void
-}
-
 export function HomePage({
   metrics,
   agenda,
@@ -127,6 +128,10 @@ export function HomePage({
   const missingFiscalView = quickViewById.get('clients-missing-fiscal') ?? null
   const overdueInternalView = quickViewById.get('overdue-internal') ?? null
   const fiscalRiskCount = metrics.expensesMissingValidVatInvoiceCount + metrics.fiscalReviewExpensesCount + metrics.fiscalRiskExpensesCount
+  const { scopeRef: heroScopeRef } = useGsapEntrance({
+    preset: 'fadeUp',
+    target: '.cc-dashboard-console-hero--decision',
+  })
 
   const homePrimaryAction: HomePrimaryAction = topIncident
     ? {
@@ -196,8 +201,9 @@ export function HomePage({
     partialCollectionsView,
   ].filter(Boolean).slice(0, 3)
 
-  const decisionKpis = [
+  const fiscalKpis: HomeFiscalKpiItem[] = [
     {
+      key: 'pending-collections',
       label: 'Pendiente de cobro',
       value: formatCurrency(metrics.outstandingReceivablesTotal),
       detail: `${metrics.pendingInvoicesCount} factura(s) siguen abiertas.`,
@@ -206,6 +212,7 @@ export function HomePage({
       onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
+      key: 'pending-billing',
       label: 'Trabajo sin facturar',
       value: String(metrics.completedJobsWithoutInvoiceCount),
       detail: 'Servicios ya ejecutados que aun no pasan a factura.',
@@ -214,16 +221,26 @@ export function HomePage({
       onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
     },
     {
-      label: 'Servicios hoy',
-      value: String(metrics.jobsScheduledTodayCount),
-      detail: metrics.jobsScheduledTodayCount > 0 ? 'Agenda inmediata para ejecutar.' : 'Sin carga operativa para hoy.',
-      badge: metrics.jobsScheduledTomorrowCount > 0 ? `Manana ${metrics.jobsScheduledTomorrowCount}` : 'Hoy',
+      key: 'expenses-this-month',
+      label: 'Gasto del mes',
+      value: formatCurrency(metrics.expensesThisMonthTotal),
+      detail: metrics.expensesCount > 0 ? 'Lectura de gasto ya registrado en el periodo actual.' : 'Sin gasto registrado este mes.',
+      badge: metrics.expensesWithoutReceiptCount > 0 ? `${metrics.expensesWithoutReceiptCount} sin soporte` : 'Con soporte',
       tone: 'info' as SeverityTone,
-      onRun: () => onRunKpiAction('jobs_today'),
+      onRun: () => onRunKpiAction('expenses_this_month'),
+    },
+    {
+      key: 'fiscal-review-open',
+      label: 'Revision fiscal abierta',
+      value: String(fiscalRiskCount),
+      detail: fiscalRiskCount > 0 ? 'Casos fiscales o documentales que requieren una pasada corta.' : 'Sin frentes fiscales dominantes en primer nivel.',
+      badge: fiscalRiskCount > 0 ? 'Revisar' : 'Estable',
+      tone: fiscalRiskCount > 0 ? 'warning' as SeverityTone : 'success' as SeverityTone,
+      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
     },
   ]
 
-  const primaryQuickActions: HomeQuickAction[] = [
+  const primaryQuickActions: HomeQuickActionItem[] = [
     {
       key: 'new-invoice',
       title: 'Nueva factura',
@@ -250,7 +267,7 @@ export function HomePage({
     },
   ]
 
-  const secondaryQuickActions: HomeQuickAction[] = [
+  const secondaryQuickActions: HomeQuickActionItem[] = [
     {
       key: 'new-job',
       title: 'Nuevo servicio',
@@ -279,7 +296,22 @@ export function HomePage({
 
   const compactQuickActions = [...primaryQuickActions, ...secondaryQuickActions]
     .filter((action) => action.key !== homePrimaryAction.primaryKey && action.key !== homePrimaryAction.secondaryKey)
-    .slice(0, 4)
+    .slice(0, 5)
+
+  const immediateLoadSeries = [
+    { label: 'Hoy', value: metrics.jobsScheduledTodayCount },
+    { label: 'Manana', value: metrics.jobsScheduledTomorrowCount },
+    { label: 'Proximos', value: agenda.upcomingJobs.length },
+  ]
+  const immediateLoadTotal = immediateLoadSeries.reduce((sum, item) => sum + item.value, 0)
+  const fiscalReviewSeries = [
+    { label: 'Revision', value: metrics.fiscalReviewExpensesCount },
+    { label: 'Sin IVA', value: metrics.expensesMissingValidVatInvoiceCount },
+    { label: 'Riesgo', value: metrics.fiscalRiskExpensesCount },
+  ]
+  const documentaryCompletionPercent = metrics.expensesCount > 0
+    ? Math.round((metrics.expensesWithReceiptCount / metrics.expensesCount) * 100)
+    : 0
 
   const operationalQueue = [
     ...urgentIncidents.map((incident) => ({
@@ -369,7 +401,7 @@ export function HomePage({
       />
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
-        <section className="cc-dashboard-block cc-dashboard-console-hero cc-dashboard-console-hero--decision">
+        <section className="cc-dashboard-block cc-dashboard-console-hero cc-dashboard-console-hero--decision" ref={heroScopeRef}>
           <div className="cc-dashboard-console-hero__grid cc-dashboard-console-hero__grid--decision">
             <article className="cc-dashboard-console-primary cc-dashboard-console-primary--decision">
               <div className="cc-dashboard-console-primary__top">
@@ -411,24 +443,76 @@ export function HomePage({
               </div>
             </article>
           </div>
-
-          <div className="cc-dashboard-console-kpis">
-            {decisionKpis.map((kpi) => (
-              <VisualKpiCard
-                key={kpi.label}
-                label={kpi.label}
-                value={kpi.value}
-                hint={kpi.detail}
-                badgeLabel={kpi.badge}
-                tone={kpi.tone}
-                priority="compact"
-                action={{ label: 'Abrir', onClick: kpi.onRun }}
-              />
-            ))}
-          </div>
         </section>
 
-        <section className="cc-dashboard-block cc-dashboard-console-section">
+        <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Acciones y KPIs</h2>
+              <p>Accesos minimos y lectura fiscal u operativa sin volver a inflar el primer scroll.</p>
+            </div>
+          </div>
+
+          <div className="cc-home-dashboard-summary-grid">
+            <HomeQuickActionsPanel actions={compactQuickActions} />
+            <HomeFiscalKpiGrid items={fiscalKpis} />
+          </div>
+        </HomeMotionSection>
+
+        <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
+          <div className="cc-dashboard-block__header">
+            <div>
+              <h2>Graficos utiles</h2>
+              <p>Lectura visual ligera con SVG, motion sobrio y fallback seguro sin librerias externas.</p>
+            </div>
+          </div>
+
+          <div className="cc-home-dashboard-chart-grid">
+            <HomeGsapChartCard
+              eyebrow="Carga inmediata"
+              title="Agenda corta"
+              value={`${immediateLoadTotal} servicio(s)`}
+              description="Serie operativa real entre hoy, manana y proximos trabajos ya visibles en Home."
+              hasData={immediateLoadTotal > 0}
+              emptyTitle="Sin agenda inmediata"
+              emptyDescription="No hay servicios cargados en la ventana corta de hoy, manana o proximos trabajos."
+              actionLabel="Abrir agenda"
+              onAction={() => onRunKpiAction('jobs_today')}
+            >
+              <SvgLineChart data={immediateLoadSeries} />
+            </HomeGsapChartCard>
+
+            <HomeGsapChartCard
+              eyebrow="Frentes fiscales"
+              title="Revision del periodo"
+              value={`${fiscalRiskCount} caso(s)`}
+              description="Barras cortas para revision, soporte IVA y riesgo fiscal ya detectado por el sistema."
+              hasData={metrics.expensesCount > 0}
+              emptyTitle="Sin gasto registrado"
+              emptyDescription="Todavia no hay gastos cargados en el periodo para construir la lectura fiscal."
+              actionLabel="Abrir revision"
+              onAction={() => onRunKpiAction('expenses_fiscal_requires_review')}
+            >
+              <SvgBarChart data={fiscalReviewSeries} />
+            </HomeGsapChartCard>
+
+            <HomeGsapChartCard
+              eyebrow="Soporte documental"
+              title="Completitud de gastos"
+              value={`${metrics.expensesWithReceiptCount}/${metrics.expensesCount}`}
+              description="Porcentaje real de gastos con soporte documental accesible ya registrado en la app."
+              hasData={metrics.expensesCount > 0}
+              emptyTitle="Sin soporte que revisar"
+              emptyDescription="Aun no hay gastos cargados en el periodo para medir completitud documental."
+              actionLabel="Abrir gastos"
+              onAction={() => onOpenView('expenses')}
+            >
+              <SvgRadialProgress label="Con soporte" percent={documentaryCompletionPercent} />
+            </HomeGsapChartCard>
+          </div>
+        </HomeMotionSection>
+
+        <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
               <h2>En marcha hoy</h2>
@@ -495,41 +579,10 @@ export function HomePage({
               )}
             </article>
           </div>
-        </section>
-
-        <section className="cc-dashboard-block cc-dashboard-console-section">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Accesos rapidos</h2>
-              <p>Solo accesos utiles que no duplican la prioridad principal ya visible arriba.</p>
-            </div>
-          </div>
-
-          <article className="cc-dashboard-console-workpanel">
-            <div>
-              <span className="cc-dashboard-console-workpanel__eyebrow">Minimas</span>
-              <h3>Crear o revisar sin ruido</h3>
-              <p>Accesos rapidos cercanos, pero sin competir con la decision principal del dia.</p>
-            </div>
-
-            <div className="cc-dashboard-console-quickactions cc-dashboard-console-quickactions--compact">
-              {compactQuickActions.map((action, index) => (
-                <button
-                  key={action.key}
-                  type="button"
-                  className={index < 2 ? 'cc-dashboard-console-quickaction cc-dashboard-console-quickaction--primary' : 'cc-dashboard-console-quickaction'}
-                  onClick={action.onRun}
-                >
-                  <strong>{action.title}</strong>
-                  <span>{action.detail}</span>
-                </button>
-              ))}
-            </div>
-          </article>
-        </section>
+        </HomeMotionSection>
 
         {shouldShowAlertBand ? (
-          <section className="cc-dashboard-block cc-dashboard-console-section">
+          <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
             <div className="cc-dashboard-block__header">
               <div>
                 <h2>Alertas y revision</h2>
@@ -597,7 +650,7 @@ export function HomePage({
                 )}
               </article>
             </div>
-          </section>
+          </HomeMotionSection>
         ) : null}
       </div>
     </section>

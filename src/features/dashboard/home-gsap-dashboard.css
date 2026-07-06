@@ -1,0 +1,231 @@
+.cc-home-dashboard-summary-grid,
+.cc-home-dashboard-chart-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.cc-home-dashboard-summary-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: start;
+}
+
+.cc-home-dashboard-chart-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cc-home-quick-actions-panel,
+.cc-home-fiscal-kpi-grid,
+.cc-home-gsap-chart-card {
+  gap: 1rem;
+}
+
+.cc-home-quick-actions-panel__grid,
+.cc-home-fiscal-kpi-grid__items {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.cc-home-quick-actions-panel__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-home-quick-actions-panel__action {
+  display: grid;
+  gap: 0.35rem;
+  min-height: 108px;
+  padding: 0.95rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  color: inherit;
+  text-align: left;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.cc-home-quick-actions-panel__action:hover,
+.cc-home-quick-actions-panel__action:focus-visible {
+  transform: translateY(-1px);
+  border-color: rgba(83, 199, 255, 0.24);
+  box-shadow: 0 14px 28px rgba(2, 8, 23, 0.14);
+}
+
+.cc-home-quick-actions-panel__action strong {
+  font-size: 0.95rem;
+  line-height: 1.15;
+}
+
+.cc-home-quick-actions-panel__action span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.cc-home-quick-actions-panel__action--accent {
+  border-color: rgba(83, 199, 255, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(83, 199, 255, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025));
+}
+
+.cc-home-fiscal-kpi-grid__items {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cc-home-gsap-chart-card__header {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.cc-home-gsap-chart-card__copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.cc-home-gsap-chart-card__eyebrow {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cc-home-gsap-chart-card__copy h3,
+.cc-home-gsap-chart-card__copy p,
+.cc-home-gsap-chart-card__value {
+  margin: 0;
+}
+
+.cc-home-gsap-chart-card__copy h3 {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.cc-home-gsap-chart-card__copy p {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.cc-home-gsap-chart-card__value {
+  font-family: var(--ds-font-display);
+  font-size: clamp(1.3rem, 2vw, 1.7rem);
+  letter-spacing: -0.04em;
+}
+
+.cc-home-gsap-chart-card__body {
+  min-height: 200px;
+}
+
+.cc-home-gsap-chart-card__footer {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.cc-home-svg-chart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.cc-home-svg-chart__axis,
+.cc-home-svg-chart__track {
+  stroke: rgba(148, 163, 184, 0.28);
+  stroke-width: 2;
+  fill: none;
+}
+
+.cc-home-svg-chart__line,
+.cc-home-svg-chart__arc {
+  stroke: rgba(83, 199, 255, 0.96);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 5;
+}
+
+.cc-home-svg-chart__bar {
+  fill: rgba(83, 199, 255, 0.82);
+}
+
+.cc-home-svg-chart__marker {
+  fill: rgba(248, 250, 252, 0.98);
+  stroke: rgba(83, 199, 255, 0.92);
+  stroke-width: 2;
+}
+
+.cc-home-svg-chart__value,
+.cc-home-svg-chart__label,
+.cc-home-svg-chart__radial-value,
+.cc-home-svg-chart__radial-label {
+  fill: currentColor;
+}
+
+.cc-home-svg-chart__value,
+.cc-home-svg-chart__radial-value {
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.cc-home-svg-chart__label,
+.cc-home-svg-chart__radial-label {
+  fill: var(--muted);
+  font-size: 0.68rem;
+}
+
+.cc-home-svg-chart__radial-value {
+  font-family: var(--ds-font-display);
+  font-size: 1.55rem;
+  letter-spacing: -0.04em;
+}
+
+.cc-home-svg-chart__radial-label {
+  font-size: 0.76rem;
+}
+
+.cc-home-svg-chart--radial {
+  max-width: 180px;
+  margin-inline: auto;
+}
+
+@media (max-width: 1080px) {
+  .cc-home-dashboard-summary-grid,
+  .cc-home-dashboard-chart-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .cc-home-quick-actions-panel__grid,
+  .cc-home-fiscal-kpi-grid__items {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-home-quick-actions-panel__action {
+    min-height: 94px;
+  }
+}
+
+:root[data-theme="light"] .cc-home-quick-actions-panel__action {
+  border-color: rgba(14, 84, 114, 0.1);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 255, 0.95));
+}
+
+:root[data-theme="light"] .cc-home-quick-actions-panel__action--accent {
+  border-color: rgba(11, 125, 176, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(11, 125, 176, 0.14), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(244, 249, 253, 0.96));
+}
+
+:root[data-theme="light"] .cc-home-svg-chart__line,
+:root[data-theme="light"] .cc-home-svg-chart__arc {
+  stroke: rgba(11, 125, 176, 0.94);
+}
+
+:root[data-theme="light"] .cc-home-svg-chart__bar {
+  fill: rgba(11, 125, 176, 0.78);
+}

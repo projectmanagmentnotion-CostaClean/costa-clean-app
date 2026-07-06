@@ -36,3 +36,26 @@
 - Sprint 11 deja resuelta la inconsistencia principal de estados y headers en pagos/gastos y clarifica la lectura del cierre fiscal, pero no cambia la orquestacion ni el write path de finanzas.
 - Sprint 12 deja resuelta una parte importante de la inconsistencia global de `empty/error/loading/confirmacion`, pero todavia queda deuda de copy y errores inline en formularios profundos.
 - Sprint 13 deja resuelta la deuda compartida mas clara de foco visible y minimos tactiles en StepFlow/DS, pero no sustituye una auditoria autenticada completa de teclado y lector de pantalla.
+
+## Priorizacion final
+
+### Prioridad 1
+
+- `UX-009` Facturas
+- riesgo residual de numeracion y mismatch asociado
+
+### Prioridad 2
+
+- `UX-002` Dashboard
+- `UX-003` Cierre fiscal
+- `UX-008` Servicios
+- `UX-020` Accesibilidad transversal
+
+### Prioridad 3
+
+- `UX-005` Clientes
+- `UX-018` Patron global de listas pendiente en modulos restantes
+- `UX-019` Estados globales en formularios profundos
+- `UX-015` Repo hygiene
+- `UX-016` Tokens / estilos base
+- `UX-017` Shell / navegacion

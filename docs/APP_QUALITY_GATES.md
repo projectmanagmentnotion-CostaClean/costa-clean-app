@@ -72,3 +72,14 @@ A work block should move forward only when:
 - all relevant gates pass
 - failures are resolved, or
 - the failure is explicitly accepted and documented by scope decision
+
+## Transformation Closeout Gate
+
+For roadmap-closeout or phase-closeout work:
+
+- governance documents are present and aligned with the real repo state
+- the final report distinguishes verified surfaces from code-audited-only surfaces
+- residual debt is prioritized instead of hidden behind generic "done" language
+- protected technical risks remain explicit
+- lint and build pass
+- the repo is ready for the next targeted phase without requiring a blind redesign restart

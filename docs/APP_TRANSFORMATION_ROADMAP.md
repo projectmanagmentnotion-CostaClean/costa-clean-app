@@ -241,6 +241,13 @@ Focus:
 - documentation alignment
 - release readiness evidence
 
+Outcome:
+
+- final QA documented
+- residual debt prioritized
+- final risks documented
+- next phase re-scoped from broad UX transformation to targeted technical hardening and authenticated QA
+
 ## Success Criteria Across All Phases
 
 - no blind redesigns
@@ -248,3 +255,11 @@ Focus:
 - no dependency drift without explicit need
 - every phase validated with repo quality gates
 - every phase documented honestly
+
+## Status Snapshot
+
+As of Sprint 14 closure:
+
+- Sprint 0 through Sprint 14 are completed at governance / UX-foundation level.
+- The app now has a controlled UX baseline: repo governance, design system foundation, official StepFlow, unified list controls, global state primitives, and base mobile/accessibility hardening.
+- The remaining work is not "finish modernizing the UI". The remaining work is targeted hardening of sensitive domains and authenticated end-to-end QA.

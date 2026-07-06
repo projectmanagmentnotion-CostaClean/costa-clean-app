@@ -25,3 +25,9 @@
 - Cualquier write path de facturas
 - Cualquier cambio de auth
 - Cualquier cambio que mezcle UX con regularizaciones SQL
+
+## Lectura final de cierre
+
+- La base UX del roadmap queda cerrada.
+- El riesgo principal ya no es visual; es tecnico-operativo en dominios sensibles.
+- La siguiente fase no debe reabrir un rediseño general, sino atacar riesgos concretos con pruebas y alcance aislado.

@@ -66,6 +66,14 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Motion does not create ambiguity in critical business states, amounts, numbering, or fiscal warnings.
 - Large lists, dense modules, and critical domains avoid uncontrolled stagger or decorative transitions.
 
+## GSAP Plugin Gate
+
+- Plugins are loaded through the shared motion layer, never ad hoc in business modules.
+- Plugin availability is checked or documented before usage.
+- Restricted plugins stay restricted unless a dedicated sprint changes policy.
+- `ScrollTrigger` is not applied globally by default.
+- SVG draw effects have a fallback path when the plugin is unavailable.
+
 ## Data Safety Gate
 
 - No accidental data model drift is introduced.

@@ -210,6 +210,16 @@ Superficies ya alineadas:
 - No registrar `ScrollTrigger` globalmente sin sprint especifico.
 - Las animaciones compartidas deben ser cortas, sobrias y no bloquear la interaccion.
 
+## GSAP plugins approved usage
+
+- El registro de plugins pasa por `src/design-system/motion/gsapPlugins.ts`.
+- La disponibilidad real se consulta via `getGsapPluginAvailability()`.
+- `DrawSVGPlugin` solo debe usarse con fallback.
+- `SplitText` solo para titulares cortos.
+- `Flip` solo para cards o listas pequenas.
+- `Observer` y `Draggable` quedan preparados, pero restringidos a casos aislados y no criticos.
+- `ScrollSmoother`, `InertiaPlugin`, `Physics2DPlugin`, `PhysicsPropsPlugin`, `PixiPlugin`, `EaselPlugin`, `GSDevTools`, `ScrambleTextPlugin` y `TextPlugin` quedan pospuestos o prohibidos por ahora.
+
 ## Que NO se migro todavia
 
 - `Dashboard`

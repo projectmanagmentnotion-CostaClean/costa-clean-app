@@ -23,6 +23,7 @@
 | UX-019 | Estados globales | `src/features/*`, `src/pages/*`, `src/design-system/components/*` | Sprint 12 unifica una parte importante de `empty`, `error`, `loading` y confirmaciones en listas, dashboard, alertas y previews documentales, pero todavia quedan formularios profundos con mensajes inline heredados y copy desigual. | media | Mejor consistencia transversal, con deuda residual en formularios create/edit de dominio | Mantener primitives DS como capa obligatoria para nuevas superficies y hacer una pasada futura solo sobre copy/error de formularios largos | Seguimiento post Sprint 12 |
 | UX-020 | Accesibilidad transversal | `src/components/FullscreenStepFlow.tsx`, `src/components/action-flow-overlay.css`, `src/design-system/components/design-system.css`, modulos autenticados legacy | Sprint 13 corrige foco visible y minimos tactiles en la base compartida, pero aun quedan superficies legacy autenticadas cuyo foco depende de clases historicas fuera del DS. | media | La base reusable mejora, aunque puede persistir drift de teclado/foco en workspaces no auditados con sesion real | Hacer una pasada autenticada con datos reales y seguir absorbiendo controles legacy en primitives compartidas antes de nuevos polish visuales | Seguimiento post Sprint 13 |
 | UX-021 | Motion adoption | `src/design-system/motion/*`, modulos compartidos pendientes | Existe ya una base motion controlada con GSAP, pero aun no hay adopcion en primitives ni superficies compartidas de produccion. | baja | La app tiene manual y capa tecnica, pero todavia no obtiene beneficios reales de motion funcional | Adoptar motion por fases desde primitives compartidas y overlays antes de dashboards, listas densas o dominios criticos | Motion Phase 2-5 |
+| UX-022 | GSAP plugin policy adoption | `src/design-system/motion/gsapPlugins.ts`, `src/design-system/motion/pluginAvailability.ts` | La capa de plugins ya queda auditada y preparada, pero todavia no hay adopcion productiva ni pruebas reales de cada plugin en contextos seguros. | baja | Buena base de control, con trabajo pendiente de adopcion prudente y QA por plugin | Empezar por primitives y overlays pequenos; no saltar directo a dashboards densos ni dominios criticos | Motion Phase 2-5 |
 
 ## Notas de lectura
 
@@ -38,6 +39,7 @@
 - Sprint 12 deja resuelta una parte importante de la inconsistencia global de `empty/error/loading/confirmacion`, pero todavia queda deuda de copy y errores inline en formularios profundos.
 - Sprint 13 deja resuelta la deuda compartida mas clara de foco visible y minimos tactiles en StepFlow/DS, pero no sustituye una auditoria autenticada completa de teclado y lector de pantalla.
 - La nueva fase motion deja resuelta la ausencia de base global de animacion, pero no inicia todavia la adopcion productiva para evitar ruido o riesgo prematuro.
+- Motion Phase 1B deja resuelta la auditoria y politica de plugins, pero no aprueba aun su uso masivo en runtime productivo.
 
 ## Priorizacion final
 
@@ -59,6 +61,7 @@
 - `UX-018` Patron global de listas pendiente en modulos restantes
 - `UX-019` Estados globales en formularios profundos
 - `UX-021` Motion adoption
+- `UX-022` GSAP plugin policy adoption
 - `UX-015` Repo hygiene
 - `UX-016` Tokens / estilos base
 - `UX-017` Shell / navegacion

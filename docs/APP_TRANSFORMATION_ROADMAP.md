@@ -272,6 +272,12 @@ Objective:
 
 Add a controlled GSAP foundation, reduced-motion support, shared presets, and a global motion manual without animating productive surfaces yet.
 
+### Motion Phase 1B: GSAP Plugins Foundation Audit
+
+Objective:
+
+Audit plugin availability in the real package, add safe registration helpers, define approved usage, and document policy before productive adoption.
+
 ### Motion Phase 2: Animate Shared Primitives
 
 Objective:

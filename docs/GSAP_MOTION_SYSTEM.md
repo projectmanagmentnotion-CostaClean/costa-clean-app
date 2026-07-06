@@ -6,6 +6,10 @@ Crear una base profesional y reutilizable de motion para la app usando GSAP, sin
 
 Esta fase no anima pantallas productivas. Solo deja la base tecnica, los presets y las reglas globales.
 
+Complemento obligatorio:
+
+- ver [docs/GSAP_PLUGIN_MATRIX.md](C:/Users/USUARIO/costa-clean-app/docs/GSAP_PLUGIN_MATRIX.md)
+
 ## 2. Reglas globales
 
 - La animacion debe ayudar a entender, no decorar.
@@ -51,6 +55,7 @@ Regla base:
 
 - usar la capa compartida de `src/design-system/motion/`
 - no importar `gsap` directamente dentro de modulos de negocio salvo sprint especifico y justificado
+- usar plugins solo a traves de `gsapPlugins.ts` y helpers seguros
 
 Entradas recomendadas:
 
@@ -69,6 +74,7 @@ Reglas:
 - confiar en `context` y `revert` para cleanup automatico
 - no dejar listeners, observers o triggers vivos fuera del ciclo del componente
 - si en el futuro se usa `ScrollTrigger`, debe registrarse localmente y con cleanup explicito
+- la aprobacion o bloqueo de plugins debe consultarse en `GSAP_PLUGIN_MATRIX`
 
 ## 7. Como respetar `prefers-reduced-motion`
 

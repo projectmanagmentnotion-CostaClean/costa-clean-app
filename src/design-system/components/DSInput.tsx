@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes } from 'react'
+import { forwardRef, type InputHTMLAttributes } from 'react'
 import './design-system.css'
 
 interface DSInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -7,16 +7,17 @@ interface DSInputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string | null
 }
 
-export function DSInput({
+export const DSInput = forwardRef<HTMLInputElement, DSInputProps>(function DSInput({
   label,
   hint,
   error,
   className,
   id,
   ...props
-}: DSInputProps) {
+}, ref) {
   const input = (
     <input
+      ref={ref}
       id={id}
       className={['ds-input', error ? 'ds-input--error' : '', className ?? ''].filter(Boolean).join(' ')}
       aria-invalid={Boolean(error) || props['aria-invalid']}
@@ -35,4 +36,4 @@ export function DSInput({
       {error ? <p className="ds-field__hint">{error}</p> : hint ? <p className="ds-field__hint">{hint}</p> : null}
     </label>
   )
-}
+})

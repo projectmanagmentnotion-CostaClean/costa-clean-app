@@ -6,7 +6,7 @@ import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import { HomeFiscalKpiGrid, type HomeFiscalKpiItem } from '../features/dashboard/components/HomeFiscalKpiGrid'
 import { HomeGsapChartCard } from '../features/dashboard/components/HomeGsapChartCard'
-import { HomeQuickActionsPanel, type HomeQuickActionItem } from '../features/dashboard/components/HomeQuickActionsPanel'
+import { HomeQuickActionsPanel } from '../features/dashboard/components/HomeQuickActionsPanel'
 import { SvgBarChart } from '../features/dashboard/components/SvgBarChart'
 import { SvgLineChart } from '../features/dashboard/components/SvgLineChart'
 import { SvgRadialProgress } from '../features/dashboard/components/SvgRadialProgress'
@@ -204,99 +204,82 @@ export function HomePage({
   const fiscalKpis: HomeFiscalKpiItem[] = [
     {
       key: 'pending-collections',
-      label: 'Pendiente de cobro',
+      label: 'Cobro abierto',
       value: formatCurrency(metrics.outstandingReceivablesTotal),
-      detail: `${metrics.pendingInvoicesCount} factura(s) siguen abiertas.`,
+      detail: `${metrics.pendingInvoicesCount} factura(s) abiertas.`,
       badge: urgentCollectionsCount > 0 ? 'Seguimiento' : 'Controlado',
       tone: 'warning' as SeverityTone,
       onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
       key: 'pending-billing',
-      label: 'Trabajo sin facturar',
+      label: 'Sin facturar',
       value: String(metrics.completedJobsWithoutInvoiceCount),
-      detail: 'Servicios ya ejecutados que aun no pasan a factura.',
+      detail: 'Servicios listos para pasar a factura.',
       badge: metrics.completedJobsWithoutInvoiceOlderThan2DaysCount > 0 ? 'Fuera de plazo' : 'Pendiente',
       tone: 'warning' as SeverityTone,
       onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
     },
     {
       key: 'expenses-this-month',
-      label: 'Gasto del mes',
+      label: 'Gasto mes',
       value: formatCurrency(metrics.expensesThisMonthTotal),
-      detail: metrics.expensesCount > 0 ? 'Lectura de gasto ya registrado en el periodo actual.' : 'Sin gasto registrado este mes.',
+      detail: metrics.expensesCount > 0 ? 'Gasto registrado en el periodo actual.' : 'Sin gasto este mes.',
       badge: metrics.expensesWithoutReceiptCount > 0 ? `${metrics.expensesWithoutReceiptCount} sin soporte` : 'Con soporte',
       tone: 'info' as SeverityTone,
       onRun: () => onRunKpiAction('expenses_this_month'),
     },
     {
       key: 'fiscal-review-open',
-      label: 'Revision fiscal abierta',
+      label: 'Revision fiscal',
       value: String(fiscalRiskCount),
-      detail: fiscalRiskCount > 0 ? 'Casos fiscales o documentales que requieren una pasada corta.' : 'Sin frentes fiscales dominantes en primer nivel.',
+      detail: fiscalRiskCount > 0 ? 'Casos fiscales o documentales pendientes.' : 'Sin frente fiscal dominante.',
       badge: fiscalRiskCount > 0 ? 'Revisar' : 'Estable',
       tone: fiscalRiskCount > 0 ? 'warning' as SeverityTone : 'success' as SeverityTone,
       onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
     },
   ]
 
-  const primaryQuickActions: HomeQuickActionItem[] = [
+  const compactQuickActions = [
     {
       key: 'new-invoice',
       title: 'Nueva factura',
-      detail: 'Emitir o revisar facturacion.',
+      detail: 'Emitir.',
       onRun: () => onOpenView('invoices'),
     },
     {
       key: 'outstanding-invoices',
-      title: 'Ver pendientes de cobro',
-      detail: 'Abrir facturas abiertas del periodo.',
+      title: 'Cobros',
+      detail: 'Seguir caja.',
       onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
       key: 'new-quote',
-      title: 'Nuevo presupuesto',
-      detail: 'Abrir propuesta comercial.',
+      title: 'Presupuesto',
+      detail: 'Abrir propuesta.',
       onRun: () => onOpenView('quotes'),
     },
     {
-      key: 'completed-jobs-without-invoice',
-      title: 'Ver trabajo sin facturar',
-      detail: 'Ir a servicios completados pendientes.',
-      onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-    },
-  ]
-
-  const secondaryQuickActions: HomeQuickActionItem[] = [
-    {
       key: 'new-job',
-      title: 'Nuevo servicio',
-      detail: 'Crear trabajo operativo.',
+      title: 'Servicio',
+      detail: 'Crear trabajo.',
       onRun: () => onOpenView('jobs'),
     },
     {
       key: 'new-expense',
-      title: 'Nuevo gasto',
-      detail: 'Registrar gasto del periodo.',
+      title: 'Gasto',
+      detail: 'Registrar gasto.',
       onRun: () => onOpenView('expenses'),
     },
     {
       key: 'fiscal-closing',
-      title: 'Revisar cierre fiscal',
-      detail: 'Abrir periodo y readiness.',
+      title: 'Cierre fiscal',
+      detail: 'Revisar periodo.',
       onRun: () => onOpenView('fiscal_closing'),
     },
-    {
-      key: 'expenses-review',
-      title: 'Ver gastos por revisar',
-      detail: 'Abrir revision fiscal pendiente.',
-      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
-    },
   ]
-
-  const compactQuickActions = [...primaryQuickActions, ...secondaryQuickActions]
     .filter((action) => action.key !== homePrimaryAction.primaryKey && action.key !== homePrimaryAction.secondaryKey)
-    .slice(0, 5)
+    .slice(0, 6)
 
   const immediateLoadSeries = [
     { label: 'Hoy', value: metrics.jobsScheduledTodayCount },
@@ -330,7 +313,7 @@ export function HomePage({
       onRun: () => onOpenJobWorkspace(job.id),
       tone: 'info' as const,
     })),
-  ].slice(0, 4)
+  ].slice(0, 3)
 
   const fiscalReviewItems = [
     {
@@ -383,7 +366,7 @@ export function HomePage({
       detail: incident.summary,
       onRun: () => onRunOperationalAction(incident.primaryAction),
     })),
-  ].slice(0, 4)
+  ].slice(0, 3)
 
   const shouldShowAlertBand = priorityAlerts.length > 0 || fiscalRiskCount > 0 || supportFootnotes.length > 0
 
@@ -392,12 +375,12 @@ export function HomePage({
       <DSPageHeader
         eyebrow="Centro operativo"
         title="Inicio"
-        summary="Empieza por una sola prioridad, revisa la cola inmediata y deja el resto del contexto en segundo plano."
+        summary="Una prioridad clara, cola corta y lectura fiscal sin ruido."
         statusLabel={criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Operativa estable'}
         statusTone={criticalAlertsCount > 0 ? 'critical' : 'success'}
         metricLabel="Hoy"
         metricValue={`${metrics.jobsScheduledTodayCount} servicio(s)`}
-        metricHint={fiscalRiskCount > 0 ? `${fiscalRiskCount} punto(s) de revision fiscal o documental.` : 'Sin ruido fiscal dominante en primer nivel.'}
+        metricHint={fiscalRiskCount > 0 ? `${fiscalRiskCount} punto(s) de revision.` : 'Sin frente fiscal dominante.'}
       />
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
@@ -423,8 +406,8 @@ export function HomePage({
 
             <article className="cc-dashboard-console-sidepanel cc-dashboard-console-sidepanel--decision">
               <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Dinero pendiente o bloqueado</h3>
-                <p>Solo los tres frentes que mas suelen mover caja o desbloquear conversion.</p>
+                <h3>Caja por mover</h3>
+                <p>Tres frentes utiles para desbloquear ingreso.</p>
               </div>
               <div className="cc-dashboard-console-lanes">
                 {moneyQueue.map((view) => (
@@ -449,7 +432,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>Acciones y KPIs</h2>
-              <p>Accesos minimos y lectura fiscal u operativa sin volver a inflar el primer scroll.</p>
+              <p>Accesos utiles y lectura corta del periodo.</p>
             </div>
           </div>
 
@@ -462,8 +445,8 @@ export function HomePage({
         <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Graficos utiles</h2>
-              <p>Lectura visual ligera con SVG, motion sobrio y fallback seguro sin librerias externas.</p>
+              <h2>Visual fiscal</h2>
+              <p>Lectura breve con SVG y motion sobrio.</p>
             </div>
           </div>
 
@@ -472,7 +455,7 @@ export function HomePage({
               eyebrow="Carga inmediata"
               title="Agenda corta"
               value={`${immediateLoadTotal} servicio(s)`}
-              description="Serie operativa real entre hoy, manana y proximos trabajos ya visibles en Home."
+              description="Hoy, manana y proximos."
               hasData={immediateLoadTotal > 0}
               emptyTitle="Sin agenda inmediata"
               emptyDescription="No hay servicios cargados en la ventana corta de hoy, manana o proximos trabajos."
@@ -486,7 +469,7 @@ export function HomePage({
               eyebrow="Frentes fiscales"
               title="Revision del periodo"
               value={`${fiscalRiskCount} caso(s)`}
-              description="Barras cortas para revision, soporte IVA y riesgo fiscal ya detectado por el sistema."
+              description="Revision, soporte IVA y riesgo."
               hasData={metrics.expensesCount > 0}
               emptyTitle="Sin gasto registrado"
               emptyDescription="Todavia no hay gastos cargados en el periodo para construir la lectura fiscal."
@@ -500,7 +483,7 @@ export function HomePage({
               eyebrow="Soporte documental"
               title="Completitud de gastos"
               value={`${metrics.expensesWithReceiptCount}/${metrics.expensesCount}`}
-              description="Porcentaje real de gastos con soporte documental accesible ya registrado en la app."
+              description="Porcentaje real con soporte."
               hasData={metrics.expensesCount > 0}
               emptyTitle="Sin soporte que revisar"
               emptyDescription="Aun no hay gastos cargados en el periodo para medir completitud documental."
@@ -516,7 +499,7 @@ export function HomePage({
           <div className="cc-dashboard-block__header">
             <div>
               <h2>En marcha hoy</h2>
-              <p>Una cola corta para abrir el siguiente paso real sin transformar Inicio en una lista pesada.</p>
+              <p>Solo la siguiente accion real.</p>
             </div>
           </div>
 

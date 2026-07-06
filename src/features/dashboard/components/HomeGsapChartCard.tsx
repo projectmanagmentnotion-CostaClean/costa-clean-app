@@ -21,7 +21,7 @@ export function HomeGsapChartCard({
   description,
   emptyDescription = 'No hay datos suficientes para representar este grafico ahora mismo.',
   emptyTitle = 'Grafico no disponible',
-  eyebrow = 'Grafico rapido',
+  eyebrow = 'Lectura visual',
   hasData,
   onAction,
   title,
@@ -51,7 +51,7 @@ export function HomeGsapChartCard({
 
         {hasData && actionLabel && onAction ? (
           <div className="cc-home-gsap-chart-card__footer">
-            <button type="button" className="secondary-button" onClick={onAction}>
+            <button type="button" className="secondary-button ds-button--sm" onClick={onAction}>
               {actionLabel}
             </button>
           </div>

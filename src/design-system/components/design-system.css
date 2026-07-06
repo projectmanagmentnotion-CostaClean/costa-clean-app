@@ -270,6 +270,163 @@
   background: var(--cc-surface-glass-subtle);
 }
 
+.ds-pro-form-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.ds-pro-form-field__head {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.ds-pro-form-field__label {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--ds-color-text);
+}
+
+.ds-pro-form-field__hint,
+.ds-pro-form-field__error {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.ds-pro-form-field__hint {
+  color: var(--ds-color-text-muted);
+}
+
+.ds-pro-form-field__error {
+  color: var(--ds-color-danger);
+}
+
+.ds-inline-suggestions {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.5rem;
+  border: 1px solid var(--ds-color-border);
+  border-radius: var(--ds-radius-lg);
+  background: color-mix(in srgb, var(--ds-color-surface-raised) 84%, transparent);
+  box-shadow: var(--ds-shadow-sm);
+}
+
+.ds-inline-suggestions--empty {
+  padding: 0.72rem 0.8rem;
+  color: var(--ds-color-text-muted);
+  font-size: 0.82rem;
+}
+
+.ds-inline-suggestions__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.48rem;
+  border-radius: var(--ds-radius-md);
+  transition: background var(--ds-motion-fast), border-color var(--ds-motion-fast);
+}
+
+.ds-inline-suggestions__item.is-active {
+  background: color-mix(in srgb, var(--ds-color-brand-soft) 42%, transparent);
+}
+
+.ds-inline-suggestions__primary {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.ds-inline-suggestions__label {
+  font-weight: 700;
+  line-height: 1.24;
+}
+
+.ds-inline-suggestions__meta {
+  color: var(--ds-color-text-muted);
+  font-size: 0.76rem;
+  line-height: 1.25;
+}
+
+.ds-inline-suggestions__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+}
+
+.ds-inline-suggestions__badge {
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ds-color-brand-soft) 72%, transparent);
+  color: var(--ds-color-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.ds-inline-suggestions__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.ds-inline-suggestions__action {
+  min-height: 44px;
+  padding: 0.56rem 0.75rem;
+}
+
+.ds-smart-postal,
+.ds-concept-autocomplete {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ds-smart-postal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.ds-smart-postal__suggestions,
+.ds-concept-autocomplete__list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.ds-concept-autocomplete__footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.ds-concept-autocomplete__save {
+  min-height: 44px;
+  padding: 0.52rem 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .ds-inline-suggestions__item,
+  .ds-smart-postal__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ds-inline-suggestions__actions,
+  .ds-concept-autocomplete__footer {
+    justify-content: stretch;
+  }
+
+  .ds-inline-suggestions__actions > *,
+  .ds-concept-autocomplete__footer > * {
+    width: 100%;
+  }
+}
+
 .ds-state__title {
   margin: 0;
   font-family: var(--ds-font-display);

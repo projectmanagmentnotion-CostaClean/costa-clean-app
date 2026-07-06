@@ -304,11 +304,19 @@ Objective:
 
 Apply motion to StepFlow, sheets, dialogs, and overlays where the transition clarifies focus and progression.
 
-### Motion Phase 4: Animate Dashboards And Lists Safely
+### Motion Phase 4: Visual Home, Pro Forms, And Smart Minimal Suggestions
 
 Objective:
 
-Introduce limited motion into dashboards and list surfaces without adding noise or harming performance.
+Make Home more visual and compact while introducing smarter local-first form helpers without touching write paths or critical business rules.
+
+Focus:
+
+- compact visual Home hierarchy
+- pro form field wrappers
+- local postal code and city suggestions
+- inline concept autocomplete
+- subtle motion only where already approved
 
 ### Motion Phase 5: Motion QA And Performance Pass
 
@@ -318,9 +326,11 @@ Audit cleanup, reduced motion, accessibility, interaction safety, and runtime co
 
 ## Motion Status Snapshot
 
-As of Motion Phase 2:
+As of Motion Phase 4:
 
 - Motion Phase 1 is completed.
 - Motion Phase 1B is completed.
 - Motion Phase 2 is completed on `Home` as the first productive surface.
-- Motion Phase 3 through Motion Phase 5 remain pending.
+- Motion Phase 3 is completed on StepFlow and overlays.
+- Motion Phase 4 is completed on visual Home and smart minimal form helpers.
+- Motion Phase 5 remains pending.

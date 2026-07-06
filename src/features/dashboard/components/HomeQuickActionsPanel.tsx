@@ -23,8 +23,8 @@ export function HomeQuickActionsPanel({ actions }: HomeQuickActionsPanelProps) {
       <DSCard as="article" className="cc-home-quick-actions-panel">
         <DSSectionHeader
           eyebrow="Acciones rapidas"
-          title="Mover hoy sin rodeos"
-          description="Solo accesos ya existentes y utiles para abrir el siguiente paso sin duplicar la prioridad principal."
+          title="Acciones directas"
+          description="Seis accesos utiles. Sin rodeos."
         />
 
         <div className="cc-home-quick-actions-panel__grid">

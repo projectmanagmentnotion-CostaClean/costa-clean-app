@@ -181,6 +181,12 @@ Public intake is not using this engine yet:
 
 - `src/features/publicIntake/PublicQuoteRequestForm.tsx`
 
+Related shared form primitives already aligned for future migrations:
+
+- `src/design-system/components/DSSmartPostalCodeInput.tsx`
+- `src/design-system/components/DSConceptAutocomplete.tsx`
+- `src/design-system/components/DSProFormField.tsx`
+
 ## Criteria for future migrations
 
 A flow should migrate onto this base when all are true:

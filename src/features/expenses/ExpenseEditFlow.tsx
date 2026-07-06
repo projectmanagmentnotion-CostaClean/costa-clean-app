@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { DSConceptAutocomplete } from '../../design-system/components'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
-import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
 import { buildConceptMemoryIndex, getConceptSuggestions } from '../concepts/conceptMemory'
 import { findExpenseDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
@@ -391,18 +391,15 @@ export function ExpenseEditFlow({
               />
             </div>
 
-            <label className="form-field form-field-full">
-              <span>Descripcion *</span>
-              <input
-                value={form.description}
-                onChange={(event) => updateField('description', event.target.value)}
-                placeholder="Ej. Compra de productos de limpieza"
-                required
-              />
-            </label>
-            <ConceptSuggestions
+            <DSConceptAutocomplete
+              label="Descripcion"
+              value={form.description}
+              onChange={(value) => updateField('description', value)}
               suggestions={descriptionSuggestions}
               onUseConcept={(suggestion) => updateField('description', suggestion.label)}
+              hint="Sugerencias compactas segun gastos ya registrados."
+              placeholder="Ej. Compra de productos de limpieza"
+              required
             />
           </section>
         ) : null}

@@ -5,9 +5,9 @@ import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOption
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { DSConceptAutocomplete } from '../../design-system/components'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
-import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
 import {
   buildConceptMemoryIndex,
   getConceptSuggestions,
@@ -732,19 +732,15 @@ export function QuoteCreateFlow({
             <div className="cc-create-flow__line-list">
               {lines.map((line, index) => (
                 <article key={line.local_id} className="cc-create-flow__line-card">
-                  <label className="form-field form-field-full">
-                    <span>Concepto {index + 1}</span>
-                    <input
-                      value={line.concept}
-                      onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
-                      required
-                    />
-                  </label>
-
-                  <ConceptSuggestions
+                  <DSConceptAutocomplete
+                    label={`Concepto ${index + 1}`}
+                    value={line.concept}
+                    onChange={(value) => updateLine(line.local_id, 'concept', value)}
                     suggestions={getSuggestionsForLine(line.concept)}
                     onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
                     onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                    hint="Sugerencias compactas segun historial y contexto."
+                    required
                   />
 
                   <div className="cc-create-flow__line-actions">

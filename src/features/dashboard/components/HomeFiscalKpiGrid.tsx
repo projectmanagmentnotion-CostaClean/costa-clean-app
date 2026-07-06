@@ -28,8 +28,8 @@ export function HomeFiscalKpiGrid({ items }: HomeFiscalKpiGridProps) {
       <DSCard as="article" className="cc-home-fiscal-kpi-grid">
         <DSSectionHeader
           eyebrow="Kpis operativos"
-          title="Caja, facturacion y revision fiscal"
-          description="Solo los indicadores que cambian la siguiente decision del dia."
+          title="Caja y fiscal"
+          description="Solo lo que cambia la decision."
         />
 
         <div className="cc-home-fiscal-kpi-grid__items">

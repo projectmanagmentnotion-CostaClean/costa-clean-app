@@ -4,6 +4,7 @@ import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { DSConceptAutocomplete } from '../../design-system/components'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { findJobDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -857,15 +858,16 @@ export function JobCreateFlow({
             <div className="cc-create-flow__line-list">
               {billingLines.map((line, index) => (
                 <article key={line.local_id} className="cc-create-flow__line-card">
-                  <label className="form-field form-field-full">
-                    <span>Concepto {index + 1}</span>
-                    <input
-                      value={line.concept}
-                      onChange={(event) => updateBillingLine(line.local_id, 'concept', event.target.value)}
-                      placeholder="Descripcion profesional que se mostrara en factura"
-                      required
-                    />
-                  </label>
+                  <DSConceptAutocomplete
+                    label={`Concepto ${index + 1}`}
+                    value={line.concept}
+                    onChange={(value) => updateBillingLine(line.local_id, 'concept', value)}
+                    suggestions={[]}
+                    onUseConcept={(suggestion) => updateBillingLine(line.local_id, 'concept', suggestion.label)}
+                    hint="Recientes locales para repetir conceptos sin ruido."
+                    placeholder="Descripcion profesional que se mostrara en factura"
+                    required
+                  />
 
                   <label className="form-field">
                     <span>Cantidad</span>

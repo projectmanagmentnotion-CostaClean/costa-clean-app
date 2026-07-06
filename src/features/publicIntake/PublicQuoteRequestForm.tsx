@@ -1,5 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
+import { DSSmartPostalCodeInput } from '../../design-system/components'
 import type { StepFlowStatus } from '../stepflow'
 import { submitPublicQuoteRequest, type PublicQuoteRequestSuccess } from './publicQuoteRequestApi'
 import type { PreferredQuoteChannel, QuoteRequestNormalizedInput } from './types'
@@ -27,7 +28,7 @@ const steps: StepConfig[] = [
   {
     id: 'contact',
     label: 'Contacto',
-    title: 'Datos de contacto',
+    title: 'Contacto',
     helper: 'Solo lo necesario para responderte.',
     description: 'Quien solicita el presupuesto y como podemos localizarle.',
   },
@@ -41,28 +42,28 @@ const steps: StepConfig[] = [
   {
     id: 'property',
     label: 'Propiedad',
-    title: 'Datos de la propiedad',
+    title: 'Propiedad',
     helper: 'Una aproximacion basta para estimar.',
     description: 'Tipo de inmueble, tamano y rasgos basicos.',
   },
   {
     id: 'schedule',
     label: 'Fecha',
-    title: 'Fecha, urgencia y disponibilidad',
+    title: 'Agenda',
     helper: 'Sirve para agenda, prioridad y zona.',
     description: 'Cuando lo necesitas y en que zona se realizaria el servicio.',
   },
   {
     id: 'details',
     label: 'Detalles',
-    title: 'Detalles adicionales',
+    title: 'Detalles',
     helper: 'Anade contexto y canal de respuesta.',
     description: 'Notas, antecedentes y preferencia de respuesta.',
   },
   {
     id: 'review',
     label: 'Revision',
-    title: 'Revision final',
+    title: 'Revisa',
     helper: 'Revisa antes de enviar. No se genera nada automaticamente.',
     description: 'Confirmacion final antes de registrar la solicitud.',
   },
@@ -690,32 +691,17 @@ export function PublicQuoteRequestForm() {
                 </select>
               </label>
 
-              <div className="cc-public-intake-field-row">
-                <label className={errors.postalCode ? 'cc-public-intake-field has-error' : 'cc-public-intake-field'}>
-                  <span>Codigo postal *</span>
-                  <input
-                    value={form.postalCode ?? ''}
-                    onChange={(event) => setTextField('postalCode', event.target.value)}
-                    autoComplete="postal-code"
-                    inputMode="numeric"
-                    placeholder="29640"
-                    aria-invalid={Boolean(errors.postalCode)}
-                  />
-                  <FieldError message={errors.postalCode} />
-                </label>
-
-                <label className={errors.city ? 'cc-public-intake-field has-error' : 'cc-public-intake-field'}>
-                  <span>Poblacion *</span>
-                  <input
-                    value={form.city ?? ''}
-                    onChange={(event) => setTextField('city', event.target.value)}
-                    autoComplete="address-level2"
-                    placeholder="Fuengirola"
-                    aria-invalid={Boolean(errors.city)}
-                  />
-                  <FieldError message={errors.city} />
-                </label>
-              </div>
+              <DSSmartPostalCodeInput
+                postalCodeValue={form.postalCode ?? ''}
+                cityValue={form.city ?? ''}
+                postalCodeError={errors.postalCode}
+                cityError={errors.city}
+                onPostalCodeChange={(value) => setTextField('postalCode', value)}
+                onCityChange={(value) => setTextField('city', value)}
+                cityLabel="Poblacion"
+                postalCodeHint="Sugerencias locales segun zona habitual."
+                cityHint="Puedes escribir o aplicar una sugerencia."
+              />
 
               <label className="cc-public-intake-field">
                 <span>Cuando necesitas el servicio?</span>

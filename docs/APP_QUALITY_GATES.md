@@ -92,6 +92,14 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Risky automation remains reviewable by the user.
 - Protected areas such as routes, Supabase, auth, invoices, quotes, clients, services, and critical logic stay untouched unless explicitly in scope.
 
+## Smart Suggestions Gate
+
+- Local suggestions must be optional and explicitly applied by the user.
+- Suggestion layers cannot mutate persisted values silently.
+- Postal code and city helpers must stay local-first unless a dedicated backend sprint changes the contract.
+- Concept autocomplete cannot weaken required fields, price rules, tax rules, or structured validation.
+- Any local memory must avoid clearly sensitive values and degrade safely if storage is unavailable.
+
 ## Release Decision
 
 A work block should move forward only when:

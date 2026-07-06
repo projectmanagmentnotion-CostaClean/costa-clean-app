@@ -3,6 +3,7 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { DSSmartPostalCodeInput } from '../../design-system/components'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
@@ -382,23 +383,16 @@ export function PropertyCreateFlow({
               />
             </label>
 
-            <label className="form-field">
-              <span>Ciudad</span>
-              <input
-                value={form.city}
-                onChange={(event) => updateField('city', event.target.value)}
-                placeholder="Ej. Calella"
+            <div className="form-field form-field-full">
+              <DSSmartPostalCodeInput
+                postalCodeValue={form.postal_code}
+                cityValue={form.city}
+                onPostalCodeChange={(value) => updateField('postal_code', value)}
+                onCityChange={(value) => updateField('city', value)}
+                postalCodeHint="Sugerencias locales sin tocar backend."
+                cityHint="Selecciona una sugerencia o escribe libre."
               />
-            </label>
-
-            <label className="form-field">
-              <span>Codigo postal</span>
-              <input
-                value={form.postal_code}
-                onChange={(event) => updateField('postal_code', event.target.value)}
-                placeholder="Ej. 08370"
-              />
-            </label>
+            </div>
 
             <label className="form-field form-field-full">
               <span>Notas operativas</span>

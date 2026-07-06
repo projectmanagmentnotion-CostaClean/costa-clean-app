@@ -291,6 +291,20 @@ Rules applied:
 
 - list/card microinteractions
 
+Surface currently covered:
+
+- `src/pages/HomePage.tsx`
+- compact quick actions
+- compact KPI cards
+- lightweight SVG chart reads
+
+Rules applied:
+
+- first compact, then animate
+- no decorative bounce or amount animation
+- no extra motion added to critical fiscal signals
+- motion stays subordinate to hierarchy and readability
+
 ### Motion Phase 5
 
 - motion QA and performance pass

@@ -4,7 +4,7 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
-import { ConceptSuggestions } from '../concepts/ConceptSuggestions'
+import { DSConceptAutocomplete } from '../../design-system/components'
 import {
   buildConceptMemoryIndex,
   getConceptSuggestions,
@@ -587,18 +587,15 @@ export function QuoteEditFlow({
             <div className="cc-create-flow__line-list">
               {lines.map((line, index) => (
                 <article key={line.local_id} className="cc-create-flow__line-card">
-                  <label className="form-field form-field-full">
-                    <span>Concepto {index + 1}</span>
-                    <input
-                      value={line.concept}
-                      onChange={(event) => updateLine(line.local_id, 'concept', event.target.value)}
-                      required
-                    />
-                  </label>
-                  <ConceptSuggestions
+                  <DSConceptAutocomplete
+                    label={`Concepto ${index + 1}`}
+                    value={line.concept}
+                    onChange={(value) => updateLine(line.local_id, 'concept', value)}
                     suggestions={getSuggestionsForLine(line.concept)}
                     onUseConcept={(suggestion) => applyConceptSuggestionToLine(line.local_id, suggestion)}
                     onUseStructuredSuggestion={(suggestion) => applyStructuredSuggestionToLine(line.local_id, suggestion)}
+                    hint="Sugerencias compactas segun historial y contexto."
+                    required
                   />
                   <div className="cc-create-flow__line-actions">
                     <small className="cc-create-flow__helper">Aqui solo ajustas el alcance.</small>

@@ -1086,6 +1086,13 @@ export function InvoiceDetailCard({
 
           {isEditing ? (
             <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
+              {invoice.status === 'issued' ? (
+                <div className="cc-alert cc-alert--warning">
+                  <strong>Factura emitida</strong>
+                  <p>Antes de guardar cambios en lineas o importes, confirma si tu proceso requiere rectificativa. Este editor no crea una rectificativa automatica.</p>
+                </div>
+              ) : null}
+
               <label className="form-field">
                 <span>Servicio</span>
                 <select

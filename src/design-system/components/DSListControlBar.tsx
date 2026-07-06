@@ -2,9 +2,10 @@ import { useState } from 'react'
 import type { ListControlFilter, ListControlState, ListSortOption } from '../../features/lists/types'
 import { buildSortLabel } from '../../features/lists/utils'
 import { DSActiveFilters } from './DSActiveFilters'
+import { DSCompactFilterGroup } from './DSCompactFilterGroup'
 import { DSFilterChip } from './DSFilterChip'
+import { DSFilterSummaryButton } from './DSFilterSummaryButton'
 import { DSSearchInput } from './DSSearchInput'
-import { DSSortMenu } from './DSSortMenu'
 
 interface DSListControlBarProps {
   searchLabel: string
@@ -99,6 +100,12 @@ export function DSListControlBar({
     activeFilterItems.push({ key: filter.key, label: `${filter.label}: ${optionLabel}` })
   }
 
+  const primaryFilter = filters[0] ?? null
+  const quickFilterOptions = primaryFilter
+    ? primaryFilter.options.slice(0, filters.length > 1 ? 3 : 4)
+    : []
+  const sortDirectionLabel = state.sortDirection === 'asc' ? 'ascendente' : 'reciente primero'
+
   function updateState(update: (current: ListControlState) => ListControlState) {
     onChange(update(state))
   }
@@ -130,80 +137,155 @@ export function DSListControlBar({
         />
       </div>
 
-      <DSActiveFilters items={activeFilterItems} onClear={hasActiveControls ? () => onChange(defaultState) : undefined} />
+      <div className="cc-list-toolbar__one-line" aria-label="Controles compactos de lista">
+        <div className="cc-list-toolbar__quick-filters">
+          {quickFilterOptions.map((option) => (
+            <DSFilterChip
+              key={`${primaryFilter?.key ?? 'filter'}-${option.value}`}
+              active={(state.filters[primaryFilter?.key ?? ''] ?? defaultState.filters[primaryFilter?.key ?? ''] ?? 'all') === option.value}
+              onClick={() => {
+                if (!primaryFilter) return
+                updateState((current) => ({
+                  ...current,
+                  filters: {
+                    ...current.filters,
+                    [primaryFilter.key]: option.value,
+                  },
+                }))
+              }}
+            >
+              {option.label}
+            </DSFilterChip>
+          ))}
+        </div>
 
-      <details
-        className="cc-list-toolbar__panel cc-collapsible-section"
-        open={showAdvancedControls}
-        onToggle={(event) => setShowAdvancedControls(event.currentTarget.open)}
-      >
-        <summary className="cc-list-toolbar__panel-summary cc-collapsible-section__summary">
-          <div className="cc-list-toolbar__panel-copy">
-            <strong>Filtros y orden</strong>
-            <span>
-              {activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Abrir controles'}
-            </span>
-          </div>
-          {hasActiveControls ? <span className="cc-list-toolbar__panel-badge">Afinada</span> : <span className="cc-list-toolbar__panel-badge is-muted">Base</span>}
-        </summary>
+        <div className="cc-list-toolbar__summary-actions">
+          <DSFilterSummaryButton
+            icon={<SortIcon />}
+            label={`Orden: ${buildSortLabel(sortOptions, state.sortField)}`}
+            detail={sortDirectionLabel}
+            onClick={() => setShowAdvancedControls((current) => !current)}
+            active={state.sortField !== defaultState.sortField || state.sortDirection !== defaultState.sortDirection}
+            aria-expanded={showAdvancedControls}
+          />
 
-        <div className="cc-list-toolbar__controls" aria-label="Ordenacion y filtros de lista">
-          <label className="cc-list-toolbar__field">
-            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><SortIcon /></span> Ordenar por</span>
-            <DSSortMenu
-              aria-label="Ordenar por"
-              label=""
-              value={state.sortField}
-              options={sortOptions}
-              onChange={(event) => updateState((current) => ({ ...current, sortField: event.target.value }))}
-            />
-          </label>
+          <DSFilterSummaryButton
+            icon={<FiltersIcon />}
+            label="Filtros"
+            detail={activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Vista base'}
+            badge={activeFilterCount > 0 ? String(activeFilterCount) : null}
+            onClick={() => setShowAdvancedControls((current) => !current)}
+            active={showAdvancedControls || activeFilterCount > 0}
+            aria-expanded={showAdvancedControls}
+          />
 
-          <label className="cc-list-toolbar__field">
-            <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><SortIcon /></span> Direccion</span>
-            <DSSortMenu
-              aria-label="Direccion de orden"
-              label=""
-              value={state.sortDirection}
-              options={[
-                { value: 'desc', label: 'Mayor / reciente primero' },
-                { value: 'asc', label: 'Menor / antiguo primero' },
-              ]}
-              onChange={(event) => updateState((current) => ({
-                ...current,
-                sortDirection: event.target.value === 'asc' ? 'asc' : 'desc',
-              }))}
-            />
-          </label>
+          {hasActiveControls ? (
+            <button type="button" className="secondary-button cc-list-toolbar__clear" onClick={() => onChange(defaultState)}>
+              Limpiar
+            </button>
+          ) : null}
+        </div>
+      </div>
 
-          {filters.map((filter) => (
-            <div key={filter.key} className="cc-list-toolbar__field cc-list-toolbar__field--chips">
-              <span><span className="cc-list-toolbar__field-icon" aria-hidden="true"><FiltersIcon /></span> {filter.label}</span>
-              <div className="ds-filter-chip-row" role="group" aria-label={filter.label}>
-                {filter.options.map((option) => {
-                  const isActive = (state.filters[filter.key] ?? defaultState.filters[filter.key] ?? 'all') === option.value
+      <DSActiveFilters
+        items={activeFilterItems}
+        maxVisible={3}
+        onClear={hasActiveControls ? () => onChange(defaultState) : undefined}
+      />
 
-                  return (
+      {showAdvancedControls ? (
+        <>
+          <button
+            type="button"
+            className="cc-list-toolbar__backdrop"
+            aria-label="Cerrar filtros"
+            onClick={() => setShowAdvancedControls(false)}
+          />
+
+          <div className="cc-list-toolbar__sheet" role="dialog" aria-modal="false" aria-label="Filtros y orden">
+            <div className="cc-list-toolbar__sheet-head">
+              <div className="cc-list-toolbar__panel-copy">
+                <strong>Filtros y orden</strong>
+                <span>{activeSummaryBits.length > 0 ? activeSummaryBits.join(' / ') : 'Vista base compacta'}</span>
+              </div>
+              <button type="button" className="secondary-button cc-list-toolbar__sheet-close" onClick={() => setShowAdvancedControls(false)}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="cc-list-toolbar__sheet-body">
+              <section className="ds-compact-filter-group">
+                <div className="ds-compact-filter-group__header">
+                  <strong>Orden</strong>
+                  <span>{buildSortLabel(sortOptions, state.sortField)}</span>
+                </div>
+                <div className="ds-filter-chip-row ds-filter-chip-row--compact" role="group" aria-label="Ordenar por">
+                  {sortOptions.map((option) => (
                     <DSFilterChip
                       key={option.value}
-                      active={isActive}
+                      active={state.sortField === option.value}
+                      onClick={() => updateState((current) => ({ ...current, sortField: option.value }))}
+                    >
+                      {option.label}
+                    </DSFilterChip>
+                  ))}
+                </div>
+              </section>
+
+              <section className="ds-compact-filter-group">
+                <div className="ds-compact-filter-group__header">
+                  <strong>Direccion</strong>
+                  <span>{sortDirectionLabel}</span>
+                </div>
+                <div className="ds-filter-chip-row ds-filter-chip-row--compact" role="group" aria-label="Direccion de orden">
+                  {[
+                    { value: 'desc', label: 'Recientes primero' },
+                    { value: 'asc', label: 'Antiguos primero' },
+                  ].map((option) => (
+                    <DSFilterChip
+                      key={option.value}
+                      active={state.sortDirection === option.value}
                       onClick={() => updateState((current) => ({
                         ...current,
-                        filters: {
-                          ...current.filters,
-                          [filter.key]: option.value,
-                        },
+                        sortDirection: option.value === 'asc' ? 'asc' : 'desc',
                       }))}
                     >
                       {option.label}
                     </DSFilterChip>
-                  )
-                })}
-              </div>
+                  ))}
+                </div>
+              </section>
+
+              {filters.map((filter) => (
+                <DSCompactFilterGroup
+                  key={filter.key}
+                  label={filter.label}
+                  options={filter.options}
+                  activeValue={state.filters[filter.key] ?? defaultState.filters[filter.key] ?? 'all'}
+                  onSelect={(value) => updateState((current) => ({
+                    ...current,
+                    filters: {
+                      ...current.filters,
+                      [filter.key]: value,
+                    },
+                  }))}
+                />
+              ))}
             </div>
-          ))}
-        </div>
-      </details>
+
+            <div className="cc-list-toolbar__sheet-foot">
+              {hasActiveControls ? (
+                <button type="button" className="secondary-button" onClick={() => onChange(defaultState)}>
+                  Limpiar vista
+                </button>
+              ) : null}
+              <button type="button" className="primary-button" onClick={() => setShowAdvancedControls(false)}>
+                Aplicar
+              </button>
+            </div>
+          </div>
+        </>
+      ) : null}
     </div>
   )
 }

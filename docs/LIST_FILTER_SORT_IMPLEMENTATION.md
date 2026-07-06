@@ -16,6 +16,8 @@ Y se reorganiza sobre design system con componentes dedicados:
 - `src/design-system/components/DSFilterChip.tsx`
 - `src/design-system/components/DSSortMenu.tsx`
 - `src/design-system/components/DSActiveFilters.tsx`
+- `src/design-system/components/DSFilterSummaryButton.tsx`
+- `src/design-system/components/DSCompactFilterGroup.tsx`
 
 `ListToolbar` se mantiene como wrapper compatible para no romper imports vivos en presupuestos y facturas.
 
@@ -93,6 +95,7 @@ Y se reorganiza sobre design system con componentes dedicados:
 - `LeadsPage` sigue siendo un workspace grande aunque ya comparte patron de control
 - algunos modulos no exponen una fecha fiable de recencia en su contrato de lista
 - `InvoicesList` mejora solo por wrapper seguro; no se fuerza migracion mas profunda
+- los chips rapidos visibles se derivan del primer grupo de filtros de cada modulo; si en el futuro un modulo requiere otra priorizacion, debe declararse de forma explicita
 
 ## Siguiente paso recomendado
 

@@ -498,6 +498,14 @@ export function InvoiceEditFlow({
 
   const sideContent = (
     <>
+      {invoice.status === 'issued' ? (
+        <section className="cc-create-flow__summary-card">
+          <span className="cc-step-flow__eyebrow">Guardia fiscal</span>
+          <strong>Factura emitida</strong>
+          <small>Usa esta edicion solo si tu proceso fiscal permite corregir emitidas. Si requiere rectificativa, no guardes cambios directos.</small>
+        </section>
+      ) : null}
+
       <section className="cc-create-flow__summary-card">
         <span className="cc-step-flow__eyebrow">Lectura operativa</span>
         <strong>{selectedJob ? formatJobLabel(selectedJob) : invoice.service_reference ?? 'Sin servicio vinculado'}</strong>
@@ -603,6 +611,13 @@ export function InvoiceEditFlow({
               <strong>Contexto de emision y referencia operativa</strong>
               <small>Servicio, fecha, estado y notas en un solo bloque.</small>
             </article>
+
+            {invoice.status === 'issued' ? (
+              <div className="cc-alert cc-alert--warning">
+                <strong>Factura emitida en revision</strong>
+                <p>Si la regularizacion correcta exige rectificativa, no confirmes esta edicion directa. Usa este flujo solo si tu operativa fiscal la permite.</p>
+              </div>
+            ) : null}
 
             <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
               <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>

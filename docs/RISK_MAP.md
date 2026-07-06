@@ -41,6 +41,12 @@
 - el acknowledgement local de alertas solo reduce ruido en `Home`; no debe confundirse con un workflow real de resolucion o revision
 - el cliente sigue guardando `billing_address` como string unico; la separacion visual de ubicacion no debe interpretarse como cambio de modelo
 
+## Riesgos nuevos de One-Line Filters + Invoice 2026-045
+
+- el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles
+- `AnnualClosingPage` y `QuarterlyClosingPage` mantienen filtros legacy fuera de `ListToolbar`; no asumir homogeneidad total en todo el repo
+- la 2026-045 sigue pendiente porque no existe soporte explicito de rectificativa; usar la edicion mayor de una emitida sin validacion fiscal puede ser un riesgo operativo real
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

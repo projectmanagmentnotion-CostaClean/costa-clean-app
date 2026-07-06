@@ -92,6 +92,13 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Risky automation remains reviewable by the user.
 - Protected areas such as routes, Supabase, auth, invoices, quotes, clients, services, and critical logic stay untouched unless explicitly in scope.
 
+## One-Line Filters Gate
+
+- Las listas operativas no pueden abrir con paneles verticales largos de filtros.
+- Busqueda, filtros rapidos y orden deben caber en una sola superficie compacta.
+- Los filtros avanzados deben vivir en popover o sheet y resumirse fuera como estado activo.
+- Mostrar todos los grupos de chips a la vez se considera regresion visual.
+
 ## Smart Suggestions Gate
 
 - Local suggestions must be optional and explicitly applied by the user.

@@ -10,21 +10,30 @@ interface DSActiveFilterItem {
 interface DSActiveFiltersProps {
   items: DSActiveFilterItem[]
   onClear?: () => void
+  maxVisible?: number
 }
 
-export function DSActiveFilters({ items, onClear }: DSActiveFiltersProps) {
+export function DSActiveFilters({ items, onClear, maxVisible }: DSActiveFiltersProps) {
   if (items.length === 0) {
     return null
   }
 
+  const visibleItems = typeof maxVisible === 'number' ? items.slice(0, maxVisible) : items
+  const hiddenCount = typeof maxVisible === 'number' ? Math.max(items.length - visibleItems.length, 0) : 0
+
   return (
     <div className="ds-active-filters" aria-label="Filtros activos">
       <div className="ds-active-filters__items">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <DSTag key={item.key} className="ds-active-filters__tag">
             {item.label}
           </DSTag>
         ))}
+        {hiddenCount > 0 ? (
+          <DSTag className="ds-active-filters__tag ds-active-filters__tag--summary">
+            +{hiddenCount} mas
+          </DSTag>
+        ) : null}
       </div>
 
       {onClear ? (

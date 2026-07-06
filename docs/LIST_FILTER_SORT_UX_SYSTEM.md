@@ -29,10 +29,10 @@ Cada lista operativa debe tener:
    - placeholder con los campos reales que acepta
    - no esconder la busqueda tras modal o panel lateral
 
-3. Ajustes colapsables
-   - orden
-   - direccion
-   - filtros rapidos por chips
+3. Ajustes compactos
+   - orden resumido en un solo control compacto
+   - 3-5 chips rapidos visibles como maximo
+   - filtros avanzados dentro de popover o sheet
    - sin convertir la pantalla en una parrilla pesada de controles
 
 4. Filtros activos visibles
@@ -87,12 +87,13 @@ Cada lista operativa debe tener:
 - Busqueda siempre accesible en el primer scroll.
 - Chips horizontales o wrap limpio.
 - Evitar dobles bandas de filtros.
+- El panel avanzado debe abrirse como sheet compacto, no como bloque largo debajo de la barra.
 - No saturar el header con iconos o multiples botones de orden.
 
 ## Comportamiento desktop
 
 - Una sola barra clara.
-- El panel de ajustes puede expandirse sin empujar demasiado contenido irrelevante.
+- El panel de ajustes debe sentirse como capa flotante corta, no como panel vertical largo.
 - Los filtros activos deben quedar visibles entre la busqueda y el panel colapsable.
 
 ## Componentes base oficiales
@@ -102,6 +103,8 @@ Cada lista operativa debe tener:
 - `DSFilterChip`
 - `DSSortMenu`
 - `DSActiveFilters`
+- `DSFilterSummaryButton`
+- `DSCompactFilterGroup`
 - compat wrapper: `ListToolbar`
 
 ## Utilidades compartidas

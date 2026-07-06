@@ -1,23 +1,42 @@
+import { useMemo, useState } from 'react'
 import type { AppView } from '../app/navigation'
-import type { SeverityTone } from '../components/SeverityBadge'
 import { DSEmptyState, DSPageHeader } from '../design-system/components'
-import { useGsapEntrance } from '../design-system/motion'
-import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
-import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
+import { HomeAlertSummaryStrip, type HomeAlertSummaryItem } from '../features/dashboard/components/HomeAlertSummaryStrip'
 import { HomeFiscalKpiGrid, type HomeFiscalKpiItem } from '../features/dashboard/components/HomeFiscalKpiGrid'
 import { HomeGsapChartCard } from '../features/dashboard/components/HomeGsapChartCard'
-import { HomeQuickActionsPanel } from '../features/dashboard/components/HomeQuickActionsPanel'
+import { HomePeriodSelector, type HomePeriodOption } from '../features/dashboard/components/HomePeriodSelector'
+import { HomeQuickActionsPanel, type HomeQuickActionItem } from '../features/dashboard/components/HomeQuickActionsPanel'
 import { SvgBarChart } from '../features/dashboard/components/SvgBarChart'
 import { SvgLineChart } from '../features/dashboard/components/SvgLineChart'
 import { SvgRadialProgress } from '../features/dashboard/components/SvgRadialProgress'
 import { HomeMotionSection } from '../features/dashboard/motion/HomeMotionSection'
+import type { AutomationAlertItem } from '../features/automation/types'
+import {
+  createTomorrowIsoReference,
+  getAlertAcknowledgementKey,
+  isAlertSuppressedInHome,
+  readAlertAcknowledgements,
+  upsertAlertAcknowledgement,
+} from '../features/alerts/alertAcknowledgements'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
-import { getJobBillingDisplayConcept } from '../features/jobs/jobBilling'
+import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
+import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
 import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import '../features/dashboard/home-gsap-dashboard.css'
-import { formatCurrency, formatDateEs } from '../app/displayFormat'
-import type { AutomationAlertItem } from '../features/automation/types'
+import { formatCurrency } from '../app/displayFormat'
+
+type ValuePeriod = 'month' | 'quarter' | 'total' | 'current'
+
+const monthTotalOptions: HomePeriodOption[] = [
+  { key: 'month', label: 'Mes' },
+  { key: 'total', label: 'Total' },
+]
+
+const monthQuarterOptions: HomePeriodOption[] = [
+  { key: 'month', label: 'Mes' },
+  { key: 'quarter', label: 'Trim' },
+]
 
 interface HomePageProps {
   metrics: {
@@ -86,555 +105,292 @@ interface HomePageProps {
   onRunOperationalAction: (action: OperationalAction) => void
 }
 
-interface HomePrimaryAction {
-  primaryKey: string
-  secondaryKey: string
-  eyebrow: string
-  label: string
-  summary: string
-  detail: string
-  onRun: () => void
-  secondaryLabel: string
-  onSecondaryRun: () => void
+function getSafePercent(numerator: number, denominator: number) {
+  if (denominator <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((numerator / denominator) * 100)))
 }
 
-export function HomePage({
-  metrics,
-  agenda,
-  onOpenJobWorkspace,
-  onOpenView,
-  onRunKpiAction,
-  alerts,
-  onOpenAlert,
-  operationalIncidents,
-  operationalQuickViews,
-  onRunOperationalAction,
-}: HomePageProps) {
+export function HomePage(props: HomePageProps) {
+  const { metrics, agenda, onOpenView, onRunKpiAction, alerts, onOpenAlert } = props
+  const [invoicedPeriod, setInvoicedPeriod] = useState<ValuePeriod>('month')
+  const [collectedPeriod, setCollectedPeriod] = useState<ValuePeriod>('month')
+  const [expensesPeriod, setExpensesPeriod] = useState<ValuePeriod>('month')
+  const [cashChartPeriod, setCashChartPeriod] = useState<ValuePeriod>('month')
+  const [alertAcknowledgements, setAlertAcknowledgements] = useState(() => readAlertAcknowledgements())
+
   const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
-  const priorityAlerts = alerts
-    .filter((alert) => alert.severity === 'critical' || alert.severity === 'warning')
-    .slice(0, 3)
-  const urgentCollectionsCount = metrics.unpaidInvoicesOlderThan7DaysCount + metrics.partiallyPaidInvoicesCount
-  const topIncident = operationalIncidents[0] ?? null
-  const quickViewById = new Map(operationalQuickViews.map((view) => [view.id, view]))
-  const urgentIncidents = operationalIncidents.filter((incident) => incident.severity !== 'info').slice(0, 3)
-  const followUpIncidents = operationalIncidents.filter((incident) => incident.severity === 'info').slice(0, 3)
-  const todayActionJobs = agenda.todayJobs.slice(0, 3)
-  const nextActionJobs = agenda.tomorrowJobs.slice(0, 2)
-  const pendingBillingView = quickViewById.get('pending-billing') ?? null
-  const pendingCollectionsView = quickViewById.get('pending-collections') ?? null
-  const partialCollectionsView = quickViewById.get('partial-collections') ?? null
-  const acceptedWithoutJobView = quickViewById.get('quotes-without-conversion') ?? null
-  const missingFiscalView = quickViewById.get('clients-missing-fiscal') ?? null
-  const overdueInternalView = quickViewById.get('overdue-internal') ?? null
   const fiscalRiskCount = metrics.expensesMissingValidVatInvoiceCount + metrics.fiscalReviewExpensesCount + metrics.fiscalRiskExpensesCount
-  const { scopeRef: heroScopeRef } = useGsapEntrance({
-    preset: 'fadeUp',
-    target: '.cc-dashboard-console-hero--decision',
-  })
-
-  const homePrimaryAction: HomePrimaryAction = topIncident
-    ? {
-        primaryKey: `incident:${topIncident.id}`,
-        secondaryKey: topIncident.secondaryAction ? `incident-secondary:${topIncident.id}` : 'alerts',
-        eyebrow: topIncident.severity === 'critical' ? 'Bloqueo principal' : 'Prioridad principal',
-        label: topIncident.primaryAction.label,
-        summary: topIncident.summary,
-        detail: topIncident.detail,
-        onRun: () => onRunOperationalAction(topIncident.primaryAction),
-        secondaryLabel: topIncident.secondaryAction?.label ?? 'Abrir alertas',
-        onSecondaryRun: () => (
-          topIncident.secondaryAction
-            ? onRunOperationalAction(topIncident.secondaryAction)
-            : onOpenView('alerts')
-        ),
-      }
-    : metrics.completedJobsWithoutInvoiceCount > 0
-      ? {
-          primaryKey: 'completed-jobs-without-invoice',
-          secondaryKey: 'completed-jobs-without-invoice',
-          eyebrow: 'Prioridad principal',
-          label: 'Facturar servicios pendientes',
-          summary: `${metrics.completedJobsWithoutInvoiceCount} servicio(s) completados siguen sin factura`,
-          detail: 'Conviene cerrar hoy el paso de servicio a factura para no bloquear ingreso.',
-          onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-          secondaryLabel: 'Ver trabajo sin facturar',
-          onSecondaryRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-        }
-      : urgentCollectionsCount > 0
-        ? {
-            primaryKey: 'outstanding-invoices',
-            secondaryKey: 'fiscal-closing',
-            eyebrow: 'Prioridad principal',
-            label: 'Revisar cobros pendientes',
-            summary: `${urgentCollectionsCount} factura(s) requieren seguimiento`,
-            detail: 'La operativa esta estable; el siguiente impacto viene de mover cobro y seguimiento.',
-            onRun: () => onRunKpiAction('outstanding_invoices'),
-            secondaryLabel: 'Abrir cierre fiscal',
-            onSecondaryRun: () => onOpenView('fiscal_closing'),
-          }
-        : {
-            primaryKey: metrics.outstandingReceivablesTotal > 0 ? 'outstanding-invoices' : 'new-invoice',
-            secondaryKey: 'fiscal-closing',
-            eyebrow: 'Prioridad principal',
-            label: metrics.outstandingReceivablesTotal > 0 ? 'Ver pendientes de cobro' : 'Nueva factura',
-            summary: metrics.outstandingReceivablesTotal > 0
-              ? `${formatCurrency(metrics.outstandingReceivablesTotal)} siguen pendientes de cobro`
-              : 'No hay bloqueo dominante y la siguiente accion util es avanzar facturacion.',
-            detail: metrics.outstandingReceivablesTotal > 0
-              ? 'Sin un bloqueo dominante, conviene atacar caja abierta antes de abrir mas frentes.'
-              : 'La operativa esta limpia y el mejor siguiente paso es abrir una factura o revisar facturacion del dia.',
-            onRun: () => (
-              metrics.outstandingReceivablesTotal > 0
-                ? onRunKpiAction('outstanding_invoices')
-                : onOpenView('invoices')
-            ),
-            secondaryLabel: 'Abrir cierre fiscal',
-            onSecondaryRun: () => onOpenView('fiscal_closing'),
-          }
-
-  const moneyQueue = [
-    pendingCollectionsView,
-    pendingBillingView,
-    acceptedWithoutJobView,
-    overdueInternalView,
-    partialCollectionsView,
-  ].filter(Boolean).slice(0, 3)
-
-  const fiscalKpis: HomeFiscalKpiItem[] = [
-    {
-      key: 'pending-collections',
-      label: 'Cobro abierto',
-      value: formatCurrency(metrics.outstandingReceivablesTotal),
-      detail: `${metrics.pendingInvoicesCount} factura(s) abiertas.`,
-      badge: urgentCollectionsCount > 0 ? 'Seguimiento' : 'Controlado',
-      tone: 'warning' as SeverityTone,
-      onRun: () => onRunKpiAction('outstanding_invoices'),
-    },
-    {
-      key: 'pending-billing',
-      label: 'Sin facturar',
-      value: String(metrics.completedJobsWithoutInvoiceCount),
-      detail: 'Servicios listos para pasar a factura.',
-      badge: metrics.completedJobsWithoutInvoiceOlderThan2DaysCount > 0 ? 'Fuera de plazo' : 'Pendiente',
-      tone: 'warning' as SeverityTone,
-      onRun: () => onRunKpiAction('completed_jobs_without_invoice'),
-    },
-    {
-      key: 'expenses-this-month',
-      label: 'Gasto mes',
-      value: formatCurrency(metrics.expensesThisMonthTotal),
-      detail: metrics.expensesCount > 0 ? 'Gasto registrado en el periodo actual.' : 'Sin gasto este mes.',
-      badge: metrics.expensesWithoutReceiptCount > 0 ? `${metrics.expensesWithoutReceiptCount} sin soporte` : 'Con soporte',
-      tone: 'info' as SeverityTone,
-      onRun: () => onRunKpiAction('expenses_this_month'),
-    },
-    {
-      key: 'fiscal-review-open',
-      label: 'Revision fiscal',
-      value: String(fiscalRiskCount),
-      detail: fiscalRiskCount > 0 ? 'Casos fiscales o documentales pendientes.' : 'Sin frente fiscal dominante.',
-      badge: fiscalRiskCount > 0 ? 'Revisar' : 'Estable',
-      tone: fiscalRiskCount > 0 ? 'warning' as SeverityTone : 'success' as SeverityTone,
-      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
-    },
-  ]
-
-  const compactQuickActions = [
-    {
-      key: 'new-invoice',
-      title: 'Nueva factura',
-      detail: 'Emitir.',
-      onRun: () => onOpenView('invoices'),
-    },
-    {
-      key: 'outstanding-invoices',
-      title: 'Cobros',
-      detail: 'Seguir caja.',
-      onRun: () => onRunKpiAction('outstanding_invoices'),
-    },
-    {
-      key: 'new-quote',
-      title: 'Presupuesto',
-      detail: 'Abrir propuesta.',
-      onRun: () => onOpenView('quotes'),
-    },
-    {
-      key: 'new-job',
-      title: 'Servicio',
-      detail: 'Crear trabajo.',
-      onRun: () => onOpenView('jobs'),
-    },
-    {
-      key: 'new-expense',
-      title: 'Gasto',
-      detail: 'Registrar gasto.',
-      onRun: () => onOpenView('expenses'),
-    },
-    {
-      key: 'fiscal-closing',
-      title: 'Cierre fiscal',
-      detail: 'Revisar periodo.',
-      onRun: () => onOpenView('fiscal_closing'),
-    },
-  ]
-    .filter((action) => action.key !== homePrimaryAction.primaryKey && action.key !== homePrimaryAction.secondaryKey)
-    .slice(0, 6)
-
-  const immediateLoadSeries = [
-    { label: 'Hoy', value: metrics.jobsScheduledTodayCount },
-    { label: 'Manana', value: metrics.jobsScheduledTomorrowCount },
-    { label: 'Proximos', value: agenda.upcomingJobs.length },
-  ]
-  const immediateLoadTotal = immediateLoadSeries.reduce((sum, item) => sum + item.value, 0)
-  const fiscalReviewSeries = [
-    { label: 'Revision', value: metrics.fiscalReviewExpensesCount },
-    { label: 'Sin IVA', value: metrics.expensesMissingValidVatInvoiceCount },
-    { label: 'Riesgo', value: metrics.fiscalRiskExpensesCount },
-  ]
   const documentaryCompletionPercent = metrics.expensesCount > 0
     ? Math.round((metrics.expensesWithReceiptCount / metrics.expensesCount) * 100)
     : 0
 
-  const operationalQueue = [
-    ...urgentIncidents.map((incident) => ({
-      id: incident.id,
-      title: incident.title,
-      detail: incident.summary,
-      actionLabel: incident.primaryAction.label,
-      onRun: () => onRunOperationalAction(incident.primaryAction),
-      tone: incident.severity,
-    })),
-    ...todayActionJobs.map((job) => ({
-      id: job.id,
-      title: getJobBillingDisplayConcept(job),
-      detail: `${job.client_name ?? job.client_display_code ?? 'Cliente'} · ${formatDateEs(job.scheduled_date)}`,
-      actionLabel: 'Abrir servicio',
-      onRun: () => onOpenJobWorkspace(job.id),
-      tone: 'info' as const,
-    })),
-  ].slice(0, 3)
+  const visiblePriorityAlerts = useMemo(() => (
+    alerts
+      .filter((alert) => alert.severity === 'critical' || alert.severity === 'warning')
+      .filter((alert) => !isAlertSuppressedInHome(alert, alertAcknowledgements[getAlertAcknowledgementKey(alert)]))
+      .slice(0, 2)
+  ), [alertAcknowledgements, alerts])
 
-  const fiscalReviewItems = [
+  function acknowledgeAlert(alert: AutomationAlertItem, status: 'seen' | 'snoozed' | 'dismissed') {
+    const alertKey = getAlertAcknowledgementKey(alert)
+    setAlertAcknowledgements((current) => upsertAlertAcknowledgement(
+      current,
+      alertKey,
+      status,
+      status === 'snoozed' ? { snoozeUntil: createTomorrowIsoReference() } : undefined,
+    ))
+  }
+
+  const invoicedValue = invoicedPeriod === 'total' ? metrics.totalInvoiced : metrics.invoicedThisMonthTotal
+  const collectedValue = collectedPeriod === 'total' ? metrics.totalCollected : metrics.collectedThisMonthTotal
+  const expenseValue = expensesPeriod === 'quarter' ? metrics.expensesThisQuarterTotal : metrics.expensesThisMonthTotal
+  const invoicedProgressPercent = getSafePercent(
+    invoicedPeriod === 'total' ? metrics.totalCollected : metrics.collectedThisMonthTotal,
+    Math.max(invoicedValue, 1),
+  )
+  const collectedProgressPercent = getSafePercent(
+    collectedValue,
+    Math.max(invoicedPeriod === 'total' ? metrics.totalInvoiced : metrics.invoicedThisMonthTotal, 1),
+  )
+  const expenseSupportPercent = documentaryCompletionPercent
+  const reviewCoveragePercent = getSafePercent(fiscalRiskCount, Math.max(metrics.expensesCount, 1))
+
+  const fiscalKpis: HomeFiscalKpiItem[] = [
     {
-      label: 'Gastos pendientes de revisar',
-      value: String(metrics.fiscalReviewExpensesCount),
-      detail: 'Casos marcados para revision fiscal.',
-      onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
+      key: 'invoiced',
+      label: 'Facturado',
+      value: formatCurrency(invoicedValue),
+      detail: invoicedPeriod === 'total' ? 'Acumulado seguro.' : 'Mes actual.',
+      badge: invoicedPeriod === 'total' ? 'Total' : 'Mes',
+      tone: 'info',
+      periodOptions: monthTotalOptions,
+      periodValue: invoicedPeriod,
+      onPeriodChange: (nextValue) => setInvoicedPeriod(nextValue as ValuePeriod),
+      progress: {
+        label: 'Cobrado',
+        percent: invoicedProgressPercent,
+        value: formatCurrency(invoicedPeriod === 'total' ? metrics.totalCollected : metrics.collectedThisMonthTotal),
+      },
+      onRun: () => onOpenView('invoices'),
     },
     {
-      label: 'Gastos sin soporte o IVA valido',
-      value: String(metrics.expensesMissingValidVatInvoiceCount),
-      detail: 'Soporte documental debil para el periodo.',
-      onRun: () => onRunKpiAction('expenses_missing_valid_vat_invoice'),
+      key: 'collected',
+      label: 'Cobrado',
+      value: formatCurrency(collectedValue),
+      detail: collectedPeriod === 'total' ? 'Caja acumulada.' : 'Cobro del mes.',
+      badge: collectedPeriod === 'total' ? 'Total' : 'Mes',
+      tone: 'success',
+      periodOptions: monthTotalOptions,
+      periodValue: collectedPeriod,
+      onPeriodChange: (nextValue) => setCollectedPeriod(nextValue as ValuePeriod),
+      progress: {
+        label: 'Sobre facturado',
+        percent: collectedProgressPercent,
+        value: `${collectedProgressPercent}%`,
+      },
+      onRun: () => onRunKpiAction('outstanding_invoices'),
     },
     {
-      label: 'Riesgo fiscal medio o alto',
-      value: String(metrics.fiscalRiskExpensesCount),
-      detail: 'Registros con riesgo fiscal activo.',
-      onRun: () => onRunKpiAction('expenses_fiscal_medium_high_risk'),
+      key: 'expenses',
+      label: 'Gasto',
+      value: formatCurrency(expenseValue),
+      detail: expensesPeriod === 'quarter' ? 'Trimestre activo.' : 'Mes actual.',
+      badge: expensesPeriod === 'quarter' ? 'Trim' : 'Mes',
+      tone: 'info',
+      periodOptions: monthQuarterOptions,
+      periodValue: expensesPeriod,
+      onPeriodChange: (nextValue) => setExpensesPeriod(nextValue as ValuePeriod),
+      progress: {
+        label: 'Con soporte',
+        percent: expenseSupportPercent,
+        value: `${metrics.expensesWithReceiptCount}/${metrics.expensesCount}`,
+      },
+      onRun: () => onOpenView('expenses'),
+    },
+    {
+      key: 'review',
+      label: 'Revisar',
+      value: String(fiscalRiskCount),
+      detail: fiscalRiskCount > 0 ? 'Frentes fiscales activos.' : 'Sin frente dominante.',
+      badge: fiscalRiskCount > 0 ? 'Riesgo' : 'Estable',
+      tone: fiscalRiskCount > 0 ? 'warning' : 'success',
+      progress: {
+        label: 'Sobre gastos',
+        percent: reviewCoveragePercent,
+        value: `${reviewCoveragePercent}%`,
+      },
+      onRun: () => onOpenView('fiscal_closing'),
     },
   ]
 
-  function runQuickView(view: OperationalQuickView | null) {
-    if (!view) return
-    onRunOperationalAction(view.action)
-  }
+  const compactQuickActions: HomeQuickActionItem[] = [
+    { key: 'new-invoice', title: 'Factura', onRun: () => onOpenView('invoices') },
+    { key: 'new-quote', title: 'Presupuesto', onRun: () => onOpenView('quotes') },
+    { key: 'new-job', title: 'Servicio', onRun: () => onOpenView('jobs') },
+    { key: 'new-expense', title: 'Gasto', onRun: () => onOpenView('expenses') },
+    { key: 'outstanding-invoices', title: 'Cobros', onRun: () => onRunKpiAction('outstanding_invoices') },
+    { key: 'fiscal-closing', title: 'Cierre', onRun: () => onOpenView('fiscal_closing') },
+  ]
 
-  const supportFootnotes = [
-    ...priorityAlerts.map((alert) => ({
-      key: `alert:${alert.id}`,
-      title: alert.title,
-      detail: alert.summary,
-      onRun: () => onOpenAlert(alert),
+  const cashChartSeries = cashChartPeriod === 'total'
+    ? [
+        { label: 'Fact.', value: Math.round(metrics.totalInvoiced) },
+        { label: 'Cob.', value: Math.round(metrics.totalCollected) },
+        { label: 'Abierto', value: Math.round(metrics.outstandingReceivablesTotal) },
+      ]
+    : [
+        { label: 'Fact.', value: Math.round(metrics.invoicedThisMonthTotal) },
+        { label: 'Cob.', value: Math.round(metrics.collectedThisMonthTotal) },
+        { label: 'Abierto', value: Math.round(Math.max(metrics.invoicedThisMonthTotal - metrics.collectedThisMonthTotal, 0)) },
+      ]
+
+  const agendaSeries = [
+    { label: 'Hoy', value: metrics.jobsScheduledTodayCount },
+    { label: 'Man.', value: metrics.jobsScheduledTomorrowCount },
+    { label: 'Prox.', value: agenda.upcomingJobs.length },
+  ]
+
+  const fiscalReviewSeries = [
+    { label: 'Rev.', value: metrics.fiscalReviewExpensesCount },
+    { label: 'IVA', value: metrics.expensesMissingValidVatInvoiceCount },
+    { label: 'Risk', value: metrics.fiscalRiskExpensesCount },
+  ]
+
+  const alertSummaryItems: HomeAlertSummaryItem[] = [
+    ...visiblePriorityAlerts.map((alert) => ({
+      key: alert.id,
+      title: alert.severity === 'critical' ? 'Critica' : 'Pendiente',
+      value: `${alert.count}`,
+      detail: alert.title,
+      tone: (alert.severity === 'critical' ? 'critical' : 'warning') as HomeAlertSummaryItem['tone'],
+      onOpen: () => onOpenAlert(alert),
+      onSeen: () => acknowledgeAlert(alert, 'seen'),
+      onSnooze: () => acknowledgeAlert(alert, 'snoozed'),
+      onDismiss: alert.severity === 'critical' ? undefined : () => acknowledgeAlert(alert, 'dismissed'),
     })),
-    ...(missingFiscalView ? [{
-      key: `quick-view:${missingFiscalView.id}`,
-      title: missingFiscalView.label,
-      detail: missingFiscalView.summary,
-      onRun: () => runQuickView(missingFiscalView),
+    ...(visiblePriorityAlerts.length < 3 && metrics.completedJobsWithoutInvoiceCount > 0 ? [{
+      key: 'unbilled-jobs',
+      title: 'Facturar',
+      value: `${metrics.completedJobsWithoutInvoiceCount}`,
+      detail: 'Servicios listos para factura.',
+      tone: 'warning' as const,
+      onOpen: () => onRunKpiAction('completed_jobs_without_invoice'),
     }] : []),
-    ...(acceptedWithoutJobView ? [{
-      key: `quick-view:${acceptedWithoutJobView.id}`,
-      title: acceptedWithoutJobView.label,
-      detail: acceptedWithoutJobView.summary,
-      onRun: () => runQuickView(acceptedWithoutJobView),
+    ...(visiblePriorityAlerts.length < 2 && fiscalRiskCount > 0 ? [{
+      key: 'fiscal-risk',
+      title: 'Revisar',
+      value: `${fiscalRiskCount}`,
+      detail: 'Fiscal o soporte pendiente.',
+      tone: 'warning' as const,
+      onOpen: () => onOpenView('fiscal_closing'),
     }] : []),
-    ...followUpIncidents.map((incident) => ({
-      key: `follow-up:${incident.id}`,
-      title: incident.title,
-      detail: incident.summary,
-      onRun: () => onRunOperationalAction(incident.primaryAction),
-    })),
   ].slice(0, 3)
 
-  const shouldShowAlertBand = priorityAlerts.length > 0 || fiscalRiskCount > 0 || supportFootnotes.length > 0
+  const homeStatus = criticalAlertsCount > 0
+    ? `${criticalAlertsCount} criticas`
+    : fiscalRiskCount > 0
+      ? 'Revision abierta'
+      : 'Operativa estable'
 
   return (
     <section className="cc-dashboard-page cc-dashboard-page--focus">
       <DSPageHeader
-        eyebrow="Centro operativo"
+        eyebrow="Cockpit"
         title="Inicio"
-        summary="Una prioridad clara, cola corta y lectura fiscal sin ruido."
-        statusLabel={criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Operativa estable'}
-        statusTone={criticalAlertsCount > 0 ? 'critical' : 'success'}
-        metricLabel="Hoy"
-        metricValue={`${metrics.jobsScheduledTodayCount} servicio(s)`}
-        metricHint={fiscalRiskCount > 0 ? `${fiscalRiskCount} punto(s) de revision.` : 'Sin frente fiscal dominante.'}
-      />
+        summary="KPIs, visual fiscal y accesos directos."
+        statusLabel={homeStatus}
+        statusTone={criticalAlertsCount > 0 ? 'critical' : fiscalRiskCount > 0 ? 'warning' : 'success'}
+        metricLabel="Abierto"
+        metricValue={formatCurrency(metrics.outstandingReceivablesTotal)}
+        metricHint="Pendiente real de cobro."
+      >
+        <HomePeriodSelector
+          compact
+          ariaLabel="Periodo visual de home"
+          options={monthQuarterOptions}
+          value={expensesPeriod}
+          onChange={(nextValue) => setExpensesPeriod(nextValue as ValuePeriod)}
+        />
+      </DSPageHeader>
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
-        <section className="cc-dashboard-block cc-dashboard-console-hero cc-dashboard-console-hero--decision" ref={heroScopeRef}>
-          <div className="cc-dashboard-console-hero__grid cc-dashboard-console-hero__grid--decision">
-            <article className="cc-dashboard-console-primary cc-dashboard-console-primary--decision">
-              <div className="cc-dashboard-console-primary__top">
-                <span className="cc-dashboard-console-primary__eyebrow">{homePrimaryAction.eyebrow}</span>
-                <span className="lead-badge">{criticalAlertsCount > 0 ? `${criticalAlertsCount} criticas` : 'Operativa estable'}</span>
-              </div>
-              <h3>{homePrimaryAction.label}</h3>
-              <strong className="cc-dashboard-console-primary__summary">{homePrimaryAction.summary}</strong>
-              <p className="cc-dashboard-console-primary__detail">{homePrimaryAction.detail}</p>
-              <div className="cc-dashboard-console-primary__actions">
-                <button type="button" className="primary-button" onClick={homePrimaryAction.onRun}>
-                  {homePrimaryAction.label}
-                </button>
-                <button type="button" className="secondary-button" onClick={homePrimaryAction.onSecondaryRun}>
-                  {homePrimaryAction.secondaryLabel}
-                </button>
-              </div>
-            </article>
-
-            <article className="cc-dashboard-console-sidepanel cc-dashboard-console-sidepanel--decision">
-              <div className="cc-dashboard-console-sidepanel__header">
-                <h3>Caja por mover</h3>
-                <p>Tres frentes utiles para desbloquear ingreso.</p>
-              </div>
-              <div className="cc-dashboard-console-lanes">
-                {moneyQueue.map((view) => (
-                  <button
-                    key={view!.id}
-                    type="button"
-                    className={`cc-dashboard-console-lane cc-dashboard-console-lane--${view!.tone}`}
-                    onClick={() => runQuickView(view!)}
-                  >
-                    <span className="cc-dashboard-console-lane__label">{view!.label}</span>
-                    <strong className="cc-dashboard-console-lane__value">{view!.value}</strong>
-                    <p className="cc-dashboard-console-lane__detail">{view!.summary}</p>
-                    <span className="cc-dashboard-console-lane__cta">{view!.action.label}</span>
-                  </button>
-                ))}
-              </div>
-            </article>
-          </div>
-        </section>
-
         <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>Acciones y KPIs</h2>
-              <p>Accesos utiles y lectura corta del periodo.</p>
-            </div>
-          </div>
-
-          <div className="cc-home-dashboard-summary-grid">
-            <HomeQuickActionsPanel actions={compactQuickActions} />
+          <div className="cc-home-dashboard-cockpit-grid">
             <HomeFiscalKpiGrid items={fiscalKpis} />
+            <HomeQuickActionsPanel actions={compactQuickActions} />
           </div>
         </HomeMotionSection>
 
         <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-dashboard-block__header">
             <div>
-              <h2>Visual fiscal</h2>
-              <p>Lectura breve con SVG y motion sobrio.</p>
+              <h2>Visual</h2>
+              <p>Solo lecturas cortas y reales.</p>
             </div>
           </div>
 
           <div className="cc-home-dashboard-chart-grid">
             <HomeGsapChartCard
-              eyebrow="Carga inmediata"
-              title="Agenda corta"
-              value={`${immediateLoadTotal} servicio(s)`}
+              eyebrow="Caja"
+              title="Facturado vs cobrado"
+              value={cashChartPeriod === 'total' ? formatCurrency(metrics.totalCollected) : formatCurrency(metrics.collectedThisMonthTotal)}
+              description="Facturado, cobrado y abierto."
+              hasData={cashChartSeries.some((item) => item.value > 0)}
+              emptyTitle="Sin caja para mostrar"
+              emptyDescription="Todavia no hay importes suficientes para esta lectura."
+              actionLabel="Abrir facturas"
+              onAction={() => onOpenView('invoices')}
+              periodOptions={monthTotalOptions}
+              periodValue={cashChartPeriod}
+              onPeriodChange={(nextValue) => setCashChartPeriod(nextValue as ValuePeriod)}
+            >
+              <SvgBarChart data={cashChartSeries} />
+            </HomeGsapChartCard>
+
+            <HomeGsapChartCard
+              eyebrow="Agenda"
+              title="Carga inmediata"
+              value={`${agendaSeries.reduce((sum, item) => sum + item.value, 0)} servicio(s)`}
               description="Hoy, manana y proximos."
-              hasData={immediateLoadTotal > 0}
+              hasData={agendaSeries.some((item) => item.value > 0)}
               emptyTitle="Sin agenda inmediata"
-              emptyDescription="No hay servicios cargados en la ventana corta de hoy, manana o proximos trabajos."
-              actionLabel="Abrir agenda"
-              onAction={() => onRunKpiAction('jobs_today')}
+              emptyDescription="No hay servicios visibles en la ventana corta."
+              actionLabel="Abrir servicios"
+              onAction={() => onOpenView('jobs')}
             >
-              <SvgLineChart data={immediateLoadSeries} />
+              <SvgLineChart data={agendaSeries} />
             </HomeGsapChartCard>
 
             <HomeGsapChartCard
-              eyebrow="Frentes fiscales"
-              title="Revision del periodo"
-              value={`${fiscalRiskCount} caso(s)`}
-              description="Revision, soporte IVA y riesgo."
-              hasData={metrics.expensesCount > 0}
-              emptyTitle="Sin gasto registrado"
-              emptyDescription="Todavia no hay gastos cargados en el periodo para construir la lectura fiscal."
-              actionLabel="Abrir revision"
-              onAction={() => onRunKpiAction('expenses_fiscal_requires_review')}
-            >
-              <SvgBarChart data={fiscalReviewSeries} />
-            </HomeGsapChartCard>
-
-            <HomeGsapChartCard
-              eyebrow="Soporte documental"
-              title="Completitud de gastos"
-              value={`${metrics.expensesWithReceiptCount}/${metrics.expensesCount}`}
-              description="Porcentaje real con soporte."
+              eyebrow="Soporte"
+              title="Revision y soporte"
+              value={`${documentaryCompletionPercent}%`}
+              description="Revision, IVA y soporte."
               hasData={metrics.expensesCount > 0}
               emptyTitle="Sin soporte que revisar"
-              emptyDescription="Aun no hay gastos cargados en el periodo para medir completitud documental."
-              actionLabel="Abrir gastos"
-              onAction={() => onOpenView('expenses')}
+              emptyDescription="Aun no hay gasto suficiente para esta lectura."
+              actionLabel="Abrir cierre"
+              onAction={() => onOpenView('fiscal_closing')}
             >
-              <SvgRadialProgress label="Con soporte" percent={documentaryCompletionPercent} />
+              {fiscalRiskCount > 0 ? (
+                <SvgBarChart data={fiscalReviewSeries} />
+              ) : (
+                <SvgRadialProgress label="Con soporte" percent={documentaryCompletionPercent} />
+              )}
             </HomeGsapChartCard>
           </div>
         </HomeMotionSection>
 
         <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
-          <div className="cc-dashboard-block__header">
-            <div>
-              <h2>En marcha hoy</h2>
-              <p>Solo la siguiente accion real.</p>
-            </div>
-          </div>
-
-          <div className="cc-dashboard-console-operating-grid">
-            <article className="cc-dashboard-console-workpanel">
-              <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Accion inmediata</span>
-                <h3>Lo que toca mover ahora</h3>
-                <p>Trabajo, incidencias y agenda en una sola cola corta.</p>
-              </div>
-
-              {operationalQueue.length > 0 ? (
-                <div className="cc-dashboard-console-actionlist cc-bounded-list">
-                  {operationalQueue.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`cc-dashboard-console-action cc-dashboard-console-action--${item.tone}`}
-                      onClick={item.onRun}
-                    >
-                      <div className="cc-dashboard-console-action__top">
-                        <span>{item.tone === 'critical' ? 'Critico' : item.tone === 'warning' ? 'Accion requerida' : 'Agenda'}</span>
-                        <strong>{item.actionLabel}</strong>
-                      </div>
-                      <h3>{item.title}</h3>
-                      <p>{item.detail}</p>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <DSEmptyState
-                  title="Sin cola operativa inmediata"
-                  description="No hay incidencias ni servicios urgentes visibles para hoy."
-                />
-              )}
-            </article>
-
-            <article className="cc-dashboard-console-workpanel">
-              <div>
-                <span className="cc-dashboard-console-workpanel__eyebrow">Siguiente paso</span>
-                <h3>Despues de hoy</h3>
-                <p>La siguiente cola inmediata sin abrir otra pantalla larga.</p>
-              </div>
-
-              {nextActionJobs.length > 0 ? (
-                <div className="cc-dashboard-console-subqueue">
-                  <span className="cc-dashboard-console-subqueue__label">Proximos servicios</span>
-                  {nextActionJobs.map((job) => (
-                    <button key={job.id} type="button" className="cc-dashboard-console-subqueue__item" onClick={() => onOpenJobWorkspace(job.id)}>
-                      <strong>{getJobBillingDisplayConcept(job)}</strong>
-                      <span>{formatDateEs(job.scheduled_date)}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <DSEmptyState
-                  title="Sin siguiente cola inmediata"
-                  description="No hay servicios proximos criticos cargados despues de hoy."
-                />
-              )}
-            </article>
-          </div>
+          {alertSummaryItems.length > 0 ? (
+            <HomeAlertSummaryStrip items={alertSummaryItems} />
+          ) : (
+            <DSEmptyState
+              title="Sin alertas repetidas en inicio"
+              description="Los detalles siguen disponibles dentro de sus modulos."
+            />
+          )}
         </HomeMotionSection>
-
-        {shouldShowAlertBand ? (
-          <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
-            <div className="cc-dashboard-block__header">
-              <div>
-                <h2>Alertas y revision</h2>
-                <p>Solo señales que justifican revisar soporte, alertas o cierre sin abrir el informe completo.</p>
-              </div>
-            </div>
-
-            <div className="cc-dashboard-console-support-grid">
-              <article className="cc-dashboard-console-sidepanel">
-                <div className="cc-dashboard-console-sidepanel__header">
-                  <h3>Riesgo del periodo</h3>
-                  <p>Lectura corta para saber si el cierre o el soporte requieren una pasada rapida.</p>
-                </div>
-
-                <div className="cc-dashboard-console-alertlist cc-bounded-list">
-                  {fiscalReviewItems.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      className="cc-dashboard-console-alert"
-                      onClick={item.onRun}
-                    >
-                      <span>{item.value}</span>
-                      <strong>{item.label}</strong>
-                      <p>{item.detail}</p>
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    className="cc-dashboard-console-alert"
-                    onClick={() => onOpenView('fiscal_closing')}
-                  >
-                    <span>Accion</span>
-                    <strong>Preparar cierre</strong>
-                    <p>Abrir readiness y resumen del periodo.</p>
-                  </button>
-                </div>
-              </article>
-
-              <article className="cc-dashboard-console-sidepanel">
-                <div className="cc-dashboard-console-sidepanel__header">
-                  <h3>Seguimiento corto</h3>
-                  <p>Alertas importantes y contexto auxiliar sin duplicar la cola operativa principal.</p>
-                </div>
-
-                {supportFootnotes.length > 0 ? (
-                  <div className="cc-dashboard-console-footnotes">
-                    {supportFootnotes.map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        className="cc-dashboard-console-footnote"
-                        onClick={item.onRun}
-                      >
-                        <strong>{item.title}</strong>
-                        <span>{item.detail}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <DSEmptyState
-                    title="Sin alertas importantes"
-                    description="No hay alertas ni seguimientos auxiliares que necesiten protagonismo ahora mismo."
-                  />
-                )}
-              </article>
-            </div>
-          </HomeMotionSection>
-        ) : null}
       </div>
     </section>
   )

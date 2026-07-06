@@ -29,6 +29,11 @@ function normalizeLabel(value: string) {
     .trim()
 }
 
+function canOfferRecentSave(value: string) {
+  const trimmed = value.replace(/\s+/g, ' ').trim()
+  return trimmed.length >= 4 && trimmed.length <= 80
+}
+
 export function DSConceptAutocomplete({
   label,
   value,
@@ -130,19 +135,21 @@ export function DSConceptAutocomplete({
       {isOpen && mergedSuggestions.length > 0 ? (
         <div className="ds-concept-autocomplete__list">
           <DSInlineSuggestionList items={listItems} />
-          <div className="ds-concept-autocomplete__footer">
-            <button
-              type="button"
-              className="secondary-button ds-concept-autocomplete__save"
-              onClick={() => {
-                if (saveRecentConcept(value)) {
-                  setIsOpen(false)
-                }
-              }}
-            >
-              Guardar frecuente
-            </button>
-          </div>
+          {canOfferRecentSave(value) ? (
+            <div className="ds-concept-autocomplete__footer">
+              <button
+                type="button"
+                className="secondary-button ds-concept-autocomplete__save"
+                onClick={() => {
+                  if (saveRecentConcept(value)) {
+                    setIsOpen(false)
+                  }
+                }}
+              >
+                Guardar frecuente
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

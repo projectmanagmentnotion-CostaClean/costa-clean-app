@@ -3,7 +3,7 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
-import { DSSmartPostalCodeInput } from '../../design-system/components'
+import { DSSmartLocationFields } from '../../design-system/components'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
@@ -66,7 +66,7 @@ export function PropertyCreateFlow({
   onCancel,
   onDirtyChange,
   title = 'Nueva propiedad',
-  description = 'Alta corta para inmueble, cliente y direccion.',
+  description = 'Alta compacta para inmueble y ubicacion.',
   submitLabel = 'Guardar propiedad',
   onOpenExistingProperty,
 }: PropertyCreateFlowProps) {
@@ -384,7 +384,7 @@ export function PropertyCreateFlow({
             </label>
 
             <div className="form-field form-field-full">
-              <DSSmartPostalCodeInput
+              <DSSmartLocationFields
                 postalCodeValue={form.postal_code}
                 cityValue={form.city}
                 onPostalCodeChange={(value) => updateField('postal_code', value)}

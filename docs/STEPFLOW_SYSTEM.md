@@ -131,6 +131,11 @@ Recommended helper contract for future migrations:
   - `status: 'valid' | 'invalid' | 'warning'`
   - `message?: string`
 
+Anti-scroll rule:
+
+- concept suggestions, location suggestions and helper panels must not inflate the step height unnecessarily
+- prefer overlays, compact dropdowns or short inline states over stacked cards inside the same step
+
 ## Review, summary, and success
 
 Current engine support:

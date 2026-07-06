@@ -100,3 +100,7 @@ export function DSSmartPostalCodeInput({
     </div>
   )
 }
+
+export function DSSmartLocationFields(props: DSSmartPostalCodeInputProps) {
+  return <DSSmartPostalCodeInput {...props} />
+}

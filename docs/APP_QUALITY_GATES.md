@@ -100,6 +100,13 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Concept autocomplete cannot weaken required fields, price rules, tax rules, or structured validation.
 - Any local memory must avoid clearly sensitive values and degrade safely if storage is unavailable.
 
+## Home Cockpit Gate
+
+- Home is a cockpit, not a report.
+- Home cannot include long operational queues, long alert lists, or explanatory report blocks.
+- The first visual read must fit into KPIs, charts, quick actions, and minimal alert state.
+- If a user needs detail, Home must hand off to the corresponding module instead of expanding itself.
+
 ## Release Decision
 
 A work block should move forward only when:

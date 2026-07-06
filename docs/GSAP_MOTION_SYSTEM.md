@@ -304,6 +304,7 @@ Rules applied:
 - no decorative bounce or amount animation
 - no extra motion added to critical fiscal signals
 - motion stays subordinate to hierarchy and readability
+- Home cannot recover long report blocks just because motion is available
 
 ### Motion Phase 5
 

@@ -51,16 +51,13 @@ export function DSInlineSuggestionList({
               </span>
             ) : null}
           </button>
-          <div className="ds-inline-suggestions__actions">
-            <button type="button" className="secondary-button ds-inline-suggestions__action" onClick={item.onPrimary}>
-              {item.primaryLabel ?? 'Usar'}
-            </button>
-            {item.onSecondary ? (
+          {item.onSecondary ? (
+            <div className="ds-inline-suggestions__actions">
               <button type="button" className="secondary-button ds-inline-suggestions__action" onClick={item.onSecondary}>
                 {item.secondaryLabel ?? 'Mas'}
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </div>
       ))}
     </div>

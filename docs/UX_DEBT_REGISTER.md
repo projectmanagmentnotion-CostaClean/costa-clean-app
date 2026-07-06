@@ -27,6 +27,7 @@
 | UX-023 | StepFlow density drift | `src/components/FullscreenStepFlow.tsx`, `src/features/shared/fullscreen-create-flow.css`, flows StepFlow vivos | Motion Phase 3 compacta header, progreso, footer y copy repetida, pero todavia queda orquestacion de review/success y validacion inline repartida entre flows. | media | Menor scroll y mejor ritmo, con deuda residual de consolidacion tecnica | Mantener la shell compacta actual y extraer helpers de copy/summary/validacion solo en sprint tecnico separado | Seguimiento post Motion Phase 3 |
 | UX-024 | Overlay/dialog legacy styling | `src/components/ActionFlowOverlay.tsx`, `src/components/ConfirmDialog.tsx`, `src/features/shell/*.css` | La motion y densidad ya mejoran, pero `ConfirmDialog` sigue dependiendo de estilos legacy del shell y no de una hoja aislada propia. | baja | Riesgo moderado de drift visual entre dialogs compartidos | Aislar estilos de dialogo en una capa comun solo si aparece mas drift real | Seguimiento post Motion Phase 3 |
 | UX-025 | Formularios inteligentes | `src/features/publicIntake/PublicQuoteRequestForm.tsx`, `src/features/properties/PropertyCreateFlow.tsx`, `src/features/*/*CreateFlow.tsx` | Motion Phase 4 introduce CP/ciudad inteligente y autocompletado inline de conceptos, pero la adopcion aun no es total y quedan superficies legacy con inputs simples o copy desigual. | baja | Mejor ritmo y menos friccion en formularios clave, con deuda residual de extension prudente y uniformidad | Reusar `DSSmartPostalCodeInput` y `DSConceptAutocomplete` solo donde ya existan campos compatibles y sin mezclarlo con cambios de write path | Seguimiento post Motion Phase 4 |
+| UX-026 | Home cockpit drift | `src/pages/HomePage.tsx` | Motion Phase 5 elimina los bloques largos tipo informe y reduce Home a KPIs, visual fiscal, quick actions y resumen de alertas. La deuda residual es evitar que futuras fases vuelvan a meter colas o listas largas en portada. | baja | Mucho menos scroll y mejor legibilidad inicial, con riesgo residual de regresion por agregados cross-module | Mantener la Home como cockpit visual y mover todo detalle otra vez a sus modulos | Seguimiento post Motion Phase 5 |
 
 ## Notas de lectura
 
@@ -44,6 +45,7 @@
 - La nueva fase motion deja resuelta la ausencia de base global de animacion, pero no inicia todavia la adopcion productiva para evitar ruido o riesgo prematuro.
 - Motion Phase 1B deja resuelta la auditoria y politica de plugins, pero no aprueba aun su uso masivo en runtime productivo.
 - Motion Phase 4 deja resuelta la primera capa real de formularios inteligentes y el recorte visual de Home, pero no justifica una migracion masiva de todos los forms legacy.
+- Motion Phase 5 deja resuelto el reset visual de Home y endurece la capa de formularios inteligentes, pero no reabre los write paths ni convierte la portada en workspace operativo largo.
 
 ## Priorizacion final
 

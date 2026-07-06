@@ -1,6 +1,6 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
-import { DSSmartPostalCodeInput } from '../../design-system/components'
+import { DSSmartLocationFields } from '../../design-system/components'
 import type { StepFlowStatus } from '../stepflow'
 import { submitPublicQuoteRequest, type PublicQuoteRequestSuccess } from './publicQuoteRequestApi'
 import type { PreferredQuoteChannel, QuoteRequestNormalizedInput } from './types'
@@ -30,42 +30,42 @@ const steps: StepConfig[] = [
     label: 'Contacto',
     title: 'Contacto',
     helper: 'Solo lo necesario para responderte.',
-    description: 'Quien solicita el presupuesto y como podemos localizarle.',
+    description: 'Quien eres y como responderte.',
   },
   {
     id: 'service',
     label: 'Servicio',
     title: 'Tipo de servicio',
     helper: 'Elige servicio y frecuencia.',
-    description: 'Servicio principal y frecuencia prevista.',
+    description: 'Servicio y ritmo esperado.',
   },
   {
     id: 'property',
     label: 'Propiedad',
     title: 'Propiedad',
     helper: 'Una aproximacion basta para estimar.',
-    description: 'Tipo de inmueble, tamano y rasgos basicos.',
+    description: 'Tipo, tamano y rasgos basicos.',
   },
   {
     id: 'schedule',
     label: 'Fecha',
     title: 'Agenda',
     helper: 'Sirve para agenda, prioridad y zona.',
-    description: 'Cuando lo necesitas y en que zona se realizaria el servicio.',
+    description: 'Fecha, zona y urgencia.',
   },
   {
     id: 'details',
     label: 'Detalles',
     title: 'Detalles',
     helper: 'Anade contexto y canal de respuesta.',
-    description: 'Notas, antecedentes y preferencia de respuesta.',
+    description: 'Notas y preferencia de respuesta.',
   },
   {
     id: 'review',
     label: 'Revision',
     title: 'Revisa',
     helper: 'Revisa antes de enviar. No se genera nada automaticamente.',
-    description: 'Confirmacion final antes de registrar la solicitud.',
+    description: 'Ultima comprobacion antes de enviar.',
   },
   {
     id: 'success',
@@ -691,7 +691,7 @@ export function PublicQuoteRequestForm() {
                 </select>
               </label>
 
-              <DSSmartPostalCodeInput
+              <DSSmartLocationFields
                 postalCodeValue={form.postalCode ?? ''}
                 cityValue={form.city ?? ''}
                 postalCodeError={errors.postalCode}

@@ -1,0 +1,24 @@
+.cc-client-create-form {
+  gap: 0.9rem;
+}
+
+.cc-client-create-form .section-header {
+  gap: 0.3rem;
+  margin-bottom: 0.4rem;
+}
+
+.cc-client-create-form .section-header h2 {
+  font-size: 1.28rem;
+}
+
+.cc-client-create-form .section-header p {
+  max-width: 52ch;
+}
+
+.cc-client-create-form .lead-form {
+  gap: 0.9rem;
+}
+
+.cc-client-create-form .form-field textarea {
+  min-height: 6rem;
+}

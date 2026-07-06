@@ -61,7 +61,7 @@ export function useRecentConceptSuggestions(query: string, limit = 5) {
   const saveRecentConcept = useCallback((rawValue: string) => {
     const label = sanitizeConcept(rawValue)
     const key = normalizeConcept(label)
-    if (key.length < 4 || looksSensitive(label)) return false
+    if (key.length < 4 || label.length > 80 || looksSensitive(label)) return false
 
     const nextEntries = [
       { key, label, usedAt: new Date().toISOString() },

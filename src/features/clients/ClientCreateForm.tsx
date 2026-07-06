@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { getStatusLabel } from '../../app/displayText'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { DSSmartLocationFields } from '../../design-system/components'
 import { findClientDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { createClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
+import './client-create-form.css'
 
 interface ClientCreateFormProps {
   onCreated: () => Promise<void>
@@ -28,6 +29,12 @@ interface FormState {
   status: string
 }
 
+interface BillingLocationDraft {
+  postalCode: string
+  city: string
+  province: string
+}
+
 const initialFormState: FormState = {
   full_name: '',
   phone: '',
@@ -35,6 +42,17 @@ const initialFormState: FormState = {
   tax_id: '',
   billing_address: '',
   status: 'active',
+}
+
+const initialBillingLocationDraft: BillingLocationDraft = {
+  postalCode: '',
+  city: '',
+  province: '',
+}
+
+function composeBillingAddress(addressLine: string, location: BillingLocationDraft) {
+  const locationLine = [location.postalCode.trim(), location.city.trim()].filter(Boolean).join(' ')
+  return [addressLine.trim(), locationLine, location.province.trim()].filter(Boolean).join(', ')
 }
 
 export function ClientCreateForm({
@@ -49,6 +67,8 @@ export function ClientCreateForm({
   onOpenExistingClient,
 }: ClientCreateFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState)
+  const [billingAddressLine, setBillingAddressLine] = useState('')
+  const [billingLocation, setBillingLocation] = useState<BillingLocationDraft>(initialBillingLocationDraft)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -66,6 +86,16 @@ export function ClientCreateForm({
     setForm((current) => ({
       ...current,
       [field]: value,
+    }))
+  }
+
+  function updateBillingAddress(nextAddressLine: string, nextLocation: BillingLocationDraft) {
+    setIsDirty(true)
+    setBillingAddressLine(nextAddressLine)
+    setBillingLocation(nextLocation)
+    setForm((current) => ({
+      ...current,
+      billing_address: composeBillingAddress(nextAddressLine, nextLocation),
     }))
   }
 
@@ -106,6 +136,8 @@ export function ClientCreateForm({
       await onCreated()
       await onCreatedClient?.(createdClient)
       setForm(initialFormState)
+      setBillingAddressLine('')
+      setBillingLocation(initialBillingLocationDraft)
       setIsDirty(false)
       setSuccessMessage('Cliente creado.')
     } catch (err) {
@@ -134,7 +166,7 @@ export function ClientCreateForm({
   }
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-client-create-form">
       <div className="section-header">
         <h2>{title}</h2>
         {description ? <p>{description}</p> : null}
@@ -146,13 +178,13 @@ export function ClientCreateForm({
           <input
             value={form.full_name}
             onChange={(event) => updateField('full_name', event.target.value)}
-            placeholder="Ej. Marta López"
+            placeholder="Ej. Marta Lopez"
             required
           />
         </label>
 
         <label className="form-field">
-          <span>Teléfono</span>
+          <span>Telefono</span>
           <input
             value={form.phone}
             onChange={(event) => updateField('phone', event.target.value)}
@@ -180,14 +212,28 @@ export function ClientCreateForm({
         </label>
 
         <label className="form-field form-field-full">
-          <span>Dirección fiscal</span>
+          <span>Direccion fiscal</span>
           <textarea
-            value={form.billing_address}
-            onChange={(event) => updateField('billing_address', event.target.value)}
-            placeholder="Dirección completa para facturación"
-            rows={3}
+            value={billingAddressLine}
+            onChange={(event) => updateBillingAddress(event.target.value, billingLocation)}
+            placeholder="Calle, numero y puerta fiscal"
+            rows={2}
           />
         </label>
+
+        <div className="form-field form-field-full">
+          <DSSmartLocationFields
+            postalCodeValue={billingLocation.postalCode}
+            cityValue={billingLocation.city}
+            provinceValue={billingLocation.province}
+            onPostalCodeChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, postalCode: value })}
+            onCityChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, city: value })}
+            onProvinceChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, province: value })}
+            showProvinceField
+            cityHint="Ciudad fiscal sugerida o escrita."
+            postalCodeHint="Sugerencia local y opcional."
+          />
+        </div>
 
         <label className="form-field">
           <span>Estado</span>
@@ -220,7 +266,7 @@ export function ClientCreateForm({
 
         {successMessage ? (
           <div className="empty-state">
-            <strong>Operación correcta</strong>
+            <strong>Operacion correcta</strong>
             <p>{successMessage}</p>
           </div>
         ) : null}

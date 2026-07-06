@@ -2,10 +2,10 @@ import { DSCard, DSSectionHeader } from '../../../design-system/components'
 import { useGsapEntrance } from '../../../design-system/motion'
 
 export interface HomeQuickActionItem {
-  detail: string
   key: string
   onRun: () => void
   title: string
+  detail?: string
 }
 
 interface HomeQuickActionsPanelProps {
@@ -23,8 +23,8 @@ export function HomeQuickActionsPanel({ actions }: HomeQuickActionsPanelProps) {
       <DSCard as="article" className="cc-home-quick-actions-panel">
         <DSSectionHeader
           eyebrow="Acciones rapidas"
-          title="Acciones directas"
-          description="Seis accesos utiles. Sin rodeos."
+          title="Acciones"
+          description="Solo accesos utiles."
         />
 
         <div className="cc-home-quick-actions-panel__grid">
@@ -36,7 +36,7 @@ export function HomeQuickActionsPanel({ actions }: HomeQuickActionsPanelProps) {
               onClick={action.onRun}
             >
               <strong>{action.title}</strong>
-              <span>{action.detail}</span>
+              {action.detail ? <span>{action.detail}</span> : null}
             </button>
           ))}
         </div>

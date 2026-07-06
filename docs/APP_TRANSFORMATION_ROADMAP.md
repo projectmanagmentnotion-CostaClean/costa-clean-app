@@ -318,19 +318,27 @@ Focus:
 - inline concept autocomplete
 - subtle motion only where already approved
 
-### Motion Phase 5: Motion QA And Performance Pass
+### Motion Phase 5: Home Visual Reset And Smart Forms Hardening
 
 Objective:
 
-Audit cleanup, reduced motion, accessibility, interaction safety, and runtime cost before broadening motion adoption further.
+Reset Home into a real visual cockpit and harden smart forms without touching critical write paths or domain logic.
+
+Focus:
+
+- remove long report-like blocks from Home
+- compact visual KPIs and charts
+- local alert acknowledgements for Home noise control
+- smart location fields
+- minimal concept autocomplete
 
 ## Motion Status Snapshot
 
-As of Motion Phase 4:
+As of Motion Phase 5:
 
 - Motion Phase 1 is completed.
 - Motion Phase 1B is completed.
 - Motion Phase 2 is completed on `Home` as the first productive surface.
 - Motion Phase 3 is completed on StepFlow and overlays.
 - Motion Phase 4 is completed on visual Home and smart minimal form helpers.
-- Motion Phase 5 remains pending.
+- Motion Phase 5 is completed on Home visual reset and smart forms hardening.

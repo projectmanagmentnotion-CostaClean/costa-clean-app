@@ -116,6 +116,7 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSProFormField`
 - `DSInlineSuggestionList`
 - `DSSmartPostalCodeInput`
+- `DSSmartLocationFields`
 - `DSConceptAutocomplete`
 
 ## Motion system disponible
@@ -165,6 +166,7 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSProFormField`
 - `DSInlineSuggestionList`
 - `DSSmartPostalCodeInput`
+- `DSSmartLocationFields`
 - `DSConceptAutocomplete`
 
 Estas piezas nuevas no cambian imports existentes ni fuerzan migracion masiva.
@@ -201,7 +203,8 @@ Superficies ya alineadas:
 4. Mantener `Facturas`, `financialWriteApi`, `auth`, `Supabase`, rutas y shell critico fuera de cualquier migracion visual directa en esta fase.
 5. Introducir nuevos componentes de design system solo para primitives o layout helpers, no para encapsular reglas de negocio.
 6. `DSSmartPostalCodeInput` solo debe usarse donde `postal_code` y `city` ya existan como campos separados.
-7. `DSConceptAutocomplete` puede enriquecer formularios, pero nunca sustituir validaciones o reglas de estructura de dominio.
+7. `DSSmartLocationFields` es el nombre recomendado para formularios nuevos o endurecidos; `DSSmartPostalCodeInput` sigue existiendo por compatibilidad.
+8. `DSConceptAutocomplete` puede enriquecer formularios, pero nunca sustituir validaciones o reglas de estructura de dominio.
 
 ## Reglas de estados y feedback
 

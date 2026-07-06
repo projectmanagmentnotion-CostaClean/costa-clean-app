@@ -36,6 +36,11 @@
 - `Home` ya es mas visual y compacto; cualquier ampliacion futura debe seguir el criterio de una sola decision clara y no reintroducir bloques densos o charts decorativos.
 - Las sugerencias locales de formularios son una ayuda de velocidad, no una fuente autoritativa de datos ni un sustituto de validacion de negocio.
 
+## Riesgos nuevos de Motion Phase 5
+
+- el acknowledgement local de alertas solo reduce ruido en `Home`; no debe confundirse con un workflow real de resolucion o revision
+- el cliente sigue guardando `billing_address` como string unico; la separacion visual de ubicacion no debe interpretarse como cambio de modelo
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

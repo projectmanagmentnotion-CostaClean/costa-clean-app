@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { DSEmptyState, DSCard } from '../../../design-system/components'
 import { useGsapEntrance } from '../../../design-system/motion'
+import { HomePeriodSelector, type HomePeriodOption } from './HomePeriodSelector'
 
 interface HomeGsapChartCardProps {
   actionLabel?: string
@@ -11,6 +12,9 @@ interface HomeGsapChartCardProps {
   eyebrow?: string
   hasData: boolean
   onAction?: () => void
+  periodOptions?: HomePeriodOption[]
+  periodValue?: string
+  onPeriodChange?: (nextValue: string) => void
   title: string
   value: string
 }
@@ -24,6 +28,9 @@ export function HomeGsapChartCard({
   eyebrow = 'Lectura visual',
   hasData,
   onAction,
+  periodOptions,
+  periodValue,
+  onPeriodChange,
   title,
   value,
 }: HomeGsapChartCardProps) {
@@ -40,7 +47,18 @@ export function HomeGsapChartCard({
             <h3>{title}</h3>
             <p>{description}</p>
           </div>
-          <strong className="cc-home-gsap-chart-card__value">{value}</strong>
+          <div className="cc-home-gsap-chart-card__meta">
+            <strong className="cc-home-gsap-chart-card__value">{value}</strong>
+            {periodOptions && periodValue && onPeriodChange ? (
+              <HomePeriodSelector
+                compact
+                ariaLabel={`Periodo para ${title}`}
+                options={periodOptions}
+                value={periodValue}
+                onChange={onPeriodChange}
+              />
+            ) : null}
+          </div>
         </div>
 
         {hasData ? (

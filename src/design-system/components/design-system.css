@@ -305,10 +305,10 @@
 
 .ds-inline-suggestions {
   display: grid;
-  gap: 0.45rem;
-  padding: 0.5rem;
+  gap: 0.28rem;
+  padding: 0.38rem;
   border: 1px solid var(--ds-color-border);
-  border-radius: var(--ds-radius-lg);
+  border-radius: var(--ds-radius-md);
   background: color-mix(in srgb, var(--ds-color-surface-raised) 84%, transparent);
   box-shadow: var(--ds-shadow-sm);
 }
@@ -322,9 +322,9 @@
 .ds-inline-suggestions__item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem;
+  gap: 0.32rem;
   align-items: center;
-  padding: 0.48rem;
+  padding: 0.28rem 0.34rem;
   border-radius: var(--ds-radius-md);
   transition: background var(--ds-motion-fast), border-color var(--ds-motion-fast);
 }
@@ -335,9 +335,9 @@
 
 .ds-inline-suggestions__primary {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.12rem;
   min-width: 0;
-  padding: 0;
+  padding: 0.16rem 0;
   border: 0;
   background: transparent;
   color: inherit;
@@ -346,13 +346,14 @@
 
 .ds-inline-suggestions__label {
   font-weight: 700;
-  line-height: 1.24;
+  font-size: 0.84rem;
+  line-height: 1.18;
 }
 
 .ds-inline-suggestions__meta {
   color: var(--ds-color-text-muted);
-  font-size: 0.76rem;
-  line-height: 1.25;
+  font-size: 0.72rem;
+  line-height: 1.18;
 }
 
 .ds-inline-suggestions__badges {
@@ -362,11 +363,11 @@
 }
 
 .ds-inline-suggestions__badge {
-  padding: 0.12rem 0.42rem;
+  padding: 0.1rem 0.38rem;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ds-color-brand-soft) 72%, transparent);
   color: var(--ds-color-text-muted);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 700;
 }
 
@@ -378,14 +379,16 @@
 }
 
 .ds-inline-suggestions__action {
-  min-height: 44px;
-  padding: 0.56rem 0.75rem;
+  min-height: 34px;
+  padding: 0.34rem 0.6rem;
+  font-size: 0.74rem;
 }
 
 .ds-smart-postal,
 .ds-concept-autocomplete {
   display: grid;
-  gap: 0.5rem;
+  gap: 0.35rem;
+  position: relative;
 }
 
 .ds-smart-postal__grid {
@@ -397,7 +400,13 @@
 .ds-smart-postal__suggestions,
 .ds-concept-autocomplete__list {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.28rem;
+}
+
+.ds-concept-autocomplete__list {
+  position: absolute;
+  inset: calc(100% + 0.25rem) 0 auto;
+  z-index: 12;
 }
 
 .ds-concept-autocomplete__footer {
@@ -406,8 +415,9 @@
 }
 
 .ds-concept-autocomplete__save {
-  min-height: 44px;
-  padding: 0.52rem 0.75rem;
+  min-height: 34px;
+  padding: 0.34rem 0.62rem;
+  font-size: 0.74rem;
 }
 
 @media (max-width: 720px) {

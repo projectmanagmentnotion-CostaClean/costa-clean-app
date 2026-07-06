@@ -42,6 +42,7 @@ import {
   buildInvoicePaymentSummary,
   getInvoiceFinancialStatusLabel,
 } from './paymentState'
+import { buildCorrectedInvoiceLines, getInvoiceCorrectionCase } from './invoiceCorrectionCases'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
@@ -146,6 +147,18 @@ function buildVisibleInvoiceNotes(): string {
   ].join('\n')
 }
 
+function correctionPrefillLineToFormLine(
+  line: ReturnType<typeof buildCorrectedInvoiceLines>[number],
+): LineFormState {
+  return {
+    local_id: createLocalId('LINE-DRAFT'),
+    concept: normalizeLineConcept(line.concept),
+    quantity: line.quantity,
+    unit: line.unit || 'servicio',
+    unit_price: line.unit_price,
+  }
+}
+
 export function InvoiceEditFlow({
   invoice,
   clients,
@@ -176,6 +189,7 @@ export function InvoiceEditFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findInvoiceDuplicateGroups>>([])
+  const [internalCorrectionConfirmed, setInternalCorrectionConfirmed] = useState(false)
 
   useEffect(() => {
     setForm({
@@ -189,6 +203,7 @@ export function InvoiceEditFlow({
     setCurrentStep(0)
     setError(null)
     setIsDirty(false)
+    setInternalCorrectionConfirmed(false)
   }, [invoice])
 
   useEffect(() => {
@@ -225,6 +240,10 @@ export function InvoiceEditFlow({
     () => buildInvoicePaymentSummary(invoice, []),
     [invoice],
   )
+  const correctionCase = useMemo(
+    () => getInvoiceCorrectionCase(invoice),
+    [invoice],
+  )
   const currentIssueYear = getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear()
   const numberingAudit = useMemo(
     () => buildInvoiceNumberingAudit(allInvoices, currentIssueYear),
@@ -232,6 +251,8 @@ export function InvoiceEditFlow({
   )
   const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
   const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
+  const isSameNumberInternalCorrection = invoice.status === 'issued' && internalCorrectionConfirmed
+  const requiresNewEmissionValidation = form.status !== 'draft' && !isSameNumberInternalCorrection
   const pricingMetadataWithFiscalSnapshot = useMemo(
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null, selectedClient),
     [invoice.pricing_metadata, linkedQuote, selectedClient],
@@ -240,10 +261,10 @@ export function InvoiceEditFlow({
     () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
       sourceFlow: 'invoice_edit_flow',
       writeApiVersion: 'save_invoice_with_lines_v2',
-      expectedInvoiceNumber: form.status !== 'draft' ? numberingAudit.nextSuggestedInvoiceNumber : null,
-      expectedDisplayCode: form.status !== 'draft' ? numberingAudit.nextSuggestedDisplayCode : null,
+      expectedInvoiceNumber: requiresNewEmissionValidation ? numberingAudit.nextSuggestedInvoiceNumber : null,
+      expectedDisplayCode: requiresNewEmissionValidation ? numberingAudit.nextSuggestedDisplayCode : null,
     }),
-    [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
+    [numberingAudit, pricingMetadataWithFiscalSnapshot, requiresNewEmissionValidation],
   )
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
@@ -331,12 +352,25 @@ export function InvoiceEditFlow({
     setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
   }
 
+  function applyKnownCorrection() {
+    if (!correctionCase) return
+    setIsDirty(true)
+    setError(null)
+    setLines(
+      buildCorrectedInvoiceLines(invoice, correctionCase).map(correctionPrefillLineToFormLine),
+    )
+  }
+
   function getStepError(stepIndex: number): string | null {
     if (stepIndex === 0 && !form.issue_date) {
       return 'Debes indicar la fecha de emision.'
     }
 
-    if (stepIndex === 0 && form.status !== 'draft' && numberingAudit.hasBlockingGaps) {
+    if (stepIndex === 0 && invoice.status === 'issued' && !internalCorrectionConfirmed) {
+      return 'Confirma la correccion interna antes de guardar una factura emitida con el mismo numero.'
+    }
+
+    if (stepIndex === 0 && requiresNewEmissionValidation && numberingAudit.hasBlockingGaps) {
       return `No se puede emitir factura. Hay huecos en la numeracion fiscal: ${numberingAudit.gaps.map((gap) => (
         gap.from === gap.to
           ? buildInvoiceNumber(numberingAudit.year, gap.from)
@@ -344,7 +378,7 @@ export function InvoiceEditFlow({
       )).join(' | ')}. Regulariza la secuencia antes de emitir.`
     }
 
-    if (stepIndex === 0 && form.status !== 'draft' && clientFiscalIssue) {
+    if (stepIndex === 0 && requiresNewEmissionValidation && clientFiscalIssue) {
       return clientFiscalIssue
     }
 
@@ -533,8 +567,8 @@ export function InvoiceEditFlow({
       {form.status !== 'draft' && numberingGapMessage ? (
         <section className="cc-create-flow__summary-card">
           <span className="cc-step-flow__eyebrow">Numeracion</span>
-          <strong>{numberingAudit.nextSuggestedInvoiceNumber}</strong>
-          <small>{numberingGapMessage}</small>
+          <strong>{isSameNumberInternalCorrection ? (invoice.invoice_number ?? invoice.display_code ?? invoice.id) : numberingAudit.nextSuggestedInvoiceNumber}</strong>
+          <small>{isSameNumberInternalCorrection ? 'Correccion interna: se conserva el numero actual y no se reemite la factura.' : numberingGapMessage}</small>
         </section>
       ) : null}
 
@@ -583,7 +617,7 @@ export function InvoiceEditFlow({
           </button>
         ) : (
           <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={isSaving}>
-            {isSaving ? 'Guardando...' : submitLabel}
+            {isSaving ? 'Guardando...' : isSameNumberInternalCorrection ? 'Guardar correccion interna' : submitLabel}
           </button>
         )}
       </div>
@@ -616,6 +650,28 @@ export function InvoiceEditFlow({
               <div className="cc-alert cc-alert--warning">
                 <strong>Factura emitida en revision</strong>
                 <p>Si la regularizacion correcta exige rectificativa, no confirmes esta edicion directa. Usa este flujo solo si tu operativa fiscal la permite.</p>
+              </div>
+            ) : null}
+
+            {invoice.status === 'issued' ? (
+              <div className="form-field form-field-full">
+                <span>Confirmacion operativa</span>
+                <div className="cc-create-flow__panel">
+                  <label className="cc-create-flow__checkbox">
+                    <input
+                      type="checkbox"
+                      checked={internalCorrectionConfirmed}
+                      onChange={(event) => {
+                        setInternalCorrectionConfirmed(event.target.checked)
+                        setIsDirty(true)
+                      }}
+                    />
+                    <span>Confirmo que esta factura no ha sido enviada y puede corregirse internamente manteniendo el numero.</span>
+                  </label>
+                  <small className="cc-create-flow__helper">
+                    Con esta confirmacion el guardado actualiza la factura existente y conserva {invoice.invoice_number ?? invoice.display_code ?? invoice.id}.
+                  </small>
+                </div>
               </div>
             ) : null}
 
@@ -716,6 +772,21 @@ export function InvoiceEditFlow({
                 <strong>{currentStepError ?? `${lines.length} linea(s) validas preparadas para la revision final.`}</strong>
               </div>
             </article>
+
+            {correctionCase ? (
+              <article className="cc-create-flow__panel">
+                <strong>Correccion guiada detectada</strong>
+                <small>
+                  {correctionCase.targetConcept}: {correctionCase.currentQuantity} hora(s) a {correctionCase.correctedQuantity} hora(s).
+                  Base esperada {formatMoneyInput(correctionCase.expectedSubtotal)} EUR, IVA {formatMoneyInput(correctionCase.expectedTaxAmount)} EUR, total {formatMoneyInput(correctionCase.expectedTotal)} EUR.
+                </small>
+                <div className="cc-create-flow__microactions-row">
+                  <button type="button" className="secondary-button" onClick={applyKnownCorrection}>
+                    Aplicar correccion conocida
+                  </button>
+                </div>
+              </article>
+            ) : null}
 
             <div className="cc-create-flow__line-list">
               {lines.map((line, index) => (

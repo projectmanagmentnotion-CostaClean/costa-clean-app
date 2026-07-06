@@ -1,82 +1,92 @@
 # Invoice 2026-045 Correction
 
-## Factura detectada
+## Confirmacion del usuario
 
-- numero: `2026-045`
+- la factura `2026-045` no ha sido enviada al cliente
+- la factura `2026-045` no ha sido declarada ni exportada fiscalmente
+- por tanto puede corregirse internamente manteniendo el mismo numero
+
+## Factura auditada
+
+- numero y `display_code`: `2026-045`
 - cliente: `FUSTERIA PINEDA MAR SL`
 - servicio o referencia: `JOB-0068 · PRO-0007 · FUSTERIA PINEDA MAR SL`
-- estado visual auditado: `Emitida`
+- estado visual actual: `Emitida`
 
-## Linea incorrecta
+## Valores anteriores
 
-- concepto: `limpieza de taller`
-- valor actual visible: `1 Horas x 18,00 EUR = 18,00 EUR`
-- valor correcto solicitado: `6 Horas x 18,00 EUR = 108,00 EUR`
-
-## Valores actuales visibles
-
-- limpieza y mantenimiento de local: `216,00 EUR`
-- limpieza de taller: `18,00 EUR`
+- `limpieza y mantenimiento de local`: `12 x 18,00 EUR = 216,00 EUR`
+- `limpieza de taller`: `1 x 18,00 EUR = 18,00 EUR`
 - base imponible: `234,00 EUR`
 - IVA 21%: `49,14 EUR`
 - total: `283,14 EUR`
 
 ## Valores corregidos esperados
 
-- limpieza y mantenimiento de local: `216,00 EUR`
-- limpieza de taller: `108,00 EUR`
+- `limpieza y mantenimiento de local`: `12 x 18,00 EUR = 216,00 EUR`
+- `limpieza de taller`: `6 x 18,00 EUR = 108,00 EUR`
 - base imponible: `324,00 EUR`
 - IVA 21%: `68,04 EUR`
 - total: `392,04 EUR`
 
-## Flujo encontrado en el repo
+## Bloqueo real encontrado
 
-- la app expone `InvoiceEditFlow` y edicion mayor desde `InvoicesPage` y `InvoiceDetailCard`.
-- esa edicion vuelve a pasar por `saveInvoiceWithLines`.
-- la app recalcula subtotal, IVA y total usando la logica existente antes de guardar.
-- no se detecto soporte explicito de factura rectificativa ni flujo dedicado de correccion fiscal para emitidas.
+La edicion mayor de facturas emitidas estaba tratando el guardado como si fuese una emision nueva:
 
-## Decision tomada
+- ejecutaba validacion de huecos de numeracion
+- calculaba `expectedInvoiceNumber` y `expectedDisplayCode`
+- si existia drift de secuencia, mostraba:
+  - `No se puede emitir factura. Hay huecos en la numeracion fiscal: 2026-045.`
 
-Decision actual: **flujo seguro preparado con borrador guiado**.
+Ese comportamiento era incorrecto para una correccion interna de una factura ya existente y no enviada.
 
-Motivo:
+## Solucion aplicada
 
-- la factura sigue auditada como emitida
-- el repo sigue sin exponer una rectificativa real
-- pero la app si permite reutilizar `InvoiceCreateFlow` con `prefill` sin crear nada automaticamente
+Se mantiene el flujo normal de `InvoiceEditFlow`, pero con un modo seguro de correccion interna:
 
-Resultado:
+- confirmacion explicita de correccion interna sin envio
+- CTA especifico: `Guardar correccion interna`
+- conservacion del mismo `invoice_number/display_code`
+- sin reemision
+- sin renumeracion
+- sin validacion de huecos como nueva emision
+- con vuelta al detalle al guardar, igual que el flujo normal
 
-- no se modifica la factura real `2026-045`
-- no se hardcodea ningun write
-- se muestra una card compacta de correccion segura en el detalle
-- desde esa card se puede abrir un borrador guiado con la linea corregida a `6 horas`
+Ademas, para el caso conocido `2026-045`, el editor ofrece `Aplicar correccion conocida` para precargar:
 
-## Instruccion operativa clara
+- `limpieza de taller` a `6` horas
+- base esperada `324,00 EUR`
+- IVA esperado `68,04 EUR`
+- total esperado `392,04 EUR`
 
-Para factura emitida `2026-045`, abrir el borrador guiado de correccion o generar rectificativa segun el criterio fiscal vigente. No editar directamente la factura emitida sin validar ese criterio.
+## Archivos tocados
 
-## Confirmacion de no-touch critico
+- `src/features/invoices/InvoiceEditFlow.tsx`
+- `src/features/shared/fullscreen-create-flow.css`
+- `docs/INVOICE_2026_045_CORRECTION.md`
+- `docs/INVOICE_2026_045_SAME_NUMBER_DECISION.md`
 
-- no se toco Supabase
-- no se toco SQL
-- no se toco RPC
-- no se tocaron migrations
-- no se toco `appDataApi`
-- no se toco `financialWriteApi`
-- no se toco `invoice_number`
-- no se toco `display_code`
-- no se toco `save_invoice_with_lines`
-- no se toco `save_invoice_with_lines_v2`
-- no se altero numeracion
-- no se altero fiscalidad global
-- no se alteraron calculos globales
-- no se alteraron contratos de datos
-- no se alteraron reglas de negocio
+## Que no se toco
 
-## Proximos pasos recomendados
+- Supabase directo
+- SQL
+- RPC
+- migrations
+- `appDataApi`
+- `financialWriteApi`
+- `save_invoice_with_lines`
+- `save_invoice_with_lines_v2`
+- numeracion global
+- fiscalidad global
+- reglas globales de calculo
+- contratos de datos
+- reglas de negocio
 
-1. confirmar con criterio fiscal si la 2026-045 debe cerrarse como rectificativa o como nuevo borrador administrativo controlado.
-2. si exige rectificativa, implementar un flujo dedicado en sprint separado.
-3. si el borrador guiado es valido para la operativa, revisarlo y confirmarlo manualmente desde `InvoiceCreateFlow`.
+## Validacion realizada
+
+- auditoria del guardado en `InvoiceEditFlow`
+- confirmacion de que `saveInvoiceWithLines` elimina `invoice_number` y `display_code` del payload
+- confirmacion de que el mismatch solo se dispara cuando se envian expectativas nuevas de numeracion
+- `npm run lint` OK
+- `npm run build` OK
+- pendiente de verificacion funcional en entorno con datos reales para confirmar que la factura persistida queda actualizada como `2026-045`

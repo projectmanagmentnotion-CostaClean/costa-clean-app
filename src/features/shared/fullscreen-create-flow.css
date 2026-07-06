@@ -201,6 +201,17 @@
   color: rgba(248, 250, 252, 0.92);
 }
 
+.cc-create-flow__checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: rgba(248, 250, 252, 0.96);
+}
+
+.cc-create-flow__checkbox input {
+  margin-top: 3px;
+}
+
 :root[data-theme="light"] .cc-create-flow__hero-card,
 :root[data-theme="light"] .cc-create-flow__panel,
 :root[data-theme="light"] .cc-create-flow__line-card,

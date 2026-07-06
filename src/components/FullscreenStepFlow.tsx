@@ -1,4 +1,4 @@
-import { useContext } from 'react'
+import { useContext, useId } from 'react'
 import type {
   StepFlowStatus,
   StepFlowStep,
@@ -33,6 +33,9 @@ export function FullscreenStepFlow({
   contextItems = [],
 }: FullscreenStepFlowProps) {
   const isNested = useContext(NestedFlowSurfaceContext)
+  const titleId = useId()
+  const descriptionId = useId()
+  const currentStepId = useId()
   const current = steps[currentStep]
   const completionRatio = ((currentStep + 1) / steps.length) * 100
   const remainingSteps = steps.length - (currentStep + 1)
@@ -42,13 +45,17 @@ export function FullscreenStepFlow({
   const shouldShowMobileSide = Boolean(contextItems.length > 0 || shouldShowSideContent)
 
   return (
-    <section className={isNested ? 'cc-step-flow cc-step-flow--nested' : 'cc-step-flow'}>
+    <section
+      className={isNested ? 'cc-step-flow cc-step-flow--nested' : 'cc-step-flow'}
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+    >
       <header className="cc-step-flow__header">
         <div className="cc-step-flow__headline">
           <div className="cc-step-flow__intro">
             <span className="cc-step-flow__eyebrow">{eyebrow}</span>
-            <h2>{title}</h2>
-            <p>{description}</p>
+            <h2 id={titleId}>{title}</h2>
+            <p id={descriptionId}>{description}</p>
           </div>
 
           <div className="cc-step-flow__hero-meta" aria-label="Resumen del progreso">
@@ -114,6 +121,7 @@ export function FullscreenStepFlow({
                 onClick={() => onStepSelect?.(index)}
                 disabled={!onStepSelect}
                 aria-current={index === currentStep ? 'step' : undefined}
+                aria-label={`Paso ${index + 1} de ${steps.length}: ${step.label}. ${getStepStateLabel(state, index === currentStep)}.`}
               >
                 <span className="cc-step-flow__mobile-progress-index">{index + 1}</span>
                 <span className="cc-step-flow__mobile-progress-label">{step.label}</span>
@@ -136,6 +144,7 @@ export function FullscreenStepFlow({
                 onClick={() => onStepSelect?.(index)}
                 disabled={!onStepSelect}
                 aria-current={index === currentStep ? 'step' : undefined}
+                aria-label={`Paso ${index + 1} de ${steps.length}: ${step.label}. ${getStepStateLabel(state, index === currentStep)}.`}
               >
                 <span className="cc-step-flow__progress-index">{index + 1}</span>
                 <span className="cc-step-flow__progress-copy">
@@ -153,7 +162,13 @@ export function FullscreenStepFlow({
 
       <div className="cc-step-flow__layout">
         <div className="cc-step-flow__main">
-          <div className="cc-step-flow__current-step">
+          <div
+            className="cc-step-flow__current-step"
+            id={currentStepId}
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             <span>Paso {currentStep + 1}</span>
             <strong>{current?.label}</strong>
             <small>{current?.description}</small>
@@ -163,7 +178,7 @@ export function FullscreenStepFlow({
 
             {shouldShowMobileSide ? (
               <details className="cc-step-flow__mobile-side">
-                <summary className="cc-step-flow__mobile-side-summary">
+                <summary className="cc-step-flow__mobile-side-summary" aria-describedby={currentStepId}>
                   <div className="cc-step-flow__mobile-side-copy">
                     <span>Contexto y apoyo</span>
                     <strong>Ver resumen del flujo</strong>
@@ -197,7 +212,7 @@ export function FullscreenStepFlow({
           </div>
         </div>
 
-        <aside className="cc-step-flow__side">
+        <aside className="cc-step-flow__side" aria-label="Contexto del flujo">
           {contextItems.length > 0 ? (
             <section className="cc-step-flow__context">
               <div className="cc-step-flow__context-head">

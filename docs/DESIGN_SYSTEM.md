@@ -173,6 +173,13 @@ Superficies ya alineadas:
 - `FeedbackDialog` existente sigue siendo valido para exito/error puntual cuando la accion ya vive en ese patron, pero nuevas superficies deben priorizar primitives DS o toasts del sistema ya existente.
 - Warnings fiscales, mismatch y riesgos criticos no deben suavizarse: la consistencia de feedback no puede ocultar severidad real.
 
+## Reglas de accesibilidad y tactilidad
+
+- `DSButton` debe mantener `focus-visible` explicito y altura minima de `44px`.
+- `DSFilterChip` y acciones compactas equivalentes deben respetar `44px` de alto minimo salvo justificacion fuerte de desktop-only.
+- Las superficies que extienden `FullscreenStepFlow` deben conservar foco visible en pasos, toggles de apoyo y acciones del footer.
+- Cuando un control compactado pierda claridad de foco o baje de `44px`, debe tratarse como regresion del sistema, no como ajuste cosmetico local.
+
 ## Que NO se migro todavia
 
 - `Dashboard`

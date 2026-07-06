@@ -263,3 +263,35 @@ As of Sprint 14 closure:
 - Sprint 0 through Sprint 14 are completed at governance / UX-foundation level.
 - The app now has a controlled UX baseline: repo governance, design system foundation, official StepFlow, unified list controls, global state primitives, and base mobile/accessibility hardening.
 - The remaining work is not "finish modernizing the UI". The remaining work is targeted hardening of sensitive domains and authenticated end-to-end QA.
+
+## Post-Roadmap Motion Phases
+
+### Motion Phase 1: GSAP Foundation And Manual
+
+Objective:
+
+Add a controlled GSAP foundation, reduced-motion support, shared presets, and a global motion manual without animating productive surfaces yet.
+
+### Motion Phase 2: Animate Shared Primitives
+
+Objective:
+
+Adopt motion first in shared primitives, state surfaces, small cards, and safe reusable containers.
+
+### Motion Phase 3: Animate StepFlow And Overlays
+
+Objective:
+
+Apply motion to StepFlow, sheets, dialogs, and overlays where the transition clarifies focus and progression.
+
+### Motion Phase 4: Animate Dashboards And Lists Safely
+
+Objective:
+
+Introduce limited motion into dashboards and list surfaces without adding noise or harming performance.
+
+### Motion Phase 5: Motion QA And Performance Pass
+
+Objective:
+
+Audit cleanup, reduced motion, accessibility, interaction safety, and runtime cost before broadening motion adoption further.

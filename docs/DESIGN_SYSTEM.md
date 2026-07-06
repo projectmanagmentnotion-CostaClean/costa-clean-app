@@ -71,6 +71,14 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `--ds-motion-slow`
 - `--ds-motion-spring`
 
+### Motion / GSAP foundation
+
+- `src/design-system/motion/gsap.ts`
+- `src/design-system/motion/useReducedMotion.ts`
+- `src/design-system/motion/useGsapEntrance.ts`
+- `src/design-system/motion/motionPresets.ts`
+- `src/design-system/motion/index.ts`
+
 ### Semantic colors
 
 - `dsColors`
@@ -98,6 +106,20 @@ La capa nueva no inventa otro universo visual. Referencia el sistema actual de v
 - `DSSkeleton`
 - `DSBottomActionBar`
 - `DSConfirmDialog`
+
+## Motion system disponible
+
+- `useReducedMotion`
+- `useGsapEntrance`
+- `motionPresets`
+- `motionDurationFast`
+- `motionDurationBase`
+- `motionDurationSlow`
+- `motionEaseStandard`
+- `motionEaseExit`
+- `motionEaseEmphasized`
+- `ensureGsapRegistration`
+- `registerGsapPlugins`
 
 ## Equivalencias con componentes actuales
 
@@ -180,6 +202,14 @@ Superficies ya alineadas:
 - Las superficies que extienden `FullscreenStepFlow` deben conservar foco visible en pasos, toggles de apoyo y acciones del footer.
 - Cuando un control compactado pierda claridad de foco o baje de `44px`, debe tratarse como regresion del sistema, no como ajuste cosmetico local.
 
+## Reglas de motion
+
+- GSAP solo entra a la app a traves de `src/design-system/motion/`.
+- Ningun componente de negocio debe importar `gsap` directamente en esta fase.
+- Toda animacion debe respetar `prefers-reduced-motion`.
+- No registrar `ScrollTrigger` globalmente sin sprint especifico.
+- Las animaciones compartidas deben ser cortas, sobrias y no bloquear la interaccion.
+
 ## Que NO se migro todavia
 
 - `Dashboard`
@@ -214,3 +244,4 @@ Tampoco se tocaron:
 3. En Sprint 4+, estudiar limpieza de duplicacion de tokens en `src/index.css` sin mezclarlo con cambios funcionales.
 4. En Sprint 5+, migrar headers, states y form primitives por modulo de forma incremental.
 5. Reusar el patron de listas en servicios, cobros, gastos y modulos auxiliares antes de crear toolbars ad hoc nuevas.
+6. Adoptar motion primero en primitives compartidas y overlays antes de tocar superficies criticas de negocio.

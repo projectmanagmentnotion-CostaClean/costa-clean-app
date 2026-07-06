@@ -57,6 +57,15 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Error states are understandable without relying only on color.
 - Structure and labeling remain semantically meaningful.
 
+## Motion Gate
+
+- Motion has a functional purpose.
+- `prefers-reduced-motion` is respected.
+- Animations clean up correctly.
+- Animations do not block interaction or obscure data.
+- Motion does not create ambiguity in critical business states, amounts, numbering, or fiscal warnings.
+- Large lists, dense modules, and critical domains avoid uncontrolled stagger or decorative transitions.
+
 ## Data Safety Gate
 
 - No accidental data model drift is introduced.

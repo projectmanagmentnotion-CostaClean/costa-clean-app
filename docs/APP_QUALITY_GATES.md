@@ -99,6 +99,13 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Los filtros avanzados deben vivir en popover o sheet y resumirse fuera como estado activo.
 - Mostrar todos los grupos de chips a la vez se considera regresion visual.
 
+## Invoice Correction Gate
+
+- Una factura emitida no puede corregirse por atajo visual silencioso.
+- Si no existe rectificativa real, la UI debe guiar a borrador o accion manual trazable.
+- La comparativa actual/corregido/diferencia debe ser visible antes de preparar la correccion.
+- Ninguna correccion guiada puede tocar numeracion ni write path automaticamente.
+
 ## Smart Suggestions Gate
 
 - Local suggestions must be optional and explicitly applied by the user.

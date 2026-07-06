@@ -101,6 +101,13 @@ Resultado:
 - Create/edit siguen teniendo mucha orquestacion propia aunque ya usen StepFlow.
 - Numeracion y mismatch siguen siendo un dominio de alto riesgo y requieren sprint separado si se quiere simplificar mas.
 - Las acciones bulk siguen vivas en la misma pagina y merecen una auditoria propia si vuelven a crecer.
+- La correccion de emitidas ya tiene card guiada y borrador seguro para la `2026-045`, pero no sustituye un flujo real de rectificativa.
+
+## Actualizacion posterior
+
+- Se anade una `InvoiceCorrectionNotice` compacta en el detalle para la `2026-045`.
+- La accion primaria prepara un borrador guiado usando `InvoiceCreateFlow` con `prefill` corregido.
+- La factura emitida original no se reescribe automaticamente.
 
 ## Siguiente paso recomendado
 

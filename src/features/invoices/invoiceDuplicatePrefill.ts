@@ -1,5 +1,6 @@
 import { formatMoneyInput, formatQuantityInput } from '../shared/billingLineDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
+import { buildCorrectedInvoiceLines, type InvoiceCorrectionCase } from './invoiceCorrectionCases'
 import type { InvoiceListItem } from './types'
 
 function createPrefillId(): string {
@@ -28,5 +29,25 @@ export function buildInvoiceCreatePrefillFromInvoice(invoice: InvoiceListItem): 
       unit_price: formatMoneyInput(line.unit_price),
     })),
     title: invoice.invoice_number ?? invoice.display_code ?? invoice.id,
+  }
+}
+
+export function buildInvoiceCorrectionPrefill(
+  invoice: InvoiceListItem,
+  correctionCase: InvoiceCorrectionCase,
+): InvoiceCreatePrefill {
+  return {
+    request_id: createPrefillId(),
+    origin_kind: 'manual',
+    job_id: '',
+    quote_id: '',
+    client_id: invoice.client_id,
+    property_id: invoice.property_id ?? '',
+    notes: [
+      invoice.notes?.trim() || null,
+      `Borrador guiado de correccion para la factura emitida ${correctionCase.invoiceNumber}. Revisar si procede rectificativa antes de emitir.`,
+    ].filter(Boolean).join('\n\n'),
+    lines: buildCorrectedInvoiceLines(invoice, correctionCase),
+    title: `${correctionCase.invoiceNumber} correccion guiada`,
   }
 }

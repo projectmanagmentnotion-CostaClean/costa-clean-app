@@ -47,6 +47,11 @@
 - `AnnualClosingPage` y `QuarterlyClosingPage` mantienen filtros legacy fuera de `ListToolbar`; no asumir homogeneidad total en todo el repo
 - la 2026-045 sigue pendiente porque no existe soporte explicito de rectificativa; usar la edicion mayor de una emitida sin validacion fiscal puede ser un riesgo operativo real
 
+## Riesgos nuevos de Invoice 2026-045 Safe Correction Flow
+
+- el borrador guiado reutiliza `InvoiceCreateFlow`, pero no certifica por si solo que el cierre fiscal correcto no requiera rectificativa
+- la card de correccion esta acotada al caso auditado `2026-045`; si aparecen mas casos, conviene mover la configuracion a un registro controlado y no replicar logica ad hoc
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

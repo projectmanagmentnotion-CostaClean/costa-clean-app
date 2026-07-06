@@ -38,24 +38,24 @@
 
 ## Decision tomada
 
-Decision: **pendiente de accion manual segura**.
+Decision actual: **flujo seguro preparado con borrador guiado**.
 
 Motivo:
 
-- la factura esta auditada como emitida.
-- el repo no muestra un flujo explicito de rectificativa.
-- aunque la UI permite editar, no existe una guarda funcional que certifique que la edicion directa de una emitida sea el procedimiento fiscal correcto.
+- la factura sigue auditada como emitida
+- el repo sigue sin exponer una rectificativa real
+- pero la app si permite reutilizar `InvoiceCreateFlow` con `prefill` sin crear nada automaticamente
 
-Por tanto:
+Resultado:
 
-- no se modifica el dato real desde codigo en este sprint.
-- no se hardcodea ninguna correccion.
-- no se toca DB, SQL, RPC ni write path.
-- se deja documentada la correccion esperada y una guarda visual en los editores de facturas emitidas.
+- no se modifica la factura real `2026-045`
+- no se hardcodea ningun write
+- se muestra una card compacta de correccion segura en el detalle
+- desde esa card se puede abrir un borrador guiado con la linea corregida a `6 horas`
 
 ## Instruccion operativa clara
 
-Para factura emitida `2026-045`, generar rectificativa o usar el flujo seguro de edicion solo si la operativa fiscal vigente lo permite. No editar directamente la factura emitida sin validar ese criterio.
+Para factura emitida `2026-045`, abrir el borrador guiado de correccion o generar rectificativa segun el criterio fiscal vigente. No editar directamente la factura emitida sin validar ese criterio.
 
 ## Confirmacion de no-touch critico
 
@@ -77,6 +77,6 @@ Para factura emitida `2026-045`, generar rectificativa o usar el flujo seguro de
 
 ## Proximos pasos recomendados
 
-1. confirmar con criterio fiscal si la 2026-045 admite edicion directa o exige rectificativa.
+1. confirmar con criterio fiscal si la 2026-045 debe cerrarse como rectificativa o como nuevo borrador administrativo controlado.
 2. si exige rectificativa, implementar un flujo dedicado en sprint separado.
-3. si admite edicion directa, ejecutar la correccion desde la UI viva con validacion final de importes y documento regenerado.
+3. si el borrador guiado es valido para la operativa, revisarlo y confirmarlo manualmente desde `InvoiceCreateFlow`.

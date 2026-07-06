@@ -19,8 +19,9 @@ import { useToast } from '../shared/toasts/useToast'
 import type { ClientListItem } from '../features/clients/types'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
-import { buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
+import { buildInvoiceCorrectionPrefill, buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { getInvoiceCorrectionCase } from '../features/invoices/invoiceCorrectionCases'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import {
   buildInvoiceFiscalAudit,
@@ -141,6 +142,12 @@ export function InvoicesPage({
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const shouldHideDetailInvoice = Boolean(error) || invoices.length === 0 || listState.visibleCount === 0
   const detailInvoice = shouldHideDetailInvoice ? null : selectedInvoice
+  const correctionDraftPrefill = useMemo(() => {
+    if (!detailInvoice) return null
+    const correctionCase = getInvoiceCorrectionCase(detailInvoice)
+    if (!correctionCase) return null
+    return buildInvoiceCorrectionPrefill(detailInvoice, correctionCase)
+  }, [detailInvoice])
   const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
   const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
   const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
@@ -810,6 +817,13 @@ export function InvoicesPage({
                 setLocalCreatePrefill(buildInvoiceCreatePrefillFromInvoice(invoice))
                 setShowCreateForm(true)
               }}
+              onPrepareCorrectionDraft={(prefill) => {
+                runGuarded(() => {
+                  setLocalCreatePrefill(prefill)
+                  setShowCreateForm(true)
+                })
+              }}
+              correctionDraftPrefill={correctionDraftPrefill}
               onOpenJobWorkspace={onOpenJobWorkspace}
               onOpenClientWorkspace={onOpenClientWorkspace}
               onOpenPropertyWorkspace={onOpenPropertyWorkspace}

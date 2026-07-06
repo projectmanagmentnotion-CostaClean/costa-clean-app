@@ -72,6 +72,78 @@
   color: rgba(226, 232, 240, 0.72);
 }
 
+.cc-invoice-correction-notice {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.cc-invoice-correction-notice__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.cc-invoice-correction-notice__headline {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.cc-invoice-correction-notice__headline strong {
+  font-size: 1rem;
+}
+
+.cc-invoice-correction-notice__headline span,
+.cc-invoice-correction-notice__delta span,
+.cc-invoice-correction-notice__card span,
+.cc-invoice-correction-notice__card small,
+.cc-invoice-correction-notice__totals span {
+  color: rgba(226, 232, 240, 0.74);
+}
+
+.cc-invoice-correction-notice__delta {
+  display: grid;
+  gap: 0.15rem;
+  justify-items: end;
+}
+
+.cc-invoice-correction-notice__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.cc-invoice-correction-notice__card {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.18);
+}
+
+.cc-invoice-correction-notice__card strong,
+.cc-invoice-correction-notice__delta strong {
+  font-size: 1.02rem;
+}
+
+.cc-invoice-correction-notice__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+}
+
+.cc-invoice-correction-notice__totals strong {
+  color: var(--text);
+}
+
+.cc-invoice-correction-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 :root[data-theme="light"] .cc-invoice-detail-card__action-block {
   border-color: rgba(148, 163, 184, 0.24);
   background: rgba(248, 250, 252, 0.92);
@@ -81,8 +153,26 @@
   color: rgba(71, 85, 105, 0.86);
 }
 
+:root[data-theme="light"] .cc-invoice-correction-notice__headline span,
+:root[data-theme="light"] .cc-invoice-correction-notice__delta span,
+:root[data-theme="light"] .cc-invoice-correction-notice__card span,
+:root[data-theme="light"] .cc-invoice-correction-notice__card small,
+:root[data-theme="light"] .cc-invoice-correction-notice__totals span {
+  color: rgba(71, 85, 105, 0.86);
+}
+
+:root[data-theme="light"] .cc-invoice-correction-notice__card {
+  border-color: rgba(148, 163, 184, 0.24);
+  background: rgba(248, 250, 252, 0.92);
+}
+
 @media (max-width: 900px) {
   .cc-invoice-workspace__control-grid {
     grid-template-columns: 1fr;
+  }
+
+  .cc-invoice-correction-notice__summary,
+  .cc-invoice-correction-notice__delta {
+    justify-items: start;
   }
 }

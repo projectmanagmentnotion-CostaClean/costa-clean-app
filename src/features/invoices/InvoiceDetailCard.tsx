@@ -34,7 +34,9 @@ import { useToast } from '../../shared/toasts/useToast'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 import { backfillSingleInvoiceFiscalSnapshot } from './invoiceFiscalSnapshotApi'
+import { InvoiceCorrectionNotice } from './InvoiceCorrectionNotice'
 import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } from './invoiceFiscalSnapshot'
+import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 
@@ -53,6 +55,8 @@ interface InvoiceDetailCardProps {
   onOpenDocument: () => void
   onViewPayments: (invoiceId: string) => void
   onCreateSimilarInvoice?: (invoice: InvoiceListItem) => void
+  onPrepareCorrectionDraft?: (prefill: InvoiceCreatePrefill) => void
+  correctionDraftPrefill?: InvoiceCreatePrefill | null
   onOpenJobWorkspace: (jobId: string) => void
   onOpenClientWorkspace: (clientId: string) => void
   onOpenPropertyWorkspace: (propertyId: string) => void
@@ -261,6 +265,8 @@ export function InvoiceDetailCard({
   onOpenDocument,
   onViewPayments,
   onCreateSimilarInvoice,
+  onPrepareCorrectionDraft,
+  correctionDraftPrefill = null,
   onOpenJobWorkspace,
   onOpenClientWorkspace,
   onOpenPropertyWorkspace,
@@ -1368,6 +1374,14 @@ export function InvoiceDetailCard({
                 ) : null}
 
               </section>
+
+              {invoice ? (
+                <InvoiceCorrectionNotice
+                  invoice={invoice}
+                  correctionPrefill={correctionDraftPrefill}
+                  onPrepareDraft={onPrepareCorrectionDraft}
+                />
+              ) : null}
 
               <section className="data-section cc-invoice-detail-card__section">
                 <div className="section-header page-header-actions">

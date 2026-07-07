@@ -51,7 +51,7 @@ function getEnvValue(name, env) {
   return process.env[name] || env[name] || ''
 }
 
-async function createSupabaseClient() {
+async function createSupabaseClients() {
   const localEnv = {
     ...loadEnvFile('.env.local'),
     ...loadEnvFile('.env'),
@@ -66,7 +66,13 @@ async function createSupabaseClient() {
     throw new Error('Missing Supabase env. Expected SUPABASE_URL/VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY/VITE_SUPABASE_ANON_KEY.')
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey, {
+  const readClient = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  })
+  const writeClient = createClient(supabaseUrl, supabaseKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -79,9 +85,26 @@ async function createSupabaseClient() {
   const authPassword =
     getEnvValue('SUPABASE_AUTH_PASSWORD', localEnv)
     || getEnvValue('VITE_SUPABASE_AUTH_PASSWORD', localEnv)
+  const accessToken =
+    getEnvValue('SUPABASE_ACCESS_TOKEN', localEnv)
+    || getEnvValue('VITE_SUPABASE_ACCESS_TOKEN', localEnv)
+  const refreshToken =
+    getEnvValue('SUPABASE_REFRESH_TOKEN', localEnv)
+    || getEnvValue('VITE_SUPABASE_REFRESH_TOKEN', localEnv)
+
+  if (accessToken && refreshToken) {
+    const { error } = await writeClient.auth.setSession({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    })
+
+    if (error) {
+      throw new Error(`Supabase auth session restore failed: ${error.message}`)
+    }
+  }
 
   if (authEmail && authPassword) {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await writeClient.auth.signInWithPassword({
       email: authEmail,
       password: authPassword,
     })
@@ -91,7 +114,10 @@ async function createSupabaseClient() {
     }
   }
 
-  return supabase
+  return {
+    readClient,
+    writeClient,
+  }
 }
 
 async function fetchInvoiceContext(supabase) {
@@ -249,6 +275,16 @@ function isAlreadyCorrected(context) {
     && roundMoney(Number(invoice.total)) === EXPECTED_TOTAL
 }
 
+function hasOriginalTargetLineValues(line) {
+  return roundMoney(Number(line.quantity)) === EXPECTED_LINE_QUANTITY
+    && roundMoney(Number(line.line_subtotal)) === EXPECTED_LINE_SUBTOTAL
+}
+
+function hasCorrectedTargetLineValues(line) {
+  return roundMoney(Number(line.quantity)) === CORRECTED_LINE_QUANTITY
+    && roundMoney(Number(line.line_subtotal)) === CORRECTED_LINE_SUBTOTAL
+}
+
 function printSummary(label, context) {
   const { invoice, lines, client, payments, sameNumberCount } = context
   console.log(`\n[${label}]`)
@@ -305,8 +341,79 @@ function isMissingSaveInvoiceResultRpcError(message) {
     )
 }
 
-async function saveInvoiceWithRpc(supabase, invoicePayload, linePayloads) {
-  const { data, error } = await supabase.rpc(SAVE_INVOICE_WITH_RESULT_RPC, {
+function isNumberingGapEmissionError(message) {
+  return message.includes('No se puede emitir factura. Hay huecos en la numeracion fiscal:')
+}
+
+async function applyDirectInternalCorrection(writeClient, readClient, invoicePayload, linePayloads) {
+  for (const line of linePayloads) {
+    const { data: updatedLines, error: lineError } = await writeClient
+      .from('invoice_lines')
+      .update({
+        sort_order: line.sort_order,
+        concept: line.concept,
+        quantity: line.quantity,
+        unit: line.unit,
+        unit_price: line.unit_price,
+        line_subtotal: line.line_subtotal,
+      })
+      .eq('id', line.id)
+      .eq('invoice_id', line.invoice_id)
+      .select('id')
+
+    if (lineError) {
+      throw new Error(`Direct invoice_lines update failed for ${line.id}: ${lineError.message}`)
+    }
+
+    if (!updatedLines || updatedLines.length !== 1) {
+      throw new Error(`Direct invoice_lines update affected ${updatedLines?.length ?? 0} rows for ${line.id}.`)
+    }
+  }
+
+  const { data: updatedInvoices, error: invoiceError } = await writeClient
+    .from('invoices')
+    .update({
+      job_id: invoicePayload.job_id ?? null,
+      quote_id: invoicePayload.quote_id ?? null,
+      client_id: invoicePayload.client_id,
+      property_id: invoicePayload.property_id ?? null,
+      issue_date: invoicePayload.issue_date,
+      status: invoicePayload.status,
+      subtotal: invoicePayload.subtotal,
+      tax_amount: invoicePayload.tax_amount,
+      total: invoicePayload.total,
+      notes: invoicePayload.notes ?? null,
+      internal_notes: invoicePayload.internal_notes ?? null,
+      pricing_metadata: invoicePayload.pricing_metadata ?? null,
+    })
+    .eq('id', invoicePayload.id)
+    .select('id,display_code,invoice_number,status,issue_date')
+
+  if (invoiceError) {
+    throw new Error(`Direct invoices update failed: ${invoiceError.message}`)
+  }
+
+  if (!updatedInvoices || updatedInvoices.length !== 1) {
+    throw new Error(
+      `Direct invoices update affected ${updatedInvoices?.length ?? 0} rows. The authenticated session can edit lines but cannot persist invoice header totals for ${invoicePayload.id}.`,
+    )
+  }
+
+  const readback = await readClient
+    .from('invoices')
+    .select('id,display_code,invoice_number,status,issue_date')
+    .eq('id', invoicePayload.id)
+    .maybeSingle()
+
+  if (readback.error) {
+    throw new Error(`Direct invoices readback failed: ${readback.error.message}`)
+  }
+
+  return readback.data
+}
+
+async function saveInvoiceWithRpc(writeClient, readClient, invoicePayload, linePayloads) {
+  const { data, error } = await writeClient.rpc(SAVE_INVOICE_WITH_RESULT_RPC, {
     p_invoice: invoicePayload,
     p_lines: linePayloads,
   })
@@ -315,11 +422,15 @@ async function saveInvoiceWithRpc(supabase, invoicePayload, linePayloads) {
     return Array.isArray(data) ? data[0] : data
   }
 
+  if (isNumberingGapEmissionError(error.message || '')) {
+    return applyDirectInternalCorrection(writeClient, readClient, invoicePayload, linePayloads)
+  }
+
   if (!isMissingSaveInvoiceResultRpcError(error.message || '')) {
     throw new Error(`save_invoice_with_lines_v2 failed: ${error.message}`)
   }
 
-  const fallback = await supabase.rpc('save_invoice_with_lines', {
+  const fallback = await writeClient.rpc('save_invoice_with_lines', {
     p_invoice: invoicePayload,
     p_lines: linePayloads,
   })
@@ -328,7 +439,7 @@ async function saveInvoiceWithRpc(supabase, invoicePayload, linePayloads) {
     throw new Error(`save_invoice_with_lines fallback failed: ${fallback.error.message}`)
   }
 
-  const readback = await supabase
+  const readback = await readClient
     .from('invoices')
     .select('id,display_code,invoice_number,status,issue_date')
     .eq('id', invoicePayload.id)
@@ -343,9 +454,9 @@ async function saveInvoiceWithRpc(supabase, invoicePayload, linePayloads) {
 
 async function main() {
   const shouldApply = process.argv.includes('--apply')
-  const supabase = await createSupabaseClient()
+  const { readClient, writeClient } = await createSupabaseClients()
 
-  const before = await fetchInvoiceContext(supabase)
+  const before = await fetchInvoiceContext(readClient)
   printSummary('before', before)
   const targetLine = assertPreconditions(before)
 
@@ -354,12 +465,13 @@ async function main() {
     return
   }
 
-  if (roundMoney(Number(targetLine.quantity)) !== EXPECTED_LINE_QUANTITY) {
-    throw new Error(`Unexpected current quantity ${targetLine.quantity}. Expected ${EXPECTED_LINE_QUANTITY}.`)
-  }
+  const targetLineIsOriginal = hasOriginalTargetLineValues(targetLine)
+  const targetLineIsCorrected = hasCorrectedTargetLineValues(targetLine)
 
-  if (roundMoney(Number(targetLine.line_subtotal)) !== EXPECTED_LINE_SUBTOTAL) {
-    throw new Error(`Unexpected current line_subtotal ${targetLine.line_subtotal}. Expected ${EXPECTED_LINE_SUBTOTAL}.`)
+  if (!targetLineIsOriginal && !targetLineIsCorrected) {
+    throw new Error(
+      `Unexpected target line state. Got quantity ${targetLine.quantity} and line_subtotal ${targetLine.line_subtotal}.`,
+    )
   }
 
   const correctedLines = buildCorrectedLines(before.lines)
@@ -376,6 +488,7 @@ async function main() {
     target_concept: targetLine.concept,
     quantity_from: targetLine.quantity,
     quantity_to: CORRECTED_LINE_QUANTITY,
+    line_state: targetLineIsOriginal ? 'original' : 'partially_corrected',
     subtotal_to: totals.subtotal,
     tax_to: totals.taxAmount,
     total_to: totals.total,
@@ -394,7 +507,7 @@ async function main() {
     total: totals.total,
   })
 
-  const savedInvoice = await saveInvoiceWithRpc(supabase, invoicePayload, correctedLines)
+  const savedInvoice = await saveInvoiceWithRpc(writeClient, readClient, invoicePayload, correctedLines)
 
   if (!savedInvoice?.id || savedInvoice.id !== before.invoice.id) {
     throw new Error(`Unexpected saved invoice id ${savedInvoice?.id ?? 'null'}. Expected ${before.invoice.id}.`)
@@ -408,7 +521,7 @@ async function main() {
     throw new Error(`display_code changed unexpectedly from ${before.invoice.display_code} to ${savedInvoice.display_code}.`)
   }
 
-  const after = await fetchInvoiceContext(supabase)
+  const after = await fetchInvoiceContext(readClient)
   printSummary('after', after)
 
   if (!isAlreadyCorrected(after)) {

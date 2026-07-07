@@ -2,7 +2,9 @@
 
 ## Estado
 
-No aplicada en datos reales en este turno.
+Parcialmente aplicada en datos reales.
+
+La linea ya esta corregida, pero la cabecera sigue desincronizada.
 
 ## Fecha
 
@@ -14,7 +16,7 @@ No aplicada en datos reales en este turno.
 - `display_code`: `INV-0045`
 - cliente: `FUSTERIA PINEDA MAR SL`
 - linea 1: `limpieza y mantenimiento de local` - `12 x 18,00 = 216,00`
-- linea 2: `limpieza de taller` - `1 x 18,00 = 18,00`
+- linea 2: `limpieza de taller` - `6 x 18,00 = 108,00`
 - subtotal: `234,00`
 - IVA: `49,14`
 - total: `283,14`
@@ -36,8 +38,13 @@ No aplicada en datos reales en este turno.
 
 ## Resultado del apply
 
-- write real bloqueado por:
-  - `Authentication required for financial writes.`
+- la RPC oficial sigue bloqueando la correccion interna de una emitida por falso hueco de autoexclusion:
+  - `No se puede emitir factura. Hay huecos en la numeracion fiscal: 2026-045.`
+- el fallback directo con sesion autenticada puede actualizar `invoice_lines`, pero no la fila de `invoices`
+- la cabecera sigue:
+  - subtotal `234,00`
+  - IVA `49,14`
+  - total `283,14`
 
 ## Confirmaciones
 
@@ -46,9 +53,10 @@ No aplicada en datos reales en este turno.
 - no cambio `invoice_number`
 - no cambio `display_code`
 - no se toco otra factura
+- la factura no esta lista para enviar
 
 ## Estado del fix de UI
 
 - aplicado en `InvoiceEditFlow`
 - la correccion interna deja separado el modo de guardado frente a emision nueva
-- pendiente de verificacion funcional con sesion autenticada real
+- el bloqueo pendiente ya no es de UI, sino de write path / permisos de cabecera

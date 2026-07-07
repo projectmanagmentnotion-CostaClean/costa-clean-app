@@ -76,7 +76,7 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 
 - Header maximo corto.
 - Descripcion visible solo si aporta contexto inmediato.
-- Stepper compacto horizontal.
+- Stepper compacto sin scroll lateral; en iPhone estrecho debe apilarse o repartirse antes de desbordar.
 - Resumen lateral bajo colapso.
 - Footer sticky compacto con safe area.
 

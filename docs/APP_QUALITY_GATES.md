@@ -39,6 +39,7 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Git diff is understandable.
 - Risks, assumptions, and unverified areas are stated honestly.
 - The final report matches what was actually tested.
+- Si se declara QA visual autenticada iPhone, debe citar al menos el viewport principal realmente usado y los problemas reales encontrados.
 
 ## Mobile Gate
 
@@ -55,6 +56,7 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Factura y cierre fiscal deben abrir con resumen y CTA, no con detalle completo.
 - Filtros avanzados no deben empujar verticalmente el listado en mobile.
 - El bottom nav no puede tapar contenido ni CTA sticky.
+- StepFlow no puede introducir scroll horizontal para mostrar el progreso.
 
 ## Accessibility Gate
 

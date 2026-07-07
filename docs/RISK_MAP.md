@@ -45,6 +45,11 @@
 
 - la compactacion iPhone debe quedarse en jerarquia, densidad y colapso; si una futura pasada intenta mezclarla con cambios de write path o reglas de negocio, el riesgo vuelve a ser alto de forma inmediata
 
+## Riesgo nuevo de QA visual autenticada iPhone 390x844
+
+- la pasada autenticada confirma que los mayores fallos residuales eran visuales en shell movil y StepFlow; no debe usarse este resultado para justificar cambios de dominio fuera de CSS/estructura
+- el viewport principal validado fue `390x844`; cualquier afirmacion sobre `375x812` o `430x932` sigue siendo de cobertura parcial mientras no exista pasada dedicada
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

@@ -79,3 +79,5 @@
 
 - `UX-002`, `UX-003` y `UX-009` reciben una pasada nueva de compactacion iPhone.
 - La deuda ya no es solo "densidad alta"; ahora queda centrada en QA visual autenticada y ajuste fino de superficies legacy.
+- La QA visual autenticada en `390x844` confirma mejora real de `Home`, `Gastos`, `Clientes`, `Propiedades` y `Cierre fiscal`.
+- El desborde del header movil compartido y el scroll lateral del StepFlow de factura quedan resueltos en esta pasada.

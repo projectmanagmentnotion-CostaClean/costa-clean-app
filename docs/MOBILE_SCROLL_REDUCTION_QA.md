@@ -61,3 +61,41 @@ Problemas observados:
 ## Limitacion de QA
 
 En este sprint hubo auditoria real por screenshots y auditoria de codigo/CSS, pero no QA visual autenticada end-to-end en navegador local sobre todos los modulos. Si aparece desviacion puntual en una superficie no abierta en estas capturas, debe tratarse como follow-up de ajuste fino, no como cambio de dominio.
+
+## QA visual autenticada iPhone 390x844
+
+### Pantallas revisadas
+
+- `Home`
+- `Clientes`
+- `Propiedades`
+- `Facturas` listado operativo
+- `Facturas` StepFlow de nueva factura
+- `Gastos`
+- `Cierre fiscal`
+- bottom nav y header/shell movil compartido
+
+### Problemas encontrados
+
+- La cabecera movil superior heredaba anchos de acciones de desktop y podia desbordarse visualmente en la parte derecha.
+- El StepFlow real de `Nueva factura` seguia mostrando progreso horizontal con scroll lateral en `390x844`.
+- No se reprodujo scroll horizontal global en `Home`, `Clientes`, `Propiedades`, `Facturas`, `Gastos` ni `Cierre fiscal`.
+
+### Correcciones aplicadas
+
+- Se compacta la cabecera `.cc-mobile-shell-header` para fijar ancho real de theme toggle y alertas en mobile y eliminar el desborde superior.
+- El progreso movil de `FullscreenStepFlow` pasa a una cuadricula compacta de dos columnas en narrow screens para eliminar el scroll lateral.
+
+### Problemas pendientes
+
+- El detalle profundo de factura sigue dependiendo de una superficie larga y sensible; en esta pasada se verifico la lectura compacta del modulo y del StepFlow, pero no se rediseño el workspace.
+- Queda repetir smoke visual breve en `375x812` y `430x932` si se abre un bloque exclusivo de QA cross-device.
+
+### Limitaciones reales
+
+- La QA autenticada se hizo en navegador local sobre sesion real y viewport principal `390x844`.
+- No se tocaron Supabase, SQL, RPC, migrations, auth, rutas, `?view=`, `appDataApi`, `financialWriteApi`, numeracion, fiscalidad, calculos, persistencia ni contratos.
+
+### Screenshots
+
+- Capturas reales en sesion autenticada tomadas durante la QA local del `2026-07-07` sobre `http://127.0.0.1:5173/`.

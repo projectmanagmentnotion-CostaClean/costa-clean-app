@@ -43,23 +43,22 @@ La factura emitida `2026-045` necesita corregir una linea sin tocar la base de d
 
 ## Decision tecnica
 
-La app no expone una rectificativa real, pero si expone un flujo seguro reutilizable:
+La app sigue sin exponer una rectificativa real, pero ahora hay dos superficies diferenciadas:
 
-- `Crear factura como esta`
-- `InvoiceCreateFlow` con `prefill`
+- `InvoiceCreateFlow` con `prefill` para borrador guiado
+- `InvoiceEditFlow` para correccion interna de una emitida no enviada
 
-La solucion de este sprint reutiliza ese camino para preparar un **borrador guiado de correccion**:
+La decision actual para la `2026-045` es:
 
-- la factura emitida original no se modifica
-- no se crea nada automaticamente
-- el usuario abre `InvoiceCreateFlow` ya precargado con lineas corregidas
-- el borrador sigue pendiente de confirmacion humana y criterio fiscal
+- mantener el borrador guiado como alternativa trazable
+- habilitar la correccion interna del mismo registro solo cuando el usuario confirma que la factura no fue enviada ni exportada
 
 ## Que permite la app ahora
 
 - detectar la correccion conocida de la `2026-045`
 - mostrar comparativa actual / corregido / diferencia dentro del detalle
 - copiar un resumen operativo al portapapeles
+- abrir una edicion mayor con correccion interna del mismo registro
 - abrir un borrador guiado con:
   - mismo cliente
   - misma propiedad si existe
@@ -71,7 +70,7 @@ La solucion de este sprint reutiliza ese camino para preparar un **borrador guia
 
 - flujo real de rectificativa
 - politica funcional que diferencie correccion administrativa simple vs rectificativa obligatoria
-- cierre documental o fiscal final despues de crear el borrador
+- sesion o credencial autorizada para aplicar el write real desde Codex
 
 ## Que no se toco
 
@@ -94,6 +93,7 @@ La solucion de este sprint reutiliza ese camino para preparar un **borrador guia
 ## Riesgos pendientes
 
 - el borrador guiado no sustituye una rectificativa real si el criterio fiscal la exige
+- el write path financiero sigue bloqueado sin autenticacion
 - la app sigue permitiendo edicion mayor de emitidas; este sprint anade una alternativa mas segura, no una prohibicion funcional total
 
 ## Proximos pasos

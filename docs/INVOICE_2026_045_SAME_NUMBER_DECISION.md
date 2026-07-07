@@ -33,6 +33,13 @@ El bloqueo real estaba en `src/features/invoices/InvoiceEditFlow.tsx`:
   - no se ejecuta la validacion de huecos como emision nueva
   - el CTA pasa a `Guardar correccion interna`
 
+## Ajuste posterior del fix
+
+- la rama interna usa ahora `resolvedSaveStatus`
+- la UI deja bloqueado el selector de estado para evitar ambiguedad entre corregir y emitir
+- la confirmacion interna limpia errores stale de validacion
+- la traza distingue el modo `invoice_edit_flow_internal_correction`
+
 ## Correccion documentada
 
 Valores anteriores:

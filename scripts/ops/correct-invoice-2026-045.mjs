@@ -51,7 +51,7 @@ function getEnvValue(name, env) {
   return process.env[name] || env[name] || ''
 }
 
-function createSupabaseClient() {
+async function createSupabaseClient() {
   const localEnv = {
     ...loadEnvFile('.env.local'),
     ...loadEnvFile('.env'),
@@ -66,12 +66,32 @@ function createSupabaseClient() {
     throw new Error('Missing Supabase env. Expected SUPABASE_URL/VITE_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY/SUPABASE_ANON_KEY/VITE_SUPABASE_ANON_KEY.')
   }
 
-  return createClient(supabaseUrl, supabaseKey, {
+  const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   })
+
+  const authEmail =
+    getEnvValue('SUPABASE_AUTH_EMAIL', localEnv)
+    || getEnvValue('VITE_SUPABASE_AUTH_EMAIL', localEnv)
+  const authPassword =
+    getEnvValue('SUPABASE_AUTH_PASSWORD', localEnv)
+    || getEnvValue('VITE_SUPABASE_AUTH_PASSWORD', localEnv)
+
+  if (authEmail && authPassword) {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    })
+
+    if (error) {
+      throw new Error(`Supabase auth sign-in failed: ${error.message}`)
+    }
+  }
+
+  return supabase
 }
 
 async function fetchInvoiceContext(supabase) {
@@ -323,7 +343,7 @@ async function saveInvoiceWithRpc(supabase, invoicePayload, linePayloads) {
 
 async function main() {
   const shouldApply = process.argv.includes('--apply')
-  const supabase = createSupabaseClient()
+  const supabase = await createSupabaseClient()
 
   const before = await fetchInvoiceContext(supabase)
   printSummary('before', before)

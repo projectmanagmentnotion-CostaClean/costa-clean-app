@@ -244,6 +244,7 @@ export function InvoiceEditFlow({
     () => getInvoiceCorrectionCase(invoice),
     [invoice],
   )
+  const isIssuedInvoice = invoice.status === 'issued'
   const currentIssueYear = getInvoiceIssueYear(form.issue_date) ?? new Date().getFullYear()
   const numberingAudit = useMemo(
     () => buildInvoiceNumberingAudit(allInvoices, currentIssueYear),
@@ -251,20 +252,21 @@ export function InvoiceEditFlow({
   )
   const numberingGapMessage = describeInvoiceNumberingGap(numberingAudit)
   const clientFiscalIssue = getClientFiscalIssueMessage(selectedClient)
-  const isSameNumberInternalCorrection = invoice.status === 'issued' && internalCorrectionConfirmed
-  const requiresNewEmissionValidation = form.status !== 'draft' && !isSameNumberInternalCorrection
+  const isSameNumberInternalCorrection = isIssuedInvoice && internalCorrectionConfirmed
+  const resolvedSaveStatus = isSameNumberInternalCorrection ? invoice.status : form.status
+  const requiresNewEmissionValidation = resolvedSaveStatus !== 'draft' && !isSameNumberInternalCorrection
   const pricingMetadataWithFiscalSnapshot = useMemo(
     () => buildInvoicePricingMetadataWithClientFiscalSnapshot(invoice.pricing_metadata ?? linkedQuote?.pricing_metadata ?? null, selectedClient),
     [invoice.pricing_metadata, linkedQuote, selectedClient],
   )
   const pricingMetadataForSave = useMemo(
     () => withInvoiceWriteTrace(pricingMetadataWithFiscalSnapshot, {
-      sourceFlow: 'invoice_edit_flow',
+      sourceFlow: isSameNumberInternalCorrection ? 'invoice_edit_flow_internal_correction' : 'invoice_edit_flow',
       writeApiVersion: 'save_invoice_with_lines_v2',
       expectedInvoiceNumber: requiresNewEmissionValidation ? numberingAudit.nextSuggestedInvoiceNumber : null,
       expectedDisplayCode: requiresNewEmissionValidation ? numberingAudit.nextSuggestedDisplayCode : null,
     }),
-    [numberingAudit, pricingMetadataWithFiscalSnapshot, requiresNewEmissionValidation],
+    [isSameNumberInternalCorrection, numberingAudit, pricingMetadataWithFiscalSnapshot, requiresNewEmissionValidation],
   )
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
@@ -366,7 +368,7 @@ export function InvoiceEditFlow({
       return 'Debes indicar la fecha de emision.'
     }
 
-    if (stepIndex === 0 && invoice.status === 'issued' && !internalCorrectionConfirmed) {
+    if (stepIndex === 0 && isIssuedInvoice && !internalCorrectionConfirmed) {
       return 'Confirma la correccion interna antes de guardar una factura emitida con el mismo numero.'
     }
 
@@ -437,7 +439,7 @@ export function InvoiceEditFlow({
           ...invoice,
           job_id: form.job_id || null,
           issue_date: form.issue_date,
-          status: form.status,
+          status: resolvedSaveStatus,
           subtotal: subtotalValue,
           tax_amount: taxAmountValue,
           total: totalValue,
@@ -464,7 +466,7 @@ export function InvoiceEditFlow({
           client_id: form.client_id,
           property_id: invoice.property_id ?? null,
           issue_date: form.issue_date,
-          status: form.status,
+          status: resolvedSaveStatus,
           subtotal: subtotalValue,
           tax_amount: taxAmountValue,
           total: totalValue,
@@ -532,7 +534,7 @@ export function InvoiceEditFlow({
 
   const sideContent = (
     <>
-      {invoice.status === 'issued' ? (
+      {isIssuedInvoice ? (
         <section className="cc-create-flow__summary-card">
           <span className="cc-step-flow__eyebrow">Guardia fiscal</span>
           <strong>Factura emitida</strong>
@@ -564,7 +566,7 @@ export function InvoiceEditFlow({
         </div>
       </section>
 
-      {form.status !== 'draft' && numberingGapMessage ? (
+      {resolvedSaveStatus !== 'draft' && numberingGapMessage ? (
         <section className="cc-create-flow__summary-card">
           <span className="cc-step-flow__eyebrow">Numeracion</span>
           <strong>{isSameNumberInternalCorrection ? (invoice.invoice_number ?? invoice.display_code ?? invoice.id) : numberingAudit.nextSuggestedInvoiceNumber}</strong>
@@ -653,7 +655,7 @@ export function InvoiceEditFlow({
               </div>
             ) : null}
 
-            {invoice.status === 'issued' ? (
+            {isIssuedInvoice ? (
               <div className="form-field form-field-full">
                 <span>Confirmacion operativa</span>
                 <div className="cc-create-flow__panel">
@@ -664,6 +666,7 @@ export function InvoiceEditFlow({
                       onChange={(event) => {
                         setInternalCorrectionConfirmed(event.target.checked)
                         setIsDirty(true)
+                        setError(null)
                       }}
                     />
                     <span>Confirmo que esta factura no ha sido enviada y puede corregirse internamente manteniendo el numero.</span>
@@ -714,11 +717,17 @@ export function InvoiceEditFlow({
                 <select
                   value={form.status}
                   onChange={(event) => updateField('status', event.target.value)}
+                  disabled={isIssuedInvoice}
                 >
                   {invoiceManualStatusOptions.map((status) => (
                     <option key={status} value={status}>{getStatusOptionLabel(status)}</option>
                   ))}
                 </select>
+                {isIssuedInvoice ? (
+                  <small className="cc-create-flow__helper">
+                    La correccion interna conserva el estado emitido y no abre una nueva emision.
+                  </small>
+                ) : null}
               </label>
 
               <label className="form-field form-field-full">
@@ -885,7 +894,7 @@ export function InvoiceEditFlow({
               <article className="cc-create-flow__review-card">
                 <span>Emision</span>
                 <strong>{form.issue_date ? formatDateEs(form.issue_date) : 'Pendiente'}</strong>
-                <small>{getStatusOptionLabel(form.status)}</small>
+                <small>{getStatusOptionLabel(resolvedSaveStatus)}</small>
               </article>
             </div>
 

@@ -14,6 +14,9 @@ La correccion real de la factura `2026-045` no pudo aplicarse en este turno.
 - comando de aplicacion: `node scripts/ops/correct-invoice-2026-045.mjs --apply`
 - write path objetivo: RPC `save_invoice_with_lines_v2`
 - fallback preparado: RPC `save_invoice_with_lines`
+- soporte opcional de autenticacion por variables:
+  - `SUPABASE_AUTH_EMAIL`
+  - `SUPABASE_AUTH_PASSWORD`
 
 ## Precondiciones verificadas
 

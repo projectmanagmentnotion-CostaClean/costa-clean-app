@@ -51,6 +51,7 @@
 
 - el borrador guiado reutiliza `InvoiceCreateFlow`, pero no certifica por si solo que el cierre fiscal correcto no requiera rectificativa
 - la card de correccion esta acotada al caso auditado `2026-045`; si aparecen mas casos, conviene mover la configuracion a un registro controlado y no replicar logica ad hoc
+- la correccion interna del mismo registro ya tiene rama UI separada, pero el write real sigue dependiendo de sesion o credencial autorizada; sin eso no hay aplicacion efectiva
 
 ## Riesgos especiales que merecen sprint separado
 

@@ -60,6 +60,17 @@ Ademas, para el caso conocido `2026-045`, el editor ofrece `Aplicar correccion c
 - IVA esperado `68,04 EUR`
 - total esperado `392,04 EUR`
 
+## Ajuste posterior del fix
+
+En la pasada del `2026-07-07` se refuerza la rama interna para evitar mezcla con la superficie de emision:
+
+- `resolvedSaveStatus` fija el estado real a guardar durante la correccion interna
+- el `Estado administrativo` queda bloqueado en facturas ya emitidas
+- la confirmacion interna limpia el error previo para no arrastrar mensajes de validacion stale
+- la traza distingue `invoice_edit_flow_internal_correction`
+
+Con esto, el bloqueo pendiente deja de ser de numeracion UI y pasa a ser de autenticacion del write path real cuando no existe sesion valida.
+
 ## Intento de aplicacion real
 
 Fecha del intento: `2026-07-06T18:34:58.1921019+02:00`

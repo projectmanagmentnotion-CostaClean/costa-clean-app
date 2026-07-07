@@ -53,6 +53,12 @@
 - la card de correccion esta acotada al caso auditado `2026-045`; si aparecen mas casos, conviene mover la configuracion a un registro controlado y no replicar logica ad hoc
 - la correccion interna del mismo registro ya tiene rama UI separada, pero el write real sigue dependiendo de sesion o credencial autorizada; sin eso no hay aplicacion efectiva
 
+## Riesgos nuevos de Same-Number RPC Update Fix
+
+- la migracion nueva protege el caso de update con mismo numero en la misma anualidad, pero si se ampliara sin criterio podria relajar de forma accidental la emision de facturas nuevas
+- el repo ya tiene la migracion creada, pero mientras no se aplique en Supabase real la factura `2026-045` sigue parcial y no debe enviarse
+- el fallback directo por sesion autenticada sigue sin permiso para actualizar `public.invoices`; incluso con el bug de hueco resuelto, una base real con policies distintas puede requerir una via de servidor autorizada
+
 ## Riesgos especiales que merecen sprint separado
 
 - Numeracion de facturas

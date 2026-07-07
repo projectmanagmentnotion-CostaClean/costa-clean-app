@@ -51,7 +51,16 @@ Se confirmaron dos bloqueos distintos:
 
 Hace falta una de estas dos vias:
 
-1. una credencial con permisos de servidor (`SUPABASE_SERVICE_ROLE_KEY`) para sincronizar solo la cabecera de esta factura existente, o
-2. una migracion minima en el write path SQL para permitir actualizar una factura ya emitida con el mismo numero sin disparar el falso hueco por autoexclusion.
+1. aplicar la migracion minima ya creada en el write path SQL para permitir actualizar una factura ya emitida con el mismo numero sin disparar el falso hueco por autoexclusion, o
+2. una credencial con permisos de servidor (`SUPABASE_SERVICE_ROLE_KEY`) para sincronizar solo la cabecera de esta factura existente una vez la RPC remota este corregida o exista una via de servidor aprobada.
 
 Sin una de esas dos vias, la factura seguira parcial aunque el script quede endurecido.
+
+## Migracion preparada
+
+- [20260707_fix_same_number_invoice_update_gap.sql](C:/Users/USUARIO/costa-clean-app/supabase/migrations/20260707_fix_same_number_invoice_update_gap.sql)
+
+Estado desde este turno:
+
+- migracion creada: si
+- migracion aplicada en Supabase real: no

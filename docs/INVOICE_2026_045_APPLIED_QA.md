@@ -45,6 +45,7 @@ La linea ya esta corregida, pero la cabecera sigue desincronizada.
   - subtotal `234,00`
   - IVA `49,14`
   - total `283,14`
+- se creo una migracion correctiva en repo para el write path SQL, pero no pudo aplicarse a Supabase real desde este turno
 
 ## Confirmaciones
 
@@ -60,3 +61,8 @@ La linea ya esta corregida, pero la cabecera sigue desincronizada.
 - aplicado en `InvoiceEditFlow`
 - la correccion interna deja separado el modo de guardado frente a emision nueva
 - el bloqueo pendiente ya no es de UI, sino de write path / permisos de cabecera
+
+## Estado de la migracion SQL
+
+- creada: [20260707_fix_same_number_invoice_update_gap.sql](C:/Users/USUARIO/costa-clean-app/supabase/migrations/20260707_fix_same_number_invoice_update_gap.sql)
+- aplicada en Supabase real: no

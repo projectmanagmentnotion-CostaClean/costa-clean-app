@@ -41,6 +41,13 @@ La edicion mayor de facturas emitidas estaba tratando el guardado como si fuese 
 
 Ese comportamiento era incorrecto para una correccion interna de una factura ya existente y no enviada.
 
+En el write path SQL real se confirmo la causa exacta:
+
+- `save_invoice_with_lines_v2` delega en `save_invoice_with_lines`
+- `save_invoice_with_lines` llama a `assert_invoice_numbering_regular(..., v_invoice_id)`
+- esa llamada excluye la propia factura del chequeo de continuidad
+- al actualizar una emitida existente con el mismo numero, esa exclusion convierte `2026-045` en un hueco artificial aunque la secuencia real `2026-043` a `2026-050` sea continua
+
 ## Solucion aplicada
 
 Se mantiene el flujo normal de `InvoiceEditFlow`, pero con un modo seguro de correccion interna:
@@ -69,7 +76,12 @@ En la pasada del `2026-07-07` se refuerza la rama interna para evitar mezcla con
 - la confirmacion interna limpia el error previo para no arrastrar mensajes de validacion stale
 - la traza distingue `invoice_edit_flow_internal_correction`
 
-Con esto, el bloqueo pendiente deja de ser de numeracion UI y pasa a ser de autenticacion del write path real cuando no existe sesion valida.
+Con esto, el bloqueo pendiente deja de ser de numeracion UI.
+
+El siguiente bloqueo real ya no es visual:
+
+- la RPC remota necesita incorporar la migracion SQL de mismo numero
+- y el fallback directo sigue sin permisos para persistir la cabecera de `invoices`
 
 ## Intento de aplicacion real
 
@@ -98,13 +110,30 @@ Precondiciones reales verificadas antes del write:
 
 Resultado del intento:
 
-- el RPC devolvio `Authentication required for financial writes.`
-- la correccion **no** quedo aplicada en datos reales en este turno
+- la RPC oficial devolvio el falso hueco `2026-045` al revalidar la emitida existente
+- el fallback directo con sesion autenticada solo pudo sostener la linea, no la cabecera
+- la correccion **no** quedo completada en datos reales en este turno
 - no se creo nueva factura
 - no se creo rectificativa
 - no cambio `invoice_number`
 - no cambio `display_code`
 - no se modifico ninguna otra factura
+
+## Migracion preparada
+
+- [20260707_fix_same_number_invoice_update_gap.sql](C:/Users/USUARIO/costa-clean-app/supabase/migrations/20260707_fix_same_number_invoice_update_gap.sql)
+
+Resumen:
+
+- ajusta `save_invoice_with_lines`
+- mantiene validacion estricta en altas nuevas
+- mantiene validacion estricta cuando una factura aun no consumia numeracion fiscal
+- evita que la propia emitida existente se trate como hueco durante una actualizacion con mismo numero y mismo ejercicio
+
+Estado:
+
+- creada en repo: si
+- aplicada en Supabase real: no
 
 ## Archivos tocados
 
@@ -136,7 +165,7 @@ Resultado del intento:
 - confirmacion de que el mismatch solo se dispara cuando se envian expectativas nuevas de numeracion
 - lectura real de Supabase con `.env.local`
 - verificacion de que la factura sigue en `234,00 / 49,14 / 283,14` antes del intento de escritura
-- intento real de escritura por RPC bloqueado por autenticacion
+- intento real de escritura por RPC bloqueado por falso hueco de autoexclusion
 - `npm run lint` OK
 - `npm run build` OK
-- pendiente de autenticacion real para poder aplicar la correccion y confirmar persistencia final
+- pendiente de aplicar la migracion en Supabase real para poder reintentar la correccion y confirmar persistencia final

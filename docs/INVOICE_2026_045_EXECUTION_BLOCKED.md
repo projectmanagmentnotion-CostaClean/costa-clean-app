@@ -66,8 +66,8 @@ Segundo, el fallback directo con sesion autenticada no puede cerrar la cabecera:
 
 Se necesita una de estas dos condiciones para completar la correccion real:
 
-1. una credencial de servidor autorizada para actualizar la cabecera real (`SUPABASE_SERVICE_ROLE_KEY` u otra via aprobada), o
-2. una migracion minima del write path SQL para que `save_invoice_with_lines` no trate la propia factura emitida como hueco al revalidar numeracion en updates del mismo registro
+1. aplicar en Supabase real la migracion [20260707_fix_same_number_invoice_update_gap.sql](C:/Users/USUARIO/costa-clean-app/supabase/migrations/20260707_fix_same_number_invoice_update_gap.sql), o
+2. disponer de una credencial de servidor autorizada para actualizar la cabecera real (`SUPABASE_SERVICE_ROLE_KEY` u otra via aprobada) si se quiere usar una via de servidor separada
 
 ## Que no se hizo
 
@@ -84,11 +84,21 @@ Se necesita una de estas dos condiciones para completar la correccion real:
 
 ## Siguiente paso seguro
 
-Si aparece `SUPABASE_SERVICE_ROLE_KEY`, reejecutar un apply controlado que actualice solo la cabecera de `INVOICE-0a0d880b-05ee-42a0-8da2-6f5bdad4e398`.
+Aplicar primero la migracion SQL nueva en Supabase real:
 
-Si no aparece esa credencial, la via minima pasa por una migracion SQL dedicada sobre `save_invoice_with_lines` / `save_invoice_with_lines_v2` para permitir la correccion interna de emitidas con mismo numero sin falso hueco de autoexclusion.
+1. abrir SQL Editor del proyecto Supabase real
+2. ejecutar `supabase/migrations/20260707_fix_same_number_invoice_update_gap.sql`
+3. reejecutar:
+   - `node scripts/ops/correct-invoice-2026-045.mjs`
+   - `node scripts/ops/correct-invoice-2026-045.mjs --apply`
 
 Mientras tanto, el estado parcial real queda documentado en `docs/INVOICE_2026_045_PARTIAL_STATE.md`.
+
+## Estado de migracion
+
+- migracion creada: si
+- migracion aplicada desde este entorno: no
+- motivo: no hay CLI `supabase` instalada ni `SUPABASE_SERVICE_ROLE_KEY` disponible para una via de servidor local
 
 ## Comandos auditados
 

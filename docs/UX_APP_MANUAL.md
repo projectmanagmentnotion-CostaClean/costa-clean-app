@@ -142,6 +142,13 @@ The app should converge toward a reusable base set of primitives:
 - Avoid nested cards when a lighter subsection or collapsible block is enough.
 - If a detail surface becomes box-heavy, simplify the structure before adding more content.
 
+## Cross-module De-nesting Rules
+
+- Mobile and iPad blocks should resolve with one visual surface per intent.
+- Shared shell, filters, lists, detail views, and StepFlows follow the same rule; this is not invoice-only guidance.
+- If a support block expands width cost more than meaning, flatten it into rows, separators, or collapse.
+- Tablet layouts must be audited as their own constraint, not assumed safe because mobile is safe.
+
 ## List Density Rules
 
 - Search is the dominant control in operational lists.
@@ -248,6 +255,7 @@ Rules:
 - Required fields should be obvious before submission.
 - Review states should summarize what matters, not duplicate the full form blindly.
 - Autofill, suggestion, and formatting behaviors must remain predictable.
+- In mobile/iPad, opening a form should expose the first real field immediately, not a long preamble of support surfaces.
 
 ## Accessibility
 

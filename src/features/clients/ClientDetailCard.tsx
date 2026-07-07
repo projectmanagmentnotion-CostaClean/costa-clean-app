@@ -358,7 +358,7 @@ export function ClientDetailCard({
   )
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-client-detail-card">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle del cliente</h2>

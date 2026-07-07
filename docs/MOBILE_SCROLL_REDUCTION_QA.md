@@ -105,3 +105,9 @@ En este sprint hubo auditoria real por screenshots y auditoria de codigo/CSS, pe
 - Si una seccion puede vivir en la misma superficie, no crear otra card interna.
 - En mobile/iPad, el ancho util debe reservarse para contenido y accion, no para wrappers.
 - Si aparecen cajas dentro de cajas para explicar un mismo detalle, la vista falla QA y debe simplificarse antes de escalar.
+
+## Actualizacion cross-module 2026-07-07
+
+- La validacion viva ahora incluye `payments`, `clients`, `properties`, `dashboard` y `fiscal_closing`.
+- `Registrar cobro` confirma visibilidad inmediata del primer campo en mobile e iPad.
+- Se detecta y resuelve un overflow horizontal real del shell en iPad; el problema no estaba en los modulos sino en la capa superior compartida.

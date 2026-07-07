@@ -104,6 +104,30 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Las cards secundarias deben perder peso visual antes que la accion principal.
 - El ancho util de mobile debe ir al contenido, no a marcos o wrappers redundantes.
 
+## Cross-module De-nesting Gate
+
+- En mobile/iPad, cada bloque operativo debe resolverse con una sola superficie principal.
+- Si la jerarquia depende de card dentro de card para el mismo contenido, la implementacion falla.
+- El shell superior y toolbars compartidas tambien entran en este gate; no solo los modulos de negocio.
+
+## Action-to-Form Gate
+
+- En create/edit mobile+iPad, el primer campo accionable debe quedar visible inmediatamente al abrir el flujo.
+- Si el usuario ve contexto, resumen o decoracion antes del campo y necesita scroll para empezar, la pantalla falla.
+- Overlay o StepFlow deben preferirse sobre formularios enterrados debajo del listado.
+
+## Mobile/iPad Button Alignment Gate
+
+- Una tarjeta compacta no debe mostrar varias acciones grandes compitiendo a la vez.
+- La accion principal mantiene prioridad; las secundarias se agrupan o pasan a `Mas`.
+- Botones deben alinear altura y anchura de forma estable en `390x844` y `768x1024`.
+
+## Filter Compactness Gate
+
+- Filtros visibles deben sentirse auxiliares frente a la lista.
+- Si `Filtros` u `Orden` ocupan tanto peso como una card de contenido, la superficie falla densidad.
+- El estado activo debe resumirse sin convertir la toolbar en un panel largo permanente.
+
 ## GSAP Plugin Gate
 
 - Plugins are loaded through the shared motion layer, never ad hoc in business modules.

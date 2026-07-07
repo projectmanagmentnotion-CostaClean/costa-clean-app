@@ -49,6 +49,18 @@ When scaling any existing module, agents must preserve operational density and a
 - Debug panels must suppress or replace the equivalent operational card instead of duplicating the same information twice.
 - New UI work must prefer flattening and simplification over adding another card, banner, shell, or wrapper.
 
+## Cross-Module Mobile/iPad Guardrails
+
+These rules are permanent and apply to all future authenticated app scaling:
+
+- In mobile and iPad, one block should resolve with one visual surface, not card-inside-card composition.
+- If a detail view needs identity, status, next action, facts, and support context, agents must flatten it before adding another wrapper.
+- Shared shell headers and top navigation must be checked for real viewport overflow at `390x844` and `768x1024` in visual sprints.
+- Any create or edit action in mobile/iPad must expose the first actionable field immediately after opening, preferably in overlay or StepFlow.
+- If a debug or audit card exists for the same concept, the operational card must be hidden, replaced, or collapsed by default.
+- Secondary actions should collapse into `Mas` before the layout grows extra rows of large buttons.
+- Tablet is not desktop shrunk down: the shell and module header must respect viewport width and avoid inherited horizontal overflow.
+
 ## Scope Preservation
 
 Unless explicitly requested in the prompt, agents must not:

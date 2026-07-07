@@ -267,6 +267,8 @@ Superficies ya alineadas:
 - Reducir microcopy repetida antes de ocultar datos utiles.
 - Mantener targets tactiles de `44px` incluso cuando la UI se compacte.
 - Un bloque compacto sigue necesitando una accion primaria clara.
+- Si un shell compartido o rail superior provoca overflow horizontal en iPad, el problema es del sistema de diseÃ±o, no de un modulo aislado.
+- Las superficies secundarias en detalle deben degradarse a separadores, filas o colapsos antes de introducir otra `DSCard`.
 
 ## GSAP plugins approved usage
 

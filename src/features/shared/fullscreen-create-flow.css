@@ -261,11 +261,39 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
+  .cc-create-flow__section {
+    gap: 10px;
+  }
+
   .cc-create-flow__hero-card {
     display: none;
   }
 
+  .cc-create-flow__panel,
+  .cc-create-flow__summary-card,
+  .cc-create-flow__review-card,
+  .cc-create-flow__status-card,
+  .cc-create-flow__line-card,
+  .cc-create-flow__microactions {
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 14px;
+    box-shadow: none;
+  }
+
+  .cc-create-flow__summary-item,
+  .cc-create-flow__review-card {
+    padding: 9px 10px;
+    border-radius: 12px;
+  }
+
+  .cc-create-flow__footer-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 720px) {
   .cc-create-flow__status-card {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
@@ -301,8 +329,8 @@
   .cc-create-flow__review-card,
   .cc-create-flow__status-card {
     gap: 10px;
-    padding: 14px;
-    border-radius: 18px;
+    padding: 10px 11px;
+    border-radius: 14px;
   }
 
   .cc-create-flow__hero-card strong,
@@ -331,7 +359,7 @@
 
   .cc-create-flow__status-card {
     gap: 8px;
-    padding: 12px 13px;
+    padding: 10px 11px;
   }
 
   .cc-create-flow__status-icon {

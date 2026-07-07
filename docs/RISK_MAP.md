@@ -51,6 +51,12 @@
 - la pasada autenticada confirma que los mayores fallos residuales eran visuales en shell movil y StepFlow; no debe usarse este resultado para justificar cambios de dominio fuera de CSS/estructura
 - el viewport principal validado fue `390x844`; cualquier afirmacion sobre `375x812` o `430x932` sigue siendo de cobertura parcial mientras no exista pasada dedicada
 
+## Riesgo nuevo de shell tablet overflow
+
+- un cambio pequeno en `cc-shell-nav` puede romper todos los modulos en `768x1024` aunque la logica de negocio siga intacta
+- el shell superior debe tratarse como superficie critica de QA visual compartida en cualquier sprint mobile/iPad
+- nunca asumir que tablet queda cubierta solo porque mobile estrecho ya no desborda
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

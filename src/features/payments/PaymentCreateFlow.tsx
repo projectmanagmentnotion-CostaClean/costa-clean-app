@@ -522,6 +522,22 @@ export function PaymentCreateFlow({
             </article>
 
             <div className="cc-create-flow__grid">
+              <label className="form-field form-field-full">
+                <span>Factura *</span>
+                <select
+                  value={form.invoice_id}
+                  onChange={(event) => updateField('invoice_id', event.target.value)}
+                  disabled={lockInvoiceSelection}
+                >
+                  {!lockInvoiceSelection ? <option value="">Selecciona una factura</option> : null}
+                  {availableInvoices.map((invoice) => (
+                    <option key={invoice.id} value={invoice.id}>
+                      {`${formatInvoiceLabel(invoice)} - Pendiente ${formatMoneyInput(Number(invoice.outstanding_amount ?? invoice.total))}`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
               {selectedInvoice ? (
                 <article className="cc-create-flow__panel">
                   <strong>Contexto del documento</strong>
@@ -541,22 +557,6 @@ export function PaymentCreateFlow({
                   </div>
                 </article>
               ) : null}
-
-              <label className="form-field form-field-full">
-                <span>Factura *</span>
-                <select
-                  value={form.invoice_id}
-                  onChange={(event) => updateField('invoice_id', event.target.value)}
-                  disabled={lockInvoiceSelection}
-                >
-                  {!lockInvoiceSelection ? <option value="">Selecciona una factura</option> : null}
-                  {availableInvoices.map((invoice) => (
-                    <option key={invoice.id} value={invoice.id}>
-                      {`${formatInvoiceLabel(invoice)} - Pendiente ${formatMoneyInput(Number(invoice.outstanding_amount ?? invoice.total))}`}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
               {!hideInvoiceCreateAction ? (
                 <ContextualCreateSection

@@ -77,6 +77,14 @@ No se permiten cards dentro de cards, paneles dentro de paneles ni wrappers que 
 - Extender el mismo aplanado a clientes, propiedades, cobros, gastos, presupuestos y cierre fiscal.
 - Revisar que algunos headers de detalle aun pueden adelgazar una capa mas.
 
+## Actualizacion cross-module 2026-07-07
+
+- Se ejecuta una pasada viva adicional sobre `dashboard`, `clients`, `properties`, `payments` y `fiscal_closing`.
+- `PaymentCreateFlow` deja visible el primer campo en `390x844` y `768x1024`.
+- `PaymentDetailCard` y `PropertyDetailCard` quedan en lectura mas plana para mobile/iPad.
+- Se detecta un overflow real en iPad dentro del shell superior y se corrige en `cc-shell-nav`.
+- Resultado final de la pasada: sin scroll horizontal en `390x844` ni `768x1024` en los modulos auditados.
+
 ## Confirmacion de alcance protegido
 
 No se tocaron Supabase, SQL, RPC, migrations, auth, rutas, `?view=`, `appDataApi`, `financialWriteApi`, numeracion, fiscalidad, calculos, persistencia ni contratos.

@@ -364,3 +364,17 @@ Focus:
 - collapsed invoice detail
 - collapsed fiscal closing detail
 - tighter StepFlow shell
+
+## Post-Roadmap Sprint: Cross-module UI De-nesting QA
+
+Objective:
+
+Apply the same one-surface, compact-action, immediate-form rules across authenticated modules with live mobile/iPad validation.
+
+Focus:
+
+- cross-module de-nesting
+- immediate action-to-form visibility
+- compact filter bars
+- shell/header overflow control on iPhone and iPad
+- flattening of shared detail surfaces before any future scaling

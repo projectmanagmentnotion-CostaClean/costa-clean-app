@@ -320,3 +320,161 @@
   border-color: rgba(14, 84, 114, 0.1);
   background: linear-gradient(180deg, rgba(236, 247, 255, 0.88), rgba(255, 255, 255, 0.96));
 }
+
+@media (max-width: 1024px) {
+  .cc-master-layout__detail > .data-section,
+  .cc-master-layout__detail > .cc-detail-panel,
+  .cc-client-detail-card,
+  .cc-property-detail-card,
+  .cc-payment-detail-card {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cc-master-layout__detail > .data-section > .section-header,
+  .cc-master-layout__detail > .cc-detail-panel > .section-header,
+  .cc-detail-panel > .section-header,
+  .cc-client-detail-card > .section-header,
+  .cc-property-detail-card > .section-header,
+  .cc-payment-detail-card > .section-header {
+    padding: 0 0 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: transparent;
+  }
+
+  .cc-master-layout__detail .lead-detail-card,
+  .cc-client-detail-card .lead-detail-card,
+  .cc-property-detail-card .lead-detail-card,
+  .cc-payment-detail-card .lead-detail-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cc-master-layout__detail .lead-detail-header,
+  .cc-client-detail-card .lead-detail-header,
+  .cc-property-detail-card .lead-detail-header,
+  .cc-payment-detail-card .lead-detail-header {
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .cc-master-layout__detail .lead-detail-grid,
+  .cc-client-detail-card .lead-detail-grid,
+  .cc-property-detail-card .lead-detail-grid,
+  .cc-payment-detail-card .lead-detail-grid {
+    gap: 6px;
+  }
+
+  .cc-master-layout__detail .detail-row,
+  .cc-client-detail-card .detail-row,
+  .cc-property-detail-card .detail-row,
+  .cc-payment-detail-card .detail-row {
+    min-height: 0;
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cc-master-layout__detail .lead-detail-grid > section,
+  .cc-client-detail-card .lead-detail-grid > section,
+  .cc-property-detail-card .lead-detail-grid > section,
+  .cc-payment-detail-card .lead-detail-grid > section {
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .cc-master-layout__detail .lead-detail-grid > section h4,
+  .cc-client-detail-card .lead-detail-grid > section h4,
+  .cc-property-detail-card .lead-detail-grid > section h4,
+  .cc-payment-detail-card .lead-detail-grid > section h4 {
+    margin: 0 0 6px;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .cc-master-layout__detail .lead-detail-grid > section ul,
+  .cc-client-detail-card .lead-detail-grid > section ul,
+  .cc-property-detail-card .lead-detail-grid > section ul,
+  .cc-payment-detail-card .lead-detail-grid > section ul {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 16px;
+  }
+
+  .cc-detail-panel__summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .cc-detail-panel__summary-card {
+    padding: 8px 0 7px;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .cc-detail-panel__next-step {
+    padding: 10px 0;
+    border-width: 0 0 1px;
+    border-radius: 0;
+    background: transparent;
+  }
+}
+
+@media (max-width: 768px) {
+  .cc-detail-panel__summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cc-detail-panel__actions,
+  .cc-detail-panel__status-actions {
+    gap: 8px;
+  }
+
+  .cc-detail-panel__actions .primary-button,
+  .cc-detail-panel__actions .secondary-button,
+  .cc-detail-panel__status-actions .primary-button,
+  .cc-detail-panel__status-actions .secondary-button {
+    min-height: 44px;
+  }
+}
+
+:root[data-theme="light"] .cc-master-layout__detail > .data-section > .section-header,
+:root[data-theme="light"] .cc-master-layout__detail > .cc-detail-panel > .section-header,
+:root[data-theme="light"] .cc-detail-panel > .section-header,
+:root[data-theme="light"] .cc-client-detail-card > .section-header,
+:root[data-theme="light"] .cc-property-detail-card > .section-header,
+:root[data-theme="light"] .cc-payment-detail-card > .section-header,
+:root[data-theme="light"] .cc-master-layout__detail .lead-detail-header,
+:root[data-theme="light"] .cc-client-detail-card .lead-detail-header,
+:root[data-theme="light"] .cc-property-detail-card .lead-detail-header,
+:root[data-theme="light"] .cc-payment-detail-card .lead-detail-header,
+:root[data-theme="light"] .cc-master-layout__detail .detail-row,
+:root[data-theme="light"] .cc-client-detail-card .detail-row,
+:root[data-theme="light"] .cc-property-detail-card .detail-row,
+:root[data-theme="light"] .cc-payment-detail-card .detail-row,
+:root[data-theme="light"] .cc-master-layout__detail .lead-detail-grid > section,
+:root[data-theme="light"] .cc-client-detail-card .lead-detail-grid > section,
+:root[data-theme="light"] .cc-property-detail-card .lead-detail-grid > section,
+:root[data-theme="light"] .cc-payment-detail-card .lead-detail-grid > section,
+:root[data-theme="light"] .cc-detail-panel__summary-card,
+:root[data-theme="light"] .cc-detail-panel__next-step {
+  border-color: rgba(14, 84, 114, 0.1);
+}

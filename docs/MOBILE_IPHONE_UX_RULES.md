@@ -83,6 +83,14 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - Stepper compacto sin scroll lateral; en iPhone estrecho debe apilarse o repartirse antes de desbordar.
 - Resumen lateral bajo colapso.
 - Footer sticky compacto con safe area.
+- El primer campo accionable de create/edit debe verse sin buscarlo con scroll al abrir el flow.
+
+## iPad
+
+- `768x1024` es un viewport obligatorio de QA para sprints visuales autenticados.
+- iPad no puede heredar overflow horizontal del shell ni de grupos de navegacion pensados para desktop.
+- Si una barra superior, rail o toolbar aumenta `scrollWidth` por encima del viewport, la pantalla falla QA aunque mobile estrecho funcione.
+- iPad debe seguir usando una sola capa visual por bloque y no reintroducir wrappers de desktop.
 
 ## Anti-patrones prohibidos
 

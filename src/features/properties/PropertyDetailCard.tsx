@@ -9,6 +9,8 @@ import {
 import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
+import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
 import type { ClientListItem } from '../clients/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -82,6 +84,7 @@ export function PropertyDetailCard({
   editRequestToken,
   onEditingStateChange,
 }: PropertyDetailCardProps) {
+  const useOverlayEdit = useActionFlowOverlayMode()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -296,6 +299,118 @@ export function PropertyDetailCard({
     await persistProperty()
   }
 
+  const editForm = (
+    <form className="lead-form" onSubmit={handleSubmit}>
+      <label className="form-field">
+        <span>Cliente *</span>
+        <select
+          value={form.client_id}
+          onChange={(event) => updateField('client_id', event.target.value)}
+        >
+          {clients.map((client) => (
+            <option key={client.id} value={client.id}>
+              {formatClientLabel(client)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="form-field">
+        <span>Nombre *</span>
+        <input
+          value={form.name}
+          onChange={(event) => updateField('name', event.target.value)}
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Tipo *</span>
+        <select
+          value={form.property_type}
+          onChange={(event) => updateField('property_type', event.target.value)}
+        >
+          <option value="apartment">{getPropertyTypeOptionLabel('apartment')}</option>
+          <option value="house">{getPropertyTypeOptionLabel('house')}</option>
+          <option value="office">{getPropertyTypeOptionLabel('office')}</option>
+          <option value="local">{getPropertyTypeOptionLabel('local')}</option>
+          <option value="tourist_apartment">{getPropertyTypeOptionLabel('tourist_apartment')}</option>
+          <option value="community">{getPropertyTypeOptionLabel('community')}</option>
+          <option value="construction_site">{getPropertyTypeOptionLabel('construction_site')}</option>
+        </select>
+      </label>
+
+      <label className="form-field form-field-full">
+        <span>Dirección *</span>
+        <input
+          value={form.address}
+          onChange={(event) => updateField('address', event.target.value)}
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Ciudad</span>
+        <input
+          value={form.city}
+          onChange={(event) => updateField('city', event.target.value)}
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Código postal</span>
+        <input
+          value={form.postal_code}
+          onChange={(event) => updateField('postal_code', event.target.value)}
+        />
+      </label>
+
+      <label className="form-field form-field-full">
+        <span>Notas</span>
+        <textarea
+          value={form.notes}
+          onChange={(event) => updateField('notes', event.target.value)}
+          rows={4}
+        />
+      </label>
+
+      <div className="form-actions">
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => {
+            if (isDirty) {
+              setShowDiscardConfirm(true)
+              return
+            }
+
+            setIsEditing(false)
+            setIsDirty(false)
+          }}
+        >
+          Cancelar
+        </button>
+        <button type="submit" className="primary-button" disabled={isSaving}>
+          {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+        </button>
+      </div>
+
+      {saveError ? (
+        <div className="cc-alert cc-alert--error">
+          <strong>No se pudo actualizar la propiedad</strong>
+          <p>{saveError}</p>
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="cc-alert cc-alert--success">
+          <strong>Operación correcta</strong>
+          <p>{successMessage}</p>
+        </div>
+      ) : null}
+    </form>
+  )
+
   if (!property) {
     return (
       <section className="data-section">
@@ -314,7 +429,7 @@ export function PropertyDetailCard({
   }
 
   return (
-    <section className="data-section">
+    <section className="data-section cc-property-detail-card">
       <div className="section-header page-header-actions">
         <div>
           <h2>Detalle de la propiedad</h2>
@@ -380,7 +495,7 @@ export function PropertyDetailCard({
           </div>
         ) : null}
 
-        {isEditing ? (
+        {isEditing && !useOverlayEdit ? (
           <form className="lead-form" onSubmit={handleSubmit}>
             <label className="form-field">
               <span>Cliente *</span>
@@ -572,6 +687,23 @@ export function PropertyDetailCard({
           </div>
         ) : null}
       </div>
+
+      <ResponsiveActionFlow
+        isOpen={isEditing && useOverlayEdit}
+        title="Editar propiedad"
+        description="La edición se abre en primer plano en móvil y tablet para no perderse debajo del workspace."
+        onClose={() => {
+          if (isDirty) {
+            setShowDiscardConfirm(true)
+            return
+          }
+
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      >
+        {editForm}
+      </ResponsiveActionFlow>
 
       <ConfirmDialog
         isOpen={showDiscardConfirm}

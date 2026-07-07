@@ -3623,3 +3623,47 @@
   border-color: rgba(14, 84, 114, 0.1);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 251, 255, 0.95));
 }
+
+@media (max-width: 1024px) {
+  .hero-card.cc-shell,
+  .cc-shell-frame,
+  .cc-shell-nav {
+    overflow: hidden;
+  }
+
+  .cc-shell-nav--top-only,
+  .cc-shell-nav__topline,
+  .cc-shell-nav__brand,
+  .cc-shell-nav__brand-copy,
+  .cc-shell-nav__actions,
+  .cc-shell-nav__utilities,
+  .cc-shell-nav__rail,
+  .cc-shell-nav__rail-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .cc-shell-nav__actions {
+    width: 100%;
+    justify-items: start;
+  }
+
+  .cc-shell-nav__utilities {
+    justify-content: flex-start;
+  }
+
+  .cc-shell-nav__rail {
+    overflow: hidden;
+  }
+
+  .cc-shell-nav__rail-scroll {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .cc-shell-nav__rail-group {
+    flex: 0 0 auto;
+    min-width: fit-content;
+  }
+}

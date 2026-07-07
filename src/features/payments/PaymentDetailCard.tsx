@@ -4,6 +4,8 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
+import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
 import { findPaymentDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -61,6 +63,7 @@ export function PaymentDetailCard({
   onUnsavedChange,
   onOpenExistingPayment,
 }: PaymentDetailCardProps) {
+  const useOverlayEdit = useActionFlowOverlayMode()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -256,8 +259,112 @@ export function PaymentDetailCard({
       : []),
   ] : []
 
+  const editForm = (
+    <form className="lead-form" onSubmit={handleSubmit}>
+      <label className="form-field">
+        <span>Factura *</span>
+        <select
+          value={form.invoice_id}
+          onChange={(event) => updateField('invoice_id', event.target.value)}
+        >
+          {isSelectedInvoiceMissing ? (
+            <option value={form.invoice_id}>
+              Factura no disponible - {form.invoice_id}
+            </option>
+          ) : null}
+          {invoices.map((invoice) => (
+            <option key={invoice.id} value={invoice.id}>
+              {formatInvoiceLabel(invoice)} - Total {formatCurrency(invoice.total)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="form-field">
+        <span>Fecha de cobro *</span>
+        <input
+          type="date"
+          value={form.payment_date}
+          onChange={(event) => updateField('payment_date', event.target.value)}
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Importe *</span>
+        <input
+          value={form.amount}
+          onChange={(event) => updateField('amount', event.target.value)}
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Método de pago</span>
+        <select
+          value={form.payment_method}
+          onChange={(event) => updateField('payment_method', event.target.value)}
+        >
+          <option value="transfer">{getPaymentMethodOptionLabel('transfer')}</option>
+          <option value="cash">{getPaymentMethodOptionLabel('cash')}</option>
+          <option value="bizum">{getPaymentMethodOptionLabel('bizum')}</option>
+          <option value="card">{getPaymentMethodOptionLabel('card')}</option>
+        </select>
+      </label>
+
+      <label className="form-field form-field-full">
+        <span>Notas</span>
+        <textarea
+          value={form.notes}
+          onChange={(event) => updateField('notes', event.target.value)}
+          rows={4}
+        />
+      </label>
+
+      <div className="form-actions">
+        <button type="button" className="secondary-button" onClick={syncAmountFromInvoice}>
+          Traer total de factura
+        </button>
+
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => {
+            if (isDirty) {
+              setShowDiscardConfirm(true)
+              return
+            }
+
+            setIsEditing(false)
+            setIsDirty(false)
+          }}
+        >
+          Cancelar
+        </button>
+
+        <button type="submit" className="primary-button" disabled={isSaving}>
+          {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+        </button>
+      </div>
+
+      {saveError ? (
+        <div className="cc-alert cc-alert--error">
+          <strong>No se pudo actualizar el pago</strong>
+          <p>{saveError}</p>
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="cc-alert cc-alert--success">
+          <strong>Operación correcta</strong>
+          <p>{successMessage}</p>
+        </div>
+      ) : null}
+    </form>
+  )
+
   return (
-    <section className="data-section cc-detail-panel cc-detail-panel--payment">
+    <section className="data-section cc-detail-panel cc-detail-panel--payment cc-payment-detail-card">
       <DSSectionHeader
         title="Detalle del cobro"
         description={payment ? 'Consulta contexto, factura vinculada y siguiente paso recomendado antes de editar este cobro.' : 'Selecciona un cobro para abrir su contexto y sus acciones seguras.'}
@@ -319,108 +426,8 @@ export function PaymentDetailCard({
         }}
       />
 
-          {isEditing ? (
-            <form className="lead-form" onSubmit={handleSubmit}>
-              <label className="form-field">
-                <span>Factura *</span>
-                <select
-                  value={form.invoice_id}
-                  onChange={(event) => updateField('invoice_id', event.target.value)}
-                >
-                  {isSelectedInvoiceMissing ? (
-                    <option value={form.invoice_id}>
-                      Factura no disponible - {form.invoice_id}
-                    </option>
-                  ) : null}
-                  {invoices.map((invoice) => (
-                    <option key={invoice.id} value={invoice.id}>
-                      {formatInvoiceLabel(invoice)} - Total {formatCurrency(invoice.total)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <label className="form-field">
-                <span>Fecha de cobro *</span>
-                <input
-                  type="date"
-                  value={form.payment_date}
-                  onChange={(event) => updateField('payment_date', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Importe *</span>
-                <input
-                  value={form.amount}
-                  onChange={(event) => updateField('amount', event.target.value)}
-                  required
-                />
-              </label>
-
-              <label className="form-field">
-                <span>Método de pago</span>
-                <select
-                  value={form.payment_method}
-                  onChange={(event) => updateField('payment_method', event.target.value)}
-                >
-                  <option value="transfer">{getPaymentMethodOptionLabel('transfer')}</option>
-                  <option value="cash">{getPaymentMethodOptionLabel('cash')}</option>
-                  <option value="bizum">{getPaymentMethodOptionLabel('bizum')}</option>
-                  <option value="card">{getPaymentMethodOptionLabel('card')}</option>
-                </select>
-              </label>
-
-              <label className="form-field form-field-full">
-                <span>Notas</span>
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => updateField('notes', event.target.value)}
-                  rows={4}
-                />
-              </label>
-
-              <div className="form-actions">
-                <button type="button" className="secondary-button" onClick={syncAmountFromInvoice}>
-                  Traer total de factura
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    if (isDirty) {
-                      setShowDiscardConfirm(true)
-                      return
-                    }
-
-                    setIsEditing(false)
-                    setIsDirty(false)
-                  }}
-                >
-                  Cancelar
-                </button>
-
-                <button type="submit" className="primary-button" disabled={isSaving}>
-                  {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-                </button>
-              </div>
-
-              {saveError ? (
-                <div className="cc-alert cc-alert--error">
-                  <strong>No se pudo actualizar el pago</strong>
-                  <p>{saveError}</p>
-                </div>
-              ) : null}
-
-              {successMessage ? (
-                <div className="cc-alert cc-alert--success">
-                  <strong>Operación correcta</strong>
-                  <p>{successMessage}</p>
-                </div>
-              ) : null}
-            </form>
+          {isEditing && !useOverlayEdit ? (
+            editForm
           ) : (
             <div className="lead-detail-grid cc-detail-panel__grid">
               <div className="detail-row">
@@ -486,6 +493,23 @@ export function PaymentDetailCard({
           description="Abre un cobro del listado para revisar su factura asociada, metodo y notas."
         />
       )}
+
+      <ResponsiveActionFlow
+        isOpen={isEditing && useOverlayEdit}
+        title="Editar cobro"
+        description="La edicion se abre en primer plano en movil y tablet para no quedar enterrada bajo el detalle."
+        onClose={() => {
+          if (isDirty) {
+            setShowDiscardConfirm(true)
+            return
+          }
+
+          setIsEditing(false)
+          setIsDirty(false)
+        }}
+      >
+        {editForm}
+      </ResponsiveActionFlow>
     </section>
   )
 }

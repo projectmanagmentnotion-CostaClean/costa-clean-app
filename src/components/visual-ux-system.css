@@ -655,6 +655,49 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .cc-visual-executive-header {
+    gap: 0.8rem;
+    padding: 1rem 1.05rem;
+    border-radius: 22px;
+    box-shadow: none;
+  }
+
+  .cc-visual-executive-header__main,
+  .cc-visual-executive-header__extra,
+  .cc-visual-executive-header__actions {
+    gap: 0.55rem;
+  }
+
+  .cc-visual-executive-header__summary,
+  .cc-visual-executive-header__metric-hint,
+  .cc-visual-kpi-card__hint,
+  .cc-progress-metric__hint,
+  .cc-action-checklist__description {
+    font-size: 0.76rem;
+    line-height: 1.32;
+  }
+
+  .cc-visual-executive-header__metric {
+    padding: 0.72rem 0.8rem;
+    border-radius: 16px;
+    background: rgba(8, 15, 28, 0.14);
+  }
+
+  .cc-visual-kpi-card,
+  .cc-action-checklist__item,
+  .cc-insight-panel {
+    gap: 0.5rem;
+    padding: 0.78rem 0.84rem;
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .cc-visual-kpi-card__footer {
+    gap: 0.45rem;
+  }
+}
+
 @media (max-width: 640px) {
   .cc-visual-executive-header {
     padding: 1.2rem 1.1rem;
@@ -710,6 +753,12 @@
   .cc-action-checklist__description {
     font-size: var(--ds-mobile-helper-size);
     line-height: 1.35;
+  }
+
+  .cc-visual-executive-header__metric-hint,
+  .cc-visual-kpi-card__hint,
+  .cc-progress-metric__hint {
+    display: none;
   }
 
   .cc-visual-executive-header__metric,

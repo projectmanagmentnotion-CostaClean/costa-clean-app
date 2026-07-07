@@ -83,36 +83,39 @@ El siguiente bloqueo real ya no es visual:
 - la RPC remota necesita incorporar la migracion SQL de mismo numero
 - y el fallback directo sigue sin permisos para persistir la cabecera de `invoices`
 
-## Intento de aplicacion real
+## Aplicacion real final
 
-Fecha del intento: `2026-07-06T18:34:58.1921019+02:00`
+Fecha de cierre operativo: `2026-07-07`
 
-Metodo intentado:
+Metodo ejecutado:
 
-- script operativo `node scripts/ops/correct-invoice-2026-045.mjs --apply`
+- `node scripts/ops/correct-invoice-2026-045.mjs`
+- `node scripts/ops/correct-invoice-2026-045.mjs --apply`
 - write path real por RPC `save_invoice_with_lines_v2`
-- fallback preparado a `save_invoice_with_lines`
 
-Precondiciones reales verificadas antes del write:
+Precondiciones reales verificadas antes del write final:
 
 - una sola factura con `invoice_number = 2026-045`
 - `display_code` persistido actual `INV-0045`
 - cliente real `FUSTERIA PINEDA MAR SL`
 - linea objetivo encontrada: `limpieza de taller`
-- cantidad actual `1`
+- cantidad real ya detectada en linea objetivo: `6`
 - `unit_price` `18,00 EUR`
-- `line_subtotal` actual `18,00 EUR`
+- `line_subtotal` real de la linea objetivo: `108,00 EUR`
 - subtotal actual `234,00 EUR`
 - IVA actual `49,14 EUR`
 - total actual `283,14 EUR`
 - sin pagos asociados
 - `pricing_metadata.renumbered_reason` contiene `Factura creada pero no enviada`
 
-Resultado del intento:
+Resultado final:
 
-- la RPC oficial devolvio el falso hueco `2026-045` al revalidar la emitida existente
-- el fallback directo con sesion autenticada solo pudo sostener la linea, no la cabecera
-- la correccion **no** quedo completada en datos reales en este turno
+- el `dry-run` confirmo estado parcial esperado
+- el `--apply` termino correctamente
+- la factura quedo sincronizada en datos reales
+- subtotal final `324,00 EUR`
+- IVA final `68,04 EUR`
+- total final `392,04 EUR`
 - no se creo nueva factura
 - no se creo rectificativa
 - no cambio `invoice_number`
@@ -133,7 +136,7 @@ Resumen:
 Estado:
 
 - creada en repo: si
-- aplicada en Supabase real: no
+- aplicada en Supabase real: si
 
 ## Archivos tocados
 
@@ -165,7 +168,7 @@ Estado:
 - confirmacion de que el mismatch solo se dispara cuando se envian expectativas nuevas de numeracion
 - lectura real de Supabase con `.env.local`
 - verificacion de que la factura sigue en `234,00 / 49,14 / 283,14` antes del intento de escritura
-- intento real de escritura por RPC bloqueado por falso hueco de autoexclusion
+- intento real final de escritura por RPC completado correctamente tras aplicar la migracion remota
 - `npm run lint` OK
 - `npm run build` OK
-- pendiente de aplicar la migracion en Supabase real para poder reintentar la correccion y confirmar persistencia final
+- lectura real final confirmada con `invoice_number = 2026-045`, `display_code = INV-0045`, `subtotal = 324,00`, `IVA = 68,04`, `total = 392,04`

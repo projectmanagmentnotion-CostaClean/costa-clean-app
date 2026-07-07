@@ -2,9 +2,9 @@
 
 ## Estado real
 
-La factura `2026-045 / INV-0045` sigue en estado **parcialmente corregido**.
+La incidencia de estado parcial queda **resuelta**.
 
-No esta lista para enviar.
+La factura `2026-045 / INV-0045` ya no esta parcial y queda lista para enviar.
 
 ## Factura auditada
 
@@ -18,43 +18,26 @@ No esta lista para enviar.
 - `limpieza y mantenimiento de local`: `12 x 18,00 EUR = 216,00 EUR`
 - `limpieza de taller`: `6 x 18,00 EUR = 108,00 EUR`
 
-## Cabecera real actual
-
-- base imponible / `subtotal`: `234,00 EUR`
-- IVA / `tax_amount`: `49,14 EUR`
-- total: `283,14 EUR`
-
-## Cabecera correcta esperada
+## Cabecera final real
 
 - base imponible / `subtotal`: `324,00 EUR`
 - IVA / `tax_amount`: `68,04 EUR`
 - total: `392,04 EUR`
 
-## Por que sigue parcial
+## Confirmaciones finales
 
-Se confirmaron dos bloqueos distintos:
-
-1. La RPC oficial `save_invoice_with_lines_v2` delega en `save_invoice_with_lines`, y esa funcion vuelve a ejecutar `assert_invoice_numbering_regular(..., v_invoice_id)` incluso al actualizar una factura ya emitida.
-2. En la secuencia real `2026-043` a `2026-050` no hay huecos. Pero al excluir la propia `2026-045` del chequeo, la funcion interpreta artificialmente que falta `2026-045` y rechaza la actualizacion como si fuera una nueva emision con hueco fiscal.
-3. El fallback de `update` directo con sesion autenticada puede modificar `invoice_lines`, pero no puede persistir la fila de `public.invoices`: el `update` afecta `0` filas.
-
-## Consecuencia operativa
-
-- la linea ya esta corregida a `6` horas
-- la cabecera sigue antigua
-- la factura no debe enviarse asi
+- la linea queda en `6` horas
+- la cabecera queda sincronizada
 - no se creo factura nueva
 - no se creo rectificativa
 - no cambio ni `invoice_number` ni `display_code`
+- no se toco otra factura
 
-## Siguiente accion minima necesaria
+## Causa ya resuelta
 
-Hace falta una de estas dos vias:
+La causa del estado parcial fue el falso hueco por autoexclusion en `save_invoice_with_lines`.
 
-1. aplicar la migracion minima ya creada en el write path SQL para permitir actualizar una factura ya emitida con el mismo numero sin disparar el falso hueco por autoexclusion, o
-2. una credencial con permisos de servidor (`SUPABASE_SERVICE_ROLE_KEY`) para sincronizar solo la cabecera de esta factura existente una vez la RPC remota este corregida o exista una via de servidor aprobada.
-
-Sin una de esas dos vias, la factura seguira parcial aunque el script quede endurecido.
+El usuario confirmo que la migracion remota ya fue aplicada y el script operativo pudo completar la sincronizacion final.
 
 ## Migracion preparada
 
@@ -63,4 +46,4 @@ Sin una de esas dos vias, la factura seguira parcial aunque el script quede endu
 Estado desde este turno:
 
 - migracion creada: si
-- migracion aplicada en Supabase real: no
+- migracion aplicada en Supabase real: si

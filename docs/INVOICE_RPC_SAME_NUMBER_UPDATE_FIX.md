@@ -83,7 +83,19 @@ Aplicacion manual exacta recomendada:
 ## Estado actual
 
 - migracion creada: si
-- migracion aplicada desde este turno: no
-- factura `2026-045` completamente corregida: no
+- migracion aplicada desde este turno: si, aplicada previamente por el usuario en Supabase real
+- factura `2026-045` completamente corregida: si
 
-La factura sigue parcial hasta que la RPC remota incorpore esta migracion o exista una via autorizada de servidor para sincronizar la cabecera.
+Resultado operativo posterior:
+
+- `node scripts/ops/correct-invoice-2026-045.mjs` confirmo el estado parcial esperado
+- `node scripts/ops/correct-invoice-2026-045.mjs --apply` sincronizo la cabecera
+- estado final de la factura:
+  - `invoice_number = 2026-045`
+  - `display_code = INV-0045`
+  - `limpieza de taller = 6 Horas`
+  - `subtotal = 324,00 EUR`
+  - `IVA = 68,04 EUR`
+  - `total = 392,04 EUR`
+  - sin factura nueva
+  - sin rectificativa

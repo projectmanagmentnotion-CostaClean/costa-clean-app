@@ -57,6 +57,8 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - En mobile solo deben verse 2 chips rapidos como maximo antes de abrir filtros.
 - Orden y filtros avanzados deben vivir en sheet.
 - Metadata secundaria debe truncarse o resumirse antes de crecer en altura.
+- El bloque visible de filtros debe sentirse auxiliar, no protagonista.
+- Si un filtro ocupa visualmente como una card de contenido, es demasiado pesado.
 
 ## Factura detalle
 
@@ -64,6 +66,8 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - Gestion y contexto bajo colapso o `Mas`.
 - No repetir documento, servicio, estado y notas en varias cards abiertas.
 - Si una accion no es primaria, no debe competir visualmente con cobro.
+- El detalle debe gastar ancho en contenido, no en wrappers anidados.
+- Las secciones internas deben aligerarse antes de crear otra caja nueva.
 
 ## Cierre fiscal
 
@@ -88,6 +92,8 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - Informe completo antes de la decision principal
 - Scroll infinito dentro de Home o detalle
 - Bottom nav tapando contenido
+- Control operativo y debug abiertos a la vez en la misma zona
+- Cajas dentro de cajas dentro de cajas para un mismo detalle
 
 ## Checklist iPhone
 

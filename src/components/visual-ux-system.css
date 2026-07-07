@@ -440,25 +440,22 @@
 }
 
 .cc-collapsible-detail {
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .cc-collapsible-detail[open] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 12px 28px rgba(2, 8, 23, 0.14);
+  box-shadow: none;
 }
 
 .cc-collapsible-detail__summary {
   list-style: none;
   display: flex;
-  gap: 0.8rem;
+  gap: 0.65rem;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.05rem;
+  padding: 0.8rem 0.85rem;
   cursor: pointer;
 }
 
@@ -474,17 +471,17 @@
 }
 
 .cc-collapsible-detail__title {
-  font-size: 0.98rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
 .cc-collapsible-detail__count {
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   color: var(--muted);
 }
 
 .cc-collapsible-detail__body {
-  padding: 0 1.05rem 1.05rem;
+  padding: 0 0.85rem 0.85rem;
 }
 
 .cc-collapsible-detail--warning {

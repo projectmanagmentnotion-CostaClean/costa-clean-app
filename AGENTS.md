@@ -16,6 +16,7 @@ No code change starts before those four documents are read and understood.
 - Codex must diagnose the real current implementation before touching code.
 - Codex must propose a plan before modifying files.
 - Codex must work in small, safe, reviewable changes.
+- Codex must validate visual mobile changes against the running app whenever the prompt requires visual QA or real iPhone behavior.
 - Codex must preserve routes, Supabase, auth, invoices, quotes, clients, services, and critical logic unless the prompt explicitly requires changing them.
 - Codex must avoid blind coding, speculative rewrites, and unrelated refactors.
 - Codex must document risks found during the diagnosis phase when they are outside the sprint scope.
@@ -34,6 +35,19 @@ Core principles:
 - Mobile-first is a real constraint, not a responsive afterthought.
 - Minimalism is functional, not decorative.
 - StepFlow is required for complex or high-friction flows.
+
+## Density Preservation Rules
+
+When scaling any existing module, agents must preserve operational density and avoid UI inflation.
+
+- Shared filters must stay compact, subtle, and secondary to search.
+- Advanced filters must open in sheet/popover, never as a long permanent block under the search bar on mobile.
+- List cards for clients, invoices, payments, properties, jobs, and similar entities must remain compact and scannable.
+- Agents must not increase padding, nested wrappers, or stacked surfaces unless the extra layer creates a clearly different user decision.
+- Detail screens must use the screen width efficiently and avoid `div inside div inside div` composition that creates box-heavy reading.
+- Secondary sections such as document/context/admin blocks must be visually quieter than the primary operational action.
+- Debug panels must suppress or replace the equivalent operational card instead of duplicating the same information twice.
+- New UI work must prefer flattening and simplification over adding another card, banner, shell, or wrapper.
 
 ## Scope Preservation
 

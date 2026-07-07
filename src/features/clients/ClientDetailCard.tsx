@@ -12,6 +12,9 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
+import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
+import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
+import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
@@ -19,7 +22,6 @@ import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
 import { updateClientRecord } from './clientWriteApi'
 import type { ClientListItem } from './types'
-import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface ClientDetailCardProps {
   client: ClientListItem | null
@@ -78,6 +80,7 @@ export function ClientDetailCard({
   archiveRequestToken = 0,
   onEditingStateChange,
 }: ClientDetailCardProps) {
+  const useOverlayEdit = useActionFlowOverlayMode()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -93,6 +96,34 @@ export function ClientDetailCard({
     billing_address: '',
     status: 'active',
   })
+
+  function syncFormFromClient(nextClient: ClientListItem) {
+    setSaveError(null)
+    setSuccessMessage(null)
+    setIsDirty(false)
+    setForm({
+      full_name: nextClient.full_name,
+      phone: nextClient.phone ?? '',
+      email: nextClient.email ?? '',
+      tax_id: nextClient.tax_id ?? '',
+      billing_address: nextClient.billing_address ?? '',
+      status: nextClient.status,
+    })
+  }
+
+  function closeEditing() {
+    setIsEditing(false)
+    setIsDirty(false)
+  }
+
+  function requestCloseEditing() {
+    if (isDirty) {
+      setShowDiscardConfirm(true)
+      return
+    }
+
+    closeEditing()
+  }
 
   useEffect(() => {
     if (!client) {
@@ -112,17 +143,7 @@ export function ClientDetailCard({
     }
 
     setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      full_name: client.full_name,
-      phone: client.phone ?? '',
-      email: client.email ?? '',
-      tax_id: client.tax_id ?? '',
-      billing_address: client.billing_address ?? '',
-      status: client.status,
-    })
+    syncFormFromClient(client)
   }, [client])
 
   useEffect(() => {
@@ -134,16 +155,7 @@ export function ClientDetailCard({
     if (!client || editRequestToken === 0) return
 
     setIsEditing(true)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setForm({
-      full_name: client.full_name,
-      phone: client.phone ?? '',
-      email: client.email ?? '',
-      tax_id: client.tax_id ?? '',
-      billing_address: client.billing_address ?? '',
-      status: client.status,
-    })
+    syncFormFromClient(client)
   }, [client, editRequestToken])
 
   useEffect(() => {
@@ -186,10 +198,7 @@ export function ClientDetailCard({
     [relatedPayments],
   )
 
-  function updateField<K extends keyof EditFormState>(
-    field: K,
-    value: EditFormState[K],
-  ) {
+  function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
     setForm((current) => ({
       ...current,
@@ -220,8 +229,7 @@ export function ClientDetailCard({
           ? 'Cliente archivado correctamente como inactivo.'
           : 'Cliente actualizado correctamente.',
       )
-      setIsEditing(false)
-      setIsDirty(false)
+      closeEditing()
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Error desconocido actualizando el cliente.'
@@ -261,12 +269,93 @@ export function ClientDetailCard({
         </div>
 
         <div className="empty-state">
-          <strong>Ningún cliente seleccionado</strong>
+          <strong>Ningun cliente seleccionado</strong>
           <p>Haz clic en una tarjeta del listado para ver su detalle.</p>
         </div>
       </section>
     )
   }
+
+  const editForm = (
+    <form className="lead-form" onSubmit={handleSubmit}>
+      <label className="form-field">
+        <span>Nombre completo *</span>
+        <input
+          value={form.full_name}
+          onChange={(event) => updateField('full_name', event.target.value)}
+          required
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Telefono</span>
+        <input
+          value={form.phone}
+          onChange={(event) => updateField('phone', event.target.value)}
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Email</span>
+        <input
+          type="email"
+          value={form.email}
+          onChange={(event) => updateField('email', event.target.value)}
+        />
+      </label>
+
+      <label className="form-field">
+        <span>DNI/NIF/CIF</span>
+        <input
+          value={form.tax_id}
+          onChange={(event) => updateField('tax_id', event.target.value)}
+        />
+      </label>
+
+      <label className="form-field form-field-full">
+        <span>Direccion fiscal</span>
+        <textarea
+          value={form.billing_address}
+          onChange={(event) => updateField('billing_address', event.target.value)}
+          rows={3}
+        />
+      </label>
+
+      <label className="form-field">
+        <span>Estado</span>
+        <select
+          value={form.status}
+          onChange={(event) => updateField('status', event.target.value)}
+        >
+          <option value="active">{getStatusLabel('active')}</option>
+          <option value="inactive">{getStatusLabel('inactive')}</option>
+        </select>
+      </label>
+
+      <div className="form-actions">
+        <button type="button" className="secondary-button" onClick={requestCloseEditing}>
+          Cancelar
+        </button>
+        <button type="submit" className="primary-button" disabled={isSaving}>
+          {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
+        </button>
+      </div>
+
+      {saveError ? (
+        <div className="cc-alert cc-alert--error">
+          <strong>No se pudo actualizar el cliente</strong>
+          <p>{saveError}</p>
+        </div>
+      ) : null}
+
+      {successMessage ? (
+        <div className="cc-alert cc-alert--success">
+          <strong>Operacion correcta</strong>
+          <p>{successMessage}</p>
+        </div>
+      ) : null}
+    </form>
+  )
 
   return (
     <section className="data-section">
@@ -299,26 +388,16 @@ export function ClientDetailCard({
               type="button"
               className="secondary-button"
               onClick={() => {
-                if (isEditing && isDirty) {
-                  setShowDiscardConfirm(true)
+                if (isEditing) {
+                  requestCloseEditing()
                   return
                 }
 
-                setIsEditing((current) => !current)
-                setSaveError(null)
-                setSuccessMessage(null)
-                setIsDirty(false)
-                setForm({
-                  full_name: client.full_name,
-                  phone: client.phone ?? '',
-                  email: client.email ?? '',
-                  tax_id: client.tax_id ?? '',
-                  billing_address: client.billing_address ?? '',
-                  status: client.status,
-                })
+                setIsEditing(true)
+                syncFormFromClient(client)
               }}
             >
-              {isEditing ? 'Cancelar edición' : 'Editar cliente'}
+              {isEditing ? 'Cancelar edicion' : 'Editar cliente'}
             </button>
           </div>
         ) : null}
@@ -354,97 +433,8 @@ export function ClientDetailCard({
           </div>
         ) : null}
 
-        {isEditing ? (
-          <form className="lead-form" onSubmit={handleSubmit}>
-            <label className="form-field">
-              <span>Nombre completo *</span>
-              <input
-                value={form.full_name}
-                onChange={(event) => updateField('full_name', event.target.value)}
-                required
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Teléfono</span>
-              <input
-                value={form.phone}
-                onChange={(event) => updateField('phone', event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Email</span>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => updateField('email', event.target.value)}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>DNI/NIF/CIF</span>
-              <input
-                value={form.tax_id}
-                onChange={(event) => updateField('tax_id', event.target.value)}
-              />
-            </label>
-
-            <label className="form-field form-field-full">
-              <span>Dirección fiscal</span>
-              <textarea
-                value={form.billing_address}
-                onChange={(event) => updateField('billing_address', event.target.value)}
-                rows={3}
-              />
-            </label>
-
-            <label className="form-field">
-              <span>Estado</span>
-              <select
-                value={form.status}
-                onChange={(event) => updateField('status', event.target.value)}
-              >
-                <option value="active">{getStatusLabel('active')}</option>
-                <option value="inactive">{getStatusLabel('inactive')}</option>
-              </select>
-            </label>
-
-            <div className="form-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  if (isDirty) {
-                    setShowDiscardConfirm(true)
-                    return
-                  }
-
-                  setIsEditing(false)
-                  setIsDirty(false)
-                }}
-              >
-                Cancelar
-              </button>
-              <button type="submit" className="primary-button" disabled={isSaving}>
-                {isSaving ? 'Guardando cambios...' : 'Guardar cambios'}
-              </button>
-            </div>
-
-            {saveError ? (
-              <div className="cc-alert cc-alert--error">
-                <strong>No se pudo actualizar el cliente</strong>
-                <p>{saveError}</p>
-              </div>
-            ) : null}
-
-            {successMessage ? (
-              <div className="cc-alert cc-alert--success">
-                <strong>Operación correcta</strong>
-                <p>{successMessage}</p>
-              </div>
-            ) : null}
-          </form>
+        {isEditing && !useOverlayEdit ? (
+          editForm
         ) : (
           <>
             <div className="lead-detail-grid">
@@ -453,12 +443,12 @@ export function ClientDetailCard({
                 <strong>{formatClientLabel(client)}</strong>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Código interno</span>
+                <span className="detail-label">Codigo interno</span>
                 <strong>{client.display_code ?? client.id}</strong>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Teléfono</span>
-                <strong>{client.phone ?? 'Sin teléfono'}</strong>
+                <span className="detail-label">Telefono</span>
+                <strong>{client.phone ?? 'Sin telefono'}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Email</span>
@@ -469,8 +459,8 @@ export function ClientDetailCard({
                 <strong>{client.tax_id ?? 'Sin dato fiscal'}</strong>
               </div>
               <div className="detail-row">
-                <span className="detail-label">Dirección fiscal</span>
-                <strong>{client.billing_address ?? 'Sin dirección fiscal'}</strong>
+                <span className="detail-label">Direccion fiscal</span>
+                <strong>{client.billing_address ?? 'Sin direccion fiscal'}</strong>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Estado</span>
@@ -496,7 +486,7 @@ export function ClientDetailCard({
 
             {relationshipSummary ? (
               <div className="cc-alert cc-alert--info">
-                <strong>Política operativa</strong>
+                <strong>Politica operativa</strong>
                 <p>
                   Este cliente tiene {relationshipSummary.propertiesCount} propiedad(es), {relationshipSummary.jobsCount} servicio(s),
                   {' '}{relationshipSummary.quotesCount} presupuesto(s) y {relationshipSummary.invoicesCount} factura(s). Para preservar
@@ -552,6 +542,15 @@ export function ClientDetailCard({
         />
       </div>
 
+      <ResponsiveActionFlow
+        isOpen={isEditing && useOverlayEdit}
+        title="Editar cliente"
+        description="La edicion se abre en primer plano en movil y tablet para no perderse debajo del workspace."
+        onClose={requestCloseEditing}
+      >
+        {editForm}
+      </ResponsiveActionFlow>
+
       <ConfirmDialog
         isOpen={showDiscardConfirm}
         title="Descartar cambios de cliente"
@@ -562,8 +561,7 @@ export function ClientDetailCard({
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
-          setIsEditing(false)
-          setIsDirty(false)
+          closeEditing()
         }}
       />
 
@@ -572,10 +570,10 @@ export function ClientDetailCard({
         title="Archivar cliente"
         description={
           relationshipSummary
-            ? `Se dejará el cliente como inactivo. Mantendrá ${relationshipSummary.propertiesCount} propiedad(es), ${relationshipSummary.jobsCount} servicio(s), ${relationshipSummary.quotesCount} presupuesto(s) y ${relationshipSummary.invoicesCount} factura(s) sin romper relaciones históricas.`
-            : 'Se dejará el cliente como inactivo para evitar un borrado riesgoso.'
+            ? `Se dejara el cliente como inactivo. Mantendra ${relationshipSummary.propertiesCount} propiedad(es), ${relationshipSummary.jobsCount} servicio(s), ${relationshipSummary.quotesCount} presupuesto(s) y ${relationshipSummary.invoicesCount} factura(s) sin romper relaciones historicas.`
+            : 'Se dejara el cliente como inactivo para evitar un borrado riesgoso.'
         }
-        confirmLabel="Sí, archivar cliente"
+        confirmLabel="Si, archivar cliente"
         tone="warning"
         isBusy={isSaving}
         onCancel={() => setPendingInactiveConfirmation(false)}

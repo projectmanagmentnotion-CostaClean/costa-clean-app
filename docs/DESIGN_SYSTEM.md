@@ -225,6 +225,8 @@ Superficies ya alineadas:
 6. `DSSmartPostalCodeInput` solo debe usarse donde `postal_code` y `city` ya existan como campos separados.
 7. `DSSmartLocationFields` es el nombre recomendado para formularios nuevos o endurecidos; `DSSmartPostalCodeInput` sigue existiendo por compatibilidad.
 8. Las listas operativas deben usar el patron `one-line filters`: busqueda primero, 3-5 chips rapidos maximo, resumen compacto de orden y sheet o popover para filtros avanzados.
+9. En detalle mobile/iPad, una superficie principal debe absorber identidad, estado y siguiente accion antes de abrir secciones secundarias.
+10. No usar card dentro de card para contexto, admin, documento o resumen si un subtitulo, divisor o colapso ligero resuelve la jerarquia.
 
 ## One-Line Filters
 
@@ -232,6 +234,7 @@ Superficies ya alineadas:
 - `DSFilterSummaryButton` resume orden y filtros en una sola superficie corta.
 - `DSCompactFilterGroup` se usa dentro del panel avanzado para evitar columnas largas de chips.
 - `DSActiveFilters` puede truncar visualmente el resumen para no inflar la altura de la lista.
+- Las variantes visuales de filtros deben sentirse auxiliares; si pesan como una card de contenido, hay que adelgazar padding, radio o contraste.
 8. `DSConceptAutocomplete` puede enriquecer formularios, pero nunca sustituir validaciones o reglas de estructura de dominio.
 
 ## Reglas de estados y feedback
@@ -292,6 +295,7 @@ Reglas:
 - no introducir librerias externas de charts
 - no usar canvas si SVG resuelve el caso
 - reduced motion debe renderizar el estado final
+- no envolver un detalle en varias cards concentricas para ordenar informacion ya presente
 
 ## Que NO se migro todavia
 

@@ -99,3 +99,9 @@ En este sprint hubo auditoria real por screenshots y auditoria de codigo/CSS, pe
 ### Screenshots
 
 - Capturas reales en sesion autenticada tomadas durante la QA local del `2026-07-07` sobre `http://127.0.0.1:5173/`.
+
+## Guardrail de desencapsulacion
+
+- Si una seccion puede vivir en la misma superficie, no crear otra card interna.
+- En mobile/iPad, el ancho util debe reservarse para contenido y accion, no para wrappers.
+- Si aparecen cajas dentro de cajas para explicar un mismo detalle, la vista falla QA y debe simplificarse antes de escalar.

@@ -123,3 +123,113 @@
     width: 100%;
   }
 }
+
+/* Compact mobile rhythm for dense operational modules */
+
+.cc-list-toolbar,
+.cc-list-toolbar__overview,
+.cc-list-toolbar__panel,
+.cc-list-toolbar__panel-summary {
+  border-radius: 18px;
+  box-shadow: none;
+}
+
+.cc-list-toolbar {
+  gap: 10px;
+}
+
+.cc-list-toolbar__overview,
+.cc-list-toolbar__panel-summary {
+  padding: 9px 11px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.cc-list-toolbar__headline {
+  font-size: 0.92rem;
+  line-height: 1.08;
+}
+
+.cc-list-toolbar__caption,
+.cc-list-toolbar__state {
+  font-size: 0.71rem;
+  line-height: 1.3;
+}
+
+.cc-list-toolbar__one-line {
+  gap: 8px;
+}
+
+.cc-list-toolbar__summary-actions {
+  gap: 8px;
+}
+
+.ds-filter-summary-button {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border-color: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.025);
+  box-shadow: none;
+}
+
+.ds-filter-summary-button__copy strong {
+  font-size: 0.73rem;
+}
+
+.ds-filter-summary-button__copy span,
+.ds-filter-summary-button__badge,
+.ds-filter-chip {
+  font-size: 0.64rem;
+}
+
+.ds-filter-chip {
+  min-height: 30px;
+  padding-inline: 8px;
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.cc-operational-list {
+  gap: 8px;
+}
+
+.cc-operational-item {
+  gap: 7px;
+  padding: 9px 10px;
+  border-radius: 13px;
+  border-color: rgba(255, 255, 255, 0.05);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012));
+  box-shadow: none;
+}
+
+.cc-operational-item.is-selected {
+  border-color: rgba(125, 211, 252, 0.14);
+  box-shadow: none;
+}
+
+.cc-operational-item__title {
+  font-size: 0.84rem;
+  line-height: 1.08;
+}
+
+.cc-operational-item__subtitle,
+.cc-operational-item__summary,
+.cc-operational-item__meta-value,
+.cc-operational-item__microhint {
+  font-size: 0.69rem;
+}
+
+.cc-operational-item__meta-label {
+  font-size: 0.56rem;
+}
+
+.cc-operational-item__chip {
+  min-height: 18px;
+  padding-inline: 7px;
+  font-size: 0.59rem;
+}
+
+.cc-operational-item__footer {
+  padding-top: 4px;
+}

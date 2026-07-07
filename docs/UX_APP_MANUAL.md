@@ -49,6 +49,8 @@ Rules:
 - Show advanced detail under demand, not by default.
 - Avoid stacked warnings, cards, and banners that repeat the same message.
 - Prefer one strong direction over many equal-weight options.
+- If the same meaning is already visible in a status, title, or next-step block, do not repeat it in another card.
+- Debug information must replace the equivalent operational block, not sit beside it by default.
 
 ## Layered Visual Hierarchy
 
@@ -94,6 +96,7 @@ No view should open with detail before decision.
 - Tight spacing is acceptable only for related operational data.
 - Increase spacing between unrelated intents.
 - The rhythm should make groups obvious without relying on borders everywhere.
+- On mobile, preserve width for content first and avoid wrapper-on-wrapper composition that only adds padding.
 
 ### Radius
 
@@ -131,6 +134,20 @@ The app should converge toward a reusable base set of primitives:
 - bottom-sheet or full-screen mobile overlays when the task needs focus
 - confirmation and success states
 - empty states with directed next actions
+
+## Detail Composition Rules
+
+- Detail screens should be flat by default: identity, status, next action, and compact facts.
+- Secondary context must be quieter than the primary action area.
+- Avoid nested cards when a lighter subsection or collapsible block is enough.
+- If a detail surface becomes box-heavy, simplify the structure before adding more content.
+
+## List Density Rules
+
+- Search is the dominant control in operational lists.
+- Filters must stay subtle until the user asks for more.
+- Cards must optimize scanning, not decoration.
+- Buttons, chips, and metadata should shrink visually before titles or amounts lose clarity.
 
 ## Button Rules
 

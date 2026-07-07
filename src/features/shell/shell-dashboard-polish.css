@@ -2882,6 +2882,9 @@
     gap: 6px;
     min-width: 0;
     flex: 0 0 auto;
+    justify-self: end;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .cc-mobile-shell-header__sync,
@@ -2905,6 +2908,7 @@
   .cc-mobile-shell-header .cc-alerts-bell,
   .cc-mobile-shell-header .cc-alerts-bell__button {
     flex: 0 0 auto;
+    min-width: 0;
   }
 
   .cc-mobile-shell-header .cc-theme-toggle {
@@ -2931,8 +2935,9 @@
   .cc-mobile-shell-header .cc-alerts-bell {
     position: relative;
     width: auto;
-    max-width: none;
+    max-width: 36px;
     min-width: 36px;
+    overflow: visible;
   }
 
   .cc-mobile-shell-header .cc-alerts-bell__button {

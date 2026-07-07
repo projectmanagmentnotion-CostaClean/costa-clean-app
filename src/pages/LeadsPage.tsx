@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { getStatusLabel } from '../app/displayText'
 import { ListToolbar, type ListPreferences } from '../components/ListToolbar'
+import { ResponsiveActionFlow } from '../components/ResponsiveActionFlow'
 import type { ClientListItem } from '../features/clients/types'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
@@ -176,7 +177,12 @@ export function LeadsPage({
         />
       ) : null}
 
-      {showCreateForm ? (
+      <ResponsiveActionFlow
+        isOpen={showCreateForm}
+        title="Nuevo lead"
+        description="La alta comercial se abre en primer plano en movil y tablet para no perderse debajo del listado."
+        onClose={() => setShowCreateForm(false)}
+      >
         <LeadCreateForm
           onCreated={onLeadCreated}
           existingLeads={leads}
@@ -185,7 +191,7 @@ export function LeadsPage({
             setSelectedLeadId(leadId)
           }}
         />
-      ) : null}
+      </ResponsiveActionFlow>
 
       <section className="data-section cc-filters-block">
         <ListToolbar

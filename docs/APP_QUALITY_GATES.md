@@ -57,6 +57,10 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Filtros avanzados no deben empujar verticalmente el listado en mobile.
 - El bottom nav no puede tapar contenido ni CTA sticky.
 - StepFlow no puede introducir scroll horizontal para mostrar el progreso.
+- El filtro visible por defecto debe ser sutil y compacto, no una card protagonista.
+- Las tarjetas de listas deben priorizar lectura rapida y altura contenida.
+- Los detalles deben aprovechar el ancho real de la pantalla y evitar encapsulacion redundante.
+- Un panel debug no puede convivir con su equivalente operativo abierta en la misma zona.
 
 ## Accessibility Gate
 
@@ -85,6 +89,20 @@ These gates define the minimum quality bar for any future app work. A change sho
 - La compactacion no puede bajar objetivos tactiles por debajo de `44px`.
 - Reducir texto es obligatorio cuando el mismo mensaje ya aparece en titulo, estado y footer.
 - Facturas y dominios criticos solo pueden compactarse a nivel visual, nunca alterando señales de warning.
+
+## Operational Detail Gate
+
+- El primer bloque del detalle debe resolver identidad, estado y siguiente accion.
+- Documento, contexto, historico y admin deben vivir con menor contraste o bajo colapso.
+- No repetir cliente, servicio, estado, notas o importes en varias cards abiertas a la vez.
+- En mobile, cada caja adicional debe justificar una decision distinta; si no, debe integrarse en una superficie existente.
+
+## Detail Density Gate
+
+- Dos capas visuales que explican lo mismo en el mismo viewport cuentan como regresion.
+- Si una vista depende de cajas dentro de cajas para ordenar el detalle, hay que simplificar antes de escalar.
+- Las cards secundarias deben perder peso visual antes que la accion principal.
+- El ancho util de mobile debe ir al contenido, no a marcos o wrappers redundantes.
 
 ## GSAP Plugin Gate
 

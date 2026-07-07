@@ -43,24 +43,32 @@
 
 .cc-invoice-detail-card {
   display: grid;
-  gap: 1rem;
+  gap: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .cc-invoice-detail-card__section {
   margin-bottom: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .cc-invoice-detail-card__action-row {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
 }
 
 .cc-invoice-detail-card__action-block {
   display: grid;
-  gap: 0.5rem;
-  padding: 0.95rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 18px;
-  background: rgba(15, 23, 42, 0.16);
+  gap: 0.2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .cc-invoice-detail-card__action-copy strong,
@@ -70,6 +78,104 @@
 
 .cc-invoice-detail-card__action-copy p {
   color: rgba(226, 232, 240, 0.72);
+}
+
+.cc-invoice-detail-card .cc-detail-panel__summary,
+.cc-invoice-detail-card .cc-detail-panel__grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.cc-invoice-detail-card .cc-detail-panel__summary-card,
+.cc-invoice-detail-card .detail-row {
+  padding: 0.72rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  min-height: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-invoice-detail-card .cc-detail-panel__summary-card:last-child,
+.cc-invoice-detail-card .detail-row:last-child {
+  border-bottom: 0;
+}
+
+.cc-invoice-detail-card .detail-label {
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(148, 163, 184, 0.84);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.cc-invoice-detail-card .cc-detail-panel__next-step {
+  padding: 0.8rem 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+}
+
+.cc-invoice-detail-card .cc-collapsible-detail {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-invoice-detail-card .cc-collapsible-detail__summary {
+  padding: 0.8rem 0;
+}
+
+.cc-invoice-detail-card .cc-collapsible-detail__body {
+  padding: 0 0 0.55rem;
+}
+
+.cc-invoice-detail-card .cc-action-group {
+  gap: 0.45rem;
+}
+
+.cc-invoice-detail-card .cc-record-card__inline-action {
+  min-height: 36px;
+  padding: 0 11px;
+  font-size: 0.69rem;
+}
+
+.cc-invoice-detail-card .cc-record-card__inline-action.is-primary {
+  min-height: 42px;
+  padding: 0 14px;
+}
+
+.cc-invoice-detail-card .cc-invoice-correction-notice {
+  padding-top: 0.2rem;
+}
+
+.cc-invoice-correction-notice {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.cc-invoice-correction-notice__grid {
+  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.cc-invoice-correction-notice__card {
+  padding: 0.72rem 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-invoice-correction-notice__card:last-child {
+  border-bottom: 0;
 }
 
 .cc-invoice-correction-notice {
@@ -145,8 +251,8 @@
 }
 
 :root[data-theme="light"] .cc-invoice-detail-card__action-block {
-  border-color: rgba(148, 163, 184, 0.24);
-  background: rgba(248, 250, 252, 0.92);
+  border-color: rgba(148, 163, 184, 0.14);
+  background: transparent;
 }
 
 :root[data-theme="light"] .cc-invoice-detail-card__action-copy p {
@@ -162,8 +268,15 @@
 }
 
 :root[data-theme="light"] .cc-invoice-correction-notice__card {
-  border-color: rgba(148, 163, 184, 0.24);
-  background: rgba(248, 250, 252, 0.92);
+  border-color: rgba(148, 163, 184, 0.16);
+  background: transparent;
+}
+
+:root[data-theme="light"] .cc-invoice-detail-card .cc-detail-panel__summary-card,
+:root[data-theme="light"] .cc-invoice-detail-card .detail-row,
+:root[data-theme="light"] .cc-invoice-detail-card .cc-collapsible-detail,
+:root[data-theme="light"] .cc-invoice-correction-notice__card {
+  border-color: rgba(14, 84, 114, 0.12);
 }
 
 @media (max-width: 900px) {

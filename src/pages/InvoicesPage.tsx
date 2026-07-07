@@ -25,11 +25,8 @@ import { getInvoiceCorrectionCase } from '../features/invoices/invoiceCorrection
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import {
   buildInvoiceFiscalAudit,
-  buildInvoiceFiscalBlockedEntries,
-  describeInvoiceFiscalMissingFields,
   shouldShowInvoiceFiscalDebug,
 } from '../features/invoices/invoiceFiscalSnapshot'
-import { backfillInvoiceFiscalSnapshots } from '../features/invoices/invoiceFiscalSnapshotApi'
 import { InvoiceNumberingControlCard } from '../features/invoices/InvoiceNumberingControlCard'
 import { InvoicesList } from '../features/invoices/InvoicesList'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from '../features/invoices/invoiceNumbering'
@@ -231,10 +228,6 @@ export function InvoicesPage({
     () => buildInvoiceFiscalAudit(allInvoices, clients),
     [allInvoices, clients],
   )
-  const blockedFiscalEntries = useMemo(
-    () => buildInvoiceFiscalBlockedEntries(invoiceFiscalAudit.entries),
-    [invoiceFiscalAudit.entries],
-  )
   const numberingGapMessage = useMemo(() => {
     const firstGap = numberingAudit.gaps[0]
     if (!firstGap) return null
@@ -256,8 +249,7 @@ export function InvoicesPage({
     return `${candidateLabel} puede regularizarse a ${targetDisplayCode} / ${buildInvoiceNumber(numberingAudit.year, firstGap.from)} si todavia no fue enviada.`
   }, [numberingAudit, numberingRegularizationCandidate])
   const showInvoiceFiscalDebug = shouldShowInvoiceFiscalDebug()
-  const [isFiscalBackfillBusy, setIsFiscalBackfillBusy] = useState(false)
-  const [showBlockedFiscalInvoices, setShowBlockedFiscalInvoices] = useState(false)
+  const [isFiscalBackfillBusy] = useState(false)
 
   const detailEmptyState = error
     ? {
@@ -370,51 +362,6 @@ export function InvoicesPage({
     }
   }
 
-  async function handleFiscalBackfill() {
-    setIsFiscalBackfillBusy(true)
-    const toastId = toast.loading('Completando datos fiscales...', 'Actualizando snapshots fiscales reparables.')
-
-    try {
-      const result = await backfillInvoiceFiscalSnapshots(allInvoices, clients)
-      if (result.repaired === 0 && result.expectedRepairable > 0) {
-        throw new Error('No se guardaron cambios. El backfill detecto facturas reparables, pero Supabase no confirmo ninguna actualizacion.')
-      }
-
-      await onInvoiceCreated()
-      toast.update(toastId, {
-        type: 'success',
-        title: 'Datos fiscales completados',
-        description: `Se completaron ${result.repaired} factura(s) reparables.`,
-        persistent: false,
-      })
-      if (result.failed > 0) {
-        toast.warning(
-          'Hay facturas sin confirmar',
-          `Supabase no confirmo ${result.failed} actualizacion(es) durante el backfill.`,
-          { persistent: true },
-        )
-      }
-      if (result.blocked > 0) {
-        setShowBlockedFiscalInvoices(true)
-        toast.warning(
-          'Hay facturas con cliente incompleto',
-          `Quedan ${result.blocked} factura(s) bloqueadas por falta de NIF/CIF o direccion fiscal.`,
-          { persistent: true },
-        )
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo completar el backfill fiscal.'
-      toast.update(toastId, {
-        type: 'error',
-        title: 'Backfill fiscal fallido',
-        description: message,
-        persistent: true,
-      })
-    } finally {
-      setIsFiscalBackfillBusy(false)
-    }
-  }
-
   async function handleReviewSequence() {
     await onInvoiceCreated()
 
@@ -514,94 +461,26 @@ export function InvoicesPage({
         </div>
 
         <div className="cc-invoice-workspace__control-grid">
-          <section className="data-section cc-invoice-workspace__support-card">
-            <div className="section-header">
-              <div>
-                <h2>Control fiscal</h2>
-                <p>Mantiene visibles las facturas bloqueadas o reparables sin mezclarlas con el cobro diario.</p>
-              </div>
-            </div>
-
-            <div className="cc-alert cc-alert--info cc-invoice-workspace__support-alert">
-              <strong>Auditoria fiscal de facturas</strong>
-              <div className="cc-invoice-workspace__support-metrics">
-                <p>Completas: {invoiceFiscalAudit.summary.complete}</p>
-                <p>Reparables desde cliente: {invoiceFiscalAudit.summary.reparable}</p>
-                <p>Incompletas: {invoiceFiscalAudit.summary.incomplete}</p>
-                <p>Base auditada: {invoiceFiscalAudit.summary.total} facturas.</p>
-              </div>
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    setShowBlockedFiscalInvoices((current) => !current)
-                    const firstIncomplete = invoiceFiscalAudit.entries.find((entry) => entry.status === 'incomplete')?.invoice
-                    if (firstIncomplete) {
-                      setSelectedInvoiceId(firstIncomplete.id)
-                    }
-                  }}
-                  disabled={invoiceFiscalAudit.summary.incomplete === 0}
-                >
-                  Revisar incompletas
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => void handleFiscalBackfill()}
-                  disabled={isFiscalBackfillBusy || invoiceFiscalAudit.summary.reparable === 0}
-                >
-                  {isFiscalBackfillBusy ? 'Completando...' : 'Completar reparables'}
-                </button>
-              </div>
-              {showInvoiceFiscalDebug ? (
-                <pre className="cc-debug-pre">
-                  {JSON.stringify({
-                    totalInvoices: invoiceFiscalAudit.summary.total,
-                    complete: invoiceFiscalAudit.summary.complete,
-                    repairable: invoiceFiscalAudit.summary.reparable,
-                    blocked: invoiceFiscalAudit.summary.incomplete,
-                    canRunBackfill: invoiceFiscalAudit.summary.reparable > 0 && !isFiscalBackfillBusy,
-                  }, null, 2)}
-                </pre>
-              ) : null}
-              {showBlockedFiscalInvoices && blockedFiscalEntries.length > 0 ? (
-                <div className="cc-inline-stack cc-invoice-workspace__blocked-list">
-                  {blockedFiscalEntries.map((entry) => (
-                    <div key={entry.invoiceId} className="cc-alert cc-alert--warning">
-                      <strong>{entry.displayCode ?? entry.invoiceNumber ?? entry.invoiceId}</strong>
-                      <p>
-                        {entry.invoiceNumber ? `Numero ${entry.invoiceNumber}. ` : ''}
-                        Cliente: {entry.clientLabel}. {describeInvoiceFiscalMissingFields(entry.missingFields)}.
-                      </p>
-                      <div className="form-actions">
-                        <button
-                          type="button"
-                          className="secondary-button"
-                          onClick={() => {
-                            setSelectedInvoiceId(entry.invoiceId)
-                          }}
-                        >
-                          Abrir factura
-                        </button>
-                        {entry.clientId ? (
-                          <button
-                            type="button"
-                            className="secondary-button"
-                            onClick={() => {
-                              onOpenClientWorkspace(entry.clientId!, 'summary')
-                            }}
-                          >
-                            Abrir cliente
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
+          {showInvoiceFiscalDebug ? (
+            <section className="data-section cc-invoice-workspace__support-card cc-invoice-workspace__support-card--debug">
+              <div className="section-header">
+                <div>
+                  <h2>Debug fiscal</h2>
+                  <p>Panel tecnico activo. El bloque operativo de control fiscal queda oculto para no duplicar lectura.</p>
                 </div>
-              ) : null}
-            </div>
-          </section>
+              </div>
+
+              <pre className="cc-debug-pre">
+                {JSON.stringify({
+                  totalInvoices: invoiceFiscalAudit.summary.total,
+                  complete: invoiceFiscalAudit.summary.complete,
+                  repairable: invoiceFiscalAudit.summary.reparable,
+                  blocked: invoiceFiscalAudit.summary.incomplete,
+                  canRunBackfill: invoiceFiscalAudit.summary.reparable > 0 && !isFiscalBackfillBusy,
+                }, null, 2)}
+              </pre>
+            </section>
+          ) : null}
 
           <div className="cc-invoice-workspace__support-card">
             <InvoiceNumberingControlCard

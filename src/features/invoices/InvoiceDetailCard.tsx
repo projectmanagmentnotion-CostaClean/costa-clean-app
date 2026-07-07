@@ -1280,7 +1280,7 @@ export function InvoiceDetailCard({
             </form>
           ) : (
             <>
-              <section className="data-section cc-invoice-detail-card__section cc-invoice-detail-card__section--payments">
+              <div className="cc-invoice-detail-card__section cc-invoice-detail-card__section--payments">
                 <div className="section-header page-header-actions">
                   <div>
                     <h2>Cobro y conciliacion</h2>
@@ -1379,7 +1379,7 @@ export function InvoiceDetailCard({
                   </ActionFlowOverlay>
                 ) : null}
 
-              </section>
+              </div>
 
               {invoice ? (
                 <InvoiceCorrectionNotice
@@ -1390,7 +1390,7 @@ export function InvoiceDetailCard({
               ) : null}
 
               <CollapsibleDetailSection title="Documento y gestion" tone="neutral">
-                <section className="data-section cc-invoice-detail-card__section">
+                <div className="cc-invoice-detail-card__section">
                 <div className="section-header page-header-actions">
                   <div>
                     <h2>Documento y gestion</h2>
@@ -1416,11 +1416,11 @@ export function InvoiceDetailCard({
                     <ActionGroup actions={statusActions} moreLabel="Estado admin." />
                   </div>
                 ) : null}
-                </section>
+                </div>
               </CollapsibleDetailSection>
 
               <CollapsibleDetailSection title="Contexto de factura" tone="neutral">
-                <section className="data-section cc-invoice-detail-card__section">
+                <div className="cc-invoice-detail-card__section">
                 <div className="section-header page-header-actions">
                   <div>
                     <h2>Contexto de factura</h2>
@@ -1453,7 +1453,7 @@ export function InvoiceDetailCard({
                   <strong>{invoice.notes ?? 'Sin notas'}</strong>
                 </div>
               </div>
-                </section>
+                </div>
               </CollapsibleDetailSection>
             </>
           )}

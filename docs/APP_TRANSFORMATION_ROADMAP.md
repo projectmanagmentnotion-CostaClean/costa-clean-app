@@ -11,6 +11,13 @@ This roadmap defines the phased transformation path for the app, from governance
 - Use the UX manual and quality gates as the control layer for every phase.
 - Favor small, validated increments over broad redesign attempts.
 
+## Cross-Cutting UI Scaling Rule
+
+- Reduce encapsulation before adding new cards.
+- Keep filters compact and secondary to content.
+- Hide debug panels from normal operational flow.
+- In visual sprints, validate mobile/iPad against the running app with real captures.
+
 ## Sprint 0: Documentation And Governance
 
 Objective:

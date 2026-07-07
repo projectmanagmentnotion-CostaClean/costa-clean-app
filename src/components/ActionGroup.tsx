@@ -48,6 +48,7 @@ export function ActionGroup({
   moreLabel = 'Mas acciones',
 }: ActionGroupProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [collapseSecondaryActions, setCollapseSecondaryActions] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
   const menuId = useId()
   const primaryAction = resolvePrimaryAction(actions)
@@ -57,8 +58,12 @@ export function ActionGroup({
       : []
   ), [actions, primaryAction])
   const visibleSecondaryActions = useMemo(
-    () => secondaryActions.slice(0, secondaryActions.length > 1 ? 1 : secondaryActions.length),
-    [secondaryActions],
+    () => (
+      collapseSecondaryActions
+        ? []
+        : secondaryActions.slice(0, secondaryActions.length > 1 ? 1 : secondaryActions.length)
+    ),
+    [collapseSecondaryActions, secondaryActions],
   )
   const menuActions = useMemo(
     () => secondaryActions.slice(visibleSecondaryActions.length),
@@ -88,6 +93,24 @@ export function ActionGroup({
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [isMenuOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 1024px)')
+    const syncCollapseMode = () => {
+      setCollapseSecondaryActions(mediaQuery.matches)
+    }
+
+    syncCollapseMode()
+    mediaQuery.addEventListener('change', syncCollapseMode)
+
+    return () => {
+      mediaQuery.removeEventListener('change', syncCollapseMode)
+    }
+  }, [])
 
   if (!primaryAction) return null
 

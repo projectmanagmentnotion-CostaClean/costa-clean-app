@@ -41,6 +41,10 @@
 - el acknowledgement local de alertas solo reduce ruido en `Home`; no debe confundirse con un workflow real de resolucion o revision
 - el cliente sigue guardando `billing_address` como string unico; la separacion visual de ubicacion no debe interpretarse como cambio de modelo
 
+## Riesgo nuevo de Mobile First Reset
+
+- la compactacion iPhone debe quedarse en jerarquia, densidad y colapso; si una futura pasada intenta mezclarla con cambios de write path o reglas de negocio, el riesgo vuelve a ser alto de forma inmediata
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

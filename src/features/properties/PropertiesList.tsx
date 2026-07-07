@@ -8,6 +8,7 @@ import { compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { applyTextSearch } from '../lists/utils'
 import type { PropertyListItem } from './types'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface PropertiesListProps {
   properties: PropertyListItem[]
@@ -130,49 +131,23 @@ export function PropertiesList({
       ) : filteredProperties.length === 0 ? (
         <DSEmptyState title="Sin resultados" description="No encontramos propiedades que coincidan con tu busqueda y filtros activos." />
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de propiedades">
           {filteredProperties.map((property) => {
             const isSelected = property.id === selectedPropertyId
 
             return (
-              <button
+              <OperationalListItem
                 key={property.id}
-                type="button"
-                className={
-                  isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--property cc-record-card--compact'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--property cc-record-card--compact'
-                }
-                onClick={() => onSelectProperty(property)}
-              >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{property.name}</strong>
-                    <span className="cc-record-card__subref">Interno {property.display_code ?? property.id}</span>
-                  </div>
-
-                  <div className="cc-record-card__aside">
-                    <span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>
-                  </div>
-                </div>
-
-                <p className="cc-record-card__summary">{property.address}</p>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Cliente</span>
-                    <span className="cc-record-card__meta-value">{formatClientLabel(property)}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Ciudad</span>
-                    <span className="cc-record-card__meta-value">{property.city ?? 'Sin ciudad'}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Postal</span>
-                    <span className="cc-record-card__meta-value">{property.postal_code ?? 'Sin CP'}</span>
-                  </span>
-                </div>
-              </button>
+                selected={isSelected}
+                onSelect={() => onSelectProperty(property)}
+                title={property.name}
+                subtitle={`Interno ${property.display_code ?? property.id}`}
+                status={<span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>}
+                summary={property.address}
+                chips={[property.city ?? 'Sin ciudad']}
+                meta={[{ label: 'Cliente', value: formatClientLabel(property) }]}
+                microhint={property.postal_code ?? 'Sin CP'}
+              />
             )
           })}
         </div>

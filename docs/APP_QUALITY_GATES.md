@@ -48,6 +48,14 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Dense tables or multi-column assumptions are avoided or safely adapted.
 - Critical flows are completable on mobile without confusion.
 
+## Mobile iPhone Gate
+
+- Ninguna pantalla iPhone debe abrir como informe largo.
+- Home no puede abrir con listas o bloques extensos.
+- Factura y cierre fiscal deben abrir con resumen y CTA, no con detalle completo.
+- Filtros avanzados no deben empujar verticalmente el listado en mobile.
+- El bottom nav no puede tapar contenido ni CTA sticky.
+
 ## Accessibility Gate
 
 - Focus behavior is coherent.

@@ -7,6 +7,7 @@ import { compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { applyTextSearch } from '../lists/utils'
 import type { ClientListItem } from './types'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { OperationalListItem } from '../../components/OperationalListItem'
 
 interface ClientsListProps {
   clients: ClientListItem[]
@@ -105,49 +106,23 @@ export function ClientsList({
       ) : filteredClients.length === 0 ? (
         <DSEmptyState title="Sin resultados" description="No encontramos clientes que coincidan con tu busqueda y filtros activos." />
       ) : (
-        <div className="lead-list cc-record-list cc-bounded-list">
+        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de clientes">
           {filteredClients.map((client) => {
             const isSelected = client.id === selectedClientId
 
             return (
-              <button
+              <OperationalListItem
                 key={client.id}
-                type="button"
-                className={
-                  isSelected
-                    ? 'lead-item lead-item-button selected cc-record-card cc-record-card--client cc-record-card--compact'
-                    : 'lead-item lead-item-button cc-record-card cc-record-card--client cc-record-card--compact'
-                }
-                onClick={() => onSelectClient(client)}
-              >
-                <div className="cc-record-card__head">
-                  <div className="cc-record-card__identity">
-                    <strong className="cc-record-card__title">{formatClientLabel(client)}</strong>
-                    <span className="cc-record-card__subref">Interno {client.display_code ?? client.id}</span>
-                  </div>
-
-                  <div className="cc-record-card__aside">
-                    <span className="lead-badge">{client.status}</span>
-                  </div>
-                </div>
-
-                <p className="cc-record-card__summary">{client.email ?? 'Sin email registrado'}</p>
-
-                <div className="cc-list-meta cc-record-card__meta">
-                  <span>
-                    <span className="cc-record-card__meta-label">Telefono</span>
-                    <span className="cc-record-card__meta-value">{client.phone ?? 'Sin telefono'}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Fiscal</span>
-                    <span className="cc-record-card__meta-value">{client.tax_id ?? 'Sin dato fiscal'}</span>
-                  </span>
-                  <span>
-                    <span className="cc-record-card__meta-label">Origen</span>
-                    <span className="cc-record-card__meta-value">{client.source_lead_id ? `Lead ${client.source_lead_id}` : 'Alta directa'}</span>
-                  </span>
-                </div>
-              </button>
+                selected={isSelected}
+                onSelect={() => onSelectClient(client)}
+                title={formatClientLabel(client)}
+                subtitle={`Interno ${client.display_code ?? client.id}`}
+                status={<span className="lead-badge">{client.status}</span>}
+                summary={client.email ?? 'Sin email registrado'}
+                chips={[client.phone ?? 'Sin telefono']}
+                meta={[{ label: 'Fiscal', value: client.tax_id ?? 'Sin dato fiscal' }]}
+                microhint={client.source_lead_id ? `Origen Lead ${client.source_lead_id}` : 'Alta directa'}
+              />
             )
           })}
         </div>

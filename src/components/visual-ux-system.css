@@ -680,3 +680,118 @@
     padding-inline: 0.9rem;
   }
 }
+
+@media (max-width: 640px) {
+  .cc-severity-badge {
+    gap: 0.35rem;
+    padding: 0.3rem 0.58rem;
+    font-size: 0.66rem;
+  }
+
+  .cc-visual-executive-header {
+    gap: var(--ds-mobile-gap);
+    padding: var(--ds-mobile-card-padding);
+    border-radius: 20px;
+  }
+
+  .cc-visual-executive-header__main,
+  .cc-visual-executive-header__extra,
+  .cc-visual-executive-header__actions {
+    gap: 0.6rem;
+  }
+
+  .cc-visual-executive-header__title {
+    font-size: var(--ds-mobile-title-size);
+    line-height: 1;
+  }
+
+  .cc-visual-executive-header__summary,
+  .cc-visual-executive-header__metric-hint,
+  .cc-fiscal-closing-card__note,
+  .cc-visual-kpi-card__hint,
+  .cc-progress-metric__hint,
+  .cc-action-checklist__description {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.35;
+  }
+
+  .cc-visual-executive-header__metric,
+  .cc-visual-kpi-card,
+  .cc-action-checklist__item {
+    border-radius: 16px;
+  }
+
+  .cc-visual-executive-header__metric {
+    padding: 0.8rem 0.86rem;
+  }
+
+  .cc-visual-executive-header__metric-value {
+    font-size: clamp(1.1rem, 5vw, 1.46rem);
+  }
+
+  .cc-visual-kpi-card {
+    gap: 0.55rem;
+    padding: 0.85rem 0.9rem;
+  }
+
+  .cc-visual-kpi-card--primary,
+  .cc-visual-kpi-card--secondary,
+  .cc-visual-kpi-card--compact {
+    min-height: auto;
+  }
+
+  .cc-visual-kpi-card__label,
+  .cc-progress-metric__label {
+    font-size: 0.66rem;
+  }
+
+  .cc-visual-kpi-card__value,
+  .cc-visual-kpi-card--primary .cc-visual-kpi-card__value {
+    font-size: var(--ds-mobile-kpi-size);
+  }
+
+  .cc-visual-kpi-card__footer {
+    gap: 0.5rem;
+  }
+
+  .cc-visual-kpi-card__action-label {
+    font-size: 0.72rem;
+  }
+
+  .cc-progress-metric {
+    gap: 0.38rem;
+  }
+
+  .cc-action-checklist,
+  .cc-action-checklist--compact {
+    gap: 0.45rem;
+  }
+
+  .cc-action-checklist__item {
+    gap: 0.5rem;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .cc-action-checklist__label {
+    font-size: 0.88rem;
+  }
+
+  .cc-fiscal-closing-page,
+  .cc-fiscal-closing-header-progress,
+  .cc-fiscal-closing-primary-grid,
+  .cc-fiscal-closing-secondary-grid,
+  .cc-fiscal-closing-two-column,
+  .cc-fiscal-closing-ai-meta,
+  .cc-fiscal-closing-ai-columns {
+    gap: var(--ds-mobile-gap);
+  }
+
+  .cc-fiscal-closing-card__split {
+    gap: 0.35rem;
+  }
+
+  .cc-fiscal-closing-inline-item {
+    padding: 0.72rem 0.8rem;
+    border-radius: 14px;
+  }
+}

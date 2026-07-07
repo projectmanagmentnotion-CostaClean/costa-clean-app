@@ -33,7 +33,7 @@ export function FiscalPeriodSelector({
   }
 
   return (
-    <section className="cc-dashboard-block">
+    <section className="cc-dashboard-block cc-fiscal-period-selector">
       <div className="cc-dashboard-block__header">
         <div>
           <h2>{title}</h2>
@@ -44,6 +44,18 @@ export function FiscalPeriodSelector({
       <div className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
           <span className="cc-dashboard-panel__label">Tipo de periodo</span>
+          <label className="cc-inline-field cc-fiscal-period-selector__mobile-mode">
+            <span>Periodo</span>
+            <select
+              value={selection.mode}
+              onChange={(event) => handleModeChange(event.target.value as FiscalPeriodMode)}
+            >
+              <option value="month">Mes</option>
+              <option value="quarter">Trimestre</option>
+              <option value="year">Año</option>
+              <option value="custom">Personalizado</option>
+            </select>
+          </label>
           <div className="cc-inline-toggle-group" role="tablist" aria-label="Selector de periodo fiscal">
             {([
               ['month', 'Mes'],

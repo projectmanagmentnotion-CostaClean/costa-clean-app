@@ -52,7 +52,7 @@
     padding:
       var(--ds-space-3)
       max(var(--ds-space-3), calc(env(safe-area-inset-right, 0px) + var(--ds-space-3)))
-      max(var(--ds-space-3), calc(env(safe-area-inset-bottom, 0px) + var(--ds-space-3)))
+      max(var(--ds-space-3), calc(var(--ds-mobile-bottom-nav-safe-space) - 56px))
       max(var(--ds-space-3), calc(env(safe-area-inset-left, 0px) + var(--ds-space-3)));
   }
 

@@ -354,6 +354,57 @@
   .cc-record-card__meta {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  .cc-list-toolbar {
+    gap: var(--ds-mobile-gap);
+  }
+
+  .cc-list-toolbar__overview {
+    gap: 10px;
+    padding: var(--ds-mobile-card-padding);
+    border-radius: 18px;
+  }
+
+  .cc-list-toolbar__eyebrow,
+  .cc-list-toolbar__caption {
+    display: none;
+  }
+
+  .cc-list-toolbar__headline {
+    font-size: 1rem;
+  }
+
+  .cc-list-toolbar__state {
+    font-size: var(--ds-mobile-helper-size);
+  }
+
+  .cc-record-card__summary {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.32;
+  }
+
+  .cc-record-card__chips {
+    margin-top: 6px;
+  }
+
+  .cc-record-card__chip {
+    min-height: 28px;
+    padding-inline: 10px;
+    font-size: 0.72rem;
+  }
+
+  .cc-record-card__meta {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .cc-record-card__meta span:not(:first-child) {
+    display: none;
+  }
+
+  .cc-record-card__meta-value {
+    font-size: 0.78rem;
+  }
 }
 
 /* Minimal nav v2 */

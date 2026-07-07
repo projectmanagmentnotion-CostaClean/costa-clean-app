@@ -321,6 +321,83 @@
   }
 }
 
+@media (max-width: 640px) {
+  .cc-home-dashboard-cockpit-grid,
+  .cc-home-dashboard-summary-grid,
+  .cc-home-dashboard-chart-grid {
+    gap: var(--ds-mobile-gap);
+  }
+
+  .cc-home-quick-actions-panel__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .cc-home-quick-actions-panel__action {
+    min-height: 52px;
+    padding: 0.58rem 0.62rem;
+    border-radius: 0.9rem;
+  }
+
+  .cc-home-quick-actions-panel__action strong {
+    font-size: 0.76rem;
+  }
+
+  .cc-home-fiscal-kpi-grid__items,
+  .cc-home-alert-summary__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.55rem;
+  }
+
+  .cc-home-gsap-chart-card__copy h3 {
+    font-size: 0.92rem;
+  }
+
+  .cc-home-gsap-chart-card__copy p {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.3;
+  }
+
+  .cc-home-gsap-chart-card__value {
+    font-size: clamp(1.02rem, 4.8vw, 1.24rem);
+  }
+
+  .cc-home-gsap-chart-card__body {
+    min-height: 112px;
+  }
+
+  .cc-home-svg-chart--radial {
+    max-width: 136px;
+  }
+
+  .cc-home-alert-summary__item {
+    min-height: auto;
+    padding: 0.72rem 0.82rem;
+    gap: 0.38rem;
+  }
+
+  .cc-home-alert-summary__item p {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.28;
+  }
+
+  .cc-home-alert-summary__actions {
+    gap: 0.35rem;
+  }
+
+  .cc-home-alert-summary__actions .secondary-button {
+    min-height: 34px;
+    padding-inline: 0.72rem;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 430px) {
+  .cc-home-quick-actions-panel__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 :root[data-theme="light"] .cc-home-quick-actions-panel__action {
   border-color: rgba(14, 84, 114, 0.1);
   background:

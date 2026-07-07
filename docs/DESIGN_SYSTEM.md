@@ -36,6 +36,26 @@ Este sprint crea una base de design system reusable y compatible sobre component
 
 La capa nueva no inventa otro universo visual. Referencia el sistema actual de variables ya presente en `src/index.css`.
 
+### iPhone density tokens
+
+Para el reset mobile real:
+
+- `--ds-mobile-page-padding`
+- `--ds-mobile-card-padding`
+- `--ds-mobile-gap`
+- `--ds-mobile-title-size`
+- `--ds-mobile-card-title-size`
+- `--ds-mobile-body-size`
+- `--ds-mobile-helper-size`
+- `--ds-mobile-kpi-size`
+- `--ds-mobile-button-height`
+- `--ds-mobile-chip-height`
+- `--ds-mobile-bottom-nav-safe-space`
+
+Regla:
+
+- mobile primero compacta desde tokens compartidos antes de añadir overrides ad hoc por modulo
+
 ### Spacing
 
 - `dsSpacing`

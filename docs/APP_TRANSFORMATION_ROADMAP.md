@@ -342,3 +342,18 @@ As of Motion Phase 5:
 - Motion Phase 3 is completed on StepFlow and overlays.
 - Motion Phase 4 is completed on visual Home and smart minimal form helpers.
 - Motion Phase 5 is completed on Home visual reset and smart forms hardening.
+
+## Post-Roadmap Sprint: Mobile First Reset
+
+Objective:
+
+Reset the live authenticated mobile reading layer for real iPhone density without reopening business logic or data contracts.
+
+Focus:
+
+- iPhone density tokens
+- compact list controls
+- compact operational cards
+- collapsed invoice detail
+- collapsed fiscal closing detail
+- tighter StepFlow shell

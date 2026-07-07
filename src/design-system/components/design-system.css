@@ -304,6 +304,58 @@
   min-height: 44px;
 }
 
+@media (max-width: 640px) {
+  .ds-card {
+    gap: var(--ds-mobile-gap);
+    padding: var(--ds-mobile-card-padding);
+    border-radius: 18px;
+  }
+
+  .ds-button,
+  .ds-filter-summary-button,
+  .ds-active-filters__clear {
+    min-height: var(--ds-mobile-button-height);
+  }
+
+  .ds-button {
+    padding: 0.68rem 0.9rem;
+  }
+
+  .ds-tag,
+  .ds-filter-chip {
+    min-height: var(--ds-mobile-chip-height);
+    padding: 0.38rem 0.72rem;
+    font-size: var(--ds-mobile-helper-size);
+  }
+
+  .ds-filter-summary-button {
+    gap: 0.55rem;
+    padding: 0.55rem 0.72rem;
+  }
+
+  .ds-filter-summary-button__copy strong {
+    font-size: 0.78rem;
+  }
+
+  .ds-filter-summary-button__copy span,
+  .ds-field__hint {
+    font-size: var(--ds-mobile-helper-size);
+  }
+
+  .ds-section-header {
+    gap: 0.55rem;
+  }
+
+  .ds-section-header__copy {
+    gap: 0.28rem;
+  }
+
+  .ds-section-header__copy h2,
+  .ds-section-header h2 {
+    font-size: var(--ds-mobile-card-title-size);
+  }
+}
+
 .ds-compact-filter-group {
   display: grid;
   gap: 0.7rem;

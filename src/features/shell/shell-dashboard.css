@@ -12225,6 +12225,10 @@
   gap: 14px;
 }
 
+.cc-fiscal-period-selector__mobile-mode {
+  display: none;
+}
+
 .cc-filters-block {
   gap: 10px;
 }
@@ -12468,6 +12472,113 @@
   .cc-filters-panel__actions {
     margin-inline: 10px;
     padding-inline: 0;
+  }
+
+  .page-section,
+  .cc-dashboard-page,
+  .dashboard-page {
+    padding-bottom: var(--ds-mobile-bottom-nav-safe-space);
+  }
+
+  .data-section,
+  .cc-dashboard-overview,
+  .cc-dashboard-block,
+  .cc-module-filter-bar,
+  .lead-detail-card,
+  .cc-expense-detail-card {
+    margin-top: 12px;
+    padding: var(--ds-mobile-card-padding);
+    border-radius: 20px;
+  }
+
+  .section-header {
+    margin-bottom: 10px;
+  }
+
+  .section-header h2,
+  .cc-dashboard-block__header h2 {
+    font-size: var(--ds-mobile-card-title-size);
+  }
+
+  .section-header p,
+  .cc-dashboard-block__header p,
+  .cc-directory-list__summary p,
+  .cc-dashboard-panel__text {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.32;
+  }
+
+  .cc-list-toolbar__one-line {
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .cc-list-toolbar__quick-filters {
+    flex: 1 1 100%;
+    gap: 6px;
+  }
+
+  .cc-list-toolbar__quick-filters .ds-filter-chip:nth-child(n+3) {
+    display: none;
+  }
+
+  .cc-list-toolbar__summary-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .cc-list-toolbar .ds-active-filters__items {
+    gap: 6px;
+  }
+
+  .cc-list-toolbar .ds-active-filters__tag:nth-child(n+3) {
+    display: none;
+  }
+
+  .lead-item,
+  .cc-record-card,
+  .cc-operational-item {
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .cc-record-card__head,
+  .cc-operational-item__head {
+    gap: 8px;
+    align-items: start;
+  }
+
+  .cc-record-card__title,
+  .cc-operational-item__title {
+    font-size: 0.96rem;
+    line-height: 1.14;
+  }
+
+  .cc-record-card__subref,
+  .cc-operational-item__subtitle,
+  .cc-operational-item__summary,
+  .cc-operational-item__microhint {
+    font-size: var(--ds-mobile-helper-size);
+    line-height: 1.3;
+  }
+
+  .cc-record-card__amount,
+  .cc-operational-item__aside .cc-record-card__amount {
+    font-size: 1rem;
+  }
+
+  .cc-record-card__inline-action,
+  .cc-action-group__trigger,
+  .cc-action-group__menu-item {
+    min-height: 40px;
+  }
+
+  .cc-fiscal-period-selector__mobile-mode {
+    display: grid;
+  }
+
+  .cc-fiscal-period-selector .cc-inline-toggle-group {
+    display: none;
   }
 }
 

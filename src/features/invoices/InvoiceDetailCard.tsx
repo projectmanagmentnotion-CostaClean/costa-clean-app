@@ -6,6 +6,7 @@ import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
+import { CollapsibleDetailSection } from '../../components/CollapsibleDetailSection'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
@@ -1304,19 +1305,24 @@ export function InvoiceDetailCard({
                     <span className="detail-label">Estado financiero</span>
                     <strong>{paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Pendiente'}</strong>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Ultimo cobro</span>
-                    <strong>
+                </div>
+
+                <CollapsibleDetailSection title="Ver detalle de cobro" count={2} tone="info">
+                  <div className="lead-detail-grid cc-detail-panel__grid">
+                    <div className="detail-row">
+                      <span className="detail-label">Ultimo cobro</span>
+                      <strong>
                       {paymentSummary?.lastPayment
                         ? `${formatDateEs(paymentSummary.lastPayment.payment_date)} · ${formatCurrency(paymentSummary.lastPayment.amount)}`
                         : 'Sin cobros'}
-                    </strong>
+                      </strong>
+                    </div>
+                    <div className="detail-row">
+                      <span className="detail-label">Metodo y origen</span>
+                      <strong>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</strong>
+                    </div>
                   </div>
-                  <div className="detail-row">
-                    <span className="detail-label">Metodo y origen</span>
-                    <strong>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</strong>
-                  </div>
-                </div>
+                </CollapsibleDetailSection>
 
               {paymentActions.length > 0 ? (
                 <div className="form-actions cc-invoice-detail-card__action-row">
@@ -1383,7 +1389,8 @@ export function InvoiceDetailCard({
                 />
               ) : null}
 
-              <section className="data-section cc-invoice-detail-card__section">
+              <CollapsibleDetailSection title="Documento y gestion" tone="neutral">
+                <section className="data-section cc-invoice-detail-card__section">
                 <div className="section-header page-header-actions">
                   <div>
                     <h2>Documento y gestion</h2>
@@ -1409,9 +1416,11 @@ export function InvoiceDetailCard({
                     <ActionGroup actions={statusActions} moreLabel="Estado admin." />
                   </div>
                 ) : null}
-              </section>
+                </section>
+              </CollapsibleDetailSection>
 
-              <section className="data-section cc-invoice-detail-card__section">
+              <CollapsibleDetailSection title="Contexto de factura" tone="neutral">
+                <section className="data-section cc-invoice-detail-card__section">
                 <div className="section-header page-header-actions">
                   <div>
                     <h2>Contexto de factura</h2>
@@ -1444,7 +1453,8 @@ export function InvoiceDetailCard({
                   <strong>{invoice.notes ?? 'Sin notas'}</strong>
                 </div>
               </div>
-              </section>
+                </section>
+              </CollapsibleDetailSection>
             </>
           )}
         </div>

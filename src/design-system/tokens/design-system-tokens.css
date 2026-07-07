@@ -39,6 +39,17 @@
   --ds-density-compact: 0.88;
   --ds-density-comfortable: 1;
   --ds-density-spacious: 1.14;
+  --ds-mobile-page-padding: 12px;
+  --ds-mobile-card-padding: 12px;
+  --ds-mobile-gap: 10px;
+  --ds-mobile-title-size: clamp(1.25rem, 4.8vw, 1.38rem);
+  --ds-mobile-card-title-size: 1rem;
+  --ds-mobile-body-size: 0.875rem;
+  --ds-mobile-helper-size: 0.75rem;
+  --ds-mobile-kpi-size: clamp(1.5rem, 7vw, 1.9rem);
+  --ds-mobile-button-height: 46px;
+  --ds-mobile-chip-height: 34px;
+  --ds-mobile-bottom-nav-safe-space: calc(92px + env(safe-area-inset-bottom, 0px));
 
   --ds-color-bg: var(--cc-color-background);
   --ds-color-surface: var(--cc-color-surface);

@@ -52,6 +52,20 @@ export const dsDensity = {
   spacious: 'var(--ds-density-spacious)',
 } as const
 
+export const dsMobile = {
+  pagePadding: 'var(--ds-mobile-page-padding)',
+  cardPadding: 'var(--ds-mobile-card-padding)',
+  gap: 'var(--ds-mobile-gap)',
+  title: 'var(--ds-mobile-title-size)',
+  cardTitle: 'var(--ds-mobile-card-title-size)',
+  body: 'var(--ds-mobile-body-size)',
+  helper: 'var(--ds-mobile-helper-size)',
+  kpi: 'var(--ds-mobile-kpi-size)',
+  buttonHeight: 'var(--ds-mobile-button-height)',
+  chipHeight: 'var(--ds-mobile-chip-height)',
+  bottomNavSafeSpace: 'var(--ds-mobile-bottom-nav-safe-space)',
+} as const
+
 export const dsColors = {
   background: 'var(--ds-color-bg)',
   surface: 'var(--ds-color-surface)',

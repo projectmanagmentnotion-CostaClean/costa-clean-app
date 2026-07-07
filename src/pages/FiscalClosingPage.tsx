@@ -539,6 +539,7 @@ export function FiscalClosingPage({
         </div>
       </section>
 
+      <CollapsibleDetailSection title="Base del periodo" count={7} tone="info">
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
@@ -608,7 +609,9 @@ export function FiscalClosingPage({
           />
         </div>
       </section>
+      </CollapsibleDetailSection>
 
+      <CollapsibleDetailSection title="Checklist y fuentes" count={checklistItems.length} tone="info">
       <section className="cc-fiscal-closing-two-column">
         <article className="cc-dashboard-block">
           <div className="cc-dashboard-block__header">
@@ -666,7 +669,9 @@ export function FiscalClosingPage({
           </div>
         </article>
       </section>
+      </CollapsibleDetailSection>
 
+      <CollapsibleDetailSection title="Configuracion y snapshot" count={summary.snapshotMode ? 2 : 1} tone="neutral">
       <section className="cc-quarterly-pack-grid">
         <article className="cc-quarterly-persistence__card">
           <span className="cc-dashboard-panel__label">Siguiente decision</span>
@@ -726,6 +731,7 @@ export function FiscalClosingPage({
           {saveError ? <p className="cc-dashboard-panel__text">{saveError}</p> : null}
         </article>
       </section>
+      </CollapsibleDetailSection>
 
       {fiscalSummary.insufficientDataNotes.length > 0 ? (
         <CollapsibleDetailSection title="Datos insuficientes" count={fiscalSummary.insufficientDataNotes.length} tone="critical">
@@ -737,6 +743,7 @@ export function FiscalClosingPage({
         </CollapsibleDetailSection>
       ) : null}
 
+      <CollapsibleDetailSection title="Informe integral del periodo" count={3} tone="warning">
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
@@ -866,6 +873,7 @@ export function FiscalClosingPage({
           </article>
         </div>
       </section>
+      </CollapsibleDetailSection>
 
       {summary.snapshotMode ? (
         <ClosingAiSummarySection

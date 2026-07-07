@@ -74,3 +74,8 @@
 - `UX-015` Repo hygiene
 - `UX-016` Tokens / estilos base
 - `UX-017` Shell / navegacion
+
+## Actualizacion 2026-07-07
+
+- `UX-002`, `UX-003` y `UX-009` reciben una pasada nueva de compactacion iPhone.
+- La deuda ya no es solo "densidad alta"; ahora queda centrada en QA visual autenticada y ajuste fino de superficies legacy.

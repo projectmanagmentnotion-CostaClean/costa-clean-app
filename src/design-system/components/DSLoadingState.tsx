@@ -1,4 +1,4 @@
-import { DeferredContentFallback } from '../../components/DeferredContentFallback'
+import { DSPageLoading } from './DSPageLoading'
 
 interface DSLoadingStateProps {
   title: string
@@ -6,5 +6,5 @@ interface DSLoadingStateProps {
 }
 
 export function DSLoadingState({ title, description }: DSLoadingStateProps) {
-  return <DeferredContentFallback title={title} description={description} />
+  return <DSPageLoading title={title} description={description} mode="inline" rows={1} />
 }

@@ -95,6 +95,7 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 ## Anti-patrones prohibidos
 
 - Cards gigantes en mobile
+- Skeletons gigantes o pilas de cards falsas durante loading
 - Filtros largos abiertos debajo del buscador
 - Dos acciones primarias visibles en una card compacta
 - Informe completo antes de la decision principal
@@ -111,3 +112,4 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - Sin numeros truncados
 - Sin chips o botones inflando altura innecesaria
 - Sin bloques largos abiertos por defecto en factura o cierre fiscal
+- Sin `0` placeholder ni empty state prematuro durante loading

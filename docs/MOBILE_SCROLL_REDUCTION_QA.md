@@ -111,3 +111,9 @@ En este sprint hubo auditoria real por screenshots y auditoria de codigo/CSS, pe
 - La validacion viva ahora incluye `payments`, `clients`, `properties`, `dashboard` y `fiscal_closing`.
 - `Registrar cobro` confirma visibilidad inmediata del primer campo en mobile e iPad.
 - Se detecta y resuelve un overflow horizontal real del shell en iPad; el problema no estaba en los modulos sino en la capa superior compartida.
+
+## Actualizacion mobile loading 2026-07-08
+
+- Se detecta que el loading compartido del shell seguia entrando como `hero + 3 cards + empty-state`, demasiado pesado para recargas mobile.
+- El patron se sustituye por una carga compacta con hasta `3` filas skeleton y un modo inline para cargas breves.
+- Los empty states compartidos bajan de peso visual en mobile para no competir con la lectura real.

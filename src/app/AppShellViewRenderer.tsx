@@ -1,6 +1,7 @@
-import { Suspense } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { AppView } from './navigation'
+import { DSPageLoading } from '../design-system/components/DSPageLoading'
 
 const shellLoadingTitles: Record<AppView, string> = {
   dashboard: 'Preparando panel de control',
@@ -19,37 +20,25 @@ const shellLoadingTitles: Record<AppView, string> = {
 }
 
 function ShellLoadingState({ currentView }: { currentView: AppView }) {
+  const [showRows, setShowRows] = useState(false)
+
+  useEffect(() => {
+    const timerId = window.setTimeout(() => {
+      setShowRows(true)
+    }, 240)
+
+    return () => {
+      window.clearTimeout(timerId)
+    }
+  }, [currentView])
+
   return (
-    <section className="cc-shell-loading" aria-live="polite" aria-busy="true">
-      <div className="cc-shell-loading__hero">
-        <div className="cc-shell-loading__eyebrow" />
-        <div className="cc-shell-loading__title" />
-        <div className="cc-shell-loading__text" />
-      </div>
-
-      <div className="cc-shell-loading__grid">
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
-        </article>
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--medium" />
-        </article>
-        <article className="cc-shell-loading__card">
-          <div className="cc-shell-loading__line cc-shell-loading__line--short" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--value" />
-          <div className="cc-shell-loading__line cc-shell-loading__line--wide" />
-        </article>
-      </div>
-
-      <div className="empty-state cc-state-card cc-state-card--loading">
-        <strong>{shellLoadingTitles[currentView]}</strong>
-        <p>Sincronizando datos y preparando la vista operativa.</p>
-      </div>
-    </section>
+    <DSPageLoading
+      title={shellLoadingTitles[currentView]}
+      description="Sincronizando la vista operativa sin ocupar mas espacio que la lectura real."
+      mode={showRows ? 'page' : 'inline'}
+      rows={showRows ? 3 : 0}
+    />
   )
 }
 

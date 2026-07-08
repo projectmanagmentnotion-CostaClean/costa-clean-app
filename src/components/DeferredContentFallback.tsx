@@ -1,3 +1,5 @@
+import { DSPageLoading } from '../design-system/components/DSPageLoading'
+
 interface DeferredContentFallbackProps {
   title: string
   description: string
@@ -7,10 +9,5 @@ export function DeferredContentFallback({
   title,
   description,
 }: DeferredContentFallbackProps) {
-  return (
-    <div className="empty-state cc-state-card cc-state-card--loading">
-      <strong>{title}</strong>
-      <p>{description}</p>
-    </div>
-  )
+  return <DSPageLoading title={title} description={description} mode="inline" rows={1} />
 }

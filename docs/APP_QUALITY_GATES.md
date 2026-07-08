@@ -136,6 +136,15 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Si `Filtros` u `Orden` ocupan tanto peso como una card de contenido, la superficie falla densidad.
 - El estado activo debe resumirse sin convertir la toolbar en un panel largo permanente.
 
+## Mobile Loading Gate
+
+- no skeletons enormes en mobile
+- no `0` placeholders mientras la vista sigue cargando
+- no empty states prematuros antes de conocer el estado real
+- maximo `3` skeleton rows en mobile
+- la carga compartida no puede ocupar mas espacio visual que la lectura real
+- QA viva obligatoria en `390x844` y `768x1024` cuando el navegador autenticado este disponible
+
 ## GSAP Plugin Gate
 
 - Plugins are loaded through the shared motion layer, never ad hoc in business modules.

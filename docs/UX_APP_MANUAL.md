@@ -246,6 +246,14 @@ Rules:
 - Saved should confirm persistence without forcing interruption.
 - Success should confirm outcome and expose the next relevant action.
 
+### Mobile Loading Rules
+
+- Loading in mobile must be quieter than the loaded state.
+- Do not simulate a full report with fake cards while data is still arriving.
+- Prefer one compact loading surface or up to three compact rows.
+- Do not show `0` as temporary content if real values are still pending.
+- Do not show an empty state until the system knows the dataset is truly empty.
+
 ## Modern Forms
 
 - Forms must be chunked by intent.

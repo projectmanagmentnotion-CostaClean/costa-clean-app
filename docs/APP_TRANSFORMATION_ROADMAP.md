@@ -378,3 +378,16 @@ Focus:
 - compact filter bars
 - shell/header overflow control on iPhone and iPad
 - flattening of shared detail surfaces before any future scaling
+
+## Post-Roadmap Sprint: Mobile Loading Polish
+
+Objective:
+
+Reduce skeleton noise, premature empty states, and `0` placeholders during mobile/iPad loading without touching protected business logic.
+
+Focus:
+
+- compact shared loading primitives
+- delayed expanded loading for short transitions
+- empty-state density reduction
+- authenticated live QA on `390x844` and `768x1024`

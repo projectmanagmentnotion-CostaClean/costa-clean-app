@@ -130,6 +130,7 @@ Regla:
 - `DSEmptyState`
 - `DSErrorState`
 - `DSLoadingState`
+- `DSPageLoading`
 - `DSSkeleton`
 - `DSBottomActionBar`
 - `DSConfirmDialog`
@@ -242,6 +243,7 @@ Superficies ya alineadas:
 - `DSEmptyState`: usarlo cuando falten datos, resultados o contexto; debe explicar que falta y cual es la siguiente accion recomendada.
 - `DSErrorState`: usarlo para errores visibles al usuario con copy humana; evitar mensajes tecnicos crudos salvo que sean la unica pista util.
 - `DSLoadingState`: usarlo en cargas estructurales o previews diferidos; preferir contexto claro frente a spinners sin texto.
+- `DSPageLoading`: primitive compartida para loading de pagina o lista compacta; en mobile no debe superar tres filas skeleton ni reutilizar una card vacia gigante como placeholder.
 - `DSConfirmDialog`: wrapper preferido para acciones destructivas, irreversibles o de salida documental; no anadir confirmaciones innecesarias a acciones ligeras.
 - `FeedbackDialog` existente sigue siendo valido para exito/error puntual cuando la accion ya vive en ese patron, pero nuevas superficies deben priorizar primitives DS o toasts del sistema ya existente.
 - Warnings fiscales, mismatch y riesgos criticos no deben suavizarse: la consistencia de feedback no puede ocultar severidad real.

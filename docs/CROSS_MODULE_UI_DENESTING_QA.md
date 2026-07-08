@@ -83,3 +83,8 @@ Protected scope remained intact:
 - secondary actions under `Mas` before growing button rows
 - debug must not coexist with equivalent operational cards
 - shell and module top bars must be checked against real `390x844` and `768x1024`
+
+## Harness Follow-up
+
+- Future authenticated re-runs of this QA can use the local harness in `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md` when the embedded browser is not stable enough.
+- The harness already completed one authenticated run across `390x844`, `768x1024`, and `1366x900`, providing a reusable base for future de-nesting audits.

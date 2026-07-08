@@ -96,3 +96,9 @@
 - La deuda UX restante en facturas y cargas mobile sigue ligada a QA autenticada estable, no a una falta de criterio visual.
 - El `2026-07-08` se recupero resolucion del tab autenticado vivo, pero no una navegacion/captura suficientemente estable para cerrar todas las pantallas pedidas.
 - La deuda pendiente deja de ser "hacer mas UI" y pasa a ser "recuperar un canal de QA autenticada fiable".
+
+## Harness Update
+
+- El canal de QA autenticada fiable ya tiene una primera infraestructura local reutilizable basada en perfil QA + CDP.
+- La deuda restante ya no es ausencia total de harness, sino ejecutar y endurecer esa via con sesiones reales y reportes repetibles.
+- La primera pasada real deja una unica alerta residual: `tablet / fiscal_closing / fiscalRealAmountVisible`.

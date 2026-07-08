@@ -69,6 +69,11 @@
 - El intento del `2026-07-08` recupero resolucion del tab autenticado, pero no la navegacion/captura estable del navegador embebido.
 - Mientras ese canal siga inestable, cualquier cierre visual autenticado debe declararse parcial aunque lint/build/test queden verdes.
 
+## Riesgo nuevo de QA harness local
+
+- el harness local reduce dependencia del navegador embebido, pero introduce riesgo de exponer datos reales si el perfil QA, screenshots o reportes privados se versionan por error
+- la mitigacion obligatoria es mantener `.auth/`, `qa-screenshots/private/` y `qa-reports/private/` fuera de git y no imprimir secretos
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

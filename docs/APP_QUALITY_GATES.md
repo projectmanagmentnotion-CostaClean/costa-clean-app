@@ -223,3 +223,10 @@ For roadmap-closeout or phase-closeout work:
   - blocked browser automation
 - If the embedded browser stalls, the final report must cite the exact timeout or runtime failure and the last authenticated surface actually reached.
 - Absence of fallback `storageState` or reusable authenticated session artifacts must be stated explicitly instead of implied away.
+
+## Authenticated Visual QA Gate
+
+- No confirmar QA visual autenticada solo por auditoria de codigo.
+- Si el navegador embebido falla, usar un harness local reutilizable con sesion ignorada por git antes de declarar bloqueo final.
+- La sesion local y screenshots privados deben vivir siempre en rutas ignoradas.
+- La validacion minima para superficies mobile/iPad sigue siendo `390x844` y `768x1024`.

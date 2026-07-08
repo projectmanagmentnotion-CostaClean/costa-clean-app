@@ -30,3 +30,9 @@
   - la captura viva fallo con `Timed out running CDP command "Page.captureScreenshot" for tab 1`
 - Se verifico ademas que el repo no contiene `storageState` autenticado reutilizable para fallback local.
 - Estado final: recuperacion parcial del canal de inspeccion, pero QA visual autenticada completa aun pendiente.
+
+## Harness Follow-up
+
+- Desde `2026-07-08` existe un harness local autenticado reutilizable documentado en `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md`.
+- Su objetivo es dejar de depender del navegador embebido como unica fuente de QA viva.
+- La primera pasada real del harness ya recorrio mobile, tablet y desktop con un solo fallo residual en `tablet / fiscal_closing`.

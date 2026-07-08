@@ -88,3 +88,8 @@ No se permiten cards dentro de cards, paneles dentro de paneles ni wrappers que 
 ## Confirmacion de alcance protegido
 
 No se tocaron Supabase, SQL, RPC, migrations, auth, rutas, `?view=`, `appDataApi`, `financialWriteApi`, numeracion, fiscalidad, calculos, persistencia ni contratos.
+
+## Harness Follow-up
+
+- La repeticion futura de esta QA ya no debe depender solo del navegador embebido.
+- El harness autenticado local documentado en `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md` pasa a ser la via de respaldo para `390x844` y `768x1024`.

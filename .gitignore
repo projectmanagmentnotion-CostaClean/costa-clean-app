@@ -44,3 +44,10 @@ _dump_*.ps1
 
 # Local client import files
 api/tools/imports/*.csv
+
+# Local authenticated QA harness artifacts
+.auth/
+playwright/.auth/
+test-results/auth/
+qa-screenshots/private/
+qa-reports/private/

@@ -63,3 +63,13 @@ Sprint focused on reducing mobile/iPad loading noise without touching Supabase, 
   - authenticated screenshot capture failed with `Timed out running CDP command "Page.captureScreenshot" for tab 1`
   - no reusable `storageState` or authenticated Playwright session artifact exists in repo for fallback
 - Pending status: authenticated visual QA remains partially blocked and must be rerun when the embedded browser becomes stable enough to navigate and capture pages end to end.
+
+## Harness Follow-up
+
+- `2026-07-08`: repo gains a reusable local authenticated QA harness based on Edge/Chrome + CDP profile reuse, without touching auth productivo.
+- This harness becomes the approved fallback when the embedded browser is unstable.
+- Primera pasada real del harness:
+  - `390x844`, `768x1024`, `1366x900`
+  - modulos `home`, `clients`, `properties`, `invoices`, `expenses`, `payments`, `fiscal_closing`, `invoices-debug`
+  - `239/240` checks en verde
+  - un unico fallo pendiente en `tablet / fiscal_closing / fiscalRealAmountVisible`

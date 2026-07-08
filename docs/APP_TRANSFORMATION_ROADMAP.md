@@ -391,3 +391,16 @@ Focus:
 - delayed expanded loading for short transitions
 - empty-state density reduction
 - authenticated live QA on `390x844` and `768x1024`
+
+## Post-Roadmap Sprint: Authenticated Visual QA Harness
+
+Objective:
+
+Create a reusable authenticated QA path independent from the embedded browser so future mobile/iPad hardening can be validated with repeatable local evidence.
+
+Focus:
+
+- isolated local QA profile
+- reusable authenticated session metadata
+- screenshots and reports in ignored local paths
+- real view audit across `?view=` surfaces and core viewports

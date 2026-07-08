@@ -160,3 +160,18 @@ Interpretacion del fallo:
   - `npm run qa:visual:auth` = `240/240`
 - Confirmacion:
   - no se tocaron importes ni calculos fiscales
+
+## Module Completion QA
+
+- El harness ya cubre tambien:
+  - `quotes`
+  - `jobs`
+  - create flows de `quotes`, `jobs`, `expenses` y `payments`
+- Los create flows se validan sin submit final y con checks de:
+  - overlay visible
+  - titulo visible
+  - primer campo visible
+  - sin overflow horizontal
+  - StepFlow presente
+- La pasada `2026-07-08` deja el resultado final en `360/360`.
+- `recurring` queda fuera del barrido standalone porque no existe ruta real `?view=` para ese dominio.

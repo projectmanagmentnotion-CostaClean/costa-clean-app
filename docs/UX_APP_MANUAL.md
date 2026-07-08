@@ -302,6 +302,8 @@ Rules:
 - Is any KPI decorative rather than useful?
 - Are warnings proportional to real severity?
 - Does text explain implication and next action, not internal mechanics?
+- If the module is considered polished, has it been checked in `390x844`, `768x1024`, and desktop with the authenticated app?
+- Does create/edit open with the first actionable field immediately visible?
 
 ## Technical Checklist
 

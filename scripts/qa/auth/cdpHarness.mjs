@@ -12,10 +12,19 @@ const DEFAULT_VIEWS = [
   'home',
   'clients',
   'properties',
+  'quotes',
+  'jobs',
   'invoices',
   'expenses',
   'payments',
   'fiscal_closing',
+]
+
+const DEFAULT_FLOW_SCENARIOS = [
+  { id: 'quotes-create', viewId: 'quotes', actionLabel: 'Nuevo presupuesto', title: 'Nuevo presupuesto' },
+  { id: 'jobs-create', viewId: 'jobs', actionLabel: 'Registrar servicio', title: 'Nuevo servicio' },
+  { id: 'expenses-create', viewId: 'expenses', actionLabel: 'Nuevo gasto', title: 'Nuevo gasto' },
+  { id: 'payments-create', viewId: 'payments', actionLabel: 'Registrar cobro', title: 'Registrar cobro' },
 ]
 
 const DEFAULT_VIEWPORTS = [
@@ -326,6 +335,32 @@ export async function navigateAndWait(connection, sessionId, url, waitMs = 1200)
   await delay(waitMs)
 }
 
+export async function waitForViewReady(connection, sessionId, viewId, timeoutMs = 8000) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const ready = await evaluateJson(connection, sessionId, `(() => {
+      const bodyText = document.body?.innerText ?? ''
+      const loadingDashboard = bodyText.includes('Preparando panel de control')
+      const header = document.querySelector('h1, header h1, [data-page-header] h1')
+
+      if (${JSON.stringify(viewId)} === 'home') {
+        return !loadingDashboard && Boolean(header)
+      }
+
+      return true
+    })()`)
+
+    if (ready) {
+      return true
+    }
+
+    await delay(400)
+  }
+
+  return false
+}
+
 async function waitForLoadEvent(connection, sessionId, timeoutMs) {
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
@@ -494,6 +529,56 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
   })()`)
 }
 
+export async function collectActionFlowAudit(connection, sessionId, scenario, viewport) {
+  await evaluateJson(connection, sessionId, `(() => {
+    const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
+    const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent) === ${JSON.stringify(scenario.actionLabel)})
+    if (!button) return false
+    button.click()
+    return true
+  })()`)
+
+  await delay(1200)
+
+  return await evaluateJson(connection, sessionId, `(() => {
+    const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
+    const panel = document.querySelector('[data-qa="action-flow-panel"]')
+    const panelRect = panel ? panel.getBoundingClientRect() : null
+    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+    const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
+    const fieldCandidates = Array.from(panel?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
+    const firstVisibleField = fieldCandidates.find((node) => {
+      const rect = node.getBoundingClientRect()
+      const style = window.getComputedStyle(node)
+      return rect.width > 0
+        && rect.height > 0
+        && style.visibility !== 'hidden'
+        && style.display !== 'none'
+        && rect.top < window.innerHeight
+        && rect.bottom > 0
+    }) ?? null
+    const firstVisibleFieldRect = firstVisibleField ? firstVisibleField.getBoundingClientRect() : null
+
+    return {
+      viewId: ${JSON.stringify(scenario.id)},
+      viewport: ${JSON.stringify(viewport)},
+      url: location.href,
+      title: document.title,
+      headerText: titleNode ? normalize(titleNode.textContent) : null,
+      checks: {
+        actionFlowVisible: Boolean(panelRect && panelRect.top < window.innerHeight && panelRect.bottom > 0),
+        actionFlowTitleVisible: Boolean(titleNode && normalize(titleNode.textContent).includes(${JSON.stringify(scenario.title)})),
+        actionFlowFirstFieldVisible: Boolean(firstVisibleFieldRect),
+        actionFlowNoHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + 1,
+        actionFlowStepFlowVisible: Boolean(flowSurface),
+      },
+      snippets: {
+        firstViewportText: (panel?.innerText ?? '').slice(0, 900),
+      },
+    }
+  })()`)
+}
+
 export async function writeMarkdownReport(reportPath, report) {
   const lines = [
     '# Authenticated Visual QA Report',
@@ -560,6 +645,10 @@ export function buildViewUrl(appUrl, viewId) {
 
 export function defaultViews() {
   return [...DEFAULT_VIEWS, 'invoices-debug']
+}
+
+export function defaultFlowScenarios() {
+  return DEFAULT_FLOW_SCENARIOS.map((scenario) => ({ ...scenario }))
 }
 
 export function defaultViewports() {

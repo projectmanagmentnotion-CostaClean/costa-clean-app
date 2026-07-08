@@ -64,12 +64,13 @@ export function ActionFlowOverlay({
   if (!isOpen) return null
 
   const overlay = (
-    <div ref={overlayRef} className="cc-action-flow" role="presentation">
+    <div ref={overlayRef} className="cc-action-flow" role="presentation" data-qa="action-flow-overlay">
       <div ref={backdropRef} className="cc-action-flow__backdrop" />
       <section
         ref={panelRef}
         className="cc-action-flow__panel"
         role="dialog"
+        data-qa="action-flow-panel"
         aria-modal="true"
         aria-labelledby="cc-action-flow-title"
         aria-describedby="cc-action-flow-description"

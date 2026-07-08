@@ -93,3 +93,8 @@ No se tocaron Supabase, SQL, RPC, migrations, auth, rutas, `?view=`, `appDataApi
 
 - La repeticion futura de esta QA ya no debe depender solo del navegador embebido.
 - El harness autenticado local documentado en `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md` pasa a ser la via de respaldo para `390x844` y `768x1024`.
+
+## Actualizacion module completion 2026-07-08
+
+- La pasada se extiende a `quotes` y `jobs`.
+- La regla de desencapsulacion ahora se hace explicita tambien en create flows largos: si el header del StepFlow entierra el primer campo, el flow falla aunque no haya overflow.

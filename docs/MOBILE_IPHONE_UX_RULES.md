@@ -113,3 +113,5 @@ Definir la capa explicita de densidad iPhone para que la app deje de comportarse
 - Sin chips o botones inflando altura innecesaria
 - Sin bloques largos abiertos por defecto en factura o cierre fiscal
 - Sin `0` placeholder ni empty state prematuro durante loading
+- Sin KPIs, alertas o checklist items a `0` ocupando altura si no cambian una decision
+- Sin formularios create/edit enterrados debajo del header del flow

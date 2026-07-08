@@ -26,6 +26,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -136,52 +137,85 @@ export function JobsPage({
     }, 0),
     [completedUninvoicedJobs],
   )
-  const jobsActionItems: ActionChecklistItem[] = [
-    {
+  const jobsActionItems: ActionChecklistItem[] = compactVisibleItems<ActionChecklistItem>([
+    todayJobs.length > 0 ? {
       id: 'today',
-      state: todayJobs.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${todayJobs.length} servicio(s) hoy`,
       description: todayJobs.length > 0
         ? 'La cola inmediata esta en la agenda de hoy y conviene abrirla primero.'
-        : 'No hay agenda activa para hoy.',
+        : '',
       action: todayJobs[0] ? {
         label: 'Abrir agenda de hoy',
         onClick: () => handleOpenWorkspace(todayJobs[0].id),
       } : undefined,
-    },
-    {
+    } : null,
+    completedUninvoicedJobs.length > 0 ? {
       id: 'uninvoiced',
-      state: completedUninvoicedJobs.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${completedUninvoicedJobs.length} completado(s) sin factura`,
       description: completedUninvoicedJobs.length > 0
         ? 'Es trabajo ya ejecutado que todavia no impacta caja porque no esta facturado.'
-        : 'No quedan servicios completados pendientes de facturar.',
+        : '',
       action: completedUninvoicedJobs[0] ? {
         label: 'Abrir listo para facturar',
         onClick: () => handleOpenWorkspace(completedUninvoicedJobs[0].id, 'billing'),
       } : undefined,
-    },
-    {
+    } : null,
+    pendingJobs.length > 0 ? {
       id: 'pending',
-      state: pendingJobs.length > 0 ? 'info' : 'done',
+      state: 'info',
       label: `${pendingJobs.length} pendiente(s) o en curso`,
       description: pendingJobs.length > 0
         ? 'Mantienen la operativa abierta fuera del cierre de hoy.'
-        : 'No hay operativa pendiente fuera de la agenda inmediata.',
-    },
-    {
+        : '',
+    } : null,
+    duplicateGroups.length > 0 ? {
       id: 'duplicates',
-      state: duplicateGroups.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${duplicateGroups.length} duplicado(s) potencial(es)`,
       description: duplicateGroups.length > 0
         ? 'Hay coincidencias operativas que conviene revisar antes de seguir programando.'
-        : 'No hay duplicidades activas dominando la agenda.',
+        : '',
       action: duplicateGroups.length > 0 ? {
         label: 'Revisar duplicados',
         onClick: () => setShowDuplicateReview(true),
       } : undefined,
-    },
-  ]
+    } : null,
+  ])
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulCount(todayJobs.length) ? (
+      <VisualKpiCard
+        key="jobs-today"
+        label="Servicios de hoy"
+        value={String(todayJobs.length)}
+        hint="Agenda inmediata del dia con fecha programada real."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(pendingJobs.length) ? (
+      <VisualKpiCard
+        key="jobs-pending"
+        label="Pendientes"
+        value={String(pendingJobs.length)}
+        hint="Servicios programados o en curso que siguen abiertos."
+        tone="warning"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(completedUninvoicedJobs.length) ? (
+      <VisualKpiCard
+        key="jobs-uninvoiced"
+        label="Completados sin facturar"
+        value={String(completedUninvoicedJobs.length)}
+        hint="Servicios ya hechos que aun no tienen factura enlazada."
+        tone="warning"
+        priority="compact"
+        badgeLabel="Caja bloqueada"
+      />
+    ) : null,
+  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
@@ -261,39 +295,20 @@ export function JobsPage({
                 }
               },
             }}
-            metricLabel="Trabajo sin facturar"
-            metricValue={formatCurrency(completedUninvoicedValue)}
-            metricHint={completedUninvoicedJobs.length > 0
+            metricLabel={hasMeaningfulAmount(completedUninvoicedValue) ? 'Trabajo sin facturar' : undefined}
+            metricValue={hasMeaningfulAmount(completedUninvoicedValue) ? formatCurrency(completedUninvoicedValue) : undefined}
+            metricHint={hasMeaningfulAmount(completedUninvoicedValue)
               ? 'Estimacion basada solo en lineas de facturacion o precio unitario del servicio.'
-              : 'No hay trabajo completado pendiente de factura visible.'}
+              : undefined}
           >
-            <ActionChecklist items={jobsActionItems} compact />
+            {jobsActionItems.length > 0 ? <ActionChecklist items={jobsActionItems} compact /> : null}
           </ExecutiveHeader>
 
-          <div className="cc-kpi-grid cc-kpi-grid--compact">
-            <VisualKpiCard
-              label="Servicios de hoy"
-              value={String(todayJobs.length)}
-              hint="Agenda inmediata del dia con fecha programada real."
-              tone={todayJobs.length > 0 ? 'info' : 'neutral'}
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Pendientes"
-              value={String(pendingJobs.length)}
-              hint="Servicios programados o en curso que siguen abiertos."
-              tone={pendingJobs.length > 0 ? 'warning' : 'success'}
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Completados sin facturar"
-              value={String(completedUninvoicedJobs.length)}
-              hint="Servicios ya hechos que aun no tienen factura enlazada."
-              tone={completedUninvoicedJobs.length > 0 ? 'warning' : 'success'}
-              priority="compact"
-              badgeLabel={completedUninvoicedJobs.length > 0 ? 'Caja bloqueada' : 'Cubierto'}
-            />
-          </div>
+          {summaryKpis.length > 0 ? (
+            <div className="cc-kpi-grid cc-kpi-grid--compact">
+              {summaryKpis}
+            </div>
+          ) : null}
 
           {recentCreatedJob ? (
             <section className="data-section cc-list-section__header">

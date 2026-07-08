@@ -24,6 +24,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
   default: (await import('../features/quotes/QuoteCreateFlow')).QuoteCreateFlow,
@@ -107,56 +108,100 @@ export function QuotesPage({
     reopenGroup,
   } = useDuplicateResolution(rawDuplicateGroups)
   const actionTargetQuote = acceptedWithoutJob[0] ?? acceptedWithoutInvoice[0] ?? sentQuotes[0] ?? selectedQuote ?? null
-  const quoteChecklistItems: ActionChecklistItem[] = [
-    {
+  const quoteChecklistItems: ActionChecklistItem[] = compactVisibleItems<ActionChecklistItem>([
+    acceptedWithoutJob.length > 0 ? {
       id: 'accepted-without-job',
-      state: acceptedWithoutJob.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${acceptedWithoutJob.length} aceptado(s) sin servicio`,
       description: acceptedWithoutJob.length > 0
         ? 'Son presupuestos ya ganados que siguen sin pasar a operativa.'
-        : 'No quedan aceptados pendientes de convertir a servicio.',
+        : '',
       action: acceptedWithoutJob[0] ? {
         label: 'Crear servicio',
         onClick: () => onCreateJobFromQuote(acceptedWithoutJob[0]),
       } : undefined,
-    },
-    {
+    } : null,
+    acceptedWithoutInvoice.length > 0 ? {
       id: 'accepted-without-invoice',
-      state: acceptedWithoutInvoice.length > 0 ? 'pending' : 'done',
+      state: 'pending',
       label: `${acceptedWithoutInvoice.length} aceptado(s) sin factura`,
       description: acceptedWithoutInvoice.length > 0
         ? 'Requieren abrir el presupuesto y decidir si ya toca facturar.'
-        : 'No quedan aceptados sin enlace de factura visible.',
+        : '',
       action: acceptedWithoutInvoice[0] ? {
         label: 'Abrir presupuesto',
         onClick: () => setSelectedQuoteId(acceptedWithoutInvoice[0].id),
       } : undefined,
-    },
-    {
+    } : null,
+    sentQuotes.length > 0 ? {
       id: 'follow-up',
-      state: sentQuotes.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${sentQuotes.length} enviado(s) por seguir`,
       description: sentQuotes.length > 0
         ? 'Siguen en decision comercial y conviene empujarlos antes de que se enfrien.'
-        : 'No hay propuestas enviadas dominando la cola comercial.',
+        : '',
       action: sentQuotes[0] ? {
         label: 'Abrir enviado',
         onClick: () => setSelectedQuoteId(sentQuotes[0].id),
       } : undefined,
-    },
-    {
+    } : null,
+    duplicateGroups.length > 0 ? {
       id: 'duplicates',
-      state: duplicateGroups.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${duplicateGroups.length} duplicado(s) potencial(es)`,
       description: duplicateGroups.length > 0
         ? 'Conviene limpiar coincidencias antes de seguir generando propuestas parecidas.'
-        : 'No hay duplicidades activas dominando la conversion.',
+        : '',
       action: duplicateGroups.length > 0 ? {
         label: 'Revisar duplicados',
         onClick: () => setShowDuplicateReview(true),
       } : undefined,
-    },
-  ]
+    } : null,
+  ])
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulCount(commercialPendingQuotes.length) ? (
+      <VisualKpiCard
+        key="quotes-pending"
+        label="Pendientes de seguimiento"
+        value={String(commercialPendingQuotes.length)}
+        hint="Borradores y enviados que siguen pidiendo decision comercial."
+        tone="warning"
+        priority="compact"
+        action={actionTargetQuote ? { label: 'Abrir', onClick: () => setSelectedQuoteId(actionTargetQuote.id) } : undefined}
+      />
+    ) : null,
+    hasMeaningfulCount(acceptedQuotes.length) ? (
+      <VisualKpiCard
+        key="quotes-accepted"
+        label="Aceptados"
+        value={String(acceptedQuotes.length)}
+        hint="Propuestas ya ganadas y listas para pasar a operativa o facturacion."
+        tone="success"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(acceptedWithoutJob.length) ? (
+      <VisualKpiCard
+        key="quotes-unconverted"
+        label="Aceptados sin convertir"
+        value={String(acceptedWithoutJob.length)}
+        hint="Aceptados que siguen sin servicio generado."
+        tone="warning"
+        priority="compact"
+        badgeLabel="Accion"
+      />
+    ) : null,
+    hasMeaningfulAmount(acceptedTotalValue) ? (
+      <VisualKpiCard
+        key="quotes-accepted-value"
+        label="Valor aceptado"
+        value={formatQuoteCustomerFacingTotal({ subtotal: acceptedTotalValue, total: acceptedTotalValue })}
+        hint="Suma de presupuestos aceptados con importe real visible."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en presupuestos')
@@ -236,56 +281,31 @@ export function QuotesPage({
               },
             }
             : undefined}
-          metricLabel="Potencial bloqueado"
-          metricValue={formatQuoteCustomerFacingTotal({ subtotal: acceptedWithoutJobValue, total: acceptedWithoutJobValue })}
-          metricHint={acceptedWithoutJob.length > 0
+          metricLabel={hasMeaningfulAmount(acceptedWithoutJobValue) ? 'Potencial bloqueado' : undefined}
+          metricValue={hasMeaningfulAmount(acceptedWithoutJobValue) ? formatQuoteCustomerFacingTotal({ subtotal: acceptedWithoutJobValue, total: acceptedWithoutJobValue }) : undefined}
+          metricHint={hasMeaningfulAmount(acceptedWithoutJobValue)
             ? 'Importe aceptado que todavia no se ha convertido en servicio.'
-            : 'No hay importe aceptado bloqueado por falta de servicio.'}
+            : undefined}
         >
           <div className="cc-fiscal-closing-header-progress">
-            <ProgressMetric
-              label="Aceptado -> servicio"
-              value={`${funnelPercent}%`}
-              percent={funnelPercent}
-              tone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
-              hint={`${acceptedConvertedQuotes.length} de ${acceptedQuotes.length} aceptado(s) ya tienen servicio.`}
-            />
-            <ActionChecklist items={quoteChecklistItems} compact />
+            {acceptedQuotes.length > 0 ? (
+              <ProgressMetric
+                label="Aceptado -> servicio"
+                value={`${funnelPercent}%`}
+                percent={funnelPercent}
+                tone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
+                hint={`${acceptedConvertedQuotes.length} de ${acceptedQuotes.length} aceptado(s) ya tienen servicio.`}
+              />
+            ) : null}
+            {quoteChecklistItems.length > 0 ? <ActionChecklist items={quoteChecklistItems} compact /> : null}
           </div>
         </ExecutiveHeader>
 
-        <div className="cc-kpi-grid cc-kpi-grid--compact">
-          <VisualKpiCard
-            label="Pendientes de seguimiento"
-            value={String(commercialPendingQuotes.length)}
-            hint="Borradores y enviados que siguen pidiendo decision comercial."
-            tone={commercialPendingQuotes.length > 0 ? 'warning' : 'neutral'}
-            priority="compact"
-            action={actionTargetQuote ? { label: 'Abrir', onClick: () => setSelectedQuoteId(actionTargetQuote.id) } : undefined}
-          />
-          <VisualKpiCard
-            label="Aceptados"
-            value={String(acceptedQuotes.length)}
-            hint="Propuestas ya ganadas y listas para pasar a operativa o facturacion."
-            tone="success"
-            priority="compact"
-          />
-          <VisualKpiCard
-            label="Aceptados sin convertir"
-            value={String(acceptedWithoutJob.length)}
-            hint="Aceptados que siguen sin servicio generado."
-            tone={acceptedWithoutJob.length > 0 ? 'warning' : 'success'}
-            priority="compact"
-            badgeLabel={acceptedWithoutJob.length > 0 ? 'Accion' : 'Cubierto'}
-          />
-          <VisualKpiCard
-            label="Valor aceptado"
-            value={formatQuoteCustomerFacingTotal({ subtotal: acceptedTotalValue, total: acceptedTotalValue })}
-            hint="Suma de presupuestos aceptados con importe real visible."
-            tone="info"
-            priority="compact"
-          />
-        </div>
+        {summaryKpis.length > 0 ? (
+          <div className="cc-kpi-grid cc-kpi-grid--compact">
+            {summaryKpis}
+          </div>
+        ) : null}
 
         {showCreateForm ? (
           <ActionFlowOverlay

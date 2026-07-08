@@ -102,3 +102,5 @@
 - El canal de QA autenticada fiable ya tiene una primera infraestructura local reutilizable basada en perfil QA + CDP.
 - La deuda restante ya no es ausencia total de harness, sino ejecutar y endurecer esa via con sesiones reales y reportes repetibles.
 - La alerta residual `tablet / fiscal_closing / fiscalRealAmountVisible` queda cerrada al corregir el selector estable del bloque fiscal real.
+- La deuda principal en `quotes` y `jobs` por ruido con valor `0` queda cerrada en la pasada `2026-07-08`.
+- `recurring` mantiene deuda de auditabilidad standalone: el dominio existe, pero no como ruta real de modulo.

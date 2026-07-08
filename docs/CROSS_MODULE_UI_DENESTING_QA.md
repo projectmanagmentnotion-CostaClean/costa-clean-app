@@ -88,3 +88,9 @@ Protected scope remained intact:
 
 - Future authenticated re-runs of this QA can use the local harness in `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md` when the embedded browser is not stable enough.
 - The harness already completed one authenticated run across `390x844`, `768x1024`, and `1366x900`, providing a reusable base for future de-nesting audits.
+
+## Module Completion Update 2026-07-08
+
+- `quotes` and `jobs` now enter the authenticated harness directly.
+- `quotes-create`, `jobs-create`, `expenses-create`, and `payments-create` are validated as real flow scenarios.
+- `recurring` remains documented as non-standalone because no real `?view=` route exists for that domain.

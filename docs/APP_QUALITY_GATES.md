@@ -231,3 +231,10 @@ For roadmap-closeout or phase-closeout work:
 - La sesion local y screenshots privados deben vivir siempre en rutas ignoradas.
 - La validacion minima para superficies mobile/iPad sigue siendo `390x844` y `768x1024`.
 - Si un check visual depende de detectar un KPI o importe concreto, debe usar una marca estable del bloque real antes que una heuristica de texto fragil.
+
+## Module Completion Gate
+
+- Ningun modulo principal se da por pulido sin QA autenticada en `390x844`, `768x1024` y desktop.
+- Ningun modulo principal puede mantener nested cards, filtros largos, KPIs `0` visibles o formularios enterrados en el primer viewport.
+- Todo create/edit StepFlow principal debe abrir con el primer campo visible inmediatamente.
+- Si un dominio no tiene ruta standalone real, debe documentarse como `no aplicable`; no se inventa vista para pasar QA.

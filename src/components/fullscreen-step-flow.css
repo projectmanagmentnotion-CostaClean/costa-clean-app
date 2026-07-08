@@ -118,6 +118,30 @@
   gap: 8px;
 }
 
+.cc-step-flow--dense-header .cc-step-flow__progress {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.cc-step-flow--dense-header .cc-step-flow__progress-step {
+  min-height: 0;
+  padding: 9px 10px;
+}
+
+.cc-step-flow--dense-header .cc-step-flow__progress-copy {
+  gap: 1px;
+}
+
+.cc-step-flow--dense-header .cc-step-flow__progress-copy small,
+.cc-step-flow--dense-header .cc-step-flow__progress-state {
+  display: none;
+}
+
+.cc-step-flow--dense-header .cc-step-flow__progress-index {
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+}
+
 .cc-step-flow__progress-step {
   display: flex;
   align-items: flex-start;

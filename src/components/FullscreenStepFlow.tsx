@@ -51,6 +51,13 @@ export function FullscreenStepFlow({
   const currentStateLabel = getStepStateLabel(currentState, true)
   const shouldShowSideContent = !isNested && Boolean(sideContent)
   const shouldShowMobileSide = Boolean(contextItems.length > 0 || shouldShowSideContent)
+  const shouldUseDenseDesktopHeader = !isNested && steps.length > 6
+  const shouldShowDesktopContextStrip = contextItems.length > 0 && !(shouldUseDenseDesktopHeader && shouldShowSideContent)
+  const surfaceClassName = [
+    'cc-step-flow',
+    isNested ? 'cc-step-flow--nested' : null,
+    shouldUseDenseDesktopHeader ? 'cc-step-flow--dense-header' : null,
+  ].filter(Boolean).join(' ')
 
   useGSAP(() => {
     if (!surfaceRef.current || !currentStepRef.current || !contentRef.current) return
@@ -78,7 +85,8 @@ export function FullscreenStepFlow({
   return (
     <section
       ref={surfaceRef}
-      className={isNested ? 'cc-step-flow cc-step-flow--nested' : 'cc-step-flow'}
+      className={surfaceClassName}
+      data-qa="fullscreen-step-flow"
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
     >
@@ -124,7 +132,7 @@ export function FullscreenStepFlow({
           </div>
         </div>
 
-        {contextItems.length > 0 ? (
+        {shouldShowDesktopContextStrip ? (
           <div className="cc-step-flow__context-strip" aria-label="Contexto siempre visible">
             {contextItems.map((item) => (
               <article key={`header-${item.label}-${item.value}`} className="cc-step-flow__context-pill">

@@ -6,7 +6,9 @@ import {
   captureScreenshot,
   closeBrowserSession,
   collectViewAudit,
+  collectActionFlowAudit,
   configureViewport,
+  defaultFlowScenarios,
   defaultViews,
   defaultViewports,
   detectBrowserExecutable,
@@ -18,6 +20,7 @@ import {
   openBrowserSession,
   readAuthStateMetadata,
   summarizeResults,
+  waitForViewReady,
   waitForCdpEndpoint,
   findFreePort,
   writeMarkdownReport,
@@ -62,6 +65,7 @@ async function main() {
     for (const viewId of defaultViews()) {
       const url = buildViewUrl(storedState.appUrl, viewId)
       await navigateAndWait(connection, session.sessionId, url)
+      await waitForViewReady(connection, session.sessionId, viewId)
       const audit = await collectViewAudit(connection, session.sessionId, viewId, viewport)
       const screenshotFileName = `${viewport.id}-${viewId}.png`
       const screenshotPath = path.join(runScreenshotsDir, screenshotFileName)
@@ -71,6 +75,21 @@ async function main() {
         screenshotPath,
       })
       process.stdout.write(`QA ${viewport.id}/${viewId}: ${Object.values(audit.checks).every(Boolean) ? 'ok' : 'check failures'}\n`)
+    }
+
+    for (const scenario of defaultFlowScenarios()) {
+      const url = buildViewUrl(storedState.appUrl, scenario.viewId)
+      await navigateAndWait(connection, session.sessionId, url)
+      await waitForViewReady(connection, session.sessionId, scenario.viewId)
+      const audit = await collectActionFlowAudit(connection, session.sessionId, scenario, viewport)
+      const screenshotFileName = `${viewport.id}-${scenario.id}.png`
+      const screenshotPath = path.join(runScreenshotsDir, screenshotFileName)
+      await captureScreenshot(connection, session.sessionId, screenshotPath)
+      results.push({
+        ...audit,
+        screenshotPath,
+      })
+      process.stdout.write(`QA ${viewport.id}/${scenario.id}: ${Object.values(audit.checks).every(Boolean) ? 'ok' : 'check failures'}\n`)
     }
   }
 

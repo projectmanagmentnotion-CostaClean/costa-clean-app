@@ -36,3 +36,8 @@
 - Desde `2026-07-08` existe un harness local autenticado reutilizable documentado en `docs/AUTHENTICATED_VISUAL_QA_HARNESS.md`.
 - Su objetivo es dejar de depender del navegador embebido como unica fuente de QA viva.
 - La primera pasada real del harness ya recorrio mobile, tablet y desktop con un solo fallo residual en `tablet / fiscal_closing`.
+
+## Module Completion Follow-up
+
+- El harness ya no se limita a finanzas base: incorpora `quotes`, `jobs` y escenarios reales de apertura de flows.
+- El baseline real de este sprint detecto un rojo en `mobile/home/headerVisible`; no se maquillo, se corrigio esperando al estado cargado antes de auditar.

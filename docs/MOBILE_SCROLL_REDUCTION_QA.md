@@ -117,3 +117,9 @@ En este sprint hubo auditoria real por screenshots y auditoria de codigo/CSS, pe
 - Se detecta que el loading compartido del shell seguia entrando como `hero + 3 cards + empty-state`, demasiado pesado para recargas mobile.
 - El patron se sustituye por una carga compacta con hasta `3` filas skeleton y un modo inline para cargas breves.
 - Los empty states compartidos bajan de peso visual en mobile para no competir con la lectura real.
+
+## Actualizacion module completion 2026-07-08
+
+- `quotes` y `jobs` eliminan ruido visible con valor `0` en mobile.
+- Los create flows de `quotes`, `jobs`, `expenses` y `payments` se revalidan con app autenticada real.
+- `quotes-create` obliga a compactar la cabecera densa del StepFlow largo tambien en desktop para no enterrar el primer campo.

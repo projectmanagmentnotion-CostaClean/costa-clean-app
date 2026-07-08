@@ -24,6 +24,7 @@ import { formatCurrency } from '../app/displayFormat'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { DSPageHeader } from '../design-system/components/DSPageHeader'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 interface ClientsPageProps {
   clients: ClientListItem[]
@@ -147,6 +148,48 @@ export function ClientsPage({
     [jobs],
   )
   const topPendingClient = clientsWithPendingBalance[0] ?? null
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulCount(clients.filter((client) => client.status !== 'inactive').length) ? (
+      <VisualKpiCard
+        key="clients-active"
+        label="Clientes activos"
+        value={String(clients.filter((client) => client.status !== 'inactive').length)}
+        hint="Cartera visible con ficha activa en el directorio."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(clientsWithPendingBalance.length) ? (
+      <VisualKpiCard
+        key="clients-pending"
+        label="Con saldo pendiente"
+        value={String(clientsWithPendingBalance.length)}
+        hint="Clientes que ya requieren abrir facturas o cobros."
+        tone="warning"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(clientsWithJobs) ? (
+      <VisualKpiCard
+        key="clients-jobs"
+        label="Con servicios"
+        value={String(clientsWithJobs)}
+        hint="Clientes con operativa real ya conectada a servicios."
+        tone="neutral"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(dueRecurringPlans.length) ? (
+      <VisualKpiCard
+        key="clients-recurring"
+        label="Planes recurrentes vencidos"
+        value={String(dueRecurringPlans.length)}
+        hint="Automatizaciones activas que ya piden revision o emision."
+        tone="warning"
+        priority="compact"
+      />
+    ) : null,
+  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en clientes')
@@ -212,43 +255,20 @@ export function ClientsPage({
                 setShowCreateForm(true)
               },
             } : undefined}
-            metricLabel="Saldo abierto visible"
-            metricValue={formatCurrency(clientsWithPendingBalance.reduce((sum, client) => sum + Number(clientPendingBalances.get(client.id) ?? 0), 0))}
+            metricLabel={hasMeaningfulAmount(clientsWithPendingBalance.reduce((sum, client) => sum + Number(clientPendingBalances.get(client.id) ?? 0), 0)) ? 'Saldo abierto visible' : undefined}
+            metricValue={hasMeaningfulAmount(clientsWithPendingBalance.reduce((sum, client) => sum + Number(clientPendingBalances.get(client.id) ?? 0), 0))
+              ? formatCurrency(clientsWithPendingBalance.reduce((sum, client) => sum + Number(clientPendingBalances.get(client.id) ?? 0), 0))
+              : undefined}
             metricHint={clientsWithPendingBalance.length > 0
               ? 'Importe agregado por cliente con factura pendiente visible.'
-              : 'No hay clientes con saldo abierto dominando el directorio.'}
+              : undefined}
           />
 
-          <div className="cc-kpi-grid cc-kpi-grid--compact">
-            <VisualKpiCard
-              label="Clientes activos"
-              value={String(clients.filter((client) => client.status !== 'inactive').length)}
-              hint="Cartera visible con ficha activa en el directorio."
-              tone="info"
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Con saldo pendiente"
-              value={String(clientsWithPendingBalance.length)}
-              hint="Clientes que ya requieren abrir facturas o cobros."
-              tone={clientsWithPendingBalance.length > 0 ? 'warning' : 'success'}
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Con servicios"
-              value={String(clientsWithJobs)}
-              hint="Clientes con operativa real ya conectada a servicios."
-              tone="neutral"
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Planes recurrentes vencidos"
-              value={String(dueRecurringPlans.length)}
-              hint="Automatizaciones activas que ya piden revision o emision."
-              tone={dueRecurringPlans.length > 0 ? 'warning' : 'neutral'}
-              priority="compact"
-            />
-          </div>
+          {summaryKpis.length > 0 ? (
+            <div className="cc-kpi-grid cc-kpi-grid--compact">
+              {summaryKpis}
+            </div>
+          ) : null}
 
           {duplicateGroups.length > 0 ? (
             <DuplicateNotice

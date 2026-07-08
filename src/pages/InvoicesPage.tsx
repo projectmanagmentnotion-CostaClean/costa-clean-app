@@ -40,6 +40,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../features/invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
@@ -172,48 +173,84 @@ export function InvoicesPage({
   )
     ? selectedInvoice
     : openCollectionInvoices[0] ?? null
-  const collectionChecklistItems: ActionChecklistItem[] = [
-    {
+  const collectionChecklistItems: ActionChecklistItem[] = compactVisibleItems<ActionChecklistItem>([
+    openCollectionInvoices.length > 0 ? {
       id: 'open-balance',
-      state: openCollectionInvoices.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${openCollectionInvoices.length} factura(s) con saldo abierto`,
-      description: openCollectionInvoices.length > 0
-        ? 'La cola principal del modulo sigue siendo cobrar o cerrar el saldo pendiente real.'
-        : 'No hay facturas emitidas con saldo pendiente visible.',
+      description: 'La cola principal del modulo sigue siendo cobrar o cerrar el saldo pendiente real.',
       action: headerTargetInvoice ? {
         label: 'Abrir cobro pendiente',
         onClick: () => onViewPayments(headerTargetInvoice.id),
       } : undefined,
-    },
-    {
+    } : null,
+    partiallyCollectedInvoices.length > 0 ? {
       id: 'partial-collection',
-      state: partiallyCollectedInvoices.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${partiallyCollectedInvoices.length} cobro(s) parcial(es)`,
-      description: partiallyCollectedInvoices.length > 0
-        ? 'Conviene revisar estas facturas antes de considerar el expediente cerrado.'
-        : 'No hay facturas parcialmente cobradas ahora mismo.',
-    },
-    {
+      description: 'Conviene revisar estas facturas antes de considerar el expediente cerrado.',
+    } : null,
+    draftInvoices.length > 0 ? {
       id: 'drafts',
-      state: draftInvoices.length > 0 ? 'pending' : 'done',
+      state: 'pending',
       label: `${draftInvoices.length} borrador(es) por emitir`,
-      description: draftInvoices.length > 0
-        ? 'Quedan visibles, pero no compiten con la prioridad principal de cobro.'
-        : 'No quedan borradores dominando la lectura principal.',
-    },
-    {
+      description: 'Quedan visibles, pero no compiten con la prioridad principal de cobro.',
+    } : null,
+    unresolvedDuplicateGroups.length > 0 ? {
       id: 'duplicates',
-      state: unresolvedDuplicateGroups.length > 0 ? 'warning' : 'done',
+      state: 'warning',
       label: `${unresolvedDuplicateGroups.length} grupo(s) duplicado(s) potencial(es)`,
-      description: unresolvedDuplicateGroups.length > 0
-        ? 'Hay coincidencias que conviene limpiar antes de seguir emitiendo o regularizando cobros.'
-        : 'No hay duplicidades activas dominando el control de facturas.',
-      action: unresolvedDuplicateGroups.length > 0 ? {
+      description: 'Hay coincidencias que conviene limpiar antes de seguir emitiendo o regularizando cobros.',
+      action: {
         label: 'Revisar duplicados',
         onClick: () => setShowDuplicateReview(true),
-      } : undefined,
-    },
-  ]
+      },
+    } : null,
+  ])
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulAmount(pendingCollectionAmount) ? (
+      <VisualKpiCard
+        key="invoices-pending"
+        label="Pendiente de cobro"
+        value={formatCurrency(pendingCollectionAmount)}
+        hint="Saldo abierto derivado del estado financiero real de las facturas emitidas."
+        tone="warning"
+        priority="primary"
+        badgeLabel="Prioridad"
+        action={headerTargetInvoice ? { label: 'Abrir', onClick: () => onViewPayments(headerTargetInvoice.id) } : undefined}
+      />
+    ) : null,
+    hasMeaningfulAmount(collectedAmount) ? (
+      <VisualKpiCard
+        key="invoices-collected"
+        label="Cobrado registrado"
+        value={formatCurrency(collectedAmount)}
+        hint="Suma de cobros ya reflejados en factura. No incluye previsiones ni caja futura."
+        tone="success"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(openCollectionInvoices.length) ? (
+      <VisualKpiCard
+        key="invoices-open"
+        label="Facturas abiertas"
+        value={String(openCollectionInvoices.length)}
+        hint="Facturas emitidas con saldo pendiente hoy."
+        tone="warning"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(draftInvoices.length) ? (
+      <VisualKpiCard
+        key="invoices-drafts"
+        label="Borradores por emitir"
+        value={String(draftInvoices.length)}
+        hint="Pendientes de emision. Siguen visibles sin competir con la cola de cobro."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+  ])
   const numberingAuditYear = useMemo(() => {
     const years = allInvoices
       .map((invoice) => getInvoiceIssueYear(invoice.issue_date))
@@ -425,41 +462,14 @@ export function InvoicesPage({
             ? `${openCollectionInvoices.length} factura(s) emitida(s) siguen con saldo abierto real.`
             : 'No hay saldo emitido pendiente visible en primer nivel.'}
         >
-          <ActionChecklist items={collectionChecklistItems} compact />
+          {collectionChecklistItems.length > 0 ? <ActionChecklist items={collectionChecklistItems} compact /> : null}
         </ExecutiveHeader>
 
-        <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
-          <VisualKpiCard
-            label="Pendiente de cobro"
-            value={formatCurrency(pendingCollectionAmount)}
-            hint="Saldo abierto derivado del estado financiero real de las facturas emitidas."
-            tone={pendingCollectionAmount > 0.009 ? 'warning' : 'success'}
-            priority="primary"
-            badgeLabel={pendingCollectionAmount > 0.009 ? 'Prioridad' : 'Controlado'}
-            action={headerTargetInvoice ? { label: 'Abrir', onClick: () => onViewPayments(headerTargetInvoice.id) } : undefined}
-          />
-          <VisualKpiCard
-            label="Cobrado registrado"
-            value={formatCurrency(collectedAmount)}
-            hint="Suma de cobros ya reflejados en factura. No incluye previsiones ni caja futura."
-            tone="success"
-            priority="compact"
-          />
-          <VisualKpiCard
-            label="Facturas abiertas"
-            value={String(openCollectionInvoices.length)}
-            hint="Facturas emitidas con saldo pendiente hoy."
-            tone={openCollectionInvoices.length > 0 ? 'warning' : 'success'}
-            priority="compact"
-          />
-          <VisualKpiCard
-            label="Borradores por emitir"
-            value={String(draftInvoices.length)}
-            hint="Pendientes de emision. Siguen visibles sin competir con la cola de cobro."
-            tone={draftInvoices.length > 0 ? 'info' : 'neutral'}
-            priority="compact"
-          />
-        </div>
+        {summaryKpis.length > 0 ? (
+          <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
+            {summaryKpis}
+          </div>
+        ) : null}
 
         <div className="cc-invoice-workspace__control-grid">
           {showInvoiceFiscalDebug ? (

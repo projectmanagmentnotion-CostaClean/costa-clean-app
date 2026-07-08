@@ -60,6 +60,7 @@ export function DSListControlBar({
   onChange,
 }: DSListControlBarProps) {
   const [showAdvancedControls, setShowAdvancedControls] = useState(false)
+  if (totalCount === 0) return null
   const activeFilterCount = Object.entries(state.filters).filter(
     ([key, value]) => value !== (defaultState.filters[key] ?? 'all'),
   ).length

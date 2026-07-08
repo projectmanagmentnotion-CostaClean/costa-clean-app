@@ -19,6 +19,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import { formatCurrency } from '../app/displayFormat'
 import { DSPageHeader } from '../design-system/components/DSPageHeader'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 interface PropertiesPageProps {
   properties: PropertyListItem[]
@@ -114,6 +115,52 @@ export function PropertiesPage({
     [jobs],
   )
   const topPendingProperty = propertiesWithPendingBalance[0] ?? null
+  const propertiesWithQuotes = useMemo(
+    () => new Set(quotes.map((quote) => quote.property_id).filter(Boolean)).size,
+    [quotes],
+  )
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulCount(properties.length) ? (
+      <VisualKpiCard
+        key="properties-total"
+        label="Propiedades"
+        value={String(properties.length)}
+        hint="Volumen del directorio activo de inmuebles."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(propertiesWithJobs) ? (
+      <VisualKpiCard
+        key="properties-jobs"
+        label="Con servicios"
+        value={String(propertiesWithJobs)}
+        hint="Propiedades con operativa real ya conectada."
+        tone="neutral"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(propertiesWithPendingBalance.length) ? (
+      <VisualKpiCard
+        key="properties-pending"
+        label="Con saldo pendiente"
+        value={String(propertiesWithPendingBalance.length)}
+        hint="Inmuebles que ya requieren abrir facturas o cobros."
+        tone="warning"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(propertiesWithQuotes) ? (
+      <VisualKpiCard
+        key="properties-quotes"
+        label="Con presupuestos"
+        value={String(propertiesWithQuotes)}
+        hint="Propiedades que ya tienen actividad comercial enlazada."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en propiedades')
@@ -172,43 +219,20 @@ export function PropertiesPage({
                 setShowCreateForm(true)
               },
             } : undefined}
-            metricLabel="Saldo abierto visible"
-            metricValue={formatCurrency(propertiesWithPendingBalance.reduce((sum, property) => sum + Number(propertyPendingBalances.get(property.id) ?? 0), 0))}
+            metricLabel={hasMeaningfulAmount(propertiesWithPendingBalance.reduce((sum, property) => sum + Number(propertyPendingBalances.get(property.id) ?? 0), 0)) ? 'Saldo abierto visible' : undefined}
+            metricValue={hasMeaningfulAmount(propertiesWithPendingBalance.reduce((sum, property) => sum + Number(propertyPendingBalances.get(property.id) ?? 0), 0))
+              ? formatCurrency(propertiesWithPendingBalance.reduce((sum, property) => sum + Number(propertyPendingBalances.get(property.id) ?? 0), 0))
+              : undefined}
             metricHint={propertiesWithPendingBalance.length > 0
               ? 'Importe agregado de propiedades con facturas pendientes visibles.'
-              : 'No hay propiedades con saldo abierto dominando la cartera.'}
+              : undefined}
           />
 
-          <div className="cc-kpi-grid cc-kpi-grid--compact">
-            <VisualKpiCard
-              label="Propiedades"
-              value={String(properties.length)}
-              hint="Volumen del directorio activo de inmuebles."
-              tone="info"
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Con servicios"
-              value={String(propertiesWithJobs)}
-              hint="Propiedades con operativa real ya conectada."
-              tone="neutral"
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Con saldo pendiente"
-              value={String(propertiesWithPendingBalance.length)}
-              hint="Inmuebles que ya requieren abrir facturas o cobros."
-              tone={propertiesWithPendingBalance.length > 0 ? 'warning' : 'success'}
-              priority="compact"
-            />
-            <VisualKpiCard
-              label="Con presupuestos"
-              value={String(new Set(quotes.map((quote) => quote.property_id).filter(Boolean)).size)}
-              hint="Propiedades que ya tienen actividad comercial enlazada."
-              tone="info"
-              priority="compact"
-            />
-          </div>
+          {summaryKpis.length > 0 ? (
+            <div className="cc-kpi-grid cc-kpi-grid--compact">
+              {summaryKpis}
+            </div>
+          ) : null}
 
           {duplicateGroups.length > 0 ? (
             <DuplicateNotice

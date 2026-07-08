@@ -19,6 +19,7 @@ import type { JobListItem } from '../features/jobs/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../features/payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -93,6 +94,38 @@ export function PaymentsPage({
     [payments],
   )
   const paymentsTargetInvoiceId = selectedPayment?.invoice_id ?? payments[0]?.invoice_id ?? null
+  const summaryKpis = compactVisibleItems([
+    hasMeaningfulCount(payments.length) ? (
+      <VisualKpiCard
+        key="payments-total"
+        label="Cobros registrados"
+        value={String(payments.length)}
+        hint="Volumen total de cobros persistidos y disponibles para auditoria interna."
+        tone="info"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(invoicesWithPaymentsCount) ? (
+      <VisualKpiCard
+        key="payments-invoices"
+        label="Facturas con cobro"
+        value={String(invoicesWithPaymentsCount)}
+        hint="Facturas distintas que ya tienen al menos un cobro asociado."
+        tone="success"
+        priority="compact"
+      />
+    ) : null,
+    hasMeaningfulCount(manualPaymentsCount) ? (
+      <VisualKpiCard
+        key="payments-manual"
+        label="Registro manual"
+        value={String(manualPaymentsCount)}
+        hint="Cobros introducidos manualmente. El resto viene de regularizacion o automatismo existente."
+        tone="neutral"
+        priority="compact"
+      />
+    ) : null,
+  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en pagos')
@@ -144,34 +177,16 @@ export function PaymentsPage({
           label: 'Abrir factura vinculada',
           onClick: () => onOpenInvoiceDetail(paymentsTargetInvoiceId),
         } : undefined}
-        metricLabel="Cobro registrado"
-        metricValue={formatCurrency(totalCollectedAmount)}
-        metricHint="Importe ya registrado en pagos. No representa previsiones ni conciliacion bancaria."
+        metricLabel={hasMeaningfulAmount(totalCollectedAmount) ? 'Cobro registrado' : undefined}
+        metricValue={hasMeaningfulAmount(totalCollectedAmount) ? formatCurrency(totalCollectedAmount) : undefined}
+        metricHint={hasMeaningfulAmount(totalCollectedAmount) ? 'Importe ya registrado en pagos. No representa previsiones ni conciliacion bancaria.' : undefined}
       />
 
-      <div className="cc-kpi-grid cc-kpi-grid--compact">
-        <VisualKpiCard
-          label="Cobros registrados"
-          value={String(payments.length)}
-          hint="Volumen total de cobros persistidos y disponibles para auditoria interna."
-          tone="info"
-          priority="compact"
-        />
-        <VisualKpiCard
-          label="Facturas con cobro"
-          value={String(invoicesWithPaymentsCount)}
-          hint="Facturas distintas que ya tienen al menos un cobro asociado."
-          tone="success"
-          priority="compact"
-        />
-        <VisualKpiCard
-          label="Registro manual"
-          value={String(manualPaymentsCount)}
-          hint="Cobros introducidos manualmente. El resto viene de regularizacion o automatismo existente."
-          tone="neutral"
-          priority="compact"
-        />
-      </div>
+      {summaryKpis.length > 0 ? (
+        <div className="cc-kpi-grid cc-kpi-grid--compact">
+          {summaryKpis}
+        </div>
+      ) : null}
       {/*
       <div className="section-header page-header-actions cc-master-page__hero">
         <div>

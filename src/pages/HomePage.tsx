@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { AppView } from '../app/navigation'
-import { DSEmptyState, DSPageHeader } from '../design-system/components'
+import { DSPageHeader } from '../design-system/components'
 import { HomeAlertSummaryStrip, type HomeAlertSummaryItem } from '../features/dashboard/components/HomeAlertSummaryStrip'
 import { HomeFiscalKpiGrid, type HomeFiscalKpiItem } from '../features/dashboard/components/HomeFiscalKpiGrid'
 import { HomeQuickActionsPanel, type HomeQuickActionItem } from '../features/dashboard/components/HomeQuickActionsPanel'
@@ -22,6 +22,7 @@ import type { JobListItem } from '../features/jobs/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import '../features/dashboard/home-gsap-dashboard.css'
 import { formatCurrency } from '../app/displayFormat'
+import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 interface HomePageProps {
   metrics: {
@@ -105,6 +106,7 @@ export function HomePage(props: HomePageProps) {
 
   const visiblePriorityAlerts = useMemo(() => (
     alerts
+      .filter((alert) => alert.count > 0)
       .filter((alert) => alert.severity === 'critical' || alert.severity === 'warning')
       .filter((alert) => !isAlertSuppressedInHome(alert, alertAcknowledgements[getAlertAcknowledgementKey(alert)]))
       .slice(0, 2)
@@ -120,8 +122,8 @@ export function HomePage(props: HomePageProps) {
     ))
   }
 
-  const fiscalKpis: HomeFiscalKpiItem[] = [
-    {
+  const fiscalKpis: HomeFiscalKpiItem[] = compactVisibleItems<HomeFiscalKpiItem>([
+    hasMeaningfulAmount(metrics.invoicedThisMonthTotal) ? {
       key: 'invoiced',
       label: 'Facturado',
       actionLabel: 'Ver facturas',
@@ -135,8 +137,8 @@ export function HomePage(props: HomePageProps) {
         value: formatCurrency(metrics.collectedThisMonthTotal),
       },
       onRun: () => onRunKpiAction('invoiced_this_month'),
-    },
-    {
+    } : null,
+    hasMeaningfulAmount(metrics.collectedThisMonthTotal) ? {
       key: 'collected',
       label: 'Cobrado',
       actionLabel: 'Ver cobros',
@@ -150,8 +152,8 @@ export function HomePage(props: HomePageProps) {
         value: `${getSafePercent(metrics.collectedThisMonthTotal, Math.max(metrics.invoicedThisMonthTotal, 1))}%`,
       },
       onRun: () => onRunKpiAction('collected_this_month'),
-    },
-    {
+    } : null,
+    hasMeaningfulAmount(metrics.expensesThisMonthTotal) ? {
       key: 'expenses',
       label: 'Gasto',
       actionLabel: 'Ver gastos',
@@ -167,8 +169,8 @@ export function HomePage(props: HomePageProps) {
         value: `${metrics.expensesWithReceiptCount}/${metrics.expensesCount}`,
       },
       onRun: () => onRunKpiAction('expenses_this_month'),
-    },
-    {
+    } : null,
+    hasMeaningfulCount(fiscalReviewCount) ? {
       key: 'review',
       label: 'Revision fiscal',
       actionLabel: 'Revisar',
@@ -182,8 +184,8 @@ export function HomePage(props: HomePageProps) {
         value: String(fiscalRiskCount),
       },
       onRun: () => onRunKpiAction('expenses_fiscal_requires_review'),
-    },
-  ]
+    } : null,
+  ])
 
   const compactQuickActions: HomeQuickActionItem[] = [
     { key: 'new-invoice', title: 'Factura', onRun: () => onOpenView('invoices') },
@@ -240,29 +242,24 @@ export function HomePage(props: HomePageProps) {
         summary="Acciones, importes del mes y alertas vivas."
         statusLabel={homeStatus}
         statusTone={criticalAlertsCount > 0 ? 'critical' : fiscalRiskCount > 0 ? 'warning' : 'success'}
-        metricLabel="Abierto"
-        metricValue={formatCurrency(metrics.outstandingReceivablesTotal)}
-        metricHint="Pendiente real de cobro."
-      />
+      metricLabel={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? 'Abierto' : undefined}
+      metricValue={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? formatCurrency(metrics.outstandingReceivablesTotal) : undefined}
+      metricHint={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? 'Pendiente real de cobro.' : undefined}
+    />
 
       <div className="cc-dashboard-stack cc-dashboard-stack--console cc-dashboard-stack--decision">
         <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
           <div className="cc-home-dashboard-cockpit-grid">
-            <HomeFiscalKpiGrid items={fiscalKpis} />
+            {fiscalKpis.length > 0 ? <HomeFiscalKpiGrid items={fiscalKpis} /> : null}
             <HomeQuickActionsPanel actions={compactQuickActions} />
           </div>
         </HomeMotionSection>
 
-        <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
-          {alertSummaryItems.length > 0 ? (
+        {alertSummaryItems.length > 0 ? (
+          <HomeMotionSection className="cc-dashboard-block cc-dashboard-console-section">
             <HomeAlertSummaryStrip items={alertSummaryItems} />
-          ) : (
-            <DSEmptyState
-              title="Sin alertas repetidas en inicio"
-              description="Los detalles siguen disponibles dentro de sus modulos."
-            />
-          )}
-        </HomeMotionSection>
+          </HomeMotionSection>
+        ) : null}
       </div>
     </section>
   )

@@ -115,6 +115,7 @@ export function InvoicesPage({
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
   const [visibleInvoices, setVisibleInvoices] = useState<InvoiceListItem[]>(invoices)
   const [bulkDialog, setBulkDialog] = useState<{
@@ -351,6 +352,15 @@ export function InvoicesPage({
         ? current.filter((id) => id !== invoiceId)
         : [...current, invoiceId]
     ))
+  }
+
+  function toggleSelectionMode() {
+    setIsSelectionMode((current) => {
+      if (current) {
+        setSelectedInvoiceIds([])
+      }
+      return !current
+    })
   }
 
   function toggleSelectAllVisible() {
@@ -616,7 +626,7 @@ export function InvoicesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
-        {selectedInvoiceIds.length > 0 ? (
+        {isSelectionMode ? (
           <BulkSelectionToolbar
             selectedCount={selectedInvoiceIds.length}
             totalVisibleCount={visibleInvoices.length}
@@ -626,11 +636,11 @@ export function InvoicesPage({
             actions={[
               {
                 id: 'transfer',
-                label: 'Cobrar por transferencia',
+                label: 'Marcar cobradas',
                 disabled: transferEligibleInvoices.length === 0,
                 onClick: () => setBulkDialog({
                   mode: 'transfer',
-                  title: 'Regularizar cobro por transferencia',
+                  title: 'Marcar facturas como cobradas',
                   description: `${transferEligibleInvoices.length} factura(s) se pueden cubrir por transferencia. Las ya cobradas o canceladas quedaran fuera.`,
                 }),
               },
@@ -645,7 +655,7 @@ export function InvoicesPage({
               },
               {
                 id: 'cancel',
-                label: 'Cancelar emitidas/borrador',
+                label: 'Cancelar seleccionadas',
                 tone: 'warning',
                 disabled: cancelEligibleInvoices.length === 0,
                 onClick: () => setBulkDialog({
@@ -672,13 +682,14 @@ export function InvoicesPage({
               error={error}
               selectedInvoiceId={selectedInvoiceKey}
               selectedInvoiceIds={selectedInvoiceIds}
-              isSelectionMode
+              isSelectionMode={isSelectionMode}
               onToggleInvoiceSelection={toggleInvoiceSelection}
               onOpenDocument={openInvoiceDocument}
               onStateChange={(state) => {
                 setListState(state)
                 setVisibleInvoices(state.visibleInvoices)
               }}
+              onToggleSelectionMode={toggleSelectionMode}
               onSelectInvoice={(invoice) => {
                 if (invoice.id === selectedInvoiceKey) return
 

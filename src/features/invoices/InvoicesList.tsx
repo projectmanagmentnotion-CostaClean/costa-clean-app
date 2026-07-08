@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
-import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
+import { ListToolbar, type ListPreferences, type ListToolbarAction } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { DSSectionHeader } from '../../design-system/components/DSSectionHeader'
@@ -19,6 +19,7 @@ interface InvoicesListProps {
   selectedInvoiceId: string | null
   selectedInvoiceIds?: string[]
   isSelectionMode?: boolean
+  onToggleSelectionMode?: () => void
   onSelectInvoice: (invoice: InvoiceListItem) => void
   onToggleInvoiceSelection?: (invoiceId: string) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
@@ -37,6 +38,7 @@ export function InvoicesList({
   selectedInvoiceId,
   selectedInvoiceIds = [],
   isSelectionMode = false,
+  onToggleSelectionMode,
   onSelectInvoice,
   onToggleInvoiceSelection,
   onOpenDocument,
@@ -148,6 +150,16 @@ export function InvoicesList({
             { value: 'archived', label: 'Archivadas' },
           ],
         }]}
+        toolbarActions={[
+          {
+            id: 'selection-mode',
+            label: isSelectionMode ? 'Seleccionando' : 'Seleccionar',
+            detail: isSelectionMode ? `${selectedInvoiceIds.length} marcadas` : 'Acciones en lote',
+            badge: isSelectionMode && selectedInvoiceIds.length > 0 ? String(selectedInvoiceIds.length) : null,
+            active: isSelectionMode,
+            onClick: () => onToggleSelectionMode?.(),
+          } satisfies ListToolbarAction,
+        ]}
         onChange={setPreferences}
       />
 

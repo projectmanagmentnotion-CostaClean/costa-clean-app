@@ -59,3 +59,8 @@ Conclusiones:
 
 - la verificacion del dato es real; la verificacion visual autenticada del shell sigue dependiendo de sesion valida en navegador
 - no se tocaron rutas, auth, Supabase, SQL, numeracion ni write paths
+
+## Fiscal Closing Tablet QA Fix
+
+- El fix del `2026-07-08` no altera este audit ni sus importes.
+- La correccion fue solo de deteccion visual estable del bloque `Total facturado real` en tablet.

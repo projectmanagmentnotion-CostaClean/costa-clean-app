@@ -440,6 +440,8 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
       }))
       .filter((item) => item.text.includes('€') && item.rect.top < window.innerHeight)
       .slice(0, 10);
+    const fiscalRealAmountCard = document.querySelector('[data-qa="fiscal-real-amount"]');
+    const fiscalRealAmountRect = fiscalRealAmountCard ? fiscalRealAmountCard.getBoundingClientRect() : null;
     const shellMarkers = ${JSON.stringify(APP_SHELL_MARKERS)};
     const errorMarkers = ${JSON.stringify(ERROR_MARKERS)};
     const shellMarkerCount = shellMarkers.filter((marker) => bodyText.includes(marker)).length;
@@ -461,7 +463,13 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
       invoiceControlHidden: ${JSON.stringify(viewId)} === 'invoices' ? !bodyText.includes('Control de numeracion') && !bodyText.includes('Debug fiscal') : true,
       invoiceDebugVisible: ${JSON.stringify(viewId)} === 'invoices-debug' ? bodyText.includes('Control de numeracion') && bodyText.includes('Debug fiscal') : true,
       homeAgendaCollapsed: ${JSON.stringify(viewId)} === 'home' ? !bodyText.includes('Sin agenda inmediata') : true,
-      fiscalRealAmountVisible: ${JSON.stringify(viewId)} === 'fiscal_closing' ? Boolean(firstMoney && firstMoney.top < Math.min(window.innerHeight * 0.6, 420)) : true,
+      fiscalRealAmountVisible: ${JSON.stringify(viewId)} === 'fiscal_closing'
+        ? Boolean(
+          fiscalRealAmountRect
+          && fiscalRealAmountRect.top < window.innerHeight
+          && fiscalRealAmountRect.bottom > 0
+        )
+        : true,
     };
 
     return {
@@ -472,6 +480,7 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
       headerText: header?.textContent?.trim() ?? null,
       headerRect,
       firstMoney,
+      fiscalRealAmountRect,
       navPreview: navRects,
       shellMarkerCount,
       checks,

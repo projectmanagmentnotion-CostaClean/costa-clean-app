@@ -404,3 +404,7 @@ Focus:
 - reusable authenticated session metadata
 - screenshots and reports in ignored local paths
 - real view audit across `?view=` surfaces and core viewports
+
+Status note:
+
+- the first follow-up fix after the harness was a selector-hardening pass for `fiscal_closing` tablet, closing the last residual check and leaving the run at `240/240`

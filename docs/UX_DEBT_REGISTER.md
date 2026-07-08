@@ -101,4 +101,4 @@
 
 - El canal de QA autenticada fiable ya tiene una primera infraestructura local reutilizable basada en perfil QA + CDP.
 - La deuda restante ya no es ausencia total de harness, sino ejecutar y endurecer esa via con sesiones reales y reportes repetibles.
-- La primera pasada real deja una unica alerta residual: `tablet / fiscal_closing / fiscalRealAmountVisible`.
+- La alerta residual `tablet / fiscal_closing / fiscalRealAmountVisible` queda cerrada al corregir el selector estable del bloque fiscal real.

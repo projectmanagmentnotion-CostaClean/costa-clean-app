@@ -19,6 +19,7 @@ interface ExecutiveHeaderProps {
   metricLabel?: string
   metricValue?: string
   metricHint?: string
+  metricDataQa?: string
   children?: ReactNode
 }
 
@@ -33,6 +34,7 @@ export function ExecutiveHeader({
   metricLabel,
   metricValue,
   metricHint,
+  metricDataQa,
   children,
 }: ExecutiveHeaderProps) {
   const hasAside = Boolean(metricLabel || children)
@@ -65,7 +67,7 @@ export function ExecutiveHeader({
       {hasAside ? (
         <aside className="cc-visual-executive-header__extra">
           {metricLabel && metricValue ? (
-            <section className="cc-visual-executive-header__metric" aria-label={metricLabel}>
+            <section className="cc-visual-executive-header__metric" aria-label={metricLabel} data-qa={metricDataQa}>
               <span className="cc-visual-executive-header__metric-label">{metricLabel}</span>
               <strong className="cc-visual-executive-header__metric-value">{metricValue}</strong>
               {metricHint ? <p className="cc-visual-executive-header__metric-hint">{metricHint}</p> : null}

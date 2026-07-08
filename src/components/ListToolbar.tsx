@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { DSListControlBar } from '../design-system/components/DSListControlBar'
-import type { ListControlFilter as ListToolbarFilter, ListControlState as ListPreferences, ListSortOption as ListToolbarOption } from '../features/lists/types'
+import type {
+  ListControlFilter as ListToolbarFilter,
+  ListControlState as ListPreferences,
+  ListSortOption as ListToolbarOption,
+  ListToolbarAction,
+} from '../features/lists/types'
 
 interface ListToolbarProps {
   storageKey: string
@@ -11,6 +16,7 @@ interface ListToolbarProps {
   sortOptions: ListToolbarOption[]
   defaultPreferences: ListPreferences
   filters?: ListToolbarFilter[]
+  toolbarActions?: ListToolbarAction[]
   onChange: (preferences: ListPreferences) => void
 }
 
@@ -48,6 +54,7 @@ export function ListToolbar({
   sortOptions,
   defaultPreferences,
   filters = [],
+  toolbarActions = [],
   onChange,
 }: ListToolbarProps) {
   const [preferences, setPreferences] = useState<ListPreferences>(() => readPreferences(storageKey, defaultPreferences))
@@ -72,9 +79,10 @@ export function ListToolbar({
       state={preferences}
       defaultState={defaultPreferences}
       filters={filters}
+      toolbarActions={toolbarActions}
       onChange={setPreferences}
     />
   )
 }
 
-export type { ListPreferences, ListToolbarFilter, ListToolbarOption }
+export type { ListPreferences, ListToolbarAction, ListToolbarFilter, ListToolbarOption }

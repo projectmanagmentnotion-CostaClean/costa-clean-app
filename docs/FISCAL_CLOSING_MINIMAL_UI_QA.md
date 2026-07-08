@@ -44,6 +44,23 @@
 - QA visual viva autenticada del modulo: pendiente por sesion de navegador
 - QA visual no autenticada: confirmada hasta pantalla de acceso local
 
+## Fiscal Closing Tablet QA Fix
+
+- Fallo detectado: `tablet / fiscal_closing / fiscalRealAmountVisible`
+- Diagnostico final:
+  - el total real ya estaba visible en el primer viewport tablet
+  - la regresion estaba en el selector del harness, que tomaba el primer importe con `€` en vez del bloque fiscal real
+- Cambio aplicado:
+  - se anadio una marca estable al bloque `Total facturado real` del `ExecutiveHeader`
+  - el harness paso a validar ese bloque concreto
+- Resultado:
+  - `390x844`, `768x1024` y `1366x900` pasan en `fiscal_closing`
+  - `npm run qa:visual:auth` termina con `240/240`
+- No cambios en datos:
+  - sin tocar importes
+  - sin tocar calculos
+  - sin tocar contratos
+
 ## No objetivos respetados
 
 - sin cambios en auth

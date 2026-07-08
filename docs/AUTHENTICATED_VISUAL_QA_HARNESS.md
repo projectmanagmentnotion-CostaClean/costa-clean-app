@@ -142,3 +142,21 @@ Interpretacion del fallo:
 
 - el harness detecto que en `768x1024` el primer importe de `fiscal_closing` no quedo suficientemente arriba segun la heuristica actual del script
 - no se interpreta como rotura general del harness; se registra como finding real para revisarlo en sprint visual posterior o ajustar la heuristica con mas evidencia
+
+## Fiscal Closing Tablet QA Fix
+
+- Fallo detectado inicialmente:
+  - `tablet / fiscal_closing / fiscalRealAmountVisible`
+- Causa exacta:
+  - el importe real fiscal ya era visible en tablet dentro del `ExecutiveHeader`
+  - el harness estaba leyendo el primer texto con `€` del viewport mediante heuristica generica, no el bloque fiscal real
+- Cambio aplicado:
+  - `ExecutiveHeader` admite `data-qa` estable para el bloque de metrica
+  - `FiscalClosingPage` marca el total real con `data-qa="fiscal-real-amount"`
+  - el harness valida ese nodo exacto en lugar del primer importe arbitrario
+- Tipo de problema:
+  - selector del harness, no calculo fiscal ni visibilidad rota del dato
+- Resultado final:
+  - `npm run qa:visual:auth` = `240/240`
+- Confirmacion:
+  - no se tocaron importes ni calculos fiscales

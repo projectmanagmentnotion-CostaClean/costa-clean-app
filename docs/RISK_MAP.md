@@ -73,6 +73,7 @@
 
 - el harness local reduce dependencia del navegador embebido, pero introduce riesgo de exponer datos reales si el perfil QA, screenshots o reportes privados se versionan por error
 - la mitigacion obligatoria es mantener `.auth/`, `qa-screenshots/private/` y `qa-reports/private/` fuera de git y no imprimir secretos
+- cuando un check visual dependa de una cifra concreta, usar `data-qa` estable reduce falsos negativos sin relajar el gate
 
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 

@@ -486,6 +486,7 @@ export function FiscalClosingPage({
         metricLabel="Total facturado real"
         metricValue={formatCurrency(semesterAudit.totals.totalAmount)}
         metricHint={semesterAuditHeadline}
+        metricDataQa="fiscal-real-amount"
       />
 
       {error ? (

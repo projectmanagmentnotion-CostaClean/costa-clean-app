@@ -230,3 +230,4 @@ For roadmap-closeout or phase-closeout work:
 - Si el navegador embebido falla, usar un harness local reutilizable con sesion ignorada por git antes de declarar bloqueo final.
 - La sesion local y screenshots privados deben vivir siempre en rutas ignoradas.
 - La validacion minima para superficies mobile/iPad sigue siendo `390x844` y `768x1024`.
+- Si un check visual depende de detectar un KPI o importe concreto, debe usar una marca estable del bloque real antes que una heuristica de texto fragil.

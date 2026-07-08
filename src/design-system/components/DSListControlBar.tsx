@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { ListControlFilter, ListControlState, ListSortOption } from '../../features/lists/types'
+import type { ListControlFilter, ListControlState, ListSortOption, ListToolbarAction } from '../../features/lists/types'
 import { buildSortLabel } from '../../features/lists/utils'
 import { DSActiveFilters } from './DSActiveFilters'
 import { DSCompactFilterGroup } from './DSCompactFilterGroup'
@@ -16,6 +16,7 @@ interface DSListControlBarProps {
   state: ListControlState
   defaultState: ListControlState
   filters?: ListControlFilter[]
+  toolbarActions?: ListToolbarAction[]
   onChange: (state: ListControlState) => void
 }
 
@@ -57,6 +58,7 @@ export function DSListControlBar({
   state,
   defaultState,
   filters = [],
+  toolbarActions = [],
   onChange,
 }: DSListControlBarProps) {
   const [showAdvancedControls, setShowAdvancedControls] = useState(false)
@@ -179,6 +181,17 @@ export function DSListControlBar({
             active={showAdvancedControls || activeFilterCount > 0}
             aria-expanded={showAdvancedControls}
           />
+
+          {toolbarActions.map((action) => (
+            <DSFilterSummaryButton
+              key={action.id}
+              label={action.label}
+              detail={action.detail}
+              badge={action.badge}
+              active={action.active}
+              onClick={action.onClick}
+            />
+          ))}
 
           {hasActiveControls ? (
             <button type="button" className="secondary-button cc-list-toolbar__clear" onClick={() => onChange(defaultState)}>

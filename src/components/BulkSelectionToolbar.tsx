@@ -23,11 +23,13 @@ export function BulkSelectionToolbar({
   onClearSelection,
   actions,
 }: BulkSelectionToolbarProps) {
+  const hasSelection = selectedCount > 0
+
   return (
     <section className="data-section cc-bulk-toolbar" aria-label="Acciones masivas">
       <div className="cc-bulk-toolbar__summary">
-        <strong>{selectedCount} seleccionado(s)</strong>
-        <span>{totalVisibleCount} visibles en la lista actual</span>
+        <strong>{hasSelection ? `${selectedCount} seleccionado(s)` : 'Modo seleccion activo'}</strong>
+        <span>{hasSelection ? `${totalVisibleCount} visibles en la lista actual` : 'Marca facturas concretas o selecciona todos los visibles para operar en lote.'}</span>
       </div>
 
       <div className="cc-bulk-toolbar__actions">
@@ -53,7 +55,7 @@ export function BulkSelectionToolbar({
             type="button"
             className={action.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
             onClick={action.onClick}
-            disabled={action.disabled}
+            disabled={action.disabled || !hasSelection}
           >
             {action.label}
           </button>

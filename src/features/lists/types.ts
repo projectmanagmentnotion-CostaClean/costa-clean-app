@@ -21,3 +21,12 @@ export interface ListControlState {
   sortDirection: 'asc' | 'desc'
   filters: Record<string, string>
 }
+
+export interface ListToolbarAction {
+  id: string
+  label: string
+  detail?: string
+  badge?: string | null
+  active?: boolean
+  onClick: () => void
+}

@@ -163,7 +163,7 @@ export function DSListControlBar({
         <div className="cc-list-toolbar__summary-actions">
           <DSFilterSummaryButton
             icon={<SortIcon />}
-            label={`Orden: ${buildSortLabel(sortOptions, state.sortField)}`}
+            label="Orden"
             detail={sortDirectionLabel}
             onClick={() => setShowAdvancedControls((current) => !current)}
             active={state.sortField !== defaultState.sortField || state.sortDirection !== defaultState.sortDirection}

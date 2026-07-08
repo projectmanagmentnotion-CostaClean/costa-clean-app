@@ -347,9 +347,18 @@ export function AppNav({
             </button>
           ) : null}
 
-          <div className="cc-mobile-shell-header__copy">
-            <span className="cc-mobile-shell-header__title">{mobileHeaderTitle}</span>
-            <span className="cc-mobile-shell-header__section">{currentViewMeta?.section ?? 'General'}</span>
+          <div className="cc-mobile-shell-header__brand">
+            <img
+              src="/branding/Costa_Clean-LOGO.png"
+              alt=""
+              className="cc-mobile-shell-header__logo"
+              aria-hidden="true"
+            />
+
+            <div className="cc-mobile-shell-header__copy">
+              <span className="cc-mobile-shell-header__title">{mobileHeaderTitle}</span>
+              <span className="cc-mobile-shell-header__section">{currentViewMeta?.section ?? 'General'}</span>
+            </div>
           </div>
         </div>
 

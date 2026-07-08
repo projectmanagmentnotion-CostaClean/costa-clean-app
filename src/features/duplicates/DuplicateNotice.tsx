@@ -13,9 +13,11 @@ export function DuplicateNotice({
 }: DuplicateNoticeProps) {
   return (
     <div className="cc-duplicate-review__notice">
-      <strong>{title}</strong>
-      <p>{description}</p>
-      <div className="form-actions">
+      <div className="cc-duplicate-review__notice-copy">
+        <strong>{title}</strong>
+        <p>{description}</p>
+      </div>
+      <div className="cc-duplicate-review__notice-actions">
         <button type="button" className="secondary-button" onClick={onAction}>
           {actionLabel}
         </button>

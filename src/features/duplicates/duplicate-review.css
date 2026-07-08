@@ -150,12 +150,33 @@
 }
 
 .cc-duplicate-review__notice {
-  margin: 1rem 0;
-  padding: 1rem 1.1rem;
-  border-radius: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.7rem 0;
+  padding: 0.85rem 1rem;
+  border-radius: 0.95rem;
   border: 1px solid rgba(251, 146, 60, 0.18);
   background: linear-gradient(135deg, rgba(33, 20, 10, 0.94), rgba(20, 17, 24, 0.92));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.cc-duplicate-review__notice-copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.cc-duplicate-review__notice-copy p {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.cc-duplicate-review__notice-actions {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .cc-duplicate-review__notice strong,
@@ -313,4 +334,22 @@
 :root[data-theme="light"] .cc-duplicate-review .secondary-button:hover,
 :root[data-theme="light"] .cc-duplicate-review__notice .secondary-button:hover {
   background: rgba(255, 255, 255, 0.96);
+}
+
+@media (max-width: 720px) {
+  .cc-duplicate-review__notice {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.6rem;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .cc-duplicate-review__notice-actions {
+    justify-content: stretch;
+  }
+
+  .cc-duplicate-review__notice-actions .secondary-button {
+    width: 100%;
+    min-height: 40px;
+  }
 }

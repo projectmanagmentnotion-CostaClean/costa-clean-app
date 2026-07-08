@@ -1,10 +1,9 @@
-import { Suspense, useEffect, useMemo, useState } from 'react'
+﻿import { Suspense, useEffect, useMemo, useState } from 'react'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { CollapsibleDetailSection } from '../components/CollapsibleDetailSection'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { ExecutiveHeader } from '../components/ExecutiveHeader'
-import { InsightPanel } from '../components/InsightPanel'
 import { ProgressMetric } from '../components/ProgressMetric'
 import { SeverityBadge, type SeverityTone } from '../components/SeverityBadge'
 import { VisualKpiCard } from '../components/VisualKpiCard'
@@ -18,6 +17,10 @@ import {
   type ClosingIncidenceView,
 } from '../features/closing/closingSummaryEngine'
 import type { ClosingDeterministicWarning } from '../features/closing/closingDeterministicSummary'
+import {
+  buildFiscalSemesterAuditSummary,
+  buildSecondSemesterSelection,
+} from '../features/closing/fiscalSemesterAudit'
 import { generateClosingIntelligenceSummary } from '../features/closingIntelligence/closingIntelligenceApi'
 import type { ClosingIntelligenceResponse } from '../features/closingIntelligence/types'
 import type { FiscalPeriodSelection } from '../features/closing/fiscalPeriods'
@@ -84,6 +87,12 @@ function getWarningSeverityLabel(value: 'critical' | 'warning' | 'info'): string
   if (value === 'critical') return 'Critico'
   if (value === 'warning') return 'Requiere revision'
   return 'Informativo'
+}
+
+function getAuditTone(input: { invoiceCount: number; reviewCount: number }): SeverityTone {
+  if (input.reviewCount > 0) return 'warning'
+  if (input.invoiceCount === 0) return 'info'
+  return 'success'
 }
 
 function getMissingDataFlagLabel(flag: string): string {
@@ -233,7 +242,6 @@ export function FiscalClosingPage({
     Number(fiscalSummary.completedJobsWithoutInvoiceCount === 0),
   ]
   const readinessPercent = Math.round((readinessCriteria.reduce((sum, value) => sum + value, 0) / readinessCriteria.length) * 100)
-  const dominantReviewTone: SeverityTone = summary.criticalIncidenceCount > 0 ? 'critical' : summary.unresolvedIncidenceCount > 0 ? 'warning' : 'success'
   const integralReportData = useMemo(
     () => buildFiscalPeriodExportData({
       selection,
@@ -244,6 +252,31 @@ export function FiscalClosingPage({
     }),
     [expenses, invoices, payments, quotes, selection],
   )
+  const semesterAudit = useMemo(
+    () => buildFiscalSemesterAuditSummary({
+      year: selection.year,
+      invoices,
+      payments,
+      clients,
+    }),
+    [clients, invoices, payments, selection.year],
+  )
+  const semesterAuditSelection = useMemo(
+    () => buildSecondSemesterSelection(selection.year),
+    [selection.year],
+  )
+  const semesterAuditTone = useMemo(
+    () => getAuditTone({
+      invoiceCount: semesterAudit.totals.invoiceCount,
+      reviewCount: semesterAudit.reviewItems.length,
+    }),
+    [semesterAudit.reviewItems.length, semesterAudit.totals.invoiceCount],
+  )
+  const semesterAuditHeadline = semesterAudit.totals.invoiceCount > 0
+    ? `${semesterAudit.totals.invoiceCount} factura(s) emitidas incluidas`
+    : `Sin facturas emitidas del ${semesterAudit.period.startDate} al ${semesterAudit.period.endDate}`
+  const semesterAuditAlert = semesterAudit.reviewItems[0]?.message
+    ?? (semesterAudit.excludedInvoices[0] ? `${semesterAudit.excludedInvoices[0].reference}: ${semesterAudit.excludedInvoices[0].reason}` : null)
   const mainCta = summary.unresolvedIncidenceCount > 0
     ? {
         label: 'Revisar pendientes',
@@ -438,106 +471,192 @@ export function FiscalClosingPage({
     <section className="dashboard-page cc-fiscal-closing-page">
       <ExecutiveHeader
         eyebrow="Cierre fiscal"
-        title="Centro de cierre del periodo"
-        summary="Estado del periodo, preparacion interna, IVA a ingresar estimado y siguientes pasos en una sola lectura. Requiere validacion profesional antes de tratarlo como cierre definitivo."
-        statusLabel={fiscalSummary.readinessLabel}
-        statusTone={getReadinessTone(fiscalSummary.readiness)}
-        primaryAction={mainCta}
-        secondaryAction={{
-          label: 'Abrir exportacion fiscal',
-          onClick: () => setIsExportOpen(true),
+        title="Importe real del segundo semestre"
+        summary="Primero muestra la cifra real emitida del periodo. El resto queda plegado o fuera del flujo principal."
+        statusLabel={semesterAudit.period.label}
+        statusTone={semesterAuditTone}
+        primaryAction={{
+          label: 'Ver facturas incluidas',
+          onClick: () => onNavigateToIncidence('invoices', 'all', semesterAuditSelection),
         }}
-        metricLabel="IVA a ingresar estimado"
-        metricValue={formatCurrency(fiscalSummary.estimatedNetVatPayable)}
-        metricHint="IVA repercutido menos IVA deducible estimado. Requiere validacion profesional."
-      >
-        <div className="cc-fiscal-closing-header-progress">
-          <ProgressMetric
-            label="Preparacion interna"
-            value={`${readinessPercent}%`}
-            percent={readinessPercent}
-            tone={getReadinessTone(fiscalSummary.readiness)}
-            hint="Indicador interno basado en snapshot, soporte, validacion IVA y pendientes reales."
-          />
-          <InsightPanel
-            title="Lectura rapida"
-            tone={getReadinessTone(fiscalSummary.readiness)}
-            insight={`${fiscalSummary.period.label} · ${fiscalSummary.readinessLabel}`}
-            implication={fiscalSummary.confidenceNotes[0] ?? statusCard.detail}
-            action={topWarnings[0]?.recommendedAction ?? 'Revisar checklist, resolver bloqueos y validar antes de exportar.'}
-          />
-        </div>
-      </ExecutiveHeader>
+        secondaryAction={{
+          label: mainCta.label,
+          onClick: mainCta.onClick,
+        }}
+        metricLabel="Total facturado real"
+        metricValue={formatCurrency(semesterAudit.totals.totalAmount)}
+        metricHint={semesterAuditHeadline}
+      />
 
       {error ? (
         <DSErrorState title="No se pudo cargar la base del cierre" description={error} />
       ) : null}
 
-      <FiscalPeriodSelector
-        availableYears={availableYears}
-        selection={selection}
-        onChange={setSelection}
-      />
-
       <section className="cc-dashboard-block">
         <div className="cc-dashboard-block__header">
           <div>
-            <h2>Lectura principal del cierre</h2>
-            <p>Primero decide si el periodo esta listo, cuanto riesgo queda abierto y si el IVA estimado ya se puede revisar con calma.</p>
+            <h2>Lectura fiscal real</h2>
+            <p>{semesterAuditHeadline}</p>
           </div>
         </div>
 
         <div className="cc-fiscal-closing-primary-grid">
           <VisualKpiCard
-            label="Estado del paquete"
-            value={fiscalSummary.readinessLabel}
-            hint={statusCard.detail}
-            tone={getReadinessTone(fiscalSummary.readiness)}
+            label="Total facturado"
+            value={formatCurrency(semesterAudit.totals.totalAmount)}
+            hint={`${semesterAudit.period.startDate} a ${semesterAudit.period.endDate}`}
+            tone={semesterAuditTone}
             priority="primary"
-            badgeLabel="Preparacion interna"
+            badgeLabel="Real"
             className="cc-fiscal-closing-card--state"
-            action={{ label: mainCta.label, onClick: mainCta.onClick }}
-            progress={{
-              label: 'Preparacion',
-              value: `${readinessPercent}%`,
-              percent: readinessPercent,
-              hint: 'Indicador interno basado en snapshot, soporte, revision y pendientes.',
-            }}
-          >
-            <p className="cc-fiscal-closing-card__note">
-              Confianza {getConfidenceLabel(fiscalSummary.confidenceLevel).toLowerCase()} y snapshot {persistedClosing ? 'guardado' : 'pendiente'}.
-            </p>
-          </VisualKpiCard>
-
-          <VisualKpiCard
-            label="IVA a ingresar estimado"
-            value={formatCurrency(fiscalSummary.estimatedNetVatPayable)}
-            hint="IVA repercutido menos IVA deducible estimado."
-            tone={summary.missingValidVatInvoiceCount > 0 ? 'warning' : 'success'}
-            priority="primary"
-            badgeLabel="Estimado"
-            className="cc-fiscal-closing-card--vat"
-          >
-            <p className="cc-fiscal-closing-card__note">No es un importe definitivo. Requiere validacion profesional.</p>
-          </VisualKpiCard>
-
-          <VisualKpiCard
-            label="Elementos por revisar"
-            value={String(summary.unresolvedIncidenceCount)}
-            hint={`${topWarnings.length} warning(s) principales y ${fiscalSummary.missingDataFlags.length} limite(s) visibles.`}
-            tone={dominantReviewTone}
-            priority="primary"
-            badgeLabel={dominantReviewTone === 'critical' ? 'Dominan bloqueos' : summary.unresolvedIncidenceCount > 0 ? 'Revision abierta' : 'Controlado'}
-            className="cc-fiscal-closing-card--review"
-            action={{ label: 'Revisar pendientes', onClick: mainCta.onClick }}
-          >
-            <div className="cc-fiscal-closing-card__split">
-              <strong>{fiscalSummary.expensesWithoutSupportCount} sin soporte · {summary.missingValidVatInvoiceCount} sin soporte IVA.</strong>
-              <strong>{fiscalSummary.pendingInvoicesCount} factura(s) pendientes · {fiscalSummary.completedJobsWithoutInvoiceCount} servicio(s) sin factura.</strong>
-            </div>
-          </VisualKpiCard>
+          />
         </div>
+
+        <div className="cc-fiscal-closing-secondary-grid">
+          <article className="cc-quarterly-persistence__card">
+            <span className="cc-dashboard-panel__label">Periodo auditado</span>
+            <strong className="cc-dashboard-panel__value">{semesterAudit.period.label}</strong>
+            <p className="cc-dashboard-panel__text">{semesterAudit.period.startDate} -&gt; {semesterAudit.period.endDate}</p>
+          </article>
+
+          <article className="cc-quarterly-persistence__card">
+            <label className="cc-inline-field">
+              <span>Año</span>
+              <select
+                value={selection.year}
+                onChange={(event) => setSelection((current) => ({ ...current, year: Number(event.target.value) }))}
+              >
+                {[...new Set<number>([...availableYears, selection.year])].sort((left, right) => right - left).map((year) => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </label>
+          </article>
+        </div>
+
+        {semesterAuditAlert || semesterAudit.totals.invoiceCount === 0 ? (
+          <article className="cc-quarterly-persistence__card" style={{ marginTop: '0.75rem' }}>
+            <div className="cc-action-group" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="cc-dashboard-panel__label">Revision compacta</span>
+              <SeverityBadge
+                label={semesterAudit.reviewItems.length > 0 ? `${semesterAudit.reviewItems.length} aviso(s)` : 'Sin actividad'}
+                tone={semesterAudit.reviewItems.length > 0 ? 'warning' : 'info'}
+              />
+            </div>
+            <p className="cc-dashboard-panel__text">
+              {semesterAuditAlert ?? `No hay facturas emitidas en ${semesterAudit.period.label}. El importe real del periodo es ${formatCurrency(semesterAudit.totals.totalAmount)}.`}
+            </p>
+          </article>
+        ) : null}
       </section>
+
+      <CollapsibleDetailSection
+        title="Desglose real"
+        count={
+          3
+          + ((semesterAudit.totals.paidAmount > 0 || semesterAudit.totals.pendingAmount > 0) ? 2 : 0)
+        }
+        tone="info"
+      >
+        <section className="cc-dashboard-block">
+          <div className="cc-fiscal-closing-secondary-grid">
+            <VisualKpiCard
+              label="Base imponible"
+              value={formatCurrency(semesterAudit.totals.baseAmount)}
+              hint="Suma exacta de bases de las facturas emitidas incluidas."
+              tone={semesterAudit.totals.invoiceCount > 0 ? 'info' : 'neutral'}
+              priority="compact"
+              badgeLabel="Base"
+            />
+            <VisualKpiCard
+              label="IVA"
+              value={formatCurrency(semesterAudit.totals.vatAmount)}
+              hint="IVA exacto de las facturas emitidas incluidas."
+              tone={semesterAudit.totals.invoiceCount > 0 ? 'info' : 'neutral'}
+              priority="compact"
+              badgeLabel="IVA"
+            />
+            <VisualKpiCard
+              label="Facturas emitidas"
+              value={String(semesterAudit.totals.invoiceCount)}
+              hint={`Estados contados: ${semesterAudit.emittedStatuses.join(', ')}`}
+              tone={semesterAuditTone}
+              priority="compact"
+              badgeLabel={semesterAudit.reviewItems.length > 0 ? 'Revisar' : 'Emitidas'}
+            />
+
+            {semesterAudit.totals.paidAmount > 0 || semesterAudit.totals.pendingAmount > 0 ? (
+              <>
+                <VisualKpiCard
+                  label="Cobrado"
+                  value={formatCurrency(semesterAudit.totals.paidAmount)}
+                  hint="Calculado desde pagos reales vinculados a las facturas incluidas."
+                  tone="success"
+                  priority="compact"
+                />
+                <VisualKpiCard
+                  label="Pendiente"
+                  value={formatCurrency(semesterAudit.totals.pendingAmount)}
+                  hint="Saldo pendiente de las facturas emitidas del semestre."
+                  tone={semesterAudit.totals.pendingAmount > 0.009 ? 'warning' : 'success'}
+                  priority="compact"
+                />
+              </>
+            ) : null}
+          </div>
+        </section>
+      </CollapsibleDetailSection>
+
+      <CollapsibleDetailSection title="Motor fiscal completo" count={1} tone="neutral">
+        <FiscalPeriodSelector
+          availableYears={availableYears}
+          selection={selection}
+          onChange={setSelection}
+          title="Otras vistas del motor"
+          description="Mes, trimestre, año y rango personalizado quedan fuera del flujo principal del segundo semestre."
+        />
+      </CollapsibleDetailSection>
+
+      <CollapsibleDetailSection title="Facturas incluidas" count={semesterAudit.includedInvoices.length} tone="info">
+        <section className="cc-dashboard-block">
+          <div className="cc-export-folder-list cc-bounded-list">
+            {semesterAudit.includedInvoices.length > 0 ? semesterAudit.includedInvoices.map((invoice) => (
+              <article key={invoice.id} className="cc-export-folder-item">
+                <strong>{invoice.reference}</strong>
+                <p>
+                  {invoice.clientLabel} · {formatDateEs(invoice.issueDate)} · Base {formatCurrency(invoice.baseAmount)} · IVA {formatCurrency(invoice.vatAmount)} · Total {formatCurrency(invoice.totalAmount)}
+                </p>
+              </article>
+            )) : (
+              <article className="cc-export-folder-item">
+                <strong>Sin facturas emitidas</strong>
+                <p>No hay registros emitidos dentro del segundo semestre auditado.</p>
+              </article>
+            )}
+          </div>
+        </section>
+      </CollapsibleDetailSection>
+
+      {semesterAudit.reviewItems.length > 0 || semesterAudit.excludedInvoices.length > 0 ? (
+        <CollapsibleDetailSection title="Revisiones necesarias" count={semesterAudit.reviewItems.length + semesterAudit.excludedInvoices.length} tone="warning">
+          <section className="cc-dashboard-block">
+            <div className="cc-export-folder-list cc-bounded-list">
+              {semesterAudit.reviewItems.map((item) => (
+                <article key={item.id} className="cc-export-folder-item">
+                  <strong>{item.reference}</strong>
+                  <p>{item.message}</p>
+                </article>
+              ))}
+              {semesterAudit.excludedInvoices.map((invoice) => (
+                <article key={`excluded-${invoice.id}`} className="cc-export-folder-item">
+                  <strong>{invoice.reference}</strong>
+                  <p>{invoice.reason}</p>
+                </article>
+              ))}
+            </div>
+          </section>
+        </CollapsibleDetailSection>
+      ) : null}
 
       <CollapsibleDetailSection title="Base del periodo" count={7} tone="info">
       <section className="cc-dashboard-block">
@@ -639,7 +758,7 @@ export function FiscalClosingPage({
                 items={topWarnings.map((warning) => ({
                   id: warning.id,
                   state: warning.severity === 'critical' ? 'critical' : warning.severity === 'warning' ? 'warning' : 'info',
-                  label: `${getWarningSeverityLabel(warning.severity)} · ${warning.title}`,
+                  label: `${getWarningSeverityLabel(warning.severity)} Â· ${warning.title}`,
                   description: `${warning.description} ${warning.recommendedAction}`,
                   action: getWarningNavigationTarget(warning) ? {
                     label: 'Abrir modulo',
@@ -767,7 +886,7 @@ export function FiscalClosingPage({
           <VisualKpiCard
             label="Resumen financiero"
             value={formatCurrency(integralReportData.metrics.invoiced_total)}
-            hint={`Cobrado ${formatCurrency(integralReportData.metrics.collected_total)} · pendiente ${formatCurrency(integralReportData.metrics.outstanding_total)}.`}
+            hint={`Cobrado ${formatCurrency(integralReportData.metrics.collected_total)} Â· pendiente ${formatCurrency(integralReportData.metrics.outstanding_total)}.`}
             tone={integralReportData.metrics.outstanding_total > 0.009 ? 'warning' : 'success'}
             priority="primary"
             badgeLabel="Determinista"
@@ -778,7 +897,7 @@ export function FiscalClosingPage({
           <VisualKpiCard
             label="Resumen IVA"
             value={formatCurrency(integralReportData.metrics.estimated_net_vat_payable)}
-            hint={`IVA repercutido ${formatCurrency(integralReportData.metrics.output_vat_total)} · IVA deducible estimado ${formatCurrency(integralReportData.metrics.estimated_deductible_vat)}.`}
+            hint={`IVA repercutido ${formatCurrency(integralReportData.metrics.output_vat_total)} Â· IVA deducible estimado ${formatCurrency(integralReportData.metrics.estimated_deductible_vat)}.`}
             tone={integralReportData.metrics.missing_valid_vat_invoice_count > 0 ? 'warning' : 'success'}
             priority="primary"
             badgeLabel="Estimado"
@@ -865,7 +984,7 @@ export function FiscalClosingPage({
                     id: 'integral-validation',
                     state: 'warning',
                     label: 'Validacion profesional requerida',
-                    description: 'El informe sirve para preparacion interna y entrega ordenada, no como asesoría fiscal definitiva.',
+                    description: 'El informe sirve para preparacion interna y entrega ordenada, no como asesorÃ­a fiscal definitiva.',
                   },
                 ]}
               />
@@ -905,7 +1024,7 @@ export function FiscalClosingPage({
                 <article key={quarter.fiscalQuarter} className="cc-export-folder-item">
                   <strong>{`T${quarter.fiscalQuarter}`}</strong>
                   <p>
-                    Facturado {formatCurrency(quarter.invoicedTotal)} · IVA neto estimado {formatCurrency(quarter.estimatedNetVatPayable)} ·
+                    Facturado {formatCurrency(quarter.invoicedTotal)} Â· IVA neto estimado {formatCurrency(quarter.estimatedNetVatPayable)} Â·
                     Incidencias {quarter.unresolvedIncidenceCount}
                   </p>
                   <button
@@ -975,7 +1094,7 @@ export function FiscalClosingPage({
                 <article key={`missing-${expense.id}`} className="cc-export-folder-item">
                   <strong>{expense.display_code ?? expense.supplier_name}</strong>
                   <p>
-                    {expense.supplier_name} · {formatDateEs(expense.expense_date)} · {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
+                    {expense.supplier_name} Â· {formatDateEs(expense.expense_date)} Â· {getExpenseDocumentSupportStatusLabel(expense.document_support_status)}
                   </p>
                 </article>
               )) : (
@@ -1007,7 +1126,7 @@ export function FiscalClosingPage({
                 <article key={`review-${expense.id}`} className="cc-export-folder-item">
                   <strong>{expense.display_code ?? expense.supplier_name}</strong>
                   <p>
-                    Revision {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)} · riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()}
+                    Revision {getExpenseFiscalReviewStatusLabel(expense.fiscal_review_status)} Â· riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()}
                   </p>
                 </article>
               ))}
@@ -1018,7 +1137,7 @@ export function FiscalClosingPage({
                   <article key={`risk-${expense.id}`} className="cc-export-folder-item">
                     <strong>{expense.display_code ?? expense.supplier_name}</strong>
                     <p>
-                      Riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()} · {formatDateEs(expense.expense_date)}
+                      Riesgo {getExpenseFiscalRiskLevelLabel(expense.ai_fiscal_risk_level ?? expense.fiscal_risk_level).toLowerCase()} Â· {formatDateEs(expense.expense_date)}
                     </p>
                   </article>
                 ))}
@@ -1062,3 +1181,7 @@ export function FiscalClosingPage({
     </section>
   )
 }
+
+
+
+

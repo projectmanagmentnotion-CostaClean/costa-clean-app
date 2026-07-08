@@ -67,3 +67,11 @@ No fiscal logic, persistence, numbering, SQL, RPC, routes, auth, or Supabase con
 ## Recommended Next Step
 
 - Sprint 12 should standardize loading, saving, success, confirmation, and error behavior across these finance surfaces without changing business logic.
+
+## Update 2026-07-08
+
+- `FiscalClosingPage` deja de competir con varias metricas primarias en el primer viewport.
+- El foco pasa a `Importe real del segundo semestre` con CTA directa a facturas incluidas.
+- `Base imponible`, `IVA`, `Facturas emitidas`, `Cobrado` y `Pendiente` se mueven a un bloque plegado `Desglose real`.
+- El motor alternativo de mes, trimestre, anio y rango personalizado queda fuera del flujo principal bajo `Motor fiscal completo`.
+- Se anade una auditoria determinista especifica del segundo semestre en `src/features/closing/fiscalSemesterAudit.ts`.

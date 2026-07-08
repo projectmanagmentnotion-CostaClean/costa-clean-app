@@ -62,6 +62,14 @@ These gates define the minimum quality bar for any future app work. A change sho
 - Los detalles deben aprovechar el ancho real de la pantalla y evitar encapsulacion redundante.
 - Un panel debug no puede convivir con su equivalente operativo abierta en la misma zona.
 
+## Fiscal Closing Real Amount Gate
+
+- `Cierre fiscal` debe abrir con un importe real exacto y un periodo explicito.
+- El primer viewport no puede repartir protagonismo entre total, base, IVA y contexto expandido.
+- Si existe desglose fiscal, debe quedar plegado o fuera del flujo principal.
+- Si no hay facturas emitidas en el periodo auditado, la UI debe decirlo de forma directa y mantener `0,00 €` como importe real.
+- Si se muestra una cifra de facturacion, debe quedar claro si es base imponible o total emitido.
+
 ## Accessibility Gate
 
 - Focus behavior is coherent.

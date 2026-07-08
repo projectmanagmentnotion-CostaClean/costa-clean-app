@@ -63,8 +63,28 @@ function renderInvoicesPage(invoices: InvoiceListItem[], clients: ClientListItem
   }))
 }
 
+function withWindowSearch<T>(search: string, run: () => T): T {
+  const originalWindow = globalThis.window
+
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: {
+      location: { search },
+    },
+  })
+
+  try {
+    return run()
+  } finally {
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: originalWindow,
+    })
+  }
+}
+
 describe('InvoicesPage fiscal control', () => {
-  it('renders the fiscal control panel with actionable counts', () => {
+  it('hides fiscal and numbering controls in the normal invoices view', () => {
     const html = renderInvoicesPage(
       [
         createInvoice({
@@ -95,53 +115,65 @@ describe('InvoicesPage fiscal control', () => {
       ],
     )
 
-    expect(html.includes('Control fiscal de facturas')).toBe(true)
-    expect(html.includes('Completas: 1')).toBe(true)
-    expect(html.includes('Reparables desde cliente: 1')).toBe(true)
-    expect(html.includes('Incompletas: 1')).toBe(true)
-    expect(html.includes('Completar reparables')).toBe(true)
-    expect(html.includes('Revisar incompletas')).toBe(true)
+    expect(html.includes('Debug fiscal')).toBe(false)
+    expect(html.includes('Control de numeracion')).toBe(false)
+    expect(html.includes('Revisar secuencia')).toBe(false)
   })
 
-  it('shows the debug JSON only with debugInvoiceFiscal=1', () => {
-    const originalWindow = globalThis.window
-    const invoices = [createInvoice()]
+  it('shows fiscal debug data and numbering control only with debugInvoiceFiscal=1', () => {
+    const invoices = [
+      createInvoice({
+        id: 'invoice-complete',
+        pricing_metadata: {
+          client_fiscal_snapshot: {
+            client_id: 'client-1',
+            fiscal_name: 'Cliente Fiscal',
+            tax_id: 'B12345678',
+            billing_address: 'Calle Mayor 1',
+            captured_at: '2026-07-02T10:00:00.000Z',
+            source: 'client_record',
+          },
+        },
+      }),
+      createInvoice({ id: 'invoice-reparable', display_code: 'INV-002', invoice_number: '2026-002' }),
+      createInvoice({
+        id: 'invoice-blocked',
+        display_code: 'INV-003',
+        invoice_number: '2026-003',
+        client_id: 'client-2',
+        client_name: 'Cliente Bloqueado',
+      }),
+    ]
+    const clients = [
+      createClient(),
+      createClient({ id: 'client-2', full_name: 'Cliente Bloqueado', tax_id: null, billing_address: null }),
+    ]
+
+    const debugHtml = withWindowSearch('?debugInvoiceFiscal=1', () => renderInvoicesPage(invoices, clients))
+    expect(debugHtml.includes('Debug fiscal')).toBe(true)
+    expect(debugHtml.includes('Control de numeracion')).toBe(true)
+    expect(debugHtml.includes('&quot;canRunBackfill&quot;: true')).toBe(true)
+    expect(debugHtml.includes('&quot;complete&quot;: 1')).toBe(true)
+    expect(debugHtml.includes('&quot;repairable&quot;: 1')).toBe(true)
+    expect(debugHtml.includes('&quot;blocked&quot;: 1')).toBe(true)
+
+    const plainHtml = withWindowSearch('?debugBuild=1', () => renderInvoicesPage(invoices, clients))
+    expect(plainHtml.includes('Debug fiscal')).toBe(false)
+    expect(plainHtml.includes('Control de numeracion')).toBe(false)
+    expect(plainHtml.includes('&quot;canRunBackfill&quot;: true')).toBe(false)
+  })
+
+  it('shows the regularization hint only inside fiscal debug mode', () => {
+    const invoices = [
+      createInvoice({ id: 'invoice-45', display_code: 'INV-0045', invoice_number: '2026-045' }),
+      createInvoice({ id: 'invoice-51', display_code: 'INV-0051', invoice_number: '2026-051' }),
+    ]
     const clients = [createClient()]
 
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      value: {
-        location: { search: '?debugInvoiceFiscal=1' },
-      },
-    })
-    const debugHtml = renderInvoicesPage(invoices, clients)
-    expect(debugHtml.includes('&quot;canRunBackfill&quot;: true')).toBe(true)
-    expect(debugHtml.includes('&quot;repairable&quot;: 1')).toBe(true)
+    const normalHtml = renderInvoicesPage(invoices, clients)
+    expect(normalHtml.includes('INV-0051 puede regularizarse a INV-0046 / 2026-046 si todavia no fue enviada.')).toBe(false)
 
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      value: {
-        location: { search: '?debugBuild=1' },
-      },
-    })
-    const plainHtml = renderInvoicesPage(invoices, clients)
-    expect(plainHtml.includes('&quot;canRunBackfill&quot;: true')).toBe(false)
-
-    Object.defineProperty(globalThis, 'window', {
-      configurable: true,
-      value: originalWindow,
-    })
-  })
-
-  it('renders a generic regularization hint for the first post-gap invoice', () => {
-    const html = renderInvoicesPage(
-      [
-        createInvoice({ id: 'invoice-45', display_code: 'INV-0045', invoice_number: '2026-045' }),
-        createInvoice({ id: 'invoice-51', display_code: 'INV-0051', invoice_number: '2026-051' }),
-      ],
-      [createClient()],
-    )
-
-    expect(html.includes('INV-0051 puede regularizarse a INV-0046 / 2026-046 si todavia no fue enviada.')).toBe(true)
+    const debugHtml = withWindowSearch('?debugInvoiceFiscal=1', () => renderInvoicesPage(invoices, clients))
+    expect(debugHtml.includes('INV-0051 puede regularizarse a INV-0046 / 2026-046 si todavia no fue enviada.')).toBe(true)
   })
 })

@@ -43,3 +43,23 @@ Sprint focused on reducing mobile/iPad loading noise without touching Supabase, 
 
 - Authenticated visual confirmation of the new loading pattern inside `?view=clients` is still pending due browser automation timeouts on the live in-app tab.
 - The code path changed is shared and low-risk, but final authenticated visual confirmation is still required.
+
+## Test Debt Closed - Invoice Fiscal Debug Visibility
+
+- Broken test: `src/pages/InvoicesPage.test.ts` still expected fiscal/numbering control visible in the normal invoices workspace.
+- Cause: product behavior had already moved that surface behind explicit `?debugInvoiceFiscal=1`, but the test kept asserting the old operational UI.
+- Correct behavior: normal invoice view hides fiscal/debug/numbering control; explicit fiscal debug shows the compact JSON plus numbering control.
+- Change applied: the test now asserts hidden state in normal view, asserts debug visibility only with `?debugInvoiceFiscal=1`, and keeps regularization-hint coverage under debug.
+- Result: `npm run test -- src/pages/InvoicesPage.test.ts` passed on `2026-07-08`.
+
+## Authenticated QA Recovery Attempt
+
+- Requested viewports: `390x844` and `768x1024`.
+- Requested authenticated modules: `home`, `clients`, `invoices`, `invoice detail`, `expenses`, `fiscal_closing`.
+- Real result on `2026-07-08`: the in-app browser reconnects and can still resolve the authenticated selected tab metadata at `http://127.0.0.1:4173/?view=invoices`, but broader module audits remain unstable.
+- Exact limitations observed:
+  - multi-module authenticated audit call hit `js execution timed out; kernel reset, rerun your request` after `120000 ms`
+  - single-page authenticated invoice audit hit `js execution timed out; kernel reset, rerun your request` after `60000 ms`
+  - authenticated screenshot capture failed with `Timed out running CDP command "Page.captureScreenshot" for tab 1`
+  - no reusable `storageState` or authenticated Playwright session artifact exists in repo for fallback
+- Pending status: authenticated visual QA remains partially blocked and must be rerun when the embedded browser becomes stable enough to navigate and capture pages end to end.

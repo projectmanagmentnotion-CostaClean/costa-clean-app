@@ -208,3 +208,18 @@ For roadmap-closeout or phase-closeout work:
 - protected technical risks remain explicit
 - lint and build pass
 - the repo is ready for the next targeted phase without requiring a blind redesign restart
+
+## Test Debt Closed - Invoice Fiscal Debug Visibility
+
+- If a test still expects a debug or fiscal surface in normal operational flow after product approval removed it, the test is wrong and must be aligned.
+- Closing that debt requires preserving meaningful coverage: hidden in normal view, visible only under the supported explicit debug trigger.
+- A green test is valid only if product behavior stays unchanged.
+
+## Authenticated QA Recovery Attempt
+
+- When authenticated live QA is requested, the report must distinguish:
+  - code or test verification
+  - live browser verification
+  - blocked browser automation
+- If the embedded browser stalls, the final report must cite the exact timeout or runtime failure and the last authenticated surface actually reached.
+- Absence of fallback `storageState` or reusable authenticated session artifacts must be stated explicitly instead of implied away.

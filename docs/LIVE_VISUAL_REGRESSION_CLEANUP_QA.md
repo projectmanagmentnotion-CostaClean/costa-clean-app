@@ -12,3 +12,21 @@
 | Gastos / revision | Filas checklist y KPIs de revision/riesgo con `0` no deben ocupar superficie | `src/pages/ExpensesPage.tsx` | Checklist y KPIs filtrados; cobertura solo aparece si hay gastos visibles | Verificado por codigo; dataset actual mantiene valores positivos y sigue visible solo lo accionable | Banner de duplicados sigue siendo grande, fuera de esta regla concreta |
 | Listas vacias | `0 visibles de 0` seguia apareciendo como bloque operativo en directorios vacios | `src/design-system/components/DSListControlBar.tsx` | La toolbar no se renderiza cuando `totalCount === 0` | Confirmado en Clientes vacio: desaparece la lectura `0 visibles de 0` | Si se quiere busqueda en vistas vacias, definir excepcion explicita |
 | Docs de sprint citadas | `docs/ALERTS_ACTIONS_QA.md`, `docs/HOME_KPI_ACTIONS_QA.md`, `docs/INVOICE_ACTIONS_MOBILE_QA.md` no existen en repo | `docs/` | Se documenta la ausencia para no asumir QA previa inexistente | Confirmado por filesystem local | Crear o consolidar esos docs si se quieren como requisito real |
+
+## Test Debt Closed - Invoice Fiscal Debug Visibility
+
+- `src/pages/InvoicesPage.test.ts` esperaba un panel fiscal operativo que ya no forma parte de la vista normal aprobada.
+- El producto correcto mantiene ese bloque oculto fuera de `?debugInvoiceFiscal=1`.
+- La cobertura se reescribio para validar ocultacion en vista normal y visibilidad solo bajo debug explicito.
+- Resultado verificado: `npm run test -- src/pages/InvoicesPage.test.ts` en verde el `2026-07-08`.
+
+## Authenticated QA Recovery Attempt
+
+- Se reintento la QA autenticada real desde el navegador embebido sobre la pestaña viva del app local.
+- La reconexion al tab activo siguio funcionando y resolvio `http://127.0.0.1:4173/?view=invoices`.
+- La recuperacion no fue completa:
+  - el barrido autenticado multi-pantalla agoto `120000 ms`
+  - el intento focalizado por pagina agoto `60000 ms`
+  - la captura viva fallo con `Timed out running CDP command "Page.captureScreenshot" for tab 1`
+- Se verifico ademas que el repo no contiene `storageState` autenticado reutilizable para fallback local.
+- Estado final: recuperacion parcial del canal de inspeccion, pero QA visual autenticada completa aun pendiente.

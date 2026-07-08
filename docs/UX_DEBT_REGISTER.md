@@ -85,3 +85,14 @@
 - La QA visual autenticada en `390x844` confirma mejora real de `Home`, `Gastos`, `Clientes`, `Propiedades` y `Cierre fiscal`.
 - El desborde del header movil compartido y el scroll lateral del StepFlow de factura quedan resueltos en esta pasada.
 - La pasada cross-module adicional confirma tambien la correccion del overflow horizontal en `768x1024` y la apertura inmediata de `Registrar cobro`.
+
+## Test Debt Closed - Invoice Fiscal Debug Visibility
+
+- La deuda de `InvoicesPage` ya no es visual sino de test heredado: la suite esperaba `control fiscal` visible en la app normal cuando el producto correcto lo deja solo bajo debug.
+- Esa deuda queda cerrada al alinear la cobertura con el comportamiento aprobado sin reabrir el panel en produccion.
+
+## Authenticated QA Recovery Attempt
+
+- La deuda UX restante en facturas y cargas mobile sigue ligada a QA autenticada estable, no a una falta de criterio visual.
+- El `2026-07-08` se recupero resolucion del tab autenticado vivo, pero no una navegacion/captura suficientemente estable para cerrar todas las pantallas pedidas.
+- La deuda pendiente deja de ser "hacer mas UI" y pasa a ser "recuperar un canal de QA autenticada fiable".

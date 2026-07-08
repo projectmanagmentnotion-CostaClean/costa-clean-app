@@ -20,6 +20,7 @@
 | Shell central | `AppShell.tsx` concentra wiring, prefills, filtros, alertas y navegacion. Cualquier toque tiene radio de impacto amplio y el shell sigue dependiendo de aliases visuales (`fiscal_closing` frente a `annual_closing` y `quarterly_closing`) sobre `?view=`. | alta | `src/app/AppShell.tsx`, `src/app/useShellNavigation.ts`, `src/app/AppShellViewRenderer.tsx`, `src/app/AppNav.tsx`, `src/app/navigation.ts` | Orquestacion cross-module, prefills, filtros, guardas de navegacion, cambio del mecanismo `?view=` o de aliases vivos | Reducir presion sobre este archivo via patrones visuales y documentacion; cualquier refactor del router interno requiere sprint tecnico separado |
 | Densidad visual mobile | La app puede reintroducir wrappers, cards anidadas y toolbars demasiado pesadas cuando un modulo crece sin un gate explicito de densidad. | media | `src/features/invoices/*`, `src/features/clients/*`, `src/features/properties/*`, `src/features/jobs/*`, `src/design-system/components/DSListControlBar.tsx`, `src/components/ActionGroup.tsx` | Nuevas cards secundarias abiertas por defecto, filtros permanentes demasiado altos, paneles debug visibles en flujo normal, acciones secundarias compitiendo por ancho | Mantener el gate `one surface = one layer`, esconder debug fuera del flujo normal y validar mobile/iPad con captura real en sprints visuales |
 | Loading mobile | El loading compartido puede volver a crecer y crear flashes de cards falsas, `0` placeholders o empty states prematuros si los estados no se separan bien. | media | `src/app/AppShellViewRenderer.tsx`, `src/design-system/components/DSPageLoading.tsx`, `src/components/DeferredContentFallback.tsx`, `src/design-system/components/DSEmptyState.tsx` | Reutilizar `empty-state` gigante como loading, mostrar KPIs `0` antes de tiempo, renderizar mas de `3` skeleton rows en mobile | Mantener primitive compartida compacta, retrasar loading expandido en transiciones cortas y repetir QA autenticada en `390x844` y `768x1024` |
+| QA autenticada embebida | La sesion autenticada del navegador embebido sigue siendo intermitente: resuelve metadata del tab pero puede agotar `60000-120000 ms` al navegar o capturar, dejando sprints visuales parcialmente bloqueados. | media | navegador embebido de Codex, app local en `127.0.0.1:4173`, docs QA vivas | Declarar QA completa sin evidencia real, inventar screenshots, asumir fallback de `storageState` inexistente | Documentar timeout exacto, reintentar con alcance corto y mantener fallback solo si existe una sesion autenticada reutilizable real |
 | Legacy views y backups | Hay paginas legacy no montadas y backups `.bak-*` en `src/pages/`. | media | `src/pages/AnnualClosingPage.tsx`, `src/pages/QuarterlyClosingPage.tsx`, `src/pages/*.bak-*` | Borrar o mover sin auditoria, tocar archivo equivocado por confusion | Registrar y tratar en sprint tecnico de higiene, separado del rediseño |
 
 ## Riesgos nuevos de Motion Phase 2
@@ -57,6 +58,16 @@
 - un cambio pequeno en `cc-shell-nav` puede romper todos los modulos en `768x1024` aunque la logica de negocio siga intacta
 - el shell superior debe tratarse como superficie critica de QA visual compartida en cualquier sprint mobile/iPad
 - nunca asumir que tablet queda cubierta solo porque mobile estrecho ya no desborda
+
+## Test Debt Closed - Invoice Fiscal Debug Visibility
+
+- La deuda de test ya no esta en producto sino en cobertura: un test viejo esperaba una superficie fiscal retirada del flujo normal.
+- El riesgo futuro es reintroducir asserts de debug en vistas operativas y convertir la suite en freno falso positivo.
+
+## Authenticated QA Recovery Attempt
+
+- El intento del `2026-07-08` recupero resolucion del tab autenticado, pero no la navegacion/captura estable del navegador embebido.
+- Mientras ese canal siga inestable, cualquier cierre visual autenticado debe declararse parcial aunque lint/build/test queden verdes.
 
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 

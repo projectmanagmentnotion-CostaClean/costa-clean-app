@@ -59,6 +59,7 @@ export function ExpensesPage({
   const rawDuplicateGroups = buildExpenseDuplicateGroups(expenses)
   const {
     visibleGroups: duplicateGroups,
+    unresolvedGroups: unresolvedDuplicateGroups,
     reviewStateByGroupId,
     markReviewed,
     ignoreGroup,
@@ -251,9 +252,9 @@ export function ExpensesPage({
         </ActionFlowOverlay>
       ) : null}
 
-      {duplicateGroups.length > 0 ? (
+      {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${duplicateGroups.length} grupo(s) de posibles gastos duplicados`}
+          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles gastos duplicados`}
           description="Se han detectado coincidencias por proveedor, referencia, fecha o importe. Revísalas desde una surface específica antes de seguir cargando gastos parecidos."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

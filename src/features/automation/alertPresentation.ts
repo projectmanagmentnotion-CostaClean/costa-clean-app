@@ -3,6 +3,7 @@ import type {
   AutomationAlertRouting,
   AutomationAlertRuleId,
 } from './types'
+import { getAlertActionMeta } from '../alerts/alertActionRegistry'
 
 export type AlertBucket = 'critical' | 'action' | 'follow_up' | 'info'
 
@@ -95,19 +96,8 @@ function getRoutingActionLabel(routing: AutomationAlertRouting): string {
   return 'Abrir detalle'
 }
 
-const alertActionLabelByRule: Partial<Record<AutomationAlertRuleId, string>> = {
-  public_intake_lead_drafts_pending: 'Revisar solicitudes',
-  unpaid_invoices_older_threshold: 'Abrir cobros urgentes',
-  completed_jobs_without_invoice_older_threshold: 'Abrir pendientes de facturar',
-  accepted_quotes_without_job_older_threshold: 'Abrir presupuestos aceptados',
-  expenses_missing_support: 'Abrir gastos sin soporte',
-  expenses_pending_fiscal_review: 'Abrir revision fiscal',
-  quarter_closing_reminder: 'Abrir cierre pendiente',
-  recurring_invoice_plan_due: 'Abrir recurrentes listas',
-}
-
 export function getAlertActionLabel(alert: AutomationAlertItem): string {
-  return alertActionLabelByRule[alert.ruleId] ?? getRoutingActionLabel(alert.routing)
+  return getAlertActionMeta(alert).primaryLabel ?? getRoutingActionLabel(alert.routing)
 }
 
 export function getAlertImpactCopy(alert: AutomationAlertItem): string {

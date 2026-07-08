@@ -1,3 +1,4 @@
+import { ActionGroup, type ActionGroupItem } from '../../../components/ActionGroup'
 import type { SeverityTone } from '../../../components/SeverityBadge'
 import { DSCard, DSSectionHeader } from '../../../design-system/components'
 import { useGsapEntrance } from '../../../design-system/motion'
@@ -8,6 +9,7 @@ export interface HomeAlertSummaryItem {
   value: string
   tone: SeverityTone
   detail?: string
+  primaryActionLabel: string
   onOpen: () => void
   onSeen?: () => void
   onSnooze?: () => void
@@ -45,24 +47,32 @@ export function HomeAlertSummaryStrip({ items }: HomeAlertSummaryStripProps) {
               </div>
               {item.detail ? <p>{item.detail}</p> : null}
               <div className="cc-home-alert-summary__actions">
-                <button type="button" className="secondary-button ds-button--sm" onClick={item.onOpen}>
-                  Abrir
-                </button>
-                {item.onSeen ? (
-                  <button type="button" className="secondary-button ds-button--sm" onClick={item.onSeen}>
-                    Visto
-                  </button>
-                ) : null}
-                {item.onSnooze ? (
-                  <button type="button" className="secondary-button ds-button--sm" onClick={item.onSnooze}>
-                    Manana
-                  </button>
-                ) : null}
-                {item.onDismiss ? (
-                  <button type="button" className="secondary-button ds-button--sm" onClick={item.onDismiss}>
-                    Ocultar
-                  </button>
-                ) : null}
+                <ActionGroup
+                  moreLabel="Mas"
+                  actions={[
+                    {
+                      key: `${item.key}-open`,
+                      label: item.primaryActionLabel,
+                      tone: 'primary',
+                      onClick: item.onOpen,
+                    },
+                    ...(item.onSeen ? [{
+                      key: `${item.key}-seen`,
+                      label: 'Visto',
+                      onClick: item.onSeen,
+                    } satisfies ActionGroupItem] : []),
+                    ...(item.onSnooze ? [{
+                      key: `${item.key}-snooze`,
+                      label: 'Manana',
+                      onClick: item.onSnooze,
+                    } satisfies ActionGroupItem] : []),
+                    ...(item.onDismiss ? [{
+                      key: `${item.key}-dismiss`,
+                      label: 'Ocultar',
+                      onClick: item.onDismiss,
+                    } satisfies ActionGroupItem] : []),
+                  ]}
+                />
               </div>
             </article>
           ))}

@@ -152,6 +152,7 @@ export function InvoicesPage({
   const rawDuplicateGroups = buildInvoiceDuplicateGroups(invoices)
   const {
     visibleGroups: duplicateGroups,
+    unresolvedGroups: unresolvedDuplicateGroups,
     reviewStateByGroupId,
     markReviewed,
     ignoreGroup,
@@ -202,12 +203,12 @@ export function InvoicesPage({
     },
     {
       id: 'duplicates',
-      state: duplicateGroups.length > 0 ? 'warning' : 'done',
-      label: `${duplicateGroups.length} grupo(s) duplicado(s) potencial(es)`,
-      description: duplicateGroups.length > 0
+      state: unresolvedDuplicateGroups.length > 0 ? 'warning' : 'done',
+      label: `${unresolvedDuplicateGroups.length} grupo(s) duplicado(s) potencial(es)`,
+      description: unresolvedDuplicateGroups.length > 0
         ? 'Hay coincidencias que conviene limpiar antes de seguir emitiendo o regularizando cobros.'
         : 'No hay duplicidades activas dominando el control de facturas.',
-      action: duplicateGroups.length > 0 ? {
+      action: unresolvedDuplicateGroups.length > 0 ? {
         label: 'Revisar duplicados',
         onClick: () => setShowDuplicateReview(true),
       } : undefined,
@@ -482,16 +483,18 @@ export function InvoicesPage({
             </section>
           ) : null}
 
-          <div className="cc-invoice-workspace__support-card">
-            <InvoiceNumberingControlCard
-              audit={numberingAudit}
-              onReviewSequence={() => void handleReviewSequence()}
-              reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
-                ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
-                : null}
-              regularizationHint={numberingAudit.hasBlockingGaps ? numberingRegularizationHint : null}
-            />
-          </div>
+          {showInvoiceFiscalDebug ? (
+            <div className="cc-invoice-workspace__support-card">
+              <InvoiceNumberingControlCard
+                audit={numberingAudit}
+                onReviewSequence={() => void handleReviewSequence()}
+                reviewHint={numberingAudit.hasBlockingGaps && numberingGapMessage
+                  ? `Hay huecos fiscales en ${numberingGapMessage}. La emision nueva queda bloqueada hasta regularizar.`
+                  : null}
+                regularizationHint={numberingAudit.hasBlockingGaps ? numberingRegularizationHint : null}
+              />
+            </div>
+          ) : null}
         </div>
         {/*
               La ruta diaria correcta es servicio → factura. Las altas directas siguen disponibles, pero quedan contenidas.
@@ -550,9 +553,9 @@ export function InvoicesPage({
 
         <div className="cc-invoice-workspace__workspace-notices">
 
-        {duplicateGroups.length > 0 ? (
+        {unresolvedDuplicateGroups.length > 0 ? (
           <DuplicateNotice
-            title={`${duplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
+            title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
             description="Se han detectado coincidencias por referencia, servicio origen o contexto de emisión. Revísalas desde una surface corta antes de seguir emitiendo."
             actionLabel="Revisar duplicados"
             onAction={() => setShowDuplicateReview(true)}

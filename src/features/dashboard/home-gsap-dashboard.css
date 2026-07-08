@@ -286,6 +286,14 @@
   margin-top: auto;
 }
 
+.cc-home-alert-summary__actions .cc-action-group {
+  width: 100%;
+}
+
+.cc-home-alert-summary__actions .cc-action-group__row {
+  flex-wrap: nowrap;
+}
+
 @media (max-width: 1080px) {
   .cc-home-dashboard-cockpit-grid,
   .cc-home-dashboard-summary-grid,
@@ -343,7 +351,11 @@
     font-size: 0.76rem;
   }
 
-  .cc-home-fiscal-kpi-grid__items,
+  .cc-home-fiscal-kpi-grid__items {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+
   .cc-home-alert-summary__grid {
     grid-template-columns: minmax(0, 1fr);
     gap: 0.55rem;
@@ -385,16 +397,15 @@
     gap: 0.35rem;
   }
 
-  .cc-home-alert-summary__actions .secondary-button {
-    min-height: 34px;
-    padding-inline: 0.72rem;
-    font-size: 0.72rem;
-  }
 }
 
 @media (max-width: 430px) {
   .cc-home-quick-actions-panel__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cc-home-fiscal-kpi-grid__items {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

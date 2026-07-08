@@ -833,15 +833,28 @@ export function InvoiceDetailCard({
     && invoice.status !== 'cancelled'
     && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009,
   )
+  const shouldShowDocumentPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status !== 'draft')
+  const shouldShowEditPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status === 'draft')
   const headerActions: ActionGroupItem[] = []
 
   if (invoice) {
-    headerActions.push({
-      key: 'open-document-primary',
-      label: 'Abrir documento',
-      tone: shouldShowPaymentPrimary ? 'default' : 'primary',
-      onClick: onOpenDocument,
-    })
+    if (shouldShowPaymentPrimary) {
+      headerActions.push({
+        key: 'register-payment-primary',
+        label: 'Registrar cobro',
+        tone: 'primary',
+        onClick: () => setPaymentActionMode('manual'),
+      })
+    }
+
+    if (shouldShowDocumentPrimary) {
+      headerActions.push({
+        key: 'open-document-primary',
+        label: 'Abrir documento',
+        tone: 'primary',
+        onClick: onOpenDocument,
+      })
+    }
   }
 
   if (invoice) {
@@ -890,6 +903,7 @@ export function InvoiceDetailCard({
     headerActions.push({
       key: 'edit-invoice',
       label: isEditing ? 'Cancelar edicion' : 'Editar factura',
+      tone: shouldShowEditPrimary ? 'primary' : 'default',
       onClick: () => {
         if (onRequestMajorEdit && !majorEditMode) {
           onRequestMajorEdit()
@@ -1054,18 +1068,6 @@ export function InvoiceDetailCard({
             <div className="cc-detail-panel__next-step">
               <span>Siguiente paso recomendado</span>
               <strong>{invoiceNextStep}</strong>
-              {shouldShowPaymentPrimary ? (
-                <div className="form-actions">
-                  <button
-                    type="button"
-                    className="primary-button"
-                    onClick={() => setPaymentActionMode('manual')}
-                    disabled={isSaving}
-                  >
-                    Registrar cobro
-                  </button>
-                </div>
-              ) : null}
             </div>
           ) : null}
 

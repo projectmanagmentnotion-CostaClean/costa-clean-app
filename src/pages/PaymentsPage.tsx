@@ -74,6 +74,7 @@ export function PaymentsPage({
   const rawDuplicateGroups = buildPaymentDuplicateGroups(payments)
   const {
     visibleGroups: duplicateGroups,
+    unresolvedGroups: unresolvedDuplicateGroups,
     reviewStateByGroupId,
     markReviewed,
     ignoreGroup,
@@ -126,8 +127,8 @@ export function PaymentsPage({
         eyebrow="Control auxiliar de cobros"
         title="Pagos"
         summary="Registro, trazabilidad y revision de cobros ya vinculados a factura. Esta vista acompana a Facturas y no compite con su prioridad principal."
-        statusLabel={duplicateGroups.length > 0 ? `${duplicateGroups.length} duplicado(s) potencial(es)` : 'Control auxiliar'}
-        statusTone={duplicateGroups.length > 0 ? 'warning' : 'info'}
+        statusLabel={unresolvedDuplicateGroups.length > 0 ? `${unresolvedDuplicateGroups.length} duplicado(s) potencial(es)` : 'Control auxiliar'}
+        statusTone={unresolvedDuplicateGroups.length > 0 ? 'warning' : 'info'}
         primaryAction={{
           label: showCreateForm ? 'Cerrar formulario' : 'Registrar cobro',
           onClick: () => {
@@ -241,9 +242,9 @@ export function PaymentsPage({
         </ActionFlowOverlay>
       ) : null}
 
-      {duplicateGroups.length > 0 ? (
+      {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${duplicateGroups.length} grupo(s) de posibles cobros duplicados`}
+          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles cobros duplicados`}
           description="Se han detectado coincidencias por factura, fecha, importe o método. Revísalas sin ensuciar el control principal de cobros."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

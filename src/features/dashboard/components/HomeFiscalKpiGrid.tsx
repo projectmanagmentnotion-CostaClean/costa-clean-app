@@ -3,18 +3,14 @@ import type { SeverityTone } from '../../../components/SeverityBadge'
 import { VisualKpiCard } from '../../../components/VisualKpiCard'
 import { DSCard, DSSectionHeader } from '../../../design-system/components'
 import { useGsapEntrance } from '../../../design-system/motion'
-import type { HomePeriodOption } from './HomePeriodSelector'
-import { HomePeriodSelector } from './HomePeriodSelector'
 
 export interface HomeFiscalKpiItem {
+  actionLabel?: string
   badge: string
   detail: string
   key: string
   label: string
   onRun: () => void
-  periodOptions?: HomePeriodOption[]
-  periodValue?: string
-  onPeriodChange?: (nextValue: string) => void
   progress?: {
     label: string
     percent: number
@@ -41,9 +37,9 @@ export function HomeFiscalKpiGrid({ items }: HomeFiscalKpiGridProps) {
     <section ref={scopeRef}>
       <DSCard as="article" className="cc-home-fiscal-kpi-grid">
         <DSSectionHeader
-          eyebrow="Kpis operativos"
-          title="KPIs"
-          description="Lectura corta y accionable."
+          eyebrow="Acciones clave"
+          title="Resolver ahora"
+          description="Cada KPI abre una vista filtrada y util."
         />
 
         <div className="cc-home-fiscal-kpi-grid__items">
@@ -57,17 +53,8 @@ export function HomeFiscalKpiGrid({ items }: HomeFiscalKpiGridProps) {
               tone={item.tone}
               priority="compact"
               progress={item.progress}
-              action={{ label: 'Abrir', onClick: item.onRun }}
+              action={{ label: item.actionLabel ?? 'Abrir', onClick: item.onRun }}
             >
-              {item.periodOptions && item.periodValue && item.onPeriodChange ? (
-                <HomePeriodSelector
-                  compact
-                  ariaLabel={`Periodo para ${item.label}`}
-                  options={item.periodOptions}
-                  value={item.periodValue}
-                  onChange={item.onPeriodChange}
-                />
-              ) : null}
               {item.visual}
             </VisualKpiCard>
           ))}

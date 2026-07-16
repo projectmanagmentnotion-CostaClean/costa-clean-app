@@ -38,4 +38,6 @@ export interface StepFlowSurfaceProps {
   sideContent?: ReactNode
   footerContent?: ReactNode
   contextItems?: StepFlowSummaryItem[]
+  hideCurrentStepSummary?: boolean
+  hideHeroMeta?: boolean
 }

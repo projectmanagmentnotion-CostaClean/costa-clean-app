@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { DSConceptAutocomplete } from '../../design-system/components'
 import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -135,6 +135,7 @@ export function ExpenseCreateFlow({
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
   const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -168,6 +169,34 @@ export function ExpenseCreateFlow({
     setLastAppliedPrefillId(prefill.request_id)
   }, [lastAppliedPrefillId, prefill])
 
+  useEffect(() => {
+    if (currentStep !== 0) return
+
+    const frameId = window.requestAnimationFrame(() => {
+      const firstField = formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>(
+        'input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])',
+      )
+      const scrollContainer = formRef.current?.closest('.cc-step-flow__content') as HTMLDivElement | null
+
+      if (firstField && scrollContainer) {
+        const fieldTop = firstField.getBoundingClientRect().top
+        const containerTop = scrollContainer.getBoundingClientRect().top
+        const nextScrollTop = scrollContainer.scrollTop + Math.max(fieldTop - containerTop - 16, 0)
+        scrollContainer.scrollTo({
+          top: nextScrollTop,
+          behavior: 'auto',
+        })
+      }
+
+      firstField?.scrollIntoView({
+        block: 'start',
+        inline: 'nearest',
+      })
+    })
+
+    return () => window.cancelAnimationFrame(frameId)
+  }, [currentStep])
+
   const subtotalValue = useMemo(() => parseDecimalInput(form.subtotal || '0'), [form.subtotal])
   const taxRateValue = useMemo(() => parseDecimalInput(form.tax_rate || '0'), [form.tax_rate])
   const taxAmountValue = useMemo(() => parseDecimalInput(form.tax_amount || '0'), [form.tax_amount])
@@ -191,6 +220,30 @@ export function ExpenseCreateFlow({
   const resolvedTotal = Number.isNaN(subtotalValue)
     ? Number.NaN
     : Number(formatMoneyInput(subtotalValue + (Number.isNaN(taxAmountValue) ? resolvedTaxAmount || 0 : taxAmountValue)))
+  const flowContextItems = currentStep === 0 ? [] : [
+    {
+      label: 'Proveedor',
+      value: form.supplier_name.trim() || 'Pendiente',
+      hint: 'Referencia principal del gasto',
+    },
+    {
+      label: 'Total previsto',
+      value: Number.isNaN(resolvedTotal) ? 'Pendiente' : `${formatMoneyInput(resolvedTotal)} EUR`,
+      hint: 'Se recalcula desde base e IVA',
+    },
+    {
+      label: 'Soporte',
+      value: pendingReceiptFile ? 'Preparado' : getExpenseDocumentSupportStatusLabel(form.document_support_status),
+      hint: pendingReceiptFile ? 'Se subira con el alta final' : 'Estado documental visible',
+    },
+  ]
+  const flowSideContent = currentStep === 0 ? null : (
+    <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
+      <span>Lectura rapida</span>
+      <strong>{getExpenseCategoryLabel(form.category)}</strong>
+      <small>{form.description.trim() || 'Sin descripcion todavia'}</small>
+    </div>
+  )
 
   function updateField<K extends keyof CreateFormState>(field: K, value: CreateFormState[K]) {
     setIsDirty(true)
@@ -356,32 +409,12 @@ export function ExpenseCreateFlow({
       ]}
       currentStep={currentStep}
       onStepSelect={setCurrentStep}
-      contextItems={[
-        {
-          label: 'Proveedor',
-          value: form.supplier_name.trim() || 'Pendiente',
-          hint: 'Referencia principal del gasto',
-        },
-        {
-          label: 'Total previsto',
-          value: Number.isNaN(resolvedTotal) ? 'Pendiente' : `${formatMoneyInput(resolvedTotal)} EUR`,
-          hint: 'Se recalcula desde base e IVA',
-        },
-        {
-          label: 'Soporte',
-          value: pendingReceiptFile ? 'Preparado' : getExpenseDocumentSupportStatusLabel(form.document_support_status),
-          hint: pendingReceiptFile ? 'Se subira con el alta final' : 'Estado documental visible',
-        },
-      ]}
-      sideContent={(
-        <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
-          <span>Lectura rapida</span>
-          <strong>{getExpenseCategoryLabel(form.category)}</strong>
-          <small>{form.description.trim() || 'Sin descripcion todavia'}</small>
-        </div>
-      )}
+      hideCurrentStepSummary={currentStep === 0}
+      hideHeroMeta={currentStep === 0}
+      contextItems={flowContextItems}
+      sideContent={flowSideContent}
     >
-      <form className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
+      <form ref={formRef} className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
         {currentStep === 0 ? (
           <section className="cc-form-shell__section">
             <div className="cc-form-shell__section-head">

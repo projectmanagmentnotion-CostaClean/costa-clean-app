@@ -180,3 +180,21 @@ Interpretacion del fallo:
 
 - La pasada del `2026-07-16` se ejecuto con la app local viva en `http://127.0.0.1:4173/`; el bloqueo anterior por `ERR_CONNECTION_REFUSED` queda resuelto como problema de entorno, no de harness.
 - El resultado ya no es un fallo total del canal: aparecen findings reales de vistas concretas. Por tanto, cualquier sprint que cite esta pasada debe distinguir esos findings del alcance del cambio revisado.
+
+## Baseline Recovery 2026-07-16
+
+- El canal partio de un estado reportado de `338/360` y, al reejecutarse localmente antes de corregir nada, llego a `322/360` por la misma inestabilidad del harness.
+- El recovery se cerro en `360/360` sin eliminar checks y sin tocar auth, rutas, `?view=` ni write paths.
+- Hardening aplicado en `cdpHarness.mjs`:
+  - espera explicita del shell autenticado estable mediante marcadores reales de loading
+  - validacion especifica de `home` e `invoices-debug`
+  - reintento defensivo cuando el navegador cae en su propia pagina interna de error
+  - apertura de create flows sin `sleep` fijo, esperando panel, StepFlow, titulo y primer campo realmente visible
+- Ajuste visual minimo asociado:
+  - `ExpenseCreateFlow` compacta el paso inicial para que el primer campo quede inmediatamente accesible
+  - `FullscreenStepFlow` permite ocultar resumen/metrica redundante cuando una entrada al formulario lo requiere
+- Causas agrupadas del sprint:
+  - timing del harness
+  - selector/readiness del harness
+  - un unico finding visual real en `expenses-create`
+- Cierre detallado: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)

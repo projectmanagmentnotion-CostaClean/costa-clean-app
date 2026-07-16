@@ -81,6 +81,13 @@
 - `PropertyCreateFlow` y `PropertyCreateForm` siguen escribiendo por REST directo desde cliente; cualquier mejora de UX debe quedarse en sincronizacion local, duplicate guard y feedback, no en redisenar el write path sin sprint dedicado.
 - Cuando el refresh tras el alta falla, el riesgo principal pasa a ser de falsa sensacion de exito; la mitigacion minima es inyeccion local de la opcion creada, mensaje visible y reintento explicito.
 
+## Riesgo nuevo de baseline QA autenticada roto y recuperado
+
+- La caida de `360/360` a `338/360` y el rerun local aun peor del `2026-07-16` muestran que el mayor riesgo ya no es ausencia de harness, sino que sus heuristicas de carga se desalineen del shell real y produzcan falsos negativos en cadena.
+- La mitigacion valida no es bajar cobertura: es endurecer readiness del shell, manejar paginas internas de error del navegador y usar markers estables en create flows.
+- El cierre recuperado a `360/360` deja este riesgo controlado, pero no eliminado; cualquier cambio futuro en loadings del shell o en cabeceras de StepFlow debe revalidarse con el harness autenticado.
+- Referencia: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

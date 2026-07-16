@@ -232,6 +232,14 @@ For roadmap-closeout or phase-closeout work:
 - La validacion minima para superficies mobile/iPad sigue siendo `390x844` y `768x1024`.
 - Si un check visual depende de detectar un KPI o importe concreto, debe usar una marca estable del bloque real antes que una heuristica de texto fragil.
 
+## Authenticated Visual QA Recovery Gate - 2026-07-16
+
+- Si un baseline autenticado cae tras un sprint funcional no relacionado, el primer paso obligatorio es clasificar el fallo como `UI real`, `timing`, `selector` o `vista no aplicable`.
+- Un rerun peor que el reporte inicial debe documentarse como senal de inestabilidad del harness, no como excusa para cerrar sin diagnostico.
+- No se permite borrar checks para volver a verde; la recuperacion valida es endurecer readiness/selectores o corregir la UI real.
+- El cierre debe dejar una nota dedicada con baseline previo, baseline roto, rerun local, causas por grupo, fixes aplicados y resultado final.
+- Referencia de este caso: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)
+
 ## Module Completion Gate
 
 - Ningun modulo principal se da por pulido sin QA autenticada en `390x844`, `768x1024` y desktop.

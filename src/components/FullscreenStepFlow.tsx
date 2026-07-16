@@ -34,6 +34,8 @@ export function FullscreenStepFlow({
   sideContent,
   footerContent,
   contextItems = [],
+  hideCurrentStepSummary = false,
+  hideHeroMeta = false,
 }: FullscreenStepFlowProps) {
   const isNested = useContext(NestedFlowSurfaceContext)
   const surfaceRef = useRef<HTMLElement | null>(null)
@@ -53,6 +55,8 @@ export function FullscreenStepFlow({
   const shouldShowMobileSide = Boolean(contextItems.length > 0 || shouldShowSideContent)
   const shouldUseDenseDesktopHeader = !isNested && steps.length > 6
   const shouldShowDesktopContextStrip = contextItems.length > 0 && !(shouldUseDenseDesktopHeader && shouldShowSideContent)
+  const shouldShowCurrentStepSummary = !hideCurrentStepSummary
+  const mobileSideDescriptionId = shouldShowCurrentStepSummary ? currentStepId : descriptionId
   const surfaceClassName = [
     'cc-step-flow',
     isNested ? 'cc-step-flow--nested' : null,
@@ -60,11 +64,15 @@ export function FullscreenStepFlow({
   ].filter(Boolean).join(' ')
 
   useGSAP(() => {
-    if (!surfaceRef.current || !currentStepRef.current || !contentRef.current) return
+    if (!surfaceRef.current || !contentRef.current) return
 
-    const targets = footerRef.current
-      ? [currentStepRef.current, contentRef.current, footerRef.current]
-      : [currentStepRef.current, contentRef.current]
+    const targets = [
+      currentStepRef.current,
+      contentRef.current,
+      footerRef.current,
+    ].filter(Boolean)
+
+    if (targets.length === 0) return
 
     if (prefersReducedMotion) {
       gsap.set(targets, getReducedMotionSetVars())
@@ -98,20 +106,22 @@ export function FullscreenStepFlow({
             <p id={descriptionId}>{description}</p>
           </div>
 
-          <div className="cc-step-flow__hero-meta" aria-label="Resumen del progreso">
-            <div className="cc-step-flow__hero-stat">
-              <span>Paso actual</span>
-              <strong>{currentStep + 1} de {steps.length}</strong>
+          {!hideHeroMeta ? (
+            <div className="cc-step-flow__hero-meta" aria-label="Resumen del progreso">
+              <div className="cc-step-flow__hero-stat">
+                <span>Paso actual</span>
+                <strong>{currentStep + 1} de {steps.length}</strong>
+              </div>
+              <div className="cc-step-flow__hero-stat">
+                <span>Queda</span>
+                <strong>{remainingSteps === 0 ? 'Listo para cerrar' : `${remainingSteps} paso(s)`}</strong>
+              </div>
+              <div className="cc-step-flow__hero-stat">
+                <span>Progreso</span>
+                <strong>{Math.round(completionRatio)}%</strong>
+              </div>
             </div>
-            <div className="cc-step-flow__hero-stat">
-              <span>Queda</span>
-              <strong>{remainingSteps === 0 ? 'Listo para cerrar' : `${remainingSteps} paso(s)`}</strong>
-            </div>
-            <div className="cc-step-flow__hero-stat">
-              <span>Progreso</span>
-              <strong>{Math.round(completionRatio)}%</strong>
-            </div>
-          </div>
+          ) : null}
         </div>
 
           <div className="cc-step-flow__mobile-hero" aria-label="Resumen movil del progreso">
@@ -200,26 +210,28 @@ export function FullscreenStepFlow({
         </div>
       </header>
 
-      <div className="cc-step-flow__layout">
+        <div className="cc-step-flow__layout">
         <div className="cc-step-flow__main">
-          <div
-            ref={currentStepRef}
-            className="cc-step-flow__current-step"
-            id={currentStepId}
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <span>Paso {currentStep + 1}</span>
-            <strong>{current?.label}</strong>
-            <small>{current?.description}</small>
-          </div>
+          {shouldShowCurrentStepSummary ? (
+            <div
+              ref={currentStepRef}
+              className="cc-step-flow__current-step"
+              id={currentStepId}
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <span>Paso {currentStep + 1}</span>
+              <strong>{current?.label}</strong>
+              <small>{current?.description}</small>
+            </div>
+          ) : null}
           <div ref={contentRef} className="cc-step-flow__content">
             {children}
 
             {shouldShowMobileSide ? (
               <details className="cc-step-flow__mobile-side">
-                <summary className="cc-step-flow__mobile-side-summary" aria-describedby={currentStepId}>
+                <summary className="cc-step-flow__mobile-side-summary" aria-describedby={mobileSideDescriptionId}>
                   <div className="cc-step-flow__mobile-side-copy">
                     <span>Resumen</span>
                     <strong>Ver contexto</strong>

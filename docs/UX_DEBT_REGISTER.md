@@ -109,3 +109,6 @@
 
 - `UX-006` propiedades y `UX-009` facturas reciben un fix tecnico-operativo: la alta embebida de propiedades en factura ya no depende solo del refresh remoto para poblar el selector.
 - Queda deuda residual en consumidores legacy que siguen calculando `availableProperties` solo desde props y todavia no incorporan una cola local sincronizada.
+- La deuda principal de QA autenticada ya no es "recuperar un baseline roto", sino mantener estable el harness frente a loadings reales y create flows embebidos.
+- La recuperacion del `2026-07-16` cierra el baseline otra vez en `360/360` sin revertir el fix funcional de propiedades.
+- Detalle del cierre: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)

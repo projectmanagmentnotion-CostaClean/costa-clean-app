@@ -409,6 +409,8 @@ Status note:
 
 - the first follow-up fix after the harness was a selector-hardening pass for `fiscal_closing` tablet, closing the last residual check and leaving the run at `240/240`
 - the next follow-up hardening pass extends authenticated QA to `quotes`, `jobs`, and real create-flow openings, raising the run to `360/360`
+- the `2026-07-16` recovery sprint restores the same `360/360` baseline after a later drop to `338/360`, confirming the remaining work is harness hardening plus small visual corrections, not a rollback of the embedded property fix
+- closure evidence: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)
 
 ## Post-Roadmap Sprint: Embedded Property Create Hardening
 

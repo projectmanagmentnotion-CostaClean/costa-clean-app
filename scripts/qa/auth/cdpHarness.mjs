@@ -52,6 +52,26 @@ const ERROR_MARKERS = [
   'ha ocurrido un error',
 ]
 
+const BROWSER_ERROR_MARKERS = [
+  'No se encuentra esta página',
+  'HTTP ERROR 404',
+  'ERR_',
+]
+
+const SHELL_LOADING_MARKERS = [
+  'Preparando tu centro de control',
+  'Cargando sesión, entorno seguro y experiencia operativa.',
+  'Sincronizando la vista operativa sin ocupar mas espacio que la lectura real.',
+  'Cargando clientes',
+  'Cargando propiedades',
+  'Cargando presupuestos',
+  'Cargando servicios',
+  'Cargando facturas',
+  'Cargando gastos',
+  'Cargando cobros',
+  'Preparando cierre fiscal',
+]
+
 const BROWSER_CANDIDATES = [
   {
     id: 'edge',
@@ -330,9 +350,22 @@ export async function configureViewport(connection, sessionId, viewport) {
 }
 
 export async function navigateAndWait(connection, sessionId, url, waitMs = 1200) {
-  await connection.send('Page.navigate', { url }, sessionId)
-  await waitForLoadEvent(connection, sessionId, 15000)
-  await delay(waitMs)
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await connection.send('Page.navigate', { url }, sessionId)
+    await waitForLoadEvent(connection, sessionId, 15000)
+    await delay(waitMs)
+
+    const landedOnBrowserError = await evaluateJson(connection, sessionId, `(() => {
+      const title = document.title ?? ''
+      const bodyText = document.body?.innerText ?? ''
+      const markers = ${JSON.stringify(BROWSER_ERROR_MARKERS)}
+      return markers.some((marker) => title.includes(marker) || bodyText.includes(marker))
+    })()`)
+
+    if (!landedOnBrowserError) {
+      return
+    }
+  }
 }
 
 export async function waitForViewReady(connection, sessionId, viewId, timeoutMs = 8000) {
@@ -341,14 +374,31 @@ export async function waitForViewReady(connection, sessionId, viewId, timeoutMs 
   while (Date.now() - startedAt < timeoutMs) {
     const ready = await evaluateJson(connection, sessionId, `(() => {
       const bodyText = document.body?.innerText ?? ''
-      const loadingDashboard = bodyText.includes('Preparando panel de control')
+      const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
       const header = document.querySelector('h1, header h1, [data-page-header] h1')
+      const headerText = normalize(header?.textContent)
+      const loadingMarkers = ${JSON.stringify(SHELL_LOADING_MARKERS)}
+      const shellMarkers = ${JSON.stringify(APP_SHELL_MARKERS)}
+      const hasLoadingMarker = loadingMarkers.some((marker) => bodyText.includes(marker))
+      const shellMarkerCount = shellMarkers.filter((marker) => bodyText.includes(marker)).length
+      const hasPasswordField = Boolean(document.querySelector('input[type="password"]'))
+      const baseReady = !hasLoadingMarker && shellMarkerCount >= 2 && !hasPasswordField
 
-      if (${JSON.stringify(viewId)} === 'home') {
-        return !loadingDashboard && Boolean(header)
+      if (!baseReady) {
+        return false
       }
 
-      return true
+      if (${JSON.stringify(viewId)} === 'invoices-debug') {
+        return headerText === 'Facturas'
+          && bodyText.includes('Debug fiscal')
+          && bodyText.includes('Control de numeracion')
+      }
+
+      if (${JSON.stringify(viewId)} === 'home') {
+        return headerText === 'Inicio'
+      }
+
+      return Boolean(headerText)
     })()`)
 
     if (ready) {
@@ -530,7 +580,7 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
 }
 
 export async function collectActionFlowAudit(connection, sessionId, scenario, viewport) {
-  await evaluateJson(connection, sessionId, `(() => {
+  const clicked = await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
     const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent) === ${JSON.stringify(scenario.actionLabel)})
     if (!button) return false
@@ -538,7 +588,56 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
     return true
   })()`)
 
-  await delay(1200)
+  if (!clicked) {
+    return {
+      viewId: scenario.id,
+      viewport,
+      url: await evaluateJson(connection, sessionId, 'location.href'),
+      title: await evaluateJson(connection, sessionId, 'document.title'),
+      headerText: null,
+      checks: {
+        actionFlowVisible: false,
+        actionFlowTitleVisible: false,
+        actionFlowFirstFieldVisible: false,
+        actionFlowNoHorizontalOverflow: true,
+        actionFlowStepFlowVisible: false,
+      },
+      snippets: {
+        firstViewportText: '',
+      },
+    }
+  }
+
+  const startedAt = Date.now()
+  while (Date.now() - startedAt < 8000) {
+    const flowReady = await evaluateJson(connection, sessionId, `(() => {
+      const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
+      const panel = document.querySelector('[data-qa="action-flow-panel"]')
+      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+      const firstEditableField = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
+      const fieldRect = firstEditableField?.getBoundingClientRect?.() ?? null
+      const fieldStyle = firstEditableField ? window.getComputedStyle(firstEditableField) : null
+      const fieldVisible = Boolean(
+        fieldRect
+        && fieldRect.width > 0
+        && fieldRect.height > 0
+        && fieldStyle
+        && fieldStyle.visibility !== 'hidden'
+        && fieldStyle.display !== 'none'
+        && fieldRect.top < window.innerHeight
+        && fieldRect.bottom > 0
+      )
+      const titleText = normalize(titleNode?.textContent)
+      return Boolean(panel && flowSurface && fieldVisible && titleText.includes(${JSON.stringify(scenario.title)}))
+    })()`)
+
+    if (flowReady) {
+      break
+    }
+
+    await delay(250)
+  }
 
   return await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()

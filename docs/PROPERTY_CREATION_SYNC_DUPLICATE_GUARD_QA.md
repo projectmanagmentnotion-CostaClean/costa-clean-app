@@ -66,3 +66,11 @@
 
 - Queda extender la sincronizacion local inmediata a todos los consumidores legacy de `PropertyCreateForm` y `PropertyCreateFlow` que todavia calculan `availableProperties` solo desde props.
 - Queda una reproduccion viva completa del caso de creacion real sin mutar datos productivos; en esta pasada no se ejecuto un alta real desde navegador por la restriccion explicita de no mutar datos reales sin autorizacion operativa.
+
+## Actualizacion 2026-07-16 - QA baseline recovery
+
+- El sprint posterior de recuperacion de QA autenticada dejo `npm run qa:visual:auth` otra vez en `360/360`.
+- La causa no fue una regresion funcional del fix de propiedades, sino una mezcla de timing del harness y un problema visual acotado en `expenses-create`.
+- El fix de propiedades sigue intacto: no se revirtio la inyeccion local, la seleccion automatica ni el duplicate guard por cliente.
+- En esta verificacion no se creo ninguna propiedad real ni ninguna factura real.
+- Detalle completo: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)

@@ -175,6 +175,7 @@ export function PropertyCreateFlow({
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
+          Prefer: 'return=representation',
         },
         body: JSON.stringify({
           id: propertyId,
@@ -194,19 +195,23 @@ export function PropertyCreateFlow({
         return
       }
 
-      await onCreatedProperty?.({
-        id: propertyId,
-        display_code: null,
-        client_id: form.client_id,
+      const createdRows = await response.json().catch(() => [])
+      const createdRow = Array.isArray(createdRows) ? createdRows[0] : createdRows
+      const createdProperty: PropertyListItem = {
+        id: createdRow?.id ?? propertyId,
+        display_code: createdRow?.display_code ?? null,
+        client_id: createdRow?.client_id ?? form.client_id,
         client_display_code: contextualClient?.display_code ?? clients.find((client) => client.id === form.client_id)?.display_code ?? null,
         client_name: contextualClient?.full_name ?? clients.find((client) => client.id === form.client_id)?.full_name ?? null,
-        name: form.name.trim(),
-        property_type: form.property_type,
-        address: form.address.trim(),
-        city: form.city.trim() || null,
-        postal_code: form.postal_code.trim() || null,
-        notes: form.notes.trim() || null,
-      })
+        name: createdRow?.name ?? form.name.trim(),
+        property_type: createdRow?.property_type ?? form.property_type,
+        address: createdRow?.address ?? form.address.trim(),
+        city: createdRow?.city ?? (form.city.trim() || null),
+        postal_code: createdRow?.postal_code ?? (form.postal_code.trim() || null),
+        notes: createdRow?.notes ?? (form.notes.trim() || null),
+      }
+
+      await onCreatedProperty?.(createdProperty)
 
       setIsDirty(false)
       await completeFullViewActionFlow({ onRefreshData, onCompleted })

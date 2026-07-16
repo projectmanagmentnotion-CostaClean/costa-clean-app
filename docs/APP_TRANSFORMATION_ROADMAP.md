@@ -409,3 +409,16 @@ Status note:
 
 - the first follow-up fix after the harness was a selector-hardening pass for `fiscal_closing` tablet, closing the last residual check and leaving the run at `240/240`
 - the next follow-up hardening pass extends authenticated QA to `quotes`, `jobs`, and real create-flow openings, raising the run to `360/360`
+
+## Post-Roadmap Sprint: Embedded Property Create Hardening
+
+Objective:
+
+Close the sync and duplicate gaps when a property is created from another focused flow such as invoices.
+
+Focus:
+
+- immediate option injection in the parent selector
+- explicit duplicate review scoped by client
+- visible inline feedback for refresh failures
+- no schema or route changes

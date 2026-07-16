@@ -238,3 +238,15 @@ For roadmap-closeout or phase-closeout work:
 - Ningun modulo principal puede mantener nested cards, filtros largos, KPIs `0` visibles o formularios enterrados en el primer viewport.
 - Todo create/edit StepFlow principal debe abrir con el primer campo visible inmediatamente.
 - Si un dominio no tiene ruta standalone real, debe documentarse como `no aplicable`; no se inventa vista para pasar QA.
+
+## Property Create Sync Gate
+
+- Cuando se crea una propiedad desde un StepFlow embebido, debe aparecer inmediatamente en el selector del contexto.
+- La propiedad creada debe quedar seleccionada sin recargar toda la app.
+- Si el refresh posterior falla, el flujo debe mostrar feedback visible y ofrecer reintento en la misma superficie.
+
+## Property Duplicate Guard Gate
+
+- Ningun flujo de alta de propiedad puede crear duplicados silenciosos para el mismo cliente.
+- El guard debe permitir usar una propiedad existente o crear de todos modos de forma explicita.
+- La deteccion de duplicados de propiedades no puede mezclar clientes distintos.

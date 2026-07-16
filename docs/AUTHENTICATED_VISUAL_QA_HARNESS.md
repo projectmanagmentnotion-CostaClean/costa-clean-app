@@ -175,3 +175,8 @@ Interpretacion del fallo:
   - StepFlow presente
 - La pasada `2026-07-08` deja el resultado final en `360/360`.
 - `recurring` queda fuera del barrido standalone porque no existe ruta real `?view=` para ese dominio.
+
+## Actualizacion 2026-07-16
+
+- La pasada del `2026-07-16` se ejecuto con la app local viva en `http://127.0.0.1:4173/`; el bloqueo anterior por `ERR_CONNECTION_REFUSED` queda resuelto como problema de entorno, no de harness.
+- El resultado ya no es un fallo total del canal: aparecen findings reales de vistas concretas. Por tanto, cualquier sprint que cite esta pasada debe distinguir esos findings del alcance del cambio revisado.

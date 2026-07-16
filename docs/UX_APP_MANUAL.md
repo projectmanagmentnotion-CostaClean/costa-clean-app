@@ -326,3 +326,8 @@ A UI task is not done unless:
 - visual hierarchy is calm and obvious
 - accessibility basics are respected
 - the implementation passes the repository quality gates
+
+## Embedded Create Rule
+
+- Si un StepFlow embebido crea una entidad dependiente como propiedad, la opcion nueva debe aparecer y quedar seleccionada en el selector padre sin salir del flujo.
+- Si el sistema detecta un posible duplicado para esa entidad dependiente, debe advertir antes de persistir y ofrecer reutilizar el registro existente.

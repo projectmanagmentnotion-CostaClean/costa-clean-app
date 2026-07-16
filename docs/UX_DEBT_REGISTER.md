@@ -104,3 +104,8 @@
 - La alerta residual `tablet / fiscal_closing / fiscalRealAmountVisible` queda cerrada al corregir el selector estable del bloque fiscal real.
 - La deuda principal en `quotes` y `jobs` por ruido con valor `0` queda cerrada en la pasada `2026-07-08`.
 - `recurring` mantiene deuda de auditabilidad standalone: el dominio existe, pero no como ruta real de modulo.
+
+## Actualizacion 2026-07-16
+
+- `UX-006` propiedades y `UX-009` facturas reciben un fix tecnico-operativo: la alta embebida de propiedades en factura ya no depende solo del refresh remoto para poblar el selector.
+- Queda deuda residual en consumidores legacy que siguen calculando `availableProperties` solo desde props y todavia no incorporan una cola local sincronizada.

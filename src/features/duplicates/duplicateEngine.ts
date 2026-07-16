@@ -5,6 +5,7 @@ import type { JobListItem } from '../jobs/types'
 import type { LeadListItem } from '../leads/types'
 import type { PaymentListItem } from '../payments/types'
 import type { PropertyListItem } from '../properties/types'
+import { comparePropertyCandidates } from '../properties/propertyDuplicateGuard'
 import type { QuoteListItem } from '../quotes/types'
 import type { RecurringInvoicePlanListItem } from '../recurringInvoices/types'
 import {
@@ -295,26 +296,7 @@ function buildPropertySummary(property: PropertyListItem): DuplicateRecordSummar
 }
 
 function compareProperties(left: PropertyListItem, right: PropertyListItem): DuplicateReason[] {
-  const reasons: DuplicateReason[] = []
-  const leftAddress = normalizeAddress(left.address)
-  const rightAddress = normalizeAddress(right.address)
-  const leftName = normalizeLooseText(left.name)
-  const rightName = normalizeLooseText(right.name)
-  const sameClient = left.client_id === right.client_id
-  const sameCity = normalizeLooseText(left.city) && normalizeLooseText(left.city) === normalizeLooseText(right.city)
-  const samePostal = normalizeLooseText(left.postal_code) && normalizeLooseText(left.postal_code) === normalizeLooseText(right.postal_code)
-
-  if (sameClient && leftAddress && leftAddress === rightAddress) {
-    reasons.push({ code: 'property-client-address', label: 'Coinciden cliente y direccion', severity: 'exact' })
-  }
-  if (leftAddress && leftAddress === rightAddress && (sameCity || samePostal)) {
-    reasons.push({ code: 'property-address-zone', label: 'Coinciden direccion y zona', severity: 'strong' })
-  }
-  if (sameClient && leftName && leftName === rightName) {
-    reasons.push({ code: 'property-client-name', label: 'Coinciden cliente y nombre interno', severity: 'probable' })
-  }
-
-  return reasons
+  return comparePropertyCandidates(left, right)
 }
 
 export function buildPropertyDuplicateGroups(properties: PropertyListItem[]) {

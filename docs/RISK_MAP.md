@@ -76,6 +76,11 @@
 - cuando un check visual dependa de una cifra concreta, usar `data-qa` estable reduce falsos negativos sin relajar el gate
 - cuando un flow no tenga ruta standalone real, no se debe inventar un escenario de modulo; se documenta como embebido o no aplicable
 
+## Riesgo nuevo de alta embebida de propiedades
+
+- `PropertyCreateFlow` y `PropertyCreateForm` siguen escribiendo por REST directo desde cliente; cualquier mejora de UX debe quedarse en sincronizacion local, duplicate guard y feedback, no en redisenar el write path sin sprint dedicado.
+- Cuando el refresh tras el alta falla, el riesgo principal pasa a ser de falsa sensacion de exito; la mitigacion minima es inyeccion local de la opcion creada, mensaje visible y reintento explicito.
+
 ## Riesgos nuevos de One-Line Filters + Invoice 2026-045
 
 - el patron `one-line filters` depende de que cada modulo ordene bien su primer grupo de filtros; una mala configuracion puede hacer que los chips rapidos no sean los mas utiles

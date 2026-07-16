@@ -27,6 +27,7 @@ import { InvoiceNumberingMismatchError, saveInvoiceWithLines } from '../financia
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import { getJobBillingDisplayConcept } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
+import { buildClientPropertyOptions, mergePropertyOptions, pruneSyncedPropertyOptions } from '../properties/propertyOptionSync'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
@@ -246,11 +247,21 @@ export function InvoiceCreateFlow({
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findInvoiceDuplicateGroups>>([])
+  const [syncedProperties, setSyncedProperties] = useState<PropertyListItem[]>([])
+  const [propertyCreateFeedback, setPropertyCreateFeedback] = useState<{ tone: 'success' | 'warning'; message: string } | null>(null)
+
+  useEffect(() => {
+    setSyncedProperties((current) => pruneSyncedPropertyOptions(properties, current))
+  }, [properties])
+
+  const propertyOptions = useMemo(
+    () => mergePropertyOptions(properties, syncedProperties),
+    [properties, syncedProperties],
+  )
 
   const availableProperties = useMemo(() => {
-    if (!form.client_id) return []
-    return properties.filter((property) => property.client_id === form.client_id)
-  }, [properties, form.client_id])
+    return buildClientPropertyOptions(properties, syncedProperties, form.client_id)
+  }, [properties, syncedProperties, form.client_id])
 
   const availableJobs = useMemo(() => jobs.filter((job) => {
     if (form.client_id && job.client_id !== form.client_id) return false
@@ -270,8 +281,8 @@ export function InvoiceCreateFlow({
     [clients, form.client_id],
   )
   const selectedProperty = useMemo(
-    () => properties.find((property) => property.id === form.property_id) ?? null,
-    [properties, form.property_id],
+    () => propertyOptions.find((property) => property.id === form.property_id) ?? null,
+    [propertyOptions, form.property_id],
   )
   const selectedJob = useMemo(() => {
     if (contextualJob?.id === form.job_id) return contextualJob
@@ -407,6 +418,7 @@ export function InvoiceCreateFlow({
 
       if (field === 'client_id') {
         next.property_id = ''
+        setPropertyCreateFeedback(null)
         if (current.origin_mode !== 'job') {
           next.quote_id = ''
           next.job_id = ''
@@ -921,7 +933,21 @@ export function InvoiceCreateFlow({
         >
           <PropertyCreateFlow
             clients={clients}
-            onRefreshData={onRefreshData}
+            properties={propertyOptions}
+            onRefreshData={async () => {
+              try {
+                await onRefreshData()
+                setPropertyCreateFeedback({
+                  tone: 'success',
+                  message: 'Inmueble creado y seleccionado.',
+                })
+              } catch {
+                setPropertyCreateFeedback({
+                  tone: 'warning',
+                  message: 'Inmueble creado y seleccionado, pero no se pudo refrescar el selector. Reintenta cargar propiedades.',
+                })
+              }
+            }}
             onCompleted={async () => {}}
             onDirtyChange={setIsDirty}
             contextClientId={form.client_id}
@@ -932,14 +958,31 @@ export function InvoiceCreateFlow({
               await completeContextualActionFlow({
                 created: property,
                 applyCreated: async (createdProperty) => {
+                  setSyncedProperties((current) => mergePropertyOptions(current, [createdProperty]))
                   setForm((current) => ({
                     ...current,
                     property_id: createdProperty.id,
                   }))
+                  setPropertyCreateFeedback({
+                    tone: 'success',
+                    message: 'Inmueble creado y seleccionado.',
+                  })
                 },
                 closeSubflow: () => setShowPropertyCreate(false),
                 markDirty,
               })
+            }}
+            onOpenExistingProperty={(propertyId) => {
+              setForm((current) => ({
+                ...current,
+                property_id: propertyId,
+              }))
+              setPropertyCreateFeedback({
+                tone: 'success',
+                message: 'Se ha reutilizado un inmueble existente para continuar la factura.',
+              })
+              setShowPropertyCreate(false)
+              markDirty()
             }}
           />
         </ContextualCreateSection>
@@ -1115,6 +1158,22 @@ export function InvoiceCreateFlow({
                   ))}
                 </select>
               </label>
+
+              {propertyCreateFeedback ? (
+                <div className={`cc-alert ${propertyCreateFeedback.tone === 'warning' ? 'cc-alert--warning' : 'cc-alert--success'}`}>
+                  <strong>{propertyCreateFeedback.tone === 'warning' ? 'No se pudo actualizar el selector' : 'Inmueble creado y seleccionado'}</strong>
+                  <p>{propertyCreateFeedback.message}</p>
+                  {propertyCreateFeedback.tone === 'warning' ? (
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      onClick={() => void onRefreshData()}
+                    >
+                      Reintentar
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
 
               <label className="form-field">
                 <span>Fecha de emision *</span>

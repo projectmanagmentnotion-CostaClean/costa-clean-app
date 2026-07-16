@@ -3,14 +3,18 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
+import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
 import type { PropertyListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 
 interface PropertyCreateFormProps {
   clients: ClientListItem[]
+  properties?: PropertyListItem[]
   onCreated: () => Promise<void>
   contextClientId?: string | null
   onCreatedProperty?: (property: PropertyListItem) => void | Promise<void>
+  onOpenExistingProperty?: (propertyId: string) => void
   onCancel?: () => void
   onDirtyChange?: (isDirty: boolean) => void
   title?: string
@@ -43,9 +47,11 @@ function getPropertyTypeLabel(value: string): string {
 
 export function PropertyCreateForm({
   clients,
+  properties = [],
   onCreated,
   contextClientId = null,
   onCreatedProperty,
+  onOpenExistingProperty,
   onCancel,
   onDirtyChange,
   title = 'Nueva propiedad',
@@ -71,6 +77,7 @@ export function PropertyCreateForm({
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPropertyDuplicateGroups>>([])
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -85,8 +92,7 @@ export function PropertyCreateForm({
     }))
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function submitProperty(skipDuplicateReview = false) {
     setSubmitError(null)
     setSuccessMessage(null)
     setIsSubmitting(true)
@@ -105,6 +111,27 @@ export function PropertyCreateForm({
         return
       }
 
+      if (!skipDuplicateReview) {
+        const duplicateGroups = findPropertyDuplicateGroups({
+          id: 'PROPERTY-DRAFT',
+          display_code: null,
+          client_id: form.client_id,
+          client_display_code: contextualClient?.display_code ?? clients.find((client) => client.id === form.client_id)?.display_code ?? null,
+          client_name: contextualClient?.full_name ?? clients.find((client) => client.id === form.client_id)?.full_name ?? null,
+          name: form.name.trim(),
+          property_type: form.property_type,
+          address: form.address.trim(),
+          city: form.city.trim() || null,
+          postal_code: form.postal_code.trim() || null,
+          notes: form.notes.trim() || null,
+        }, properties)
+
+        if (duplicateGroups.length > 0) {
+          setPendingDuplicateGroups(duplicateGroups)
+          return
+        }
+      }
+
       const propertyId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? `PROPERTY-${crypto.randomUUID()}`
@@ -116,6 +143,7 @@ export function PropertyCreateForm({
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
+          Prefer: 'return=representation',
         },
         body: JSON.stringify({
           id: propertyId,
@@ -135,20 +163,24 @@ export function PropertyCreateForm({
         return
       }
 
-      await onCreated()
-      await onCreatedProperty?.({
-        id: propertyId,
-        display_code: null,
-        client_id: form.client_id,
+      const createdRows = await response.json().catch(() => [])
+      const createdRow = Array.isArray(createdRows) ? createdRows[0] : createdRows
+      const createdProperty: PropertyListItem = {
+        id: createdRow?.id ?? propertyId,
+        display_code: createdRow?.display_code ?? null,
+        client_id: createdRow?.client_id ?? form.client_id,
         client_display_code: contextualClient?.display_code ?? clients.find((client) => client.id === form.client_id)?.display_code ?? null,
         client_name: contextualClient?.full_name ?? clients.find((client) => client.id === form.client_id)?.full_name ?? null,
-        name: form.name.trim(),
-        property_type: form.property_type,
-        address: form.address.trim(),
-        city: form.city.trim() || null,
-        postal_code: form.postal_code.trim() || null,
-        notes: form.notes.trim() || null,
-      })
+        name: createdRow?.name ?? form.name.trim(),
+        property_type: createdRow?.property_type ?? form.property_type,
+        address: createdRow?.address ?? form.address.trim(),
+        city: createdRow?.city ?? (form.city.trim() || null),
+        postal_code: createdRow?.postal_code ?? (form.postal_code.trim() || null),
+        notes: createdRow?.notes ?? (form.notes.trim() || null),
+      }
+
+      await onCreated()
+      await onCreatedProperty?.(createdProperty)
       setForm({
         client_id: contextClientId ?? '',
         name: '',
@@ -168,6 +200,11 @@ export function PropertyCreateForm({
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    await submitProperty()
   }
 
   function requestCancel() {
@@ -356,6 +393,26 @@ export function PropertyCreateForm({
         onConfirm={() => {
           setShowCancelConfirm(false)
           onCancel?.()
+        }}
+      />
+
+      <DuplicateReviewOverlay
+        isOpen={pendingDuplicateGroups.length > 0}
+        title="Posible propiedad duplicada"
+        description="Ya existe una propiedad muy parecida para este cliente. Puedes usar la existente o crear otra de forma explicita."
+        groups={pendingDuplicateGroups}
+        onClose={() => setPendingDuplicateGroups([])}
+        onOpenRecord={onOpenExistingProperty ? (propertyId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingProperty(propertyId)
+        } : undefined}
+        onUseRecord={onOpenExistingProperty ? (propertyId) => {
+          setPendingDuplicateGroups([])
+          onOpenExistingProperty(propertyId)
+        } : undefined}
+        onContinueAnyway={() => {
+          setPendingDuplicateGroups([])
+          void submitProperty(true)
         }}
       />
     </section>

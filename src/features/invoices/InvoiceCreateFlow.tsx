@@ -490,7 +490,6 @@ export function InvoiceCreateFlow({
     if (stepIndex === 0) {
       if (form.origin_mode === 'job' && !form.job_id) return 'Selecciona un servicio para seguir la ruta principal.'
       if (form.origin_mode === 'quote' && !form.quote_id) return 'Selecciona un presupuesto aceptado para facturar desde presupuesto.'
-      if (form.origin_mode === 'manual' && !form.client_id) return 'Selecciona o crea un cliente para la factura administrativa.'
       return null
     }
 
@@ -1001,6 +1000,8 @@ export function InvoiceCreateFlow({
         contextItems={contextItems}
         sideContent={sideContent}
         footerContent={footerContent}
+        hideCurrentStepSummary={currentStep === 0}
+        hideHeroMeta={currentStep === 0}
       >
         {currentStep === 0 ? (
           <section className="cc-create-flow__section">
@@ -1029,6 +1030,7 @@ export function InvoiceCreateFlow({
                   className={`cc-create-flow__choice ${form.origin_mode === originMode ? 'cc-create-flow__choice--active' : ''}`}
                   onClick={() => updateField('origin_mode', originMode)}
                   disabled={isOriginLocked && form.origin_mode !== originMode}
+                  data-qa={`invoice-origin-mode-${originMode}`}
                 >
                   <span>{originMode === 'job' ? 'Ruta principal' : originMode === 'quote' ? 'Ruta secundaria' : 'Excepcion administrativa'}</span>
                   <strong>
@@ -1133,6 +1135,7 @@ export function InvoiceCreateFlow({
                   value={form.client_id}
                   onChange={(event) => updateField('client_id', event.target.value)}
                   disabled={form.origin_mode !== 'manual'}
+                  data-qa="invoice-manual-client-select"
                 >
                   {form.origin_mode === 'manual' ? <option value="">Selecciona un cliente</option> : null}
                   {clients.map((client) => (
@@ -1149,6 +1152,7 @@ export function InvoiceCreateFlow({
                   value={form.property_id}
                   onChange={(event) => updateField('property_id', event.target.value)}
                   disabled={form.origin_mode !== 'manual'}
+                  data-qa="invoice-manual-property-select"
                 >
                   <option value="">Sin propiedad</option>
                   {availableProperties.map((property) => (
@@ -1201,6 +1205,7 @@ export function InvoiceCreateFlow({
                   description="Para seguir con esta factura necesitas fijar antes un cliente o crearlo ahora."
                   isOpen={showClientCreate}
                   onToggle={() => setShowClientCreate(true)}
+                  buttonDataQa="invoice-create-client-trigger"
                 >
                   <></>
                 </ContextualCreateSection>
@@ -1213,6 +1218,7 @@ export function InvoiceCreateFlow({
                   description="Si necesitas asociar una propiedad, creala primero y despues retoma esta factura con ella ya resuelta."
                   isOpen={showPropertyCreate}
                   onToggle={() => setShowPropertyCreate(true)}
+                  buttonDataQa="invoice-create-property-trigger"
                 >
                   <></>
                 </ContextualCreateSection>

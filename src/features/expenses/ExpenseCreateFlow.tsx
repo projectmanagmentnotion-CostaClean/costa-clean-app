@@ -8,7 +8,6 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { InvoiceListItem } from '../invoices/types'
 import type { QuoteListItem } from '../quotes/types'
 import type { FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
-import { completeFullViewActionFlow } from '../shared/actionFlowLifecycle'
 import { createExpense, updateExpenseAttachment } from './expenseApi'
 import type { ExpenseCreatePrefill } from './expenseCreatePrefill'
 import { uploadExpenseReceipt } from './expenseAttachmentsApi'
@@ -38,6 +37,7 @@ interface ExpenseCreateFlowProps extends FullViewActionFlowProps {
   invoices?: InvoiceListItem[]
   prefill?: ExpenseCreatePrefill | null
   onOpenExistingExpense?: (expenseId: string) => void
+  onCreatedExpense?: (expense: Pick<ExpenseListItem, 'id'>) => void | Promise<void>
 }
 
 interface CreateFormState {
@@ -109,6 +109,7 @@ export function ExpenseCreateFlow({
   invoices = [],
   prefill = null,
   onOpenExistingExpense,
+  onCreatedExpense,
 }: ExpenseCreateFlowProps) {
   const [form, setForm] = useState<CreateFormState>(() => ({
     ...defaultFormState,
@@ -133,6 +134,7 @@ export function ExpenseCreateFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
+  const [createdExpenseId, setCreatedExpenseId] = useState<string | null>(null)
   const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const formRef = useRef<HTMLFormElement | null>(null)
@@ -378,7 +380,10 @@ export function ExpenseCreateFlow({
 
       setIsDirty(false)
       setPendingReceiptFile(null)
-      await completeFullViewActionFlow({ onRefreshData, onCompleted })
+      await onCreatedExpense?.({ id: createdExpenseId })
+      await onRefreshData()
+      setCreatedExpenseId(createdExpenseId)
+      setCurrentStep(3)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error desconocido creando el gasto.'
       setError(message)
@@ -406,14 +411,36 @@ export function ExpenseCreateFlow({
         { id: 'base', label: 'Origen y documento', description: 'Proveedor, fecha y soporte' },
         { id: 'amounts', label: 'Importes y pago', description: 'Base, IVA y estado' },
         { id: 'review', label: 'Revision fiscal', description: 'Riesgo, deducibilidad y notas' },
+        { id: 'success', label: 'Confirmacion', description: 'Gasto guardado y listo para revisar' },
       ]}
-      currentStep={currentStep}
-      onStepSelect={setCurrentStep}
-      hideCurrentStepSummary={currentStep === 0}
-      hideHeroMeta={currentStep === 0}
+      currentStep={createdExpenseId ? 3 : currentStep}
+      onStepSelect={createdExpenseId ? undefined : setCurrentStep}
+      hideCurrentStepSummary={!createdExpenseId && currentStep === 0}
+      hideHeroMeta={!createdExpenseId && currentStep === 0}
       contextItems={flowContextItems}
       sideContent={flowSideContent}
     >
+      {createdExpenseId ? (
+        <section
+          className="cc-create-flow__section"
+          data-qa="expense-create-success"
+          data-entity-id={createdExpenseId}
+        >
+          <article className="cc-create-flow__status-card cc-create-flow__status-card--ready">
+            <span className="cc-create-flow__status-icon" aria-hidden="true">OK</span>
+            <div className="cc-create-flow__status-copy">
+              <span>Registro completado</span>
+              <strong>Gasto creado</strong>
+              <small>{createdExpenseId}</small>
+            </div>
+          </article>
+          <div className="form-actions">
+            <button type="button" className="primary-button" onClick={() => void onCompleted()}>
+              Volver a gastos
+            </button>
+          </div>
+        </section>
+      ) : (
       <form ref={formRef} className="lead-form cc-detail-panel__editor" onSubmit={handleSubmit}>
         {currentStep === 0 ? (
           <section className="cc-form-shell__section">
@@ -671,6 +698,7 @@ export function ExpenseCreateFlow({
           )}
         </div>
       </form>
+      )}
 
       <DuplicateReviewOverlay
         isOpen={pendingDuplicateGroups.length > 0}

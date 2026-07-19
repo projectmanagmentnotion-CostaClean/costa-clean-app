@@ -119,3 +119,25 @@
 - La base UX del roadmap queda cerrada.
 - El riesgo principal ya no es visual; es tecnico-operativo en dominios sensibles.
 - La siguiente fase no debe reabrir un rediseño general, sino atacar riesgos concretos con pruebas y alcance aislado.
+
+## Riesgos nuevos del End-User Flow Agent
+
+- El runner dry-run reduce el riesgo de data basura, pero una allowlist demasiado amplia podria pulsar un CTA ambiguo en el futuro; esa lista debe mantenerse corta y revisable.
+- La autenticacion sigue dependiendo de una sesion manual local; si expira, el fallo debe clasificarse como problema de entorno o harness, no como regresion UX inventada.
+- Algunos flujos embebidos pueden requerir contexto previo para abrirse sin escribir datos reales; esos casos deben reportarse como `skipped` o `not applicable`, nunca como exito fabricado.
+- El modo `write-and-clean` introduce un riesgo nuevo: si el selector de lookup por `qaRunId` o el payload de cleanup deriva, podria dejar entidades reales vivas o tocar la fila equivocada. La mitigacion obligatoria es mantener un registro por flujo, markers unicos y reportes privados de cleanup revisables.
+
+## Riesgo de URL y build incorrectas en QA
+
+- Si el runner ignora `QA_APP_URL`, una pasada etiquetada como local puede auditar produccion y producir evidencia invalida.
+- Si el detector de shell acepta una pantalla de arranque, el agente puede generar falsos resultados en cadena sobre una app que nunca cargo.
+- Mitigacion aplicada: URL efectiva unica en runner, rechazo de marcadores de error de arranque y reporte honesto del bloqueo por variables.
+- Riesgo residual: produccion sigue en una build anterior; no validar `invoice-create` hasta que la URL auditada sirva el fix actual.
+
+## Riesgos de Submit y Cleanup - 2026-07-19
+
+- Un overlay con footer propio alrededor de un StepFlow con footer operativo puede ocultar el CTA en mobile/tablet sin romper el estado del formulario.
+- Descartar el id devuelto por una insercion y cerrar inmediatamente puede convertir una escritura real en un resultado imposible de auditar o limpiar con certeza.
+- Un HTTP exitoso con cero filas afectadas no demuestra cleanup; el registro debe rechazarlo.
+- Los runners especializados no pueden eludir la politica central de write-and-clean.
+- Hasta desplegar la fuente actual, repetir quote/expense submit contra produccion solo reproduce la build anterior y no valida la correccion.

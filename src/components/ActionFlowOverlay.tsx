@@ -11,6 +11,7 @@ interface ActionFlowOverlayProps {
   description: string
   onClose: () => void
   children: ReactNode
+  hasInternalFooter?: boolean
 }
 
 export function ActionFlowOverlay({
@@ -19,6 +20,7 @@ export function ActionFlowOverlay({
   description,
   onClose,
   children,
+  hasInternalFooter = false,
 }: ActionFlowOverlayProps) {
   const overlayRef = useRef<HTMLDivElement | null>(null)
   const backdropRef = useRef<HTMLDivElement | null>(null)
@@ -68,7 +70,7 @@ export function ActionFlowOverlay({
       <div ref={backdropRef} className="cc-action-flow__backdrop" />
       <section
         ref={panelRef}
-        className="cc-action-flow__panel"
+        className={`cc-action-flow__panel${hasInternalFooter ? ' cc-action-flow__panel--internal-footer' : ''}`}
         role="dialog"
         data-qa="action-flow-panel"
         aria-modal="true"
@@ -91,11 +93,13 @@ export function ActionFlowOverlay({
           {children}
         </div>
 
-        <div className="cc-action-flow__footer">
-          <button type="button" className="secondary-button cc-action-flow__dismiss cc-action-flow__dismiss--footer" onClick={onClose}>
-            Cerrar
-          </button>
-        </div>
+        {!hasInternalFooter ? (
+          <div className="cc-action-flow__footer">
+            <button type="button" className="secondary-button cc-action-flow__dismiss cc-action-flow__dismiss--footer" onClick={onClose}>
+              Cerrar
+            </button>
+          </div>
+        ) : null}
       </section>
     </div>
   )

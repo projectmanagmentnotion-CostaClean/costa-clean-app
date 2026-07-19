@@ -17,11 +17,13 @@ No code change starts before those four documents are read and understood.
 - Codex must propose a plan before modifying files.
 - Codex must work in small, safe, reviewable changes.
 - Codex must validate visual mobile changes against the running app whenever the prompt requires visual QA or real iPhone behavior.
+- Live QA requests must stay visible by default so the user can watch the flow; headless execution is opt-in only.
 - Codex must preserve routes, Supabase, auth, invoices, quotes, clients, services, and critical logic unless the prompt explicitly requires changing them.
 - Codex must avoid blind coding, speculative rewrites, and unrelated refactors.
 - Codex must document risks found during the diagnosis phase when they are outside the sprint scope.
 - Codex must execute `npm run lint` and `npm run build` before closing each work block.
 - Codex must create a commit and push the current branch after closing each approved work block.
+- Codex must never commit `.auth/`, QA browser profiles, tokens/cookies, or private QA reports/screenshots.
 
 ## Product Direction
 

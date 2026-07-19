@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project Continuation Agent"
+  short_description: "Validate outputs and design the next sprint"
+  default_prompt: "Use $project-continuation-agent to validate this output and generate the next safe sprint."

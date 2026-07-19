@@ -10,6 +10,7 @@ interface ContextualCreateSectionProps {
   onToggle: () => void
   children: ReactNode
   backLabel?: string
+  buttonDataQa?: string
 }
 
 export function ContextualCreateSection({
@@ -20,6 +21,7 @@ export function ContextualCreateSection({
   onToggle,
   children,
   backLabel = 'Volver al flujo',
+  buttonDataQa,
 }: ContextualCreateSectionProps) {
   if (isOpen) {
     return (
@@ -63,6 +65,7 @@ export function ContextualCreateSection({
           className="secondary-button"
           onClick={onToggle}
           aria-expanded={false}
+          data-qa={buttonDataQa}
         >
           {actionLabel}
         </button>

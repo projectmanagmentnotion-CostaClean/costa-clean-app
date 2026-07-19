@@ -198,3 +198,29 @@ Interpretacion del fallo:
   - selector/readiness del harness
   - un unico finding visual real en `expenses-create`
 - Cierre detallado: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)
+
+## End-User Flow Agent - 2026-07-18
+
+- El harness CDP ahora expone helpers reutilizables para navegacion segura, deteccion de overflow horizontal, apertura/cierre de flows y espera de primer campo visible.
+- `npm run qa:flow:agent` reutiliza la misma sesion QA autenticada pero trabaja en `dry-run` por defecto.
+- El objetivo ya no es solo validar vistas: tambien verificar apertura real de formularios, StepFlows y cancelacion segura sin submit final.
+- Los reportes del agente viven en `qa-reports/private/` y los screenshots en `qa-screenshots/private/`.
+- Si el entorno local no puede levantar la app por falta de variables, el setup puede recibir `QA_APP_URL` para apuntar temporalmente a otra URL valida sin cambiar el comportamiento por defecto del harness.
+- Tanto `qa:visual:auth` como `qa:flow:agent` abren el navegador visible por defecto para que la auditoria pueda seguirse en vivo; `--headless` queda solo como opt-in.
+- El agente de flows admite `--mode=write-and-clean`, pero solo para un subconjunto con cleanup registrado y con gate adicional `QA_ALLOW_WRITE_CLEAN=1` cuando `QA_APP_URL` apunta a una URL no local.
+
+## Validacion de build actual - 2026-07-19
+
+- La app local se sirvio en `http://127.0.0.1:4173/`, pero quedo bloqueada antes de auth por ausencia de `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY`.
+- La sesion del navegador integrado se uso para reproducir el fallo autenticado en produccion sin submit final.
+- `qa:flow:agent` ahora aplica `QA_APP_URL` sobre la URL guardada en la metadata de auth.
+- La pantalla `Error de arranque` deja de contar como shell autenticado.
+- No se declara `qa:visual:auth` verde contra la build actual hasta configurar local o desplegar el fix.
+
+## Real Submit Failure Validation - 2026-07-19
+
+- La pasada visual visible contra produccion termino en `360/360`.
+- El dry-run completo termino en `416/435`; los `19` fallos pertenecen exclusivamente a `invoice-create` servido por la build anterior.
+- La politica restringida impidio escrituras de invoice/payment/job/fiscal en los tres viewports.
+- La pasada visible `QA-AUTO-20260719-003838-THOX5J` termino en `132/132`, con seis altas client/property y seis cleanups confirmados.
+- Quote mobile/tablet y expense no se revalidan como verdes contra produccion porque esa URL todavia no contiene las correcciones de fuente.

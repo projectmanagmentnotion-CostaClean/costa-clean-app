@@ -9,7 +9,11 @@
     "import:google-form-history": "node scripts/import-google-form-history.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
+    "agent:continue": "node scripts/ops/run-project-continuation-agent.mjs",
     "qa:auth:setup": "node scripts/qa/setup-auth-state.mjs",
+    "qa:flow:agent": "node scripts/qa/run-end-user-flow-agent.mjs",
+    "qa:flow:agent:dry": "node scripts/qa/run-end-user-flow-agent.mjs --mode=dry-run",
+    "qa:flow:agent:write-clean": "node scripts/qa/run-end-user-flow-agent.mjs --mode=write-and-clean",
     "qa:visual:auth": "node scripts/qa/run-authenticated-visual-qa.mjs",
     "test": "vitest run --config vitest.config.mjs",
     "test:watch": "vitest --config vitest.config.mjs"

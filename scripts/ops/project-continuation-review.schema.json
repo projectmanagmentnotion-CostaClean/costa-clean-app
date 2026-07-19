@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "verdict": { "type": "string", "enum": ["continue", "complete", "blocked", "stop"] },
+    "summary": { "type": "string" },
+    "quality_score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "verified_evidence": { "type": "array", "items": { "type": "string" } },
+    "missing_evidence": { "type": "array", "items": { "type": "string" } },
+    "risks": { "type": "array", "items": { "type": "string" } },
+    "stop_reason": { "type": "string" },
+    "next_prompt": { "type": "string" }
+  },
+  "required": [
+    "verdict",
+    "summary",
+    "quality_score",
+    "verified_evidence",
+    "missing_evidence",
+    "risks",
+    "stop_reason",
+    "next_prompt"
+  ],
+  "additionalProperties": false
+}

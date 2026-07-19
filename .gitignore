@@ -47,7 +47,12 @@ api/tools/imports/*.csv
 
 # Local authenticated QA harness artifacts
 .auth/
+.auth/*.json
+*.storage-state.json
+*storageState*.json
+*qa-browser-profile*
 playwright/.auth/
 test-results/auth/
 qa-screenshots/private/
 qa-reports/private/
+.project-agent/private/

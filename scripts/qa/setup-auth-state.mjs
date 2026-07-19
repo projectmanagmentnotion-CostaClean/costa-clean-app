@@ -1,6 +1,7 @@
 import path from 'node:path'
 import {
   CdpConnection,
+  detachBrowserSession,
   detectAuthenticatedShell,
   detectBrowserExecutable,
   detectLocalAppUrl,
@@ -8,7 +9,7 @@ import {
   findFreePort,
   getQaPaths,
   launchQaBrowser,
-  openBrowserSession,
+  openExistingBrowserSession,
   waitForCdpEndpoint,
   writeAuthStateMetadata,
   closeBrowserSession,
@@ -36,7 +37,7 @@ async function main() {
   const endpoint = await waitForCdpEndpoint(remoteDebuggingPort, 20000)
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
-  const session = await openBrowserSession(connection, appUrl)
+  let session = await openExistingBrowserSession(connection, appUrl)
 
   process.stdout.write(
     [
@@ -53,7 +54,18 @@ async function main() {
   const startedAt = Date.now()
   let shellState = null
   while (Date.now() - startedAt < setupTimeoutMs) {
-    shellState = await detectAuthenticatedShell(connection, session.sessionId)
+    try {
+      shellState = await detectAuthenticatedShell(connection, session.sessionId)
+    } catch (error) {
+      if (!String(error?.message ?? '').includes('Session with given id not found')) {
+        throw error
+      }
+
+      await detachBrowserSession(connection, session.sessionId)
+      session = await openExistingBrowserSession(connection, appUrl)
+      await delay(500)
+      continue
+    }
     if (shellState.authenticated) {
       break
     }

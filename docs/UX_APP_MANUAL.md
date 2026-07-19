@@ -331,3 +331,9 @@ A UI task is not done unless:
 
 - Si un StepFlow embebido crea una entidad dependiente como propiedad, la opcion nueva debe aparecer y quedar seleccionada en el selector padre sin salir del flujo.
 - Si el sistema detecta un posible duplicado para esa entidad dependiente, debe advertir antes de persistir y ofrecer reutilizar el registro existente.
+
+## Dry-Run QA Rule
+
+- La validacion UX autenticada puede abrir formularios y StepFlows, pero el modo por defecto debe seguir siendo `dry-run`.
+- Un agente QA puede escribir campos de prueba y cancelar, pero no puede ejecutar submits finales sobre datos reales.
+- Si un flujo necesitara escritura real para validarse, debe moverse a un sandbox explicito y documentado antes de correrlo.

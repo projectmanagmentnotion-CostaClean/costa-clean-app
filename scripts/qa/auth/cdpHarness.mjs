@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import net from 'node:net'
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 
 const LOCAL_APP_CANDIDATES = [
   'http://127.0.0.1:4173/',
@@ -44,6 +44,7 @@ const LOGIN_MARKERS = [
 ]
 
 const APP_SHELL_MARKERS = ['Inicio', 'Clientes', 'Servicios', 'Facturas', 'Mas']
+const APP_STARTUP_ERROR_MARKERS = ['Error de arranque', 'Faltan las variables de entorno de Supabase.']
 
 const ERROR_MARKERS = [
   'unexpected application error',
@@ -122,6 +123,10 @@ export async function detectBrowserExecutable() {
 }
 
 export async function detectLocalAppUrl() {
+  if (process.env.QA_APP_URL) {
+    return process.env.QA_APP_URL
+  }
+
   for (const candidate of LOCAL_APP_CANDIDATES) {
     try {
       const controller = new AbortController()
@@ -179,6 +184,18 @@ export async function launchQaBrowser({
   startUrl,
   headless = false,
 }) {
+  const existingDebugPort = findExistingQaDebugPort({
+    executablePath,
+    profileDir,
+  })
+  if (existingDebugPort) {
+    return {
+      child: null,
+      remoteDebuggingPort: existingDebugPort,
+      reusedExistingBrowser: true,
+    }
+  }
+
   const args = [
     `--remote-debugging-port=${remoteDebuggingPort}`,
     `--user-data-dir=${profileDir}`,
@@ -202,7 +219,47 @@ export async function launchQaBrowser({
   })
 
   child.unref()
-  return child
+  return {
+    child,
+    remoteDebuggingPort,
+    reusedExistingBrowser: false,
+  }
+}
+
+function escapePowerShellLiteral(value) {
+  return String(value ?? '').replace(/'/g, "''")
+}
+
+function findExistingQaDebugPort({ executablePath, profileDir }) {
+  if (process.platform !== 'win32') {
+    return null
+  }
+
+  const profileLower = String(profileDir ?? '').replaceAll('/', '\\').toLowerCase()
+  const command = [
+    '$processes = Get-CimInstance Win32_Process -Filter "name = \'msedge.exe\' or name = \'chrome.exe\'"',
+    '$ports = @()',
+    'foreach ($process in $processes) {',
+    '  $commandLine = [string]$process.CommandLine',
+    '  if (-not $commandLine) { continue }',
+    `  if (-not $commandLine.ToLowerInvariant().Contains('${escapePowerShellLiteral(profileLower)}')) { continue }`,
+    "  if ($commandLine -match '--remote-debugging-port=(\\d+)') { $ports += $matches[1] }",
+    '}',
+    'if ($ports.Count -gt 0) { $ports[0] }',
+  ].join(' ')
+
+  try {
+    const systemRoot = process.env.SystemRoot || 'C:\\Windows'
+    const powerShellPath = path.join(systemRoot, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe')
+    const raw = execFileSync(powerShellPath, ['-NoProfile', '-Command', command], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
+    const port = Number.parseInt(raw, 10)
+    return Number.isFinite(port) && port > 0 ? port : null
+  } catch {
+    return null
+  }
 }
 
 async function waitForJson(url, timeoutMs) {
@@ -308,6 +365,38 @@ export class CdpConnection {
 
 export async function openBrowserSession(connection, initialUrl) {
   const { targetId } = await connection.send('Target.createTarget', { url: initialUrl })
+  return await attachToPageTarget(connection, targetId)
+}
+
+export async function openExistingBrowserSession(connection, matchUrlPrefix, timeoutMs = 15000) {
+  const startedAt = Date.now()
+  let fallbackTarget = null
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const { targetInfos = [] } = await connection.send('Target.getTargets')
+    const pageTargets = targetInfos.filter((target) => target.type === 'page')
+    const preferredTarget = pageTargets.find((target) => target.url?.startsWith(matchUrlPrefix))
+      ?? pageTargets.find((target) => target.url?.startsWith('http://127.0.0.1:4173'))
+      ?? pageTargets.find((target) => target.url?.startsWith('http://127.0.0.1:5173'))
+      ?? pageTargets.find((target) => target.url && !target.url.startsWith('devtools://'))
+      ?? null
+
+    if (preferredTarget) {
+      return await attachToPageTarget(connection, preferredTarget.targetId)
+    }
+
+    fallbackTarget = pageTargets[0] ?? null
+    await delay(300)
+  }
+
+  if (fallbackTarget) {
+    return await attachToPageTarget(connection, fallbackTarget.targetId)
+  }
+
+  throw new Error(`Timed out waiting for a browser page target for ${matchUrlPrefix}.`)
+}
+
+async function attachToPageTarget(connection, targetId) {
   const { sessionId } = await connection.send('Target.attachToTarget', {
     targetId,
     flatten: true,
@@ -333,6 +422,14 @@ export async function closeBrowserSession(connection, targetId, sessionId) {
   }
 }
 
+export async function detachBrowserSession(connection, sessionId) {
+  try {
+    await connection.send('Target.detachFromTarget', { sessionId })
+  } catch {
+    // Ignore detach failures while reattaching to another local QA browser target.
+  }
+}
+
 export async function configureViewport(connection, sessionId, viewport) {
   await connection.send('Emulation.setDeviceMetricsOverride', {
     width: viewport.width,
@@ -355,17 +452,26 @@ export async function navigateAndWait(connection, sessionId, url, waitMs = 1200)
     await waitForLoadEvent(connection, sessionId, 15000)
     await delay(waitMs)
 
-    const landedOnBrowserError = await evaluateJson(connection, sessionId, `(() => {
-      const title = document.title ?? ''
-      const bodyText = document.body?.innerText ?? ''
-      const markers = ${JSON.stringify(BROWSER_ERROR_MARKERS)}
-      return markers.some((marker) => title.includes(marker) || bodyText.includes(marker))
-    })()`)
+    const landedOnBrowserError = await detectBrowserErrorPage(connection, sessionId)
 
     if (!landedOnBrowserError) {
       return
     }
   }
+}
+
+export async function waitForShellStable(connection, sessionId, timeoutMs = 12000) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const shellState = await detectAuthenticatedShell(connection, sessionId)
+    if (shellState.authenticated || shellState.startupError) {
+      return shellState
+    }
+    await delay(400)
+  }
+
+  return null
 }
 
 export async function waitForViewReady(connection, sessionId, viewId, timeoutMs = 8000) {
@@ -406,6 +512,59 @@ export async function waitForViewReady(connection, sessionId, viewId, timeoutMs 
     }
 
     await delay(400)
+  }
+
+  return false
+}
+
+export async function waitForStepFlowVisible(connection, sessionId, title, timeoutMs = 8000) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const visible = await evaluateJson(connection, sessionId, `(() => {
+      const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
+      const panel = document.querySelector('[data-qa="action-flow-panel"]')
+      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+      const panelRect = panel?.getBoundingClientRect?.() ?? null
+      const hasVisiblePanel = Boolean(panel && panelRect && panelRect.width > 0 && panelRect.height > 0)
+      const hasInteractiveContent = Boolean(flowSurface || panel?.querySelector('form, input, select, textarea, button'))
+      return Boolean(hasVisiblePanel && hasInteractiveContent && normalize(titleNode?.textContent).includes(${JSON.stringify(title)}))
+    })()`)
+
+    if (visible) {
+      return true
+    }
+
+    await delay(250)
+  }
+
+  return false
+}
+
+export async function waitForFirstFieldVisible(connection, sessionId, scopeSelector = 'body', timeoutMs = 8000) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < timeoutMs) {
+    const visible = await evaluateJson(connection, sessionId, `(() => {
+      const scope = document.querySelector(${JSON.stringify(scopeSelector)}) ?? document.body
+      const field = scope?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
+      if (!field) return false
+      const rect = field.getBoundingClientRect()
+      const style = window.getComputedStyle(field)
+      return rect.width > 0
+        && rect.height > 0
+        && style.visibility !== 'hidden'
+        && style.display !== 'none'
+        && rect.top < window.innerHeight
+        && rect.bottom > 0
+    })()`)
+
+    if (visible) {
+      return true
+    }
+
+    await delay(250)
   }
 
   return false
@@ -486,8 +645,10 @@ export async function detectAuthenticatedShell(connection, sessionId) {
     const hasEmailField = Boolean(document.querySelector('input[type="email"]'));
     const loginMarkers = ${JSON.stringify(LOGIN_MARKERS)};
     const shellMarkers = ${JSON.stringify(APP_SHELL_MARKERS)};
+    const startupErrorMarkers = ${JSON.stringify(APP_STARTUP_ERROR_MARKERS)};
     const loginMarkerCount = loginMarkers.filter((marker) => lower.includes(marker)).length;
     const shellMarkerCount = shellMarkers.filter((marker) => bodyText.includes(marker)).length;
+    const startupErrorMarkerCount = startupErrorMarkers.filter((marker) => bodyText.includes(marker)).length;
     return {
       href: location.href,
       title: document.title,
@@ -495,9 +656,103 @@ export async function detectAuthenticatedShell(connection, sessionId) {
       hasEmailField,
       loginMarkerCount,
       shellMarkerCount,
-      authenticated: shellMarkerCount >= 2 && !hasPasswordField,
+      startupErrorMarkerCount,
+      startupError: startupErrorMarkerCount > 0,
+      authenticated: shellMarkerCount >= 2 && !hasPasswordField && startupErrorMarkerCount === 0,
     };
   })()`)
+}
+
+export async function detectBrowserErrorPage(connection, sessionId) {
+  return await evaluateJson(connection, sessionId, `(() => {
+    const title = document.title ?? ''
+    const bodyText = document.body?.innerText ?? ''
+    const markers = ${JSON.stringify(BROWSER_ERROR_MARKERS)}
+    return markers.some((marker) => title.includes(marker) || bodyText.includes(marker))
+  })()`)
+}
+
+export async function checkNoHorizontalOverflow(connection, sessionId, scopeSelector = 'html') {
+  return await evaluateJson(connection, sessionId, `(() => {
+    const scope = document.querySelector(${JSON.stringify(scopeSelector)}) ?? document.documentElement
+    const width = scope.scrollWidth ?? document.documentElement.scrollWidth
+    return width <= window.innerWidth + 1
+  })()`)
+}
+
+export async function safeNavigateView(connection, sessionId, appUrl, viewId) {
+  const url = buildViewUrl(appUrl, viewId)
+  await navigateAndWait(connection, sessionId, url)
+  await waitForViewReady(connection, sessionId, viewId)
+  return url
+}
+
+export async function safeClickByText(connection, sessionId, label, {
+  selectors = ['button', '[role="button"]'],
+  exact = true,
+} = {}) {
+  return await evaluateJson(connection, sessionId, `(() => {
+    const normalize = (value) => (value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/\\s+/g, ' ').trim()
+    const compact = (value) => normalize(value).toLowerCase().replace(/[^a-z0-9]+/g, '')
+    const selectors = ${JSON.stringify(selectors)}
+    const wanted = normalize(${JSON.stringify(label)})
+    const wantedCompact = compact(${JSON.stringify(label)})
+    const nodes = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+    const match = nodes.find((node) => {
+      const rect = node.getBoundingClientRect()
+      const style = window.getComputedStyle(node)
+      if (node.hasAttribute('disabled') || rect.width <= 0 || rect.height <= 0 || style.display === 'none' || style.visibility === 'hidden') {
+        return false
+      }
+      const text = normalize(node.textContent)
+      const textCompact = compact(node.textContent)
+      return ${exact
+        ? '(text === wanted) || (textCompact === wantedCompact)'
+        : 'text.includes(wanted) || textCompact.includes(wantedCompact)'}
+    })
+    if (!match) return false
+    match.click()
+    return true
+  })()`)
+}
+
+export async function safeClickBySelector(connection, sessionId, selector) {
+  return await evaluateJson(connection, sessionId, `(() => {
+    const node = document.querySelector(${JSON.stringify(selector)})
+    if (!(node instanceof HTMLElement) || node.hasAttribute('disabled')) return false
+    node.click()
+    return true
+  })()`)
+}
+
+export async function safeCloseDialogOrFlow(connection, sessionId) {
+  const closeLabels = ['Cerrar', 'Cerrar formulario', 'Cerrar alta', 'Volver', 'Atras', 'Atrás', 'Cancelar']
+
+  for (const label of closeLabels) {
+    const clicked = await safeClickByText(connection, sessionId, label)
+    if (clicked) {
+      await evaluateJson(connection, sessionId, `(() => {
+        const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim().toLowerCase()
+        const confirmNode = Array.from(document.querySelectorAll('button, [role="button"]')).find((node) => {
+          const text = normalize(node.textContent)
+          return text === 'descartar cambios' || text === 'continuar'
+        })
+        if (!confirmNode) return false
+        confirmNode.click()
+        return true
+      })()`).catch(() => false)
+      return label
+    }
+  }
+
+  const fallbackClicked = await evaluateJson(connection, sessionId, `(() => {
+    const closeNode = document.querySelector('[aria-label="Cerrar"], [data-qa="action-flow-close"], dialog button, [role="dialog"] button')
+    if (!closeNode) return false
+    closeNode.click()
+    return true
+  })()`)
+
+  return fallbackClicked ? 'fallback-close' : null
 }
 
 export async function collectViewAudit(connection, sessionId, viewId, viewport) {

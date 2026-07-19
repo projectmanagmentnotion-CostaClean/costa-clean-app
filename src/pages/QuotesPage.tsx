@@ -310,6 +310,7 @@ export function QuotesPage({
         {showCreateForm ? (
           <ActionFlowOverlay
             isOpen={showCreateForm}
+            hasInternalFooter
             title="Nuevo presupuesto"
             description="Trabaja el presupuesto en una superficie dedicada y vuelve a la lista sin perder el contexto."
               onClose={() => {

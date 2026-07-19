@@ -553,7 +553,12 @@ export function QuoteCreateFlow({
           Atras
         </button>
         {currentStep < stepIndexById.review ? (
-          <button type="button" className="primary-button" onClick={() => goToStep(currentStep + 1)}>
+          <button
+            type="button"
+            className="primary-button"
+            data-qa="quote-next-button"
+            onClick={() => goToStep(currentStep + 1)}
+          >
             Continuar
           </button>
         ) : (
@@ -770,7 +775,7 @@ export function QuoteCreateFlow({
         ) : null}
 
         {currentStep === stepIndexById.property ? (
-          <section className="cc-create-flow__section">
+          <section className="cc-create-flow__section" data-qa="quote-property-step">
             {activeContextualFlow ? activeContextualFlow : (
               <>
                 <article className="cc-create-flow__hero-card">
@@ -791,13 +796,14 @@ export function QuoteCreateFlow({
                   <label className="form-field">
                     <span>Propiedad</span>
                     <select
+                      data-qa="quote-property-select"
                       value={form.property_id}
                       onChange={(event) => updateField('property_id', event.target.value)}
                       disabled={Boolean(contextPropertyId)}
                     >
                       {!contextPropertyId ? <option value="">Sin propiedad</option> : null}
                       {availableProperties.map((property) => (
-                        <option key={property.id} value={property.id}>
+                        <option key={property.id} value={property.id} data-qa="quote-property-option">
                           {formatPropertyLabel(property)}
                         </option>
                       ))}
@@ -993,7 +999,11 @@ export function QuoteCreateFlow({
         ) : null}
 
         {currentStep === stepIndexById.success && successState ? (
-          <section className="cc-create-flow__section">
+          <section
+            className="cc-create-flow__section"
+            data-qa="quote-create-success"
+            data-entity-id={successState.quoteId}
+          >
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 7</span>
               <strong>Presupuesto creado</strong>

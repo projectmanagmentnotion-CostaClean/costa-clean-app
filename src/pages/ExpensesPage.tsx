@@ -52,6 +52,7 @@ export function ExpensesPage({
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [createPrefill, setCreatePrefill] = useState<ExpenseCreatePrefill | null>(null)
+  const [createdExpenseConfirmation, setCreatedExpenseConfirmation] = useState<string | null>(null)
 
   const selectedExpense =
     expenses.find((expense) => expense.id === selectedExpenseId) ?? expenses[0] ?? null
@@ -170,7 +171,6 @@ export function ExpensesPage({
   ])
 
   async function handleExpenseCreated() {
-    await onExpenseCreated()
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
     setCreatePrefill(null)
@@ -233,6 +233,7 @@ export function ExpensesPage({
       {showCreateForm ? (
         <ActionFlowOverlay
           isOpen={showCreateForm}
+          hasInternalFooter
           title="Nuevo gasto"
           description="El alta se resuelve en una superficie dedicada y al cerrar vuelves al mismo punto del modulo."
           onClose={() => {
@@ -256,6 +257,10 @@ export function ExpensesPage({
             }}
             onRefreshData={onExpenseCreated}
             onCompleted={handleExpenseCreated}
+            onCreatedExpense={({ id }) => {
+              setSelectedExpenseId(id)
+              setCreatedExpenseConfirmation(id)
+            }}
             onCancel={() => {
               setHasCreateFormDirty(false)
               setShowCreateForm(false)
@@ -264,6 +269,17 @@ export function ExpensesPage({
             onDirtyChange={setHasCreateFormDirty}
           />
         </ActionFlowOverlay>
+      ) : null}
+
+      {createdExpenseConfirmation ? (
+        <div
+          className="cc-alert cc-alert--success"
+          data-qa="expense-list-create-success"
+          data-entity-id={createdExpenseConfirmation}
+        >
+          <strong>Gasto creado</strong>
+          <p>El gasto {createdExpenseConfirmation} ya esta disponible para revision.</p>
+        </div>
       ) : null}
 
       {unresolvedDuplicateGroups.length > 0 ? (

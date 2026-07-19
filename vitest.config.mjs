@@ -6,6 +6,7 @@ export default defineConfig({
     include: [
       'api/**/*.test.js',
       'src/**/*.test.ts',
+      'scripts/**/*.test.mjs',
     ],
   },
 })

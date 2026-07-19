@@ -112,3 +112,21 @@
 - La deuda principal de QA autenticada ya no es "recuperar un baseline roto", sino mantener estable el harness frente a loadings reales y create flows embebidos.
 - La recuperacion del `2026-07-16` cierra el baseline otra vez en `360/360` sin revertir el fix funcional de propiedades.
 - Detalle del cierre: [QA_BASELINE_RECOVERY_20260716.md](C:/Users/USUARIO/costa-clean-app/docs/QA_BASELINE_RECOVERY_20260716.md)
+
+## End-User Flow Agent - 2026-07-18
+
+- Queda cerrada la ausencia de un canal reusable para abrir y cancelar flows principales como usuario final autenticado sin crear data basura.
+- La deuda residual pasa a ser de cobertura y estabilidad por flujo concreto, no de falta total de guardrails dry-run.
+- La nueva deuda controlada es endurecer `write-and-clean` por flujo sin ampliar escritura real fuera del registro permitido; invoice, payment, fiscal closing y job siguen fuera del subset write-enabled de este sprint.
+
+## Current-Build Invoice Validation - 2026-07-19
+
+- `invoice-create` sigue como deuda abierta de validacion, no como fix confirmado: produccion reproduce el bloqueo antiguo y local no arranca sin las variables Supabase publicas.
+- Se cerro un falso positivo del harness: `QA_APP_URL` ya no puede quedar ignorada por la metadata de auth y la pantalla de error no cuenta como shell autenticado.
+- Pendiente: desplegar o configurar localmente la build actual y recuperar dry-run verde en los tres viewports.
+
+## Real Submit QA Debt - 2026-07-19
+
+- Queda corregida en fuente la doble superficie de footer que ocultaba el avance de presupuesto en mobile/tablet; falta validacion autenticada sobre una build desplegada actual.
+- Queda corregida en fuente la falta de confirmacion trazable de gasto y la perdida del id retornado; falta validar submit y cleanup en esa misma build.
+- La deuda de factura sigue siendo de deploy/sandbox: produccion sirve el comportamiento anterior y local no dispone de variables publicas Supabase.

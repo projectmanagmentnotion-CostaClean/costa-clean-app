@@ -20,6 +20,7 @@ import {
   openBrowserSession,
   readAuthStateMetadata,
   summarizeResults,
+  waitForShellStable,
   waitForViewReady,
   waitForCdpEndpoint,
   findFreePort,
@@ -40,21 +41,28 @@ async function main() {
   }
 
   const browser = await detectBrowserExecutable()
-  const remoteDebuggingPort = await findFreePort()
-  const headless = process.argv.includes('--headed') ? false : true
+  const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
+  const headless = process.argv.includes('--headless')
 
-  await launchQaBrowser({
-    executablePath: browser.executablePath,
-    profileDir: storedState.profileDir,
-    remoteDebuggingPort,
-    startUrl: storedState.appUrl,
-    headless,
-  })
+  const browserLaunch = process.env.QA_REMOTE_DEBUGGING_PORT
+    ? { remoteDebuggingPort, reusedExistingBrowser: true }
+    : await launchQaBrowser({
+      executablePath: browser.executablePath,
+      profileDir: storedState.profileDir,
+      remoteDebuggingPort,
+      startUrl: storedState.appUrl,
+      headless,
+    })
 
-  const endpoint = await waitForCdpEndpoint(remoteDebuggingPort, 20000)
+  const endpoint = await waitForCdpEndpoint(browserLaunch.remoteDebuggingPort, 20000)
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
   const session = await openBrowserSession(connection, storedState.appUrl)
+  const shellState = await waitForShellStable(connection, session.sessionId)
+
+  if (!shellState?.authenticated) {
+    throw new Error('Authenticated shell was not detected in the reused QA profile. Run npm run qa:auth:setup again.')
+  }
 
   const timestamp = formatTimestampForPath(new Date())
   const runScreenshotsDir = path.join(qaPaths.screenshotsDir, timestamp)

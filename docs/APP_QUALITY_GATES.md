@@ -258,3 +258,26 @@ For roadmap-closeout or phase-closeout work:
 - Ningun flujo de alta de propiedad puede crear duplicados silenciosos para el mismo cliente.
 - El guard debe permitir usar una propiedad existente o crear de todos modos de forma explicita.
 - La deteccion de duplicados de propiedades no puede mezclar clientes distintos.
+
+## End-User Flow Agent Gate
+
+- Todo flujo principal debe abrir formulario visible.
+- El agente no ejecuta submit final en modo dry-run.
+- `write-and-clean` solo puede ejecutarse en flujos con cleanup registrado, `qaRunId` trazable y artefactos privados de cleanup.
+- Contra una URL no local, `write-and-clean` exige `QA_ALLOW_WRITE_CLEAN=1`.
+- Ningun sprint UX se cierra si rompe `npm run qa:flow:agent`.
+- Los reportes privados no se versionan.
+- El agente debe cubrir `390x844`, `768x1024` y `1366x900`.
+- Si un flujo no aplica en un viewport, debe documentarse como tal.
+- La URL efectiva del reporte debe coincidir con `QA_APP_URL` cuando exista; auditar otra URL invalida la evidencia.
+- Una pantalla de error de arranque nunca puede satisfacer el gate de shell autenticado.
+- Si local carece de variables publicas Supabase y produccion sirve una build anterior, el gate queda bloqueado; no se sustituye por una declaracion de exito ni se habilita `write-and-clean`.
+
+## Real Submit And Cleanup Gate - 2026-07-19
+
+- Un submit permitido solo pasa si el id creado queda registrado antes de ejecutar cleanup.
+- Una respuesta de cleanup con cero filas afectadas falla el gate.
+- Un feedback de exito que desaparece al cerrar el overlay no es suficiente; debe ser visible y trazable por `data-entity-id`.
+- Los footers anidados no pueden ocultar el CTA operativo del StepFlow en `390x844` ni `768x1024`.
+- Invoice, payment, job y fiscal deben producir skips de politica, no intentos de escritura.
+- No hay cierre, commit ni push mientras la build autenticada auditada no contenga los fixes funcionales requeridos.

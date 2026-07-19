@@ -424,3 +424,39 @@ Focus:
 - explicit duplicate review scoped by client
 - visible inline feedback for refresh failures
 - no schema or route changes
+
+## Post-Roadmap Sprint: End-User Flow Agent
+
+Objective:
+
+Create a reusable authenticated dry-run runner that behaves like an end user across the main creation flows without creating real business data.
+
+Focus:
+
+- dry-run guardrails by default
+- safe opening and cancellation of main flows
+- multi-viewport coverage on `390x844`, `768x1024`, and `1366x900`
+- private local reports and screenshots only
+- explicit skipped-dangerous-action reporting
+
+Status note:
+
+- current-build validation on `2026-07-19` passed lint, build, and `146/146` tests
+- authenticated production reproduction still shows the old manual-invoice step-1 blocker
+- local validation is blocked before auth because the required Supabase public environment variables are absent
+- `QA_APP_URL` precedence and startup-error shell detection were hardened
+- the sprint remains open until visual QA and flow dry-run are green against a URL serving the current build
+
+## Post-Roadmap Sprint: Real Submit QA Failure Hardening
+
+Objective:
+
+Make safe submits observable, traceable, and cleanable without expanding access to fiscal or financial writes.
+
+Status note:
+
+- quote mobile/tablet footer geometry and stable QA selectors are corrected in source
+- expense creation now preserves and displays the created id before returning to the list
+- cleanup rejects zero affected rows and restricted writes are centrally intercepted
+- client/property live submit remains green with six of six rows cleaned in `QA-AUTO-20260719-003838-THOX5J`
+- closure remains blocked on a deployed/current authenticated build for quote, expense, and invoice dry-run validation

@@ -281,3 +281,6 @@ For roadmap-closeout or phase-closeout work:
 - Los footers anidados no pueden ocultar el CTA operativo del StepFlow en `390x844` ni `768x1024`.
 - Invoice, payment, job y fiscal deben producir skips de politica, no intentos de escritura.
 - No hay cierre, commit ni push mientras la build autenticada auditada no contenga los fixes funcionales requeridos.
+- El write-and-clean local exige `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env.local` ignorado; nunca se usa service-role ni se versionan valores.
+- Si falta la configuracion publica local, los submits deben quedar bloqueados y el resultado se documenta como no ejecutado, no como write-and-clean verde.
+- Antes de cualquier submit local deben pasar build, shell autenticado y dry-run contra exactamente `http://127.0.0.1:4173/`.

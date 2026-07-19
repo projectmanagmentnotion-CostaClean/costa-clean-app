@@ -462,3 +462,4 @@ Status note:
 - closure was blocked on a deployed/current authenticated build for quote, expense, and invoice dry-run validation
 - production `a1188ca` now contains the current source; authenticated visual QA is `360/360` and the full dry-run is `435/435`, including quote, expense, and invoice-create across mobile, tablet, and desktop
 - the remaining real-submit gate is limited to non-financial write-and-clean evidence; the current environment skipped those submits because the public Supabase cleanup configuration was unavailable locally
+- local configuration guidance now fixes the required contract to an ignored `.env.local` containing only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; the real submit-and-clean run remains blocked until those existing public values are provided locally

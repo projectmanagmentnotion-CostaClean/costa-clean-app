@@ -524,12 +524,13 @@ export async function waitForStepFlowVisible(connection, sessionId, title, timeo
     const visible = await evaluateJson(connection, sessionId, `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
       const panel = document.querySelector('[data-qa="action-flow-panel"]')
-      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
+      const titleNodes = Array.from(panel?.querySelectorAll('#cc-action-flow-title, h1, h2') ?? [])
       const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
       const panelRect = panel?.getBoundingClientRect?.() ?? null
       const hasVisiblePanel = Boolean(panel && panelRect && panelRect.width > 0 && panelRect.height > 0)
       const hasInteractiveContent = Boolean(flowSurface || panel?.querySelector('form, input, select, textarea, button'))
-      return Boolean(hasVisiblePanel && hasInteractiveContent && normalize(titleNode?.textContent).includes(${JSON.stringify(title)}))
+      const hasExpectedTitle = titleNodes.some((node) => normalize(node.textContent).includes(${JSON.stringify(title)}))
+      return Boolean(hasVisiblePanel && hasInteractiveContent && hasExpectedTitle)
     })()`)
 
     if (visible) {
@@ -548,16 +549,17 @@ export async function waitForFirstFieldVisible(connection, sessionId, scopeSelec
   while (Date.now() - startedAt < timeoutMs) {
     const visible = await evaluateJson(connection, sessionId, `(() => {
       const scope = document.querySelector(${JSON.stringify(scopeSelector)}) ?? document.body
-      const field = scope?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
-      if (!field) return false
-      const rect = field.getBoundingClientRect()
-      const style = window.getComputedStyle(field)
-      return rect.width > 0
-        && rect.height > 0
-        && style.visibility !== 'hidden'
-        && style.display !== 'none'
-        && rect.top < window.innerHeight
-        && rect.bottom > 0
+      const fields = Array.from(scope?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
+      return fields.some((field) => {
+        const rect = field.getBoundingClientRect()
+        const style = window.getComputedStyle(field)
+        return rect.width > 0
+          && rect.height > 0
+          && style.visibility !== 'hidden'
+          && style.display !== 'none'
+          && rect.top < window.innerHeight
+          && rect.bottom > 0
+      })
     })()`)
 
     if (visible) {
@@ -720,13 +722,14 @@ export async function safeClickBySelector(connection, sessionId, selector) {
   return await evaluateJson(connection, sessionId, `(() => {
     const node = document.querySelector(${JSON.stringify(selector)})
     if (!(node instanceof HTMLElement) || node.hasAttribute('disabled')) return false
+    node.scrollIntoView({ block: 'center', inline: 'nearest' })
     node.click()
     return true
   })()`)
 }
 
 export async function safeCloseDialogOrFlow(connection, sessionId) {
-  const closeLabels = ['Cerrar', 'Cerrar formulario', 'Cerrar alta', 'Volver', 'Atras', 'Atrás', 'Cancelar']
+  const closeLabels = ['Volver al flujo', 'Cerrar', 'Cerrar formulario', 'Cerrar alta', 'Cancelar', 'Volver', 'Atras', 'Atrás']
 
   for (const label of closeLabels) {
     const clicked = await safeClickByText(connection, sessionId, label)

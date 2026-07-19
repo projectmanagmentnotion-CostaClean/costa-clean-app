@@ -540,6 +540,8 @@ async function runInvoiceFlow(context) {
   result.checks.manualOriginReachable = manualOriginSelected
   if (!manualOriginSelected) {
     result.notes.push('Could not switch the invoice flow to the manual route before probing billing context.')
+  } else if (!(await waitForManualInvoiceOriginSelected(connection, sessionId))) {
+    result.notes.push('The manual invoice route did not become active before advancing the flow.')
   }
 
   const nextClicked = await safeClickOpeningAction(connection, sessionId, ['Confirmar origen'], result)
@@ -624,16 +626,25 @@ async function runBaseFlowAudit({ connection, sessionId, appUrl, viewport, flowS
 }
 
 async function safeClickOpeningAction(connection, sessionId, labels, result) {
+  const allowedLabels = []
   for (const label of labels) {
     if (!isSafeOpeningAction(label) && isDangerousFinalAction(label)) {
       recordSkippedDangerousAction(result, label)
       continue
     }
 
-    const clicked = await safeClickByText(connection, sessionId, label)
-    if (clicked) {
-      return label
+    allowedLabels.push(label)
+  }
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    for (const label of allowedLabels) {
+      const clicked = await safeClickByText(connection, sessionId, label)
+      if (clicked) {
+        return label
+      }
     }
+
+    await delay(100)
   }
 
   return null
@@ -768,6 +779,23 @@ async function waitForInvoiceFlowContentReady(connection, sessionId, timeoutMs =
     }, sessionId).then((result) => Boolean(result.result?.value))
     if (ready) return true
     await delay(250)
+  }
+  return false
+}
+
+async function waitForManualInvoiceOriginSelected(connection, sessionId, timeoutMs = 4000) {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const selected = await connection.send('Runtime.evaluate', {
+      expression: `(() => {
+        const button = document.querySelector('[data-qa="invoice-origin-mode-manual"]')
+        return Boolean(button?.classList.contains('cc-create-flow__choice--active'))
+      })()`,
+      returnByValue: true,
+      awaitPromise: true,
+    }, sessionId).then((result) => Boolean(result.result?.value))
+    if (selected) return true
+    await delay(100)
   }
   return false
 }

@@ -459,4 +459,6 @@ Status note:
 - expense creation now preserves and displays the created id before returning to the list
 - cleanup rejects zero affected rows and restricted writes are centrally intercepted
 - client/property live submit remains green with six of six rows cleaned in `QA-AUTO-20260719-003838-THOX5J`
-- closure remains blocked on a deployed/current authenticated build for quote, expense, and invoice dry-run validation
+- closure was blocked on a deployed/current authenticated build for quote, expense, and invoice dry-run validation
+- production `a1188ca` now contains the current source; authenticated visual QA is `360/360` and the full dry-run is `435/435`, including quote, expense, and invoice-create across mobile, tablet, and desktop
+- the remaining real-submit gate is limited to non-financial write-and-clean evidence; the current environment skipped those submits because the public Supabase cleanup configuration was unavailable locally

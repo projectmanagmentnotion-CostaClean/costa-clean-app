@@ -73,3 +73,31 @@ Safety result for this attempt:
 - production records deleted: `0`
 
 The exact remaining gate is unchanged: an authorized operator must make the existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` available through one approved private local source. A public/anon key is required; service-role and other privileged credentials remain prohibited.
+
+## Local Authenticated Validation - 2026-07-20
+
+- HEAD used: `cd3a0ae578c0bc9f268089063af7f9a4997672e3`
+- ignored `.env.local`: present
+- required public variables present by name: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+- lint: passed
+- build: passed
+- tests: `153/153` passed
+- local preview: reachable at `http://127.0.0.1:4173/`
+- local authenticated state: refreshed without printing cookies or tokens
+- visible authenticated visual QA: passed for all configured mobile, tablet, and desktop views
+- local dry-run: `435/435` checks passed across `24` viewport/flow combinations
+- tablet shell distribution: corrected and revalidated at `768x1024`
+
+Write-and-clean was not executed. The configured Supabase destination is not proven to be a disposable QA project or branch, and the requested full-submit coverage includes numbered and financial document families that the current cleanup contract cannot restore. Soft-archiving a quote or expense does not rewind a consumed display number. Resetting production sequences, invoice numbers, display codes, or fiscal numbering remains prohibited.
+
+Safety result for this validation:
+
+- entities created: `0`
+- entities cleaned: `0`
+- known QA residue created: `0`
+- invoices issued: `0`
+- payments/cobros recorded: `0`
+- financial writes: `0`
+- production records deleted: `0`
+
+The next gate is an isolated, restorable Supabase QA environment. The required full-flow and numbering restoration design is documented in `docs/FULL_FLOW_QA_NUMBERING_STRATEGY.md`.

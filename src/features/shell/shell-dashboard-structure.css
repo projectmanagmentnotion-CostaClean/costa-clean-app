@@ -555,3 +555,47 @@
     display: none;
   }
 }
+
+/* Tablet keeps the desktop rail, but gives utilities the full row. */
+@media (min-width: 641px) and (max-width: 900px) {
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__topline {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__actions {
+    display: flex;
+    width: 100%;
+    max-width: none;
+    align-items: center;
+    justify-content: space-between;
+    flex-flow: row nowrap;
+    gap: 12px;
+  }
+
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__utilities {
+    display: flex;
+    flex: 0 1 auto;
+    width: auto;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__sync,
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__back,
+  .cc-shell-nav.cc-shell-nav--top-only .cc-theme-toggle,
+  .cc-shell-nav.cc-shell-nav--top-only .cc-alerts-bell,
+  .cc-shell-nav.cc-shell-nav--top-only .cc-alerts-bell__button {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .cc-shell-nav.cc-shell-nav--top-only .cc-shell-nav__current {
+    width: auto;
+    max-width: min(220px, 34vw);
+    flex: 0 0 min(168px, 34vw);
+  }
+}

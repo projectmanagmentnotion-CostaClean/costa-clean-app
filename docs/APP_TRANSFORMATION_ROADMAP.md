@@ -463,3 +463,4 @@ Status note:
 - production `a1188ca` now contains the current source; authenticated visual QA is `360/360` and the full dry-run is `435/435`, including quote, expense, and invoice-create across mobile, tablet, and desktop
 - the remaining real-submit gate is limited to non-financial write-and-clean evidence; the current environment skipped those submits because the public Supabase cleanup configuration was unavailable locally
 - local configuration guidance now fixes the required contract to an ignored `.env.local` containing only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; the real submit-and-clean run remains blocked until those existing public values are provided locally
+- the `2026-07-20` authorized-source audit found no local env, process env, ignored private config, linked Vercel CLI session, or Supabase CLI source; no `.env.local` was synthesized and no local QA/write was attempted

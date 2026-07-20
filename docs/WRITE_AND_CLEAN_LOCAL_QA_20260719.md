@@ -45,3 +45,31 @@ The required setup steps are documented in `docs/LOCAL_QA_SUPABASE_CONFIG.md`. R
 ## Remaining Gate
 
 Provide the two existing public Supabase values locally without exposing or versioning them, then run local preview, visible authenticated dry-run, and write-and-clean for client, property, quote, and expense. Every created ID must be recorded and every cleanup must affect at least one row.
+
+## Authorized Source Audit - 2026-07-20
+
+The requested automatic `.env.local` creation was attempted only through the approved source classes and remained blocked:
+
+- existing `.env.local`: absent
+- current process environment: neither required public variable is present
+- ignored private environment/configuration files in the repository: none found
+- repository `.env*` candidates: only the committed `.env.example` with empty values
+- Vercel project link: `.vercel/project.json` absent
+- Vercel CLI on `PATH`: absent
+- ephemeral Vercel CLI identity check: timed out after 94 seconds without returning an authenticated identity or creating files
+- Supabase CLI on `PATH`: absent
+- local Supabase CLI project config: absent
+
+No value was copied, inferred from the deployed bundle, invented, printed, or written. `.env.local` remains absent and ignored. Because the source gate failed, local preview, local auth setup, visual QA, dry-run, and write-and-clean were not executed.
+
+Safety result for this attempt:
+
+- entities created: `0`
+- entities cleaned: `0`
+- known QA residue created: `0`
+- invoices issued: `0`
+- payments/cobros recorded: `0`
+- financial writes: `0`
+- production records deleted: `0`
+
+The exact remaining gate is unchanged: an authorized operator must make the existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` available through one approved private local source. A public/anon key is required; service-role and other privileged credentials remain prohibited.

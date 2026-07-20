@@ -3,13 +3,14 @@ import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabe
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { DSErrorState } from '../../design-system/components/DSErrorState'
-import { formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
 import type { JobListItem } from './types'
 import { getJobBillingDisplayConcept } from './jobBilling'
 import { applySortDirection, compareDate, compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { applyTextSearch } from '../lists/utils'
 import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { getJobOperationalStatus, isUpcomingJob } from './jobOperationalState'
 
 interface JobsListProps {
   jobs: JobListItem[]
@@ -18,6 +19,7 @@ interface JobsListProps {
   onSelectJob: (job: JobListItem) => void
   onOpenQuoteDetail?: (quoteId: string) => void
   onOpenInvoiceDetail?: (invoiceId: string) => void
+  onCreateJob?: () => void
 }
 
 function getJobPrimaryReference(job: JobListItem): string {
@@ -31,9 +33,10 @@ export function JobsList({
   onSelectJob,
   onOpenQuoteDetail,
   onOpenInvoiceDetail,
+  onCreateJob,
 }: JobsListProps) {
   const today = new Date().toISOString().slice(0, 10)
-  const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'active' }), [])
+  const defaultPreferences = useMemo(() => createDefaultPreferences('scheduled_date', 'asc', { status: 'upcoming' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
 
   const filteredJobs = useMemo(() => {
@@ -45,14 +48,15 @@ export function JobsList({
         const cancelled = isCancelledEntity(job)
         const active = !archived && !deleted && !cancelled
         const isToday = job.scheduled_date === today
-        const isPending = job.status === 'scheduled'
+        const isPending = job.status === 'scheduled' || job.status === 'pending'
         const hasAlert = active && (
           (job.status === 'completed' && !job.invoice_id) ||
-          (job.scheduled_date < today && (job.status === 'scheduled' || job.status === 'in_progress'))
+          (job.scheduled_date < today && (job.status === 'scheduled' || job.status === 'pending' || job.status === 'in_progress'))
         )
 
         if (lifecycleFilter === 'all') return true
         if (lifecycleFilter === 'active') return active
+        if (lifecycleFilter === 'upcoming') return active && isUpcomingJob(job, today)
         if (lifecycleFilter === 'today') return active && isToday
         if (lifecycleFilter === 'pending') return active && isPending
         if (lifecycleFilter === 'alert') return hasAlert
@@ -76,7 +80,7 @@ export function JobsList({
         getServiceTypeLabel(job.service_type),
         job.billing_concept,
         job.status,
-        getDisplayStatusLabel(job.status),
+        getJobOperationalStatus(job, today).label,
         job.scheduled_date,
         job.notes,
       ]),
@@ -88,23 +92,23 @@ export function JobsList({
           : preferences.sortField === 'service'
             ? compareText(getJobPrimaryReference(left), getJobPrimaryReference(right))
             : preferences.sortField === 'status'
-              ? compareText(getDisplayStatusLabel(left.status), getDisplayStatusLabel(right.status))
+              ? compareText(getJobOperationalStatus(left, today).label, getJobOperationalStatus(right, today).label)
               : compareDate(left.scheduled_date, right.scheduled_date)
       return applySortDirection(comparison, preferences.sortDirection)
     })
   }, [jobs, preferences, today])
 
   return (
-    <section className="data-section cc-module-list-section">
+    <section className="cc-module-list-section cc-jobs-list-shell">
       <div className="section-header cc-list-section__header">
         <div>
-          <h2>Servicios</h2>
-          <p>Planificacion operativa, ejecucion y facturacion vinculada.</p>
+          <h2>Proximos servicios</h2>
+          <p>Agenda ordenada por fecha, con cliente e inmueble en una sola lectura.</p>
         </div>
       </div>
 
       <ListToolbar
-        storageKey="costaclean-list-preferences-jobs"
+        storageKey="costaclean-list-preferences-jobs-v2"
         searchLabel="Buscar servicio"
         searchPlaceholder="Servicio, cliente, propiedad, codigo interno, estado o fecha"
         resultCount={filteredJobs.length}
@@ -123,6 +127,7 @@ export function JobsList({
           value: preferences.filters.status ?? 'all',
           options: [
                 { value: 'all', label: 'Todos' },
+                { value: 'upcoming', label: 'Proximos' },
                 { value: 'active', label: 'Activos' },
                 { value: 'today', label: 'Hoy' },
                 { value: 'pending', label: 'Pendientes' },
@@ -137,36 +142,37 @@ export function JobsList({
         onChange={setPreferences}
       />
 
-      {!error && jobs.length > 0 ? (
-        <div className="cc-directory-list__summary">
-          <strong>{filteredJobs.length} visibles</strong>
-          <p>
-            {preferences.searchQuery.trim()
-              ? 'Vista afinada sobre agenda, ejecucion y facturacion operativa.'
-              : 'La lista prioriza agenda activa y deja el resto bajo demanda para no ensuciar la lectura diaria.'}
-          </p>
-        </div>
-      ) : null}
-
       {error ? (
         <DSErrorState title="Error cargando servicios" description={error} />
       ) : jobs.length === 0 ? (
-        <DSEmptyState title="No hay servicios" description="Todavia no existen registros en la tabla jobs." />
+        <DSEmptyState
+          title="No hay servicios"
+          description="Registra el primer servicio para empezar a construir la agenda operativa."
+          action={onCreateJob ? <button type="button" className="primary-button" onClick={onCreateJob}>Registrar servicio</button> : undefined}
+        />
       ) : filteredJobs.length === 0 ? (
-        <DSEmptyState title="Sin resultados" description="No encontramos servicios que coincidan con tu busqueda y filtros activos." />
+        <DSEmptyState
+          title={preferences.filters.status === 'upcoming' ? 'Sin proximos servicios' : 'Sin resultados'}
+          description={preferences.filters.status === 'upcoming'
+            ? 'No hay visitas futuras abiertas. Puedes registrar una nueva o cambiar el filtro para revisar el historico.'
+            : 'No encontramos servicios que coincidan con tu busqueda y filtros activos.'}
+          action={onCreateJob ? <button type="button" className="primary-button" onClick={onCreateJob}>Registrar servicio</button> : undefined}
+        />
       ) : (
         <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de servicios">
           {filteredJobs.map((job) => {
             const isSelected = job.id === selectedJobId
+            const operationalStatus = getJobOperationalStatus(job, today)
 
             return (
               <OperationalListItem
                 key={job.id}
+                dataQa="job-list-item"
                 selected={isSelected}
                 onSelect={() => onSelectJob(job)}
                 title={formatJobLabel(job)}
                 subtitle={getJobPrimaryReference(job)}
-                status={<span className="lead-badge">{getDisplayStatusLabel(job.status)}</span>}
+                status={<span className="lead-badge" data-operational-state={operationalStatus.state}>{operationalStatus.label}</span>}
                 aside={<strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>}
                 summary={`${formatClientLabel(job)} - ${formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}`}
                 chips={[
@@ -199,7 +205,11 @@ export function JobsList({
                       }]
                     : []),
                 ]}
-                microhint={job.invoice_id ? 'Facturacion enlazada' : 'Pendiente de facturar'}
+                microhint={operationalStatus.state === 'review'
+                  ? 'Requiere revision operativa'
+                  : job.status === 'completed' && !job.invoice_id
+                    ? 'Listo para facturar'
+                    : 'Cliente e inmueble vinculados'}
               />
             )
           })}

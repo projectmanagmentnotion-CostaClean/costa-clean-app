@@ -149,3 +149,10 @@
 - Archivar documentos numerados no restaura secuencias ni elimina relaciones o side effects.
 - El reset total requiere snapshot o rama desechable del sandbox; SQL manual y renumeracion productiva siguen prohibidos.
 - Los wrappers preparados no habilitan full-submit; hacerlo antes de provisionar sandbox, seed, baseline y restore proof seria un bypass de seguridad.
+
+## Riesgos de recurrencia y agenda - 2026-07-20
+
+- Confundir `recurring_invoice_plans` con recurrencia de servicios puede emitir documentos sin representar visitas reales.
+- La mitigacion actual es copy explicito, CTA de servicio recurrente deshabilitado y skip estable en dry-run.
+- Los flows desde cliente e inmueble dependen de conservar sus query params; el agente los valida antes, durante y despues de cancelar.
+- Una preferencia legacy de lista puede ocultar la agenda proxima; Jobs usa una clave versionada con `Proximos` como lectura inicial.

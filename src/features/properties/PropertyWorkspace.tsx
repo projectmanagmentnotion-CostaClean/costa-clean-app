@@ -277,8 +277,15 @@ export function PropertyWorkspace({
     {
       key: nextStep.action === 'payment' ? 'primary-payment' : 'primary-job',
       label: nextStep.action === 'payment' ? 'Registrar cobro' : 'Nuevo servicio',
+      dataQa: nextStep.action === 'payment' ? 'property-register-payment' : 'property-create-service',
       tone: 'primary',
       onClick: () => openAction(nextStep.action),
+    },
+    {
+      key: 'new-job',
+      label: 'Nuevo servicio',
+      dataQa: 'property-create-service',
+      onClick: () => openAction('job'),
     },
     {
       key: 'new-invoice',

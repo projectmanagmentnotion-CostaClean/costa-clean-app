@@ -294,3 +294,10 @@ For roadmap-closeout or phase-closeout work:
 - Full-flow submit remains unavailable until a disposable/restorable sandbox exists.
 - Future full-submit requires `QA_ENV=sandbox`, matching project fingerprint, `QA_ALLOW_FULL_SUBMIT=1`, `QA_ALLOW_WRITE_CLEAN=1`, a `QA-AUTO` run ID, `registry-and-reset` cleanup, and `snapshot-restore` or `branch-discard`.
 - Invoice, payment, fiscal cancellation, and numbering reset are always blocked outside sandbox.
+
+## Recurring Service Contract Gate - 2026-07-20
+
+- La automatizacion de facturas no puede presentarse como recurrencia de servicios.
+- Si no existe contrato de recurrencia de visitas, la UI debe explicarlo y el agente debe registrar un skip con razon estable.
+- No se inventan rutas, writes, SQL, RPC ni fechas recurrentes para cerrar una auditoria UX.
+- El alta contextual de servicio debe conservar cliente o inmueble al abrir y al cancelar.

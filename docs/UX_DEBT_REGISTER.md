@@ -130,3 +130,9 @@
 - Queda corregida en fuente la doble superficie de footer que ocultaba el avance de presupuesto en mobile/tablet; falta validacion autenticada sobre una build desplegada actual.
 - Queda corregida en fuente la falta de confirmacion trazable de gasto y la perdida del id retornado; falta validar submit y cleanup en esa misma build.
 - La deuda de factura sigue siendo de deploy/sandbox: produccion sirve el comportamiento anterior y local no dispone de variables publicas Supabase.
+
+## Recurring Service Operations - 2026-07-20
+
+- `UX-008` queda reducido en densidad y navegacion contextual: Jobs abre con agenda proxima, estados operativos y un CTA dominante.
+- La recurrencia de servicios sigue abierta como deuda de dominio; la app solo tiene automatizacion de facturas y ahora ambas capacidades quedan diferenciadas.
+- No se debe cerrar esta deuda creando UI simulada sobre `recurring_invoice_plans`; requiere contrato, sandbox y sprint de persistencia propios.

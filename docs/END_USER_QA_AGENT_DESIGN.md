@@ -216,3 +216,11 @@ Dry-run keeps UX verification fast, repeatable, and private while preserving rea
 - Write-and-clean restrictions are enforced centrally. Invoice, payment, job, and fiscal flows cannot bypass policy through custom runners.
 - A zero-row cleanup response is a cleanup failure, not a successful cleanup.
 - Source fixes require validation on a deployed/current authenticated build before quote and expense can be declared live-green.
+
+## Service Scheduling Coverage - 2026-07-20
+
+- `job-create` sigue validando apertura, primer campo y cancelacion desde Jobs.
+- `service-from-client` y `service-from-property` abren un registro real de lectura, conservan el parametro contextual y cancelan hacia el workspace de origen.
+- `recurring-section` no simula persistencia inexistente: verifica la explicacion visible y registra `service-recurring-contract-unavailable`.
+- La cobertura completa sube de `435` a `588` checks en `390x844`, `768x1024` y `1366x900`.
+- `qa:visual:auth` usa `QA_APP_URL` como URL efectiva para lanzamiento, navegacion y reporte, igual que el flow agent.

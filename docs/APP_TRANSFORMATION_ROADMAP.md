@@ -466,3 +466,4 @@ Status note:
 - the `2026-07-20` authorized-source audit found no local env, process env, ignored private config, linked Vercel CLI session, or Supabase CLI source; no `.env.local` was synthesized and no local QA/write was attempted
 - local authenticated validation now passes visual QA and `435/435` dry-run checks; tablet shell actions were redistributed for `768x1024`, while full-submit and numbering restoration remain gated on a disposable Supabase QA environment rather than production sequence rewrites
 - the QA sandbox blueprint now defines environment fingerprinting, private env wrappers, demo seed, snapshot/reset, and phased full-flow gates; implementation remains blocked on manual provisioning of a disposable/restorable Supabase QA project
+- service scheduling now opens with a compact upcoming agenda and explicit review states; client/property contextual dry-runs are covered, while service recurrence remains honestly blocked on a real domain contract

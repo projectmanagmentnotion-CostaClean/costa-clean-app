@@ -655,19 +655,23 @@ export function JobCreateFlow({
           <section className="cc-create-flow__section">
             {activeContextualFlow ? activeContextualFlow : (
               <>
-            <article className="cc-create-flow__hero-card">
-              <span className="cc-step-flow__eyebrow">Paso 1</span>
-              <strong>Fija el origen real del servicio</strong>
-              <small>Si falta algo, lo resuelves aqui mismo.</small>
-            </article>
+            {!isClientLocked && !isPropertyLocked ? (
+              <>
+                <article className="cc-create-flow__hero-card">
+                  <span className="cc-step-flow__eyebrow">Paso 1</span>
+                  <strong>Fija el origen real del servicio</strong>
+                  <small>Si falta algo, lo resuelves aqui mismo.</small>
+                </article>
 
-            <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
-              <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
-              <div className="cc-create-flow__status-copy">
-                <span>{currentStepError ? 'Falta contexto base' : 'Contexto listo'}</span>
-                <strong>{currentStepError ?? 'Cliente, propiedad y origen estan listos para programar el servicio.'}</strong>
-              </div>
-            </article>
+                <article className={`cc-create-flow__status-card ${currentStepError ? 'cc-create-flow__status-card--blocked' : 'cc-create-flow__status-card--ready'}`}>
+                  <span className="cc-create-flow__status-icon" aria-hidden="true">{currentStepError ? '!' : 'OK'}</span>
+                  <div className="cc-create-flow__status-copy">
+                    <span>{currentStepError ? 'Falta contexto base' : 'Contexto listo'}</span>
+                    <strong>{currentStepError ?? 'Cliente, propiedad y origen estan listos para programar el servicio.'}</strong>
+                  </div>
+                </article>
+              </>
+            ) : null}
 
             <div className="cc-create-flow__grid">
               <label className="form-field">

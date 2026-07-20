@@ -113,6 +113,7 @@ export function ClientsList({
             return (
               <OperationalListItem
                 key={client.id}
+                dataQa="client-list-item"
                 selected={isSelected}
                 onSelect={() => onSelectClient(client)}
                 title={formatClientLabel(client)}

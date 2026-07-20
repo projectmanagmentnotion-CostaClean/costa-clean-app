@@ -113,6 +113,33 @@ const FLOW_SPECS = [
     run: runSimpleOpenAndCancelFlow,
   },
   {
+    id: 'service-from-client',
+    viewId: 'clients',
+    labels: ['Nuevo servicio'],
+    expectedTitle: 'Nuevo servicio',
+    recordSelector: '[data-qa="client-list-item"] .cc-operational-item__select',
+    actionSelector: '[data-qa="client-create-service"]',
+    contextParam: 'client',
+    run: runContextualServiceFlow,
+  },
+  {
+    id: 'service-from-property',
+    viewId: 'properties',
+    labels: ['Nuevo servicio'],
+    expectedTitle: 'Nuevo servicio',
+    recordSelector: '[data-qa="property-list-item"] .cc-operational-item__select',
+    actionSelector: '[data-qa="property-create-service"]',
+    contextParam: 'property',
+    run: runContextualServiceFlow,
+  },
+  {
+    id: 'recurring-section',
+    viewId: 'jobs',
+    labels: [],
+    expectedTitle: 'Servicio recurrente',
+    run: runRecurringSectionAudit,
+  },
+  {
     id: 'fiscal-closing',
     viewId: 'fiscal_closing',
     labels: [],
@@ -302,6 +329,79 @@ async function runSimpleOpenAndCancelFlow(context) {
   result.checks.noRealCreationMessage = !(await detectRealCreationMessage(connection, sessionId))
   result.checks.noDangerousActionClicked = true
   result.checks.noRealDataCreated = true
+  return result
+}
+
+async function runContextualServiceFlow(context) {
+  const result = await runBaseFlowAudit(context)
+  const { connection, sessionId, flowSpec } = context
+  const recordOpened = await safeClickSelectorWithRetry(connection, sessionId, flowSpec.recordSelector)
+  result.checks.contextRecordAvailable = recordOpened
+
+  if (!recordOpened) {
+    result.notes.push(`No record was available for ${flowSpec.id}; contextual flow could not be opened.`)
+    return result
+  }
+
+  const workspaceContext = await waitForWorkspaceContext(connection, sessionId, flowSpec.contextParam)
+  result.checks.workspaceVisible = Boolean(workspaceContext?.contextId)
+  result.checks.contextRoutePresent = Boolean(workspaceContext?.contextId)
+  if (!workspaceContext?.contextId) {
+    result.notes.push(`Workspace context parameter ${flowSpec.contextParam} was not preserved.`)
+    return result
+  }
+
+  let openAction = await safeClickSelectorWithRetry(connection, sessionId, flowSpec.actionSelector, 6)
+  if (!openAction) {
+    await safeClickOpeningAction(connection, sessionId, ['Mas acciones', 'Más acciones'], result)
+    openAction = await safeClickSelectorWithRetry(connection, sessionId, flowSpec.actionSelector, 6)
+  }
+
+  result.checks.expectedButtonExists = openAction
+  result.checks.openingResponds = openAction
+  if (!openAction) {
+    result.notes.push(`Contextual service action was not found for ${flowSpec.id}.`)
+    return result
+  }
+
+  result.checks.formVisible = await waitForStepFlowVisible(connection, sessionId, flowSpec.expectedTitle)
+  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
+  result.checks.contextPreservedInFlow = await currentUrlHasContext(connection, sessionId, flowSpec.contextParam, workspaceContext.contextId)
+  result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
+
+  const closeLabel = await safeCloseDialogOrFlow(connection, sessionId)
+  result.checks.cancelExists = Boolean(closeLabel)
+  const returnedContext = await waitForWorkspaceContext(connection, sessionId, flowSpec.contextParam, workspaceContext.contextId)
+  result.checks.cancelReturnsToContext = Boolean(returnedContext?.contextId)
+  result.checks.noRealCreationMessage = !(await detectRealCreationMessage(connection, sessionId))
+  result.checks.noDangerousActionClicked = true
+  result.checks.noRealDataCreated = true
+  return result
+}
+
+async function runRecurringSectionAudit(context) {
+  const result = await runBaseFlowAudit(context)
+  const { connection, sessionId } = context
+  const recurringState = await waitForRecurringServiceState(connection, sessionId)
+
+  result.checks.recurringSectionVisible = recurringState.sectionVisible
+  result.checks.recurringStatusExplained = recurringState.statusExplained
+  result.checks.noDangerousActionClicked = true
+  result.checks.noRealDataCreated = true
+
+  if (recurringState.enabledAction) {
+    const opened = await safeClickSelectorWithRetry(connection, sessionId, '[data-qa="recurring-service-action"]')
+    result.checks.recurringFlowOpened = opened && await waitForStepFlowVisible(connection, sessionId, context.flowSpec.expectedTitle)
+    await safeCloseDialogOrFlow(connection, sessionId)
+  } else {
+    result.checks.recurringFlowSkippedSafely = recurringState.disabledAction
+    result.skippedActions.push({
+      label: 'Crear servicio recurrente',
+      reason: 'service-recurring-contract-unavailable',
+    })
+    result.notes.push('Recurring service creation is intentionally unavailable because no service recurrence contract exists.')
+  }
+
   return result
 }
 
@@ -655,6 +755,76 @@ async function safeClickOpeningAction(connection, sessionId, labels, result) {
   }
 
   return null
+}
+
+async function safeClickSelectorWithRetry(connection, sessionId, selector, attempts = 20) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    if (await safeClickBySelector(connection, sessionId, selector)) return true
+    await delay(150)
+  }
+  return false
+}
+
+async function waitForWorkspaceContext(connection, sessionId, contextParam, expectedContextId = null) {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const state = await connection.send('Runtime.evaluate', {
+      expression: `(() => {
+        const url = new URL(window.location.href)
+        return {
+          workspaceVisible: Boolean(document.querySelector('.cc-client-workspace')),
+          flowPanelVisible: Boolean(document.querySelector('[data-qa="action-flow-panel"]')),
+          contextId: url.searchParams.get(${JSON.stringify(contextParam)}),
+        }
+      })()`,
+      returnByValue: true,
+      awaitPromise: true,
+    }, sessionId).then((response) => response.result?.value)
+
+    if (state?.workspaceVisible && !state.flowPanelVisible && state.contextId && (!expectedContextId || state.contextId === expectedContextId)) {
+      return state
+    }
+    await delay(250)
+  }
+  return null
+}
+
+async function currentUrlHasContext(connection, sessionId, contextParam, expectedContextId) {
+  return await connection.send('Runtime.evaluate', {
+    expression: `new URL(window.location.href).searchParams.get(${JSON.stringify(contextParam)}) === ${JSON.stringify(expectedContextId)}`,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((response) => Boolean(response.result?.value))
+}
+
+async function waitForRecurringServiceState(connection, sessionId) {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
+    const state = await connection.send('Runtime.evaluate', {
+      expression: `(() => {
+        const section = document.querySelector('[data-qa="recurring-service-section"]')
+        const disabledAction = document.querySelector('[data-qa="recurring-service-disabled-action"]')
+        const enabledAction = document.querySelector('[data-qa="recurring-service-action"]')
+        const text = (section?.textContent ?? '').toLowerCase()
+        return {
+          sectionVisible: Boolean(section && section.getClientRects().length > 0),
+          statusExplained: text.includes('pendiente de contrato') && text.includes('facturas'),
+          disabledAction: Boolean(disabledAction?.disabled),
+          enabledAction: Boolean(enabledAction && !enabledAction.disabled),
+        }
+      })()`,
+      returnByValue: true,
+      awaitPromise: true,
+    }, sessionId).then((response) => response.result?.value)
+
+    if (state?.sectionVisible) return state
+    await delay(250)
+  }
+
+  return {
+    sectionVisible: false,
+    statusExplained: false,
+    disabledAction: false,
+    enabledAction: false,
+  }
 }
 
 async function waitForReturnToView({ connection, sessionId, flowSpec }) {

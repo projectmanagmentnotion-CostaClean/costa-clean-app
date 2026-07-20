@@ -22,6 +22,8 @@ Exit gate: seed is repeatable and baseline is restorable.
 
 - Run auth, visual QA, and all current flow audits at mobile, tablet, and desktop sizes.
 - Confirm every target flow opens, validates, and stops before submit.
+- Include standalone job creation plus service creation from client and property workspaces.
+- Keep service recurrence as an explicit policy skip until a real sandbox-backed contract exists.
 
 Exit gate: all configured checks pass with zero writes.
 

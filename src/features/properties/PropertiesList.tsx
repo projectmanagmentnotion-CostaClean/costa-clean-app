@@ -138,6 +138,7 @@ export function PropertiesList({
             return (
               <OperationalListItem
                 key={property.id}
+                dataQa="property-list-item"
                 selected={isSelected}
                 onSelect={() => onSelectProperty(property)}
                 title={property.name}

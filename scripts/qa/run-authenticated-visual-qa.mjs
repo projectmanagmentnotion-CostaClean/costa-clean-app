@@ -40,6 +40,7 @@ async function main() {
     throw new Error(`Missing auth state at ${path.relative(rootDir, qaPaths.stateFile)}. Run npm run qa:auth:setup first.`)
   }
 
+  const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
   const browser = await detectBrowserExecutable()
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
   const headless = process.argv.includes('--headless')
@@ -50,15 +51,19 @@ async function main() {
       executablePath: browser.executablePath,
       profileDir: storedState.profileDir,
       remoteDebuggingPort,
-      startUrl: storedState.appUrl,
+      startUrl: appUrl,
       headless,
     })
 
   const endpoint = await waitForCdpEndpoint(browserLaunch.remoteDebuggingPort, 20000)
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
-  const session = await openBrowserSession(connection, storedState.appUrl)
+  const session = await openBrowserSession(connection, appUrl)
   const shellState = await waitForShellStable(connection, session.sessionId)
+
+  if (shellState?.startupError) {
+    throw new Error('Application startup failed before authenticated visual QA. Check the public Supabase configuration for the target build.')
+  }
 
   if (!shellState?.authenticated) {
     throw new Error('Authenticated shell was not detected in the reused QA profile. Run npm run qa:auth:setup again.')
@@ -71,7 +76,7 @@ async function main() {
   for (const viewport of defaultViewports()) {
     await configureViewport(connection, session.sessionId, viewport)
     for (const viewId of defaultViews()) {
-      const url = buildViewUrl(storedState.appUrl, viewId)
+      const url = buildViewUrl(appUrl, viewId)
       await navigateAndWait(connection, session.sessionId, url)
       await waitForViewReady(connection, session.sessionId, viewId)
       const audit = await collectViewAudit(connection, session.sessionId, viewId, viewport)
@@ -86,7 +91,7 @@ async function main() {
     }
 
     for (const scenario of defaultFlowScenarios()) {
-      const url = buildViewUrl(storedState.appUrl, scenario.viewId)
+      const url = buildViewUrl(appUrl, scenario.viewId)
       await navigateAndWait(connection, session.sessionId, url)
       await waitForViewReady(connection, session.sessionId, scenario.viewId)
       const audit = await collectActionFlowAudit(connection, session.sessionId, scenario, viewport)
@@ -103,7 +108,7 @@ async function main() {
 
   const report = {
     generatedAt: new Date().toISOString(),
-    appUrl: storedState.appUrl,
+    appUrl,
     browserId: browser.id,
     profileDir: storedState.profileDir,
     summary: summarizeResults(results),

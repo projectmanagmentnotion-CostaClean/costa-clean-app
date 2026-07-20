@@ -1,0 +1,48 @@
+.cc-jobs-list-shell {
+  display: grid;
+  gap: 14px;
+}
+
+.cc-recurring-service-readiness {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 16px 2px 2px;
+  border-top: 1px solid var(--card-border);
+}
+
+.cc-recurring-service-readiness__copy {
+  display: grid;
+  gap: 4px;
+}
+
+.cc-recurring-service-readiness__copy span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cc-recurring-service-readiness__copy strong {
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.cc-recurring-service-readiness__copy p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--muted-strong);
+}
+
+@media (max-width: 700px) {
+  .cc-recurring-service-readiness {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cc-recurring-service-readiness .secondary-button {
+    width: 100%;
+  }
+}

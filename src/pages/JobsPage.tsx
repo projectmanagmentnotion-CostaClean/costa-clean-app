@@ -1,10 +1,8 @@
 import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
-import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { ModuleFilterBar } from '../components/ModuleFilterBar'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { ExecutiveHeader } from '../components/ExecutiveHeader'
-import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DuplicateNotice } from '../features/duplicates/DuplicateNotice'
 import { useDuplicateResolution } from '../features/duplicates/duplicateResolution'
 import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOverlay'
@@ -16,7 +14,6 @@ import { JobsList } from '../features/jobs/JobsList'
 import { JobWorkspace } from '../features/jobs/JobWorkspace'
 import { buildJobCreatePrefillFromJob, type JobCreatePrefill } from '../features/jobs/jobCreatePrefill'
 import type { JobListItem } from '../features/jobs/types'
-import { formatCurrency } from '../app/displayFormat'
 import {
   useJobWorkspaceNavigation,
   type JobWorkspaceTab,
@@ -26,7 +23,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
-import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import '../features/jobs/jobsOperations.css'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -118,104 +115,17 @@ export function JobsPage({
     [jobs, today],
   )
   const pendingJobs = useMemo(
-    () => jobs.filter((job) => job.status === 'scheduled' || job.status === 'in_progress'),
-    [jobs],
-  )
-  const completedUninvoicedJobs = useMemo(
-    () => jobs.filter((job) => job.status === 'completed' && !job.invoice_id),
+    () => jobs.filter((job) => job.status === 'scheduled' || job.status === 'pending' || job.status === 'in_progress'),
     [jobs],
   )
   const upcomingJobs = useMemo(
-    () => jobs.filter((job) => job.status !== 'cancelled' && job.scheduled_date > today),
-    [jobs, today],
+    () => pendingJobs.filter((job) => job.status !== 'cancelled' && job.scheduled_date >= today),
+    [pendingJobs, today],
   )
-  const completedUninvoicedValue = useMemo(
-    () => completedUninvoicedJobs.reduce((sum, job) => {
-      const derivedSubtotal = Number(job.billing_lines?.reduce((lineSum, line) => lineSum + Number(line.line_subtotal ?? 0), 0) ?? 0)
-      const fallbackSubtotal = Number(job.billing_unit_price ?? 0) * Number(job.billing_quantity ?? 1)
-      return sum + (derivedSubtotal > 0 ? derivedSubtotal : fallbackSubtotal)
-    }, 0),
-    [completedUninvoicedJobs],
+  const reviewJobs = useMemo(
+    () => pendingJobs.filter((job) => job.scheduled_date < today),
+    [pendingJobs, today],
   )
-  const jobsActionItems: ActionChecklistItem[] = compactVisibleItems<ActionChecklistItem>([
-    todayJobs.length > 0 ? {
-      id: 'today',
-      state: 'warning',
-      label: `${todayJobs.length} servicio(s) hoy`,
-      description: todayJobs.length > 0
-        ? 'La cola inmediata esta en la agenda de hoy y conviene abrirla primero.'
-        : '',
-      action: todayJobs[0] ? {
-        label: 'Abrir agenda de hoy',
-        onClick: () => handleOpenWorkspace(todayJobs[0].id),
-      } : undefined,
-    } : null,
-    completedUninvoicedJobs.length > 0 ? {
-      id: 'uninvoiced',
-      state: 'warning',
-      label: `${completedUninvoicedJobs.length} completado(s) sin factura`,
-      description: completedUninvoicedJobs.length > 0
-        ? 'Es trabajo ya ejecutado que todavia no impacta caja porque no esta facturado.'
-        : '',
-      action: completedUninvoicedJobs[0] ? {
-        label: 'Abrir listo para facturar',
-        onClick: () => handleOpenWorkspace(completedUninvoicedJobs[0].id, 'billing'),
-      } : undefined,
-    } : null,
-    pendingJobs.length > 0 ? {
-      id: 'pending',
-      state: 'info',
-      label: `${pendingJobs.length} pendiente(s) o en curso`,
-      description: pendingJobs.length > 0
-        ? 'Mantienen la operativa abierta fuera del cierre de hoy.'
-        : '',
-    } : null,
-    duplicateGroups.length > 0 ? {
-      id: 'duplicates',
-      state: 'warning',
-      label: `${duplicateGroups.length} duplicado(s) potencial(es)`,
-      description: duplicateGroups.length > 0
-        ? 'Hay coincidencias operativas que conviene revisar antes de seguir programando.'
-        : '',
-      action: duplicateGroups.length > 0 ? {
-        label: 'Revisar duplicados',
-        onClick: () => setShowDuplicateReview(true),
-      } : undefined,
-    } : null,
-  ])
-  const summaryKpis = compactVisibleItems([
-    hasMeaningfulCount(todayJobs.length) ? (
-      <VisualKpiCard
-        key="jobs-today"
-        label="Servicios de hoy"
-        value={String(todayJobs.length)}
-        hint="Agenda inmediata del dia con fecha programada real."
-        tone="info"
-        priority="compact"
-      />
-    ) : null,
-    hasMeaningfulCount(pendingJobs.length) ? (
-      <VisualKpiCard
-        key="jobs-pending"
-        label="Pendientes"
-        value={String(pendingJobs.length)}
-        hint="Servicios programados o en curso que siguen abiertos."
-        tone="warning"
-        priority="compact"
-      />
-    ) : null,
-    hasMeaningfulCount(completedUninvoicedJobs.length) ? (
-      <VisualKpiCard
-        key="jobs-uninvoiced"
-        label="Completados sin facturar"
-        value={String(completedUninvoicedJobs.length)}
-        hint="Servicios ya hechos que aun no tienen factura enlazada."
-        tone="warning"
-        priority="compact"
-        badgeLabel="Caja bloqueada"
-      />
-    ) : null,
-  ])
 
   useEffect(() => {
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
@@ -258,9 +168,13 @@ export function JobsPage({
           <ExecutiveHeader
             eyebrow="Agenda y ejecucion"
             title="Servicios"
-            summary="Agenda diaria, servicios abiertos y trabajo listo para facturar en una sola lectura. El alta rapida vive en el mismo modulo, pero la prioridad sigue siendo ejecutar y cerrar el siguiente paso operativo."
-            statusLabel={completedUninvoicedJobs.length > 0 ? `${completedUninvoicedJobs.length} sin facturar` : 'Operativa estable'}
-            statusTone={completedUninvoicedJobs.length > 0 ? 'warning' : todayJobs.length > 0 ? 'info' : 'success'}
+            summary="Que toca hoy y que viene despues, con cliente e inmueble visibles."
+            statusLabel={reviewJobs.length > 0
+              ? `${reviewJobs.length} por revisar`
+              : todayJobs.length > 0
+                ? `${todayJobs.length} hoy`
+                : `${upcomingJobs.length} proximos`}
+            statusTone={reviewJobs.length > 0 ? 'warning' : todayJobs.length > 0 ? 'info' : 'success'}
             primaryAction={{
               label: isCreateFormVisible ? 'Cerrar alta' : 'Registrar servicio',
               onClick: () => {
@@ -278,37 +192,7 @@ export function JobsPage({
                 setShowCreateForm(true)
               },
             }}
-            secondaryAction={completedUninvoicedJobs[0] ? {
-              label: 'Ver listo para facturar',
-              onClick: () => handleOpenWorkspace(completedUninvoicedJobs[0].id, 'billing'),
-            } : todayJobs[0] ? {
-              label: 'Abrir agenda de hoy',
-              onClick: () => handleOpenWorkspace(todayJobs[0].id),
-            } : {
-              label: 'Ver pendientes',
-              onClick: () => {
-                const nextPendingJob = pendingJobs[0] ?? upcomingJobs[0] ?? null
-                if (nextPendingJob) {
-                  handleOpenWorkspace(nextPendingJob.id)
-                } else {
-                  setShowCreateForm(true)
-                }
-              },
-            }}
-            metricLabel={hasMeaningfulAmount(completedUninvoicedValue) ? 'Trabajo sin facturar' : undefined}
-            metricValue={hasMeaningfulAmount(completedUninvoicedValue) ? formatCurrency(completedUninvoicedValue) : undefined}
-            metricHint={hasMeaningfulAmount(completedUninvoicedValue)
-              ? 'Estimacion basada solo en lineas de facturacion o precio unitario del servicio.'
-              : undefined}
-          >
-            {jobsActionItems.length > 0 ? <ActionChecklist items={jobsActionItems} compact /> : null}
-          </ExecutiveHeader>
-
-          {summaryKpis.length > 0 ? (
-            <div className="cc-kpi-grid cc-kpi-grid--compact">
-              {summaryKpis}
-            </div>
-          ) : null}
+          />
 
           {recentCreatedJob ? (
             <section className="data-section cc-list-section__header">
@@ -333,15 +217,6 @@ export function JobsPage({
                 </button>
               </div>
             </section>
-          ) : null}
-
-          {duplicateGroups.length > 0 ? (
-            <DuplicateNotice
-              title={`${duplicateGroups.length} grupo(s) de posibles servicios duplicados`}
-              description="Se han detectado coincidencias operativas por cliente, propiedad, fecha y tipo de servicio. Revísalas sin ensuciar la agenda principal."
-              actionLabel="Revisar duplicados"
-              onAction={() => setShowDuplicateReview(true)}
-            />
           ) : null}
 
           {isCreateFormVisible ? (
@@ -400,23 +275,26 @@ export function JobsPage({
             <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
           ) : null}
 
-          <div className="data-section">
-            <div className="section-header page-header-actions">
-              <div>
-                <h2>Agenda y ejecucion de servicios</h2>
-                <p>Abre cualquier tarjeta para entrar en su workspace operativo y financiero completo.</p>
-              </div>
-            </div>
+          <JobsList
+            jobs={jobs}
+            error={error}
+            selectedJobId={null}
+            onOpenQuoteDetail={onOpenQuoteDetail}
+            onOpenInvoiceDetail={onOpenInvoiceDetail}
+            onSelectJob={(job) => handleOpenWorkspace(job.id)}
+            onCreateJob={() => setShowCreateForm(true)}
+          />
 
-            <JobsList
-              jobs={jobs}
-              error={error}
-              selectedJobId={null}
-              onOpenQuoteDetail={onOpenQuoteDetail}
-              onOpenInvoiceDetail={onOpenInvoiceDetail}
-              onSelectJob={(job) => handleOpenWorkspace(job.id)}
-            />
-          </div>
+          <section className="cc-recurring-service-readiness" data-qa="recurring-service-section">
+            <div className="cc-recurring-service-readiness__copy">
+              <span>Servicios recurrentes</span>
+              <strong>Planificacion recurrente pendiente de contrato</strong>
+              <p>La app permite programar cada servicio, pero todavia no existe un modelo seguro para generar visitas recurrentes. La automatizacion de facturas es independiente.</p>
+            </div>
+            <button type="button" className="secondary-button" data-qa="recurring-service-disabled-action" disabled>
+              Crear recurrencia no disponible
+            </button>
+          </section>
 
           <DuplicateReviewOverlay
             isOpen={showDuplicateReview}

@@ -6,6 +6,7 @@ export interface ActionGroupItem {
   onClick: () => void
   tone?: 'primary' | 'default'
   disabled?: boolean
+  dataQa?: string
 }
 
 interface ActionGroupProps {
@@ -124,6 +125,7 @@ export function ActionGroup({
       <button
         type="button"
         className={primaryAction.tone === 'primary' ? 'cc-record-card__inline-action is-primary' : 'cc-record-card__inline-action'}
+        data-qa={primaryAction.dataQa}
         onClick={primaryAction.onClick}
         disabled={primaryAction.disabled}
       >
@@ -135,6 +137,7 @@ export function ActionGroup({
           key={action.key}
           type="button"
           className="cc-record-card__inline-action cc-record-card__inline-action--secondary"
+          data-qa={action.dataQa}
           onClick={action.onClick}
           disabled={action.disabled}
         >
@@ -169,6 +172,7 @@ export function ActionGroup({
                   type="button"
                   role="menuitem"
                   className="cc-action-group__menu-item"
+                  data-qa={action.dataQa}
                   onClick={() => {
                     action.onClick()
                     setIsMenuOpen(false)

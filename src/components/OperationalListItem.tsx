@@ -4,6 +4,7 @@ import { ActionGroup, type ActionGroupItem } from './ActionGroup'
 export type OperationalListAction = ActionGroupItem
 
 interface OperationalListItemProps {
+  dataQa?: string
   selected: boolean
   onSelect: () => void
   title: string
@@ -19,6 +20,7 @@ interface OperationalListItemProps {
 }
 
 export function OperationalListItem({
+  dataQa,
   selected,
   onSelect,
   title,
@@ -33,7 +35,7 @@ export function OperationalListItem({
   selectionControl,
 }: OperationalListItemProps) {
   return (
-    <article className={selected ? 'cc-operational-item is-selected' : 'cc-operational-item'}>
+    <article data-qa={dataQa} className={selected ? 'cc-operational-item is-selected' : 'cc-operational-item'}>
       {selectionControl ? <div className="cc-operational-item__selection">{selectionControl}</div> : null}
 
       <button

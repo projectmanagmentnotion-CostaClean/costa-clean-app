@@ -151,7 +151,7 @@ function getActionTitle(action: Exclude<ClientWorkspaceAction, null>) {
     case 'quote': return 'Nuevo presupuesto'
     case 'invoice': return 'Nueva factura'
     case 'payment': return 'Registrar cobro'
-    case 'recurring': return 'Automatizacion recurrente'
+    case 'recurring': return 'Automatizacion de facturas'
   }
 }
 
@@ -612,6 +612,7 @@ export function ClientWorkspace({
     heroActions.push({
       key: 'new-job',
       label: 'Nuevo servicio',
+      dataQa: 'client-create-service',
       tone: 'primary',
       onClick: () => openAction('job'),
     })
@@ -621,6 +622,7 @@ export function ClientWorkspace({
     {
       key: 'secondary-job',
       label: 'Nuevo servicio',
+      dataQa: 'client-create-service',
       onClick: () => openAction('job'),
     },
     {
@@ -698,7 +700,7 @@ export function ClientWorkspace({
       detail: nextJob ? formatDateEs(nextJob.scheduled_date) : 'Sin agenda futura',
     },
     {
-      label: 'Automatizacion',
+      label: 'Facturacion recurrente',
       value: dueRecurringPlans.length > 0 ? `${dueRecurringPlans.length} por emitir` : `${relatedRecurringPlans.length} plan(es)`,
       detail:
         latestIssuedRecurringPlan
@@ -910,8 +912,8 @@ export function ClientWorkspace({
             </article>
             <article className="data-section">
               <div className="section-header">
-                <h2>Automatizacion recurrente</h2>
-                <p>Planes activos y emisiones que siguen vivas hoy.</p>
+                <h2>Automatizacion de facturas</h2>
+                <p>Planes de emision; no programan visitas ni servicios recurrentes.</p>
               </div>
               <div className="cc-client-workspace__focus-list">
                 {visibleRecurringPlans.map((plan) => (
@@ -925,8 +927,8 @@ export function ClientWorkspace({
                 ))}
                 {relatedRecurringPlans.length === 0 ? (
                   <div className="cc-client-workspace__focus-empty">
-                    <strong>Sin automatizaciones recurrentes</strong>
-                    <p>Cuando el cliente tenga una rutina estable, convendrá preparar la automatización desde aquí.</p>
+                    <strong>Sin facturas recurrentes</strong>
+                    <p>Esta automatizacion solo emite documentos. La recurrencia de servicios todavia no esta disponible.</p>
                   </div>
                 ) : null}
               </div>
@@ -1134,8 +1136,8 @@ export function ClientWorkspace({
             <article className="data-section">
               <div className="section-header page-header-actions">
                 <div>
-                  <h2>Automatizaciones recurrentes</h2>
-                  <p>Se quedan aqui como control, pero no compiten con las facturas del cliente.</p>
+                  <h2>Automatizacion de facturas</h2>
+                  <p>Control de emisiones periodicas, separado de la planificacion de servicios.</p>
                 </div>
                 <button
                   type="button"

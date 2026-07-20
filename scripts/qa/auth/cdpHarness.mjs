@@ -93,10 +93,17 @@ const BROWSER_CANDIDATES = [
 ]
 
 export function getQaPaths(rootDir = process.cwd()) {
+  const authNamespace = String(process.env.QA_AUTH_NAMESPACE ?? '')
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/gu, '')
+  const authDir = authNamespace
+    ? path.resolve(rootDir, '.auth', authNamespace)
+    : path.resolve(rootDir, '.auth')
+
   return {
-    authDir: path.resolve(rootDir, '.auth'),
-    profileDir: path.resolve(rootDir, '.auth', 'qa-browser-profile'),
-    stateFile: path.resolve(rootDir, '.auth', 'costa-clean-storage-state.json'),
+    authDir,
+    profileDir: path.resolve(authDir, 'qa-browser-profile'),
+    stateFile: path.resolve(authDir, 'costa-clean-storage-state.json'),
     screenshotsDir: path.resolve(rootDir, 'qa-screenshots', 'private'),
     reportsDir: path.resolve(rootDir, 'qa-reports', 'private'),
   }

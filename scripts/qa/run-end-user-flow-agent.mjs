@@ -48,6 +48,10 @@ import {
   listWriteAndCleanEnabledFlowIds,
   loadSupabasePublicEnv,
 } from './qaCleanupRegistry.mjs'
+import {
+  assertQaAgentEnvironmentAllowed,
+  resolveQaEnvironment,
+} from './qaEnvironmentGuardrails.mjs'
 
 const rootDir = process.cwd()
 const qaPaths = getQaPaths(rootDir)
@@ -130,6 +134,8 @@ async function main() {
   }
 
   const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
+  const qaEnvironment = resolveQaEnvironment({ qaEnv: process.env.QA_ENV, appUrl })
+  assertQaAgentEnvironmentAllowed({ mode: qaAgentMode, appUrl })
   const browser = await detectBrowserExecutable()
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
 
@@ -194,6 +200,7 @@ async function main() {
   const report = {
     generatedAt: new Date().toISOString(),
     mode: qaAgentMode,
+    qaEnvironment,
     qaRunId,
     appUrl,
     browserId: browser.id,

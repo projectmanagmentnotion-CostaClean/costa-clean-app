@@ -141,3 +141,11 @@
 - Un HTTP exitoso con cero filas afectadas no demuestra cleanup; el registro debe rechazarlo.
 - Los runners especializados no pueden eludir la politica central de write-and-clean.
 - Hasta desplegar la fuente actual, repetir quote/expense submit contra produccion solo reproduce la build anterior y no valida la correccion.
+
+## Riesgos del QA Sandbox Blueprint - 2026-07-20
+
+- Una URL localhost no demuestra aislamiento: puede servir una build local conectada a Supabase productivo.
+- Un valor manual `QA_ENV=sandbox` tampoco basta; debe coincidir el fingerprint del proyecto Supabase.
+- Archivar documentos numerados no restaura secuencias ni elimina relaciones o side effects.
+- El reset total requiere snapshot o rama desechable del sandbox; SQL manual y renumeracion productiva siguen prohibidos.
+- Los wrappers preparados no habilitan full-submit; hacerlo antes de provisionar sandbox, seed, baseline y restore proof seria un bypass de seguridad.

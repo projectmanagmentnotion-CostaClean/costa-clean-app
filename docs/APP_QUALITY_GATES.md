@@ -284,3 +284,13 @@ For roadmap-closeout or phase-closeout work:
 - El write-and-clean local exige `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` en `.env.local` ignorado; nunca se usa service-role ni se versionan valores.
 - Si falta la configuracion publica local, los submits deben quedar bloqueados y el resultado se documenta como no ejecutado, no como write-and-clean verde.
 - Antes de cualquier submit local deben pasar build, shell autenticado y dry-run contra exactamente `http://127.0.0.1:4173/`.
+
+## QA Sandbox Environment Gate - 2026-07-20
+
+- Dry-run is allowed in production, local-production-config, sandbox, and unknown read-only targets.
+- Every write-and-clean run requires `QA_ALLOW_WRITE_CLEAN=1`; unknown targets are blocked.
+- Sandbox commands require `VITE_APP_ENV=qa` and a `QA_SANDBOX_PROJECT_REF` matching the public Supabase URL.
+- Service-role and Supabase secret keys are forbidden in frontend and browser-runner configuration.
+- Full-flow submit remains unavailable until a disposable/restorable sandbox exists.
+- Future full-submit requires `QA_ENV=sandbox`, matching project fingerprint, `QA_ALLOW_FULL_SUBMIT=1`, `QA_ALLOW_WRITE_CLEAN=1`, a `QA-AUTO` run ID, `registry-and-reset` cleanup, and `snapshot-restore` or `branch-discard`.
+- Invoice, payment, fiscal cancellation, and numbering reset are always blocked outside sandbox.

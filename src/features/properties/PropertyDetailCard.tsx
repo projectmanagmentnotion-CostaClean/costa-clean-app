@@ -11,6 +11,7 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
 import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
+import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
 import type { ClientListItem } from '../clients/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -210,25 +211,15 @@ export function PropertyDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSaveError('Debes seleccionar un cliente.')
         return
       }
 
       if (form.client_id !== property.client_id) {
-        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reassign_property_client`, {
+        await fetchAuthenticatedSupabaseWrite('rpc/reassign_property_client', {
           method: 'POST',
           headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -237,20 +228,13 @@ export function PropertyDetailCard({
           }),
         })
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-          return
-        }
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(property.id)}`,
+      await fetchAuthenticatedSupabaseWrite(
+        `properties?id=eq.${encodeURIComponent(property.id)}`,
         {
           method: 'PATCH',
           headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -264,12 +248,6 @@ export function PropertyDetailCard({
           }),
         },
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
 
       await onPropertyUpdated()
       setSuccessMessage(

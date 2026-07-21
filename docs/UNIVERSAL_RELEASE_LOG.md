@@ -6,6 +6,19 @@ Registro transversal para cambios que adopten el sistema universal. Los proyecto
 
 ### Costa Clean
 
+#### 2026-07-21 - P1 Authenticated Property and Service Writes
+
+- fecha: 2026-07-21
+- proyecto: Costa Clean CRM
+- tipo: functional / backend security patch
+- resumen: sustituye el bearer anonimo de los REST writes directos de propiedades y estado de servicios por `session.access_token`, bloqueando el guardado sin sesion y preservando errores 401/403
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validacion: lint/build, `183/183` tests, sandbox check y QA visual `360/360`; dry-run sin writes `587/588` con un check intermitente distinto en cada rerun
+- riesgo: acotado a headers y errores de writes no financieros; payloads, rutas y contratos permanecen intactos
+- rollback: `git revert <commit-de-esta-entrega>` y repetir gates completos
+
+Evidencia: [P1_AUTH_WRITE_PATH_HARDENING_20260721.md](P1_AUTH_WRITE_PATH_HARDENING_20260721.md).
+
 #### 2026-07-21 — Full App Production Audit and Correction Pass
 
 - fecha: 2026-07-21

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -98,14 +99,6 @@ export function PropertyCreateForm({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSubmitError('Debes seleccionar un cliente.')
         return
@@ -137,11 +130,9 @@ export function PropertyCreateForm({
           ? `PROPERTY-${crypto.randomUUID()}`
           : `PROPERTY-${Date.now()}`
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/properties`, {
+      const response = await fetchAuthenticatedSupabaseWrite('properties', {
         method: 'POST',
         headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
           Prefer: 'return=representation',
         },
@@ -156,12 +147,6 @@ export function PropertyCreateForm({
           notes: form.notes.trim() || null,
         }),
       })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
 
       const createdRows = await response.json().catch(() => [])
       const createdRow = Array.isArray(createdRows) ? createdRows[0] : createdRows

@@ -4,6 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
 import {
   buildBillingLinePayloads,
   calculateBillingLineSubtotal,
@@ -485,46 +486,16 @@ export function JobDetailCard({
     const toastId = toast.loading('Actualizando estado del servicio...', 'Guardando el nuevo estado operativo.')
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveState('error')
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        toast.update(toastId, {
-          type: 'error',
-          title: 'No se pudo actualizar el estado',
-          description: 'Faltan las variables de entorno de Supabase.',
-          persistent: true,
-        })
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/jobs?id=eq.${encodeURIComponent(job.id)}`,
+      await fetchAuthenticatedSupabaseWrite(
+        `jobs?id=eq.${encodeURIComponent(job.id)}`,
         {
           method: 'PATCH',
           headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ status: nextStatus }),
         },
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveState('error')
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        toast.update(toastId, {
-          type: 'error',
-          title: 'No se pudo actualizar el estado',
-          description: `REST ${response.status}: ${errorText || response.statusText}`,
-          persistent: true,
-        })
-        return
-      }
 
       setSaveState('refreshing')
       setSuccessMessage('Actualizando estado y refrescando vista...')

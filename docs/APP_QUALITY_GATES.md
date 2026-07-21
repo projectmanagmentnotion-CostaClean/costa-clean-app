@@ -309,3 +309,12 @@ For roadmap-closeout or phase-closeout work:
 - Antes de auth o dry-run debe existir un schema QA completo y revisado; una branch vacia o parcialmente migrada falla el gate.
 - Antes de cualquier write debe existir seed sintetico, baseline privado y side effects externos deshabilitados o sandboxed.
 - Full-submit sigue bloqueado hasta demostrar restore/discard y comparacion post-reset; un flag no sustituye esa evidencia.
+
+## Sandbox Schema Delivery Gate - 2026-07-21
+
+- Un directorio de SQL incremental no equivale a una historia reproducible de migraciones.
+- Antes de `db push`, deben existir definiciones revisadas para todas las tablas base, relaciones, tipos, defaults, constraints, indexes, RPCs, triggers, RLS, policies y grants usados por la app.
+- Si una migracion depende de una tabla que el repo no crea, el bootstrap falla cerrado.
+- SQL de regularizacion productiva, renumeracion o correccion de datos no puede formar parte del bootstrap QA.
+- Un export schema-only debe excluir filas, auth users, secretos y datos de storage, y requiere revision antes de convertirse en migracion.
+- La mutacion externa del schema QA requiere autorizacion separada incluso cuando el fingerprint ya haya pasado.

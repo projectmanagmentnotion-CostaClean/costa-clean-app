@@ -4,7 +4,7 @@
 
 - Current phase: Phase 1 configuration and isolation passed; blocked on QA schema delivery.
 - Available: isolated Supabase QA target, populated ignored `.env.qa.local`, matching fingerprint, `snapshot-restore` strategy, and isolated authenticated browser profile.
-- Missing: complete reviewed schema, synthetic seed, baseline capture, and executed restore proof.
+- Missing: an authorized reviewed schema-only baseline, complete ordered migrations, synthetic seed, baseline capture, and executed restore proof.
 - Executed: sandbox visual structure check and non-writing dry-run. The dry-run stopped at `489/510` because required application tables are absent.
 - Not started: seed/baseline, write-and-clean, full submit, and total reset.
 - Production remained untouched and no QA entities were created.
@@ -19,6 +19,8 @@
 Exit gate: sandbox wrapper validates configuration without printing values; production remains unchanged.
 
 Current result: configuration and project separation pass, but Phase 1 cannot close until the reviewed application schema is present and its REST surface is verified.
+
+Repository audit result: classification `C`. The repo does not contain the core base table definitions, and a read-only QA probe reports all audited application tables missing. The next action is an authorized schema-only export and review, not execution of the loose historical SQL folder.
 
 ## Phase 2 - Demo Seed And Baseline
 

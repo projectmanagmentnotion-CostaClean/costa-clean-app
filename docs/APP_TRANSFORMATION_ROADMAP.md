@@ -481,3 +481,11 @@ Status note:
 - The visual runner passed 42 structural checks, but captured REST 404 errors for the required application tables. The non-writing dry-run reached `489/510` checks and created no entities.
 - Phases 2-6 remain blocked. Invoice, payment, cancellation, numbering, and fiscal writes stay unavailable until controlled schema delivery, synthetic seed, baseline, restore execution, and post-reset proof exist.
 - Evidence: `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.
+
+## QA Schema Delivery Audit - 2026-07-21
+
+- Schema reproducibility is classified `C`: the repository has one formal dependent migration and a loose incremental SQL inventory, but no complete base schema.
+- A read-only probe against the validated QA ref reports every audited application table missing from the REST schema cache.
+- No schema, migration, RPC, policy, trigger, seed, full-submit, or reset was executed.
+- The next bounded gate is an explicitly authorized schema-only export from a known-good authoritative environment, private review, and conversion into an ordered migration baseline before any QA schema mutation.
+- Evidence: `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.

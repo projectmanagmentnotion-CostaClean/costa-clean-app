@@ -87,3 +87,15 @@ The missing context records and unavailable dependent flows are consistent with 
 An authorized schema-delivery step must deploy a reviewed, complete application schema to the isolated QA project through the normal controlled path. Do not apply the repository's loose historical SQL inventory speculatively. After schema verification, add deterministic synthetic seed data, capture a private baseline, and prove snapshot restoration before enabling any write-and-clean or full-submit path.
 
 No full-submit or destructive reset command is authorized by this result.
+
+## Schema Reproducibility Audit
+
+The follow-up repository audit classified schema reproducibility as `C - not reproducible from the repository`.
+
+- The sole formal migration only replaces an invoice RPC and assumes the base schema.
+- Loose SQL creates some later tables, functions, triggers, and policies, but does not create the core base tables.
+- A safe read-only QA probe confirmed all 17 audited application tables are absent from the REST schema cache.
+- Supabase CLI, project config, deployment credentials, deterministic seed, and a reviewed schema dump are unavailable on this work PC.
+- No schema was applied and no post-schema visual QA, dry-run, or baseline was run.
+
+Detailed evidence and the controlled schema-only export gate are in `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.

@@ -166,3 +166,5 @@
 - `.env.local` contiene superficie privada y no puede reutilizarse como `.env.qa.local`; el checker solo compara el fingerprint publico en memoria y nunca imprime valores.
 - El target QA aislado ya pasa fingerprint y auth, pero su REST schema cache no contiene las tablas principales. Un pase estructural del runner visual no demuestra readiness de datos si las capturas muestran errores REST.
 - El dry-run queda bloqueado en `489/510`; aplicar SQL historico para completar el schema sin revision sigue fuera de alcance y podria reproducir contratos obsoletos.
+- La auditoria de bootstrap confirma que faltan `CREATE TABLE` para las ocho tablas base principales y que varias RPC financieras tienen reemplazos sucesivos sin una cadena formal de migraciones.
+- Ejecutar `sql/` en orden de nombre podria mezclar creacion parcial, hardening y regularizaciones productivas; el siguiente gate seguro es export schema-only autorizado, revision y conversion a baseline ordenada.

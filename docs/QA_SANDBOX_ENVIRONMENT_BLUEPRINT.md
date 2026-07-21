@@ -90,6 +90,8 @@ There is deliberately no full-submit command. Its prepared policy requires `QA_E
 
 The readiness checker validates only private configuration and project separation. It does not prove schema completeness, seed safety, baseline availability, restoration, or permission to write. Manual setup and the current provisioning stop are documented in `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md` and `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.
 
+The `2026-07-21` schema audit proved that the current repository cannot bootstrap the QA database: the formal migration history is incomplete and the loose SQL inventory omits the core base tables. The QA REST surface currently reports all audited application tables as missing. Do not run the loose SQL set as a bootstrap sequence. See `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
+
 ## Closure Criteria
 
 - Full-flow submit is 100% green in the isolated sandbox.

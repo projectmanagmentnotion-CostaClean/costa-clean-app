@@ -6,7 +6,7 @@ import { assertSandboxPublicConfig } from './qaEnvironmentGuardrails.mjs'
 const rootDir = process.cwd()
 const envFilePath = path.join(rootDir, '.env.qa.local')
 const commandName = process.argv[2]
-const supportedCommands = new Set(['preview', 'auth', 'visual', 'dry', 'write-clean'])
+const supportedCommands = new Set(['preview', 'auth', 'visual', 'dry', 'write-clean', 'seed-dry', 'seed-apply'])
 
 if (!supportedCommands.has(commandName)) {
   throw new Error(`Unsupported sandbox command "${commandName}".`)
@@ -52,6 +52,12 @@ switch (commandName) {
       ['scripts/qa/run-end-user-flow-agent.mjs', '--mode=write-and-clean'],
       { ...sandboxEnv, QA_ALLOW_WRITE_CLEAN: '1' },
     )
+    break
+  case 'seed-dry':
+    await run(nodeExecutable, ['scripts/qa/seed-sandbox-demo.mjs', '--dry-run'], sandboxEnv)
+    break
+  case 'seed-apply':
+    await run(nodeExecutable, ['scripts/qa/seed-sandbox-demo.mjs', '--apply'], sandboxEnv)
     break
   default:
     throw new Error(`Unsupported sandbox command "${commandName}".`)

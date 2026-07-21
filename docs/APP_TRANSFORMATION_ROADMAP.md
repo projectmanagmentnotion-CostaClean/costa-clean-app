@@ -473,21 +473,21 @@ Status note:
 - `main` was synchronized by fast-forward to `a42bad7`, matching `origin/main`, with no local changes overwritten.
 - The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
 - The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are validated. The reviewed baseline is applied and verified; full-flow submit remains blocked because synthetic seed, provider snapshot, and executed restore proof are absent.
-- The next recommended sprint is deterministic synthetic seed and a dry-run rerun, followed by provider snapshot and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
+- The deterministic synthetic seed and dry-run rerun now pass. The next recommended sprint is provider snapshot capture and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
 
 ## Full-Flow Sandbox Attempt - 2026-07-21
 
 - Sandbox access and project separation pass for QA ref `kpvvydthlxupjjqqdpxy`; isolated auth also reaches the application shell.
-- The visual runner passed 42 structural checks, but captured REST 404 errors for the required application tables. The non-writing dry-run reached `489/510` checks and created no entities.
-- Phases 2-6 remain blocked. Invoice, payment, cancellation, numbering, and fiscal writes stay unavailable until controlled schema delivery, synthetic seed, baseline, restore execution, and post-reset proof exist.
+- The original visual runner passed 42 structural checks but captured REST 404 errors; the applied schema and seed later closed that blocker.
+- Current evidence is visual `360/360` and dry-run `588/588`, with 15 deterministic seed rows and zero flow-created entities. Invoice, payment, cancellation, numbering, and fiscal writes stay unavailable until restore execution and post-reset proof exist.
 - Evidence: `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.
 
 ## QA Schema Delivery Audit - 2026-07-21
 
 - The initial audit classified reproducibility as `C`; the applied and verified baseline now changes core-schema readiness to `A-`, with the authoritative `recurring_invoice_plans` gap still open.
-- A read-only probe against the validated QA ref reports every audited application table missing from the REST schema cache.
-- No schema, migration, RPC, policy, trigger, seed, full-submit, or reset was executed.
-- The baseline apply and REST verification passed. The next bounded gate is deterministic synthetic seed; future Supabase CLI migration operations remain blocked until direct-`psql` history is reconciled.
+- The historical read-only probe reported every audited table missing; the later baseline apply and REST verification closed that gap for 17 tables.
+- Schema and seed were applied only to QA. Full-submit and reset were not executed.
+- The deterministic seed now passes dry-run, apply, idempotence, visual QA, and full dry-run. The next bounded gate is provider snapshot/restore proof; future Supabase CLI migration operations remain blocked until direct-`psql` history is reconciled.
 - Evidence: `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
 
 ## Production Schema-Only Export Preflight - 2026-07-21
@@ -496,5 +496,13 @@ Status note:
 - The private safety review passed and `supabase/migrations/20260721_qa_baseline_schema.sql` was created without secrets, owners, ACLs, managed schemas, or production sequence state.
 - The authoritative schema lacks `recurring_invoice_plans`; the baseline records rather than invents that gap.
 - The baseline was applied only to QA with PostgreSQL 17 `psql` in one atomic transaction. Verification found 17/17 tables, 41 functions, 15 triggers, 45 policies, RLS on 17 tables, and zero rows.
-- Authenticated visual QA passed `360/360`; sandbox dry-run passed `588/588` with zero entities and zero residue. The next gate is deterministic synthetic seed, not full-submit or reset.
+- Authenticated visual QA passed `360/360`; sandbox dry-run passed `588/588`. The deterministic seed now supplies 15 marked rows across eight non-fiscal tables, with zero runner-created entities. The next gate is restore proof, not full-submit or financial writes.
 - Evidence: `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.
+
+## Deterministic QA Seed - 2026-07-21
+
+- `scripts/qa/seed-sandbox-demo.mjs` requires the sandbox wrapper, exact QA ref/fingerprint, private pooler validation, and no privileged frontend credentials.
+- Marker `QA_DEMO_20260721` owns 15 rows across leads, clients, properties, quotes/lines, jobs/lines, and expenses.
+- Apply is atomic and idempotent; unmarked ID collisions fail closed.
+- Invoices, payments, closings, recurrence, full-submit, and reset remain untouched.
+- Private post-seed counts are captured. The next gate is provider snapshot/restore proof before write-and-clean.

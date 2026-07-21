@@ -1,51 +1,66 @@
 # QA Sandbox Seed Data Plan
 
-## Purpose
+## Status
 
-Define the smallest deterministic dataset needed to exercise real submits and downstream relationships in the isolated QA sandbox. This document does not create data.
+`IMPLEMENTED AND APPLIED TO QA - 2026-07-21`
 
-## Naming And Ownership
+The deterministic seed is implemented in `scripts/qa/seed-sandbox-demo.mjs` and targets only Supabase QA ref `kpvvydthlxupjjqqdpxy`. It requires the sandbox wrapper, validates the public fingerprint and private pooler login ref, rejects privileged frontend credentials, and never prints the DB URL or password.
 
-- Stable baseline records use `QA-DEMO-*` identifiers and remain after each successful reset.
-- Per-run records use `QA-AUTO-<qaRunId>` and must disappear after reset.
-- Use synthetic names, addresses, emails, tax identifiers, amounts, and dates only.
-- All relationships remain inside the sandbox dataset.
-
-## Minimum Baseline
-
-| Fixture | Minimum fields | Required relationships | Reset policy |
-| --- | --- | --- | --- |
-| Residential client | Name, synthetic email/phone, active status | Owns basic property | Preserve baseline |
-| Company client | Legal name, synthetic tax data, billing contact | Owns tourist property | Preserve baseline |
-| Basic property | Name, synthetic address, city, client ID | Residential client | Preserve baseline |
-| Tourist property | Name, synthetic address, access notes, client ID | Company client | Preserve baseline |
-| One-off service template | Name, duration, sandbox price/tax metadata | None | Preserve baseline |
-| Recurring service template | Name, cadence, duration, sandbox price/tax metadata | None | Preserve baseline |
-| Draft quote | Client, property, line, quantity, draft status | Residential baseline | Preserve baseline |
-| QA expense | Supplier, date, amount, category, notes | Optional property/job | Recreate with snapshot |
-| Sandbox invoice | Sandbox series, client, property, lines, draft state | Company baseline | Sandbox only; snapshot reset |
-| Sandbox payment | Invoice, amount, date, sandbox method | Sandbox invoice | Sandbox only; snapshot reset |
-
-## Flow-Created Data
-
-The action matrix creates fresh client, property, quote, expense, job, recurring schedule, invoice, payment, and cancellation records using one `qaRunId`. Each ID is captured before the next dependent step. No flow may select a production-like or unlabelled record.
-
-## Relationship Chain
-
-The canonical full-flow chain is:
+## Commands
 
 ```text
-client -> property -> quote -> job/service -> invoice -> payment
-                           -> recurring schedule
-                           -> expense
+npm run qa:sandbox:seed:dry-run
+npm run qa:sandbox:seed:apply
 ```
 
-Tests must verify both forward visibility and reverse context after each submit. Examples include the new property appearing in client context, the accepted quote being selectable by the job flow, and the sandbox invoice showing its payment after registration.
+Both commands require `QA_ENV=sandbox`. Apply uses PostgreSQL 17 `psql`, `ON_ERROR_STOP`, and an explicit transaction. Dry-run performs no writes.
 
-## Baseline Verification
+## Marker And Ownership
 
-Before use, the seed command must publish a private manifest containing fixture keys, stable IDs, relationship IDs, counts, and checksums. It must not include secrets or real customer payloads. Running seed twice must be idempotent or fail with a clear duplicate-baseline error.
+- marker: `QA_DEMO_20260721`
+- deterministic text ID prefix: `qa-demo-20260721-`
+- expense marker: `QA_DEMO_20260721-EXP-001`
+- per-run future records remain reserved for `QA-AUTO-<qaRunId>`
 
-## Deferred Work
+The script deletes/replaces only its exact deterministic IDs when the expected marker is also present. Collision guards abort before mutation when an ID belongs to an unmarked row.
 
-No seed script or data is created in this sprint because no QA project exists. Schema-specific required fields and sandbox series configuration must be derived from a read-only inventory after the project is provisioned.
+## Applied Dataset
+
+| Table | Count | Synthetic purpose |
+| --- | ---: | --- |
+| `leads` | 2 | one new lead and one contacted/convertible lead |
+| `clients` | 2 | residential and company demo clients |
+| `properties` | 2 | residential and office demo properties |
+| `quotes` | 2 | one draft and one accepted quote |
+| `quote_lines` | 2 | one line per quote |
+| `jobs` | 2 | one scheduled and one completed service |
+| `job_lines` | 2 | one line per service |
+| `expenses` | 1 | small synthetic cleaning-supplies expense |
+
+Total: 15 rows.
+
+No invoice, payment, fiscal closing, auth user, storage object, or recurring plan is seeded. `recurring_invoice_plans` remains absent and was not invented.
+
+## Synthetic Data Rules Proven
+
+- emails use `example.com`
+- phones use `000` prefixes
+- addresses are `Calle QA Demo 1` and `Avenida Sandbox 2`
+- names, tax IDs, references, notes, dates, and amounts are visibly QA/demo values
+- all relations resolve only between deterministic seed IDs
+- invoices, payments, and quarterly closings remain at zero
+- production writes remain zero
+
+## Verification
+
+- initial dry-run: passed, 15 planned and 0 existing
+- first apply: passed after correcting an identity-column insertion inside a rolled-back transaction
+- idempotence dry-run: detected exactly 15 replaceable marker rows
+- second apply: passed with unchanged counts
+- QA visual: 360/360
+- sandbox dry-run: 588/588, zero created entities
+- private post-seed baseline: created under `qa-reports/private/`
+
+## Next Gate
+
+Capture a provider-supported snapshot or equivalent approved baseline and execute a separately authorized restore-proof comparison. Write-and-clean remains blocked until restorability is demonstrated.

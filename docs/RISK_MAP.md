@@ -176,3 +176,6 @@
 - La baseline se aplico a QA mediante `psql` directo y no registro versiones en `supabase_migrations.schema_migrations`; un futuro `db push` podria intentar reejecutarla. Mitigacion: bloquear CLI push/history repair hasta un gate especifico de reconciliacion.
 - El schema QA queda vacio y apto para seed, pero `recurring_invoice_plans` sigue ausente por contrato autoritativo. Ningun seed debe crear esa tabla ni simular el dominio.
 - El launcher CDP puede ignorar una sesion sandbox sana y abrir un puerto inutil. La evidencia valida de este sprint reutilizo el endpoint del perfil `.auth/sandbox`; nunca se deben cerrar procesos de navegador personales para resolverlo.
+- El seed QA usa IDs deterministas y un gasto con identity override controlado. Cualquier ampliacion debe conservar guards de colision, transaccion atomica y numeros claramente demo; no usar este patron para facturas, pagos ni produccion.
+- Reejecutar el seed elimina y recrea exclusivamente sus 15 filas marcadas. Cambiar el marker o ampliar deletes por prefijo sin comprobar contenido podria tocar QA manual; exigir revision y prueba dry-run.
+- La baseline post-seed aun no es un snapshot restaurable. Autorizar write-and-clean antes de probar restore dejaria residuos o secuencias sin via demostrada de recuperacion.

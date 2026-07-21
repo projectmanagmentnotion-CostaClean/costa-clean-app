@@ -2,7 +2,7 @@
 
 ## Verdict
 
-`QA SCHEMA APPLIED AND READ-ONLY FLOWS GREEN; SEED/RESTORE GATE NEXT`
+`QA SCHEMA AND DETERMINISTIC SEED VERIFIED; RESTORE-PROOF GATE NEXT`
 
 The reviewed baseline was applied only to Supabase QA project `kpvvydthlxupjjqqdpxy`. The target was validated from the sandbox fingerprint, the private pooler login ref, and a live authenticated database session before mutation. Production was not targeted or modified.
 
@@ -39,6 +39,21 @@ Essential tables verified: `leads`, `clients`, `properties`, `quotes`, `quote_li
 
 The authoritative gap remains: `recurring_invoice_plans` is absent from production and QA. It was not invented during the apply.
 
+## Deterministic Synthetic Seed
+
+- script: `scripts/qa/seed-sandbox-demo.mjs`
+- commands: `qa:sandbox:seed:dry-run` and `qa:sandbox:seed:apply`
+- marker: `QA_DEMO_20260721`
+- dry-run: passed before apply
+- apply: passed in an atomic transaction
+- idempotence: passed by dry-run plus second apply against the 15 existing marker rows
+- populated tables: `leads`, `clients`, `properties`, `quotes`, `quote_lines`, `jobs`, `job_lines`, `expenses`
+- counts: 2 / 2 / 2 / 2 / 2 / 2 / 2 / 1, for 15 total rows
+- invoices, payments, and quarterly closings: 0
+- real data: no
+
+All emails use `example.com`; phones use the `000` range; names, tax IDs, addresses, dates, references, notes, and amounts are explicitly synthetic. Collision guards abort if a deterministic ID belongs to an unmarked record.
+
 ## Visual And Dry-Run Evidence
 
 - authenticated visual QA: `360/360`, 42 scenarios/results across mobile, tablet, and desktop
@@ -74,4 +89,4 @@ Private reports remain ignored under `qa-reports/private/`, and screenshots rema
 
 ## Next Gate
 
-Prepare and authorize deterministic synthetic demo seed plus a read-only dry-run rerun. Write-and-clean, snapshot restoration, destructive reset, full-submit, invoice issue, and payment registration remain separate blocked gates.
+Authorize provider snapshot capture and an executed restore-proof comparison against the private post-seed baseline. Write-and-clean, destructive reset, full-submit, invoice issue, and payment registration remain separate blocked gates.

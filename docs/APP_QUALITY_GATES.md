@@ -324,5 +324,17 @@ For roadmap-closeout or phase-closeout work:
 - La baseline preparada no autoriza `db push`: aplicar a QA requiere una aprobacion separada, rerun inmediato del fingerprint y verificacion posterior de tablas, funciones, policies, grants y REST schema cache.
 - Un contrato ausente en el schema autoritativo, como `recurring_invoice_plans`, permanece bloqueado; el gate prohibe inventarlo para conseguir un full-flow verde.
 - Estado actual: export obtenido, safety review pasado y baseline aplicada solo a QA mediante transaccion atomica; datos reales incluidos `NO`, produccion modificada `NO`, QA visual `360/360`, dry-run `588/588`, entidades creadas `0`.
-- El siguiente gate es seed sintetico determinista con autorizacion separada. Write-and-clean, reset, full-submit, facturas y cobros siguen bloqueados.
+- El seed sintetico determinista `QA_DEMO_20260721` ya paso dry-run, apply e idempotencia: 15 filas en ocho tablas, QA visual `360/360`, dry-run `588/588` y cero entidades creadas por el runner.
+- El siguiente gate es snapshot/restore proof con autorizacion separada. Write-and-clean, reset destructivo, full-submit, facturas y cobros siguen bloqueados.
 - Un apply directo con `psql` no demuestra historial de migraciones Supabase reconciliado; antes de cualquier `db push` se debe auditar y resolver ese metadata drift sin reejecutar la baseline.
+
+## Deterministic Sandbox Seed Gate - 2026-07-21
+
+- El script debe exigir `QA_ENV=sandbox`, ref exacto, fingerprint publico coincidente y login pooler privado del mismo proyecto.
+- Dry-run siempre precede al apply y no puede escribir.
+- IDs y marcadores deben ser deterministas; cualquier colision con una fila sin marcador aborta la transaccion.
+- Solo se reemplazan filas propias del marker `QA_DEMO_20260721`.
+- Emails, telefonos, direcciones, tax IDs, referencias e importes deben ser inequivocamente ficticios.
+- Invoice, payment, closing, auth, storage y recurring plans quedan fuera del seed base.
+- Idempotencia requiere un segundo dry-run y apply con conteos identicos.
+- El gate pasa solo con reportes privados, conteos relacionales exactos, cero datos reales, cero writes productivos y dry-run de producto con cero entidades creadas.

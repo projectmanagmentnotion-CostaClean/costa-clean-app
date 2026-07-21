@@ -18,6 +18,8 @@ After schema deployment and seed verification, capture a restorable snapshot or 
 
 Do not store credentials, tokens, cookies, or row payloads in the manifest.
 
+Current candidate baseline: the private `sandbox-baseline-post-seed-latest` manifest records 15 deterministic `QA_DEMO_20260721` rows across eight tables, with invoices, payments, and closings at zero. It is evidence for the future provider snapshot; no snapshot or restore operation was executed in the seed sprint.
+
 ## Reset Methods
 
 Preferred method: discard the disposable database branch and recreate it from the baseline branch/snapshot. Alternative method: use the provider-supported atomic snapshot restore against the QA project only. Ad hoc delete loops, manual SQL cleanup, and production sequence updates are prohibited.
@@ -59,4 +61,4 @@ Never point reset tooling at production, localhost with unverified production co
 
 ## Deferred Implementation
 
-No destructive reset script or SQL is implemented in this sprint. Implementation starts only after the QA project and provider restoration mechanism exist and are separately authorized.
+No destructive reset script or SQL is implemented in this sprint. The QA project and deterministic seed now exist, but provider snapshot capture and restore execution remain separately authorized work. Write-and-clean must not start until the restore-proof comparison passes.

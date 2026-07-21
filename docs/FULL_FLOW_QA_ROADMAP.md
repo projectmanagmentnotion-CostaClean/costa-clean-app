@@ -2,12 +2,12 @@
 
 ## Status - 2026-07-21
 
-- Current phase: Phase 1 schema delivery passed; Phase 2 deterministic synthetic seed is next.
-- Available: isolated Supabase QA target, matching fingerprint, reviewed applied schema, `snapshot-restore` strategy, private zero-row baseline, and isolated authenticated browser profile.
-- Missing: deterministic synthetic seed, provider snapshot capture, executed restore proof, and migration-history reconciliation before future `db push`.
-- Executed: authenticated visual QA `360/360` and non-writing sandbox dry-run `588/588`, with zero created entities and zero residual rows.
-- Not started: seed/baseline, write-and-clean, full submit, and total reset.
-- Production remained untouched and no QA entities were created.
+- Current phase: Phase 2 deterministic synthetic seed passed; provider snapshot/restore proof is next.
+- Available: isolated QA target, applied schema, idempotent `QA_DEMO_20260721` seed, private post-seed baseline, `snapshot-restore` declaration, and authenticated browser profile.
+- Missing: provider snapshot capture, executed restore proof, and migration-history reconciliation before future `db push`.
+- Executed: seed dry-run/apply/idempotence, authenticated visual QA `360/360`, and non-writing sandbox dry-run `588/588` with zero flow-created entities.
+- Not started: write-and-clean, full submit, and destructive reset.
+- Production remained untouched; QA contains only 15 authorized synthetic seed rows.
 
 ## Phase 1 - Sandbox Provisioning
 
@@ -32,6 +32,8 @@ Export/apply result: obtained with `pg_dump 17.10`, reviewed, sanitized, and app
 - Create the provider snapshot or baseline branch.
 
 Exit gate: seed is repeatable and baseline is restorable.
+
+Current result: deterministic seed and private post-seed count baseline pass. Restorability remains unproven until a separately authorized provider snapshot/restore exercise reproduces the same 15 marker rows and relationships.
 
 ## Phase 3 - Sandbox Dry-Run
 

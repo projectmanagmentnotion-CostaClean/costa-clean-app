@@ -179,3 +179,7 @@
 - El seed QA usa IDs deterministas y un gasto con identity override controlado. Cualquier ampliacion debe conservar guards de colision, transaccion atomica y numeros claramente demo; no usar este patron para facturas, pagos ni produccion.
 - Reejecutar el seed elimina y recrea exclusivamente sus 15 filas marcadas. Cambiar el marker o ampliar deletes por prefijo sin comprobar contenido podria tocar QA manual; exigir revision y prueba dry-run.
 - La baseline post-seed aun no es un snapshot restaurable. Autorizar write-and-clean antes de probar restore dejaria residuos o secuencias sin via demostrada de recuperacion.
+- El plan Free de Supabase QA no ofrece backups programados ni PITR, y no existe preview branch. Un dump privado reduce el riesgo de perdida, pero no demuestra restauracion hasta ejecutar un restore destructivo autorizado.
+- El cleanup logico probado solo cubre una fila no financiera con marker exacto. No restaura secuencias, audit trails, webhooks, auth, storage ni efectos externos, por lo que no habilita full-submit ni dominios financieros.
+- `qa:sandbox:restore-proof` aborta antes del dump si `public` contiene algo distinto de las 15 filas sinteticas aprobadas; ampliar esa regla o el alcance del dump exige revision para evitar capturar datos QA manuales o reales.
+- Un write-and-clean posterior debe usar el registro por entidad y fallar si no elimina exactamente la fila creada. La prueba de lead no sustituye la evidencia propia de client/property/quote/expense/job.

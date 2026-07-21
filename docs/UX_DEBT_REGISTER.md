@@ -157,3 +157,10 @@
 - La QA post-seed mantiene `360/360` visual y `588/588` dry-run; no se necesita UI simulada para demostrar clientes, inmuebles, presupuestos, servicios y gasto.
 - `recurring_invoice_plans`, facturas, cobros y cierres permanecen deliberadamente vacios; su ausencia no debe maquillarse con fixtures fuera de contrato.
 - La deuda operativa real es demostrar snapshot/restore antes de permitir write-and-clean.
+
+## QA Restore Proof - 2026-07-21
+
+- La deuda de cleanup logico minimo queda cerrada: un lead temporal marcado volvio de `2 -> 3 -> 2` sin alterar las 15 filas demo, y el post-cleanup conserva visual `360/360` y dry-run `588/588`.
+- La deuda de restore completo sigue abierta porque el plan Free no ofrece backup/PITR y el dump privado capturado no fue restaurado destructivamente.
+- El siguiente trabajo UX/operativo puede validar write-and-clean no financiero con registro exacto; factura, cobro, cierre y recurrencia siguen siendo deuda separada y bloqueada.
+- `recurring_invoice_plans` permanece ausente del contrato autoritativo y no se crea para maquillar la cobertura.

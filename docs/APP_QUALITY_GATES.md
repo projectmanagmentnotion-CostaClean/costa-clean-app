@@ -338,3 +338,13 @@ For roadmap-closeout or phase-closeout work:
 - Invoice, payment, closing, auth, storage y recurring plans quedan fuera del seed base.
 - Idempotencia requiere un segundo dry-run y apply con conteos identicos.
 - El gate pasa solo con reportes privados, conteos relacionales exactos, cero datos reales, cero writes productivos y dry-run de producto con cero entidades creadas.
+
+## Sandbox Restore Proof Gate - 2026-07-21
+
+- El Dashboard del proyecto QA confirma plan Free sin backups programados ni PITR y ausencia de preview branches existentes.
+- El dump privado se limita al schema `public` de QA y solo se captura cuando sus 15 filas coinciden exactamente con el seed sintetico; no incluye `auth`, storage ni datos productivos.
+- La captura de un dump no equivale a haber probado su restauracion. Un restore completo o reemplazo de schema sigue requiriendo autorizacion destructiva separada.
+- La prueba C exige ref/fingerprint/login pooler QA exactos, una sola fila no financiera con marker `QA_RESTORE_PROOF_20260721`, cleanup de exactamente una fila y comparacion integral de conteos.
+- Resultado: leads `2 -> 3 -> 2`, filas publicas `15 -> 16 -> 15`, marker temporal `0 -> 1 -> 0`, seed demo intacto, invoices/payments/closings `0/0/0`.
+- QA post-cleanup: visual `360/360`, dry-run `588/588`, entidades creadas `0`.
+- Este resultado habilita solo proponer write-and-clean no financiero y registrado como siguiente gate separado. Full-submit, reset destructivo, facturas, cobros, reparacion de historial y `db push` siguen bloqueados.

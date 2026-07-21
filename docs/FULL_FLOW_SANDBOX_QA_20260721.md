@@ -89,4 +89,8 @@ Private reports remain ignored under `qa-reports/private/`, and screenshots rema
 
 ## Next Gate
 
-Authorize provider snapshot capture and an executed restore-proof comparison against the private post-seed baseline. Write-and-clean, destructive reset, full-submit, invoice issue, and payment registration remain separate blocked gates.
+The restore-proof sprint captured a private PostgreSQL 17 dump of the QA `public` schema and its 15 synthetic rows, then proved deterministic cleanup with one temporary lead marked `QA_RESTORE_PROOF_20260721`. Counts returned from leads `2 -> 3 -> 2`, total public rows `15 -> 16 -> 15`, and the proof marker `0 -> 1 -> 0`; the `QA_DEMO_20260721` baseline stayed intact and invoices/payments/closings remained `0/0/0`.
+
+Supabase Free exposes neither scheduled backups nor PITR for this project, and no preview branch exists. The captured dump is a private recovery artifact, but a full dump restore was not executed because it would require a destructive schema replacement. Classification C (marker-scoped logical cleanup) is proven; provider restore and full-dump restore remain unproven.
+
+Post-cleanup evidence is authenticated visual QA `360/360` and sandbox dry-run `588/588`, with zero created entities. The next separately authorized gate may be bounded non-financial write-and-clean for flows with exact registry cleanup. Destructive reset, full-submit, invoice issue, payment registration, and `db push` remain blocked.

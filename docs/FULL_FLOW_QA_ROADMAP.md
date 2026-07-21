@@ -2,10 +2,10 @@
 
 ## Status - 2026-07-21
 
-- Current phase: Phase 2 deterministic synthetic seed passed; provider snapshot/restore proof is next.
-- Available: isolated QA target, applied schema, idempotent `QA_DEMO_20260721` seed, private post-seed baseline, `snapshot-restore` declaration, and authenticated browser profile.
-- Missing: provider snapshot capture, executed restore proof, and migration-history reconciliation before future `db push`.
-- Executed: seed dry-run/apply/idempotence, authenticated visual QA `360/360`, and non-writing sandbox dry-run `588/588` with zero flow-created entities.
+- Current phase: Phase 2 baseline plus classification-C logical restore proof passed; bounded Phase 4 write-and-clean is the next separately authorized gate.
+- Available: isolated QA target, applied schema, idempotent `QA_DEMO_20260721` seed, private post-seed baseline, private `public` dump, exact-marker cleanup proof, and authenticated browser profile.
+- Missing: provider/full-dump restore execution and migration-history reconciliation before future `db push`.
+- Executed: seed dry-run/apply/idempotence, temporary lead cleanup `2 -> 3 -> 2`, authenticated visual QA `360/360`, and non-writing sandbox dry-run `588/588` with zero flow-created entities.
 - Not started: write-and-clean, full submit, and destructive reset.
 - Production remained untouched; QA contains only 15 authorized synthetic seed rows.
 
@@ -33,7 +33,7 @@ Export/apply result: obtained with `pg_dump 17.10`, reviewed, sanitized, and app
 
 Exit gate: seed is repeatable and baseline is restorable.
 
-Current result: deterministic seed and private post-seed count baseline pass. Restorability remains unproven until a separately authorized provider snapshot/restore exercise reproduces the same 15 marker rows and relationships.
+Current result: deterministic seed and private post-seed count baseline pass. Supabase Free has no scheduled backup or PITR and no preview branch exists. A private QA `public` dump was captured, while deterministic marker cleanup was executed and returned the database to the 15-row baseline. This proves logical cleanup only; full provider/dump restorability remains unproven.
 
 ## Phase 3 - Sandbox Dry-Run
 
@@ -51,6 +51,8 @@ Exit gate: all configured checks pass with zero writes.
 - Require cleanup to affect at least one row.
 
 Exit gate: all enabled entities are cleaned and zero run residue remains.
+
+Authorization status: eligible as the next separate sandbox gate for non-financial flows with exact registry cleanup. It is not executed by the restore-proof sprint.
 
 ## Phase 5 - Full Sandbox Submit
 

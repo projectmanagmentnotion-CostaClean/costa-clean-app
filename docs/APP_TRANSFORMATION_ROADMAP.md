@@ -506,3 +506,12 @@ Status note:
 - Apply is atomic and idempotent; unmarked ID collisions fail closed.
 - Invoices, payments, closings, recurrence, full-submit, and reset remain untouched.
 - Private post-seed counts are captured. The next gate is provider snapshot/restore proof before write-and-clean.
+
+## QA Snapshot And Restore Proof - 2026-07-21
+
+- Supabase Dashboard inspection confirmed that the QA Free plan has neither scheduled backups nor PITR, and no preview branch currently exists.
+- PostgreSQL 17 captured an ignored private dump of QA `public` after verifying that all 15 rows belong to the deterministic synthetic baseline.
+- `scripts/qa/prove-sandbox-restore.mjs` then inserted and removed one `QA_RESTORE_PROOF_20260721` lead with exact target, count, and cleanup guards.
+- Leads returned `2 -> 3 -> 2`, total public rows `15 -> 16 -> 15`, and invoices/payments/closings stayed `0/0/0`.
+- Post-cleanup authenticated visual QA passed `360/360`; sandbox dry-run passed `588/588` with zero created entities.
+- Classification C logical cleanup is proven. Full provider/dump restore remains unproven, so the next separately authorized gate is bounded non-financial write-and-clean; destructive reset, full-submit, financial writes, migration-history repair, and `db push` remain blocked.

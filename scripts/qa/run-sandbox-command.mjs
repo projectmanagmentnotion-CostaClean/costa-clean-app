@@ -6,7 +6,7 @@ import { assertSandboxPublicConfig } from './qaEnvironmentGuardrails.mjs'
 const rootDir = process.cwd()
 const envFilePath = path.join(rootDir, '.env.qa.local')
 const commandName = process.argv[2]
-const supportedCommands = new Set(['preview', 'auth', 'visual', 'dry', 'write-clean', 'seed-dry', 'seed-apply'])
+const supportedCommands = new Set(['preview', 'auth', 'visual', 'dry', 'write-clean', 'seed-dry', 'seed-apply', 'restore-proof'])
 
 if (!supportedCommands.has(commandName)) {
   throw new Error(`Unsupported sandbox command "${commandName}".`)
@@ -58,6 +58,9 @@ switch (commandName) {
     break
   case 'seed-apply':
     await run(nodeExecutable, ['scripts/qa/seed-sandbox-demo.mjs', '--apply'], sandboxEnv)
+    break
+  case 'restore-proof':
+    await run(nodeExecutable, ['scripts/qa/prove-sandbox-restore.mjs'], sandboxEnv)
     break
   default:
     throw new Error(`Unsupported sandbox command "${commandName}".`)

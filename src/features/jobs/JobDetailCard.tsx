@@ -4,7 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
-import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import {
   buildBillingLinePayloads,
   calculateBillingLineSubtotal,
@@ -486,15 +486,20 @@ export function JobDetailCard({
     const toastId = toast.loading('Actualizando estado del servicio...', 'Guardando el nuevo estado operativo.')
 
     try {
-      await fetchAuthenticatedSupabaseWrite(
+      const statusResponse = await fetchAuthenticatedSupabaseWrite(
         `jobs?id=eq.${encodeURIComponent(job.id)}`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            Prefer: 'return=representation',
           },
           body: JSON.stringify({ status: nextStatus }),
         },
+      )
+      await readSingleAuthenticatedWriteRow(
+        statusResponse,
+        'No se actualizo el estado del servicio. Tu sesion puede no tener permisos para este cambio.',
       )
 
       setSaveState('refreshing')

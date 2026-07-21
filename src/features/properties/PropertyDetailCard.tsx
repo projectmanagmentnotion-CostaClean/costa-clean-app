@@ -11,7 +11,7 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
 import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
-import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import type { ClientListItem } from '../clients/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -230,12 +230,13 @@ export function PropertyDetailCard({
 
       }
 
-      await fetchAuthenticatedSupabaseWrite(
+      const updateResponse = await fetchAuthenticatedSupabaseWrite(
         `properties?id=eq.${encodeURIComponent(property.id)}`,
         {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            Prefer: 'return=representation',
           },
           body: JSON.stringify({
             client_id: form.client_id,
@@ -247,6 +248,10 @@ export function PropertyDetailCard({
             notes: form.notes.trim() || null,
           }),
         },
+      )
+      await readSingleAuthenticatedWriteRow(
+        updateResponse,
+        'No se actualizo ninguna propiedad. Tu sesion puede no tener permisos para este cambio.',
       )
 
       await onPropertyUpdated()

@@ -6,7 +6,20 @@ import { assertSandboxPublicConfig } from './qaEnvironmentGuardrails.mjs'
 const rootDir = process.cwd()
 const envFilePath = path.join(rootDir, '.env.qa.local')
 const commandName = process.argv[2]
-const supportedCommands = new Set(['preview', 'auth', 'visual', 'dry', 'write-clean', 'seed-dry', 'seed-apply', 'restore-proof'])
+const supportedCommands = new Set([
+  'preview',
+  'auth',
+  'visual',
+  'dry',
+  'write-clean',
+  'seed-dry',
+  'seed-apply',
+  'restore-proof',
+  'auth-rls-dry',
+  'auth-rls-apply',
+  'auth-rls-cleanup',
+  'auth-rls-verify-clean',
+])
 
 if (!supportedCommands.has(commandName)) {
   throw new Error(`Unsupported sandbox command "${commandName}".`)
@@ -61,6 +74,18 @@ switch (commandName) {
     break
   case 'restore-proof':
     await run(nodeExecutable, ['scripts/qa/prove-sandbox-restore.mjs'], sandboxEnv)
+    break
+  case 'auth-rls-dry':
+    await run(nodeExecutable, ['scripts/qa/verify-authenticated-rls-writes.mjs', '--dry-run'], sandboxEnv)
+    break
+  case 'auth-rls-apply':
+    await run(nodeExecutable, ['scripts/qa/verify-authenticated-rls-writes.mjs', '--apply'], sandboxEnv)
+    break
+  case 'auth-rls-cleanup':
+    await run(nodeExecutable, ['scripts/qa/verify-authenticated-rls-writes.mjs', '--cleanup'], sandboxEnv)
+    break
+  case 'auth-rls-verify-clean':
+    await run(nodeExecutable, ['scripts/qa/verify-authenticated-rls-writes.mjs', '--verify-clean'], sandboxEnv)
     break
   default:
     throw new Error(`Unsupported sandbox command "${commandName}".`)

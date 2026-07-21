@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
-import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -148,8 +148,10 @@ export function PropertyCreateForm({
         }),
       })
 
-      const createdRows = await response.json().catch(() => [])
-      const createdRow = Array.isArray(createdRows) ? createdRows[0] : createdRows
+      const createdRow = await readSingleAuthenticatedWriteRow<Partial<PropertyListItem>>(
+        response,
+        'La propiedad no se creo. Revisa tu sesion o permisos y vuelve a intentarlo.',
+      )
       const createdProperty: PropertyListItem = {
         id: createdRow?.id ?? propertyId,
         display_code: createdRow?.display_code ?? null,

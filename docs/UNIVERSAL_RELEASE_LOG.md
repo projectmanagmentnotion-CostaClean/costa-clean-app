@@ -6,6 +6,19 @@ Registro transversal para cambios que adopten el sistema universal. Los proyecto
 
 ### Costa Clean
 
+#### 2026-07-21 - QA Authenticated RLS Write Verification
+
+- fecha: 2026-07-21
+- proyecto: Costa Clean CRM
+- tipo: QA / authenticated write hardening
+- resumen: verifica writes reales con `session.access_token` en el proyecto QA; confirma RPC de reasignación y alta de servicio, detecta RLS bloqueando writes REST directos y evita falsos éxitos HTTP 200 con cero filas
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validación: marker temporal limpiado a 0, seed demo intacto, tablas financieras `0/0/0`; gates finales registrados en la evidencia
+- riesgo: los INSERT/PATCH directos requieren revisión de policies en un sprint autorizado separado
+- rollback: `git revert <commit-de-esta-entrega>`; no requiere cleanup adicional
+
+Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md).
+
 #### 2026-07-21 - P1 Authenticated Property and Service Writes
 
 - fecha: 2026-07-21

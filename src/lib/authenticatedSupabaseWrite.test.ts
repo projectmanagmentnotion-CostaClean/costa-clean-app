@@ -4,6 +4,7 @@ import {
   buildAuthenticatedSupabaseWriteRequest,
   fetchAuthenticatedSupabaseWrite,
   getAuthenticatedWriteResponseError,
+  readSingleAuthenticatedWriteRow,
   resolveAuthenticatedWriteContext,
 } from './authenticatedSupabaseWrite'
 
@@ -119,5 +120,28 @@ describe('authenticatedSupabaseWrite', () => {
     expect(unauthorized.message.includes('sesion ha caducado')).toBe(true)
     expect(unauthorized.message.includes('REST 401: JWT expired')).toBe(true)
     expect(forbidden.message.includes('REST 403: RLS denied')).toBe(true)
+  })
+
+  it('rejects successful REST responses that affected zero rows', async () => {
+    let errorMessage = ''
+    try {
+      await readSingleAuthenticatedWriteRow(new Response('[]', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }), 'No se actualizo ninguna fila.')
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : ''
+    }
+
+    expect(errorMessage).toBe('No se actualizo ninguna fila.')
+  })
+
+  it('returns the single persisted row from a represented write', async () => {
+    const row = await readSingleAuthenticatedWriteRow<{ id: string }>(new Response('[{"id":"row-1"}]', {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }), 'No se actualizo ninguna fila.')
+
+    expect(row).toMatchObject({ id: 'row-1' })
   })
 })

@@ -117,6 +117,18 @@ export async function getAuthenticatedWriteResponseError(response: Response): Pr
   return new Error(`REST ${response.status}: ${detail}`)
 }
 
+export async function readSingleAuthenticatedWriteRow<T>(
+  response: Response,
+  emptyMessage: string,
+): Promise<T> {
+  const body = await response.json().catch(() => null)
+  const rows = Array.isArray(body) ? body : body ? [body] : []
+  if (rows.length !== 1) {
+    throw new Error(emptyMessage)
+  }
+  return rows[0] as T
+}
+
 export async function fetchAuthenticatedSupabaseWrite(
   path: string,
   init: RequestInit,

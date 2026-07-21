@@ -349,6 +349,15 @@ For roadmap-closeout or phase-closeout work:
 - QA post-cleanup: visual `360/360`, dry-run `588/588`, entidades creadas `0`.
 - Este resultado habilita solo proponer write-and-clean no financiero y registrado como siguiente gate separado. Full-submit, reset destructivo, facturas, cobros, reparacion de historial y `db push` siguen bloqueados.
 
+## Authenticated RLS Write Gate - 2026-07-21
+
+- Solo se ejecuta contra `QA_ENV=sandbox`, ref y URL exactas del proyecto autorizado.
+- La sesión debe validarse en Auth; `Authorization` usa `session.access_token` y debe diferir de la anon key.
+- HTTP 2xx no basta: INSERT/PATCH debe devolver exactamente la fila afectada y el runner debe reconciliar el estado persistido.
+- Fixtures de operador no cuentan como evidencia RLS y solo pueden usar IDs deterministas y marcador exacto.
+- El cierre exige marcador temporal 0, seed `QA_DEMO_20260721` intacto y `invoices/payments/quarterly_closings` en `0/0/0`.
+- Un fallo RLS no autoriza fallback anon, `service_role` ni cambios de policy. Se documenta y se escala a un sprint con autorización separada.
+
 ## Universal Correction And Release Gate
 
 - Toda correccion debe clasificarse y validarse segun [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md), sin rebajar los gates especificos de Costa Clean.

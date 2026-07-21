@@ -199,3 +199,11 @@ Cada correccion debe revisar ambos mapas antes de definir alcance. [UNIVERSAL_CO
 - El CSS global y los componentes grandes son deuda de mantenimiento; no autorizan un refactor masivo ni una reescritura del shell.
 
 Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
+
+## Riesgos de writes autenticados RLS en QA - 2026-07-21
+
+- Una sesión válida y un HTTP 200 no prueban que RLS haya permitido un PATCH: PostgREST puede devolver cero filas. Todo write debe exigir representación exacta y reconciliar estado persistido.
+- Las policies QA actuales bloquean INSERT directo autenticado de `clients` y `properties`, y hacen invisibles los PATCH directos de `properties` y `jobs`; no se debe recuperar operatividad usando bearer anon.
+- `reassign_property_client` y `save_job_with_lines` persisten como RPC. No ampliar ni alterar sus grants, SECURITY DEFINER o contratos sin auditoría y autorización separadas.
+- El operador DB privado solo puede preparar fixtures y limpiar IDs/marcador exactos; nunca cuenta como evidencia de RLS del usuario.
+- Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md).

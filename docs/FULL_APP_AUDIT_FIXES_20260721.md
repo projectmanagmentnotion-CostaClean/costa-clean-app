@@ -106,3 +106,9 @@ No se modificaron contratos, persistencia, Supabase, auth, facturación, cobros,
 1. Hardening de writes autenticados para propiedad/servicio en sandbox, con cleanup exacto y sin dominios financieros.
 2. Presupuesto de assets/bundle con comparación visual de SVG/PNG y medición de carga.
 3. Higiene incremental de CSS, módulos declarativos y superficies legacy, sin refactor transversal.
+
+## Seguimiento QA autenticado RLS — 2026-07-21
+
+La sesión real de QA se validó con HTTP 200 y bearer de usuario distinto de la anon key. `reassign_property_client` y `save_job_with_lines` persistieron correctamente. Los INSERT REST de cliente/propiedad devolvieron RLS `42501`; los PATCH REST de propiedad/estado devolvieron 200 con cero filas. El frontend ahora exige una representación de exactamente una fila para no declarar éxito falso. No se tocaron policies. Cleanup final: marcador temporal 0, seed demo intacto y finanzas `0/0/0`.
+
+Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md).

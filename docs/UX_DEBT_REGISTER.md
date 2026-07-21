@@ -140,5 +140,5 @@
 ## Full-Flow Sandbox QA - 2026-07-21
 
 - La deuda ya no es de apertura/cancelacion de flows, sino de evidencia real de persistencia, relaciones y reset en un entorno aislado.
-- Factura, cobro y cancelacion siguen sin cobertura de submit real porque no existe sandbox provisionado, baseline, reset probado ni serie fiscal QA.
-- No se debe cerrar esta deuda ampliando allowlists o simulando success states; requiere primero infraestructura QA restaurable y schema verificado.
+- Factura, cobro y cancelacion siguen sin cobertura de submit real: el sandbox ya esta aislado y autenticado, pero carece del schema de aplicacion, baseline, reset probado y serie fiscal QA.
+- No se debe cerrar esta deuda ampliando allowlists, interpretando checks estructurales como readiness de datos ni simulando success states; requiere schema QA revisado e infraestructura restaurable probada.

@@ -465,19 +465,19 @@ Status note:
 - local configuration guidance now fixes the required contract to an ignored `.env.local` containing only `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; the real submit-and-clean run remains blocked until those existing public values are provided locally
 - the `2026-07-20` authorized-source audit found no local env, process env, ignored private config, linked Vercel CLI session, or Supabase CLI source; no `.env.local` was synthesized and no local QA/write was attempted
 - local authenticated validation now passes visual QA and `435/435` dry-run checks; tablet shell actions were redistributed for `768x1024`, while full-submit and numbering restoration remain gated on a disposable Supabase QA environment rather than production sequence rewrites
-- the QA sandbox blueprint now defines environment fingerprinting, private env wrappers, demo seed, snapshot/reset, and phased full-flow gates; implementation remains blocked on manual provisioning of a disposable/restorable Supabase QA project
+- the QA sandbox blueprint defines environment fingerprinting, private env wrappers, demo seed, snapshot/reset, and phased full-flow gates; the isolated target and fingerprint now pass, while implementation is blocked on reviewed QA schema delivery
 - service scheduling now opens with a compact upcoming agenda and explicit review states; client/property contextual dry-runs are covered, while service recurrence remains honestly blocked on a real domain contract
 
 ## Work PC Status - 2026-07-21
 
 - `main` was synchronized by fast-forward to `a42bad7`, matching `origin/main`, with no local changes overwritten.
 - The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
-- The QA sandbox blueprint, seed plan, reset plan, wrappers, and guardrails are complete; full-flow submit remains blocked until a separate disposable/restorable Supabase QA target and ignored `.env.qa.local` exist.
-- The next recommended sprint is isolated Supabase QA provisioning plus baseline and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
+- The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are now validated. Full-flow submit remains blocked because the required application tables, synthetic seed, baseline, and executed restore proof are absent.
+- The next recommended sprint is controlled QA schema delivery and verification, followed by synthetic seed, baseline, and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
 
 ## Full-Flow Sandbox Attempt - 2026-07-21
 
-- Phase 1 remains blocked before sandbox access: the ignored `.env.qa.local` template is unconfigured, and a Supabase CLI/project link, isolated auth, and a proven restore operator are absent on the work PC.
-- A safe local readiness command and exact private setup instructions are prepared; no full-submit command was enabled.
-- Phases 2-6 remain not started. Invoice, payment, cancellation, numbering, and fiscal writes stay blocked until a complete QA schema, synthetic seed, baseline, restore execution, and post-reset proof exist.
+- Sandbox access and project separation pass for QA ref `kpvvydthlxupjjqqdpxy`; isolated auth also reaches the application shell.
+- The visual runner passed 42 structural checks, but captured REST 404 errors for the required application tables. The non-writing dry-run reached `489/510` checks and created no entities.
+- Phases 2-6 remain blocked. Invoice, payment, cancellation, numbering, and fiscal writes stay unavailable until controlled schema delivery, synthetic seed, baseline, restore execution, and post-reset proof exist.
 - Evidence: `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.

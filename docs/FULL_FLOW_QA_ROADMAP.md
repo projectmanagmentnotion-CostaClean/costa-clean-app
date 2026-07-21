@@ -2,10 +2,11 @@
 
 ## Status - 2026-07-21
 
-- Current phase: Phase 1, blocked before sandbox access.
-- Missing: isolated Supabase QA target, populated `.env.qa.local`, dedicated auth, complete schema proof, and approved restore operator.
-- Prepared: `npm run qa:sandbox:check` and `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md`.
-- Not started: seed/baseline, sandbox dry-run, write-and-clean, full submit, and total reset.
+- Current phase: Phase 1 configuration and isolation passed; blocked on QA schema delivery.
+- Available: isolated Supabase QA target, populated ignored `.env.qa.local`, matching fingerprint, `snapshot-restore` strategy, and isolated authenticated browser profile.
+- Missing: complete reviewed schema, synthetic seed, baseline capture, and executed restore proof.
+- Executed: sandbox visual structure check and non-writing dry-run. The dry-run stopped at `489/510` because required application tables are absent.
+- Not started: seed/baseline, write-and-clean, full submit, and total reset.
 - Production remained untouched and no QA entities were created.
 
 ## Phase 1 - Sandbox Provisioning
@@ -16,6 +17,8 @@
 - Verify project fingerprint and sandbox integrations.
 
 Exit gate: sandbox wrapper validates configuration without printing values; production remains unchanged.
+
+Current result: configuration and project separation pass, but Phase 1 cannot close until the reviewed application schema is present and its REST surface is verified.
 
 ## Phase 2 - Demo Seed And Baseline
 

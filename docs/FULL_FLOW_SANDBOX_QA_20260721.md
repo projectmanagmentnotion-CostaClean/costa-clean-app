@@ -1,68 +1,75 @@
-# Full-Flow Sandbox QA - Provisioning Blocker - 2026-07-21
+# Full-Flow Sandbox QA - Schema Blocker - 2026-07-21
 
 ## Verdict
 
-`BLOCKED BEFORE SANDBOX ACCESS`
+`SANDBOX ISOLATION VALIDATED; BLOCKED ON INCOMPLETE QA SCHEMA`
 
-Real full-flow QA was not executed. The required isolated/restorable Supabase QA target and private configuration are not available on this work PC. No claim of sandbox, invoice, payment, cleanup, or reset success is made.
+The isolated Supabase QA target is configured and reachable. Authentication and the responsive application shell were validated, but the target does not contain the required application tables. The dry-run therefore did not pass and no baseline, write-clean, full-submit, destructive reset, invoice, payment, or fiscal write was attempted.
 
-## Initial State
+## Repository And Environment
 
-- Repository: `C:\Users\USUARIO\costa-clean-app`
 - Branch: `main`
-- Initial and synchronized HEAD: `45e259904137e84ce342f5da5f6d54dd74855d40`
-- Worktree before implementation: clean
-- `origin/main`: synchronized
-- Baseline lint: passed
-- Baseline build: passed
-- Baseline tests: `170/170` across 37 files
+- Initial synchronized HEAD: `1a4a196f5e4c22949aba9898cc27230655182fbf`
+- Initial worktree: clean
+- `.env.qa.local`: present and ignored; values were not printed or versioned
+- Required public variable names: present and non-empty
+- QA project ref: `kpvvydthlxupjjqqdpxy`
+- URL/ref consistency: passed
+- Fingerprint differs from the local reference project: passed
+- Reset strategy: `snapshot-restore`
+- Privileged/service-role credential names: absent
+- `npm run qa:sandbox:check`: passed
 
-## Environment Audit
+The checker proves configuration separation only. It does not prove schema completeness, seed safety, baseline availability, or restoration.
 
-| Check | Result |
-| --- | --- |
-| `.env.qa.local` | Ignored empty template created; public QA values/fingerprint missing |
-| `.env.local` | Present and ignored; not used for sandbox |
-| Forbidden private credential names in `.env.local` | Present; values were not printed, copied, or reused |
-| `.auth/sandbox/` | Missing |
-| Supabase CLI | Not installed |
-| Local Supabase project config | Missing |
-| Vercel CLI | Installed and authenticated |
-| Vercel project link | Present; hosting only, not sandbox proof |
-| Sandbox fingerprint | Not available; not validated |
-| Restore operator/strategy | Not proven |
+## Technical Validation
 
-The existing sandbox dry-run wrapper was invoked as a negative gate before the template existed and stopped with `Missing .env.qa.local` before browser launch or data access. After the ignored template was created, the readiness checker stopped on missing public QA URL/key. Both are expected safe failures.
+- `npm run lint`: passed
+- `npm run build`: passed (`372` modules transformed)
+- `npm run test`: `175/175` passed across 38 files
+- QA preview: reachable at `http://127.0.0.1:4174/`, built with the sandbox wrapper
+- Auth: authenticated shell detected with four shell markers and no startup-error marker
+- Auth storage: isolated under ignored `.auth/sandbox/`; only local metadata was saved
 
-## QA Results
+## Visual And Dry-Run Evidence
+
+The authenticated visual runner completed all 42 structural viewport/scenario checks across mobile, tablet, and desktop. This is not a data-readiness pass: the screenshots and captured viewport text show REST 404 schema-cache errors.
+
+Observed missing QA tables:
+
+- `public.clients`
+- `public.properties`
+- `public.quotes`
+- `public.jobs`
+- `public.invoices`
+- `public.expenses`
+- `public.payments`
+- `public.quarterly_closings`
+
+The sandbox dry-run completed without submissions or created entities, with `489/510` checks passing and `21` failing. The failures repeat consistently across all three viewports:
+
+- invoice creation: embedded property subflow unavailable
+- property creation: first actionable field not visible
+- service from client: no context record available
+- service from property: no context record available
+
+The missing context records and unavailable dependent flows are consistent with the absent schema. The visual runner's structural success must not be interpreted as a functional sandbox pass while visible REST errors exist.
+
+## Baseline And Safety Result
 
 | Gate | Result |
 | --- | --- |
-| Sandbox baseline | Not created; no sandbox target |
-| Sandbox auth | Not run |
-| Sandbox visual QA | Not run |
-| Sandbox dry-run | Blocked before execution |
-| Sandbox write-and-clean | Not run |
-| Full-flow submit | Not run; no command exists and reset proof is absent |
-| Sandbox clients/properties/quotes/expenses/jobs | 0 created |
-| Sandbox invoices | 0 created |
-| Sandbox payments | 0 registered |
-| Sandbox cancellations | 0 executed |
-| Sandbox reset | Not run |
+| Sandbox configuration/fingerprint | Passed |
+| Authenticated shell | Passed |
+| Structural responsive checks | 42/42 passed |
+| Data-backed visual readiness | Failed: required tables absent |
+| Sandbox dry-run | Failed: 489/510 checks |
+| Created sandbox entities | 0 |
+| Baseline proof | Not generated because visual data readiness and dry-run did not pass |
+| Write-and-clean | Not run |
+| Full-submit | Not run |
+| Destructive reset | Not run |
 | QA residue created by this block | 0 |
-
-## Why Automation Stopped
-
-Creating the QA project or persistent branch requires an authorized Supabase user to choose organization, region, compute/billing, target type, and restore capability. The repository also lacks a complete Supabase migration history, executable seed, baseline collector, reset operator, and post-reset verifier. Applying the loose `sql/` inventory automatically would be speculative and could reproduce obsolete regularizations or production-specific data changes.
-
-Official Supabase behavior reinforces the stop: branches are isolated and data-less, but their schema creation depends on migration history; backup restore and clone paths can require paid-plan features and explicit cost confirmation. These choices cannot be made safely by the repository runner.
-
-## Prepared Work
-
-- Added `npm run qa:sandbox:check` to validate private sandbox configuration without printing values.
-- The checker rejects privileged credential names, missing/mismatched project fingerprints, a sandbox matching the local reference project, and missing reset strategy.
-- Added exact private setup instructions in `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md`.
-- Preserved the existing fail-closed wrappers; no full-submit command was enabled.
 
 ## Production Safety
 
@@ -75,16 +82,8 @@ Official Supabase behavior reinforces the stop: branches are isolated and data-l
 - Secrets printed: 0
 - Secrets versioned: 0
 
-## Exact Manual Action Required
+## Next Gate
 
-An authorized user must create or select an isolated/restorable Supabase QA target, configure sandbox-only integrations, save only the public QA URL/key and guard variables in ignored `.env.qa.local`, and run `npm run qa:sandbox:check`. Full instructions are in `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md`.
+An authorized schema-delivery step must deploy a reviewed, complete application schema to the isolated QA project through the normal controlled path. Do not apply the repository's loose historical SQL inventory speculatively. After schema verification, add deterministic synthetic seed data, capture a private baseline, and prove snapshot restoration before enabling any write-and-clean or full-submit path.
 
-Do not resume at dry-run or writes until the schema, seed, baseline, and restore proof gates are also satisfied.
-
-## Final Repository Validation
-
-- `npm run lint`: passed
-- `npm run build`: passed
-- `npm run test`: `175/175` passed across 38 files
-- New sandbox readiness tests: `5/5` passed
-- `npm run qa:sandbox:check`: blocked safely on missing public QA configuration
+No full-submit or destructive reset command is authorized by this result.

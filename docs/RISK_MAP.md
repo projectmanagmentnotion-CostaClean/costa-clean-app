@@ -189,3 +189,13 @@
 [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) aporta la clasificacion reutilizable para datos/backend, finanzas/fiscalidad, frontend/UX, produccion/deploy y marca/diseno. Este `RISK_MAP.md` sigue siendo la fuente especifica y mas estricta para Costa Clean.
 
 Cada correccion debe revisar ambos mapas antes de definir alcance. [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md) gobierna diagnostico y validacion; [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md) las correcciones visuales; [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md) y [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) la entrega y trazabilidad; [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) aporta prompts, nunca autorizaciones.
+
+## Riesgos del Full App Production Audit - 2026-07-21
+
+- Un puerto local valido puede pertenecer a otro producto. El harness ahora valida `CostaClean` en el titulo durante deteccion y tras abrir CDP; no se reutiliza evidencia previa a esa verificacion.
+- `PropertyDetailCard` y `JobDetailCard` conservan PATCH/RPC directos con anon key como bearer. Es un riesgo P1 de autenticacion/RLS: no cambiar sin sprint sandbox con sesion real, write-and-clean exacto y revision de policies/contratos.
+- El servicio contextual desde propiedad ya abre en Agenda cuando cliente y propiedad estan fijados. Cualquier ampliacion futura debe conservar Contexto para el alta general y para prefills que aun necesiten elegir propiedad.
+- Sustituir PNG de marca por SVG puede reducir peso, pero requiere verificar logo, transparencia, documentos impresos y superficies claras/oscuras antes de publicar.
+- El CSS global y los componentes grandes son deuda de mantenimiento; no autorizan un refactor masivo ni una reescritura del shell.
+
+Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).

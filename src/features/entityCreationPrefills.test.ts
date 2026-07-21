@@ -2,10 +2,37 @@ import { describe, expect, it } from 'vitest'
 import { buildExpenseCreatePrefillFromExpense } from './expenses/expenseCreatePrefill'
 import { buildInvoiceCreatePrefillFromJob } from './invoices/invoiceCreatePrefill'
 import { buildInvoiceCreatePrefillFromInvoice } from './invoices/invoiceDuplicatePrefill'
-import { buildJobCreatePrefillFromJob, buildJobCreatePrefillFromQuote } from './jobs/jobCreatePrefill'
+import {
+  buildJobCreatePrefillFromJob,
+  buildJobCreatePrefillFromQuote,
+  getJobCreateInitialStep,
+  type JobCreatePrefill,
+} from './jobs/jobCreatePrefill'
 import { buildQuoteCreatePrefillFromQuote } from './quotes/quoteCreatePrefill'
 
 describe('entity creation prefills', () => {
+  it('opens contextual jobs at the first decision that still needs user input', () => {
+    const clientPrefill: JobCreatePrefill = {
+      request_id: 'client-prefill',
+      origin_kind: 'client',
+      client_id: 'client-1',
+      property_id: '',
+      quote_id: '',
+      notes: '',
+      billing_concept: '',
+    }
+    const propertyPrefill: JobCreatePrefill = {
+      ...clientPrefill,
+      request_id: 'property-prefill',
+      origin_kind: 'property',
+      property_id: 'property-1',
+    }
+
+    expect(getJobCreateInitialStep(null)).toBe(0)
+    expect(getJobCreateInitialStep(clientPrefill)).toBe(0)
+    expect(getJobCreateInitialStep(propertyPrefill)).toBe(1)
+  })
+
   it('copies all quote lines into job and quote prefills', () => {
     const quote = {
       id: 'quote-1',

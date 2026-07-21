@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {
   CdpConnection,
+  assertExpectedAppIdentity,
   buildViewUrl,
   captureScreenshot,
   checkNoHorizontalOverflow,
@@ -180,6 +181,7 @@ async function main() {
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
   const session = await openBrowserSession(connection, appUrl)
+  await assertExpectedAppIdentity(connection, session.sessionId)
   const shellState = await waitForShellStable(connection, session.sessionId)
 
   if (shellState?.startupError) {

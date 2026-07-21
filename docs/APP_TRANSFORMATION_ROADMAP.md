@@ -533,3 +533,24 @@ Deliverables:
 - reusable templates under `docs/templates/`
 
 This governance sprint is documentation-only. It does not authorize or modify production, Supabase, auth, routes, business logic, financial writes, fiscal operations or deployment behavior. Future Costa Clean corrections use the universal intake and release structure while continuing to pass every repository-specific quality gate.
+
+## Full App Production Audit And Correction Pass - 2026-07-21
+
+Objective:
+
+Audit the complete application with source evidence and authenticated multi-viewport QA, then correct only verified production issues inside the safe local scope.
+
+Outcome:
+
+- repository, modules, routes, clients, UX/UI, responsive, accessibility signals, performance and protected domains inventoried
+- wrong-product local QA target reproduced and closed with a fail-fast Costa Clean identity guard
+- property-context service flow now starts at Agenda when client and property are already fixed
+- authenticated sandbox visual QA passes `360/360`
+- sandbox end-user dry-run passes `588/588` with zero created entities
+- production, Supabase, auth, schema, migrations, invoices, payments, numbering, full-submit and financial writes remain untouched
+- direct authenticated write-path risk for property/job, asset optimization and structural CSS debt remain separately scoped
+
+Evidence:
+
+- [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md)
+- [FULL_APP_AUDIT_FIXES_20260721.md](FULL_APP_AUDIT_FIXES_20260721.md)

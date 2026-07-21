@@ -1,6 +1,7 @@
 import path from 'node:path'
 import {
   CdpConnection,
+  assertExpectedAppIdentity,
   detachBrowserSession,
   detectAuthenticatedShell,
   detectBrowserExecutable,
@@ -38,6 +39,7 @@ async function main() {
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
   let session = await openExistingBrowserSession(connection, appUrl)
+  await assertExpectedAppIdentity(connection, session.sessionId)
 
   process.stdout.write(
     [

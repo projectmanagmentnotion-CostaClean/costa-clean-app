@@ -1,6 +1,10 @@
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { getQaPaths } from './cdpHarness.mjs'
+import {
+  getQaPaths,
+  matchesExpectedAppHtml,
+  matchesExpectedAppTitle,
+} from './cdpHarness.mjs'
 
 describe('getQaPaths auth namespace', () => {
   it('keeps the existing default auth paths', () => {
@@ -30,5 +34,13 @@ describe('getQaPaths auth namespace', () => {
       if (previous === undefined) delete process.env.QA_AUTH_NAMESPACE
       else process.env.QA_AUTH_NAMESPACE = previous
     }
+  })
+})
+
+describe('Costa Clean QA target identity', () => {
+  it('accepts the Costa Clean title and rejects another local Vite app', () => {
+    expect(matchesExpectedAppTitle('CostaClean CRM | Gestion')).toBe(true)
+    expect(matchesExpectedAppHtml('<title>CostaClean CRM | Gestion</title>')).toBe(true)
+    expect(matchesExpectedAppHtml('<title>Malcriado</title>')).toBe(false)
   })
 })

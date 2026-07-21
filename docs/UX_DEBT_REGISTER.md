@@ -170,3 +170,13 @@
 La deuda UX sigue priorizandose en este registro, mientras su correccion operativa usa [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md) y [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md). Cada item convertido en sprint debe declarar severidad, evidencia, alcance, no-objetivos y validacion proporcional.
 
 [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) complementa [RISK_MAP.md](RISK_MAP.md); [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md), [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) y [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) controlan preparacion, trazabilidad y prompts de ejecucion. Ninguna deuda UX autoriza por si sola cambios de datos, Supabase, auth, facturacion, fiscalidad o produccion.
+
+## Full App Production Audit - 2026-07-21
+
+- Cerrada: el alta de servicio desde propiedad ya no abre en un paso de Contexto sin decisión; con cliente y propiedad fijados comienza en Agenda. El dry-run tablet pasa de `587/588` a `588/588` global.
+- Cerrada: el harness deja de aceptar otro producto local como target de Costa Clean; la identidad se valida antes del shell.
+- Abierta P2: equivalencia y optimización de PNG/SVG de marca, con medición y QA documental/visual.
+- Abierta P3/P4: consolidación incremental de CSS grande, drift declarativo de `kpis/settings`, starter assets sin referencias y superficies legacy.
+- Separada de UX: los writes directos de propiedad/servicio requieren hardening autenticado en sandbox; no se corrigen como polish visual.
+
+Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).

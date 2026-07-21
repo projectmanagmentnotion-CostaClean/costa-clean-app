@@ -8,6 +8,8 @@ const LOCAL_APP_CANDIDATES = [
   'http://127.0.0.1:5173/',
 ]
 
+const DEFAULT_APP_TITLE_MARKER = 'CostaClean'
+
 const DEFAULT_VIEWS = [
   'home',
   'clients',
@@ -145,14 +147,26 @@ export async function detectLocalAppUrl() {
       })
       clearTimeout(timeout)
       if (response.status >= 200 && response.status < 500) {
-        return candidate
+        const html = await response.text()
+        if (matchesExpectedAppHtml(html)) {
+          return candidate
+        }
       }
     } catch {
       continue
     }
   }
 
-  throw new Error('Local app is not reachable at http://127.0.0.1:4173/ or http://127.0.0.1:5173/.')
+  throw new Error('Costa Clean is not reachable at http://127.0.0.1:4173/ or http://127.0.0.1:5173/. Set QA_APP_URL to the verified Costa Clean build.')
+}
+
+export function matchesExpectedAppTitle(title, expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER) {
+  return String(title ?? '').toLocaleLowerCase().includes(expectedTitle.toLocaleLowerCase())
+}
+
+export function matchesExpectedAppHtml(html, expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER) {
+  const title = String(html ?? '').match(/<title[^>]*>([^<]*)<\/title>/iu)?.[1] ?? ''
+  return matchesExpectedAppTitle(title, expectedTitle)
 }
 
 export async function ensureQaDirectories(paths) {
@@ -373,6 +387,26 @@ export class CdpConnection {
 export async function openBrowserSession(connection, initialUrl) {
   const { targetId } = await connection.send('Target.createTarget', { url: initialUrl })
   return await attachToPageTarget(connection, targetId)
+}
+
+export async function assertExpectedAppIdentity(
+  connection,
+  sessionId,
+  expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER,
+  timeoutMs = 8000,
+) {
+  const startedAt = Date.now()
+  let lastTitle = ''
+
+  while (Date.now() - startedAt < timeoutMs) {
+    lastTitle = await evaluateJson(connection, sessionId, 'document.title')
+    if (matchesExpectedAppTitle(lastTitle, expectedTitle)) {
+      return lastTitle
+    }
+    await delay(200)
+  }
+
+  throw new Error(`QA target identity mismatch: expected title marker "${expectedTitle}" but received "${lastTitle || 'untitled page'}".`)
 }
 
 export async function openExistingBrowserSession(connection, matchUrlPrefix, timeoutMs = 15000) {

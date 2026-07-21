@@ -30,7 +30,7 @@ import {
   formatMoneyInput,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
-import type { JobCreatePrefill } from './jobCreatePrefill'
+import { getJobCreateInitialStep, type JobCreatePrefill } from './jobCreatePrefill'
 import type { JobBillingLineItem, JobListItem } from './types'
 import '../shared/fullscreen-create-flow.css'
 
@@ -167,7 +167,7 @@ export function JobCreateFlow({
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
   const [billingLines, setBillingLines] = useState<BillingLineFormState[]>(() => buildInitialBillingLines(prefill))
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState<number>(() => getJobCreateInitialStep(prefill))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
@@ -232,6 +232,7 @@ export function JobCreateFlow({
 
     setForm(applyPrefillToForm(prefill))
     setBillingLines(buildInitialBillingLines(prefill))
+    setCurrentStep(getJobCreateInitialStep(prefill))
     setSubmitError(null)
     setIsDirty(false)
     setLastAppliedPrefillId(prefill.request_id)

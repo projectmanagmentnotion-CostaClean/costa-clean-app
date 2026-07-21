@@ -173,3 +173,6 @@
 - El baseline revisado ya existe, pero no incluye `recurring_invoice_plans` porque tampoco existe en el schema productivo exportado; inventarlo cerraria falsamente el gap y podria activar automatizacion financiera sin contrato real.
 - El export solicitado usa `--no-privileges`; antes de declarar QA operativa se deben verificar grants efectivos y visibilidad REST tras el apply, sin asumir que las policies por si solas conceden acceso.
 - `supabase/migrations/20260721_qa_baseline_schema.sql` es una baseline exclusiva de QA y no debe aplicarse a produccion, donde los objetos ya existen.
+- La baseline se aplico a QA mediante `psql` directo y no registro versiones en `supabase_migrations.schema_migrations`; un futuro `db push` podria intentar reejecutarla. Mitigacion: bloquear CLI push/history repair hasta un gate especifico de reconciliacion.
+- El schema QA queda vacio y apto para seed, pero `recurring_invoice_plans` sigue ausente por contrato autoritativo. Ningun seed debe crear esa tabla ni simular el dominio.
+- El launcher CDP puede ignorar una sesion sandbox sana y abrir un puerto inutil. La evidencia valida de este sprint reutilizo el endpoint del perfil `.auth/sandbox`; nunca se deben cerrar procesos de navegador personales para resolverlo.

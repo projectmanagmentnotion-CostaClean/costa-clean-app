@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`B - REVIEWED BASELINE PREPARED; QA NOT YET MUTATED`
+`A- - CORE QA SCHEMA APPLIED; ONE AUTHORITATIVE RUNTIME GAP REMAINS`
 
-The isolated QA project is reachable and its fingerprint is valid. A reviewed production `public` schema-only export has now been converted into `supabase/migrations/20260721_qa_baseline_schema.sql`; it has not been applied to QA. The historical audit below remains useful evidence of why the loose SQL folder must not be used as bootstrap input.
+The isolated QA project is reachable, its fingerprint is valid, and the reviewed production `public` schema baseline has been applied only to QA. Post-apply checks confirm all 17 exported tables, required RPC names, triggers, policies, RLS, and sequences. The historical audit below remains useful evidence of why the loose SQL folder must not be used as bootstrap input.
 
 ## Schema-Only Export Follow-Up
 
@@ -13,12 +13,12 @@ The isolated QA project is reachable and its fingerprint is valid. A reviewed pr
 - baseline migration created: yes
 - real data included: no
 - production modified: no
-- QA modified: no
-- next gate: separately authorized baseline apply to Supabase QA
+- QA modified: yes, reviewed schema only
+- next gate: separately authorized deterministic demo seed
 
 The baseline reproduces the 17 tables present in the authoritative production `public` schema, plus functions, sequences without state, indexes, policies, and triggers. It deliberately excludes managed schemas, owners, ACLs, row data, production sequence state, and secrets.
 
-One runtime gap remains authoritative rather than speculative: `recurring_invoice_plans` is referenced by the app but absent from the production export. It is therefore not invented in the baseline and must remain a blocked capability pending a reviewed contract.
+One runtime gap remains authoritative rather than speculative: `recurring_invoice_plans` is referenced by the app but absent from the production export and remains absent in QA. It was not invented and must remain a blocked capability pending a reviewed contract.
 
 ## Evidence And Target Guardrails
 
@@ -169,7 +169,7 @@ Some loose scripts contain production-specific data corrections and numbering re
 
 Applying the loose SQL set would require guessing the missing base schema and the intended final order of repeated RPC replacements. It could also execute production-specific regularizations. This fails the repository's schema-readiness gate and the sprint's explicit stop condition.
 
-## Required Next Gate
+## Historical Required Gate
 
 Obtain a reviewed **schema-only** export from the authoritative Supabase project or another known-good environment through an explicitly authorized read-only workflow. The export must exclude rows, auth users, storage objects, secrets, and production-specific data corrections. Before applying it to QA:
 
@@ -190,7 +190,7 @@ The user subsequently authorized a schema-only production export. `pg_dump 17.10
 - data rows exported: 0
 - production writes: 0
 - secrets versioned: 0
-- QA schema writes: 0
-- baseline applied: no
+- QA schema writes: reviewed baseline applied atomically
+- baseline applied: yes
 
-The completed review and the separate QA-apply gate are documented in `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.
+The completed review and QA apply verification are documented in `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`. Visual QA passed `360/360`, dry-run passed `588/588`, and all 17 table counts remained zero. The next gate is deterministic synthetic seed; direct `psql` did not register Supabase CLI migration history, so future `db push` remains blocked pending reconciliation.

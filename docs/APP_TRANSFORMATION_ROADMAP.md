@@ -472,8 +472,8 @@ Status note:
 
 - `main` was synchronized by fast-forward to `a42bad7`, matching `origin/main`, with no local changes overwritten.
 - The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
-- The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are validated. A reviewed baseline now exists, but full-flow submit remains blocked because QA apply, synthetic seed, baseline capture, and executed restore proof are absent.
-- The next recommended sprint is the separately authorized QA baseline apply and verification, followed by synthetic seed, baseline capture, and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
+- The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are validated. The reviewed baseline is applied and verified; full-flow submit remains blocked because synthetic seed, provider snapshot, and executed restore proof are absent.
+- The next recommended sprint is deterministic synthetic seed and a dry-run rerun, followed by provider snapshot and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
 
 ## Full-Flow Sandbox Attempt - 2026-07-21
 
@@ -484,10 +484,10 @@ Status note:
 
 ## QA Schema Delivery Audit - 2026-07-21
 
-- The initial audit classified reproducibility as `C`; the reviewed baseline now changes readiness to `B - baseline prepared, not applied`.
+- The initial audit classified reproducibility as `C`; the applied and verified baseline now changes core-schema readiness to `A-`, with the authoritative `recurring_invoice_plans` gap still open.
 - A read-only probe against the validated QA ref reports every audited application table missing from the REST schema cache.
 - No schema, migration, RPC, policy, trigger, seed, full-submit, or reset was executed.
-- The next bounded gate is a separately authorized baseline apply to the isolated QA project, followed by migration-order, grants, and REST verification.
+- The baseline apply and REST verification passed. The next bounded gate is deterministic synthetic seed; future Supabase CLI migration operations remain blocked until direct-`psql` history is reconciled.
 - Evidence: `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
 
 ## Production Schema-Only Export Preflight - 2026-07-21
@@ -495,5 +495,6 @@ Status note:
 - The authorized schema-only export was obtained with `pg_dump 17.10`; no rows were exported and production received no writes.
 - The private safety review passed and `supabase/migrations/20260721_qa_baseline_schema.sql` was created without secrets, owners, ACLs, managed schemas, or production sequence state.
 - The authoritative schema lacks `recurring_invoice_plans`; the baseline records rather than invents that gap.
-- The next gate is a separately authorized baseline apply to QA, followed by migration-order, grants, and REST verification. No QA mutation occurred in this sprint.
+- The baseline was applied only to QA with PostgreSQL 17 `psql` in one atomic transaction. Verification found 17/17 tables, 41 functions, 15 triggers, 45 policies, RLS on 17 tables, and zero rows.
+- Authenticated visual QA passed `360/360`; sandbox dry-run passed `588/588` with zero entities and zero residue. The next gate is deterministic synthetic seed, not full-submit or reset.
 - Evidence: `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

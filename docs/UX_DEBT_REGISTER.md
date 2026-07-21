@@ -140,6 +140,13 @@
 ## Full-Flow Sandbox QA - 2026-07-21
 
 - La deuda ya no es de apertura/cancelacion de flows, sino de evidencia real de persistencia, relaciones y reset en un entorno aislado.
-- Factura, cobro y cancelacion siguen sin cobertura de submit real: el sandbox ya esta aislado y autenticado, pero carece del schema de aplicacion, baseline, reset probado y serie fiscal QA.
-- No se debe cerrar esta deuda ampliando allowlists, interpretando checks estructurales como readiness de datos ni simulando success states; requiere schema QA revisado e infraestructura restaurable probada.
-- El repo no puede recrear hoy ese schema: el bloqueo es de infraestructura DB y migraciones base, no una razon para introducir fallbacks visuales o datos simulados en los StepFlow.
+- Factura, cobro y cancelacion siguen sin cobertura de submit real: el sandbox ya tiene schema revisado, pero carece de seed sintetico, reset probado y serie fiscal QA.
+- No se debe cerrar esta deuda ampliando allowlists ni simulando success states; requiere infraestructura restaurable y gates financieros separados.
+- El repo ya contiene y aplico la baseline QA revisada. La deuda de infraestructura pasa a seed, snapshot/restore e historial de migraciones, no a fallbacks visuales o datos simulados en los StepFlow.
+
+## QA Schema Applied - 2026-07-21
+
+- La deuda de ausencia de schema QA queda cerrada para las 17 tablas del contrato productivo exportado: visual QA pasa `360/360` y dry-run pasa `588/588` sin crear entidades.
+- La deuda siguiente es seed sintetico y restaurabilidad, no mas cambios visuales ni apertura de full-submit.
+- `recurring_invoice_plans` permanece como deuda de dominio porque no existe en el schema autoritativo; no debe cerrarse con UI simulada ni una tabla inventada.
+- El harness conserva una deuda tecnica menor: el autodetector CDP no reutilizo la sesion sandbox sana en el primer intento, aunque el endpoint existente permitio completar toda la evidencia.

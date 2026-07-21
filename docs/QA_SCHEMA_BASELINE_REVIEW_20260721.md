@@ -2,9 +2,9 @@
 
 ## Verdict
 
-`PASS - REVIEWED QA BASELINE PREPARED; NOT APPLIED`
+`PASS - REVIEWED QA BASELINE APPLIED AND VERIFIED`
 
-An authorized production schema-only export was obtained with `pg_dump 17.10`. The raw artifacts and connection input remain private and ignored. No rows were exported, production received no writes, and nothing was applied to Supabase QA.
+An authorized production schema-only export was obtained with `pg_dump 17.10`. The raw artifacts and connection inputs remain private and ignored. No rows were exported and production received no writes. The reviewed baseline was later applied only to QA ref `kpvvydthlxupjjqqdpxy` through an atomic `psql` transaction.
 
 ## Export Result
 
@@ -18,7 +18,7 @@ An authorized production schema-only export was obtained with `pg_dump 17.10`. T
 | Public-only dump size | 116651 bytes |
 | Data rows exported | 0 |
 | Production modified | no |
-| QA modified | no |
+| QA modified | yes, reviewed schema only |
 
 Credentials were supplied only through temporary process environment variables read from the ignored private input. They were not written to the command line, documentation, Git, or the baseline.
 
@@ -70,6 +70,24 @@ Because the requested export excluded privileges, the QA apply gate must verify 
 - full-submit: not executed
 - reset: not executed
 
+## QA Apply Verification
+
+- method: PostgreSQL 17 `psql`, `ON_ERROR_STOP`, single transaction
+- expected tables: 17/17
+- functions: 41
+- triggers: 15
+- policies: 45
+- RLS-enabled tables: 17
+- effective sequences: 9
+- initial and post-dry-run row counts: all zero
+- authenticated visual QA: 360/360
+- sandbox dry-run: 588/588, 0 created entities
+- full-submit: no
+- destructive reset: no
+- production touched: no
+
+The apply used direct `psql`, so Supabase CLI migration-history metadata was not modified. A future `db push` must not be attempted until migration history is reconciled in a separate gate.
+
 ## Next Gate
 
-Apply the reviewed baseline to the isolated Supabase QA project only after separate authorization. Then verify migration ordering, effective grants, REST schema visibility, the known recurring-plan gap, and zero production targeting. Do not seed, full-submit, issue invoices, record payments, or reset until their later gates are explicitly approved.
+Prepare a deterministic synthetic demo seed in a separate authorized gate. Do not write-and-clean, full-submit, issue invoices, record payments, repair migration history, or reset until their later gates are explicitly approved.

@@ -2,10 +2,10 @@
 
 ## Status - 2026-07-21
 
-- Current phase: Phase 1 configuration and isolation passed; reviewed schema baseline prepared but not applied.
-- Available: isolated Supabase QA target, populated ignored `.env.qa.local`, matching fingerprint, `snapshot-restore` strategy, isolated authenticated browser profile, and `supabase/migrations/20260721_qa_baseline_schema.sql`.
-- Missing: authorized QA schema apply and verification, synthetic seed, baseline capture, and executed restore proof.
-- Executed: sandbox visual structure check and non-writing dry-run. The dry-run stopped at `489/510` because required application tables are absent.
+- Current phase: Phase 1 schema delivery passed; Phase 2 deterministic synthetic seed is next.
+- Available: isolated Supabase QA target, matching fingerprint, reviewed applied schema, `snapshot-restore` strategy, private zero-row baseline, and isolated authenticated browser profile.
+- Missing: deterministic synthetic seed, provider snapshot capture, executed restore proof, and migration-history reconciliation before future `db push`.
+- Executed: authenticated visual QA `360/360` and non-writing sandbox dry-run `588/588`, with zero created entities and zero residual rows.
 - Not started: seed/baseline, write-and-clean, full submit, and total reset.
 - Production remained untouched and no QA entities were created.
 
@@ -18,11 +18,11 @@
 
 Exit gate: sandbox wrapper validates configuration without printing values; production remains unchanged.
 
-Current result: configuration and project separation pass, but Phase 1 cannot close until the reviewed application schema is present and its REST surface is verified.
+Current result: configuration, project separation, schema apply, REST visibility, RPC/policy/trigger verification, visual QA, and dry-run pass. Phase 1 is closed for the exported schema contract.
 
-Initial repository audit result: classification `C`. The reviewed export and baseline now raise readiness to `B`, while the read-only QA probe still reports the application tables missing because the migration has not been applied. The loose historical SQL folder remains prohibited as bootstrap input.
+Initial repository audit result: classification `C`. The reviewed export, atomic QA apply, and post-apply verification now raise core-schema readiness to `A-`; all 17 exported tables are present and empty. The loose historical SQL folder remains prohibited as bootstrap input, and `recurring_invoice_plans` remains an explicit gap.
 
-Export result: obtained with `pg_dump 17.10`; private safety review passed and the sanitized baseline was created. It contains no real data or secrets, and production was not modified. The next action is a separately authorized apply to QA followed by grants/REST verification. `recurring_invoice_plans` remains absent from the authoritative schema and is not invented.
+Export/apply result: obtained with `pg_dump 17.10`, reviewed, sanitized, and applied atomically to QA with `psql`. It contains no real data or secrets, production was not modified, and REST-backed QA now passes. `recurring_invoice_plans` remains absent from the authoritative schema and is not invented.
 
 ## Phase 2 - Demo Seed And Baseline
 

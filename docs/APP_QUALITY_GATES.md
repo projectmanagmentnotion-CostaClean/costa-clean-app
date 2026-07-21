@@ -323,4 +323,6 @@ For roadmap-closeout or phase-closeout work:
 - El export `public` revisado con `pg_dump 17.10` pasa solo si no contiene filas, `COPY`, `setval`, secretos, owners, ACLs ni DDL de schemas administrados; DML dentro de cuerpos de funciones debe clasificarse manualmente y no confundirse con datos exportados.
 - La baseline preparada no autoriza `db push`: aplicar a QA requiere una aprobacion separada, rerun inmediato del fingerprint y verificacion posterior de tablas, funciones, policies, grants y REST schema cache.
 - Un contrato ausente en el schema autoritativo, como `recurring_invoice_plans`, permanece bloqueado; el gate prohibe inventarlo para conseguir un full-flow verde.
-- Estado actual: export obtenido, safety review pasado, baseline creada, datos reales incluidos `NO`, produccion modificada `NO`, QA modificada `NO`; siguiente gate: aplicar baseline a Supabase QA con autorizacion expresa.
+- Estado actual: export obtenido, safety review pasado y baseline aplicada solo a QA mediante transaccion atomica; datos reales incluidos `NO`, produccion modificada `NO`, QA visual `360/360`, dry-run `588/588`, entidades creadas `0`.
+- El siguiente gate es seed sintetico determinista con autorizacion separada. Write-and-clean, reset, full-submit, facturas y cobros siguen bloqueados.
+- Un apply directo con `psql` no demuestra historial de migraciones Supabase reconciliado; antes de cualquier `db push` se debe auditar y resolver ese metadata drift sin reejecutar la baseline.

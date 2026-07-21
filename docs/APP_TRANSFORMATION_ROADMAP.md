@@ -467,3 +467,10 @@ Status note:
 - local authenticated validation now passes visual QA and `435/435` dry-run checks; tablet shell actions were redistributed for `768x1024`, while full-submit and numbering restoration remain gated on a disposable Supabase QA environment rather than production sequence rewrites
 - the QA sandbox blueprint now defines environment fingerprinting, private env wrappers, demo seed, snapshot/reset, and phased full-flow gates; implementation remains blocked on manual provisioning of a disposable/restorable Supabase QA project
 - service scheduling now opens with a compact upcoming agenda and explicit review states; client/property contextual dry-runs are covered, while service recurrence remains honestly blocked on a real domain contract
+
+## Work PC Status - 2026-07-21
+
+- `main` was synchronized by fast-forward to `a42bad7`, matching `origin/main`, with no local changes overwritten.
+- The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
+- The QA sandbox blueprint, seed plan, reset plan, wrappers, and guardrails are complete; full-flow submit remains blocked until a separate disposable/restorable Supabase QA target and ignored `.env.qa.local` exist.
+- The next recommended sprint is isolated Supabase QA provisioning plus baseline and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.

@@ -348,3 +348,12 @@ For roadmap-closeout or phase-closeout work:
 - Resultado: leads `2 -> 3 -> 2`, filas publicas `15 -> 16 -> 15`, marker temporal `0 -> 1 -> 0`, seed demo intacto, invoices/payments/closings `0/0/0`.
 - QA post-cleanup: visual `360/360`, dry-run `588/588`, entidades creadas `0`.
 - Este resultado habilita solo proponer write-and-clean no financiero y registrado como siguiente gate separado. Full-submit, reset destructivo, facturas, cobros, reparacion de historial y `db push` siguen bloqueados.
+
+## Universal Correction And Release Gate
+
+- Toda correccion debe clasificarse y validarse segun [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md), sin rebajar los gates especificos de Costa Clean.
+- Las correcciones visuales deben seguir [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md) y conservar la evidencia visual exigida por este documento.
+- Toda publicacion debe seguir [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md), actualizar [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) y declarar rollback.
+- Antes de ampliar alcance se deben revisar [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) y [RISK_MAP.md](RISK_MAP.md).
+- Los prompts de [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) no sustituyen autorizaciones ni evidencia real.
+- Si un gate local es mas estricto que el universal, prevalece el gate local.

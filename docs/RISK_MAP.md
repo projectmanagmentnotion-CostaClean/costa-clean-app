@@ -183,3 +183,9 @@
 - El cleanup logico probado solo cubre una fila no financiera con marker exacto. No restaura secuencias, audit trails, webhooks, auth, storage ni efectos externos, por lo que no habilita full-submit ni dominios financieros.
 - `qa:sandbox:restore-proof` aborta antes del dump si `public` contiene algo distinto de las 15 filas sinteticas aprobadas; ampliar esa regla o el alcance del dump exige revision para evitar capturar datos QA manuales o reales.
 - Un write-and-clean posterior debe usar el registro por entidad y fallar si no elimina exactamente la fila creada. La prueba de lead no sustituye la evidencia propia de client/property/quote/expense/job.
+
+## Integracion con el mapa universal de riesgo
+
+[UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) aporta la clasificacion reutilizable para datos/backend, finanzas/fiscalidad, frontend/UX, produccion/deploy y marca/diseno. Este `RISK_MAP.md` sigue siendo la fuente especifica y mas estricta para Costa Clean.
+
+Cada correccion debe revisar ambos mapas antes de definir alcance. [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md) gobierna diagnostico y validacion; [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md) las correcciones visuales; [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md) y [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) la entrega y trazabilidad; [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) aporta prompts, nunca autorizaciones.

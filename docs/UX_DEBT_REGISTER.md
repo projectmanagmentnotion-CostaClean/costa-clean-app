@@ -164,3 +164,9 @@
 - La deuda de restore completo sigue abierta porque el plan Free no ofrece backup/PITR y el dump privado capturado no fue restaurado destructivamente.
 - El siguiente trabajo UX/operativo puede validar write-and-clean no financiero con registro exacto; factura, cobro, cierre y recurrencia siguen siendo deuda separada y bloqueada.
 - `recurring_invoice_plans` permanece ausente del contrato autoritativo y no se crea para maquillar la cobertura.
+
+## Integracion con el sistema universal
+
+La deuda UX sigue priorizandose en este registro, mientras su correccion operativa usa [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md) y [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md). Cada item convertido en sprint debe declarar severidad, evidencia, alcance, no-objetivos y validacion proporcional.
+
+[UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) complementa [RISK_MAP.md](RISK_MAP.md); [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md), [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) y [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) controlan preparacion, trazabilidad y prompts de ejecucion. Ninguna deuda UX autoriza por si sola cambios de datos, Supabase, auth, facturacion, fiscalidad o produccion.

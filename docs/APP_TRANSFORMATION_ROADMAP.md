@@ -515,3 +515,21 @@ Status note:
 - Leads returned `2 -> 3 -> 2`, total public rows `15 -> 16 -> 15`, and invoices/payments/closings stayed `0/0/0`.
 - Post-cleanup authenticated visual QA passed `360/360`; sandbox dry-run passed `588/588` with zero created entities.
 - Classification C logical cleanup is proven. Full provider/dump restore remains unproven, so the next separately authorized gate is bounded non-financial write-and-clean; destructive reset, full-submit, financial writes, migration-history repair, and `db push` remain blocked.
+
+## Universal Product Correction And Release System - 2026-07-21
+
+Objective:
+
+Connect Costa Clean's existing governance to a reusable correction and release methodology without changing application code or relaxing protected-domain controls.
+
+Deliverables:
+
+- [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md)
+- [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md)
+- [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md)
+- [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md)
+- [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md)
+- [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md)
+- reusable templates under `docs/templates/`
+
+This governance sprint is documentation-only. It does not authorize or modify production, Supabase, auth, routes, business logic, financial writes, fiscal operations or deployment behavior. Future Costa Clean corrections use the universal intake and release structure while continuing to pass every repository-specific quality gate.

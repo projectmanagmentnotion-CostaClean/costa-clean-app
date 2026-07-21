@@ -124,3 +124,16 @@ Codex should behave as an implementation partner with repository discipline:
 - explicit tradeoffs
 - honest verification
 - no invented certainty
+
+## Universal Correction And Release Integration
+
+For correction and release work, this repository adopts the universal control layer without replacing Costa Clean's stricter rules:
+
+- [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md) defines intake, classification, diagnosis, correction, proportional validation and rollback.
+- [UX_UI_CORRECTION_SYSTEM.md](UX_UI_CORRECTION_SYSTEM.md) governs visual and experience corrections.
+- [UNIVERSAL_RELEASE_SYSTEM.md](UNIVERSAL_RELEASE_SYSTEM.md) governs release classification and traceable publication.
+- [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) provides reusable Codex prompts.
+- [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) is the generic risk baseline; [RISK_MAP.md](RISK_MAP.md) remains authoritative for Costa Clean specifics.
+- [UNIVERSAL_RELEASE_LOG.md](UNIVERSAL_RELEASE_LOG.md) records universal-system releases.
+
+When rules differ, `AGENTS.md`, this workflow, the app quality gates and explicit sprint constraints take precedence. None of these documents authorizes production, Supabase, financial, fiscal, auth or deployment changes by itself.

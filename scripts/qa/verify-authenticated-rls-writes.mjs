@@ -115,7 +115,7 @@ function assertRuntimeGuardrails(mode) {
   if (!Object.values(MODE_FLAGS).includes(mode)) throw new Error(`Unsupported mode ${mode}.`)
 }
 
-function parsePrivateDbUrl(raw) {
+export function parsePrivateDbUrl(raw) {
   const url = new URL(String(raw ?? '').trim())
   const username = decodeURIComponent(url.username)
   const password = decodeURIComponent(url.password)
@@ -129,7 +129,7 @@ function parsePrivateDbUrl(raw) {
   return { host: url.hostname, port: url.port, username, password, database }
 }
 
-function privatePgEnv(connection) {
+export function privatePgEnv(connection) {
   return {
     ...process.env,
     PGHOST: connection.host,
@@ -148,7 +148,7 @@ function extractJson(raw) {
   return JSON.parse(raw.slice(start, end + 1))
 }
 
-async function runPrivateQaQuery(connection, sql, label) {
+export async function runPrivateQaQuery(connection, sql, label) {
   await fs.mkdir(privateDir, { recursive: true })
   const sqlPath = path.join(privateDir, `${label}.sql`)
   const outputPath = path.join(privateDir, `${label}.out`)
@@ -445,7 +445,7 @@ export function reconcileAuthenticatedApplyResults(browser, snapshot) {
   return browser
 }
 
-async function runAuthenticatedBrowserChecks(mode) {
+export async function withAuthenticatedQaSession(execute) {
   const qaPaths = getQaPaths(rootDir)
   const storedState = await readAuthStateMetadata(qaPaths.stateFile).catch(() => {
     throw new Error('Missing sandbox auth metadata. Run npm run qa:auth:sandbox first.')
@@ -500,7 +500,7 @@ async function runAuthenticatedBrowserChecks(mode) {
       storageId: { securityOrigin: authOrigin, isLocalStorage: true },
     }, storageSession.sessionId)
     const storedSession = readSessionFromStorageEntries(storage.entries ?? [])
-    let result = await executeAuthenticatedOperations(mode, storedSession.accessToken)
+    let result = await execute(storedSession.accessToken)
     if (!result.auth.ok && storedSession.refreshToken) {
       const refreshed = await refreshQaSession(storedSession.refreshToken)
       await connection.send('DOMStorage.setDOMStorageItem', {
@@ -508,7 +508,7 @@ async function runAuthenticatedBrowserChecks(mode) {
         key: storedSession.key,
         value: JSON.stringify(mergeRefreshedSession(storedSession, refreshed)),
       }, storageSession.sessionId)
-      result = await executeAuthenticatedOperations(mode, refreshed.access_token)
+      result = await execute(refreshed.access_token)
     }
     return result
   } finally {
@@ -516,6 +516,10 @@ async function runAuthenticatedBrowserChecks(mode) {
     if (session) await closeBrowserSession(connection, session.targetId, session.sessionId)
     await connection.close()
   }
+}
+
+async function runAuthenticatedBrowserChecks(mode) {
+  return withAuthenticatedQaSession((accessToken) => executeAuthenticatedOperations(mode, accessToken))
 }
 
 async function writeReport(report) {

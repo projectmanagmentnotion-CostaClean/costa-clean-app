@@ -71,3 +71,9 @@ No se modificaron policies. Conseguir INSERT/PATCH directos reales requiere un s
 ## Rollback
 
 Revertir el commit de esta entrega con `git revert <commit>` y ejecutar lint, build y tests. El rollback de código no requiere mutación de QA: el marcador temporal ya quedó en cero. No revertir mediante reset destructivo ni cambios de policies.
+
+## Follow-up RLS closure — 2026-07-21
+
+The residual block was closed in QA with authenticated RPCs rather than global authenticated policies. Client/property writes and job status now persist through allowlisted RPCs; anonymous INSERT/UPDATE policies on the three target tables were removed. Final marker `QA_RLS_FIX_20260721` is 0, the demo seed remains intact, and financial tables remain `0/0/0`. Production remains untouched.
+
+Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).

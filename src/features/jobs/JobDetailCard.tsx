@@ -5,6 +5,7 @@ import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import {
   buildBillingLinePayloads,
   calculateBillingLineSubtotal,
@@ -487,14 +488,11 @@ export function JobDetailCard({
 
     try {
       const statusResponse = await fetchAuthenticatedSupabaseWrite(
-        `jobs?id=eq.${encodeURIComponent(job.id)}`,
+        operationalWriteRpcPaths.updateJobStatus,
         {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Prefer: 'return=representation',
-          },
-          body: JSON.stringify({ status: nextStatus }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_job_id: job.id, p_status: nextStatus }),
         },
       )
       await readSingleAuthenticatedWriteRow(

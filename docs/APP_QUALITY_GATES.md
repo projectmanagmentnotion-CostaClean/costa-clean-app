@@ -358,6 +358,15 @@ For roadmap-closeout or phase-closeout work:
 - El cierre exige marcador temporal 0, seed `QA_DEMO_20260721` intacto y `invoices/payments/quarterly_closings` en `0/0/0`.
 - Un fallo RLS no autoriza fallback anon, `service_role` ni cambios de policy. Se documenta y se escala a un sprint con autorización separada.
 
+## Authenticated Operational RPC Gate - 2026-07-21
+
+- When target tables lack ownership columns, do not add global authenticated write policies; use allowlisted RPCs or stop for a tenancy design.
+- SECURITY DEFINER RPCs require fixed `search_path`, an internal `auth.uid()` guard and EXECUTE revoked from public/anon.
+- Removing a legacy anon policy and switching the frontend must be delivered as one coordinated change.
+- HTTP success must be reconciled against exactly one persisted row or the expected RPC effect.
+- QA closure requires both temporary markers at 0, demo seed intact, financial tables `0/0/0`, and a catalog check of policies and function grants.
+- Production application requires a separate gate and must account for direct-`psql` migration-history drift.
+
 ## Universal Correction And Release Gate
 
 - Toda correccion debe clasificarse y validarse segun [UNIVERSAL_CORRECTION_SYSTEM.md](UNIVERSAL_CORRECTION_SYSTEM.md), sin rebajar los gates especificos de Costa Clean.

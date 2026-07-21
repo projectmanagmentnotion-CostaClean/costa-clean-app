@@ -207,3 +207,12 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - `reassign_property_client` y `save_job_with_lines` persisten como RPC. No ampliar ni alterar sus grants, SECURITY DEFINER o contratos sin auditoría y autorización separadas.
 - El operador DB privado solo puede preparar fixtures y limpiar IDs/marcador exactos; nunca cuenta como evidencia de RLS del usuario.
 - Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md).
+
+## RLS/RPC write-path closure risk - 2026-07-21
+
+- The target tables have no tenant ownership columns or role claims. Authenticated RPCs are safe for the current single-workspace model but are not a multi-tenant authorization design.
+- Anon INSERT/UPDATE was removed from clients/properties/jobs. Reintroducing direct REST writes requires an ownership model, not `USING (true)`.
+- Anon SELECT remains unchanged for compatibility and requires a separate privacy/read-path audit.
+- `reassign_property_client` is now reachable only through an authenticated wrapper; do not restore its public/anon EXECUTE grant.
+- Direct `psql` apply to QA does not reconcile Supabase migration history. `db push` remains blocked until a dedicated history gate.
+- Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).

@@ -554,3 +554,12 @@ Evidence:
 
 - [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md)
 - [FULL_APP_AUDIT_FIXES_20260721.md](FULL_APP_AUDIT_FIXES_20260721.md)
+
+## Post-Roadmap Sprint: RLS and RPC Write Path Fix — 2026-07-21
+
+- QA selected authenticated, allowlisted RPCs instead of global authenticated policies because clients/properties/jobs have no tenant ownership columns.
+- Client/property writes and quick job status persist in real QA with `session.access_token`; property reassignment and full job save remain RPC-based with hardened grants.
+- Obsolete anon INSERT/UPDATE policies were removed only from the three target tables in QA.
+- Cleanup closed `QA_RLS_FIX_20260721` and the prior marker to 0; the 15-row demo seed and financial `0/0/0` baseline remain intact.
+- Production remains unchanged. The next gate is production readiness and coordinated rollout, not automatic migration apply or `db push`.
+- Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).

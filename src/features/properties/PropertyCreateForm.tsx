@@ -3,6 +3,7 @@ import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -130,21 +131,22 @@ export function PropertyCreateForm({
           ? `PROPERTY-${crypto.randomUUID()}`
           : `PROPERTY-${Date.now()}`
 
-      const response = await fetchAuthenticatedSupabaseWrite('properties', {
+      const response = await fetchAuthenticatedSupabaseWrite(operationalWriteRpcPaths.createProperty, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Prefer: 'return=representation',
         },
         body: JSON.stringify({
-          id: propertyId,
-          client_id: form.client_id,
-          name: form.name.trim(),
-          property_type: form.property_type,
-          address: form.address.trim(),
-          city: form.city.trim() || null,
-          postal_code: form.postal_code.trim() || null,
-          notes: form.notes.trim() || null,
+          p_property: {
+            id: propertyId,
+            client_id: form.client_id,
+            name: form.name.trim(),
+            property_type: form.property_type,
+            address: form.address.trim(),
+            city: form.city.trim() || null,
+            postal_code: form.postal_code.trim() || null,
+            notes: form.notes.trim() || null,
+          },
         }),
       })
 

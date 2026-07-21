@@ -14,11 +14,11 @@ describe('authenticatedSupabaseWrite', () => {
       supabaseUrl: 'https://example.supabase.co',
       supabaseAnonKey: 'anon-key',
       accessToken: 'property-session-token',
-      path: 'properties',
+      path: 'rpc/create_property',
       init: { method: 'POST' },
     })
 
-    expect(request.url).toBe('https://example.supabase.co/rest/v1/properties')
+    expect(request.url).toBe('https://example.supabase.co/rest/v1/rpc/create_property')
     expect(request.init.headers).toMatchObject({
       apikey: 'anon-key',
       Authorization: 'Bearer property-session-token',
@@ -31,11 +31,11 @@ describe('authenticatedSupabaseWrite', () => {
       supabaseUrl: 'https://example.supabase.co',
       supabaseAnonKey: 'anon-key',
       accessToken: 'service-session-token',
-      path: 'jobs?id=eq.job-1',
-      init: { method: 'PATCH' },
+      path: 'rpc/update_job_status',
+      init: { method: 'POST' },
     })
 
-    expect(request.url).toBe('https://example.supabase.co/rest/v1/jobs?id=eq.job-1')
+    expect(request.url).toBe('https://example.supabase.co/rest/v1/rpc/update_job_status')
     expect(request.init.headers).toMatchObject({
       apikey: 'anon-key',
       Authorization: 'Bearer service-session-token',
@@ -63,7 +63,7 @@ describe('authenticatedSupabaseWrite', () => {
     let errorMessage = ''
 
     try {
-      await fetchAuthenticatedSupabaseWrite('properties', { method: 'POST' }, {
+      await fetchAuthenticatedSupabaseWrite('rpc/create_property', { method: 'POST' }, {
         getContext: async () => resolveAuthenticatedWriteContext({
           supabaseUrl: 'https://example.supabase.co',
           supabaseAnonKey: 'anon-key',
@@ -86,7 +86,7 @@ describe('authenticatedSupabaseWrite', () => {
     let capturedUrl = ''
     let capturedInit: RequestInit | undefined
 
-    await fetchAuthenticatedSupabaseWrite('jobs?id=eq.job-1', { method: 'PATCH' }, {
+    await fetchAuthenticatedSupabaseWrite('rpc/update_job_status', { method: 'POST' }, {
       getContext: async () => resolveAuthenticatedWriteContext({
         supabaseUrl: 'https://example.supabase.co',
         supabaseAnonKey: 'anon-key',
@@ -99,8 +99,8 @@ describe('authenticatedSupabaseWrite', () => {
       },
     })
 
-    expect(capturedUrl).toBe('https://example.supabase.co/rest/v1/jobs?id=eq.job-1')
-    expect(capturedInit?.method).toBe('PATCH')
+    expect(capturedUrl).toBe('https://example.supabase.co/rest/v1/rpc/update_job_status')
+    expect(capturedInit?.method).toBe('POST')
     expect(capturedInit?.headers as Record<string, string>).toMatchObject({
       apikey: 'anon-key',
       Authorization: 'Bearer live-session-token',

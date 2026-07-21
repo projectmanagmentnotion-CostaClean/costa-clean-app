@@ -12,6 +12,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
 import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import type { ClientListItem } from '../clients/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -217,7 +218,7 @@ export function PropertyDetailCard({
       }
 
       if (form.client_id !== property.client_id) {
-        await fetchAuthenticatedSupabaseWrite('rpc/reassign_property_client', {
+        await fetchAuthenticatedSupabaseWrite(operationalWriteRpcPaths.reassignProperty, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -231,21 +232,20 @@ export function PropertyDetailCard({
       }
 
       const updateResponse = await fetchAuthenticatedSupabaseWrite(
-        `properties?id=eq.${encodeURIComponent(property.id)}`,
+        operationalWriteRpcPaths.updateProperty,
         {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Prefer: 'return=representation',
-          },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            client_id: form.client_id,
-            name: form.name.trim(),
-            property_type: form.property_type,
-            address: form.address.trim(),
-            city: form.city.trim() || null,
-            postal_code: form.postal_code.trim() || null,
-            notes: form.notes.trim() || null,
+            p_property: {
+              id: property.id,
+              name: form.name.trim(),
+              property_type: form.property_type,
+              address: form.address.trim(),
+              city: form.city.trim() || null,
+              postal_code: form.postal_code.trim() || null,
+              notes: form.notes.trim() || null,
+            },
           }),
         },
       )

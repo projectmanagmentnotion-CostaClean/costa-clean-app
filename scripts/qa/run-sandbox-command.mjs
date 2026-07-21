@@ -19,6 +19,10 @@ const supportedCommands = new Set([
   'auth-rls-apply',
   'auth-rls-cleanup',
   'auth-rls-verify-clean',
+  'rls-fix-dry',
+  'rls-fix-apply',
+  'rls-fix-cleanup',
+  'rls-fix-verify-clean',
 ])
 
 if (!supportedCommands.has(commandName)) {
@@ -86,6 +90,18 @@ switch (commandName) {
     break
   case 'auth-rls-verify-clean':
     await run(nodeExecutable, ['scripts/qa/verify-authenticated-rls-writes.mjs', '--verify-clean'], sandboxEnv)
+    break
+  case 'rls-fix-dry':
+    await run(nodeExecutable, ['scripts/qa/verify-rls-write-fix.mjs', '--dry-run'], sandboxEnv)
+    break
+  case 'rls-fix-apply':
+    await run(nodeExecutable, ['scripts/qa/verify-rls-write-fix.mjs', '--apply'], sandboxEnv)
+    break
+  case 'rls-fix-cleanup':
+    await run(nodeExecutable, ['scripts/qa/verify-rls-write-fix.mjs', '--cleanup'], sandboxEnv)
+    break
+  case 'rls-fix-verify-clean':
+    await run(nodeExecutable, ['scripts/qa/verify-rls-write-fix.mjs', '--verify-clean'], sandboxEnv)
     break
   default:
     throw new Error(`Unsupported sandbox command "${commandName}".`)

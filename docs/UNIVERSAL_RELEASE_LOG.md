@@ -6,6 +6,19 @@ Registro transversal para cambios que adopten el sistema universal. Los proyecto
 
 ### Costa Clean
 
+#### 2026-07-21 - RLS and RPC Write Path Fix
+
+- fecha: 2026-07-21
+- proyecto: Costa Clean CRM
+- tipo: backend security / QA migration / frontend write path
+- resumen: replaces direct client/property/job-status REST writes with authenticated allowlisted RPCs, closes obsolete anon write policies, and hardens RPC execution grants
+- commit: commit of this delivery; final identifier is reported at close
+- validación: real QA writes persisted, exact cleanup returned both QA markers to 0, seed remained intact and financial tables stayed `0/0/0`; final app gates are recorded in the evidence
+- riesgo: current model is single-workspace and anon reads remain a separate privacy concern; production migration is a separate authorized gate
+- rollback: revert repository commit; QA schema rollback requires separately reviewed SQL and would restore the legacy insecure surface
+
+Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).
+
 #### 2026-07-21 - QA Authenticated RLS Write Verification
 
 - fecha: 2026-07-21

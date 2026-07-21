@@ -112,3 +112,9 @@ No se modificaron contratos, persistencia, Supabase, auth, facturación, cobros,
 La sesión real de QA se validó con HTTP 200 y bearer de usuario distinto de la anon key. `reassign_property_client` y `save_job_with_lines` persistieron correctamente. Los INSERT REST de cliente/propiedad devolvieron RLS `42501`; los PATCH REST de propiedad/estado devolvieron 200 con cero filas. El frontend ahora exige una representación de exactamente una fila para no declarar éxito falso. No se tocaron policies. Cleanup final: marcador temporal 0, seed demo intacto y finanzas `0/0/0`.
 
 Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md).
+
+## RLS/RPC closure — 2026-07-21
+
+The QA-only follow-up selected authenticated RPCs because the schema has no tenant ownership columns. Direct anon writes on clients/properties/jobs were closed, the affected frontend writes moved to allowlisted RPCs, and real QA persistence plus exact cleanup passed. Production was not changed.
+
+Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).

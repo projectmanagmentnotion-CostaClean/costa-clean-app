@@ -2,9 +2,9 @@
 
 ## Status - 2026-07-21
 
-- Current phase: Phase 1 configuration and isolation passed; blocked on QA schema delivery.
-- Available: isolated Supabase QA target, populated ignored `.env.qa.local`, matching fingerprint, `snapshot-restore` strategy, and isolated authenticated browser profile.
-- Missing: an authorized reviewed schema-only baseline, complete ordered migrations, synthetic seed, baseline capture, and executed restore proof.
+- Current phase: Phase 1 configuration and isolation passed; reviewed schema baseline prepared but not applied.
+- Available: isolated Supabase QA target, populated ignored `.env.qa.local`, matching fingerprint, `snapshot-restore` strategy, isolated authenticated browser profile, and `supabase/migrations/20260721_qa_baseline_schema.sql`.
+- Missing: authorized QA schema apply and verification, synthetic seed, baseline capture, and executed restore proof.
 - Executed: sandbox visual structure check and non-writing dry-run. The dry-run stopped at `489/510` because required application tables are absent.
 - Not started: seed/baseline, write-and-clean, full submit, and total reset.
 - Production remained untouched and no QA entities were created.
@@ -20,9 +20,9 @@ Exit gate: sandbox wrapper validates configuration without printing values; prod
 
 Current result: configuration and project separation pass, but Phase 1 cannot close until the reviewed application schema is present and its REST surface is verified.
 
-Repository audit result: classification `C`. The repo does not contain the core base table definitions, and a read-only QA probe reports all audited application tables missing. The next action is an authorized schema-only export and review, not execution of the loose historical SQL folder.
+Initial repository audit result: classification `C`. The reviewed export and baseline now raise readiness to `B`, while the read-only QA probe still reports the application tables missing because the migration has not been applied. The loose historical SQL folder remains prohibited as bootstrap input.
 
-Export preflight result: authorized but blocked before schema read. Database tooling and a DB password/connection string remain unavailable; the next action is the documented interactive schema-only export into an ignored private path.
+Export result: obtained with `pg_dump 17.10`; private safety review passed and the sanitized baseline was created. It contains no real data or secrets, and production was not modified. The next action is a separately authorized apply to QA followed by grants/REST verification. `recurring_invoice_plans` remains absent from the authoritative schema and is not invented.
 
 ## Phase 2 - Demo Seed And Baseline
 

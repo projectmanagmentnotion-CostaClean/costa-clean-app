@@ -2,106 +2,74 @@
 
 ## Verdict
 
-`BLOCKED BEFORE PRODUCTION SCHEMA READ`
+`PASS - REVIEWED QA BASELINE PREPARED; NOT APPLIED`
 
-The user authorized a production schema-only export, but this work PC does not currently have a complete safe export channel. No production schema was read, no dump was obtained, and no baseline migration was created.
+An authorized production schema-only export was obtained with `pg_dump 17.10`. The raw artifacts and connection input remain private and ignored. No rows were exported, production received no writes, and nothing was applied to Supabase QA.
 
-## Preflight Result
+## Export Result
 
 | Check | Result |
 | --- | --- |
-| Initial HEAD | `b14ec58f6642767a62660b5b2d889beca75071b0` |
-| Supabase CLI | unavailable |
-| `pg_dump` | unavailable |
-| `psql` | unavailable |
-| `supabase/config.toml` or local link metadata | absent |
-| Production public URL | present privately |
-| Production project ref | resolved privately and confirmed different from QA |
-| Supabase access token | present privately |
-| Database password | absent |
-| Database connection string | absent |
-| Existing repository export command | absent |
-| Private export directories | created and confirmed ignored |
+| Tool | `pg_dump 17.10` |
+| Full schema-only export | obtained privately |
+| Reviewed source | `public` schema-only export |
+| Flags | `--schema-only --schema=public --no-owner --no-privileges` |
+| Full dump size | 278388 bytes |
+| Public-only dump size | 116651 bytes |
+| Data rows exported | 0 |
+| Production modified | no |
+| QA modified | no |
 
-No values, project credentials, connection strings, or complete production URLs were printed.
+Credentials were supplied only through temporary process environment variables read from the ignored private input. They were not written to the command line, documentation, Git, or the baseline.
 
-## Export Method Used
+## Private Safety Review
 
-None. The repository has no export wrapper and the required database tooling is unavailable. The existing access token was not used to guess, recover, rotate, or synthesize a database password.
+Result: `PASS`.
 
-Supabase documents `supabase db dump` as a schema dump by default, excluding managed schemas such as auth and storage. It requires a linked remote project or an explicit DB URL. A remote link/dump may request the database password. That prerequisite is not satisfied here.
+- top-level `INSERT INTO`: 0
+- `COPY ... FROM stdin`: 0
+- data sections: 0
+- sequence `setval`: 0
+- emails, JWTs, connection strings, private keys, and secret assignments: 0
+- auth users and storage row data: 0
+- owners and ACLs: excluded by export flags
 
-## Safety Review
+The reviewed dump contains 13 `INSERT INTO` occurrences inside PL/pgSQL function bodies. These are application RPC definitions, not exported rows and not data statements executed while installing the schema.
 
-- Raw export obtained: no
-- `INSERT INTO` scan: not applicable
-- `COPY ... FROM stdin` scan: not applicable
-- Personal-data pattern scan: not applicable
-- Secret pattern scan: not applicable
-- `CREATE TABLE`, functions, policies, and triggers inventoried from export: not applicable
-- Data rows included: no, because no export was run
+The private report is stored at `qa-reports/private/schema-export/schema-only-safety-review.md` and remains ignored.
 
-A private preflight report was written to `qa-reports/private/schema-export/schema-only-safety-review.md`; it remains ignored by Git.
+## Versioned Baseline
 
-## Baseline Migration
+Created: `supabase/migrations/20260721_qa_baseline_schema.sql`.
 
-No `20260721_qa_baseline_schema.sql` migration was created. Producing one without the authoritative export would repeat the speculative reconstruction already rejected by the schema-gap audit.
+The baseline contains:
 
-Tables included: none. The required runtime inventory remains documented in `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
+- 17 `public` tables
+- 40 functions, plus `save_invoice_with_lines(jsonb, jsonb)` supplied by the earlier `20260707` migration
+- 8 sequences with no production sequence state
+- 43 indexes
+- 45 RLS policies
+- 15 triggers
 
-## Exact Authorized Manual Export Procedure
+Sanitization removed PostgreSQL 17 client metacommands, `CREATE SCHEMA public`, the PostgreSQL 17-only `transaction_timeout` setting, and the duplicate invoice function. Managed Supabase schemas, owners, ACLs, credentials, connection strings, tokens, row data, and production sequence values are absent.
 
-Use an authorized operator on this work PC or another controlled machine. Do not paste credentials into chat, source files, shell history, or versioned environment files.
+## Known Gap And Apply Preconditions
 
-1. Install the official Supabase CLI using a supported method, or make a compatible `pg_dump` available.
-2. Work inside `.project-agent/private/schema-export/`; do not initialize/link Supabase at the repository root.
-3. Authenticate interactively with the authorized production account.
-4. Link the temporary private working directory to the production project using its private project ref. Confirm visibly that it is not QA ref `kpvvydthlxupjjqqdpxy`.
-5. Enter the production database password only through the CLI's secure interactive prompt or an approved ephemeral secret mechanism.
-6. Run the equivalent of:
+The authoritative production `public` schema does not contain `recurring_invoice_plans`, although current runtime code references it. The baseline does not invent the missing contract. Recurring-invoice functionality must remain blocked or receive a separately reviewed schema decision.
 
-   ```text
-   supabase db dump --linked --schema public --file production-schema-only.sql
-   ```
+Because the requested export excluded privileges, the QA apply gate must verify the effective Supabase default privileges and REST access after migration. A baseline file is not proof that QA is ready.
 
-7. Do not add `--data-only`, `--use-copy`, `--include-seed`, or any option that exports rows.
-8. Leave the raw file at `.project-agent/private/schema-export/production-schema-only.sql` and verify `git check-ignore` succeeds.
-9. Do not run `db push`, `db reset`, `db pull`, migration repair, SQL Editor writes, or any command against QA in this gate.
+## Safety Accounting
 
-Alternative with an authorized connection string:
-
-```text
-pg_dump --schema-only --schema=public --no-owner --file=production-schema-only.sql <private-connection>
-```
-
-The connection must be supplied privately and must never be embedded in the command saved to history, documentation, or Git.
-
-## Required Review After The File Exists
-
-Before creating a versioned baseline:
-
-1. reject any top-level `COPY`, data `INSERT`, sequence `setval` tied to production state, or real row payload;
-2. scan for emails, phone numbers, names, addresses, invoice values, tokens, passwords, and connection strings;
-3. inventory tables, columns, types, defaults, PK/FK, indexes, constraints, functions, triggers, policies, grants, enums, extensions, and sequences;
-4. distinguish SQL statements inside function bodies from exported table rows;
-5. remove incompatible owners and production-specific grants only through a reviewed patch;
-6. compare the export with the runtime contract and later reviewed SQL patches;
-7. stop on financial-numbering state, production regularizations, ambiguous function versions, or any personal data.
-
-Because application RPC bodies legitimately contain `INSERT INTO`, a literal match must trigger manual review and block automatic conversion; it must not be silently deleted or mistaken for exported rows.
-
-## Production Safety
-
-- Production schema read: no
-- Production modified: no
-- Production writes: 0
-- Production invoices issued: 0
-- Production payments recorded: 0
-- Production financial writes: 0
-- Full-submit: not executed
-- Reset: not executed
-- Secrets printed or versioned: 0
+- production writes: 0
+- production invoices issued: 0
+- production payments recorded: 0
+- financial writes: 0
+- data rows exported: 0
+- secrets versioned: 0
+- full-submit: not executed
+- reset: not executed
 
 ## Next Gate
 
-Provide the schema-only file in the expected ignored path or make the official CLI plus authorized database password available interactively. The next sprint must perform the private safety review and may prepare—but must not apply—the ordered QA baseline migration.
+Apply the reviewed baseline to the isolated Supabase QA project only after separate authorization. Then verify migration ordering, effective grants, REST schema visibility, the known recurring-plan gap, and zero production targeting. Do not seed, full-submit, issue invoices, record payments, or reset until their later gates are explicitly approved.

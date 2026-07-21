@@ -472,8 +472,8 @@ Status note:
 
 - `main` was synchronized by fast-forward to `a42bad7`, matching `origin/main`, with no local changes overwritten.
 - The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
-- The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are now validated. Full-flow submit remains blocked because the required application tables, synthetic seed, baseline, and executed restore proof are absent.
-- The next recommended sprint is controlled QA schema delivery and verification, followed by synthetic seed, baseline, and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
+- The isolated Supabase QA target, ignored configuration, fingerprint guard, auth profile, and `snapshot-restore` strategy are validated. A reviewed baseline now exists, but full-flow submit remains blocked because QA apply, synthetic seed, baseline capture, and executed restore proof are absent.
+- The next recommended sprint is the separately authorized QA baseline apply and verification, followed by synthetic seed, baseline capture, and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
 
 ## Full-Flow Sandbox Attempt - 2026-07-21
 
@@ -484,15 +484,16 @@ Status note:
 
 ## QA Schema Delivery Audit - 2026-07-21
 
-- Schema reproducibility is classified `C`: the repository has one formal dependent migration and a loose incremental SQL inventory, but no complete base schema.
+- The initial audit classified reproducibility as `C`; the reviewed baseline now changes readiness to `B - baseline prepared, not applied`.
 - A read-only probe against the validated QA ref reports every audited application table missing from the REST schema cache.
 - No schema, migration, RPC, policy, trigger, seed, full-submit, or reset was executed.
-- The next bounded gate is an explicitly authorized schema-only export from a known-good authoritative environment, private review, and conversion into an ordered migration baseline before any QA schema mutation.
+- The next bounded gate is a separately authorized baseline apply to the isolated QA project, followed by migration-order, grants, and REST verification.
 - Evidence: `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
 
 ## Production Schema-Only Export Preflight - 2026-07-21
 
-- The schema-only export was explicitly authorized, but no production schema read occurred because the required CLI/`pg_dump` tooling and database password/connection string are unavailable.
-- Private ignored export/review directories are ready; no dump or baseline migration exists.
-- The next gate is an interactive authorized export followed by private data-safety and schema review. Applying the future baseline to QA remains a separately authorized sprint.
+- The authorized schema-only export was obtained with `pg_dump 17.10`; no rows were exported and production received no writes.
+- The private safety review passed and `supabase/migrations/20260721_qa_baseline_schema.sql` was created without secrets, owners, ACLs, managed schemas, or production sequence state.
+- The authoritative schema lacks `recurring_invoice_plans`; the baseline records rather than invents that gap.
+- The next gate is a separately authorized baseline apply to QA, followed by migration-order, grants, and REST verification. No QA mutation occurred in this sprint.
 - Evidence: `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

@@ -6,6 +6,12 @@
 
 The isolated Supabase QA target is configured and reachable. Authentication and the responsive application shell were validated, but the target does not contain the required application tables. The dry-run therefore did not pass and no baseline, write-clean, full-submit, destructive reset, invoice, payment, or fiscal write was attempted.
 
+## Schema Baseline Follow-Up
+
+A later authorized read-only gate obtained a production schema-only export with `pg_dump 17.10`. Its private safety review passed and the sanitized baseline `supabase/migrations/20260721_qa_baseline_schema.sql` was created. It contains no real data or secrets, production was not modified, and the migration has not been applied to QA.
+
+The next gate is a separately authorized baseline apply to the isolated QA target, followed by REST/grant verification. Full-submit, invoices, payments, seed, and reset remain blocked. The authoritative export does not contain `recurring_invoice_plans`, so that runtime surface remains an explicit schema gap.
+
 ## Repository And Environment
 
 - Branch: `main`
@@ -65,7 +71,7 @@ The missing context records and unavailable dependent flows are consistent with 
 | Data-backed visual readiness | Failed: required tables absent |
 | Sandbox dry-run | Failed: 489/510 checks |
 | Created sandbox entities | 0 |
-| Baseline proof | Not generated because visual data readiness and dry-run did not pass |
+| Baseline proof | Reviewed schema-only migration prepared; not applied to QA |
 | Write-and-clean | Not run |
 | Full-submit | Not run |
 | Destructive reset | Not run |
@@ -90,14 +96,14 @@ No full-submit or destructive reset command is authorized by this result.
 
 ## Schema Reproducibility Audit
 
-The follow-up repository audit classified schema reproducibility as `C - not reproducible from the repository`.
+The initial repository audit classified schema reproducibility as `C - not reproducible from the repository`. The later reviewed export raises readiness to `B - baseline prepared; QA not yet mutated`.
 
 - The sole formal migration only replaces an invoice RPC and assumes the base schema.
 - Loose SQL creates some later tables, functions, triggers, and policies, but does not create the core base tables.
 - A safe read-only QA probe confirmed all 17 audited application tables are absent from the REST schema cache.
-- Supabase CLI, project config, deployment credentials, deterministic seed, and a reviewed schema dump are unavailable on this work PC.
-- No schema was applied and no post-schema visual QA, dry-run, or baseline was run.
+- The original audit lacked tooling and a reviewed schema dump; `pg_dump 17.10` and a private Session pooler input later closed the export prerequisite.
+- No schema was applied and no post-schema visual QA or dry-run rerun was performed. The baseline file is prepared only.
 
 Detailed evidence and the controlled schema-only export gate are in `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
 
-The authorized export preflight did not access production schema: required database tooling and DB credentials are unavailable. No dump, sanitized baseline, QA apply, visual rerun, dry-run rerun, or baseline proof was produced. See `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.
+The authorized read-only export later succeeded, the private safety review passed, and the sanitized baseline was produced. QA apply, visual rerun, dry-run rerun, seed, full-submit, and reset remain pending separate gates. See `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

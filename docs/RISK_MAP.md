@@ -170,3 +170,6 @@
 - Ejecutar `sql/` en orden de nombre podria mezclar creacion parcial, hardening y regularizaciones productivas; el siguiente gate seguro es export schema-only autorizado, revision y conversion a baseline ordenada.
 - Un access token de plataforma no sustituye el password/connection string requerido para un dump DB verificable; no debe usarse para recuperar, rotar o inventar credenciales.
 - Los RPCs schema-only pueden contener `INSERT INTO` dentro del cuerpo de funciones. Ese match exige revision manual para distinguir codigo de funcion frente a filas exportadas y bloquea una conversion automatica ingenua.
+- El baseline revisado ya existe, pero no incluye `recurring_invoice_plans` porque tampoco existe en el schema productivo exportado; inventarlo cerraria falsamente el gap y podria activar automatizacion financiera sin contrato real.
+- El export solicitado usa `--no-privileges`; antes de declarar QA operativa se deben verificar grants efectivos y visibilidad REST tras el apply, sin asumir que las policies por si solas conceden acceso.
+- `supabase/migrations/20260721_qa_baseline_schema.sql` es una baseline exclusiva de QA y no debe aplicarse a produccion, donde los objetos ya existen.

@@ -2,9 +2,23 @@
 
 ## Verdict
 
-`C - SCHEMA NOT REPRODUCIBLE FROM THE REPOSITORY`
+`B - REVIEWED BASELINE PREPARED; QA NOT YET MUTATED`
 
-The isolated QA project is reachable and its fingerprint is valid, but the repository does not contain a complete reviewed migration history or schema dump capable of creating the application's database contract. No SQL, migration, RPC, policy, trigger, seed, or production export was applied in this sprint.
+The isolated QA project is reachable and its fingerprint is valid. A reviewed production `public` schema-only export has now been converted into `supabase/migrations/20260721_qa_baseline_schema.sql`; it has not been applied to QA. The historical audit below remains useful evidence of why the loose SQL folder must not be used as bootstrap input.
+
+## Schema-Only Export Follow-Up
+
+- export obtained: yes, with `pg_dump 17.10`
+- private safety review: passed
+- baseline migration created: yes
+- real data included: no
+- production modified: no
+- QA modified: no
+- next gate: separately authorized baseline apply to Supabase QA
+
+The baseline reproduces the 17 tables present in the authoritative production `public` schema, plus functions, sequences without state, indexes, policies, and triggers. It deliberately excludes managed schemas, owners, ACLs, row data, production sequence state, and secrets.
+
+One runtime gap remains authoritative rather than speculative: `recurring_invoice_plans` is referenced by the app but absent from the production export. It is therefore not invented in the baseline and must remain a blocked capability pending a reviewed contract.
 
 ## Evidence And Target Guardrails
 
@@ -167,16 +181,16 @@ Obtain a reviewed **schema-only** export from the authoritative Supabase project
 6. rerun the QA fingerprint checker immediately before any push;
 7. require separate authorization for the external QA schema mutation.
 
-Production was not read, exported, changed, or used as a migration destination in this sprint.
+Production was not changed or used as a migration destination in the original audit. A later explicitly authorized read-only schema export supplied the reviewed baseline described below.
 
-## Authorized Export Preflight Follow-Up
+## Authorized Export Follow-Up
 
-The user subsequently authorized a schema-only production export, but the local preflight stopped before any schema read:
+The user subsequently authorized a schema-only production export. `pg_dump 17.10` completed through the Session pooler using private ignored credentials; the `public`-only safety review passed and the sanitized baseline migration was created.
 
-- Supabase CLI, `pg_dump`, and `psql` are unavailable.
-- There is no local Supabase link/configuration or repository export command.
-- A private access token exists, but no database password or connection string is available.
-- Private export/review directories are present and ignored.
-- No raw dump or baseline migration was created.
+- data rows exported: 0
+- production writes: 0
+- secrets versioned: 0
+- QA schema writes: 0
+- baseline applied: no
 
-Exact interactive instructions and the pending safety-review contract are documented in `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.
+The completed review and the separate QA-apply gate are documented in `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

@@ -320,3 +320,7 @@ For roadmap-closeout or phase-closeout work:
 - La mutacion externa del schema QA requiere autorizacion separada incluso cuando el fingerprint ya haya pasado.
 - El preflight de export debe comprobar CLI, link, DB password/connection y ruta ignorada sin imprimir valores; un access token aislado no autoriza recuperar o cambiar el password DB.
 - Un dump inexistente no permite declarar safety review ni generar baseline. Las instrucciones manuales deben ser el resultado honesto del gate.
+- El export `public` revisado con `pg_dump 17.10` pasa solo si no contiene filas, `COPY`, `setval`, secretos, owners, ACLs ni DDL de schemas administrados; DML dentro de cuerpos de funciones debe clasificarse manualmente y no confundirse con datos exportados.
+- La baseline preparada no autoriza `db push`: aplicar a QA requiere una aprobacion separada, rerun inmediato del fingerprint y verificacion posterior de tablas, funciones, policies, grants y REST schema cache.
+- Un contrato ausente en el schema autoritativo, como `recurring_invoice_plans`, permanece bloqueado; el gate prohibe inventarlo para conseguir un full-flow verde.
+- Estado actual: export obtenido, safety review pasado, baseline creada, datos reales incluidos `NO`, produccion modificada `NO`, QA modificada `NO`; siguiente gate: aplicar baseline a Supabase QA con autorizacion expresa.

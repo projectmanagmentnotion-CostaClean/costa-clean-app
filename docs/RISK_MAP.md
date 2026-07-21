@@ -156,3 +156,11 @@
 - La mitigacion actual es copy explicito, CTA de servicio recurrente deshabilitado y skip estable en dry-run.
 - Los flows desde cliente e inmueble dependen de conservar sus query params; el agente los valida antes, durante y despues de cancelar.
 - Una preferencia legacy de lista puede ocultar la agenda proxima; Jobs usa una clave versionada con `Proximos` como lectura inicial.
+
+## Riesgos de provisionamiento full-flow sandbox - 2026-07-21
+
+- El repo tiene muchos SQL historicos fuera de `supabase/migrations`; aplicar esa carpeta completa a un QA nuevo podria ejecutar regularizaciones obsoletas o dependientes de datos productivos.
+- Una branch Supabase puede quedar aislada pero incompleta si la historia de migraciones no reproduce el schema vivo; debe verificarse antes de auth o seed.
+- Un proyecto separado sin snapshot/branch baseline no demuestra restaurabilidad aunque acepte writes.
+- Clonar backups puede copiar datos y auth productivos y puede implicar coste; no es una via autorizada para seed sintetico sin decision expresa del propietario.
+- `.env.local` contiene superficie privada y no puede reutilizarse como `.env.qa.local`; el checker solo compara el fingerprint publico en memoria y nunca imprime valores.

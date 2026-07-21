@@ -474,3 +474,10 @@ Status note:
 - The Recurring Operations and Service Scheduling sprint is complete at the current UX and dry-run scope: upcoming agenda, operational states, contextual client/property flows, and the explicit recurrence-contract skip are in place.
 - The QA sandbox blueprint, seed plan, reset plan, wrappers, and guardrails are complete; full-flow submit remains blocked until a separate disposable/restorable Supabase QA target and ignored `.env.qa.local` exist.
 - The next recommended sprint is isolated Supabase QA provisioning plus baseline and restore proof. Real service recurrence remains a separate future domain-contract sprint and must not be simulated with recurring invoice plans.
+
+## Full-Flow Sandbox Attempt - 2026-07-21
+
+- Phase 1 remains blocked before sandbox access: the ignored `.env.qa.local` template is unconfigured, and a Supabase CLI/project link, isolated auth, and a proven restore operator are absent on the work PC.
+- A safe local readiness command and exact private setup instructions are prepared; no full-submit command was enabled.
+- Phases 2-6 remain not started. Invoice, payment, cancellation, numbering, and fiscal writes stay blocked until a complete QA schema, synthetic seed, baseline, restore execution, and post-reset proof exist.
+- Evidence: `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.

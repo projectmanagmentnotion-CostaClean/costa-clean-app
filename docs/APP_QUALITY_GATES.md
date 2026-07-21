@@ -301,3 +301,11 @@ For roadmap-closeout or phase-closeout work:
 - Si no existe contrato de recurrencia de visitas, la UI debe explicarlo y el agente debe registrar un skip con razon estable.
 - No se inventan rutas, writes, SQL, RPC ni fechas recurrentes para cerrar una auditoria UX.
 - El alta contextual de servicio debe conservar cliente o inmueble al abrir y al cancelar.
+
+## Sandbox Provisioning Readiness Gate - 2026-07-21
+
+- La existencia de `.env.qa.local` no demuestra por si sola un sandbox: el fingerprint debe coincidir con `QA_SANDBOX_PROJECT_REF` y diferir del proyecto local de referencia.
+- `.env.qa.local` no puede contener nombres ni valores de service-role, secret keys, passwords, access tokens o connection strings.
+- Antes de auth o dry-run debe existir un schema QA completo y revisado; una branch vacia o parcialmente migrada falla el gate.
+- Antes de cualquier write debe existir seed sintetico, baseline privado y side effects externos deshabilitados o sandboxed.
+- Full-submit sigue bloqueado hasta demostrar restore/discard y comparacion post-reset; un flag no sustituye esa evidencia.

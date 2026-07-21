@@ -136,3 +136,9 @@
 - `UX-008` queda reducido en densidad y navegacion contextual: Jobs abre con agenda proxima, estados operativos y un CTA dominante.
 - La recurrencia de servicios sigue abierta como deuda de dominio; la app solo tiene automatizacion de facturas y ahora ambas capacidades quedan diferenciadas.
 - No se debe cerrar esta deuda creando UI simulada sobre `recurring_invoice_plans`; requiere contrato, sandbox y sprint de persistencia propios.
+
+## Full-Flow Sandbox QA - 2026-07-21
+
+- La deuda ya no es de apertura/cancelacion de flows, sino de evidencia real de persistencia, relaciones y reset en un entorno aislado.
+- Factura, cobro y cancelacion siguen sin cobertura de submit real porque no existe sandbox provisionado, baseline, reset probado ni serie fiscal QA.
+- No se debe cerrar esta deuda ampliando allowlists o simulando success states; requiere primero infraestructura QA restaurable y schema verificado.

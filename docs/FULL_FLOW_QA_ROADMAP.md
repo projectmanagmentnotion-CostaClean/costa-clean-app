@@ -1,5 +1,13 @@
 # Full-Flow QA Roadmap
 
+## Status - 2026-07-21
+
+- Current phase: Phase 1, blocked before sandbox access.
+- Missing: isolated Supabase QA target, populated `.env.qa.local`, dedicated auth, complete schema proof, and approved restore operator.
+- Prepared: `npm run qa:sandbox:check` and `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md`.
+- Not started: seed/baseline, sandbox dry-run, write-and-clean, full submit, and total reset.
+- Production remained untouched and no QA entities were created.
+
 ## Phase 1 - Sandbox Provisioning
 
 - Create a separate Supabase QA project or disposable branch manually.

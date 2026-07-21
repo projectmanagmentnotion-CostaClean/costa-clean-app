@@ -78,6 +78,7 @@ QA fiscal numbering must use a sandbox-only series and datastore. QA numbers mus
 The repository provides wrappers that load `.env.qa.local`, reject privileged keys, validate the Supabase project fingerprint, set `QA_ENV=sandbox`, isolate auth under `.auth/sandbox/`, and never print values:
 
 ```text
+npm run qa:sandbox:check
 npm run qa:preview:sandbox
 npm run qa:auth:sandbox
 npm run qa:visual:sandbox
@@ -86,6 +87,8 @@ npm run qa:flow:sandbox:write-clean
 ```
 
 There is deliberately no full-submit command. Its prepared policy requires `QA_ENV=sandbox`, a matching public project fingerprint, both explicit allow flags, a `QA-AUTO` run ID, `registry-and-reset` cleanup, and an approved reset strategy. It remains blocked until sandbox provisioning, baseline capture, reset execution, and post-reset verification are implemented and separately approved.
+
+The readiness checker validates only private configuration and project separation. It does not prove schema completeness, seed safety, baseline availability, restoration, or permission to write. Manual setup and the current provisioning stop are documented in `docs/QA_SANDBOX_PRIVATE_SETUP_INSTRUCTIONS.md` and `docs/FULL_FLOW_SANDBOX_QA_20260721.md`.
 
 ## Closure Criteria
 

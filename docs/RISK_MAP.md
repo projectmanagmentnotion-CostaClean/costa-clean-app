@@ -168,3 +168,5 @@
 - El dry-run queda bloqueado en `489/510`; aplicar SQL historico para completar el schema sin revision sigue fuera de alcance y podria reproducir contratos obsoletos.
 - La auditoria de bootstrap confirma que faltan `CREATE TABLE` para las ocho tablas base principales y que varias RPC financieras tienen reemplazos sucesivos sin una cadena formal de migraciones.
 - Ejecutar `sql/` en orden de nombre podria mezclar creacion parcial, hardening y regularizaciones productivas; el siguiente gate seguro es export schema-only autorizado, revision y conversion a baseline ordenada.
+- Un access token de plataforma no sustituye el password/connection string requerido para un dump DB verificable; no debe usarse para recuperar, rotar o inventar credenciales.
+- Los RPCs schema-only pueden contener `INSERT INTO` dentro del cuerpo de funciones. Ese match exige revision manual para distinguir codigo de funcion frente a filas exportadas y bloquea una conversion automatica ingenua.

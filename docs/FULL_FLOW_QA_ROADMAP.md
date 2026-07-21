@@ -22,6 +22,8 @@ Current result: configuration and project separation pass, but Phase 1 cannot cl
 
 Repository audit result: classification `C`. The repo does not contain the core base table definitions, and a read-only QA probe reports all audited application tables missing. The next action is an authorized schema-only export and review, not execution of the loose historical SQL folder.
 
+Export preflight result: authorized but blocked before schema read. Database tooling and a DB password/connection string remain unavailable; the next action is the documented interactive schema-only export into an ignored private path.
+
 ## Phase 2 - Demo Seed And Baseline
 
 - Implement deterministic synthetic seed data.

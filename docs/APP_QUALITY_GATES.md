@@ -318,3 +318,5 @@ For roadmap-closeout or phase-closeout work:
 - SQL de regularizacion productiva, renumeracion o correccion de datos no puede formar parte del bootstrap QA.
 - Un export schema-only debe excluir filas, auth users, secretos y datos de storage, y requiere revision antes de convertirse en migracion.
 - La mutacion externa del schema QA requiere autorizacion separada incluso cuando el fingerprint ya haya pasado.
+- El preflight de export debe comprobar CLI, link, DB password/connection y ruta ignorada sin imprimir valores; un access token aislado no autoriza recuperar o cambiar el password DB.
+- Un dump inexistente no permite declarar safety review ni generar baseline. Las instrucciones manuales deben ser el resultado honesto del gate.

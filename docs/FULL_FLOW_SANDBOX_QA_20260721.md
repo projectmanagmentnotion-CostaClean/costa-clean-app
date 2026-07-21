@@ -99,3 +99,5 @@ The follow-up repository audit classified schema reproducibility as `C - not rep
 - No schema was applied and no post-schema visual QA, dry-run, or baseline was run.
 
 Detailed evidence and the controlled schema-only export gate are in `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
+
+The authorized export preflight did not access production schema: required database tooling and DB credentials are unavailable. No dump, sanitized baseline, QA apply, visual rerun, dry-run rerun, or baseline proof was produced. See `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

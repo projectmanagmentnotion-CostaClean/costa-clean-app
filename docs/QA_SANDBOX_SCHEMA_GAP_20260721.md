@@ -168,3 +168,15 @@ Obtain a reviewed **schema-only** export from the authoritative Supabase project
 7. require separate authorization for the external QA schema mutation.
 
 Production was not read, exported, changed, or used as a migration destination in this sprint.
+
+## Authorized Export Preflight Follow-Up
+
+The user subsequently authorized a schema-only production export, but the local preflight stopped before any schema read:
+
+- Supabase CLI, `pg_dump`, and `psql` are unavailable.
+- There is no local Supabase link/configuration or repository export command.
+- A private access token exists, but no database password or connection string is available.
+- Private export/review directories are present and ignored.
+- No raw dump or baseline migration was created.
+
+Exact interactive instructions and the pending safety-review contract are documented in `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

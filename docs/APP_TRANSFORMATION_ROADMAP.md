@@ -489,3 +489,10 @@ Status note:
 - No schema, migration, RPC, policy, trigger, seed, full-submit, or reset was executed.
 - The next bounded gate is an explicitly authorized schema-only export from a known-good authoritative environment, private review, and conversion into an ordered migration baseline before any QA schema mutation.
 - Evidence: `docs/QA_SANDBOX_SCHEMA_GAP_20260721.md`.
+
+## Production Schema-Only Export Preflight - 2026-07-21
+
+- The schema-only export was explicitly authorized, but no production schema read occurred because the required CLI/`pg_dump` tooling and database password/connection string are unavailable.
+- Private ignored export/review directories are ready; no dump or baseline migration exists.
+- The next gate is an interactive authorized export followed by private data-safety and schema review. Applying the future baseline to QA remains a separately authorized sprint.
+- Evidence: `docs/QA_SCHEMA_BASELINE_REVIEW_20260721.md`.

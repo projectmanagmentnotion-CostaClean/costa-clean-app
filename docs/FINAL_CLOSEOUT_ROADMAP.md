@@ -4,7 +4,7 @@
 
 The separately authorized production metadata-only repair is PASS. Production now records exactly the three canonical incrementals; QA baseline and unknown versions are absent. Public schema fingerprint, 17 table counts, nine sequences and invoice identifiers remained unchanged. QA was not modified. `db push` remains locked because legacy history and the physical migration directory still lack a proven CLI zero-SQL transition. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
-Gate 3, Workspace / Tenancy / Ownership Security Model, is now closed by source/catalog-evidence audit and versioned decision documentation. The current model is accepted only while Costa Clean remains one mutually trusted workspace; another company or differently trusted users require a separately authorized ownership model first. Gate 4, Public Quiz RPC Abuse Protection, is the next active gate. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
+Gate 3 is closed and published. Gate 4A, Public Quiz RPC Abuse Protection audit/design, is also closed source-only. Gate 4B QA implementation is the next active gate and is blocked pending explicit QA/provider/privacy/secrets authorization. Gate 4C production remains independently blocked. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md) and [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
 
 ## Historical production metadata authorization package - 2026-07-22
 
@@ -149,7 +149,7 @@ Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TEN
 
 ### Gate 4 — Public Quiz RPC Abuse Protection
 
-**Estado actual:** Ready — next active gate. Not started by Gate 3.
+**Estado actual:** Gate 4A audit/design DONE. Gate 4B QA implementation BLOCKED pending authorization. Gate 4C production BLOCKED pending QA PASS and separate authorization.
 
 Objetivo:
 
@@ -222,6 +222,6 @@ El roadmap final queda cerrado cuando:
 
 ## Próxima acción
 
-Gate 3 is closed at the documentary/source-evidence level. The next active gate is Gate 4, Public Quiz RPC Abuse Protection. It must remain a separate QA-first security gate and must not reopen anonymous table history, tenancy implementation, protected financial behavior, migration repair, or `db push`.
+Gate 3 and Gate 4A are closed. The next active gate is Gate 4B, QA-only implementation of the reviewed Turnstile + Edge + private RPC design. It must not start without the exact authorization and external prerequisites in the Gate 4A package. Gate 4C production remains separate and blocked.
 
 Gate 1 historical proof limits and the completed QA/production metadata evidence remain preserved. The database-push lock remains active. The unrelated `358/360` visual/harness residual from the production metadata gate also remains open and separate; Gate 3 does not resolve it.

@@ -33,7 +33,7 @@ Primary files:
 
 ## Current gate after production metadata repair - 2026-07-22
 
-The separately authorized production metadata-only repair is complete and verified. Do not repeat it, do not execute rollback, and do not infer that `db push` is safe. Gate 3 is also complete at the source/catalog-evidence and documentary decision level. The current model is accepted only for one mutually trusted Costa Clean workspace; another company or differently trusted users require a separately authorized ownership model before onboarding. Gate 4, Public Quiz RPC Abuse Protection, is next and was not started by Gate 3. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md) and [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
+The production metadata-only repair and Gate 3 are complete. Gate 4A source audit/design is complete with Turnstile + Edge + private RPC recommended. Gate 4B is next but blocked pending explicit QA/provider/privacy/secrets authorization; Gate 4C production requires a later independent authorization. Do not repeat prior gates or infer that `db push` is safe. Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
 
 ## Historical production metadata block - superseded 2026-07-22
 
@@ -55,7 +55,9 @@ Expected behavior:
 Current continuation:
 
 - Gate 3: complete; do not reopen tenancy implementation without separate schema/Auth/policy authorization.
-- Gate 4: next active gate; keep it QA-first and bounded to public quiz RPC abuse protection.
+- Gate 4A: complete, source-only.
+- Gate 4B: next active gate, blocked until exact QA/provider/privacy/secrets authorization; do not implement or simulate it.
+- Gate 4C: production blocked until Gate 4B QA PASS and separate authorization.
 - Gate 5: later; do not begin it during Gate 3 or Gate 4.
 
 ## Completion format

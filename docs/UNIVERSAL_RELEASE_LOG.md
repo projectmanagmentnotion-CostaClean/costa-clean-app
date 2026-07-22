@@ -1,5 +1,14 @@
 # Universal Release Log
 
+## 2026-07-22 — Gate 4A public quiz abuse-protection design
+
+- tipo: security design / documentation only
+- resumen: audits the anonymous quiz RPC and selects Turnstile Managed + Supabase Edge Function + private transactional RPC with privacy-preserving throttling
+- producción/QA/schema/data/code/provider: unchanged
+- coste estimado: EUR 0/month inside current free quotas; no paid overage authorized
+- estado: Gate 4A DONE; Gate 4B QA BLOCKED pending explicit provider/privacy/secrets authorization; Gate 4C production BLOCKED
+- evidencia: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md)
+
 ## 2026-07-22 - Costa Clean App - production migration metadata repair gate
 
 - tipo: production operational metadata repair

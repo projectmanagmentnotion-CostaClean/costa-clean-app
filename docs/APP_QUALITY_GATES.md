@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Gate 4A — public quiz RPC abuse-protection design — DONE 2026-07-22
+
+- Source-only: no QA/production/RPC/schema/provider mutation.
+- Current contract, grants, table, frontend call and missing controls audited.
+- Recommended architecture: Turnstile server validation + Edge ingress + private transactional RPC + short-lived peppered-HMAC throttling.
+- Gate 4B cannot pass without exact target/hash/backup proof, strict payload boundaries, server-authoritative scoring, direct RPC denial, anonymous-history denial, replay/burst/provider-outage tests, privacy-safe logs and complete synthetic cleanup.
+- Gate 4B QA and Gate 4C production each require separate authorization. `db push` remains locked.
+- Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
+
 ## Production Migration Metadata Repair Gate - 2026-07-22
 
 - Execution requires exact separate user authorization, triple production identity, fresh private rollback and canonical hash allowlist.

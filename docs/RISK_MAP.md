@@ -1,5 +1,14 @@
 # Risk Map
 
+## Public quiz anonymous submission abuse — Gate 4A design 2026-07-22
+
+- Current public RPC has useful field/result consistency checks but no authoritative answer validation, byte/depth/cardinality limit, burst/cooldown, replay control, provider challenge, retention or privacy-safe telemetry.
+- Raw PostgREST error text is exposed to the visitor and the full inserted row is returned.
+- Recommended Gate 4B architecture is Turnstile Managed + Supabase Edge Function + private transactional RPC, with short-lived peppered-HMAC DB rate buckets and no clear IP/token/payload logs.
+- Gate 4A is documentation-only DONE. Gate 4B QA and Gate 4C production remain separately blocked.
+- Upstash is deferred unless observed distributed traffic justifies another processor/cost/secret. Estimated initial recurring cost is zero only inside current provider quotas.
+- Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUDIT_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUDIT_20260722.md) and [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_IMPLEMENTATION_PLAN_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_IMPLEMENTATION_PLAN_20260722.md).
+
 ## Workspace / tenancy / ownership residual risk - Gate 3 closure 2026-07-22
 
 - Gate 3 is closed by source/catalog-evidence audit, not by implementing tenant isolation or roles.

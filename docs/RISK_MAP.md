@@ -227,3 +227,15 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - The migration was applied through direct `psql`; Supabase migration-history reconciliation remains mandatory before any future `db push`.
 - Emergency rollback recreates six anonymous write policies and broad legacy RPC execution. It is security-regressive, requires frontend coordination, and must not be used without an explicit production incident decision.
 - Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).
+
+## Anonymous read and public exposure risk - 2026-07-22
+
+- **P0:** QA and production expose ten tables through anon-applicable `SELECT USING (true)` policies: `clients`, `properties`, `leads`, `invoices`, `invoice_lines`, `payments`, `quotes`, `quote_lines`, `jobs`, and `public_gym_manual_quiz_attempts`.
+- Personal, address, employee, commercial, payment, and fiscal fields are included. RLS is active but ineffective for confidentiality on these policies.
+- The authenticated shell is not a boundary for REST: the shared read helper falls back to the anon key and the ten endpoints answer HTTP 200 under anon in both environments.
+- Production exposes 12 non-trigger functions to anon EXECUTE; two can return client fiscal/PII snapshots, two inspect invoice sequence state, and protected write RPCs retain unnecessary public grants despite internal auth guards.
+- QA exposes 24 non-trigger functions to anon EXECUTE. The additional protected workflows have source-level auth guards, but QA must converge to an explicit allowlist before it can validate closure.
+- Grant-only SELECT exposure also exists on sensitive tables currently hidden only by lack of an anon policy. Revoke the grants so a later policy cannot open them accidentally.
+- Catalog inspection additionally found legacy anon write policies on financial and commercial tables. No write was attempted; this P0 debt requires a separately controlled correction scope.
+- Next gate: coordinated authenticated frontend read path plus QA-only policy/grant closure. Production changes require a later explicit release authorization.
+- Evidence: [ANON_READ_POLICY_AUDIT_20260722.md](ANON_READ_POLICY_AUDIT_20260722.md).

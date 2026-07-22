@@ -6,6 +6,20 @@ Registro transversal para cambios que adopten el sistema universal. Los proyecto
 
 ### Costa Clean
 
+#### 2026-07-22 - Anonymous Read Policy And Public Exposure Audit
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: read-only security audit
+- resumen: confirms ten anon-readable REST tables in both QA and production, including personal, operational, commercial, payment and fiscal data; inventories 12 production and 24 QA non-trigger RPC grants effective for anon
+- clasificacion: P0 because personal and financial data are anonymously readable; P1 operational exposure is included in the higher-severity finding
+- cambios externos: none; no policy, grant, function, migration or business row was modified
+- validacion: exact project-ref guards, read-only catalog introspection, anonymous HTTP HEAD probes, source correlation, lint/build/201 tests
+- siguiente gate: coordinated authenticated read path and QA-only anonymous policy/grant closure, followed by separate production authorization
+- rollback: documentation-only `git revert`; no database rollback required
+
+Evidence: [ANON_READ_POLICY_AUDIT_20260722.md](ANON_READ_POLICY_AUDIT_20260722.md).
+
 #### 2026-07-22 - Production RLS/RPC Write Path Release
 
 - fecha: 2026-07-22

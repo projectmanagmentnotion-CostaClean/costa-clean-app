@@ -396,3 +396,15 @@ For roadmap-closeout or phase-closeout work:
 - The completed smoke used `PROD_RLS_SMOKE_20260722`, returned `200/200/200/204/200`, and left zero marker or ID residue.
 - Automatic `CLI/PRO/JOB` sequence gaps are accepted operational effects, are not fiscal numbering, and must not be reset. Invoice `display_code` and `invoice_number` remain prohibited.
 - Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).
+
+## Anonymous Read Exposure Gate - 2026-07-22
+
+- An authenticated UI shell does not protect a REST table whose anon policy permits `SELECT USING (true)`.
+- Internal list/detail reads must require `session.access_token`; the anon key may remain in `apikey` but cannot be the bearer for internal data.
+- RLS enabled is not sufficient evidence. The gate must inspect effective grants, policy roles and predicates, column privileges, RPC EXECUTE, and live anon REST behavior.
+- HTTP 200 with zero rows is not a durable confidentiality control when anon retains SELECT grants. Internal tables must deny anon access explicitly.
+- Public submission flows may retain narrowly reviewed INSERT capability, but must not expose submission history, employee results, PII, or internal status through SELECT.
+- Function EXECUTE must be revoked from `PUBLIC`/`anon` by default and restored only through a documented allowlist. Internal auth guards are defense in depth, not justification for a public grant.
+- Policy closure must be coordinated with frontend token propagation and proven in QA before any production authorization.
+- The gate fails P0 when personal or financial rows are anonymously readable, and P1 when internal clients/properties/jobs are anonymously readable without a higher-severity field classification.
+- Evidence: [ANON_READ_POLICY_AUDIT_20260722.md](ANON_READ_POLICY_AUDIT_20260722.md).

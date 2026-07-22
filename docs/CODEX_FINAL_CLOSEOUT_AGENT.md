@@ -31,6 +31,10 @@ Primary files:
 11. Commit and push after each completed versionable gate.
 12. Stop if a gate needs credentials, a disposable Supabase project, production access, migration-history writes or another explicit authorization.
 
+## Current production metadata block - 2026-07-22
+
+The QA metadata repair is complete. A subsequent read-only sprint prepared [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) and verified the three incremental postconditions in production without writes. Do not repeat the package and do not execute production repair. Stop with `blocked` until the exact production metadata-only authorization quoted in that package is supplied. Even after an authorized repair, `db push` remains a later independent gate.
+
 ## Current external block
 
 Gate 1 now has a passing local disposable PostgreSQL proof. The remote disposable Supabase proof is deferred because the free plan cannot provide a third project. This local evidence is not Supabase Cloud equivalence and does not authorize remote metadata writes. Gate 2 remains blocked until a separate QA-only authorization exists.

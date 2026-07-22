@@ -11,6 +11,19 @@
 | Optional B — CSS / Layout Consolidation | Deferred | Post-cierre | No aplica | No aplica | Pending | Consolidación incremental |
 | Optional C — UX Polish Pass | Deferred | Post-cierre | No aplica | No aplica | Pending | Polish P3/P4 |
 
+## Production Migration Metadata Repair Authorization Package
+
+- Package: complete, read-only.
+- Production history: absent; proposed versions are `20260707120336`, `20260721183811`, `20260722114751`.
+- Baseline `20260721134926`: excluded permanently.
+- Production/QA/schema/data modified in this sprint: no.
+- Material incremental postconditions: present.
+- Production schema-only SHA-256: `B4681AF0CD27471D5495E5A3C70A9916720F340653557EE6C46080B9C8C93847`.
+- Next action: blocked pending explicit production metadata-write authorization.
+- `db push`: remains locked.
+
+Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md).
+
 ## Actualizacion posterior - QA Official Migration Metadata Repair
 
 - Gate QA metadata-only: PASS.

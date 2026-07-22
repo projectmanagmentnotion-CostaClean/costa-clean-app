@@ -1,5 +1,14 @@
 # Risk Map
 
+## Production migration metadata authorization residual risk - 2026-07-22
+
+- Production read-only inspection confirms empty migration history and material presence of the three incremental effects; no production or QA write occurred.
+- The schema-only production fingerprint is `B4681AF0CD27471D5495E5A3C70A9916720F340653557EE6C46080B9C8C93847`; it is a pre-authorization reference, not permission to mutate.
+- The QA baseline was derived from production, so object similarity cannot prove it was never executed. Safety depends on permanently excluding its version/file from history and future transaction inputs.
+- The proposed three entries do not reconstruct production legacy history and do not make the physical migration directory safe for CLI push.
+- Mitigation: exact separate authorization, fresh backup/fingerprint, one guarded metadata-only transaction, exact rollback and continued global push lock.
+- Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md).
+
 ## QA official migration metadata repair residual risk - 2026-07-22
 
 - QA now has exactly three canonical incremental versions with verified names and SHA-256 values; the QA-only baseline remains excluded.

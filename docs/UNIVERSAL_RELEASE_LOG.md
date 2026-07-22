@@ -1,5 +1,16 @@
 # Universal Release Log
 
+## 2026-07-22 - Costa Clean App - production migration metadata authorization package
+
+- tipo: docs / production read-only authorization package
+- resumen: validates empty production history and material incremental postconditions, then defines a future metadata-only transaction, exact rollback and explicit authorization boundary
+- commit: commit of this delivery; final identifier reported at closeout
+- validacion: exact production identity, 17-table inventory, migration sentinels, canonical hashes, schema-only fingerprint, lint/build/tests and intentional npm push locks
+- riesgo: legacy history and physical migration filenames remain unresolved; package does not authorize repair and `db push` stays blocked
+- rollback: documentation revert only; production and QA received no writes
+
+Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md).
+
 ## 2026-07-22 - Costa Clean App - QA migration metadata repair gate
 
 - tipo: docs / QA operational metadata repair

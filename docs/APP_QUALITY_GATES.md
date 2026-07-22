@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Production Migration Metadata Repair Authorization Package Gate - 2026-07-22
+
+- This gate is read-only and may validate only the exact production ref while explicitly rejecting QA and unknown refs.
+- Package PASS requires empty current history, exact canonical hashes, material presence of all three incrementals, baseline exclusion, a current schema-only fingerprint, a guarded transaction proposal and exact rollback design.
+- Material postconditions may establish that migration bodies are unnecessary, but cannot be presented as a general CLI zero-SQL plan while filenames and the QA baseline remain unresolved.
+- The package never authorizes its own production write. A later sprint requires the exact separate production metadata-only authorization recorded in the package.
+- Production and QA changes for the package sprint must be zero; both npm push locks remain mandatory.
+- Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md).
+
 ## QA Official Migration Metadata Repair Gate - 2026-07-22
 
 - Target identity requires exact agreement between public QA ref, private pooler user and live PostgreSQL session; production ref or any other ref aborts.

@@ -408,3 +408,12 @@ For roadmap-closeout or phase-closeout work:
 - Policy closure must be coordinated with frontend token propagation and proven in QA before any production authorization.
 - The gate fails P0 when personal or financial rows are anonymously readable, and P1 when internal clients/properties/jobs are anonymously readable without a higher-severity field classification.
 - Evidence: [ANON_READ_POLICY_AUDIT_20260722.md](ANON_READ_POLICY_AUDIT_20260722.md).
+
+## QA P0 Anonymous Closure Gate - 2026-07-22
+
+- Exact QA ref, public URL fingerprint and private pooler identity must all equal `kpvvydthlxupjjqqdpxy`; production ref must be rejected.
+- Pass requires zero anon SELECT policies/grants on the ten target tables, zero legacy anon write policies in the scoped commercial/financial tables and zero sensitive anon RPC grants.
+- Live evidence requires anon HTTP 401/403 and authenticated HTTP 200 for every target table.
+- Protected frontend REST reads must require `session.access_token`; anon may remain only as `apikey` or as bearer for an explicitly public, allowlisted RPC.
+- Final app evidence is authenticated visual QA plus a no-write sandbox dry-run. Any visible load error fails the gate even if layout checks pass.
+- Production release remains a separate authorization with pre/post evidence and rollback.

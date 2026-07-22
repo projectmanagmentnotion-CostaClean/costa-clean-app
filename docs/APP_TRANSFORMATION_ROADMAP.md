@@ -563,3 +563,12 @@ Evidence:
 - Cleanup closed `QA_RLS_FIX_20260721` and the prior marker to 0; the 15-row demo seed and financial `0/0/0` baseline remain intact.
 - Production remains unchanged. The next gate is production readiness and coordinated rollout, not automatic migration apply or `db push`.
 - Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).
+
+## Post-Roadmap Sprint: P0 Authenticated Read Closure in QA — 2026-07-22
+
+- Internal REST reads now require the authenticated Supabase session and cannot fall back to the anon key as bearer.
+- QA denies anonymous reads on the ten P0/P1 resources and anonymous execution on the audited sensitive RPC set.
+- Public quiz submission remains through a narrowly validated RPC; public result history is removed.
+- Authenticated QA remains functional (`360/360` visual); no business entity or financial operation was created by validation.
+- Production remains unchanged. The next milestone is a separately authorized production release gate with exact migration/hash review and rollback evidence.
+- Evidence: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).

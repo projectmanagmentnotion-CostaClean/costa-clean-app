@@ -24,6 +24,8 @@
     "qa:rls-fix:apply": "node scripts/qa/run-sandbox-command.mjs rls-fix-apply",
     "qa:rls-fix:cleanup": "node scripts/qa/run-sandbox-command.mjs rls-fix-cleanup",
     "qa:rls-fix:verify-clean": "node scripts/qa/run-sandbox-command.mjs rls-fix-verify-clean",
+    "qa:anon-closure:before": "node scripts/qa/run-sandbox-command.mjs anon-closure-before",
+    "qa:anon-closure:after": "node scripts/qa/run-sandbox-command.mjs anon-closure-after",
     "qa:preview:sandbox": "node scripts/qa/run-sandbox-command.mjs preview",
     "qa:auth:sandbox": "node scripts/qa/run-sandbox-command.mjs auth",
     "qa:visual:sandbox": "node scripts/qa/run-sandbox-command.mjs visual",

@@ -1,14 +1,9 @@
-import { useEffect, useState } from 'react'
-import { createQuizAttempt, fetchRecentQuizAttempts } from './manualQuizApi'
+import { useState } from 'react'
+import { createQuizAttempt } from './manualQuizApi'
 import { gymManualQuizQuestions, PASSING_PERCENTAGE } from './quizQuestions'
-import { buildQuizResult, type PublicQuizAttempt, type PublicQuizComputedResult } from './types'
+import { buildQuizResult, type PublicQuizComputedResult } from './types'
 
 type QuizStep = 'intro' | 'quiz' | 'result'
-
-const dateFormatter = new Intl.DateTimeFormat('es-ES', {
-  dateStyle: 'short',
-  timeStyle: 'short',
-})
 
 function formatAttemptStatus(passed: boolean) {
   return passed ? 'Aprobado' : 'No aprobado'
@@ -18,42 +13,10 @@ export function ManualQuizExperience() {
   const [step, setStep] = useState<QuizStep>('intro')
   const [workerName, setWorkerName] = useState('')
   const [answers, setAnswers] = useState<Record<string, string>>({})
-  const [attempts, setAttempts] = useState<PublicQuizAttempt[]>([])
-  const [attemptsError, setAttemptsError] = useState<string | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
-  const [isLoadingAttempts, setIsLoadingAttempts] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [result, setResult] = useState<PublicQuizComputedResult | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function loadAttempts() {
-      try {
-        setIsLoadingAttempts(true)
-        setAttemptsError(null)
-        const data = await fetchRecentQuizAttempts()
-        if (!cancelled) {
-          setAttempts(data)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setAttemptsError(error instanceof Error ? error.message : 'No se pudo cargar la lista.')
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingAttempts(false)
-        }
-      }
-    }
-
-    void loadAttempts()
-
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   function handleStart() {
     const normalizedName = workerName.trim().replace(/\s+/g, ' ')
@@ -87,18 +50,16 @@ export function ManualQuizExperience() {
       setIsSubmitting(true)
       setSubmitError(null)
 
-      const savedAttempt = await createQuizAttempt({
+      await createQuizAttempt({
         nombre_trabajador: workerName,
         puntuacion: computedResult.score,
         porcentaje: computedResult.percentage,
         aprobado: computedResult.passed,
-        fecha: new Date().toISOString(),
         respuestas_json: computedResult.answerMap,
         errores_json: computedResult.errors,
         total_preguntas: computedResult.totalQuestions,
       })
 
-      setAttempts((current) => [savedAttempt, ...current].sort((left, right) => right.fecha.localeCompare(left.fecha)))
       setResult(computedResult)
       setStep('result')
     } catch (error) {
@@ -254,44 +215,15 @@ export function ManualQuizExperience() {
         ) : null}
       </section>
 
-      <section className="cc-public-quiz-panel cc-public-quiz-panel--attempts" aria-labelledby="quiz-attempts-title">
+      <section className="cc-public-quiz-panel cc-public-quiz-panel--attempts" aria-labelledby="quiz-privacy-title">
         <div className="cc-public-quiz-section-heading">
-          <p>Presentados</p>
-          <h2 id="quiz-attempts-title">Lista de notas</h2>
+          <p>Privacidad</p>
+          <h2 id="quiz-privacy-title">Tu resultado es privado</h2>
         </div>
 
-        {attemptsError ? (
-          <div className="cc-public-quiz-message cc-public-quiz-message--error">
-            <strong>No se pudo cargar la lista</strong>
-            <p>{attemptsError}</p>
-          </div>
-        ) : null}
-
-        {isLoadingAttempts ? (
-          <p className="cc-public-quiz-muted">Cargando resultados...</p>
-        ) : attempts.length === 0 ? (
-          <p className="cc-public-quiz-muted">Todavía no hay trabajadores registrados.</p>
-        ) : (
-          <div className="cc-public-quiz-attempt-list">
-            {attempts.map((attempt) => (
-              <article key={attempt.id} className="cc-public-quiz-attempt-row">
-                <div>
-                  <strong>{attempt.nombre_trabajador}</strong>
-                  <span>{dateFormatter.format(new Date(attempt.fecha))}</span>
-                </div>
-                <div>
-                  <strong>{attempt.porcentaje}%</strong>
-                  <span>{attempt.puntuacion} / {attempt.total_preguntas}</span>
-                </div>
-                <div>
-                  <span className={attempt.aprobado ? 'cc-public-quiz-chip is-pass' : 'cc-public-quiz-chip is-fail'}>
-                    {formatAttemptStatus(attempt.aprobado)}
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-        )}
+        <p className="cc-public-quiz-muted">
+          Solo veras el resultado del intento que acabas de completar. El historial queda reservado al equipo autenticado.
+        </p>
       </section>
     </div>
   )

@@ -1,7 +1,7 @@
 import type { AppView } from './navigation'
 import { getDomainsForView } from './dataLoadingPlan'
 import { getAppViewLabel } from './displayText'
-import { getSupabasePublicEnv } from '../lib/supabaseEnv'
+import { getAuthenticatedReadContext, type AuthenticatedReadContext } from '../lib/supabaseRest'
 
 export interface DataHealthProbeDefinition {
   key: string
@@ -61,12 +61,10 @@ export function classifyDataHealthIssue(statusCode: number | null, detail: strin
 }
 
 export async function runDataHealthProbes(
-  fetchImpl: typeof fetch = fetch,
+  fetchImpl: typeof fetch = (input, init) => fetch(input, init),
+  getContext: () => Promise<AuthenticatedReadContext> = getAuthenticatedReadContext,
 ): Promise<DataHealthProbeResult[]> {
-  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Faltan las variables de entorno de Supabase.')
-  }
+  const { supabaseUrl, supabaseAnonKey, accessToken } = await getContext()
 
   const results: DataHealthProbeResult[] = []
   for (const probe of dataHealthProbeDefinitions) {
@@ -75,7 +73,7 @@ export async function runDataHealthProbes(
         method: 'GET',
         headers: {
           apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       })
       const rawBody = await response.text()

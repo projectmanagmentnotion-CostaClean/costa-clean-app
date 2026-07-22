@@ -23,6 +23,8 @@ const supportedCommands = new Set([
   'rls-fix-apply',
   'rls-fix-cleanup',
   'rls-fix-verify-clean',
+  'anon-closure-before',
+  'anon-closure-after',
 ])
 
 if (!supportedCommands.has(commandName)) {
@@ -102,6 +104,12 @@ switch (commandName) {
     break
   case 'rls-fix-verify-clean':
     await run(nodeExecutable, ['scripts/qa/verify-rls-write-fix.mjs', '--verify-clean'], sandboxEnv)
+    break
+  case 'anon-closure-before':
+    await run(nodeExecutable, ['scripts/qa/verify-anon-read-closure.mjs', '--before'], sandboxEnv)
+    break
+  case 'anon-closure-after':
+    await run(nodeExecutable, ['scripts/qa/verify-anon-read-closure.mjs', '--after'], sandboxEnv)
     break
   default:
     throw new Error(`Unsupported sandbox command "${commandName}".`)

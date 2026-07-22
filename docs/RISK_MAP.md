@@ -239,3 +239,12 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - Catalog inspection additionally found legacy anon write policies on financial and commercial tables. No write was attempted; this P0 debt requires a separately controlled correction scope.
 - Next gate: coordinated authenticated frontend read path plus QA-only policy/grant closure. Production changes require a later explicit release authorization.
 - Evidence: [ANON_READ_POLICY_AUDIT_20260722.md](ANON_READ_POLICY_AUDIT_20260722.md).
+
+## QA anonymous read closure risk - 2026-07-22
+
+- QA now denies anon SELECT on the ten exposed P0/P1 tables and denies anon EXECUTE on all audited sensitive RPCs; authenticated probes pass 10/10.
+- Production remains exposed and is the remaining P0. QA success is evidence for a release gate, not authorization to apply production changes.
+- Authenticated reads are workspace-wide because the schema has no tenant ownership model. This is acceptable only for the current single-workspace contract.
+- Public quiz submission is intentionally retained through a validation RPC; public quiz history is blocked.
+- Direct `psql` application leaves migration-history reconciliation debt. `db push` remains prohibited.
+- Evidence: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).

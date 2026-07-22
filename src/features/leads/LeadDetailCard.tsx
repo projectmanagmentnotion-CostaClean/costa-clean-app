@@ -6,6 +6,7 @@ import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { LeadListItem } from './types'
+import { updateLeadAuthenticated } from './leadWriteApi'
 
 interface LeadDetailCardProps {
   lead: LeadListItem | null
@@ -93,32 +94,7 @@ export function LeadDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        },
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+      await updateLeadAuthenticated(lead.id, payload)
 
       await onLeadUpdated()
       setSuccessMessage(successText)

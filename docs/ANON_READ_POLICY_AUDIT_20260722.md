@@ -1,5 +1,7 @@
 # Anonymous Read Policy And Public Exposure Audit — 2026-07-22
 
+> Actualización de cierre QA: el P0 fue corregido y verificado en `kpvvydthlxupjjqqdpxy` el 2026-07-22. Los diez probes anon pasaron de HTTP 200 a HTTP 401 y los diez probes autenticados devolvieron HTTP 200. Producción sigue sin cambios y mantiene el riesgo hasta un gate separado. Evidencia: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).
+
 ## Verdict
 
 - Severity: **P0**.

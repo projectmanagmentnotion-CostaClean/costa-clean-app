@@ -97,6 +97,19 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md) y [FULL_APP_
 - riesgo: bajo; cambios limitados a documentación
 - rollback: `git revert <commit-de-esta-entrega>` y volver a ejecutar los gates documentales
 
+#### 2026-07-22 — QA P0 Authenticated Read And Anonymous Closure
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: security / QA schema and frontend patch
+- resumen: exige sesión real en lecturas internas, bloquea historial público del quiz y cierra SELECT/write policies y RPC grants anónimos sensibles solo en QA
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validación: anon REST `200 -> 401` en 10/10, authenticated REST `200` en 10/10, QA visual `360/360`, dry-run `587/588` sin writes
+- riesgo: producción conserva el P0 hasta autorización separada; lectura autenticada sigue el modelo single-workspace
+- rollback: revert de código; rollback SQL QA separado y explícitamente security-regressive
+
+Evidencia: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).
+
 ### Ridaos Print
 
 Sin entradas.

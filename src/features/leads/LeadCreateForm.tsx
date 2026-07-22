@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { getSupabaseClient } from '../../lib/supabase'
 import { findLeadDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
+import { createLeadAuthenticated } from './leadWriteApi'
 import type { LeadListItem } from './types'
 
 function getServiceTypeLabel(value: string): string {
@@ -94,13 +94,6 @@ export function LeadCreateForm({
       }
     }
 
-    const { client, error } = getSupabaseClient()
-
-    if (error || !client) {
-      setSubmitError(error ?? 'No se pudo crear el cliente Supabase.')
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
@@ -121,12 +114,7 @@ export function LeadCreateForm({
         notes: form.notes.trim() || null,
       }
 
-      const { error: insertError } = await client.from('leads').insert(payload)
-
-      if (insertError) {
-        setSubmitError(insertError.message)
-        return
-      }
+      await createLeadAuthenticated(payload)
 
       setForm(initialFormState)
       setSuccessMessage('Lead creado correctamente.')

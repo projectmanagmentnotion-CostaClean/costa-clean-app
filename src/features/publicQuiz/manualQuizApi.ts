@@ -1,46 +1,31 @@
-import { getSupabaseClient } from '../../lib/supabase'
+import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
 import type { PublicQuizAttempt } from './types'
 
-const QUIZ_ATTEMPTS_TABLE = 'public_gym_manual_quiz_attempts'
-
-type QuizAttemptInsert = Omit<PublicQuizAttempt, 'id'>
-
-export async function fetchRecentQuizAttempts(limit = 50): Promise<PublicQuizAttempt[]> {
-  const { client, error } = getSupabaseClient()
-
-  if (error || !client) {
-    throw new Error(error ?? 'No se pudo iniciar Supabase.')
-  }
-
-  const { data, error: queryError } = await client
-    .from(QUIZ_ATTEMPTS_TABLE)
-    .select('id, nombre_trabajador, puntuacion, porcentaje, aprobado, fecha, respuestas_json, errores_json, total_preguntas')
-    .order('fecha', { ascending: false })
-    .limit(limit)
-
-  if (queryError) {
-    throw new Error(queryError.message)
-  }
-
-  return (data ?? []) as PublicQuizAttempt[]
-}
+type QuizAttemptInsert = Omit<PublicQuizAttempt, 'id' | 'fecha'>
 
 export async function createQuizAttempt(payload: QuizAttemptInsert): Promise<PublicQuizAttempt> {
-  const { client, error } = getSupabaseClient()
-
-  if (error || !client) {
-    throw new Error(error ?? 'No se pudo iniciar Supabase.')
+  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error('Faltan las variables de entorno de Supabase.')
   }
 
-  const { data, error: insertError } = await client
-    .from(QUIZ_ATTEMPTS_TABLE)
-    .insert(payload)
-    .select('id, nombre_trabajador, puntuacion, porcentaje, aprobado, fecha, respuestas_json, errores_json, total_preguntas')
-    .single()
+  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_gym_manual_quiz_attempt`, {
+    method: 'POST',
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ p_attempt: payload }),
+  })
 
-  if (insertError || !data) {
-    throw new Error(insertError?.message ?? 'No se pudo guardar el intento.')
+  if (!response.ok) {
+    const detail = (await response.text()).trim()
+    throw new Error(`No se pudo guardar el intento. REST ${response.status}: ${detail || response.statusText}`)
   }
 
-  return data as PublicQuizAttempt
+  const body = await response.json().catch(() => null)
+  const row = Array.isArray(body) ? body[0] : body
+  if (!row) throw new Error('No se pudo confirmar el intento guardado.')
+  return row as PublicQuizAttempt
 }

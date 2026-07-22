@@ -18,6 +18,11 @@ describe('authenticated operational write RPC contracts', () => {
     expect(operationalWriteRpcPaths.saveJobWithLines).toBe('rpc/save_job_with_lines')
   })
 
+  it('routes lead writes through protected RPCs', () => {
+    expect(operationalWriteRpcPaths.createLead).toBe('rpc/create_lead')
+    expect(operationalWriteRpcPaths.updateLead).toBe('rpc/update_lead')
+  })
+
   it('does not expose a direct REST table write path', () => {
     expect(Object.values(operationalWriteRpcPaths).every((path) => path.startsWith('rpc/'))).toBe(true)
   })

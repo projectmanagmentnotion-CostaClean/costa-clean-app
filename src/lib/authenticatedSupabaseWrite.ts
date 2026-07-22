@@ -36,7 +36,7 @@ export function resolveAuthenticatedWriteContext({
   }
 
   const normalizedAccessToken = accessToken?.trim()
-  if (!normalizedAccessToken) {
+  if (!normalizedAccessToken || normalizedAccessToken === supabaseAnonKey) {
     throw new Error(AUTHENTICATED_WRITE_SESSION_ERROR)
   }
 

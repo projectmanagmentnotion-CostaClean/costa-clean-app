@@ -58,6 +58,21 @@ describe('authenticatedSupabaseWrite', () => {
     expect(errorMessage).toBe(AUTHENTICATED_WRITE_SESSION_ERROR)
   })
 
+  it('blocks the anon key from being reused as an authenticated bearer', () => {
+    let errorMessage = ''
+    try {
+      resolveAuthenticatedWriteContext({
+        supabaseUrl: 'https://example.supabase.co',
+        supabaseAnonKey: 'anon-key',
+        accessToken: 'anon-key',
+      })
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : ''
+    }
+
+    expect(errorMessage).toBe(AUTHENTICATED_WRITE_SESSION_ERROR)
+  })
+
   it('aborts before fetch when the current Supabase session is missing', async () => {
     let fetchCalls = 0
     let errorMessage = ''

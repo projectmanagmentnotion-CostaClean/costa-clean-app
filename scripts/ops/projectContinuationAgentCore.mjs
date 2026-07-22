@@ -5,8 +5,12 @@ const SECRET_PATTERNS = [
 ]
 
 const FORBIDDEN_AUTOMATIC_PATTERNS = [
-  { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic' },
-  { pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b/i, reason: 'deployment-not-automatic' },
+  {
+    pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b[^\n]{0,100}\b(?:production|produccion|producción|wfxnwfcdjainpojhbdri)\b/i,
+    reason: 'production-deployment-not-authorized',
+  },
+  { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic', capability: 'gitPublication' },
+  { pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b/i, reason: 'deployment-not-automatic', capability: 'qaDeployment' },
   { pattern: /\b(?:emitir|emit)\b[^\n]{0,40}\bfactura/i, reason: 'invoice-emission-not-safe' },
   { pattern: /\b(?:registrar|create|crear)\b[^\n]{0,40}\b(?:cobro|payment)\b/i, reason: 'payment-write-not-safe' },
   { pattern: /\b(?:drop|truncate)\s+(?:table|schema|database)\b/i, reason: 'destructive-database-action' },
@@ -14,6 +18,16 @@ const FORBIDDEN_AUTOMATIC_PATTERNS = [
 ]
 
 export const REVIEW_VERDICTS = new Set(['continue', 'complete', 'blocked', 'stop'])
+
+function automaticCapabilities() {
+  return {
+    gitPublication: process.env.PROJECT_CONTINUATION_ALLOW_GIT_PUBLICATION === '1',
+    qaDeployment: process.env.PROJECT_CONTINUATION_ALLOW_QA_DEPLOY === '1',
+    privateProviderAuth: process.env.PROJECT_CONTINUATION_ALLOW_PRIVATE_PROVIDER_AUTH === '1',
+    authorizedQaRef: process.env.PROJECT_CONTINUATION_AUTHORIZED_QA_REF || '',
+    forbiddenProductionRef: process.env.PROJECT_CONTINUATION_FORBIDDEN_PROD_REF || '',
+  }
+}
 
 export function detectSensitiveContent(value) {
   const text = String(value ?? '')
@@ -23,7 +37,12 @@ export function detectSensitiveContent(value) {
 export function findAutomaticStopReason(prompt) {
   const text = String(prompt ?? '')
   if (detectSensitiveContent(text)) return 'suspected-secret'
-  return FORBIDDEN_AUTOMATIC_PATTERNS.find(({ pattern }) => pattern.test(text))?.reason ?? null
+  const capabilities = automaticCapabilities()
+  return FORBIDDEN_AUTOMATIC_PATTERNS.find(({ pattern, capability }) => {
+    if (!pattern.test(text)) return false
+    if (!capability) return true
+    return !capabilities[capability]
+  })?.reason ?? null
 }
 
 export function validateReview(review) {
@@ -82,11 +101,40 @@ export function buildExecutorPrompt(nextPrompt, iteration, maxIterations) {
   validatePromptShape(nextPrompt)
   const stopReason = findAutomaticStopReason(nextPrompt)
   if (stopReason) throw new Error(`Automatic execution blocked: ${stopReason}`)
+
+  const capabilities = automaticCapabilities()
+  const boundaries = [
+    'Work only inside the current repository and obey AGENTS.md plus nested instructions.',
+    'Preserve all pre-existing worktree changes.',
+  ]
+
+  if (capabilities.gitPublication) {
+    boundaries.push('Commit and push are permitted only for the bounded, reviewed Gate 4B changes after validation and secret scanning.')
+  } else {
+    boundaries.push('Never commit or push.')
+  }
+
+  if (capabilities.qaDeployment) {
+    const qaScope = capabilities.authorizedQaRef ? ` Supabase QA ref: ${capabilities.authorizedQaRef}.` : ''
+    const productionScope = capabilities.forbiddenProductionRef ? ` Forbidden production ref: ${capabilities.forbiddenProductionRef}.` : ''
+    boundaries.push(`QA-only deployment is permitted under the versioned authorization.${qaScope}${productionScope}`)
+    boundaries.push('Never deploy to production, alter the production hostname, or begin the production gate.')
+  } else {
+    boundaries.push('Never deploy.')
+  }
+
+  if (capabilities.privateProviderAuth) {
+    boundaries.push('Existing private provider sessions and ignored local credentials may be used only for the authorized QA setup; never print, copy, log, or commit their values.')
+  } else {
+    boundaries.push('Never access secrets or private auth artifacts.')
+  }
+
+  boundaries.push('Never send external messages or bypass approvals.')
+  boundaries.push('If any required action exceeds the explicit QA authorization or touches protected production/financial behavior, stop and report the blocker.')
+
   return [
     `AUTOMATED PROJECT CONTINUATION ${iteration}/${maxIterations}.`,
-    'Work only inside the current repository and obey AGENTS.md plus nested instructions.',
-    'Preserve all pre-existing worktree changes. Never commit, push, deploy, send external messages, bypass approvals, or access secrets/private auth artifacts.',
-    'If any required action needs fresh approval or touches protected production/financial/auth/schema behavior, stop and report the blocker.',
+    ...boundaries,
     '',
     nextPrompt.trim(),
   ].join('\n')

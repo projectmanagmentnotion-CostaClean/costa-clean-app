@@ -15,6 +15,7 @@ Primary files:
 - `docs/APP_QUALITY_GATES.md`
 - `docs/RISK_MAP.md`
 - `docs/CODEX_WORKFLOW.md`
+- `docs/GATE_4B_AUTONOMOUS_EXECUTION_AUTHORIZATION_20260722.md`
 
 ## Execution rules
 
@@ -31,9 +32,19 @@ Primary files:
 11. Commit and push after each completed versionable gate.
 12. Stop if a gate needs credentials, a disposable Supabase project, production access, migration-history writes or another explicit authorization.
 
+## Current active authorization — Gate 4B
+
+Gate 4B is now explicitly authorized for autonomous execution exclusively in Supabase QA `kpvvydthlxupjjqqdpxy` under the exact scope, provider rules, credential handling, stop conditions and verification requirements in [GATE_4B_AUTONOMOUS_EXECUTION_AUTHORIZATION_20260722.md](GATE_4B_AUTONOMOUS_EXECUTION_AUTHORIZATION_20260722.md).
+
+The owner authorizes Codex to inspect the real hosting, deployment and DNS configuration; reuse or provision a stable QA hostname under the app's actual domain; create a Cloudflare Turnstile Managed widget when authenticated provider access exists; install QA-only frontend and Edge Function configuration; implement the approved Edge Function/private RPC/migration architecture; run local proof; apply and verify only in QA; clean synthetic data; document; commit; push; and reactivate continuation.
+
+Do not ask for values that can be discovered or provisioned safely through existing authenticated local sessions. Stop only for the smallest unavoidable human-only action such as login, MFA, email verification, account creation, billing acceptance or missing provider access. Never print or commit secret values.
+
+Production `wfxnwfcdjainpojhbdri`, Gate 4C, `db push`, financial/fiscal writes, full-submit, paid overage and unrelated changes remain forbidden.
+
 ## Current gate after production metadata repair - 2026-07-22
 
-The production metadata-only repair and Gate 3 are complete. Gate 4A source audit/design is complete with Turnstile + Edge + private RPC recommended. Gate 4B is next but blocked pending explicit QA/provider/privacy/secrets authorization; Gate 4C production requires a later independent authorization. Do not repeat prior gates or infer that `db push` is safe. Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
+The production metadata-only repair and Gate 3 are complete. Gate 4A source audit/design is complete with Turnstile + Edge + private RPC recommended. Gate 4B is the active execution gate under the authorization above. Gate 4C production requires a later independent authorization. Do not repeat prior gates or infer that `db push` is safe. Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
 
 ## Historical production metadata block - superseded 2026-07-22
 
@@ -56,9 +67,9 @@ Current continuation:
 
 - Gate 3: complete; do not reopen tenancy implementation without separate schema/Auth/policy authorization.
 - Gate 4A: complete, source-only.
-- Gate 4B: next active gate, blocked until exact QA/provider/privacy/secrets authorization; do not implement or simulate it.
+- Gate 4B: explicitly authorized and active under `docs/GATE_4B_AUTONOMOUS_EXECUTION_AUTHORIZATION_20260722.md`.
 - Gate 4C: production blocked until Gate 4B QA PASS and separate authorization.
-- Gate 5: later; do not begin it during Gate 3 or Gate 4.
+- Gate 5: later; do not begin it during Gate 4.
 
 ## Completion format
 

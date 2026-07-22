@@ -438,3 +438,15 @@ For roadmap-closeout or phase-closeout work:
 - Unlocking requires a canonical manifest, unique versions/baseline strategy, disposable repair proof, authorized remote metadata repair and a demonstrated zero-SQL plan.
 - Local lock commands must fail closed: `npm run db:push` and `npm run supabase:db:push`.
 - Evidence: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).
+
+## Migration Manifest And Disposable Repair Proof Gate - 2026-07-22
+
+- Every published SQL file must map to one immutable SHA-256, one unique logical alias, material evidence by target and an explicit history decision.
+- A QA-only baseline is bootstrap infrastructure, `never-push`, and must not be registered as an incremental migration in QA or production.
+- Historical order and executable empty-database bootstrap order are separate claims; neither may be declared proven from filenames alone.
+- Disposable proof requires a third exact ref distinct from `kpvvydthlxupjjqqdpxy` and `wfxnwfcdjainpojhbdri`, private credentials, and a proven discard/restore path.
+- If no disposable destination exists, the valid result is `proof: NO`; QA/production must not be substituted.
+- Repair in disposable does not authorize repair in QA. QA and production metadata writes each require later, separate authorization.
+- The npm locks remain mandatory before and after the proof; no gate may claim `db push` safe until a reviewed zero-SQL plan and legacy-history decision exist.
+- Current result: manifest and plan created, strategy B retained temporarily, disposable proof not executed, QA/production unchanged, lock active.
+- Evidence: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md), [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md), and [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).

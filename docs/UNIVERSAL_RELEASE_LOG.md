@@ -136,6 +136,19 @@ Evidencia: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_
 
 Evidencia: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).
 
+#### 2026-07-22 — Migration Manifest And Disposable Repair Proof Gate
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: docs / operational safety gate
+- resumen: define aliases lógicos únicos, clasifica la baseline QA como `never-push`, conserva los archivos sin rename y documenta un repair futuro sin ejecutarlo
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validación: hashes SHA-256, lint/build/tests y locks npm; proof desechable `NO` porque solo existen refs de QA oficial y producción
+- riesgo: bootstrap ejecutable y metadata repair siguen sin probar; `db push` continúa bloqueado
+- rollback: revertir este commit documental; no existe rollback DB porque QA, producción, schema, datos e historial no se modificaron
+
+Evidencia: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md), [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md) y [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).
+
 ### Ridaos Print
 
 Sin entradas.

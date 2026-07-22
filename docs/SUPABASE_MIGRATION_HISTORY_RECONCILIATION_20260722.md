@@ -90,6 +90,15 @@ Gate separado, con autorización explícita para metadata:
 - Full-submit: no.
 - Secretos o artefactos privados versionados: 0.
 
+## Gate de manifiesto y proof — actualización 2026-07-22
+
+- Manifiesto canónico: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md).
+- Plan sin ejecución: [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md).
+- Proof: [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).
+- Estrategia elegida: Opción B temporal, sin move/rename, baseline `never-push` y lock global intacto.
+- Proof desechable ejecutado: no. Solo existen configuraciones para QA oficial y producción; falta un tercer ref descartable y credencial privada.
+- Repair QA/producción: no autorizado y no ejecutado.
+
 ## Próximo gate
 
-`Migration Manifest And Disposable Repair Proof`: crear el manifest de hashes/versiones, resolver el diseño de baseline/version collision en fuente y demostrar la reparación sobre un Supabase desechable. Debe detenerse antes de cualquier write en QA o producción hasta recibir autorización explícita adicional.
+`Provision Disposable Supabase And Execute Migration Repair Proof`: provisionar un tercer destino descartable, autorizar writes solo allí, demostrar el orden de bootstrap, registrar únicamente los tres aliases incrementales y obtener un plan de cero SQL. Debe abortar si el target coincide con QA o producción. La reparación real de QA seguirá necesitando otro sprint autorizado.

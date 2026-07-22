@@ -42,4 +42,13 @@ No se elimina este lock hasta que un sprint autorizado:
 5. demuestre que el plan de `db push` resultante contiene cero SQL pendiente inesperado;
 6. pase revisión de seguridad y gates completos.
 
-El informe vigente es [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).
+El manifiesto ya propone aliases lógicos únicos, pero no los activa ni resuelve el historial remoto. La estrategia vigente mantiene temporalmente los archivos en su ubicación para no cambiar su identidad antes del proof; la baseline QA-only queda clasificada como `never-push` y fuera de cualquier historial incremental.
+
+El proof desechable de este gate no se ejecutó: las únicas configuraciones locales apuntan a QA oficial y producción, ambos destinos prohibidos. El lock no se relaja hasta disponer de un tercer destino descartable, demostrar bootstrap/repair/plan de cero SQL y recibir autorizaciones separadas para metadata QA y producción.
+
+Informes vigentes:
+
+- [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md)
+- [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md)
+- [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md)
+- [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md)

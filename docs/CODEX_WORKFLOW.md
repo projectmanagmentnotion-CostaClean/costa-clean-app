@@ -24,6 +24,8 @@ This document defines the mandatory working method for Codex and any AI coding a
 - Do not create or modify `supabase_migrations.schema_migrations` without a sprint that explicitly authorizes metadata writes.
 - Do not move, rename, squash, or mark migration files as applied merely to make CLI output look clean.
 - Read [DB_PUSH_LOCK.md](DB_PUSH_LOCK.md) and [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md) before any Supabase CLI planning.
+- The canonical manifest is documentary only. Logical aliases are not active migration versions and must not be renamed, registered or marked applied without a proven disposable transition.
+- A migration repair gate must validate an exact disposable ref, exclude QA/production, prove discard/restore first and stop honestly when the private disposable configuration is absent.
 
 ## Mandatory Documents
 

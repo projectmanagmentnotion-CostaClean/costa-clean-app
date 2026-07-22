@@ -265,3 +265,13 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - Production's original schema history predates the formal directory, so marking the four current files cannot by itself create a truthful bootstrap history.
 - `db push` and migration-history repair remain blocked. Any metadata write requires a separate authorization and disposable proof first.
 - Evidence: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).
+
+## Migration manifest and disposable proof risk - 2026-07-22
+
+- Unique 14-digit logical aliases now remove ambiguity in documentation, but they are not active filenames or remote metadata and cannot be treated as repaired history.
+- The QA-only baseline remains beside incrementals under `supabase/migrations`; retaining it avoids a premature identity change but leaves direct CLI use critically unsafe.
+- The baseline/fix-of-invoice bootstrap dependency is not proven on an empty database. Historical ordering is not evidence of executable bootstrap ordering.
+- No third disposable ref or credential exists locally. Substituting official QA or production would violate the gate, so proof is explicitly not executed.
+- Production has legacy schema history outside these artifacts. Even a future three-version repair cannot claim a complete reproducible origin without a separate legacy baseline decision.
+- Next mitigation: provision and authorize a truly disposable target, prove discard, bootstrap, repair and zero-SQL plan, then request a separate QA metadata-repair gate.
+- Evidence: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md) and [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).

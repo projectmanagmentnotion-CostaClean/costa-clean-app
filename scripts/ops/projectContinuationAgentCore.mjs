@@ -6,7 +6,7 @@ const SECRET_PATTERNS = [
 
 const FORBIDDEN_AUTOMATIC_PATTERNS = [
   {
-    pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b[^\n]{0,100}\b(?:production|produccion|producción|wfxnwfcdjainpojhbdri)\b/i,
+    pattern: /(?<!do not )(?<!never )(?<!no )\b(?:deploy|deployment|desplegar|despliegue)\b[^\n]{0,100}\b(?:production|produccion|producción|wfxnwfcdjainpojhbdri)\b/i,
     reason: 'production-deployment-not-authorized',
   },
   { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic', capability: 'gitPublication' },

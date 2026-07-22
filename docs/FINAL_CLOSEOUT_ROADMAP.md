@@ -4,15 +4,15 @@
 
 The separately authorized production metadata-only repair is PASS. Production now records exactly the three canonical incrementals; QA baseline and unknown versions are absent. Public schema fingerprint, 17 table counts, nine sequences and invoice identifiers remained unchanged. QA was not modified. `db push` remains locked because legacy history and the physical migration directory still lack a proven CLI zero-SQL transition. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
-The next active roadmap gate is Gate 3, Workspace / Tenancy / Ownership Security Model. It is read-only/documentary unless a later authorization expands scope.
+Gate 3, Workspace / Tenancy / Ownership Security Model, is now closed by source/catalog-evidence audit and versioned decision documentation. The current model is accepted only while Costa Clean remains one mutually trusted workspace; another company or differently trusted users require a separately authorized ownership model first. Gate 4, Public Quiz RPC Abuse Protection, is the next active gate. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
 
-## Production metadata authorization package - 2026-07-22
+## Historical production metadata authorization package - 2026-07-22
 
-The production read-only package is complete. Production history is still absent, all three incremental postconditions are materially present, and the proposed action is metadata-only. Production and QA were not modified. The next repair sprint is blocked until the exact explicit production authorization in [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) is supplied. `db push` remains locked.
+The production read-only package was completed before the later separately authorized production metadata repair. At package time production history was absent, all three incremental postconditions were materially present, and production/QA were not modified. The later repair passed; do not repeat the package, repair or rollback. [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) remains historical evidence. `db push` remains locked.
 
-## Actualizacion QA metadata gate - 2026-07-22
+## Historical QA metadata gate update - 2026-07-22
 
-El gate QA autorizado ya esta PASS: metadata oficial reparada con tres incrementales, baseline ausente, fingerprint y conteos sin cambios, produccion intacta. `db push` continua bloqueado. La proxima accion permitida es preparar, no ejecutar, un gate independiente de metadata para produccion; requiere autorizacion nueva y no hereda permisos de QA. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+El gate QA autorizado está PASS: metadata oficial reparada con tres incrementales, baseline ausente, fingerprint y conteos sin cambios, producción intacta. La acción siguiente en aquel momento era un gate independiente de metadata para producción; ese gate separado pasó posteriormente y no debe repetirse. `db push` continúa bloqueado. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
 ## Estado actual
 
@@ -104,11 +104,11 @@ Recurso y autorización exactos requeridos para reabrir únicamente el proof:
 3. Un mecanismo probado de descarte o restauración para ese destino exacto antes de cualquier write.
 4. Autorización explícita para writes de schema e historial de migraciones únicamente en ese destino desechable.
 
-La limitación de cuenta mantiene diferido ese proof remoto. El siguiente gate posible no es producción: es un paquete de autorización separado para repair de metadata en QA oficial. Hasta esa autorización, el agente debe detenerse sin conexión ni writes; `db push` no se desbloquea.
+La limitación de cuenta mantiene diferido ese proof remoto. Históricamente, el siguiente gate fue un paquete de autorización separado para repair de metadata en QA oficial; los repairs metadata-only de QA y producción se completaron después bajo autorizaciones independientes. Esta evidencia no equivale a proof remoto Supabase ni desbloquea `db push`.
 
 ### Gate 2 — Migration History Repair Authorization Package
 
-**Estado actual:** Blocked — el proof local pasó, pero no autoriza repair de metadata remota; no avanzar sin autorización QA separada.
+**Estado actual:** Closed by later separately authorized metadata-only gates in QA and production. The historical local-proof limitation below remains valid evidence and never authorized either remote action by itself. `db push` remains blocked because metadata repair did not prove a safe CLI zero-SQL transition.
 
 Objetivo:
 
@@ -127,7 +127,7 @@ Criterio de cierre:
 
 ### Gate 3 — Workspace / Tenancy / Ownership Security Model
 
-**Estado inicial:** Ready.
+**Estado actual:** Closed — conditional temporary acceptance documented on 2026-07-22.
 
 Objetivo:
 
@@ -139,14 +139,17 @@ Objetivo:
 
 Criterio de cierre:
 
-- Modelo actual aceptado temporalmente o plan técnico definido.
-- Riesgos documentados.
-- Si se requieren cambios, primero deben ir a QA en gate separado.
-- Commit/push realizado.
+- The current authenticated single-workspace model is accepted only while Costa Clean remains one mutually trusted workspace.
+- Adding another company or differently trusted users requires a separately authorized ownership model first.
+- Current guarantees/non-guarantees, table evidence, role matrix, invalidation conditions and a QA-first phased technical plan are documented.
+- No schema, policy, grant, RPC, Auth, data, application-code, QA or production change was made.
+- The continuation produced a reviewable documentation-only diff; the separately authorized closeout sprint validated and published exactly the five Gate 3 documents.
+
+Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
 
 ### Gate 4 — Public Quiz RPC Abuse Protection
 
-**Estado inicial:** Ready.
+**Estado actual:** Ready — next active gate. Not started by Gate 3.
 
 Objetivo:
 
@@ -217,8 +220,8 @@ El roadmap final queda cerrado cuando:
 9. Tests pasan.
 10. Release log y checklist final están actualizados.
 
-## Próxima acción bloqueada
+## Próxima acción
 
-Gate 1 ya entregó manifiesto, repair plan y proof PostgreSQL local. Gate 2 permanece bloqueado y no es ejecutable sin autorización nueva.
+Gate 3 is closed at the documentary/source-evidence level. The next active gate is Gate 4, Public Quiz RPC Abuse Protection. It must remain a separate QA-first security gate and must not reopen anonymous table history, tenancy implementation, protected financial behavior, migration repair, or `db push`.
 
-La única continuación remota recomendada es preparar y solicitar un gate de repair de metadata solo en QA oficial, con credencial privada, backup de metadata/schema, fingerprints pre/post, registro exclusivo de los tres aliases incrementales, baseline ausente, cero cambios de schema/datos y rollback probado. Hasta esa autorización, detenerse. No tocar QA oficial/producción y no ejecutar `db push`.
+Gate 1 historical proof limits and the completed QA/production metadata evidence remain preserved. The database-push lock remains active. The unrelated `358/360` visual/harness residual from the production metadata gate also remains open and separate; Gate 3 does not resolve it.

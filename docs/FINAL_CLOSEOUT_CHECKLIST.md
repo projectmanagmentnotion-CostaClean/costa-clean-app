@@ -3,10 +3,10 @@
 | Gate | Estado | Bloqueante | Producción | QA | Commit | Resultado |
 | --- | --- | --- | --- | --- | --- | --- |
 | Gate 1 — Migration Manifest And Disposable Repair Proof | Local proof DONE; remote proof deferred | Manifest DONE; repair plan DONE; local disposable proof DONE; remote disposable proof deferred por plan gratis; `db push` y repair real BLOCKED | No tocar | No tocar QA oficial sin autorización separada | Pending | PostgreSQL local valida sintaxis, orden, baseline, incrementales y metadata simulada; no equivale a Supabase Cloud |
-| Gate 2 — Migration History Repair Authorization Package | Blocked | El proof local no autoriza metadata remota; el primer repair remoto debe ser QA oficial con autorización separada | No tocar | Repair solo bajo nuevo gate explícito | Pending | Mantener `db push` bloqueado y preparar autorización QA solo cuando se solicite |
-| Gate 3 — Workspace / Tenancy / Ownership Security Model | Ready | Decisión de modelo single-workspace vs ownership granular | Read-only salvo gate explícito | Read-only salvo gate explícito | Pending | Modelo aceptado temporalmente o plan técnico |
-| Gate 4 — Public Quiz RPC Abuse Protection | Ready | Proteger RPC público sin romper envío legítimo | Gate separado si aplica | Cambios primero en QA | Pending | Anti-abuso validado y documentado |
-| Gate 5 — Production Functional Smoke Final | Blocked | Depende de Gates 1–4 o decisión manual | Smoke sin writes financieros | No requerido salvo comparación | Pending | P0/P1 = 0 y producción operativa |
+| Gate 2 — Migration History Repair Authorization Package | DONE by later separate gates | QA and production metadata-only repairs passed under independent authorizations; CLI zero-SQL proof remains absent | Metadata-only gate complete | Metadata-only gate complete | Historical commits preserved | `db push` remains blocked |
+| Gate 3 — Workspace / Tenancy / Ownership Security Model | DONE — single-workspace accepted with explicit constraints | Valid only for one mutually trusted Costa Clean workspace | Not touched | Not touched | Published in the separately authorized closeout sprint | Another company or differently trusted users require a separately authorized ownership model first |
+| Gate 4 — Public Quiz RPC Abuse Protection | Ready — NEXT | Protect public RPC without breaking legitimate submission | Separate gate if applicable | Changes first in QA | Pending | Anti-abuse validated and documented |
+| Gate 5 — Production Functional Smoke Final | Blocked | Depends on Gate 4 or explicit final decision | Smoke without financial writes | Not required unless comparison is authorized | Pending | P0/P1 = 0 and production operational |
 | Optional A — Asset / Bundle Optimization | Deferred | Post-cierre | No aplica | No aplica | Pending | Optimización medida |
 | Optional B — CSS / Layout Consolidation | Deferred | Post-cierre | No aplica | No aplica | Pending | Consolidación incremental |
 | Optional C — UX Polish Pass | Deferred | Post-cierre | No aplica | No aplica | Pending | Polish P3/P4 |
@@ -19,7 +19,7 @@
 - Public fingerprint, 17 table counts, nine sequences and invoice identifiers: unchanged.
 - QA/business schema/business data/migration bodies: unchanged or not executed.
 - `db push`: remains locked pending a separate CLI zero-SQL gate.
-- Next active gate: Gate 3, Workspace / Tenancy / Ownership Security Model.
+- Gate 3 later closed by the workspace/tenancy evidence decision; current next active gate: Gate 4, Public Quiz RPC Abuse Protection.
 
 Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
@@ -31,7 +31,7 @@ Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIG
 - Production/QA/schema/data modified in this sprint: no.
 - Material incremental postconditions: present.
 - Production schema-only SHA-256: `B4681AF0CD27471D5495E5A3C70A9916720F340653557EE6C46080B9C8C93847`.
-- Next action: blocked pending explicit production metadata-write authorization.
+- Historical next action at package time: blocked pending explicit production metadata-write authorization; that separately authorized repair later passed.
 - `db push`: remains locked.
 
 Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md).
@@ -45,7 +45,7 @@ Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.m
 - Schema/datos de negocio: sin cambios.
 - Produccion: sin cambios.
 - `db push`: bloqueado.
-- Proximo gate: autorizacion independiente para metadata de produccion; no ejecutar dentro de este cierre.
+- Próximo gate en ese momento: autorización independiente para metadata de producción; ese gate separado pasó posteriormente y no debe repetirse.
 
 La evidencia que prevalece para el estado actual es [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
@@ -55,10 +55,12 @@ La evidencia que prevalece para el estado actual es [QA_MIGRATION_METADATA_REPAI
 - RLS/RPC write-path producción: Done.
 - Smoke real productivo no financiero RLS/RPC: Done.
 - db push lock: Active.
-- Migration history repair: Not authorized.
+- Migration metadata repair: Done in QA and production under separate authorizations; physical/legacy CLI safety remains unresolved.
 - Full-submit: Blocked.
 - Facturas/cobros/cierres: Protected.
+- Workspace/tenancy Gate 3: Done with conditional single-workspace acceptance.
+- Residual visual/harness debt: `358/360`, separate and unresolved.
 
 ## Próxima acción del agente
 
-Gate 1 queda probado únicamente en PostgreSQL local descartable. El proof Supabase remoto se difiere por la limitación del plan gratuito y no se presenta como equivalente. El próximo gate recomendado es preparar y solicitar autorización separada para un repair de metadata **solo en QA oficial**, con backup privado, fingerprints pre/post, cero SQL de schema/datos y rollback de metadata. No ejecutar el repair, no tocar producción y no desbloquear `db push` dentro de este sprint.
+Gate 3 is closed by [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md). The next active gate is Gate 4, Public Quiz RPC Abuse Protection. Do not start it inside the Gate 3 work block. Preserve the database-push lock, protected financial domains, the historical Gate 1/2 evidence and the separate `358/360` visual/harness debt.

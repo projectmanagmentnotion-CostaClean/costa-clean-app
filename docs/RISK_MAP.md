@@ -1,5 +1,16 @@
 # Risk Map
 
+## Workspace / tenancy / ownership residual risk - Gate 3 closure 2026-07-22
+
+- Gate 3 is closed by source/catalog-evidence audit, not by implementing tenant isolation or roles.
+- The current model is acceptable only while Costa Clean remains one mutually trusted workspace. Authenticated read policies are workspace-wide, guarded RPCs establish authentication but not row ownership, and the named owner/admin, supervisor, employee, accounting and read-only roles are not currently enforceable.
+- Adding another company, workspace, external organization or differently trusted users immediately invalidates the exception and requires a separately authorized ownership/membership/RLS/RPC design before onboarding.
+- `audit_events.changed_by = auth.uid()` provides limited actor attribution but is not a membership or authorization contract.
+- Future isolation must preserve routes, frontend Supabase contracts, current business logic and protected financial/fiscal behavior; schema, backfill, RLS/RPC, QA and production each require separate authorization.
+- Gate 4, Public Quiz RPC Abuse Protection, is next. Gate 3 did not start it.
+- `db push` remains locked. The unrelated `358/360` visual/harness result remains explicit unresolved UI debt.
+- Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
+
 ## Production migration metadata repair residual risk - 2026-07-22
 
 - Production now records exactly the same three canonical incrementals as QA; the QA-only baseline and unknown entries remain absent.

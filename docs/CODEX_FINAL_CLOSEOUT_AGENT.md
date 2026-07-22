@@ -33,25 +33,30 @@ Primary files:
 
 ## Current gate after production metadata repair - 2026-07-22
 
-The separately authorized production metadata-only repair is complete and verified. Do not repeat it, do not execute rollback, and do not infer that `db push` is safe. The next active roadmap gate is Gate 3, Workspace / Tenancy / Ownership Security Model, limited to read-only audit and documentation unless a new authorization permits schema, policy, auth or production changes. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+The separately authorized production metadata-only repair is complete and verified. Do not repeat it, do not execute rollback, and do not infer that `db push` is safe. Gate 3 is also complete at the source/catalog-evidence and documentary decision level. The current model is accepted only for one mutually trusted Costa Clean workspace; another company or differently trusted users require a separately authorized ownership model before onboarding. Gate 4, Public Quiz RPC Abuse Protection, is next and was not started by Gate 3. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md) and [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
 
-## Current production metadata block - 2026-07-22
+## Historical production metadata block - superseded 2026-07-22
 
-The QA metadata repair is complete. A subsequent read-only sprint prepared [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) and verified the three incremental postconditions in production without writes. Do not repeat the package and do not execute production repair. Stop with `blocked` until the exact production metadata-only authorization quoted in that package is supplied. Even after an authorized repair, `db push` remains a later independent gate.
+The QA metadata repair and authorization package were followed by a separately authorized production metadata-only repair, now complete. Preserve the package as historical evidence; do not repeat the package, repair or rollback. `db push` remains a later independent and locked gate.
 
-## Current external block
+## Historical Gate 1/2 external block and current residual
 
-Gate 1 now has a passing local disposable PostgreSQL proof. The remote disposable Supabase proof is deferred because the free plan cannot provide a third project. This local evidence is not Supabase Cloud equivalence and does not authorize remote metadata writes. Gate 2 remains blocked until a separate QA-only authorization exists.
+Gate 1 has a passing local disposable PostgreSQL proof. The remote disposable Supabase proof remains deferred because the free plan could not provide a third project; the local evidence is not Supabase Cloud equivalence. Later QA and production metadata-only repairs were independently authorized and completed. Their completion does not prove a safe CLI zero-SQL plan, so `db push` remains locked. The production metadata smoke also retains unrelated `358/360` visual/harness debt.
 
 Expected behavior:
 
 - Do not repeat the migration manifest or repair plan.
 - Treat `npm run qa:migrations:local-proof` and its versioned report as proof only of PostgreSQL syntax, bootstrap order, fingerprints and simulated metadata.
 - Defer the third-project Supabase proof while the account limitation remains.
-- The next remote gate, if explicitly authorized, must target official QA first, write metadata only, prove zero schema/data changes and retain a private rollback artifact.
-- Never infer authorization for QA from the passing local proof; production requires a later distinct gate.
+- Never infer future authorization from the passing local proof or completed metadata gates.
 - Do not simulate proof.
 - Keep `db push` explicitly locked.
+
+Current continuation:
+
+- Gate 3: complete; do not reopen tenancy implementation without separate schema/Auth/policy authorization.
+- Gate 4: next active gate; keep it QA-first and bounded to public quiz RPC abuse protection.
+- Gate 5: later; do not begin it during Gate 3 or Gate 4.
 
 ## Completion format
 

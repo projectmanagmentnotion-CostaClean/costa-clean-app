@@ -40,7 +40,7 @@ QA is verified and production remains unchanged.
 # Validation
 Run lint, build, tests, QA probes, and secret scanning.
 # Stop conditions
-Stop on any production target or missing private provider access.
+Stop on any production deployment target or missing private provider access.
 # Delivery
 Report QA evidence, commit, push, and blockers.
 `
@@ -105,16 +105,27 @@ describe('projectContinuationAgentCore', () => {
     expect(findAutomaticStopReason('Emitir una factura real')).toBe('invoice-emission-not-safe')
   })
 
-  it('permits explicitly authorized QA deployment and publication while still blocking production deployment', () => {
+  it('permits explicitly authorized QA deployment and publication while still blocking positive production deployment', () => {
     withAuthorizedQaCapabilities(() => {
       expect(findAutomaticStopReason('Deploy the QA build and run git push origin main')).toBeNull()
       expect(findAutomaticStopReason('Deploy to production prod-ref')).toBe('production-deployment-not-authorized')
+      expect(findAutomaticStopReason('Production deployment to prod-ref is required now')).toBe('production-deployment-not-authorized')
       const prompt = buildExecutorPrompt(authorizedQaPrompt, 1, 3)
       expect(prompt).toContain('QA-only deployment is permitted')
       expect(prompt).toContain('Commit and push are permitted')
       expect(prompt).toContain('Never deploy to production')
       expect(prompt).toContain('qa-ref')
       expect(prompt).toContain('prod-ref')
+    })
+  })
+
+  it('does not misclassify explicit production prohibitions as deployment requests', () => {
+    withAuthorizedQaCapabilities(() => {
+      expect(findAutomaticStopReason('Do not deploy to production prod-ref.')).toBeNull()
+      expect(findAutomaticStopReason('Never deploy to production.')).toBeNull()
+      expect(findAutomaticStopReason('Production deployment is prohibited.')).toBeNull()
+      expect(findAutomaticStopReason('Deploy only to QA; production remains unchanged.')).toBeNull()
+      expect(findAutomaticStopReason(authorizedQaPrompt)).toBeNull()
     })
   })
 

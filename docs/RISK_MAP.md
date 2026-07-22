@@ -270,8 +270,17 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 
 - Unique 14-digit logical aliases now remove ambiguity in documentation, but they are not active filenames or remote metadata and cannot be treated as repaired history.
 - The QA-only baseline remains beside incrementals under `supabase/migrations`; retaining it avoids a premature identity change but leaves direct CLI use critically unsafe.
-- The baseline/fix-of-invoice bootstrap dependency is not proven on an empty database. Historical ordering is not evidence of executable bootstrap ordering.
-- No third disposable ref or credential exists locally. Substituting official QA or production would violate the gate, so proof is explicitly not executed.
+- The baseline/fix-of-invoice bootstrap dependency is proven on empty local PostgreSQL 17.10, but not under Supabase Cloud's managed runtime. Historical ordering alone remains insufficient evidence.
+- No third disposable Supabase ref or credential exists locally. Official QA and production were not substituted; a loopback-only PostgreSQL cluster supplied the explicitly non-equivalent local proof.
 - Production has legacy schema history outside these artifacts. Even a future three-version repair cannot claim a complete reproducible origin without a separate legacy baseline decision.
-- Next mitigation: provision and authorize a truly disposable target, prove discard, bootstrap, repair and zero-SQL plan, then request a separate QA metadata-repair gate.
+- Next mitigation: retain the Cloud proof as deferred and request a separate QA-only metadata-repair authorization package with backups, pre/post fingerprints, zero schema/data changes and rollback evidence.
 - Evidence: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md) and [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).
+
+## Local disposable PostgreSQL proof residual risk — 2026-07-22
+
+- PostgreSQL 17.10 proved the baseline and three incrementals execute in canonical bootstrap order with the expected hashes and final fingerprints.
+- Simulated `supabase_migrations.schema_migrations` proved three unique aliases and baseline exclusion, but it does not prove the installed Supabase CLI's exact metadata semantics.
+- Plain PostgreSQL uses minimal local stubs for Supabase roles and `auth.uid()`; managed extensions, provider roles, schema cache, CLI link state and Cloud diff/plan remain untested.
+- The temporary cluster was loopback-only and discarded. QA official and production were not contacted.
+- Mitigation: keep `db push` and real repair blocked; make QA official the first remote metadata-repair gate under separate authorization, backup and zero-schema/data-change verification.
+- Evidence: [LOCAL_DISPOSABLE_POSTGRES_MIGRATION_REPAIR_PROOF_20260722.md](LOCAL_DISPOSABLE_POSTGRES_MIGRATION_REPAIR_PROOF_20260722.md).

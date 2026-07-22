@@ -33,14 +33,15 @@ Primary files:
 
 ## Current external block
 
-Gate 1 is closed at the documentary boundary and blocked before disposable proof. The manifest, repair plan and `proof: NO` status document already exist. Gate 2 remains blocked and must not advance.
+Gate 1 now has a passing local disposable PostgreSQL proof. The remote disposable Supabase proof is deferred because the free plan cannot provide a third project. This local evidence is not Supabase Cloud equivalence and does not authorize remote metadata writes. Gate 2 remains blocked until a separate QA-only authorization exists.
 
 Expected behavior:
 
 - Do not repeat the migration manifest or repair plan.
-- Request exactly: a third disposable Supabase project/branch ref distinct from official QA and production; a private operator/DB credential delivered through a private channel; a proven discard or restore mechanism for that exact target; and explicit authorization for schema and migration-history writes only on that disposable target.
-- Attempt a disposable proof only after all four items are present and the ref is explicitly confirmed not to be production or official QA.
-- Until then, stop at the external-resource boundary and keep Gate 2 blocked.
+- Treat `npm run qa:migrations:local-proof` and its versioned report as proof only of PostgreSQL syntax, bootstrap order, fingerprints and simulated metadata.
+- Defer the third-project Supabase proof while the account limitation remains.
+- The next remote gate, if explicitly authorized, must target official QA first, write metadata only, prove zero schema/data changes and retain a private rollback artifact.
+- Never infer authorization for QA from the passing local proof; production requires a later distinct gate.
 - Do not simulate proof.
 - Keep `db push` explicitly locked.
 

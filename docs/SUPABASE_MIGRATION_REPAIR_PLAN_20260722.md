@@ -4,9 +4,15 @@
 
 Definir cómo podría reconciliarse el historial sin aplicar schema nuevo. Este documento no autoriza ni ejecuta repair, `db push`, SQL remoto, creación de historial ni cambios en QA/producción.
 
+## Proof local sustitutivo — 2026-07-22
+
+Por la limitación del plan gratuito, el proof remoto en un tercer Supabase queda diferido. `npm run qa:migrations:local-proof` ejecutó en PostgreSQL 17.10 un clúster descartable loopback-only, validó los cuatro hashes, aplicó baseline y tres incrementales en el orden candidato, creó metadata simulada con los tres aliases únicos, excluyó la baseline `never-push` y eliminó el clúster.
+
+Esto cierra la hipótesis local de sintaxis, orden, baseline, incrementales y metadata simulada. No valida semántica real de Supabase CLI/Cloud, no produce un plan remoto de cero SQL y no sustituye una autorización de metadata. `db push` y todo repair real continúan bloqueados. El primer repair remoto futuro debe ejecutarse en QA oficial bajo autorización separada; producción no forma parte de ese gate.
+
 ## Precondiciones obligatorias
 
-1. Un tercer proyecto Supabase desechable cuyo ref no sea `kpvvydthlxupjjqqdpxy` ni `wfxnwfcdjainpojhbdri`.
+1. Para repetir el proof remoto completo, un tercer proyecto Supabase desechable cuyo ref no sea `kpvvydthlxupjjqqdpxy` ni `wfxnwfcdjainpojhbdri`; temporalmente diferido por el plan gratuito.
 2. Credencial privada de operador almacenada solo en una ruta ignorada; nunca service role en frontend.
 3. Backup schema-only y backup de metadata inmediatamente anterior para cada destino que llegue a autorizarse.
 4. Hashes exactos iguales al [manifiesto](SUPABASE_MIGRATION_MANIFEST_20260722.md).

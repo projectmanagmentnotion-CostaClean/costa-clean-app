@@ -445,8 +445,10 @@ For roadmap-closeout or phase-closeout work:
 - A QA-only baseline is bootstrap infrastructure, `never-push`, and must not be registered as an incremental migration in QA or production.
 - Historical order and executable empty-database bootstrap order are separate claims; neither may be declared proven from filenames alone.
 - Disposable proof requires a third exact ref distinct from `kpvvydthlxupjjqqdpxy` and `wfxnwfcdjainpojhbdri`, private credentials, and a proven discard/restore path.
-- If no disposable destination exists, the valid result is `proof: NO`; QA/production must not be substituted.
+- If no remote disposable destination exists, the valid Supabase Cloud result is `proof: NO`; QA/production must not be substituted. A local disposable PostgreSQL substitute must be labeled non-equivalent and cannot authorize remote writes.
 - Repair in disposable does not authorize repair in QA. QA and production metadata writes each require later, separate authorization.
 - The npm locks remain mandatory before and after the proof; no gate may claim `db push` safe until a reviewed zero-SQL plan and legacy-history decision exist.
-- Current result: manifest and plan created, strategy B retained temporarily, disposable proof not executed, QA/production unchanged, lock active.
+- Current result: manifest and plan created; local disposable PostgreSQL proof passed; remote Supabase disposable proof deferred by free-plan capacity; QA/production unchanged; lock active.
+- The local proof may validate SQL syntax, bootstrap order, fingerprints and simulated unique metadata only. It is not Supabase Cloud equivalence and cannot authorize remote repair or unlock `db push`.
+- After a passing local proof, the first real remote repair must be official QA under a separate explicit metadata-only authorization; production remains a later independent gate.
 - Evidence: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md), [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md), and [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).

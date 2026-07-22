@@ -45,15 +45,15 @@ Estas reglas aplican a todos los gates restantes:
 
 ### Gate 1 — Migration Manifest And Disposable Repair Proof
 
-**Estado actual:** Blocked — cerrado en el límite documental por recurso externo ausente.
+**Estado actual:** Local disposable proof DONE; remote Supabase disposable proof deferred por limitación del plan gratuito.
 
 Entrega documental existente: commit `bca5189209a4e7662164af803754a5b759ac1a9e`.
 
 - Manifiesto canónico: completo; no repetir.
 - Repair plan: completo; no repetir.
-- Documento de estado del proof: completo con `Proof ejecutado: NO`.
-- Proof desechable: no ejecutado.
-- Bloqueo: falta un tercer destino Supabase desechable y autorización limitada para probarlo.
+- Documento de estado del proof: actualizado con proof local `SÍ` y proof Supabase remoto `NO`.
+- Proof local descartable: ejecutado en PostgreSQL 17.10, con clúster eliminado.
+- Proof Supabase remoto: diferido; no hay tercer destino disponible.
 
 Trabajo documental entregado:
 
@@ -61,7 +61,8 @@ Trabajo documental entregado:
 - Se separó conceptualmente la baseline QA-only de las migraciones incrementales productivas.
 - Se resolvió la colisión de versiones `20260721` a nivel de estrategia/documentación.
 - Se definieron orden canónico, hashes, alcance y estado material.
-- La prueba de reparación en un Supabase desechable no se ejecutó por falta del recurso externo requerido.
+- La estrategia se probó en PostgreSQL local descartable: baseline, incrementales, hashes, orden y metadata simulada pasaron.
+- La prueba en Supabase Cloud no se ejecutó y no se declara equivalente.
 - QA oficial y producción no se tocaron.
 
 Entregables existentes:
@@ -74,7 +75,8 @@ Entregables existentes:
 Criterio de cierre:
 
 - Límite documental: cerrado en `bca5189209a4e7662164af803754a5b759ac1a9e` con bloqueo externo documentado.
-- Proof desechable: pendiente; no declarar PASS sin ejecución real.
+- Local disposable proof: DONE con ejecución real.
+- Remote disposable proof: deferred; no declarar Supabase Cloud PASS.
 - `db push` sigue bloqueado.
 - Repair real sigue bloqueado.
 - Producción modificada: NO.
@@ -88,11 +90,11 @@ Recurso y autorización exactos requeridos para reabrir únicamente el proof:
 3. Un mecanismo probado de descarte o restauración para ese destino exacto antes de cualquier write.
 4. Autorización explícita para writes de schema e historial de migraciones únicamente en ese destino desechable.
 
-Hasta recibir los cuatro elementos, el agente debe detenerse sin conexión ni writes. Gate 2 permanece bloqueado y `db push` no se desbloquea.
+La limitación de cuenta mantiene diferido ese proof remoto. El siguiente gate posible no es producción: es un paquete de autorización separado para repair de metadata en QA oficial. Hasta esa autorización, el agente debe detenerse sin conexión ni writes; `db push` no se desbloquea.
 
 ### Gate 2 — Migration History Repair Authorization Package
 
-**Estado actual:** Blocked — Gate 1 no tiene proof desechable ejecutado; no avanzar.
+**Estado actual:** Blocked — el proof local pasó, pero no autoriza repair de metadata remota; no avanzar sin autorización QA separada.
 
 Objetivo:
 
@@ -203,6 +205,6 @@ El roadmap final queda cerrado cuando:
 
 ## Próxima acción bloqueada
 
-Gate 1 ya entregó el manifiesto y el repair plan en `bca5189209a4e7662164af803754a5b759ac1a9e`; no deben repetirse. Gate 2 permanece bloqueado y no es el siguiente gate ejecutable.
+Gate 1 ya entregó manifiesto, repair plan y proof PostgreSQL local. Gate 2 permanece bloqueado y no es ejecutable sin autorización nueva.
 
-La única continuación permitida es pedir los cuatro elementos exactos descritos en Gate 1: tercer ref desechable, credencial privada de operador/DB, descarte o restauración probado y autorización explícita de writes de schema/historial solo para ese destino. Hasta entonces, detenerse. No simular proof, no tocar QA oficial/producción y no ejecutar `db push`.
+La única continuación remota recomendada es preparar y solicitar un gate de repair de metadata solo en QA oficial, con credencial privada, backup de metadata/schema, fingerprints pre/post, registro exclusivo de los tres aliases incrementales, baseline ausente, cero cambios de schema/datos y rollback probado. Hasta esa autorización, detenerse. No tocar QA oficial/producción y no ejecutar `db push`.

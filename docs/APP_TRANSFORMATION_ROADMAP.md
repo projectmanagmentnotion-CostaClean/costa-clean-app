@@ -572,3 +572,12 @@ Evidence:
 - Authenticated QA remains functional (`360/360` visual); no business entity or financial operation was created by validation.
 - Production remains unchanged. The next milestone is a separately authorized production release gate with exact migration/hash review and rollback evidence.
 - Evidence: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).
+
+## Post-Roadmap Sprint: Production P0 Anonymous Read Closure — 2026-07-22
+
+- The QA-verified migration was applied to the exact production ref after a private schema-only backup and dual public/private target validation.
+- Anonymous REST access moved from HTTP 200 to HTTP 401 on all ten protected resources; authenticated access remains HTTP 200.
+- Sensitive anonymous RPC grants and scoped legacy anonymous write policies are zero; public quiz submission remains narrowly available.
+- Read-only authenticated app smoke passes `360/360` with no load errors, entities or submits.
+- Remaining work is migration-history reconciliation and public endpoint abuse controls, not reopening anonymous table access.
+- Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).

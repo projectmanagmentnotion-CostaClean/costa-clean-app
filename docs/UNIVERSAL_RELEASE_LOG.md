@@ -110,6 +110,19 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md) y [FULL_APP_
 
 Evidencia: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).
 
+#### 2026-07-22 — Production P0 Anonymous Read Closure
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: security / production database release
+- resumen: aplica en producción la migración exacta validada en QA, cierra lecturas y writes legacy anon, restringe RPC sensibles y preserva auth y el envío público validado del quiz
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validación: backup schema-only previo; anon REST `200 -> 401` en 10/10; authenticated REST `200` en 10/10; RPC anon `6 -> 0`; smoke visual `360/360`; cero writes de negocio
+- riesgo: modelo single-workspace, historial de migraciones pendiente de reconciliar y rate limiting del quiz público
+- rollback: inversa transaccional basada en el schema/reportes previos; reabre P0 y requiere autorización separada de incidente
+
+Evidencia: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
+
 ### Ridaos Print
 
 Sin entradas.

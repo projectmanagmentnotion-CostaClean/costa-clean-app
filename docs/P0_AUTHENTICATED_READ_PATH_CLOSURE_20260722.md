@@ -2,7 +2,7 @@
 
 ## Resultado
 
-El P0 de lectura anónima quedó cerrado y verificado únicamente en Supabase QA `kpvvydthlxupjjqqdpxy`. Producción `wfxnwfcdjainpojhbdri` no fue modificada. La migración queda lista para un gate productivo independiente; este sprint no autoriza aplicarla allí.
+El P0 de lectura anónima quedó cerrado y verificado primero en Supabase QA `kpvvydthlxupjjqqdpxy`. El gate productivo separado del 2026-07-22 aplicó posteriormente el mismo archivo auditado en `wfxnwfcdjainpojhbdri`; véase [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
 
 ## Diagnóstico y read paths corregidos
 
@@ -47,7 +47,7 @@ Los reportes JSON están en `qa-reports/private/anon-closure/` y no se versionan
 
 ## Riesgos restantes
 
-- Producción conserva la exposición documentada hasta un gate productivo explícito.
+- Producción ya cerró la exposición mediante el gate separado y conserva evidencia anon/auth posterior.
 - El modelo actual no tiene ownership/tenant columns. La policy de lectura autenticada sirve al workspace único actual, pero no es autorización multi-tenant.
 - La aplicación directa por `psql` no reconcilia `supabase_migrations.schema_migrations`; `db push` sigue bloqueado.
 - Los scripts operativos históricos que dependan de bearer anon ya no funcionarán contra QA y deben migrarse a sesión/credencial operativa explícita antes de reutilizarse.
@@ -59,4 +59,4 @@ El rollback de frontend es `git revert <commit-de-esta-entrega>`. El rollback de
 
 ## Próximo gate
 
-Preparar una revisión de release productiva con diff/hash exacto de esta migración, snapshot privado previo, pruebas anon/auth posteriores y autorización explícita. No aplicar automáticamente desde este resultado QA.
+El gate productivo fue completado con hash exacto, backup previo y pruebas anon/auth. El siguiente trabajo es reconciliar el historial de migraciones y revisar rate limiting del RPC público del quiz, siempre en sprints separados.

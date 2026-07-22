@@ -417,3 +417,13 @@ For roadmap-closeout or phase-closeout work:
 - Protected frontend REST reads must require `session.access_token`; anon may remain only as `apikey` or as bearer for an explicitly public, allowlisted RPC.
 - Final app evidence is authenticated visual QA plus a no-write sandbox dry-run. Any visible load error fails the gate even if layout checks pass.
 - Production release remains a separate authorization with pre/post evidence and rollback.
+
+## Production P0 Anonymous Closure Gate - 2026-07-22
+
+- The exact QA-verified migration hash, public project ref and private pooler ref must match before apply; QA and local identities must be rejected.
+- A non-empty schema-only backup with zero COPY/data INSERT/connection strings is mandatory before mutation.
+- Apply is limited to one reviewed migration through PostgreSQL 17 `psql`, `ON_ERROR_STOP` and explicit transaction boundaries; `db push` is forbidden.
+- Pass requires anon HTTP 401/403 in 10/10, authenticated HTTP 200 in 10/10, zero sensitive anon RPC grants and preservation of the allowlisted public quiz submission.
+- App smoke is read-only and must show no load errors, submits or created entities.
+- Completed evidence: backup valid, apply transaction complete, anon `401` 10/10, auth `200` 10/10, visual smoke `360/360`, business writes 0.
+- Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).

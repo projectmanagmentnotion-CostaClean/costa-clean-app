@@ -243,8 +243,16 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 ## QA anonymous read closure risk - 2026-07-22
 
 - QA now denies anon SELECT on the ten exposed P0/P1 tables and denies anon EXECUTE on all audited sensitive RPCs; authenticated probes pass 10/10.
-- Production remains exposed and is the remaining P0. QA success is evidence for a release gate, not authorization to apply production changes.
+- Production closed the same exposure through the separately authorized gate: anon REST is now 401 on 10/10 and authenticated REST remains 200 on 10/10.
 - Authenticated reads are workspace-wide because the schema has no tenant ownership model. This is acceptable only for the current single-workspace contract.
 - Public quiz submission is intentionally retained through a validation RPC; public quiz history is blocked.
 - Direct `psql` application leaves migration-history reconciliation debt. `db push` remains prohibited.
 - Evidence: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md).
+
+## Production anonymous read closure risk - 2026-07-22
+
+- The production P0 is closed: zero anonymous SELECT policies/grants, zero scoped legacy anonymous write policies and zero sensitive anonymous RPC grants remain.
+- The public quiz submission RPC is intentionally anonymous, validates a narrow payload and does not expose history. Abuse/rate limiting remains an operational risk.
+- Authenticated reads remain workspace-wide because the schema has no tenant ownership columns; this is not a multi-tenant authorization model.
+- Direct `psql` apply remains outside Supabase migration history. `db push` is blocked until a separately reviewed reconciliation.
+- Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).

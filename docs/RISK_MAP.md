@@ -220,7 +220,8 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 ## Production RLS/RPC release risk - 2026-07-22
 
 - Production ref `wfxnwfcdjainpojhbdri` now contains the authenticated operational RPC migration. The deployed frontend bundle was checked for all six coordinated RPC paths before closure.
-- No production row-level smoke was executed. Catalog correctness is verified, but the first real authenticated operational write remains observable live usage unless a separate marked smoke is authorized.
+- The separately authorized production row-level smoke passed for `create_client`, `create_property`, `update_property`, `save_job_with_lines`, and `update_job_status` using a real session bearer. Persisted state was reconciled before immediate cleanup; marker and deterministic-ID residue are both zero.
+- The smoke consumed one automatic `CLI-*`, `PRO-*`, and `JOB-*` value. Those unavoidable gaps are operational and non-fiscal; no sequence reset was attempted, and invoice `display_code` / `invoice_number` remained untouched.
 - Clients, properties and jobs still have no tenant ownership columns. Authentication is sufficient only for the current single-workspace operating model.
 - Anonymous SELECT policies remain outside this release and require a separate privacy/read-path audit.
 - The migration was applied through direct `psql`; Supabase migration-history reconciliation remains mandatory before any future `db push`.

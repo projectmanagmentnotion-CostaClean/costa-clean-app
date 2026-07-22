@@ -382,6 +382,17 @@ For roadmap-closeout or phase-closeout work:
 - The deployed frontend must contain the coordinated RPC paths before legacy anon policies or grants are removed.
 - Apply uses `psql`, `ON_ERROR_STOP`, and one reviewed transaction; `db push` and unrelated migrations remain prohibited until history is reconciled.
 - Post-apply introspection must verify RLS, `SECURITY DEFINER`, fixed `search_path`, internal auth guards, denied `public/anon`, allowed `authenticated`, and zero global authenticated write policies.
-- Catalog verification does not count as a real write smoke. Production row creation requires separate authorization and cleanup controls.
+- Catalog verification does not count as a real write smoke. Production row creation requires separate authorization, deterministic IDs, a unique marker, immediate foreign-key-ordered cleanup, and a zero-residue reconciliation.
 - Rollback must be derived from the private pre-apply schema and documented as security-regressive when it restores anonymous writes.
+- Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).
+
+## Production Non-Financial RLS Smoke Gate - 2026-07-22
+
+- The authorized target and the excluded QA ref must both be validated from public and private connection identities before any write.
+- Authenticated writes must use `session.access_token`; equality between bearer and anon key blocks the run.
+- The endpoint allowlist is limited to operational client/property/job RPCs and must reject invoice, payment, closing, or full-submit paths.
+- Persisted rows and affected state must be reconciled before cleanup; HTTP success alone is insufficient.
+- Cleanup is limited to deterministic IDs carrying the exact marker and runs `job_lines -> jobs -> properties -> clients`, including after an intermediate failure.
+- The completed smoke used `PROD_RLS_SMOKE_20260722`, returned `200/200/200/204/200`, and left zero marker or ID residue.
+- Automatic `CLI/PRO/JOB` sequence gaps are accepted operational effects, are not fiscal numbering, and must not be reset. Invoice `display_code` and `invoice_number` remain prohibited.
 - Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).

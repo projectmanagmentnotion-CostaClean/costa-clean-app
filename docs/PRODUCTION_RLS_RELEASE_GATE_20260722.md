@@ -82,7 +82,7 @@ The public production deployment was checked without authentication or writes. A
 
 ## Protected domains
 
-- Real authenticated write smoke test: not executed; it requires separate authorization.
+- Real authenticated write smoke test: executed successfully under separate authorization with marker `PROD_RLS_SMOKE_20260722`.
 - Invoice operations: 0.
 - Payment operations: 0.
 - Quarterly closing operations: 0.
@@ -92,6 +92,20 @@ The public production deployment was checked without authentication or writes. A
 - Full-submit: no.
 - `financialWriteApi` modifications: none.
 - Production Auth modifications: none.
+
+## Real authenticated non-financial smoke
+
+The separately authorized production smoke targeted `wfxnwfcdjainpojhbdri` and explicitly rejected QA `kpvvydthlxupjjqqdpxy`. It used a real production `session.access_token`; the bearer was verified to differ from the anon key.
+
+- `create_client`: HTTP `200`; the marked row and its automatic `CLI-*` code were persisted and verified.
+- `create_property`: HTTP `200`; the marked row and its automatic `PRO-*` code were persisted and verified.
+- `update_property`: HTTP `200`; the safe city/notes edit was persisted and verified.
+- `save_job_with_lines`: HTTP `204`; one marked job, one marked job line, and the automatic `JOB-*` code were persisted and verified.
+- `update_job_status`: HTTP `200`; status `in_progress` was persisted and verified.
+
+Cleanup ran immediately in foreign-key order `job_lines -> jobs -> properties -> clients`, restricted to deterministic IDs carrying `PROD_RLS_SMOKE_20260722`. Post-clean reconciliation found zero marker rows and zero deterministic IDs. No invoice, payment, quarterly closing, fiscal-numbering, or full-submit endpoint was called.
+
+The single consumed `CLI-*`, `PRO-*`, and `JOB-*` values create expected sequence gaps. These codes are operational, not fiscal; the sequences were not and must not be reset. No invoice `display_code` or `invoice_number` was read or written.
 
 ## Rollback
 
@@ -134,4 +148,4 @@ This rollback deliberately restores the insecure anonymous write surface and mus
 - Authentication protects the write entry points, but clients/properties/jobs still lack tenant ownership columns. The solution is appropriate only for the current single-workspace model.
 - Anonymous SELECT policies remain unchanged and require a separate privacy/read-path audit.
 - Direct `psql` application does not reconcile `supabase_migrations.schema_migrations`; `db push` remains blocked until a dedicated history-reconciliation gate.
-- No real production write smoke was executed in this gate.
+- The marked production smoke verified the five authorized operational RPC calls and immediate cleanup. Residual application risk is no longer the absence of a production write probe, but the single-workspace authorization model and the separate anonymous read surface.

@@ -9,36 +9,71 @@ if (-not (Test-Path $directRunner)) {
   throw "Missing direct Gate 4B runner: $directRunner"
 }
 
-Write-Host 'Checking Supabase CLI authentication for the authorized QA project...'
-$projectsOutput = & npx supabase projects list 2>&1
-$authenticated = $LASTEXITCODE -eq 0
-$projectsText = $projectsOutput | Out-String
-
-if (-not $authenticated) {
-  Write-Host ''
-  Write-Host 'One private human authentication step is required.' -ForegroundColor Yellow
-  Write-Host 'Complete the Supabase CLI login prompt without sharing the token in chat, files, logs or Git.' -ForegroundColor Yellow
-  Write-Host 'After successful authentication this launcher will continue automatically.' -ForegroundColor Yellow
-  Write-Host ''
-
-  & npx supabase login
-  if ($LASTEXITCODE -ne 0) {
-    throw 'Supabase CLI login did not complete successfully. Use a Supabase Personal Access Token beginning with sbp_.'
-  }
-
+function Test-SupabaseQaAccess {
   $projectsOutput = & npx supabase projects list 2>&1
-  if ($LASTEXITCODE -ne 0) {
-    throw 'Supabase CLI authentication completed but projects list still failed.'
-  }
+  $exitCode = $LASTEXITCODE
   $projectsText = $projectsOutput | Out-String
+
+  return [pscustomobject]@{
+    Success = $exitCode -eq 0 -and $projectsText -match 'kpvvydthlxupjjqqdpxy'
+    ExitCode = $exitCode
+    Output = $projectsText
+  }
 }
 
-if ($projectsText -notmatch 'kpvvydthlxupjjqqdpxy') {
-  throw 'The authenticated Supabase account cannot see the authorized QA project kpvvydthlxupjjqqdpxy.'
+Write-Host 'Checking Supabase CLI authentication for the authorized QA project...'
+
+$existingProcessToken = [Environment]::GetEnvironmentVariable('SUPABASE_ACCESS_TOKEN', 'Process')
+if ($existingProcessToken -and $existingProcessToken -notmatch '^sbp_[A-Za-z0-9]+$') {
+  Remove-Item Env:SUPABASE_ACCESS_TOKEN -ErrorAction SilentlyContinue
+  Write-Host 'Ignored an invalid inherited SUPABASE_ACCESS_TOKEN without displaying or persisting it.' -ForegroundColor Yellow
 }
 
-Write-Host 'Supabase QA authentication verified. Handing the remaining Gate 4B work to Codex...'
-& powershell -ExecutionPolicy Bypass -File $directRunner
-if ($LASTEXITCODE -ne 0) {
-  throw "Direct Gate 4B runner exited with code $LASTEXITCODE."
+$temporaryTokenInstalled = $false
+$tokenBstr = [IntPtr]::Zero
+$plainToken = $null
+
+try {
+  $access = Test-SupabaseQaAccess
+
+  if (-not $access.Success) {
+    Write-Host ''
+    Write-Host 'One private human authentication step is required.' -ForegroundColor Yellow
+    Write-Host 'Paste the Supabase Personal Access Token beginning with sbp_ into the secure prompt.' -ForegroundColor Yellow
+    Write-Host 'The token will not be printed, written to files, stored by the CLI or committed to Git.' -ForegroundColor Yellow
+    Write-Host ''
+
+    $secureToken = Read-Host 'Supabase Personal Access Token' -AsSecureString
+    $tokenBstr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secureToken)
+    $plainToken = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($tokenBstr)
+
+    if ([string]::IsNullOrWhiteSpace($plainToken) -or $plainToken -notmatch '^sbp_[A-Za-z0-9]+$') {
+      throw 'Invalid Supabase Personal Access Token format. Generate a classic access token beginning with sbp_.'
+    }
+
+    $env:SUPABASE_ACCESS_TOKEN = $plainToken
+    $temporaryTokenInstalled = $true
+    $plainToken = $null
+
+    $access = Test-SupabaseQaAccess
+    if (-not $access.Success) {
+      throw 'The supplied token is invalid or its account cannot see QA project kpvvydthlxupjjqqdpxy.'
+    }
+  }
+
+  Write-Host 'Supabase QA authentication verified. Handing the remaining Gate 4B work to Codex...'
+  & powershell -ExecutionPolicy Bypass -File $directRunner
+  if ($LASTEXITCODE -ne 0) {
+    throw "Direct Gate 4B runner exited with code $LASTEXITCODE."
+  }
+}
+finally {
+  if ($temporaryTokenInstalled) {
+    Remove-Item Env:SUPABASE_ACCESS_TOKEN -ErrorAction SilentlyContinue
+  }
+
+  $plainToken = $null
+  if ($tokenBstr -ne [IntPtr]::Zero) {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($tokenBstr)
+  }
 }

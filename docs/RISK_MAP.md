@@ -216,3 +216,13 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - `reassign_property_client` is now reachable only through an authenticated wrapper; do not restore its public/anon EXECUTE grant.
 - Direct `psql` apply to QA does not reconcile Supabase migration history. `db push` remains blocked until a dedicated history gate.
 - Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).
+
+## Production RLS/RPC release risk - 2026-07-22
+
+- Production ref `wfxnwfcdjainpojhbdri` now contains the authenticated operational RPC migration. The deployed frontend bundle was checked for all six coordinated RPC paths before closure.
+- No production row-level smoke was executed. Catalog correctness is verified, but the first real authenticated operational write remains observable live usage unless a separate marked smoke is authorized.
+- Clients, properties and jobs still have no tenant ownership columns. Authentication is sufficient only for the current single-workspace operating model.
+- Anonymous SELECT policies remain outside this release and require a separate privacy/read-path audit.
+- The migration was applied through direct `psql`; Supabase migration-history reconciliation remains mandatory before any future `db push`.
+- Emergency rollback recreates six anonymous write policies and broad legacy RPC execution. It is security-regressive, requires frontend coordination, and must not be used without an explicit production incident decision.
+- Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).

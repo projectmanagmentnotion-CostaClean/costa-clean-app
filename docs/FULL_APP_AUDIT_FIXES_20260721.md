@@ -118,3 +118,9 @@ Evidencia: [QA_AUTH_RLS_WRITE_VERIFICATION_20260721.md](QA_AUTH_RLS_WRITE_VERIFI
 The QA-only follow-up selected authenticated RPCs because the schema has no tenant ownership columns. Direct anon writes on clients/properties/jobs were closed, the affected frontend writes moved to allowlisted RPCs, and real QA persistence plus exact cleanup passed. Production was not changed.
 
 Evidence: [RLS_WRITE_PATH_FIX_20260721.md](RLS_WRITE_PATH_FIX_20260721.md).
+
+## Production RLS/RPC release follow-up — 2026-07-22
+
+The exact QA-verified migration was applied to production ref `wfxnwfcdjainpojhbdri` after a private schema-only backup and read-only compatibility preflight. Post-apply introspection confirmed RLS, authenticated RPC guards/grants, the blocked legacy reassignment entry point, removal of six anon write policies, and zero unsafe authenticated write policies. The public deployment contains all coordinated RPC paths. No production business row, invoice, payment, closing, fiscal number, Auth setting, or full-submit flow was touched.
+
+Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).

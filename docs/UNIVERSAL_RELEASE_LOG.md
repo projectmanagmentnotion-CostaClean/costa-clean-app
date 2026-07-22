@@ -6,6 +6,19 @@ Registro transversal para cambios que adopten el sistema universal. Los proyecto
 
 ### Costa Clean
 
+#### 2026-07-22 - Production RLS/RPC Write Path Release
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: production backend security release
+- resumen: applies the QA-verified authenticated RPC migration to production after exact target validation and a private schema-only backup; closes legacy anonymous writes on clients, properties, and jobs
+- commit: documentation commit of this production release; final identifier is reported at close
+- validación: preflight lint/build/201 tests, migration hash guard, PostgreSQL 17 transactional apply, post-apply catalog verification, and deployed bundle contract verification
+- riesgo: single-workspace authorization and anonymous reads remain; direct `psql` migration-history drift remains blocked from `db push`; no real production write smoke was executed
+- rollback: separately reviewed production SQL documented in the release evidence; rollback restores the insecure legacy write surface and requires frontend coordination
+
+Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).
+
 #### 2026-07-21 - RLS and RPC Write Path Fix
 
 - fecha: 2026-07-21

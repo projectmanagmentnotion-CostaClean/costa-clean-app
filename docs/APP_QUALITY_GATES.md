@@ -375,3 +375,13 @@ For roadmap-closeout or phase-closeout work:
 - Antes de ampliar alcance se deben revisar [UNIVERSAL_RISK_ZONES.md](UNIVERSAL_RISK_ZONES.md) y [RISK_MAP.md](RISK_MAP.md).
 - Los prompts de [CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md](CODEX_UNIVERSAL_CORRECTOR_PROTOCOL.md) no sustituyen autorizaciones ni evidencia real.
 - Si un gate local es mas estricto que el universal, prevalece el gate local.
+
+## Production Authenticated RPC Release Gate - 2026-07-22
+
+- A production RPC migration requires an exact file/hash allowlist, an unambiguous public/private project-ref match, and a private pre-apply schema backup.
+- The deployed frontend must contain the coordinated RPC paths before legacy anon policies or grants are removed.
+- Apply uses `psql`, `ON_ERROR_STOP`, and one reviewed transaction; `db push` and unrelated migrations remain prohibited until history is reconciled.
+- Post-apply introspection must verify RLS, `SECURITY DEFINER`, fixed `search_path`, internal auth guards, denied `public/anon`, allowed `authenticated`, and zero global authenticated write policies.
+- Catalog verification does not count as a real write smoke. Production row creation requires separate authorization and cleanup controls.
+- Rollback must be derived from the private pre-apply schema and documented as security-regressive when it restores anonymous writes.
+- Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).

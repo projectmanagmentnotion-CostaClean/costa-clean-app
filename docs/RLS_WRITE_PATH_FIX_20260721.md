@@ -5,7 +5,7 @@
 - Initial HEAD: `66a32d9a639ba83262a92da5d2e53e92fbbe0cda`.
 - Applied database target: QA `kpvvydthlxupjjqqdpxy` only.
 - Test marker: `QA_RLS_FIX_20260721`.
-- Production, production Auth, financial writes, invoices, payments, closings, fiscal numbering and `financialWriteApi`: untouched.
+- During the QA implementation block, production, production Auth, financial writes, invoices, payments, closings, fiscal numbering and `financialWriteApi` were untouched. The verified migration was later released to production under the separate 2026-07-22 gate documented below.
 
 ## Current-state audit
 
@@ -100,7 +100,7 @@ Auth validation returned HTTP 200. The bearer differed from the anon key. Maximu
 - This is a single-workspace authorization model. RPC authentication prevents anonymous mutation but does not create tenant ownership. Adding a second company or tenant requires an explicit ownership schema and policy sprint before onboarding its users.
 - Anon SELECT policies remain on clients/properties/jobs because read-path migration was outside scope. They should receive a separate privacy audit.
 - QA was updated by direct `psql`; migration-history reconciliation remains required before any future `db push`.
-- Production has not been migrated or smoke-tested.
+- Production received the exact verified migration on 2026-07-22. No real production write smoke has been authorized or executed.
 
 ## Final validation
 
@@ -113,12 +113,14 @@ Auth validation returned HTTP 200. The bearer differed from the anon key. Maximu
 - `node scripts/qa/run-end-user-flow-agent.mjs --mode=dry-run`: `588/588`, 3 policy skips, 0 entities created.
 - Final `qa:rls-fix:verify-clean`: pass; both temporary markers 0, seed intact, financial tables `0/0/0`.
 
-## Production gate
+## Production release — 2026-07-22
 
-The change is ready for a separate production-readiness gate, not for automatic production apply. That gate must review the migration against the live schema, coordinate frontend deployment with removal of legacy anon write policies, capture an authorized backup/rollback point, apply without `db push` until migration history is reconciled, and run authenticated non-financial smoke plus exact cleanup. Any multi-tenant requirement stops the rollout until ownership is modeled.
+The separate production gate passed and applied this exact migration to production ref `wfxnwfcdjainpojhbdri` after target validation and a private schema-only backup. PostgreSQL 17 `psql` used `ON_ERROR_STOP` and the migration transaction; `db push` and all other migrations remained prohibited. Post-apply catalog verification confirmed RLS, six authenticated RPCs, hardened legacy grants, removal of the six anon write policies, and zero unsafe authenticated write policies. The deployed frontend bundle contains the coordinated RPC paths. No real write smoke, invoice, payment, closing, numbering, Auth, or full-submit operation ran.
+
+Evidence: [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md).
 
 ## Rollback
 
 Repository rollback: `git revert <commit-of-this-sprint>` followed by lint, build and tests.
 
-QA database rollback requires a separately reviewed `psql` transaction that drops the seven new functions, restores the previous function grants and recreates the six removed anon write policies. That rollback deliberately restores the insecure legacy surface and must never be run in production by default. No QA data rollback is currently needed because all marked rows were removed.
+QA database rollback requires a separately reviewed `psql` transaction that drops the seven new functions, restores the previous function grants and recreates the six removed anon write policies. Production rollback is specified in [PRODUCTION_RLS_RELEASE_GATE_20260722.md](PRODUCTION_RLS_RELEASE_GATE_20260722.md), requires an explicit operational decision, and deliberately restores the insecure legacy surface. No data rollback is currently needed.

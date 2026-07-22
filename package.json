@@ -12,6 +12,7 @@
     "agent:continue": "node scripts/ops/run-project-continuation-agent.mjs",
     "qa:migrations:local-proof": "node scripts/ops/run-local-migration-repair-proof.mjs",
     "qa:migrations:qa-metadata-repair": "node scripts/ops/run-qa-migration-metadata-repair.mjs --verify",
+    "qa:migrations:production-metadata-repair": "node scripts/ops/run-production-migration-metadata-repair.mjs --verify",
     "db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "supabase:db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "qa:auth:setup": "node scripts/qa/setup-auth-state.mjs",

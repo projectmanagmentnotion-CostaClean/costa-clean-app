@@ -1,6 +1,10 @@
 # Supabase DB Push Lock
 
-## Estado vigente tras el gate QA metadata-only
+## Estado vigente tras repairs metadata-only en QA y produccion
+
+QA y produccion registran ahora exactamente las tres incrementales canonicas; la baseline QA-only sigue excluida. El lock permanece activo porque esas tres entradas no reconstruyen la historia legacy, los nombres fisicos `20260721` siguen siendo ambiguos, la baseline permanece dentro del directorio y no existe un gate CLI revisado que demuestre cero SQL pendiente. Metadata reconciliada no equivale a `db push` seguro. Evidencia: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
+## Estado historico tras el gate QA metadata-only
 
 QA oficial ya contiene exactamente las tres incrementales canonicas bajo `supabase_migrations`; la baseline QA-only sigue excluida. Produccion continua sin historial reconciliado y no existe un plan revisado de `db push` con cero SQL para la cadena completa. Por ello este lock sigue activo sin excepciones. Esta actualizacion prevalece sobre las descripciones historicas inferiores. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 

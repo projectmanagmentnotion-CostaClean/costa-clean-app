@@ -1,5 +1,11 @@
 # Costa Clean App — Final Closeout Roadmap
 
+## Production metadata repair gate completed - 2026-07-22
+
+The separately authorized production metadata-only repair is PASS. Production now records exactly the three canonical incrementals; QA baseline and unknown versions are absent. Public schema fingerprint, 17 table counts, nine sequences and invoice identifiers remained unchanged. QA was not modified. `db push` remains locked because legacy history and the physical migration directory still lack a proven CLI zero-SQL transition. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
+The next active roadmap gate is Gate 3, Workspace / Tenancy / Ownership Security Model. It is read-only/documentary unless a later authorization expands scope.
+
 ## Production metadata authorization package - 2026-07-22
 
 The production read-only package is complete. Production history is still absent, all three incremental postconditions are materially present, and the proposed action is metadata-only. Production and QA were not modified. The next repair sprint is blocked until the exact explicit production authorization in [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) is supplied. `db push` remains locked.

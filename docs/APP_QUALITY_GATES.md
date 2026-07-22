@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Production Migration Metadata Repair Gate - 2026-07-22
+
+- Execution requires exact separate user authorization, triple production identity, fresh private rollback and canonical hash allowlist.
+- The only permitted mutation is the CLI-compatible metadata schema/table plus exactly three canonical incremental rows; baseline and unknown entries are forbidden.
+- Pre-commit and post-commit verification must preserve public fingerprint, table inventory/counts, sequences, invoice identifiers and material sentinels.
+- Current result: PASS. Migration bodies, business schema/data, QA, full-submit and financial/fiscal writes were untouched.
+- `db push` remains locked until a separate gate proves the physical repository migration chain produces safe zero pending SQL.
+- Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Production Migration Metadata Repair Authorization Package Gate - 2026-07-22
 
 - This gate is read-only and may validate only the exact production ref while explicitly rejecting QA and unknown refs.

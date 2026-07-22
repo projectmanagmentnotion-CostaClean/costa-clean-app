@@ -31,6 +31,10 @@ Primary files:
 11. Commit and push after each completed versionable gate.
 12. Stop if a gate needs credentials, a disposable Supabase project, production access, migration-history writes or another explicit authorization.
 
+## Current gate after production metadata repair - 2026-07-22
+
+The separately authorized production metadata-only repair is complete and verified. Do not repeat it, do not execute rollback, and do not infer that `db push` is safe. The next active roadmap gate is Gate 3, Workspace / Tenancy / Ownership Security Model, limited to read-only audit and documentation unless a new authorization permits schema, policy, auth or production changes. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Current production metadata block - 2026-07-22
 
 The QA metadata repair is complete. A subsequent read-only sprint prepared [PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_AUTHORIZATION_PACKAGE_20260722.md) and verified the three incremental postconditions in production without writes. Do not repeat the package and do not execute production repair. Stop with `blocked` until the exact production metadata-only authorization quoted in that package is supplied. Even after an authorized repair, `db push` remains a later independent gate.

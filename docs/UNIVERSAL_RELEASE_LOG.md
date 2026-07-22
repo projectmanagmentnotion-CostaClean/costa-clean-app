@@ -1,5 +1,16 @@
 # Universal Release Log
 
+## 2026-07-22 - Costa Clean App - production migration metadata repair gate
+
+- tipo: production operational metadata repair
+- resumen: registers exactly three canonical migration-history entries in production without executing migration bodies or changing business schema/data
+- commit: commit of this delivery; final identifier reported at closeout
+- validacion: triple target identity, fresh private rollback, canonical hashes, public fingerprint, 17 table counts, nine sequences, invoice identifiers, authenticated no-submit smoke, lint/build/tests and push locks
+- riesgo: legacy history and physical migration filenames remain unresolved; authenticated visual audit is `358/360`; `db push` remains blocked
+- rollback: private guarded transaction removes only the gate-created metadata schema after exact-content verification; not executed because the gate passed
+
+Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## 2026-07-22 - Costa Clean App - production migration metadata authorization package
 
 - tipo: docs / production read-only authorization package

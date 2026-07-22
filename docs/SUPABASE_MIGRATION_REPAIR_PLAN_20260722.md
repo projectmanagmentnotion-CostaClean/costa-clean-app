@@ -1,6 +1,10 @@
 # Supabase Migration Repair Plan — 2026-07-22
 
-## Estado actual - QA repair ejecutado
+## Estado actual - QA y produccion metadata repair ejecutados
+
+QA y produccion registran exactamente `20260707120336`, `20260721183811` y `20260722114751`; la baseline `20260721134926` permanece fuera. El gate productivo uso un backup privado fresco, una transaccion metadata-only y verificacion pre/post de fingerprint, conteos, secuencias e identificadores fiscales. No se ejecuto SQL de migraciones ni hubo cambios de negocio. Esto cierra el repair remoto autorizado, pero no desbloquea `db push`: falta una transicion fisica de archivos y un gate CLI separado de cero SQL. Evidencia: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
+## Estado anterior - QA repair ejecutado
 
 El 2026-07-22 se ejecuto el gate autorizado exclusivamente contra `kpvvydthlxupjjqqdpxy`. Se creo metadata compatible con Supabase CLI y se registraron solo `20260707120336`, `20260721183811` y `20260722114751`; la baseline `20260721134926` quedo fuera. El fingerprint `public` `A2E82C1CF0A1B8DF01AEAC14FC1E497EBEFECBBA25858E7BDBA81D8DE0509439`, las 17 tablas y sus conteos permanecieron identicos. No se ejecuto SQL de migraciones ni se tocaron schema/datos de negocio. Produccion y `db push` siguen bloqueados. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 

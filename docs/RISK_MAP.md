@@ -1,5 +1,14 @@
 # Risk Map
 
+## Production migration metadata repair residual risk - 2026-07-22
+
+- Production now records exactly the same three canonical incrementals as QA; the QA-only baseline and unknown entries remain absent.
+- Public schema fingerprint, all 17 business counts, nine sequence states and invoice identifier fingerprint were identical before and after.
+- The repair did not execute migration bodies or alter business schema/data, but it still does not reconstruct legacy production history.
+- Physical filenames remain ambiguous and the baseline remains in the migration directory, so CLI push remains unsafe.
+- Authenticated smoke loaded all configured surfaces and left business state unchanged; two unrelated visual checks remain at `358/360` and require a separate UI/harness diagnosis.
+- Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Production migration metadata authorization residual risk - 2026-07-22
 
 - Production read-only inspection confirms empty migration history and material presence of the three incremental effects; no production or QA write occurred.

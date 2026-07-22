@@ -5,16 +5,21 @@ const SECRET_PATTERNS = [
 ]
 
 const FORBIDDEN_AUTOMATIC_PATTERNS = [
-  {
-    pattern: /(?<!do not )(?<!never )(?<!no )\b(?:deploy|deployment|desplegar|despliegue)\b[^\n]{0,100}\b(?:production|produccion|producción|wfxnwfcdjainpojhbdri)\b/i,
-    reason: 'production-deployment-not-authorized',
-  },
   { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic', capability: 'gitPublication' },
   { pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b/i, reason: 'deployment-not-automatic', capability: 'qaDeployment' },
   { pattern: /\b(?:emitir|emit)\b[^\n]{0,40}\bfactura/i, reason: 'invoice-emission-not-safe' },
   { pattern: /\b(?:registrar|create|crear)\b[^\n]{0,40}\b(?:cobro|payment)\b/i, reason: 'payment-write-not-safe' },
   { pattern: /\b(?:drop|truncate)\s+(?:table|schema|database)\b/i, reason: 'destructive-database-action' },
   { pattern: /\b(?:bypass|saltar|omitir)\b[^\n]{0,50}\b(?:approval|aprobacion|sandbox|policy|politica)\b/i, reason: 'approval-bypass-not-allowed' },
+]
+
+const SAFE_PRODUCTION_SECTIONS = new Set(['non-goals', 'non goals', 'stop conditions'])
+const PRODUCTION_SAFETY_LANGUAGE = [
+  /\b(?:do not|don't|never|must not|shall not|avoid|without)\b/i,
+  /\b(?:no|sin)\s+(?:production|produccion|producción|deployment|deploy|despliegue|desplegar)\b/i,
+  /\b(?:production|produccion|producción)\b[^\n]{0,80}\b(?:forbidden|prohibited|blocked|denied|unchanged|untouched|intact|not authorized|out of scope|no autorizado|prohibid[oa]|bloquead[oa]|sin cambios|intact[oa])\b/i,
+  /\b(?:forbidden|prohibited|blocked|denied|not authorized|out of scope|no autorizado|prohibid[oa]|bloquead[oa])\b[^\n]{0,80}\b(?:production|produccion|producción)\b/i,
+  /^\s*(?:stop|abort|detenerse|abortar)\s+(?:if|si)\b/i,
 ]
 
 export const REVIEW_VERDICTS = new Set(['continue', 'complete', 'blocked', 'stop'])
@@ -29,6 +34,32 @@ function automaticCapabilities() {
   }
 }
 
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function containsUnauthorizedProductionDeployment(text, forbiddenProductionRef) {
+  const productionTerms = ['production', 'produccion', 'producción']
+  if (forbiddenProductionRef) productionTerms.push(escapeRegExp(forbiddenProductionRef))
+  const productionPattern = new RegExp(`\\b(?:${productionTerms.join('|')})\\b`, 'i')
+  const deploymentPattern = /\b(?:deploy|deployment|desplegar|despliegue)\b/i
+  let currentSection = ''
+
+  for (const rawLine of String(text ?? '').split(/\r?\n/)) {
+    const line = rawLine.trim()
+    const heading = line.match(/^#{1,3}\s*(.+?)\s*:??\s*$/)
+    if (heading) {
+      currentSection = heading[1].trim().toLowerCase()
+      continue
+    }
+    if (!deploymentPattern.test(line) || !productionPattern.test(line)) continue
+    if (SAFE_PRODUCTION_SECTIONS.has(currentSection)) continue
+    if (PRODUCTION_SAFETY_LANGUAGE.some((pattern) => pattern.test(line))) continue
+    return true
+  }
+  return false
+}
+
 export function detectSensitiveContent(value) {
   const text = String(value ?? '')
   return SECRET_PATTERNS.some((pattern) => pattern.test(text))
@@ -38,6 +69,9 @@ export function findAutomaticStopReason(prompt) {
   const text = String(prompt ?? '')
   if (detectSensitiveContent(text)) return 'suspected-secret'
   const capabilities = automaticCapabilities()
+  if (containsUnauthorizedProductionDeployment(text, capabilities.forbiddenProductionRef)) {
+    return 'production-deployment-not-authorized'
+  }
   return FORBIDDEN_AUTOMATIC_PATTERNS.find(({ pattern, capability }) => {
     if (!pattern.test(text)) return false
     if (!capability) return true

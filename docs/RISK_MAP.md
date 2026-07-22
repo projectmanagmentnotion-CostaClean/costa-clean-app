@@ -256,3 +256,12 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - Authenticated reads remain workspace-wide because the schema has no tenant ownership columns; this is not a multi-tenant authorization model.
 - Direct `psql` apply remains outside Supabase migration history. `db push` is blocked until a separately reviewed reconciliation.
 - Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
+
+## Supabase migration history risk - 2026-07-22
+
+- QA and production have no `supabase_migrations` schema or registered versions despite four material migration files in the repo.
+- Two files share `20260721`, making the current version identity ambiguous.
+- The QA-only baseline is non-idempotent and lives beside production incrementals; a blind push could attempt to create existing objects in production.
+- Production's original schema history predates the formal directory, so marking the four current files cannot by itself create a truthful bootstrap history.
+- `db push` and migration-history repair remain blocked. Any metadata write requires a separate authorization and disposable proof first.
+- Evidence: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).

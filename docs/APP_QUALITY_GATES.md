@@ -427,3 +427,14 @@ For roadmap-closeout or phase-closeout work:
 - App smoke is read-only and must show no load errors, submits or created entities.
 - Completed evidence: backup valid, apply transaction complete, anon `401` 10/10, auth `200` 10/10, visual smoke `360/360`, business writes 0.
 - Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
+
+## Supabase Migration History Reconciliation Gate - 2026-07-22
+
+- QA and production history inspection must run read-only and validate each private project ref before querying.
+- Absence of `supabase_migrations.schema_migrations` is not permission to initialize or repair it.
+- `db push`, `migration repair`, history INSERT/UPDATE/DELETE and new migrations remain blocked.
+- The repository currently has four files but zero registered versions in both remotes, two files collide on version `20260721`, and a QA-only baseline shares the production migration directory.
+- Material schema fingerprints may prove an apply occurred, but cannot substitute for formal version metadata.
+- Unlocking requires a canonical manifest, unique versions/baseline strategy, disposable repair proof, authorized remote metadata repair and a demonstrated zero-SQL plan.
+- Local lock commands must fail closed: `npm run db:push` and `npm run supabase:db:push`.
+- Evidence: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).

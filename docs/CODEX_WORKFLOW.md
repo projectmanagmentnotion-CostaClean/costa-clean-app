@@ -15,6 +15,15 @@ This document defines the mandatory working method for Codex and any AI coding a
 - Do not touch critical logic without explicit request.
 - Verify with `npm run lint` and `npm run build`.
 - Commit and push when closing the work block.
+- Supabase `db push`, migration repair, history writes, and new migration apply are blocked until the migration-history gate is explicitly reopened.
+
+## Supabase DB Push Lock
+
+- Never run `npx supabase db push` or `supabase db push` in this repository.
+- `npm run db:push` and `npm run supabase:db:push` are intentional fail-closed guards, not deployment commands.
+- Do not create or modify `supabase_migrations.schema_migrations` without a sprint that explicitly authorizes metadata writes.
+- Do not move, rename, squash, or mark migration files as applied merely to make CLI output look clean.
+- Read [DB_PUSH_LOCK.md](DB_PUSH_LOCK.md) and [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md) before any Supabase CLI planning.
 
 ## Mandatory Documents
 

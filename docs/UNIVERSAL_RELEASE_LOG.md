@@ -123,6 +123,19 @@ Evidencia: [P0_AUTHENTICATED_READ_PATH_CLOSURE_20260722.md](P0_AUTHENTICATED_REA
 
 Evidencia: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
 
+#### 2026-07-22 — Supabase Migration History Reconciliation Audit
+
+- fecha: 2026-07-22
+- proyecto: Costa Clean CRM
+- tipo: audit / operational guardrail
+- resumen: inventaría cuatro migraciones y confirma mediante lectura remota que QA y producción tienen cero historial registrado; añade bloqueo npm/documental de `db push`
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validación: introspección `READ ONLY`, hashes SHA-256, fingerprints live y gates de repositorio; cero writes remotos
+- riesgo: colisión de versión `20260721`, baseline QA-only mezclada con incrementales y ausencia total de metadata remota
+- rollback: revertir docs/script/package; no existe rollback DB porque no se modificó ninguna base
+
+Evidencia: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md).
+
 ### Ridaos Print
 
 Sin entradas.

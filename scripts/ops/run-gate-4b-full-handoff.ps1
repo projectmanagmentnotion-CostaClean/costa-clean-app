@@ -10,8 +10,19 @@ if (-not (Test-Path $directRunner)) {
 }
 
 function Test-SupabaseQaAccess {
-  $projectsOutput = & npx supabase projects list 2>&1
-  $exitCode = $LASTEXITCODE
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    # Windows PowerShell can convert native stderr into a terminating NativeCommandError
+    # when the script-level preference is Stop. Authentication failure is expected here,
+    # so capture it and continue to the secure token prompt.
+    $ErrorActionPreference = 'Continue'
+    $projectsOutput = & npx supabase projects list 2>&1
+    $exitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+
   $projectsText = $projectsOutput | Out-String
 
   return [pscustomobject]@{

@@ -1,5 +1,9 @@
 # Costa Clean App — Final Closeout Roadmap
 
+## Actualizacion QA metadata gate - 2026-07-22
+
+El gate QA autorizado ya esta PASS: metadata oficial reparada con tres incrementales, baseline ausente, fingerprint y conteos sin cambios, produccion intacta. `db push` continua bloqueado. La proxima accion permitida es preparar, no ejecutar, un gate independiente de metadata para produccion; requiere autorizacion nueva y no hereda permisos de QA. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Estado actual
 
 Este roadmap es la columna vertebral final para cerrar Costa Clean App sin repetir auditorías ya resueltas ni ejecutar pruebas ambiguas.

@@ -11,6 +11,19 @@
 | Optional B — CSS / Layout Consolidation | Deferred | Post-cierre | No aplica | No aplica | Pending | Consolidación incremental |
 | Optional C — UX Polish Pass | Deferred | Post-cierre | No aplica | No aplica | Pending | Polish P3/P4 |
 
+## Actualizacion posterior - QA Official Migration Metadata Repair
+
+- Gate QA metadata-only: PASS.
+- QA oficial: modificada solo en `supabase_migrations.schema_migrations`.
+- Versiones: `20260707120336`, `20260721183811`, `20260722114751`.
+- Baseline `20260721134926`: ausente.
+- Schema/datos de negocio: sin cambios.
+- Produccion: sin cambios.
+- `db push`: bloqueado.
+- Proximo gate: autorizacion independiente para metadata de produccion; no ejecutar dentro de este cierre.
+
+La evidencia que prevalece para el estado actual es [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Estado de cierre rápido
 
 - P0 anonymous read producción: Done.

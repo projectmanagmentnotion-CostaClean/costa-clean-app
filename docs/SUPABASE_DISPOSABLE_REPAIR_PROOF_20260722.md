@@ -1,5 +1,9 @@
 # Supabase Disposable Repair Proof — 2026-07-22
 
+## Continuacion controlada
+
+El proof desechable Cloud continua diferido y no cambia de veredicto. Con autorizacion separada se completo despues el repair metadata-only de la QA oficial, con backup privado, fingerprints pre/post identicos y cero cambios de negocio. Esa ejecucion no convierte QA en un destino desechable ni autoriza produccion. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Resultado remoto original
 
 - Proof Supabase remoto ejecutado: **NO**.

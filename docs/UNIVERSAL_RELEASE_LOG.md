@@ -1,5 +1,16 @@
 # Universal Release Log
 
+## 2026-07-22 - Costa Clean App - QA migration metadata repair gate
+
+- tipo: docs / QA operational metadata repair
+- resumen: crea en QA oficial el historial compatible con Supabase CLI y registra solo tres incrementales canonicas; baseline excluida, produccion intacta
+- commit: commit de esta entrega; el identificador final se informa en el cierre
+- validacion: identidad triple QA, hashes remotos, fingerprint `public`, 17 tablas y conteos pre/post; lint/build/tests y locks npm
+- riesgo: historia legacy de produccion y baseline dentro del directorio incremental siguen sin resolver; `db push` permanece bloqueado
+- rollback: artefacto privado exacto que elimina solo el schema de metadata creado tras guardas estrictas; no ejecutado porque el gate es PASS
+
+Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 Registro transversal para cambios que adopten el sistema universal. Los proyectos con changelog propio pueden enlazarlo aquí sin duplicar todo su historial.
 
 ## Unreleased

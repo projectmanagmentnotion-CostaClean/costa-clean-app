@@ -1,5 +1,15 @@
 # App Quality Gates
 
+## QA Official Migration Metadata Repair Gate - 2026-07-22
+
+- Target identity requires exact agreement between public QA ref, private pooler user and live PostgreSQL session; production ref or any other ref aborts.
+- Before mutation, metadata must be absent and private pre-state/rollback evidence must exist with no credentials or business data.
+- The only permitted write is one transaction creating the CLI-compatible history schema/table and registering the three canonical incrementals with exact hashes.
+- The QA-only baseline is forbidden from history; migration SQL, business schema/data, full-submit and `db push` are forbidden.
+- Pass requires exact metadata, unchanged public-schema SHA-256, unchanged 17-table inventory and row counts, unchanged function/policy sentinels and production untouched.
+- Current result: PASS. Production remains a separate unauthorized gate and both npm push locks remain mandatory.
+- Evidence: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Purpose
 
 These gates define the minimum quality bar for any future app work. A change should not be considered complete if it fails any mandatory gate.

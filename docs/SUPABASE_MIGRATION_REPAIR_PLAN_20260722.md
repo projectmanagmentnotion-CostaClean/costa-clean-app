@@ -1,5 +1,9 @@
 # Supabase Migration Repair Plan — 2026-07-22
 
+## Estado actual - QA repair ejecutado
+
+El 2026-07-22 se ejecuto el gate autorizado exclusivamente contra `kpvvydthlxupjjqqdpxy`. Se creo metadata compatible con Supabase CLI y se registraron solo `20260707120336`, `20260721183811` y `20260722114751`; la baseline `20260721134926` quedo fuera. El fingerprint `public` `A2E82C1CF0A1B8DF01AEAC14FC1E497EBEFECBBA25858E7BDBA81D8DE0509439`, las 17 tablas y sus conteos permanecieron identicos. No se ejecuto SQL de migraciones ni se tocaron schema/datos de negocio. Produccion y `db push` siguen bloqueados. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 ## Propósito
 
 Definir cómo podría reconciliarse el historial sin aplicar schema nuevo. Este documento no autoriza ni ejecuta repair, `db push`, SQL remoto, creación de historial ni cambios en QA/producción.

@@ -1,5 +1,14 @@
 # Risk Map
 
+## QA official migration metadata repair residual risk - 2026-07-22
+
+- QA now has exactly three canonical incremental versions with verified names and SHA-256 values; the QA-only baseline remains excluded.
+- Public schema fingerprint, the 17-table inventory and all business row counts were identical before and after. Production was not contacted.
+- A post-commit helper initially returned a false failure because it compared JSONB key order; field-level verification then passed without another write. Transaction-internal hash checks had already passed before commit.
+- The private exact rollback removes only the gate-created metadata schema after strict identity/content guards. It has not been executed because the final state is valid.
+- Residual risk remains production legacy history and the unsafe baseline location. `db push` stays locked; QA success does not authorize production repair.
+- Evidence: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+
 | Area | Riesgo | Severidad | Archivos sensibles | Que no tocar sin permiso explicito | Mitigacion recomendada |
 | --- | --- | --- | --- | --- | --- |
 | Supabase read layer | `appDataApi` ya usa fallbacks por drift de esquema y compatibilidad legacy. Cambios superficiales pueden ocultar problemas reales de despliegue. | alta | `src/app/appDataApi.ts`, `src/lib/supabaseRest.ts`, `src/lib/supabase.ts`, `src/app/dataHealth.ts` | Queries REST, rutas de lectura, manejo de errores, fallback de columnas, cliente Supabase | Mantener auditoria separada de cualquier rediseño; validar siempre contra schema real antes de tocar lecturas |

@@ -18,7 +18,7 @@ Primary files:
 
 ## Execution rules
 
-1. Start with `Gate 1 — Migration Manifest And Disposable Repair Proof`.
+1. Treat Gate 1 documentary work as delivered by commit `bca5189209a4e7662164af803754a5b759ac1a9e`; do not recreate its manifest or repair plan.
 2. Do not skip gates.
 3. Do not repeat gates already closed.
 4. Do not execute `db push`.
@@ -31,17 +31,18 @@ Primary files:
 11. Commit and push after each completed versionable gate.
 12. Stop if a gate needs credentials, a disposable Supabase project, production access, migration-history writes or another explicit authorization.
 
-## First active gate
+## Current external block
 
-`Gate 1 — Migration Manifest And Disposable Repair Proof`.
+Gate 1 is closed at the documentary boundary and blocked before disposable proof. The manifest, repair plan and `proof: NO` status document already exist. Gate 2 remains blocked and must not advance.
 
 Expected behavior:
 
-- Create the migration manifest.
-- Create the repair plan.
-- Attempt a disposable proof only if a disposable Supabase project exists and is explicitly confirmed not to be production or official QA.
-- If there is no disposable Supabase project, stop with a clear resource request.
+- Do not repeat the migration manifest or repair plan.
+- Request exactly: a third disposable Supabase project/branch ref distinct from official QA and production; a private operator/DB credential delivered through a private channel; a proven discard or restore mechanism for that exact target; and explicit authorization for schema and migration-history writes only on that disposable target.
+- Attempt a disposable proof only after all four items are present and the ref is explicitly confirmed not to be production or official QA.
+- Until then, stop at the external-resource boundary and keep Gate 2 blocked.
 - Do not simulate proof.
+- Keep `db push` explicitly locked.
 
 ## Completion format
 

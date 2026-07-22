@@ -45,36 +45,54 @@ Estas reglas aplican a todos los gates restantes:
 
 ### Gate 1 — Migration Manifest And Disposable Repair Proof
 
-**Estado inicial:** Ready.
+**Estado actual:** Blocked — cerrado en el límite documental por recurso externo ausente.
 
-Objetivo:
+Entrega documental existente: commit `bca5189209a4e7662164af803754a5b759ac1a9e`.
 
-- Crear un manifiesto canónico de migraciones.
-- Separar baseline QA-only de migraciones incrementales productivas.
-- Resolver la colisión de versiones `20260721` a nivel de estrategia/documentación.
-- Definir orden canónico, hashes, alcance y estado material.
-- Probar la reparación de historial únicamente en un Supabase desechable.
-- No tocar QA oficial ni producción.
+- Manifiesto canónico: completo; no repetir.
+- Repair plan: completo; no repetir.
+- Documento de estado del proof: completo con `Proof ejecutado: NO`.
+- Proof desechable: no ejecutado.
+- Bloqueo: falta un tercer destino Supabase desechable y autorización limitada para probarlo.
 
-Entregables esperados:
+Trabajo documental entregado:
 
-- `docs/SUPABASE_MIGRATION_MANIFEST_YYYYMMDD.md`
-- `docs/SUPABASE_MIGRATION_REPAIR_PLAN_YYYYMMDD.md`
-- `docs/SUPABASE_DISPOSABLE_REPAIR_PROOF_YYYYMMDD.md`
-- `docs/FINAL_CLOSEOUT_CHECKLIST.md` actualizado.
+- Se creó el manifiesto canónico de migraciones.
+- Se separó conceptualmente la baseline QA-only de las migraciones incrementales productivas.
+- Se resolvió la colisión de versiones `20260721` a nivel de estrategia/documentación.
+- Se definieron orden canónico, hashes, alcance y estado material.
+- La prueba de reparación en un Supabase desechable no se ejecutó por falta del recurso externo requerido.
+- QA oficial y producción no se tocaron.
+
+Entregables existentes:
+
+- `docs/SUPABASE_MIGRATION_MANIFEST_20260722.md`
+- `docs/SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md`
+- `docs/SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md`
+- `docs/FINAL_CLOSEOUT_CHECKLIST.md`
 
 Criterio de cierre:
 
-- Proof desechable PASS, o bloqueo documentado por falta de Supabase desechable.
+- Límite documental: cerrado en `bca5189209a4e7662164af803754a5b759ac1a9e` con bloqueo externo documentado.
+- Proof desechable: pendiente; no declarar PASS sin ejecución real.
 - `db push` sigue bloqueado.
 - Repair real sigue bloqueado.
 - Producción modificada: NO.
 - QA oficial modificada: NO.
-- Commit/push realizado.
+- Entrega documental versionada en el commit citado; cualquier reconciliación posterior requiere autorización separada para commit/push.
+
+Recurso y autorización exactos requeridos para reabrir únicamente el proof:
+
+1. Un tercer ref de proyecto o branch Supabase desechable, distinto de `kpvvydthlxupjjqqdpxy` y `wfxnwfcdjainpojhbdri`.
+2. Una credencial privada de operador/DB entregada por canal privado y conservada fuera del repositorio.
+3. Un mecanismo probado de descarte o restauración para ese destino exacto antes de cualquier write.
+4. Autorización explícita para writes de schema e historial de migraciones únicamente en ese destino desechable.
+
+Hasta recibir los cuatro elementos, el agente debe detenerse sin conexión ni writes. Gate 2 permanece bloqueado y `db push` no se desbloquea.
 
 ### Gate 2 — Migration History Repair Authorization Package
 
-**Estado inicial:** Blocked by Gate 1.
+**Estado actual:** Blocked — Gate 1 no tiene proof desechable ejecutado; no avanzar.
 
 Objetivo:
 
@@ -172,7 +190,7 @@ Criterio de cierre:
 
 El roadmap final queda cerrado cuando:
 
-1. Gate 1 está cerrado.
+1. Gate 1 tiene su límite documental cerrado y su proof desechable ejecutado, o el bloqueo externo sigue aceptado explícitamente sin avanzar Gate 2.
 2. Gate 2 está cerrado o diferido explícitamente con protección activa.
 3. Gate 3 está cerrado.
 4. Gate 4 está cerrado.
@@ -183,10 +201,8 @@ El roadmap final queda cerrado cuando:
 9. Tests pasan.
 10. Release log y checklist final están actualizados.
 
-## Primer gate activo
+## Próxima acción bloqueada
 
-El primer gate que debe ejecutar el agente continuador es:
+Gate 1 ya entregó el manifiesto y el repair plan en `bca5189209a4e7662164af803754a5b759ac1a9e`; no deben repetirse. Gate 2 permanece bloqueado y no es el siguiente gate ejecutable.
 
-`Gate 1 — Migration Manifest And Disposable Repair Proof`.
-
-Si no existe Supabase desechable, el agente debe detenerse, documentar el bloqueo y pedir ese recurso. No debe simular proof ni tocar QA oficial/producción.
+La única continuación permitida es pedir los cuatro elementos exactos descritos en Gate 1: tercer ref desechable, credencial privada de operador/DB, descarte o restauración probado y autorización explícita de writes de schema/historial solo para ese destino. Hasta entonces, detenerse. No simular proof, no tocar QA oficial/producción y no ejecutar `db push`.

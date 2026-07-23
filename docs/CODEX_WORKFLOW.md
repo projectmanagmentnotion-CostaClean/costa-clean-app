@@ -35,6 +35,20 @@ This document defines the mandatory working method for Codex and any AI coding a
 - Any such change must prove one logout control per viewport, duplicate-call prevention, generic failure handling, `SIGNED_OUT`, protected-content removal and public-route isolation.
 - See [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md) for operating limits and reopen conditions.
 
+## Client Portal Roadmap Lock - 2026-07-23
+
+- [CLIENT_PORTAL_SECURITY_LEGAL_ROADMAP_20260723.md](CLIENT_PORTAL_SECURITY_LEGAL_ROADMAP_20260723.md) is the active scoped roadmap for the future customer portal.
+- Gates CP-0 and CP-1 are documentation-only and are closed by the package under [client-portal/](client-portal/).
+- Stop before CP-2. The design package does not authorize schema, migration, RLS, Auth, user, Edge, Storage, QA, production, website or deployment changes.
+- The current canonical `authenticated` read model is internal-workspace-wide. No customer Auth user may be created until a QA-proven explicit `internal_staff_memberships` boundary replaces every any-authenticated canonical policy and legacy RPC guard.
+- Email equality is never identity proof and never creates or links a client. Only an exact staff-selected invitation or explicit staff approval may create `client_portal_memberships`.
+- Portal browser code may use only the publishable Supabase key plus the user session. `service_role`, invite peppers, recovery secrets and document-signing authority remain trusted-server only.
+- Invoice documents must use a separate private bucket, opaque object keys, fresh ownership checks and short-lived access. Public/permanent PDF URLs are prohibited.
+- Customer service requests never create jobs, quotes, invoices, payments or schedule commitments without internal review.
+- CP-2 requires a separate prompt naming exact QA ref `kpvvydthlxupjjqqdpxy`, immutable file hashes, local/disposable proof, backup/rollback, two-client negative tests and exact cleanup. Production ref `wfxnwfcdjainpojhbdri` must be rejected.
+- WordPress/SiteGround integration is CP-4. No public website repository was found in the connected owner or local workspaces; obtain a versioned export/backup and controlled deployment procedure before modifying it.
+- Legal content remains `pending professional legal approval` until verified controller/provider facts and human legal review exist.
+
 ## Mandatory Documents
 
 Before any code modification, read:

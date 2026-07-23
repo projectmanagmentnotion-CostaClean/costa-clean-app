@@ -1,5 +1,20 @@
 # App Quality Gates
 
+## Client Portal CP-0 / CP-1 Design Gate - DONE 2026-07-23
+
+- The public website is verified as WordPress/Elementor on SiteGround with WPForms and Complianz. No public-website Git repository exists in the connected/local repository scope; a versioned export and deployment procedure are mandatory before CP-4.
+- The portal route is fixed to `https://app.costacleanbcn.com/portal` and the trust flow is `website -> portal UI -> Supabase Auth -> portal-specific RPC/Edge/RLS -> canonical CRM`.
+- Email matching never creates a membership or client. Existing clients use exact staff-selected invitations; open registration remains pending with zero CRM data until manual approval.
+- The current any-authenticated canonical read/write guards are a P0 blocker for portal identities. CP-2 must atomically introduce explicit internal staff authorization before creating any customer Auth user.
+- Canonical CRM tables are deny-by-default to customer sessions. Only narrow, membership-checked projections/RPC/Edge endpoints are allowed.
+- Invoice documents require a dedicated private bucket, opaque keys, fresh ownership validation, 60-second signed access, no public/list access and privacy-safe audit.
+- Service requests cannot create or mutate jobs, quotes, invoices, payments, closings or sequences.
+- The complete anonymous/pending/revoked/member/admin/internal-staff cross-client matrix must pass in QA before portal UI work.
+- Privacy information, contractual acceptance, optional marketing consent and cookie consent are separate decisions and evidence records.
+- Legal pages, retention, processors, transfers, rights, closure, security, breach response and ROPA are specified but remain pending verified facts and professional legal approval.
+- CP-2 remains unauthorized; production and QA changes for CP-0/CP-1 are zero.
+- Evidence: [client-portal/ARCHITECTURE.md](client-portal/ARCHITECTURE.md), [client-portal/RLS_SECURITY_SPEC.md](client-portal/RLS_SECURITY_SPEC.md), [client-portal/LEGAL_COMPLIANCE_MATRIX.md](client-portal/LEGAL_COMPLIANCE_MATRIX.md), [client-portal/QA_AUTHORIZATION_PACKAGE.md](client-portal/QA_AUTHORIZATION_PACKAGE.md).
+
 ## Gate 5 — production functional smoke and Auth logout — DONE 2026-07-23
 
 - One centralized flow uses the existing Supabase client, prevents duplicate sign-out calls, disables while pending and clears authenticated state only after success.

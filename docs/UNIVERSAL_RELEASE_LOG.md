@@ -1,5 +1,19 @@
 # Universal Release Log
 
+## 2026-07-23 — Client portal CP-0 / CP-1 security and legal design
+
+- fecha: 2026-07-23
+- proyecto: Costa Clean Client Portal
+- tipo: architecture / security / legal design, documentation only
+- resumen: maps the WordPress public website and canonical CRM, defines explicit customer tenancy, invitations/manual approval, deny-by-default portal APIs, private invoice delivery, service-request review, legal/consent content and the exact future QA authorization gate
+- commit: commit of this delivery with subject `docs: design secure Costa Clean client portal`; final identifier reported at closeout
+- validación: starting commit `b0c1768b2c8d797aab61771c9db63472f31e962e`; source/live read-only audit; 13 required portal documents; cross-document review; lint/build; secret and Git diff review
+- producción/QA/schema/Auth/usuarios/storage/datos: unchanged; remote writes `0`; invoice/payment/closing/sequence changes `0`
+- riesgo: current any-authenticated canonical policies are P0 for future portal users; no WordPress Git repository was found; legal content remains pending verified facts and professional legal approval
+- rollback: revert this documentation commit only; no database, Auth, Storage, WordPress or deployment rollback exists because none was changed
+- estado: CP-0 `DONE`; CP-1 `DONE`; CP-2 `NOT AUTHORIZED`
+- evidencia: [client-portal/ARCHITECTURE.md](client-portal/ARCHITECTURE.md), [client-portal/QA_AUTHORIZATION_PACKAGE.md](client-portal/QA_AUTHORIZATION_PACKAGE.md), [client-portal/IMPLEMENTATION_ROADMAP.md](client-portal/IMPLEMENTATION_ROADMAP.md)
+
 ## 2026-07-23 — Gate 5 production functional smoke and final roadmap close
 
 - fecha: 2026-07-23

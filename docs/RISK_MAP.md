@@ -340,3 +340,20 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - The temporary cluster was loopback-only and discarded. QA official and production were not contacted.
 - Mitigation: keep `db push` and real repair blocked; make QA official the first remote metadata-repair gate under separate authorization, backup and zero-schema/data-change verification.
 - Evidence: [LOCAL_DISPOSABLE_POSTGRES_MIGRATION_REPAIR_PROOF_20260722.md](LOCAL_DISPOSABLE_POSTGRES_MIGRATION_REPAIR_PROOF_20260722.md).
+
+## Client portal CP-0 / CP-1 risks - 2026-07-23
+
+- **P0 tenancy:** the effective canonical read policies still equate any Supabase `authenticated` user with a trusted internal operator. Creating even one portal Auth user before an explicit internal staff boundary would expose workspace-wide clients, properties, jobs, quotes, invoices and payments.
+- **P0 legacy RPC:** existing operational and financial SECURITY DEFINER functions commonly guard only on non-null `auth.uid()`. Portal principals must have zero EXECUTE, and internal functions must require explicit active staff authorization before customer accounts exist.
+- **P0 identity:** verified email or equality with `clients.email` is not client ownership proof. Client linkage is limited to a staff-selected invitation or manual approval transaction.
+- **P0 documents:** current invoice “PDF” is browser print output and no canonical private invoice bucket exists. Public/permanent URLs, guessable paths or signing arbitrary paths would expose fiscal documents.
+- **P1 website source control:** `costacleanbcn.com` is a live WordPress/Elementor site hosted by SiteGround, but no matching Git repository exists in the connected owner or local workspaces. CP-4 is blocked on a SiteGround/WordPress export, backup, owner and controlled deployment workflow.
+- **P1 website privacy:** current WPForms collect name, phone, address, email and message without a rendered first-layer privacy notice. Published cookie/terms pages contain stale, unresolved or inconsistent contact/technology details.
+- **P1 service workflow:** a customer request must remain separate from jobs and cannot trigger scheduling, quotes, invoice issuance, payments or sequence effects.
+- **P1 revocation:** long JWTs or document signatures can preserve access after membership revocation. Every request rechecks membership; JWT/document TTLs stay short and critical revocation invalidates sessions.
+- **P1 abuse/enumeration:** signup, recovery, invitations, downloads and service requests require generic responses, pseudonymous throttling, replay protection and CAPTCHA escalation without logging raw emails, IPs or tokens.
+- **P1 legal/processor facts:** controller identity, NIF/address/rights contact, actual vendor plans/regions/DPAs/subprocessors and transfer mechanisms are not established by source code. They block publication and production release.
+- **P2 retention:** account closure must revoke portal access without deleting invoice/payment/contract evidence still under tax, commercial or legal-hold retention.
+- **P2 multi-client membership:** a user may have separately approved client memberships. Every API request must carry one explicit client context and must never union data from all memberships implicitly.
+- CP-0/CP-1 made no production, QA, schema, Auth, user, Storage, invoice, payment, closing or sequence changes. CP-2 requires separate QA authorization.
+- Evidence: [client-portal/THREAT_MODEL.md](client-portal/THREAT_MODEL.md), [client-portal/DATA_CLASSIFICATION.md](client-portal/DATA_CLASSIFICATION.md), [client-portal/QA_AUTHORIZATION_PACKAGE.md](client-portal/QA_AUTHORIZATION_PACKAGE.md).

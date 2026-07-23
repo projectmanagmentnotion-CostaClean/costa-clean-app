@@ -589,3 +589,12 @@ Evidence:
 - Anonymous direct quiz RPC execution, direct table inserts and quiz-history reads remain denied; zero synthetic attempts and guard rows remain.
 - Production, financial/fiscal domains, migration history and `db push` were untouched. Gate 4C remains separately blocked.
 - Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
+
+## Post-Roadmap Gate 4C: Public Quiz Abuse Protection in Production — 2026-07-23
+
+- Production now serves the QA-proven Edge ingress, strict contract, HMAC throttling and private transactional RPC.
+- The completion resumed after migration/secret/Edge/frontend release and verified those operations read-only without repeating them.
+- The production 12-case synthetic matrix, authoritative scoring, anonymous-denial checks, custom-log privacy scan and exact cleanup passed.
+- Cleanup returned production to six real attempts, zero `PROD-GATE4C-*` attempts and zero guards; financial/fiscal data, real-data digests, sequence state and migration history remained unchanged.
+- Both `db push` locks remain active. Gate 5 was not opened.
+- Evidence: [GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md](GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md).

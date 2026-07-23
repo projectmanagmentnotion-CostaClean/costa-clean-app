@@ -5,8 +5,10 @@ import {
   validatePublicQuizRequest,
 } from './publicQuizContract.ts'
 
-const AUTHORIZED_QA_REF = 'kpvvydthlxupjjqqdpxy'
-const FORBIDDEN_PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
+const AUTHORIZED_PROJECT_REFS = new Set([
+  'kpvvydthlxupjjqqdpxy',
+  'wfxnwfcdjainpojhbdri',
+])
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
@@ -59,7 +61,7 @@ export function createPublicQuizHandler(dependencies: PublicQuizHandlerDependenc
     const projectRef = readProjectRef(supabaseUrl)
     const clientIp = readTrustedClientIp(request.headers)
     if (!supabaseUrl || !serviceKey || !pepper || pepper.length < 43 || !clientIp
-      || projectRef === FORBIDDEN_PRODUCTION_REF || projectRef !== AUTHORIZED_QA_REF) {
+      || !projectRef || !AUTHORIZED_PROJECT_REFS.has(projectRef)) {
       dependencies.log({ event: 'configuration_denied', status: 503 })
       return errorResponse(503, 'temporarily_unavailable', 'El servicio no está disponible. Inténtalo más tarde.')
     }

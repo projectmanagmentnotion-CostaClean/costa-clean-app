@@ -94,13 +94,36 @@ describe('public quiz Edge handler', () => {
     expect(response.headers.get('retry-after')).toBe('60')
   })
 
-  it('fails closed when the resolved project is production', async () => {
+  it('accepts the separately authorized production project', async () => {
     const { fetchCalls, logCalls } = setup()
     const handler = createPublicQuizHandler({
       env: (name) => ({
         SUPABASE_URL: 'https://wfxnwfcdjainpojhbdri.supabase.co',
         SUPABASE_SERVICE_ROLE_KEY: 'private-test-placeholder',
         PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough-for-qa',
+      })[name],
+      fetch: async (input, init) => {
+        fetchCalls.push([input, init])
+        return Response.json({
+          ok: true,
+          result: { score: 20, percentage: 100, passed: true, totalQuestions: 20, incorrectQuestionIds: [] },
+        })
+      },
+      now: () => now,
+      log: (event) => logCalls.push(event),
+    })
+    const response = await handler(request())
+    expect(response.status).toBe(200)
+    expect(fetchCalls.length).toBe(1)
+  })
+
+  it('fails closed when the resolved project is not allowlisted', async () => {
+    const { fetchCalls, logCalls } = setup()
+    const handler = createPublicQuizHandler({
+      env: (name) => ({
+        SUPABASE_URL: 'https://unknown-project.supabase.co',
+        SUPABASE_SERVICE_ROLE_KEY: 'private-test-placeholder',
+        PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough',
       })[name],
       fetch: async (input, init) => { fetchCalls.push([input, init]); return Response.json({ ok: true }) },
       now: () => now,

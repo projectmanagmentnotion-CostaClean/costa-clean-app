@@ -202,6 +202,19 @@ Evidencia: [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGR
 
 Evidencia: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md), [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md) y [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).
 
+#### 2026-07-23 — Gate 4C Public Quiz Production Protection
+
+- fecha: 2026-07-23
+- proyecto: Costa Clean CRM
+- tipo: security / production release completion
+- resumen: cierra Gate 4C verificando read-only la migración, pepper, Edge y frontend ya publicados; ejecuta la matriz productiva de 12 casos y limpia exactamente el intento y los guards sintéticos
+- commit: commit de esta entrega con asunto `security: release public quiz protection to production`; el identificador final se informa en el cierre
+- validación: Edge `ACTIVE` versión 1, dominio `200`, preflight `204`, matriz `12/12`, scoring autoritativo reconciliado, logs `0` violaciones, cleanup `1/2`, seis intentos reales intactos, tests específicos `28/28`, suite `236/236`, lint/build y ambos locks
+- riesgo: el endpoint público conserva una protección providerless dependiente de límites HMAC por fingerprint; cualquier rollback de base reabre el RPC legacy y es security-regressive
+- rollback: artefactos privados preparados para DB/Edge/secret/Vercel; requieren autorización de incidente, y el rollback de repositorio usa `git revert` seguido del release controlado
+
+Evidencia: [GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md](GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md).
+
 ### Ridaos Print
 
 Sin entradas.

@@ -15,6 +15,7 @@
     "qa:migrations:production-metadata-repair": "node scripts/ops/run-production-migration-metadata-repair.mjs --verify",
     "qa:public-quiz:local-proof": "node scripts/qa/prove-public-quiz-migration-local.mjs",
     "qa:public-quiz:qa-preflight": "node scripts/qa/run-public-quiz-gate4b-qa.mjs",
+    "ops:public-quiz:gate4c": "node scripts/ops/run-public-quiz-gate4c-production.mjs",
     "db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "supabase:db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "qa:auth:setup": "node scripts/qa/setup-auth-state.mjs",

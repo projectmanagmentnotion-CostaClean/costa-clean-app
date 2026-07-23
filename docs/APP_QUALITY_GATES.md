@@ -1,5 +1,16 @@
 # App Quality Gates
 
+## Gate 4C — public quiz abuse protection in production — DONE 2026-07-23
+
+- The already-applied migration, production-only pepper, active Edge Function and frontend deployment were verified read-only and were not repeated.
+- Production identity passed through public config, linked state, Management API metadata and live PostgreSQL 17; QA was explicitly rejected.
+- The 12-case `PROD-GATE4C-*` matrix passed, including authoritative scoring and anonymous denial of the private RPC, legacy RPC, history and direct insert.
+- Log privacy passed with three matching custom events and zero sensitive-value findings.
+- Exact cleanup deleted one synthetic attempt and two captured guards; postflight proved `0` synthetic attempts, `0` guards and six real attempts unchanged.
+- Financial/fiscal data, real-data digests, sequence state and migration history were unchanged. Both `db push` locks remain active and the secret scan found zero versioned secrets.
+- Gate 5 was not started.
+- Evidence: [GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md](GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md).
+
 ## Gate 4B — providerless public quiz abuse protection in QA — DONE 2026-07-22
 
 - Exact QA identity passed through public config, linked/authenticated CLI state and private/live PostgreSQL 17 state; production was rejected and not modified.

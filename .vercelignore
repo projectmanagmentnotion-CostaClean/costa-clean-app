@@ -1,0 +1,44 @@
+# Local agent, authentication, and QA artifacts
+.project-agent/
+.auth/
+qa-reports/
+qa-screenshots/
+test-results/
+_diagnostics/
+/_*.txt
+/brand-audit.txt
+playwright/.auth/
+*qa-browser-profile*
+*.storage-state.json
+*storageState*.json
+
+# Dependencies, generated output, caches, and logs
+.git/
+.vercel/
+node_modules/
+dist/
+dist-ssr/
+coverage/
+logs/
+*.log
+*.bak
+*.bak-*
+*.bak_*
+*.tmp
+*.temp
+backups/
+
+# Local environment material
+.env
+.env.*
+
+# Supabase local state and non-frontend deployment material
+supabase/.temp/
+supabase/.branches/
+supabase/migrations/
+
+# Repository-only operational material
+docs/
+scripts/qa/
+scripts/ops/
+sql/

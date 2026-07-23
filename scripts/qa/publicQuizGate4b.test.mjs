@@ -18,8 +18,10 @@ describe('Gate 4B source guardrails', () => {
     expect(sql).not.toMatch(/invoice_number|display_code|quarterly_closings|payments/iu)
   })
 
-  it('contains no production deployment target or sensitive logging fields', () => {
-    expect(edgeSource).toContain("const FORBIDDEN_PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'")
+  it('allowlists only the reviewed QA and production projects and contains no sensitive logging fields', () => {
+    expect(edgeSource).toContain("'kpvvydthlxupjjqqdpxy'")
+    expect(edgeSource).toContain("'wfxnwfcdjainpojhbdri'")
+    expect(edgeSource).toContain('AUTHORIZED_PROJECT_REFS.has(projectRef)')
     expect(edgeSource).not.toMatch(/log\([^\n]*(clientIp|payload|serviceKey|pepper|requestNonce)/u)
     expect(edgeSource).not.toMatch(/user-agent/iu)
   })

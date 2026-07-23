@@ -64,12 +64,17 @@ import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relat
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/useJobWorkspaceNavigation'
+import type { LogoutOutcome } from '../features/auth/logoutFlow'
+import { useToast } from '../shared/toasts/useToast'
 
 const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
 
 interface AppShellProps {
   theme: AppTheme
   onToggleTheme: () => void
+  accountLabel: string
+  isSigningOut: boolean
+  onSignOut: () => Promise<LogoutOutcome>
 }
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
@@ -144,7 +149,14 @@ function createDayKey(offsetDays = 0): string {
 }
 
 
-export function AppShell({ theme, onToggleTheme }: AppShellProps) {
+export function AppShell({
+  theme,
+  onToggleTheme,
+  accountLabel,
+  isSigningOut,
+  onSignOut,
+}: AppShellProps) {
+  const toast = useToast()
   const {
     AlertsCenterPage,
     ClientsPage,
@@ -1025,6 +1037,16 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
+  const handleSignOut = useCallback(async () => {
+    const outcome = await onSignOut()
+
+    if (outcome === 'failed') {
+      toast.error('No se pudo cerrar la sesión.', 'Inténtalo de nuevo.')
+    }
+
+    return outcome
+  }, [onSignOut, toast])
+
   return (
     <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
       <section className="hero-card cc-shell cc-shell-frame">
@@ -1042,6 +1064,9 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           onToggleTheme={onToggleTheme}
           backTargetView={navigationBackTarget}
           onBack={navigateBack}
+          accountLabel={accountLabel}
+          isSigningOut={isSigningOut}
+          onSignOut={handleSignOut}
         />
         <div className="cc-shell-content">
           <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>

@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react'
+import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
 import type { AppView } from './navigation'
 import { getAppViewLabel } from './displayText'
@@ -7,6 +7,7 @@ import { AlertsBell } from './AlertsBell'
 import { ThemeToggle } from './ThemeToggle'
 import type { AppTheme } from './theme'
 import type { AutomationAlertItem } from '../features/automation/types'
+import type { LogoutOutcome } from '../features/auth/logoutFlow'
 
 interface AppNavProps {
   currentView: AppView
@@ -22,6 +23,9 @@ interface AppNavProps {
   onToggleTheme?: () => void
   backTargetView?: AppView | null
   onBack?: () => void
+  accountLabel: string
+  isSigningOut: boolean
+  onSignOut: () => Promise<LogoutOutcome>
 }
 
 interface NavItemDefinition {
@@ -318,8 +322,16 @@ export function AppNav({
   onToggleTheme,
   backTargetView = null,
   onBack,
+  accountLabel,
+  isSigningOut,
+  onSignOut,
 }: AppNavProps) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const accountTriggerRef = useRef<HTMLButtonElement>(null)
+  const desktopLogoutRef = useRef<HTMLButtonElement>(null)
+  const moreTriggerRef = useRef<HTMLButtonElement>(null)
+  const mobileSheetCloseRef = useRef<HTMLButtonElement>(null)
   const currentViewLabel = currentView === 'dashboard' ? 'Inicio' : getAppViewLabel(currentView)
   const currentViewMeta = topNavItems.find((item) => item.view === currentView)
     ?? ((currentView === 'annual_closing' || currentView === 'quarterly_closing')
@@ -332,6 +344,55 @@ export function AppNav({
   const mobileHeaderTitle = currentView === 'dashboard' ? 'Hoy' : currentViewLabel
   const shouldShowDesktopCurrent = !mobileViewport && !compactMobile
   const canUsePortal = typeof document !== 'undefined'
+
+  useEffect(() => {
+    if (isAccountMenuOpen) {
+      desktopLogoutRef.current?.focus()
+    }
+  }, [isAccountMenuOpen])
+
+  useEffect(() => {
+    if (isMoreMenuOpen) {
+      mobileSheetCloseRef.current?.focus()
+    }
+  }, [isMoreMenuOpen])
+
+  useEffect(() => {
+    if (!isAccountMenuOpen && !isMoreMenuOpen) {
+      return undefined
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+
+      if (isAccountMenuOpen) {
+        setIsAccountMenuOpen(false)
+        accountTriggerRef.current?.focus()
+      }
+
+      if (isMoreMenuOpen) {
+        setIsMoreMenuOpen(false)
+        moreTriggerRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [isAccountMenuOpen, isMoreMenuOpen])
+
+  async function handleSignOut() {
+    const outcome = await onSignOut()
+
+    if (outcome === 'signed-out') {
+      setIsAccountMenuOpen(false)
+      setIsMoreMenuOpen(false)
+    }
+  }
+
+  function closeMobileMenu() {
+    setIsMoreMenuOpen(false)
+    moreTriggerRef.current?.focus()
+  }
   const mobileHeader = (
     <header className="cc-mobile-shell-header" aria-label="Cabecera movil">
       <div className="cc-mobile-shell-header__row">
@@ -421,6 +482,7 @@ export function AppNav({
           })}
 
           <button
+            ref={moreTriggerRef}
             type="button"
             className={isMoreMenuOpen || isMoreSectionActive ? 'cc-bottom-dock__button is-active' : 'cc-bottom-dock__button'}
             onClick={() => setIsMoreMenuOpen((currentState) => !currentState)}
@@ -441,7 +503,7 @@ export function AppNav({
           <button
             type="button"
             className="cc-mobile-nav-sheet__backdrop"
-            onClick={() => setIsMoreMenuOpen(false)}
+            onClick={closeMobileMenu}
             aria-label="Cerrar menu de modulos"
           />
 
@@ -459,9 +521,10 @@ export function AppNav({
               </div>
 
               <button
+                ref={mobileSheetCloseRef}
                 type="button"
                 className="cc-mobile-nav-sheet__close"
-                onClick={() => setIsMoreMenuOpen(false)}
+                onClick={closeMobileMenu}
                 aria-label="Cerrar menu de modulos"
               >
                 Cerrar
@@ -502,6 +565,21 @@ export function AppNav({
                   </div>
                 </section>
               ))}
+
+              <section className="cc-mobile-nav-sheet__section cc-account-section" aria-label="Cuenta">
+                <span className="cc-mobile-nav-sheet__section-label">Cuenta</span>
+                <div className="cc-account-card">
+                  <span className="cc-account-card__identity" title={accountLabel}>{accountLabel}</span>
+                  <button
+                    type="button"
+                    className="cc-account-card__logout"
+                    onClick={() => void handleSignOut()}
+                    disabled={isSigningOut}
+                  >
+                    {isSigningOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+                  </button>
+                </div>
+              </section>
             </div>
           </section>
         </>
@@ -558,6 +636,44 @@ export function AppNav({
                     onOpenAlertsCenter={onOpenAlertsCenter}
                   />
                 ) : null}
+
+                <div className="cc-account-menu">
+                  <button
+                    ref={accountTriggerRef}
+                    type="button"
+                    className="cc-account-menu__trigger"
+                    onClick={() => setIsAccountMenuOpen((isOpen) => !isOpen)}
+                    aria-expanded={isAccountMenuOpen}
+                    aria-controls="cc-desktop-account-menu"
+                    aria-label={`Abrir cuenta de ${accountLabel}`}
+                  >
+                    <span className="cc-account-menu__label">Mi cuenta</span>
+                    <span className="cc-account-menu__identity">{accountLabel}</span>
+                  </button>
+
+                  {isAccountMenuOpen ? (
+                    <div
+                      id="cc-desktop-account-menu"
+                      className="cc-account-menu__popover"
+                      role="menu"
+                      aria-label="Cuenta"
+                    >
+                      <span className="cc-account-menu__popover-identity" title={accountLabel}>
+                        {accountLabel}
+                      </span>
+                      <button
+                        ref={desktopLogoutRef}
+                        type="button"
+                        className="cc-account-menu__logout"
+                        role="menuitem"
+                        onClick={() => void handleSignOut()}
+                        disabled={isSigningOut}
+                      >
+                        {isSigningOut ? 'Cerrando sesión…' : 'Cerrar sesión'}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
 
                 {currentView !== 'dashboard' ? (
                   <button

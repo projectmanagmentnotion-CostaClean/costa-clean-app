@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import './App.css'
 import { AppShell } from './app/AppShell'
@@ -6,6 +6,7 @@ import { BuildInfoBadge } from './app/BuildInfoBadge'
 import { shouldShowBuildInfo } from './app/buildInfo'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
+import { createLogoutFlow } from './features/auth/logoutFlow'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
 import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
@@ -34,6 +35,24 @@ function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [isBooting, setIsBooting] = useState(true)
   const [bootError, setBootError] = useState<string | null>(null)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const runLogout = useMemo(() => createLogoutFlow({
+    signOut: async () => {
+      const { client } = getSupabaseClient()
+
+      if (!client) {
+        return { error: true }
+      }
+
+      return client.auth.signOut()
+    },
+    onPendingChange: setIsSigningOut,
+    onSignedOut: () => {
+      clearStoredSupabaseSession()
+      setSession(null)
+    },
+  }), [])
 
   useEffect(() => {
     applyTheme(theme)
@@ -110,7 +129,11 @@ function App() {
 
         const {
           data: { subscription },
-        } = client.auth.onAuthStateChange((_event, nextSession) => {
+        } = client.auth.onAuthStateChange((event, nextSession) => {
+          if (event === 'SIGNED_OUT') {
+            clearStoredSupabaseSession()
+          }
+
           if (isMounted) {
             setSession(nextSession)
           }
@@ -224,7 +247,13 @@ function App() {
 
   return renderWithBuildInfo(
     <div className="cc-app-shell-enter">
-      <AppShell theme={theme} onToggleTheme={toggleTheme} />
+      <AppShell
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        accountLabel={session.user.email ?? 'Mi cuenta'}
+        isSigningOut={isSigningOut}
+        onSignOut={runLogout}
+      />
       {themeFeedback ? (
         <div className="cc-theme-toast" role="status" aria-live="polite" aria-atomic="true">
           {themeFeedback}

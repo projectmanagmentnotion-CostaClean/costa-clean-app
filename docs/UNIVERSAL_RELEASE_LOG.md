@@ -1,5 +1,16 @@
 # Universal Release Log
 
+## 2026-07-22 — Gate 4B providerless public quiz protection in QA
+
+- tipo: QA backend/frontend security implementation
+- resumen: replaces direct public quiz RPC submission in QA with a public Edge Function, strict shared/server contract, HMAC pseudonymous throttling and a private transactional RPC
+- validacion: exact triple QA identity, PostgreSQL 17 disposable proof and transactional apply, active Edge deployment, 12/12 live synthetic matrix, custom-log privacy scan and zero-residue cleanup
+- produccion: unchanged; invoices, payments, closings, fiscal numbering/sequences and full-submit untouched
+- secretos versionados: 0
+- riesgo residual: providerless controls do not prove a human; Gate 4C must independently decide whether production requires Turnstile or another provider
+- estado: Gate 4B QA DONE; Gate 4C production BLOCKED pending separate authorization
+- evidencia: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md)
+
 ## 2026-07-22 — Gate 4A public quiz abuse-protection design
 
 - tipo: security design / documentation only

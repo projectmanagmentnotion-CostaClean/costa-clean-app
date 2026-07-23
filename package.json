@@ -13,6 +13,8 @@
     "qa:migrations:local-proof": "node scripts/ops/run-local-migration-repair-proof.mjs",
     "qa:migrations:qa-metadata-repair": "node scripts/ops/run-qa-migration-metadata-repair.mjs --verify",
     "qa:migrations:production-metadata-repair": "node scripts/ops/run-production-migration-metadata-repair.mjs --verify",
+    "qa:public-quiz:local-proof": "node scripts/qa/prove-public-quiz-migration-local.mjs",
+    "qa:public-quiz:qa-preflight": "node scripts/qa/run-public-quiz-gate4b-qa.mjs",
     "db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "supabase:db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "qa:auth:setup": "node scripts/qa/setup-auth-state.mjs",

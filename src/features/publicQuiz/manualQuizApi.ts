@@ -1,31 +1,45 @@
 import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
-import type { PublicQuizAttempt } from './types'
+import type {
+  PublicQuizRequest,
+  PublicQuizResponse,
+  PublicQuizResult,
+} from '../../../supabase/functions/_shared/publicQuizContract'
 
-type QuizAttemptInsert = Omit<PublicQuizAttempt, 'id' | 'fecha'>
+export const PUBLIC_QUIZ_GENERIC_ERROR = 'No se pudo enviar la prueba. Revisa la conexión e inténtalo de nuevo.'
+export const PUBLIC_QUIZ_RATE_LIMIT_ERROR = 'Espera unos minutos antes de volver a enviar la prueba.'
 
-export async function createQuizAttempt(payload: QuizAttemptInsert): Promise<PublicQuizAttempt> {
-  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
+interface PublicQuizApiDependencies {
+  getEnv(): { supabaseUrl: string; supabaseAnonKey: string }
+  fetch(input: string, init: RequestInit): Promise<Response>
+}
+
+const defaultDependencies: PublicQuizApiDependencies = {
+  getEnv: getSupabasePublicEnv,
+  fetch: (input, init) => fetch(input, init),
+}
+
+export async function createQuizAttempt(
+  payload: PublicQuizRequest,
+  dependencies: PublicQuizApiDependencies = defaultDependencies,
+): Promise<PublicQuizResult> {
+  const { supabaseUrl, supabaseAnonKey } = dependencies.getEnv()
   if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Faltan las variables de entorno de Supabase.')
+    throw new Error(PUBLIC_QUIZ_GENERIC_ERROR)
   }
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/rpc/submit_public_gym_manual_quiz_attempt`, {
+  const response = await dependencies.fetch(`${supabaseUrl}/functions/v1/submit-public-gym-manual-quiz`, {
     method: 'POST',
     headers: {
       apikey: supabaseAnonKey,
       Authorization: `Bearer ${supabaseAnonKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ p_attempt: payload }),
+    body: JSON.stringify(payload),
   })
 
-  if (!response.ok) {
-    const detail = (await response.text()).trim()
-    throw new Error(`No se pudo guardar el intento. REST ${response.status}: ${detail || response.statusText}`)
+  const body = await response.json().catch(() => null) as PublicQuizResponse | null
+  if (!response.ok || !body?.ok) {
+    throw new Error(response.status === 429 ? PUBLIC_QUIZ_RATE_LIMIT_ERROR : PUBLIC_QUIZ_GENERIC_ERROR)
   }
-
-  const body = await response.json().catch(() => null)
-  const row = Array.isArray(body) ? body[0] : body
-  if (!row) throw new Error('No se pudo confirmar el intento guardado.')
-  return row as PublicQuizAttempt
+  return body.result
 }

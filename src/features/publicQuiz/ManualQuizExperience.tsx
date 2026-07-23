@@ -1,7 +1,12 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { createQuizAttempt } from './manualQuizApi'
 import { gymManualQuizQuestions, PASSING_PERCENTAGE } from './quizQuestions'
-import { buildQuizResult, type PublicQuizComputedResult } from './types'
+import {
+  normalizePublicQuizWorkerName,
+  PUBLIC_QUIZ_VERSION,
+  type PublicQuizQuestionId,
+} from '../../../supabase/functions/_shared/publicQuizContract'
+import type { PublicQuizDisplayResult, PublicQuizErrorReview } from './types'
 
 type QuizStep = 'intro' | 'quiz' | 'result'
 
@@ -16,10 +21,12 @@ export function ManualQuizExperience() {
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [nameError, setNameError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [result, setResult] = useState<PublicQuizComputedResult | null>(null)
+  const [result, setResult] = useState<PublicQuizDisplayResult | null>(null)
+  const [honeypot, setHoneypot] = useState('')
+  const interactionStartedAt = useRef<number | null>(null)
 
   function handleStart() {
-    const normalizedName = workerName.trim().replace(/\s+/g, ' ')
+    const normalizedName = normalizePublicQuizWorkerName(workerName)
 
     if (normalizedName.length < 2) {
       setNameError('Escribe tu nombre para comenzar.')
@@ -28,6 +35,7 @@ export function ManualQuizExperience() {
 
     setWorkerName(normalizedName)
     setNameError(null)
+    interactionStartedAt.current = Date.now()
     setStep('quiz')
   }
 
@@ -44,23 +52,30 @@ export function ManualQuizExperience() {
       return
     }
 
-    const computedResult = buildQuizResult(gymManualQuizQuestions, answers, PASSING_PERCENTAGE)
+    const startedAt = interactionStartedAt.current
+    if (startedAt === null) {
+      setSubmitError('No se pudo preparar el envío. Vuelve a comenzar la prueba.')
+      return
+    }
 
     try {
       setIsSubmitting(true)
       setSubmitError(null)
 
-      await createQuizAttempt({
-        nombre_trabajador: workerName,
-        puntuacion: computedResult.score,
-        porcentaje: computedResult.percentage,
-        aprobado: computedResult.passed,
-        respuestas_json: computedResult.answerMap,
-        errores_json: computedResult.errors,
-        total_preguntas: computedResult.totalQuestions,
+      const authoritativeResult = await createQuizAttempt({
+        workerName,
+        quizVersion: PUBLIC_QUIZ_VERSION,
+        answers: answers as Record<PublicQuizQuestionId, 'a' | 'b' | 'c' | 'd'>,
+        honeypot: honeypot as '',
+        interactionStartedAt: startedAt,
+        interactionDurationMs: Date.now() - startedAt,
+        requestNonce: crypto.randomUUID(),
       })
 
-      setResult(computedResult)
+      setResult({
+        ...authoritativeResult,
+        errors: buildErrorReview(authoritativeResult.incorrectQuestionIds, answers),
+      })
       setStep('result')
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'No se pudo guardar el examen.')
@@ -152,8 +167,20 @@ export function ManualQuizExperience() {
               ))}
             </div>
 
+            <label className="cc-public-quiz-honeypot" aria-hidden="true">
+              No rellenar este campo
+              <input
+                type="text"
+                name="companyWebsite"
+                value={honeypot}
+                onChange={(event) => setHoneypot(event.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </label>
+
             {submitError ? (
-              <div className="cc-public-quiz-message cc-public-quiz-message--error">
+              <div className="cc-public-quiz-message cc-public-quiz-message--error" role="alert" aria-live="polite">
                 <strong>No se pudo enviar</strong>
                 <p>{submitError}</p>
               </div>
@@ -227,4 +254,27 @@ export function ManualQuizExperience() {
       </section>
     </div>
   )
+}
+
+function buildErrorReview(
+  incorrectQuestionIds: PublicQuizQuestionId[],
+  answers: Record<string, string>,
+): PublicQuizErrorReview[] {
+  return incorrectQuestionIds.flatMap((questionId) => {
+    const question = gymManualQuizQuestions.find((item) => item.id === questionId)
+    if (!question) return []
+    const selectedOptionId = answers[questionId] ?? null
+    const selectedOption = question.options.find((option) => option.id === selectedOptionId)
+    const correctOption = question.options.find((option) => option.id === question.correctOptionId)
+    return [{
+      questionId,
+      topic: question.topic,
+      prompt: question.prompt,
+      selectedOptionId,
+      selectedOptionLabel: selectedOption?.label ?? 'Sin respuesta',
+      correctOptionId: question.correctOptionId,
+      correctOptionLabel: correctOption?.label ?? '',
+      explanation: question.explanation,
+    }]
+  })
 }

@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Gate 4B — providerless public quiz abuse protection in QA — DONE 2026-07-22
+
+- Exact QA identity passed through public config, linked/authenticated CLI state and private/live PostgreSQL 17 state; production was rejected and not modified.
+- One reviewed 14-digit migration created the private RPC and minimum HMAC guard storage; local disposable proof and QA transactional apply passed without `db push` or history writes.
+- The public QA Edge Function is active with strict contract/body/timing/honeypot checks, server-authoritative scoring, generic errors and privacy-safe custom logging.
+- Live legitimate, malformed, oversized, unknown-field, honeypot, too-fast, replay, cooldown, direct-RPC, history-read and direct-insert tests passed; exact cleanup left zero synthetic attempts and zero guard rows.
+- Gate 4C production remains blocked pending a separate authorization.
+- Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
+
 ## Gate 4A — public quiz RPC abuse-protection design — DONE 2026-07-22
 
 - Source-only: no QA/production/RPC/schema/provider mutation.

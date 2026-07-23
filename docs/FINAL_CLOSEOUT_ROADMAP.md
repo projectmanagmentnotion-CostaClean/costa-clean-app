@@ -4,7 +4,7 @@
 
 The separately authorized production metadata-only repair is PASS. Production now records exactly the three canonical incrementals; QA baseline and unknown versions are absent. Public schema fingerprint, 17 table counts, nine sequences and invoice identifiers remained unchanged. QA was not modified. `db push` remains locked because legacy history and the physical migration directory still lack a proven CLI zero-SQL transition. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
-Gate 3 is closed and published. Gate 4A, Public Quiz RPC Abuse Protection audit/design, is also closed source-only. Gate 4B QA implementation is the next active gate and is blocked pending explicit QA/provider/privacy/secrets authorization. Gate 4C production remains independently blocked. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md) and [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md).
+Gate 3 and Gate 4A are closed. Gate 4B providerless QA implementation is also PASS: one reviewed migration, one public QA Edge Function, private transactional RPC, HMAC throttling, live deny/allow matrix, privacy-safe custom logs and zero-residue cleanup are proven. Gate 4C production remains independently blocked pending a separate authorization. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md) and [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
 
 ## Historical production metadata authorization package - 2026-07-22
 

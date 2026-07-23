@@ -1,13 +1,13 @@
 # Risk Map
 
-## Public quiz anonymous submission abuse — Gate 4A design 2026-07-22
+## Public quiz anonymous submission abuse — Gate 4B QA closure 2026-07-22
 
-- Current public RPC has useful field/result consistency checks but no authoritative answer validation, byte/depth/cardinality limit, burst/cooldown, replay control, provider challenge, retention or privacy-safe telemetry.
-- Raw PostgREST error text is exposed to the visitor and the full inserted row is returned.
-- Recommended Gate 4B architecture is Turnstile Managed + Supabase Edge Function + private transactional RPC, with short-lived peppered-HMAC DB rate buckets and no clear IP/token/payload logs.
-- Gate 4A is documentation-only DONE. Gate 4B QA and Gate 4C production remain separately blocked.
-- Upstash is deferred unless observed distributed traffic justifies another processor/cost/secret. Estimated initial recurring cost is zero only inside current provider quotas.
-- Evidence: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUDIT_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUDIT_20260722.md) and [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_IMPLEMENTATION_PLAN_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_IMPLEMENTATION_PLAN_20260722.md).
+- QA no longer exposes the legacy submission RPC to anon/authenticated callers. Public traffic enters through one QA-only Edge Function with exact body/field/timing/honeypot validation, server scoring, HMAC replay/cooldown/window controls and a service-role-only transactional RPC.
+- Live QA passed the legitimate and denial matrix, anonymous history remains closed, custom logs contain no request identity/payload material, and cleanup left zero synthetic attempts/guards.
+- Residual risk: providerless heuristics do not supply a proof-of-human challenge; distributed attackers can rotate network identities. Observe QA behavior before Gate 4C and decide separately whether production needs Turnstile or another authorized control.
+- Gate 4C production remains blocked. Production still uses the earlier narrow RPC and did not receive the Gate 4B migration, function or secret.
+- Upstash, Cloudflare, DNS changes and paid overage remain deferred.
+- Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
 
 ## Workspace / tenancy / ownership residual risk - Gate 3 closure 2026-07-22
 

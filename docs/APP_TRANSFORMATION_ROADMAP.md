@@ -581,3 +581,11 @@ Evidence:
 - Read-only authenticated app smoke passes `360/360` with no load errors, entities or submits.
 - Remaining work is migration-history reconciliation and public endpoint abuse controls, not reopening anonymous table access.
 - Evidence: [PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md](PRODUCTION_ANON_READ_CLOSURE_GATE_20260722.md).
+
+## Post-Roadmap Gate 4B: Providerless Public Quiz Abuse Protection in QA — 2026-07-22
+
+- QA now routes public quiz submissions through one public Edge Function, strict shared/server contracts, HMAC pseudonymous throttling and one private transactional RPC.
+- The disposable PostgreSQL proof, exact QA migration apply, Edge deployment, 12-case synthetic matrix, custom-log privacy scan and exact cleanup passed.
+- Anonymous direct quiz RPC execution, direct table inserts and quiz-history reads remain denied; zero synthetic attempts and guard rows remain.
+- Production, financial/fiscal domains, migration history and `db push` were untouched. Gate 4C remains separately blocked.
+- Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).

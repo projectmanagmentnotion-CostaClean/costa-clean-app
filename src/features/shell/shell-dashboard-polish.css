@@ -3069,12 +3069,15 @@
 
   .cc-mobile-nav-sheet {
     display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr);
     gap: 14px;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 220;
+    max-height: calc(100dvh - max(8px, env(safe-area-inset-top, 0px)));
+    overflow: hidden;
     padding:
       10px
       max(14px, env(safe-area-inset-right))
@@ -3145,6 +3148,10 @@
   .cc-mobile-nav-sheet__sections {
     display: grid;
     gap: 14px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
   }
 
   .cc-mobile-nav-sheet__section {

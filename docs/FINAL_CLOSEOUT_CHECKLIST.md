@@ -7,8 +7,8 @@
 | Gate 3 — Workspace / Tenancy / Ownership Security Model | DONE — single-workspace accepted with explicit constraints | Valid only for one mutually trusted Costa Clean workspace | Not touched | Not touched | Published in the separately authorized closeout sprint | Another company or differently trusted users require a separately authorized ownership model first |
 | Gate 4A — Public Quiz RPC Abuse Protection audit/design | DONE — source-only | Recommended architecture and exact authorization package documented | Not touched | Not touched | This docs gate | Turnstile + Edge + private RPC selected |
 | Gate 4B — Public Quiz RPC Abuse Protection QA implementation | DONE — providerless QA PASS | Separate authorization executed with exact target/hash/proof | Not touched | Migration + Edge deployed; synthetic residue 0 | This delivery | 12/12 allow/deny/replay/cooldown/privacy/cleanup matrix passed |
-| Gate 4C — Public Quiz RPC Abuse Protection production release | BLOCKED | Gate 4B QA PASS plus separate production authorization | No authorization | QA evidence required | Pending | Independent production gate |
-| Gate 5 — Production Functional Smoke Final | Blocked | Depends on Gate 4 or explicit final decision | Smoke without financial writes | Not required unless comparison is authorized | Pending | P0/P1 = 0 and production operational |
+| Gate 4C — Public Quiz RPC Abuse Protection production release | DONE | None | Migration/pepper/Edge/frontend verified; 12/12 matrix and exact cleanup PASS | Unchanged | `db3dd1a` | Providerless production protection active; synthetic residue 0 |
+| Gate 5 — Production Functional Smoke Final | DONE | None | Visible logout/login and read-only module smoke PASS | Unchanged | `f2ba980`, `2d63f6b`, final docs commit | P0/P1 = 0; production ready for normal operation |
 | Optional A — Asset / Bundle Optimization | Deferred | Post-cierre | No aplica | No aplica | Pending | Optimización medida |
 | Optional B — CSS / Layout Consolidation | Deferred | Post-cierre | No aplica | No aplica | Pending | Consolidación incremental |
 | Optional C — UX Polish Pass | Deferred | Post-cierre | No aplica | No aplica | Pending | Polish P3/P4 |
@@ -21,7 +21,7 @@
 - Public fingerprint, 17 table counts, nine sequences and invoice identifiers: unchanged.
 - QA/business schema/business data/migration bodies: unchanged or not executed.
 - `db push`: remains locked pending a separate CLI zero-SQL gate.
-- Gate 3 later closed by the workspace/tenancy evidence decision; current next active gate: Gate 4, Public Quiz RPC Abuse Protection.
+- Gate 3 later closed by the workspace/tenancy evidence decision; Gate 4 and Gate 5 subsequently closed under their separate scopes.
 
 Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
@@ -61,8 +61,12 @@ La evidencia que prevalece para el estado actual es [QA_MIGRATION_METADATA_REPAI
 - Full-submit: Blocked.
 - Facturas/cobros/cierres: Protected.
 - Workspace/tenancy Gate 3: Done with conditional single-workspace acceptance.
-- Residual visual/harness debt: `358/360`, separate and unresolved.
+- Logout/Auth lifecycle: PASS.
+- Gate 5 exact viewports: desktop/tablet/mobile PASS.
+- Residual visual/harness `358/360`: resolved/reclassified by later `360/360` and final exact-viewport evidence.
+- Roadmap: CLOSED.
+- Production: READY FOR NORMAL OPERATION.
 
 ## Próxima acción del agente
 
-Gate 3, Gate 4A and providerless Gate 4B QA are closed. Gate 4C production remains blocked pending a separate authorization package based on [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md). Preserve the database-push lock, protected financial domains, historical Gate 1/2 evidence and separate `358/360` visual/harness debt.
+All mandatory gates are closed. Continue normal operation and preserve the database-push lock, protected financial domains, historical Gate 1/2 limits, single-workspace constraint and providerless distributed-abuse risk. Optional A/B/C remain deferred. Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md).

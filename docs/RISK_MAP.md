@@ -1,11 +1,20 @@
 # Risk Map
 
+## Gate 5 final risk disposition — 2026-07-23
+
+- The missing authenticated logout P1 is closed. The flow is centralized, guarded against duplicate calls, reacts to `SIGNED_OUT`, preserves the session on provider failure and removes protected React state after success.
+- Production logout/login and post-login navigation passed in visible Chrome. Desktop, tablet and mobile each expose one in-viewport logout control with Escape/focus behavior and no horizontal overflow.
+- P0 open: `0`. P1 open: `0`.
+- The former `358/360` visual/harness residual is resolved/reclassified by later `360/360` evidence and the final exact-viewport production smoke; it is not open release debt.
+- Residuals intentionally preserved: single-workspace trust boundary, providerless distributed-abuse exposure, unsafe physical migration/legacy CLI chain, deferred remote disposable Supabase proof, deferred Turnstile and unauthorized financial full-submit.
+- Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md).
+
 ## Public quiz anonymous submission abuse — Gate 4B QA closure 2026-07-22
 
 - QA no longer exposes the legacy submission RPC to anon/authenticated callers. Public traffic enters through one QA-only Edge Function with exact body/field/timing/honeypot validation, server scoring, HMAC replay/cooldown/window controls and a service-role-only transactional RPC.
 - Live QA passed the legitimate and denial matrix, anonymous history remains closed, custom logs contain no request identity/payload material, and cleanup left zero synthetic attempts/guards.
-- Residual risk: providerless heuristics do not supply a proof-of-human challenge; distributed attackers can rotate network identities. Observe QA behavior before Gate 4C and decide separately whether production needs Turnstile or another authorized control.
-- Gate 4C production remains blocked. Production still uses the earlier narrow RPC and did not receive the Gate 4B migration, function or secret.
+- Residual risk: providerless heuristics do not supply a proof-of-human challenge; distributed attackers can rotate network identities. Gate 4C later activated the reviewed controls in production. Turnstile remains deferred until real abuse metrics justify a separate provider/privacy gate.
+- Gate 4C production is `DONE`; migration, production-only pepper, Edge ingress and frontend contract are active.
 - Upstash, Cloudflare, DNS changes and paid overage remain deferred.
 - Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
 
@@ -16,8 +25,8 @@
 - Adding another company, workspace, external organization or differently trusted users immediately invalidates the exception and requires a separately authorized ownership/membership/RLS/RPC design before onboarding.
 - `audit_events.changed_by = auth.uid()` provides limited actor attribution but is not a membership or authorization contract.
 - Future isolation must preserve routes, frontend Supabase contracts, current business logic and protected financial/fiscal behavior; schema, backfill, RLS/RPC, QA and production each require separate authorization.
-- Gate 4, Public Quiz RPC Abuse Protection, is next. Gate 3 did not start it.
-- `db push` remains locked. The unrelated `358/360` visual/harness result remains explicit unresolved UI debt.
+- Gate 4 and Gate 5 are now closed.
+- `db push` remains locked. The former `358/360` visual/harness result is resolved/reclassified by later `360/360` and final exact-viewport evidence.
 - Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md).
 
 ## Production migration metadata repair residual risk - 2026-07-22
@@ -26,7 +35,7 @@
 - Public schema fingerprint, all 17 business counts, nine sequence states and invoice identifier fingerprint were identical before and after.
 - The repair did not execute migration bodies or alter business schema/data, but it still does not reconstruct legacy production history.
 - Physical filenames remain ambiguous and the baseline remains in the migration directory, so CLI push remains unsafe.
-- Authenticated smoke loaded all configured surfaces and left business state unchanged; two unrelated visual checks remain at `358/360` and require a separate UI/harness diagnosis.
+- Authenticated smoke loaded all configured surfaces and left business state unchanged; the historical `358/360` result was later superseded by `360/360` and the final Gate 5 exact-viewport smoke.
 - Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
 ## Production migration metadata authorization residual risk - 2026-07-22

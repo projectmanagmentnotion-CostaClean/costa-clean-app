@@ -1,5 +1,16 @@
 # App Quality Gates
 
+## Gate 5 — production functional smoke and Auth logout — DONE 2026-07-23
+
+- One centralized flow uses the existing Supabase client, prevents duplicate sign-out calls, disables while pending and clears authenticated state only after success.
+- `SIGNED_OUT` updates the UI; failure preserves the session and exposes only a generic toast.
+- Visible Chrome proved logout, protected-content removal, Back/reload denial, human login, post-login persistence and read-only navigation across ten authenticated modules.
+- Desktop `1440x900`, tablet `768x1024` and mobile `390x844` each expose one logout control, stay inside the viewport and return focus on `Escape`.
+- The public quiz exposes no account control or authenticated navigation.
+- Lint/build and `239/239` tests pass; both database-push locks fail closed; business, financial/fiscal and real-data writes are `0`.
+- Gate 5 `DONE`; roadmap `CLOSED`; production `READY FOR NORMAL OPERATION`; P0/P1 open `0`.
+- Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md).
+
 ## Gate 4C — public quiz abuse protection in production — DONE 2026-07-23
 
 - The already-applied migration, production-only pepper, active Edge Function and frontend deployment were verified read-only and were not repeated.
@@ -8,7 +19,7 @@
 - Log privacy passed with three matching custom events and zero sensitive-value findings.
 - Exact cleanup deleted one synthetic attempt and two captured guards; postflight proved `0` synthetic attempts, `0` guards and six real attempts unchanged.
 - Financial/fiscal data, real-data digests, sequence state and migration history were unchanged. Both `db push` locks remain active and the secret scan found zero versioned secrets.
-- Gate 5 was not started.
+- At this historical Gate 4C closeout, Gate 5 had not started; Gate 5 subsequently passed on 2026-07-23.
 - Evidence: [GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md](GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md).
 
 ## Gate 4B — providerless public quiz abuse protection in QA — DONE 2026-07-22
@@ -17,7 +28,7 @@
 - One reviewed 14-digit migration created the private RPC and minimum HMAC guard storage; local disposable proof and QA transactional apply passed without `db push` or history writes.
 - The public QA Edge Function is active with strict contract/body/timing/honeypot checks, server-authoritative scoring, generic errors and privacy-safe custom logging.
 - Live legitimate, malformed, oversized, unknown-field, honeypot, too-fast, replay, cooldown, direct-RPC, history-read and direct-insert tests passed; exact cleanup left zero synthetic attempts and zero guard rows.
-- Gate 4C production remains blocked pending a separate authorization.
+- Gate 4C later passed under its separate production authorization.
 - Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
 
 ## Gate 4A — public quiz RPC abuse-protection design — DONE 2026-07-22

@@ -1,5 +1,20 @@
 # Universal Release Log
 
+## 2026-07-23 — Gate 5 production functional smoke and final roadmap close
+
+- fecha: 2026-07-23
+- proyecto: Costa Clean CRM
+- tipo: P1 Auth correction / production frontend release / roadmap close
+- resumen: adds one secure responsive account/logout flow through the existing Supabase client, proves visible logout and human re-login in production, and closes the mandatory roadmap
+- commits runtime: `f2ba980e1b10c17a3c4f8441a54890e3839f01d9`, `2d63f6bc1798ff5a2c79347730881b894f790253`
+- deployment: Git-triggered Vercel production deployment `dpl_4DDzs7QFgBXEjY1SrANtPUwKVqYb`, `READY`; canonical domain HTTP `200`
+- validación: account/menu/Escape/focus; logout; protected-content removal; Back/reload; human login; persistence; ten modules; public quiz isolation; `1440x900`, `768x1024`, `390x844`; lint/build; `239/239` tests; both db-push locks
+- producción/QA/datos: Auth session lifecycle only; QA unchanged; business writes `0`; financial/fiscal writes `0`; real-data changes `0`
+- estado: Gate 5 `DONE`; roadmap `CLOSED`; production `READY FOR NORMAL OPERATION`; P0/P1 open `0`
+- riesgo: single-workspace trust boundary, providerless distributed abuse and migration CLI lock remain documented; optional A/B/C and Turnstile remain deferred
+- rollback: revert the runtime commits and redeploy only under a separately reviewed incident action; no database rollback exists because this sprint made no database change
+- evidencia: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md), [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md)
+
 ## 2026-07-22 — Gate 4B providerless public quiz protection in QA
 
 - tipo: QA backend/frontend security implementation
@@ -8,7 +23,7 @@
 - produccion: unchanged; invoices, payments, closings, fiscal numbering/sequences and full-submit untouched
 - secretos versionados: 0
 - riesgo residual: providerless controls do not prove a human; Gate 4C must independently decide whether production requires Turnstile or another provider
-- estado: Gate 4B QA DONE; Gate 4C production BLOCKED pending separate authorization
+- estado histórico: Gate 4B QA DONE; Gate 4C later passed under separate authorization
 - evidencia: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md)
 
 ## 2026-07-22 — Gate 4A public quiz abuse-protection design
@@ -17,7 +32,7 @@
 - resumen: audits the anonymous quiz RPC and selects Turnstile Managed + Supabase Edge Function + private transactional RPC with privacy-preserving throttling
 - producción/QA/schema/data/code/provider: unchanged
 - coste estimado: EUR 0/month inside current free quotas; no paid overage authorized
-- estado: Gate 4A DONE; Gate 4B QA BLOCKED pending explicit provider/privacy/secrets authorization; Gate 4C production BLOCKED
+- estado histórico: Gate 4A DONE; Gate 4B and Gate 4C later passed under separate authorizations
 - evidencia: [PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md](PUBLIC_QUIZ_RPC_ABUSE_PROTECTION_AUTHORIZATION_PACKAGE_20260722.md)
 
 ## 2026-07-22 - Costa Clean App - production migration metadata repair gate

@@ -1,10 +1,18 @@
 # Costa Clean App — Final Closeout Roadmap
 
+## Final closure — 2026-07-23
+
+**Roadmap status: `CLOSED`. Production status: `READY FOR NORMAL OPERATION`.**
+
+Gate 4B, Gate 4C and Gate 5 are `DONE`. The P1 missing logout lifecycle is closed by the centralized guarded Supabase sign-out flow, responsive account menu and successful visible production logout/login smoke. Desktop `1440x900`, tablet `768x1024` and mobile `390x844` passed; all ten authenticated modules and the public quiz loaded read-only; console errors, business writes, financial/fiscal writes and real-data changes were `0`. Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md) and [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md).
+
+The historical `358/360` residual is resolved/reclassified by the later successful `360/360` evidence and the final exact-viewport smoke. It is not an open P1. P0 open: `0`. P1 open: `0`.
+
 ## Production metadata repair gate completed - 2026-07-22
 
 The separately authorized production metadata-only repair is PASS. Production now records exactly the three canonical incrementals; QA baseline and unknown versions are absent. Public schema fingerprint, 17 table counts, nine sequences and invoice identifiers remained unchanged. QA was not modified. `db push` remains locked because legacy history and the physical migration directory still lack a proven CLI zero-SQL transition. Evidence: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
 
-Gate 3 and Gate 4A are closed. Gate 4B providerless QA implementation is also PASS: one reviewed migration, one public QA Edge Function, private transactional RPC, HMAC throttling, live deny/allow matrix, privacy-safe custom logs and zero-residue cleanup are proven. Gate 4C production remains independently blocked pending a separate authorization. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md) and [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
+Gate 3 and Gate 4A are closed. Gate 4B providerless QA and Gate 4C production are also PASS under their separate authorizations. Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md), [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md) and [GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md](GATE_4C_PUBLIC_QUIZ_PRODUCTION_RELEASE_20260723.md).
 
 ## Historical production metadata authorization package - 2026-07-22
 
@@ -55,7 +63,7 @@ Estas reglas aplican a todos los gates restantes:
 10. Cada gate versionable debe cerrar con validación proporcional, commit y push.
 11. Si un gate necesita credenciales, proyecto desechable, producción, repair real o writes sensibles, debe detenerse y pedir autorización explícita.
 
-## Gates pendientes obligatorios
+## Gates obligatorios — closed
 
 ### Gate 1 — Migration Manifest And Disposable Repair Proof
 
@@ -149,7 +157,7 @@ Evidence: [WORKSPACE_TENANCY_OWNERSHIP_SECURITY_MODEL_20260722.md](WORKSPACE_TEN
 
 ### Gate 4 — Public Quiz RPC Abuse Protection
 
-**Estado actual:** Gate 4A audit/design DONE. Gate 4B QA implementation BLOCKED pending authorization. Gate 4C production BLOCKED pending QA PASS and separate authorization.
+**Estado actual:** Gate 4A `DONE`; Gate 4B QA `DONE`; Gate 4C production `DONE`.
 
 Objetivo:
 
@@ -167,7 +175,7 @@ Criterio de cierre:
 
 ### Gate 5 — Production Functional Smoke Final
 
-**Estado inicial:** Blocked by Gates 1–4 or manual decision.
+**Estado actual:** `DONE` on 2026-07-23. Production is ready for normal operation.
 
 Objetivo:
 
@@ -222,6 +230,6 @@ El roadmap final queda cerrado cuando:
 
 ## Próxima acción
 
-Gate 3 and Gate 4A are closed. The next active gate is Gate 4B, QA-only implementation of the reviewed Turnstile + Edge + private RPC design. It must not start without the exact authorization and external prerequisites in the Gate 4A package. Gate 4C production remains separate and blocked.
+Normal operation. Reopen only for a new scoped roadmap or one of the triggers in [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md).
 
-Gate 1 historical proof limits and the completed QA/production metadata evidence remain preserved. The database-push lock remains active. The unrelated `358/360` visual/harness residual from the production metadata gate also remains open and separate; Gate 3 does not resolve it.
+Gate 1 historical proof limits and the completed QA/production metadata evidence remain preserved. The database-push lock remains active. Optional A/B/C, remote disposable Supabase proof, Turnstile and financial full-submit remain deferred.

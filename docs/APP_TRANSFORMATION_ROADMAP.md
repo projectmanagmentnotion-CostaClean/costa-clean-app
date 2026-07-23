@@ -4,6 +4,14 @@
 
 This roadmap defines the phased transformation path for the app, from governance through final hardening, while preserving operational safety.
 
+## Final status — CLOSED 2026-07-23
+
+The mandatory transformation and closeout roadmap is closed. Gate 4B QA, Gate 4C production and Gate 5 production functional smoke are `DONE`; P0/P1 open findings are `0`; production is ready for normal operation.
+
+The final corrective sprint added a secure centralized logout using the existing Supabase client, a single responsive account surface and regression coverage. Visible production smoke passed logout, human login, persistence, ten authenticated modules, the public quiz and exact desktop/tablet/mobile viewports without business, financial/fiscal or real-data writes.
+
+Optional asset optimization, CSS consolidation and P3/P4 polish remain deferred and do not block operation. Reopen only with a new scoped roadmap. Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md) and [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md).
+
 ## Operating Rules
 
 - Diagnose first.
@@ -587,7 +595,7 @@ Evidence:
 - QA now routes public quiz submissions through one public Edge Function, strict shared/server contracts, HMAC pseudonymous throttling and one private transactional RPC.
 - The disposable PostgreSQL proof, exact QA migration apply, Edge deployment, 12-case synthetic matrix, custom-log privacy scan and exact cleanup passed.
 - Anonymous direct quiz RPC execution, direct table inserts and quiz-history reads remain denied; zero synthetic attempts and guard rows remain.
-- Production, financial/fiscal domains, migration history and `db push` were untouched. Gate 4C remains separately blocked.
+- Production, financial/fiscal domains, migration history and `db push` were untouched. Gate 4C later passed under its separate production authorization.
 - Evidence: [GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md](GATE_4B_PROVIDERLESS_QA_EXECUTION_20260722.md).
 
 ## Post-Roadmap Gate 4C: Public Quiz Abuse Protection in Production — 2026-07-23

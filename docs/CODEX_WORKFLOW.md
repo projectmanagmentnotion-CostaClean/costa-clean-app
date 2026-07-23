@@ -27,6 +27,14 @@ This document defines the mandatory working method for Codex and any AI coding a
 - The canonical manifest is documentary only. Logical aliases are not active migration versions and must not be renamed, registered or marked applied without a proven disposable transition.
 - A migration repair gate must validate an exact disposable ref, exclude QA/production, prove discard/restore first and stop honestly when the private disposable configuration is absent.
 
+## Normal Operation After Gate 5
+
+- The mandatory final roadmap closed on 2026-07-23. Normal scoped maintenance may proceed under this workflow.
+- Reopen a new roadmap before any cross-domain feature, tenancy/role change, Auth-provider or user-administration change, schema/RLS/RPC/migration action, database-push unlock, financial/fiscal full-submit, production security incident or proof-of-human provider integration.
+- Production logout/login is now a permanent release gate for changes to `App.tsx`, `AppShell.tsx`, `AppNav.tsx`, Supabase session handling or protected/public route boundaries.
+- Any such change must prove one logout control per viewport, duplicate-call prevention, generic failure handling, `SIGNED_OUT`, protected-content removal and public-route isolation.
+- See [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md) for operating limits and reopen conditions.
+
 ## Mandatory Documents
 
 Before any code modification, read:

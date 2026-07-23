@@ -1,5 +1,15 @@
 # App Quality Gates
 
+## Client Portal CP-2A Source Security Gate — DONE 2026-07-23
+
+- Initial HEAD and source impact map were verified before edits.
+- The migration introduces explicit active-staff authorization before portal membership and hardens canonical policies, grants and legacy RPC guards.
+- Eleven portal/staff/security tables use RLS plus `FORCE RLS`; customer direct canonical access remains denied.
+- Four QA-locked Edge boundaries enforce exact contracts, verified Auth, generic errors, server-only secrets and 60-second exact-path document signing.
+- PostgreSQL 17.10 disposable apply/matrix/cleanup/rollback/reapply proof passed with zero residue and cluster discard.
+- QA, production, Auth users, remote Storage/Edge and remote writes remain zero. CP-2B is not authorized.
+- Evidence: [client-portal/CP2A_IMPLEMENTATION_PACKAGE.md](client-portal/CP2A_IMPLEMENTATION_PACKAGE.md), [client-portal/CP2A_LOCAL_PROOF.md](client-portal/CP2A_LOCAL_PROOF.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION.md).
+
 ## Client Portal CP-0 / CP-1 Design Gate - DONE 2026-07-23
 
 - The public website is verified as WordPress/Elementor on SiteGround with WPForms and Complianz. No public-website Git repository exists in the connected/local repository scope; a versioned export and deployment procedure are mandatory before CP-4.
@@ -12,7 +22,7 @@
 - The complete anonymous/pending/revoked/member/admin/internal-staff cross-client matrix must pass in QA before portal UI work.
 - Privacy information, contractual acceptance, optional marketing consent and cookie consent are separate decisions and evidence records.
 - Legal pages, retention, processors, transfers, rights, closure, security, breach response and ROPA are specified but remain pending verified facts and professional legal approval.
-- CP-2 remains unauthorized; production and QA changes for CP-0/CP-1 are zero.
+- CP-2B remains unauthorized; production and QA changes through CP-2A are zero.
 - Evidence: [client-portal/ARCHITECTURE.md](client-portal/ARCHITECTURE.md), [client-portal/RLS_SECURITY_SPEC.md](client-portal/RLS_SECURITY_SPEC.md), [client-portal/LEGAL_COMPLIANCE_MATRIX.md](client-portal/LEGAL_COMPLIANCE_MATRIX.md), [client-portal/QA_AUTHORIZATION_PACKAGE.md](client-portal/QA_AUTHORIZATION_PACKAGE.md).
 
 ## Gate 5 — production functional smoke and Auth logout — DONE 2026-07-23

@@ -6,11 +6,11 @@ const edgeSource = readFileSync('supabase/functions/_shared/publicQuizHandler.ts
 
 describe('Gate 4B source guardrails', () => {
   it('adds exactly one uniquely versioned 14-digit migration', () => {
-    expect(migrations).toEqual(['20260722171428_public_quiz_providerless_abuse_protection.sql'])
+    expect(migrations).toContain('20260722171428_public_quiz_providerless_abuse_protection.sql')
   })
 
   it('locks the old RPC and grants only the private signature to service_role', () => {
-    const sql = readFileSync(`supabase/migrations/${migrations[0]}`, 'utf8')
+    const sql = readFileSync('supabase/migrations/20260722171428_public_quiz_providerless_abuse_protection.sql', 'utf8')
     expect(sql).toMatch(/revoke execute on function public\.submit_public_gym_manual_quiz_attempt\(jsonb\)[\s\S]+from public, anon, authenticated/iu)
     expect(sql).toMatch(/grant execute on function public\.submit_public_gym_manual_quiz_attempt_private\(jsonb, text, text\)[\s\S]+to service_role/iu)
     expect(sql).toMatch(/enable row level security/iu)

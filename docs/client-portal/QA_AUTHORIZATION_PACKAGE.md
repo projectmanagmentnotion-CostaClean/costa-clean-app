@@ -1,14 +1,14 @@
 # CP-2 QA Authorization Package
 
 Date: 2026-07-23
-Current authorization: none
-Purpose: define, not execute, the exact next QA gate
+Current authorization: CP-2A source-only package complete; CP-2B none
+Purpose: govern, not execute, the exact next QA gate
 
 ## Verdict
 
-CP-0 and CP-1 design may close. CP-2 is not authorized by this document or commit.
+CP-0/CP-1 and the source-only CP-2A package may close. Remote CP-2B is not authorized by this document or commit.
 
-The next gate is `continue` only after a separate user authorization names QA ref `kpvvydthlxupjjqqdpxy` and accepts the exact reviewed migration/Edge/storage file hashes. Production ref `wfxnwfcdjainpojhbdri` is always rejected.
+The next gate is `continue` only after a separate user authorization names QA ref `kpvvydthlxupjjqqdpxy` and accepts the hashes frozen in `CP2B_EXACT_QA_AUTHORIZATION.md`. Production ref `wfxnwfcdjainpojhbdri` is always rejected.
 
 ## Objective
 

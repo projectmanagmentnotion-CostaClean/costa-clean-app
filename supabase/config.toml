@@ -385,6 +385,18 @@ deno_version = 2
 [functions.submit-public-gym-manual-quiz]
 verify_jwt = false
 
+[functions.portal-account-actions]
+verify_jwt = false
+
+[functions.portal-service-actions]
+verify_jwt = false
+
+[functions.portal-member-actions]
+verify_jwt = false
+
+[functions.portal-invoice-download]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

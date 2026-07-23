@@ -357,3 +357,13 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - **P2 multi-client membership:** a user may have separately approved client memberships. Every API request must carry one explicit client context and must never union data from all memberships implicitly.
 - CP-0/CP-1 made no production, QA, schema, Auth, user, Storage, invoice, payment, closing or sequence changes. CP-2 requires separate QA authorization.
 - Evidence: [client-portal/THREAT_MODEL.md](client-portal/THREAT_MODEL.md), [client-portal/DATA_CLASSIFICATION.md](client-portal/DATA_CLASSIFICATION.md), [client-portal/QA_AUTHORIZATION_PACKAGE.md](client-portal/QA_AUTHORIZATION_PACKAGE.md).
+
+## Client portal CP-2A residual risks — 2026-07-23
+
+- The staff/customer split, portal RLS and narrow APIs are source-complete and passed disposable PostgreSQL 17.10 proof, but have not been applied or validated in Supabase Cloud QA.
+- The migration fails without exact pre-existing staff Auth UUIDs. Those identities must be privately verified before CP-2B; email/metadata must never substitute.
+- The CP-2A member Edge has no email delivery adapter, so no invitation email can be sent. A sandbox adapter, failure compensation and provider facts require separate review before CP-2B.
+- Local Auth/Storage are compatibility stubs; managed schema cache, JWT/AAL shape, Edge runtime, Storage signing and Cloud grants remain CP-2B evidence.
+- Disable-first rollback restores broad authenticated staff behavior only after proving zero portal records. If that proof fails, access stays disabled for incident handling.
+- Migration-history reconciliation remains independently locked; CP-2A does not authorize `db push`, repair or history writes.
+- Evidence: [client-portal/CP2A_MIGRATION_REVIEW.md](client-portal/CP2A_MIGRATION_REVIEW.md), [client-portal/CP2A_ROLLBACK_PLAN.md](client-portal/CP2A_ROLLBACK_PLAN.md).

@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-23
-Current state: CP-0 and CP-1 designed; stop before CP-2
+Current state: CP-0/CP-1 complete; CP-2A source package complete; CP-2B not authorized
 
 ## CP-0 — Discovery
 
@@ -30,9 +30,22 @@ Status: `DONE — documentation only`
 
 No professional legal approval is claimed.
 
-## CP-2 — QA schema, authorization and server APIs
+## CP-2A — Immutable source package and disposable proof
 
-Status: `BLOCKED — requires separate explicit authorization`
+Status: `DONE — source only, QA/production unchanged`
+
+- one reviewed migration, four Edge boundaries and private Storage design;
+- explicit staff trust boundary and deny-by-default customer tenancy;
+- deterministic synthetic fixtures, authorization matrix and exact cleanup;
+- PostgreSQL 17.10 disposable apply/rollback/reapply proof;
+- frozen migration/Edge/runner/fixture/rollback hashes;
+- future QA commands documented but not executed.
+
+Evidence: `CP2A_IMPLEMENTATION_PACKAGE.md` and `CP2B_EXACT_QA_AUTHORIZATION.md`.
+
+## CP-2B — QA schema, authorization and server APIs
+
+Status: `BLOCKED — requires new exact-hash authorization`
 
 Order:
 

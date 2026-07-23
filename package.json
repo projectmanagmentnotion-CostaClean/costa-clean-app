@@ -15,6 +15,8 @@
     "qa:migrations:production-metadata-repair": "node scripts/ops/run-production-migration-metadata-repair.mjs --verify",
     "qa:public-quiz:local-proof": "node scripts/qa/prove-public-quiz-migration-local.mjs",
     "qa:public-quiz:qa-preflight": "node scripts/qa/run-public-quiz-gate4b-qa.mjs",
+    "qa:client-portal:local-proof": "node scripts/client-portal/run-cp2a-local-proof.mjs",
+    "qa:client-portal:cp2b-plan": "node scripts/client-portal/run-cp2b-qa.mjs --plan",
     "ops:public-quiz:gate4c": "node scripts/ops/run-public-quiz-gate4c-production.mjs",
     "db:push": "node scripts/ops/assert-db-push-locked.mjs",
     "supabase:db:push": "node scripts/ops/assert-db-push-locked.mjs",

@@ -1,5 +1,18 @@
 # Universal Release Log
 
+## 2026-07-23 — Client portal CP-2A immutable QA-preparation package
+
+- fecha: 2026-07-23
+- proyecto: Costa Clean Client Portal
+- tipo: security source package / local disposable proof
+- resumen: explicit staff boundary, portal tenancy, narrow RPC/Edge APIs, private invoice documents, synthetic authorization matrix and disable-first rollback
+- validación: PostgreSQL 17.10 apply/matrix/cleanup/rollback/reapply; strict Edge contract tests; lint/build/full test and db-push locks recorded at closeout
+- producción/QA/Auth/Storage/Edge: unchanged; remote writes `0`; users created `0`
+- datos: synthetic `QA-CP2-` and `@example.invalid` only; real PII `0`; fiscal/financial/sequence changes `0`
+- estado: CP-2A `DONE`; CP-2B `NOT AUTHORIZED`; `/portal` UI not implemented
+- rollback: exact local script, disable-first and fail-closed; no remote rollback executed
+- evidencia: [client-portal/CP2A_IMPLEMENTATION_PACKAGE.md](client-portal/CP2A_IMPLEMENTATION_PACKAGE.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION.md)
+
 ## 2026-07-23 — Client portal CP-0 / CP-1 security and legal design
 
 - fecha: 2026-07-23

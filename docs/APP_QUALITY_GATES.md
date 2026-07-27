@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Client Portal CP-2A.2 Windows Runner Gate — DONE 2026-07-27
+
+- The clean CP-2B V2 block was confirmed as `spawnSync` attempting to execute the npm `supabase.cmd` shim directly on Windows and returning `EINVAL` before ledger creation.
+- V3 executes `supabase/dist/supabase.js` directly with Node and provides a restricted `ComSpec` compatibility path with quoted tokens, control/metacharacter rejection, timeout, hidden windows, bounded buffers, and redacted failures.
+- Real Windows `.cmd`, Supabase version, authenticated project listing, QA-linked/production-not-linked identity, path/argument spaces, timeout, nonzero exit, injection rejection, sensitive-argument rejection, and non-Windows direct execution pass.
+- The original 16 and V2 eight artifacts remain byte-for-byte intact. V3 is `PREPARED_NOT_AUTHORIZED`; no npm execute alias exists.
+- QA, production, Auth users, Edge, Storage, SQL, WordPress, `/portal`, and CP-3 writes are zero. CP-2B is `BLOCKED_PENDING_EXPLICIT_V3_AUTHORIZATION`.
+- Evidence: [client-portal/CP2A2_WINDOWS_RUNNER_FIX.md](client-portal/CP2A2_WINDOWS_RUNNER_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md).
+
 ## Client Portal CP-2A.1 QA-compatible Package Gate — DONE 2026-07-27
 
 - The prior CP-2B block was confirmed legitimate: frozen local-disposable fixtures, fixed Auth UUID assumptions, and a plan-only runner were not QA-executable.

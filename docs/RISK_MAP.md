@@ -379,3 +379,13 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - The private backup and its hash manifest must exist outside Git before CP-2B. Current CP-2A.1 source preflight reports 0/9 private runtime inputs in this terminal and makes no readiness claim.
 - Migration-history reconciliation remains locked. V2 contains no `db push`, `db pull`, repair, or history write path.
 - Evidence: [client-portal/CP2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP2A1_QA_EXECUTION_PACKAGE.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md).
+
+## Client portal CP-2A.2 residual risks — 2026-07-27
+
+- The Windows launcher defect is source-closed and proven with the real CLI, but V3 has not executed any mutating CP-2B stage in Supabase Cloud QA.
+- V3 delegates the reviewed mutation lifecycle to the byte-frozen V2 runner after an independent V3 authorization/manifest/triple-identity gate. Any future drift in either layer must fail the combined hash checks.
+- The restricted `.cmd` path intentionally rejects quotes and CMD expansion/metacharacters. Future CLI arguments requiring those characters need a new reviewed launcher version; they must not weaken quoting ad hoc.
+- The Supabase direct target depends on the installed package layout `supabase/dist/supabase.js`; missing or changed layout fails closed.
+- V3 removes the frozen V2 PostgreSQL URL from `psql` arguments and maps it to `PG*` environment variables. This transformation is unit-proven but remains unexercised against Cloud QA until a separately authorized CP-2B run.
+- Invitation delivery, previous Edge bundle reconstruction, Cloud behavior, fresh backup/head binding, and migration-history reconciliation remain unresolved exactly as documented for CP-2A.1.
+- Evidence: [client-portal/CP2A2_WINDOWS_RUNNER_FIX.md](client-portal/CP2A2_WINDOWS_RUNNER_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md).

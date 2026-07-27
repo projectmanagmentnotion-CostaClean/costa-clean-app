@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-27
-Current state: CP-0/CP-1/CP-2A/CP-2A.1 complete; CP-2B blocked pending explicit V2 authorization; CP-3 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2 complete; CP-2B blocked pending explicit V3 authorization; CP-3 not started
 
 ## CP-0 — Discovery
 
@@ -57,9 +57,21 @@ Status: `DONE — source/local only, QA/production unchanged`
 
 Evidence: `CP2A1_QA_EXECUTION_PACKAGE.md`, `CP2B_EXACT_QA_AUTHORIZATION_V2.md`, and `scripts/client-portal/cp2b_qa_package_v2.manifest.json`.
 
+## CP-2A.2 — Windows-compatible Supabase CLI runner
+
+Status: `DONE — source/local read-only, QA/production unchanged`
+
+- the clean V2 block was reproduced as Windows `spawnSync(.cmd) -> EINVAL` before ledger creation;
+- a separate V3 launcher executes the real Supabase JavaScript entry and supports restricted, quoted `.cmd` execution;
+- V3 adds a separate manifest, authorization ID, outer execution gate and Windows preload while preserving all original/V2 bytes;
+- real Windows shim, Supabase version, authenticated project listing, QA link, production rejection, command quoting and secret redaction are locally proven;
+- no V2/V3 `--execute` command ran and remote writes remain zero.
+
+Evidence: `CP2A2_WINDOWS_RUNNER_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V3.md`, and `scripts/client-portal/cp2b_qa_package_v3.manifest.json`.
+
 ## CP-2B — QA schema, authorization and server APIs
 
-Status: `BLOCKED_PENDING_EXPLICIT_V2_AUTHORIZATION`
+Status: `BLOCKED_PENDING_EXPLICIT_V3_AUTHORIZATION`
 
 Order:
 

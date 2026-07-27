@@ -1,5 +1,18 @@
 # Universal Release Log
 
+## 2026-07-27 — Client portal CP-2A.2 Windows-compatible runner
+
+- fecha: 2026-07-27
+- proyecto: Costa Clean Client Portal
+- tipo: corrective local launcher / source and read-only proof
+- resumen: replaces direct Windows `.cmd` spawning with a direct Supabase JavaScript target, restricted batch compatibility, V3 authorization gate, immutable manifest, tests, and proof
+- validación: real Windows `.cmd`; Supabase version and authenticated project list through V3; QA linked; production not linked; injection/timeout/redaction/negative authorization gates; full suite/lint/build recorded at closeout
+- remoto: QA writes `0`; production writes `0`; Auth users, Edge deploys, Storage and SQL mutations `0`; WordPress and `/portal` untouched
+- datos: real PII added `0`; secrets/private artifacts versioned `0`
+- estado: CP-0 `DONE`; CP-1 `DONE`; CP-2A `DONE`; CP-2A.1 `DONE`; CP-2A.2 `DONE`; CP-2B `BLOCKED_PENDING_EXPLICIT_V3_AUTHORIZATION`; CP-3 `NOT STARTED`
+- autorización: V3 is `PREPARED / NOT EXECUTED / AWAITING EXPLICIT AUTHORIZATION`; neither V1 nor V2 authorization carries forward
+- evidencia: [client-portal/CP2A2_WINDOWS_RUNNER_FIX.md](client-portal/CP2A2_WINDOWS_RUNNER_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V3.md)
+
 ## 2026-07-27 — Client portal CP-2A.1 QA-compatible execution package
 
 - fecha: 2026-07-27

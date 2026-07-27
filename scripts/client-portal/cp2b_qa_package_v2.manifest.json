@@ -1,0 +1,144 @@
+{
+  "version": 2,
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP2B-V2-AUTHORIZATION-PENDING",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migrationSha256": "ea10b4b3db30f6b27f60cd8fff6c8a7c711636e1d6ac439337966f5736cc6277",
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp2b_qa_auth_fixtures_v2.mjs",
+      "sha256": "744427964926cabb1da2249ed14a34d3305059eb14b2fb7a42723e51a43e5118"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_qa_fixtures_v2.sql",
+      "sha256": "1cf3b34f0b707596864bf44c4bfdb099833d6d4a558c395a1bdfb80abda0e600"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_qa_authorization_matrix_v2.sql",
+      "sha256": "2b4b623540be3e298052c969a83eef1328d0b56e95095d72148e8360d40985c3"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_qa_cleanup_v2.sql",
+      "sha256": "3ae04ea2425b3a0f305018e6c2aa71340bc9b2b9f0577f8537523dcbd70d95be"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_qa_failure_recovery_v2.sql",
+      "sha256": "85e1926357fee9345c64eade16540a3dc3b6c67f6195fa848a8d8ad9d0aff0e9"
+    },
+    {
+      "path": "scripts/client-portal/run-cp2b-qa-v2.mjs",
+      "sha256": "e4bc77360b8a9b622c49f613de01ed2b9c599671404d9b1ec7514d1f34bd7aea"
+    },
+    {
+      "path": "scripts/client-portal/run-cp2a1-local-proof.mjs",
+      "sha256": "e368bfc7a72faaba4dc2a93b5383961f68070b5a93752aff3d48a9c9cb73891a"
+    },
+    {
+      "path": "scripts/client-portal/cp2a1Package.test.mjs",
+      "sha256": "8c8609970e85aa36187d691337990670ca2f689578a5d7cc72fc448a1f96e4e7"
+    }
+  ],
+  "reusedFrozenArtifacts": [
+    {
+      "path": "supabase/migrations/20260723160000_client_portal_security_boundary.sql",
+      "sha256": "ea10b4b3db30f6b27f60cd8fff6c8a7c711636e1d6ac439337966f5736cc6277"
+    },
+    {
+      "path": "supabase/functions/_shared/portalContract.ts",
+      "sha256": "3a474271ebe265ae53486c40407752370e7d7d4908dae975643ce0ef7548f271"
+    },
+    {
+      "path": "supabase/functions/_shared/portalHandler.ts",
+      "sha256": "5309116b26eec92044a3d86e7bab04f90ee82e6dd7729765e551f5b8c295f8c3"
+    },
+    {
+      "path": "supabase/functions/portal-account-actions/index.ts",
+      "sha256": "2c42f3ba84beb5ab766d38416fd969bc6a8e968ed39d3f758288148541cfffd9"
+    },
+    {
+      "path": "supabase/functions/portal-service-actions/index.ts",
+      "sha256": "6268365b2ffb3cfadde23c5fd52b2bf6e4fec9cf3e32053c3d649e0777b81024"
+    },
+    {
+      "path": "supabase/functions/portal-member-actions/index.ts",
+      "sha256": "d99f64e43787af5df56dafa736b2410621ced457163c4abacc18f2c737b40f3c"
+    },
+    {
+      "path": "supabase/functions/portal-invoice-download/index.ts",
+      "sha256": "aee337003adc848697febf2efc414996862b62ff46220e9214ad28478914ac43"
+    },
+    {
+      "path": "scripts/client-portal/run-cp2a-local-proof.mjs",
+      "sha256": "2d98909b9d55ada13bf036494ad18f7266bcca53f3c0f099d4a1019c97d1c891"
+    },
+    {
+      "path": "scripts/client-portal/run-cp2b-qa.mjs",
+      "sha256": "c0fd0806b8c7eb3fe47d732071435d4b0da2758a7659d7afaa861d6573ed1a66"
+    },
+    {
+      "path": "scripts/client-portal/cp2a_rollback.sql",
+      "sha256": "dfdc64a272bde2b8ddfcbab54f58ff4908f170057b4d110f77c27558b5826dee"
+    },
+    {
+      "path": "scripts/client-portal/cp2a_fixtures.sql",
+      "sha256": "acaf020adda30cb0f22a90195ccbf95a95017b2061a096df286fdbd8ddee504e"
+    },
+    {
+      "path": "scripts/client-portal/cp2a_authorization_matrix.sql",
+      "sha256": "f4734b4a91461dff7b97c68a0571c208193d4f362c7f7f1ed709baf893756845"
+    },
+    {
+      "path": "scripts/client-portal/cp2a_cleanup.sql",
+      "sha256": "9cbbc8c71274fdeccd4804e06e4f7fa365b177be406340689bdab5f6deab446e"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_catalog_snapshot.sql",
+      "sha256": "ba470d3e113536d39a24cca5a42c227f8f16bf38134abcbdf1b750af51e8fce6"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_apply.sql",
+      "sha256": "1b04a35d0e7a2a703ac36b86510d005044464236049dcf596590205dd6c914b5"
+    },
+    {
+      "path": "supabase/config.toml",
+      "sha256": "839c8ce0493969c851586b9768dbbfb12adf29566ad13283911b8fa58211bbd7"
+    }
+  ],
+  "requiredPrivateInputNames": [
+    "CP2B_QA_DATABASE_URL",
+    "CP2B_ACTIVE_STAFF_USER_ID",
+    "SUPABASE_ACCESS_TOKEN",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY",
+    "PORTAL_INVITATION_PEPPER",
+    "PORTAL_RATE_LIMIT_PEPPER",
+    "PORTAL_ALLOWED_ORIGIN"
+  ],
+  "expectedStages": [
+    "triple_identity",
+    "private_backup_verification",
+    "private_catalog_snapshot",
+    "dynamic_auth_creation",
+    "frozen_migration_apply",
+    "staff_membership_verification",
+    "parameterized_fixtures",
+    "edge_function_deploy",
+    "private_storage_verification",
+    "sql_authorization_matrix",
+    "http_edge_denial_matrix",
+    "exact_id_cleanup",
+    "exact_auth_cleanup",
+    "zero_residue_verification"
+  ],
+  "cleanupRequirements": [
+    "ledger_ids_only",
+    "no_email_matching",
+    "no_global_delete",
+    "active_real_staff_preserved",
+    "auth_users_deleted_by_exact_uuid",
+    "storage_objects_deleted_by_exact_key",
+    "zero_fixture_residue_proved"
+  ]
+}

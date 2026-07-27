@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-07-23
-Current state: CP-0/CP-1 complete; CP-2A source package complete; CP-2B not authorized
+Date: 2026-07-27
+Current state: CP-0/CP-1/CP-2A/CP-2A.1 complete; CP-2B blocked pending explicit V2 authorization; CP-3 not started
 
 ## CP-0 — Discovery
 
@@ -43,9 +43,23 @@ Status: `DONE — source only, QA/production unchanged`
 
 Evidence: `CP2A_IMPLEMENTATION_PACKAGE.md` and `CP2B_EXACT_QA_AUTHORIZATION.md`.
 
+## CP-2A.1 — QA-compatible execution package
+
+Status: `DONE — source/local only, QA/production unchanged`
+
+- original 16 frozen artifacts preserved byte-for-byte;
+- separate V2 Auth/fixtures/matrix/cleanup/recovery/runner package;
+- Auth UUIDs generated dynamically and injected privately;
+- exact private ledger under `.git/cp2b-private/`;
+- target/hash/backup/authorization execution gates;
+- PostgreSQL 17 disposable dynamic-Auth/matrix/cleanup/rollback proof;
+- V2 manifest and future exact authorization prepared but not granted.
+
+Evidence: `CP2A1_QA_EXECUTION_PACKAGE.md`, `CP2B_EXACT_QA_AUTHORIZATION_V2.md`, and `scripts/client-portal/cp2b_qa_package_v2.manifest.json`.
+
 ## CP-2B — QA schema, authorization and server APIs
 
-Status: `BLOCKED — requires new exact-hash authorization`
+Status: `BLOCKED_PENDING_EXPLICIT_V2_AUTHORIZATION`
 
 Order:
 
@@ -64,7 +78,7 @@ Do not use `db push` or migration repair.
 
 ## CP-3 — Portal UI in QA
 
-Status: not opened
+Status: `NOT STARTED`
 
 - dedicated `/portal` route guard and shell;
 - invitation, pending registration, login, recovery, logout, session/security and MFA readiness;

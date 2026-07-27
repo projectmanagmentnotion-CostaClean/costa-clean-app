@@ -1,5 +1,18 @@
 # Universal Release Log
 
+## 2026-07-27 — Client portal CP-2A.1 QA-compatible execution package
+
+- fecha: 2026-07-27
+- proyecto: Costa Clean Client Portal
+- tipo: corrective security execution package / source and local disposable proof
+- resumen: replaces fixed Auth fixture assumptions with Admin-API-generated UUIDs, exact private ledger, parameterized V2 SQL, exact cleanup, backup/hash gates, Edge denial matrix, and disable-first recovery
+- validación: PostgreSQL 17 dynamic Auth/migration/fixtures/matrix/cleanup/recovery/rollback/zero-residue proof; 9/9 specific tests; plan/preflight; lint/build/full suite recorded at closeout
+- remoto: QA writes `0`; production writes `0`; remote Auth/Edge/Storage/schema/data changes `0`; WordPress untouched
+- datos: only runtime-generated local UUIDs and `example.invalid`; real PII `0`; secrets/private artifacts versioned `0`
+- estado: CP-0 `DONE`; CP-1 `DONE`; CP-2A `DONE`; CP-2A.1 `DONE`; CP-2B `BLOCKED_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3 `NOT STARTED`
+- autorización: V2 is `PREPARED / NOT EXECUTED / AWAITING EXPLICIT AUTHORIZATION`; this commit does not authorize remote execution
+- evidencia: [client-portal/CP2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP2A1_QA_EXECUTION_PACKAGE.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md)
+
 ## 2026-07-23 — Client portal CP-2A immutable QA-preparation package
 
 - fecha: 2026-07-23

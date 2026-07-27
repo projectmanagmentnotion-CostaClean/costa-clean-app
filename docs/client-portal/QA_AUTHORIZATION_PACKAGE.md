@@ -1,14 +1,16 @@
 # CP-2 QA Authorization Package
 
-Date: 2026-07-23
-Current authorization: CP-2A source-only package complete; CP-2B none
+Date: 2026-07-27
+Current authorization: CP-2A.1 source/local package complete; CP-2B blocked pending explicit V2 authorization
 Purpose: govern, not execute, the exact next QA gate
 
 ## Verdict
 
-CP-0/CP-1 and the source-only CP-2A package may close. Remote CP-2B is not authorized by this document or commit.
+CP-0/CP-1, CP-2A, and the source/local-only CP-2A.1 package may close. Remote CP-2B is not authorized by this document or commit.
 
-The next gate is `continue` only after a separate user authorization names QA ref `kpvvydthlxupjjqqdpxy` and accepts the hashes frozen in `CP2B_EXACT_QA_AUTHORIZATION.md`. Production ref `wfxnwfcdjainpojhbdri` is always rejected.
+The next gate is `continue` only after a separate user authorization names the exact final V2 commit and QA ref `kpvvydthlxupjjqqdpxy`, and accepts the hashes frozen in `CP2B_EXACT_QA_AUTHORIZATION_V2.md` and the machine manifest. Production ref `wfxnwfcdjainpojhbdri` is always rejected.
+
+The V1 authorization file remains frozen historical evidence and cannot authorize the V2 runner.
 
 ## Objective
 

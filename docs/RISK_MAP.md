@@ -367,3 +367,15 @@ Evidencia: [FULL_APP_AUDIT_20260721.md](FULL_APP_AUDIT_20260721.md).
 - Disable-first rollback restores broad authenticated staff behavior only after proving zero portal records. If that proof fails, access stays disabled for incident handling.
 - Migration-history reconciliation remains independently locked; CP-2A does not authorize `db push`, repair or history writes.
 - Evidence: [client-portal/CP2A_MIGRATION_REVIEW.md](client-portal/CP2A_MIGRATION_REVIEW.md), [client-portal/CP2A_ROLLBACK_PLAN.md](client-portal/CP2A_ROLLBACK_PLAN.md).
+
+## Client portal CP-2A.1 residual risks — 2026-07-27
+
+- The V2 package resolves fixed Auth UUIDs and ambiguous cleanup, but it has still not executed against Supabase Cloud QA. Managed Admin API, JWT/AAL, schema cache, Edge, Storage signing, logs, and grants remain unproved.
+- The disposable proof uses PostgreSQL 17 plus minimal Auth/Storage compatibility schemas. It is substantive database-boundary proof, not Cloud equivalence.
+- The active staff UUID remains a private, manually confirmed prerequisite. Email, metadata, or a client email match is never identity proof.
+- A failed Edge deployment has no automatic previous-bundle restore. Disable-first database recovery makes the deployed portal code inert, but further Edge action requires incident authorization.
+- The frozen member Edge still has no invitation delivery adapter. No invitation email can be sent until a separately reviewed sandbox delivery design exists.
+- Successful live invoice download creates audit/rate-limit state. V2 uses transactional SQL for the allow/60-second contract and HTTP for anonymous/cross-client/inactive denials; CP-2B must still capture exact live audit cleanup evidence.
+- The private backup and its hash manifest must exist outside Git before CP-2B. Current CP-2A.1 source preflight reports 0/9 private runtime inputs in this terminal and makes no readiness claim.
+- Migration-history reconciliation remains locked. V2 contains no `db push`, `db pull`, repair, or history write path.
+- Evidence: [client-portal/CP2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP2A1_QA_EXECUTION_PACKAGE.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md).

@@ -46,6 +46,9 @@ This document defines the mandatory working method for Codex and any AI coding a
 - Invoice documents must use a separate private bucket, opaque object keys, fresh ownership checks and short-lived access. Public/permanent PDF URLs are prohibited.
 - Customer service requests never create jobs, quotes, invoices, payments or schedule commitments without internal review.
 - CP-2B requires a new prompt naming exact QA ref `kpvvydthlxupjjqqdpxy` and accepting every immutable hash in [client-portal/CP2B_EXACT_QA_AUTHORIZATION.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION.md). Production ref `wfxnwfcdjainpojhbdri` must be rejected.
+- CP-2A.1 supersedes the execution mechanics, not the frozen evidence. A future CP-2B must name the exact final commit and accept [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md) plus `scripts/client-portal/cp2b_qa_package_v2.manifest.json`. The V1 document cannot authorize V2.
+- Never invoke `run-cp2b-qa-v2.mjs --execute` from a generic npm task. It requires an explicit command, exact authorization controls, clean authorized HEAD, triple QA identity, verified private backup, nine private inputs, empty ledger, and production rejection.
+- CP2B ledgers/backups/catalogs/Edge env files belong only under `.git/cp2b-private/` or another private ignored location. They must never be staged, printed, or searched by email.
 - WordPress/SiteGround integration is CP-4. No public website repository was found in the connected owner or local workspaces; obtain a versioned export/backup and controlled deployment procedure before modifying it.
 - Legal content remains `pending professional legal approval` until verified controller/provider facts and human legal review exist.
 

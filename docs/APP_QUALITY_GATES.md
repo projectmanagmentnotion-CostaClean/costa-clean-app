@@ -1,5 +1,14 @@
 # App Quality Gates
 
+## Client Portal CP-2A.1 QA-compatible Package Gate — DONE 2026-07-27
+
+- The prior CP-2B block was confirmed legitimate: frozen local-disposable fixtures, fixed Auth UUID assumptions, and a plan-only runner were not QA-executable.
+- The 16 original artifacts remain byte-for-byte frozen; a separate eight-artifact V2 manifest supplies dynamic Admin API Auth UUIDs, exact IDs, private ledger, parameterized matrix, exact cleanup, and disable-first recovery.
+- PostgreSQL 17 disposable proof passed with runtime-generated Auth UUIDs, migration, fixtures, cross-client matrix, cleanup, Auth deletion, rollback, zero residue, production/unknown/missing-input/hash/ledger rejection, and cluster discard.
+- `--plan` remains `NOT_AUTHORIZED`; preflight performs zero writes and reports private inputs only as `PRESENT`/`MISSING`.
+- QA, production, WordPress, remote Auth, Edge, Storage, schema, and data writes are zero. CP-2B is `BLOCKED_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3 is `NOT STARTED`.
+- Evidence: [client-portal/CP2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP2A1_QA_EXECUTION_PACKAGE.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V2.md).
+
 ## Client Portal CP-2A Source Security Gate — DONE 2026-07-23
 
 - Initial HEAD and source impact map were verified before edits.

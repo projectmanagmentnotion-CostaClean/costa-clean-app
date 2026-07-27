@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-27
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4 complete; CP-2B blocked pending explicit V5 authorization; CP-3 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B complete; CP-3 not started
 
 ## CP-0 — Discovery
 
@@ -102,22 +102,22 @@ Evidence: `CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION
 
 ## CP-2B — QA schema, authorization and server APIs
 
-Status: `BLOCKED_PENDING_EXPLICIT_V5_AUTHORIZATION`
+Status: `DONE — Supabase Cloud QA boundary validated`
 
-Order:
-
-1. reconcile exact QA pre-state and produce unique migration/hash/rollback;
-2. local/disposable PostgreSQL proof;
-3. create explicit internal staff boundary before any portal identity;
-4. create portal tables, constraints, indexes, RLS/FORCE RLS and grants;
-5. create narrow RPC/Edge functions and rate limits;
-6. create private invoice-documents bucket/registry;
-7. create synthetic two-client fixtures;
-8. execute catalog and live allow/deny matrix;
-9. reconcile zero financial/production changes and exact cleanup;
-10. commit/push evidence.
+- exact V5 authorization, private HEAD-bound backup and triple QA identity passed;
+- the runner executed once and completed its private ledger;
+- 11 portal/security tables retain RLS plus `FORCE RLS`;
+- one confirmed internal staff membership remains active;
+- SQL cross-client and HTTP Edge denial matrices passed;
+- four portal Edge Functions and the private `invoice-documents` bucket remain;
+- ten synthetic Auth users, two PDFs and all synthetic fixtures were removed;
+- independent reconciliation found zero synthetic residue and unchanged
+  financial counts/sequences;
+- production, WordPress, SiteGround and `/portal` were untouched.
 
 Do not use `db push` or migration repair.
+
+Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 

@@ -1,5 +1,26 @@
 # App Quality Gates
 
+## Client Portal CP-2B V5 Cloud QA Boundary Gate — DONE 2026-07-27
+
+- Exact Git, immutable hashes, private backup and triple QA identity passed
+  before effects; production was rejected.
+- The V5 runner executed exactly once and completed the migration, staff
+  boundary, synthetic fixtures, SQL/HTTP matrices, Edge deployment, private
+  Storage checks and exact cleanup.
+- Independent reconciliation confirms 11/11 RLS plus `FORCE RLS` tables, one
+  active internal staff membership, 4/4 portal Edge Functions and a private,
+  empty `invoice-documents` bucket.
+- Ten synthetic Auth users were created and deleted; synthetic users, fixtures
+  and objects remaining are all zero.
+- Financial tables stayed `0/0/0` and the public sequence catalog matches the
+  private pre-run snapshot.
+- The full suite passes `324` with `4` skips; lint and build pass. The frozen
+  CP-2A.4 proof and three authenticated V5 cases remain pre-effect-only and
+  reject the expected deployed poststate with `portal_prestate_rejected`.
+- CP-2B is `DONE`; CP-3 is `NOT STARTED`.
+- Evidence:
+  [client-portal/CP2B_V5_QA_EXECUTION_20260727.md](client-portal/CP2B_V5_QA_EXECUTION_20260727.md).
+
 ## Client Portal CP-2A.4 PostgreSQL Secret Transport Gate — DONE 2026-07-27
 
 - V4 was reproduced rejecting `CP2B_QA_DATABASE_URL` as a sensitive argument before its later `PG*` transformation; Windows and Linux spies proved zero spawned processes and effects.

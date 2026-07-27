@@ -1,5 +1,31 @@
 # Universal Release Log
 
+## 2026-07-27 — Client portal CP-2B V5 Supabase Cloud QA boundary
+
+- fecha: 2026-07-27
+- proyecto: Costa Clean Client Portal
+- tipo: authorized QA security-boundary execution and validation
+- resumen: executed the exact frozen V5 runner once in QA, established the
+  internal-staff/portal tenancy boundary, deployed four narrow Edge Functions
+  and retained a private empty invoice-document bucket
+- validación: SQL cross-client matrix, HTTP Edge denial matrix, invitation
+  security, pending-review service requests, 60-second document contract,
+  independent cleanup/catalog/Auth/Storage/Edge reconciliation, full suite
+  `324 passed / 4 skipped`, lint and build
+- cleanup: ten synthetic Auth users created and deleted; synthetic users,
+  fixtures and Storage objects remaining `0`; completed ledger retained
+  privately and prior blocked ledger preserved
+- datos: active internal staff memberships `1`; portal tables/RLS/FORCE RLS
+  `11/11`; financial counts `0/0/0`; public sequences unchanged
+- remoto: QA boundary changed as authorized; production, WordPress, SiteGround,
+  `/portal` and CP-3 untouched
+- deuda: invitation delivery `NOT IMPLEMENTED`; frozen CP-2A.4 proof and three
+  authenticated V5 tests remain pre-effect-only and reject the deployed
+  poststate
+- estado: CP-2B `DONE`; CP-3 `NOT STARTED`
+- evidencia:
+  [client-portal/CP2B_V5_QA_EXECUTION_20260727.md](client-portal/CP2B_V5_QA_EXECUTION_20260727.md)
+
 ## 2026-07-27 — Client portal CP-2A.4 PostgreSQL secret transport
 
 - fecha: 2026-07-27

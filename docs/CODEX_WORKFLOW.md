@@ -38,8 +38,11 @@ This document defines the mandatory working method for Codex and any AI coding a
 ## Client Portal Roadmap Lock - 2026-07-23
 
 - [CLIENT_PORTAL_SECURITY_LEGAL_ROADMAP_20260723.md](CLIENT_PORTAL_SECURITY_LEGAL_ROADMAP_20260723.md) is the active scoped roadmap for the future customer portal.
-- Gates CP-0 and CP-1 are documentation-only and closed. CP-2A is a local source-only package with disposable proof; it authorizes no remote change.
-- Stop before CP-2B. The frozen package does not authorize remote migration/RLS/Auth/user/Edge/Storage/QA/production/website/deployment changes.
+- Gates CP-0 and CP-1 are documentation-only and closed. CP-2A through
+  CP-2A.4 are the immutable source/proof chain; CP-2B later executed that exact
+  V5 package only in QA under a separate explicit authorization.
+- CP-2B is closed in QA. Stop before CP-3: no portal frontend, production,
+  website or legal publication work is authorized by the QA result.
 - The current canonical `authenticated` read model is internal-workspace-wide. No customer Auth user may be created until a QA-proven explicit `internal_staff_memberships` boundary replaces every any-authenticated canonical policy and legacy RPC guard.
 - Email equality is never identity proof and never creates or links a client. Only an exact staff-selected invitation or explicit staff approval may create `client_portal_memberships`.
 - Portal browser code may use only the publishable Supabase key plus the user session. `service_role`, invite peppers, recovery secrets and document-signing authority remain trusted-server only.
@@ -56,8 +59,13 @@ This document defines the mandatory working method for Codex and any AI coding a
 - CP-2A.3 is closed: the frozen authenticated CP-2A.2 proof passed through an authorized private-auth process without exposing authentication, and the local/disposable V4 proof passed with zero remote writes.
 - Never invoke `run-cp2b-qa-v4.mjs --execute` from a generic npm task. CP-2A.3 authorizes only local/disposable proof, V4 plan and V4 preflight.
 - CP-2A.4 closes the V4 PostgreSQL secret-order defect with a separate V5 transport. The database URL is converted to a minimal `PG*` child environment before the frozen launcher sees arguments, and a live read-only QA/staff/prestate gate completes before any ledger or Auth effect.
-- CP-2B is `BLOCKED_PENDING_EXPLICIT_V5_AUTHORIZATION`. A future prompt must name the exact clean CP-2A.4 commit, accept [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md), verify `scripts/client-portal/cp2b_qa_package_v5.manifest.json`, and use a new private backup bound to that HEAD.
-- Never invoke `run-cp2b-qa-v5.mjs --execute` from a generic npm task. CP-2A.4 authorizes only local tests, authenticated read-only proof, V5 plan and V5 preflight.
+- CP-2B V5 executed once against exact QA and passed. Its completed ledger,
+  independent zero-residue reconciliation and remaining harness debt are
+  recorded in
+  [client-portal/CP2B_V5_QA_EXECUTION_20260727.md](client-portal/CP2B_V5_QA_EXECUTION_20260727.md).
+- Never invoke `run-cp2b-qa-v5.mjs --execute` again without a new exact
+  authorization. The completed run is not reusable and does not authorize
+  CP-3 or production.
 - CP2B ledgers/backups/catalogs/Edge env files belong only under `.git/cp2b-private/` or another private ignored location. They must never be staged, printed, or searched by email.
 - WordPress/SiteGround integration is CP-4. No public website repository was found in the connected owner or local workspaces; obtain a versioned export/backup and controlled deployment procedure before modifying it.
 - Legal content remains `pending professional legal approval` until verified controller/provider facts and human legal review exist.

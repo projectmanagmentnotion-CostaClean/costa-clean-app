@@ -1,5 +1,22 @@
 # Risk Map
 
+## Client portal CP-2B V5 residual risks — 2026-07-27
+
+- The Cloud QA security boundary is active and independently reconciled, but
+  it is not a production authorization and it does not authorize CP-3.
+- Invitation token security is proven; invitation email delivery remains
+  `NOT IMPLEMENTED`.
+- The frozen CP-2A.4 proof and three live V5 tests are pre-effect-only. They
+  reject the expected deployed state with `portal_prestate_rejected`; a future
+  source sprint should add a non-mutating post-deployment mode without
+  weakening the pre-effect collision gate.
+- The four QA Edge Functions and private bucket intentionally remain deployed.
+  A future rollback or replacement requires a new exact authorization.
+- Legal texts still require verified controller/provider facts and professional
+  legal review. No approval is claimed.
+- Evidence:
+  [client-portal/CP2B_V5_QA_EXECUTION_20260727.md](client-portal/CP2B_V5_QA_EXECUTION_20260727.md).
+
 ## Client portal CP-2A.4 residual risks — 2026-07-27
 
 - V5 transport and live read-only preflight are proven, but V5 has not executed migration, Auth, Edge, Storage, matrix or cleanup stages in Cloud QA.

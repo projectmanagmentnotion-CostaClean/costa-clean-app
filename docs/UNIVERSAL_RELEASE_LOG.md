@@ -1,5 +1,19 @@
 # Universal Release Log
 
+## 2026-07-27 — Client portal CP-2A.3 bootstrap contract correction
+
+- fecha: 2026-07-27
+- proyecto: Costa Clean Client Portal
+- tipo: corrective security bootstrap contract / source and local disposable proof
+- resumen: adds the separate V4 apply wrapper and runner that bootstrap only the confirmed active staff identity using the migration's exact `(user_id, role)` contract, while preserving all original, V2 and V3 artifacts
+- validación: original SQLSTATE `42703` reproduced; 11/11 RLS and FORCE RLS tables; active/suspended staff separation; parameterized matrix; exact cleanup; recovery and zero residue; authenticated CP-2A.2 Windows proof; 291 tests passed and 1 skipped; lint/build passed
+- remoto: QA writes `0`; production writes `0`; Auth users, Edge deploys, Storage and SQL mutations `0`; WordPress, SiteGround, `/portal` and CP-3 untouched
+- integración: remote base `ddc4581d6aea99a1ebf22ea6349077a08f9dee3f` preserved with its six-file Production Agents pilot; V4 restored without conflicts
+- datos: secrets/private artifacts versioned `0`; private blocked incident ledger preserved outside Git; V4 backup intentionally deferred until an exact authorized HEAD exists
+- estado: CP-0 `DONE`; CP-1 `DONE`; CP-2A `DONE`; CP-2A.1 `DONE`; CP-2A.2 `DONE`; CP-2A.3 `DONE`; CP-2B `BLOCKED_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3 `NOT STARTED`
+- autorización: V4 is `PREPARED_NOT_AUTHORIZED`; no V1, V2 or V3 authorization carries forward
+- evidencia: [client-portal/CP2A3_BOOTSTRAP_CONTRACT_FIX.md](client-portal/CP2A3_BOOTSTRAP_CONTRACT_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V4.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V4.md)
+
 ## 2026-07-27 — Client portal CP-2A.2 Windows-compatible runner
 
 - fecha: 2026-07-27

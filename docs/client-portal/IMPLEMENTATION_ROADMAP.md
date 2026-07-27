@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-27
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2 complete; CP-2B blocked pending explicit V3 authorization; CP-3 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3 complete; CP-2B blocked pending explicit V4 authorization; CP-3 not started
 
 ## CP-0 — Discovery
 
@@ -69,9 +69,25 @@ Status: `DONE — source/local read-only, QA/production unchanged`
 
 Evidence: `CP2A2_WINDOWS_RUNNER_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V3.md`, and `scripts/client-portal/cp2b_qa_package_v3.manifest.json`.
 
+## CP-2A.3 — QA migration bootstrap contract correction
+
+Status: `DONE — source/local/disposable proof only, QA/production unchanged`
+
+- the blocked V3 attempt was reconciled to zero remote residue and its private ledger remains preserved;
+- PostgreSQL 17 reproduced the original `staff_role`/`role` mismatch as SQLSTATE `42703`;
+- V4 bootstraps only the confirmed real active staff identity with the migration's exact `(user_id, role)` contract;
+- synthetic suspended staff remains exclusively a frozen V2 fixture with status `suspended`;
+- the explicit V4 runner preserves V3 launch security and V2 ledger/Auth/matrix/cleanup/recovery mechanics;
+- local baseline and restored private QA public-schema proofs pass V4 migration, 11-table RLS/FORCE RLS, matrix, cleanup and recovery;
+- V4 is `PREPARED_NOT_AUTHORIZED`; no V4 remote execution occurred.
+- the required frozen CP-2A.2 authenticated proof passes through the authorized private-auth process without printing or versioning secrets;
+- the Production Agents pilot commit remains preserved as the integrated remote base.
+
+Evidence: `CP2A3_BOOTSTRAP_CONTRACT_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V4.md`, and `scripts/client-portal/cp2b_qa_package_v4.manifest.json`.
+
 ## CP-2B — QA schema, authorization and server APIs
 
-Status: `BLOCKED_PENDING_EXPLICIT_V3_AUTHORIZATION`
+Status: `BLOCKED_PENDING_EXPLICIT_V4_AUTHORIZATION`
 
 Order:
 

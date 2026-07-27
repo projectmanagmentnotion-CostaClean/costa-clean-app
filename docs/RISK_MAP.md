@@ -1,5 +1,14 @@
 # Risk Map
 
+## Client portal CP-2A.3 residual risks — 2026-07-27
+
+- The frozen V3 apply contract is not QA-executable: its `staff_role/status` bootstrap shape conflicts with the immutable migration's `role` shape and would incorrectly activate synthetic suspended staff.
+- V4 closes that source defect locally and against a restored private QA public-schema snapshot, but has not executed any mutating stage in Supabase Cloud QA.
+- The prior blocked incident ledger remains private evidence and cannot be reused. A future V4 run requires a new empty ledger and a new private backup bound to its exact authorized HEAD.
+- Edge deployment, managed Auth behavior, Storage signing and live HTTP denial remain CP-2B evidence. Source/local proof cannot claim Cloud QA success.
+- Invitation delivery is still not implemented. V4 may prove token security only and must not claim email delivery.
+- V1/V2/V3 authorizations do not carry forward. CP-2B remains blocked until an explicit V4 prompt accepts all hashes and stop conditions.
+
 ## Gate 5 final risk disposition — 2026-07-23
 
 - The missing authenticated logout P1 is closed. The flow is centralized, guarded against duplicate calls, reacts to `SIGNED_OUT`, preserves the session on provider failure and removes protected React state after success.

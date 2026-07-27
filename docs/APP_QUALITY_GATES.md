@@ -1,5 +1,17 @@
 # App Quality Gates
 
+## Client Portal CP-2A.3 Bootstrap Contract Gate — DONE 2026-07-27
+
+- The V3 incident is reconciled to a frozen wrapper/migration contract mismatch: `staff_role` versus `role`, plus incorrect inclusion of synthetic suspended staff in an active-only bootstrap.
+- Disposable PostgreSQL 17 reproduced SQLSTATE `42703` at the immutable migration and proved transactional zero-schema residue.
+- V4 creates exactly `cp2a_bootstrap_staff(user_id uuid primary key, role text not null)`, validates the real active Auth identity, and bootstraps only that identity as `admin`.
+- Frozen V2 fixtures remain responsible for inserting synthetic suspended staff as `operator / suspended`.
+- Local baseline and restored private QA public-schema proofs pass migration, 11/11 RLS/FORCE RLS tables, staff separation, parameterized matrix, exact cleanup, recovery and zero residue.
+- All original 16, V2 eight and V3 five artifacts remain byte-for-byte intact. V4 is `PREPARED_NOT_AUTHORIZED`; QA, production, Edge, Storage, remote Auth and SQL writes are zero.
+- V4 tests, PostgreSQL proofs, full suite, lint and build pass. The frozen CP-2A.2 authenticated proof also passes through the authorized private-auth process, including QA link, production rejection, secret redaction and negative execution gates.
+- CP-2B is `BLOCKED_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3 is `NOT STARTED`.
+- Evidence: [client-portal/CP2A3_BOOTSTRAP_CONTRACT_FIX.md](client-portal/CP2A3_BOOTSTRAP_CONTRACT_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V4.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V4.md).
+
 ## Client Portal CP-2A.2 Windows Runner Gate — DONE 2026-07-27
 
 - The clean CP-2B V2 block was confirmed as `spawnSync` attempting to execute the npm `supabase.cmd` shim directly on Windows and returning `EINVAL` before ledger creation.

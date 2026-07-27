@@ -1,5 +1,18 @@
 # Universal Release Log
 
+## 2026-07-27 — Client portal CP-2A.4 PostgreSQL secret transport
+
+- fecha: 2026-07-27
+- proyecto: Costa Clean Client Portal
+- tipo: corrective security transport / authenticated read-only QA proof
+- resumen: adds a separate V5 PostgreSQL transport that converts the private URL to a minimal `PG*` environment before the launcher boundary and moves live connectivity/staff/prestate ahead of ledger and Auth effects
+- validación: V4 failure reproduced before spawn; live QA `SELECT 1`; exact staff UUID; clean portal prestate; production rejection; 36/36 authenticated V5 tests; full regression/lint/build recorded at closeout
+- remoto: QA writes `0`; production writes `0`; new ledgers, Auth users, Edge deploys and Storage mutations `0`; WordPress, SiteGround, `/portal` and CP-3 untouched
+- datos: secrets/private artifacts versioned `0`; real PII added `0`; prior blocked ledger preserved privately
+- estado: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4 `DONE`; CP-2B `BLOCKED_PENDING_EXPLICIT_V5_AUTHORIZATION`; CP-3 `NOT STARTED`
+- autorización: V5 is `PREPARED_NOT_AUTHORIZED`; no previous authorization carries forward and no future HEAD is authorized
+- evidencia: [client-portal/CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md](client-portal/CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md)
+
 ## 2026-07-27 — Client portal CP-2A.3 bootstrap contract correction
 
 - fecha: 2026-07-27

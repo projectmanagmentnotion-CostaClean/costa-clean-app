@@ -1,5 +1,13 @@
 # Risk Map
 
+## Client portal CP-2A.4 residual risks — 2026-07-27
+
+- V5 transport and live read-only preflight are proven, but V5 has not executed migration, Auth, Edge, Storage, matrix or cleanup stages in Cloud QA.
+- Any future V5 authorization requires a new private backup bound to the exact clean V5 HEAD; the current sprint intentionally creates none.
+- The prior blocked V3 incident ledger remains private and must never be reused. A future authorized V5 attempt requires a new run ID and ledger.
+- Invitation email delivery remains `NOT IMPLEMENTED`.
+- V1–V4 authorizations do not carry forward. CP-2B remains blocked until an exact V5 authorization accepts all hashes and stop conditions.
+
 ## Client portal CP-2A.3 residual risks — 2026-07-27
 
 - The frozen V3 apply contract is not QA-executable: its `staff_role/status` bootstrap shape conflicts with the immutable migration's `role` shape and would incorrectly activate synthetic suspended staff.

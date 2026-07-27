@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-27
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3 complete; CP-2B blocked pending explicit V4 authorization; CP-3 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4 complete; CP-2B blocked pending explicit V5 authorization; CP-3 not started
 
 ## CP-0 — Discovery
 
@@ -85,9 +85,24 @@ Status: `DONE — source/local/disposable proof only, QA/production unchanged`
 
 Evidence: `CP2A3_BOOTSTRAP_CONTRACT_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V4.md`, and `scripts/client-portal/cp2b_qa_package_v4.manifest.json`.
 
+## CP-2A.4 — PostgreSQL secret transport and pre-effect connectivity
+
+Status: `DONE — live QA read-only proof, QA/production unchanged`
+
+- V4 `sensitive_argument_rejected` reproduced before process spawn on Windows and Linux;
+- separate V5 transport converts the private URL to a minimal `PG*` environment before calling the frozen launcher;
+- URL/password/Supabase keys/peppers never enter child arguments and the database URL is removed from the child environment;
+- live QA `SELECT 1`, exact target, exact active staff UUID and clean portal prestate pass;
+- `postgres_pre_effect_check` is enforced before `ledger_create` and `auth_create`;
+- connectivity failure leaves new ledger, Auth users and remote writes at zero;
+- 36/36 V5 authenticated tests pass;
+- V5 is `PREPARED_NOT_AUTHORIZED`; no V5 `--execute` occurred.
+
+Evidence: `CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V5.md`, and `scripts/client-portal/cp2b_qa_package_v5.manifest.json`.
+
 ## CP-2B — QA schema, authorization and server APIs
 
-Status: `BLOCKED_PENDING_EXPLICIT_V4_AUTHORIZATION`
+Status: `BLOCKED_PENDING_EXPLICIT_V5_AUTHORIZATION`
 
 Order:
 

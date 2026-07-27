@@ -1,5 +1,15 @@
 # App Quality Gates
 
+## Client Portal CP-2A.4 PostgreSQL Secret Transport Gate — DONE 2026-07-27
+
+- V4 was reproduced rejecting `CP2B_QA_DATABASE_URL` as a sensitive argument before its later `PG*` transformation; Windows and Linux spies proved zero spawned processes and effects.
+- V5 reads the URL only from the private environment, rejects production/unknown targets, creates a minimal PostgreSQL child environment and removes the URL, Supabase keys/tokens and portal peppers before invoking the frozen V3 launcher.
+- Live QA proof passes CLI identity, PostgreSQL `SELECT 1`, exact staff UUID, portal prestate and production rejection with zero remote writes.
+- The mandatory order is `postgres_pre_effect_check -> ledger_create -> auth_create`; connectivity failure cannot create a ledger or reach the Auth Admin API.
+- V5 authenticated tests pass 36/36. V1–V4 artifacts and the migration remain byte-for-byte intact.
+- V5 is `PREPARED_NOT_AUTHORIZED`; CP-2B is `BLOCKED_PENDING_EXPLICIT_V5_AUTHORIZATION`; CP-3 is `NOT STARTED`.
+- Evidence: [client-portal/CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md](client-portal/CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md), [client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md](client-portal/CP2B_EXACT_QA_AUTHORIZATION_V5.md).
+
 ## Client Portal CP-2A.3 Bootstrap Contract Gate — DONE 2026-07-27
 
 - The V3 incident is reconciled to a frozen wrapper/migration contract mismatch: `staff_role` versus `role`, plus incorrect inclusion of synthetic suspended staff in an active-only bootstrap.

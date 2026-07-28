@@ -2,8 +2,8 @@
 
 Date: 2026-07-28
 
-Status: CP-3A/CP-3B.0/CP-3B.0A and CP-3B.0 QA application `DONE`;
-CP-3B.1 `UNBLOCKED_NOT_STARTED`; later gates are `NOT STARTED`
+Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application and CP-3B.1
+`DONE`; CP-3B.2 and later gates are `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -56,7 +56,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Hash/target mismatch, CP-2B drift, need for email/metadata/client parameter, PII, policy/table grant change, remote write or failed isolation. |
 | Evidence | [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md), [`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md) and [`CP3B0_QA_APPLICATION_20260728.md`](./CP3B0_QA_APPLICATION_20260728.md). |
 | Expected commit | `security: add self-resolving portal access context` |
-| Next gate | CP-3B.1, unblocked but not started |
+| Next gate | CP-3B.1, subsequently completed; current next gate is CP-3B.2 |
 
 ## CP-3B.0A — QA application execution and recovery package
 
@@ -87,30 +87,30 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Invariants | Portal rows, policies, table grants, Auth users, Edge, Storage and migration history unchanged; production, WordPress and SiteGround untouched. |
 | Validation | Exact hashes and target; fresh HEAD-bound private backup; full pre-effect order; runner postcheck; independent read-only catalog/digest/residue verification; full regression. |
 | Evidence | [`CP3B0_QA_APPLICATION_20260728.md`](./CP3B0_QA_APPLICATION_20260728.md). |
-| Next gate | CP-3B.1, unblocked and not started |
+| Next gate | CP-3B.1, subsequently completed; current next gate is CP-3B.2 |
 
 ## CP-3B.1 — Authentication and access lifecycle
 
 | Field | Specification |
 |---|---|
-| Status | `UNBLOCKED_NOT_STARTED` |
+| Status | `DONE — local implementation and visible synthetic-runtime evidence`; closed 2026-07-28 |
 | Objective | Implement the portal Auth lifecycle against narrow CP-2B boundaries. |
 | User outcome | Clients can log in, recover/change passwords, handle expiry and receive safe pending, invitation, suspended or revoked outcomes. |
 | Dependencies | CP-3A closed; CP-3B.0 deployed and proven in QA under a separate exact authorization; approved Auth DTOs; invitation/recovery URLs and anti-enumeration copy defined. |
 | Agents | Primary `senior-fullstack-builder`; specialists `security-privacy-auditor`, `qa-e2e-specialist`, `supabase-guardian` read-only; reviewer `pr-quality-gate`. |
-| In scope | Login, logout, recovery, password change, session expiry, pending review, invitation token handling, suspended/revoked states and anti-enumeration. |
+| In scope | Login, logout, recovery, password change, session expiry, pending review, suspended/revoked states, multi-client selection and anti-enumeration. |
 | Out of scope | Public self-approval, email-to-client linkage, MFA enforcement, production users, membership administration and email provider delivery. |
 | Likely files/modules | Portal Auth adapter/state machine/pages/StepFlows/tests and narrow existing endpoint clients. |
 | Definition of Ready | Exact endpoint contracts, redirect allowlist, copy equivalence, token lifecycle, session policy, rate-limit behavior and synthetic test identities approved. |
-| Implementation steps | Bind adapters; implement equal-response forms; handle one-time token/session transitions; add safe errors; test every state and replay/expiry path. |
+| Implementation steps | Completed: isolated portal Auth client; equal-response forms; ordered Auth event handling; strict parameterless RPC DTO parsing; safe states/retry; synthetic preview and negative tests. |
 | Acceptance | No enumeration signal; tokens absent from logs/storage beyond necessity; revoked/suspended users lose access; errors do not disclose membership. |
-| Validations | Auth unit/integration tests, negative-state matrix, expiry/replay tests, baseline test/lint/build and secret scan. |
-| Visual QA | Mobile/iPad/desktop, keyboard, password manager, live-region errors, focus restoration and expired-link recovery. |
+| Validations | 69 test files, 404 passed and 4 skipped; agents 160/160; lint/build; source/bundle boundary, secret/private-file and direct-table-access scans pass. |
+| Visual QA | Visible local QA passed exact portrait viewports 320x568, 375x812, 390x844, 430x932, 768x1024 and 1366x900 plus 844x390/1024x768 orientation checks; physical Safari, real password-manager UI and physical mobile keyboard remain not executed. |
 | Security/privacy | PKCE/session controls where applicable, generic recovery response, short token lifetime, rate limiting and MFA-ready model. |
-| Rollback | Revert the CP-3B.1 commit and remove only synthetic QA identities under the authorized cleanup plan. |
+| Rollback | Revert the single CP-3B.1 commit; no QA identity, fixture or backend residue exists. |
 | Stop conditions | Unexpected Auth mutation, cross-client access, token in logs, redirect escape, missing cleanup authority or production identity. |
-| Closeout documentation | Auth state diagram, negative matrix, cleanup evidence, unexecuted MFA debt and next gate. |
-| Expected commit | `feat: implement client portal authentication lifecycle` |
+| Closeout documentation | [`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md); Auth/runtime boundary, negative matrix, visible QA, limitations, zero remote effects, MFA debt and next gate. |
+| Expected commit | `feat: connect client portal authentication lifecycle` |
 | Next gate | CP-3B.2 |
 
 ## CP-3B.2 — Profile and properties

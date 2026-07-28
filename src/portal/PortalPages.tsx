@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import type { PortalFoundationData } from './PortalShell'
+import type { PortalFoundationData } from './PortalPreviewShell'
 import type { PortalPage } from './portalNavigation'
 
 interface PortalPagesProps {

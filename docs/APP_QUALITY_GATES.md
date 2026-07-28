@@ -1,5 +1,30 @@
 # App Quality Gates
 
+## Client Portal CP-3B.1 Auth Lifecycle Gate — DONE 2026-07-28
+
+- `/portal` uses an isolated PKCE Supabase Auth client, ordered Auth-event
+  lifecycle and exactly the zero-parameter
+  `portal_resolve_self_access_context()` RPC.
+- Strict fail-closed parsing covers active admin/member, multi-client,
+  pending, suspended, revoked and authenticated-without-access states; no
+  email, metadata, browser client ID, `.from(...)` or frontend `service_role`
+  participates in tenancy.
+- Neutral recovery, constrained reset redirect, password replacement,
+  immediate protected-state clearing, stale-response rejection and safe retry
+  are covered by tests.
+- Visible local QA passed all required CSS viewports plus orientation, focus,
+  live status, reduced motion, bottom-nav clearance, back navigation and
+  horizontal-overflow checks. Physical Safari/password-manager/device-keyboard
+  certification remains explicitly not executed.
+- Full regression passes: 69 test files, 404 tests plus 4 skipped;
+  `qa:agents` 160/160; lint and build.
+- QA/production writes, Auth users, SQL/RLS/RPC/Edge/Storage changes,
+  WordPress/SiteGround changes, real PII, versioned secrets and tracked private
+  files are zero.
+- CP-3B.1 is `DONE`; CP-3B.2 remains `NOT_STARTED`.
+- Evidence:
+  [client-portal/CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md](client-portal/CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md).
+
 ## Client Portal CP-3B.0 QA Application V2 Gate — DONE 2026-07-28
 
 - Exact local and remote authorized HEAD, clean `main`, divergence `0/0`, all
@@ -39,7 +64,8 @@
 - QA/production writes, remote Auth users, Edge deploys, Storage mutations and
   migration-history writes are zero; frontend files are unchanged.
 - CP-3B.0A remains `DONE`; the separately authorized CP-3B.0 QA application is
-  now `DONE`, and CP-3B.1 is `UNBLOCKED_NOT_STARTED`.
+  now `DONE`. At this checkpoint CP-3B.1 was `UNBLOCKED_NOT_STARTED`; the newer
+  CP-3B.1 gate above records its subsequent completion.
 - Evidence:
   [client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md](client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md)
   and
@@ -67,8 +93,9 @@
 - At this source-gate checkpoint the QA application was not yet authorized and
   all remote writes were zero. The separate V2 application gate above now
   records its exact QA-only result.
-- CP-3B.0 is `DONE`; CP-3B.1 is `UNBLOCKED_NOT_STARTED`; CP-3B.2 is not
-  started.
+- CP-3B.0 is `DONE`. At this checkpoint CP-3B.1 was
+  `UNBLOCKED_NOT_STARTED`; the newer CP-3B.1 gate above records its subsequent
+  completion.
 - Evidence:
   [client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md](client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)
   and

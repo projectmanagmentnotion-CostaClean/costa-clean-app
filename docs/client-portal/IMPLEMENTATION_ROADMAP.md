@@ -1,13 +1,13 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-28
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A and CP-3B.0 QA application complete; CP-3B.1 unblocked and not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application and CP-3B.1 complete; CP-3B.2 not started
 
 ## Progress and execution authority
 
-- Weighted scope estimate: approximately **60% complete / 40% remaining**.
+- Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.1 — authentication and access lifecycle**.
+- Next gate: **CP-3B.2 — profile and properties**.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -18,9 +18,11 @@ the self-context source contract; CP-3B.0A closes its V2 execution/recovery
 package, disposable proof and live QA read-only preflight. The separately
 authorized QA application created exactly the narrow self-context function and
 passed independent post-application checks with no other remote change. No real
-portal authentication or remote UI integration has started. This document
-remains the canonical status roadmap; the detailed roadmap expands it without
-changing its authority.
+portal QA identity was created. CP-3B.1 now closes the local Auth lifecycle,
+strict self-context consumption and visible synthetic UI proof without remote
+writes; live real-identity E2E remains reserved for separately authorized
+CP-3C.1/CP-3C.2. This document remains the canonical status roadmap; the
+detailed roadmap expands it without changing its authority.
 
 ## CP-0 — Discovery
 
@@ -140,7 +142,7 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION DONE; CP-3B.1 UNBLOCKED_NOT_STARTED`
+Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1 DONE; CP-3B.2 NOT_STARTED`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
@@ -158,8 +160,12 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION DONE; CP-
   proven. The separately authorized one-shot QA execution passed with one apply,
   zero recovery attempts and zero synthetic residue.
 - **CP-3B.1 — Authentication and access lifecycle:**
-  `UNBLOCKED_NOT_STARTED`; login, recovery, session, invitations,
-  review/suspension/revocation and anti-enumeration remain unimplemented.
+  `DONE — local implementation and visible synthetic-runtime evidence`.
+  Portal-only PKCE Auth, session event ordering, parameterless self-context
+  resolution, strict DTO validation, neutral recovery, active/multi-client/
+  pending/suspended/revoked/without-access outcomes and iPhone-first UI are
+  proven. Complete invitations, remote users and real-identity E2E remain
+  outside this gate.
 - **CP-3B.2 — Profile and properties:** account context, read models and reviewed
   change requests without canonical-table writes.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
@@ -179,6 +185,9 @@ No production release is part of CP-3.
 
 CP-3A evidence:
 [`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md).
+
+CP-3B.1 evidence:
+[`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md).
 
 CP-3B.0 evidence:
 [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)

@@ -10,7 +10,10 @@ export const portalPages = [
   'security',
 ] as const
 
+export const portalAuthRoutes = ['login', 'recover', 'reset-password'] as const
+
 export type PortalPage = (typeof portalPages)[number]
+export type PortalAuthRoute = (typeof portalAuthRoutes)[number]
 
 const portalPageByPath = new Map<string, PortalPage>([
   ['/portal', 'home'],
@@ -23,6 +26,12 @@ const portalPageByPath = new Map<string, PortalPage>([
   ['/portal/security', 'security'],
 ])
 
+const portalAuthRouteByPath = new Map<string, PortalAuthRoute>([
+  ['/portal/login', 'login'],
+  ['/portal/recover', 'recover'],
+  ['/portal/reset-password', 'reset-password'],
+])
+
 const portalPathByPage: Record<PortalPage, string> = {
   home: '/portal',
   profile: '/portal/profile',
@@ -33,10 +42,24 @@ const portalPathByPage: Record<PortalPage, string> = {
   security: '/portal/security',
 }
 
+const portalPathByAuthRoute: Record<PortalAuthRoute, string> = {
+  login: '/portal/login',
+  recover: '/portal/recover',
+  'reset-password': '/portal/reset-password',
+}
+
 export function resolvePortalPage(pathname: string): PortalPage | null {
   return portalPageByPath.get(normalizeApplicationPathname(pathname)) ?? null
 }
 
+export function resolvePortalAuthRoute(pathname: string): PortalAuthRoute | null {
+  return portalAuthRouteByPath.get(normalizeApplicationPathname(pathname)) ?? null
+}
+
 export function getPortalPagePath(page: PortalPage): string {
   return portalPathByPage[page]
+}
+
+export function getPortalAuthPath(route: PortalAuthRoute): string {
+  return portalPathByAuthRoute[route]
 }

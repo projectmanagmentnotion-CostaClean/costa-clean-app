@@ -1,15 +1,47 @@
 export type PortalMembershipRole = 'client_admin' | 'client_member'
 
+export interface PortalMembershipContext {
+  clientId: string
+  membershipId: string
+  role: PortalMembershipRole
+  status: 'active'
+}
+
 export type PortalAccessResolution =
   | { status: 'unauthenticated' }
   | { status: 'pending_review' }
-  | { status: 'authenticated'; clientContextId: string; role: PortalMembershipRole }
+  | {
+      status: 'active_member'
+      selectedClientId: string
+      membership: PortalMembershipContext
+    }
+  | {
+      status: 'client_selection_required'
+      memberships: PortalMembershipContext[]
+    }
   | { status: 'suspended' }
   | { status: 'revoked' }
-  | { status: 'forbidden' }
+  | { status: 'authenticated_without_access' }
 
-export interface PortalAccessAdapter {
-  resolveAccess(): Promise<PortalAccessResolution>
+export type PortalLifecycleResolution =
+  | PortalAccessResolution
+  | { status: 'booting' }
+  | { status: 'password_recovery' }
+  | { status: 'session_expired' }
+  | { status: 'error'; message: string }
+
+export interface PortalAuthActionResult {
+  ok: boolean
+  message: string
+}
+
+export interface PortalLifecycleAdapter {
+  start(onResolution: (resolution: PortalLifecycleResolution) => void): () => void
+  retry(): void
+  signIn(email: string, password: string): Promise<PortalAuthActionResult>
+  requestPasswordRecovery(email: string): Promise<PortalAuthActionResult>
+  updatePassword(password: string): Promise<PortalAuthActionResult>
+  signOut(): Promise<PortalAuthActionResult>
 }
 
 export interface PortalAccountContext {
@@ -70,20 +102,26 @@ export interface PortalReadAdapter {
 }
 
 export interface PortalRuntimeAdapter {
-  access: PortalAccessAdapter
-  reads: PortalReadAdapter
+  decoratePath(pathname: string): string
+  lifecycle: PortalLifecycleAdapter
+  reads: PortalReadAdapter | null
   previewScenario: PortalPreviewScenario | null
 }
 
 export const portalPreviewScenarios = [
   'loading',
-  'unauthenticated',
+  'login',
+  'recovery',
+  'reset',
+  'active_admin',
+  'active_member',
+  'multi_client',
   'pending_review',
-  'authenticated',
   'suspended',
   'revoked',
-  'forbidden',
-  'error',
+  'without_access',
+  'session_expired',
+  'offline',
 ] as const
 
 export type PortalPreviewScenario = (typeof portalPreviewScenarios)[number]

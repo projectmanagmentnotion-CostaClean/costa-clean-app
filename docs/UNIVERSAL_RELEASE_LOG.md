@@ -1,5 +1,28 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3B.1 authentication lifecycle
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: local frontend Auth/access lifecycle implementation
+- resumen: connects the isolated portal bootstrap to Supabase Auth and the
+  parameterless self-access RPC with strict fail-closed DTO validation
+- validación: Auth lifecycle and negative-state tests; 12 visible synthetic
+  scenarios; required viewport/orientation matrix; reduced motion; source and
+  product-bundle boundary scans; full regression
+- seguridad: no email/metadata tenancy, browser client-ID trust, direct table
+  access, frontend `service_role`, technical error leakage or stale-session
+  protected content
+- remoto: QA/production writes, Auth users and backend changes `0`; WordPress
+  and SiteGround untouched
+- regresión: `404 passed / 4 skipped`; agents 160/160; lint/build pass
+- limitación: physical Safari iOS, physical keyboard, provider autofill and
+  third-party password-manager UI were not executed in the Windows environment
+- estado: CP-3B.1 `DONE — local implementation and visible synthetic-runtime
+  evidence`; CP-3B.2 `NOT STARTED`
+- evidencia:
+  [client-portal/CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md](client-portal/CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md)
+
 ## 2026-07-28 — Client portal CP-3B.0 QA application V2
 
 - fecha: 2026-07-28

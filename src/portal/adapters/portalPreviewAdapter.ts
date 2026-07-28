@@ -1,48 +1,105 @@
 import {
   portalPreviewScenarios,
+  type PortalLifecycleResolution,
+  type PortalMembershipContext,
   type PortalPreviewScenario,
   type PortalRuntimeAdapter,
 } from '../contracts'
 
 const previewScenarioSet = new Set<PortalPreviewScenario>(portalPreviewScenarios)
-
-export function readPortalPreviewScenario(search: string): PortalPreviewScenario {
-  const requestedScenario = new URLSearchParams(search).get('portalPreview')
-
-  return requestedScenario && previewScenarioSet.has(requestedScenario as PortalPreviewScenario)
-    ? requestedScenario as PortalPreviewScenario
-    : 'unauthenticated'
+const demoClientId = 'client-demo-cp3b1'
+const adminMembership: PortalMembershipContext = {
+  clientId: demoClientId,
+  membershipId: '11111111-1111-4111-8111-111111111111',
+  role: 'client_admin',
+  status: 'active',
+}
+const memberMembership: PortalMembershipContext = {
+  clientId: demoClientId,
+  membershipId: '22222222-2222-4222-8222-222222222222',
+  role: 'client_member',
+  status: 'active',
 }
 
-export function createPortalPreviewAdapter(scenario: PortalPreviewScenario): PortalRuntimeAdapter {
+export function readPortalPreviewScenario(
+  search: string,
+): PortalPreviewScenario | null {
+  const requestedScenario = new URLSearchParams(search).get('portalPreview')
+  if (requestedScenario === null) return null
+  return previewScenarioSet.has(requestedScenario as PortalPreviewScenario)
+    ? requestedScenario as PortalPreviewScenario
+    : 'offline'
+}
+
+export function createPortalPreviewAdapter(
+  scenario: PortalPreviewScenario,
+): PortalRuntimeAdapter {
+  let notify: ((resolution: PortalLifecycleResolution) => void) | null = null
+  let signedInMembership =
+    scenario === 'active_member' ? memberMembership : adminMembership
+
+  function emit(resolution: PortalLifecycleResolution) {
+    globalThis.queueMicrotask(() => notify?.(resolution))
+  }
+
   return {
-    access: {
-      resolveAccess: async () => {
-        if (scenario === 'loading') {
-          return new Promise(() => undefined)
+    decoratePath(pathname) {
+      const url = new URL(pathname, window.location.origin)
+      url.searchParams.set('portalPreview', scenario)
+      if (
+        new URLSearchParams(window.location.search).get('portalReducedMotion')
+        === '1'
+      ) {
+        url.searchParams.set('portalReducedMotion', '1')
+      }
+      return `${url.pathname}${url.search}`
+    },
+    lifecycle: {
+      start(onResolution) {
+        notify = onResolution
+        const resolution = getPreviewResolution(scenario)
+        if (resolution) emit(resolution)
+        return () => {
+          notify = null
         }
-
-        if (scenario === 'error') {
-          throw new Error('Synthetic preview failure')
+      },
+      retry() {
+        emit(getPreviewResolution(scenario) ?? { status: 'booting' })
+      },
+      async signIn() {
+        emit({
+          status: 'active_member',
+          selectedClientId: signedInMembership.clientId,
+          membership: signedInMembership,
+        })
+        return { ok: true, message: 'Acceso de demostración confirmado.' }
+      },
+      async requestPasswordRecovery() {
+        return {
+          ok: true,
+          message:
+            'Si existe una cuenta válida, recibirás las instrucciones de recuperación.',
         }
-
-        if (scenario === 'authenticated') {
-          return {
-            status: 'authenticated',
-            clientContextId: 'client-demo-cp3a',
-            role: 'client_admin',
-          }
+      },
+      async updatePassword() {
+        emit({ status: 'unauthenticated' })
+        return {
+          ok: true,
+          message: 'Contraseña actualizada. Vuelve a iniciar sesión.',
         }
-
-        return { status: scenario }
+      },
+      async signOut() {
+        signedInMembership = adminMembership
+        emit({ status: 'unauthenticated' })
+        return { ok: true, message: 'Sesión cerrada.' }
       },
     },
     reads: {
       getAccountContext: async () => ({
-        clientContextId: 'client-demo-cp3a',
-        clientDisplayName: 'Cliente demostración CP-3A',
+        clientContextId: signedInMembership.clientId,
+        clientDisplayName: 'Cliente demostración CP-3B.1',
         accountLabel: 'Cuenta sintética',
-        role: 'client_admin',
+        role: signedInMembership.role,
         isSynthetic: true,
       }),
       getDashboard: async () => ({
@@ -53,14 +110,14 @@ export function createPortalPreviewAdapter(scenario: PortalPreviewScenario): Por
       }),
       listProperties: async () => [
         {
-          id: 'property-demo-cp3a-a',
+          id: 'property-demo-cp3b1-a',
           displayName: 'Espacio Demo Norte',
           addressLabel: 'Dirección sintética · Barcelona',
           statusLabel: 'Activo · vista previa',
           isSynthetic: true,
         },
         {
-          id: 'property-demo-cp3a-b',
+          id: 'property-demo-cp3b1-b',
           displayName: 'Espacio Demo Centro',
           addressLabel: 'Ubicación sintética · Barcelona',
           statusLabel: 'Activo · vista previa',
@@ -69,25 +126,17 @@ export function createPortalPreviewAdapter(scenario: PortalPreviewScenario): Por
       ],
       listServices: async () => [
         {
-          id: 'service-demo-cp3a-a',
+          id: 'service-demo-cp3b1-a',
           serviceLabel: 'Limpieza de mantenimiento · demo',
           propertyLabel: 'Espacio Demo Norte',
           scheduleLabel: 'Mañana · 10:00',
           statusLabel: 'Planificado · sintético',
           isSynthetic: true,
         },
-        {
-          id: 'service-demo-cp3a-b',
-          serviceLabel: 'Servicio puntual · demo',
-          propertyLabel: 'Espacio Demo Centro',
-          scheduleLabel: 'Próxima semana',
-          statusLabel: 'Pendiente de revisión · sintético',
-          isSynthetic: true,
-        },
       ],
       listServiceRequests: async () => [
         {
-          id: 'request-demo-cp3a-a',
+          id: 'request-demo-cp3b1-a',
           requestLabel: 'Solicitud de cambio de horario · demo',
           submittedLabel: 'Enviada en la vista previa local',
           statusLabel: 'Pendiente de revisión · sintético',
@@ -96,7 +145,7 @@ export function createPortalPreviewAdapter(scenario: PortalPreviewScenario): Por
       ],
       listInvoices: async () => [
         {
-          id: 'invoice-demo-cp3a-a',
+          id: 'invoice-demo-cp3b1-a',
           referenceLabel: 'DEMO-FACTURA-001',
           issuedLabel: 'Documento sintético · sin validez fiscal',
           paymentStatusLabel: 'Estado de demostración',
@@ -105,5 +154,64 @@ export function createPortalPreviewAdapter(scenario: PortalPreviewScenario): Por
       ],
     },
     previewScenario: scenario,
+  }
+}
+
+function getPreviewResolution(
+  scenario: PortalPreviewScenario,
+): PortalLifecycleResolution | null {
+  switch (scenario) {
+    case 'loading':
+      return null
+    case 'login':
+    case 'recovery':
+      return { status: 'unauthenticated' }
+    case 'reset':
+      return { status: 'password_recovery' }
+    case 'active_admin':
+      return {
+        status: 'active_member',
+        selectedClientId: adminMembership.clientId,
+        membership: adminMembership,
+      }
+    case 'active_member':
+      return {
+        status: 'active_member',
+        selectedClientId: memberMembership.clientId,
+        membership: memberMembership,
+      }
+    case 'multi_client':
+      return {
+        status: 'client_selection_required',
+        memberships: [
+          {
+            clientId: 'client-demo-a',
+            membershipId: '33333333-3333-4333-8333-333333333333',
+            role: 'client_admin',
+            status: 'active',
+          },
+          {
+            clientId: 'client-demo-b',
+            membershipId: '44444444-4444-4444-8444-444444444444',
+            role: 'client_member',
+            status: 'active',
+          },
+        ],
+      }
+    case 'pending_review':
+      return { status: 'pending_review' }
+    case 'suspended':
+      return { status: 'suspended' }
+    case 'revoked':
+      return { status: 'revoked' }
+    case 'without_access':
+      return { status: 'authenticated_without_access' }
+    case 'session_expired':
+      return { status: 'session_expired' }
+    case 'offline':
+      return {
+        status: 'error',
+        message: 'No hemos podido comprobar tu acceso. Revisa la conexión e inténtalo de nuevo.',
+      }
   }
 }

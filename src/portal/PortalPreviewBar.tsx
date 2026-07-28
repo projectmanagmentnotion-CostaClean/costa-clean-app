@@ -5,13 +5,18 @@ import {
 
 const previewScenarioLabels: Record<PortalPreviewScenario, string> = {
   loading: 'Cargando',
-  unauthenticated: 'Sin sesión',
+  login: 'Inicio de sesión',
+  recovery: 'Recuperación',
+  reset: 'Nueva contraseña',
+  active_admin: 'Cliente administrador',
+  active_member: 'Cliente miembro',
+  multi_client: 'Selección de cuenta',
   pending_review: 'Pendiente de revisión',
-  authenticated: 'Acceso autorizado',
   suspended: 'Cuenta suspendida',
   revoked: 'Acceso revocado',
-  forbidden: 'Sin permisos',
-  error: 'Error seguro',
+  without_access: 'Sin acceso asignado',
+  session_expired: 'Sesión expirada',
+  offline: 'Error de conexión',
 }
 
 interface PortalPreviewBarProps {
@@ -19,12 +24,11 @@ interface PortalPreviewBarProps {
 }
 
 export function PortalPreviewBar({ scenario }: PortalPreviewBarProps) {
-  if (!scenario) {
-    return null
-  }
+  if (!scenario) return null
 
   function handleScenarioChange(nextScenario: PortalPreviewScenario) {
     const url = new URL(window.location.href)
+    url.pathname = getPreviewPath(nextScenario)
     url.searchParams.set('portalPreview', nextScenario)
     window.location.assign(url)
   }
@@ -36,7 +40,8 @@ export function PortalPreviewBar({ scenario }: PortalPreviewBarProps) {
         <span>Estado de acceso</span>
         <select
           value={scenario}
-          onChange={(event) => handleScenarioChange(event.target.value as PortalPreviewScenario)}
+          onChange={(event) =>
+            handleScenarioChange(event.target.value as PortalPreviewScenario)}
         >
           {portalPreviewScenarios.map((previewScenario) => (
             <option key={previewScenario} value={previewScenario}>
@@ -47,4 +52,11 @@ export function PortalPreviewBar({ scenario }: PortalPreviewBarProps) {
       </label>
     </aside>
   )
+}
+
+function getPreviewPath(scenario: PortalPreviewScenario) {
+  if (scenario === 'recovery') return '/portal/recover'
+  if (scenario === 'reset') return '/portal/reset-password'
+  if (scenario === 'login') return '/portal/login'
+  return '/portal'
 }

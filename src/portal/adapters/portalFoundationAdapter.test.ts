@@ -1,31 +1,74 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import type {
+  PortalAuthEvent,
+  PortalAuthProvider,
+} from '../auth/portalAuthLifecycle'
 import { createPortalFoundationAdapter } from './portalFoundationAdapter'
 
-describe('production portal foundation adapter', () => {
-  it('starts closed and unauthenticated without preview controls', async () => {
-    const adapter = createPortalFoundationAdapter()
-    const resolution = await adapter.access.resolveAccess()
+async function eventually(assertion: () => boolean) {
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    if (assertion()) return
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 0)
+    })
+  }
+  throw new Error('expected_condition_not_reached')
+}
 
-    expect(resolution.status).toBe('unauthenticated')
+function createProvider(): PortalAuthProvider {
+  return {
+    clearStoredSession: vi.fn(),
+    getSession: async () => ({ ok: true, value: null }),
+    onAuthStateChange: (
+      listener: (
+        event: PortalAuthEvent | string,
+        session: { userId: string } | null,
+      ) => void,
+    ) => {
+      void listener
+      return () => undefined
+    },
+    requestPasswordRecovery: async () => ({ ok: true, value: null }),
+    resolveSelfAccess: async () => ({
+      ok: true,
+      value: { status: 'authenticated_without_access' },
+    }),
+    sanitizeRecoveryUrl: vi.fn(),
+    signIn: async () => ({ ok: true, value: null }),
+    signOut: async () => ({ ok: true, value: null }),
+    updatePassword: async () => ({ ok: true, value: null }),
+  }
+}
+
+describe('production portal foundation adapter', () => {
+  it('starts with the real lifecycle boundary and no business reads', async () => {
+    const adapter = createPortalFoundationAdapter({
+      provider: createProvider(),
+    })
+    const resolutions: string[] = []
+    const stop = adapter.lifecycle.start((resolution) => {
+      resolutions.push(resolution.status)
+    })
+
+    await eventually(() => resolutions.includes('unauthenticated'))
+
+    expect(adapter.reads).toBeNull()
     expect(adapter.previewScenario).toBeNull()
+    stop()
   })
 
-  it('exposes only unavailable read methods and no write operation', async () => {
-    const adapter = createPortalFoundationAdapter()
-    const methodNames = Object.keys(adapter.reads)
-    const containsWriteMethod = methodNames.some((name) =>
-      /create|update|delete|save|write|upload/i.test(name),
-    )
-    let readRejected = false
+  it('exposes only the bounded lifecycle command allowlist', () => {
+    const adapter = createPortalFoundationAdapter({
+      provider: createProvider(),
+    })
 
-    try {
-      await adapter.reads.getAccountContext()
-    } catch {
-      readRejected = true
-    }
-
-    expect(methodNames).toHaveLength(6)
-    expect(containsWriteMethod).toBe(false)
-    expect(readRejected).toBe(true)
+    expect(Object.keys(adapter.lifecycle).sort()).toEqual([
+      'requestPasswordRecovery',
+      'retry',
+      'signIn',
+      'signOut',
+      'start',
+      'updatePassword',
+    ])
   })
 })

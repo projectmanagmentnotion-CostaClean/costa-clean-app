@@ -2,8 +2,8 @@
 
 Date: 2026-07-28
 
-Status: governance active; CP-3A and CP-3B.0 source complete; CP-3B.1 blocked
-pending CP-3B.0 QA
+Status: governance active; CP-3A, CP-3B.0 and CP-3B.0A source complete;
+CP-3B.0 QA application pending exact V2 authorization; CP-3B.1 blocked
 
 `project-continuation` initiates every block by reconciling HEAD, evidence,
 canonical roadmap, Definition of Ready and stop conditions. It does not enlarge
@@ -18,6 +18,7 @@ separate exact human gate even when the maximum risk is R3.
 |---|---|---|---|---|---|---|---|---|---|
 | CP-3A | `senior-fullstack-builder` | `frontend-ux-accessibility`, `qa-e2e-specialist`, `security-privacy-auditor` | `pr-quality-gate` | R2 local | Approved portal UI/tests/docs only | local dev/preview, targeted tests, `npm test`, lint, build | Remote writes, schema/Auth/Edge, WordPress, production | Route isolation, state matrix, viewport/a11y evidence, clean diff | All local gates pass; no backend/runtime contract drift |
 | CP-3B.0 | `implementation-planner` | `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist` | `pr-quality-gate` | R3 source; remote read-only until separate gate | One forward-only self-context RPC, local proof, manifest and read-only QA preflight | local PostgreSQL proof/tests; exact QA read-only preflight | QA apply, production, frontend, Auth/Edge/Storage, policy/table-grant/history changes | Original block, six-state matrix, grants/search path, hashes, rollback/reapply, zero residue | Source/local proof passes; QA application remains separately authorized |
+| CP-3B.0A | `implementation-planner` | `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist` | `pr-quality-gate` | R3 package; QA read-only | V2 runner/SQL/proof/manifest, private backup/snapshot and exact recovery | direct Node plan/preflight, disposable PostgreSQL, tests/lint/build | `--execute`, QA/prod writes, frontend, Auth Admin, Edge, Storage, policy/table-grant/history changes | V1/CP-2B/V2 hashes, ordered gates, postcheck, rollback/recovery, private backup and live function-absent read | Source/local/preflight pass; exact V2 application remains separately authorized |
 | CP-3B.1 | `senior-fullstack-builder` | `security-privacy-auditor`, `qa-e2e-specialist`, `supabase-guardian` read-only | `pr-quality-gate` | R2; R3 only by separate QA gate | Portal Auth UI/adapters/tests; narrow QA reads | local tests; separately authorized QA browser/API tests | User creation without gate, production, enumeration, token logs | Auth lifecycle, replay/expiry, suspended/revoked and cleanup evidence | Anti-enumeration and denial matrix pass |
 | CP-3B.2 | `senior-fullstack-builder` | `frontend-ux-accessibility`, `security-privacy-auditor` | `pr-quality-gate` | R2 | Profile/property read UI and reviewed request adapter/tests | local preview/tests, baseline gates | Direct `clients`/`properties` write, client-ID trust | Field exposure, two-client denial, request receipt/idempotency | Only narrow DTOs visible; canonical rows unchanged |
 | CP-3B.3 | `senior-fullstack-builder` | `business-rules-test-engineer`, `qa-e2e-specialist` | `pr-quality-gate` | R2 | Services/read requests UI and approved narrow request calls | local tests; separately authorized QA E2E | Direct jobs/services writes, fake save, price/date promise | Transition, retry/idempotency, denial and cleanup matrix | One authoritative request per intent; no canonical mutation |

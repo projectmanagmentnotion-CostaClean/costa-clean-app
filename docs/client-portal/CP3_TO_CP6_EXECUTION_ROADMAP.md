@@ -2,7 +2,8 @@
 
 Date: 2026-07-28
 
-Status: CP-3A `DONE`; CP-3B.0 source/local proof `DONE`; CP-3B.1
+Status: CP-3A/CP-3B.0/CP-3B.0A source/local proof `DONE`; CP-3B.0 QA
+application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.1
 `BLOCKED_PENDING_CP3B0_QA`; later gates are `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
@@ -43,7 +44,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `DONE — source/local disposable proof only`; QA application `NOT AUTHORIZED` |
+| Status | `DONE — source/local disposable proof only`; QA application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION` |
 | Objective | Resolve the authenticated caller's own portal access state without a browser-provided `user_id` or prior `client_id`. |
 | User outcome | No portal UI change yet; CP-3B.1 receives a narrow backend contract for active, multi-client, pending, suspended, revoked and no-access states after QA deployment. |
 | Dependencies | CP-3A closed; CP-2B frozen boundary present; original bootstrap block reproduced. |
@@ -56,7 +57,26 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Hash/target mismatch, CP-2B drift, need for email/metadata/client parameter, PII, policy/table grant change, remote write or failed isolation. |
 | Evidence | [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md) and [`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md). |
 | Expected commit | `security: add self-resolving portal access context` |
-| Next gate | CP-3B.0 exact QA application; only after it passes may CP-3B.1 resume |
+| Next gate | CP-3B.0 exact V2 QA application; only after it passes may CP-3B.1 resume |
+
+## CP-3B.0A — QA application execution and recovery package
+
+| Field | Specification |
+|---|---|
+| Status | `DONE — source/local/preflight only`; `--execute` not run |
+| Objective | Freeze a deterministic QA-only apply, postcheck, transactional matrix and one-function recovery runner for the CP-3B.0 RPC. |
+| User outcome | No UI change; a later human can authorize one exact QA application with verified backup, target, hashes and rollback. |
+| Dependencies | CP-3B.0 V1 and CP-2B V5 chains intact; PostgreSQL 17; authenticated QA reads; production excluded. |
+| Agents | Planning `implementation-planner`; implementation/review `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist`; independent reviewer `pr-quality-gate`. |
+| In scope | New V2 SQL/runner/proof/tests/manifest, private HEAD-bound backup and snapshot, live QA read-only preflight and documentation. |
+| Out of scope | QA apply, frontend, production, Auth Admin, remote Auth users, Edge, Storage, RLS/policy/table-grant/history changes and CP-3B.1. |
+| Acceptance | Exact pre-effect order; unauthorized/production/drift/offline gates fail closed; one apply; complete postcheck; matrix always rolls back; recovery drops only the target function once. |
+| Validations | V1/CP-2B/V2 hashes, disposable apply/postcheck/matrix/recovery, negative gates, live QA function-absent preflight, private backup, full tests/agents/lint/build. |
+| Rollback | Source revert before application; future QA recovery uses only the frozen atomic one-function drop and verifies the prestate digest. |
+| Stop conditions | Missing explicit V2 authorization, target/hash/HEAD/backup drift, production link, unexpected function, SQL write during preflight, secret output or failed recovery. |
+| Evidence | [`CP3B0A_QA_EXECUTION_PACKAGE.md`](./CP3B0A_QA_EXECUTION_PACKAGE.md) and [`CP3B0_EXACT_QA_AUTHORIZATION_V2.md`](./CP3B0_EXACT_QA_AUTHORIZATION_V2.md). |
+| Expected commit | `security: prepare self-access context QA application` |
+| Next gate | Separately authorized CP-3B.0 V2 QA application |
 
 ## CP-3B.1 — Authentication and access lifecycle
 

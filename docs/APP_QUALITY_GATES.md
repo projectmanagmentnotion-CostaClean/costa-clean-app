@@ -1,5 +1,27 @@
 # App Quality Gates
 
+## Client Portal CP-3B.0A QA Execution/Recovery Package Gate — DONE 2026-07-28
+
+- The nine CP-3B.0 V1 artifacts and complete CP-2B V5 chain remain
+  byte-for-byte intact; the CP-3B.0 migration hash remains exact.
+- A separate V2 package locks the exact clean-HEAD authorization, private
+  backup, triple QA identity, function-absent prestate and mandatory pre-effect
+  order before a single future apply.
+- PostgreSQL 17 disposable proof passes apply, complete catalog/grant/policy/
+  history postcheck, QA-specific transactional authorization matrix, zero
+  residue, exact rollback and simulated recovery without automatic retry.
+- Live QA read-only preflight passes with production rejected, the new function
+  absent and a verified private schema backup/catalog snapshot. `--execute` was
+  not run.
+- QA/production writes, remote Auth users, Edge deploys, Storage mutations and
+  migration-history writes are zero; frontend files are unchanged.
+- CP-3B.0A is `DONE — source/local/preflight only`; CP-3B.0 QA application is
+  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.1 remains blocked.
+- Evidence:
+  [client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md](client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md)
+  and
+  [client-portal/CP3B0_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP3B0_EXACT_QA_AUTHORIZATION_V2.md).
+
 ## Client Portal CP-3B.0 Self Access Context Source Gate — DONE 2026-07-28
 
 - The frozen CP-2B block is reproduced: `portal_get_account_context(text)`

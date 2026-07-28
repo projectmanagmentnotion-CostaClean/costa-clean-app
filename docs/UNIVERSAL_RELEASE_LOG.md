@@ -1,5 +1,28 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3B.0A QA execution/recovery package
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: QA application preparation, local proof and remote read-only preflight
+- resumen: freezes a V2 runner with exact authorization/HEAD/backup gates,
+  PostgreSQL V5 transport, complete postcheck, QA-only transactional matrix and
+  one-function recovery for a future self-context RPC application
+- validación: V1 and CP-2B frozen chains; V2 hashes; PostgreSQL 17 disposable
+  apply/postcheck/matrix/rollback/recovery; negative gates; private backup and
+  catalog snapshot; live QA read confirms target and absent function
+- seguridad: production rejected; no secrets or private paths printed; no real
+  users/PII; matrix fixtures roll back; application has no automatic retry
+- remoto: QA reads only; QA/production writes, remote Auth users, Edge deploys,
+  Storage mutations and migration-history writes `0`; `--execute` not run
+- estado: CP-3B.0A `DONE — source/local/preflight only`; QA application
+  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.1
+  `BLOCKED_PENDING_CP3B0_QA`; CP-3B.2 `NOT STARTED`
+- evidencia:
+  [client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md](client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md)
+  and
+  [client-portal/CP3B0_EXACT_QA_AUTHORIZATION_V2.md](client-portal/CP3B0_EXACT_QA_AUTHORIZATION_V2.md)
+
 ## 2026-07-28 — Client portal CP-3B.0 self access context source contract
 
 - fecha: 2026-07-28

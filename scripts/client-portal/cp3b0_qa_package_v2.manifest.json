@@ -1,0 +1,87 @@
+{
+  "version": 2,
+  "gate": "CP-3B.0A",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B0-QA-V2-AUTHORIZATION-PENDING",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728120000_portal_self_access_context.sql",
+  "migrationSha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731",
+  "v1ManifestSha256": "a0ca32d9f8016b69b4907f25e02ffb8994e4b3610f0fcaf51168ed94f7c912bf",
+  "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3b0_qa_precheck_v2.sql",
+      "sha256": "46d2b13b7e74116a9f024dc9351aa942bb03832f9b1cf49e6baf98211c8ed2cc"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0_qa_matrix_v2.sql",
+      "sha256": "dd1038ac67b729d18fb193eaba743269167340da629c6aa6e9805a32540445cb"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0_qa_postcheck_v2.sql",
+      "sha256": "ec076bec52a6fe7ad422a378af09c8c95d699aa161a957dfee17693c9ed1deeb"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0_qa_rollback_v2.sql",
+      "sha256": "7d5415e07e6812c01c2bed722564a574c582d7ae4d2e63bc7c1dee321d94d691"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b0-qa-v2.mjs",
+      "sha256": "aaeb2d443d5e0783e47d0b74919d8486870ea87a2f5e47b9b1019ceba2902cb8"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b0a-local-proof.mjs",
+      "sha256": "2c914e9416c9c79423873568277e0be2d7c530a196f252ab5f1d81f70ffb44f8"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0QaApplicationV2.test.mjs",
+      "sha256": "727309f6018f0a14173eb7a32d48e0b8793efaf16bd6f5628b57a376c854b394"
+    },
+    {
+      "path": "docs/client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md",
+      "sha256": "76c0511a1d8e6cc342f6072a3ef28ab433ea0cba07c5e165aaf20c5e6933e164"
+    },
+    {
+      "path": "docs/client-portal/CP3B0_EXACT_QA_AUTHORIZATION_V2.md",
+      "sha256": "fefd45427dc3874da5f7877f535d611ef95ed7ffe4f899e72d8d2e0b4fd0ba0b"
+    }
+  ],
+  "preEffectOrder": [
+    "manifest_and_hashes",
+    "authorization_and_head",
+    "clean_worktree",
+    "private_backup",
+    "local_qa_link",
+    "supabase_cli_qa_link",
+    "production_not_linked",
+    "postgres_live_read",
+    "postgres_qa_target",
+    "cp2b_prerequisite",
+    "function_absent",
+    "catalog_prestate",
+    "grants_and_policy_digest",
+    "synthetic_collision_check",
+    "postgres_pre_effect_check",
+    "apply"
+  ],
+  "expectedRemoteEffects": {
+    "functionsCreated": 1,
+    "tableRowsChanged": 0,
+    "policiesChanged": 0,
+    "tableGrantsChanged": 0,
+    "authUsersChanged": 0,
+    "edgeFunctionsChanged": 0,
+    "storageObjectsChanged": 0,
+    "migrationHistoryRowsChanged": 0
+  },
+  "recoveryContract": {
+    "sql": "drop function if exists public.portal_resolve_self_access_context();",
+    "atomic": true,
+    "automaticRetry": false,
+    "maxRecoveryAttempts": 1,
+    "requiresFunctionAbsent": true,
+    "requiresPrestateDigestRestored": true
+  },
+  "executeAlias": false
+}

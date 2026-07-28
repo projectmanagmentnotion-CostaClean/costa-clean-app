@@ -1,13 +1,13 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-28
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A source complete; CP-3B.0 QA application pending explicit V2 authorization; CP-3B.1 blocked
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A and CP-3B.0 QA application complete; CP-3B.1 unblocked and not started
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **60% complete / 40% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.0 QA application — exact V2 authorization required**.
+- Next gate: **CP-3B.1 — authentication and access lifecycle**.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -15,10 +15,12 @@ Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B
 
 CP-3A is closed with local source and visible-browser evidence. CP-3B.0 closes
 the self-context source contract; CP-3B.0A closes its V2 execution/recovery
-package, disposable proof and live QA read-only preflight. The function is not
-deployed. No real portal authentication or remote UI integration has started.
-This document remains the canonical status roadmap; the detailed roadmap
-expands it without changing its authority.
+package, disposable proof and live QA read-only preflight. The separately
+authorized QA application created exactly the narrow self-context function and
+passed independent post-application checks with no other remote change. No real
+portal authentication or remote UI integration has started. This document
+remains the canonical status roadmap; the detailed roadmap expands it without
+changing its authority.
 
 ## CP-0 — Discovery
 
@@ -138,25 +140,25 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A SOURCE DONE; QA APPLICATION PENDING; CP-3B.1 BLOCKED`
+Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION DONE; CP-3B.1 UNBLOCKED_NOT_STARTED`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
   machine, responsive shell, base pages and development-only synthetic preview;
   remote writes `0`.
 - **CP-3B.0 — Self access context backend contract:**
-  `DONE — source/local disposable proof only`. Zero-parameter `auth.uid()`
+  `DONE — source/local/QA validated`. Zero-parameter `auth.uid()`
   contract, six deterministic states, multi-client selection, minimal DTO,
-  grants and rollback/reapply are locally proven. QA application is
-  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`.
+  grants and rollback/reapply are proven. Its exact V2 QA application ran once,
+  created one function and passed independent catalog and residue checks.
 - **CP-3B.0A — QA application execution and recovery package:**
-  `DONE — source/local/preflight only`. Immutable V2 manifest, exact
+  `DONE`. Immutable V2 manifest, exact
   pre-effect ordering, HEAD-bound private backup/snapshot, PostgreSQL 17
   apply/postcheck, transactional QA matrix and one-function recovery are
-  proven. Live QA read confirms the function remains absent; remote writes are
-  zero and `--execute` was not run.
+  proven. The separately authorized one-shot QA execution passed with one apply,
+  zero recovery attempts and zero synthetic residue.
 - **CP-3B.1 — Authentication and access lifecycle:**
-  `BLOCKED_PENDING_CP3B0_QA`; login, recovery, session, invitations,
+  `UNBLOCKED_NOT_STARTED`; login, recovery, session, invitations,
   review/suspension/revocation and anti-enumeration remain unimplemented.
 - **CP-3B.2 — Profile and properties:** account context, read models and reviewed
   change requests without canonical-table writes.
@@ -187,6 +189,9 @@ CP-3B.0A evidence:
 [`CP3B0A_QA_EXECUTION_PACKAGE.md`](./CP3B0A_QA_EXECUTION_PACKAGE.md)
 and
 [`CP3B0_EXACT_QA_AUTHORIZATION_V2.md`](./CP3B0_EXACT_QA_AUTHORIZATION_V2.md).
+
+CP-3B.0 QA application evidence:
+[`CP3B0_QA_APPLICATION_20260728.md`](./CP3B0_QA_APPLICATION_20260728.md).
 
 ## CP-4 — Public website and legal integration
 

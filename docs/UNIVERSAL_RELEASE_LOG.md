@@ -1,5 +1,27 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3B.0 QA application V2
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: exact authorized Supabase QA security-boundary application
+- resumen: the frozen V2 runner executed once and created only the
+  zero-parameter `portal_resolve_self_access_context()` function
+- validación: exact Git/target/hash identity; fresh eight-artifact private
+  backup; complete pre-effect order; one apply; postcheck; transactional QA
+  matrix rolled back; independent catalog/digest/residue reads; full regression
+- seguridad: `auth.uid()` self-context; `jsonb`, `STABLE`,
+  `SECURITY DEFINER`, owner `postgres`, fixed `search_path=pg_catalog`; execute
+  only for `authenticated`; no email or browser-supplied tenancy
+- remoto: one QA function created; table rows, policies, table grants, Auth
+  users, Edge, Storage and migration history changes `0`; production,
+  WordPress and SiteGround untouched
+- regresión: `368 passed / 4 skipped`; agents 160/160; lint/build pass
+- estado: CP-3B.0/CP-3B.0A/QA application `DONE`; CP-3B.1
+  `UNBLOCKED_NOT_STARTED`; CP-3B.2 `NOT STARTED`
+- evidencia:
+  [client-portal/CP3B0_QA_APPLICATION_20260728.md](client-portal/CP3B0_QA_APPLICATION_20260728.md)
+
 ## 2026-07-28 — Client portal CP-3B.0A QA execution/recovery package
 
 - fecha: 2026-07-28

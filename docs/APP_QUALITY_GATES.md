@@ -1,5 +1,28 @@
 # App Quality Gates
 
+## Client Portal CP-3B.0 QA Application V2 Gate — DONE 2026-07-28
+
+- Exact local and remote authorized HEAD, clean `main`, divergence `0/0`, all
+  V1/V2/CP-2B hashes, migration hash and triple QA identity passed.
+- A fresh ignored eight-artifact private backup matched the immediate QA
+  prestate before the effect.
+- The frozen direct runner executed exactly once: pre-effect ordering passed,
+  one apply created only `portal_resolve_self_access_context()`, the QA matrix
+  passed and rolled back, synthetic residue was zero and recovery attempts were
+  zero.
+- Independent PostgreSQL reads confirmed the zero-parameter `jsonb`, `STABLE`,
+  `SECURITY DEFINER`, `postgres`-owned function with
+  `search_path=pg_catalog`, a comment and execute only for `authenticated`.
+- Portal rows, policies, table grants, other portal functions, Auth users, Edge,
+  Storage and migration history were unchanged; production, WordPress and
+  SiteGround were untouched.
+- Full regression passes: 64 test files, 368 tests plus 4 skipped;
+  `qa:agents` 160/160; lint and build.
+- CP-3B.0, CP-3B.0A and the QA application are `DONE`; CP-3B.1 is
+  `UNBLOCKED_NOT_STARTED`; CP-3B.2 remains not started.
+- Evidence:
+  [client-portal/CP3B0_QA_APPLICATION_20260728.md](client-portal/CP3B0_QA_APPLICATION_20260728.md).
+
 ## Client Portal CP-3B.0A QA Execution/Recovery Package Gate — DONE 2026-07-28
 
 - The nine CP-3B.0 V1 artifacts and complete CP-2B V5 chain remain
@@ -15,8 +38,8 @@
   not run.
 - QA/production writes, remote Auth users, Edge deploys, Storage mutations and
   migration-history writes are zero; frontend files are unchanged.
-- CP-3B.0A is `DONE — source/local/preflight only`; CP-3B.0 QA application is
-  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.1 remains blocked.
+- CP-3B.0A remains `DONE`; the separately authorized CP-3B.0 QA application is
+  now `DONE`, and CP-3B.1 is `UNBLOCKED_NOT_STARTED`.
 - Evidence:
   [client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md](client-portal/CP3B0A_QA_EXECUTION_PACKAGE.md)
   and
@@ -41,10 +64,11 @@
 - Focused tests pass 11/11; full suite passes 353 with 4 skips; project agents
   pass 160/160; lint and build pass. QA read-only preflight confirms the CP-2B
   prerequisite and absent new RPC, then rolls back.
-- QA application is `NOT AUTHORIZED`; QA/production writes, remote Auth users,
-  Edge deploys, Storage mutations and migration-history writes are all zero.
-- CP-3B.0 source/local proof is `DONE`; CP-3B.1 is
-  `BLOCKED_PENDING_CP3B0_QA`; CP-3B.2 is not started.
+- At this source-gate checkpoint the QA application was not yet authorized and
+  all remote writes were zero. The separate V2 application gate above now
+  records its exact QA-only result.
+- CP-3B.0 is `DONE`; CP-3B.1 is `UNBLOCKED_NOT_STARTED`; CP-3B.2 is not
+  started.
 - Evidence:
   [client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md](client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)
   and

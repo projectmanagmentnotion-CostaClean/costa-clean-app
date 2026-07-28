@@ -2,9 +2,8 @@
 
 Date: 2026-07-28
 
-Status: CP-3A/CP-3B.0/CP-3B.0A source/local proof `DONE`; CP-3B.0 QA
-application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.1
-`BLOCKED_PENDING_CP3B0_QA`; later gates are `NOT STARTED`
+Status: CP-3A/CP-3B.0/CP-3B.0A and CP-3B.0 QA application `DONE`;
+CP-3B.1 `UNBLOCKED_NOT_STARTED`; later gates are `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -38,34 +37,34 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Any need for schema/Auth/Edge writes, ambiguous route ownership, CRM regression, secret exposure or failed isolation test. |
 | Closeout documentation | [`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md); route/state inventory, runtime evidence, risks and exact next gate recorded. |
 | Expected commit | `feat: establish client portal UI and auth boundary` |
-| Next gate | CP-3B.0 QA application under a separate exact authorization |
+| Next gate | CP-3B.1 |
 
 ## CP-3B.0 — Self access context backend contract
 
 | Field | Specification |
 |---|---|
-| Status | `DONE — source/local disposable proof only`; QA application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION` |
+| Status | `DONE — source/local/QA validated`; QA application `DONE` |
 | Objective | Resolve the authenticated caller's own portal access state without a browser-provided `user_id` or prior `client_id`. |
-| User outcome | No portal UI change yet; CP-3B.1 receives a narrow backend contract for active, multi-client, pending, suspended, revoked and no-access states after QA deployment. |
+| User outcome | No portal UI change yet; CP-3B.1 now has a QA-validated narrow backend contract for active, multi-client, pending, suspended, revoked and no-access states. |
 | Dependencies | CP-3A closed; CP-2B frozen boundary present; original bootstrap block reproduced. |
 | Agents | Planning `implementation-planner`; implementation/review `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist`; independent reviewer `pr-quality-gate`. |
 | In scope | One forward-only zero-parameter RPC, source tests, disposable PostgreSQL proof, immutable manifest and read-only QA plan/preflight. |
-| Out of scope | Frontend, QA apply, production, Auth users, email/metadata tenancy, Edge, Storage, RLS/policy/table-grant changes and migration history. |
+| Out of scope | Frontend, production, Auth users, email/metadata tenancy, Edge, Storage, RLS/policy/table-grant changes and migration history; QA application occurred only in the separately authorized V2 gate. |
 | Acceptance | `auth.uid()` is the only identity; active memberships are minimal and ordered; inactive identifiers are hidden; anon denied; authenticated granted; no PII/write. |
 | Validations | Original-block reproduction, six-state/cross-user/multi-client matrix, rollback/reapply, zero residue, full test/lint/build and hash/security review. |
 | Rollback | Local proof drops only `portal_resolve_self_access_context()` and proves reapply; remote rollback requires a future private backup and exact gate. |
 | Stop conditions | Hash/target mismatch, CP-2B drift, need for email/metadata/client parameter, PII, policy/table grant change, remote write or failed isolation. |
-| Evidence | [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md) and [`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md). |
+| Evidence | [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md), [`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md) and [`CP3B0_QA_APPLICATION_20260728.md`](./CP3B0_QA_APPLICATION_20260728.md). |
 | Expected commit | `security: add self-resolving portal access context` |
-| Next gate | CP-3B.0 exact V2 QA application; only after it passes may CP-3B.1 resume |
+| Next gate | CP-3B.1, unblocked but not started |
 
 ## CP-3B.0A — QA application execution and recovery package
 
 | Field | Specification |
 |---|---|
-| Status | `DONE — source/local/preflight only`; `--execute` not run |
+| Status | `DONE`; package closed and separately authorized QA execution passed |
 | Objective | Freeze a deterministic QA-only apply, postcheck, transactional matrix and one-function recovery runner for the CP-3B.0 RPC. |
-| User outcome | No UI change; a later human can authorize one exact QA application with verified backup, target, hashes and rollback. |
+| User outcome | No UI change; the package enabled the exact QA application to run once with verified backup, target, hashes and recovery controls. |
 | Dependencies | CP-3B.0 V1 and CP-2B V5 chains intact; PostgreSQL 17; authenticated QA reads; production excluded. |
 | Agents | Planning `implementation-planner`; implementation/review `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist`; independent reviewer `pr-quality-gate`. |
 | In scope | New V2 SQL/runner/proof/tests/manifest, private HEAD-bound backup and snapshot, live QA read-only preflight and documentation. |
@@ -76,13 +75,25 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Missing explicit V2 authorization, target/hash/HEAD/backup drift, production link, unexpected function, SQL write during preflight, secret output or failed recovery. |
 | Evidence | [`CP3B0A_QA_EXECUTION_PACKAGE.md`](./CP3B0A_QA_EXECUTION_PACKAGE.md) and [`CP3B0_EXACT_QA_AUTHORIZATION_V2.md`](./CP3B0_EXACT_QA_AUTHORIZATION_V2.md). |
 | Expected commit | `security: prepare self-access context QA application` |
-| Next gate | Separately authorized CP-3B.0 V2 QA application |
+| Next gate | CP-3B.1 |
+
+## CP-3B.0 QA application V2
+
+| Field | Specification |
+|---|---|
+| Status | `DONE`; closed 2026-07-28 |
+| Objective | Apply only the frozen zero-parameter self-context function to the authorized QA project and prove absence of collateral effects. |
+| Result | One apply, one function created, QA matrix `PASS_ROLLED_BACK`, zero synthetic residue and zero recovery attempts. |
+| Invariants | Portal rows, policies, table grants, Auth users, Edge, Storage and migration history unchanged; production, WordPress and SiteGround untouched. |
+| Validation | Exact hashes and target; fresh HEAD-bound private backup; full pre-effect order; runner postcheck; independent read-only catalog/digest/residue verification; full regression. |
+| Evidence | [`CP3B0_QA_APPLICATION_20260728.md`](./CP3B0_QA_APPLICATION_20260728.md). |
+| Next gate | CP-3B.1, unblocked and not started |
 
 ## CP-3B.1 — Authentication and access lifecycle
 
 | Field | Specification |
 |---|---|
-| Status | `BLOCKED_PENDING_CP3B0_QA` |
+| Status | `UNBLOCKED_NOT_STARTED` |
 | Objective | Implement the portal Auth lifecycle against narrow CP-2B boundaries. |
 | User outcome | Clients can log in, recover/change passwords, handle expiry and receive safe pending, invitation, suspended or revoked outcomes. |
 | Dependencies | CP-3A closed; CP-3B.0 deployed and proven in QA under a separate exact authorization; approved Auth DTOs; invitation/recovery URLs and anti-enumeration copy defined. |

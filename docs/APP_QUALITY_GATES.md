@@ -1,5 +1,25 @@
 # App Quality Gates
 
+## Client Portal CP-3A UI/Auth Boundary Gate — DONE 2026-07-28
+
+- `/portal` and all `/portal/*` paths resolve before CRM import to an independent
+  bootstrap, stylesheet, navigation, page registry and access state machine.
+- The production portal adapter is closed and read-only: unauthenticated access
+  only, no Supabase/CRM import, no writes and no direct canonical-table path.
+- The authenticated synthetic preview and its selector are development-only and
+  absent from the production build.
+- Explicit booting, unauthenticated, pending, authenticated, suspended, revoked,
+  forbidden and generic-error outcomes fail closed without email-based tenancy.
+- Visible local QA passed at `390x844`, adjacent iPad widths around the
+  Windows-scaled 768 breakpoint, and `1366x900`, with no horizontal overflow.
+- Focused tests pass 18/18; full suite passes `342` with `4` skips; agent package
+  checks pass 160/160; lint and build pass.
+- Secret/PII/direct-data scans found zero indicators. QA, production, Supabase,
+  Auth, Edge, Storage, WordPress and SiteGround writes are zero.
+- CP-3A is `DONE`; CP-3B.1 is next and has not started.
+- Evidence:
+  [client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md](client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md).
+
 ## Client Portal CP-2B V5 Cloud QA Boundary Gate — DONE 2026-07-27
 
 - Exact Git, immutable hashes, private backup and triple QA identity passed

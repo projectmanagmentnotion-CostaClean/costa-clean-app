@@ -2,7 +2,7 @@
 
 Date: 2026-07-28
 
-Status: execution specification; all gates below are `NOT STARTED`
+Status: CP-3A `DONE`; CP-3B.1 is the next gate; later gates are `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -18,7 +18,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED`; next gate |
+| Status | `DONE — local source/runtime evidence`; closed 2026-07-28 |
 | Objective | Isolate `/portal` behind an independent bootstrap, Auth state machine and typed server-boundary adapters. |
 | User outcome | A responsive portal shell exposes honest loading, unauthenticated, pending, authenticated, forbidden and error states without exposing CRM internals. |
 | Dependencies | CP-2B evidence closed; UI contract approved; local preview available; no remote write required. |
@@ -34,8 +34,8 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Security/privacy | No `service_role`; no email-based linkage; no PII fixtures; adapters expose only portal-specific DTOs. |
 | Rollback | Revert the single CP-3A commit; no remote state exists to clean. |
 | Stop conditions | Any need for schema/Auth/Edge writes, ambiguous route ownership, CRM regression, secret exposure or failed isolation test. |
-| Closeout documentation | Canonical roadmap evidence, route/state inventory, screenshots/evidence references, risks and exact next gate. |
-| Expected commit | `feat: add isolated client portal UI foundation` |
+| Closeout documentation | [`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md); route/state inventory, runtime evidence, risks and exact next gate recorded. |
+| Expected commit | `feat: establish client portal UI and auth boundary` |
 | Next gate | CP-3B.1 |
 
 ## CP-3B.1 — Authentication and access lifecycle

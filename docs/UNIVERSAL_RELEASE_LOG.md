@@ -1,5 +1,24 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3A isolated UI/Auth boundary
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: local frontend foundation and trust-boundary implementation
+- resumen: splits the application entry into isolated portal/CRM bootstraps and
+  adds the `/portal` access state machine, typed read-only boundary, responsive
+  shell, base pages and development-only synthetic preview
+- validación: 18/18 focused tests; full suite `342 passed / 4 skipped`;
+  `qa:agents` 160/160; lint/build; visible mobile/iPad/desktop route, state,
+  navigation and overflow checks
+- seguridad: no portal Supabase/CRM import, direct canonical access, write
+  method, email linkage, real PII, secret or production mock adapter
+- remoto: QA writes `0`; production writes `0`; Auth, SQL, migrations, RLS,
+  Edge, Storage, WordPress and SiteGround unchanged
+- estado: CP-3A `DONE`; CP-3B.1 next and `NOT STARTED`
+- evidencia:
+  [client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md](client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md)
+
 ## 2026-07-27 — Client portal CP-2B V5 Supabase Cloud QA boundary
 
 - fecha: 2026-07-27

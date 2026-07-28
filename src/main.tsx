@@ -1,13 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { applyTheme, getInitialTheme } from './app/theme'
+import { resolveApplicationSurface } from './portal/applicationSurface'
 
-applyTheme(getInitialTheme())
+async function bootstrapApplication() {
+  const rootElement = document.getElementById('root')
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+  if (!rootElement) {
+    throw new Error('No se encontró el punto de montaje de la aplicación.')
+  }
+
+  const surface = resolveApplicationSurface(window.location.pathname)
+
+  if (surface === 'portal') {
+    const { bootstrapPortal } = await import('./portal/bootstrapPortal')
+    await bootstrapPortal(rootElement)
+    return
+  }
+
+  const { bootstrapCrm } = await import('./bootstrapCrm')
+  bootstrapCrm(rootElement)
+}
+
+void bootstrapApplication()

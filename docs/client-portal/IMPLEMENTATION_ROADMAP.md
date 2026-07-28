@@ -1,20 +1,22 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-28
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B complete; CP-3 through CP-6 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A complete; CP-3B.1 is next
 
 ## Progress and execution authority
 
-- Weighted scope estimate: approximately **55% complete / 45% remaining**.
+- Weighted scope estimate: approximately **60% complete / 40% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3A — Portal UI foundation**.
+- Next gate: **CP-3B.1 — Authentication and access lifecycle**.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
   [`AGENT_EXECUTION_MATRIX.md`](./AGENT_EXECUTION_MATRIX.md).
 
-No CP-3 implementation has started. This document remains the canonical status
-roadmap; the detailed roadmap expands it without changing its authority.
+CP-3A is closed with local source and visible-browser evidence. No real portal
+authentication or remote UI integration has started. This document remains the
+canonical status roadmap; the detailed roadmap expands it without changing its
+authority.
 
 ## CP-0 — Discovery
 
@@ -134,10 +136,12 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `NOT STARTED`
+Status: `IN PROGRESS — CP-3A DONE; CP-3B.1 NEXT`
 
-- **CP-3A — Portal UI foundation:** isolated `/portal` bootstrap, typed adapters,
-  Auth state machine, responsive shell and local preview with zero remote writes.
+- **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
+  Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
+  machine, responsive shell, base pages and development-only synthetic preview;
+  remote writes `0`.
 - **CP-3B.1 — Authentication and access lifecycle:** login, recovery, session,
   invitations, review/suspension/revocation and anti-enumeration.
 - **CP-3B.2 — Profile and properties:** account context, read models and reviewed
@@ -156,6 +160,9 @@ Status: `NOT STARTED`
   keyboard, screen readers, reduced motion and Web Vitals.
 
 No production release is part of CP-3.
+
+CP-3A evidence:
+[`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md).
 
 ## CP-4 — Public website and legal integration
 

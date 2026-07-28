@@ -1,5 +1,33 @@
 # App Quality Gates
 
+## Client Portal CP-3B.0 Self Access Context Source Gate — DONE 2026-07-28
+
+- The frozen CP-2B block is reproduced: `portal_get_account_context(text)`
+  requires a browser-unknown `client_id`, has no zero-argument overload and
+  exposes only active memberships.
+- A separate forward-only migration adds
+  `portal_resolve_self_access_context()` with zero parameters, `auth.uid()` as
+  the only identity, minimal JSON and deterministic active/multi-client,
+  pending, suspended, revoked and no-access states.
+- The function is `STABLE`, `SECURITY DEFINER`, owned by `postgres`, uses a
+  fixed safe `search_path`, denies `PUBLIC`/`anon`/`service_role` and grants
+  execute only to `authenticated`.
+- PostgreSQL 17.10 disposable proof passes admin/member, cross-user,
+  multi-client ordering, inactive identifier minimization, unverified/staff
+  denial, PII absence, unchanged policies/table grants, rollback/reapply, zero
+  fixture residue and cluster discard.
+- Focused tests pass 11/11; full suite passes 353 with 4 skips; project agents
+  pass 160/160; lint and build pass. QA read-only preflight confirms the CP-2B
+  prerequisite and absent new RPC, then rolls back.
+- QA application is `NOT AUTHORIZED`; QA/production writes, remote Auth users,
+  Edge deploys, Storage mutations and migration-history writes are all zero.
+- CP-3B.0 source/local proof is `DONE`; CP-3B.1 is
+  `BLOCKED_PENDING_CP3B0_QA`; CP-3B.2 is not started.
+- Evidence:
+  [client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md](client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)
+  and
+  [client-portal/CP3B0_EXACT_QA_AUTHORIZATION.md](client-portal/CP3B0_EXACT_QA_AUTHORIZATION.md).
+
 ## Client Portal CP-3A UI/Auth Boundary Gate — DONE 2026-07-28
 
 - `/portal` and all `/portal/*` paths resolve before CRM import to an independent
@@ -16,7 +44,8 @@
   checks pass 160/160; lint and build pass.
 - Secret/PII/direct-data scans found zero indicators. QA, production, Supabase,
   Auth, Edge, Storage, WordPress and SiteGround writes are zero.
-- CP-3A is `DONE`; CP-3B.1 is next and has not started.
+- CP-3A is `DONE`; CP-3B.0 source/local proof is the completed corrective
+  boundary and CP-3B.1 remains blocked until its QA application.
 - Evidence:
   [client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md](client-portal/CP3A_PORTAL_UI_FOUNDATION_20260728.md).
 

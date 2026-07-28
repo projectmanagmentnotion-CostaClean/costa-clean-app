@@ -2,7 +2,8 @@
 
 Date: 2026-07-28
 
-Status: CP-3A `DONE`; CP-3B.1 is the next gate; later gates are `NOT STARTED`
+Status: CP-3A `DONE`; CP-3B.0 source/local proof `DONE`; CP-3B.1
+`BLOCKED_PENDING_CP3B0_QA`; later gates are `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -36,16 +37,35 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Any need for schema/Auth/Edge writes, ambiguous route ownership, CRM regression, secret exposure or failed isolation test. |
 | Closeout documentation | [`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md); route/state inventory, runtime evidence, risks and exact next gate recorded. |
 | Expected commit | `feat: establish client portal UI and auth boundary` |
-| Next gate | CP-3B.1 |
+| Next gate | CP-3B.0 QA application under a separate exact authorization |
+
+## CP-3B.0 — Self access context backend contract
+
+| Field | Specification |
+|---|---|
+| Status | `DONE — source/local disposable proof only`; QA application `NOT AUTHORIZED` |
+| Objective | Resolve the authenticated caller's own portal access state without a browser-provided `user_id` or prior `client_id`. |
+| User outcome | No portal UI change yet; CP-3B.1 receives a narrow backend contract for active, multi-client, pending, suspended, revoked and no-access states after QA deployment. |
+| Dependencies | CP-3A closed; CP-2B frozen boundary present; original bootstrap block reproduced. |
+| Agents | Planning `implementation-planner`; implementation/review `supabase-guardian`, `security-privacy-auditor`, `qa-e2e-specialist`; independent reviewer `pr-quality-gate`. |
+| In scope | One forward-only zero-parameter RPC, source tests, disposable PostgreSQL proof, immutable manifest and read-only QA plan/preflight. |
+| Out of scope | Frontend, QA apply, production, Auth users, email/metadata tenancy, Edge, Storage, RLS/policy/table-grant changes and migration history. |
+| Acceptance | `auth.uid()` is the only identity; active memberships are minimal and ordered; inactive identifiers are hidden; anon denied; authenticated granted; no PII/write. |
+| Validations | Original-block reproduction, six-state/cross-user/multi-client matrix, rollback/reapply, zero residue, full test/lint/build and hash/security review. |
+| Rollback | Local proof drops only `portal_resolve_self_access_context()` and proves reapply; remote rollback requires a future private backup and exact gate. |
+| Stop conditions | Hash/target mismatch, CP-2B drift, need for email/metadata/client parameter, PII, policy/table grant change, remote write or failed isolation. |
+| Evidence | [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md) and [`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md). |
+| Expected commit | `security: add self-resolving portal access context` |
+| Next gate | CP-3B.0 exact QA application; only after it passes may CP-3B.1 resume |
 
 ## CP-3B.1 — Authentication and access lifecycle
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `BLOCKED_PENDING_CP3B0_QA` |
 | Objective | Implement the portal Auth lifecycle against narrow CP-2B boundaries. |
 | User outcome | Clients can log in, recover/change passwords, handle expiry and receive safe pending, invitation, suspended or revoked outcomes. |
-| Dependencies | CP-3A closed; approved Auth DTOs; invitation/recovery URLs and anti-enumeration copy defined; QA writes separately authorized if required. |
+| Dependencies | CP-3A closed; CP-3B.0 deployed and proven in QA under a separate exact authorization; approved Auth DTOs; invitation/recovery URLs and anti-enumeration copy defined. |
 | Agents | Primary `senior-fullstack-builder`; specialists `security-privacy-auditor`, `qa-e2e-specialist`, `supabase-guardian` read-only; reviewer `pr-quality-gate`. |
 | In scope | Login, logout, recovery, password change, session expiry, pending review, invitation token handling, suspended/revoked states and anti-enumeration. |
 | Out of scope | Public self-approval, email-to-client linkage, MFA enforcement, production users, membership administration and email provider delivery. |

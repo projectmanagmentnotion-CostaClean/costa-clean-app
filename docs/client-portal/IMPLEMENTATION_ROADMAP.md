@@ -1,22 +1,23 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-28
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A complete; CP-3B.1 is next
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0 source complete; CP-3B.1 blocked pending CP-3B.0 QA
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **60% complete / 40% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.1 — Authentication and access lifecycle**.
+- Next gate: **CP-3B.0 QA application — separately authorized**.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
   [`AGENT_EXECUTION_MATRIX.md`](./AGENT_EXECUTION_MATRIX.md).
 
-CP-3A is closed with local source and visible-browser evidence. No real portal
-authentication or remote UI integration has started. This document remains the
-canonical status roadmap; the detailed roadmap expands it without changing its
-authority.
+CP-3A is closed with local source and visible-browser evidence. CP-3B.0 closes
+the self-context source contract and disposable proof only; it is not deployed.
+No real portal authentication or remote UI integration has started. This
+document remains the canonical status roadmap; the detailed roadmap expands it
+without changing its authority.
 
 ## CP-0 — Discovery
 
@@ -136,14 +137,20 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A DONE; CP-3B.1 NEXT`
+Status: `IN PROGRESS — CP-3A DONE; CP-3B.0 SOURCE DONE; CP-3B.1 BLOCKED`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
   machine, responsive shell, base pages and development-only synthetic preview;
   remote writes `0`.
-- **CP-3B.1 — Authentication and access lifecycle:** login, recovery, session,
-  invitations, review/suspension/revocation and anti-enumeration.
+- **CP-3B.0 — Self access context backend contract:**
+  `DONE — source/local disposable proof only`. Zero-parameter `auth.uid()`
+  contract, six deterministic states, multi-client selection, minimal DTO,
+  grants and rollback/reapply are locally proven. QA application is
+  `NOT AUTHORIZED`.
+- **CP-3B.1 — Authentication and access lifecycle:**
+  `BLOCKED_PENDING_CP3B0_QA`; login, recovery, session, invitations,
+  review/suspension/revocation and anti-enumeration remain unimplemented.
 - **CP-3B.2 — Profile and properties:** account context, read models and reviewed
   change requests without canonical-table writes.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
@@ -163,6 +170,11 @@ No production release is part of CP-3.
 
 CP-3A evidence:
 [`CP3A_PORTAL_UI_FOUNDATION_20260728.md`](./CP3A_PORTAL_UI_FOUNDATION_20260728.md).
+
+CP-3B.0 evidence:
+[`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)
+and
+[`CP3B0_EXACT_QA_AUTHORIZATION.md`](./CP3B0_EXACT_QA_AUTHORIZATION.md).
 
 ## CP-4 — Public website and legal integration
 

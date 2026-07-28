@@ -1,5 +1,30 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3B.0 self access context source contract
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: source-only PostgreSQL security contract and local disposable proof
+- resumen: adds a zero-parameter `auth.uid()` self-context RPC so the future
+  portal Auth bootstrap can resolve active, multi-client, pending, suspended,
+  revoked and no-access states without email, metadata or a browser-provided
+  client identifier
+- validación: original block reproduction; PostgreSQL 17.10 synthetic
+  authorization matrix; admin/member, cross-user and multi-client cases;
+  grants/search-path/security-definer review; rollback/reapply; zero residue;
+  full suite, agent validation, lint and build at closeout
+- seguridad: minimal active-membership DTO; suspended/revoked identifiers
+  hidden; PII returned `0`; no dynamic SQL, writes, audit event, policy or table
+  grant change
+- remoto: QA writes `0`; production writes `0`; Auth users, Edge deploys,
+  Storage mutations and migration-history writes `0`
+- estado: CP-3B.0 source/local proof `DONE`; QA application `NOT AUTHORIZED`;
+  CP-3B.1 `BLOCKED_PENDING_CP3B0_QA`; CP-3B.2 `NOT STARTED`
+- evidencia:
+  [client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md](client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)
+  and
+  [client-portal/CP3B0_EXACT_QA_AUTHORIZATION.md](client-portal/CP3B0_EXACT_QA_AUTHORIZATION.md)
+
 ## 2026-07-28 — Client portal CP-3A isolated UI/Auth boundary
 
 - fecha: 2026-07-28

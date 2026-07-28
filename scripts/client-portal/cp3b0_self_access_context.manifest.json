@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "gate": "CP-3B.0",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B0-QA-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "fa1d62dfd414b6fb66ac4cbaf3232a3fc3368b08",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728120000_portal_self_access_context.sql",
+  "migrationSha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731",
+  "cp2bMigrationSha256": "ea10b4b3db30f6b27f60cd8fff6c8a7c711636e1d6ac439337966f5736cc6277",
+  "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
+  "artifacts": [
+    {
+      "path": "supabase/migrations/20260728120000_portal_self_access_context.sql",
+      "sha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b0-local-proof.mjs",
+      "sha256": "2f7bfd96ea6a71b9d8d248eaf534f30f0d1d39fd2443b9fa3f805232a560bad3"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b0-qa.mjs",
+      "sha256": "40ee3ebe3d67553594a18c200f0431983c109bc10d1ee61f9e3b70ae8aedb0b6"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0SelfAccessContext.test.mjs",
+      "sha256": "b2983599fa863041d4f912e38ba2cbefe41c026f0fccc46b732501d9eee93a9e"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0_reproduce_block.sql",
+      "sha256": "f1f3033ded21857e462ffd06cd5fbbdc57d22eb99cb2231a948bcaeaa9fcd257"
+    },
+    {
+      "path": "scripts/client-portal/cp3b0_self_access_context_matrix.sql",
+      "sha256": "526a343ad84b8b68e04f4f8bd1f786f124a227d0f0c9668130004f1cc216018d"
+    },
+    {
+      "path": "docs/client-portal/CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md",
+      "sha256": "de618a180b2088aedeaddb5b834f4d9a0fda27ea4b53912ce0db2d9e8d27643b"
+    },
+    {
+      "path": "docs/client-portal/CP3B0_EXACT_QA_AUTHORIZATION.md",
+      "sha256": "1095ec05f2c4b7f423a267bf340e533ee8196f6850ac2e5694d95345f2c3d324"
+    },
+    {
+      "path": "package.json",
+      "sha256": "1a421cb5ca25c7168648b268e35613dfbef3962b9a8654ecb4b3a7e8177c8c04"
+    }
+  ],
+  "allowedCommands": [
+    "npm run qa:client-portal:cp3b0-proof",
+    "npm run qa:client-portal:cp3b0-plan",
+    "npm run qa:client-portal:cp3b0-preflight"
+  ],
+  "remoteApplyCommandIncluded": false,
+  "expectedRemoteEffectsIfLaterAuthorized": {
+    "functionsCreated": 1,
+    "tableRowsChanged": 0,
+    "policiesChanged": 0,
+    "tableGrantsChanged": 0,
+    "authUsersChanged": 0,
+    "edgeFunctionsChanged": 0,
+    "storageObjectsChanged": 0,
+    "migrationHistoryRowsChanged": 0
+  }
+}

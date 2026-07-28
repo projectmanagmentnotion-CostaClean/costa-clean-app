@@ -1,0 +1,114 @@
+{
+  "version": 1,
+  "gate": "CP-3B.2A",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B2A-QA-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "bbdf32720b7e1a97d2e03a35f75b209af6fafbb9",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+  "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
+  "executeAlias": false,
+  "frozen": {
+    "cp2bMigrationSha256": "ea10b4b3db30f6b27f60cd8fff6c8a7c711636e1d6ac439337966f5736cc6277",
+    "cp3b0MigrationSha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731",
+    "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
+    "cp3b0ManifestSha256": "a0ca32d9f8016b69b4907f25e02ffb8994e4b3610f0fcaf51168ed94f7c912bf"
+  },
+  "functions": [
+    "portal_submit_profile_change_request_v2",
+    "portal_submit_property_change_request_v2",
+    "portal_list_own_profile_change_requests_v2",
+    "portal_list_own_property_change_requests_v2"
+  ],
+  "privateFunctions": [
+    "portal_private.normalize_profile_change_v2(jsonb)",
+    "portal_private.normalize_property_change_v2(jsonb)",
+    "portal_private.reviewed_change_receipt_v2(text,text,timestamptz,jsonb,text)"
+  ],
+  "columns": [
+    "public.client_portal_profile_change_requests.idempotency_key",
+    "public.client_portal_profile_change_requests.public_reference",
+    "public.client_portal_property_change_requests.idempotency_key",
+    "public.client_portal_property_change_requests.public_reference"
+  ],
+  "indexes": [
+    "client_portal_profile_change_v2_idempotency_uidx",
+    "client_portal_property_change_v2_idempotency_uidx",
+    "client_portal_profile_change_v2_public_reference_uidx",
+    "client_portal_property_change_v2_public_reference_uidx"
+  ],
+  "artifacts": [
+    {
+      "path": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+      "sha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-local-proof.mjs",
+      "sha256": "9ffbba1d223beee72c99ea02bd44beb366d0ffc2195e768b86c9e1f60d59cb25"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_reviewed_change_matrix.sql",
+      "sha256": "72fdcadd689c07348de9d66aa122c8020bde601f07222467de899ad3d757b275"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_reproduce_contract_gap.sql",
+      "sha256": "b8c65aee05bbaa35d4baf0459a8c0c8b5b968d987fea2014325a8f24c8902ddc"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aReviewedChangeContract.test.mjs",
+      "sha256": "24274c04185a18c20f1969f8f7182533e396c24eb4888f37ee1b49065f396079"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-qa.mjs",
+      "sha256": "807b8d41dd0d9f93f27ec07fced14329def27e09fb937762b6b1ac5a47b42843"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md",
+      "sha256": "b3d2bf780075bb76370ae3a4ebc35d488a8ea9a2627644518b5cb3881e448400"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_FIELD_CONTRACT.md",
+      "sha256": "710e7d2a6265280a7c484d2b1608a906d536d6616c069046a755d5b85d1e7fbf"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION.md",
+      "sha256": "4907e6cea0ea8b22eefb544362885bac131d765b80ea79474c870cdcb2811368"
+    },
+    {
+      "path": "docs/client-portal/CP3B2_CONTRACT_MAP.md",
+      "sha256": "7c6b362c809a742e699540c12d135042cda66174f38b87b67c709a6e0eade224"
+    }
+  ],
+  "allowedCommands": [
+    "node scripts/client-portal/run-cp3b2a-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a-qa.mjs --plan",
+    "node scripts/client-portal/run-cp3b2a-qa.mjs --preflight"
+  ],
+  "expectedRemoteEffectsIfLaterAuthorized": {
+    "nullableColumnsAdded": 4,
+    "formatConstraintsAdded": 2,
+    "partialUniqueIndexesAdded": 4,
+    "privateFunctionsAdded": 3,
+    "publicFunctionsAdded": 4,
+    "broadCustomerPoliciesRemoved": 2,
+    "legacyServiceRoleExecuteGrantsRemoved": 2,
+    "historicalRowsChanged": 0,
+    "authUsersChanged": 0,
+    "canonicalClientRowsChanged": 0,
+    "canonicalPropertyRowsChanged": 0,
+    "edgeFunctionsChanged": 0,
+    "storageObjectsChanged": 0,
+    "migrationHistoryRowsChangedByMigration": 0
+  },
+  "rollbackContract": {
+    "precondition": "zero V2 rows",
+    "publicFunctionsDropped": 4,
+    "privateFunctionsDropped": 3,
+    "customerPoliciesRestored": 2,
+    "legacyServiceRoleGrantsRestored": 2,
+    "indexesDropped": 4,
+    "constraintsDropped": 2,
+    "columnsDropped": 4
+  }
+}

@@ -1,5 +1,24 @@
 # App Quality Gates
 
+## Client Portal CP-3B.2A Reviewed Change Contract — DONE 2026-07-28
+
+- A forward-only, not-applied migration defines four authenticated-only,
+  requester-scoped RPCs with strict allowlists, eligible-property checks,
+  persisted opaque receipts and atomic idempotency.
+- PostgreSQL 17 proves the original gap, security/tenancy matrix, identical
+  concurrent retry, one-row/one-audit cardinality, rollback, reapply and zero
+  fixture residue.
+- The two broad customer request-table policies are removed in the prepared
+  migration; internal-staff policies remain. Legacy non-idempotent service
+  grants are revoked so the deployed old Edge path fails closed.
+- QA preflight is read-only with rollback. QA/production writes and
+  Auth/Edge/Storage/history/canonical writes are zero.
+- CP-3B.2A source/local/preflight is `DONE`; QA application is
+  `NOT_AUTHORIZED`; CP-3B.2 is `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 is
+  `NOT_STARTED`.
+- Evidence:
+  [client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md](client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md).
+
 ## Client Portal CP-3B.1 Auth Lifecycle Gate — DONE 2026-07-28
 
 - `/portal` uses an isolated PKCE Supabase Auth client, ordered Auth-event

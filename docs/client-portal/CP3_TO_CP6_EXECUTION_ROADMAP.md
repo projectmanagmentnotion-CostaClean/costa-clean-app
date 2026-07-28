@@ -2,8 +2,9 @@
 
 Date: 2026-07-28
 
-Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application and CP-3B.1
-`DONE`; CP-3B.2 and later gates are `NOT STARTED`
+Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1 and
+CP-3B.2A source/local/read-only preflight `DONE`; CP-3B.2
+`BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 and later gates `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -111,16 +112,27 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Unexpected Auth mutation, cross-client access, token in logs, redirect escape, missing cleanup authority or production identity. |
 | Closeout documentation | [`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md); Auth/runtime boundary, negative matrix, visible QA, limitations, zero remote effects, MFA debt and next gate. |
 | Expected commit | `feat: connect client portal authentication lifecycle` |
-| Next gate | CP-3B.2 |
+| Next gate | CP-3B.2A source package, subsequently completed; current next gate is its separately authorized QA application. |
+
+## CP-3B.2A — Backend reviewed change request contract
+
+| Field | Specification |
+|---|---|
+| Status | `DONE — SOURCE/LOCAL PROOF AND QA READ-ONLY PREFLIGHT`; QA application `NOT_AUTHORIZED` |
+| Objective | Freeze idempotent requester-only profile/property correction submits and minimized own-status lists. |
+| Evidence | Forward-only migration; PostgreSQL 17 gap/security/concurrency/rollback/reapply proof; sanitized QA read-only preflight; frozen manifest. |
+| Security | `auth.uid()` only; active verified membership; strict allowlists; eligible properties; persisted opaque receipts; broad customer request-table policies removed; legacy non-idempotent Edge path fails closed. |
+| Remote effects | QA writes `0`; production writes `0`; Auth/Edge/Storage/history/canonical writes `0`. |
+| Next gate | Separately authorized CP-3B.2A QA application. |
 
 ## CP-3B.2 — Profile and properties
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `BLOCKED_PENDING_CP3B2A_QA` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
-| Dependencies | CP-3B.1 closed; client-context/view contracts and reviewed-change workflow available. |
+| Dependencies | CP-3B.1 closed; CP-3B.2A source/local/preflight closed; reviewed-change migration still requires separately authorized QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
 | Agents | Primary `senior-fullstack-builder`; specialists `frontend-ux-accessibility`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |

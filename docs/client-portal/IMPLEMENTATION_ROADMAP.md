@@ -1,13 +1,13 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-28
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application and CP-3B.1 complete; CP-3B.2 not started
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1 and CP-3B.2A source package complete; CP-3B.2 blocked pending CP-3B.2A QA
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2 — profile and properties**.
+- Next gate: **CP-3B.2A QA application**, requiring separate exact authorization.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -21,8 +21,16 @@ passed independent post-application checks with no other remote change. No real
 portal QA identity was created. CP-3B.1 now closes the local Auth lifecycle,
 strict self-context consumption and visible synthetic UI proof without remote
 writes; live real-identity E2E remains reserved for separately authorized
-CP-3C.1/CP-3C.2. This document remains the canonical status roadmap; the
+CP-3C.1/CP-3C.2. CP-3B.2A now closes the reviewed-change source contract with
+PostgreSQL 17 proof and a QA read-only preflight. Its QA application is not
+authorized, so CP-3B.2 remains blocked and CP-3B.3 has not started. This
+document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
+
+CP-3B.2A QA application is the next executable gate, but it is not the entire
+CP-3B.2 Definition of Ready. Customer-safe canonical status mapping and opaque
+profile/property identifier handling remain to be approved before frontend
+implementation.
 
 ## CP-0 — Discovery
 
@@ -142,7 +150,7 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1 DONE; CP-3B.2 NOT_STARTED`
+Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/CP-3B.2A SOURCE DONE; CP-3B.2 BLOCKED_PENDING_CP3B2A_QA`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
@@ -166,8 +174,13 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1 D
   pending/suspended/revoked/without-access outcomes and iPhone-first UI are
   proven. Complete invitations, remote users and real-identity E2E remain
   outside this gate.
-- **CP-3B.2 — Profile and properties:** account context, read models and reviewed
-  change requests without canonical-table writes.
+- **CP-3B.2A — Reviewed change backend contract:**
+  `DONE — SOURCE/LOCAL PROOF AND QA READ-ONLY PREFLIGHT`; QA application
+  `NOT_AUTHORIZED`.
+- **CP-3B.2 — Profile and properties:**
+  `BLOCKED_PENDING_CP3B2A_QA`; account context, read models and reviewed change
+  requests without canonical-table writes. After QA application, freeze
+  customer-safe canonical status and opaque-ID mappings before implementation.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
   cancellation, idempotency and explicit feedback.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and

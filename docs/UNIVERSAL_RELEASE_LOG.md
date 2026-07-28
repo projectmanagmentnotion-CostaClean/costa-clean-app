@@ -1,5 +1,26 @@
 # Universal Release Log
 
+## 2026-07-28 — Client portal CP-3B.2A reviewed change source contract
+
+- fecha: 2026-07-28
+- proyecto: Costa Clean Client Portal
+- tipo: source-only PostgreSQL security contract and QA read-only preflight
+- resumen: adds prepared idempotent profile/property correction contracts,
+  persisted opaque receipts and requester-only minimized status lists
+- validación: frozen-gap reproduction; PostgreSQL 17 security, payload,
+  eligibility, idempotency, concurrency, list, rollback/reapply and zero-residue
+  proof; QA read-only catalog preflight; full regression
+- seguridad: `auth.uid()` tenancy, verified active membership, archived/deleted
+  denial, broad customer table-policy removal and legacy Edge fail-closed grant
+  revocation
+- remoto: QA/production writes, Auth users, Edge/Storage/history/canonical writes
+  `0`; WordPress and SiteGround untouched
+- estado: CP-3B.2A `DONE — SOURCE/LOCAL PROOF AND QA READ-ONLY PREFLIGHT`; QA
+  application `NOT_AUTHORIZED`; CP-3B.2 `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3
+  `NOT_STARTED`
+- evidencia:
+  [client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md](client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md)
+
 ## 2026-07-28 — Client portal CP-3B.1 authentication lifecycle
 
 - fecha: 2026-07-28

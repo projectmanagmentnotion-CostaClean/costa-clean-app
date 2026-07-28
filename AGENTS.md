@@ -95,3 +95,32 @@ Before closing, the agent must confirm:
 - git diff is reviewable
 - commit is created
 - push is completed
+
+## Project Agent Routing
+
+Project agents are selected manually. They remain subordinate to this file and
+must read the mandatory documents above before acting.
+
+| Need | Project agent |
+|---|---|
+| continue the project | `project-continuation` |
+| plan a gate | `implementation-planner` |
+| implement an approved slice | `senior-fullstack-builder` |
+| diagnose a reproducible bug | `bug-root-cause-investigator` |
+| QA or E2E | `qa-e2e-specialist` |
+| independent PR gate | `pr-quality-gate` |
+| security and privacy | `security-privacy-auditor` |
+| documentation and roadmap | `documentation-roadmap` |
+| Supabase | `supabase-guardian` |
+| economic and fiscal rules | `business-rules-test-engineer` |
+| UX and accessibility | `frontend-ux-accessibility` |
+| GSAP and performance | `performance-gsap-motion` |
+| public SEO | `seo-local-structured-data` |
+| release and deployment | `release-deployment-guardian` |
+| enterprise agent architecture | `enterprise-agent-architect` |
+
+- No agent replaces or weakens `AGENTS.md`.
+- Invocation remains manual; automatic model invocation is disabled.
+- The implementer never approves its own work.
+- Production access is prohibited by default.
+- Remote Supabase work requires a separate exact human authorization gate.

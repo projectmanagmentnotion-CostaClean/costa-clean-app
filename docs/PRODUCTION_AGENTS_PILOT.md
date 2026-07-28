@@ -74,3 +74,19 @@ Usar `pr-quality-gate` sobre el PR resultante de cualquier piloto. El agente que
 ## Rollback
 
 Eliminar mediante PR los archivos instalados en `.github/agents/` y este documento. No hay cambios de runtime que revertir.
+
+## Promotion to Full Costa Clean Project Pack
+
+- Fecha de promoción: 2026-07-28.
+- Fuente fijada: `projectmanagmentnotion-CostaClean/production-agents`.
+- Nuevo commit fuente exacto: `e08e4fdd77a3d1672dad51cebabf03e5e67196d0`.
+- Resultado: piloto promovido a pack completo de 15 agentes.
+- Selección: exclusivamente manual; `disable-model-invocation: true`.
+- Autoridad: `AGENTS.md` sigue siendo la autoridad principal.
+- Validación estructural: `npm run qa:agents`.
+- Runtime: sin cambios.
+- Supabase/Auth/Storage/Edge: sin cambios.
+- Despliegues: ninguno.
+- Rollback: PR que elimine los diez perfiles añadidos, restaure el manifiesto
+  previo y retire el tooling/documentación del pack; no existe runtime que
+  revertir.

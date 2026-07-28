@@ -1,7 +1,20 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-07-27
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B complete; CP-3 not started
+Date: 2026-07-28
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B complete; CP-3 through CP-6 not started
+
+## Progress and execution authority
+
+- Weighted scope estimate: approximately **55% complete / 45% remaining**.
+- This is a scope-weighted orientation, not an hours or delivery-date estimate.
+- Next gate: **CP-3A — Portal UI foundation**.
+- Detailed executable sequence:
+  [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
+- Agent permissions and separation of duties:
+  [`AGENT_EXECUTION_MATRIX.md`](./AGENT_EXECUTION_MATRIX.md).
+
+No CP-3 implementation has started. This document remains the canonical status
+roadmap; the detailed roadmap expands it without changing its authority.
 
 ## CP-0 — Discovery
 
@@ -123,51 +136,64 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 Status: `NOT STARTED`
 
-- dedicated `/portal` route guard and shell;
-- invitation, pending registration, login, recovery, logout, session/security and MFA readiness;
-- dashboard, profile, properties, services, requests and invoices;
-- layered privacy and versioned terms acceptance;
-- accessible StepFlows and explicit states;
-- mobile/iPad/desktop visible QA;
-- no production release.
+- **CP-3A — Portal UI foundation:** isolated `/portal` bootstrap, typed adapters,
+  Auth state machine, responsive shell and local preview with zero remote writes.
+- **CP-3B.1 — Authentication and access lifecycle:** login, recovery, session,
+  invitations, review/suspension/revocation and anti-enumeration.
+- **CP-3B.2 — Profile and properties:** account context, read models and reviewed
+  change requests without canonical-table writes.
+- **CP-3B.3 — Services and requests:** real pending-review request workflow,
+  cancellation, idempotency and explicit feedback.
+- **CP-3B.4 — Invoices and private documents:** read-only financial states and
+  private 60-second signed downloads.
+- **CP-3B.5 — Members, security and legal acceptance:** client roles,
+  invitations/revocation, account security, versioned terms and layered privacy.
+- **CP-3C.1 — Controlled QA identities and fixtures:** separately authorized,
+  synthetic, exact-cleanup dataset.
+- **CP-3C.2 — End-to-end authorization QA:** positive and negative journeys,
+  cross-client isolation, expiry and cleanup.
+- **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
+  keyboard, screen readers, reduced motion and Web Vitals.
+
+No production release is part of CP-3.
 
 ## CP-4 — Public website and legal integration
 
-Status: not opened
+Status: `NOT STARTED`
 
-- establish WordPress source/backup/change workflow;
-- add `Área de clientes` link only to canonical portal URL;
-- update legal notice, privacy, cookies, portal terms and service conditions;
-- add first layers to every WPForms/portal collection point;
-- separate marketing/cookie/contract/privacy controls;
-- test Complianz prior blocking and actual trackers;
-- maintain `pending professional legal approval` until review is recorded.
+- **CP-4.1 — WordPress source and deployment prerequisite:** export, backup,
+  ownership, staging and rollback before any edit.
+- **CP-4.2 — Public website and legal integration:** canonical client-area link,
+  legal surfaces, first layers and separated privacy/contract/marketing/cookie
+  controls, with professional legal review still pending.
+- **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,
+  domain authentication, rate limits, audit, safe logs, fallback and monitoring.
 
 No website form may auto-create/link a CRM client.
 
 ## CP-5 — Production security release
 
-Status: not opened
+Status: `NOT STARTED`
 
-- independent production authorization;
-- exact QA-proven hashes and rollback;
-- provider contracts/regions/subprocessors complete;
-- invite-only designated pilot;
-- negative isolation, document and request proof;
-- incident/support runbooks;
-- no invoice/payment/numbering writes.
+- **CP-5.1 — Production readiness gate:** independently authorized identity,
+  hashes, backup, rollback, secrets, observability, support and incident response.
+- **CP-5.2 — Restricted production pilot:** designated invite-only cohort, smoke
+  tests, monitoring and exact rollback; no public signup.
+- **CP-5.3 — Production stabilization:** errors, performance, accessibility,
+  support, metrics, documentation and closure of every P0/P1.
+
+No invoice, payment, fiscal-close or numbering write is authorized by CP-5.
 
 ## CP-6 — Final smoke and handoff
 
-Status: not opened
+Status: `NOT STARTED`
 
-- cross-client isolation and revocation;
-- invoice download expiry;
-- request-to-review workflow;
-- legal links/consent;
-- P0/P1 zero;
-- operational ROPA, retention, rights and breach handoff;
-- final roadmap closeout.
+- complete smoke and evidence package;
+- cross-client isolation, revocation, invoice expiry and request-review proof;
+- legal links and consent separation;
+- user and operations manuals plus support/incident runbooks;
+- explicit ROPA, retention, rights and breach ownership;
+- final debt, acceptance, P0/P1 closure and canonical roadmap closeout.
 
 ## Dependency order
 
@@ -178,8 +204,10 @@ internal staff trust split
   -> private document boundary
   -> two-client QA proof
   -> portal UI
+  -> QA authorization, accessibility and performance proof
   -> WordPress/legal integration
-  -> production pilot
+  -> production readiness and restricted pilot
+  -> stabilization and final handoff
 ```
 
 No downstream gate may run around a failed upstream security boundary.

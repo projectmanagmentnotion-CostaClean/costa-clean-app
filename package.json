@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "agent:continue": "node scripts/ops/run-project-continuation-agent.mjs",
+    "qa:agents": "node scripts/ops/validate-project-agents.mjs",
     "qa:migrations:local-proof": "node scripts/ops/run-local-migration-repair-proof.mjs",
     "qa:migrations:qa-metadata-repair": "node scripts/ops/run-qa-migration-metadata-repair.mjs --verify",
     "qa:migrations:production-metadata-repair": "node scripts/ops/run-production-migration-metadata-repair.mjs --verify",

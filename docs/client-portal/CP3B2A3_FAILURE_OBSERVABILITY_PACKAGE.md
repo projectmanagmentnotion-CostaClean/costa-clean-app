@@ -151,6 +151,10 @@ rate-limit table, whose deterministic digest follows its real composite key
 (`action`, `subject_hash`, `window_started_at`) rather than assuming a synthetic
 `id` column.
 
+The repository pins every manifest-bound V3 text artifact to LF in
+`.gitattributes`. This preserves the reviewed byte hashes on clean Windows and
+Linux checkouts without normalizing or weakening any V1/V2 artifact check.
+
 ## Authorization boundary
 
 The only future authorization ID is:

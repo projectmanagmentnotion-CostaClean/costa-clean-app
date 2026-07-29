@@ -15,11 +15,13 @@
   then passes a real local apply/failure/persist/reread/recovery path, followed
   by reapply, second postcheck/matrix and zero audit/rate residue.
 - Injected precheck/apply/postcheck/parser/timeout/matrix/residue/recovery
-  failures plus 28 targeted tests prove one apply, at most one recovery, zero
+  failures plus 29 targeted tests prove one apply, at most one recovery, zero
   retry, exact ledger pins, provisional success-report safety and public
   redaction.
 - The final QA read-only preflight covers the production-shaped composite
   rate-limit key and performs no remote writes.
+- All 11 manifest-bound V3 artifacts are pinned to LF so byte-exact hashes are
+  stable across Windows and Linux clean checkouts.
 - Original migration and all V1/V2 artifacts remain byte-for-byte frozen.
 - QA/production/Auth/Edge/Storage/history/canonical/frontend writes: `0`.
 - CP-3B.2A QA application V3 is

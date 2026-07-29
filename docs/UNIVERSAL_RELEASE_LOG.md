@@ -15,6 +15,8 @@
   audit/rate residue `PASS`
 - QA read-only closeout: validates the real composite key of
   `client_portal_rate_limits`; remote writes remain `0`
+- cross-platform manifest correction: all 11 V3 artifacts are pinned to LF so
+  a clean Windows checkout preserves the reviewed byte hashes
 - migración correctiva: none; frozen migration and V1/V2 bytes unchanged
 - efectos remotos: QA/production/Auth/Edge/Storage/history/canonical/frontend
   writes `0`

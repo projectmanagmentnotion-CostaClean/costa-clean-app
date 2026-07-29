@@ -3,8 +3,9 @@
 Date: 2026-07-29
 
 Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
-CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2
-`BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 and later gates `NOT STARTED`
+CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A.2
+`BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3 `DONE`; CP-3B.2
+`BLOCKED_PENDING_CP3B2A_QA_V3`; CP-3B.3 and later gates `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -112,7 +113,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Unexpected Auth mutation, cross-client access, token in logs, redirect escape, missing cleanup authority or production identity. |
 | Closeout documentation | [`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md); Auth/runtime boundary, negative matrix, visible QA, limitations, zero remote effects, MFA debt and next gate. |
 | Expected commit | `feat: connect client portal authentication lifecycle` |
-| Next gate | CP-3B.2A and CP-3B.2A.1, subsequently completed; current next gate is the separately authorized QA application V2. |
+| Next gate | CP-3B.2A and CP-3B.2A.1 completed; CP-3B.2A.2 remained blocked and CP-3B.2A.3 subsequently prepared the instrumented V3 package. |
 
 ## CP-3B.2A — Backend reviewed change request contract
 
@@ -129,7 +130,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `DONE`; QA application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION` |
+| Status | `DONE`; QA application V2 `BLOCKED_RECOVERED — SUPERSEDED` |
 | Objective | Freeze an exact QA-only application, exhaustive postcheck, transactional cross-client matrix and guarded recovery package for the reviewed-change migration. |
 | Evidence | Immutable V1/CP-3B.0/CP-2B chain; V2 manifest; PostgreSQL 17 apply/postcheck/matrix/rollback and simulated-failure recovery; live QA read-only preflight; verified eight-artifact private backup. |
 | Security | Exact QA database identity; production rejected; authorization and clean final HEAD required before effects; one apply path; no automatic retry; rollback rejects existing V2 rows. |
@@ -137,16 +138,44 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Backup note | The closeout preflight backup belongs to the starting HEAD and must be regenerated after this commit before any future exact authorization. |
 | Evidence files | [`CP3B2A1_QA_EXECUTION_PACKAGE.md`](./CP3B2A1_QA_EXECUTION_PACKAGE.md) and [`CP3B2A_EXACT_QA_AUTHORIZATION_V2.md`](./CP3B2A_EXACT_QA_AUTHORIZATION_V2.md). |
 | Expected commit | `security: prepare reviewed change QA application` |
-| Next gate | Separately authorized CP-3B.2A QA application V2; CP-3B.2 remains blocked. |
+| Next gate | CP-3B.2A.2 investigation remained blocked by missing remote detail; CP-3B.2A.3 subsequently completed the safe observability package without closing that uncertainty. |
+
+## CP-3B.2A.2 — QA failure investigation and V3 remediation
+
+| Field | Specification |
+|---|---|
+| Status | `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; V3 application `BLOCKED_NOT_AUTHORIZABLE` |
+| Objective | Demonstrate the V2 post-apply diagnostic failure and prepare an exact, one-shot V3 package without changing the frozen migration. |
+| Evidence | Sanitized private incident analysis; PostgreSQL 17 historical-row postcheck/matrix/recovery proof; V3 parser/transport/authorization regression tests; immutable V3 manifest. |
+| Root cause | V2 `catch {}` discarded the first failure and reduced the incident to a generic recovered error; the underlying remote SQL assertion is not recoverable and is not guessed, so the gate cannot close. |
+| Security | V1/V2 authorization rejected; exclusive HEAD-bound attempt ledger; exact per-object catalog checks; ambiguous-apply reconciliation; one recovery; zero automatic retry; no raw database output. |
+| Remote effects | QA reads only; QA writes `0`; production/Auth/Edge/Storage/history/canonical/frontend writes `0`. |
+| Evidence files | [`CP3B2A2_QA_FAILURE_ROOT_CAUSE.md`](./CP3B2A2_QA_FAILURE_ROOT_CAUSE.md); its draft remediation package was physically superseded by [`CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md`](./CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md) without unique-evidence loss. |
+| Expected commit | `security: prepare reviewed change QA application v3` |
+| Next gate | Exact-trigger evidence or explicit human gate redefinition; no V3 application is currently authorizable. |
+
+## CP-3B.2A.3 — V3 failure observability package
+
+| Field | Specification |
+|---|---|
+| Status | `DONE`; V3 application `READY_PENDING_EXPLICIT_V3_AUTHORIZATION` |
+| Objective | Prepare an instrumented one-shot V3 application without guessing the original remote trigger discarded by V2. |
+| Evidence | Verified immutable private failure envelope before recovery; SQLSTATE/parser/transport classification; stable assertion IDs; 27-test injected-failure matrix; PostgreSQL 17 extra-policy/grant-option rejection plus integrated apply/failure/persist/reread/recovery and reapply proof. |
+| Security | Non-injectable real executor, exact V3 authorization, QA-only target, frozen hash chain, exact complete-policy/ACL boundary, context-bound ledger, one recovery, zero retry and public redaction. |
+| Remaining uncertainty | `ORIGINAL_REMOTE_TRIGGER=UNKNOWN_PENDING_V3_EXECUTION`; only a separately authorized V3 execution can resolve it. |
+| Remote effects | QA reads only; QA/production/Auth/Edge/Storage/history/canonical/frontend writes `0`. |
+| Evidence files | [`CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md`](./CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md), [`CP3B2A2_QA_FAILURE_ROOT_CAUSE.md`](./CP3B2A2_QA_FAILURE_ROOT_CAUSE.md) and [`CP3B2A_EXACT_QA_AUTHORIZATION_V3.md`](./CP3B2A_EXACT_QA_AUTHORIZATION_V3.md). |
+| Expected commit | `security: preserve reviewed change QA failure diagnostics` |
+| Next gate | Separately authorized CP-3B.2A QA application V3; CP-3B.2 remains blocked. |
 
 ## CP-3B.2 — Profile and properties
 
 | Field | Specification |
 |---|---|
-| Status | `BLOCKED_PENDING_CP3B2A_QA` |
+| Status | `BLOCKED_PENDING_CP3B2A_QA_V3` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
-| Dependencies | CP-3B.1, CP-3B.2A and CP-3B.2A.1 closed; reviewed-change migration still requires separately authorized V2 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
+| Dependencies | CP-3B.1, CP-3B.2A and CP-3B.2A.1 are closed; CP-3B.2A.2 remains blocked/superseded by the completed CP-3B.2A.3 observability package. The reviewed-change migration still requires separately authorized V3 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
 | Agents | Primary `senior-fullstack-builder`; specialists `frontend-ux-accessibility`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |

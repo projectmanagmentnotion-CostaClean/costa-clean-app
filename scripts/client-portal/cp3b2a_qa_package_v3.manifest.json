@@ -1,0 +1,148 @@
+{
+  "version": 3,
+  "gate": "CP-3B.2A.3",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B2A-QA-V3-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "23071c1b3d5525e9642a71d9c1f05a04136b22a8",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+  "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
+  "correctiveMigrationRequired": false,
+  "v1ManifestSha256": "ac87b1bf7ed5410dc0ba6db5ca470584ee0a3aee59f6079c147c6c0db4d7e9f4",
+  "v1ArtifactCount": 10,
+  "v2ManifestSha256": "477797daddd92a5301d97c9abf02eafcf7b284e225e859dc103c9c350cb41484",
+  "v2ArtifactCount": 9,
+  "executeAlias": false,
+  "v2AuthorizationRejected": true,
+  "automaticRetries": 0,
+  "maximumApplyAttempts": 1,
+  "maximumRecoveryAttempts": 1,
+  "originalRemoteTrigger": "UNKNOWN_PENDING_V3_EXECUTION",
+  "preEffectOrder": [
+    "manifest_and_frozen_hashes",
+    "authorization_and_head",
+    "clean_main_worktree",
+    "private_backup_v3",
+    "local_qa_link",
+    "supabase_cli_qa_link",
+    "production_not_linked",
+    "postgres_live_read",
+    "postgres_qa_target",
+    "cp2b_cp3b0_prerequisites",
+    "reviewed_contract_absent",
+    "v3_synthetic_collision_check",
+    "exact_boundary_prestate",
+    "backup_matches_live_prestate",
+    "attempt_ledger_create",
+    "apply_started"
+  ],
+  "assertionIds": [
+    "V3-COLUMN-COUNT",
+    "V3-COLUMN-DEFINITION",
+    "V3-CONSTRAINT-DEFINITION",
+    "V3-INDEX-DEFINITION",
+    "V3-FUNCTION-SIGNATURE",
+    "V3-FUNCTION-OWNER",
+    "V3-FUNCTION-SEARCH-PATH",
+    "V3-FUNCTION-GRANTS",
+    "V3-FUNCTION-COMMENT",
+    "V3-POLICY-COUNT",
+    "V3-RLS-FORCE",
+    "V3-LEGACY-GRANT-COUNT",
+    "V3-HISTORICAL-DIGEST",
+    "V3-CANONICAL-DIGEST",
+    "V3-FINANCIAL-SEQUENCE-DIGEST",
+    "V3-AUTH-DIGEST",
+    "V3-MIGRATION-HISTORY-DIGEST"
+  ],
+  "failureEnvelopeContract": {
+    "version": 3,
+    "privateLocation": ".git/cp3b2a-private",
+    "persistedAndVerifiedBeforeRecovery": true,
+    "primaryFailureImmutable": true,
+    "recoveryFailureSeparate": true,
+    "processEvidencePrivateAndRedacted": true,
+    "publicFields": [
+      "stage",
+      "failureCode",
+      "failureCategory",
+      "assertionId",
+      "objectKind",
+      "expectedSummary",
+      "actualSummary",
+      "recoveryOutcome"
+    ],
+    "categories": [
+      "sql",
+      "assertion",
+      "parser",
+      "transport",
+      "timeout",
+      "unknown"
+    ]
+  },
+  "recoveryContract": {
+    "requiresConfirmedApply": true,
+    "ambiguousPresentOrPartialState": "MANUAL_VERIFICATION_REQUIRED",
+    "rowfulV2State": "MANUAL_VERIFICATION_REQUIRED",
+    "protectedAuditRateStateUnchanged": true,
+    "exactRecoveredBoundaryRequired": true,
+    "maximumAttempts": 1,
+    "automaticRetries": 0
+  },
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_precheck_v3.sql",
+      "sha256": "3cecbf4491a147a68f4c6394594e721001303d26d4df8a273dfd8807b2187ed6"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_postcheck_v3.sql",
+      "sha256": "5b59540c505806efa18e2e7001420c28f57bc85121c3161172122849d38328f9"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_matrix_v3.sql",
+      "sha256": "340862b537bd41a996cfa1b1b95bd98b4f305bbace96a918a474b110b4c8b673"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_rollback_v3.sql",
+      "sha256": "4d4fde53d23665cb420d3f814310b1ef76f14d4d0f913b0eed11a314cf753083"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-qa-v3.mjs",
+      "sha256": "005b241a8f14cdc66351fe31b06de0ecf0dfbfc4eeef2b11bb52319b1c4d492c"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a3-local-proof.mjs",
+      "sha256": "3f241af9e3817b95e1f968c85896271a99daf9cdae2a14037684b68e685fa43a"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aQaApplicationV3.test.mjs",
+      "sha256": "2cd1cd54f00a95cf49dca4578caffe035dc1ffa6a17daa8e7aa47207f0b838e0"
+    },
+    {
+      "path": "scripts/client-portal/analyze-cp3b2a-v2-incident.mjs",
+      "sha256": "84ef74d30440deccdfe5a919b6d32d7465b0a9a75bae959cd47bacd751518834"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A2_QA_FAILURE_ROOT_CAUSE.md",
+      "sha256": "63276ed5e4886bd41e437a74c5facbd53a12c776f4de33c34957db8b82b52945"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md",
+      "sha256": "0e6ed5da33a82f2ff628b89419ca90485d70325f1c654e835bf2ad9c45e7e7f6"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V3.md",
+      "sha256": "c264020caed2e59cb26e8f954a9eeec3701623e2d4b3253e7f1db8d36bfc70e7"
+    }
+  ],
+  "allowedCommandsDuringGate": [
+    "node scripts/client-portal/run-cp3b2a-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a1-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a3-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a-qa-v3.mjs --plan",
+    "node scripts/client-portal/run-cp3b2a-qa-v3.mjs --preflight"
+  ],
+  "prohibitedCommandDuringGate": "node scripts/client-portal/run-cp3b2a-qa-v3.mjs --execute"
+}

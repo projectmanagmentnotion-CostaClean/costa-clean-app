@@ -1,5 +1,55 @@
 # Universal Release Log
 
+## 2026-07-29 — Client portal CP-3B.2A.3 V3 failure observability package
+
+- tipo: local security source/proof and QA read-only preparation
+- estado: `PREPARED_NOT_AUTHORIZED`
+- root cause confirmada: `V2_RUNNER_OBSERVABILITY_DEFECT`
+- detonante remoto original: `UNKNOWN_PENDING_V3_EXECUTION`
+- corrección: verified private first-failure envelope, full redacted private
+  expected/actual, immutable primary snapshot, typed process/parser diagnostics,
+  complete policy/ACL boundary, exact ledger pins, one recovery and zero retry
+- PostgreSQL 17: rejects injected extra policy and grant-option drift with exact
+  expected/actual, then drives the V3 core through real local
+  apply/failure/persist/reread/recovery and reapply/second matrix with zero
+  audit/rate residue `PASS`
+- migración correctiva: none; frozen migration and V1/V2 bytes unchanged
+- efectos remotos: QA/production/Auth/Edge/Storage/history/canonical/frontend
+  writes `0`
+- autorización futura:
+  `CP3B2A-QA-V3-AUTHORIZATION-PENDING`
+- siguiente estado: V3
+  `READY_PENDING_EXPLICIT_V3_AUTHORIZATION`; CP-3B.2 blocked
+
+## 2026-07-29 — Client portal CP-3B.2A.2 blocked failure investigation
+
+- tipo: security investigation and QA execution-package remediation
+- entorno: local PostgreSQL 17 + Supabase QA read-only preflight
+- migración original:
+  `supabase/migrations/20260728160000_portal_reviewed_change_contract.sql`
+- SHA-256:
+  `4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544`
+- incidente V2: one apply, one recovery, zero retry; exact prestate restored;
+  V2 authorization exhausted
+- root cause demostrada: the V2 runner discarded the first post-apply
+  exception and retained only a generic recovered error
+- corrección: V3 runner diagnostics, typed parser, exact object postcheck,
+  historical-safe transactional matrix, exclusive HEAD-bound attempt ledger
+  and ambiguous-apply reconciliation
+- migración correctiva: none; V1/V2 and original migration unchanged
+- proof local: PostgreSQL 17 apply/postcheck, historical rows,
+  `PASS_ROLLED_BACK`, rowful rollback blocked, exact recovery, zero residue
+- autorización V3: `CP3B2A-QA-V3-AUTHORIZATION-PENDING`
+- efectos remotos: QA writes `0`; production/Auth/Edge/Storage/history/
+  canonical/frontend/WordPress/SiteGround writes `0`
+- blocker: V2 discarded the original SQL/parser/transport trigger; the exact
+  assertion/object/expected/actual required by the gate cannot be reconstructed
+  without a new remote effect, which this gate prohibits
+- independent review: `FAIL`; the draft is not committed or authorizable
+- estado: CP-3B.2A.2 `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; V3 application
+  `BLOCKED_NOT_AUTHORIZABLE`; CP-3B.2
+  `BLOCKED_PENDING_CP3B2A_QA_V3`; CP-3B.3 `NOT_STARTED`
+
 ## 2026-07-29 — Client portal CP-3B.2A.1 QA execution/recovery package
 
 - fecha: 2026-07-29

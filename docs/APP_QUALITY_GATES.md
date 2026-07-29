@@ -1,5 +1,49 @@
 # App Quality Gates
 
+## Client Portal CP-3B.2A.3 V3 Failure Observability Gate — DONE 2026-07-29
+
+- The demonstrated V2 runner observability defect is corrected without
+  asserting the unknown original remote trigger.
+- V3 is `PREPARED_NOT_AUTHORIZED` and requires a new exact authorization,
+  clean committed HEAD and fresh private backup before any future QA effect.
+- The private failure envelope is persisted and reread before recovery,
+  retains full redacted private expected/actual plus bounded digest-bearing
+  public summaries, enforces primary-failure immutability, and keeps recovery
+  failure separate.
+- PostgreSQL 17 passes apply, exact complete-policy/ACL postcheck, rejection of
+  an extra permissive policy, historical-safe matrix and recovery. The V3 core
+  then passes a real local apply/failure/persist/reread/recovery path, followed
+  by reapply, second postcheck/matrix and zero audit/rate residue.
+- Injected precheck/apply/postcheck/parser/timeout/matrix/residue/recovery
+  failures plus 27 targeted tests prove one apply, at most one recovery, zero
+  retry, exact ledger pins, provisional success-report safety and public
+  redaction.
+- Original migration and all V1/V2 artifacts remain byte-for-byte frozen.
+- QA/production/Auth/Edge/Storage/history/canonical/frontend writes: `0`.
+- CP-3B.2A QA application V3 is
+  `READY_PENDING_EXPLICIT_V3_AUTHORIZATION`; CP-3B.2 remains blocked.
+
+## Client Portal CP-3B.2A.2 QA Failure/V3 Remediation Gate — BLOCKED 2026-07-29
+
+- The single authorized V2 application failed after apply and recovered once;
+  its exact prestate is restored and its authorization is exhausted.
+- Sanitized incident analysis proves the V2 runner discarded the original
+  exception in `catch {}` and retained no database-level assertion. This
+  prevents the exact-trigger requirement from being satisfied.
+- No migration defect is demonstrated and no corrective migration is created;
+  the original migration and all V1/V2 artifacts remain byte-for-byte frozen.
+- V3 records exact stage/assertion diagnostics, rejects V1/V2 authorization,
+  creates one exclusive HEAD-bound attempt ledger and reconciles ambiguous
+  apply outcomes before one guarded recovery.
+- PostgreSQL 17 proves historical rows, exact postcheck, run-scoped
+  `PASS_ROLLED_BACK` matrix, rowful rollback denial, exact recovery, zero retry
+  and zero remote contact.
+- The draft V3 application is `BLOCKED_NOT_AUTHORIZABLE`; CP-3B.2 is
+  `BLOCKED_PENDING_CP3B2A_QA_V3`; CP-3B.3 is `NOT_STARTED`.
+- Independent security and PR review correctly rejected a DONE/READY closeout.
+- QA/production/Auth/Edge/Storage/history/canonical/frontend writes in this
+  gate: `0`.
+
 ## Client Portal CP-3B.2A.1 QA Execution/Recovery Package Gate — DONE 2026-07-29
 
 - A separate V2 package freezes the CP-3B.2A V1, CP-3B.0 and CP-2B V5
@@ -16,12 +60,12 @@
   Auth/Edge/Storage/history/canonical writes are `0`.
 - Full regression passes: 71 test files, 431 tests plus 4 skipped;
   `qa:agents` 160/160; lint and build.
-- The preflight backup belongs to the starting HEAD and cannot authorize the
-  closeout commit; future execution requires a fresh backup and exact human V2
-  authorization for the final clean local/remote HEAD.
-- CP-3B.2A.1 is `DONE`; QA application is
-  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.2 is
-  `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 is `NOT_STARTED`.
+- The later exact V2 authorization was consumed once. Application failed after
+  apply, guarded recovery restored prestate, and V2 is now
+  `BLOCKED_RECOVERED — SUPERSEDED`; it must never be retried.
+- CP-3B.2A.1 remains `DONE`; its V2 application is superseded by the
+  CP-3B.2A.2 V3 package. CP-3B.2 is
+  `BLOCKED_PENDING_CP3B2A_QA_V3`; CP-3B.3 is `NOT_STARTED`.
 - Evidence:
   [client-portal/CP3B2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP3B2A1_QA_EXECUTION_PACKAGE.md).
 

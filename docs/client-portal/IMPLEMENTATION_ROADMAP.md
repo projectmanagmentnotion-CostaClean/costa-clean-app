@@ -1,14 +1,14 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-07-29
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A and CP-3B.2A.1 complete; CP-3B.2 blocked pending CP-3B.2A QA application
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1 and CP-3B.2A.3 complete; CP-3B.2A.2 remains blocked by missing V2 detail
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2A QA application V2**, ready but requiring separate
-  exact authorization for the final committed HEAD and a fresh private backup.
+- Next gate: **CP-3B.2A QA application V3**, requiring a separate exact human
+  authorization for the final committed HEAD and fresh private backup.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -23,14 +23,19 @@ portal QA identity was created. CP-3B.1 now closes the local Auth lifecycle,
 strict self-context consumption and visible synthetic UI proof without remote
 writes; live real-identity E2E remains reserved for separately authorized
 CP-3C.1/CP-3C.2. CP-3B.2A closes the reviewed-change source contract.
-CP-3B.2A.1 now closes its V2 apply/postcheck/transactional-matrix/recovery
-package, disposable PostgreSQL 17 proof and QA read-only preflight. Its QA
-application is `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`, so CP-3B.2 remains
-blocked and CP-3B.3 has not started. This
+CP-3B.2A.1 closed its V2 apply/postcheck/transactional-matrix/recovery package.
+The authorized V2 application failed after apply, recovered once and restored
+the exact prestate; its authorization is exhausted. CP-3B.2A.2 demonstrates
+  that the V2 runner discarded the first failure. The exact remote trigger
+  remains unknowable from existing evidence, so CP-3B.2A.2 stays `BLOCKED`.
+  CP-3B.2A.3 closes the separately defined observability package without
+  guessing that trigger: V3 is `PREPARED_NOT_AUTHORIZED` and will retain the
+  instrumented first failure in a future exact execution. CP-3B.2 remains
+  blocked and CP-3B.3 has not started. This
 document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
 
-CP-3B.2A QA application V2 is the next executable gate, but it is not the entire
+CP-3B.2A QA application V3 is the next separately authorized gate. It is not the entire
 CP-3B.2 Definition of Ready. Customer-safe canonical status mapping and opaque
 profile/property identifier handling remain to be approved before frontend
 implementation.
@@ -153,7 +158,7 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/CP-3B.2A/CP-3B.2A.1 DONE; CP-3B.2 BLOCKED_PENDING_CP3B2A_QA`
+Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3 DONE; CP-3B.2A.2 BLOCKED; CP-3B.2 BLOCKED_PENDING_CP3B2A_QA_V3`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
@@ -182,10 +187,24 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3B.2A.1 — QA application execution and recovery package:**
   `DONE`; exact V2 plan/preflight, immutable dependency chain, HEAD-bound
   eight-artifact private backup, PostgreSQL 17 postcheck/matrix/recovery proof
-  and fail-closed future `--execute` are complete. QA application
-  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; remote writes `0`.
+  and fail-closed `--execute` are complete. Its one authorized QA application
+  is `BLOCKED_RECOVERED — SUPERSEDED`; V2 authorization is not reusable.
+- **CP-3B.2A.2 — QA failure investigation and V3 remediation:**
+  `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; the runner diagnostic-loss defect
+  is reproduced and a local V3 draft passes PostgreSQL 17, but the original
+  remote SQL/parser/transport assertion was discarded by V2 and cannot be
+  named without a newly authorized remote reproduction. V3 application is
+  `BLOCKED_NOT_AUTHORIZABLE`; QA writes in this gate `0`.
+- **CP-3B.2A.3 — V3 failure observability package:**
+  `DONE`; it preserves and verifies the primary failure before recovery,
+  enforces immutable primary versus separate recovery failure, classifies
+  SQL/parser/transport/timeout outcomes, verifies the complete target policy/ACL
+  set, and proves integrated PostgreSQL 17 persist/reread/recovery plus
+  reapply. It remains `PREPARED_NOT_AUTHORIZED`; the original remote trigger is
+  still `UNKNOWN_PENDING_V3_EXECUTION` and V3 QA application is
+  `READY_PENDING_EXPLICIT_V3_AUTHORIZATION`.
 - **CP-3B.2 — Profile and properties:**
-  `BLOCKED_PENDING_CP3B2A_QA`; account context, read models and reviewed change
+  `BLOCKED_PENDING_CP3B2A_QA_V3`; account context, read models and reviewed change
   requests without canonical-table writes. After QA application, freeze
   customer-safe canonical status and opaque-ID mappings before implementation.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,

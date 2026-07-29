@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "project": "Costa Clean Client Portal",
   "sourceRepository": "projectmanagmentnotion-CostaClean/production-agents",
-  "sourceCommit": "e08e4fdd77a3d1672dad51cebabf03e5e67196d0",
-  "installedAt": "2026-07-28",
-  "totalAgents": 15,
+  "sourceCommit": "01101e79240867c50cd7d9df1dd84cff5cbebd7d",
+  "installedAt": "2026-07-29",
+  "totalAgents": 16,
   "manualInvocation": true,
   "agents": [
     {
@@ -38,6 +38,17 @@
       "sha256": "c5127e707228f3e6288357e78acfccd227a04c9d347817ca03c5fbd0d6063d64",
       "primaryUse": "Design and audit mobile-first portal UI, complete states, responsive behavior, and accessibility.",
       "roadmapPhases": ["CP-3A", "CP-3B.2", "CP-3C.3", "CP-4.2", "CP-5.3"],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "senior-figma-mobile-first-auditor",
+      "category": "full-frontend-product-design-audit",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/senior-figma-mobile-first-auditor.agent.md",
+      "sha256": "cf78ed4af1e143e785a12eb35d40d259e6a2e34babab2ebd5d98aa297462d4e1",
+      "primaryUse": "Audit every discovered frontend surface mobile-first, define a calm premium visual system, adapt iPad and produce a safe implementation roadmap without changing business logic.",
+      "roadmapPhases": ["FULL-FRONTEND-AUDIT", "VISUAL-FOUNDATION", "MOBILE-FIRST-MODULES", "IPAD-DESKTOP-ADAPTATION", "FINAL-VISUAL-QA"],
       "independentReviewer": "pr-quality-gate"
     },
     {

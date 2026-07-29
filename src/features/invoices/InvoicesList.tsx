@@ -217,17 +217,18 @@ export function InvoicesList({
                 ) : undefined}
                 actions={[
                   {
-                    key: 'open',
-                    label: 'Abrir',
-                    tone: 'primary',
-                    onClick: () => onSelectInvoice(invoice),
-                  },
-                  {
                     key: 'document',
-                    label: 'Abrir documento',
+                    label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
+                    tone: 'primary',
                     onClick: () => onOpenDocument(invoice),
                   },
+                  {
+                    key: 'open',
+                    label: 'Abrir detalle',
+                    onClick: () => onSelectInvoice(invoice),
+                  },
                 ]}
+                compactVisibleSecondaryActionCount={1}
                 microhint={invoice.payment_status !== 'paid'
                   ? `Pendiente ${formatCurrency(invoice.outstanding_amount ?? invoice.total)}`
                   : 'Cobro cerrado'}

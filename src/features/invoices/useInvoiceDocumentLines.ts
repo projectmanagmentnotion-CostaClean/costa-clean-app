@@ -9,7 +9,7 @@ interface InvoiceDocumentLinesState {
 }
 
 function hasInvoiceLines(invoice: InvoiceListItem): boolean {
-  return Boolean(invoice.invoice_lines?.length)
+  return Boolean(invoice.lines?.length || invoice.invoice_lines?.length)
 }
 
 function sortInvoiceLines(lines: InvoiceLineItem[]): InvoiceLineItem[] {
@@ -67,7 +67,7 @@ export function useInvoiceDocumentLines(invoice: InvoiceListItem): InvoiceDocume
     if (hasInvoiceLines(invoice)) {
       return {
         ...invoice,
-        lines: sortInvoiceLines(invoice.invoice_lines ?? []),
+        lines: sortInvoiceLines(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []),
       }
     }
 

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const agentsDirectory = path.join(repositoryRoot, '.github', 'agents')
 const manifestPath = path.join(repositoryRoot, 'config', 'project-agents.json')
-const expectedSourceCommit = 'e08e4fdd77a3d1672dad51cebabf03e5e67196d0'
+const expectedSourceCommit = '01101e79240867c50cd7d9df1dd84cff5cbebd7d'
 const expectedAgents = [
   'bug-root-cause-investigator',
   'business-rules-test-engineer',
@@ -20,6 +20,7 @@ const expectedAgents = [
   'qa-e2e-specialist',
   'release-deployment-guardian',
   'security-privacy-auditor',
+  'senior-figma-mobile-first-auditor',
   'senior-fullstack-builder',
   'seo-local-structured-data',
   'supabase-guardian',
@@ -30,7 +31,12 @@ const allowedWildcardTools = new Map(
     new Set([
       'github/*',
       ...(
-        ['frontend-ux-accessibility', 'performance-gsap-motion', 'qa-e2e-specialist'].includes(name)
+        [
+          'frontend-ux-accessibility',
+          'performance-gsap-motion',
+          'qa-e2e-specialist',
+          'senior-figma-mobile-first-auditor',
+        ].includes(name)
           ? ['playwright/*']
           : []
       ),
@@ -114,7 +120,7 @@ async function main() {
   const unexpected = actualNames.filter((name) => !expectedAgents.includes(name))
   record(
     'exact-profile-set',
-    filenames.length === 15 && missing.length === 0 && unexpected.length === 0 ? 'PASS' : 'FAIL',
+    filenames.length === 16 && missing.length === 0 && unexpected.length === 0 ? 'PASS' : 'FAIL',
     `found=${filenames.length}; missing=${missing.join(',') || 'none'}; unexpected=${unexpected.join(',') || 'none'}`,
   )
 
@@ -219,7 +225,7 @@ async function main() {
     )
     record(
       'manifest:count',
-      manifest.totalAgents === 15 && Array.isArray(manifest.agents) && manifest.agents.length === 15 ? 'PASS' : 'FAIL',
+      manifest.totalAgents === 16 && Array.isArray(manifest.agents) && manifest.agents.length === 16 ? 'PASS' : 'FAIL',
       `declared=${manifest.totalAgents}; entries=${manifest.agents?.length ?? 'missing'}`,
     )
 

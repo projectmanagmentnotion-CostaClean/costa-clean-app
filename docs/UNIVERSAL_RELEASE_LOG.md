@@ -1,5 +1,24 @@
 # Universal Release Log
 
+## 2026-07-29 - Client portal frozen-artifact Windows baseline
+
+- tipo: deterministic test-baseline correction
+- causa raiz: legacy byte-pinned portal artifacts had no LF checkout policy;
+  `core.autocrlf=true` materialized CRLF and invalidated otherwise-correct
+  Git-blob hashes
+- alcance: 16 deterministic failures in 7 suites, grouped into one
+  environment-dependent cause
+- correccion: LF checkout policy for all 85 manifest-declared artifact paths
+  plus a manifest-discovery regression test
+- hashes/manifiestos/SQL/producto: unchanged
+- validacion Windows limpia: 73 suites, 461 passed, 4 skipped, 0 failed;
+  lint, TypeScript and build pass
+- portal plans: CP-2B V2/V4, CP-3B.0 and CP-3B.2A V1/V2/V3 pass with remote
+  writes `0`
+- facturas: no files changed; focused regression 22/22
+- evidencia:
+  [qa/PORTAL_TEST_FAILURE_ROOT_CAUSE.md](qa/PORTAL_TEST_FAILURE_ROOT_CAUSE.md)
+
 ## 2026-07-29 — Client portal CP-3B.2A.3 V3 failure observability package
 
 - tipo: local security source/proof and QA read-only preparation
@@ -13,6 +32,10 @@
   expected/actual, then drives the V3 core through real local
   apply/failure/persist/reread/recovery and reapply/second matrix with zero
   audit/rate residue `PASS`
+- QA read-only closeout: validates the real composite key of
+  `client_portal_rate_limits`; remote writes remain `0`
+- cross-platform manifest correction: all 11 V3 artifacts are pinned to LF so
+  a clean Windows checkout preserves the reviewed byte hashes
 - migración correctiva: none; frozen migration and V1/V2 bytes unchanged
 - efectos remotos: QA/production/Auth/Edge/Storage/history/canonical/frontend
   writes `0`

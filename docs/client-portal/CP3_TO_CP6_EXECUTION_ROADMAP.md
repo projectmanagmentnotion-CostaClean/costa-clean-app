@@ -160,7 +160,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 |---|---|
 | Status | `DONE`; V3 application `READY_PENDING_EXPLICIT_V3_AUTHORIZATION` |
 | Objective | Prepare an instrumented one-shot V3 application without guessing the original remote trigger discarded by V2. |
-| Evidence | Verified immutable private failure envelope before recovery; SQLSTATE/parser/transport classification; stable assertion IDs; 27-test injected-failure matrix; PostgreSQL 17 extra-policy/grant-option rejection plus integrated apply/failure/persist/reread/recovery and reapply proof. |
+| Evidence | Verified immutable private failure envelope before recovery; SQLSTATE/parser/transport classification; stable assertion IDs; 29-test injected-failure matrix; PostgreSQL 17 extra-policy/grant-option rejection plus integrated apply/failure/persist/reread/recovery and reapply proof; live read-only composite-key digest preflight; cross-platform LF pinning for all V3 artifact hashes. |
 | Security | Non-injectable real executor, exact V3 authorization, QA-only target, frozen hash chain, exact complete-policy/ACL boundary, context-bound ledger, one recovery, zero retry and public redaction. |
 | Remaining uncertainty | `ORIGINAL_REMOTE_TRIGGER=UNKNOWN_PENDING_V3_EXECUTION`; only a separately authorized V3 execution can resolve it. |
 | Remote effects | QA reads only; QA/production/Auth/Edge/Storage/history/canonical/frontend writes `0`. |

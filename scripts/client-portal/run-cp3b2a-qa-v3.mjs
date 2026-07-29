@@ -698,7 +698,10 @@ function captureOperationalState(environment, stage = 'operational_state') {
       'auditDigest', (select md5(coalesce(string_agg(to_jsonb(r)::text, '|' order by r.id), ''))
         from public.client_portal_audit_events r),
       'rateRows', (select count(*) from public.client_portal_rate_limits),
-      'rateDigest', (select md5(coalesce(string_agg(to_jsonb(r)::text, '|' order by r.id), ''))
+      'rateDigest', (select md5(coalesce(string_agg(
+        to_jsonb(r)::text,
+        '|' order by r.action, r.subject_hash, r.window_started_at
+      ), ''))
         from public.client_portal_rate_limits r)
     )::text;
   `, environment, stage))

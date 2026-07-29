@@ -1,11 +1,34 @@
 # App Quality Gates
 
+## Client Portal CP-3B.2A.4 Authorization/Concurrency V4 Gate — DONE 2026-07-29
+
+- V3 QA application stopped before effects because its matrix lacked actual
+  anon/no-membership/revoked/allowlist RPC evidence and real concurrency. It is
+  `BLOCKED_BEFORE_EFFECT — SUPERSEDED`.
+- V4 performs four real RPC invocations for anon, no membership, revoked and
+  suspended actors, recording exact neutral SQLSTATE/message evidence.
+- Invalid and outside-allowlist payloads are behaviorally rejected with zero
+  request, audit, rate-limit or canonical side effects.
+- Profile and property concurrency use two independent PostgreSQL workers.
+  Both are observed with ungranted `RowExclusiveLock` at the real insertion
+  boundary before the coordinator releases them.
+- Simultaneous retry returns one authoritative receipt from exactly one
+  request/audit/rate increment. Simultaneous conflicting payloads produce one
+  receipt and one deterministic `23505/idempotency_conflict`.
+- Transactional evidence is `PASS_ROLLED_BACK`; committed concurrent fixtures
+  are `PASS_CLEANED`, with exact Auth/canonical/request/audit/rate digest
+  restoration. Apply/recovery maxima are `1/1`; automatic retries are `0`.
+- The gate performs QA reads only. QA writes `0`; production writes `0`.
+- V4 application is `READY_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3B.2 is
+  `BLOCKED_PENDING_CP3B2A_QA_V4`; CP-3B.3 is `NOT_STARTED`.
+
 ## Client Portal CP-3B.2A.3 V3 Failure Observability Gate — DONE 2026-07-29
 
 - The demonstrated V2 runner observability defect is corrected without
   asserting the unknown original remote trigger.
-- V3 is `PREPARED_NOT_AUTHORIZED` and requires a new exact authorization,
-  clean committed HEAD and fresh private backup before any future QA effect.
+- V3 had been `PREPARED_NOT_AUTHORIZED`, but its attempted authorization is
+  exhausted and the package is now `BLOCKED_BEFORE_EFFECT — SUPERSEDED`.
+  Only V4 may receive a future exact authorization.
 - The private failure envelope is persisted and reread before recovery,
   retains full redacted private expected/actual plus bounded digest-bearing
   public summaries, enforces primary-failure immutability, and keeps recovery
@@ -25,7 +48,7 @@
 - Original migration and all V1/V2 artifacts remain byte-for-byte frozen.
 - QA/production/Auth/Edge/Storage/history/canonical/frontend writes: `0`.
 - CP-3B.2A QA application V3 is
-  `READY_PENDING_EXPLICIT_V3_AUTHORIZATION`; CP-3B.2 remains blocked.
+  `BLOCKED_BEFORE_EFFECT — SUPERSEDED`; CP-3B.2 remains blocked.
 
 ## Client Portal CP-3B.2A.2 QA Failure/V3 Remediation Gate — BLOCKED 2026-07-29
 

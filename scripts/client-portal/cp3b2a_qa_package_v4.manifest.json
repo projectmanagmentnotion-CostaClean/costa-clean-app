@@ -1,0 +1,77 @@
+{
+  "version": 4,
+  "gate": "CP-3B.2A.4",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B2A-QA-V4-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "793118454f6bd419ecd289ec99e893301ddd2276",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+  "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
+  "v1ManifestSha256": "ac87b1bf7ed5410dc0ba6db5ca470584ee0a3aee59f6079c147c6c0db4d7e9f4",
+  "v2ManifestSha256": "477797daddd92a5301d97c9abf02eafcf7b284e225e859dc103c9c350cb41484",
+  "v3ManifestSha256": "d70750dedf907de5a680476b22d2bd87ebb61eee14950a9ac02756bd10544bb3",
+  "executeAlias": false,
+  "maximumApplyAttempts": 1,
+  "maximumRecoveryAttempts": 1,
+  "automaticRetries": 0,
+  "transactionalMatrix": "PASS_ROLLED_BACK",
+  "concurrentMatrix": "PASS_CLEANED",
+  "concurrencyContract": {
+    "independentPostgresWorkers": 2,
+    "observerConnection": true,
+    "barrier": "TWO_UNGRANTED_ROW_EXCLUSIVE_LOCKS",
+    "profileRetryAndConflict": true,
+    "propertyRetryAndConflict": true,
+    "authoritativeReceipt": true,
+    "exactRequestAuditRateDelta": 1
+  },
+  "recoveryContract": {
+    "fixtureCleanupBeforeDdlRollback": true,
+    "exactInventory": true,
+    "authDigestRestored": true,
+    "canonicalDigestRestored": true,
+    "requestAuditRateDigestsRestored": true,
+    "unverifiableCleanup": "MANUAL_VERIFICATION_REQUIRED",
+    "failureEnvelopeVersion": 3
+  },
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_matrix_v4.sql",
+      "sha256": "149de64e8da11e0540e2de01ea3ff36fa83af24dd419a79bc162bb46bbe689d9"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_concurrency_v4.mjs",
+      "sha256": "611430cabca5bce3cc774ab15b92051dc0bdcd26530ef43b9885aab958baa10c"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-qa-v4.mjs",
+      "sha256": "575eae2325105f8df60c147a4540df2393c40d6a3bd23862908f783dd61b989d"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a4-local-proof.mjs",
+      "sha256": "82499efba4bf65c17ae8baba324cdf6ec0b768c39be8f69be6a115782ca5ba74"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aQaApplicationV4.test.mjs",
+      "sha256": "86dac8bc5422e94c56ad370baf558cfa1e94c0bad06c19cb4855e3c6e0c7b105"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md",
+      "sha256": "329b302e7ec6f9760f9995d0cdcaad58a581ad8a1a26366c6a88c4af51c586cd"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V4.md",
+      "sha256": "b9df4a45e9bb788f020fa83ec14c4c30f3bcd2b3b5bed93514c0cffed9f50d56"
+    }
+  ],
+  "allowedCommandsDuringGate": [
+    "node scripts/client-portal/run-cp3b2a-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a1-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a3-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a4-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a-qa-v4.mjs --plan",
+    "node scripts/client-portal/run-cp3b2a-qa-v4.mjs --preflight"
+  ],
+  "prohibitedCommandDuringGate": "node scripts/client-portal/run-cp3b2a-qa-v4.mjs --execute"
+}

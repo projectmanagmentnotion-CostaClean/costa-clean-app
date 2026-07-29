@@ -4,8 +4,8 @@ Date: 2026-07-29
 
 Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
 CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A.2
-`BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3 `DONE`; CP-3B.2
-`BLOCKED_PENDING_CP3B2A_QA_V3`; CP-3B.3 and later gates `NOT STARTED`
+`BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3/CP-3B.2A.4 `DONE`; CP-3B.2
+`BLOCKED_PENDING_CP3B2A_QA_V4`; CP-3B.3 and later gates `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -158,7 +158,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `DONE`; V3 application `READY_PENDING_EXPLICIT_V3_AUTHORIZATION` |
+| Status | `DONE`; V3 application `BLOCKED_BEFORE_EFFECT — SUPERSEDED` |
 | Objective | Prepare an instrumented one-shot V3 application without guessing the original remote trigger discarded by V2. |
 | Evidence | Verified immutable private failure envelope before recovery; SQLSTATE/parser/transport classification; stable assertion IDs; 29-test injected-failure matrix; PostgreSQL 17 extra-policy/grant-option rejection plus integrated apply/failure/persist/reread/recovery and reapply proof; live read-only composite-key digest preflight; cross-platform LF pinning for all V3 artifact hashes. |
 | Security | Non-injectable real executor, exact V3 authorization, QA-only target, frozen hash chain, exact complete-policy/ACL boundary, context-bound ledger, one recovery, zero retry and public redaction. |
@@ -166,16 +166,29 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Remote effects | QA reads only; QA/production/Auth/Edge/Storage/history/canonical/frontend writes `0`. |
 | Evidence files | [`CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md`](./CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md), [`CP3B2A2_QA_FAILURE_ROOT_CAUSE.md`](./CP3B2A2_QA_FAILURE_ROOT_CAUSE.md) and [`CP3B2A_EXACT_QA_AUTHORIZATION_V3.md`](./CP3B2A_EXACT_QA_AUTHORIZATION_V3.md). |
 | Expected commit | `security: preserve reviewed change QA failure diagnostics` |
-| Next gate | Separately authorized CP-3B.2A QA application V3; CP-3B.2 remains blocked. |
+| Next gate | Superseded by CP-3B.2A.4 after the V3 application stopped before effects. |
+
+## CP-3B.2A.4 — Executable authorization and real concurrency matrix V4
+
+| Field | Specification |
+|---|---|
+| Status | `DONE`; V4 application `READY_PENDING_EXPLICIT_V4_AUTHORIZATION` |
+| Objective | Replace the incomplete V3 QA matrix with behavioral RPC authorization, allowlist and real two-session concurrency evidence without changing the frozen migration. |
+| Evidence | Actual four-RPC anon/no-membership/revoked/suspended denials; exact invalid/foreign payload SQLSTATEs; two independent PostgreSQL workers observed with ungranted `RowExclusiveLock` at the insertion boundary; simultaneous retry and conflict for profile and property; exact committed-fixture cleanup. |
+| Security | QA-only/TLS target, V1–V3 authorization rejection, HEAD-bound private backup, O_EXCL one-shot ledger, V3 failure envelope, one recovery, zero automatic retries and `MANUAL_VERIFICATION_REQUIRED` on unverifiable cleanup. |
+| Remote effects | This preparation gate performs QA reads only; QA writes `0`, production writes `0`. |
+| Evidence files | [`CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md`](./CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md) and [`CP3B2A_EXACT_QA_AUTHORIZATION_V4.md`](./CP3B2A_EXACT_QA_AUTHORIZATION_V4.md). |
+| Expected commit | `security: add executable portal authorization and concurrency QA matrix` |
+| Next gate | Separately authorized CP-3B.2A QA application V4; CP-3B.2 remains blocked. |
 
 ## CP-3B.2 — Profile and properties
 
 | Field | Specification |
 |---|---|
-| Status | `BLOCKED_PENDING_CP3B2A_QA_V3` |
+| Status | `BLOCKED_PENDING_CP3B2A_QA_V4` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
-| Dependencies | CP-3B.1, CP-3B.2A and CP-3B.2A.1 are closed; CP-3B.2A.2 remains blocked/superseded by the completed CP-3B.2A.3 observability package. The reviewed-change migration still requires separately authorized V3 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
+| Dependencies | CP-3B.1, CP-3B.2A, CP-3B.2A.1, CP-3B.2A.3 and CP-3B.2A.4 are closed; CP-3B.2A.2 remains blocked. The reviewed-change migration still requires separately authorized V4 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
 | Agents | Primary `senior-fullstack-builder`; specialists `frontend-ux-accessibility`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |

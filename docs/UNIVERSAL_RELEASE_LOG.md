@@ -1,5 +1,27 @@
 # Universal Release Log
 
+## 2026-07-29 — Client portal CP-3B.2A.4 executable authorization/concurrency V4
+
+- tipo: local security source/proof and QA read-only preparation
+- causa: V3 application stopped before effects because grants and sequential
+  retry did not prove the mandatory authorization and concurrency boundary
+- corrección: actual anon/no-membership/revoked/suspended RPC calls, exact
+  payload/allowlist denials, two independent PostgreSQL workers held at the
+  insertion boundary, simultaneous retry/conflict for profile and property,
+  and exact committed-fixture cleanup
+- aislamiento: transactional matrix `PASS_ROLLED_BACK`; concurrent matrix
+  `PASS_CLEANED`; final synthetic residue `0`
+- recovery: one apply maximum, one recovery maximum, zero automatic retries;
+  frozen V3 failure envelope retained
+- frozen scope: migration and V1/V2/V3 artifacts unchanged; frontend and
+  invoices unchanged
+- remote effects: QA writes `0`; production writes `0`
+- estado: CP-3B.2A.4 `DONE`; V4 application
+  `READY_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3B.2
+  `BLOCKED_PENDING_CP3B2A_QA_V4`; CP-3B.3 `NOT_STARTED`
+- evidencia:
+  [client-portal/CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md](client-portal/CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md)
+
 ## 2026-07-29 - Client portal frozen-artifact Windows baseline
 
 - tipo: deterministic test-baseline correction

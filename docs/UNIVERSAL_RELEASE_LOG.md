@@ -13,6 +13,8 @@
   expected/actual, then drives the V3 core through real local
   apply/failure/persist/reread/recovery and reapply/second matrix with zero
   audit/rate residue `PASS`
+- QA read-only closeout: validates the real composite key of
+  `client_portal_rate_limits`; remote writes remain `0`
 - migración correctiva: none; frozen migration and V1/V2 bytes unchanged
 - efectos remotos: QA/production/Auth/Edge/Storage/history/canonical/frontend
   writes `0`

@@ -792,4 +792,17 @@ describe('CP-3B.2A.3 V3 observability package', () => {
       'financial_sequences_unchanged',
     ]) expect(matrix).toContain(evidence)
   })
+
+  it('uses the real composite rate-limit key for deterministic operational digests', () => {
+    const source = readFileSync(
+      'scripts/client-portal/run-cp3b2a-qa-v3.mjs',
+      'utf8',
+    )
+    expect(source).toContain(
+      "'|' order by r.action, r.subject_hash, r.window_started_at",
+    )
+    expect(source).not.toMatch(
+      /rateDigest[\s\S]{0,240}order by r[.]id/u,
+    )
+  })
 })

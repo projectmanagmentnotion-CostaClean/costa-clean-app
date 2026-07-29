@@ -110,7 +110,7 @@
     },
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v3.mjs",
-      "sha256": "005b241a8f14cdc66351fe31b06de0ecf0dfbfc4eeef2b11bb52319b1c4d492c"
+      "sha256": "4874da2ed9386611eea41d60f0a66f4f1ed9c09e1ce305a901af60382f0ba40e"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a3-local-proof.mjs",
@@ -118,7 +118,7 @@
     },
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV3.test.mjs",
-      "sha256": "2cd1cd54f00a95cf49dca4578caffe035dc1ffa6a17daa8e7aa47207f0b838e0"
+      "sha256": "d662c660b6f3514670f6f5f7222416ecb16612e430d1998f0f210b3eaaeb1f6a"
     },
     {
       "path": "scripts/client-portal/analyze-cp3b2a-v2-incident.mjs",
@@ -130,7 +130,7 @@
     },
     {
       "path": "docs/client-portal/CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md",
-      "sha256": "0e6ed5da33a82f2ff628b89419ca90485d70325f1c654e835bf2ad9c45e7e7f6"
+      "sha256": "e794c17e28348f46b1f6221d2d89d9ec8acc06312303e0d59e1f1cd43b00b27f"
     },
     {
       "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V3.md",

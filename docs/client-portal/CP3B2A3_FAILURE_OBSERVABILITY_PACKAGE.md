@@ -146,6 +146,11 @@ through apply, a deliberate catalog assertion failure, private-file persist,
 reread-before-recovery, guarded rollback and restored prestate. A final reapply,
 second postcheck/matrix and rollback leave zero audit/rate residue.
 
+The final live read-only preflight additionally validates the production-shaped
+rate-limit table, whose deterministic digest follows its real composite key
+(`action`, `subject_hash`, `window_started_at`) rather than assuming a synthetic
+`id` column.
+
 ## Authorization boundary
 
 The only future authorization ID is:

@@ -70,11 +70,12 @@ export function buildInvoicePrintDocumentHtml(
 export function openInvoicePrintWindow(
   invoice: InvoiceListItem,
   intent: InvoiceOutputIntent = 'print',
-): void {
+): boolean {
   const printWindow = window.open('', '_blank', 'width=1100,height=1400')
 
   if (!printWindow) {
-    throw new Error('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+    return false
   }
 
   const html = buildInvoicePrintDocumentHtml(invoice, intent)
@@ -82,4 +83,5 @@ export function openInvoicePrintWindow(
   printWindow.document.open()
   printWindow.document.write(html)
   printWindow.document.close()
+  return true
 }

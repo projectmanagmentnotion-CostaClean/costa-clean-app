@@ -59,9 +59,13 @@ export function InvoiceDocumentScreen({
     setOutputError(null)
 
     try {
-      await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
+      const didOpenOutput = await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
       setPendingOutputIntent(null)
+      if (!didOpenOutput) {
+        setOutputError('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+      }
     } catch (err) {
+      setPendingOutputIntent(null)
       setOutputError(err instanceof Error ? err.message : 'No se pudo abrir la salida del documento.')
     } finally {
       setIsOpeningOutput(false)

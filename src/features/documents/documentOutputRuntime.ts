@@ -10,7 +10,7 @@ export async function openInvoiceDocumentOutput(
   intent: InvoiceOutputIntent = 'print',
 ) {
   const { openInvoicePrintWindow } = await import('../invoices/openInvoicePrintWindow')
-  openInvoicePrintWindow(invoice, intent)
+  return openInvoicePrintWindow(invoice, intent)
 }
 
 export async function openQuoteDocumentOutput(

@@ -1,5 +1,30 @@
 # App Quality Gates
 
+## Client Portal CP-3B.2A.1 QA Execution/Recovery Package Gate — DONE 2026-07-29
+
+- A separate V2 package freezes the CP-3B.2A V1, CP-3B.0 and CP-2B V5
+  dependency chains plus the exact reviewed-change migration hash.
+- The runner exposes only direct `--plan`, `--preflight` and fail-closed future
+  `--execute`; apply is last after exact authorization, clean HEAD, verified
+  private backup, triple QA identity, live prestate and collision checks.
+- PostgreSQL 17 disposable proof passes apply, exact seven-function/four-column/
+  two-constraint/four-index postcheck, transactional cross-client matrix,
+  rollback, simulated post-apply recovery, zero automatic retries and zero
+  residue.
+- Live QA read-only preflight passes with the reviewed contract absent and a
+  verified eight-artifact private backup. QA writes, production writes,
+  Auth/Edge/Storage/history/canonical writes are `0`.
+- Full regression passes: 71 test files, 431 tests plus 4 skipped;
+  `qa:agents` 160/160; lint and build.
+- The preflight backup belongs to the starting HEAD and cannot authorize the
+  closeout commit; future execution requires a fresh backup and exact human V2
+  authorization for the final clean local/remote HEAD.
+- CP-3B.2A.1 is `DONE`; QA application is
+  `READY_PENDING_EXPLICIT_V2_AUTHORIZATION`; CP-3B.2 is
+  `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 is `NOT_STARTED`.
+- Evidence:
+  [client-portal/CP3B2A1_QA_EXECUTION_PACKAGE.md](client-portal/CP3B2A1_QA_EXECUTION_PACKAGE.md).
+
 ## Client Portal CP-3B.2A Reviewed Change Contract — DONE 2026-07-28
 
 - A forward-only, not-applied migration defines four authenticated-only,
@@ -13,9 +38,8 @@
   grants are revoked so the deployed old Edge path fails closed.
 - QA preflight is read-only with rollback. QA/production writes and
   Auth/Edge/Storage/history/canonical writes are zero.
-- CP-3B.2A source/local/preflight is `DONE`; QA application is
-  `NOT_AUTHORIZED`; CP-3B.2 is `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 is
-  `NOT_STARTED`.
+- CP-3B.2A source/local/preflight is `DONE`; execution is superseded by the
+  stricter CP-3B.2A.1 V2 package.
 - Evidence:
   [client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md](client-portal/CP3B2A_REVIEWED_CHANGE_CONTRACT.md).
 

@@ -1,0 +1,105 @@
+{
+  "version": 2,
+  "gate": "CP-3B.2A.1",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B2A-QA-V2-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "e64294575dce78a18ed194a14191225cd025847e",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+  "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
+  "v1ManifestSha256": "ac87b1bf7ed5410dc0ba6db5ca470584ee0a3aee59f6079c147c6c0db4d7e9f4",
+  "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
+  "cp3b0ManifestSha256": "a0ca32d9f8016b69b4907f25e02ffb8994e4b3610f0fcaf51168ed94f7c912bf",
+  "executeAlias": false,
+  "preEffectOrder": [
+    "manifest_and_hashes",
+    "authorization_and_head",
+    "clean_worktree",
+    "private_backup",
+    "local_qa_link",
+    "supabase_cli_qa_link",
+    "production_not_linked",
+    "postgres_live_read",
+    "postgres_qa_target",
+    "cp2b_cp3b0_prerequisites",
+    "reviewed_contract_absent",
+    "catalog_prestate",
+    "grants_policy_history_digest",
+    "synthetic_collision_check",
+    "backup_matches_prestate",
+    "apply"
+  ],
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_precheck_v2.sql",
+      "sha256": "d704cb97debbf6005276f0f45adb41afbf5b9c0ff2ce5d9340f6c2ce6aa6e9fd"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_postcheck_v2.sql",
+      "sha256": "98c14cd29b97b5d74c828bd0a4552c02c160d4727600d71d8b137f2c4df1616c"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_matrix_v2.sql",
+      "sha256": "393dc784b2c4ff624c33d8ce398b2c592a0cc94768382098e4bfa22c6ac7b9d7"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_rollback_v2.sql",
+      "sha256": "c78b6a9dca9c129b47912c7cad337f1277e3d548a05ddeffa63e3a0c897d6e75"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-qa-v2.mjs",
+      "sha256": "6ce86ffe6c7ec77cf692c32252a603988f177469320ec9fc9e1e0859b219ae16"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a1-local-proof.mjs",
+      "sha256": "00abc26c60c11f320e3375c2555da996af9da21d4804aa1561177fbfbb70714f"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aQaApplicationV2.test.mjs",
+      "sha256": "dcde59ef87bee0836db33fa147912285b82e3d047276b0f5ea8fd53431929b28"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A1_QA_EXECUTION_PACKAGE.md",
+      "sha256": "8fd5d6699f837a400c7c4cd5b645b4b725c90de00860c7e5d98d413361be85b1"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V2.md",
+      "sha256": "fb967953404f85bdf8c48b467e1991b421314dd54cb77a49f6f31d5e39b53ad9"
+    }
+  ],
+  "allowedCommandsDuringGate": [
+    "node scripts/client-portal/run-cp3b2a1-local-proof.mjs",
+    "node scripts/client-portal/run-cp3b2a-qa-v2.mjs --plan",
+    "node scripts/client-portal/run-cp3b2a-qa-v2.mjs --preflight"
+  ],
+  "prohibitedCommandDuringGate": "node scripts/client-portal/run-cp3b2a-qa-v2.mjs --execute",
+  "expectedRemoteEffectsIfLaterAuthorized": {
+    "nullableColumnsAdded": 4,
+    "formatConstraintsAdded": 2,
+    "partialUniqueIndexesAdded": 4,
+    "privateFunctionsAdded": 3,
+    "publicFunctionsAdded": 4,
+    "broadCustomerPoliciesRemoved": 2,
+    "legacyServiceRoleExecuteGrantsRemoved": 2,
+    "historicalRowsChanged": 0,
+    "authUsersChangedOutsideRolledBackMatrix": 0,
+    "canonicalRowsChanged": 0,
+    "financialSequencesChanged": 0,
+    "storageObjectsChanged": 0,
+    "edgeFunctionsChanged": 0,
+    "migrationHistoryRowsChanged": 0
+  },
+  "rollbackContract": {
+    "precondition": "zero rows with non-null V2 idempotency key or public reference",
+    "applicationRetries": 0,
+    "recoveryAttempts": 1,
+    "publicFunctionsDropped": 4,
+    "privateFunctionsDropped": 3,
+    "customerPoliciesRestored": 2,
+    "legacyServiceRoleGrantsRestored": 2,
+    "indexesDropped": 4,
+    "constraintsDropped": 2,
+    "columnsDropped": 4
+  }
+}

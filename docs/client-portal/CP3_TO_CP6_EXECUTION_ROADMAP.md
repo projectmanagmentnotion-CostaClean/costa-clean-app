@@ -1,9 +1,9 @@
 # Client Portal CP-3 to CP-6 Execution Roadmap
 
-Date: 2026-07-28
+Date: 2026-07-29
 
-Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1 and
-CP-3B.2A source/local/read-only preflight `DONE`; CP-3B.2
+Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
+CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2
 `BLOCKED_PENDING_CP3B2A_QA`; CP-3B.3 and later gates `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
@@ -112,18 +112,32 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Unexpected Auth mutation, cross-client access, token in logs, redirect escape, missing cleanup authority or production identity. |
 | Closeout documentation | [`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md); Auth/runtime boundary, negative matrix, visible QA, limitations, zero remote effects, MFA debt and next gate. |
 | Expected commit | `feat: connect client portal authentication lifecycle` |
-| Next gate | CP-3B.2A source package, subsequently completed; current next gate is its separately authorized QA application. |
+| Next gate | CP-3B.2A and CP-3B.2A.1, subsequently completed; current next gate is the separately authorized QA application V2. |
 
 ## CP-3B.2A — Backend reviewed change request contract
 
 | Field | Specification |
 |---|---|
-| Status | `DONE — SOURCE/LOCAL PROOF AND QA READ-ONLY PREFLIGHT`; QA application `NOT_AUTHORIZED` |
+| Status | `DONE — SOURCE CONTRACT`; execution superseded by CP-3B.2A.1 V2 |
 | Objective | Freeze idempotent requester-only profile/property correction submits and minimized own-status lists. |
 | Evidence | Forward-only migration; PostgreSQL 17 gap/security/concurrency/rollback/reapply proof; sanitized QA read-only preflight; frozen manifest. |
 | Security | `auth.uid()` only; active verified membership; strict allowlists; eligible properties; persisted opaque receipts; broad customer request-table policies removed; legacy non-idempotent Edge path fails closed. |
 | Remote effects | QA writes `0`; production writes `0`; Auth/Edge/Storage/history/canonical writes `0`. |
-| Next gate | Separately authorized CP-3B.2A QA application. |
+| Next gate | CP-3B.2A.1 execution/recovery package, subsequently completed. |
+
+## CP-3B.2A.1 — QA application execution and recovery package
+
+| Field | Specification |
+|---|---|
+| Status | `DONE`; QA application `READY_PENDING_EXPLICIT_V2_AUTHORIZATION` |
+| Objective | Freeze an exact QA-only application, exhaustive postcheck, transactional cross-client matrix and guarded recovery package for the reviewed-change migration. |
+| Evidence | Immutable V1/CP-3B.0/CP-2B chain; V2 manifest; PostgreSQL 17 apply/postcheck/matrix/rollback and simulated-failure recovery; live QA read-only preflight; verified eight-artifact private backup. |
+| Security | Exact QA database identity; production rejected; authorization and clean final HEAD required before effects; one apply path; no automatic retry; rollback rejects existing V2 rows. |
+| Remote effects | QA reads only; QA writes `0`; production writes `0`; Auth/Edge/Storage/history/canonical writes `0`. |
+| Backup note | The closeout preflight backup belongs to the starting HEAD and must be regenerated after this commit before any future exact authorization. |
+| Evidence files | [`CP3B2A1_QA_EXECUTION_PACKAGE.md`](./CP3B2A1_QA_EXECUTION_PACKAGE.md) and [`CP3B2A_EXACT_QA_AUTHORIZATION_V2.md`](./CP3B2A_EXACT_QA_AUTHORIZATION_V2.md). |
+| Expected commit | `security: prepare reviewed change QA application` |
+| Next gate | Separately authorized CP-3B.2A QA application V2; CP-3B.2 remains blocked. |
 
 ## CP-3B.2 — Profile and properties
 
@@ -132,7 +146,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Status | `BLOCKED_PENDING_CP3B2A_QA` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
-| Dependencies | CP-3B.1 closed; CP-3B.2A source/local/preflight closed; reviewed-change migration still requires separately authorized QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
+| Dependencies | CP-3B.1, CP-3B.2A and CP-3B.2A.1 closed; reviewed-change migration still requires separately authorized V2 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
 | Agents | Primary `senior-fullstack-builder`; specialists `frontend-ux-accessibility`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |

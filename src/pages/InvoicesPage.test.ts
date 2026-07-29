@@ -177,3 +177,66 @@ describe('InvoicesPage fiscal control', () => {
     expect(debugHtml.includes('INV-0051 puede regularizarse a INV-0046 / 2026-046 si todavia no fue enviada.')).toBe(true)
   })
 })
+
+describe('InvoicesPage document actions', () => {
+  it('keeps document and payment actions available together for an issued pending invoice', () => {
+    const invoice = createInvoice({
+      payment_status: 'pending',
+      paid_amount: 0,
+      outstanding_amount: 121,
+    })
+
+    const html = renderInvoicesPage([invoice], [createClient()])
+
+    expect(html.includes('Abrir documento')).toBe(true)
+    expect(html.includes('Registrar cobro')).toBe(true)
+    expect(invoice.payment_status).toBe('pending')
+    expect(invoice.paid_amount).toBe(0)
+    expect(invoice.outstanding_amount).toBe(121)
+  })
+
+  it('keeps document and another payment available for a partially paid invoice', () => {
+    const html = renderInvoicesPage([
+      createInvoice({
+        payment_status: 'partially_paid',
+        paid_amount: 40,
+        outstanding_amount: 81,
+      }),
+    ], [createClient()])
+
+    expect(html.includes('Abrir documento')).toBe(true)
+    expect(html.includes('Registrar cobro')).toBe(true)
+  })
+
+  it('keeps document access for paid and cancelled historical invoices', () => {
+    const paidHtml = renderInvoicesPage([
+      createInvoice({
+        payment_status: 'paid',
+        paid_amount: 121,
+        outstanding_amount: 0,
+      }),
+    ], [createClient()])
+    const cancelledHtml = renderInvoicesPage([
+      createInvoice({
+        status: 'cancelled',
+        payment_status: 'cancelled',
+        outstanding_amount: 0,
+      }),
+    ], [createClient()])
+
+    expect(paidHtml.includes('Abrir documento')).toBe(true)
+    expect(cancelledHtml.includes('Abrir documento')).toBe(true)
+  })
+
+  it('offers an explicit document preview for drafts', () => {
+    const html = renderInvoicesPage([
+      createInvoice({
+        status: 'draft',
+        invoice_number: null,
+        payment_status: 'pending',
+      }),
+    ], [createClient()])
+
+    expect(html.includes('Previsualizar documento')).toBe(true)
+  })
+})

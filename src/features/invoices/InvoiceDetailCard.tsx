@@ -833,24 +833,28 @@ export function InvoiceDetailCard({
     && invoice.status !== 'cancelled'
     && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009,
   )
-  const shouldShowDocumentPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status !== 'draft')
-  const shouldShowEditPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status === 'draft')
+  const shouldShowDocumentPrimary = Boolean(invoice)
+  const shouldShowEditPrimary = Boolean(invoice && invoice.status === 'draft')
   const headerActions: ActionGroupItem[] = []
 
   if (invoice) {
     if (shouldShowPaymentPrimary) {
       headerActions.push({
+        key: 'open-document-primary',
+        label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
+        tone: 'primary',
+        onClick: onOpenDocument,
+      })
+
+      headerActions.push({
         key: 'register-payment-primary',
         label: 'Registrar cobro',
-        tone: 'primary',
         onClick: () => setPaymentActionMode('manual'),
       })
-    }
-
-    if (shouldShowDocumentPrimary) {
+    } else if (shouldShowDocumentPrimary) {
       headerActions.push({
         key: 'open-document-primary',
-        label: 'Abrir documento',
+        label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
         tone: 'primary',
         onClick: onOpenDocument,
       })
@@ -1014,7 +1018,11 @@ export function InvoiceDetailCard({
 
         {invoice && !hideHeaderActions ? (
           <div className="cc-detail-panel__actions">
-            <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
+            <ActionGroup
+              actions={dedupedHeaderActions}
+              moreLabel="Mas acciones"
+              compactVisibleSecondaryCount={shouldShowPaymentPrimary ? 1 : 0}
+            />
           </div>
         ) : null}
       </div>

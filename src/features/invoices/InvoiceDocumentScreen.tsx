@@ -29,6 +29,8 @@ export function InvoiceDocumentScreen({
   onClose,
 }: InvoiceDocumentScreenProps) {
   const [pendingOutputIntent, setPendingOutputIntent] = useState<'print' | 'pdf' | null>(null)
+  const [outputError, setOutputError] = useState<string | null>(null)
+  const [isOpeningOutput, setIsOpeningOutput] = useState(false)
   const {
     invoice: hydratedInvoice,
     isLoadingLines,
@@ -38,12 +40,14 @@ export function InvoiceDocumentScreen({
 
   function handlePrint() {
     if (!isLoadingLines && !linesError) {
+      setOutputError(null)
       setPendingOutputIntent('print')
     }
   }
 
   function handleSavePdf() {
     if (!isLoadingLines && !linesError) {
+      setOutputError(null)
       setPendingOutputIntent('pdf')
     }
   }
@@ -51,8 +55,21 @@ export function InvoiceDocumentScreen({
   async function handleConfirmOpenWindow() {
     if (!pendingOutputIntent) return
 
-    await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
-    setPendingOutputIntent(null)
+    setIsOpeningOutput(true)
+    setOutputError(null)
+
+    try {
+      const didOpenOutput = await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
+      setPendingOutputIntent(null)
+      if (!didOpenOutput) {
+        setOutputError('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+      }
+    } catch (err) {
+      setPendingOutputIntent(null)
+      setOutputError(err instanceof Error ? err.message : 'No se pudo abrir la salida del documento.')
+    } finally {
+      setIsOpeningOutput(false)
+    }
   }
 
   async function handleShare() {
@@ -77,7 +94,9 @@ export function InvoiceDocumentScreen({
         onSavePdf={handleSavePdf}
         isOutputDisabled={isLoadingLines || Boolean(linesError)}
       >
-        {isLoadingLines ? (
+        {outputError ? (
+          <DSErrorState title="No se pudo abrir el documento" description={outputError} />
+        ) : isLoadingLines ? (
           <DSLoadingState
             title="Cargando lineas de factura"
             description="Preparando la vista previa con los conceptos reales."
@@ -94,6 +113,7 @@ export function InvoiceDocumentScreen({
         title={pendingOutputIntent === 'pdf' ? 'Abrir ventana para guardar PDF' : 'Abrir ventana de impresion'}
         description="El navegador abrira una nueva ventana o pestana para preparar la factura. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."
         confirmLabel={pendingOutputIntent === 'pdf' ? 'Abrir y guardar PDF' : 'Abrir e imprimir'}
+        isBusy={isOpeningOutput}
         onCancel={() => setPendingOutputIntent(null)}
         onConfirm={() => void handleConfirmOpenWindow()}
       />

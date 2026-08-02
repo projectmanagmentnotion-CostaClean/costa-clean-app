@@ -11,13 +11,13 @@ projectmanagmentnotion-CostaClean/costa-clean-app
 RAMA OBLIGATORIA:
 prototype/stitch-full-visual-parity
 
-BASE DE LA RAMA:
-agent/stitch-fe-02-token-theme-fundamentals
+PR DE TRABAJO:
+#13
 
 OBJETIVO:
-Continuar la implementación del prototipo visual que traslada literalmente la interfaz original de Google Stitch a Costa Clean CRM, manteniendo intactos datos, lógica, navegación, autenticación, Supabase, cálculos, documentos y consecuencias operativas.
+Continuar el prototipo que traslada literalmente la interfaz original de Google Stitch a Costa Clean CRM sin cambiar datos, lógica, navegación, autenticación, Supabase, cálculos, documentos ni consecuencias operativas.
 
-No quiero un cambio superficial de colores. Quiero shell, navegación, proporciones, tipografía, avatares, assets, listas, KPI, Workspaces, StepFlows y módulos master-detail visualmente equivalentes a los exports originales.
+No quiero un cambio superficial de colores. Deben trasladarse shell, navegación, proporciones, tipografía, avatares, assets, listas, KPI, Workspaces, StepFlows y módulos master-detail.
 
 # 1. PREPARACIÓN GIT
 
@@ -29,239 +29,229 @@ git pull --ff-only origin prototype/stitch-full-visual-parity
 git status --short
 git log -1 --oneline
 
-Detente si:
-
-- la rama no está limpia;
-- existen cambios locales no relacionados;
-- la rama no parte de `agent/stitch-fe-02-token-theme-fundamentals`;
-- la PR #12 fue fusionada o modificada de forma inesperada;
-- necesitas trabajar directamente sobre `main`.
-
+Detente si el árbol no está limpio o si necesitas trabajar en main.
 No añadas commits a la rama de la PR #12.
 No fusiones ninguna PR.
 
-# 2. DOCUMENTOS OBLIGATORIOS
+# 2. LECTURA OBLIGATORIA
 
 Lee completos y en este orden:
 
 1. AGENTS.md
-2. docs/FRONTEND_GLOBAL_BLUEPRINT.md
-3. docs/STITCH_FRONTEND_REALITY_ROADMAP_20260731.md
-4. docs/STITCH_FE_01_REAL_FRONTEND_AUDIT_20260802.md
-5. docs/STITCH_FE_02_THEME_TOKENS_20260802.md
-6. docs/STITCH_VISUAL_PARITY_MASTER_SPEC_20260802.md
-7. docs/STITCH_FULL_VISUAL_PARITY_IMPLEMENTATION_PLAN_20260802.md
-8. src/design-system/stitch/README.md
-9. docs/UX_APP_MANUAL.md
-10. docs/CODEX_WORKFLOW.md
-11. docs/APP_QUALITY_GATES.md
+2. docs/STITCH_SOURCE_SET_CORRECTION_20260802.md
+3. docs/FRONTEND_GLOBAL_BLUEPRINT.md
+4. docs/STITCH_FRONTEND_REALITY_ROADMAP_20260731.md
+5. docs/STITCH_FE_01_REAL_FRONTEND_AUDIT_20260802.md
+6. docs/STITCH_FE_02_THEME_TOKENS_20260802.md
+7. docs/STITCH_VISUAL_PARITY_MASTER_SPEC_20260802.md
+8. docs/STITCH_FULL_VISUAL_PARITY_IMPLEMENTATION_PLAN_20260802.md
+9. src/design-system/stitch/README.md
+10. scripts/stitch/README.md
+11. docs/UX_APP_MANUAL.md
+12. docs/CODEX_WORKFLOW.md
+13. docs/APP_QUALITY_GATES.md
 
-Inspecciona también:
+La corrección de fuente tiene prioridad sobre cualquier documento anterior que mencione seis ZIP.
 
-- src/design-system/stitch/stitchAssets.ts
-- src/design-system/stitch/stitchAssets.test.ts
-- src/design-system/stitch/stitchVisualParity.css
-- public/ui-assets/**
-- src/App.tsx
-- src/app/AppShell.tsx
-- src/app/AppNav.tsx
-- src/app/AppShellViewRenderer.tsx
-- src/app/AppShellPages.ts
-- src/pages/HomePage.tsx
-- src/pages/ClientsPage.tsx
-- src/pages/PropertiesPage.tsx
-- ClientWorkspace y PropertyWorkspace
-- CSS real del shell, dashboard, clientes y propiedades
+# 3. FUENTE DEFINITIVA DE STITCH
 
-# 3. FUENTES ORIGINALES DE STITCH
+El usuario confirmó que el handoff definitivo contiene exactamente cuatro ZIP:
 
-Comprueba que existan localmente:
+- stitch_costa_clean_crm_system.zip
+- stitch_costa_clean_crm_system (1).zip
+- stitch_costa_clean_crm_system (2).zip
+- stitch_costa_clean_crm_system (3).zip
+
+No esperes paquetes (4) ni (5).
+No pidas al usuario stitch-source-report.json: el script lo genera automáticamente.
+
+Verifica que los cuatro archivos existan en:
 
 .project-agent/private/stitch-source/
 
-con los seis ZIP originales.
+Ejecuta desde la raíz del repositorio:
+
+powershell -ExecutionPolicy Bypass -File .\scripts\stitch\prepare-stitch-source.ps1 -SourceFolder .project-agent\private\stitch-source
+
+El script debe generar:
+
+.project-agent/private/stitch-source/stitch-source-report.json
+
+Acepta la fuente únicamente cuando el informe confirme exactamente:
+
+- 4 ZIP
+- 58 code.html
+- 59 screen.png
+- 7 DESIGN.md
+- content_inventory_complete = true
+
+Si el conteo no coincide, detente y comunica el déficit exacto por paquete. No inventes paquetes adicionales.
 
 Extrae temporalmente en:
 
 .project-agent/private/stitch-extracted/
 
-La carpeta está ignorada por Git.
-No subas ZIPs, HTML exportado, capturas privadas ni URLs remotas de Stitch.
+No subas ZIP, HTML, capturas ni el informe privado a GitHub.
+No copies el HTML completo a src/.
 
-Si los ZIP no existen, detente y comunica exactamente qué archivos faltan. No simules el análisis.
+# 4. DIAGNÓSTICO ANTES DE EDITAR
 
-Audita:
+Audita todos los exports y entrega primero:
 
-- 58 code.html;
-- 59 screen.png;
-- 7 DESIGN.md;
-- handoff técnico;
-- dimensiones;
-- Tailwind classes;
-- responsive;
-- iconos;
-- tipografía;
-- imágenes;
-- estados;
-- duplicados y versiones corregidas.
-
-No copies HTML completo a src/.
-
-# 4. PRIMER INFORME ANTES DE EDITAR
-
-Entrega un diagnóstico breve con:
-
-- inventario de pantallas;
+- inventario por paquete;
 - pantallas canónicas;
-- pantallas descartadas;
-- mapa Stitch → componentes reales;
+- duplicados;
+- versiones corregidas;
+- pantallas descartadas por dominio inventado;
+- mapa Stitch → componente React real;
 - archivos que se tocarán;
 - riesgos;
 - lógica protegida;
-- orden de implementación.
+- orden del bloque actual.
 
-Después implementa. No esperes otra confirmación salvo que exista una condición de parada real.
+Después implementa sin esperar otra confirmación salvo un bloqueo real.
 
-# 5. IMPLEMENTACIÓN POR BLOQUES
+# 5. ESTADO ACTUAL
 
-Trabaja en el siguiente orden. Cada bloque termina con validación, commit y push.
+La rama ya contiene:
 
-BLOCK 1 — Integración segura de primitives y assets
+- especificación visual canónica;
+- plan de implementación;
+- CSS Stitch activado bajo cc-stitch-prototype;
+- manifiesto de assets;
+- StitchAvatar;
+- assets fallback locales;
+- integración inicial de splash, login y cuenta;
+- ajustes de contraste y alineación.
 
-- valida `stitchAssets.ts`, sus tests y los SVG locales;
-- importa `stitchVisualParity.css` de forma controlada;
-- activa `.cc-stitch-prototype` únicamente en la rama prototipo;
-- no permitas que la cascada rompa rutas públicas o documentos;
-- crea avatar presentacional reutilizable solo si la arquitectura real lo justifica;
-- usa avatar_url real, fallback local y finalmente iniciales;
-- empresa = icono de edificio, nunca retrato inventado.
+No declares paridad completa.
+No vuelvas a limitarte a tokens o contraste.
 
-Commit sugerido:
-feat(frontend): integrate Stitch visual primitives and assets
+# 6. PRÓXIMO BLOQUE OBLIGATORIO
 
-BLOCK 2 — Shell y navegación
+Transforma visualmente estas superficies:
 
-Reconstruye visualmente AppShell/AppNav para obtener:
+1. Inicio / Dashboard.
+2. Directorio de Clientes.
+3. Workspace de Cliente.
+4. Shell y navegación estrictamente necesarios para esas superficies.
 
-- rail desktop de 64–80 px;
-- topbar de 64 px;
-- logo compacto;
-- active tile cian;
-- búsqueda, alertas, tema y avatar en una línea;
-- contenido inmediatamente visible;
-- mobile header de 56–64 px;
-- dock inferior Inicio, Clientes, Servicios, Facturas y Más;
-- safe-area;
-- cero etiquetas GENERAL/BASE/OPERACIONES repetidas dentro de botones;
-- cero gran tarjeta de navegación.
+## Inicio
 
-Mantén exactamente:
+Debe reproducir la composición Stitch:
 
-- AppView;
-- destinos;
-- props;
-- callbacks;
-- alertas;
-- tema;
-- cuenta;
-- logout;
-- guard de navegación.
-
-Commit sugerido:
-prototype(frontend): rebuild shell and navigation from Stitch
-
-BLOCK 3 — Splash, Login e Inicio
-
-- splash equivalente a Stitch;
-- login de 420–440 px, inputs/CTA de 56 px;
-- dashboard con header compacto;
+- header compacto;
 - CTA dominante;
 - KPI pequeños;
-- prioridades y servicios del día arriba;
-- menos texto y menos tarjetas anidadas;
-- primeros datos útiles sin scroll.
+- prioridades;
+- servicios del día;
+- alertas necesarias;
+- primera información útil visible;
+- menos texto;
+- menos wrappers;
+- menos tarjetas anidadas;
+- sin gran tarjeta exterior.
 
-Mantén métricas, acciones, filtros y datos existentes.
+Mantén métricas, datos, callbacks, filtros y acciones.
 
-Commit sugerido:
-prototype(frontend): migrate splash login and home visuals
+## Directorio de Clientes
 
-BLOCK 4 — Clientes, Propiedades y Workspaces
+Implementa:
 
-- directorios densos;
+- título y Nuevo cliente alineados;
 - buscador dominante;
-- CTA junto al título;
-- KPI compactos;
-- avatar/icono, nombre, código, ubicación, estado y chevron;
-- mobile cards compactas;
-- identidad de Workspace de 64–80 px;
+- filtros secundarios compactos;
+- KPI pequeños;
+- filas densas;
+- avatar, iniciales o icono de empresa;
+- nombre, código, ubicación, actividad, estado y chevron;
+- lista compacta en escritorio;
+- cards ligeras en móvil.
+
+No cambies búsqueda, filtros, creación, duplicados, IDs ni navegación al Workspace.
+No inventes fotografías de clientes.
+
+## Workspace de Cliente
+
+Implementa:
+
+- identidad compacta;
+- avatar de 64–80 px;
+- nombre, código y estado;
+- próxima acción;
 - KPI strip;
-- siguiente acción;
-- tabs y actividad como Stitch;
-- imagen de propiedad 16:9 cuando aporte contexto;
-- sin nested-card inflation.
+- tabs compactas;
+- propiedades, servicios, presupuestos, facturas, cobros y actividad;
+- una superficie por intención;
+- menos nested cards;
+- adaptación móvil equivalente al export corregido.
 
-Mantén duplicados, creación, guard de cambios, tabs reales y navegación contextual.
+Mantén tabs reales, relaciones, callbacks, navegación y guard de cambios sin guardar.
 
-Commit sugerido:
-prototype(frontend): migrate clients properties and workspaces
+## Shell
 
-BLOCK 5 — StepFlows
+Desktop:
 
-Aplica la composición Stitch a:
+- rail de 64–80 px;
+- topbar de 64 px;
+- avatar visible;
+- active tile cian;
+- navegación silenciosa;
+- contenido como protagonista.
 
-- cliente;
-- propiedad;
-- presupuesto;
-- servicio;
-- factura;
-- cobro;
-- automatización de factura;
-- duplicados;
-- cambios sin guardar;
-- éxito y recuperación.
+Mobile:
 
-Mobile full-height, progreso visible, primer campo arriba y footer sticky.
-No cambies campos, pasos funcionales, validación ni persistencia.
+- header 56–64 px;
+- dock 68–76 px;
+- Inicio, Clientes, Servicios, Facturas y Más;
+- safe-area;
+- cero solapamientos.
 
-Commit sugerido:
-prototype(frontend): migrate guided creation flows
+Mantén AppView, destinos, props, handlers, alertas, tema, cuenta y logout.
 
-BLOCK 6 — Servicios, Presupuestos, Facturas y Cobros
+# 7. INVARIANCIA FUNCIONAL
 
-Implementa master-detail:
+Se permite:
 
-- list pane 360–400 px;
-- búsqueda y filtros compactos;
-- selected row con borde cian;
-- detail pane;
-- entity header;
-- estado;
-- tabs;
-- CTA arriba a la derecha;
-- resumen/documento secundario;
-- adaptación mobile de las pantallas exportadas.
+- CSS;
+- assets locales;
+- JSX presentacional;
+- wrappers;
+- componentes visuales;
+- layout;
+- responsive;
+- iconos;
+- avatar;
+- orden visual sin cambiar consecuencias.
 
-No cambies estados, numeración, impuestos, totales, pagos ni documentos.
+Está prohibido cambiar:
 
-Commit sugerido:
-prototype(frontend): migrate operational master-detail modules
+- Supabase;
+- SQL, RLS o RPC;
+- queries o mutaciones;
+- auth o sesión;
+- rutas o AppView;
+- props y callbacks públicos;
+- validaciones;
+- estados de dominio;
+- datos;
+- importes;
+- impuestos;
+- numeración;
+- documentos;
+- cálculos financieros o fiscales;
+- dependencias;
+- mocks sustituyendo datos reales;
+- refactors ajenos.
 
-BLOCK 7 — Alertas, Gastos y Cierre Fiscal
+INVARIANTE:
+MISMAS ENTRADAS + MISMOS DATOS + MISMAS ACCIONES = MISMOS RESULTADOS FUNCIONALES.
 
-- listas compactas;
-- panel de detalle;
-- estados semánticos;
-- importes jerarquizados;
-- cierre fiscal ejecutivo;
-- reemplaza contenido Aura Maritime por entidades reales;
-- no inventes automatizaciones;
-- no cambies cálculos ni advertencias deterministas.
+# 8. QA
 
-Commit sugerido:
-prototype(frontend): migrate alerts expenses and fiscal closing
-
-BLOCK 8 — Responsive, accesibilidad y QA final
+No uses producción para validar esta rama.
+Usa exclusivamente servidor local de la rama o Preview de la PR #13 asociado al HEAD exacto.
+No realices escrituras reales.
 
 Viewports:
 
@@ -272,124 +262,76 @@ Viewports:
 - 1366x900
 - 1440x900
 
-Valida dark y light:
+Dark y light.
+
+Comprueba:
 
 - cero overflow horizontal;
 - cero solapamientos;
-- 44 px touch target;
+- 44 px touch targets;
 - safe-area;
 - focus-visible;
-- navegación estable;
-- avatar y assets correctos;
 - primer contenido útil visible;
-- loading/empty/error/success;
-- misma acción = misma consecuencia;
-- capturas comparativas sin datos personales.
+- avatar correcto;
+- CTA dominante;
+- listas densas;
+- misma acción = misma consecuencia.
 
-Commit sugerido:
-qa(frontend): close Stitch visual parity prototype
-
-# 6. INVARIANCIA FUNCIONAL
-
-Se permite:
-
-- CSS;
-- assets locales;
-- reorganizar JSX presentacional;
-- cambiar wrappers;
-- extraer componentes visuales;
-- cambiar layout y responsive;
-- ordenar visualmente sin alterar orden funcional.
-
-Prohibido:
-
-- Supabase;
-- SQL/RLS/RPC;
-- queries o mutaciones;
-- auth o sesión;
-- rutas o AppView;
-- props/callbacks públicos;
-- validaciones;
-- datos;
-- estados de dominio;
-- importes;
-- impuestos;
-- numeración;
-- documentos;
-- cálculos financieros/fiscales;
-- mocks sustituyendo datos reales;
-- nuevas dependencias;
-- refactors ajenos.
-
-INVARIANTE:
-MISMAS ENTRADAS + MISMOS DATOS + MISMAS ACCIONES = MISMOS RESULTADOS FUNCIONALES.
-
-# 7. VALIDACIÓN POR BLOQUE
+# 9. VALIDACIÓN
 
 Ejecuta:
 
 pnpm exec eslint <todos-los-ts-tsx-modificados>
 pnpm exec vitest run src/design-system/stitch/stitchAssets.test.ts --config vitest.config.mjs
+pnpm exec vitest run src/app/theme.test.ts --config vitest.config.mjs
 pnpm run build
 git diff --check
 git status --short
 git diff --stat
 
-Ejecuta tests focalizados adicionales del shell, navegación y módulo afectado.
+Ejecuta tests focalizados adicionales de shell, navegación y clientes.
+Reproduce fallos globales preexistentes sin corregir deuda ajena.
+No cierres con FAIL_NEW.
 
-Reproduce los fallos globales preexistentes sin corregir deuda ajena.
+# 10. COMMIT Y PUSH
 
-Clasifica:
+Cierra el bloque con commit y push en la misma rama.
 
-- PASS
-- FAIL_PREEXISTING
-- FAIL_NEW
-- BLOCKED
-- NOT_EXECUTED
+Mensaje recomendado:
 
-No cierres ningún bloque con FAIL_NEW.
+prototype(frontend): apply Stitch parity to home and clients
 
-# 8. PR Y DEPLOYMENT
+Mantén la PR #13 en borrador y con base:
 
-Abre o actualiza una PR en borrador:
-
-HEAD:
-prototype/stitch-full-visual-parity
-
-BASE:
 agent/stitch-fe-02-token-theme-fundamentals
 
-TÍTULO:
-prototype(frontend): full Stitch visual parity preview
-
-La PR debe generar Vercel Preview.
 No apuntes a main.
 No fusiones.
 
-# 9. INFORME FINAL
+# 11. INFORME FINAL
 
 Entrega:
 
-- HEAD inicial y final;
-- commits por bloque;
-- PR;
-- URL Preview;
+- HEAD inicial;
+- HEAD final;
+- commit;
+- inventario de los cuatro ZIP;
+- conteos 58/59/7;
 - archivos modificados;
-- pantallas migradas;
-- assets y avatar;
+- componentes creados;
+- cambios de Inicio;
+- cambios de Clientes;
+- cambios de Workspace;
+- cambios de shell;
+- assets y avatares;
+- URL Preview;
+- SHA exacto desplegado;
 - QA por viewport;
 - dark/light;
 - pruebas;
-- deuda preexistente;
-- deuda nueva;
 - limitaciones;
-- diferencias restantes frente a Stitch;
-- recomendación visual.
+- diferencias pendientes frente a Stitch;
+- veredicto de invariancia funcional.
 
-VEREDICTO OBLIGATORIO:
-La rama cambia composición y presentación visual, pero mantiene datos,
-props, callbacks, navegación, autenticación, Supabase, cálculos,
-documentos y consecuencias operativas sin cambios.
-
-Detente después de publicar la preview final. No fusiones ninguna PR.
+Detente después de publicar el Preview del bloque.
 ```

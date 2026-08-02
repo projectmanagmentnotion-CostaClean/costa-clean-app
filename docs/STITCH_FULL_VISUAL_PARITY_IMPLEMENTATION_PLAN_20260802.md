@@ -28,7 +28,7 @@ Codex must read, in order:
 
 ## 3. Private source location
 
-Place the six original ZIP exports locally under:
+Place the four original ZIP exports locally under:
 
 ```text
 .project-agent/private/stitch-source/

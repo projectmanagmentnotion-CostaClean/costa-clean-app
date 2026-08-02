@@ -15,10 +15,10 @@ The objective is literal visual parity at product level, not a token-only refres
 
 The reviewed handoff contains:
 
-- 6 ZIP exports;
+- 4 ZIP exports;
 - 58 `code.html` screens;
 - 59 `screen.png` captures;
-- 7 `DESIGN.md` variants;
+- 5 `DESIGN.md` variants;
 - 1 technical handoff;
 - two unusable screenshots with valid HTML: `inicio_cockpit/screen.png` and `m_dulo_de_facturas_escritorio/screen.png`.
 

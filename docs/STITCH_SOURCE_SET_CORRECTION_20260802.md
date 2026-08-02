@@ -20,7 +20,7 @@ The package count is accepted only when the combined archive inventory contains 
 
 - 58 `code.html`
 - 59 `screen.png`
-- 7 `DESIGN.md`
+- 5 `DESIGN.md`
 
 The preparation script generates `stitch-source-report.json` automatically. The report is not an additional source file and must not be requested from the user.
 

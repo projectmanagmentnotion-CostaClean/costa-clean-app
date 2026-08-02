@@ -82,7 +82,7 @@ Acepta la fuente únicamente cuando el informe confirme exactamente:
 - 4 ZIP
 - 58 code.html
 - 59 screen.png
-- 7 DESIGN.md
+- 5 DESIGN.md
 - content_inventory_complete = true
 
 Si el conteo no coincide, detente y comunica el déficit exacto por paquete. No inventes paquetes adicionales.

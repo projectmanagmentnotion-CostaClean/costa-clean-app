@@ -42,7 +42,7 @@ The script:
 3. counts `code.html`, `screen.png` and `DESIGN.md` entries;
 4. copies the archives to `.project-agent/private/stitch-source/` when necessary;
 5. creates `stitch-source-report.json` locally;
-6. verifies the canonical totals `58 / 59 / 7`;
+6. verifies the canonical totals `58 / 59 / 5`;
 7. never stages or uploads private packages.
 
 The report is generated automatically. It is not a file the user needs to download.

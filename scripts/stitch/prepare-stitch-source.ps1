@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $expectedZipCount = 4
 $expectedCodeCount = 58
 $expectedScreenCount = 59
-$expectedDesignCount = 7
+$expectedDesignCount = 5
 
 function Write-Step([string]$Message) {
   Write-Host "`n==> $Message" -ForegroundColor Cyan
@@ -112,7 +112,7 @@ Write-Host "Informe: $reportPath" -ForegroundColor Gray
 Write-Host "La carpeta está ignorada por Git y no debe subirse al repositorio." -ForegroundColor Yellow
 
 if (-not $contentInventoryComplete) {
-  throw "Los cuatro ZIP se validaron, pero su inventario no coincide con los totales canónicos: 58 code.html, 59 screen.png y 7 DESIGN.md. Revisa exports duplicados, incompletos o renombrados."
+  throw "Los cuatro ZIP se validaron, pero su inventario no coincide con los totales canónicos: 58 code.html, 59 screen.png y 5 DESIGN.md. Revisa exports duplicados, incompletos o renombrados."
 }
 
 Write-Host "Inventario definitivo validado correctamente." -ForegroundColor Green

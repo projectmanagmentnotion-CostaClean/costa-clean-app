@@ -4,12 +4,14 @@
 
 Every AI agent, Codex session, or automated coding assistant working in this repository must read these documents before modifying any file:
 
-1. `docs/UX_APP_MANUAL.md`
-2. `docs/CODEX_WORKFLOW.md`
-3. `docs/APP_QUALITY_GATES.md`
-4. `docs/APP_TRANSFORMATION_ROADMAP.md`
+1. `docs/FRONTEND_GLOBAL_BLUEPRINT.md`
+2. `docs/STITCH_FRONTEND_REALITY_ROADMAP_20260731.md`
+3. `docs/UX_APP_MANUAL.md`
+4. `docs/CODEX_WORKFLOW.md`
+5. `docs/APP_QUALITY_GATES.md`
+6. `docs/APP_TRANSFORMATION_ROADMAP.md`
 
-No code change starts before those four documents are read and understood.
+No code change starts before those six documents are read and understood.
 
 ## Mandatory Working Rules
 
@@ -37,6 +39,8 @@ Core principles:
 - Mobile-first is a real constraint, not a responsive afterthought.
 - Minimalism is functional, not decorative.
 - StepFlow is required for complex or high-friction flows.
+- Google Stitch exports are visual references only; the real repository architecture, contracts and `FRONTEND_GLOBAL_BLUEPRINT.md` remain authoritative.
+- “Maritime Professional” describes Costa Clean's visual atmosphere, never maritime logistics, fleet operations or property-investment functionality.
 
 ## Density Preservation Rules
 

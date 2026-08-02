@@ -2,18 +2,26 @@
 
 The original Google Stitch ZIP exports are private local inputs. They are intentionally excluded from Git by `.project-agent/private/`.
 
-## Required files
+## Definitive source set
 
-Place these six files in one local folder, normally `Downloads`:
+The user confirmed that the definitive source is the following four-package export set:
 
 - `stitch_costa_clean_crm_system.zip`
 - `stitch_costa_clean_crm_system (1).zip`
 - `stitch_costa_clean_crm_system (2).zip`
 - `stitch_costa_clean_crm_system (3).zip`
-- `stitch_costa_clean_crm_system (4).zip`
-- `stitch_costa_clean_crm_system (5).zip`
+
+Do not wait for `(4)` or `(5)`. Those names were part of an earlier incorrect assumption and are not required for the definitive handoff.
+
+The package count alone is not enough. The four packages are accepted only when their combined inventory matches the canonical audit totals:
+
+- 58 `code.html`
+- 59 `screen.png`
+- 7 `DESIGN.md`
 
 ## Prepare the private source folder
+
+Place the four ZIP files in one local folder, normally `Downloads`.
 
 From the repository root in PowerShell:
 
@@ -29,13 +37,16 @@ powershell -ExecutionPolicy Bypass -File .\scripts\stitch\prepare-stitch-source.
 
 The script:
 
-1. requires exactly six matching ZIP files;
-2. opens each archive to verify that it contains Stitch evidence;
+1. requires exactly the four definitive ZIP files;
+2. opens every archive and verifies Stitch evidence;
 3. counts `code.html`, `screen.png` and `DESIGN.md` entries;
-4. copies the archives to `.project-agent/private/stitch-source/`;
-5. creates a local SHA-256 report;
-6. never stages or uploads the private packages.
+4. copies the archives to `.project-agent/private/stitch-source/` when necessary;
+5. creates `stitch-source-report.json` locally;
+6. verifies the canonical totals `58 / 59 / 7`;
+7. never stages or uploads private packages.
 
-After it succeeds, Codex can continue using:
+The report is generated automatically. It is not a file the user needs to download.
+
+After the script succeeds, Codex can continue using:
 
 `docs/STITCH_CODEX_CONTINUATION_PROMPT_20260802.md`

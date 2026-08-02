@@ -97,6 +97,7 @@
 .auth-brand__logo {
   width: min(100%, 230px);
   height: auto;
+  max-height: 44px;
   object-fit: contain;
 }
 
@@ -379,6 +380,15 @@
 :root[data-theme="light"] .auth-header p,
 :root[data-theme="light"] .auth-field span {
   color: #465d70;
+}
+
+:root[data-theme="light"] .auth-brand__logo {
+  width: min(100%, 244px);
+  max-height: 42px;
+  filter:
+    brightness(0.92)
+    contrast(1.12)
+    saturate(1.08);
 }
 
 :root[data-theme="light"] .auth-header h1 {

@@ -1,16 +1,23 @@
 import { useState, type FormEvent } from 'react'
+import type { AppTheme } from '../../app/theme'
 import { getSupabaseClient } from '../../lib/supabase'
+import { stitchAssetPaths } from '../../design-system/stitch/stitchAssets'
 import './auth.css'
 
 interface AuthPageProps {
+  theme: AppTheme
   onSignedIn: () => Promise<void> | void
 }
 
-export function AuthPage({ onSignedIn }: AuthPageProps) {
+export function AuthPage({ theme, onSignedIn }: AuthPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const logoSrc =
+    theme === 'light'
+      ? stitchAssetPaths.branding.horizontalLight
+      : stitchAssetPaths.branding.horizontalDark
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -55,7 +62,7 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
             <div className="auth-brand__copy">
               <p className="auth-kicker">CostaClean CRM</p>
               <img
-                src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+                src={logoSrc}
                 alt="CostaClean"
                 className="auth-brand__logo"
               />
@@ -114,4 +121,3 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
     </main>
   )
 }
-

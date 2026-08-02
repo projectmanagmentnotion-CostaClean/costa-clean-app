@@ -495,7 +495,11 @@ a,
 }
 
 :root[data-theme="light"] .cc-boot-card__logo {
-  filter: drop-shadow(0 18px 34px rgba(11, 125, 176, 0.16));
+  filter:
+    brightness(0.94)
+    contrast(1.12)
+    saturate(1.08)
+    drop-shadow(0 18px 34px rgba(11, 125, 176, 0.16));
 }
 
 :root[data-theme="light"] .cc-boot-card__kicker {

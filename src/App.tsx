@@ -249,7 +249,7 @@ function App() {
   }
 
   if (!session) {
-    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} />)
+    return renderWithBuildInfo(<AuthPage theme={theme} onSignedIn={() => undefined} />)
   }
 
   return renderWithBuildInfo(

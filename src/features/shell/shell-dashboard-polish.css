@@ -3797,13 +3797,77 @@
   background: rgba(15, 23, 42, 0.26);
 }
 
+.cc-shell-nav--top-only {
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.cc-shell-nav__topline {
+  align-items: center;
+  gap: 10px;
+}
+
+.cc-shell-nav__brand {
+  align-items: center;
+}
+
+.cc-shell-nav__actions {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cc-shell-nav__utilities {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cc-shell-nav__current {
+  align-self: center;
+  display: inline-grid;
+  justify-items: end;
+  gap: 2px;
+  padding: 7px 10px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 14px;
+  background: rgba(15, 23, 42, 0.22);
+  min-width: 0;
+}
+
+.cc-shell-nav__current-label {
+  font-size: 0.60rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.cc-shell-nav__current-value {
+  font-size: 0.82rem;
+  line-height: 1.05;
+}
+
 :root[data-theme="light"] .cc-account-menu__trigger,
 :root[data-theme="light"] .cc-account-menu__logout,
 :root[data-theme="light"] .cc-account-card,
-:root[data-theme="light"] .cc-account-card__logout {
+:root[data-theme="light"] .cc-account-card__logout,
+:root[data-theme="light"] .cc-shell-nav__current {
   border-color: rgba(14, 84, 114, 0.16);
   background: rgba(255, 255, 255, 0.9);
   color: var(--brand-ink);
+}
+
+:root[data-theme="light"] .cc-shell-nav__logo {
+  filter:
+    brightness(0.92)
+    contrast(1.12)
+    saturate(1.08);
 }
 
 @media (max-width: 520px) {
@@ -3841,6 +3905,11 @@
 
   .cc-shell-nav__actions {
     width: 100%;
+    justify-content: flex-start;
+    align-items: flex-start;
+  }
+
+  .cc-shell-nav__current {
     justify-items: start;
   }
 

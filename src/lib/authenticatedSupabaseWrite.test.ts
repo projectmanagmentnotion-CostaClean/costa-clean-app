@@ -122,6 +122,80 @@ describe('authenticatedSupabaseWrite', () => {
     })
   })
 
+  it('refreshes the session and retries once when Supabase rejects an expired token', async () => {
+    const authorizationHeaders: string[] = []
+    let fetchCalls = 0
+    let refreshCalls = 0
+
+    const response = await fetchAuthenticatedSupabaseWrite('rpc/create_client', {
+      method: 'POST',
+      body: JSON.stringify({ p_client: { id: 'CLIENT-1', full_name: 'Cliente' } }),
+    }, {
+      getContext: async () => resolveAuthenticatedWriteContext({
+        supabaseUrl: 'https://example.supabase.co',
+        supabaseAnonKey: 'anon-key',
+        accessToken: 'expired-session-token',
+      }),
+      refreshContext: async () => {
+        refreshCalls += 1
+        return resolveAuthenticatedWriteContext({
+          supabaseUrl: 'https://example.supabase.co',
+          supabaseAnonKey: 'anon-key',
+          accessToken: 'refreshed-session-token',
+        })
+      },
+      fetch: async (_url, init) => {
+        fetchCalls += 1
+        authorizationHeaders.push((init?.headers as Record<string, string>).Authorization)
+        return fetchCalls === 1
+          ? new Response('JWT expired', { status: 401, statusText: 'Unauthorized' })
+          : new Response(null, { status: 204 })
+      },
+    })
+
+    expect(response.status).toBe(204)
+    expect(fetchCalls).toBe(2)
+    expect(refreshCalls).toBe(1)
+    expect(authorizationHeaders).toEqual([
+      'Bearer expired-session-token',
+      'Bearer refreshed-session-token',
+    ])
+  })
+
+  it('does not retry permission failures that are unrelated to token expiry', async () => {
+    let fetchCalls = 0
+    let refreshCalls = 0
+    let errorMessage = ''
+
+    try {
+      await fetchAuthenticatedSupabaseWrite('rpc/create_client', { method: 'POST' }, {
+        getContext: async () => resolveAuthenticatedWriteContext({
+          supabaseUrl: 'https://example.supabase.co',
+          supabaseAnonKey: 'anon-key',
+          accessToken: 'live-session-token',
+        }),
+        refreshContext: async () => {
+          refreshCalls += 1
+          return resolveAuthenticatedWriteContext({
+            supabaseUrl: 'https://example.supabase.co',
+            supabaseAnonKey: 'anon-key',
+            accessToken: 'unexpected-refreshed-token',
+          })
+        },
+        fetch: async () => {
+          fetchCalls += 1
+          return new Response('RLS denied', { status: 403, statusText: 'Forbidden' })
+        },
+      })
+    } catch (error) {
+      errorMessage = error instanceof Error ? error.message : ''
+    }
+
+    expect(errorMessage.includes('REST 403: RLS denied')).toBe(true)
+    expect(fetchCalls).toBe(1)
+    expect(refreshCalls).toBe(0)
+  })
+
   it('keeps 401 and 403 status details in clear UX errors', async () => {
     const unauthorized = await getAuthenticatedWriteResponseError(new Response('JWT expired', {
       status: 401,

@@ -231,7 +231,7 @@ Create one repository-backed source of truth that resolves contradictions betwee
 
 # STITCH-FE-01 — Frontend inventory and visual baseline
 
-**Status:** `READY`
+**Status:** `DONE_WITH_DOCUMENTED_DEBT`
 
 ### Objective
 
@@ -267,6 +267,16 @@ Audit the current running frontend against the canonical blueprint before changi
 - every authenticated and public surface is `TESTED`, `CODE_REVIEW_ONLY`, `BLOCKED` or `NOT_DISCOVERED`;
 - exact affected files are documented;
 - no unsupported “100% audited” claim.
+
+### Audit closeout
+
+- **Date:** 2026-08-02
+- **Coverage:** shell, public standalone routes, portal boundary, core CRM views, shared primitives and protected logic boundaries were inventory-audited from `origin/main`; public preview validation covered `/quote-request` and `/manual-quiz` in `390x844` and `/quote-request` in `768x1024`
+- **Evidence:** `docs/STITCH_FE_01_REAL_FRONTEND_AUDIT_20260802.md`
+- **Blockers:** authenticated shell visual validation still requires a navigable branch preview or safe QA session; public surfaces were validated locally without real data
+- **Hallazgos:** P0 `0`, P1 `0`, P2 `3`, P3 `2`
+- **First slice authorized:** token and theme convergence
+- **Next sprint:** `STITCH-FE-02 — Token and theme convergence`
 
 ---
 

@@ -35,6 +35,15 @@
   gap: 1rem;
 }
 
+.cc-client-workspace__identity-leading {
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.cc-client-workspace__avatar {
+  flex: 0 0 auto;
+}
+
 .cc-client-workspace__identity-copy h1 {
   margin: 0.24rem 0 0.3rem;
   line-height: 1.02;

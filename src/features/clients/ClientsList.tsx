@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { DSErrorState } from '../../design-system/components/DSErrorState'
+import { StitchAvatar } from '../../design-system/stitch/StitchAvatar'
 import { compareText, createDefaultPreferences } from '../lists/listPreferences'
 import { applyTextSearch } from '../lists/utils'
 import type { ClientListItem } from './types'
@@ -116,12 +118,26 @@ export function ClientsList({
                 dataQa="client-list-item"
                 selected={isSelected}
                 onSelect={() => onSelectClient(client)}
+                leading={(
+                  <StitchAvatar
+                    label={client.full_name}
+                    kind="client"
+                    size="client"
+                    className="cc-directory-list__avatar"
+                  />
+                )}
                 title={formatClientLabel(client)}
                 subtitle={`Interno ${client.display_code ?? client.id}`}
                 status={<span className="lead-badge">{client.status}</span>}
-                summary={client.email ?? 'Sin email registrado'}
-                chips={[client.phone ?? 'Sin telefono']}
-                meta={[{ label: 'Fiscal', value: client.tax_id ?? 'Sin dato fiscal' }]}
+                summary={client.billing_address ?? client.email ?? 'Sin direccion fiscal'}
+                chips={[
+                  client.phone ?? 'Sin telefono',
+                  client.email ?? 'Sin email',
+                ]}
+                meta={[
+                  { label: 'Fiscal', value: client.tax_id ?? 'Sin dato fiscal' },
+                  { label: 'Actividad', value: client.created_at ? formatDateEs(client.created_at) : 'Sin fecha de alta' },
+                ]}
                 microhint={client.source_lead_id ? `Origen Lead ${client.source_lead_id}` : 'Alta directa'}
               />
             )

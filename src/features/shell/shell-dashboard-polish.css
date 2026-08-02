@@ -46,13 +46,13 @@
 .cc-shell-nav__topline {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 18px;
+  gap: 12px;
   align-items: start;
 }
 
 .cc-shell-nav__brand {
   display: flex;
-  gap: 18px;
+  gap: 14px;
   align-items: center;
   min-width: 0;
 }
@@ -88,7 +88,7 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
-  max-width: min(100%, 660px);
+  max-width: min(100%, 620px);
 }
 
 .cc-shell-nav__sync,
@@ -3798,8 +3798,8 @@
 }
 
 .cc-shell-nav--top-only {
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 8px 10px;
 }
 
 .cc-shell-nav__topline {
@@ -3865,9 +3865,10 @@
 
 :root[data-theme="light"] .cc-shell-nav__logo {
   filter:
-    brightness(0.92)
-    contrast(1.12)
-    saturate(1.08);
+    brightness(0.97)
+    contrast(1.18)
+    saturate(1.12)
+    drop-shadow(0 8px 18px rgba(11, 125, 176, 0.18));
 }
 
 @media (max-width: 520px) {

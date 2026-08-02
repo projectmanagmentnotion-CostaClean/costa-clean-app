@@ -23,8 +23,11 @@ export interface AuthenticatedWriteContext {
 
 interface AuthenticatedWriteDependencies {
   getContext: () => Promise<AuthenticatedWriteContext>
+  refreshContext?: () => Promise<AuthenticatedWriteContext>
   fetch: typeof fetch
 }
+
+const browserFetch: typeof fetch = (input, init) => globalThis.fetch(input, init)
 
 export function resolveAuthenticatedWriteContext({
   supabaseUrl,
@@ -69,18 +72,18 @@ export function buildAuthenticatedSupabaseWriteRequest({
   }
 }
 
-async function getAuthenticatedWriteContext(): Promise<AuthenticatedWriteContext> {
+async function getSupabaseSessionContext(refreshSession: boolean): Promise<AuthenticatedWriteContext> {
   const { client, error } = getSupabaseClient()
   if (!client) {
     throw new Error(error ?? 'No se pudo inicializar Supabase.')
   }
 
-  const {
-    data: { session },
-    error: sessionError,
-  } = await client.auth.getSession()
+  const sessionResult = refreshSession
+    ? await client.auth.refreshSession()
+    : await client.auth.getSession()
+  const session = sessionResult.data.session
 
-  if (sessionError || !session?.access_token) {
+  if (sessionResult.error || !session?.access_token) {
     throw new Error(AUTHENTICATED_WRITE_SESSION_ERROR)
   }
 
@@ -90,6 +93,20 @@ async function getAuthenticatedWriteContext(): Promise<AuthenticatedWriteContext
     supabaseAnonKey,
     accessToken: session.access_token,
   })
+}
+
+async function getAuthenticatedWriteContext(): Promise<AuthenticatedWriteContext> {
+  return getSupabaseSessionContext(false)
+}
+
+async function refreshAuthenticatedWriteContext(): Promise<AuthenticatedWriteContext> {
+  return getSupabaseSessionContext(true)
+}
+
+const defaultAuthenticatedWriteDependencies: AuthenticatedWriteDependencies = {
+  getContext: getAuthenticatedWriteContext,
+  refreshContext: refreshAuthenticatedWriteContext,
+  fetch: browserFetch,
 }
 
 async function readResponseDetail(response: Response): Promise<string> {
@@ -132,18 +149,25 @@ export async function readSingleAuthenticatedWriteRow<T>(
 export async function fetchAuthenticatedSupabaseWrite(
   path: string,
   init: RequestInit,
-  dependencies: AuthenticatedWriteDependencies = {
-    getContext: getAuthenticatedWriteContext,
-    fetch,
-  },
+  dependencies: AuthenticatedWriteDependencies = defaultAuthenticatedWriteDependencies,
 ): Promise<Response> {
-  const context = await dependencies.getContext()
-  const request = buildAuthenticatedSupabaseWriteRequest({ ...context, path, init })
-  const response = await dependencies.fetch(request.url, request.init)
+  let context = await dependencies.getContext()
+  let request = buildAuthenticatedSupabaseWriteRequest({ ...context, path, init })
+  let response = await dependencies.fetch(request.url, request.init)
+
+  if (response.status === 401 && dependencies.refreshContext) {
+    context = await dependencies.refreshContext()
+    request = buildAuthenticatedSupabaseWriteRequest({ ...context, path, init })
+    response = await dependencies.fetch(request.url, request.init)
+  }
 
   if (!response.ok) {
     throw await getAuthenticatedWriteResponseError(response)
   }
 
   return response
+}
+
+export const __authenticatedSupabaseWriteTestUtils = {
+  browserFetch,
 }

@@ -60,6 +60,8 @@ The table below maps the 58 `code.html` exports to the real Costa Clean surfaces
 | `(2)` | `nueva_factura_escritorio_1440px` | `code.html`, `screen.png` | Desktop StepFlow | Invoices | `src/features/invoices/InvoiceCreateFlow.tsx` | Canonical | USE | Desktop invoice creation. | Block 6 | Same write semantics. |
 | `(2)` | `nuevo_presupuesto_m_vil_390px` | `code.html`, `screen.png` | Mobile StepFlow | Quotes | `src/features/quotes/QuoteCreateFlow.tsx` | Canonical | USE | Mobile quote creation. | Block 6 | Preserve quote line semantics. |
 | `(2)` | `nuevo_presupuesto_tablet_1024px` | `code.html`, `screen.png` | Tablet StepFlow | Quotes | `src/features/quotes/QuoteCreateFlow.tsx` | Canonical | USE | Tablet quote creation. | Block 6 | No overflow. |
+| `(2)` | `nueva_propiedad_escritorio_1440px` | `code.html`, `screen.png` | Desktop StepFlow | Properties | `src/features/properties/PropertyCreateForm.tsx` | Canonical | USE | Desktop property creation reference. | Block 6 | Keep client/property handoff and write payload unchanged. |
+| `(2)` | `nueva_propiedad_tablet_768px` | `code.html`, `screen.png` | Tablet StepFlow | Properties | `src/features/properties/PropertyCreateForm.tsx` | Canonical | USE | Tablet property creation reference. | Block 6 | Maintain compact step progression and no overflow. |
 | `(1)` | `lista_de_presupuestos_m_vil` | `code.html`, `screen.png` | Mobile list | Quotes | `src/pages/QuotesPage.tsx` | Canonical | USE | Mobile quote list composition. | Block 7 | Dense list, no card inflation. |
 | `(1)` | `m_dulo_de_presupuestos_escritorio` | `code.html`, `screen.png` | Desktop module | Quotes | `src/pages/QuotesPage.tsx` | Canonical | USE | Desktop quotes module reference. | Block 7 | Keep master-detail invariants. |
 | `(1)` | `m_dulo_de_presupuestos_escritorio_1440px` | `code.html`, `screen.png` | Desktop module | Quotes | `src/pages/QuotesPage.tsx` | Canonical | USE | Large desktop quotes reference. | Block 7 | No layout inflation. |
@@ -103,6 +105,12 @@ These are the only duplicated screen families across packages:
 | `workspace_propiedad_calella_centro_escritorio_corregido` | `(1)`, `(3)` | `COMBINE` | Same corrected property workspace family. |
 | `workspace_propiedad_calella_centro_m_vil_corregido` | `(1)`, `(3)` | `COMBINE` | Same corrected mobile property workspace family. |
 
+## 5. Block progress notes
+
+- Block 1 remains the source audit baseline and private inventory contract.
+- Block 2 now also covers the property avatar primitive and the property create StepFlow variants.
+- The property creation source evidence is present as desktop and tablet exports; the mobile property create composition implemented in the app is a derived presentational adaptation, not a new source artifact.
+
 ## 4. What this audit preserves
 
 - The HTML exports are used only as visual evidence.
@@ -115,4 +123,3 @@ These are the only duplicated screen families across packages:
   - shell navigation and `AppView`
 - The motion audit remains advisory only; no layout now depends on GSAP.
 - The private extraction and report stay ignored by Git.
-

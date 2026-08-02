@@ -5,12 +5,13 @@ import {
   type StitchAvatarKind,
 } from './stitchAssets'
 
-type StitchAvatarSize = 'account' | 'workspace' | 'client' | 'staff'
+type StitchAvatarSize = 'account' | 'workspace' | 'client' | 'property' | 'staff'
 
 const avatarSizeClassName: Record<StitchAvatarSize, string> = {
   account: 'cc-stitch-avatar--account',
   workspace: 'cc-stitch-avatar--workspace',
   client: 'cc-stitch-avatar--client',
+  property: 'cc-stitch-avatar--property',
   staff: 'cc-stitch-avatar--staff',
 }
 

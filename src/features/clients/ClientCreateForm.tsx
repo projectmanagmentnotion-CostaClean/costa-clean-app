@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { getStatusLabel } from '../../app/displayText'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { DSSmartLocationFields } from '../../design-system/components'
 import { findClientDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
@@ -75,6 +76,12 @@ export function ClientCreateForm({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findClientDuplicateGroups>>([])
+  const [currentStep, setCurrentStep] = useState(0)
+  const steps = [
+    { id: 'identity', label: 'Identidad', description: 'Nombre y estado base' },
+    { id: 'contact', label: 'Contacto', description: 'Telefono, email y fiscal' },
+    { id: 'billing', label: 'Direccion', description: 'Contexto de facturacion' },
+  ] as const
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -139,6 +146,7 @@ export function ClientCreateForm({
       setBillingAddressLine('')
       setBillingLocation(initialBillingLocationDraft)
       setIsDirty(false)
+      setCurrentStep(0)
       setSuccessMessage('Cliente creado.')
     } catch (err) {
       const message =
@@ -152,6 +160,11 @@ export function ClientCreateForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (currentStep < steps.length - 1) {
+      setCurrentStep((value) => Math.min(value + 1, steps.length - 1))
+      return
+    }
+
     await submitClient()
   }
 
@@ -165,97 +178,165 @@ export function ClientCreateForm({
     setShowCancelConfirm(true)
   }
 
+  const stepStates = steps.map((_, index) => (
+    index < currentStep ? 'complete' : index === currentStep ? 'current' : 'pending'
+  )) as Array<'complete' | 'current' | 'pending'>
+
+  const footerContent = (
+    <div className="cc-client-create-form__footer">
+      {onCancel ? (
+        <button type="button" className="secondary-button" onClick={requestCancel} disabled={isSubmitting}>
+          Cancelar
+        </button>
+      ) : null}
+
+      {currentStep > 0 ? (
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => setCurrentStep((value) => Math.max(value - 1, 0))}
+          disabled={isSubmitting}
+        >
+          Atrás
+        </button>
+      ) : null}
+
+      {currentStep < steps.length - 1 ? (
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => setCurrentStep((value) => Math.min(value + 1, steps.length - 1))}
+          disabled={isSubmitting}
+        >
+          Continuar
+        </button>
+      ) : (
+        <button type="button" className="primary-button" onClick={() => void submitClient()} disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : submitLabel}
+        </button>
+      )}
+    </div>
+  )
+
   return (
-    <section className="data-section cc-client-create-form">
-      <div className="section-header">
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-      </div>
-
-      <form className="lead-form" onSubmit={handleSubmit}>
-        <label className="form-field">
-          <span>Nombre completo *</span>
-          <input
-            value={form.full_name}
-            onChange={(event) => updateField('full_name', event.target.value)}
-            placeholder="Ej. Marta Lopez"
-            required
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Telefono</span>
-          <input
-            value={form.phone}
-            onChange={(event) => updateField('phone', event.target.value)}
-            placeholder="Ej. 600123123"
-          />
-        </label>
-
-        <label className="form-field">
-          <span>Email</span>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) => updateField('email', event.target.value)}
-            placeholder="Ej. cliente@email.com"
-          />
-        </label>
-
-        <label className="form-field">
-          <span>DNI/NIF/CIF</span>
-          <input
-            value={form.tax_id}
-            onChange={(event) => updateField('tax_id', event.target.value)}
-            placeholder="Ej. B12345678"
-          />
-        </label>
-
-        <label className="form-field form-field-full">
-          <span>Direccion fiscal</span>
-          <textarea
-            value={billingAddressLine}
-            onChange={(event) => updateBillingAddress(event.target.value, billingLocation)}
-            placeholder="Calle, numero y puerta fiscal"
-            rows={2}
-          />
-        </label>
-
-        <div className="form-field form-field-full">
-          <DSSmartLocationFields
-            postalCodeValue={billingLocation.postalCode}
-            cityValue={billingLocation.city}
-            provinceValue={billingLocation.province}
-            onPostalCodeChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, postalCode: value })}
-            onCityChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, city: value })}
-            onProvinceChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, province: value })}
-            showProvinceField
-            cityHint="Ciudad fiscal sugerida o escrita."
-            postalCodeHint="Sugerencia local y opcional."
-          />
+    <FullscreenStepFlow
+      eyebrow="Cliente"
+      title={title}
+      description={description ?? 'Alta guiada para identificar, contactar y cerrar la ficha fiscal sin perder contexto.'}
+      steps={steps.map((step) => ({
+        id: step.id,
+        label: step.label,
+        description: step.description,
+      }))}
+      currentStep={currentStep}
+      stepStates={stepStates}
+      onStepSelect={setCurrentStep}
+      contextItems={[
+        {
+          label: 'Nombre',
+          value: form.full_name.trim() || 'Pendiente',
+          hint: 'Identidad principal del cliente',
+        },
+        {
+          label: 'Estado',
+          value: getStatusLabel(form.status),
+          hint: 'Se preserva el mismo contrato de escritura',
+        },
+      ]}
+      sideContent={(
+        <div className="cc-client-create-form__review">
+          <span>Revision</span>
+          <strong>{form.full_name.trim() || 'Nuevo cliente'}</strong>
+          <small>{billingAddressLine.trim() || 'Sin direccion fiscal aun'}</small>
         </div>
+      )}
+      footerContent={footerContent}
+    >
+      <form className="lead-form cc-client-create-form__flow" onSubmit={handleSubmit}>
+        {currentStep === 0 ? (
+          <section className="cc-client-create-form__step">
+            <label className="form-field">
+              <span>Nombre completo *</span>
+              <input
+                value={form.full_name}
+                onChange={(event) => updateField('full_name', event.target.value)}
+                placeholder="Ej. Marta Lopez"
+                required
+              />
+            </label>
 
-        <label className="form-field">
-          <span>Estado</span>
-          <select
-            value={form.status}
-            onChange={(event) => updateField('status', event.target.value)}
-          >
-            <option value="active">{getStatusLabel('active')}</option>
-            <option value="inactive">{getStatusLabel('inactive')}</option>
-          </select>
-        </label>
+            <label className="form-field">
+              <span>Estado</span>
+              <select
+                value={form.status}
+                onChange={(event) => updateField('status', event.target.value)}
+              >
+                <option value="active">{getStatusLabel('active')}</option>
+                <option value="inactive">{getStatusLabel('inactive')}</option>
+              </select>
+            </label>
+          </section>
+        ) : null}
 
-        <div className="form-actions">
-          {onCancel ? (
-            <button type="button" className="secondary-button" onClick={requestCancel}>
-              Cancelar
-            </button>
-          ) : null}
-          <button type="submit" className="primary-button" disabled={isSubmitting}>
-            {isSubmitting ? 'Guardando...' : submitLabel}
-          </button>
-        </div>
+        {currentStep === 1 ? (
+          <section className="cc-client-create-form__step">
+            <label className="form-field">
+              <span>Telefono</span>
+              <input
+                value={form.phone}
+                onChange={(event) => updateField('phone', event.target.value)}
+                placeholder="Ej. 600123123"
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Email</span>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(event) => updateField('email', event.target.value)}
+                placeholder="Ej. cliente@email.com"
+              />
+            </label>
+
+            <label className="form-field">
+              <span>DNI/NIF/CIF</span>
+              <input
+                value={form.tax_id}
+                onChange={(event) => updateField('tax_id', event.target.value)}
+                placeholder="Ej. B12345678"
+              />
+            </label>
+          </section>
+        ) : null}
+
+        {currentStep === 2 ? (
+          <section className="cc-client-create-form__step">
+            <label className="form-field form-field-full">
+              <span>Direccion fiscal</span>
+              <textarea
+                value={billingAddressLine}
+                onChange={(event) => updateBillingAddress(event.target.value, billingLocation)}
+                placeholder="Calle, numero y puerta fiscal"
+                rows={2}
+              />
+            </label>
+
+            <div className="form-field form-field-full">
+              <DSSmartLocationFields
+                postalCodeValue={billingLocation.postalCode}
+                cityValue={billingLocation.city}
+                provinceValue={billingLocation.province}
+                onPostalCodeChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, postalCode: value })}
+                onCityChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, city: value })}
+                onProvinceChange={(value) => updateBillingAddress(billingAddressLine, { ...billingLocation, province: value })}
+                showProvinceField
+                cityHint="Ciudad fiscal sugerida o escrita."
+                postalCodeHint="Sugerencia local y opcional."
+              />
+            </div>
+          </section>
+        ) : null}
 
         {submitError ? (
           <div className="empty-state">
@@ -304,6 +385,6 @@ export function ClientCreateForm({
           void submitClient(true)
         }}
       />
-    </section>
+    </FullscreenStepFlow>
   )
 }

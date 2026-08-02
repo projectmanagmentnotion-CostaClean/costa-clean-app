@@ -45,11 +45,12 @@ export const stitchVisualMetrics = {
   },
 } as const
 
-export type StitchAvatarKind = 'account' | 'client' | 'staff'
+export type StitchAvatarKind = 'account' | 'client' | 'property' | 'staff'
 
 const avatarFallbackByKind: Record<StitchAvatarKind, string> = {
   account: stitchAssetPaths.avatars.accountFallback,
   client: stitchAssetPaths.avatars.clientFallback,
+  property: stitchAssetPaths.properties.fallback,
   staff: stitchAssetPaths.avatars.staffFallback,
 }
 

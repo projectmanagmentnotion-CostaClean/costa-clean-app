@@ -24,6 +24,8 @@ describe('Stitch visual asset helpers', () => {
       .toBe(stitchAssetPaths.avatars.accountFallback)
     expect(resolveStitchAvatarSource('', 'client'))
       .toBe(stitchAssetPaths.avatars.clientFallback)
+    expect(resolveStitchAvatarSource(undefined, 'property'))
+      .toBe(stitchAssetPaths.properties.fallback)
   })
 
   it('builds safe initials without inventing profile data', () => {

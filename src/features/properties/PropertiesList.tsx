@@ -9,6 +9,7 @@ import { applyTextSearch } from '../lists/utils'
 import type { PropertyListItem } from './types'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 import { OperationalListItem } from '../../components/OperationalListItem'
+import { StitchAvatar } from '../../design-system/stitch/StitchAvatar'
 
 interface PropertiesListProps {
   properties: PropertyListItem[]
@@ -141,12 +142,26 @@ export function PropertiesList({
                 dataQa="property-list-item"
                 selected={isSelected}
                 onSelect={() => onSelectProperty(property)}
+                leading={(
+                  <StitchAvatar
+                    label={property.name}
+                    kind="property"
+                    size="property"
+                    className="cc-directory-list__avatar"
+                  />
+                )}
                 title={property.name}
                 subtitle={`Interno ${property.display_code ?? property.id}`}
                 status={<span className="lead-badge">{getPropertyTypeLabel(property.property_type)}</span>}
                 summary={property.address}
-                chips={[property.city ?? 'Sin ciudad']}
-                meta={[{ label: 'Cliente', value: formatClientLabel(property) }]}
+                chips={[
+                  property.city ?? 'Sin ciudad',
+                  getPropertyTypeLabel(property.property_type),
+                ]}
+                meta={[
+                  { label: 'Cliente', value: formatClientLabel(property) },
+                  { label: 'Codigo', value: property.display_code ?? 'Sin codigo' },
+                ]}
                 microhint={property.postal_code ?? 'Sin CP'}
               />
             )

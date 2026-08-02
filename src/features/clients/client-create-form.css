@@ -19,6 +19,64 @@
   gap: 0.9rem;
 }
 
+.cc-client-create-form__flow {
+  min-width: 0;
+}
+
+.cc-client-create-form__step {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.cc-client-create-form__review {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.26);
+}
+
+.cc-client-create-form__review span {
+  color: rgba(148, 163, 184, 0.84);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.cc-client-create-form__review strong {
+  font-family: var(--cc-font-display);
+  font-size: 1.02rem;
+  letter-spacing: -0.03em;
+}
+
+.cc-client-create-form__review small {
+  color: rgba(226, 232, 240, 0.8);
+  line-height: 1.45;
+}
+
+.cc-client-create-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  width: 100%;
+}
+
 .cc-client-create-form .form-field textarea {
   min-height: 6rem;
+}
+
+:root[data-theme="light"] .cc-client-create-form__review {
+  border-color: rgba(14, 84, 114, 0.16);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="light"] .cc-client-create-form__review span {
+  color: #5f778b;
+}
+
+:root[data-theme="light"] .cc-client-create-form__review small {
+  color: #51687c;
 }

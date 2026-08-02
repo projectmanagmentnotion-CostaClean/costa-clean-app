@@ -289,3 +289,9 @@ The prototype passes when:
 - dark/light are coherent;
 - all existing actions still lead to the same outcomes;
 - no protected logic changed.
+
+## 10. Progress log
+
+- Block 2 now includes property avatar support and property-specific fallback assets in the shared Stitch primitive layer.
+- Block 6 now includes presentational StepFlow compositions for client and property creation, with the first actionable fields kept at the top of the flow.
+- This branch remains visual-only; protected routes, data and business semantics stay untouched.

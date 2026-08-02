@@ -21,19 +21,20 @@
   color-scheme: dark;
 
   --cc-color-background: #06101d;
-  --cc-color-background-soft: rgba(11, 22, 40, 0.58);
-  --cc-color-surface: rgba(255, 255, 255, 0.10);
-  --cc-color-surface-raised: rgba(15, 23, 35, 0.92);
+  --cc-color-background: #07111f;
+  --cc-color-background-soft: rgba(11, 22, 40, 0.54);
+  --cc-color-surface: rgba(255, 255, 255, 0.09);
+  --cc-color-surface-raised: rgba(13, 22, 38, 0.94);
   --cc-color-surface-solid: #0b1628;
   --cc-color-text: #eff6ff;
-  --cc-color-text-muted: rgba(226, 232, 240, 0.74);
-  --cc-color-text-muted-strong: rgba(226, 232, 240, 0.88);
-  --cc-color-border: rgba(255, 255, 255, 0.16);
-  --cc-color-border-strong: rgba(255, 255, 255, 0.24);
+  --cc-color-text-muted: rgba(226, 232, 240, 0.70);
+  --cc-color-text-muted-strong: rgba(226, 232, 240, 0.86);
+  --cc-color-border: rgba(255, 255, 255, 0.14);
+  --cc-color-border-strong: rgba(255, 255, 255, 0.22);
   --cc-color-brand: #7dd3fc;
   --cc-color-brand-strong: #38bdf8;
   --cc-color-brand-soft: rgba(34, 211, 238, 0.18);
-  --cc-color-focus: #93c5fd;
+  --cc-color-focus: #8ec9ff;
   --cc-color-success: #34d399;
   --cc-color-success-soft: rgba(52, 211, 153, 0.18);
   --cc-color-warning: #facc15;
@@ -78,10 +79,10 @@
   --danger: var(--cc-color-danger);
   --danger-soft: var(--cc-color-danger-soft);
 
-  --shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
-  --shadow-soft: 0 18px 44px rgba(0, 0, 0, 0.20);
-  --shadow-shell: 0 32px 90px rgba(2, 6, 23, 0.42);
-  --shadow-float: 0 18px 36px rgba(8, 21, 35, 0.26);
+  --shadow: 0 24px 64px rgba(0, 0, 0, 0.30);
+  --shadow-soft: 0 16px 36px rgba(0, 0, 0, 0.18);
+  --shadow-shell: 0 28px 72px rgba(2, 6, 23, 0.36);
+  --shadow-float: 0 16px 30px rgba(8, 21, 35, 0.22);
   --glass-blur: blur(24px);
   --cc-font-display:
     "Avenir Next",
@@ -97,12 +98,12 @@
   --cc-control-shadow-hover: 0 18px 34px rgba(2, 6, 23, 0.24);
   --cc-copy-max: 72ch;
 
-  --radius-xs: 12px;
-  --radius-sm: 16px;
-  --radius-md: 20px;
-  --radius-lg: 24px;
-  --radius-xl: 28px;
-  --radius-2xl: 36px;
+  --radius-xs: 10px;
+  --radius-sm: 14px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --radius-2xl: 32px;
   --radius-pill: 999px;
 
   --space-1: 4px;
@@ -122,11 +123,11 @@
   --container-max: 1440px;
   --content-max: 1260px;
 
-  --motion-fast: 160ms cubic-bezier(.2,.8,.2,1);
-  --motion-base: 220ms cubic-bezier(.2,.8,.2,1);
-  --motion-slow: 340ms cubic-bezier(.2,.8,.2,1);
-  --motion-spring: 280ms cubic-bezier(.22,1,.36,1);
-  --motion-fade: 260ms cubic-bezier(.2,.8,.2,1);
+  --motion-fast: 140ms cubic-bezier(.2,.8,.2,1);
+  --motion-base: 200ms cubic-bezier(.2,.8,.2,1);
+  --motion-slow: 300ms cubic-bezier(.2,.8,.2,1);
+  --motion-spring: 260ms cubic-bezier(.22,1,.36,1);
+  --motion-fade: 220ms cubic-bezier(.2,.8,.2,1);
 }
 
 :root[data-theme="light"] {
@@ -137,16 +138,16 @@
     linear-gradient(180deg, #fbfdff 0%, #f0f8fc 42%, #e8f3f8 100%);
   color-scheme: light;
 
-  --cc-color-background: #f4f9fc;
+  --cc-color-background: #f5fafc;
   --cc-color-background-soft: #eaf5fa;
   --cc-color-surface: #ffffff;
-  --cc-color-surface-raised: #f9fcff;
+  --cc-color-surface-raised: #fbfdff;
   --cc-color-surface-solid: #ffffff;
   --cc-color-text: #10243a;
   --cc-color-text-muted: #52677a;
   --cc-color-text-muted-strong: #31465a;
-  --cc-color-border: rgba(17, 73, 103, 0.18);
-  --cc-color-border-strong: rgba(17, 73, 103, 0.30);
+  --cc-color-border: rgba(17, 73, 103, 0.15);
+  --cc-color-border-strong: rgba(17, 73, 103, 0.26);
   --cc-color-brand: #0b83b4;
   --cc-color-brand-strong: #075f88;
   --cc-color-brand-soft: rgba(11, 131, 180, 0.13);
@@ -165,8 +166,8 @@
   --cc-surface-emphasis-strong: rgba(7, 95, 136, 0.14);
   --cc-surface-warning: rgba(154, 91, 0, 0.12);
   --cc-surface-success: rgba(8, 127, 91, 0.11);
-  --cc-control-shadow: 0 6px 16px rgba(17, 73, 103, 0.08);
-  --cc-control-shadow-hover: 0 10px 22px rgba(17, 73, 103, 0.12);
+  --cc-control-shadow: 0 6px 16px rgba(17, 73, 103, 0.07);
+  --cc-control-shadow-hover: 0 10px 22px rgba(17, 73, 103, 0.10);
   --cc-shell-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.985), rgba(247, 252, 255, 0.97)),
     radial-gradient(circle at top left, rgba(11, 131, 180, 0.12), transparent 34%);
@@ -197,10 +198,10 @@
   --warning-soft: var(--cc-color-warning-soft);
   --danger: var(--cc-color-danger);
   --danger-soft: var(--cc-color-danger-soft);
-  --shadow: 0 24px 64px rgba(17, 73, 103, 0.14);
-  --shadow-soft: 0 16px 34px rgba(17, 73, 103, 0.11);
-  --shadow-shell: 0 28px 70px rgba(17, 73, 103, 0.15);
-  --shadow-float: 0 16px 32px rgba(17, 73, 103, 0.14);
+  --shadow: 0 20px 48px rgba(17, 73, 103, 0.12);
+  --shadow-soft: 0 14px 30px rgba(17, 73, 103, 0.09);
+  --shadow-shell: 0 24px 58px rgba(17, 73, 103, 0.13);
+  --shadow-float: 0 14px 28px rgba(17, 73, 103, 0.12);
 }
 
 * {
@@ -525,51 +526,51 @@ a,
 :root {
   --cc-color-brand: #7dd3fc;
   --cc-color-brand-strong: #38bdf8;
-  --cc-color-brand-soft: rgba(56, 189, 248, 0.16);
-  --cc-color-border: rgba(255, 255, 255, 0.12);
-  --cc-color-border-strong: rgba(255, 255, 255, 0.2);
-  --cc-color-surface: rgba(255, 255, 255, 0.08);
-  --cc-color-surface-raised: rgba(9, 17, 30, 0.82);
+  --cc-color-brand-soft: rgba(56, 189, 248, 0.14);
+  --cc-color-border: rgba(255, 255, 255, 0.10);
+  --cc-color-border-strong: rgba(255, 255, 255, 0.18);
+  --cc-color-surface: rgba(255, 255, 255, 0.07);
+  --cc-color-surface-raised: rgba(9, 17, 30, 0.84);
   --cc-color-surface-solid: #0c1524;
-  --cc-surface-glass: rgba(255, 255, 255, 0.08);
+  --cc-surface-glass: rgba(255, 255, 255, 0.07);
   --cc-surface-glass-subtle: rgba(255, 255, 255, 0.04);
-  --cc-surface-input: rgba(255, 255, 255, 0.07);
-  --shadow: 0 30px 80px rgba(2, 8, 23, 0.34);
-  --shadow-soft: 0 18px 44px rgba(2, 8, 23, 0.2);
-  --shadow-shell: 0 32px 90px rgba(2, 8, 23, 0.38);
-  --shadow-float: 0 20px 40px rgba(2, 8, 23, 0.24);
-  --radius-md: 22px;
-  --radius-lg: 26px;
-  --radius-xl: 30px;
-  --radius-2xl: 38px;
-  --space-4: 18px;
-  --space-5: 24px;
-  --space-6: 30px;
-  --space-7: 36px;
-  --space-8: 44px;
-  --space-9: 56px;
-  --control-height-md: 46px;
-  --control-height-lg: 54px;
+  --cc-surface-input: rgba(255, 255, 255, 0.06);
+  --shadow: 0 24px 64px rgba(2, 8, 23, 0.30);
+  --shadow-soft: 0 16px 36px rgba(2, 8, 23, 0.18);
+  --shadow-shell: 0 28px 72px rgba(2, 8, 23, 0.36);
+  --shadow-float: 0 16px 32px rgba(2, 8, 23, 0.22);
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-xl: 26px;
+  --radius-2xl: 32px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 40px;
+  --control-height-md: 44px;
+  --control-height-lg: 50px;
 }
 
 :root[data-theme="light"] {
-  --cc-color-background: #edf6fb;
-  --cc-color-background-soft: #e5f2f8;
-  --cc-color-surface: rgba(255, 255, 255, 0.88);
-  --cc-color-surface-raised: rgba(255, 255, 255, 0.96);
+  --cc-color-background: #f5fafc;
+  --cc-color-background-soft: #eaf5fa;
+  --cc-color-surface: rgba(255, 255, 255, 0.92);
+  --cc-color-surface-raised: rgba(255, 255, 255, 0.97);
   --cc-color-surface-solid: #ffffff;
-  --cc-color-border: rgba(14, 84, 114, 0.12);
-  --cc-color-border-strong: rgba(14, 84, 114, 0.22);
+  --cc-color-border: rgba(14, 84, 114, 0.10);
+  --cc-color-border-strong: rgba(14, 84, 114, 0.20);
   --cc-color-brand: #0b7db0;
   --cc-color-brand-strong: #065d87;
-  --cc-color-brand-soft: rgba(11, 125, 176, 0.12);
-  --cc-surface-glass: rgba(255, 255, 255, 0.84);
-  --cc-surface-glass-subtle: rgba(248, 252, 255, 0.88);
-  --cc-surface-input: rgba(255, 255, 255, 0.96);
-  --shadow: 0 24px 64px rgba(17, 73, 103, 0.12);
-  --shadow-soft: 0 16px 34px rgba(17, 73, 103, 0.1);
-  --shadow-shell: 0 28px 68px rgba(17, 73, 103, 0.14);
-  --shadow-float: 0 16px 30px rgba(17, 73, 103, 0.14);
+  --cc-color-brand-soft: rgba(11, 125, 176, 0.11);
+  --cc-surface-glass: rgba(255, 255, 255, 0.86);
+  --cc-surface-glass-subtle: rgba(248, 252, 255, 0.90);
+  --cc-surface-input: rgba(255, 255, 255, 0.97);
+  --shadow: 0 20px 48px rgba(17, 73, 103, 0.10);
+  --shadow-soft: 0 14px 30px rgba(17, 73, 103, 0.08);
+  --shadow-shell: 0 24px 58px rgba(17, 73, 103, 0.12);
+  --shadow-float: 0 14px 28px rgba(17, 73, 103, 0.12);
 }
 
 body {

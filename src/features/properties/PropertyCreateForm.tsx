@@ -58,7 +58,7 @@ export function PropertyCreateForm({
   onOpenExistingProperty,
   onCancel,
   onDirtyChange,
-  title = 'Nueva propiedad',
+  title = 'Nueva Propiedad',
   description,
   submitLabel = 'Guardar propiedad',
 }: PropertyCreateFormProps) {
@@ -84,9 +84,9 @@ export function PropertyCreateForm({
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPropertyDuplicateGroups>>([])
   const [currentStep, setCurrentStep] = useState(0)
   const steps = [
-    { id: 'client', label: 'Cliente', description: 'Seleccion del propietario' },
-    { id: 'identity', label: 'Identidad', description: 'Nombre y tipologia' },
-    { id: 'location', label: 'Ubicacion', description: 'Direccion y contexto' },
+    { id: 'base', label: 'Base', description: 'Cliente y titularidad' },
+    { id: 'operations', label: 'Datos operativos', description: 'Identidad y localizacion' },
+    { id: 'review', label: 'Revision', description: 'Comprobacion final' },
   ] as const
 
   useEffect(() => {
@@ -262,7 +262,7 @@ export function PropertyCreateForm({
 
   const sharedStepFlow = (
     <FullscreenStepFlow
-      eyebrow="Propiedad"
+      eyebrow="Alta de activo"
       title={title}
       description={description ?? 'Alta guiada para vincular cliente, inmueble y ubicacion sin romper el contrato existente.'}
       steps={steps.map((step) => ({
@@ -275,7 +275,7 @@ export function PropertyCreateForm({
       onStepSelect={setCurrentStep}
       contextItems={[
         {
-          label: 'Cliente',
+          label: 'Cliente heredado',
           value: contextualClient
             ? formatClientLabel(contextualClient)
             : form.client_id
@@ -284,16 +284,39 @@ export function PropertyCreateForm({
           hint: contextualClient ? 'Heredado del contexto actual' : 'Se usara como propietario base',
         },
         {
-          label: 'Tipo',
+          label: 'Tipo operativo',
           value: getPropertyTypeLabel(form.property_type),
           hint: 'Define el contexto operativo principal',
         },
       ]}
       sideContent={(
-        <div className="cc-property-create-form__review">
-          <span>Revision</span>
-          <strong>{form.name.trim() || 'Nueva propiedad'}</strong>
-          <small>{form.address.trim() || 'Sin direccion operativa'}</small>
+        <div className="cc-property-create-form__summary">
+          <div className="cc-property-create-form__summary-top">
+            <span className="cc-property-create-form__summary-avatar" aria-hidden="true">
+              {(form.name.trim() || contextualClient?.full_name || 'N').trim().charAt(0).toUpperCase()}
+            </span>
+            <div className="cc-property-create-form__summary-copy">
+              <span>Revision</span>
+              <strong>{form.name.trim() || 'Nueva Propiedad'}</strong>
+              <small>{form.address.trim() || 'Sin direccion operativa'}</small>
+            </div>
+          </div>
+          <div className="cc-property-create-form__summary-grid">
+            <div>
+              <span>Cliente</span>
+              <strong>
+                {contextualClient
+                  ? formatClientLabel(contextualClient)
+                  : form.client_id
+                    ? formatClientLabel(clients.find((client) => client.id === form.client_id) ?? { id: form.client_id })
+                    : 'Pendiente'}
+              </strong>
+            </div>
+            <div>
+              <span>Tipo</span>
+              <strong>{getPropertyTypeLabel(form.property_type)}</strong>
+            </div>
+          </div>
         </div>
       )}
       footerContent={footerContent}
@@ -436,11 +459,6 @@ export function PropertyCreateForm({
 
   return (
     <section className="data-section cc-property-create-form">
-      <div className="section-header">
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-      </div>
-
       {sharedStepFlow}
 
       <ConfirmDialog

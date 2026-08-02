@@ -84,8 +84,8 @@ export function ActionFlowOverlay({
             <p id="cc-action-flow-description">{description}</p>
           </div>
 
-          <button type="button" className="secondary-button cc-action-flow__dismiss" onClick={onClose}>
-            Cerrar
+          <button type="button" className="secondary-button cc-action-flow__dismiss" onClick={onClose} aria-label="Cerrar">
+            ×
           </button>
         </header>
 

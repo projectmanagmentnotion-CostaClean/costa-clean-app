@@ -67,7 +67,7 @@ export function PropertyCreateFlow({
   onCreatedProperty,
   onCancel,
   onDirtyChange,
-  title = 'Nueva propiedad',
+  title = 'Nueva Propiedad',
   description = 'Alta compacta para inmueble y ubicacion.',
   submitLabel = 'Guardar propiedad',
   onOpenExistingProperty,
@@ -94,7 +94,7 @@ export function PropertyCreateFlow({
 
   const contextItems = [
     {
-      label: 'Cliente',
+      label: 'Cliente heredado',
       value: contextualClient
         ? formatClientLabel(contextualClient)
         : form.client_id
@@ -103,7 +103,7 @@ export function PropertyCreateFlow({
       hint: contextualClient ? 'Heredado del contexto actual' : 'Se usara como propietario base',
     },
     {
-      label: 'Tipo',
+      label: 'Tipo operativo',
       value: getPropertyTypeLabel(form.property_type),
       hint: 'Define el contexto operativo principal',
     },
@@ -229,11 +229,11 @@ export function PropertyCreateFlow({
 
   return (
     <FullscreenStepFlow
-      eyebrow="Propiedad"
+      eyebrow="Alta de activo"
       title={title}
       description={description}
       steps={[
-        { id: 'owner', label: 'Cliente y tipo', description: 'Contexto base del inmueble' },
+        { id: 'owner', label: 'Base', description: 'Cliente y titularidad' },
         { id: 'location', label: 'Datos operativos', description: 'Direccion y lectura del inmueble' },
       ]}
       currentStep={1}
@@ -241,9 +241,9 @@ export function PropertyCreateFlow({
       contextItems={contextItems}
       sideContent={(
         <div className="cc-form-shell__summary-card cc-form-shell__summary-card--stack">
-          <span>Resultado</span>
-          <strong>{form.name.trim() || 'Nueva propiedad'}</strong>
-          <small>{form.address.trim() || 'Sin direccion'}</small>
+          <span>Revision</span>
+          <strong>{form.name.trim() || 'Nueva Propiedad'}</strong>
+          <small>{form.address.trim() || 'Sin direccion operativa'} · Paso 2 de 2</small>
         </div>
       )}
     >

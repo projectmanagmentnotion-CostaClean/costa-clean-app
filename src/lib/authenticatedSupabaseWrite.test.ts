@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  __authenticatedSupabaseWriteTestUtils,
   AUTHENTICATED_WRITE_SESSION_ERROR,
   buildAuthenticatedSupabaseWriteRequest,
   fetchAuthenticatedSupabaseWrite,
@@ -100,6 +101,7 @@ describe('authenticatedSupabaseWrite', () => {
   it('reads session.access_token before executing the protected write', async () => {
     let capturedUrl = ''
     let capturedInit: RequestInit | undefined
+    let fetchCalls = 0
 
     await fetchAuthenticatedSupabaseWrite('rpc/update_job_status', { method: 'POST' }, {
       getContext: async () => resolveAuthenticatedWriteContext({
@@ -108,6 +110,7 @@ describe('authenticatedSupabaseWrite', () => {
         accessToken: 'live-session-token',
       }),
       fetch: async (url, init) => {
+        fetchCalls += 1
         capturedUrl = String(url)
         capturedInit = init
         return new Response(null, { status: 204 })
@@ -115,6 +118,7 @@ describe('authenticatedSupabaseWrite', () => {
     })
 
     expect(capturedUrl).toBe('https://example.supabase.co/rest/v1/rpc/update_job_status')
+    expect(fetchCalls).toBe(1)
     expect(capturedInit?.method).toBe('POST')
     expect(capturedInit?.headers as Record<string, string>).toMatchObject({
       apikey: 'anon-key',
@@ -124,6 +128,7 @@ describe('authenticatedSupabaseWrite', () => {
 
   it('refreshes the session and retries once when Supabase rejects an expired token', async () => {
     const authorizationHeaders: string[] = []
+    const requestBodies: BodyInit[] = []
     let fetchCalls = 0
     let refreshCalls = 0
 
@@ -147,6 +152,7 @@ describe('authenticatedSupabaseWrite', () => {
       fetch: async (_url, init) => {
         fetchCalls += 1
         authorizationHeaders.push((init?.headers as Record<string, string>).Authorization)
+        if (init?.body) requestBodies.push(init.body)
         return fetchCalls === 1
           ? new Response('JWT expired', { status: 401, statusText: 'Unauthorized' })
           : new Response(null, { status: 204 })
@@ -160,6 +166,41 @@ describe('authenticatedSupabaseWrite', () => {
       'Bearer expired-session-token',
       'Bearer refreshed-session-token',
     ])
+    expect(requestBodies).toEqual([
+      JSON.stringify({ p_client: { id: 'CLIENT-1', full_name: 'Cliente' } }),
+      JSON.stringify({ p_client: { id: 'CLIENT-1', full_name: 'Cliente' } }),
+    ])
+  })
+
+  it('calls the global fetch transport with globalThis as its receiver', async () => {
+    const originalFetch = globalThis.fetch
+    let fetchCalls = 0
+
+    const receiverSensitiveFetch: typeof fetch = function (
+      this: typeof globalThis,
+      ...args: Parameters<typeof fetch>
+    ) {
+      if (this !== globalThis) {
+        return Promise.reject(new TypeError("Failed to execute 'fetch' on 'Window': Illegal invocation"))
+      }
+      fetchCalls += 1
+      expect(String(args[0])).toBe('https://example.supabase.co/rest/v1/rpc/create_client')
+      expect(args[1]).toMatchObject({ method: 'POST' })
+      return Promise.resolve(new Response(null, { status: 204 }))
+    }
+
+    try {
+      globalThis.fetch = receiverSensitiveFetch
+      const dependencies = { fetch: __authenticatedSupabaseWriteTestUtils.browserFetch }
+      const response = await dependencies.fetch('https://example.supabase.co/rest/v1/rpc/create_client', {
+        method: 'POST',
+      })
+
+      expect(response.status).toBe(204)
+      expect(fetchCalls).toBe(1)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
   })
 
   it('does not retry permission failures that are unrelated to token expiry', async () => {

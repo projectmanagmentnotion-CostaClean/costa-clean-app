@@ -27,6 +27,8 @@ interface AuthenticatedWriteDependencies {
   fetch: typeof fetch
 }
 
+const browserFetch: typeof fetch = (input, init) => globalThis.fetch(input, init)
+
 export function resolveAuthenticatedWriteContext({
   supabaseUrl,
   supabaseAnonKey,
@@ -101,6 +103,12 @@ async function refreshAuthenticatedWriteContext(): Promise<AuthenticatedWriteCon
   return getSupabaseSessionContext(true)
 }
 
+const defaultAuthenticatedWriteDependencies: AuthenticatedWriteDependencies = {
+  getContext: getAuthenticatedWriteContext,
+  refreshContext: refreshAuthenticatedWriteContext,
+  fetch: browserFetch,
+}
+
 async function readResponseDetail(response: Response): Promise<string> {
   try {
     const detail = (await response.text()).trim()
@@ -141,11 +149,7 @@ export async function readSingleAuthenticatedWriteRow<T>(
 export async function fetchAuthenticatedSupabaseWrite(
   path: string,
   init: RequestInit,
-  dependencies: AuthenticatedWriteDependencies = {
-    getContext: getAuthenticatedWriteContext,
-    refreshContext: refreshAuthenticatedWriteContext,
-    fetch,
-  },
+  dependencies: AuthenticatedWriteDependencies = defaultAuthenticatedWriteDependencies,
 ): Promise<Response> {
   let context = await dependencies.getContext()
   let request = buildAuthenticatedSupabaseWriteRequest({ ...context, path, init })
@@ -162,4 +166,8 @@ export async function fetchAuthenticatedSupabaseWrite(
   }
 
   return response
+}
+
+export const __authenticatedSupabaseWriteTestUtils = {
+  browserFetch,
 }

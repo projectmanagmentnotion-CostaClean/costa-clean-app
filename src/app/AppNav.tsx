@@ -6,6 +6,7 @@ import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
 import { AlertsBell } from './AlertsBell'
 import { ThemeToggle } from './ThemeToggle'
 import type { AppTheme } from './theme'
+import { StitchAvatar } from '../design-system/stitch/StitchAvatar'
 import type { AutomationAlertItem } from '../features/automation/types'
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
 
@@ -566,10 +567,21 @@ export function AppNav({
                 </section>
               ))}
 
-              <section className="cc-mobile-nav-sheet__section cc-account-section" aria-label="Cuenta">
+            <section className="cc-mobile-nav-sheet__section cc-account-section" aria-label="Cuenta">
                 <span className="cc-mobile-nav-sheet__section-label">Cuenta</span>
                 <div className="cc-account-card">
-                  <span className="cc-account-card__identity" title={accountLabel}>{accountLabel}</span>
+                  <StitchAvatar
+                    label={accountLabel}
+                    kind="account"
+                    size="account"
+                    className="cc-account-card__avatar"
+                  />
+
+                  <span className="cc-account-card__copy">
+                    <span className="cc-account-card__label">Mi cuenta</span>
+                    <span className="cc-account-card__identity" title={accountLabel}>{accountLabel}</span>
+                  </span>
+
                   <button
                     type="button"
                     className="cc-account-card__logout"
@@ -647,8 +659,17 @@ export function AppNav({
                     aria-controls="cc-desktop-account-menu"
                     aria-label={`Abrir cuenta de ${accountLabel}`}
                   >
-                    <span className="cc-account-menu__label">Mi cuenta</span>
-                    <span className="cc-account-menu__identity">{accountLabel}</span>
+                    <StitchAvatar
+                      label={accountLabel}
+                      kind="account"
+                      size="account"
+                      className="cc-account-menu__avatar"
+                    />
+
+                    <span className="cc-account-menu__copy">
+                      <span className="cc-account-menu__label">Mi cuenta</span>
+                      <span className="cc-account-menu__identity">{accountLabel}</span>
+                    </span>
                   </button>
 
                   {isAccountMenuOpen ? (

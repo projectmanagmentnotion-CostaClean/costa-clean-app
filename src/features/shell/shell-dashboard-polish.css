@@ -544,7 +544,9 @@
 
 :root[data-theme="light"] .cc-shell-nav__current-label,
 :root[data-theme="light"] .cc-account-menu__label,
+:root[data-theme="light"] .cc-account-card__label,
 :root[data-theme="light"] .cc-account-menu__identity,
+:root[data-theme="light"] .cc-account-card__identity,
 :root[data-theme="light"] .cc-shell-nav__sync,
 :root[data-theme="light"] .cc-shell-nav__back,
 :root[data-theme="light"] .cc-theme-toggle,
@@ -553,6 +555,7 @@
 }
 
 :root[data-theme="light"] .cc-account-menu__label,
+:root[data-theme="light"] .cc-account-card__label,
 :root[data-theme="light"] .cc-shell-nav__current-label {
   opacity: 0.82;
 }
@@ -3698,15 +3701,28 @@
 }
 
 .cc-account-menu__trigger {
-  display: grid;
-  justify-items: start;
-  gap: 1px;
-  max-width: 190px;
-  padding: 6px 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 228px;
+  padding: 6px 10px 6px 8px;
   text-align: left;
 }
 
-.cc-account-menu__label {
+.cc-account-menu__avatar,
+.cc-account-card__avatar {
+  flex: 0 0 auto;
+}
+
+.cc-account-menu__copy,
+.cc-account-card__copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.cc-account-menu__label,
+.cc-account-card__label {
   font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -3772,7 +3788,7 @@
 
 .cc-account-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 12px;
@@ -3793,6 +3809,10 @@
 @media (max-width: 520px) {
   .cc-account-card {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cc-account-menu__trigger {
+    max-width: 100%;
   }
 
   .cc-account-card__logout {

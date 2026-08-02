@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Imagen predeterminada de propiedad</title>
+  <desc id="desc">Ilustración mediterránea abstracta para propiedades sin fotografía.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9DE5FF"/>
+      <stop offset=".56" stop-color="#DDF6FF"/>
+      <stop offset="1" stop-color="#F4F9FC"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="430" x2="1280" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#0F3C8A"/>
+    </linearGradient>
+    <linearGradient id="house" x1="390" y1="270" x2="860" y2="595" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#EAF5FA"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="720" fill="url(#sky)"/>
+  <path d="M0 474c166-47 293-40 421 4 144 49 276 51 430 4 154-47 286-43 429 18v220H0Z" fill="url(#sea)"/>
+  <path d="M269 493 524 279h257l225 214v112H269Z" fill="url(#house)"/>
+  <path d="m478 302 183-151 178 151" fill="none" stroke="#0F3C8A" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="365" y="420" width="172" height="185" rx="18" fill="#BDEBFF"/>
+  <rect x="744" y="394" width="164" height="112" rx="18" fill="#8ED5FF"/>
+  <rect x="574" y="432" width="126" height="173" rx="16" fill="#10243A"/>
+  <path d="M0 584c185-34 360-25 537 23 191 51 388 46 743-25" fill="none" stroke="#C4F4FF" stroke-opacity=".72" stroke-width="12"/>
+  <circle cx="1060" cy="142" r="66" fill="#FACC15" opacity=".88"/>
+</svg>

@@ -52,8 +52,8 @@
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "825cad8650116abde0aa3432e88abcb33f60a3d4",
-      "blobSha256": "94b11066c439a922ccbfccbc4a2745c6db67db59638afbbf3d939d3fe74054a6"
+      "gitBlobId": "4f4b2f3506ef84eefa1ef6e1a9f4c00a13f50ffe",
+      "blobSha256": "9f96281d2ea6ba91fe79fd3e05242ab1be491c50ad967640606d16c60204449e"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",

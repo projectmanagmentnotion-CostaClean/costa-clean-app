@@ -560,8 +560,12 @@ function parseSnapshotV6R(stdout) {
 }
 
 function readLiveSnapshotV6R(environment, dependencies = {}) {
-  const result = (dependencies.runPsql ?? runPsqlV6R)(buildReadOnlySnapshotSqlV6R(), {
+  mkdirSync(privateRoot, { recursive: true })
+  const snapshotSqlPath = path.join(privateRoot, 'live-snapshot-v6r1.sql')
+  writeFileSync(snapshotSqlPath, `${buildReadOnlySnapshotSqlV6R()}\n`, 'utf8')
+  const result = (dependencies.runPsql ?? runPsqlV6R)('', {
     environment,
+    filePath: snapshotSqlPath,
     variables: {
       gate: GATE_V6R1,
       project_ref: QA_REF,

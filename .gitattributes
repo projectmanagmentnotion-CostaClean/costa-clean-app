@@ -21,3 +21,4 @@ scripts/client-portal/analyze-cp3b2a-v2-incident.mjs text eol=lf
 docs/client-portal/CP3B2A2_QA_FAILURE_ROOT_CAUSE.md text eol=lf
 docs/client-portal/CP3B2A3_FAILURE_OBSERVABILITY_PACKAGE.md text eol=lf
 docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V3.md text eol=lf
+scripts/client-portal/cp3b2a_qa_package_v3.manifest.json text eol=crlf

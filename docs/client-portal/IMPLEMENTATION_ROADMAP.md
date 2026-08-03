@@ -1,13 +1,13 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-07-30
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4 and CP-3B.2A.5 complete; CP-3B.2A.6R prepared; CP-3B.2A.2 remains blocked by missing V2 detail
+Date: 2026-08-03
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4 and CP-3B.2A.5 complete; CP-3B.2A.6R.1 prepared; CP-3B.2A.2 remains blocked by missing V2 detail
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2A QA application V6R**, requiring a separate exact human
+- Next gate: **CP-3B.2A QA application V6R1**, requiring a separate exact human
   authorization for the final committed HEAD and fresh private backup.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
@@ -39,7 +39,7 @@ the exact prestate; its authorization is exhausted. CP-3B.2A.2 demonstrates
 document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
 
-CP-3B.2A QA application V6R is the current reproducible rebaseline gate. It is
+CP-3B.2A QA application V6R1 is the current reproducible rebaseline gate. It is
 still separate from the full CP-3B.2 Definition of Ready. Customer-safe
 canonical status mapping and opaque profile/property identifier handling remain
 to be approved before frontend implementation.
@@ -219,13 +219,13 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   capability contract, and a fresh HEAD-bound private backup must match the
   live prestate and immediate drift sentinel before apply. The package is
   `READY_PENDING_EXPLICIT_V5_AUTHORIZATION`; this gate made zero remote writes.
-- **CP-3B.2A.6R — Real PostgreSQL rebaseline reproducible executable package:**
+- **CP-3B.2A.6R.1 — Real PostgreSQL rebaseline closeout package:**
   `PREPARED_NOT_AUTHORIZED`; Git blob identity plus canonical JSON identity
   now connect to a real PostgreSQL QA adapter and ignored private backup path,
   while the full V5 operational contract remains preserved as evidence. No QA
   or production write is authorized.
 - **CP-3B.2 — Profile and properties:**
-  `BLOCKED_PENDING_CP3B2A_QA_V6R`; account context, read models and reviewed
+  `BLOCKED_PENDING_CP3B2A_QA_V6R1`; account context, read models and reviewed
   change requests without canonical-table writes. After QA application, freeze
   customer-safe canonical status and opaque-ID mappings before implementation.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,

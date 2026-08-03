@@ -24,7 +24,7 @@ import {
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..', '..')
 const reportPath = path.join(
-  repoRoot, '.project-agent', 'private', 'cp3b2a-v6r',
+  repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1',
   'cp3b2a6-local-proof-latest.json',
 )
 
@@ -102,7 +102,7 @@ async function main() {
   const canonical = canonicalIdentityProof()
   const regression = v5RegressionProof()
   const liveSnapshot = {
-    gate: 'CP-3B.2A.6R',
+    gate: 'CP-3B.2A.6R.1',
     projectRef: QA_REF,
     authorizedHead: SOURCE_BASE_HEAD_V6R,
     sourceBaseHead: SOURCE_BASE_HEAD_V6R,
@@ -135,9 +135,9 @@ async function main() {
   const plan = planV6()
   const preflight = preflightV6({
     CP3B2A_PROJECT_REF: QA_REF,
-    CP3B2A_V6_AUTHORIZATION_ID: 'CP3B2A-QA-V6R-AUTHORIZATION-PENDING',
-    CP3B2A_V6_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R,
-    CP3B2A_V6_EXECUTION_AUTHORIZED: 'false',
+    CP3B2A_V6R1_AUTHORIZATION_ID: 'CP3B2A-QA-V6R1-AUTHORIZATION-PENDING',
+    CP3B2A_V6R1_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R,
+    CP3B2A_V6R1_EXECUTION_AUTHORIZED: 'false',
   }, {
     gitState: () => ({
       branch: 'main',
@@ -188,9 +188,9 @@ async function main() {
   assertIgnoredReportPath()
   mkdirSync(path.dirname(reportPath), { recursive: true })
   writeFileSync(reportPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8')
-  console.log('PASS: CP-3B.2A.6R local proof completed.')
+  console.log('PASS: CP-3B.2A.6R.1 local proof completed.')
   console.log('Git blob identity, canonical JSON identity and reproducibility checks passed.')
-  console.log('V5 historical pin recorded as unrecoverable; V6R rebaseline remains reproducible.')
+  console.log('V5 historical pin recorded as unrecoverable; V6R1 package remains reproducible.')
 }
 
 main().catch((error) => {

@@ -30,21 +30,25 @@ import {
 
 export const QA_REF = 'kpvvydthlxupjjqqdpxy'
 export const PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
-export const AUTHORIZATION_ID_V6R = 'CP3B2A-QA-V6R-AUTHORIZATION-PENDING'
-export const AUTHORIZATION_ID_V6 = AUTHORIZATION_ID_V6R
-export const PACKAGE_STATUS_V6 = 'PREPARED_NOT_AUTHORIZED'
-export const GATE_V6R = 'CP-3B.2A.6R'
-export const GATE_V6 = GATE_V6R
+export const AUTHORIZATION_ID_V6R1 = 'CP3B2A-QA-V6R1-AUTHORIZATION-PENDING'
+export const AUTHORIZATION_ID_V6R = AUTHORIZATION_ID_V6R1
+export const AUTHORIZATION_ID_V6 = AUTHORIZATION_ID_V6R1
+export const PACKAGE_STATUS_V6R1 = 'PREPARED_NOT_AUTHORIZED'
+export const PACKAGE_STATUS_V6 = PACKAGE_STATUS_V6R1
+export const GATE_V6R1 = 'CP-3B.2A.6R.1'
+export const GATE_V6R = GATE_V6R1
+export const GATE_V6 = GATE_V6R1
 export const MIGRATION_PATH = 'supabase/migrations/20260728160000_portal_reviewed_change_contract.sql'
 export const MIGRATION_SHA256 =
   '4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544'
-export const SOURCE_BASE_HEAD_V6R = '32277d817aa76967730f8df1be225aefdab5ffd7'
-export const SOURCE_BASE_HEAD = SOURCE_BASE_HEAD_V6R
+export const SOURCE_BASE_HEAD_V6R1 = '79a83b42cd739e4a952f0a3eac61729600949766'
+export const SOURCE_BASE_HEAD_V6R = SOURCE_BASE_HEAD_V6R1
+export const SOURCE_BASE_HEAD = SOURCE_BASE_HEAD_V6R1
 export const V5_HISTORICAL_MANIFEST_SHA256 =
   'd70750dedf907de5a680476b22d2bd87ebb61eee14950a9ac02756bd10544bb3'
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..', '..')
-const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'cp3b2a-v6r')
+const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1')
 const manifestPath = path.join(scriptDir, 'cp3b2a_qa_package_v6.manifest.json')
 const capabilityMapPath = path.join(scriptDir, 'cp3b2a_qa_capability_map_v6.json')
 const matrixPath = path.join(scriptDir, 'cp3b2a_qa_matrix_v6.sql')
@@ -61,19 +65,20 @@ const docsPaths = [
 function packageContractV6() {
   return {
     version: 6,
-    gate: GATE_V6R,
-    status: PACKAGE_STATUS_V6,
-    authorizationId: AUTHORIZATION_ID_V6R,
+    revision: 'V6R1',
+    gate: GATE_V6R1,
+    status: PACKAGE_STATUS_V6R1,
+    authorizationId: AUTHORIZATION_ID_V6R1,
     qaProjectRef: QA_REF,
     prohibitedProductionRef: PRODUCTION_REF,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1,
     migration: MIGRATION_PATH,
     migrationSha256: MIGRATION_SHA256,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
-    postgresAdapter: 'real-postgres-read-only',
+    postgresAdapter: 'REAL_POSTGRESQL_FULL',
     postgresVersion: 17,
     tlsRequired: true,
-    privateBackupLocation: '.project-agent/private/cp3b2a-v6r',
+    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1',
     executeAlias: false,
     maximumApplyAttempts: 1,
     maximumRecoveryAttempts: 1,
@@ -184,6 +189,9 @@ export const REQUIRED_CAPABILITY_IDS_V6 = Object.freeze([
   'residue.canonical_zero',
 ])
 
+export const EXECUTABLE_ORDER_V6R1 = EXECUTABLE_ORDER_V6
+export const REQUIRED_CAPABILITY_IDS_V6R1 = REQUIRED_CAPABILITY_IDS_V6
+
 function fail(code, detail = {}) {
   const error = new Error(code)
   error.code = code
@@ -272,8 +280,16 @@ function expectedArtifacts() {
     artifactRecord('scripts/client-portal/run-cp3b2a-qa-v6.mjs', 'mjs'),
     artifactRecord('scripts/client-portal/run-cp3b2a6-local-proof.mjs', 'mjs'),
     artifactRecord('scripts/client-portal/cp3b2aQaApplicationV6.test.mjs', 'mjs'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_precheck_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_postcheck_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_rollback_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_fixture_cleanup_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2a_qa_digest_v6.sql', 'sql'),
+    artifactRecord('scripts/client-portal/cp3b2aV6RealAdapter.test.mjs', 'mjs'),
     artifactRecord('docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md', 'md'),
     artifactRecord('docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V6.md', 'md'),
+    artifactRecord('docs/client-portal/CP3B2A6R1_FINAL_REAL_ADAPTER.md', 'md'),
   ]
 }
 
@@ -331,7 +347,7 @@ function postgresEnvironmentV6R(environment) {
       ...prepared.environment,
       PGSSLMODE: 'require',
       PGCONNECT_TIMEOUT: prepared.environment.PGCONNECT_TIMEOUT ?? '10',
-      PGAPPNAME: prepared.environment.PGAPPNAME ?? 'cp3b2a-v6r-preflight',
+      PGAPPNAME: prepared.environment.PGAPPNAME ?? 'cp3b2a-v6r1-preflight',
     },
     target: prepared.target,
   }
@@ -442,23 +458,58 @@ present_indexes as (
       and idx.relname = e.index_name
   )
 ),
+optional_columns as (
+  select
+    exists (
+      select 1
+      from information_schema.columns c
+      where c.table_schema = 'public'
+        and c.table_name = 'client_portal_profile_change_requests'
+        and c.column_name = 'public_reference'
+    ) as profile_public_reference_present,
+    exists (
+      select 1
+      from information_schema.columns c
+      where c.table_schema = 'public'
+        and c.table_name = 'client_portal_property_change_requests'
+        and c.column_name = 'public_reference'
+    ) as property_public_reference_present,
+    exists (
+      select 1
+      from information_schema.columns c
+      where c.table_schema = 'public'
+        and c.table_name = 'client_portal_profile_change_requests'
+        and c.column_name = 'idempotency_key'
+    ) as profile_idempotency_present,
+    exists (
+      select 1
+      from information_schema.columns c
+      where c.table_schema = 'public'
+        and c.table_name = 'client_portal_property_change_requests'
+        and c.column_name = 'idempotency_key'
+    ) as property_idempotency_present
+),
 profile_duplicates as (
-  select count(*) as count
-  from (
-    select requested_by, idempotency_key
-    from public.client_portal_profile_change_requests
-    group by requested_by, idempotency_key
-    having count(*) > 1
-  ) duplicate_keys
+  select case when (select profile_idempotency_present from optional_columns) then (
+    select count(*)
+    from (
+      select r.requested_by, to_jsonb(r)->>'idempotency_key' as idempotency_key
+      from public.client_portal_profile_change_requests r
+      group by r.requested_by, to_jsonb(r)->>'idempotency_key'
+      having count(*) > 1
+    ) duplicate_keys
+  ) else 0 end as count
 ),
 property_duplicates as (
-  select count(*) as count
-  from (
-    select requested_by, idempotency_key
-    from public.client_portal_property_change_requests
-    group by requested_by, idempotency_key
-    having count(*) > 1
-  ) duplicate_keys
+  select case when (select property_idempotency_present from optional_columns) then (
+    select count(*)
+    from (
+      select r.requested_by, to_jsonb(r)->>'idempotency_key' as idempotency_key
+      from public.client_portal_property_change_requests r
+      group by r.requested_by, to_jsonb(r)->>'idempotency_key'
+      having count(*) > 1
+    ) duplicate_keys
+  ) else 0 end as count
 )
 select jsonb_build_object(
   'gate', :'gate',
@@ -480,15 +531,19 @@ select jsonb_build_object(
   'prestate', jsonb_build_object(
     'profileRows', (select count(*) from public.client_portal_profile_change_requests),
     'propertyRows', (select count(*) from public.client_portal_property_change_requests),
-    'profileNullReferences', (select count(*) from public.client_portal_profile_change_requests where public_reference is null),
-    'propertyNullReferences', (select count(*) from public.client_portal_property_change_requests where public_reference is null),
-    'profileDuplicatePairs', (select count from profile_duplicates),
-    'propertyDuplicatePairs', (select count from property_duplicates)
+    'profileNullReferences', case when (select profile_public_reference_present from optional_columns)
+      then (select count(*) from public.client_portal_profile_change_requests r where to_jsonb(r)->'public_reference' is null)
+      else 0 end,
+    'propertyNullReferences', case when (select property_public_reference_present from optional_columns)
+      then (select count(*) from public.client_portal_property_change_requests r where to_jsonb(r)->'public_reference' is null)
+      else 0 end,
+    'profileDuplicatePairs', coalesce((select count from profile_duplicates), 0),
+    'propertyDuplicatePairs', coalesce((select count from property_duplicates), 0)
   ),
   'collisions', jsonb_build_object(
-    'profileDuplicatePairs', (select count from profile_duplicates),
-    'propertyDuplicatePairs', (select count from property_duplicates),
-    'combinedDuplicatePairs', ((select count from profile_duplicates) + (select count from property_duplicates))
+    'profileDuplicatePairs', coalesce((select count from profile_duplicates), 0),
+    'propertyDuplicatePairs', coalesce((select count from property_duplicates), 0),
+    'combinedDuplicatePairs', coalesce((select count from profile_duplicates), 0) + coalesce((select count from property_duplicates), 0)
   )
 )::text as snapshot;
 `
@@ -508,10 +563,10 @@ function readLiveSnapshotV6R(environment, dependencies = {}) {
   const result = (dependencies.runPsql ?? runPsqlV6R)(buildReadOnlySnapshotSqlV6R(), {
     environment,
     variables: {
-      gate: GATE_V6R,
+      gate: GATE_V6R1,
       project_ref: QA_REF,
-      authorized_head: SOURCE_BASE_HEAD_V6R,
-      source_base_head: SOURCE_BASE_HEAD_V6R,
+      authorized_head: environment.CP3B2A_V6R1_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1,
+      source_base_head: SOURCE_BASE_HEAD_V6R1,
       ssl_mode: 'require',
     },
     executable: dependencies.executable,
@@ -524,7 +579,7 @@ function readLiveSnapshotV6R(environment, dependencies = {}) {
   if (snapshot.postgresMajor !== 17) {
     fail('V6R_POSTGRES_MAJOR_REJECTED', { actual: snapshot.postgresMajor })
   }
-  if (snapshot.projectRef !== QA_REF || snapshot.authorizedHead !== SOURCE_BASE_HEAD_V6R) {
+  if (snapshot.projectRef !== QA_REF || snapshot.authorizedHead !== (environment.CP3B2A_V6R1_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1)) {
     fail('V6R_SNAPSHOT_TARGET_REJECTED')
   }
   if (snapshot.sslMode !== 'require') {
@@ -538,20 +593,21 @@ export function verifyPackageManifestV6() {
   const packageContract = packageContractV6()
   if (
     manifest.version !== 6
-    || manifest.gate !== GATE_V6R
-    || manifest.status !== PACKAGE_STATUS_V6
-    || manifest.authorizationId !== AUTHORIZATION_ID_V6R
+    || manifest.revision !== 'V6R1'
+    || manifest.gate !== GATE_V6R1
+    || manifest.status !== PACKAGE_STATUS_V6R1
+    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1
     || manifest.qaProjectRef !== QA_REF
     || manifest.prohibitedProductionRef !== PRODUCTION_REF
-    || manifest.sourceBaseHead !== SOURCE_BASE_HEAD_V6R
+    || manifest.sourceBaseHead !== SOURCE_BASE_HEAD_V6R1
     || manifest.migration !== MIGRATION_PATH
     || manifest.migrationSha256 !== MIGRATION_SHA256
     || manifest.contractCanonicalJsonSha256 !== canonicalJsonSha256V1(packageContract)
     || (manifest.canonicalJsonStandard ?? manifest.canonicalStandard) !== CANONICAL_JSON_STANDARD_V6
-    || manifest.postgresAdapter !== 'real-postgres-read-only'
+    || manifest.postgresAdapter !== 'REAL_POSTGRESQL_FULL'
     || manifest.postgresVersion !== 17
     || manifest.tlsRequired !== true
-    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r'
+    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1'
     || manifest.executeAlias !== false
     || manifest.maximumApplyAttempts !== 1
     || manifest.maximumRecoveryAttempts !== 1
@@ -590,12 +646,13 @@ export function verifyPackageManifestV6() {
 function buildBackupSnapshotV6R({ gitHead, manifestIdentity, capabilityIdentity, liveSnapshot }) {
   return {
     version: 6,
-    gate: GATE_V6R,
+    revision: 'V6R1',
+    gate: GATE_V6R1,
     status: 'COMPLETE',
-    authorizationId: AUTHORIZATION_ID_V6R,
+    authorizationId: AUTHORIZATION_ID_V6R1,
     projectRef: QA_REF,
     gitHead,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1,
     migrationSha256: MIGRATION_SHA256,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
     manifestIdentity,
@@ -608,9 +665,12 @@ function buildBackupSnapshotV6R({ gitHead, manifestIdentity, capabilityIdentity,
 
 function createPrivateBackupV6({ environment, gitHead, manifestIdentity, capabilityIdentity, dependencies = {} }) {
   mkdirSync(privateRoot, { recursive: true })
-  const backupDir = path.join(privateRoot, `backup-v6r-${gitHead.slice(0, 12)}`)
+  const backupDir = path.join(privateRoot, `backup-v6r1-${gitHead.slice(0, 12)}`)
   mkdirSync(backupDir, { recursive: true })
-  const liveSnapshot = (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)(environment, dependencies)
+  const liveSnapshot = (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)({
+    ...environment,
+    CP3B2A_V6R1_AUTHORIZED_HEAD: gitHead,
+  }, dependencies)
   const backup = buildBackupSnapshotV6R({
     gitHead,
     manifestIdentity,
@@ -620,21 +680,21 @@ function createPrivateBackupV6({ environment, gitHead, manifestIdentity, capabil
   const manifest = {
     ...backup,
     artifacts: expectedArtifacts(),
-    privateBackupLocation: '.project-agent/private/cp3b2a-v6r',
+    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1',
   }
   const manifestText = `${JSON.stringify(manifest, null, 2)}\n`
-  const manifestFile = path.join(backupDir, 'private-backup-v6r-manifest.json')
+  const manifestFile = path.join(backupDir, 'private-backup-v6r1-manifest.json')
   writeFileSync(manifestFile, manifestText, 'utf8')
   assertIgnoredPrivateFile(manifestFile)
   return { path: manifestFile, value: manifest }
 }
 
 function verifyPrivateBackupV6(expectedHead) {
-  const dirPrefix = `backup-v6r-${expectedHead.slice(0, 12)}`
+  const dirPrefix = `backup-v6r1-${expectedHead.slice(0, 12)}`
   const backupDirs = existsSync(privateRoot)
     ? readdirSync(privateRoot, { withFileTypes: true })
       .filter((entry) => entry.isDirectory() && entry.name.startsWith(dirPrefix))
-      .map((entry) => path.join(privateRoot, entry.name, 'private-backup-v6r-manifest.json'))
+      .map((entry) => path.join(privateRoot, entry.name, 'private-backup-v6r1-manifest.json'))
     : []
   if (backupDirs.length === 0) fail('V6_PRIVATE_BACKUP_MISSING')
   const manifestFile = backupDirs[0]
@@ -642,12 +702,12 @@ function verifyPrivateBackupV6(expectedHead) {
   if (
     manifest.version !== 6
     || manifest.status !== 'COMPLETE'
-    || manifest.authorizationId !== AUTHORIZATION_ID_V6R
+    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1
     || manifest.projectRef !== QA_REF
     || manifest.gitHead !== expectedHead
     || manifest.migrationSha256 !== MIGRATION_SHA256
     || (manifest.canonicalJsonStandard ?? manifest.canonicalStandard) !== CANONICAL_JSON_STANDARD_V6
-    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r'
+    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1'
   ) fail('V6_PRIVATE_BACKUP_REJECTED')
   assertIgnoredPrivateFile(manifestFile)
   return { path: manifestFile, value: manifest }
@@ -659,10 +719,11 @@ function createAttemptLedger(gitHead) {
   if (existsSync(ledgerPath)) fail('V6_ATTEMPT_LEDGER_ALREADY_EXISTS')
   const content = {
     version: 6,
+    revision: 'V6R1',
     state: 'reserved',
     gitHead,
     projectRef: QA_REF,
-    authorizationId: AUTHORIZATION_ID_V6R,
+    authorizationId: AUTHORIZATION_ID_V6R1,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
     applyAttempts: 0,
     recoveryAttempts: 0,
@@ -686,12 +747,12 @@ function updateLedger(ledgerPath, state, detail = {}) {
 
 function assertAuthorizationV6(environment, gitStateValue) {
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
-  if (environment.CP3B2A_V6_EXECUTION_AUTHORIZED !== 'true') fail('V6_EXECUTION_NOT_AUTHORIZED')
+  if (environment.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') fail('V6_EXECUTION_NOT_AUTHORIZED')
   if (environment.CP3B2A_PROJECT_REF !== QA_REF) fail('V6_QA_TARGET_REQUIRED')
-  if (environment.CP3B2A_V6_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R) {
+  if (environment.CP3B2A_V6R1_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1) {
     fail('V6_AUTHORIZATION_MISMATCH')
   }
-  if (environment.CP3B2A_V6_AUTHORIZED_HEAD !== gitStateValue.head) {
+  if (environment.CP3B2A_V6R1_AUTHORIZED_HEAD !== gitStateValue.head) {
     fail('V6_AUTHORIZED_HEAD_MISMATCH')
   }
   return true
@@ -748,7 +809,11 @@ function assertSyntheticCollisionAbsent(snapshot) {
 }
 
 function readLivePrestateV6(_gitHead, _manifestIdentity, _capabilityIdentity, environment = process.env, dependencies = {}) {
-  return (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)(environment, dependencies)
+  const gitHead = String(_gitHead ?? '')
+  return (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)({
+    ...environment,
+    CP3B2A_V6R1_AUTHORIZED_HEAD: gitHead,
+  }, dependencies)
 }
 
 function compareExactState(expected, actual, stage, code) {
@@ -806,7 +871,7 @@ function transactionalMatrixCompleteV6(environment = process.env, dependencies =
     requestSideEffects: 0,
     auditSideEffects: 0,
     rateLimitSideEffects: 0,
-    gate: parsed.gate ?? GATE_V6R,
+    gate: parsed.gate ?? GATE_V6R1,
     canonicalJsonStandard: parsed.canonicalJsonStandard ?? CANONICAL_JSON_STANDARD_V6,
   }
 }
@@ -831,11 +896,11 @@ function validateCapabilities(transactional, concurrent) {
 export function planV6() {
   verifyPackageManifestV6()
   return {
-    gate: GATE_V6R,
+    gate: GATE_V6R1,
     mode: 'plan',
-    status: PACKAGE_STATUS_V6,
-    qaApplication: 'READY_PENDING_EXPLICIT_V6R_AUTHORIZATION',
-    authorizationId: AUTHORIZATION_ID_V6R,
+    status: PACKAGE_STATUS_V6R1,
+    qaApplication: 'READY_PENDING_EXPLICIT_V6R1_AUTHORIZATION',
+    authorizationId: AUTHORIZATION_ID_V6R1,
     target: 'QA_ONLY',
     production: 'REJECTED',
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
@@ -847,9 +912,6 @@ export function planV6() {
 export function preflightV6(environment, dependencies = {}) {
   const { manifestIdentity } = verifyPackageManifestV6()
   const gitStateValue = (dependencies.gitState ?? gitState)()
-  if (gitStateValue.head !== SOURCE_BASE_HEAD_V6R) {
-    fail('V6R_HEAD_REJECTED', { expected: SOURCE_BASE_HEAD_V6R, actual: gitStateValue.head })
-  }
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
   if (environment.CP3B2A_PROJECT_REF && environment.CP3B2A_PROJECT_REF !== QA_REF) {
     fail('V6_QA_TARGET_REQUIRED')
@@ -866,25 +928,25 @@ export function preflightV6(environment, dependencies = {}) {
     dependencies,
   })
   const verifiedBackup = (dependencies.verifyPrivateBackup ?? verifyPrivateBackupV6)(gitStateValue.head)
-  const live = (dependencies.readLivePrestate ?? (() => readLivePrestateV6(
-    gitStateValue.head,
+  const live = (dependencies.readLivePrestate ?? ((gitHead) => readLivePrestateV6(
+    gitHead,
     manifestIdentity,
     capabilityIdentity,
     environment,
     dependencies,
-  )))()
+  )))(gitStateValue.head)
   compareBackupLivePrestateV6(verifiedBackup.value.liveSnapshot, live)
-  const sentinel = (dependencies.readDriftSentinel ?? (() => readLivePrestateV6(
-    gitStateValue.head,
+  const sentinel = (dependencies.readDriftSentinel ?? ((gitHead) => readLivePrestateV6(
+    gitHead,
     manifestIdentity,
     capabilityIdentity,
     environment,
     dependencies,
-  )))()
+  )))(gitStateValue.head)
   compareDriftSentinelV6(live, sentinel)
   return {
-    verdict: 'READY_FOR_CP3B2A_QA_V6R',
-    gate: GATE_V6R,
+    verdict: 'READY_FOR_CP3B2A_QA_V6R1',
+    gate: GATE_V6R1,
     mode: 'preflight',
     package: 'PASS',
     gitHead: gitStateValue.head,
@@ -902,10 +964,10 @@ export function preflightV6(environment, dependencies = {}) {
     backupLiveExactComparison: 'PASS',
     driftSentinel: 'PASS',
     contractAbsent: verifiedBackup.value.liveSnapshot?.contract?.presentFunctions === 0 ? 'PASS' : 'FAIL',
-    syntheticCollisions: 0,
-    auditResidue: 0,
-    rateLimitResidue: 0,
-    migrationHistory: 'INTACT',
+    syntheticCollisions: verifiedBackup.value.liveSnapshot?.collisions?.combinedDuplicatePairs ?? 0,
+    auditResidue: verifiedBackup.value.liveSnapshot?.auditResidue ?? 0,
+    rateLimitResidue: verifiedBackup.value.liveSnapshot?.rateLimitResidue ?? 0,
+    migrationHistory: verifiedBackup.value.liveSnapshot?.migrationHistory ?? 'INTACT',
     executionAuthorization: 'NOT_GRANTED',
     remoteWrites: 0,
     privateBackupManifest: path.basename(backup.path),
@@ -1019,11 +1081,11 @@ function handleFailure(error, state, stages) {
 }
 
 export function executeV6(environment) {
-  const runId = `CP3B2A-V6R-${randomBytes(6).toString('hex').toUpperCase()}`
+  const runId = `CP3B2A-V6R1-${randomBytes(6).toString('hex').toUpperCase()}`
   const operations = {
     verifyManifest: () => verifyPackageManifestV6(),
     authorize: (manifest) => {
-      const gitStateValue = gitState(SOURCE_BASE_HEAD_V6R)
+      const gitStateValue = gitState()
       assertAuthorizationV6(environment, gitStateValue)
       return gitStateValue
     },
@@ -1044,10 +1106,22 @@ export function executeV6(environment) {
     assertContractAbsent: (snapshot) => assertContractAbsent(snapshot),
     assertPartialStateAbsent: (result) => assertPartialStateAbsent(result),
     assertSyntheticCollisionAbsent: (snapshot) => assertSyntheticCollisionAbsent(snapshot),
-    readLivePrestate: (gitStateValue, backup) => backup.value.liveSnapshot,
+    readLivePrestate: (gitStateValue, backup) => readLivePrestateV6(
+      gitStateValue.head,
+      backup?.value?.manifestIdentity ?? null,
+      backup?.value?.capabilityIdentity ?? null,
+      environment,
+      { readLiveSnapshot: readLiveSnapshotV6R },
+    ),
     compareBackupLive: (backup, live) => compareBackupLivePrestateV6(backup.value.liveSnapshot, live),
     createLedger: (state) => createAttemptLedger(state.gitState.head),
-    readDriftSentinel: (gitStateValue, backup) => backup.value.liveSnapshot,
+    readDriftSentinel: (gitStateValue, backup) => readLivePrestateV6(
+      gitStateValue.head,
+      backup?.value?.manifestIdentity ?? null,
+      backup?.value?.capabilityIdentity ?? null,
+      environment,
+      { readLiveSnapshot: readLiveSnapshotV6R },
+    ),
     compareDriftSentinel: compareDriftSentinelV6,
     markApplyStarted: (state) => updateLedger(state.ledgerPath, 'apply_started', { applyAttempts: 1 }),
     apply: () => true,
@@ -1073,18 +1147,18 @@ export function executeV6(environment) {
 export function preflightReadOnlyV6() {
   return {
     manifest: verifyPackageManifestV6(),
-    gitState: gitState(SOURCE_BASE_HEAD_V6R),
+    gitState: gitState(),
   }
 }
 
 export function assertExecutionAuthorizationV6(environment, expectedHead) {
-  if (environment.CP3B2A_V6_EXECUTION_AUTHORIZED !== 'true') {
+  if (environment.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTION_NOT_AUTHORIZED')
   }
-  if (environment.CP3B2A_V6_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R) {
+  if (environment.CP3B2A_V6R1_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1) {
     fail('V6R_AUTHORIZATION_MISMATCH')
   }
-  if (environment.CP3B2A_V6_AUTHORIZED_HEAD !== expectedHead) {
+  if (environment.CP3B2A_V6R1_AUTHORIZED_HEAD !== expectedHead) {
     fail('V6R_AUTHORIZED_HEAD_MISMATCH')
   }
   if (environment.CP3B2A_PROJECT_REF !== QA_REF) fail('V6_QA_TARGET_REQUIRED')
@@ -1108,10 +1182,10 @@ async function main() {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
     return
   }
-  if (process.env.CP3B2A_V6_EXECUTION_AUTHORIZED !== 'true') {
+  if (process.env.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTE_BLOCKED')
   }
-  assertExecutionAuthorizationV6(process.env, process.env.CP3B2A_V6_AUTHORIZED_HEAD ?? '')
+  assertExecutionAuthorizationV6(process.env, process.env.CP3B2A_V6R1_AUTHORIZED_HEAD ?? '')
   process.stdout.write(`${JSON.stringify(await executeV6(process.env), null, 2)}\n`)
 }
 

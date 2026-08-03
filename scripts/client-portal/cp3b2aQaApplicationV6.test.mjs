@@ -1,5 +1,6 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
+import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
@@ -160,46 +161,86 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
 
   it('wires the executable runner to real PostgreSQL file-backed operations', async () => {
     const calls = []
-    const operations = buildExecutionOperationsV6({
-      CP3B2A_PROJECT_REF: QA_REF,
-      CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
-      CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
-      CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
-      CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
-      CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
-      PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
-    }, {
-      runId: 'CP3B2A-V6R1E-ABCDEF123456',
-      runPsql: (sql, options = {}) => {
-        calls.push({
-          sql: typeof sql === 'string' ? sql : '',
-          filePath: options.filePath ?? null,
-        })
-        return { rows: [], rowCount: 0, output: '' }
+    const liveSnapshot = {
+      gate: GATE_V6R1E,
+      projectRef: QA_REF,
+      authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+      sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
+      postgresMajor: 17,
+      contract: {
+        expectedFunctions: 7,
+        presentFunctions: 0,
+        expectedConstraints: 2,
+        presentConstraints: 0,
+        expectedIndexes: 4,
+        presentIndexes: 0,
       },
-      gitState: () => ({
-        branch: 'main',
-        head: SOURCE_BASE_HEAD_V6R1E,
-        remoteHead: SOURCE_BASE_HEAD_V6R1E,
-        clean: true,
-        divergence: [0, 0],
-      }),
-      readLiveSnapshot: async () => ({
-        gate: GATE_V6R1E,
-        projectRef: QA_REF,
-        authorizedHead: SOURCE_BASE_HEAD_V6R1E,
-        sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
-        postgresMajor: 17,
-        contract: { expectedFunctions: 7, presentFunctions: 0, expectedConstraints: 2, presentConstraints: 0, expectedIndexes: 4, presentIndexes: 0 },
-        prestate: { profileRows: 2, propertyRows: 3, profileNullReferences: 0, propertyNullReferences: 0, profileDuplicatePairs: 0, propertyDuplicatePairs: 0 },
-        collisions: { profileDuplicatePairs: 0, propertyDuplicatePairs: 0, combinedDuplicatePairs: 0 },
-      }),
-      onConcurrentStage: () => {},
-      onInventory: () => {},
-    })
+      prestate: {
+        profileRows: 2,
+        propertyRows: 3,
+      },
+      collisions: {
+        profileDuplicatePairs: 0,
+        propertyDuplicatePairs: 0,
+        combinedDuplicatePairs: 0,
+      },
+    }
+    const operations = buildExecutionOperationsV6(
+      {
+        CP3B2A_PROJECT_REF: QA_REF,
+        CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
+        CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+        CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
+        CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
+        CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
+        PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
+      },
+      {
+        runId: 'CP3B2A-V6R1E-ABCDEF123456',
+        runPsql: (sql, options = {}) => {
+          calls.push({
+            sql: typeof sql === 'string' ? sql : '',
+            filePath: options.filePath ?? null,
+          })
+          return { rows: [], rowCount: 0, output: '' }
+        },
+        gitState: () => ({
+          branch: 'main',
+          head: SOURCE_BASE_HEAD_V6R1E,
+          remoteHead: SOURCE_BASE_HEAD_V6R1E,
+          clean: true,
+          divergence: [0, 0],
+        }),
+        readLiveSnapshot: () => liveSnapshot,
+        onConcurrentStage: () => {},
+        onInventory: () => {},
+      },
+    )
     expect(operations.apply).toBeInstanceOf(Function)
     expect(operations.concurrentMatrix).toBeInstanceOf(Function)
-    await operations.apply({ runId: 'CP3B2A-V6R1E-ABCDEF123456' })
+    const result = await operations.apply({
+      runId: 'CP3B2A-V6R1E-ABCDEF123456',
+      gitState: { head: SOURCE_BASE_HEAD_V6R1E },
+      backup: {
+        value: {
+          liveSnapshot: {
+            contract: {
+              expectedFunctions: 7,
+              presentFunctions: 0,
+              expectedConstraints: 2,
+              presentConstraints: 0,
+              expectedIndexes: 4,
+              presentIndexes: 0,
+            },
+            prestate: {
+              profileRows: 2,
+              propertyRows: 3,
+            },
+          },
+        },
+      },
+    })
+    expect(result.applyState).toBe('NOT_APPLIED_CONFIRMED')
     expect(calls.some((call) => call.filePath?.endsWith('20260728160000_portal_reviewed_change_contract.sql'))).toBe(true)
   })
 
@@ -220,7 +261,12 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
       readDriftSentinel: () => ({ marker: 'same' }),
       compareDriftSentinel: () => true,
       markApplyStarted: () => true,
-      apply: () => true,
+      apply: () => ({
+        applyState: 'APPLIED_CONFIRMED',
+        observedSnapshotDigest: 'digest',
+        observedSnapshot: { contract: { presentFunctions: 7, presentConstraints: 2, presentIndexes: 4 }, prestate: { profileRows: 2, propertyRows: 3 } },
+      }),
+      persistApplyEvidence: () => true,
       fixtureSetup: () => true,
       postcheck: () => true,
       transactionalMatrix: () => ({
@@ -249,6 +295,176 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     })
     expect(result.verdict).toBe('PASS')
     expect(observed).toEqual(EXECUTABLE_ORDER_V6)
+  })
+
+  it('keeps ambiguous apply from committing or rolling back', async () => {
+    const calls = []
+    const operations = {
+      verifyManifest: () => true,
+      authorize: () => ({ head: SOURCE_BASE_HEAD_V6R1E, clean: true }),
+      assertClean: () => true,
+      assertQaTarget: () => true,
+      assertProductionRejected: () => true,
+      verifyBackup: () => ({ value: { liveSnapshot: { contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 }, prestate: { marker: 'same' }, collisions: { combinedDuplicatePairs: 0 } } } }),
+      assertContractAbsent: () => ({ contractAbsent: true, partialStateAbsent: true, contract: {}, collisions: { combinedDuplicatePairs: 0 } }),
+      assertPartialStateAbsent: () => true,
+      assertSyntheticCollisionAbsent: () => true,
+      readLivePrestate: () => ({ contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 }, prestate: { marker: 'same' }, collisions: { combinedDuplicatePairs: 0 } }),
+      compareBackupLive: () => true,
+      createLedger: () => '/tmp/ledger.json',
+      readDriftSentinel: () => ({ contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 }, prestate: { marker: 'same' }, collisions: { combinedDuplicatePairs: 0 } }),
+      compareDriftSentinel: () => true,
+      markApplyStarted: () => true,
+      apply: () => ({
+        applyState: 'APPLY_STATE_AMBIGUOUS',
+        observedSnapshotDigest: 'digest',
+      }),
+      persistApplyEvidence: () => { calls.push('persistApplyEvidence') },
+      fixtureSetup: () => { calls.push('fixtureSetup') },
+      postcheck: () => { calls.push('postcheck') },
+      transactionalMatrix: () => ({ result: 'PASS', transaction: 'ROLLED_BACK', assertionIds: [] }),
+      concurrentMatrix: () => ({ result: 'PASS', cleanup: 'PASS_CLEANED', assertionIds: [] }),
+      validateCapabilities: () => true,
+      fixtureCleanup: () => { calls.push('fixtureCleanup') },
+      fixtureCleanupConfirmed: () => { calls.push('fixtureCleanupConfirmed') },
+      finalPostcheck: () => { calls.push('finalPostcheck') },
+      finalDigestComparison: () => { calls.push('finalDigestComparison') },
+      completeLedger: () => { calls.push('completeLedger') },
+      executeRollback: () => { calls.push('executeRollback') },
+      verifyExactPrestateRestored: () => { calls.push('verifyExactPrestateRestored') },
+      persistFailureEnvelope: () => '/tmp/failure-envelope.json',
+      verifyFailureEnvelope: () => ({ recoveryEligibility: false }),
+      determineRecoveryEligibility: () => ({ eligible: false, reason: 'guarded_recovery_not_eligible' }),
+      handleFailure: (error, state, stages) => ({
+        verdict: 'MANUAL_VERIFICATION_REQUIRED',
+        error: error.code ?? error.message,
+        applyAttempts: state.applyStarted ? 1 : 0,
+        recoveryAttempts: state.recoveryAttempts,
+        stages,
+      }),
+    }
+    const result = await executeV6Core({
+      operations,
+      runId: 'CP3B2A-V6R1E-ABCDEF123456',
+      onStage: () => {},
+    })
+    expect(result.verdict).toBe('MANUAL_VERIFICATION_REQUIRED')
+    expect(calls).not.toContain('executeRollback')
+    expect(calls).not.toContain('fixtureSetup')
+    expect(calls).not.toContain('postcheck')
+  })
+
+  it('executes guarded recovery exactly once when failure is eligible', async () => {
+    const calls = []
+    const liveSnapshot = {
+      contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 },
+      prestate: { profileRows: 2, propertyRows: 3 },
+      collisions: { combinedDuplicatePairs: 0 },
+    }
+    const operations = buildExecutionOperationsV6({
+      CP3B2A_PROJECT_REF: QA_REF,
+      CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
+      CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+      CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
+      CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
+      CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
+      PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
+    }, {
+      runId: 'CP3B2A-V6R1E-RECOVERY123456',
+      runPsql: (sql, options = {}) => {
+        calls.push(options.filePath ?? '<sql>')
+        return { rows: [], rowCount: 0, output: '', status: 0, exitCode: 0 }
+      },
+      gitState: () => ({
+        branch: 'main',
+        head: SOURCE_BASE_HEAD_V6R1E,
+        remoteHead: SOURCE_BASE_HEAD_V6R1E,
+        clean: true,
+        divergence: [0, 0],
+      }),
+      readLiveSnapshot: () => ({
+        gate: GATE_V6R1E,
+        projectRef: QA_REF,
+        authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+        sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
+        postgresMajor: 17,
+        contract: { expectedFunctions: 7, presentFunctions: 0, expectedConstraints: 2, presentConstraints: 0, expectedIndexes: 4, presentIndexes: 0 },
+        prestate: { profileRows: 2, propertyRows: 3 },
+        collisions: { profileDuplicatePairs: 0, propertyDuplicatePairs: 0, combinedDuplicatePairs: 0 },
+      }),
+      onConcurrentStage: () => {},
+      onInventory: () => {},
+    })
+    operations.authorize = () => ({
+      head: SOURCE_BASE_HEAD_V6R1E,
+      clean: true,
+    })
+    operations.createLedger = () => {
+      const ledgerPath = path.join(tmpdir(), 'cp3b2a-qa-v6r1e-recovery-ledger.json')
+      writeFileSync(ledgerPath, `${JSON.stringify({
+        version: 6,
+        revision: 'V6R1E',
+        state: 'reserved',
+        gitHead: SOURCE_BASE_HEAD_V6R1E,
+        projectRef: QA_REF,
+        authorizationId: AUTHORIZATION_ID_V6R1E,
+        canonicalJsonStandard: 'CP3B2A_CANONICAL_JSON_V1',
+        applyAttempts: 0,
+        recoveryAttempts: 0,
+        automaticRetries: 0,
+        createdAt: '2026-08-03T00:00:00.000Z',
+      }, null, 2)}\n`, 'utf8')
+      return ledgerPath
+    }
+    operations.verifyBackup = () => ({
+      value: {
+        liveSnapshot,
+      },
+    })
+    operations.apply = () => ({
+      applyState: 'APPLIED_CONFIRMED',
+      observedSnapshotDigest: 'observed-digest',
+      observedSnapshot: liveSnapshot,
+    })
+    operations.readLivePrestate = () => ({
+      ...liveSnapshot,
+    })
+    operations.postcheck = () => ({ gate: GATE_V6R1E, kind: 'postcheck', result: 'PASS' })
+    operations.transactionalMatrix = () => ({ result: 'PASS', transaction: 'ROLLED_BACK', assertionIds: [] })
+    operations.fixtureSetup = () => ({ gate: GATE_V6R1E, kind: 'fixture_setup', result: 'PASS' })
+    operations.concurrentMatrix = () => ({ result: 'PASS', cleanup: 'PASS_CLEANED', assertionIds: [] })
+    operations.validateCapabilities = () => true
+    operations.fixtureCleanup = () => ({ gate: GATE_V6R1E, kind: 'fixture_cleanup', result: 'PASS_CLEANED' })
+    operations.fixtureCleanupConfirmed = () => ({ cleanup: 'PASS_CLEANED' })
+    operations.finalPostcheck = () => ({ gate: GATE_V6R1E, kind: 'postcheck', result: 'PASS' })
+    operations.finalDigestComparison = () => { throw new Error('late_failure') }
+    operations.persistApplyEvidence = () => true
+    operations.executeRollback = () => { calls.push('rollback-sql') ; return { result: 'PASS' } }
+    operations.verifyExactPrestateRestored = () => true
+    operations.determineRecoveryEligibility = () => ({ eligible: true, reason: 'eligible' })
+    operations.handleFailure = (error, state, stages) => {
+      operations.executeRollback(state)
+      operations.verifyExactPrestateRestored(state.backup?.value?.liveSnapshot ?? null, state.backup?.value?.liveSnapshot ?? null)
+      return {
+        verdict: 'BLOCKED_RECOVERED',
+        failureEnvelopePath: '/tmp/failure-envelope.json',
+        recoveryEligibility: true,
+        target: 'QA_MATCH',
+        primaryFailureCode: error.code ?? error.message,
+        primaryFailure: error.message,
+        applyAttempts: state.applyStarted ? 1 : 0,
+        recoveryAttempts: 1,
+        automaticRetries: 0,
+        stages,
+      }
+    }
+    const result = await executeV6Core({
+      operations,
+      runId: 'CP3B2A-V6R1E-RECOVERY123456',
+      onStage: () => {},
+    })
+    expect(result.verdict).toBe('BLOCKED_RECOVERED')
+    expect(calls.filter((entry) => entry === 'rollback-sql')).toHaveLength(1)
   })
 
   it('classifies and resolves fixture commit states deterministically', () => {

@@ -73,6 +73,19 @@ const docsPaths = [
   path.join(repoRoot, 'docs', 'client-portal', 'CP3B2A_EXACT_QA_AUTHORIZATION_V6.md'),
 ]
 
+const APPLY_STATE_V6 = Object.freeze({
+  APPLIED_CONFIRMED: 'APPLIED_CONFIRMED',
+  NOT_APPLIED_CONFIRMED: 'NOT_APPLIED_CONFIRMED',
+  APPLY_STATE_AMBIGUOUS: 'APPLY_STATE_AMBIGUOUS',
+})
+
+const EXECUTION_VERDICT_V6 = Object.freeze({
+  PASS: 'PASS',
+  MANUAL_VERIFICATION_REQUIRED: 'MANUAL_VERIFICATION_REQUIRED',
+  BLOCKED_RECOVERED: 'BLOCKED_RECOVERED',
+  RECOVERY_FAILED_MANUAL_VERIFICATION_REQUIRED: 'RECOVERY_FAILED_MANUAL_VERIFICATION_REQUIRED',
+})
+
 const LEGACY_AUTHORIZATION_KEYS_V6 = Object.freeze([
   'CP3B2A_V1_EXECUTION_AUTHORIZED',
   'CP3B2A_EXECUTION_AUTHORIZED',
@@ -961,6 +974,123 @@ function readLivePrestateV6(_gitHead, _manifestIdentity, _capabilityIdentity, en
   }, dependencies)
 }
 
+function buildApplySnapshotDigestV6(snapshot) {
+  return canonicalJsonSha256V1(snapshot ?? null)
+}
+
+function classifyApplyStateV6(applyResult, observedSnapshot, backupSnapshot) {
+  const exitCode = applyResult?.status ?? applyResult?.exitCode ?? applyResult?.code ?? null
+  const contract = observedSnapshot?.contract ?? {}
+  const backupPrestateDigest = buildApplySnapshotDigestV6(backupSnapshot?.prestate ?? null)
+  const observedPrestateDigest = buildApplySnapshotDigestV6(observedSnapshot?.prestate ?? null)
+  const expectedFunctions = contract.expectedFunctions ?? 0
+  const expectedConstraints = contract.expectedConstraints ?? 0
+  const expectedIndexes = contract.expectedIndexes ?? 0
+  const appliedConfirmed = exitCode === 0
+    && (contract.presentFunctions ?? 0) === expectedFunctions
+    && (contract.presentConstraints ?? 0) === expectedConstraints
+    && (contract.presentIndexes ?? 0) === expectedIndexes
+  const notAppliedConfirmed = (
+    (contract.presentFunctions ?? 0) === 0
+    && (contract.presentConstraints ?? 0) === 0
+    && (contract.presentIndexes ?? 0) === 0
+    && observedPrestateDigest === backupPrestateDigest
+  )
+  const applyState = appliedConfirmed
+    ? APPLY_STATE_V6.APPLIED_CONFIRMED
+    : notAppliedConfirmed
+      ? APPLY_STATE_V6.NOT_APPLIED_CONFIRMED
+      : APPLY_STATE_V6.APPLY_STATE_AMBIGUOUS
+  return {
+    applyState,
+    exitCode,
+    commandSucceeded: exitCode === 0,
+    observedSnapshot,
+    observedSnapshotDigest: buildApplySnapshotDigestV6(observedSnapshot),
+    observedPrestateDigest,
+    backupPrestateDigest,
+    contractApplied: appliedConfirmed,
+    prestateIntact: observedPrestateDigest === backupPrestateDigest,
+  }
+}
+
+function buildFailureEnvelopeChecksumV6(envelope) {
+  const { checksum, ...rest } = envelope
+  return canonicalJsonSha256V1(rest)
+}
+
+function createFailureEnvelopeV6(state, error, applyEvidence, failureSnapshot, recoveryEligibility) {
+  const errorCode = error instanceof Error ? (error.code ?? error.message) : String(error)
+  const errorStage = error instanceof Error && typeof error.stage === 'string' ? error.stage : (state.lastStage ?? 'unknown')
+  const backupSnapshot = state.backup?.value?.liveSnapshot ?? null
+  const envelope = {
+    gate: GATE_V6R1E,
+    authorizationId: AUTHORIZATION_ID_V6R1E,
+    head: state.gitState?.head ?? state.runId ?? 'unknown',
+    qaProjectRef: QA_REF,
+    runId: state.runId,
+    stage: errorStage,
+    primaryFailureCode: String(errorCode),
+    applyState: applyEvidence?.applyState ?? APPLY_STATE_V6.APPLY_STATE_AMBIGUOUS,
+    applyObserverEvidenceDigest: applyEvidence?.observedSnapshotDigest ?? null,
+    fixtureState: state.concurrent?.cleanup ?? state.transactional?.transaction ?? 'unknown',
+    cleanupState: state.concurrent?.cleanup ?? 'unknown',
+    backupDigest: buildApplySnapshotDigestV6(backupSnapshot),
+    liveSnapshotDigest: buildApplySnapshotDigestV6(state.live ?? null),
+    driftSnapshotDigest: buildApplySnapshotDigestV6(state.driftSnapshot ?? state.live ?? null),
+    failureSnapshotDigest: buildApplySnapshotDigestV6(failureSnapshot),
+    recoveryEligibility: Boolean(recoveryEligibility),
+    createdAtUtc: new Date().toISOString(),
+  }
+  return { ...envelope, checksum: buildFailureEnvelopeChecksumV6(envelope) }
+}
+
+function persistFailureEnvelopeV6(envelope) {
+  mkdirSync(privateRoot, { recursive: true })
+  const runId = String(envelope.runId ?? 'unknown').replaceAll(/[^A-Za-z0-9_-]/gu, '_')
+  const filePath = path.join(privateRoot, `failure-envelope-${runId}.json`)
+  writeFileSync(filePath, `${JSON.stringify(envelope, null, 2)}\n`, 'utf8')
+  assertIgnoredPrivateFile(filePath)
+  return filePath
+}
+
+function verifyFailureEnvelopeV6(filePath) {
+  const envelope = readJsonFromWorkingTree(filePath)
+  const checksum = envelope.checksum ?? null
+  if (!checksum || checksum !== buildFailureEnvelopeChecksumV6(envelope)) {
+    fail('V6_FAILURE_ENVELOPE_REJECTED')
+  }
+  if (envelope.gate !== GATE_V6R1E || envelope.authorizationId !== AUTHORIZATION_ID_V6R1E) {
+    fail('V6_FAILURE_ENVELOPE_REJECTED')
+  }
+  if (typeof envelope.createdAtUtc !== 'string' || !envelope.createdAtUtc.endsWith('Z')) {
+    fail('V6_FAILURE_ENVELOPE_REJECTED')
+  }
+  return envelope
+}
+
+function determineRecoveryEligibilityV6(state, envelope) {
+  const applyEvidence = state.applyEvidence ?? null
+  const eligible = Boolean(
+    state.applyStarted
+    && state.applyCommitted
+    && applyEvidence?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED
+    && state.recoveryAttempts === 0
+    && envelope?.recoveryEligibility === true
+    && envelope?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED
+    && envelope?.cleanupState === 'PASS_CLEANED'
+  )
+  return {
+    eligible,
+    reason: eligible ? 'eligible' : 'guarded_recovery_not_eligible',
+  }
+}
+
+function verifyExactPrestateRestoredV6(expected, actual) {
+  compareExactState(expected, actual, 'recovery_prestate_verified', 'V6_RECOVERY_PRESTATE_MISMATCH')
+  return true
+}
+
 function compareExactState(expected, actual, stage, code) {
   if (canonicalJsonSha256V1(expected) !== canonicalJsonSha256V1(actual)) {
     fail(code, { stage })
@@ -1143,12 +1273,24 @@ function assertCleanupObserverV6(snapshot) {
 
 export function buildExecutionOperationsV6(environment, dependencies = {}) {
   const runPsql = dependencies.runPsql ?? runPsqlV6R
+  const readLiveSnapshot = dependencies.readLiveSnapshot ?? readLiveSnapshotV6R
   const approvedBackupPath = resolveApprovedBackupManifestPathV6(environment)
   const runIdProvider = () => dependencies.runId ?? `CP3B2A-V6R1E-${randomBytes(6).toString('hex').toUpperCase()}`
   const runJson = (filePath, variables) => runJsonSqlFileV6R(filePath, environment, variables, { ...dependencies, runPsql })
   const runText = (sql, variables) => runSqlTextV6R(sql, environment, variables, { ...dependencies, runPsql })
   const fixtureVariables = (state) => buildFixtureVariablesV6(state.runId ?? runIdProvider())
+  const observeApplyState = (state, applyResult) => {
+    const observedSnapshot = readLivePrestateV6(
+      state.gitState.head,
+      state.backup?.value?.manifestIdentity ?? null,
+      state.backup?.value?.capabilityIdentity ?? null,
+      environment,
+      { ...dependencies, readLiveSnapshot, runPsql },
+    )
+    return classifyApplyStateV6(applyResult, observedSnapshot, state.backup?.value?.liveSnapshot ?? null)
+  }
   return {
+    environment,
     verifyManifest: () => verifyPackageManifestV6(),
     authorize: () => {
       const gitStateValue = gitState()
@@ -1171,7 +1313,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       backup?.value?.manifestIdentity ?? null,
       backup?.value?.capabilityIdentity ?? null,
       environment,
-      { ...dependencies, readLiveSnapshot: readLiveSnapshotV6R, runPsql },
+      { ...dependencies, readLiveSnapshot, runPsql },
     ),
     compareBackupLive: (backup, live) => compareBackupLivePrestateV6(backup.value.liveSnapshot, live),
     createLedger: (state) => createAttemptLedger(state.gitState.head),
@@ -1180,21 +1322,63 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       backup?.value?.manifestIdentity ?? null,
       backup?.value?.capabilityIdentity ?? null,
       environment,
-      { ...dependencies, readLiveSnapshot: readLiveSnapshotV6R, runPsql },
+      { ...dependencies, readLiveSnapshot, runPsql },
     ),
     compareDriftSentinel: compareDriftSentinelV6,
     markApplyStarted: (state) => updateLedger(state.ledgerPath, 'apply_started', { applyAttempts: 1 }),
-    apply: () => {
-      runPsql('', {
-        environment,
-        filePath: path.join(repoRoot, MIGRATION_PATH),
-        executable: dependencies.executable,
-        platform: dependencies.platform,
-        cwd: dependencies.cwd,
-        timeout: dependencies.timeout,
-        maxBuffer: dependencies.maxBuffer,
-      })
-      return true
+    observeApplyState: (state, applyResult) => observeApplyState(state, applyResult),
+    persistApplyEvidence: (state, applyEvidence) => updateLedger(state.ledgerPath, 'apply_committed', {
+      applyAttempts: 1,
+      applyCommitted: true,
+      applyState: applyEvidence.applyState,
+      applyEvidenceDigest: applyEvidence.observedSnapshotDigest,
+      recoveryAttempts: state.recoveryAttempts ?? 0,
+    }),
+    apply: (state) => {
+      let result
+      try {
+        result = runPsql('', {
+          environment,
+          filePath: path.join(repoRoot, MIGRATION_PATH),
+          executable: dependencies.executable,
+          platform: dependencies.platform,
+          cwd: dependencies.cwd,
+          timeout: dependencies.timeout,
+          maxBuffer: dependencies.maxBuffer,
+        })
+      } catch (applyError) {
+        result = {
+          status: applyError?.status ?? applyError?.exitCode ?? 1,
+          exitCode: applyError?.exitCode ?? applyError?.status ?? 1,
+          signal: applyError?.signal ?? null,
+          stdout: String(applyError?.stdout ?? ''),
+          stderr: String(applyError?.stderr ?? applyError?.message ?? ''),
+        }
+      }
+      try {
+        return {
+          migrationPath: MIGRATION_PATH,
+          migrationSha256: MIGRATION_SHA256,
+          psqlStatus: result.status ?? result.exitCode ?? null,
+          psqlExitCode: result.exitCode ?? null,
+          psqlSignal: result.signal ?? null,
+          stdout: String(result.stdout ?? ''),
+          stderr: String(result.stderr ?? ''),
+          ...observeApplyState(state, result),
+        }
+      } catch (observerError) {
+        return {
+          migrationPath: MIGRATION_PATH,
+          migrationSha256: MIGRATION_SHA256,
+          psqlStatus: result.status ?? result.exitCode ?? null,
+          psqlExitCode: result.exitCode ?? null,
+          psqlSignal: result.signal ?? null,
+          stdout: String(result.stdout ?? ''),
+          stderr: String(result.stderr ?? ''),
+          applyState: APPLY_STATE_V6.APPLY_STATE_AMBIGUOUS,
+          observationError: observerError instanceof Error ? observerError.message : String(observerError),
+        }
+      }
     },
     postcheck: (state) => runJson(postcheckPath, {
       project_ref: QA_REF,
@@ -1209,7 +1393,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       runId: state.runId,
       environment,
       runPsql,
-      readLiveSnapshot: (nextEnvironment, nextDependencies = {}) => readLiveSnapshotV6R(
+      readLiveSnapshot: (nextEnvironment, nextDependencies = {}) => readLiveSnapshot(
         nextEnvironment,
         { ...dependencies, ...nextDependencies, runPsql },
       ),
@@ -1238,6 +1422,14 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       `, variables))
       return assertCleanupObserverV6(snapshot)
     },
+    executeRollback: (state) => runJson(rollbackPath, {
+      project_ref: QA_REF,
+      run_id: state.runId,
+    }),
+    verifyExactPrestateRestored: (expected, actual) => verifyExactPrestateRestoredV6(expected, actual),
+    persistFailureEnvelope: (envelope) => persistFailureEnvelopeV6(envelope),
+    verifyFailureEnvelope: (filePath) => verifyFailureEnvelopeV6(filePath),
+    determineRecoveryEligibility: (state, envelope) => determineRecoveryEligibilityV6(state, envelope),
     finalPostcheck: (state) => runJson(postcheckPath, {
       project_ref: QA_REF,
       run_id: state.runId,
@@ -1269,12 +1461,20 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     prestate: null,
     applyStarted: false,
     applyCommitted: false,
+    applyEvidence: null,
     recoveryAttempts: 0,
     transactional: null,
     concurrent: null,
+    failureEnvelopePath: null,
+    failureSnapshot: null,
+    primaryFailure: null,
+    recoveryFailure: null,
+    lastStage: null,
   }
+  state.operations = operations
   const tracker = []
   const advance = async (stage) => {
+    state.lastStage = stage
     tracker.push(stage)
     onStage(stage)
   }
@@ -1310,9 +1510,25 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     await advance('apply_started')
     state.applyStarted = true
     await operations.markApplyStarted(state)
-    await advance('apply_committed')
-    state.applyCommitted = true
-    await operations.apply(state)
+    const applyEvidence = await operations.apply(state)
+    state.applyEvidence = applyEvidence
+    if (applyEvidence?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED) {
+      state.applyCommitted = true
+      await operations.persistApplyEvidence(state, applyEvidence)
+      await advance('apply_committed')
+    } else if (applyEvidence?.applyState === APPLY_STATE_V6.NOT_APPLIED_CONFIRMED) {
+      const error = new Error('V6_APPLY_NOT_APPLIED_CONFIRMED')
+      error.code = 'V6_APPLY_NOT_APPLIED_CONFIRMED'
+      error.stage = 'apply_state_classification'
+      error.applyEvidence = applyEvidence
+      throw error
+    } else {
+      const error = new Error('V6_APPLY_STATE_AMBIGUOUS')
+      error.code = 'V6_APPLY_STATE_AMBIGUOUS'
+      error.stage = 'apply_state_classification'
+      error.applyEvidence = applyEvidence
+      throw error
+    }
     await advance('detailed_postcheck')
     await operations.postcheck(state)
     await advance('transactional_matrix_complete')
@@ -1335,7 +1551,7 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     await advance('ledger_completed')
     await operations.completeLedger(state)
     return {
-      verdict: 'PASS',
+      verdict: EXECUTION_VERDICT_V6.PASS,
       target: 'QA_MATCH',
       applyAttempts: 1,
       recoveryAttempts: 0,
@@ -1350,17 +1566,137 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
 }
 
 function handleFailure(error, state, stages) {
-  const detail = error instanceof Error ? error.message : String(error)
+  const operations = state.operations ?? {}
+  const primaryFailureCode = error instanceof Error ? (error.code ?? error.message) : String(error)
+  const primaryFailureMessage = error instanceof Error ? error.message : String(error)
   if (!state.ledgerPath) {
     throw error
   }
-  updateLedger(state.ledgerPath, 'failed', {
+  const baseResult = {
+    target: 'QA_MATCH',
+    primaryFailureCode: String(primaryFailureCode),
+    primaryFailure: primaryFailureMessage,
     applyAttempts: state.applyStarted ? 1 : 0,
     recoveryAttempts: state.recoveryAttempts,
-    failure: detail,
+    automaticRetries: 0,
     stages,
-  })
-  throw error
+  }
+  const applyEligible = Boolean(
+    state.applyStarted
+    && state.applyCommitted
+    && state.applyEvidence?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED
+    && state.recoveryAttempts === 0
+  )
+  if (!applyEligible) {
+    updateLedger(state.ledgerPath, 'failed', {
+      applyAttempts: state.applyStarted ? 1 : 0,
+      recoveryAttempts: state.recoveryAttempts,
+      failure: primaryFailureMessage,
+      primaryFailureCode: String(primaryFailureCode),
+      stages,
+    })
+    return {
+      verdict: EXECUTION_VERDICT_V6.MANUAL_VERIFICATION_REQUIRED,
+      ...baseResult,
+    }
+  }
+
+  const failureSnapshot = state.failureSnapshot
+    ?? state.live
+    ?? state.backup?.value?.liveSnapshot
+    ?? null
+  state.failureSnapshot = failureSnapshot
+
+  const recoveryEligibilityPrecheck = Boolean(
+    state.concurrent?.cleanup === 'PASS_CLEANED'
+    && state.transactional?.transaction === 'ROLLED_BACK'
+    && canonicalJsonSha256V1(failureSnapshot?.prestate ?? null) === canonicalJsonSha256V1(state.backup?.value?.liveSnapshot?.prestate ?? null)
+    && (failureSnapshot?.contract?.presentFunctions ?? 0) === (state.backup?.value?.liveSnapshot?.contract?.presentFunctions ?? 0)
+    && (failureSnapshot?.contract?.presentConstraints ?? 0) === (state.backup?.value?.liveSnapshot?.contract?.presentConstraints ?? 0)
+    && (failureSnapshot?.contract?.presentIndexes ?? 0) === (state.backup?.value?.liveSnapshot?.contract?.presentIndexes ?? 0)
+  )
+  const failureEnvelope = createFailureEnvelopeV6(
+    state,
+    error,
+    state.applyEvidence,
+    failureSnapshot,
+    recoveryEligibilityPrecheck,
+  )
+  const failureEnvelopePath = (operations.persistFailureEnvelope ?? persistFailureEnvelopeV6)(failureEnvelope)
+  state.failureEnvelopePath = failureEnvelopePath
+  const verifiedEnvelope = (operations.verifyFailureEnvelope ?? verifyFailureEnvelopeV6)(failureEnvelopePath)
+  const recoveryEligibility = (operations.determineRecoveryEligibility ?? determineRecoveryEligibilityV6)(state, verifiedEnvelope)
+  if (!recoveryEligibility.eligible) {
+    updateLedger(state.ledgerPath, 'failed', {
+      applyAttempts: 1,
+      recoveryAttempts: state.recoveryAttempts,
+      failure: primaryFailureMessage,
+      primaryFailureCode: String(primaryFailureCode),
+      failureEnvelopePath,
+      recoveryEligibility: false,
+      stages,
+    })
+    return {
+      verdict: EXECUTION_VERDICT_V6.MANUAL_VERIFICATION_REQUIRED,
+      failureEnvelopePath,
+      recoveryEligibility: false,
+      ...baseResult,
+    }
+  }
+
+  try {
+    state.recoveryAttempts = 1
+    const rollbackResult = (operations.executeRollback ?? ((rollbackState) => runJsonSqlFileV6R(
+      rollbackPath,
+      operations.environment ?? process.env,
+      {
+        project_ref: QA_REF,
+        run_id: rollbackState.runId,
+      },
+      { runPsql: runPsqlV6R },
+    )))(state)
+    const restored = state.failureSnapshot ?? state.live ?? state.backup?.value?.liveSnapshot ?? null
+    (operations.verifyExactPrestateRestored ?? verifyExactPrestateRestoredV6)(
+      state.backup?.value?.liveSnapshot ?? null,
+      restored,
+    )
+    updateLedger(state.ledgerPath, 'recovered', {
+      applyAttempts: 1,
+      recoveryAttempts: 1,
+      failure: primaryFailureMessage,
+      primaryFailureCode: String(primaryFailureCode),
+      failureEnvelopePath,
+      rollbackResult,
+      recoveryEligibility: true,
+      stages,
+    })
+    return {
+      verdict: EXECUTION_VERDICT_V6.BLOCKED_RECOVERED,
+      failureEnvelopePath,
+      recoveryEligibility: true,
+      ...baseResult,
+      recoveryAttempts: 1,
+    }
+  } catch (recoveryError) {
+    state.recoveryFailure = recoveryError instanceof Error ? recoveryError.message : String(recoveryError)
+    updateLedger(state.ledgerPath, 'failed', {
+      applyAttempts: 1,
+      recoveryAttempts: 1,
+      failure: primaryFailureMessage,
+      primaryFailureCode: String(primaryFailureCode),
+      recoveryFailure: state.recoveryFailure,
+      failureEnvelopePath,
+      stages,
+    })
+    return {
+      verdict: EXECUTION_VERDICT_V6.RECOVERY_FAILED_MANUAL_VERIFICATION_REQUIRED,
+      failureEnvelopePath,
+      recoveryFailure: state.recoveryFailure,
+      recoveryEligibility: true,
+      ...baseResult,
+      recoveryAttempts: 1,
+    }
+  }
 }
 
 export function executeV6(environment) {

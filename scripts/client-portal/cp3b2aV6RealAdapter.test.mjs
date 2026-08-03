@@ -67,6 +67,30 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
 
   it('builds file-backed execution operations for the reviewed contract', () => {
     const calls = []
+    const liveSnapshot = {
+      gate: GATE_V6R1E,
+      projectRef: QA_REF,
+      authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+      sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
+      postgresMajor: 17,
+      contract: {
+        expectedFunctions: 7,
+        presentFunctions: 0,
+        expectedConstraints: 2,
+        presentConstraints: 0,
+        expectedIndexes: 4,
+        presentIndexes: 0,
+      },
+      prestate: {
+        profileRows: 2,
+        propertyRows: 3,
+      },
+      collisions: {
+        profileDuplicatePairs: 0,
+        propertyDuplicatePairs: 0,
+        combinedDuplicatePairs: 0,
+      },
+    }
     const operations = buildExecutionOperationsV6({
       CP3B2A_PROJECT_REF: QA_REF,
       CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
@@ -91,15 +115,8 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
         clean: true,
         divergence: [0, 0],
       }),
-      readLiveSnapshot: async () => ({
-        gate: GATE_V6R1E,
-        projectRef: QA_REF,
-        authorizedHead: SOURCE_BASE_HEAD_V6R1E,
-        sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
-        postgresMajor: 17,
-        contract: { expectedFunctions: 7, presentFunctions: 0, expectedConstraints: 2, presentConstraints: 0, expectedIndexes: 4, presentIndexes: 0 },
-        prestate: { profileRows: 2, propertyRows: 3, profileNullReferences: 0, propertyNullReferences: 0, profileDuplicatePairs: 0, propertyDuplicatePairs: 0 },
-        collisions: { profileDuplicatePairs: 0, propertyDuplicatePairs: 0, combinedDuplicatePairs: 0 },
+      readLiveSnapshot: () => ({
+        ...liveSnapshot,
       }),
       onConcurrentStage: () => {},
       onInventory: () => {},
@@ -107,7 +124,22 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
     expect(operations.apply).toBeInstanceOf(Function)
     expect(operations.concurrentMatrix).toBeInstanceOf(Function)
     expect(operations.fixtureCleanupConfirmed).toBeInstanceOf(Function)
-    operations.apply({ runId: 'CP3B2A-V6R1E-ABCDEF123456' })
+    const applyResult = operations.apply({
+      runId: 'CP3B2A-V6R1E-ABCDEF123456',
+      gitState: {
+        head: SOURCE_BASE_HEAD_V6R1E,
+      },
+      backup: {
+        value: {
+          liveSnapshot: {
+            contract: { expectedFunctions: 7, presentFunctions: 0, expectedConstraints: 2, presentConstraints: 0, expectedIndexes: 4, presentIndexes: 0 },
+            prestate: { profileRows: 2, propertyRows: 3 },
+            collisions: { profileDuplicatePairs: 0, propertyDuplicatePairs: 0, combinedDuplicatePairs: 0 },
+          },
+        },
+      },
+    })
+    expect(applyResult.applyState).toBe('NOT_APPLIED_CONFIRMED')
     expect(calls.some((call) => call.filePath?.endsWith('20260728160000_portal_reviewed_change_contract.sql'))).toBe(true)
   })
 })

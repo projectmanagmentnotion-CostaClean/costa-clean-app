@@ -1,5 +1,26 @@
 # App Quality Gates
 
+## Client Portal CP-3B.2A.5 Final Executable Safety V5 Gate — DONE 2026-07-30
+
+- V4 stopped before remote effects and is
+  `BLOCKED_BEFORE_REMOTE_EFFECTS — SUPERSEDED`; its authorization is not
+  reusable.
+- V5 assigns the exact synthetic inventory before its transaction and resolves
+  COMMIT through an independent observer as confirmed, not applied or
+  `MANUAL_VERIFICATION_REQUIRED`; cleanup runs only from confirmed state.
+- The executed V5 matrix orchestrates the frozen V3 and V4 contracts and
+  validates every mandatory capability assertion at runtime.
+- The supplied private backup is compared against the complete live prestate,
+  followed by an immediate drift-sentinel comparison before the single apply.
+- The same 26-stage core is used by `--execute` and the PostgreSQL 17 proof.
+  Sixteen failure injections cover pre-effect drift, apply/postcheck/matrix,
+  fixture states, real-concurrency failures, cleanup, final digest and recovery.
+- PostgreSQL 17 apply, complete transactional matrix, two-session concurrency,
+  cleanup, recovery, reapply and exact restored digests pass with residue zero.
+- V5 is `READY_PENDING_EXPLICIT_V5_AUTHORIZATION`; CP-3B.2 is
+  `BLOCKED_PENDING_CP3B2A_QA_V5`; CP-3B.3 is `NOT_STARTED`.
+- This gate performs zero QA/production writes and does not run `--execute`.
+
 ## Client Portal CP-3B.2A.4 Authorization/Concurrency V4 Gate — DONE 2026-07-29
 
 - V3 QA application stopped before effects because its matrix lacked actual
@@ -19,8 +40,9 @@
   are `PASS_CLEANED`, with exact Auth/canonical/request/audit/rate digest
   restoration. Apply/recovery maxima are `1/1`; automatic retries are `0`.
 - The gate performs QA reads only. QA writes `0`; production writes `0`.
-- V4 application is `READY_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3B.2 is
-  `BLOCKED_PENDING_CP3B2A_QA_V4`; CP-3B.3 is `NOT_STARTED`.
+- V4 later stopped before remote effects and is
+  `BLOCKED_BEFORE_REMOTE_EFFECTS — SUPERSEDED`; the current blocker is
+  `BLOCKED_PENDING_CP3B2A_QA_V5`. CP-3B.3 is `NOT_STARTED`.
 
 ## Client Portal CP-3B.2A.3 V3 Failure Observability Gate — DONE 2026-07-29
 

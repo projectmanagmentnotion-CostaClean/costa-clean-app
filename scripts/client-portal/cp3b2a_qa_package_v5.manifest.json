@@ -1,0 +1,59 @@
+{
+  "version": 5,
+  "gate": "CP-3B.2A.5",
+  "status": "PREPARED_NOT_AUTHORIZED",
+  "authorizationId": "CP3B2A-QA-V5-AUTHORIZATION-PENDING",
+  "sourceBaseHead": "de8f761ac9914321a97603009ce7242e500568bc",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+  "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
+  "v1ManifestSha256": "ac87b1bf7ed5410dc0ba6db5ca470584ee0a3aee59f6079c147c6c0db4d7e9f4",
+  "v2ManifestSha256": "477797daddd92a5301d97c9abf02eafcf7b284e225e859dc103c9c350cb41484",
+  "v3ManifestSha256": "d70750dedf907de5a680476b22d2bd87ebb61eee14950a9ac02756bd10544bb3",
+  "v4ManifestSha256": "cbdc0ed7bb10022ef29c2231b5acc58987a97e430d99117fb4235bd22aeca06f",
+  "executeAlias": false,
+  "maximumApplyAttempts": 1,
+  "maximumRecoveryAttempts": 1,
+  "automaticRetries": 0,
+  "transactionalMatrix": "PASS_ROLLED_BACK",
+  "concurrentMatrix": "PASS_CLEANED",
+  "ambiguousCommit": "MANUAL_VERIFICATION_REQUIRED",
+  "backupLiveExactComparison": true,
+  "driftSentinel": true,
+  "executableOrderStages": 26,
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_matrix_v5.sql",
+      "sha256": "ca232aa26da0389ec6314cc12504d1c8f4371d0feaaf0b9c9b960b63b7e38256"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_concurrency_v5.mjs",
+      "sha256": "69f5fe522af312daf199e8a26f614586f5884443a34ab553fdb7f008a1caee20"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a-qa-v5.mjs",
+      "sha256": "39bf68e3bcd8c6694b730b9ba0d44e5f9236b6be7a97a015ba19482a8ab78b48"
+    },
+    {
+      "path": "scripts/client-portal/run-cp3b2a5-local-proof.mjs",
+      "sha256": "2133ba60b3069f3dc8588f4c86afda371be739e125a9afb76538175ceb0649fa"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aQaApplicationV5.test.mjs",
+      "sha256": "071c0f04c6fd5798b382efe16732ab2b59eb7a5520a22564dd91092b09f0d384"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2a_qa_capability_map_v5.json",
+      "sha256": "73dca9fa5518a81b3869562d285d4bce1340ed29b9f5fbc89a27af0b76eaed5c"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A5_FINAL_EXECUTABLE_PATH_CLOSURE.md",
+      "sha256": "28e5eea7f94b1e4273685d56e083ea770567283af6135c5557df53434d9aa9c0"
+    },
+    {
+      "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V5.md",
+      "sha256": "8e463c11c1f3ba8d5986cd0e385ba0aad1c18bc672de0671224ef33ac9ad7b77"
+    }
+  ]
+}

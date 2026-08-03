@@ -1,5 +1,28 @@
 # Universal Release Log
 
+## 2026-07-30 — Client portal CP-3B.2A.5 final executable safety V5
+
+- tipo: local security source/proof and QA read-only preparation
+- causa: V4 left three P1 findings in its executable path: ambiguous fixture
+  COMMIT, incomplete executed contract coverage and no exact backup/live
+  comparison immediately before apply
+- corrección: observer-confirmed fixture state machine, complete V3+V4
+  transactional orchestrator with runtime capability map, and exact
+  backup/live plus drift-sentinel comparison in one 26-stage core
+- prueba: PostgreSQL 17 apply/postcheck/full matrix/two-session
+  concurrency/cleanup/recovery/reapply; 16-point failure injection; exact
+  restored digests and zero residue
+- recovery: one apply maximum, one recovery maximum, zero automatic retries;
+  ambiguous COMMIT or cleanup becomes `MANUAL_VERIFICATION_REQUIRED`
+- frozen scope: migration and V1/V2/V3/V4 artifacts unchanged; frontend and
+  invoices unchanged
+- remote effects: QA writes `0`; production writes `0`
+- estado: CP-3B.2A.5 `DONE`; V5 application
+  `READY_PENDING_EXPLICIT_V5_AUTHORIZATION`; CP-3B.2
+  `BLOCKED_PENDING_CP3B2A_QA_V5`; CP-3B.3 `NOT_STARTED`
+- evidencia:
+  [client-portal/CP3B2A5_FINAL_EXECUTABLE_PATH_CLOSURE.md](client-portal/CP3B2A5_FINAL_EXECUTABLE_PATH_CLOSURE.md)
+
 ## 2026-07-29 — Client portal CP-3B.2A.4 executable authorization/concurrency V4
 
 - tipo: local security source/proof and QA read-only preparation
@@ -16,9 +39,11 @@
 - frozen scope: migration and V1/V2/V3 artifacts unchanged; frontend and
   invoices unchanged
 - remote effects: QA writes `0`; production writes `0`
-- estado: CP-3B.2A.4 `DONE`; V4 application
+- estado en la fecha: CP-3B.2A.4 `DONE`; V4 application
   `READY_PENDING_EXPLICIT_V4_AUTHORIZATION`; CP-3B.2
   `BLOCKED_PENDING_CP3B2A_QA_V4`; CP-3B.3 `NOT_STARTED`
+- superseded: el 2026-07-30 la aplicación V4 quedó
+  `BLOCKED_BEFORE_REMOTE_EFFECTS — SUPERSEDED` y CP-3B.2 pasó a depender de V5
 - evidencia:
   [client-portal/CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md](client-portal/CP3B2A4_AUTHORIZATION_CONCURRENCY_MATRIX.md)
 

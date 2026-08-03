@@ -1,13 +1,13 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-07-29
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3 and CP-3B.2A.4 complete; CP-3B.2A.2 remains blocked by missing V2 detail
+Date: 2026-07-30
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4 and CP-3B.2A.5 complete; CP-3B.2A.2 remains blocked by missing V2 detail
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2A QA application V4**, requiring a separate exact human
+- Next gate: **CP-3B.2A QA application V5**, requiring a separate exact human
   authorization for the final committed HEAD and fresh private backup.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
@@ -30,13 +30,16 @@ the exact prestate; its authorization is exhausted. CP-3B.2A.2 demonstrates
   remains unknowable from existing evidence, so CP-3B.2A.2 stays `BLOCKED`.
   CP-3B.2A.3 closed the observability package. Its authorized application was
   stopped before effects because V3 lacked mandatory real authorization and
-  concurrency cases. CP-3B.2A.4 supersedes it with actual RPC denials and a
-  two-session insertion barrier. CP-3B.2 remains
+  concurrency cases. CP-3B.2A.4 supplied actual RPC denials and a two-session
+  insertion barrier, but its application stopped before remote effects and is
+  superseded. CP-3B.2A.5 closes the three executable P1 findings with explicit
+  ambiguous COMMIT handling, a complete executed capability map and exact
+  backup/live comparison immediately before apply. CP-3B.2 remains
   blocked and CP-3B.3 has not started. This
 document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
 
-CP-3B.2A QA application V4 is the next separately authorized gate. It is not the entire
+CP-3B.2A QA application V5 is the next separately authorized gate. It is not the entire
 CP-3B.2 Definition of Ready. Customer-safe canonical status mapping and opaque
 profile/property identifier handling remain to be approved before frontend
 implementation.
@@ -159,7 +162,7 @@ Evidence: `CP2B_V5_QA_EXECUTION_20260727.md`.
 
 ## CP-3 — Portal UI in QA
 
-Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4 DONE; CP-3B.2A.2 BLOCKED; CP-3B.2 BLOCKED_PENDING_CP3B2A_QA_V4`
+Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5 DONE; CP-3B.2A.2 BLOCKED; CP-3B.2 BLOCKED_PENDING_CP3B2A_QA_V5`
 
 - **CP-3A — Portal UI foundation:** `DONE — local source/runtime evidence`.
   Isolated `/portal` bootstrap, typed read-only adapters, explicit access state
@@ -208,10 +211,16 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   `DONE`; actual RPC denials cover anon, no membership, revoked, suspended and
   invalid/foreign payloads with exact neutral SQLSTATEs. Two independent
   PostgreSQL workers are held at the real request-table insertion boundary and
-  prove simultaneous same-key retry/conflict for profile and property. The
-  package is `READY_PENDING_EXPLICIT_V4_AUTHORIZATION`.
+  prove simultaneous same-key retry/conflict for profile and property. Its QA
+  application is `BLOCKED_BEFORE_REMOTE_EFFECTS — SUPERSEDED`.
+- **CP-3B.2A.5 — Final executable-path safety closure V5:**
+  `DONE`; explicit observer-confirmed fixture states prevent speculative
+  cleanup after an ambiguous COMMIT, the V5 runner executes the complete V3+V4
+  capability contract, and a fresh HEAD-bound private backup must match the
+  live prestate and immediate drift sentinel before apply. The package is
+  `READY_PENDING_EXPLICIT_V5_AUTHORIZATION`; this gate made zero remote writes.
 - **CP-3B.2 — Profile and properties:**
-  `BLOCKED_PENDING_CP3B2A_QA_V4`; account context, read models and reviewed change
+  `BLOCKED_PENDING_CP3B2A_QA_V5`; account context, read models and reviewed change
   requests without canonical-table writes. After QA application, freeze
   customer-safe canonical status and opaque-ID mappings before implementation.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,

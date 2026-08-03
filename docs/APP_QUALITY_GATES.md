@@ -1,5 +1,15 @@
 # App Quality Gates
 
+# Client Portal CP-3B.2A.6 Reproducible Rebaseline V6 Gate — PREPARED_NOT_AUTHORIZED 2026-08-03
+
+- Git blob identity replaces the unrecoverable historical mixed-byte pin for the
+  V3 manifest package, and canonical JSON identity is used for contract JSON.
+- The package keeps QA/production writes at zero and does not authorize
+  `--execute`.
+- The exact V5 historical pin remains documented as unrecoverable evidence.
+- Plan and read-only preflight remain available for the current gate.
+- CP-3B.2 remains blocked pending the separately authorized QA application.
+
 ## Client Portal CP-3B.2A.5 Final Executable Safety V5 Gate — DONE 2026-07-30
 
 - V4 stopped before remote effects and is

@@ -1,5 +1,5 @@
--- CP-3B.2A.6 — reproducible rebaseline matrix V6
--- The contract is executable SQL, but this gate only requires plan/preflight.
+-- CP-3B.2A.6R â€” real PostgreSQL rebaseline matrix
+-- The contract is executable SQL and is now run through the PostgreSQL QA adapter.
 -- Validation uses Git blob identity plus CP3B2A_CANONICAL_JSON_V1.
 
 with stage_order(stage_no, stage_name) as (
@@ -103,11 +103,10 @@ capabilities(requirement_id, stage_name, artifact_path) as (
 )
 select jsonb_build_object(
   'version', 6,
-  'gate', 'CP-3B.2A.6',
+  'gate', 'CP-3B.2A.6R',
   'canonicalJsonStandard', 'CP3B2A_CANONICAL_JSON_V1',
   'result', 'PASS',
   'transaction', 'ROLLED_BACK',
   'stages', (select jsonb_agg(stage_name order by stage_no) from stage_order),
   'capabilityIds', (select jsonb_agg(requirement_id order by requirement_id) from capabilities)
 )::text as cp3b2a_qa_matrix_v6;
-

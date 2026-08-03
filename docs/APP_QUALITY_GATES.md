@@ -1,9 +1,11 @@
 # App Quality Gates
 
-# Client Portal CP-3B.2A.6 Reproducible Rebaseline V6 Gate — PREPARED_NOT_AUTHORIZED 2026-08-03
+# Client Portal CP-3B.2A.6R Real PostgreSQL Rebaseline V6R Gate â€” PREPARED_NOT_AUTHORIZED 2026-08-03
 
 - Git blob identity replaces the unrecoverable historical mixed-byte pin for the
   V3 manifest package, and canonical JSON identity is used for contract JSON.
+- The package now routes plan/preflight through a real PostgreSQL 17 read-only
+  adapter and stores the backup under an ignored repo-local private path.
 - The package keeps QA/production writes at zero and does not authorize
   `--execute`.
 - The exact V5 historical pin remains documented as unrecoverable evidence.

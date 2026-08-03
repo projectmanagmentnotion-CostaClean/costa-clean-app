@@ -1,8 +1,10 @@
 {
   "version": 6,
-  "gate": "CP-3B.2A.6",
+  "gate": "CP-3B.2A.6R",
   "executedBy": "executeV6Core",
-  "contractCanonicalJsonSha256": "1fd6cf183b5c5cf1af6d73b338a13799e138c3b48cfb02c92cabed6f9787b1c7",
+  "contractCanonicalJsonSha256": "7d5ff349d570a3ab8de9c7f7e9f81696577da4280f353fbea680b468e98d0794",
+  "postgresAdapter": "real-postgres-read-only",
+  "privateBackupLocation": ".project-agent/private/cp3b2a-v6r",
   "capabilities": [
     ["manifest git blob identity", "canonical_and_blob_manifest_validation", "identity.manifest_git_blob", "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json"],
     ["manifest canonical JSON identity", "canonical_and_blob_manifest_validation", "identity.manifest_canonical_json", "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json"],

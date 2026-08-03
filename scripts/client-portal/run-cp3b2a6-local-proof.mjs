@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -10,7 +11,7 @@ import {
 } from './cp3b2aCanonicalJsonV6.mjs'
 import {
   QA_REF,
-  SOURCE_BASE_HEAD,
+  SOURCE_BASE_HEAD_V6R,
   V5_HISTORICAL_MANIFEST_SHA256,
   planV6,
   preflightV6,
@@ -23,7 +24,7 @@ import {
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..', '..')
 const reportPath = path.join(
-  repoRoot, '.cp3b2a-private',
+  repoRoot, '.project-agent', 'private', 'cp3b2a-v6r',
   'cp3b2a6-local-proof-latest.json',
 )
 
@@ -33,6 +34,16 @@ function fail(code) {
 
 function assert(condition, code) {
   if (!condition) fail(code)
+}
+
+function assertIgnoredReportPath() {
+  const relativePath = path.relative(repoRoot, reportPath).replaceAll('\\', '/')
+  const ignored = spawnSync('git', ['check-ignore', '-q', relativePath], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    windowsHide: true,
+  })
+  assert(ignored.status === 0, 'report_path_not_ignored')
 }
 
 function canonicalIdentityProof() {
@@ -90,15 +101,63 @@ async function main() {
   const identity = checkoutIdentityProof()
   const canonical = canonicalIdentityProof()
   const regression = v5RegressionProof()
+  const liveSnapshot = {
+    gate: 'CP-3B.2A.6R',
+    projectRef: QA_REF,
+    authorizedHead: SOURCE_BASE_HEAD_V6R,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R,
+    postgresMajor: 17,
+    databaseName: 'postgres',
+    databaseUser: 'postgres',
+    sslMode: 'require',
+    contract: {
+      expectedFunctions: 7,
+      presentFunctions: 0,
+      expectedConstraints: 2,
+      presentConstraints: 0,
+      expectedIndexes: 4,
+      presentIndexes: 0,
+    },
+    prestate: {
+      profileRows: 2,
+      propertyRows: 3,
+      profileNullReferences: 0,
+      propertyNullReferences: 0,
+      profileDuplicatePairs: 0,
+      propertyDuplicatePairs: 0,
+    },
+    collisions: {
+      profileDuplicatePairs: 0,
+      propertyDuplicatePairs: 0,
+      combinedDuplicatePairs: 0,
+    },
+  }
   const plan = planV6()
   const preflight = preflightV6({
     CP3B2A_PROJECT_REF: QA_REF,
-    CP3B2A_V6_AUTHORIZATION_ID: 'CP3B2A-QA-V6-AUTHORIZATION-PENDING',
-    CP3B2A_V6_AUTHORIZED_HEAD: SOURCE_BASE_HEAD,
+    CP3B2A_V6_AUTHORIZATION_ID: 'CP3B2A-QA-V6R-AUTHORIZATION-PENDING',
+    CP3B2A_V6_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R,
     CP3B2A_V6_EXECUTION_AUTHORIZED: 'false',
   }, {
+    gitState: () => ({
+      branch: 'main',
+      head: SOURCE_BASE_HEAD_V6R,
+      remoteHead: SOURCE_BASE_HEAD_V6R,
+      clean: true,
+      divergence: [0, 0],
+    }),
     assertQaTarget: () => ({ target: 'QA_MATCH', tls: 'REQUIRED' }),
     assertProductionRejected: () => true,
+    createPrivateBackup: () => ({
+      path: reportPath,
+      value: { liveSnapshot },
+    }),
+    verifyPrivateBackup: () => ({
+      path: reportPath,
+      value: { liveSnapshot },
+    }),
+    readLivePrestate: () => liveSnapshot,
+    readDriftSentinel: () => liveSnapshot,
   })
   const concurrency = runConcurrencyV6({
     runId: 'CP3B2A-V6-LOCAL-000000',
@@ -118,7 +177,7 @@ async function main() {
     driftSentinel: preflight.driftSentinel,
     concurrency: concurrency.cleanup,
     regression: regression.v5HistoricalPin,
-    gitHead: SOURCE_BASE_HEAD,
+    gitHead: SOURCE_BASE_HEAD_V6R,
     qaRef: QA_REF,
     canonicalJsonStandard: canonical.standard,
     manifestBlobId: identity.manifestBlobId,
@@ -126,11 +185,12 @@ async function main() {
     manifestCanonical: identity.manifestCanonical,
     capabilityCanonical: identity.capabilityCanonical,
   }
+  assertIgnoredReportPath()
   mkdirSync(path.dirname(reportPath), { recursive: true })
   writeFileSync(reportPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8')
-  console.log('PASS: CP-3B.2A.6 local proof completed.')
+  console.log('PASS: CP-3B.2A.6R local proof completed.')
   console.log('Git blob identity, canonical JSON identity and reproducibility checks passed.')
-  console.log('V5 historical pin recorded as unrecoverable; V6 rebaseline remains reproducible.')
+  console.log('V5 historical pin recorded as unrecoverable; V6R rebaseline remains reproducible.')
 }
 
 main().catch((error) => {

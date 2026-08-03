@@ -1,9 +1,9 @@
-## 2026-08-03 â€” Client portal CP-3B.2A.6R.1 real PostgreSQL closeout V6R1
+## 2026-08-03 â€” Client portal CP-3B.2A.6R.1E real PostgreSQL closeout V6R1E
 
 - tipo: local source/proof and documentation rebaseline
 - causa: the historical mixed-byte pin from the earlier V3/V5 package model is
   no longer reproducible honestly from current Git-visible sources
-- corrección: the V6R1 package now routes plan/preflight through a real PostgreSQL
+- corrección: the V6R1E package now routes plan/preflight through a real PostgreSQL
   adapter and ignored private backup path, while keeping Git blob identity plus
   canonical JSON identity for the executable contract and preserving the
   unrecoverable V5 pin
@@ -11,8 +11,8 @@
   production writes
 - scope: no `--execute`, no Supabase remote mutation, no frontend/runtime
   rollout
-- estado: CP-3B.2A.6R.1 `PREPARED_NOT_AUTHORIZED`; CP-3B.2 remains blocked
-  pending the separately authorized V6R1 QA application
+- estado: CP-3B.2A.6R.1E `PREPARED_NOT_AUTHORIZED`; CP-3B.2 remains blocked
+  pending the separately authorized V6R1E QA application
 - evidencia:
   [client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md](client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md)
 # Universal Release Log

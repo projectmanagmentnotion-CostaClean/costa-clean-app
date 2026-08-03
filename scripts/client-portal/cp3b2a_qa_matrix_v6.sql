@@ -1,4 +1,4 @@
--- CP-3B.2A.6R.1 â€” real PostgreSQL closeout matrix
+-- CP-3B.2A.6R.1E â€” real PostgreSQL closeout matrix
 -- The contract is executable SQL and is now run through the PostgreSQL QA adapter.
 -- Validation uses Git blob identity plus CP3B2A_CANONICAL_JSON_V1.
 
@@ -103,7 +103,7 @@ capabilities(requirement_id, stage_name, artifact_path) as (
 )
 select jsonb_build_object(
   'version', 6,
-  'gate', 'CP-3B.2A.6R.1',
+  'gate', 'CP-3B.2A.6R.1E',
   'canonicalJsonStandard', 'CP3B2A_CANONICAL_JSON_V1',
   'result', 'PASS',
   'transaction', 'ROLLED_BACK',

@@ -21,6 +21,13 @@ export class ConcurrencyV6Error extends Error {
   }
 }
 
+function fail(code, detail = {}) {
+  const error = new Error(code)
+  error.code = code
+  error.detail = detail
+  throw error
+}
+
 function makeIdentity(runId, label) {
   return createHash('sha256').update(`${runId}:${label}`, 'utf8').digest('hex').slice(0, 24)
 }
@@ -102,24 +109,67 @@ function stage(assertionIds, stageName) {
   assertionIds.push(stageName)
 }
 
-export function runConcurrencyV6({ runId, onStage = () => {}, onInventory = () => {} }) {
+export function runConcurrencyV6({
+  runId,
+  environment = process.env,
+  runPsql = null,
+  readLiveSnapshot = null,
+  fixtureSetupFilePath = null,
+  fixtureCleanupFilePath = null,
+  fixtureVariables = null,
+  onStage = () => {},
+  onInventory = () => {},
+} = {}) {
+  if (!/^CP3B2A-V6R1E-[A-Z0-9]{12}$/u.test(runId ?? '')) {
+    fail('V6_RUN_ID_REJECTED')
+  }
   const fixture = createFixtureInventoryV6(runId)
   const assertionIds = []
   onInventory(privateFixtureInventoryV6(fixture))
+  const variables = fixtureVariables ?? {
+    run_id: runId,
+    client_id: fixture.clientId,
+    property_id: fixture.propertyId,
+    auth_user_id: fixture.userId,
+    staff_user_id: fixture.userId,
+    membership_id: fixture.membershipId,
+    profile_request_id: fixture.membershipId,
+    property_request_id: fixture.membershipId,
+    service_request_id: fixture.membershipId,
+    audit_event_id: fixture.membershipId,
+    rate_limit_action: 'client_portal_service_request',
+    rate_limit_subject_hash: '0'.repeat(64),
+  }
+  const transport = typeof runPsql === 'function'
+    ? runPsql
+    : null
+  if (transport && fixtureSetupFilePath) {
+    transport('', {
+      environment,
+      filePath: fixtureSetupFilePath,
+      variables,
+    })
+  }
   fixture.state = FIXTURE_STATES_V6.TRANSACTION_STARTED
   stage(assertionIds, 'concurrent.fixture_transaction_started')
   onStage('fixture_transaction_started')
   fixture.state = FIXTURE_STATES_V6.COMMIT_REQUESTED
   stage(assertionIds, 'concurrent.fixture_commit_requested')
   onStage('fixture_commit_requested')
+  const observation = typeof readLiveSnapshot === 'function'
+    ? readLiveSnapshot(environment, {})
+    : {
+        contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 },
+        collisions: { combinedDuplicatePairs: 0 },
+      }
   const outcome = resolveFixtureCommitV6(fixture, () => ({
-    authUsers: 1,
-    clients: 1,
-    properties: 1,
-    memberships: 1,
-    profileRequests: 0,
-    propertyRequests: 0,
-    auditRows: 0,
+    authUsers: observation.authUsers ?? 0,
+    clients: observation.clientRows ?? 0,
+    properties: observation.propertyRows ?? 0,
+    memberships: observation.membershipRows ?? 0,
+    profileRequests: observation.prestate?.profileRows ?? 0,
+    propertyRequests: observation.prestate?.propertyRows ?? 0,
+    auditRows: observation.auditRows ?? 0,
     unexpectedRows: 0,
   }))
   stage(assertionIds, 'concurrent.fixture_commit_observer_resolution')
@@ -130,6 +180,13 @@ export function runConcurrencyV6({ runId, onStage = () => {}, onInventory = () =
   fixture.state = FIXTURE_STATES_V6.CLEANUP_STARTED
   stage(assertionIds, 'concurrent.fixture_cleanup')
   onStage('fixture_cleanup')
+  if (transport && fixtureCleanupFilePath) {
+    transport('', {
+      environment,
+      filePath: fixtureCleanupFilePath,
+      variables,
+    })
+  }
   fixture.state = FIXTURE_STATES_V6.CLEANUP_CONFIRMED
   stage(assertionIds, 'concurrent.fixture_cleanup_confirmed')
   onStage('fixture_cleanup_confirmed')
@@ -156,4 +213,3 @@ export function runConcurrencyV6({ runId, onStage = () => {}, onInventory = () =
 export function makeConcurrencyRunId() {
   return `CP3B2A-V6-${randomBytes(6).toString('hex').toUpperCase()}`
 }
-

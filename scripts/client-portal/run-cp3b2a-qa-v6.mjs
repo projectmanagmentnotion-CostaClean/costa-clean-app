@@ -30,28 +30,39 @@ import {
 
 export const QA_REF = 'kpvvydthlxupjjqqdpxy'
 export const PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
-export const AUTHORIZATION_ID_V6R1 = 'CP3B2A-QA-V6R1-AUTHORIZATION-PENDING'
-export const AUTHORIZATION_ID_V6R = AUTHORIZATION_ID_V6R1
-export const AUTHORIZATION_ID_V6 = AUTHORIZATION_ID_V6R1
-export const PACKAGE_STATUS_V6R1 = 'PREPARED_NOT_AUTHORIZED'
-export const PACKAGE_STATUS_V6 = PACKAGE_STATUS_V6R1
-export const GATE_V6R1 = 'CP-3B.2A.6R.1'
-export const GATE_V6R = GATE_V6R1
-export const GATE_V6 = GATE_V6R1
+export const AUTHORIZATION_ID_V6R1E = 'CP3B2A-QA-V6R1E-AUTHORIZATION-PENDING'
+export const AUTHORIZATION_ID_V6R1 = AUTHORIZATION_ID_V6R1E
+export const AUTHORIZATION_ID_V6R = AUTHORIZATION_ID_V6R1E
+export const AUTHORIZATION_ID_V6 = AUTHORIZATION_ID_V6R1E
+export const PACKAGE_STATUS_V6R1E = 'PREPARED_NOT_AUTHORIZED'
+export const PACKAGE_STATUS_V6R1 = PACKAGE_STATUS_V6R1E
+export const PACKAGE_STATUS_V6R = PACKAGE_STATUS_V6R1E
+export const PACKAGE_STATUS_V6 = PACKAGE_STATUS_V6R1E
+export const GATE_V6R1E = 'CP-3B.2A.6R.1E'
+export const GATE_V6R1 = GATE_V6R1E
+export const GATE_V6R = GATE_V6R1E
+export const GATE_V6 = GATE_V6R1E
 export const MIGRATION_PATH = 'supabase/migrations/20260728160000_portal_reviewed_change_contract.sql'
 export const MIGRATION_SHA256 =
   '4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544'
-export const SOURCE_BASE_HEAD_V6R1 = '79a83b42cd739e4a952f0a3eac61729600949766'
-export const SOURCE_BASE_HEAD_V6R = SOURCE_BASE_HEAD_V6R1
-export const SOURCE_BASE_HEAD = SOURCE_BASE_HEAD_V6R1
+export const SOURCE_BASE_HEAD_V6R1E = 'abc6d52da7e0e6ce781ac9c54addfc58c71f4963'
+export const SOURCE_BASE_HEAD_V6R1 = SOURCE_BASE_HEAD_V6R1E
+export const SOURCE_BASE_HEAD_V6R = SOURCE_BASE_HEAD_V6R1E
+export const SOURCE_BASE_HEAD = SOURCE_BASE_HEAD_V6R1E
 export const V5_HISTORICAL_MANIFEST_SHA256 =
   'd70750dedf907de5a680476b22d2bd87ebb61eee14950a9ac02756bd10544bb3'
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..', '..')
-const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1')
+const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1e')
 const manifestPath = path.join(scriptDir, 'cp3b2a_qa_package_v6.manifest.json')
 const capabilityMapPath = path.join(scriptDir, 'cp3b2a_qa_capability_map_v6.json')
 const matrixPath = path.join(scriptDir, 'cp3b2a_qa_matrix_v6.sql')
+const precheckPath = path.join(scriptDir, 'cp3b2a_qa_precheck_v6.sql')
+const postcheckPath = path.join(scriptDir, 'cp3b2a_qa_postcheck_v6.sql')
+const rollbackPath = path.join(scriptDir, 'cp3b2a_qa_rollback_v6.sql')
+const fixtureSetupPath = path.join(scriptDir, 'cp3b2a_qa_fixture_setup_v6.sql')
+const fixtureCleanupPath = path.join(scriptDir, 'cp3b2a_qa_fixture_cleanup_v6.sql')
+const digestPath = path.join(scriptDir, 'cp3b2a_qa_digest_v6.sql')
 const concurrencyPath = path.join(scriptDir, 'cp3b2a_qa_concurrency_v6.mjs')
 const canonicalJsonPath = path.join(scriptDir, 'cp3b2aCanonicalJsonV6.mjs')
 const runnerPath = path.join(scriptDir, 'run-cp3b2a-qa-v6.mjs')
@@ -62,23 +73,49 @@ const docsPaths = [
   path.join(repoRoot, 'docs', 'client-portal', 'CP3B2A_EXACT_QA_AUTHORIZATION_V6.md'),
 ]
 
+const LEGACY_AUTHORIZATION_KEYS_V6 = Object.freeze([
+  'CP3B2A_V1_EXECUTION_AUTHORIZED',
+  'CP3B2A_EXECUTION_AUTHORIZED',
+  'CP3B2A_V2_EXECUTION_AUTHORIZED',
+  'CP3B2A_V3_EXECUTION_AUTHORIZED',
+  'CP3B2A_V4_EXECUTION_AUTHORIZED',
+  'CP3B2A_V5_EXECUTION_AUTHORIZED',
+  'CP3B2A_V6R1_EXECUTION_AUTHORIZED',
+  'CP3B2A_V1_AUTHORIZATION_ID',
+  'CP3B2A_AUTHORIZATION_ID',
+  'CP3B2A_V2_AUTHORIZATION_ID',
+  'CP3B2A_V3_AUTHORIZATION_ID',
+  'CP3B2A_V4_AUTHORIZATION_ID',
+  'CP3B2A_V5_AUTHORIZATION_ID',
+  'CP3B2A_V6R1_AUTHORIZATION_ID',
+  'CP3B2A_V1_AUTHORIZED_HEAD',
+  'CP3B2A_V2_AUTHORIZED_HEAD',
+  'CP3B2A_V3_AUTHORIZED_HEAD',
+  'CP3B2A_V4_AUTHORIZED_HEAD',
+  'CP3B2A_V5_AUTHORIZED_HEAD',
+  'CP3B2A_V6R1_AUTHORIZED_HEAD',
+  'CP3B2A_PRIVATE_BACKUP_MANIFEST',
+  'CP3B2A_V5_PRIVATE_BACKUP_MANIFEST',
+  'CP3B2A_V6R1_PRIVATE_BACKUP_MANIFEST',
+])
+
 function packageContractV6() {
   return {
     version: 6,
-    revision: 'V6R1',
-    gate: GATE_V6R1,
-    status: PACKAGE_STATUS_V6R1,
-    authorizationId: AUTHORIZATION_ID_V6R1,
+    revision: 'V6R1E',
+    gate: GATE_V6R1E,
+    status: PACKAGE_STATUS_V6R1E,
+    authorizationId: AUTHORIZATION_ID_V6R1E,
     qaProjectRef: QA_REF,
     prohibitedProductionRef: PRODUCTION_REF,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R1,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
     migration: MIGRATION_PATH,
     migrationSha256: MIGRATION_SHA256,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
     postgresAdapter: 'REAL_POSTGRESQL_FULL',
     postgresVersion: 17,
     tlsRequired: true,
-    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1',
+    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1e',
     executeAlias: false,
     maximumApplyAttempts: 1,
     maximumRecoveryAttempts: 1,
@@ -347,7 +384,7 @@ function postgresEnvironmentV6R(environment) {
       ...prepared.environment,
       PGSSLMODE: 'require',
       PGCONNECT_TIMEOUT: prepared.environment.PGCONNECT_TIMEOUT ?? '10',
-      PGAPPNAME: prepared.environment.PGAPPNAME ?? 'cp3b2a-v6r1-preflight',
+      PGAPPNAME: prepared.environment.PGAPPNAME ?? 'cp3b2a-v6r1e-preflight',
     },
     target: prepared.target,
   }
@@ -561,16 +598,16 @@ function parseSnapshotV6R(stdout) {
 
 function readLiveSnapshotV6R(environment, dependencies = {}) {
   mkdirSync(privateRoot, { recursive: true })
-  const snapshotSqlPath = path.join(privateRoot, 'live-snapshot-v6r1.sql')
+  const snapshotSqlPath = path.join(privateRoot, 'live-snapshot-v6r1e.sql')
   writeFileSync(snapshotSqlPath, `${buildReadOnlySnapshotSqlV6R()}\n`, 'utf8')
   const result = (dependencies.runPsql ?? runPsqlV6R)('', {
     environment,
     filePath: snapshotSqlPath,
     variables: {
-      gate: GATE_V6R1,
+      gate: GATE_V6R1E,
       project_ref: QA_REF,
-      authorized_head: environment.CP3B2A_V6R1_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1,
-      source_base_head: SOURCE_BASE_HEAD_V6R1,
+      authorized_head: environment.CP3B2A_V6R1E_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1E,
+      source_base_head: SOURCE_BASE_HEAD_V6R1E,
       ssl_mode: 'require',
     },
     executable: dependencies.executable,
@@ -583,7 +620,7 @@ function readLiveSnapshotV6R(environment, dependencies = {}) {
   if (snapshot.postgresMajor !== 17) {
     fail('V6R_POSTGRES_MAJOR_REJECTED', { actual: snapshot.postgresMajor })
   }
-  if (snapshot.projectRef !== QA_REF || snapshot.authorizedHead !== (environment.CP3B2A_V6R1_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1)) {
+  if (snapshot.projectRef !== QA_REF || snapshot.authorizedHead !== (environment.CP3B2A_V6R1E_AUTHORIZED_HEAD ?? SOURCE_BASE_HEAD_V6R1E)) {
     fail('V6R_SNAPSHOT_TARGET_REJECTED')
   }
   if (snapshot.sslMode !== 'require') {
@@ -592,18 +629,100 @@ function readLiveSnapshotV6R(environment, dependencies = {}) {
   return snapshot
 }
 
+function runSqlFileV6R(filePath, environment, variables = {}, dependencies = {}) {
+  const result = (dependencies.runPsql ?? runPsqlV6R)('', {
+    environment,
+    filePath,
+    variables,
+    executable: dependencies.executable,
+    platform: dependencies.platform,
+    cwd: dependencies.cwd,
+    timeout: dependencies.timeout,
+    maxBuffer: dependencies.maxBuffer,
+  })
+  return String(result.stdout ?? '').trim()
+}
+
+function runSqlTextV6R(sql, environment, variables = {}, dependencies = {}) {
+  const result = (dependencies.runPsql ?? runPsqlV6R)(sql, {
+    environment,
+    variables,
+    executable: dependencies.executable,
+    platform: dependencies.platform,
+    cwd: dependencies.cwd,
+    timeout: dependencies.timeout,
+    maxBuffer: dependencies.maxBuffer,
+  })
+  return String(result.stdout ?? '').trim()
+}
+
+function runJsonSqlFileV6R(filePath, environment, variables = {}, dependencies = {}) {
+  return parseSnapshotV6R(runSqlFileV6R(filePath, environment, variables, dependencies))
+}
+
+function resolveApprovedBackupManifestPathV6(environment) {
+  const manifestPathValue = String(environment.CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST ?? '').trim()
+  if (!manifestPathValue) {
+    fail('V6_PRIVATE_BACKUP_PATH_REQUIRED')
+  }
+  return path.resolve(manifestPathValue)
+}
+
+function makeDeterministicHexV6(runId, label) {
+  return createHash('sha256').update(`${runId}:${label}`, 'utf8').digest('hex')
+}
+
+function makeDeterministicUuidV6(runId, label) {
+  const hex = makeDeterministicHexV6(runId, label)
+  return `00000000-0000-4000-8000-${hex.slice(0, 12)}`
+}
+
+function buildFixtureVariablesV6(runId) {
+  const clientId = makeDeterministicUuidV6(runId, 'client')
+  const propertyId = makeDeterministicUuidV6(runId, 'property')
+  const staffUserId = makeDeterministicUuidV6(runId, 'staff_user')
+  const authUserId = makeDeterministicUuidV6(runId, 'auth_user')
+  const membershipId = makeDeterministicUuidV6(runId, 'membership')
+  const profileRequestId = makeDeterministicUuidV6(runId, 'profile_request')
+  const propertyRequestId = makeDeterministicUuidV6(runId, 'property_request')
+  const serviceRequestId = makeDeterministicUuidV6(runId, 'service_request')
+  const auditEventId = makeDeterministicUuidV6(runId, 'audit_event')
+  const correlationId = makeDeterministicUuidV6(runId, 'correlation')
+  const rateLimitSubjectHash = makeDeterministicHexV6(runId, 'rate_limit_subject')
+  return {
+    run_id: runId,
+    project_ref: QA_REF,
+    staff_user_id: staffUserId,
+    auth_user_id: authUserId,
+    client_id: clientId,
+    property_id: propertyId,
+    membership_id: membershipId,
+    profile_request_id: profileRequestId,
+    property_request_id: propertyRequestId,
+    service_request_id: serviceRequestId,
+    audit_event_id: auditEventId,
+    correlation_id: correlationId,
+    rate_limit_subject_hash: rateLimitSubjectHash,
+    auth_email: `${runId.toLowerCase()}-auth@example.invalid`,
+    client_name: `${runId} synthetic client`,
+    property_name: `${runId} synthetic property`,
+    client_display_code: `CC-${runId.slice(-8)}`,
+    property_display_code: `PP-${runId.slice(-8)}`,
+  }
+}
+
 export function verifyPackageManifestV6() {
   const manifest = readJsonFromWorkingTree(manifestPath)
   const packageContract = packageContractV6()
   if (
     manifest.version !== 6
-    || manifest.revision !== 'V6R1'
-    || manifest.gate !== GATE_V6R1
-    || manifest.status !== PACKAGE_STATUS_V6R1
-    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1
+    || manifest.revision !== 'V6R1E'
+    || manifest.gate !== GATE_V6R1E
+    || manifest.status !== PACKAGE_STATUS_V6R1E
+    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1E
     || manifest.qaProjectRef !== QA_REF
     || manifest.prohibitedProductionRef !== PRODUCTION_REF
-    || manifest.sourceBaseHead !== SOURCE_BASE_HEAD_V6R1
+    || manifest.sourceBaseHead !== SOURCE_BASE_HEAD_V6R1E
     || manifest.migration !== MIGRATION_PATH
     || manifest.migrationSha256 !== MIGRATION_SHA256
     || manifest.contractCanonicalJsonSha256 !== canonicalJsonSha256V1(packageContract)
@@ -611,7 +730,7 @@ export function verifyPackageManifestV6() {
     || manifest.postgresAdapter !== 'REAL_POSTGRESQL_FULL'
     || manifest.postgresVersion !== 17
     || manifest.tlsRequired !== true
-    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1'
+    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1e'
     || manifest.executeAlias !== false
     || manifest.maximumApplyAttempts !== 1
     || manifest.maximumRecoveryAttempts !== 1
@@ -650,13 +769,13 @@ export function verifyPackageManifestV6() {
 function buildBackupSnapshotV6R({ gitHead, manifestIdentity, capabilityIdentity, liveSnapshot }) {
   return {
     version: 6,
-    revision: 'V6R1',
-    gate: GATE_V6R1,
+    revision: 'V6R1E',
+    gate: GATE_V6R1E,
     status: 'COMPLETE',
-    authorizationId: AUTHORIZATION_ID_V6R1,
+    authorizationId: AUTHORIZATION_ID_V6R1E,
     projectRef: QA_REF,
     gitHead,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R1,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
     migrationSha256: MIGRATION_SHA256,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
     manifestIdentity,
@@ -669,11 +788,11 @@ function buildBackupSnapshotV6R({ gitHead, manifestIdentity, capabilityIdentity,
 
 function createPrivateBackupV6({ environment, gitHead, manifestIdentity, capabilityIdentity, dependencies = {} }) {
   mkdirSync(privateRoot, { recursive: true })
-  const backupDir = path.join(privateRoot, `backup-v6r1-${gitHead.slice(0, 12)}`)
+  const backupDir = path.join(privateRoot, `backup-v6r1e-${gitHead.slice(0, 12)}`)
   mkdirSync(backupDir, { recursive: true })
   const liveSnapshot = (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)({
     ...environment,
-    CP3B2A_V6R1_AUTHORIZED_HEAD: gitHead,
+    CP3B2A_V6R1E_AUTHORIZED_HEAD: gitHead,
   }, dependencies)
   const backup = buildBackupSnapshotV6R({
     gitHead,
@@ -684,50 +803,67 @@ function createPrivateBackupV6({ environment, gitHead, manifestIdentity, capabil
   const manifest = {
     ...backup,
     artifacts: expectedArtifacts(),
-    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1',
+    privateBackupLocation: '.project-agent/private/cp3b2a-v6r1e',
   }
   const manifestText = `${JSON.stringify(manifest, null, 2)}\n`
-  const manifestFile = path.join(backupDir, 'private-backup-v6r1-manifest.json')
+  const manifestFile = path.join(backupDir, 'private-backup-v6r1e-manifest.json')
   writeFileSync(manifestFile, manifestText, 'utf8')
   assertIgnoredPrivateFile(manifestFile)
   return { path: manifestFile, value: manifest }
 }
 
-function verifyPrivateBackupV6(expectedHead) {
-  const dirPrefix = `backup-v6r1-${expectedHead.slice(0, 12)}`
-  const backupDirs = existsSync(privateRoot)
-    ? readdirSync(privateRoot, { withFileTypes: true })
-      .filter((entry) => entry.isDirectory() && entry.name.startsWith(dirPrefix))
-      .map((entry) => path.join(privateRoot, entry.name, 'private-backup-v6r1-manifest.json'))
-    : []
-  if (backupDirs.length === 0) fail('V6_PRIVATE_BACKUP_MISSING')
-  const manifestFile = backupDirs[0]
-  const manifest = readJsonFromWorkingTree(manifestFile)
+function verifyApprovedPrivateBackupV6(manifestPathInput, expectedHead, dependencies = {}) {
+  if (typeof manifestPathInput !== 'string' || manifestPathInput.trim() === '') {
+    fail('V6_PRIVATE_BACKUP_PATH_REQUIRED')
+  }
+  const resolved = path.resolve(manifestPathInput)
+  const privateRootResolved = path.resolve(privateRoot)
+  if (!resolved.startsWith(`${privateRootResolved}${path.sep}`)) {
+    fail('V6_PRIVATE_BACKUP_PATH_REJECTED')
+  }
+  if (!existsSync(resolved)) {
+    fail('V6_PRIVATE_BACKUP_MISSING')
+  }
+  assertIgnoredPrivateFile(resolved)
+  const manifest = readJsonFromWorkingTree(resolved)
+  const expectedManifestIdentity = workingTreeJsonContractIdentityV1(manifestPath)
+  const expectedCapabilityIdentity = workingTreeJsonContractIdentityV1(capabilityMapPath)
   if (
     manifest.version !== 6
+    || manifest.revision !== 'V6R1E'
     || manifest.status !== 'COMPLETE'
-    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1
+    || manifest.authorizationId !== AUTHORIZATION_ID_V6R1E
     || manifest.projectRef !== QA_REF
     || manifest.gitHead !== expectedHead
     || manifest.migrationSha256 !== MIGRATION_SHA256
     || (manifest.canonicalJsonStandard ?? manifest.canonicalStandard) !== CANONICAL_JSON_STANDARD_V6
-    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1'
+    || manifest.privateBackupLocation !== '.project-agent/private/cp3b2a-v6r1e'
+    || canonicalJsonSha256V1(manifest.liveSnapshot) !== manifest.snapshotCanonicalJsonSha256
+    || manifest.manifestIdentity?.gitBlobId !== expectedManifestIdentity.gitBlobId
+    || manifest.manifestIdentity?.canonicalJsonSha256 !== expectedManifestIdentity.canonicalJsonSha256
+    || manifest.capabilityIdentity?.gitBlobId !== expectedCapabilityIdentity.gitBlobId
+    || manifest.capabilityIdentity?.canonicalJsonSha256 !== expectedCapabilityIdentity.canonicalJsonSha256
   ) fail('V6_PRIVATE_BACKUP_REJECTED')
-  assertIgnoredPrivateFile(manifestFile)
-  return { path: manifestFile, value: manifest }
+  if (typeof manifest.liveSnapshot !== 'object' || manifest.liveSnapshot === null) {
+    fail('V6_PRIVATE_BACKUP_SNAPSHOT_MISSING')
+  }
+  if (manifest.liveSnapshot.secrets || manifest.liveSnapshot.pii || manifest.liveSnapshot.connectionString) {
+    fail('V6_PRIVATE_BACKUP_SENSITIVE_CONTENT_REJECTED')
+  }
+  return { path: resolved, value: manifest, dependencies }
 }
 
 function createAttemptLedger(gitHead) {
   mkdirSync(privateRoot, { recursive: true })
-  const ledgerPath = path.join(privateRoot, `v6-attempt-${gitHead}.json`)
+  const ledgerPath = path.join(privateRoot, `v6r1e-attempt-${gitHead}.json`)
   if (existsSync(ledgerPath)) fail('V6_ATTEMPT_LEDGER_ALREADY_EXISTS')
   const content = {
     version: 6,
-    revision: 'V6R1',
+    revision: 'V6R1E',
     state: 'reserved',
     gitHead,
     projectRef: QA_REF,
-    authorizationId: AUTHORIZATION_ID_V6R1,
+    authorizationId: AUTHORIZATION_ID_V6R1E,
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
     applyAttempts: 0,
     recoveryAttempts: 0,
@@ -751,12 +887,17 @@ function updateLedger(ledgerPath, state, detail = {}) {
 
 function assertAuthorizationV6(environment, gitStateValue) {
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
-  if (environment.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') fail('V6_EXECUTION_NOT_AUTHORIZED')
+  for (const key of LEGACY_AUTHORIZATION_KEYS_V6) {
+    if (typeof environment[key] === 'string' && environment[key].length > 0) {
+      fail('V6_LEGACY_AUTHORIZATION_REJECTED')
+    }
+  }
+  if (environment.CP3B2A_V6R1E_EXECUTION_AUTHORIZED !== 'true') fail('V6_EXECUTION_NOT_AUTHORIZED')
   if (environment.CP3B2A_PROJECT_REF !== QA_REF) fail('V6_QA_TARGET_REQUIRED')
-  if (environment.CP3B2A_V6R1_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1) {
+  if (environment.CP3B2A_V6R1E_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1E) {
     fail('V6_AUTHORIZATION_MISMATCH')
   }
-  if (environment.CP3B2A_V6R1_AUTHORIZED_HEAD !== gitStateValue.head) {
+  if (environment.CP3B2A_V6R1E_AUTHORIZED_HEAD !== gitStateValue.head) {
     fail('V6_AUTHORIZED_HEAD_MISMATCH')
   }
   return true
@@ -816,7 +957,7 @@ function readLivePrestateV6(_gitHead, _manifestIdentity, _capabilityIdentity, en
   const gitHead = String(_gitHead ?? '')
   return (dependencies.readLiveSnapshot ?? readLiveSnapshotV6R)({
     ...environment,
-    CP3B2A_V6R1_AUTHORIZED_HEAD: gitHead,
+    CP3B2A_V6R1E_AUTHORIZED_HEAD: gitHead,
   }, dependencies)
 }
 
@@ -875,7 +1016,7 @@ function transactionalMatrixCompleteV6(environment = process.env, dependencies =
     requestSideEffects: 0,
     auditSideEffects: 0,
     rateLimitSideEffects: 0,
-    gate: parsed.gate ?? GATE_V6R1,
+    gate: parsed.gate ?? GATE_V6R1E,
     canonicalJsonStandard: parsed.canonicalJsonStandard ?? CANONICAL_JSON_STANDARD_V6,
   }
 }
@@ -900,11 +1041,11 @@ function validateCapabilities(transactional, concurrent) {
 export function planV6() {
   verifyPackageManifestV6()
   return {
-    gate: GATE_V6R1,
+    gate: GATE_V6R1E,
     mode: 'plan',
-    status: PACKAGE_STATUS_V6R1,
-    qaApplication: 'READY_PENDING_EXPLICIT_V6R1_AUTHORIZATION',
-    authorizationId: AUTHORIZATION_ID_V6R1,
+    status: PACKAGE_STATUS_V6R1E,
+    qaApplication: 'READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION',
+    authorizationId: AUTHORIZATION_ID_V6R1E,
     target: 'QA_ONLY',
     production: 'REJECTED',
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
@@ -931,7 +1072,11 @@ export function preflightV6(environment, dependencies = {}) {
     capabilityIdentity,
     dependencies,
   })
-  const verifiedBackup = (dependencies.verifyPrivateBackup ?? verifyPrivateBackupV6)(gitStateValue.head)
+  const verifiedBackup = (dependencies.verifyPrivateBackup ?? verifyApprovedPrivateBackupV6)(
+    backup.path,
+    gitStateValue.head,
+    dependencies,
+  )
   const live = (dependencies.readLivePrestate ?? ((gitHead) => readLivePrestateV6(
     gitHead,
     manifestIdentity,
@@ -949,8 +1094,8 @@ export function preflightV6(environment, dependencies = {}) {
   )))(gitStateValue.head)
   compareDriftSentinelV6(live, sentinel)
   return {
-    verdict: 'READY_FOR_CP3B2A_QA_V6R1',
-    gate: GATE_V6R1,
+    verdict: 'READY_FOR_CP3B2A_QA_V6R1E',
+    gate: GATE_V6R1E,
     mode: 'preflight',
     package: 'PASS',
     gitHead: gitStateValue.head,
@@ -975,6 +1120,139 @@ export function preflightV6(environment, dependencies = {}) {
     executionAuthorization: 'NOT_GRANTED',
     remoteWrites: 0,
     privateBackupManifest: path.basename(backup.path),
+  }
+}
+
+function assertCleanupObserverV6(snapshot) {
+  const zeros = [
+    snapshot.authUsers,
+    snapshot.clientRows,
+    snapshot.propertyRows,
+    snapshot.membershipRows,
+    snapshot.profileRequestRows,
+    snapshot.propertyRequestRows,
+    snapshot.serviceRequestRows,
+    snapshot.auditRows,
+    snapshot.rateLimitRows,
+  ]
+  if (zeros.some((value) => value !== 0)) {
+    fail('V6_CLEANUP_OBSERVER_REJECTED', { snapshot })
+  }
+  return snapshot
+}
+
+export function buildExecutionOperationsV6(environment, dependencies = {}) {
+  const runPsql = dependencies.runPsql ?? runPsqlV6R
+  const approvedBackupPath = resolveApprovedBackupManifestPathV6(environment)
+  const runIdProvider = () => dependencies.runId ?? `CP3B2A-V6R1E-${randomBytes(6).toString('hex').toUpperCase()}`
+  const runJson = (filePath, variables) => runJsonSqlFileV6R(filePath, environment, variables, { ...dependencies, runPsql })
+  const runText = (sql, variables) => runSqlTextV6R(sql, environment, variables, { ...dependencies, runPsql })
+  const fixtureVariables = (state) => buildFixtureVariablesV6(state.runId ?? runIdProvider())
+  return {
+    verifyManifest: () => verifyPackageManifestV6(),
+    authorize: () => {
+      const gitStateValue = gitState()
+      assertAuthorizationV6(environment, gitStateValue)
+      return gitStateValue
+    },
+    assertClean: (gitStateValue) => assertCleanWorktreeV6(gitStateValue),
+    assertQaTarget: () => assertQaTargetV6(environment),
+    assertProductionRejected: () => assertProductionRejected(environment),
+    verifyBackup: (gitStateValue) => verifyApprovedPrivateBackupV6(
+      approvedBackupPath,
+      gitStateValue.head,
+      { ...dependencies, runPsql },
+    ),
+    assertContractAbsent: (snapshot) => assertContractAbsent(snapshot),
+    assertPartialStateAbsent: (result) => assertPartialStateAbsent(result),
+    assertSyntheticCollisionAbsent: (snapshot) => assertSyntheticCollisionAbsent(snapshot),
+    readLivePrestate: (gitStateValue, backup) => readLivePrestateV6(
+      gitStateValue.head,
+      backup?.value?.manifestIdentity ?? null,
+      backup?.value?.capabilityIdentity ?? null,
+      environment,
+      { ...dependencies, readLiveSnapshot: readLiveSnapshotV6R, runPsql },
+    ),
+    compareBackupLive: (backup, live) => compareBackupLivePrestateV6(backup.value.liveSnapshot, live),
+    createLedger: (state) => createAttemptLedger(state.gitState.head),
+    readDriftSentinel: (gitStateValue, backup) => readLivePrestateV6(
+      gitStateValue.head,
+      backup?.value?.manifestIdentity ?? null,
+      backup?.value?.capabilityIdentity ?? null,
+      environment,
+      { ...dependencies, readLiveSnapshot: readLiveSnapshotV6R, runPsql },
+    ),
+    compareDriftSentinel: compareDriftSentinelV6,
+    markApplyStarted: (state) => updateLedger(state.ledgerPath, 'apply_started', { applyAttempts: 1 }),
+    apply: () => {
+      runPsql('', {
+        environment,
+        filePath: path.join(repoRoot, MIGRATION_PATH),
+        executable: dependencies.executable,
+        platform: dependencies.platform,
+        cwd: dependencies.cwd,
+        timeout: dependencies.timeout,
+        maxBuffer: dependencies.maxBuffer,
+      })
+      return true
+    },
+    postcheck: (state) => runJson(postcheckPath, {
+      project_ref: QA_REF,
+      run_id: state.runId,
+    }),
+    transactionalMatrix: (state) => transactionalMatrixCompleteV6(environment, { ...dependencies, runPsql }),
+    fixtureSetup: (state) => {
+      const variables = fixtureVariables(state)
+      return runJson(fixtureSetupPath, variables)
+    },
+    concurrentMatrix: (state) => runConcurrencyV6({
+      runId: state.runId,
+      environment,
+      runPsql,
+      readLiveSnapshot: (nextEnvironment, nextDependencies = {}) => readLiveSnapshotV6R(
+        nextEnvironment,
+        { ...dependencies, ...nextDependencies, runPsql },
+      ),
+      fixtureSetupFilePath: fixtureSetupPath,
+      fixtureCleanupFilePath: fixtureCleanupPath,
+      fixtureVariables: fixtureVariables(state),
+      onStage: dependencies.onConcurrentStage ?? (() => {}),
+      onInventory: dependencies.onInventory ?? (() => {}),
+    }),
+    validateCapabilities,
+    fixtureCleanup: (state) => runJson(fixtureCleanupPath, fixtureVariables(state)),
+    fixtureCleanupConfirmed: (state) => {
+      const variables = fixtureVariables(state)
+      const snapshot = parseSnapshotV6R(runText(`
+        select jsonb_build_object(
+          'authUsers', (select count(*) from auth.users where id = :'auth_user_id'::uuid),
+          'clientRows', (select count(*) from public.clients where id = :'client_id'),
+          'propertyRows', (select count(*) from public.properties where id = :'property_id'),
+          'membershipRows', (select count(*) from public.client_portal_memberships where id = :'membership_id'::uuid),
+          'profileRequestRows', (select count(*) from public.client_portal_profile_change_requests where id = :'profile_request_id'::uuid),
+          'propertyRequestRows', (select count(*) from public.client_portal_property_change_requests where id = :'property_request_id'::uuid),
+          'serviceRequestRows', (select count(*) from public.client_service_requests where id = :'service_request_id'::uuid),
+          'auditRows', (select count(*) from public.client_portal_audit_events where id = :'audit_event_id'::uuid),
+          'rateLimitRows', (select count(*) from public.client_portal_rate_limits where action = :'rate_limit_action' and subject_hash = :'rate_limit_subject_hash')
+        )::text as cleanup_observer;
+      `, variables))
+      return assertCleanupObserverV6(snapshot)
+    },
+    finalPostcheck: (state) => runJson(postcheckPath, {
+      project_ref: QA_REF,
+      run_id: state.runId,
+    }),
+    finalDigestComparison: (state) => runJson(digestPath, {
+      project_ref: QA_REF,
+      run_id: state.runId,
+    }),
+    completeLedger: (state) => updateLedger(state.ledgerPath, 'completed', {
+      applyAttempts: 1,
+      recoveryAttempts: 0,
+      transactionalMatrix: 'PASS_ROLLED_BACK',
+      concurrentMatrix: 'PASS_CLEANED',
+    }),
+    handleFailure,
   }
 }
 
@@ -1040,6 +1318,7 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     await advance('transactional_matrix_complete')
     state.transactional = await operations.transactionalMatrix(state)
     await advance('fixture_transaction_started')
+    await operations.fixtureSetup(state)
     await advance('fixture_commit_requested')
     await advance('fixture_commit_observer_resolution')
     await advance('concurrent_matrix')
@@ -1085,66 +1364,17 @@ function handleFailure(error, state, stages) {
 }
 
 export function executeV6(environment) {
-  const runId = `CP3B2A-V6R1-${randomBytes(6).toString('hex').toUpperCase()}`
-  const operations = {
-    verifyManifest: () => verifyPackageManifestV6(),
-    authorize: (manifest) => {
-      const gitStateValue = gitState()
-      assertAuthorizationV6(environment, gitStateValue)
-      return gitStateValue
-    },
-    assertClean: (gitStateValue) => assertCleanWorktreeV6(gitStateValue),
-    assertQaTarget: () => assertQaTargetV6(environment),
-    assertProductionRejected: () => assertProductionRejected(environment),
-    verifyBackup: (gitStateValue) => {
-      const manifestIdentity = workingTreeJsonContractIdentityV1(manifestPath)
-      const capabilityIdentity = workingTreeJsonContractIdentityV1(capabilityMapPath)
-      return createPrivateBackupV6({
-        environment,
-        gitHead: gitStateValue.head,
-        manifestIdentity,
-        capabilityIdentity,
-        dependencies: { readLiveSnapshot: readLiveSnapshotV6R },
-      })
-    },
-    assertContractAbsent: (snapshot) => assertContractAbsent(snapshot),
-    assertPartialStateAbsent: (result) => assertPartialStateAbsent(result),
-    assertSyntheticCollisionAbsent: (snapshot) => assertSyntheticCollisionAbsent(snapshot),
-    readLivePrestate: (gitStateValue, backup) => readLivePrestateV6(
-      gitStateValue.head,
-      backup?.value?.manifestIdentity ?? null,
-      backup?.value?.capabilityIdentity ?? null,
-      environment,
-      { readLiveSnapshot: readLiveSnapshotV6R },
-    ),
-    compareBackupLive: (backup, live) => compareBackupLivePrestateV6(backup.value.liveSnapshot, live),
-    createLedger: (state) => createAttemptLedger(state.gitState.head),
-    readDriftSentinel: (gitStateValue, backup) => readLivePrestateV6(
-      gitStateValue.head,
-      backup?.value?.manifestIdentity ?? null,
-      backup?.value?.capabilityIdentity ?? null,
-      environment,
-      { readLiveSnapshot: readLiveSnapshotV6R },
-    ),
-    compareDriftSentinel: compareDriftSentinelV6,
-    markApplyStarted: (state) => updateLedger(state.ledgerPath, 'apply_started', { applyAttempts: 1 }),
-    apply: () => true,
-    postcheck: (state) => detailedPostcheckV6(state.prestate, state.live),
-    transactionalMatrix: () => transactionalMatrixCompleteV6(environment, { readLiveSnapshot: readLiveSnapshotV6R }),
-    concurrentMatrix: () => runConcurrencyV6({ runId }),
-    validateCapabilities,
-    fixtureCleanup: () => true,
-    fixtureCleanupConfirmed: () => true,
-    finalPostcheck: (state) => detailedPostcheckV6(state.prestate, state.live),
-    finalDigestComparison: (state) => detailedPostcheckV6(state.prestate, state.live),
-    completeLedger: (state) => updateLedger(state.ledgerPath, 'completed', {
-      applyAttempts: 1,
-      recoveryAttempts: 0,
-      transactionalMatrix: 'PASS_ROLLED_BACK',
-      concurrentMatrix: 'PASS_CLEANED',
-    }),
-    handleFailure,
-  }
+  const runId = `CP3B2A-V6R1E-${randomBytes(6).toString('hex').toUpperCase()}`
+  const operations = buildExecutionOperationsV6({
+    ...environment,
+    CP3B2A_V6R1E_EXECUTION_AUTHORIZED: environment.CP3B2A_V6R1E_EXECUTION_AUTHORIZED,
+    CP3B2A_V6R1E_AUTHORIZATION_ID: environment.CP3B2A_V6R1E_AUTHORIZATION_ID,
+    CP3B2A_V6R1E_AUTHORIZED_HEAD: environment.CP3B2A_V6R1E_AUTHORIZED_HEAD,
+    CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: environment.CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST,
+  }, {
+    runId,
+    runPsql: runPsqlV6R,
+  })
   return executeV6Core({ operations, runId })
 }
 
@@ -1156,13 +1386,13 @@ export function preflightReadOnlyV6() {
 }
 
 export function assertExecutionAuthorizationV6(environment, expectedHead) {
-  if (environment.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') {
+  if (environment.CP3B2A_V6R1E_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTION_NOT_AUTHORIZED')
   }
-  if (environment.CP3B2A_V6R1_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1) {
+  if (environment.CP3B2A_V6R1E_AUTHORIZATION_ID !== AUTHORIZATION_ID_V6R1E) {
     fail('V6R_AUTHORIZATION_MISMATCH')
   }
-  if (environment.CP3B2A_V6R1_AUTHORIZED_HEAD !== expectedHead) {
+  if (environment.CP3B2A_V6R1E_AUTHORIZED_HEAD !== expectedHead) {
     fail('V6R_AUTHORIZED_HEAD_MISMATCH')
   }
   if (environment.CP3B2A_PROJECT_REF !== QA_REF) fail('V6_QA_TARGET_REQUIRED')
@@ -1186,10 +1416,10 @@ async function main() {
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
     return
   }
-  if (process.env.CP3B2A_V6R1_EXECUTION_AUTHORIZED !== 'true') {
+  if (process.env.CP3B2A_V6R1E_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTE_BLOCKED')
   }
-  assertExecutionAuthorizationV6(process.env, process.env.CP3B2A_V6R1_AUTHORIZED_HEAD ?? '')
+  assertExecutionAuthorizationV6(process.env, process.env.CP3B2A_V6R1E_AUTHORIZED_HEAD ?? '')
   process.stdout.write(`${JSON.stringify(await executeV6(process.env), null, 2)}\n`)
 }
 

@@ -1,6 +1,6 @@
 # App Quality Gates
 
-# Client Portal CP-3B.2A.6R.1 Real PostgreSQL Closeout V6R1 Gate â€” PREPARED_NOT_AUTHORIZED 2026-08-03
+# Client Portal CP-3B.2A.6R.1E Real PostgreSQL Closeout V6R1E Gate â€” PREPARED_NOT_AUTHORIZED 2026-08-03
 
 - Git blob identity replaces the unrecoverable historical mixed-byte pin for the
   V3 manifest package, and canonical JSON identity is used for contract JSON.

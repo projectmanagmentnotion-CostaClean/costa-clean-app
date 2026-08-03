@@ -11,20 +11,19 @@ import {
 } from './cp3b2aCanonicalJsonV6.mjs'
 import {
   QA_REF,
-  SOURCE_BASE_HEAD_V6R,
+  SOURCE_BASE_HEAD_V6R1E,
   V5_HISTORICAL_MANIFEST_SHA256,
   planV6,
   preflightV6,
 } from './run-cp3b2a-qa-v6.mjs'
 import {
-  createFixtureInventoryV6,
   runConcurrencyV6,
 } from './cp3b2a_qa_concurrency_v6.mjs'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(scriptDir, '..', '..')
 const reportPath = path.join(
-  repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1',
+  repoRoot, '.project-agent', 'private', 'cp3b2a-v6r1e',
   'cp3b2a6-local-proof-latest.json',
 )
 
@@ -102,10 +101,10 @@ async function main() {
   const canonical = canonicalIdentityProof()
   const regression = v5RegressionProof()
   const liveSnapshot = {
-    gate: 'CP-3B.2A.6R.1',
+    gate: 'CP-3B.2A.6R.1E',
     projectRef: QA_REF,
-    authorizedHead: SOURCE_BASE_HEAD_V6R,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R,
+    authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
     postgresMajor: 17,
     databaseName: 'postgres',
     databaseUser: 'postgres',
@@ -135,14 +134,14 @@ async function main() {
   const plan = planV6()
   const preflight = preflightV6({
     CP3B2A_PROJECT_REF: QA_REF,
-    CP3B2A_V6R1_AUTHORIZATION_ID: 'CP3B2A-QA-V6R1-AUTHORIZATION-PENDING',
-    CP3B2A_V6R1_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R,
-    CP3B2A_V6R1_EXECUTION_AUTHORIZED: 'false',
+    CP3B2A_V6R1E_AUTHORIZATION_ID: 'CP3B2A-QA-V6R1E-AUTHORIZATION-PENDING',
+    CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
   }, {
     gitState: () => ({
       branch: 'main',
-      head: SOURCE_BASE_HEAD_V6R,
-      remoteHead: SOURCE_BASE_HEAD_V6R,
+      head: SOURCE_BASE_HEAD_V6R1E,
+      remoteHead: SOURCE_BASE_HEAD_V6R1E,
       clean: true,
       divergence: [0, 0],
     }),
@@ -160,7 +159,7 @@ async function main() {
     readDriftSentinel: () => liveSnapshot,
   })
   const concurrency = runConcurrencyV6({
-    runId: 'CP3B2A-V6-LOCAL-000000',
+    runId: 'CP3B2A-V6R1E-LOCAL-000000',
     onStage: () => {},
   })
   const result = {
@@ -177,7 +176,7 @@ async function main() {
     driftSentinel: preflight.driftSentinel,
     concurrency: concurrency.cleanup,
     regression: regression.v5HistoricalPin,
-    gitHead: SOURCE_BASE_HEAD_V6R,
+    gitHead: SOURCE_BASE_HEAD_V6R1E,
     qaRef: QA_REF,
     canonicalJsonStandard: canonical.standard,
     manifestBlobId: identity.manifestBlobId,
@@ -188,9 +187,9 @@ async function main() {
   assertIgnoredReportPath()
   mkdirSync(path.dirname(reportPath), { recursive: true })
   writeFileSync(reportPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8')
-  console.log('PASS: CP-3B.2A.6R.1 local proof completed.')
+  console.log('PASS: CP-3B.2A.6R.1E local proof completed.')
   console.log('Git blob identity, canonical JSON identity and reproducibility checks passed.')
-  console.log('V5 historical pin recorded as unrecoverable; V6R1 package remains reproducible.')
+  console.log('V5 historical pin recorded as unrecoverable; V6R1E package remains reproducible.')
 }
 
 main().catch((error) => {

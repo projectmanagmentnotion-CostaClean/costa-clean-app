@@ -34,7 +34,7 @@ alter table public.client_portal_property_change_requests
 commit;
 
 select jsonb_build_object(
-  'gate', 'CP-3B.2A.6R.1',
+  'gate', 'CP-3B.2A.6R.1E',
   'kind', 'rollback',
   'result', 'PASS'
 )::text as cp3b2a_qa_rollback_v6;

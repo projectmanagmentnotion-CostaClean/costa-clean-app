@@ -100,7 +100,7 @@ table_digests as (
   ) as definition
 )
 select jsonb_build_object(
-  'gate', 'CP-3B.2A.6R.1',
+  'gate', 'CP-3B.2A.6R.1E',
   'projectRef', :'project_ref',
   'authorizedHead', :'authorized_head',
   'database', current_database(),

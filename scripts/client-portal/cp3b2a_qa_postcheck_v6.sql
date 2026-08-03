@@ -60,7 +60,7 @@ table_counts as (
   ) as definition
 )
 select jsonb_build_object(
-  'gate', 'CP-3B.2A.6R.1',
+  'gate', 'CP-3B.2A.6R.1E',
   'kind', 'postcheck',
   'projectRef', :'project_ref',
   'runId', :'run_id',

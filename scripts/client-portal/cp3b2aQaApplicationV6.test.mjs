@@ -3,16 +3,17 @@ import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
-  AUTHORIZATION_ID_V6R,
+  AUTHORIZATION_ID_V6R1E,
+  buildExecutionOperationsV6,
   EXECUTABLE_ORDER_V6,
-  GATE_V6R,
-  PACKAGE_STATUS_V6,
+  GATE_V6R1E,
+  PACKAGE_STATUS_V6R1E,
   QA_REF,
-  SOURCE_BASE_HEAD_V6R,
+  SOURCE_BASE_HEAD_V6R1E,
   assertExecutionAuthorizationV6,
+  executeV6Core,
   preflightV6,
   verifyPackageManifestV6,
-  executeV6Core,
   V5_HISTORICAL_MANIFEST_SHA256,
 } from './run-cp3b2a-qa-v6.mjs'
 import {
@@ -40,18 +41,18 @@ const runnerPath = 'scripts/client-portal/run-cp3b2a-qa-v6.mjs'
 function baseEnvironment() {
   return {
     CP3B2A_PROJECT_REF: QA_REF,
-    CP3B2A_V6R1_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R,
-    CP3B2A_V6R1_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R,
-    CP3B2A_V6R1_EXECUTION_AUTHORIZED: 'true',
+    CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'true',
   }
 }
 
 function matchingPreflightDependencies() {
   const liveSnapshot = {
-    gate: GATE_V6R,
+    gate: GATE_V6R1E,
     projectRef: QA_REF,
-    authorizedHead: SOURCE_BASE_HEAD_V6R,
-    sourceBaseHead: SOURCE_BASE_HEAD_V6R,
+    authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+    sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
     postgresMajor: 17,
     contract: {
       expectedFunctions: 7,
@@ -78,19 +79,19 @@ function matchingPreflightDependencies() {
   return {
     gitState: () => ({
       branch: 'main',
-      head: SOURCE_BASE_HEAD_V6R,
-      remoteHead: SOURCE_BASE_HEAD_V6R,
+      head: SOURCE_BASE_HEAD_V6R1E,
+      remoteHead: SOURCE_BASE_HEAD_V6R1E,
       clean: true,
       divergence: [0, 0],
     }),
     assertQaTarget: () => ({ target: 'QA_MATCH', tls: 'REQUIRED', adapter: 'POSTGRESQL_17' }),
     assertProductionRejected: () => true,
     createPrivateBackup: () => ({
-      path: '/tmp/private-backup-v6r1-manifest.json',
+      path: '/tmp/private-backup-v6r1e-manifest.json',
       value: { liveSnapshot },
     }),
     verifyPrivateBackup: () => ({
-      path: '/tmp/private-backup-v6r1-manifest.json',
+      path: '/tmp/private-backup-v6r1e-manifest.json',
       value: { liveSnapshot },
     }),
     readLivePrestate: () => liveSnapshot,
@@ -98,7 +99,7 @@ function matchingPreflightDependencies() {
   }
 }
 
-describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
+describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
   it('canonicalizes JSON recursively and ignores object key order', () => {
     const original = {
       z: 1,
@@ -129,38 +130,83 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
     expect(workingTreeSha256V1(path.join(repoRoot, manifestPath))).toMatch(/^[0-9a-f]{64}$/u)
   })
 
-  it('validates the V6R1 manifest and package contract', () => {
+  it('validates the V6R1E manifest and package contract', () => {
     const { manifest, expected } = verifyPackageManifestV6()
-    expect(manifest.gate).toBe(GATE_V6R)
-    expect(manifest.status).toBe(PACKAGE_STATUS_V6)
-    expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R)
-    expect(manifest.sourceBaseHead).toBe(SOURCE_BASE_HEAD_V6R)
-    expect(manifest.privateBackupLocation).toBe('.project-agent/private/cp3b2a-v6r1')
+    expect(manifest.gate).toBe(GATE_V6R1E)
+    expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)
+    expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R1E)
+    expect(manifest.sourceBaseHead).toBe(SOURCE_BASE_HEAD_V6R1E)
+    expect(manifest.privateBackupLocation).toBe('.project-agent/private/cp3b2a-v6r1e')
     expect(expected.map((entry) => entry.path)).toHaveLength(17)
   })
 
   it('preflights read-only and creates a fresh private backup model', () => {
     const result = preflightV6(baseEnvironment(), matchingPreflightDependencies())
-    expect(result.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1')
+    expect(result.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1E')
     expect(result.backupLiveExactComparison).toBe('PASS')
     expect(result.driftSentinel).toBe('PASS')
     expect(result.remoteWrites).toBe(0)
-    expect(result.privateBackupManifest).toContain('private-backup-v6r1-manifest.json')
+    expect(result.privateBackupManifest).toContain('private-backup-v6r1e-manifest.json')
   })
 
-  it('rejects execute without the exact V6R authorization', () => {
-    expect(() => assertExecutionAuthorizationV6({}, SOURCE_BASE_HEAD_V6R))
+  it('rejects execute without the exact V6R1E authorization', () => {
+    expect(() => assertExecutionAuthorizationV6({}, SOURCE_BASE_HEAD_V6R1E))
       .toThrow('V6R_EXECUTION_NOT_AUTHORIZED')
     expect(() => assertExecutionAuthorizationV6({
       ...baseEnvironment(),
-      CP3B2A_V6R1_AUTHORIZED_HEAD: 'b'.repeat(40),
-    }, SOURCE_BASE_HEAD_V6R)).toThrow('V6R_AUTHORIZED_HEAD_MISMATCH')
+      CP3B2A_V6R1E_AUTHORIZED_HEAD: 'b'.repeat(40),
+    }, SOURCE_BASE_HEAD_V6R1E)).toThrow('V6R_AUTHORIZED_HEAD_MISMATCH')
+  })
+
+  it('wires the executable runner to real PostgreSQL file-backed operations', async () => {
+    const calls = []
+    const operations = buildExecutionOperationsV6({
+      CP3B2A_PROJECT_REF: QA_REF,
+      CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
+      CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+      CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
+      CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
+      CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
+      PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
+    }, {
+      runId: 'CP3B2A-V6R1E-ABCDEF123456',
+      runPsql: (sql, options = {}) => {
+        calls.push({
+          sql: typeof sql === 'string' ? sql : '',
+          filePath: options.filePath ?? null,
+        })
+        return { rows: [], rowCount: 0, output: '' }
+      },
+      gitState: () => ({
+        branch: 'main',
+        head: SOURCE_BASE_HEAD_V6R1E,
+        remoteHead: SOURCE_BASE_HEAD_V6R1E,
+        clean: true,
+        divergence: [0, 0],
+      }),
+      readLiveSnapshot: async () => ({
+        gate: GATE_V6R1E,
+        projectRef: QA_REF,
+        authorizedHead: SOURCE_BASE_HEAD_V6R1E,
+        sourceBaseHead: SOURCE_BASE_HEAD_V6R1E,
+        postgresMajor: 17,
+        contract: { expectedFunctions: 7, presentFunctions: 0, expectedConstraints: 2, presentConstraints: 0, expectedIndexes: 4, presentIndexes: 0 },
+        prestate: { profileRows: 2, propertyRows: 3, profileNullReferences: 0, propertyNullReferences: 0, profileDuplicatePairs: 0, propertyDuplicatePairs: 0 },
+        collisions: { profileDuplicatePairs: 0, propertyDuplicatePairs: 0, combinedDuplicatePairs: 0 },
+      }),
+      onConcurrentStage: () => {},
+      onInventory: () => {},
+    })
+    expect(operations.apply).toBeInstanceOf(Function)
+    expect(operations.concurrentMatrix).toBeInstanceOf(Function)
+    await operations.apply({ runId: 'CP3B2A-V6R1E-ABCDEF123456' })
+    expect(calls.some((call) => call.filePath?.endsWith('20260728160000_portal_reviewed_change_contract.sql'))).toBe(true)
   })
 
   it('enforces the exact 26-stage order', async () => {
     const operations = {
       verifyManifest: () => true,
-      authorize: () => ({ head: SOURCE_BASE_HEAD_V6R, clean: true }),
+      authorize: () => ({ head: SOURCE_BASE_HEAD_V6R1E, clean: true }),
       assertClean: () => true,
       assertQaTarget: () => true,
       assertProductionRejected: () => true,
@@ -175,6 +221,7 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
       compareDriftSentinel: () => true,
       markApplyStarted: () => true,
       apply: () => true,
+      fixtureSetup: () => true,
       postcheck: () => true,
       transactionalMatrix: () => ({
         result: 'PASS',
@@ -197,7 +244,7 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
     const observed = []
     const result = await executeV6Core({
       operations,
-      runId: 'CP3B2A-V6R1-ABCDEF123456',
+      runId: 'CP3B2A-V6R1E-ABCDEF123456',
       onStage: (stage) => observed.push(stage),
     })
     expect(result.verdict).toBe('PASS')
@@ -215,7 +262,7 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
       auditRows: 0,
       unexpectedRows: 0,
     })).toBe(FIXTURE_STATES_V6.COMMIT_CONFIRMED)
-    const fixture = createFixtureInventoryV6('CP3B2A-V6R1-ABCDEF123456')
+    const fixture = createFixtureInventoryV6('CP3B2A-V6R1E-ABCDEF123456')
     expect(privateFixtureInventoryV6(fixture)).toMatchObject({
       runId: fixture.runId,
       state: FIXTURE_STATES_V6.NOT_STARTED,
@@ -235,7 +282,7 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
   })
 
   it('simulates the concurrent matrix without residue', () => {
-    const result = runConcurrencyV6({ runId: 'CP3B2A-V6R1-ABCDEF123456' })
+    const result = runConcurrencyV6({ runId: 'CP3B2A-V6R1E-ABCDEF123456' })
     expect(result.result).toBe('PASS')
     expect(result.cleanup).toBe('PASS_CLEANED')
     expect(result.syntheticResidue).toBe(0)
@@ -255,11 +302,11 @@ describe('CP-3B.2A.6R.1 final real PostgreSQL adapter V6R1', () => {
       encoding: 'utf8',
     })
     expect(result.status).toBe(0)
-    expect(result.stdout).toContain('READY_PENDING_EXPLICIT_V6R1_AUTHORIZATION')
+    expect(result.stdout).toContain('READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION')
     const preflight = preflightV6(baseEnvironment(), {
       ...matchingPreflightDependencies(),
     })
-    expect(preflight.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1')
+    expect(preflight.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1E')
     const execute = spawnSync(process.execPath, [runnerPath, '--execute'], {
       cwd: repoRoot,
       encoding: 'utf8',

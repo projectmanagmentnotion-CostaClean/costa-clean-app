@@ -1,20 +1,20 @@
 {
   "version": 6,
-  "revision": "V6R1",
-  "gate": "CP-3B.2A.6R.1",
+  "revision": "V6R1E",
+  "gate": "CP-3B.2A.6R.1E",
   "status": "PREPARED_NOT_AUTHORIZED",
-  "authorizationId": "CP3B2A-QA-V6R1-AUTHORIZATION-PENDING",
+  "authorizationId": "CP3B2A-QA-V6R1E-AUTHORIZATION-PENDING",
   "qaProjectRef": "kpvvydthlxupjjqqdpxy",
   "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
-  "sourceBaseHead": "79a83b42cd739e4a952f0a3eac61729600949766",
+  "sourceBaseHead": "abc6d52da7e0e6ce781ac9c54addfc58c71f4963",
   "migration": "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
   "migrationSha256": "4030c67ba82f353cd81345a59fca8ee0c3088affd0869c8d9e744c02f24bb544",
-  "contractCanonicalJsonSha256": "a9176a6eb8bffb46d1d1fc1a2e06e43f0caef1b9513a71e2513aa94d2f23572b",
+  "contractCanonicalJsonSha256": "2584151b398b8b0e1acfa27d94ed82776ae0006334a02385284053868542ea68",
   "canonicalJsonStandard": "CP3B2A_CANONICAL_JSON_V1",
   "postgresAdapter": "REAL_POSTGRESQL_FULL",
   "postgresVersion": 17,
   "tlsRequired": true,
-  "privateBackupLocation": ".project-agent/private/cp3b2a-v6r1",
+  "privateBackupLocation": ".project-agent/private/cp3b2a-v6r1e",
   "executeAlias": false,
   "maximumApplyAttempts": 1,
   "maximumRecoveryAttempts": 1,
@@ -33,81 +33,81 @@
     {
       "path": "scripts/client-portal/cp3b2a_qa_matrix_v6.sql",
       "kind": "sql",
-      "gitBlobId": "1a17427cc76c778ab96ff88a5ce3048fdf7c4e30",
-      "blobSha256": "30af7af30600a3326bfe77a9d92e687fd37547c1c3270488414a7ff1897de637"
+      "gitBlobId": "bb36551a5c8a3b4070c832770abee9bf547e043a",
+      "blobSha256": "4416f67c6e32554d3d0a5023c6d8cd393122523821f166b73142cb17741e0999"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_concurrency_v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "9d9006bf203137ead56b6984ef61a5f6c44e7ddf",
-      "blobSha256": "393c3070f75695eee489618bb7ce7e9f7ce418648268e5ea2a8633f57d36c0b0"
+      "gitBlobId": "940a232d54060daf898c467f5c734ae45d9e382a",
+      "blobSha256": "cf005ac193e41e19e2c03ca91c318f82e3dea58e23954279adfd4e8fb4d99401"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_capability_map_v6.json",
       "kind": "json",
-      "gitBlobId": "e272bbb67401bc394d4244e59003a10c80dfc078",
-      "blobSha256": "7bef80435a13f1fb10d97cc98146ffe0a9093504beed86ab451699a5c16c8cd8",
-      "canonicalJsonSha256": "86c9b89343707997007c35cb1b8a9819494a1790149978af13d96249fce9c81e"
+      "gitBlobId": "8838db97815678435f7183034653e9b06174ddfc",
+      "blobSha256": "9cca8ac9aea4a0539bd2ec2022ca2550e3168f3f2274c53d28857d38ce3738c6",
+      "canonicalJsonSha256": "8e82d66e4796ec0dfa866ba948e306c21bbebde7814086a4ef6fb40a430ffd2c"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "4f4b2f3506ef84eefa1ef6e1a9f4c00a13f50ffe",
-      "blobSha256": "9f96281d2ea6ba91fe79fd3e05242ab1be491c50ad967640606d16c60204449e"
+      "gitBlobId": "7fa346aa04abd0c9f29900c4aecb4fb1d9e56399",
+      "blobSha256": "e841d9be2370884928e115295e7ad902910e83546bf823495ba697c9164a13a4"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
       "kind": "mjs",
-      "gitBlobId": "1f73da4a85c564c72659c5ab3c2f350554bc7b2a",
-      "blobSha256": "7cd5a29cc0f2c6d15980a6d8d0b5e986702e4a8db43e65ff09946f331782ac1e"
+      "gitBlobId": "776efb394be7ffbe513cc5245590c585524c7bc2",
+      "blobSha256": "9dccd78f5c818e0b15430fb6cfc724c5b45fc266f996fd04e9d15c7663af7d87"
     },
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "25e9301f9c8ac63944558bea89fc9b0bd2fc14a6",
-      "blobSha256": "c97b0b76f042b574a10afc20ff760bc52574e1c309a834948d9f98d6bbede8d5"
+      "gitBlobId": "b2f8db2c79f8e1847fbb638c52fb501afb20c48f",
+      "blobSha256": "04b2206d14633c1b21ba6d8e7e776b30c074ffd752693b8e5ac49addce55585e"
     },
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "2a8a2f8f7965a4b546fbf7b3ce498c109b32d506",
-      "blobSha256": "42c3f564a939b3fbdac6f01d5b20880ecc14305574b6121f541b16aeb562742d"
+      "gitBlobId": "aaa4cfbda34e92790c0ba24fd1c1ece20d76eeee",
+      "blobSha256": "16157cfd2a777ece6e6568178863e0d4cd751b97e9c2b808f3e20d8a2f6595c3"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_precheck_v6.sql",
       "kind": "sql",
-      "gitBlobId": "a487c59eb498119866f713f358ced0c6081abfb0",
-      "blobSha256": "f522f37ea7e07ef0f3de68d8dbf0a64f701277045d86e6b5c22e7b39b72855c4"
+      "gitBlobId": "ee7be0cf106416446df2874474fafc083a1e1dfc",
+      "blobSha256": "0499dffecd2a405c571a7c716911e482eb06931eae27a25c7565002b23cad142"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_postcheck_v6.sql",
       "kind": "sql",
-      "gitBlobId": "757d63aa03b5aa5bd60ae03d94e22bfb1bbd3463",
-      "blobSha256": "c825831a226654101394a627fcdc1483c30eea079ab980000c742133c4bcf7d5"
+      "gitBlobId": "a65e57d6775af7e19424e84376e0c04cacf636d7",
+      "blobSha256": "d9ec479074d357fb614505bfc930d462ee4eb3f864bfe27cac3978103af2e988"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_rollback_v6.sql",
       "kind": "sql",
-      "gitBlobId": "4036f86bd157ca5d3882c338b51ca081d68babcc",
-      "blobSha256": "caf2f29382fc4a578807871126cb65a8a1ce0daa2c9c9b5ef722d5bd952771a5"
+      "gitBlobId": "029d4e8e81294fbdd11615cafdc6281c709a9e8e",
+      "blobSha256": "317d9f8cfe96f96e897092f31ef26c115208b086089b513a79ddce88f0a82cf5"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql",
       "kind": "sql",
-      "gitBlobId": "ace83d8f7cf06d3f8e6febe3e1380c24b5d37f38",
-      "blobSha256": "25e4f0786138ab6e55323407a0742b0482156d3b984fe26e22df474567874dd1"
+      "gitBlobId": "121595298296c1669850131bef285508f6cd983f",
+      "blobSha256": "9ed6dfb7b11334dcb33f47ddca64de896bcc1c149187c0f2607d9df004bc124f"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_fixture_cleanup_v6.sql",
       "kind": "sql",
-      "gitBlobId": "d3c38189ada48db425edcdd8839c5c4379668469",
-      "blobSha256": "e234b1e4c24a013b17b791f38533f289557a7d434225aef68ba0bad3616626ff"
+      "gitBlobId": "75218ee4ce26d71dfab652732f4d3c66c3cf92f6",
+      "blobSha256": "158cacd0932c36cc945ca385e37f136538a584cbbeff08d5e24f79f053618804"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_digest_v6.sql",
       "kind": "sql",
-      "gitBlobId": "e773ac7cd8b4b3fb633c54a6f1900fb70e98d92b",
-      "blobSha256": "20915fb14919e079c40fbe11b194a1f491d44ccc476dcde1f1d185c05ea981f8"
+      "gitBlobId": "0e30957563cd6c070a057c62aaa98a013981fcc1",
+      "blobSha256": "439f38dded9bbd7d276f6764a87bb1faae5834dd3d8f12544a5a2e05b9187dd0"
     },
     {
       "path": "docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md",
@@ -129,3 +129,6 @@
     }
   ]
 }
+
+
+

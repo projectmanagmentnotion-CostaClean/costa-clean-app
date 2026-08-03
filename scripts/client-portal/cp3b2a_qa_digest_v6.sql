@@ -17,7 +17,7 @@
 begin transaction read only;
 
 select jsonb_build_object(
-  'gate', 'CP-3B.2A.6R.1',
+  'gate', 'CP-3B.2A.6R.1E',
   'kind', 'digest',
   'projectRef', :'project_ref',
   'runId', :'run_id',

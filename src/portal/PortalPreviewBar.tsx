@@ -17,6 +17,12 @@ const previewScenarioLabels: Record<PortalPreviewScenario, string> = {
   without_access: 'Sin acceso asignado',
   session_expired: 'Sesión expirada',
   offline: 'Error de conexión',
+  empty: 'Vacío',
+  profile_request_success: 'Perfil enviado',
+  profile_retry: 'Perfil reintento',
+  profile_conflict: 'Perfil conflicto',
+  property_unavailable: 'Propiedad no disponible',
+  property_request_success: 'Propiedad enviada',
 }
 
 interface PortalPreviewBarProps {
@@ -58,5 +64,10 @@ function getPreviewPath(scenario: PortalPreviewScenario) {
   if (scenario === 'recovery') return '/portal/recover'
   if (scenario === 'reset') return '/portal/reset-password'
   if (scenario === 'login') return '/portal/login'
+  if (scenario === 'profile_request_success') return '/portal/profile/correction/success'
+  if (scenario === 'profile_retry') return '/portal/profile/correction/review'
+  if (scenario === 'profile_conflict') return '/portal/profile/requests'
+  if (scenario === 'property_unavailable') return '/portal/properties'
+  if (scenario === 'property_request_success') return '/portal/properties/espacio-demo/correction/success'
   return '/portal'
 }

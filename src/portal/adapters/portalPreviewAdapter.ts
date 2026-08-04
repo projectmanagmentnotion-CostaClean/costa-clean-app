@@ -37,6 +37,8 @@ export function createPortalPreviewAdapter(
   let notify: ((resolution: PortalLifecycleResolution) => void) | null = null
   let signedInMembership =
     scenario === 'active_member' ? memberMembership : adminMembership
+  const isEmptyLikeScenario =
+    scenario === 'empty' || scenario === 'property_unavailable'
 
   function emit(resolution: PortalLifecycleResolution) {
     globalThis.queueMicrotask(() => notify?.(resolution))
@@ -103,54 +105,72 @@ export function createPortalPreviewAdapter(
         isSynthetic: true,
       }),
       getDashboard: async () => ({
-        nextServiceLabel: 'Mañana · 10:00 · Servicio de demostración',
-        openRequestCount: 1,
-        availableDocumentCount: 1,
+        nextServiceLabel: isEmptyLikeScenario
+          ? 'Sin próximo servicio confirmado'
+          : 'Mañana · 10:00 · Servicio de demostración',
+        openRequestCount: isEmptyLikeScenario ? 0 : 1,
+        availableDocumentCount: isEmptyLikeScenario ? 0 : 1,
         isSynthetic: true,
       }),
       listProperties: async () => [
-        {
-          id: 'property-demo-cp3b1-a',
-          displayName: 'Espacio Demo Norte',
-          addressLabel: 'Dirección sintética · Barcelona',
-          statusLabel: 'Activo · vista previa',
-          isSynthetic: true,
-        },
-        {
-          id: 'property-demo-cp3b1-b',
-          displayName: 'Espacio Demo Centro',
-          addressLabel: 'Ubicación sintética · Barcelona',
-          statusLabel: 'Activo · vista previa',
-          isSynthetic: true,
-        },
+        ...(isEmptyLikeScenario
+          ? []
+          : [
+              {
+                id: 'property-demo-cp3b1-a',
+                displayName: 'Espacio Demo Norte',
+                addressLabel: 'Dirección sintética · Barcelona',
+                statusLabel: 'Activo · vista previa',
+                isSynthetic: true,
+              },
+              {
+                id: 'property-demo-cp3b1-b',
+                displayName: 'Espacio Demo Centro',
+                addressLabel: 'Ubicación sintética · Barcelona',
+                statusLabel: 'Activo · vista previa',
+                isSynthetic: true,
+              },
+            ]),
       ],
       listServices: async () => [
-        {
-          id: 'service-demo-cp3b1-a',
-          serviceLabel: 'Limpieza de mantenimiento · demo',
-          propertyLabel: 'Espacio Demo Norte',
-          scheduleLabel: 'Mañana · 10:00',
-          statusLabel: 'Planificado · sintético',
-          isSynthetic: true,
-        },
+        ...(isEmptyLikeScenario
+          ? []
+          : [
+              {
+                id: 'service-demo-cp3b1-a',
+                serviceLabel: 'Limpieza de mantenimiento · demo',
+                propertyLabel: 'Espacio Demo Norte',
+                scheduleLabel: 'Mañana · 10:00',
+                statusLabel: 'Planificado · sintético',
+                isSynthetic: true,
+              },
+            ]),
       ],
       listServiceRequests: async () => [
-        {
-          id: 'request-demo-cp3b1-a',
-          requestLabel: 'Solicitud de cambio de horario · demo',
-          submittedLabel: 'Enviada en la vista previa local',
-          statusLabel: 'Pendiente de revisión · sintético',
-          isSynthetic: true,
-        },
+        ...(isEmptyLikeScenario
+          ? []
+          : [
+              {
+                id: 'request-demo-cp3b1-a',
+                requestLabel: 'Solicitud de cambio de horario · demo',
+                submittedLabel: 'Enviada en la vista previa local',
+                statusLabel: 'Pendiente de revisión · sintético',
+                isSynthetic: true,
+              },
+            ]),
       ],
       listInvoices: async () => [
-        {
-          id: 'invoice-demo-cp3b1-a',
-          referenceLabel: 'DEMO-FACTURA-001',
-          issuedLabel: 'Documento sintético · sin validez fiscal',
-          paymentStatusLabel: 'Estado de demostración',
-          isSynthetic: true,
-        },
+        ...(isEmptyLikeScenario
+          ? []
+          : [
+              {
+                id: 'invoice-demo-cp3b1-a',
+                referenceLabel: 'DEMO-FACTURA-001',
+                issuedLabel: 'Documento sintético · sin validez fiscal',
+                paymentStatusLabel: 'Estado de demostración',
+                isSynthetic: true,
+              },
+            ]),
       ],
     },
     previewScenario: scenario,
@@ -212,6 +232,22 @@ function getPreviewResolution(
       return {
         status: 'error',
         message: 'No hemos podido comprobar tu acceso. Revisa la conexión e inténtalo de nuevo.',
+      }
+    case 'empty':
+      return {
+        status: 'active_member',
+        selectedClientId: adminMembership.clientId,
+        membership: adminMembership,
+      }
+    case 'profile_request_success':
+    case 'profile_retry':
+    case 'profile_conflict':
+    case 'property_unavailable':
+    case 'property_request_success':
+      return {
+        status: 'active_member',
+        selectedClientId: adminMembership.clientId,
+        membership: adminMembership,
       }
   }
 }

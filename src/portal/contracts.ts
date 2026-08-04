@@ -122,6 +122,12 @@ export const portalPreviewScenarios = [
   'without_access',
   'session_expired',
   'offline',
+  'empty',
+  'profile_request_success',
+  'profile_retry',
+  'profile_conflict',
+  'property_unavailable',
+  'property_request_success',
 ] as const
 
 export type PortalPreviewScenario = (typeof portalPreviewScenarios)[number]

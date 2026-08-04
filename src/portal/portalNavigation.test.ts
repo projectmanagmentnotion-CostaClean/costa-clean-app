@@ -11,7 +11,7 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal')).toBe('home')
     expect(resolvePortalPage('/portal/')).toBe('home')
     expect(resolvePortalPage('/portal/properties')).toBe('properties')
-    expect(resolvePortalPage('/portal/invoices/')).toBe('invoices')
+    expect(resolvePortalPage('/portal/invoices/')).toBe('documents')
   })
 
   it('returns no page for unknown portal paths instead of falling through to CRM', () => {
@@ -22,7 +22,9 @@ describe('portal page routing', () => {
 
   it('generates canonical portal paths for navigation', () => {
     expect(getPortalPagePath('home')).toBe('/portal')
+    expect(getPortalPagePath('account')).toBe('/portal/account')
     expect(getPortalPagePath('requests')).toBe('/portal/requests')
+    expect(getPortalPagePath('documents')).toBe('/portal/documents')
     expect(getPortalPagePath('security')).toBe('/portal/security')
   })
 
@@ -32,5 +34,14 @@ describe('portal page routing', () => {
     expect(resolvePortalAuthRoute('/portal/reset-password')).toBe('reset-password')
     expect(resolvePortalAuthRoute('/portal/invoices')).toBeNull()
     expect(getPortalAuthPath('reset-password')).toBe('/portal/reset-password')
+  })
+
+  it('maps legacy and nested portal routes to the correct workspace page', () => {
+    expect(resolvePortalPage('/portal/invoices')).toBe('documents')
+    expect(resolvePortalPage('/portal/profile/requests')).toBe('profile')
+    expect(resolvePortalPage('/portal/profile/correction/review')).toBe('profile')
+    expect(resolvePortalPage('/portal/properties/espacio-demo/correction/success')).toBe('properties')
+    expect(resolvePortalPage('/portal/help')).toBe('help')
+    expect(resolvePortalPage('/portal/preferences')).toBe('preferences')
   })
 })

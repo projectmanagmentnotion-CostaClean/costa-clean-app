@@ -159,7 +159,7 @@ async function main() {
     readDriftSentinel: () => liveSnapshot,
   })
   const concurrency = runConcurrencyV6({
-    runId: 'CP3B2A-V6R1E-LOCAL-000000',
+    runId: 'CP3B2A-V6R1E-LOCALPROOF01',
     onStage: () => {},
   })
   const result = {

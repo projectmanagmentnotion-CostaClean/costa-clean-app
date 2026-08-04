@@ -1,6 +1,6 @@
-# CP-3B.2A.6R.1 Exact QA Authorization V6R1
+# CP-3B.2A.6R.1E Exact QA Authorization V6R1E
 
-Authorization ID: `CP3B2A-QA-V6R1-AUTHORIZATION-PENDING`
+Authorization ID: `CP3B2A-QA-V6R1E-AUTHORIZATION-PENDING`
 
 Package status: `PREPARED_NOT_AUTHORIZED`
 
@@ -8,10 +8,11 @@ Authorized base:
 
 - repository: `C:\Users\USUARIO\costa-clean-app`
 - branch: `main`
-- required base HEAD: `79a83b42cd739e4a952f0a3eac61729600949766`
+- source/provenance HEAD: `81f1f73ffbc46ba44e6fd285816d56f4f565c411`
+- runtime authorized HEAD: provided later by exact human authorization and must match the local HEAD, `origin/main`, the approved backup HEAD, and the snapshot HEAD
 - QA project ref: `kpvvydthlxupjjqqdpxy`
 - production ref: `wfxnwfcdjainpojhbdri`
-- private backup location: `.project-agent/private/cp3b2a-v6r1`
+- private backup location: `.project-agent/private/cp3b2a-v6r1e`
 
 Allowed in this gate:
 

@@ -58,14 +58,14 @@
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
       "kind": "mjs",
-      "gitBlobId": "776efb394be7ffbe513cc5245590c585524c7bc2",
-      "blobSha256": "9dccd78f5c818e0b15430fb6cfc724c5b45fc266f996fd04e9d15c7663af7d87"
+      "gitBlobId": "77d1656bb5a02f8cb03fa78e91e5971800e0b5fb",
+      "blobSha256": "2cfd647a27de502f862167e5a0b971e28a0e94816a98676f3a26d552056611a1"
     },
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "37e66ef82b6d5ee453c97d36fbce4a49689ee202",
-      "blobSha256": "c0b4dd42e2230e9a5bd91cfa6aa00bd66df8139c951d86361915979e3d7667c7"
+      "gitBlobId": "d2efaf6e5d5e54697b88c8e1515d695c7bf979d5",
+      "blobSha256": "cc0f32c144e116162889c56716bb340af582b454d4f26249a18ef1c4fbdff0b1"
     },
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
@@ -118,8 +118,8 @@
     {
       "path": "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V6.md",
       "kind": "md",
-      "gitBlobId": "74b61d3f013dc6839dc3097d45e14b0f69493230",
-      "blobSha256": "38e191988a04671e65274494e2ac2977d8ec6112be59bceb2dc56fe5879041fc"
+      "gitBlobId": "0ee3893fa3e2901fb1fa7bfe7a694086e4909bfd",
+      "blobSha256": "15cda6329cbb006ba94a5b6b1ccdd7510180ebb3c55e91221a24b7ebf2ee8198"
     },
     {
       "path": "docs/client-portal/CP3B2A6R1_FINAL_REAL_ADAPTER.md",

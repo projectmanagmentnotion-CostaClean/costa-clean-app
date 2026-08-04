@@ -506,6 +506,18 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(result.canonicalResidue).toBe(0)
   })
 
+  it('accepts the deterministic local proof run id and rejects invalid lengths', () => {
+    const valid = runConcurrencyV6({ runId: 'CP3B2A-V6R1E-LOCALPROOF01' })
+    expect(valid.result).toBe('PASS')
+    expect(valid.cleanup).toBe('PASS_CLEANED')
+    expect(() => runConcurrencyV6({ runId: 'CP3B2A-V6R1E-LOCAL-000000' }))
+      .toThrow('V6_RUN_ID_REJECTED')
+    expect(() => runConcurrencyV6({ runId: 'CP3B2A-V6R1E-LOCALPROOF1' }))
+      .toThrow('V6_RUN_ID_REJECTED')
+    expect(() => runConcurrencyV6({ runId: 'CP3B2A-V6R1E-LOCALPROOF010' }))
+      .toThrow('V6_RUN_ID_REJECTED')
+  })
+
   it('blocks the historical V5 pin without rewriting the incident', () => {
     const v5Manifest = readFileSync('scripts/client-portal/cp3b2a_qa_package_v5.manifest.json', 'utf8')
     expect(v5Manifest).toContain(V5_HISTORICAL_MANIFEST_SHA256)

@@ -887,3 +887,17 @@ For roadmap-closeout or phase-closeout work:
 - The local proof may validate SQL syntax, bootstrap order, fingerprints and simulated unique metadata only. It is not Supabase Cloud equivalence and cannot authorize remote repair or unlock `db push`.
 - After a passing local proof, the first real remote repair must be official QA under a separate explicit metadata-only authorization; production remains a later independent gate.
 - Evidence: [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md), [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md), and [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md).
+
+## Client Portal CP-3B.2 Frontend Authorization Gate — AUTHORIZED_AND_IN_PROGRESS 2026-08-04
+
+- The reviewed-change QA closeout is complete and the profile/property frontend
+  slice may now be implemented locally from the approved roadmap state.
+- CP-3B.2 is a frontend gate only; it must not reopen the reviewed-change QA
+  application, create a new database gate, or modify remote Supabase state.
+- The next active gate is the portal frontend implementation for profile,
+  properties and reviewed-change request surfaces.
+- Evidence:
+  [`docs/client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md`](client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md),
+  [`docs/client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md`](client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md),
+  [`docs/client-portal/PORTAL_ROUTE_MAP.md`](client-portal/PORTAL_ROUTE_MAP.md),
+  [`docs/client-portal/PORTAL_VISUAL_QA_CHECKLIST.md`](client-portal/PORTAL_VISUAL_QA_CHECKLIST.md)

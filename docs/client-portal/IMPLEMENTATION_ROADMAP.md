@@ -1,14 +1,14 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-08-04
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5 and CP-3B.2A real QA closeout complete; CP-3B.2A.6R.1E prepared; CP-3B.2A.2 remains blocked by missing V2 detail
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5 and CP-3B.2A real QA closeout complete; CP-3B.2A.6R.1E prepared; CP-3B.2A.2 remains blocked by missing V2 detail; CP-3B.2 authorized and in progress
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2A QA application V6R1E**, requiring a separate exact human
-  authorization for the final committed HEAD and fresh private backup.
+- Next gate: **CP-3B.2 frontend implementation**, following the documented
+  documentation reconciliation and local-only implementation scope.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -44,7 +44,7 @@ It is still separate from the full CP-3B.2 Definition of Ready. The real QA
 closeout for the reviewed-change migration now has executed postcheck, matrix
 and concurrency evidence with zero residual QA or production writes. Customer-
 safe canonical status mapping and opaque profile/property identifier handling
-remain to be approved before frontend implementation.
+are approved for implementation. CP-3B.2 is now the next active gate.
 
 ## CP-0 — Discovery
 
@@ -232,9 +232,10 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   two-session concurrency harness passed and cleanup left zero residual QA or
   production writes. This closeout does not authorize CP-3B.2 or later gates.
 - **CP-3B.2 — Profile and properties:**
-  `BLOCKED_PENDING_CP3B2A_QA_V6R1E`; account context, read models and reviewed
-  change requests without canonical-table writes. After QA application, freeze
-  customer-safe canonical status and opaque-ID mappings before implementation.
+  `AUTHORIZED_AND_IN_PROGRESS`; account context, read models and reviewed
+  change requests without canonical-table writes. The customer-safe canonical
+  status and opaque-ID mappings are frozen and the frontend implementation is
+  the active gate.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
   cancellation, idempotency and explicit feedback.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and

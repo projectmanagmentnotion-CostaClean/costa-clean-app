@@ -660,6 +660,24 @@ Sin entradas.
 
 Sin entradas.
 
+## 2026-08-04 — Client portal CP-3B.2 frontend implementation authorization
+
+- fecha: 2026-08-04
+- proyecto: Costa Clean Client Portal
+- tipo: documentation and frontend authorization reconciliation
+- resumen: reconciles the canonical roadmap after the reviewed-change QA
+  closeout and marks CP-3B.2 as authorized and in progress for local frontend
+  implementation only
+- alcance: no new database gate, no remote Supabase mutation, no QA application,
+  no production, no WordPress and no SiteGround changes
+- estado: CP-3B.2 `AUTHORIZED_AND_IN_PROGRESS`; next active gate is the frontend
+  implementation slice for profile and properties
+- evidencia:
+  [client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md](client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md),
+  [client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md](client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md),
+  [client-portal/PORTAL_ROUTE_MAP.md](client-portal/PORTAL_ROUTE_MAP.md) and
+  [client-portal/PORTAL_VISUAL_QA_CHECKLIST.md](client-portal/PORTAL_VISUAL_QA_CHECKLIST.md)
+
 ## Formato de nuevas entradas
 
 Cada entrada debe incluir:

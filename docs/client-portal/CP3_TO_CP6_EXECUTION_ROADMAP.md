@@ -5,7 +5,7 @@ Date: 2026-08-04
 Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
 CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A real QA closeout `DONE`; CP-3B.2A.2
 `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5
-`DONE`; CP-3B.2 `BLOCKED_PENDING_CP3B2A_QA_V5`; CP-3B.3 and later gates
+`DONE`; CP-3B.2 `AUTHORIZED_AND_IN_PROGRESS`; CP-3B.3 and later gates
 `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
@@ -199,7 +199,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `BLOCKED_PENDING_CP3B2A_QA_V5` |
+| Status | `AUTHORIZED_AND_IN_PROGRESS` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
 | Dependencies | CP-3B.1, CP-3B.2A, CP-3B.2A.1, CP-3B.2A.3, CP-3B.2A.4 and CP-3B.2A.5 are closed; CP-3B.2A.2 remains blocked. The reviewed-change migration still requires separately authorized V5 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
@@ -207,9 +207,9 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |
 | Likely files/modules | Portal account/profile/property adapters, pages, request forms, tests and presentation models. |
-| Definition of Ready | Visible/editable classification mapped, DTO fields approved, review SLA/copy agreed and two-client negative fixtures available. |
+| Definition of Ready | Visible/editable classification mapped, DTO fields approved, review SLA/copy agreed and two-client negative fixtures available; these are frozen for implementation. |
 | Implementation steps | Render narrow DTOs; add state-complete list/detail; submit idempotent reviewed requests; show receipt/status; test denial. |
-| Acceptance | Only current-client resources appear; canonical records remain unchanged; resubmission is safe; forbidden differs from empty without leaking data. |
+| Acceptance | Only current-client resources appear; canonical records remain unchanged; resubmission is safe; forbidden differs from empty without leaking data; the route map and shell stay isolated from CRM. |
 | Validations | Adapter/ownership tests, cross-client negative tests, request idempotency, test/lint/build and accessibility checks. |
 | Visual QA | Compact mobile lists, flat detail views, first actionable field visible, iPad overflow and keyboard/error states. |
 | Security/privacy | Data minimization, no hidden internal notes/IDs, server-derived client context and auditable reviewed changes. |
@@ -217,7 +217,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Direct canonical write, user-supplied client ID trusted, internal/fiscal field exposure or request saved without receipt. |
 | Closeout documentation | Field exposure map, denial evidence, reviewed-request behavior and next gate. |
 | Expected commit | `feat: add portal profile and property views` |
-| Next gate | CP-3B.3 |
+| Next gate | CP-3B.3 after CP-3B.2 closes |
 
 ## CP-3B.3 — Services and requests
 

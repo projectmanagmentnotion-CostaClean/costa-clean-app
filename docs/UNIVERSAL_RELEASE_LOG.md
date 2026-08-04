@@ -1,3 +1,20 @@
+## 2026-08-04 — Client portal CP-3B.2A real QA closeout
+
+- fecha: 2026-08-04
+- proyecto: Costa Clean Client Portal
+- tipo: QA closeout / reviewed-change transactional verification
+- resumen: applies the reviewed-change migration once in QA and verifies the
+  resulting state with a strict read-only postcheck, transactional matrix and
+  independent two-session concurrency harness
+- validación: QA project-ref identity, absent prestate contract, strict
+  postcheck, idempotency and cross-client matrix, concurrency winner/conflict
+  evidence, cleanup and zero residual QA writes
+- remoto: QA writes `0` after cleanup; production writes `0`; no production
+  or WordPress changes
+- estado: CP-3B.2A real QA closeout `DONE`; CP-3B.2A.6R.1E remains
+  `PREPARED_NOT_AUTHORIZED`; CP-3B.2 remains blocked
+- evidencia: [client-portal/CP3B2A_QA_REAL_CLOSEOUT.md](client-portal/CP3B2A_QA_REAL_CLOSEOUT.md)
+
 ## 2026-08-03 â€” Client portal CP-3B.2A.6R.1E real PostgreSQL closeout V6R1E
 
 - tipo: local source/proof and documentation rebaseline

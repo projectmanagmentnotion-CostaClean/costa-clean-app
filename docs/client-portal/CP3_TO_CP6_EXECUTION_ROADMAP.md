@@ -1,9 +1,9 @@
 # Client Portal CP-3 to CP-6 Execution Roadmap
 
-Date: 2026-07-30
+Date: 2026-08-04
 
 Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
-CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A.2
+CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A real QA closeout `DONE`; CP-3B.2A.2
 `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5
 `DONE`; CP-3B.2 `BLOCKED_PENDING_CP3B2A_QA_V5`; CP-3B.3 and later gates
 `NOT STARTED`

@@ -1,5 +1,16 @@
 # App Quality Gates
 
+# Client Portal CP-3B.2A Real QA Closeout Gate — DONE 2026-08-04
+
+- The reviewed-change migration was applied once in QA and then verified with
+  a strict read-only postcheck, a transactional contract matrix and an
+  independent two-session concurrency harness.
+- The QA closeout kept production untouched, preserved the QA/project-ref
+  boundary and left zero residual QA writes after cleanup.
+- The closeout is evidence for the reviewed-change contract only; it does not
+  authorize CP-3B.2 or later gates.
+- Evidence: [`docs/client-portal/CP3B2A_QA_REAL_CLOSEOUT.md`](client-portal/CP3B2A_QA_REAL_CLOSEOUT.md)
+
 # Client Portal CP-3B.2A.6R.1E Real PostgreSQL Closeout V6R1E Gate â€” PREPARED_NOT_AUTHORIZED 2026-08-03
 
 - Git blob identity replaces the unrecoverable historical mixed-byte pin for the

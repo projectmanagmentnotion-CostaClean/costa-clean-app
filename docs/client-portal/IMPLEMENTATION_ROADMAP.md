@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-08-03
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4 and CP-3B.2A.5 complete; CP-3B.2A.6R.1E prepared; CP-3B.2A.2 remains blocked by missing V2 detail
+Date: 2026-08-04
+Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5 and CP-3B.2A real QA closeout complete; CP-3B.2A.6R.1E prepared; CP-3B.2A.2 remains blocked by missing V2 detail
 
 ## Progress and execution authority
 
@@ -39,10 +39,12 @@ the exact prestate; its authorization is exhausted. CP-3B.2A.2 demonstrates
 document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
 
-CP-3B.2A QA application V6R1E is the current reproducible rebaseline gate. It is
-still separate from the full CP-3B.2 Definition of Ready. Customer-safe
-canonical status mapping and opaque profile/property identifier handling remain
-to be approved before frontend implementation.
+CP-3B.2A QA application V6R1E remains the current reproducible rebaseline gate.
+It is still separate from the full CP-3B.2 Definition of Ready. The real QA
+closeout for the reviewed-change migration now has executed postcheck, matrix
+and concurrency evidence with zero residual QA or production writes. Customer-
+safe canonical status mapping and opaque profile/property identifier handling
+remain to be approved before frontend implementation.
 
 ## CP-0 — Discovery
 
@@ -224,6 +226,11 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   now connect to a real PostgreSQL QA adapter and ignored private backup path,
   while the full V5 operational contract remains preserved as evidence. No QA
   or production write is authorized.
+- **CP-3B.2A real QA closeout — Reviewed-change transactional closeout:**
+  `DONE`; the reviewed-change migration was applied once in QA, the strict
+  read-only postcheck passed, the transactional matrix passed, the independent
+  two-session concurrency harness passed and cleanup left zero residual QA or
+  production writes. This closeout does not authorize CP-3B.2 or later gates.
 - **CP-3B.2 — Profile and properties:**
   `BLOCKED_PENDING_CP3B2A_QA_V6R1E`; account context, read models and reviewed
   change requests without canonical-table writes. After QA application, freeze

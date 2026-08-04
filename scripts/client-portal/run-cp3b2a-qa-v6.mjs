@@ -1289,6 +1289,20 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
     )
     return classifyApplyStateV6(applyResult, observedSnapshot, state.backup?.value?.liveSnapshot ?? null)
   }
+  const readFailureSnapshot = (state) => readLivePrestateV6(
+    state.gitState.head,
+    state.backup?.value?.manifestIdentity ?? null,
+    state.backup?.value?.capabilityIdentity ?? null,
+    environment,
+    { ...dependencies, readLiveSnapshot, runPsql },
+  )
+  const readRecoveryObservedSnapshot = (state) => readLivePrestateV6(
+    state.gitState.head,
+    state.backup?.value?.manifestIdentity ?? null,
+    state.backup?.value?.capabilityIdentity ?? null,
+    environment,
+    { ...dependencies, readLiveSnapshot, runPsql },
+  )
   return {
     environment,
     verifyManifest: () => verifyPackageManifestV6(),
@@ -1325,6 +1339,8 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       { ...dependencies, readLiveSnapshot, runPsql },
     ),
     compareDriftSentinel: compareDriftSentinelV6,
+    readFailureSnapshot: (state) => readFailureSnapshot(state),
+    readRecoveryObservedSnapshot: (state) => readRecoveryObservedSnapshot(state),
     markApplyStarted: (state) => updateLedger(state.ledgerPath, 'apply_started', { applyAttempts: 1 }),
     observeApplyState: (state, applyResult) => observeApplyState(state, applyResult),
     persistApplyEvidence: (state, applyEvidence) => updateLedger(state.ledgerPath, 'apply_committed', {
@@ -1601,10 +1617,26 @@ function handleFailure(error, state, stages) {
     }
   }
 
-  const failureSnapshot = state.failureSnapshot
-    ?? state.live
-    ?? state.backup?.value?.liveSnapshot
-    ?? null
+  let failureSnapshot
+  try {
+    failureSnapshot = operations.readFailureSnapshot(state)
+  } catch (failureSnapshotError) {
+    state.recoveryFailure = failureSnapshotError instanceof Error ? failureSnapshotError.message : String(failureSnapshotError)
+    updateLedger(state.ledgerPath, 'failed', {
+      applyAttempts: 1,
+      recoveryAttempts: 0,
+      failure: primaryFailureMessage,
+      primaryFailureCode: String(primaryFailureCode),
+      recoveryFailure: state.recoveryFailure,
+      stages,
+    })
+    return {
+      verdict: EXECUTION_VERDICT_V6.MANUAL_VERIFICATION_REQUIRED,
+      recoveryFailure: state.recoveryFailure,
+      ...baseResult,
+      recoveryAttempts: 0,
+    }
+  }
   state.failureSnapshot = failureSnapshot
 
   const recoveryEligibilityPrecheck = Boolean(
@@ -1655,10 +1687,11 @@ function handleFailure(error, state, stages) {
       },
       { runPsql: runPsqlV6R },
     )))(state)
-    const restored = state.failureSnapshot ?? state.live ?? state.backup?.value?.liveSnapshot ?? null
-    (operations.verifyExactPrestateRestored ?? verifyExactPrestateRestoredV6)(
+    const recoveryObservedSnapshot = operations.readRecoveryObservedSnapshot(state)
+    state.recoveryObservedSnapshot = recoveryObservedSnapshot
+    ;(operations.verifyExactPrestateRestored ?? verifyExactPrestateRestoredV6)(
       state.backup?.value?.liveSnapshot ?? null,
-      restored,
+      recoveryObservedSnapshot,
     )
     updateLedger(state.ledgerPath, 'recovered', {
       applyAttempts: 1,

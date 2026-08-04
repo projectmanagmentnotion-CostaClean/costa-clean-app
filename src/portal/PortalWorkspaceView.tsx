@@ -18,6 +18,7 @@ export interface PortalWorkspaceViewProps {
   dataState: PortalWorkspaceDataState
   previewScenario: PortalPreviewScenario | null
   onSignOut: () => void
+  onRefreshData?: () => void
 }
 
 const portalNavigationItems: Array<{
@@ -56,6 +57,7 @@ export function PortalWorkspaceView({
   dataState,
   previewScenario,
   onSignOut,
+  onRefreshData,
 }: PortalWorkspaceViewProps) {
   const currentPage = resolvePortalPage(window.location.pathname)
   const pageLabel = currentPage ? portalPageLabels[currentPage] : 'Página no disponible'
@@ -144,6 +146,7 @@ export function PortalWorkspaceView({
               data={workspaceData!}
               getHref={getHref}
               isUnavailable={dataState.status === 'unavailable'}
+              onRefreshData={onRefreshData}
             />
           )}
         </main>

@@ -13,6 +13,11 @@ import type { PortalAccessState } from './accessMachine'
 type AuthenticatedPortalAccess = Extract<PortalAccessState, { status: 'active_member' }>
 
 export interface PortalProfileSnapshot {
+  fullName: string
+  phone: string
+  email: string
+  taxId: string
+  billingAddress: string
   fullNameLabel: string
   phoneLabel: string
   emailLabel: string
@@ -23,6 +28,14 @@ export interface PortalProfileSnapshot {
 }
 
 export interface PortalPropertyDetail {
+  id: string
+  publicRef: string
+  name: string
+  propertyType: string
+  address: string
+  city: string
+  postalCode: string
+  status: string
   publicRefLabel: string
   nameLabel: string
   propertyTypeLabel: string
@@ -34,11 +47,16 @@ export interface PortalPropertyDetail {
 }
 
 export interface PortalReviewedChangeRequestSummary {
+  reference: string
   referenceLabel: string
   scopeLabel: string
   fieldSummaryLabel: string
   submittedLabel: string
   statusLabel: string
+  requestedAt: string
+  resolvedAt: string | null
+  changedFields: string[]
+  requestType: 'profile' | 'property'
   isSynthetic: boolean
 }
 
@@ -73,8 +91,8 @@ export function createFallbackPortalFoundationData(
   return {
     account: {
       clientContextId: access.selectedClientId,
-      clientDisplayName: 'Cuenta pendiente de lectura segura',
-      accountLabel: 'Área de clientes',
+      clientDisplayName: 'Área de clientes Costa Clean',
+      accountLabel: 'Acceso seguro',
       role: access.membership.role,
       isSynthetic: false,
     },
@@ -85,6 +103,11 @@ export function createFallbackPortalFoundationData(
       isSynthetic: false,
     },
     profile: {
+      fullName: 'Datos de perfil no disponibles todavía',
+      phone: 'Pendiente de lectura segura',
+      email: 'Pendiente de lectura segura',
+      taxId: 'Pendiente de lectura segura',
+      billingAddress: 'Pendiente de lectura segura',
       fullNameLabel: 'Datos de perfil no disponibles todavía',
       phoneLabel: 'Pendiente de lectura segura',
       emailLabel: 'Pendiente de lectura segura',
@@ -141,9 +164,14 @@ function buildProfileSnapshot(
   const isEmptyScenario = scenario === 'empty'
 
   return {
-    fullNameLabel: isEmptyScenario ? 'Sin datos sintéticos de perfil' : baseFullName,
+    fullName: isEmptyScenario ? 'Sin datos de perfil en vista previa' : baseFullName,
+    phone: isEmptyScenario ? 'No disponible en la vista previa vacía' : '+34 600 123 456',
+    email: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'cliente@vista-previa.costaclean',
+    taxId: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'B12345678',
+    billingAddress: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'Av. Marina 12 · Barcelona',
+    fullNameLabel: isEmptyScenario ? 'Sin datos de perfil en vista previa' : baseFullName,
     phoneLabel: isEmptyScenario ? 'No disponible en la vista previa vacía' : '+34 600 123 456',
-    emailLabel: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'cliente@demostracion.costaclean',
+    emailLabel: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'cliente@vista-previa.costaclean',
     taxIdLabel: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'B12345678',
     billingAddressLabel: isEmptyScenario ? 'No disponible en la vista previa vacía' : 'Av. Marina 12 · Barcelona',
     reviewStateLabel: isEmptyScenario
@@ -159,12 +187,20 @@ function buildPropertyDetail(
 ): PortalPropertyDetail {
   const isUnavailable = scenario === 'property_unavailable'
   return {
-    publicRefLabel: 'CC-PT-01',
+    id: property.id,
+    publicRef: property.publicRef,
+    name: property.displayName,
+    propertyType: property.propertyType,
+    address: property.address,
+    city: property.city,
+    postalCode: property.postalCode,
+    status: property.status,
+    publicRefLabel: property.publicRef.toUpperCase(),
     nameLabel: property.displayName,
-    propertyTypeLabel: 'Vivienda gestionada',
+    propertyTypeLabel: property.propertyTypeLabel,
     addressLabel: property.addressLabel,
-    cityLabel: 'Barcelona',
-    postalCodeLabel: '08001',
+    cityLabel: property.city,
+    postalCodeLabel: property.postalCode,
     reviewStateLabel: isUnavailable
       ? 'Esta propiedad no está disponible.'
       : property.statusLabel,
@@ -200,11 +236,16 @@ function buildProfileRequests(
 
   return [
     {
+      reference: 'CC-PR-0142',
       referenceLabel: 'CC-PR-0142',
       scopeLabel: 'Perfil',
       fieldSummaryLabel: 'Nombre, teléfono y dirección de facturación',
-      submittedLabel: 'Solicitud sintética',
+      submittedLabel: 'Solicitud de vista previa',
       statusLabel: stateByScenario[scenario ?? 'pending_review'] ?? 'En revisión',
+      requestedAt: '2026-07-31T09:00:00Z',
+      resolvedAt: null,
+      changedFields: ['fullName', 'phone', 'billingAddress'],
+      requestType: 'profile',
       isSynthetic: true,
     },
   ]
@@ -214,7 +255,7 @@ function buildPropertyRequests(
   scenario: PortalPreviewScenario | null,
   property: PortalPropertySummary | null,
 ): PortalReviewedChangeRequestSummary[] {
-  if (!property || scenario === 'empty') return []
+  if (!property || scenario === 'empty') return [] 
 
   const stateByScenario: Record<Exclude<PortalPreviewScenario, 'empty'>, string> = {
     loading: 'Pendiente',
@@ -239,11 +280,16 @@ function buildPropertyRequests(
 
   return [
     {
+      reference: 'CC-PT-0318',
       referenceLabel: 'CC-PT-0318',
       scopeLabel: 'Propiedad',
       fieldSummaryLabel: 'Nombre, tipo, dirección, ciudad y código postal',
       submittedLabel: property.displayName,
       statusLabel: stateByScenario[scenario ?? 'pending_review'] ?? 'En revisión',
+      requestedAt: '2026-07-31T09:05:00Z',
+      resolvedAt: null,
+      changedFields: ['name', 'propertyType', 'address', 'city', 'postalCode'],
+      requestType: 'property',
       isSynthetic: true,
     },
   ]

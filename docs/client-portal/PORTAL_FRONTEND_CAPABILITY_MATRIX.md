@@ -11,10 +11,10 @@ verified contract, and what must remain a safe UI-only surface.
 | Auth | session expired / no access | implemented | real | Must remain non-enumerating. |
 | Workspace | home summary | implemented | real/preview | Preview uses synthetic data; production uses narrow adapter results. |
 | Account | account overview | implemented | real | Must never reveal internal membership IDs. |
-| Profile | read-only profile summary | partial | contract pending for review workflow UI | Can render the current account context now. |
-| Profile | reviewed-change request StepFlow | partial | backend contract exists as source design | Frontend can render the flow shell and safe states now. |
-| Properties | property list / property detail | partial | narrow read contract expected | Only authorized client-scoped properties may appear. |
-| Properties | reviewed-change request StepFlow | partial | backend contract exists as source design | Must keep IDs opaque in the visible UI. |
+| Profile | read-only profile summary | implemented | real/preview | Renders current account context and the reviewed-change form. |
+| Profile | reviewed-change request StepFlow | implemented | backend contract exists as source design | Uses public receipts and no direct canonical writes. |
+| Properties | property list / property detail | implemented | narrow read contract | Uses public property refs and client-scoped cards only. |
+| Properties | reviewed-change request StepFlow | implemented | backend contract exists as source design | Keeps internal IDs opaque in the visible UI. |
 | Services | service history | foundation only | future gate | No service mutation in this sprint. |
 | Documents | invoice/document overview | foundation only | future gate | No private document download until the signing boundary is verified. |
 | Security | account security / MFA-ready messaging | implemented | real | UI only; enforcement remains outside this slice. |
@@ -27,6 +27,8 @@ verified contract, and what must remain a safe UI-only surface.
 - preserve mobile-first navigation
 - share preview and production components
 - avoid any direct canonical-table access from the browser
+- keep property routes and receipts public-ref based
+- preserve reviewable receipt/history surfaces for profile and property changes
 
 ## Non-goals for this sprint
 
@@ -35,4 +37,3 @@ verified contract, and what must remain a safe UI-only surface.
 - production writes
 - new Supabase schema or policy changes
 - CRM navigation changes
-

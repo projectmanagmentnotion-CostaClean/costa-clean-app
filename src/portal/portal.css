@@ -574,6 +574,16 @@ input {
   background: #fff;
 }
 
+.portal-record--link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.portal-record--link:hover {
+  border-color: #8bb7c1;
+  background: #f7fcfd;
+}
+
 .portal-detail-row span {
   color: var(--portal-muted);
 }
@@ -704,6 +714,16 @@ input {
   margin-top: 26px;
 }
 
+.portal-form-section {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+
+.portal-page__header--compact {
+  margin-bottom: 2px;
+}
+
 .portal-field {
   display: grid;
   gap: 7px;
@@ -783,6 +803,15 @@ input {
   border-color: #eccaca;
   color: #813333;
   background: #fff1f1;
+}
+
+.portal-request-receipt {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--portal-line);
+  border-radius: 12px;
+  background: #f8fcfd;
 }
 
 .portal-auth__content > .portal-text-button {

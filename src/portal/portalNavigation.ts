@@ -16,6 +16,11 @@ export const portalPages = [
 
 export const portalAuthRoutes = ['login', 'recover', 'reset-password'] as const
 
+export interface PortalPropertyRoute {
+  publicRef: string
+  step: 'fields' | 'values' | 'review' | 'success' | null
+}
+
 export type PortalPage = (typeof portalPages)[number]
 export type PortalAuthRoute = (typeof portalAuthRoutes)[number]
 
@@ -83,6 +88,28 @@ export function getPortalPagePath(page: PortalPage): string {
 
 export function getPortalAuthPath(route: PortalAuthRoute): string {
   return portalPathByAuthRoute[route]
+}
+
+export function getPortalPropertyPath(publicRef: string): string {
+  return `/portal/properties/${publicRef}`
+}
+
+export function resolvePortalPropertyRoute(pathname: string): PortalPropertyRoute | null {
+  const normalizedPath = normalizeApplicationPathname(pathname)
+  if (!normalizedPath.startsWith('/portal/properties/')) return null
+
+  const remainder = normalizedPath.slice('/portal/properties/'.length)
+  const [publicRef = '', maybeCorrection, maybeStep] = remainder.split('/')
+  if (!publicRef) return null
+  if (maybeCorrection !== 'correction') {
+    return { publicRef, step: null }
+  }
+
+  if (maybeStep === 'fields' || maybeStep === 'values' || maybeStep === 'review' || maybeStep === 'success') {
+    return { publicRef, step: maybeStep }
+  }
+
+  return { publicRef, step: null }
 }
 
 function resolveNestedPortalPage(pathname: string): PortalPage | null {

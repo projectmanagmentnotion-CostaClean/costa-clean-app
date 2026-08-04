@@ -1,3 +1,18 @@
+## 2026-08-04 — Client portal CP-3B.2 profile/property frontend slice
+
+- fecha: 2026-08-04
+- proyecto: Costa Clean Client Portal
+- tipo: frontend implementation / visible-browser QA
+- resumen: isolates `/portal`, wires real profile/property reads through a
+  portal-specific adapter, uses public property references, and adds reviewed
+  change forms for profile and property surfaces
+- validación: `npm.cmd run lint`, `npm.cmd run test`, `npm.cmd run build`,
+  local browser QA at 320×568, 375×812, 390×844, 430×932, 768×1024 and
+  1366×900
+- remoto: no Supabase, QA, production, WordPress or SiteGround writes
+- estado: CP-3B.2 frontend slice advanced locally; CP-3B.3 not started
+- evidencia: [client-portal/CP3B2_REAL_READ_CONTRACT_AUDIT.md](client-portal/CP3B2_REAL_READ_CONTRACT_AUDIT.md)
+
 ## 2026-08-04 — Client portal CP-3B.2A real QA closeout
 
 - fecha: 2026-08-04

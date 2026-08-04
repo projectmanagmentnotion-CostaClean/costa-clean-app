@@ -61,7 +61,15 @@ export interface PortalDashboardSnapshot {
 
 export interface PortalPropertySummary {
   id: string
+  publicRef: string
   displayName: string
+  name: string
+  propertyType: string
+  address: string
+  city: string
+  postalCode: string
+  status: string
+  propertyTypeLabel: string
   addressLabel: string
   statusLabel: string
   isSynthetic: boolean

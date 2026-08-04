@@ -19,13 +19,13 @@ routes.
 | `/portal/profile/correction/review` | Profile correction review | StepFlow stage 3. |
 | `/portal/profile/correction/success` | Profile correction success | Receipt and stable confirmation. |
 | `/portal/properties` | Property list | Opaque, client-scoped property cards. |
-| `/portal/properties/:propertyRef` | Property detail | Safe detail view for one property. |
+| `/portal/properties/:propertyRef` | Property detail | Safe detail view keyed by public property reference. |
 | `/portal/properties/:propertyRef/requests` | Property request list | Requests linked to the selected property. |
 | `/portal/properties/:propertyRef/requests/:reference` | Property request detail | Public reference only. |
 | `/portal/properties/:propertyRef/correction/fields` | Property correction fields | StepFlow stage 1. |
 | `/portal/properties/:propertyRef/correction/values` | Property correction values | StepFlow stage 2. |
 | `/portal/properties/:propertyRef/correction/review` | Property correction review | StepFlow stage 3. |
-| `/portal/properties/:propertyRef/correction/success` | Property correction success | Receipt and stable confirmation. |
+| `/portal/properties/:propertyRef/correction/success` | Property correction success | Receipt and stable confirmation via public reference. |
 | `/portal/services` | Services overview | Foundation only in this sprint. |
 | `/portal/documents` | Documents overview | Foundation only in this sprint. |
 | `/portal/security` | Security overview | Auth, recovery and MFA-ready guidance. |
@@ -45,4 +45,3 @@ These routes should continue to resolve safely:
 - No route should fall through to CRM navigation.
 - Unknown portal routes should resolve to a safe not-found state.
 - Preview and production must use the same route map.
-

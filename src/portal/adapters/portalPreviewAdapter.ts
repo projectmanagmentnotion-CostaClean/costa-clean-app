@@ -7,15 +7,15 @@ import {
 } from '../contracts'
 
 const previewScenarioSet = new Set<PortalPreviewScenario>(portalPreviewScenarios)
-const demoClientId = 'client-demo-cp3b1'
+const previewClientId = 'client-preview-main'
 const adminMembership: PortalMembershipContext = {
-  clientId: demoClientId,
+  clientId: previewClientId,
   membershipId: '11111111-1111-4111-8111-111111111111',
   role: 'client_admin',
   status: 'active',
 }
 const memberMembership: PortalMembershipContext = {
-  clientId: demoClientId,
+  clientId: previewClientId,
   membershipId: '22222222-2222-4222-8222-222222222222',
   role: 'client_member',
   status: 'active',
@@ -74,7 +74,7 @@ export function createPortalPreviewAdapter(
           selectedClientId: signedInMembership.clientId,
           membership: signedInMembership,
         })
-        return { ok: true, message: 'Acceso de demostración confirmado.' }
+        return { ok: true, message: 'Acceso de vista previa confirmado.' }
       },
       async requestPasswordRecovery() {
         return {
@@ -99,15 +99,15 @@ export function createPortalPreviewAdapter(
     reads: {
       getAccountContext: async () => ({
         clientContextId: signedInMembership.clientId,
-        clientDisplayName: 'Cliente demostración CP-3B.1',
-        accountLabel: 'Cuenta sintética',
+        clientDisplayName: 'Cliente de vista previa',
+        accountLabel: 'Cuenta de vista previa',
         role: signedInMembership.role,
         isSynthetic: true,
       }),
       getDashboard: async () => ({
         nextServiceLabel: isEmptyLikeScenario
           ? 'Sin próximo servicio confirmado'
-          : 'Mañana · 10:00 · Servicio de demostración',
+          : 'Mañana · 10:00 · Servicio de vista previa',
         openRequestCount: isEmptyLikeScenario ? 0 : 1,
         availableDocumentCount: isEmptyLikeScenario ? 0 : 1,
         isSynthetic: true,
@@ -117,16 +117,32 @@ export function createPortalPreviewAdapter(
           ? []
           : [
               {
-                id: 'property-demo-cp3b1-a',
-                displayName: 'Espacio Demo Norte',
-                addressLabel: 'Dirección sintética · Barcelona',
+                id: 'property-preview-north',
+                publicRef: 'ref-espacio-norte',
+                displayName: 'Espacio Norte',
+                name: 'Espacio Norte',
+                propertyType: 'vivienda',
+                propertyTypeLabel: 'Vivienda',
+                address: 'Calle Marina 12',
+                city: 'Barcelona',
+                postalCode: '08001',
+                status: 'active',
+                addressLabel: 'Calle Marina 12 · Barcelona',
                 statusLabel: 'Activo · vista previa',
                 isSynthetic: true,
               },
               {
-                id: 'property-demo-cp3b1-b',
-                displayName: 'Espacio Demo Centro',
-                addressLabel: 'Ubicación sintética · Barcelona',
+                id: 'property-preview-center',
+                publicRef: 'ref-espacio-centro',
+                displayName: 'Espacio Centro',
+                name: 'Espacio Centro',
+                propertyType: 'oficina',
+                propertyTypeLabel: 'Oficina',
+                address: 'Avenida Diagonal 88',
+                city: 'Barcelona',
+                postalCode: '08018',
+                status: 'active',
+                addressLabel: 'Avenida Diagonal 88 · Barcelona',
                 statusLabel: 'Activo · vista previa',
                 isSynthetic: true,
               },
@@ -137,11 +153,11 @@ export function createPortalPreviewAdapter(
           ? []
           : [
               {
-                id: 'service-demo-cp3b1-a',
-                serviceLabel: 'Limpieza de mantenimiento · demo',
-                propertyLabel: 'Espacio Demo Norte',
+                id: 'service-preview-1',
+                serviceLabel: 'Limpieza de mantenimiento',
+                propertyLabel: 'Espacio Norte',
                 scheduleLabel: 'Mañana · 10:00',
-                statusLabel: 'Planificado · sintético',
+                statusLabel: 'Planificado · vista previa',
                 isSynthetic: true,
               },
             ]),
@@ -151,10 +167,10 @@ export function createPortalPreviewAdapter(
           ? []
           : [
               {
-                id: 'request-demo-cp3b1-a',
-                requestLabel: 'Solicitud de cambio de horario · demo',
+                id: 'request-preview-1',
+                requestLabel: 'Solicitud de cambio de horario',
                 submittedLabel: 'Enviada en la vista previa local',
-                statusLabel: 'Pendiente de revisión · sintético',
+                statusLabel: 'Pendiente de revisión · vista previa',
                 isSynthetic: true,
               },
             ]),
@@ -164,9 +180,9 @@ export function createPortalPreviewAdapter(
           ? []
           : [
               {
-                id: 'invoice-demo-cp3b1-a',
-                referenceLabel: 'DEMO-FACTURA-001',
-                issuedLabel: 'Documento sintético · sin validez fiscal',
+                id: 'invoice-preview-1',
+                referenceLabel: 'FACTURA-VISTA-PREVIA-001',
+                issuedLabel: 'Documento de vista previa · sin validez fiscal',
                 paymentStatusLabel: 'Estado de demostración',
                 isSynthetic: true,
               },
@@ -205,13 +221,13 @@ function getPreviewResolution(
         status: 'client_selection_required',
         memberships: [
           {
-            clientId: 'client-demo-a',
+            clientId: 'client-preview-a',
             membershipId: '33333333-3333-4333-8333-333333333333',
             role: 'client_admin',
             status: 'active',
           },
           {
-            clientId: 'client-demo-b',
+            clientId: 'client-preview-b',
             membershipId: '44444444-4444-4444-8444-444444444444',
             role: 'client_member',
             status: 'active',

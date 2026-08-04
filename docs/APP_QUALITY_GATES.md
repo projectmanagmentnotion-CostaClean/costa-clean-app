@@ -896,6 +896,9 @@ For roadmap-closeout or phase-closeout work:
   application, create a new database gate, or modify remote Supabase state.
 - The next active gate is the portal frontend implementation for profile,
   properties and reviewed-change request surfaces.
+- Current local evidence now includes the isolated `/portal` shell, real
+  profile/property read adapter, public property references, reviewed-change
+  request forms, and visible-browser QA across the required viewport set.
 - Evidence:
   [`docs/client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md`](client-portal/STITCH_IMPLEMENTATION_BLUEPRINT.md),
   [`docs/client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md`](client-portal/PORTAL_FRONTEND_CAPABILITY_MATRIX.md),

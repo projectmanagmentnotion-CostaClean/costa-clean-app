@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import type { PortalFoundationData } from './portalWorkspaceData'
 import type { PortalPage } from './portalNavigation'
+import { getPortalPropertyPath } from './portalNavigation'
+import { PortalProfileChangeForm, PortalPropertyChangeForm } from './PortalReviewedChangeForms'
 
 interface PortalPagesProps {
   page: PortalPage | null
@@ -8,6 +10,7 @@ interface PortalPagesProps {
   data: PortalFoundationData
   getHref: (page: PortalPage) => string
   isUnavailable: boolean
+  onRefreshData?: () => void | Promise<void>
 }
 
 export function PortalPages({
@@ -16,6 +19,7 @@ export function PortalPages({
   data,
   getHref,
   isUnavailable,
+  onRefreshData,
 }: PortalPagesProps) {
   if (!page) {
     return (
@@ -112,11 +116,11 @@ export function PortalPages({
   }
 
   if (page === 'profile') {
-    return renderProfilePage(pathname, data, getHref, isUnavailable)
+    return renderProfilePage(pathname, data, getHref, isUnavailable, onRefreshData)
   }
 
   if (page === 'properties') {
-    return renderPropertiesPage(pathname, data, getHref, isUnavailable)
+    return renderPropertiesPage(pathname, data, getHref, isUnavailable, onRefreshData)
   }
 
   if (page === 'services') {
@@ -278,10 +282,18 @@ function renderProfilePage(
   data: PortalFoundationData,
   getHref: (page: PortalPage) => string,
   isUnavailable: boolean,
+  onRefreshData?: () => void | Promise<void>,
 ) {
   const routeStep = resolveCorrectionStep(pathname, 'profile')
   if (routeStep) {
-    return renderCorrectionFlow('Perfil', routeStep, data.profileRequests[0] ?? null, getHref, isUnavailable)
+    return renderCorrectionFlow(
+      'Perfil',
+      routeStep,
+      data.profileRequests[0] ?? null,
+      withCurrentSearch('/portal/profile'),
+      getHref,
+      isUnavailable,
+    )
   }
 
   return (
@@ -298,42 +310,14 @@ function renderProfilePage(
         <PortalDetailRow label="Facturación" value={data.profile.billingAddressLabel} />
       </section>
 
-      <section className="portal-correction-callout">
-        <div>
-          <p className="portal-eyebrow">Corrección revisable</p>
-          <h2>Solicitar cambio de perfil</h2>
-          <p>{isUnavailable ? 'La lectura segura todavía no está conectada.' : 'Los cambios se revisan antes de tocar el CRM.'}</p>
-        </div>
-        <div className="portal-correction-callout__actions">
-          <a className="portal-button portal-button--primary" href={getHref('profile')}>
-            Revisar campos
-          </a>
-          <a className="portal-button portal-button--secondary" href="/portal/profile/correction/fields">
-            Iniciar revisión
-          </a>
-        </div>
-      </section>
-
-      <section className="portal-request-history" aria-label="Solicitudes de perfil">
-        <h2>Solicitudes recientes</h2>
-        {data.profileRequests.length > 0 ? (
-          <div className="portal-record-list">
-            {data.profileRequests.map((request) => (
-              <article key={request.referenceLabel} className="portal-record">
-                <div>
-                  <h3>{request.referenceLabel}</h3>
-                  <p>{request.fieldSummaryLabel}</p>
-                </div>
-                <span className="portal-status portal-status--info">{request.statusLabel}</span>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <section className="portal-empty-state">
-            <p>No hay solicitudes de perfil activas.</p>
-          </section>
-        )}
-      </section>
+      <PortalProfileChangeForm
+        key={data.account.clientContextId}
+        clientId={data.account.clientContextId}
+        profile={data.profile}
+        requests={data.profileRequests}
+        isUnavailable={isUnavailable}
+        onRefreshData={onRefreshData}
+      />
     </PortalPageFrame>
   )
 }
@@ -343,10 +327,22 @@ function renderPropertiesPage(
   data: PortalFoundationData,
   getHref: (page: PortalPage) => string,
   isUnavailable: boolean,
+  onRefreshData?: () => void | Promise<void>,
 ) {
   const routeStep = resolveCorrectionStep(pathname, 'property')
+  const selectedProperty = data.propertyDetail
+  const propertyBasePath = withCurrentSearch(
+    getPortalPropertyPath(selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'),
+  )
   if (routeStep) {
-    return renderCorrectionFlow('Propiedad', routeStep, data.propertyRequests[0] ?? null, getHref, isUnavailable)
+    return renderCorrectionFlow(
+      'Propiedad',
+      routeStep,
+      data.propertyRequests[0] ?? null,
+      propertyBasePath,
+      getHref,
+      isUnavailable,
+    )
   }
 
   return (
@@ -357,13 +353,13 @@ function renderPropertiesPage(
     >
       <div className="portal-record-list">
         {data.properties.length > 0 ? data.properties.map((property) => (
-          <article key={property.id} className="portal-record">
+          <a key={property.id} className="portal-record portal-record--link" href={withCurrentSearch(getPortalPropertyPath(property.publicRef))}>
             <div>
               <h2>{property.displayName}</h2>
               <p>{property.addressLabel}</p>
             </div>
             <span className="portal-status portal-status--info">{property.statusLabel}</span>
-          </article>
+          </a>
         )) : (
           <section className="portal-empty-state">
             <p>Esta propiedad no está disponible.</p>
@@ -390,42 +386,14 @@ function renderPropertiesPage(
         </section>
       ) : null}
 
-      <section className="portal-correction-callout">
-        <div>
-          <p className="portal-eyebrow">Corrección revisable</p>
-          <h2>Solicitar cambio de propiedad</h2>
-          <p>{isUnavailable ? 'La lectura segura todavía no está conectada.' : 'Solo se exponen campos permitidos y la revisión evita escritura directa.'}</p>
-        </div>
-        <div className="portal-correction-callout__actions">
-          <a className="portal-button portal-button--primary" href="/portal/properties/espacio-demo/correction/fields">
-            Iniciar revisión
-          </a>
-          <a className="portal-button portal-button--secondary" href={getHref('properties')}>
-            Volver al listado
-          </a>
-        </div>
-      </section>
-
-      <section className="portal-request-history" aria-label="Solicitudes de propiedad">
-        <h2>Solicitudes recientes</h2>
-        {data.propertyRequests.length > 0 ? (
-          <div className="portal-record-list">
-            {data.propertyRequests.map((request) => (
-              <article key={request.referenceLabel} className="portal-record">
-                <div>
-                  <h3>{request.referenceLabel}</h3>
-                  <p>{request.fieldSummaryLabel}</p>
-                </div>
-                <span className="portal-status portal-status--info">{request.statusLabel}</span>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <section className="portal-empty-state">
-            <p>No hay solicitudes de propiedad activas.</p>
-          </section>
-        )}
-      </section>
+      <PortalPropertyChangeForm
+        key={data.propertyDetail?.publicRef ?? 'property-none'}
+        clientId={data.account.clientContextId}
+        property={data.propertyDetail}
+        requests={data.propertyRequests}
+        isUnavailable={isUnavailable}
+        onRefreshData={onRefreshData}
+      />
     </PortalPageFrame>
   )
 }
@@ -434,6 +402,7 @@ function renderCorrectionFlow(
   scopeLabel: 'Perfil' | 'Propiedad',
   step: 'fields' | 'values' | 'review' | 'success',
   request: PortalFoundationData['profileRequests'][number] | PortalFoundationData['propertyRequests'][number] | null,
+  basePath: string,
   getHref: (page: PortalPage) => string,
   isUnavailable: boolean,
 ) {
@@ -501,7 +470,7 @@ function renderCorrectionFlow(
 
           <div className="portal-stepflow__actions">
             {step !== 'fields' ? (
-              <a className="portal-button portal-button--secondary" href={scopeLabel === 'Perfil' ? '/portal/profile/correction/fields' : '/portal/properties/espacio-demo/correction/fields'}>
+              <a className="portal-button portal-button--secondary" href={`${basePath}/correction/fields`}>
                 Volver
               </a>
             ) : null}
@@ -510,16 +479,10 @@ function renderCorrectionFlow(
                 className="portal-button portal-button--primary"
                 href={
                   step === 'fields'
-                    ? scopeLabel === 'Perfil'
-                      ? '/portal/profile/correction/values'
-                      : '/portal/properties/espacio-demo/correction/values'
+                    ? `${basePath}/correction/values`
                     : step === 'values'
-                      ? scopeLabel === 'Perfil'
-                        ? '/portal/profile/correction/review'
-                        : '/portal/properties/espacio-demo/correction/review'
-                      : scopeLabel === 'Perfil'
-                        ? '/portal/profile/correction/success'
-                        : '/portal/properties/espacio-demo/correction/success'
+                      ? `${basePath}/correction/review`
+                      : `${basePath}/correction/success`
                 }
               >
                 Continuar
@@ -589,6 +552,11 @@ function PortalDetailRow({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </div>
   )
+}
+
+function withCurrentSearch(pathname: string): string {
+  const search = window.location.search
+  return search ? `${pathname}${search}` : pathname
 }
 
 function PortalSecurityRow({

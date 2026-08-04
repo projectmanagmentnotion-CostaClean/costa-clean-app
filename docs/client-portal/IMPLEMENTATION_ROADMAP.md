@@ -235,7 +235,9 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   `AUTHORIZED_AND_IN_PROGRESS`; account context, read models and reviewed
   change requests without canonical-table writes. The customer-safe canonical
   status and opaque-ID mappings are frozen and the frontend implementation is
-  the active gate.
+  the active gate. Local implementation now includes the isolated `/portal`
+  shell, real profile/property read adapter, public property references and
+  reviewed-change forms.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
   cancellation, idempotency and explicit feedback.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and
@@ -256,6 +258,10 @@ CP-3A evidence:
 
 CP-3B.1 evidence:
 [`CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md`](./CP3B1_AUTH_ACCESS_LIFECYCLE_20260728.md).
+
+CP-3B.2 implementation evidence:
+[`CP3B2_REAL_READ_CONTRACT_AUDIT.md`](./CP3B2_REAL_READ_CONTRACT_AUDIT.md) and
+[`QA_LEGACY_SYNTHETIC_DATA_CLEANUP.md`](./QA_LEGACY_SYNTHETIC_DATA_CLEANUP.md).
 
 CP-3B.0 evidence:
 [`CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md`](./CP3B0_SELF_ACCESS_CONTEXT_CONTRACT.md)

@@ -3,6 +3,8 @@
 Date: 2026-08-04
 
 Use this checklist for the portal UI foundation and the CP-3B.2 frontend slice.
+The current validation run covered the real profile/property slice and the
+mobile-first preview shell.
 
 ## Viewports
 
@@ -56,6 +58,7 @@ Use this checklist for the portal UI foundation and the CP-3B.2 frontend slice.
 - profile fields are clearly visible
 - property cards remain compact and scannable
 - reviewed-change entry is visible without exposing internal IDs
+- public property references are visible in cards and detail headers
 - empty and unavailable states are neutral
 - retry and conflict states are understandable
 
@@ -65,4 +68,4 @@ Use this checklist for the portal UI foundation and the CP-3B.2 frontend slice.
 - no layout shift before first paint
 - GSAP-only motion stays subtle
 - reduced motion still preserves state clarity
-
+- profile/property screens remain usable at 320, 375, 390, 430, 768 and 1366

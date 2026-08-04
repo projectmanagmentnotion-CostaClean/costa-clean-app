@@ -68,6 +68,6 @@ function getPreviewPath(scenario: PortalPreviewScenario) {
   if (scenario === 'profile_retry') return '/portal/profile/correction/review'
   if (scenario === 'profile_conflict') return '/portal/profile/requests'
   if (scenario === 'property_unavailable') return '/portal/properties'
-  if (scenario === 'property_request_success') return '/portal/properties/espacio-demo/correction/success'
+  if (scenario === 'property_request_success') return '/portal/properties/ref-espacio-norte/correction/success'
   return '/portal'
 }

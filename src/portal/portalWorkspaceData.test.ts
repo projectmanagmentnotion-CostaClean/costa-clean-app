@@ -11,9 +11,9 @@ import type {
 import { createFallbackPortalFoundationData, createPreviewPortalFoundationData } from './portalWorkspaceData'
 
 const account: PortalAccountContext = {
-  clientContextId: 'client-demo',
-  clientDisplayName: 'Cliente demostración',
-  accountLabel: 'Cuenta sintética',
+  clientContextId: 'client-preview',
+  clientDisplayName: 'Cliente de vista previa',
+  accountLabel: 'Cuenta de vista previa',
   role: 'client_admin',
   isSynthetic: true,
 }
@@ -28,8 +28,16 @@ const dashboard: PortalDashboardSnapshot = {
 const properties: PortalPropertySummary[] = [
   {
     id: 'property-1',
-    displayName: 'Espacio Demo Norte',
-    addressLabel: 'Dirección sintética · Barcelona',
+    publicRef: 'ref-espacio-norte',
+    displayName: 'Espacio Norte',
+    name: 'Espacio Norte',
+    propertyType: 'vivienda',
+    propertyTypeLabel: 'Vivienda',
+    address: 'Calle Marina 12',
+    city: 'Barcelona',
+    postalCode: '08001',
+    status: 'active',
+    addressLabel: 'Calle Marina 12 · Barcelona',
     statusLabel: 'Activo · vista previa',
     isSynthetic: true,
   },
@@ -38,10 +46,10 @@ const properties: PortalPropertySummary[] = [
 const services: PortalServiceSummary[] = [
   {
     id: 'service-1',
-    serviceLabel: 'Limpieza de mantenimiento · demo',
-    propertyLabel: 'Espacio Demo Norte',
+    serviceLabel: 'Limpieza de mantenimiento',
+    propertyLabel: 'Espacio Norte',
     scheduleLabel: 'Mañana · 10:00',
-    statusLabel: 'Planificado · sintético',
+    statusLabel: 'Planificado · vista previa',
     isSynthetic: true,
   },
 ]
@@ -49,9 +57,9 @@ const services: PortalServiceSummary[] = [
 const requests: PortalServiceRequestSummary[] = [
   {
     id: 'request-1',
-    requestLabel: 'Solicitud de cambio de horario · demo',
+    requestLabel: 'Solicitud de cambio de horario',
     submittedLabel: 'Enviada en la vista previa local',
-    statusLabel: 'Pendiente de revisión · sintético',
+    statusLabel: 'Pendiente de revisión · vista previa',
     isSynthetic: true,
   },
 ]
@@ -59,8 +67,8 @@ const requests: PortalServiceRequestSummary[] = [
 const invoices: PortalInvoiceSummary[] = [
   {
     id: 'invoice-1',
-    referenceLabel: 'DEMO-FACTURA-001',
-    issuedLabel: 'Documento sintético · sin validez fiscal',
+    referenceLabel: 'FACTURA-VISTA-PREVIA-001',
+    issuedLabel: 'Documento de vista previa · sin validez fiscal',
     paymentStatusLabel: 'Estado de demostración',
     isSynthetic: true,
   },
@@ -70,10 +78,10 @@ describe('portal workspace data', () => {
   it('creates a safe fallback workspace without synthetic identifiers', () => {
     const data = createFallbackPortalFoundationData({
       status: 'active_member',
-      selectedClientId: 'client-demo',
+      selectedClientId: 'client-preview',
       membership: {
-        clientId: 'client-demo',
-        membershipId: 'membership-demo',
+        clientId: 'client-preview',
+        membershipId: 'membership-preview',
         role: 'client_member',
         status: 'active',
       },
@@ -127,5 +135,6 @@ describe('portal workspace data', () => {
 
     expect(profileSuccess.profileRequests[0]?.statusLabel).toBe('Enviado')
     expect(propertySuccess.propertyRequests[0]?.statusLabel).toBe('Enviado')
+    expect(propertySuccess.propertyDetail?.publicRef).toBe('ref-espacio-norte')
   })
 })

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   getPortalAuthPath,
   getPortalPagePath,
+  getPortalPropertyPath,
   resolvePortalAuthRoute,
   resolvePortalPage,
+  resolvePortalPropertyRoute,
 } from './portalNavigation'
 
 describe('portal page routing', () => {
@@ -40,8 +42,17 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/invoices')).toBe('documents')
     expect(resolvePortalPage('/portal/profile/requests')).toBe('profile')
     expect(resolvePortalPage('/portal/profile/correction/review')).toBe('profile')
-    expect(resolvePortalPage('/portal/properties/espacio-demo/correction/success')).toBe('properties')
+    expect(resolvePortalPage('/portal/properties/ref-espacio-norte/correction/success')).toBe('properties')
     expect(resolvePortalPage('/portal/help')).toBe('help')
     expect(resolvePortalPage('/portal/preferences')).toBe('preferences')
+    expect(getPortalPropertyPath('ref-espacio-norte')).toBe('/portal/properties/ref-espacio-norte')
+    expect(resolvePortalPropertyRoute('/portal/properties/ref-espacio-norte')).toEqual({
+      publicRef: 'ref-espacio-norte',
+      step: null,
+    })
+    expect(resolvePortalPropertyRoute('/portal/properties/ref-espacio-norte/correction/review')).toEqual({
+      publicRef: 'ref-espacio-norte',
+      step: 'review',
+    })
   })
 })

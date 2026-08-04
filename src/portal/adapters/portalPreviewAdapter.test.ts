@@ -20,9 +20,10 @@ describe('portal development preview adapter', () => {
     const properties = await adapter.reads.listProperties()
     const invoices = await adapter.reads.listInvoices()
 
-    expect(account.clientContextId).toBe('client-demo-cp3b1')
+    expect(account.clientContextId).toBe('client-preview-main')
     expect(account.isSynthetic).toBe(true)
     expect(properties.every((property) => property.isSynthetic)).toBe(true)
+    expect(properties[0]?.publicRef).toBe('ref-espacio-norte')
     expect(invoices.every((invoice) => invoice.isSynthetic)).toBe(true)
     expect(invoices[0]?.issuedLabel.includes('sin validez fiscal')).toBe(true)
   })

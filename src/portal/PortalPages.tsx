@@ -1,26 +1,25 @@
 import type { ReactNode } from 'react'
 import type { PortalFoundationData } from './portalWorkspaceData'
 import type { PortalPage } from './portalNavigation'
-import { getPortalPropertyPath } from './portalNavigation'
-import { PortalProfileChangeForm, PortalPropertyChangeForm } from './PortalReviewedChangeForms'
+import {
+  getPortalProfileRequestPath,
+  getPortalProfileRequestsPath,
+  getPortalPropertyPath,
+  getPortalPropertyRequestPath,
+  getPortalPropertyRequestsPath,
+  resolvePortalRequestRoute,
+} from './portalNavigation'
+import { PortalProfileChangeFlow, PortalPropertyChangeFlow } from './PortalReviewedChangeForms'
 
 interface PortalPagesProps {
   page: PortalPage | null
   pathname: string
   data: PortalFoundationData
   getHref: (page: PortalPage) => string
-  isUnavailable: boolean
   onRefreshData?: () => void | Promise<void>
 }
 
-export function PortalPages({
-  page,
-  pathname,
-  data,
-  getHref,
-  isUnavailable,
-  onRefreshData,
-}: PortalPagesProps) {
+export function PortalPages({ page, pathname, data, getHref, onRefreshData }: PortalPagesProps) {
   if (!page) {
     return (
       <PortalPageFrame eyebrow="Área protegida" title="Página no disponible">
@@ -35,6 +34,7 @@ export function PortalPages({
   }
 
   if (page === 'home') {
+    const isReadReady = data.capabilities.profile.status === 'REAL' && data.capabilities.properties.status === 'REAL'
     return (
       <PortalPageFrame
         eyebrow="Resumen"
@@ -45,7 +45,7 @@ export function PortalPages({
           <div>
             <span className="portal-decision-block__label">Próximo servicio</span>
             <h2>{data.dashboard.nextServiceLabel}</h2>
-            <p>{isUnavailable ? 'La lectura segura todavía no está conectada.' : 'Datos sintéticos exclusivos de la vista previa local.'}</p>
+            <p>{isReadReady ? 'Lectura real conectada por capacidades aisladas.' : 'Lectura parcial o en preparación; el portal sigue siendo utilizable.'}</p>
           </div>
           <a className="portal-button portal-button--primary" href={getHref('services')}>
             Revisar servicios
@@ -116,11 +116,11 @@ export function PortalPages({
   }
 
   if (page === 'profile') {
-    return renderProfilePage(pathname, data, getHref, isUnavailable, onRefreshData)
+    return renderProfilePage(pathname, data, onRefreshData)
   }
 
   if (page === 'properties') {
-    return renderPropertiesPage(pathname, data, getHref, isUnavailable, onRefreshData)
+    return renderPropertiesPage(pathname, data, onRefreshData)
   }
 
   if (page === 'services') {
@@ -277,22 +277,64 @@ export function PortalPages({
   )
 }
 
-function renderProfilePage(
-  pathname: string,
-  data: PortalFoundationData,
-  getHref: (page: PortalPage) => string,
-  isUnavailable: boolean,
-  onRefreshData?: () => void | Promise<void>,
-) {
+function renderProfilePage(pathname: string, data: PortalFoundationData, onRefreshData?: () => void | Promise<void>) {
+  const requestRoute = resolvePortalRequestRoute(pathname)
+  if (requestRoute?.scope === 'profile') {
+    if (requestRoute.reference) {
+      const request = data.profileRequests.find((item) => item.reference === requestRoute.reference) ?? null
+      return (
+        <PortalPageFrame
+          eyebrow="Cuenta"
+          title="Solicitud de perfil"
+          description="Detalle público de una corrección revisable sin exponer IDs internos."
+        >
+          <PortalRequestDetail
+            request={request}
+            scopeLabel="Perfil"
+            backHref={getPortalProfileRequestsPath()}
+            fallbackMessage="No encontramos una solicitud pública con esa referencia."
+          />
+        </PortalPageFrame>
+      )
+    }
+
+    return (
+      <PortalPageFrame
+        eyebrow="Cuenta"
+        title="Solicitudes de perfil"
+        description="Historial público de correcciones revisables."
+      >
+        <PortalRequestHistoryList
+          requests={data.profileRequests}
+          emptyMessage="No hay solicitudes activas."
+          detailHref={(reference) => getPortalProfileRequestPath(reference)}
+        />
+      </PortalPageFrame>
+    )
+  }
+
   const routeStep = resolveCorrectionStep(pathname, 'profile')
   if (routeStep) {
-    return renderCorrectionFlow(
-      'Perfil',
-      routeStep,
-      data.profileRequests[0] ?? null,
-      withCurrentSearch('/portal/profile'),
-      getHref,
-      isUnavailable,
+    return (
+      <PortalPageFrame
+        eyebrow="Cuenta"
+        title={routeStep === 'success' ? 'Solicitud enviada' : 'Revisión de perfil'}
+        description="StepFlow real para corregir datos del perfil sin escribir directamente en el CRM."
+      >
+        <PortalProfileChangeFlow
+          clientId={data.account.clientContextId}
+          profile={data.profile}
+          requestHistory={data.profileRequests}
+          capabilityStatus={data.capabilities.profile.status}
+          capabilityMessage={data.capabilities.profile.message ?? 'Lectura real disponible'}
+          pathname={pathname}
+          basePath={withCurrentSearch('/portal/profile/correction')}
+          returnPath={withCurrentSearch('/portal/profile')}
+          resourceRef="profile"
+          resourceId={data.account.clientContextId}
+          onRefreshData={onRefreshData}
+        />
+      </PortalPageFrame>
     )
   }
 
@@ -310,38 +352,92 @@ function renderProfilePage(
         <PortalDetailRow label="Facturación" value={data.profile.billingAddressLabel} />
       </section>
 
-      <PortalProfileChangeForm
-        key={data.account.clientContextId}
-        clientId={data.account.clientContextId}
-        profile={data.profile}
-        requests={data.profileRequests}
-        isUnavailable={isUnavailable}
-        onRefreshData={onRefreshData}
-      />
+      <section className="portal-decision-block portal-decision-block--compact">
+        <div>
+          <span className="portal-decision-block__label">Corrección revisable</span>
+          <h2>Solicitar cambios de perfil</h2>
+          <p>Un StepFlow de cuatro pasos permite seleccionar campos, revisar valores y enviar la petición sin tocar tablas internas.</p>
+        </div>
+        <a className="portal-button portal-button--primary" href={withCurrentSearch('/portal/profile/correction/fields')}>
+          Iniciar corrección
+        </a>
+      </section>
+
+      <section className="portal-request-history" aria-label="Solicitudes de perfil">
+        <h3>Solicitudes recientes</h3>
+        <PortalRequestHistoryList
+          requests={data.profileRequests}
+          emptyMessage="No hay solicitudes activas."
+          detailHref={(reference) => getPortalProfileRequestPath(reference)}
+        />
+      </section>
     </PortalPageFrame>
   )
 }
 
-function renderPropertiesPage(
-  pathname: string,
-  data: PortalFoundationData,
-  getHref: (page: PortalPage) => string,
-  isUnavailable: boolean,
-  onRefreshData?: () => void | Promise<void>,
-) {
+function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRefreshData?: () => void | Promise<void>) {
+  const requestRoute = resolvePortalRequestRoute(pathname)
   const routeStep = resolveCorrectionStep(pathname, 'property')
   const selectedProperty = data.propertyDetail
+  const propertyRef = requestRoute?.propertyRef ?? selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'
   const propertyBasePath = withCurrentSearch(
-    getPortalPropertyPath(selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'),
+    getPortalPropertyPath(propertyRef),
   )
+  if (requestRoute?.scope === 'property') {
+    if (requestRoute.reference) {
+      const request = data.propertyRequests.find((item) => item.reference === requestRoute.reference) ?? null
+      return (
+        <PortalPageFrame
+          eyebrow="Espacios"
+          title="Solicitud de propiedad"
+          description="Detalle público de una corrección revisable sin exponer IDs internos."
+        >
+          <PortalRequestDetail
+            request={request}
+            scopeLabel="Propiedad"
+            backHref={getPortalPropertyRequestsPath(propertyRef)}
+            fallbackMessage="No encontramos una solicitud pública con esa referencia."
+          />
+        </PortalPageFrame>
+      )
+    }
+
+    return (
+      <PortalPageFrame
+        eyebrow="Espacios"
+        title="Solicitudes de propiedad"
+        description="Historial público de correcciones revisables para la propiedad seleccionada."
+      >
+        <PortalRequestHistoryList
+          requests={data.propertyRequests}
+          emptyMessage="No hay solicitudes activas para esta propiedad."
+          detailHref={(reference) => getPortalPropertyRequestPath(propertyRef, reference)}
+        />
+      </PortalPageFrame>
+    )
+  }
+
   if (routeStep) {
-    return renderCorrectionFlow(
-      'Propiedad',
-      routeStep,
-      data.propertyRequests[0] ?? null,
-      propertyBasePath,
-      getHref,
-      isUnavailable,
+    return (
+      <PortalPageFrame
+        eyebrow="Espacios"
+        title={routeStep === 'success' ? 'Solicitud enviada' : 'Revisión de propiedad'}
+        description="StepFlow real para corregir datos de la propiedad visible sin exponer IDs internos."
+      >
+        <PortalPropertyChangeFlow
+          clientId={data.account.clientContextId}
+          property={selectedProperty}
+          requestHistory={data.propertyRequests}
+          capabilityStatus={data.capabilities.properties.status}
+          capabilityMessage={data.capabilities.properties.message ?? 'Lectura real disponible'}
+          pathname={pathname}
+          basePath={`${propertyBasePath}/correction`}
+          returnPath={propertyBasePath}
+          resourceRef={selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'}
+          resourceId={selectedProperty?.id ?? ''}
+          onRefreshData={onRefreshData}
+        />
+      </PortalPageFrame>
     )
   }
 
@@ -353,7 +449,11 @@ function renderPropertiesPage(
     >
       <div className="portal-record-list">
         {data.properties.length > 0 ? data.properties.map((property) => (
-          <a key={property.id} className="portal-record portal-record--link" href={withCurrentSearch(getPortalPropertyPath(property.publicRef))}>
+          <a
+            key={property.id}
+            className="portal-record portal-record--link"
+            href={withCurrentSearch(getPortalPropertyPath(property.publicRef))}
+          >
             <div>
               <h2>{property.displayName}</h2>
               <p>{property.addressLabel}</p>
@@ -383,118 +483,28 @@ function renderPropertiesPage(
             <PortalDetailRow label="Ciudad" value={data.propertyDetail.cityLabel} />
             <PortalDetailRow label="Código postal" value={data.propertyDetail.postalCodeLabel} />
           </div>
+
+          <section className="portal-decision-block portal-decision-block--compact">
+            <div>
+              <span className="portal-decision-block__label">Corrección revisable</span>
+              <h2>Solicitar cambios de propiedad</h2>
+              <p>La referencia pública visible queda aislada del identificador interno y la corrección se tramita mediante revisión.</p>
+            </div>
+            <a className="portal-button portal-button--primary" href={`${propertyBasePath}/correction/fields`}>
+              Iniciar corrección
+            </a>
+          </section>
         </section>
       ) : null}
 
-      <PortalPropertyChangeForm
-        key={data.propertyDetail?.publicRef ?? 'property-none'}
-        clientId={data.account.clientContextId}
-        property={data.propertyDetail}
-        requests={data.propertyRequests}
-        isUnavailable={isUnavailable}
-        onRefreshData={onRefreshData}
-      />
-    </PortalPageFrame>
-  )
-}
-
-function renderCorrectionFlow(
-  scopeLabel: 'Perfil' | 'Propiedad',
-  step: 'fields' | 'values' | 'review' | 'success',
-  request: PortalFoundationData['profileRequests'][number] | PortalFoundationData['propertyRequests'][number] | null,
-  basePath: string,
-  getHref: (page: PortalPage) => string,
-  isUnavailable: boolean,
-) {
-  const stepIndex = {
-    fields: 1,
-    values: 2,
-    review: 3,
-    success: 4,
-  }[step]
-
-  return (
-    <PortalPageFrame
-      eyebrow={`${scopeLabel} · revisión`}
-      title={step === 'success' ? 'Solicitud enviada' : 'Revisión de cambios'}
-      description="Un StepFlow compacto guía la corrección sin escribir directamente en el CRM."
-    >
-      <div className="portal-stepflow">
-        <div className="portal-stepflow__steps" aria-label="Pasos de revisión">
-          {['Datos', 'Cambios', 'Revisar', 'Enviado'].map((label, index) => (
-            <span key={label} className={index + 1 === stepIndex ? 'portal-stepflow__step is-active' : 'portal-stepflow__step'}>
-              {label}
-            </span>
-          ))}
-        </div>
-
-        <section className="portal-stepflow__surface">
-          {step === 'fields' ? (
-            <>
-              <p className="portal-eyebrow">Paso 1</p>
-              <h2>Selecciona los campos que quieres revisar</h2>
-              <div className="portal-field-pills" aria-label={`Campos del ${scopeLabel.toLowerCase()}`}>
-                {(scopeLabel === 'Perfil'
-                  ? ['Nombre', 'Teléfono', 'Email', 'NIF/CIF', 'Facturación']
-                  : ['Nombre', 'Tipo de propiedad', 'Dirección', 'Ciudad', 'Código postal']
-                ).map((label) => (
-                  <span key={label} className="portal-field-pill">{label}</span>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          {step === 'values' ? (
-            <>
-              <p className="portal-eyebrow">Paso 2</p>
-              <h2>Revisa los valores antes de continuar</h2>
-              <p>{isUnavailable ? 'La lectura segura todavía no está conectada.' : 'Los valores visibles se limitan a datos permitidos y no exponen IDs internos.'}</p>
-            </>
-          ) : null}
-
-          {step === 'review' ? (
-            <>
-              <p className="portal-eyebrow">Paso 3</p>
-              <h2>Confirma la solicitud</h2>
-              <p>Se generará un recibo estable y la revisión quedará pendiente de validación manual.</p>
-            </>
-          ) : null}
-
-          {step === 'success' ? (
-            <>
-              <span className="portal-status portal-status--success">Solicitud registrada</span>
-              <h2>Tu solicitud quedó enviada</h2>
-              <p>{request ? `${request.referenceLabel} · ${request.statusLabel}` : 'La revisión se completó correctamente.'}</p>
-            </>
-          ) : null}
-
-          <div className="portal-stepflow__actions">
-            {step !== 'fields' ? (
-              <a className="portal-button portal-button--secondary" href={`${basePath}/correction/fields`}>
-                Volver
-              </a>
-            ) : null}
-            {step !== 'success' ? (
-              <a
-                className="portal-button portal-button--primary"
-                href={
-                  step === 'fields'
-                    ? `${basePath}/correction/values`
-                    : step === 'values'
-                      ? `${basePath}/correction/review`
-                      : `${basePath}/correction/success`
-                }
-              >
-                Continuar
-              </a>
-            ) : (
-              <a className="portal-button portal-button--primary" href={scopeLabel === 'Perfil' ? getHref('profile') : getHref('properties')}>
-                Volver a la vista
-              </a>
-            )}
-          </div>
-        </section>
-      </div>
+      <section className="portal-request-history" aria-label="Solicitudes de propiedad">
+        <h3>Solicitudes recientes</h3>
+        <PortalRequestHistoryList
+          requests={data.propertyRequests}
+          emptyMessage="No hay solicitudes activas para esta propiedad."
+          detailHref={(reference) => getPortalPropertyRequestPath(propertyRef, reference)}
+        />
+      </section>
     </PortalPageFrame>
   )
 }
@@ -528,14 +538,7 @@ function PortalPageFrame({ eyebrow, title, description, children }: PortalPageFr
   )
 }
 
-interface PortalSummaryLinkProps {
-  label: string
-  value: string
-  hint: string
-  href: string
-}
-
-function PortalSummaryLink({ label, value, hint, href }: PortalSummaryLinkProps) {
+function PortalSummaryLink({ label, value, hint, href }: { label: string; value: string; hint: string; href: string }) {
   return (
     <a className="portal-summary-link" href={href}>
       <span>{label}</span>
@@ -552,6 +555,91 @@ function PortalDetailRow({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </div>
   )
+}
+
+function PortalRequestHistoryList({
+  requests,
+  emptyMessage,
+  detailHref,
+}: {
+  requests: PortalFoundationData['profileRequests']
+  emptyMessage: string
+  detailHref: (reference: string) => string
+}) {
+  return requests.length > 0 ? (
+    <div className="portal-record-list">
+      {requests.map((request) => (
+        <a key={request.reference} className="portal-record portal-record--link" href={detailHref(request.reference)}>
+          <div>
+            <h4>{request.referenceLabel}</h4>
+            <p>{request.fieldSummaryLabel}</p>
+          </div>
+          <span className="portal-status portal-status--warning">{request.statusLabel}</span>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <section className="portal-empty-state">
+      <p>{emptyMessage}</p>
+    </section>
+  )
+}
+
+function PortalRequestDetail({
+  request,
+  scopeLabel,
+  backHref,
+  fallbackMessage,
+}: {
+  request: PortalFoundationData['profileRequests'][number] | PortalFoundationData['propertyRequests'][number] | null
+  scopeLabel: 'Perfil' | 'Propiedad'
+  backHref: string
+  fallbackMessage: string
+}) {
+  if (!request) {
+    return (
+      <section className="portal-empty-state">
+        <p>{fallbackMessage}</p>
+        <a className="portal-button portal-button--primary" href={backHref}>
+          Volver al listado
+        </a>
+      </section>
+    )
+  }
+
+  return (
+    <section className="portal-request-detail" aria-label={`Solicitud de ${scopeLabel.toLowerCase()}`}>
+      <div className="portal-decision-block portal-decision-block--compact">
+        <div>
+          <span className="portal-decision-block__label">Referencia pública</span>
+          <h2>{request.referenceLabel}</h2>
+          <p>{request.fieldSummaryLabel}</p>
+        </div>
+        <span className="portal-status portal-status--info">{request.statusLabel}</span>
+      </div>
+
+      <section className="portal-detail-list portal-detail-list--compact">
+        <PortalDetailRow label="Tipo" value={request.scopeLabel} />
+        <PortalDetailRow label="Solicitada" value={formatDateTime(request.requestedAt)} />
+        <PortalDetailRow label="Resuelta" value={request.resolvedAt ? formatDateTime(request.resolvedAt) : 'Pendiente'} />
+        <PortalDetailRow label="Campos" value={request.changedFields.length > 0 ? request.changedFields.join(' · ') : 'Sin campos visibles'} />
+        <PortalDetailRow label="Estado" value={request.statusLabel} />
+      </section>
+
+      <a className="portal-button portal-button--primary" href={backHref}>
+        Volver al listado
+      </a>
+    </section>
+  )
+}
+
+function formatDateTime(value: string) {
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(date)
 }
 
 function withCurrentSearch(pathname: string): string {

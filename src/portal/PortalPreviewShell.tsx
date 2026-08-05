@@ -26,7 +26,7 @@ export function PortalPreviewShell({
     reads
       ? { status: 'loading' }
       : {
-          status: 'unavailable',
+          status: 'ready',
           data: createFallbackPreviewData(access),
         },
   )

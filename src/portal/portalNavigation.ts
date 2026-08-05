@@ -21,6 +21,12 @@ export interface PortalPropertyRoute {
   step: 'fields' | 'values' | 'review' | 'success' | null
 }
 
+export interface PortalRequestRoute {
+  scope: 'profile' | 'property'
+  propertyRef: string | null
+  reference: string | null
+}
+
 export type PortalPage = (typeof portalPages)[number]
 export type PortalAuthRoute = (typeof portalAuthRoutes)[number]
 
@@ -94,6 +100,22 @@ export function getPortalPropertyPath(publicRef: string): string {
   return `/portal/properties/${publicRef}`
 }
 
+export function getPortalProfileRequestsPath(): string {
+  return '/portal/profile/requests'
+}
+
+export function getPortalProfileRequestPath(reference: string): string {
+  return `${getPortalProfileRequestsPath()}/${reference}`
+}
+
+export function getPortalPropertyRequestsPath(publicRef: string): string {
+  return `${getPortalPropertyPath(publicRef)}/requests`
+}
+
+export function getPortalPropertyRequestPath(publicRef: string, reference: string): string {
+  return `${getPortalPropertyRequestsPath(publicRef)}/${reference}`
+}
+
 export function resolvePortalPropertyRoute(pathname: string): PortalPropertyRoute | null {
   const normalizedPath = normalizeApplicationPathname(pathname)
   if (!normalizedPath.startsWith('/portal/properties/')) return null
@@ -110,6 +132,32 @@ export function resolvePortalPropertyRoute(pathname: string): PortalPropertyRout
   }
 
   return { publicRef, step: null }
+}
+
+export function resolvePortalRequestRoute(pathname: string): PortalRequestRoute | null {
+  const normalizedPath = normalizeApplicationPathname(pathname)
+
+  if (normalizedPath === '/portal/profile/requests') {
+    return { scope: 'profile', propertyRef: null, reference: null }
+  }
+
+  if (normalizedPath.startsWith('/portal/profile/requests/')) {
+    const reference = normalizedPath.slice('/portal/profile/requests/'.length).split('/')[0] ?? ''
+    if (!reference) return null
+    return { scope: 'profile', propertyRef: null, reference }
+  }
+
+  if (!normalizedPath.startsWith('/portal/properties/')) return null
+
+  const remainder = normalizedPath.slice('/portal/properties/'.length)
+  const [propertyRef = '', maybeSection, maybeReference] = remainder.split('/')
+  if (!propertyRef || maybeSection !== 'requests') return null
+
+  if (!maybeReference) {
+    return { scope: 'property', propertyRef, reference: null }
+  }
+
+  return { scope: 'property', propertyRef, reference: maybeReference }
 }
 
 function resolveNestedPortalPage(pathname: string): PortalPage | null {

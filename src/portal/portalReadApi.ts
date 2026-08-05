@@ -17,7 +17,9 @@ import type {
   PortalProfileSnapshot,
   PortalPropertyDetail,
   PortalReviewedChangeRequestSummary,
+  PortalCapabilityStatus,
 } from './portalWorkspaceData'
+import { createFallbackPortalFoundationData } from './portalWorkspaceData'
 
 type JsonRecord = Record<string, unknown>
 
@@ -49,36 +51,89 @@ export async function loadPortalFoundationData(
   pathname: string,
 ): Promise<PortalFoundationData> {
   const client = getPortalRpcClient()
-  const [profile, properties, services, serviceRequests, invoices, profileRequests] =
-    await Promise.all([
-      readPortalProfile(client, access.clientContextId),
-      readPortalProperties(client, access.clientContextId),
-      readPortalServices(client, access.clientContextId),
-      readPortalServiceRequests(client, access.clientContextId),
-      readPortalInvoices(client, access.clientContextId),
-      readPortalProfileRequests(client, access.clientContextId),
-    ])
+  const fallback = createFallbackPortalFoundationData(access)
+  const [
+    profileResult,
+    propertiesResult,
+    servicesResult,
+    serviceRequestsResult,
+    invoicesResult,
+    profileRequestsResult,
+  ] = await Promise.all([
+    loadCapability(
+      () => readPortalProfile(client, access.clientContextId),
+      fallback.profile,
+    ),
+    loadCapability(
+      () => readPortalProperties(client, access.clientContextId),
+      fallback.properties,
+    ),
+    loadCapability(
+      () => readPortalServices(client, access.clientContextId),
+      fallback.services,
+    ),
+    loadCapability(
+      () => readPortalServiceRequests(client, access.clientContextId),
+      fallback.requests,
+    ),
+    loadCapability(
+      () => readPortalInvoices(client, access.clientContextId),
+      fallback.invoices,
+    ),
+    loadCapability(
+      () => readPortalProfileRequests(client, access.clientContextId),
+      fallback.profileRequests,
+    ),
+  ])
 
   const selectedPropertyRoute = resolvePortalPropertyRoute(pathname)
-  const selectedProperty = selectPortalProperty(properties, selectedPropertyRoute)
-  const propertyDetail = selectedProperty
-    ? await readPortalPropertyDetail(client, access.clientContextId, selectedProperty)
-    : null
-  const propertyRequests = selectedProperty
-    ? await readPortalPropertyRequests(client, access.clientContextId, selectedProperty.id)
-    : []
+  const selectedProperty = selectPortalProperty(propertiesResult.data, selectedPropertyRoute)
+  const propertyDetailResult = selectedProperty
+    ? await loadCapability(
+      () => readPortalPropertyDetail(client, access.clientContextId, selectedProperty),
+      buildPropertyDetailFromSummary(selectedProperty),
+    )
+    : {
+        status: 'UNAVAILABLE' as PortalCapabilityStatus,
+        data: null,
+        message: 'No hay una propiedad seleccionada.',
+      }
+  const propertyRequestsResult = selectedProperty
+    ? await loadCapability(
+      () => readPortalPropertyRequests(client, access.clientContextId, selectedProperty.id),
+      fallback.propertyRequests,
+    )
+    : {
+        status: 'UNAVAILABLE' as PortalCapabilityStatus,
+        data: fallback.propertyRequests,
+        message: 'No hay una propiedad seleccionada.',
+      }
 
   return {
     account: buildAccountContext(access.clientContextId, access.role),
-    dashboard: buildDashboardSnapshot(services, serviceRequests, invoices),
-    profile,
-    propertyDetail,
-    properties,
-    services,
-    requests: serviceRequests,
-    invoices,
-    profileRequests,
-    propertyRequests,
+    dashboard: buildDashboardSnapshot(
+      servicesResult.data,
+      serviceRequestsResult.data,
+      invoicesResult.data,
+    ),
+    capabilities: {
+      account: { status: 'REAL' },
+      profile: profileResult,
+      properties: propertiesResult,
+      profileRequests: profileRequestsResult,
+      propertyRequests: propertyRequestsResult,
+      services: servicesResult,
+      serviceRequests: serviceRequestsResult,
+      invoices: invoicesResult,
+    },
+    profile: profileResult.data,
+    propertyDetail: propertyDetailResult.data,
+    properties: propertiesResult.data,
+    services: servicesResult.data,
+    requests: serviceRequestsResult.data,
+    invoices: invoicesResult.data,
+    profileRequests: profileRequestsResult.data,
+    propertyRequests: propertyRequestsResult.data,
   }
 }
 
@@ -252,6 +307,42 @@ async function readPortalPropertyRequests(
   return buildReviewedChangeSummaries(raw, 'property')
 }
 
+interface CapabilityLoadResult<T> {
+  status: PortalCapabilityStatus
+  data: T
+  message?: string
+}
+
+async function loadCapability<T>(
+  loader: () => Promise<T>,
+  fallback: T,
+): Promise<CapabilityLoadResult<T>> {
+  try {
+    return {
+      status: 'REAL',
+      data: await loader(),
+    }
+  } catch (error) {
+    const { status, message } = classifyCapabilityError(error)
+    return {
+      status,
+      data: fallback,
+      message,
+    }
+  }
+}
+
+function classifyCapabilityError(error: unknown): { status: PortalCapabilityStatus; message: string } {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  if (message.includes('rpc_denied') || message.includes('rpc_empty_response')) {
+    return { status: 'UNAVAILABLE', message: 'Esta capacidad todavía no está disponible.' }
+  }
+  if (message.includes('portal_auth_configuration_unavailable') || message.includes('session')) {
+    return { status: 'UNAVAILABLE', message: 'La sesión segura no está lista.' }
+  }
+  return { status: 'ERROR', message: 'No se pudo leer esta capacidad.' }
+}
+
 function buildAccountContext(clientContextId: string, role: PortalMembershipRole): PortalAccountContext {
   return {
     clientContextId,
@@ -306,9 +397,10 @@ function buildPropertySummaries(raw: unknown): PortalPropertySummary[] {
       const city = stringValue(record.city)
       const postalCode = stringValue(record.postalCode)
       const status = stringValue(record.status)
+      const reference = stringValue(record.reference) || stringValue(record.publicRef) || stringValue(record.display_code)
       return {
         id: stringValue(record.id) || `property-${index + 1}`,
-        publicRef: createPublicPropertyReference(name, index),
+        publicRef: reference || `property-${index + 1}`,
         displayName: name,
         name,
         propertyType,
@@ -353,6 +445,27 @@ function buildPropertyDetail(
     cityLabel: city || 'Ciudad no disponible',
     postalCodeLabel: postalCode || 'Código postal no disponible',
     reviewStateLabel: propertyStatusLabel(status),
+    isSynthetic: false,
+  }
+}
+
+function buildPropertyDetailFromSummary(property: PortalPropertySummary): PortalPropertyDetail {
+  return {
+    id: property.id,
+    publicRef: property.publicRef,
+    name: property.name,
+    propertyType: property.propertyType,
+    address: property.address,
+    city: property.city,
+    postalCode: property.postalCode,
+    status: property.status,
+    publicRefLabel: property.publicRef.toUpperCase(),
+    nameLabel: property.displayName,
+    propertyTypeLabel: property.propertyTypeLabel,
+    addressLabel: property.addressLabel,
+    cityLabel: property.city || 'Ciudad no disponible',
+    postalCodeLabel: property.postalCode || 'Código postal no disponible',
+    reviewStateLabel: property.statusLabel,
     isSynthetic: false,
   }
 }
@@ -441,17 +554,6 @@ function selectPortalProperty(
   if (!properties.length) return null
   if (!route) return properties[0]
   return properties.find((property) => property.publicRef === route.publicRef) ?? null
-}
-
-function createPublicPropertyReference(name: string, index: number): string {
-  const normalized = name
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/gu, '')
-    .replace(/[^a-z0-9]+/gu, '-')
-    .replace(/^-+|-+$/gu, '')
-  return normalized ? `ref-${normalized}` : `ref-property-${index + 1}`
 }
 
 function profileStatusLabel(status: string): string {

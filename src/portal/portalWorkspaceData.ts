@@ -8,9 +8,24 @@ import type {
   PortalServiceSummary,
   PortalMembershipRole,
 } from './contracts'
-import type { PortalAccessState } from './accessMachine'
 
-type AuthenticatedPortalAccess = Extract<PortalAccessState, { status: 'active_member' }>
+export type PortalCapabilityStatus = 'REAL' | 'UNAVAILABLE' | 'ERROR'
+
+export interface PortalCapabilitySnapshot {
+  status: PortalCapabilityStatus
+  message?: string
+}
+
+export interface PortalCapabilityMap {
+  account: PortalCapabilitySnapshot
+  profile: PortalCapabilitySnapshot
+  properties: PortalCapabilitySnapshot
+  profileRequests: PortalCapabilitySnapshot
+  propertyRequests: PortalCapabilitySnapshot
+  services: PortalCapabilitySnapshot
+  serviceRequests: PortalCapabilitySnapshot
+  invoices: PortalCapabilitySnapshot
+}
 
 export interface PortalProfileSnapshot {
   fullName: string
@@ -63,6 +78,7 @@ export interface PortalReviewedChangeRequestSummary {
 export interface PortalFoundationData {
   account: PortalAccountContext
   dashboard: PortalDashboardSnapshot
+  capabilities: PortalCapabilityMap
   profile: PortalProfileSnapshot
   propertyDetail: PortalPropertyDetail | null
   properties: PortalPropertySummary[]
@@ -84,16 +100,24 @@ export interface PortalPreviewContentInput {
 }
 
 export function createFallbackPortalFoundationData(
-  access: AuthenticatedPortalAccess,
+  access: {
+    status?: string
+    clientContextId?: string
+    selectedClientId?: string
+    role?: PortalMembershipRole
+    membership?: { role: PortalMembershipRole } & Record<string, unknown>
+  },
 ): PortalFoundationData {
-  const roleLabel = getRoleLabel(access.membership.role)
+  const role = access.membership?.role ?? access.role ?? 'client_member'
+  const clientContextId = access.selectedClientId ?? access.clientContextId ?? ''
+  const roleLabel = getRoleLabel(role)
 
   return {
     account: {
-      clientContextId: access.selectedClientId,
+      clientContextId,
       clientDisplayName: 'Área de clientes Costa Clean',
       accountLabel: 'Acceso seguro',
-      role: access.membership.role,
+      role,
       isSynthetic: false,
     },
     dashboard: {
@@ -102,6 +126,7 @@ export function createFallbackPortalFoundationData(
       availableDocumentCount: 0,
       isSynthetic: false,
     },
+    capabilities: buildUnavailableCapabilityMap('Lectura segura pendiente'),
     profile: {
       fullName: 'Datos de perfil no disponibles todavía',
       phone: 'Pendiente de lectura segura',
@@ -144,6 +169,7 @@ export function createPreviewPortalFoundationData(
           availableDocumentCount: 0,
         }
       : dashboard,
+    capabilities: buildPreviewCapabilityMap(scenario, isEmptyScenario),
     profile: buildProfileSnapshot(account, scenario),
     propertyDetail: selectedProperty ? buildPropertyDetail(selectedProperty, scenario) : null,
     properties: safeProperties,
@@ -152,6 +178,37 @@ export function createPreviewPortalFoundationData(
     invoices: isEmptyScenario ? [] : invoices,
     profileRequests: buildProfileRequests(scenario),
     propertyRequests: buildPropertyRequests(scenario, selectedProperty),
+  }
+}
+
+export function buildUnavailableCapabilityMap(message: string): PortalCapabilityMap {
+  return {
+    account: { status: 'UNAVAILABLE', message },
+    profile: { status: 'UNAVAILABLE', message },
+    properties: { status: 'UNAVAILABLE', message },
+    profileRequests: { status: 'UNAVAILABLE', message },
+    propertyRequests: { status: 'UNAVAILABLE', message },
+    services: { status: 'UNAVAILABLE', message },
+    serviceRequests: { status: 'UNAVAILABLE', message },
+    invoices: { status: 'UNAVAILABLE', message },
+  }
+}
+
+function buildPreviewCapabilityMap(
+  scenario: PortalPreviewScenario | null,
+  isEmptyScenario: boolean,
+): PortalCapabilityMap {
+  const message = isEmptyScenario ? 'Vista previa vacía' : 'Vista previa sintética'
+  const status: PortalCapabilityStatus = scenario === 'offline' ? 'ERROR' : 'REAL'
+  return {
+    account: { status },
+    profile: { status, message },
+    properties: { status, message },
+    profileRequests: { status, message },
+    propertyRequests: { status, message },
+    services: { status, message },
+    serviceRequests: { status, message },
+    invoices: { status, message },
   }
 }
 

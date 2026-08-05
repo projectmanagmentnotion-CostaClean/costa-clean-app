@@ -10,7 +10,6 @@ type AuthenticatedPortalAccess = Extract<PortalAccessState, { status: 'active_me
 export type PortalWorkspaceDataState =
   | { status: 'loading' }
   | { status: 'ready'; data: PortalFoundationData }
-  | { status: 'unavailable'; data: PortalFoundationData }
   | { status: 'error' }
 
 export interface PortalWorkspaceViewProps {
@@ -61,11 +60,10 @@ export function PortalWorkspaceView({
 }: PortalWorkspaceViewProps) {
   const currentPage = resolvePortalPage(window.location.pathname)
   const pageLabel = currentPage ? portalPageLabels[currentPage] : 'Página no disponible'
-  const workspaceMode = dataState.status === 'ready' ? 'ready' : dataState.status === 'unavailable' ? 'unavailable' : dataState.status
-  const workspaceData =
-    dataState.status === 'ready' || dataState.status === 'unavailable'
-      ? dataState.data
-      : null
+  const workspaceData = dataState.status === 'ready' ? dataState.data : null
+  const workspaceMode = dataState.status === 'ready'
+    ? summarizeWorkspaceMode(dataState.data.capabilities)
+    : dataState.status
 
   const getHref = useMemo(() => {
     return (page: PortalPage) => {
@@ -90,11 +88,11 @@ export function PortalWorkspaceView({
         </a>
         <div className="portal-workspace__context">
           <span className="portal-workspace__page-label">{pageLabel}</span>
-          <span className={`portal-status portal-status--${workspaceMode === 'error' ? 'danger' : workspaceMode === 'unavailable' ? 'warning' : 'success'}`}>
+          <span className={`portal-status portal-status--${workspaceMode === 'error' ? 'danger' : workspaceMode === 'partial' || workspaceMode === 'loading' ? 'warning' : 'success'}`}>
             {workspaceMode === 'ready'
               ? 'Acceso autorizado'
-              : workspaceMode === 'unavailable'
-                ? 'Lectura segura pendiente'
+              : workspaceMode === 'partial'
+                ? 'Lectura parcial'
                 : workspaceMode === 'loading'
                   ? 'Preparando'
                   : 'Error seguro'}
@@ -145,7 +143,6 @@ export function PortalWorkspaceView({
               pathname={window.location.pathname}
               data={workspaceData!}
               getHref={getHref}
-              isUnavailable={dataState.status === 'unavailable'}
               onRefreshData={onRefreshData}
             />
           )}
@@ -159,6 +156,21 @@ export function PortalWorkspaceView({
       />
     </div>
   )
+}
+
+function summarizeWorkspaceMode(capabilities: PortalFoundationData['capabilities']) {
+  const statuses = [
+    capabilities.profile.status,
+    capabilities.properties.status,
+    capabilities.profileRequests.status,
+    capabilities.propertyRequests.status,
+    capabilities.services.status,
+    capabilities.serviceRequests.status,
+    capabilities.invoices.status,
+  ]
+  if (statuses.includes('ERROR')) return 'error'
+  if (statuses.includes('UNAVAILABLE')) return 'partial'
+  return 'ready'
 }
 
 function MobilePortalNavigation({

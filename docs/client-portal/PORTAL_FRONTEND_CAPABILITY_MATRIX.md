@@ -13,7 +13,7 @@ verified contract, and what must remain a safe UI-only surface.
 | Account | account overview | implemented | real | Must never reveal internal membership IDs. |
 | Profile | read-only profile summary | implemented | real/preview | Renders current account context and the reviewed-change form. |
 | Profile | reviewed-change request StepFlow | implemented | backend contract exists as source design | Uses public receipts and no direct canonical writes. |
-| Properties | property list / property detail | implemented | narrow read contract | Uses public property refs and client-scoped cards only. |
+| Properties | property list / property detail | implemented | narrow read contract | Uses backend `publicRef` values surfaced by the property RPCs and client-scoped cards only. |
 | Properties | reviewed-change request StepFlow | implemented | backend contract exists as source design | Keeps internal IDs opaque in the visible UI. |
 | Services | service history | foundation only | future gate | No service mutation in this sprint. |
 | Documents | invoice/document overview | foundation only | future gate | No private document download until the signing boundary is verified. |

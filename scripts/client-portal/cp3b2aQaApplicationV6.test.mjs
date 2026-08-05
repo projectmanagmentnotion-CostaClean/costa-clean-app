@@ -1,4 +1,5 @@
-import { readFileSync, writeFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
@@ -157,16 +158,21 @@ function buildRecoveryHarness({
   recoveryEligibility = true,
 } = {}) {
   const calls = []
+  const harnessId = randomUUID().replaceAll('-', '')
+  const privateRoot = path.join(tmpdir(), `costa-clean-cp3b2a-v6r1e-${harnessId}`)
+  const backupManifestPath = path.join(privateRoot, 'test-backup.json')
+  const ledgerPath = path.join(privateRoot, 'recovery-ledger.json')
+  const failureEnvelopePath = path.join(privateRoot, 'failure-envelope.json')
   const operations = buildExecutionOperationsV6({
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
-    CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
+    CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: backupManifestPath,
     CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
     PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
   }, {
-    runId: 'CP3B2A-V6R1E-RECOVERY123456',
+    runId: `CP3B2A-V6R1E-RECOVERY-${harnessId.slice(0, 12).toUpperCase()}`,
     runPsql: () => ({ rows: [], rowCount: 0, output: '', status: 0, exitCode: 0 }),
     gitState: () => ({
       branch: 'main',
@@ -208,7 +214,7 @@ function buildRecoveryHarness({
   }
   operations.compareBackupLive = () => true
   operations.createLedger = () => {
-    const ledgerPath = path.join(tmpdir(), 'cp3b2a-qa-v6r1e-recovery-ledger.json')
+    mkdirSync(privateRoot, { recursive: true })
     writeFileSync(ledgerPath, `${JSON.stringify({
       version: 6,
       revision: 'V6R1E',
@@ -265,7 +271,7 @@ function buildRecoveryHarness({
       ...failureSnapshot,
     }
   }
-  operations.persistFailureEnvelope = () => '/tmp/failure-envelope.json'
+  operations.persistFailureEnvelope = () => failureEnvelopePath
   operations.verifyFailureEnvelope = () => ({
     recoveryEligibility,
     cleanupState: 'PASS_CLEANED',
@@ -390,7 +396,11 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
         CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
         CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
         CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
-        CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
+        CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: path.join(
+          tmpdir(),
+          `costa-clean-cp3b2a-v6r1e-runner-${randomUUID().replaceAll('-', '')}`,
+          'test-backup.json',
+        ),
         CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
         PORTAL_ALLOWED_ORIGIN: 'https://app.costacleanbcn.com',
       },
@@ -531,7 +541,11 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
       completeLedger: () => { calls.push('completeLedger') },
       executeRollback: () => { calls.push('executeRollback') },
       verifyExactPrestateRestored: () => { calls.push('verifyExactPrestateRestored') },
-      persistFailureEnvelope: () => '/tmp/failure-envelope.json',
+      persistFailureEnvelope: () => path.join(
+        tmpdir(),
+        `costa-clean-cp3b2a-v6r1e-failure-${randomUUID().replaceAll('-', '')}`,
+        'failure-envelope.json',
+      ),
       verifyFailureEnvelope: () => ({ recoveryEligibility: false }),
       determineRecoveryEligibility: () => ({ eligible: false, reason: 'guarded_recovery_not_eligible' }),
       handleFailure: (error, state, stages) => ({

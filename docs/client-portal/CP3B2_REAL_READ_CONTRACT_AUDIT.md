@@ -10,7 +10,9 @@ properties slice.
 - Portal reads now flow through `src/portal/portalReadApi.ts`.
 - Profile data is rendered as read-only account context with a reviewed-change
   request form.
-- Property data is routed through public references, not internal IDs.
+- Property data is routed through backend `publicRef` values, not internal IDs,
+  and the parser now fails closed instead of fabricating a property route when
+  the contract field is missing.
 - Property cards link to public property routes.
 - Reviewed-change forms submit through the portal-specific request adapter and
   return a receipt.
@@ -33,4 +35,6 @@ properties slice.
 - Browser QA was exercised locally across the required mobile, tablet and
   desktop sizes with no horizontal overflow observed in the tested portal
   surfaces.
-
+- Local regression coverage now checks stable property public refs, duplicate
+  names with distinct routes, and safe handling of rows that do not expose the
+  backend reference field.

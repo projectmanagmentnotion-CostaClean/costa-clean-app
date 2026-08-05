@@ -337,6 +337,9 @@ function classifyCapabilityError(error: unknown): { status: PortalCapabilityStat
   if (message.includes('rpc_denied') || message.includes('rpc_empty_response')) {
     return { status: 'UNAVAILABLE', message: 'Esta capacidad todavía no está disponible.' }
   }
+  if (message.includes('portal_property_reference_')) {
+    return { status: 'UNAVAILABLE', message: 'La referencia pública de la propiedad no está disponible.' }
+  }
   if (message.includes('portal_auth_configuration_unavailable') || message.includes('session')) {
     return { status: 'UNAVAILABLE', message: 'La sesión segura no está lista.' }
   }
@@ -388,19 +391,23 @@ function buildProfileSnapshot(raw: JsonRecord): PortalProfileSnapshot {
 
 function buildPropertySummaries(raw: unknown): PortalPropertySummary[] {
   const rows = arrayValue(raw)
-  return rows
-    .map((row, index) => {
+  const properties = rows
+    .map((row) => {
       const record = objectValue(row)
+      const id = stringValue(record.id)
+      const publicRef = stringValue(record.publicRef)
       const name = stringValue(record.name)
+      if (!id || !publicRef || !name) return null
+
       const propertyType = stringValue(record.propertyType)
       const address = stringValue(record.address)
       const city = stringValue(record.city)
       const postalCode = stringValue(record.postalCode)
       const status = stringValue(record.status)
-      const reference = stringValue(record.reference) || stringValue(record.publicRef) || stringValue(record.display_code)
+
       return {
-        id: stringValue(record.id) || `property-${index + 1}`,
-        publicRef: reference || `property-${index + 1}`,
+        id,
+        publicRef,
         displayName: name,
         name,
         propertyType,
@@ -414,7 +421,13 @@ function buildPropertySummaries(raw: unknown): PortalPropertySummary[] {
         isSynthetic: false,
       }
     })
-    .filter((property) => property.displayName.length > 0)
+    .filter((property): property is PortalPropertySummary => property !== null)
+
+  if (rows.length > 0 && properties.length === 0) {
+    throw new Error('portal_property_reference_unavailable')
+  }
+
+  return properties
 }
 
 function buildPropertyDetail(
@@ -422,6 +435,13 @@ function buildPropertyDetail(
   property: PortalPropertySummary,
 ): PortalPropertyDetail {
   const record = objectValue(raw)
+  const publicRef = stringValue(record.publicRef)
+  if (!publicRef) {
+    throw new Error('portal_property_reference_unavailable')
+  }
+  if (publicRef !== property.publicRef) {
+    throw new Error('portal_property_reference_mismatch')
+  }
   const name = stringValue(record.name) || property.name
   const propertyType = stringValue(record.propertyType) || property.propertyType
   const address = stringValue(record.address) || property.address
@@ -431,14 +451,14 @@ function buildPropertyDetail(
 
   return {
     id: property.id,
-    publicRef: property.publicRef,
+    publicRef,
     name,
     propertyType,
     address,
     city,
     postalCode,
     status,
-    publicRefLabel: property.publicRef.toUpperCase(),
+    publicRefLabel: publicRef.toUpperCase(),
     nameLabel: name,
     propertyTypeLabel: propertyTypeLabel(propertyType),
     addressLabel: [address, city].filter(Boolean).join(' · ') || 'Dirección no disponible',

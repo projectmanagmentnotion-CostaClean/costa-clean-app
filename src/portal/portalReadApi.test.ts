@@ -5,6 +5,7 @@ vi.mock('./adapters/portalSupabaseClient', () => ({
 }))
 
 import { getPortalSupabaseClient } from './adapters/portalSupabaseClient'
+import { getPortalPropertyPath } from './portalNavigation'
 import { loadPortalFoundationData } from './portalReadApi'
 
 const mockedGetPortalSupabaseClient = vi.mocked(getPortalSupabaseClient)
@@ -14,7 +15,7 @@ beforeEach(() => {
 })
 
 describe('portal read api', () => {
-  it('uses the backend property display code as the public portal reference', async () => {
+  it('uses the backend publicRef as the property route key even when names collide', async () => {
     const client = createMockPortalClient(async (functionName: string) => {
           switch (functionName) {
             case 'portal_get_client_profile':
@@ -33,13 +34,23 @@ describe('portal read api', () => {
               return {
                 data: [
                   {
-                    id: 'property-qa-1',
-                    display_code: 'PRO-9001',
+                    id: 'property-qa-2',
+                    publicRef: 'PRO-9002',
                     name: 'Espacio Norte',
                     propertyType: 'vivienda',
                     address: 'Calle Marina 12',
                     city: 'Barcelona',
                     postalCode: '08001',
+                    status: 'active',
+                  },
+                  {
+                    id: 'property-qa-1',
+                    publicRef: 'PRO-9001',
+                    name: 'Espacio Norte',
+                    propertyType: 'vivienda',
+                    address: 'Calle Marina 18',
+                    city: 'Barcelona',
+                    postalCode: '08002',
                     status: 'active',
                   },
                 ],
@@ -49,7 +60,8 @@ describe('portal read api', () => {
               return {
                 data: {
                   id: 'property-qa-1',
-                  name: 'Espacio Norte',
+                  publicRef: 'PRO-9001',
+                  name: 'Espacio Norte Renovado',
                   propertyType: 'vivienda',
                   address: 'Calle Marina 12',
                   city: 'Barcelona',
@@ -104,11 +116,139 @@ describe('portal read api', () => {
       '/portal/properties/PRO-9001',
     )
 
-    expect(data.properties[0]?.publicRef).toBe('PRO-9001')
+    expect(data.properties.map((property) => property.publicRef)).toEqual(['PRO-9002', 'PRO-9001'])
+    expect(data.properties[1]?.name).toBe('Espacio Norte')
     expect(data.propertyDetail?.publicRef).toBe('PRO-9001')
+    expect(data.propertyDetail?.nameLabel).toBe('Espacio Norte Renovado')
+    expect(getPortalPropertyPath(data.properties[1]?.publicRef ?? '')).toBe('/portal/properties/PRO-9001')
     expect(data.capabilities.properties.status).toBe('REAL')
     expect(data.capabilities.services.status).toBe('ERROR')
     expect(data.capabilities.profile.status).toBe('REAL')
+  })
+
+  it('drops rows without a publicRef and fails closed when the list has no valid property routes', async () => {
+    const client = createMockPortalClient(async (functionName: string) => {
+          if (functionName === 'portal_list_services') {
+            return { data: [], error: null }
+          }
+
+          if (functionName === 'portal_get_client_profile') {
+            return {
+              data: {
+                fullName: 'Cliente QA',
+                phone: '+34 600 100 200',
+                email: 'cliente.qa@example.invalid',
+                taxId: 'B12345678',
+                billingAddress: 'Av. Marina 12',
+                status: 'active',
+              },
+              error: null,
+            }
+          }
+
+          if (functionName === 'portal_list_properties') {
+            return {
+              data: [
+                {
+                  id: 'property-qa-1',
+                  publicRef: 'PRO-9001',
+                  name: 'Espacio Norte',
+                  propertyType: 'vivienda',
+                  address: 'Calle Marina 12',
+                  city: 'Barcelona',
+                  postalCode: '08001',
+                  status: 'active',
+                },
+                {
+                  id: 'property-qa-2',
+                  name: 'Espacio Centro',
+                  propertyType: 'vivienda',
+                  address: 'Calle Marina 14',
+                  city: 'Barcelona',
+                  postalCode: '08002',
+                  status: 'active',
+                },
+              ],
+              error: null,
+            }
+          }
+
+          return { data: [], error: null }
+    })
+
+    mockedGetPortalSupabaseClient.mockReturnValue({
+      client,
+      error: null,
+    })
+
+    const data = await loadPortalFoundationData(
+      {
+        clientContextId: 'client-qa',
+        role: 'client_admin',
+      },
+      '/portal/properties/PRO-9001',
+    )
+
+    expect(data.properties).toHaveLength(1)
+    expect(data.properties[0]?.publicRef).toBe('PRO-9001')
+    expect(data.capabilities.properties.status).toBe('REAL')
+  })
+
+  it('marks the properties capability unavailable when no property row has a stable publicRef', async () => {
+    const client = createMockPortalClient(async (functionName: string) => {
+          if (functionName === 'portal_get_client_profile') {
+            return {
+              data: {
+                fullName: 'Cliente QA',
+                phone: '+34 600 100 200',
+                email: 'cliente.qa@example.invalid',
+                taxId: 'B12345678',
+                billingAddress: 'Av. Marina 12',
+                status: 'active',
+              },
+              error: null,
+            }
+          }
+
+          if (functionName === 'portal_list_properties') {
+            return {
+              data: [
+                {
+                  id: 'property-qa-1',
+                  name: 'Espacio Norte',
+                  propertyType: 'vivienda',
+                  address: 'Calle Marina 12',
+                  city: 'Barcelona',
+                  postalCode: '08001',
+                  status: 'active',
+                },
+              ],
+              error: null,
+            }
+          }
+
+          if (functionName === 'portal_list_services') {
+            return { data: [], error: null }
+          }
+
+          return { data: [], error: null }
+    })
+
+    mockedGetPortalSupabaseClient.mockReturnValue({
+      client,
+      error: null,
+    })
+
+    const data = await loadPortalFoundationData(
+      {
+        clientContextId: 'client-qa',
+        role: 'client_member',
+      },
+      '/portal/properties/PRO-9001',
+    )
+
+    expect(data.properties).toEqual([])
+    expect(data.capabilities.properties.status).toBe('UNAVAILABLE')
   })
 
   it('keeps other capabilities readable when one read fails', async () => {
@@ -136,7 +276,7 @@ describe('portal read api', () => {
               data: [
                 {
                   id: 'property-qa-1',
-                  display_code: 'PRO-9001',
+                  publicRef: 'PRO-9001',
                   name: 'Espacio Norte',
                   propertyType: 'vivienda',
                   address: 'Calle Marina 12',

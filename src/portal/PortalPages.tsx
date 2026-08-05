@@ -379,10 +379,8 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
   const requestRoute = resolvePortalRequestRoute(pathname)
   const routeStep = resolveCorrectionStep(pathname, 'property')
   const selectedProperty = data.propertyDetail
-  const propertyRef = requestRoute?.propertyRef ?? selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'
-  const propertyBasePath = withCurrentSearch(
-    getPortalPropertyPath(propertyRef),
-  )
+  const propertyRef = requestRoute?.propertyRef ?? ''
+  const propertyBasePath = withCurrentSearch(getPortalPropertyPath(propertyRef))
   if (requestRoute?.scope === 'property') {
     if (requestRoute.reference) {
       const request = data.propertyRequests.find((item) => item.reference === requestRoute.reference) ?? null
@@ -433,7 +431,7 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
           pathname={pathname}
           basePath={`${propertyBasePath}/correction`}
           returnPath={propertyBasePath}
-          resourceRef={selectedProperty?.publicRef ?? data.properties[0]?.publicRef ?? 'ref-property'}
+          resourceRef={propertyRef}
           resourceId={selectedProperty?.id ?? ''}
           onRefreshData={onRefreshData}
         />

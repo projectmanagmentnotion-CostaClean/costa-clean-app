@@ -236,8 +236,8 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   change requests without canonical-table writes. The customer-safe canonical
   status and opaque-ID mappings are frozen and the frontend implementation is
   the active gate. Local implementation now includes the isolated `/portal`
-  shell, real profile/property read adapter, public property references and
-  reviewed-change forms.
+  shell, real profile/property read adapter, strict backend `publicRef`
+  handling for properties, and reviewed-change forms.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
   cancellation, idempotency and explicit feedback.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and

@@ -64,8 +64,8 @@
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "5be3064202b3e5c7140f1a7641a17b598f93199b",
-      "blobSha256": "3ecc145afe01a7b66f02f93a643fa3fe736304c298d17fd775e1e07946c92620"
+      "gitBlobId": "579579ad9f9ad644de22dc13280f8d486cf881d7",
+      "blobSha256": "92f0700d3185c9d4a27b73e816aaf6c2295db70cb740e390cfd0603272b489f2"
     },
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",

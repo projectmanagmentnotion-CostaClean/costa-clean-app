@@ -19,10 +19,12 @@ portal frontend implementation path.
 - preview properties use public references such as `ref-*`
 - reviewed-change receipts use public references only
 - property routes use public references in the path
+- portal property reads now fail closed when the backend does not provide the
+  stable `publicRef` field, instead of fabricating `property-*` or
+  `ref-property` routes
 
 ## Non-goals
 
 - No remote data cleanup was performed.
 - No production, QA or WordPress records were modified.
 - No schema, policy or auth mutation was made.
-

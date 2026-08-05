@@ -27,8 +27,8 @@ slice. It is a repo audit, not a remote production proof.
 | `/portal/service-requests` | implemented | `src/portal/PortalServiceArea.tsx`, `src/portal/PortalWorkspaceView.tsx` |
 | `/portal/service-requests/:reference` | implemented | `src/portal/portalNavigation.ts`, `src/portal/PortalServiceArea.tsx` |
 | `/portal/service-requests/new/:step` | implemented | `src/portal/PortalServiceArea.tsx` |
-| submit request | implemented in repo | `public.portal_submit_service_request_v2(...)` in `supabase/migrations/20260805120000_portal_service_request_contract_v2.sql` |
-| cancel request | implemented in repo | `public.portal_cancel_own_service_request_v2(...)` in `supabase/migrations/20260805120000_portal_service_request_contract_v2.sql` |
+| submit request | implemented in repo | `public.portal_submit_service_request_v2(...)` in `supabase/migrations/20260805123000_portal_service_request_contract_v3.sql` |
+| cancel request | implemented in repo | `public.portal_cancel_own_service_request_v2(...)` in `supabase/migrations/20260805123000_portal_service_request_contract_v3.sql` |
 
 ## DTO rules
 
@@ -57,4 +57,5 @@ slice. It is a repo audit, not a remote production proof.
 - `npm.cmd run qa:agents` passed.
 - `npm.cmd run lint` passed.
 - `npm.cmd run build` passed.
-
+- QA postcheck passed against the real QA database and the disposable PostgreSQL 17 proof.
+- Browser smoke against the active local app reached the login screen only; authenticated services/request UI proof remains blocked in this environment.

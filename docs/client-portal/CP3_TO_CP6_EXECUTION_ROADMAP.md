@@ -5,7 +5,7 @@ Date: 2026-08-04
 Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
 CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A real QA closeout `DONE`; CP-3B.2A.2
 `BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5
-`DONE`; CP-3B.2 `AUTHORIZED_AND_IN_PROGRESS`; CP-3B.3 and later gates
+`DONE`; CP-3B.2 `AUTHORIZED_AND_IN_PROGRESS`; CP-3B.3 `BLOCKED_PENDING_AUTHENTICATED_BROWSER_PROOF_AND_RESIDUE`; later gates
 `NOT STARTED`
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
@@ -223,7 +223,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `BLOCKED_PENDING_AUTHENTICATED_BROWSER_PROOF_AND_RESIDUE` |
 | Objective | Expose service history and a real pending-review service-request lifecycle. |
 | User outcome | Clients can inspect their services, submit/cancel eligible requests and see truthful review status. |
 | Dependencies | CP-3B.2 closed; request RPC/Edge contracts, allowed transitions and idempotency rules verified. |

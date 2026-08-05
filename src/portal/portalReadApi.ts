@@ -9,6 +9,9 @@ import type {
   PortalInvoiceSummary,
   PortalMembershipRole,
   PortalPropertySummary,
+  PortalServiceRequestCancellationInput,
+  PortalServiceRequestReceipt,
+  PortalServiceRequestSubmissionInput,
   PortalServiceRequestSummary,
   PortalServiceSummary,
 } from './contracts'
@@ -254,7 +257,7 @@ async function readPortalServices(
   client: PortalRpcClientLike,
   clientId: string,
 ): Promise<PortalServiceSummary[]> {
-  const raw = await rpcJson<unknown>(client, 'portal_list_services', {
+  const raw = await rpcJson<unknown>(client, 'portal_list_services_v2', {
     p_client_id: clientId,
     p_limit: 25,
   })
@@ -265,7 +268,7 @@ async function readPortalServiceRequests(
   client: PortalRpcClientLike,
   clientId: string,
 ): Promise<PortalServiceRequestSummary[]> {
-  const raw = await rpcJson<unknown>(client, 'portal_list_service_requests', {
+  const raw = await rpcJson<unknown>(client, 'portal_list_own_service_requests_v2', {
     p_client_id: clientId,
     p_limit: 25,
   })
@@ -307,6 +310,34 @@ async function readPortalPropertyRequests(
   return buildReviewedChangeSummaries(raw, 'property')
 }
 
+export async function submitServiceRequest(
+  input: PortalServiceRequestSubmissionInput,
+): Promise<PortalServiceRequestReceipt> {
+  const client = getPortalRpcClient()
+  const raw = await rpcJson<unknown>(client, 'portal_submit_service_request_v2', {
+    p_client_id: input.clientId,
+    p_property_public_ref: input.propertyPublicRef,
+    p_service_type: input.serviceType,
+    p_preferred_date: input.preferredDate,
+    p_preferred_time_window: input.preferredTimeWindow || null,
+    p_notes: input.notes,
+    p_idempotency_key: input.idempotencyKey,
+  })
+  return readServiceRequestReceipt(raw)
+}
+
+export async function cancelServiceRequest(
+  input: PortalServiceRequestCancellationInput,
+): Promise<PortalServiceRequestReceipt> {
+  const client = getPortalRpcClient()
+  const raw = await rpcJson<unknown>(client, 'portal_cancel_own_service_request_v2', {
+    p_client_id: input.clientId,
+    p_request_reference: input.reference,
+    p_expected_version: input.version,
+  })
+  return readServiceRequestReceipt(raw)
+}
+
 interface CapabilityLoadResult<T> {
   status: PortalCapabilityStatus
   data: T
@@ -340,6 +371,12 @@ function classifyCapabilityError(error: unknown): { status: PortalCapabilityStat
   if (message.includes('portal_property_reference_')) {
     return { status: 'UNAVAILABLE', message: 'La referencia pública de la propiedad no está disponible.' }
   }
+  if (message.includes('portal_service_reference_')) {
+    return { status: 'UNAVAILABLE', message: 'La referencia pública del servicio no está disponible.' }
+  }
+  if (message.includes('portal_service_request_reference_')) {
+    return { status: 'UNAVAILABLE', message: 'La referencia pública de la solicitud no está disponible.' }
+  }
   if (message.includes('portal_auth_configuration_unavailable') || message.includes('session')) {
     return { status: 'UNAVAILABLE', message: 'La sesión segura no está lista.' }
   }
@@ -364,9 +401,9 @@ function buildDashboardSnapshot(
   const nextService = services[0] ?? null
   return {
     nextServiceLabel: nextService
-      ? `${nextService.serviceLabel} · ${nextService.scheduleLabel}`
+      ? `${nextService.serviceTypeLabel} · ${nextService.scheduleLabel}`
       : 'Sin próximo servicio confirmado',
-    openRequestCount: requests.filter((request) => request.statusLabel !== 'Completada').length,
+    openRequestCount: requests.filter((request) => request.status !== 'cancelled' && request.status !== 'rejected').length,
     availableDocumentCount: invoices.length,
     isSynthetic: false,
   }
@@ -492,35 +529,96 @@ function buildPropertyDetailFromSummary(property: PortalPropertySummary): Portal
 
 function buildServiceSummaries(raw: unknown): PortalServiceSummary[] {
   const rows = arrayValue(raw)
-  return rows.map((row, index) => {
+  const summaries = rows.map((row) => {
     const record = objectValue(row)
-    const scheduleLabel = dateTimeLabel(stringValue(record.scheduledDate))
+    const reference = stringValue(record.reference)
+    const propertyPublicRef = stringValue(record.propertyPublicRef)
+    const propertyLabel = stringValue(record.propertyName)
+    const propertyAddressLabel = stringValue(record.addressLabel)
+    const serviceType = stringValue(record.serviceType)
+    const scheduledDate = stringValue(record.scheduledDate)
+    const status = stringValue(record.status)
+
+    if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !scheduledDate || !status) {
+      return null
+    }
+
     return {
-      id: stringValue(record.id) || `service-${index + 1}`,
-      serviceLabel: serviceTypeLabel(stringValue(record.serviceType)),
-      propertyLabel: `Propiedad ${index + 1}`,
-      scheduleLabel,
-      statusLabel: serviceStatusLabel(stringValue(record.status)),
+      reference,
+      referenceLabel: reference,
+      serviceType,
+      serviceTypeLabel: serviceTypeLabel(serviceType),
+      propertyPublicRef,
+      propertyLabel,
+      propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
+      scheduledDate,
+      scheduleLabel: dateLabel(scheduledDate),
+      status,
+      statusLabel: serviceStatusLabel(status),
       isSynthetic: false,
     }
-  })
+  }).filter((summary): summary is PortalServiceSummary => summary !== null)
+
+  if (rows.length > 0 && summaries.length === 0) {
+    throw new Error('portal_service_reference_unavailable')
+  }
+
+  return summaries
 }
 
 function buildServiceRequestSummaries(raw: unknown): PortalServiceRequestSummary[] {
   const rows = arrayValue(raw)
-  return rows.map((row, index) => {
+  const summaries = rows.map((row) => {
     const record = objectValue(row)
+    const reference = stringValue(record.reference)
+    const propertyPublicRef = stringValue(record.propertyPublicRef)
+    const propertyLabel = stringValue(record.propertyName)
+    const propertyAddressLabel = stringValue(record.addressLabel)
     const serviceType = stringValue(record.serviceType)
     const preferredDate = stringValue(record.preferredDate)
+    const preferredTimeWindow = stringValue(record.preferredTimeWindow)
+    const requestedAt = stringValue(record.requestedAt)
+    const resolvedAt = record.resolvedAt === null ? '' : stringValue(record.resolvedAt)
+    const notes = stringValue(record.notes)
     const status = stringValue(record.status)
+    const version = numberValue(record.version)
+    const canCancel = booleanValue(record.canCancel)
+
+    if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !requestedAt || !status || !Number.isFinite(version)) {
+      return null
+    }
+
     return {
-      id: stringValue(record.id) || `service-request-${index + 1}`,
-      requestLabel: serviceTypeLabel(serviceType),
-      submittedLabel: dateTimeLabel(stringValue(record.createdAt) || preferredDate),
+      reference,
+      referenceLabel: reference,
+      propertyPublicRef,
+      propertyLabel,
+      propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
+      serviceType,
+      serviceTypeLabel: serviceTypeLabel(serviceType),
+      preferredDate,
+      preferredDateLabel: dateLabel(preferredDate),
+      preferredTimeWindow,
+      preferredTimeWindowLabel: preferredTimeWindowLabel(preferredTimeWindow),
+      requestedAt,
+      requestedAtLabel: dateTimeLabel(requestedAt),
+      resolvedAt: resolvedAt || null,
+      resolvedAtLabel: resolvedAt ? dateTimeLabel(resolvedAt) : null,
+      notes,
+      notesLabel: notes || 'Sin detalles adicionales',
+      status,
       statusLabel: serviceRequestStatusLabel(status),
+      canCancel,
+      version,
       isSynthetic: false,
     }
-  })
+  }).filter((summary): summary is PortalServiceRequestSummary => summary !== null)
+
+  if (rows.length > 0 && summaries.length === 0) {
+    throw new Error('portal_service_request_reference_unavailable')
+  }
+
+  return summaries
 }
 
 function buildInvoiceSummaries(raw: unknown): PortalInvoiceSummary[] {
@@ -565,6 +663,43 @@ function buildReviewedChangeSummaries(
       isSynthetic: false,
     }
   })
+}
+
+function readServiceRequestReceipt(raw: unknown): PortalServiceRequestReceipt {
+  const record = objectValue(raw)
+  const reference = stringValue(record.reference)
+  const status = stringValue(record.status)
+  const requestedAt = stringValue(record.requestedAt)
+  const resolvedAt = record.resolvedAt === null ? null : stringValue(record.resolvedAt)
+  const propertyPublicRef = stringValue(record.propertyPublicRef)
+  const propertyLabel = stringValue(record.propertyLabel)
+  const serviceType = stringValue(record.serviceType)
+  const preferredDate = stringValue(record.preferredDate)
+  const preferredTimeWindow = stringValue(record.preferredTimeWindow)
+  const notes = stringValue(record.notes)
+  const version = numberValue(record.version)
+
+  if (!reference || !requestedAt || !propertyPublicRef || !propertyLabel || !serviceType || !preferredDate || !Number.isFinite(version)) {
+    throw new Error('service_request_receipt_invalid')
+  }
+
+  return {
+    reference,
+    status: serviceRequestStatusLabel(status),
+    requestedAt,
+    resolvedAt,
+    propertyPublicRef,
+    propertyLabel,
+    serviceType,
+    serviceTypeLabel: serviceTypeLabel(serviceType),
+    preferredDate,
+    preferredDateLabel: dateLabel(preferredDate),
+    preferredTimeWindow,
+    preferredTimeWindowLabel: preferredTimeWindowLabel(preferredTimeWindow),
+    notes,
+    notesLabel: notes || 'Sin detalles adicionales',
+    version,
+  }
 }
 
 function selectPortalProperty(
@@ -612,26 +747,44 @@ function serviceTypeLabel(value: string): string {
     case 'commercial_cleaning':
       return 'Limpieza comercial'
     case 'other':
-      return 'Servicio solicitado'
+      return 'Otro servicio'
     default:
       return 'Servicio no disponible'
   }
 }
 
 function serviceStatusLabel(value: string): string {
-  if (!value) return 'Estado no disponible'
-  return value
-    .split('_')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ')
+  switch (value) {
+    case 'scheduled':
+      return 'Programado'
+    case 'in_progress':
+      return 'En curso'
+    case 'completed':
+      return 'Completado'
+    case 'cancelled':
+      return 'Cancelado'
+    default:
+      return 'Estado no disponible'
+  }
 }
 
 function serviceRequestStatusLabel(value: string): string {
-  if (!value) return 'Solicitud pendiente'
-  return value
-    .split('_')
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ')
+  switch (value) {
+    case 'pending_review':
+      return 'Pendiente de revisión'
+    case 'under_review':
+      return 'En revisión'
+    case 'quoted':
+      return 'Propuesta disponible'
+    case 'confirmed':
+      return 'Servicio programado'
+    case 'rejected':
+      return 'No aceptada'
+    case 'cancelled':
+      return 'Cancelada'
+    default:
+      return 'Solicitud no disponible'
+  }
 }
 
 function invoiceStatusLabel(value: string): string {
@@ -670,6 +823,19 @@ function dateTimeLabel(value: string): string {
       }).format(date)
 }
 
+function preferredTimeWindowLabel(value: string): string {
+  switch (value) {
+    case 'morning':
+      return 'Mañana'
+    case 'afternoon':
+      return 'Tarde'
+    case 'flexible':
+      return 'Flexible'
+    default:
+      return value ? 'Ventana no disponible' : 'Sin franja preferida'
+  }
+}
+
 function arrayValue(value: unknown): unknown[] {
   return Array.isArray(value) ? value : []
 }
@@ -682,4 +848,12 @@ function objectValue(value: unknown): JsonRecord {
 
 function stringValue(value: unknown): string {
   return typeof value === 'string' ? value.trim() : ''
+}
+
+function numberValue(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : Number.NaN
+}
+
+function booleanValue(value: unknown): boolean {
+  return typeof value === 'boolean' ? value : false
 }

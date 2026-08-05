@@ -6,6 +6,7 @@ export const portalPages = [
   'profile',
   'properties',
   'services',
+  'service-requests',
   'documents',
   'requests',
   'invoices',
@@ -21,10 +22,19 @@ export interface PortalPropertyRoute {
   step: 'fields' | 'values' | 'review' | 'success' | null
 }
 
+export interface PortalServiceRoute {
+  serviceRef: string
+}
+
 export interface PortalRequestRoute {
   scope: 'profile' | 'property'
   propertyRef: string | null
   reference: string | null
+}
+
+export interface PortalServiceRequestRoute {
+  reference: string | null
+  step: 'property' | 'service' | 'date' | 'details' | 'review' | 'success' | null
 }
 
 export type PortalPage = (typeof portalPages)[number]
@@ -37,6 +47,7 @@ const portalPageByPath = new Map<string, PortalPage>([
   ['/portal/profile', 'profile'],
   ['/portal/properties', 'properties'],
   ['/portal/services', 'services'],
+  ['/portal/service-requests', 'service-requests'],
   ['/portal/documents', 'documents'],
   ['/portal/requests', 'requests'],
   ['/portal/invoices', 'invoices'],
@@ -62,6 +73,7 @@ const portalPathByPage: Record<PortalPage, string> = {
   profile: '/portal/profile',
   properties: '/portal/properties',
   services: '/portal/services',
+  'service-requests': '/portal/service-requests',
   documents: '/portal/documents',
   requests: '/portal/requests',
   invoices: '/portal/invoices',
@@ -100,6 +112,22 @@ export function getPortalPropertyPath(publicRef: string): string {
   return `/portal/properties/${publicRef}`
 }
 
+export function getPortalServicePath(serviceRef: string): string {
+  return `/portal/services/${serviceRef}`
+}
+
+export function getPortalServiceRequestsPath(): string {
+  return '/portal/service-requests'
+}
+
+export function getPortalServiceRequestPath(reference: string): string {
+  return `${getPortalServiceRequestsPath()}/${reference}`
+}
+
+export function getPortalServiceRequestNewPath(step: 'property' | 'service' | 'date' | 'details' | 'review' | 'success'): string {
+  return `${getPortalServiceRequestsPath()}/new/${step}`
+}
+
 export function getPortalProfileRequestsPath(): string {
   return '/portal/profile/requests'
 }
@@ -134,6 +162,15 @@ export function resolvePortalPropertyRoute(pathname: string): PortalPropertyRout
   return { publicRef, step: null }
 }
 
+export function resolvePortalServiceRoute(pathname: string): PortalServiceRoute | null {
+  const normalizedPath = normalizeApplicationPathname(pathname)
+  if (!normalizedPath.startsWith('/portal/services/')) return null
+
+  const serviceRef = normalizedPath.slice('/portal/services/'.length).split('/')[0] ?? ''
+  if (!serviceRef) return null
+  return { serviceRef }
+}
+
 export function resolvePortalRequestRoute(pathname: string): PortalRequestRoute | null {
   const normalizedPath = normalizeApplicationPathname(pathname)
 
@@ -160,8 +197,35 @@ export function resolvePortalRequestRoute(pathname: string): PortalRequestRoute 
   return { scope: 'property', propertyRef, reference: maybeReference }
 }
 
+export function resolvePortalServiceRequestRoute(pathname: string): PortalServiceRequestRoute | null {
+  const normalizedPath = normalizeApplicationPathname(pathname)
+
+  if (normalizedPath === '/portal/service-requests') {
+    return { reference: null, step: null }
+  }
+
+  if (normalizedPath.startsWith('/portal/service-requests/new/')) {
+    const step = normalizedPath.slice('/portal/service-requests/new/'.length).split('/')[0] ?? ''
+    if (!step) return null
+    if (step === 'property' || step === 'service' || step === 'date' || step === 'details' || step === 'review' || step === 'success') {
+      return { reference: null, step }
+    }
+    return null
+  }
+
+  if (normalizedPath.startsWith('/portal/service-requests/')) {
+    const reference = normalizedPath.slice('/portal/service-requests/'.length).split('/')[0] ?? ''
+    if (!reference || reference === 'new') return null
+    return { reference, step: null }
+  }
+
+  return null
+}
+
 function resolveNestedPortalPage(pathname: string): PortalPage | null {
   if (pathname.startsWith('/portal/profile/')) return 'profile'
   if (pathname.startsWith('/portal/properties/')) return 'properties'
+  if (pathname.startsWith('/portal/services/')) return 'services'
+  if (pathname.startsWith('/portal/service-requests/')) return 'service-requests'
   return null
 }

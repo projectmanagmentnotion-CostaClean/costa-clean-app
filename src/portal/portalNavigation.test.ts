@@ -7,10 +7,16 @@ import {
   getPortalPropertyPath,
   getPortalPropertyRequestPath,
   getPortalPropertyRequestsPath,
+  getPortalServicePath,
+  getPortalServiceRequestNewPath,
+  getPortalServiceRequestPath,
+  getPortalServiceRequestsPath,
   resolvePortalAuthRoute,
   resolvePortalPage,
   resolvePortalRequestRoute,
   resolvePortalPropertyRoute,
+  resolvePortalServiceRequestRoute,
+  resolvePortalServiceRoute,
 } from './portalNavigation'
 
 describe('portal page routing', () => {
@@ -19,6 +25,8 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/')).toBe('home')
     expect(resolvePortalPage('/portal/properties')).toBe('properties')
     expect(resolvePortalPage('/portal/invoices/')).toBe('documents')
+    expect(resolvePortalPage('/portal/services/JOB-PREV-001')).toBe('services')
+    expect(resolvePortalPage('/portal/service-requests/new/review')).toBe('service-requests')
   })
 
   it('returns no page for unknown portal paths instead of falling through to CRM', () => {
@@ -54,6 +62,10 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/help')).toBe('help')
     expect(resolvePortalPage('/portal/preferences')).toBe('preferences')
     expect(getPortalPropertyPath('ref-espacio-norte')).toBe('/portal/properties/ref-espacio-norte')
+    expect(getPortalServicePath('JOB-PREV-001')).toBe('/portal/services/JOB-PREV-001')
+    expect(getPortalServiceRequestsPath()).toBe('/portal/service-requests')
+    expect(getPortalServiceRequestNewPath('review')).toBe('/portal/service-requests/new/review')
+    expect(getPortalServiceRequestPath('CC-SR-PREV-001')).toBe('/portal/service-requests/CC-SR-PREV-001')
     expect(getPortalProfileRequestsPath()).toBe('/portal/profile/requests')
     expect(getPortalProfileRequestPath('CC-PR-0142')).toBe('/portal/profile/requests/CC-PR-0142')
     expect(getPortalPropertyRequestsPath('ref-espacio-norte')).toBe('/portal/properties/ref-espacio-norte/requests')
@@ -67,6 +79,21 @@ describe('portal page routing', () => {
     expect(resolvePortalPropertyRoute('/portal/properties/ref-espacio-norte/correction/review')).toEqual({
       publicRef: 'ref-espacio-norte',
       step: 'review',
+    })
+    expect(resolvePortalServiceRoute('/portal/services/JOB-PREV-001')).toEqual({
+      serviceRef: 'JOB-PREV-001',
+    })
+    expect(resolvePortalServiceRequestRoute('/portal/service-requests')).toEqual({
+      reference: null,
+      step: null,
+    })
+    expect(resolvePortalServiceRequestRoute('/portal/service-requests/new/review')).toEqual({
+      reference: null,
+      step: 'review',
+    })
+    expect(resolvePortalServiceRequestRoute('/portal/service-requests/CC-SR-PREV-001')).toEqual({
+      reference: 'CC-SR-PREV-001',
+      step: null,
     })
     expect(resolvePortalRequestRoute('/portal/profile/requests')).toEqual({
       scope: 'profile',

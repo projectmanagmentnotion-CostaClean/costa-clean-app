@@ -23,6 +23,19 @@ const previewScenarioLabels: Record<PortalPreviewScenario, string> = {
   profile_conflict: 'Perfil conflicto',
   property_unavailable: 'Propiedad no disponible',
   property_request_success: 'Propiedad enviada',
+  services_loading: 'Servicios cargando',
+  services_empty: 'Servicios vacíos',
+  services_error: 'Servicios error',
+  next_service: 'Próximo servicio',
+  service_history: 'Historial de servicios',
+  service_unavailable: 'Servicio no disponible',
+  request_draft: 'Solicitud borrador',
+  request_review: 'Solicitud revisión',
+  request_success: 'Solicitud enviada',
+  request_retry: 'Solicitud reintento',
+  request_conflict: 'Solicitud conflicto',
+  request_cancelled: 'Solicitud cancelada',
+  request_not_cancellable: 'Solicitud bloqueada',
 }
 
 interface PortalPreviewBarProps {
@@ -69,5 +82,18 @@ function getPreviewPath(scenario: PortalPreviewScenario) {
   if (scenario === 'profile_conflict') return '/portal/profile/requests'
   if (scenario === 'property_unavailable') return '/portal/properties'
   if (scenario === 'property_request_success') return '/portal/properties/ref-espacio-norte/correction/success'
+  if (scenario === 'services_loading') return '/portal/services'
+  if (scenario === 'services_empty') return '/portal/services'
+  if (scenario === 'services_error') return '/portal/services'
+  if (scenario === 'next_service') return '/portal/services'
+  if (scenario === 'service_history') return '/portal/services'
+  if (scenario === 'service_unavailable') return '/portal/services'
+  if (scenario === 'request_draft') return '/portal/service-requests/new/property'
+  if (scenario === 'request_review') return '/portal/service-requests/new/review'
+  if (scenario === 'request_success') return '/portal/service-requests/new/success'
+  if (scenario === 'request_retry') return '/portal/service-requests'
+  if (scenario === 'request_conflict') return '/portal/service-requests'
+  if (scenario === 'request_cancelled') return '/portal/service-requests/CC-SR-PREV-001'
+  if (scenario === 'request_not_cancellable') return '/portal/service-requests/CC-SR-PREV-002'
   return '/portal'
 }

@@ -270,7 +270,8 @@ function buildProfileRequests(
 ): PortalReviewedChangeRequestSummary[] {
   if (scenario === 'empty') return []
 
-  const stateByScenario: Record<Exclude<PortalPreviewScenario, 'empty'>, string> = {
+  const stateByScenario: Record<PortalPreviewScenario, string> = {
+    empty: 'Pendiente',
     loading: 'Pendiente',
     login: 'Pendiente',
     recovery: 'Pendiente',
@@ -289,6 +290,19 @@ function buildProfileRequests(
     profile_conflict: 'Conflicto neutral',
     property_unavailable: 'No disponible',
     property_request_success: 'Enviado',
+    services_loading: 'Pendiente',
+    services_empty: 'Pendiente',
+    services_error: 'Pendiente',
+    next_service: 'Pendiente',
+    service_history: 'Pendiente',
+    service_unavailable: 'No disponible',
+    request_draft: 'Pendiente',
+    request_review: 'En revisión',
+    request_success: 'Enviado',
+    request_retry: 'Reintento listo',
+    request_conflict: 'Conflicto neutral',
+    request_cancelled: 'Cancelada',
+    request_not_cancellable: 'Bloqueada',
   }
 
   return [
@@ -314,7 +328,8 @@ function buildPropertyRequests(
 ): PortalReviewedChangeRequestSummary[] {
   if (!property || scenario === 'empty') return [] 
 
-  const stateByScenario: Record<Exclude<PortalPreviewScenario, 'empty'>, string> = {
+  const stateByScenario: Record<PortalPreviewScenario, string> = {
+    empty: 'Pendiente',
     loading: 'Pendiente',
     login: 'Pendiente',
     recovery: 'Pendiente',
@@ -333,6 +348,19 @@ function buildPropertyRequests(
     profile_conflict: 'Pendiente',
     property_unavailable: 'No disponible',
     property_request_success: 'Enviado',
+    services_loading: 'Pendiente',
+    services_empty: 'Pendiente',
+    services_error: 'Pendiente',
+    next_service: 'Pendiente',
+    service_history: 'Pendiente',
+    service_unavailable: 'No disponible',
+    request_draft: 'Pendiente',
+    request_review: 'En revisión',
+    request_success: 'Enviado',
+    request_retry: 'Reintento listo',
+    request_conflict: 'Conflicto neutral',
+    request_cancelled: 'Cancelada',
+    request_not_cancellable: 'Bloqueada',
   }
 
   return [

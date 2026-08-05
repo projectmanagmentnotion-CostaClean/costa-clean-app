@@ -10,6 +10,10 @@ import {
   resolvePortalRequestRoute,
 } from './portalNavigation'
 import { PortalProfileChangeFlow, PortalPropertyChangeFlow } from './PortalReviewedChangeForms'
+import {
+  PortalServiceRequestsPage,
+  PortalServicesPage,
+} from './PortalServiceArea'
 
 interface PortalPagesProps {
   page: PortalPage | null
@@ -124,29 +128,11 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
   }
 
   if (page === 'services') {
-    return (
-      <PortalPageFrame
-        eyebrow="Actividad"
-        title="Servicios"
-        description="La vista base diferencia agenda y estado sin prometer cambios, fechas o guardados."
-      >
-        <div className="portal-record-list">
-          {data.services.length > 0 ? data.services.map((service) => (
-            <article key={service.id} className="portal-record">
-              <div>
-                <h2>{service.serviceLabel}</h2>
-                <p>{service.propertyLabel} · {service.scheduleLabel}</p>
-              </div>
-              <span className="portal-status portal-status--info">{service.statusLabel}</span>
-            </article>
-          )) : (
-            <section className="portal-empty-state">
-              <p>No hay servicios visibles para esta cuenta todavía.</p>
-            </section>
-          )}
-        </div>
-      </PortalPageFrame>
-    )
+    return <PortalServicesPage pathname={pathname} data={data} getHref={getHref} onRefreshData={onRefreshData} />
+  }
+
+  if (page === 'service-requests') {
+    return <PortalServiceRequestsPage pathname={pathname} data={data} getHref={getHref} onRefreshData={onRefreshData} />
   }
 
   if (page === 'documents' || page === 'invoices') {

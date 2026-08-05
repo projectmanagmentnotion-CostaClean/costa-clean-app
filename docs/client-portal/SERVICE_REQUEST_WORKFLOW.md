@@ -1,6 +1,6 @@
 # Service Request Workflow
 
-Date: 2026-07-23
+Date: 2026-08-05
 Scope: CP-1 design; no jobs or requests created
 
 ## Boundary
@@ -9,7 +9,7 @@ A portal service request is a customer message for staff review. It is not a quo
 
 ```text
 draft (client-local UI only)
-  -> requested
+  -> pending_review
   -> under_review
   -> quoted | confirmed | rejected | cancelled
 ```
@@ -21,6 +21,7 @@ Only internal staff can move a request to `under_review`, `quoted`, `confirmed` 
 | Field | Rule |
 | --- | --- |
 | `id` | uuid PK, opaque |
+| `public_reference` | public customer-safe reference |
 | `client_id` | derived from active membership, not trusted from body |
 | `property_id` | must belong to the same client |
 | `requested_by` | `auth.uid()` |
@@ -39,16 +40,16 @@ Do not accept price, staff assignment, invoice status, job status, payment data 
 
 ## Create RPC
 
-`portal_submit_service_request(p_client_id, p_property_id, p_service_type, p_preferred_date, p_window, p_notes, p_idempotency_key)`:
+`portal_submit_service_request_v2(p_client_id, p_property_public_ref, p_service_type, p_preferred_date, p_preferred_time_window, p_notes, p_idempotency_key)`:
 
 1. validates active membership;
 2. checks property belongs to that client and is active;
 3. validates enum/date/length;
 4. rate-limits per user/client/IP pseudonym;
 5. enforces unique `(requested_by, idempotency_key)`;
-6. inserts only `requested`;
+6. inserts only `pending_review`;
 7. writes audit event;
-8. returns a customer-safe receipt.
+8. returns a customer-safe receipt with public reference, version and labels.
 
 No trigger or RPC invoked by this function may create a job, quote, invoice or payment.
 
@@ -67,7 +68,7 @@ Setting `approved_job_id` requires internal staff authorization and verifies `jo
 
 ## Customer presentation
 
-- `requested`: received, not confirmed.
+- `pending_review`: received, not confirmed.
 - `under_review`: team is evaluating.
 - `quoted`: proposal available; no automatic contract assumption.
 - `confirmed`: operational service confirmed and linked only after staff action.
@@ -78,7 +79,7 @@ Copy must not imply that preferred dates are reserved before `confirmed`.
 
 ## Cancellation
 
-`portal_cancel_service_request` checks membership, ownership, allowed state and optimistic `version`. It records cancellation but never deletes the row. If the request is already linked to a confirmed job, cancellation stops and directs the customer to contact Costa Clean; it does not cancel the job.
+`portal_cancel_own_service_request_v2` checks membership, ownership, allowed state and optimistic `version`. It records cancellation but never deletes the row. If the request is already linked to a confirmed job, cancellation stops and directs the customer to contact Costa Clean; it does not cancel the job.
 
 ## Abuse and privacy
 

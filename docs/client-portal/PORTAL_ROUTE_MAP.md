@@ -26,7 +26,11 @@ routes.
 | `/portal/properties/:propertyRef/correction/values` | Property correction values | StepFlow stage 2. |
 | `/portal/properties/:propertyRef/correction/review` | Property correction review | StepFlow stage 3. |
 | `/portal/properties/:propertyRef/correction/success` | Property correction success | Receipt and stable confirmation via public reference. |
-| `/portal/services` | Services overview | Foundation only in this sprint. |
+| `/portal/services` | Services overview | Compact service list and next-action entry point. |
+| `/portal/services/:serviceRef` | Service detail | Public service reference only. |
+| `/portal/service-requests` | Service request list | Own request history and cancellation entry point. |
+| `/portal/service-requests/:reference` | Service request detail | Public request reference only. |
+| `/portal/service-requests/new/:step` | Service request StepFlow | Public request creation flow. |
 | `/portal/documents` | Documents overview | Foundation only in this sprint. |
 | `/portal/security` | Security overview | Auth, recovery and MFA-ready guidance. |
 | `/portal/preferences` | Preferences | Future support/settings surface. |
@@ -38,6 +42,8 @@ These routes should continue to resolve safely:
 
 - `/portal/invoices` → canonical invoice/document area or a safe redirect
 - `/portal/requests` → request history or safe redirect
+- `/portal/services/:id` → safe redirect to the public service-reference route
+- `/portal/service-request` → safe redirect to `/portal/service-requests`
 
 ## Route principles
 

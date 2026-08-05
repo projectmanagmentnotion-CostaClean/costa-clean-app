@@ -70,12 +70,12 @@ describe('portal read api', () => {
                 },
                 error: null,
               }
-            case 'portal_list_services':
+            case 'portal_list_services_v2':
               return {
                 data: null,
                 error: { message: 'boom' },
               }
-            case 'portal_list_service_requests':
+            case 'portal_list_own_service_requests_v2':
               return {
                 data: [],
                 error: null,
@@ -128,7 +128,7 @@ describe('portal read api', () => {
 
   it('drops rows without a publicRef and fails closed when the list has no valid property routes', async () => {
     const client = createMockPortalClient(async (functionName: string) => {
-          if (functionName === 'portal_list_services') {
+          if (functionName === 'portal_list_services_v2') {
             return { data: [], error: null }
           }
 
@@ -227,7 +227,7 @@ describe('portal read api', () => {
             }
           }
 
-          if (functionName === 'portal_list_services') {
+          if (functionName === 'portal_list_services_v2') {
             return { data: [], error: null }
           }
 
@@ -253,7 +253,7 @@ describe('portal read api', () => {
 
   it('keeps other capabilities readable when one read fails', async () => {
     const client = createMockPortalClient(async (functionName: string) => {
-          if (functionName === 'portal_list_services') {
+          if (functionName === 'portal_list_services_v2') {
             return { data: null, error: { message: 'boom' } }
           }
 

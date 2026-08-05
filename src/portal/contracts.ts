@@ -76,19 +76,42 @@ export interface PortalPropertySummary {
 }
 
 export interface PortalServiceSummary {
-  id: string
-  serviceLabel: string
+  reference: string
+  referenceLabel: string
+  serviceType: string
+  serviceTypeLabel: string
+  propertyPublicRef: string
   propertyLabel: string
+  propertyAddressLabel: string
+  scheduledDate: string
   scheduleLabel: string
+  status: string
   statusLabel: string
   isSynthetic: boolean
 }
 
 export interface PortalServiceRequestSummary {
-  id: string
-  requestLabel: string
-  submittedLabel: string
+  reference: string
+  referenceLabel: string
+  propertyPublicRef: string
+  propertyLabel: string
+  propertyAddressLabel: string
+  serviceType: string
+  serviceTypeLabel: string
+  preferredDate: string
+  preferredDateLabel: string
+  preferredTimeWindow: string
+  preferredTimeWindowLabel: string
+  requestedAt: string
+  requestedAtLabel: string
+  resolvedAt: string | null
+  resolvedAtLabel: string | null
+  notes: string
+  notesLabel: string
+  status: string
   statusLabel: string
+  canCancel: boolean
+  version: number
   isSynthetic: boolean
 }
 
@@ -107,6 +130,42 @@ export interface PortalReadAdapter {
   listServices(): Promise<PortalServiceSummary[]>
   listServiceRequests(): Promise<PortalServiceRequestSummary[]>
   listInvoices(): Promise<PortalInvoiceSummary[]>
+  submitServiceRequest(input: PortalServiceRequestSubmissionInput): Promise<PortalServiceRequestReceipt>
+  cancelServiceRequest(input: PortalServiceRequestCancellationInput): Promise<PortalServiceRequestReceipt>
+}
+
+export interface PortalServiceRequestSubmissionInput {
+  clientId: string
+  propertyPublicRef: string
+  serviceType: string
+  preferredDate: string
+  preferredTimeWindow: string
+  notes: string
+  idempotencyKey: string
+}
+
+export interface PortalServiceRequestCancellationInput {
+  clientId: string
+  reference: string
+  version: number
+}
+
+export interface PortalServiceRequestReceipt {
+  reference: string
+  status: string
+  requestedAt: string
+  resolvedAt: string | null
+  propertyPublicRef: string
+  propertyLabel: string
+  serviceType: string
+  serviceTypeLabel: string
+  preferredDate: string
+  preferredDateLabel: string
+  preferredTimeWindow: string
+  preferredTimeWindowLabel: string
+  notes: string
+  notesLabel: string
+  version: number
 }
 
 export interface PortalRuntimeAdapter {
@@ -136,6 +195,19 @@ export const portalPreviewScenarios = [
   'profile_conflict',
   'property_unavailable',
   'property_request_success',
+  'services_loading',
+  'services_empty',
+  'services_error',
+  'next_service',
+  'service_history',
+  'service_unavailable',
+  'request_draft',
+  'request_review',
+  'request_success',
+  'request_retry',
+  'request_conflict',
+  'request_cancelled',
+  'request_not_cancellable',
 ] as const
 
 export type PortalPreviewScenario = (typeof portalPreviewScenarios)[number]

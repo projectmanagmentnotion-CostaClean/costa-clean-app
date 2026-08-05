@@ -25,7 +25,7 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/')).toBe('home')
     expect(resolvePortalPage('/portal/properties')).toBe('properties')
     expect(resolvePortalPage('/portal/invoices/')).toBe('documents')
-    expect(resolvePortalPage('/portal/services/JOB-PREV-001')).toBe('services')
+    expect(resolvePortalPage('/portal/services/CC-SV-PREV-001')).toBe('services')
     expect(resolvePortalPage('/portal/service-requests/new/review')).toBe('service-requests')
   })
 
@@ -62,7 +62,7 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/help')).toBe('help')
     expect(resolvePortalPage('/portal/preferences')).toBe('preferences')
     expect(getPortalPropertyPath('ref-espacio-norte')).toBe('/portal/properties/ref-espacio-norte')
-    expect(getPortalServicePath('JOB-PREV-001')).toBe('/portal/services/JOB-PREV-001')
+    expect(getPortalServicePath('CC-SV-PREV-001')).toBe('/portal/services/CC-SV-PREV-001')
     expect(getPortalServiceRequestsPath()).toBe('/portal/service-requests')
     expect(getPortalServiceRequestNewPath('review')).toBe('/portal/service-requests/new/review')
     expect(getPortalServiceRequestPath('CC-SR-PREV-001')).toBe('/portal/service-requests/CC-SR-PREV-001')
@@ -80,8 +80,8 @@ describe('portal page routing', () => {
       publicRef: 'ref-espacio-norte',
       step: 'review',
     })
-    expect(resolvePortalServiceRoute('/portal/services/JOB-PREV-001')).toEqual({
-      serviceRef: 'JOB-PREV-001',
+    expect(resolvePortalServiceRoute('/portal/services/CC-SV-PREV-001')).toEqual({
+      serviceRef: 'CC-SV-PREV-001',
     })
     expect(resolvePortalServiceRequestRoute('/portal/service-requests')).toEqual({
       reference: null,

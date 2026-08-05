@@ -45,8 +45,8 @@ const properties: PortalPropertySummary[] = [
 
 const services: PortalServiceSummary[] = [
   {
-    reference: 'JOB-PREV-001',
-    referenceLabel: 'JOB-PREV-001',
+    reference: 'CC-SV-PREV-001',
+    referenceLabel: 'CC-SV-PREV-001',
     serviceType: 'regular_cleaning',
     serviceTypeLabel: 'Limpieza regular',
     propertyPublicRef: 'ref-espacio-norte',

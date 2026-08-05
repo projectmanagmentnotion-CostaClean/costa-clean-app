@@ -83,7 +83,9 @@ export interface PortalFoundationData {
   propertyDetail: PortalPropertyDetail | null
   properties: PortalPropertySummary[]
   services: PortalServiceSummary[]
+  serviceDetail: PortalServiceSummary | null
   requests: PortalServiceRequestSummary[]
+  serviceRequestDetail: PortalServiceRequestSummary | null
   invoices: PortalInvoiceSummary[]
   profileRequests: PortalReviewedChangeRequestSummary[]
   propertyRequests: PortalReviewedChangeRequestSummary[]
@@ -144,7 +146,9 @@ export function createFallbackPortalFoundationData(
     propertyDetail: null,
     properties: [],
     services: [],
+    serviceDetail: null,
     requests: [],
+    serviceRequestDetail: null,
     invoices: [],
     profileRequests: [],
     propertyRequests: [],
@@ -158,6 +162,8 @@ export function createPreviewPortalFoundationData(
   const isEmptyScenario = scenario === 'empty'
   const safeProperties = isEmptyScenario ? [] : properties
   const selectedProperty = safeProperties[0] ?? null
+  const selectedService = isEmptyScenario ? null : services[0] ?? null
+  const selectedServiceRequest = isEmptyScenario ? null : requests[0] ?? null
 
   return {
     account,
@@ -174,7 +180,9 @@ export function createPreviewPortalFoundationData(
     propertyDetail: selectedProperty ? buildPropertyDetail(selectedProperty, scenario) : null,
     properties: safeProperties,
     services: isEmptyScenario ? [] : services,
+    serviceDetail: selectedService,
     requests: isEmptyScenario ? [] : requests,
+    serviceRequestDetail: selectedServiceRequest,
     invoices: isEmptyScenario ? [] : invoices,
     profileRequests: buildProfileRequests(scenario),
     propertyRequests: buildPropertyRequests(scenario, selectedProperty),

@@ -105,7 +105,7 @@ export function createPortalPreviewAdapter(
         ? []
         : [
             buildPreviewService({
-              reference: 'JOB-PREV-001',
+              reference: 'CC-SV-PREV-001',
               serviceType: 'regular_cleaning',
               propertyPublicRef: 'ref-espacio-norte',
               propertyLabel: 'Espacio Norte',
@@ -114,7 +114,7 @@ export function createPortalPreviewAdapter(
               status: 'scheduled',
             }),
             buildPreviewService({
-              reference: 'JOB-PREV-002',
+              reference: 'CC-SV-PREV-002',
               serviceType: 'deep_cleaning',
               propertyPublicRef: 'ref-espacio-centro',
               propertyLabel: 'Espacio Centro',

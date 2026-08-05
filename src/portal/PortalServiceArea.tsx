@@ -54,9 +54,7 @@ export function PortalServicesPage({
   getHref,
 }: PortalServicesPageProps) {
   const route = resolvePortalServiceRoute(pathname)
-  const service = route
-    ? data.services.find((item) => item.reference === route.serviceRef) ?? null
-    : null
+  const service = route ? data.serviceDetail : null
 
   if (route && !service) {
     return (
@@ -183,7 +181,7 @@ export function PortalServiceRequestsPage({
   }
 
   const request = route?.reference
-    ? data.requests.find((item) => item.reference === route.reference) ?? null
+    ? data.serviceRequestDetail
     : null
 
   if (route?.reference && !request) {
@@ -405,7 +403,7 @@ function PortalServiceRequestFlow({
             {properties.length > 0 ? (
               <div className="portal-change-checklist portal-change-checklist--cards">
                 {properties.map((property) => {
-                  const checked = property.publicRef === intent.propertyPublicRef
+                  const checked = property.publicRef === effectivePropertyPublicRef
                   return (
                     <label key={property.publicRef} className="portal-change-checklist__item portal-service-choice">
                       <input

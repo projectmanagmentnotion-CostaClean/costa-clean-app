@@ -1,6 +1,8 @@
 import { getPortalSupabaseClient } from './adapters/portalSupabaseClient'
 import {
   resolvePortalPropertyRoute,
+  resolvePortalServiceRequestRoute,
+  resolvePortalServiceRoute,
   type PortalPropertyRoute,
 } from './portalNavigation'
 import type {
@@ -91,6 +93,9 @@ export async function loadPortalFoundationData(
 
   const selectedPropertyRoute = resolvePortalPropertyRoute(pathname)
   const selectedProperty = selectPortalProperty(propertiesResult.data, selectedPropertyRoute)
+  const selectedServiceRoute = resolvePortalServiceRoute(pathname)
+  const selectedServiceRequestRoute = resolvePortalServiceRequestRoute(pathname)
+  const selectedServiceRequestReference = selectedServiceRequestRoute?.reference ?? null
   const propertyDetailResult = selectedProperty
     ? await loadCapability(
       () => readPortalPropertyDetail(client, access.clientContextId, selectedProperty),
@@ -110,6 +115,26 @@ export async function loadPortalFoundationData(
         status: 'UNAVAILABLE' as PortalCapabilityStatus,
         data: fallback.propertyRequests,
         message: 'No hay una propiedad seleccionada.',
+      }
+  const serviceDetailResult = selectedServiceRoute
+    ? await loadCapability(
+      () => readPortalServiceDetail(client, access.clientContextId, selectedServiceRoute.serviceRef),
+      null,
+    )
+    : {
+        status: 'UNAVAILABLE' as PortalCapabilityStatus,
+        data: null,
+        message: 'No hay un servicio seleccionado.',
+      }
+  const serviceRequestDetailResult = selectedServiceRequestReference
+    ? await loadCapability(
+      () => readPortalServiceRequestDetail(client, access.clientContextId, selectedServiceRequestReference),
+      null,
+    )
+    : {
+        status: 'UNAVAILABLE' as PortalCapabilityStatus,
+        data: null,
+        message: 'No hay una solicitud seleccionada.',
       }
 
   return {
@@ -133,7 +158,9 @@ export async function loadPortalFoundationData(
     propertyDetail: propertyDetailResult.data,
     properties: propertiesResult.data,
     services: servicesResult.data,
+    serviceDetail: serviceDetailResult.data,
     requests: serviceRequestsResult.data,
+    serviceRequestDetail: serviceRequestDetailResult.data,
     invoices: invoicesResult.data,
     profileRequests: profileRequestsResult.data,
     propertyRequests: propertyRequestsResult.data,
@@ -264,6 +291,18 @@ async function readPortalServices(
   return buildServiceSummaries(raw)
 }
 
+async function readPortalServiceDetail(
+  client: PortalRpcClientLike,
+  clientId: string,
+  serviceReference: string,
+): Promise<PortalServiceSummary | null> {
+  const raw = await rpcJson<unknown>(client, 'portal_get_service_v2', {
+    p_client_id: clientId,
+    p_service_reference: serviceReference,
+  })
+  return buildServiceSummary(raw)
+}
+
 async function readPortalServiceRequests(
   client: PortalRpcClientLike,
   clientId: string,
@@ -273,6 +312,18 @@ async function readPortalServiceRequests(
     p_limit: 25,
   })
   return buildServiceRequestSummaries(raw)
+}
+
+async function readPortalServiceRequestDetail(
+  client: PortalRpcClientLike,
+  clientId: string,
+  reference: string,
+): Promise<PortalServiceRequestSummary | null> {
+  const raw = await rpcJson<unknown>(client, 'portal_get_own_service_request_v2', {
+    p_client_id: clientId,
+    p_request_reference: reference,
+  })
+  return buildServiceRequestSummary(raw)
 }
 
 async function readPortalInvoices(
@@ -398,7 +449,7 @@ function buildDashboardSnapshot(
   requests: PortalServiceRequestSummary[],
   invoices: PortalInvoiceSummary[],
 ): PortalDashboardSnapshot {
-  const nextService = services[0] ?? null
+  const nextService = selectNextService(services)
   return {
     nextServiceLabel: nextService
       ? `${nextService.serviceTypeLabel} · ${nextService.scheduleLabel}`
@@ -407,6 +458,46 @@ function buildDashboardSnapshot(
     availableDocumentCount: invoices.length,
     isSynthetic: false,
   }
+}
+
+function selectNextService(services: PortalServiceSummary[]): PortalServiceSummary | null {
+  const today = startOfDay(new Date())
+  const eligible = services.reduce<Array<{ service: PortalServiceSummary; date: Date }>>((acc, service) => {
+    if (service.status !== 'scheduled' && service.status !== 'confirmed') {
+      return acc
+    }
+
+    const date = parseDate(service.scheduledDate)
+    if (!date || date < today) {
+      return acc
+    }
+
+    acc.push({ service, date })
+    return acc
+  }, [])
+
+  if (!eligible.length) {
+    return null
+  }
+
+  eligible.sort((left, right) => {
+    const dateDiff = left.date.getTime() - right.date.getTime()
+    if (dateDiff !== 0) return dateDiff
+    return left.service.reference.localeCompare(right.service.reference)
+  })
+
+  return eligible[0]?.service ?? null
+}
+
+function parseDate(value: string): Date | null {
+  const parsed = new Date(value)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function startOfDay(date: Date) {
+  const copy = new Date(date)
+  copy.setHours(0, 0, 0, 0)
+  return copy
 }
 
 function buildProfileSnapshot(raw: JsonRecord): PortalProfileSnapshot {
@@ -529,35 +620,9 @@ function buildPropertyDetailFromSummary(property: PortalPropertySummary): Portal
 
 function buildServiceSummaries(raw: unknown): PortalServiceSummary[] {
   const rows = arrayValue(raw)
-  const summaries = rows.map((row) => {
-    const record = objectValue(row)
-    const reference = stringValue(record.reference)
-    const propertyPublicRef = stringValue(record.propertyPublicRef)
-    const propertyLabel = stringValue(record.propertyName)
-    const propertyAddressLabel = stringValue(record.addressLabel)
-    const serviceType = stringValue(record.serviceType)
-    const scheduledDate = stringValue(record.scheduledDate)
-    const status = stringValue(record.status)
-
-    if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !scheduledDate || !status) {
-      return null
-    }
-
-    return {
-      reference,
-      referenceLabel: reference,
-      serviceType,
-      serviceTypeLabel: serviceTypeLabel(serviceType),
-      propertyPublicRef,
-      propertyLabel,
-      propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
-      scheduledDate,
-      scheduleLabel: dateLabel(scheduledDate),
-      status,
-      statusLabel: serviceStatusLabel(status),
-      isSynthetic: false,
-    }
-  }).filter((summary): summary is PortalServiceSummary => summary !== null)
+  const summaries = rows
+    .map((row) => buildServiceSummary(row))
+    .filter((summary): summary is PortalServiceSummary => summary !== null)
 
   if (rows.length > 0 && summaries.length === 0) {
     throw new Error('portal_service_reference_unavailable')
@@ -566,59 +631,93 @@ function buildServiceSummaries(raw: unknown): PortalServiceSummary[] {
   return summaries
 }
 
+function buildServiceSummary(raw: unknown): PortalServiceSummary | null {
+  const record = objectValue(raw)
+  const reference = stringValue(record.reference)
+  const propertyPublicRef = stringValue(record.propertyPublicRef)
+  const propertyLabel = stringValue(record.propertyName)
+  const propertyAddressLabel = stringValue(record.addressLabel)
+  const serviceType = stringValue(record.serviceType)
+  const scheduledDate = stringValue(record.scheduledDate)
+  const status = stringValue(record.status)
+
+  if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !scheduledDate || !status) {
+    return null
+  }
+
+  return {
+    reference,
+    referenceLabel: reference,
+    serviceType,
+    serviceTypeLabel: serviceTypeLabel(serviceType),
+    propertyPublicRef,
+    propertyLabel,
+    propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
+    scheduledDate,
+    scheduleLabel: dateLabel(scheduledDate),
+    status,
+    statusLabel: serviceStatusLabel(status),
+    isSynthetic: false,
+  }
+}
+
 function buildServiceRequestSummaries(raw: unknown): PortalServiceRequestSummary[] {
   const rows = arrayValue(raw)
-  const summaries = rows.map((row) => {
-    const record = objectValue(row)
-    const reference = stringValue(record.reference)
-    const propertyPublicRef = stringValue(record.propertyPublicRef)
-    const propertyLabel = stringValue(record.propertyName)
-    const propertyAddressLabel = stringValue(record.addressLabel)
-    const serviceType = stringValue(record.serviceType)
-    const preferredDate = stringValue(record.preferredDate)
-    const preferredTimeWindow = stringValue(record.preferredTimeWindow)
-    const requestedAt = stringValue(record.requestedAt)
-    const resolvedAt = record.resolvedAt === null ? '' : stringValue(record.resolvedAt)
-    const notes = stringValue(record.notes)
-    const status = stringValue(record.status)
-    const version = numberValue(record.version)
-    const canCancel = booleanValue(record.canCancel)
-
-    if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !requestedAt || !status || !Number.isFinite(version)) {
-      return null
-    }
-
-    return {
-      reference,
-      referenceLabel: reference,
-      propertyPublicRef,
-      propertyLabel,
-      propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
-      serviceType,
-      serviceTypeLabel: serviceTypeLabel(serviceType),
-      preferredDate,
-      preferredDateLabel: dateLabel(preferredDate),
-      preferredTimeWindow,
-      preferredTimeWindowLabel: preferredTimeWindowLabel(preferredTimeWindow),
-      requestedAt,
-      requestedAtLabel: dateTimeLabel(requestedAt),
-      resolvedAt: resolvedAt || null,
-      resolvedAtLabel: resolvedAt ? dateTimeLabel(resolvedAt) : null,
-      notes,
-      notesLabel: notes || 'Sin detalles adicionales',
-      status,
-      statusLabel: serviceRequestStatusLabel(status),
-      canCancel,
-      version,
-      isSynthetic: false,
-    }
-  }).filter((summary): summary is PortalServiceRequestSummary => summary !== null)
+  const summaries = rows
+    .map((row) => buildServiceRequestSummary(row))
+    .filter((summary): summary is PortalServiceRequestSummary => summary !== null)
 
   if (rows.length > 0 && summaries.length === 0) {
     throw new Error('portal_service_request_reference_unavailable')
   }
 
   return summaries
+}
+
+function buildServiceRequestSummary(raw: unknown): PortalServiceRequestSummary | null {
+  const record = objectValue(raw)
+  const reference = stringValue(record.reference)
+  const propertyPublicRef = stringValue(record.propertyPublicRef)
+  const propertyLabel = stringValue(record.propertyName)
+  const propertyAddressLabel = stringValue(record.addressLabel)
+  const serviceType = stringValue(record.serviceType)
+  const preferredDate = stringValue(record.preferredDate)
+  const preferredTimeWindow = stringValue(record.preferredTimeWindow)
+  const requestedAt = stringValue(record.requestedAt)
+  const resolvedAt = record.resolvedAt === null ? '' : stringValue(record.resolvedAt)
+  const notes = stringValue(record.notes)
+  const status = stringValue(record.status)
+  const version = numberValue(record.version)
+  const canCancel = booleanValue(record.canCancel)
+
+  if (!reference || !propertyPublicRef || !propertyLabel || !serviceType || !requestedAt || !status || !Number.isFinite(version)) {
+    return null
+  }
+
+  return {
+    reference,
+    referenceLabel: reference,
+    propertyPublicRef,
+    propertyLabel,
+    propertyAddressLabel: propertyAddressLabel || 'Dirección no disponible',
+    serviceType,
+    serviceTypeLabel: serviceTypeLabel(serviceType),
+    preferredDate,
+    preferredDateLabel: dateLabel(preferredDate),
+    preferredTimeWindow,
+    preferredTimeWindowLabel: preferredTimeWindowLabel(preferredTimeWindow),
+    requestedAt,
+    requestedAtLabel: dateTimeLabel(requestedAt),
+    resolvedAt: resolvedAt || null,
+    resolvedAtLabel: resolvedAt ? dateTimeLabel(resolvedAt) : null,
+    notes,
+    notesLabel: notes || 'Sin detalles adicionales',
+    status,
+    statusLabel: serviceRequestStatusLabel(status),
+    canCancel,
+    version,
+    isSynthetic: false,
+  }
 }
 
 function buildInvoiceSummaries(raw: unknown): PortalInvoiceSummary[] {

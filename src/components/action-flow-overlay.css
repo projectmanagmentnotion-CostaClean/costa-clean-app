@@ -37,7 +37,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px 12px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background:
     radial-gradient(circle at top right, rgba(103, 220, 255, 0.08), transparent 28%),
@@ -51,7 +51,7 @@
 }
 
 .cc-action-flow__dismiss {
-  min-height: 40px;
+  min-height: 38px;
   padding-inline: 16px;
 }
 
@@ -188,7 +188,7 @@
     flex-wrap: wrap;
     gap: 8px;
     padding:
-      max(10px, calc(env(safe-area-inset-top, 0px) + 2px))
+      max(8px, calc(env(safe-area-inset-top, 0px) + 2px))
       10px
       8px;
     align-items: center;
@@ -204,26 +204,18 @@
     background: rgba(148, 163, 184, 0.36);
   }
 
-  .cc-action-flow__copy {
-    gap: 3px;
-  }
-
   .cc-action-flow__eyebrow {
     display: none;
   }
 
-  .cc-action-flow__copy h2 {
-    font-size: 0.84rem;
-    line-height: 1.15;
-  }
-
-  .cc-action-flow__copy p {
+  .cc-action-flow__copy {
     display: none;
   }
 
   .cc-action-flow__dismiss {
-    min-height: 44px;
+    min-height: 42px;
     padding-inline: 12px;
+    margin-left: auto;
   }
 
   .cc-action-flow__body {

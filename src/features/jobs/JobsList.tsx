@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
 import { DSErrorState } from '../../design-system/components/DSErrorState'
@@ -22,8 +22,23 @@ interface JobsListProps {
   onCreateJob?: () => void
 }
 
+interface JobDirectorySection {
+  key: string
+  label: string
+  description: string
+  items: JobListItem[]
+}
+
 function getJobPrimaryReference(job: JobListItem): string {
   return getJobBillingDisplayConcept(job) || getServiceTypeLabel(job.service_type)
+}
+
+function getJobDirectoryBucket(job: JobListItem, today: string) {
+  if (job.status === 'completed' && !job.invoice_id) return 'review'
+  if (job.status === 'cancelled' || isArchivedEntity(job) || isDeletedEntity(job)) return 'history'
+  if (job.scheduled_date === today) return 'today'
+  if (job.scheduled_date > today) return 'upcoming'
+  return 'history'
 }
 
 export function JobsList({
@@ -98,6 +113,41 @@ export function JobsList({
     })
   }, [jobs, preferences, today])
 
+  const directorySections = useMemo<JobDirectorySection[]>(() => {
+    const buckets: Record<string, JobDirectorySection> = {
+      review: {
+        key: 'review',
+        label: 'Revisión',
+        description: 'Servicios completados que todavía requieren cierre financiero.',
+        items: [],
+      },
+      today: {
+        key: 'today',
+        label: 'Hoy',
+        description: 'Servicios en ejecución o de salida inmediata.',
+        items: [],
+      },
+      upcoming: {
+        key: 'upcoming',
+        label: 'Próximos',
+        description: 'Agenda futura todavía abierta.',
+        items: [],
+      },
+      history: {
+        key: 'history',
+        label: 'Histórico',
+        description: 'Servicios pasados, cancelados o archivados.',
+        items: [],
+      },
+    }
+
+    filteredJobs.forEach((job) => {
+      buckets[getJobDirectoryBucket(job, today)].items.push(job)
+    })
+
+    return Object.values(buckets).filter((section) => section.items.length > 0)
+  }, [filteredJobs, today])
+
   return (
     <section className="cc-module-list-section cc-jobs-list-shell">
       <div className="section-header cc-list-section__header">
@@ -159,60 +209,79 @@ export function JobsList({
           action={onCreateJob ? <button type="button" className="primary-button" onClick={onCreateJob}>Registrar servicio</button> : undefined}
         />
       ) : (
-        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de servicios">
-          {filteredJobs.map((job) => {
-            const isSelected = job.id === selectedJobId
-            const operationalStatus = getJobOperationalStatus(job, today)
+        <div className="cc-jobs-directory" aria-label="Lista de servicios">
+          {directorySections.map((section) => (
+            <section key={section.key} className="cc-jobs-directory__section">
+              <header className="cc-jobs-directory__section-header">
+                <div className="cc-jobs-directory__section-copy">
+                  <span>{section.label}</span>
+                  <strong>{section.items.length} servicio{section.items.length === 1 ? '' : 's'}</strong>
+                  <p>{section.description}</p>
+                </div>
+              </header>
 
-            return (
-              <OperationalListItem
-                key={job.id}
-                dataQa="job-list-item"
-                selected={isSelected}
-                onSelect={() => onSelectJob(job)}
-                title={formatJobLabel(job)}
-                subtitle={getJobPrimaryReference(job)}
-                status={<span className="lead-badge" data-operational-state={operationalStatus.state}>{operationalStatus.label}</span>}
-                aside={<strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>}
-                summary={`${formatClientLabel(job)} - ${formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })}`}
-                chips={[
-                  getServiceTypeLabel(job.service_type),
-                  job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto',
-                ]}
-                meta={[
-                  { label: 'Servicio', value: getServiceTypeLabel(job.service_type) },
-                  { label: 'Origen', value: job.quote_id ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name }) : 'Sin presupuesto' },
-                ]}
-                actions={[
-                  {
-                    key: 'open',
-                    label: 'Abrir',
-                    tone: 'primary',
-                    onClick: () => onSelectJob(job),
-                  },
-                  ...(job.quote_id
-                    ? [{
-                        key: 'quote',
-                        label: 'Presupuesto',
-                        onClick: () => onOpenQuoteDetail?.(job.quote_id!),
-                      }]
-                    : []),
-                  ...(job.invoice_id
-                    ? [{
-                        key: 'invoice',
-                        label: 'Factura',
-                        onClick: () => onOpenInvoiceDetail?.(job.invoice_id!),
-                      }]
-                    : []),
-                ]}
-                microhint={operationalStatus.state === 'review'
-                  ? 'Requiere revision operativa'
-                  : job.status === 'completed' && !job.invoice_id
-                    ? 'Listo para facturar'
-                    : 'Cliente e inmueble vinculados'}
-              />
-            )
-          })}
+              <div className="cc-operational-list cc-bounded-list cc-jobs-directory__rows" role="listbox">
+                {section.items.map((job) => {
+                  const isSelected = job.id === selectedJobId
+                  const operationalStatus = getJobOperationalStatus(job, today)
+                  const propertyLabel = formatPropertyLabel({ id: job.property_id, display_code: job.property_display_code, name: job.property_name })
+                  const clientLabel = formatClientLabel(job)
+                  const quoteLabel = job.quote_id
+                    ? formatQuoteLabel({ id: job.quote_id, display_code: job.quote_display_code, client_name: job.client_name, property_name: job.property_name })
+                    : 'Sin presupuesto'
+
+                  return (
+                    <OperationalListItem
+                      key={job.id}
+                      dataQa="job-list-item"
+                      selected={isSelected}
+                      onSelect={() => onSelectJob(job)}
+                      title={propertyLabel}
+                      subtitle={clientLabel}
+                      status={<span className="lead-badge" data-operational-state={operationalStatus.state}>{operationalStatus.label}</span>}
+                      aside={<strong className="cc-record-card__meta-emphasis">{formatDateEs(job.scheduled_date)}</strong>}
+                      summary={getJobPrimaryReference(job)}
+                      chips={[
+                        getServiceTypeLabel(job.service_type),
+                        quoteLabel,
+                      ]}
+                      meta={[
+                        { label: 'Cliente', value: clientLabel },
+                        { label: 'Origen', value: quoteLabel },
+                      ]}
+                      actions={[
+                        {
+                          key: 'open',
+                          label: 'Abrir',
+                          tone: 'primary',
+                          onClick: () => onSelectJob(job),
+                        },
+                        ...(job.quote_id
+                          ? [{
+                              key: 'quote',
+                              label: 'Presupuesto',
+                              onClick: () => onOpenQuoteDetail?.(job.quote_id!),
+                            }]
+                          : []),
+                        ...(job.invoice_id
+                          ? [{
+                              key: 'invoice',
+                              label: 'Factura',
+                              onClick: () => onOpenInvoiceDetail?.(job.invoice_id!),
+                            }]
+                          : []),
+                      ]}
+                      microhint={operationalStatus.state === 'review'
+                        ? 'Requiere revision operativa'
+                        : job.status === 'completed' && !job.invoice_id
+                          ? 'Listo para facturar'
+                          : 'Servicio vinculado a cliente y propiedad'}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </section>

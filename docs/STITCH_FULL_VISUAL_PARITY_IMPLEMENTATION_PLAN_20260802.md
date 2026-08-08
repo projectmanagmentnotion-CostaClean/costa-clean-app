@@ -294,4 +294,5 @@ The prototype passes when:
 
 - Block 2 now includes property avatar support and property-specific fallback assets in the shared Stitch primitive layer.
 - Block 6 now includes presentational StepFlow compositions for client and property creation, with the first actionable fields kept at the top of the flow.
+- Block 7 now includes service and quote directory regrouping plus flatter master-detail workspaces aligned to the Stitch references.
 - This branch remains visual-only; protected routes, data and business semantics stay untouched.

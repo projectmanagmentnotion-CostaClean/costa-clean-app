@@ -28,6 +28,7 @@ import {
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import './quotesOperations.css'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface QuoteDetailCardProps {

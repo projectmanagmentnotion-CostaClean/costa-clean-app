@@ -361,35 +361,42 @@ export function JobWorkspace({
   }
 
   return (
-    <section className="cc-client-workspace">
-      <div className="cc-client-workspace__topline">
+    <section className="cc-client-workspace cc-job-workspace">
+      <div className="cc-job-workspace__topline">
         <button type="button" className="secondary-button" onClick={onClose}>
           Volver a servicios
         </button>
         <span className="cc-client-workspace__eyebrow">Workspace de servicio</span>
       </div>
 
-      <header className="cc-client-workspace__hero">
-        <div className="cc-client-workspace__identity">
-          <div className="cc-client-workspace__identity-copy">
-            <span className="cc-client-workspace__kicker">Operacion viva</span>
-            <h1>{getJobBillingDisplayConcept(liveJob) || getServiceTypeLabel(liveJob.service_type)}</h1>
-            <p>{formatJobLabel(liveJob)} · {formatDateEs(liveJob.scheduled_date)}</p>
-          </div>
-
-          <div className="cc-client-workspace__status">
+      <header className="cc-client-workspace__hero cc-job-workspace__hero">
+        <div className="cc-job-workspace__identity">
+          <span className="cc-client-workspace__kicker">Operacion viva</span>
+          <div className="cc-job-workspace__headline">
             <span className="lead-badge">{getDisplayStatusLabel(liveJob.status)}</span>
-            <span className="cc-client-workspace__status-meta">{liveJob.display_code ?? liveJob.id}</span>
+            <h1>{getJobBillingDisplayConcept(liveJob) || getServiceTypeLabel(liveJob.service_type)}</h1>
           </div>
+          <p>
+            {formatPropertyLabel({
+              id: liveJob.property_id,
+              display_code: liveJob.property_display_code,
+              name: liveJob.property_name,
+            })} · {formatDateEs(liveJob.scheduled_date)} · {formatJobLabel(liveJob)}
+          </p>
         </div>
 
-        <div className="cc-client-workspace__meta">
-          <article className="cc-client-workspace__meta-card">
+        <div className="cc-job-workspace__hero-actions">
+          <span className="cc-job-workspace__hero-code">{liveJob.display_code ?? liveJob.id}</span>
+          <ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />
+        </div>
+
+        <div className="cc-job-workspace__hero-strip">
+          <article className="cc-client-workspace__snapshot-card">
             <span>Cliente</span>
             <strong>{client ? formatClientLabel(client) : formatClientLabel(liveJob)}</strong>
             <small>{client?.phone ?? client?.email ?? 'Sin contacto principal'}</small>
           </article>
-          <article className="cc-client-workspace__meta-card">
+          <article className="cc-client-workspace__snapshot-card">
             <span>Propiedad</span>
             <strong>
               {property
@@ -402,31 +409,36 @@ export function JobWorkspace({
             </strong>
             <small>{property?.address ?? 'Sin direccion ampliada'}</small>
           </article>
+          <article className="cc-client-workspace__snapshot-card">
+            <span>Facturación</span>
+            <strong>{invoice ? formatCurrency(outstanding) : 'Pendiente de emitir'}</strong>
+            <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'La siguiente accion natural es preparar factura cuando toque.'}</small>
+          </article>
         </div>
       </header>
 
-      <section className="cc-client-workspace__snapshot">
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Situacion actual</span>
-          <strong>{operationalSignal.label}</strong>
+      <section className="cc-job-workspace__signal-strip">
+        <article className="cc-job-workspace__signal-card">
+          <span>Siguiente paso</span>
+          <strong>{nextStep}</strong>
           <small>{operationalSignal.detail}</small>
         </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Agenda</span>
-          <strong>{formatDateEs(liveJob.scheduled_date)}</strong>
+        <article className="cc-job-workspace__signal-card">
+          <span>Situación actual</span>
+          <strong>{operationalSignal.label}</strong>
           <small>{getDisplayStatusLabel(liveJob.status)}</small>
         </article>
-        <article className="cc-client-workspace__snapshot-card">
-          <span>Facturacion</span>
-          <strong>{invoice ? formatCurrency(outstanding) : 'Pendiente de emitir'}</strong>
-          <small>{invoice ? `${formatCurrency(totalCollected)} cobrados` : 'La siguiente accion natural es preparar factura cuando toque.'}</small>
+        <article className="cc-job-workspace__signal-card">
+          <span>Factura</span>
+          <strong>{invoice ? formatInvoiceLabel(invoice) : 'Pendiente de emitir'}</strong>
+          <small>{invoice ? `${formatCurrency(outstanding)} por cerrar` : 'Servicio aún sin factura asociada.'}</small>
         </article>
       </section>
 
       <details className="cc-client-workspace__context-toggle">
         <summary className="cc-client-workspace__context-toggle-summary">
           <span>Contexto ampliado</span>
-          <strong>Ver origen, propiedad y facturacion extendida</strong>
+          <strong>Ver origen, propiedad y facturación extendida</strong>
         </summary>
 
         <div className="cc-client-workspace__context-toggle-grid cc-client-workspace__context-toggle-grid--meta">
@@ -460,15 +472,6 @@ export function JobWorkspace({
           </article>
         </div>
       </details>
-
-      <section className="cc-client-workspace__next-step">
-        <div>
-          <span>Siguiente paso recomendado</span>
-          <strong>{nextStep}</strong>
-          <small>{operationalSignal.detail}</small>
-        </div>
-        <ActionGroup actions={dedupedHeroActions} moreLabel="Mas acciones" />
-      </section>
 
       <nav className="cc-client-workspace__tabs" aria-label="Secciones del servicio">
         {jobWorkspaceTabs.map((tab) => (

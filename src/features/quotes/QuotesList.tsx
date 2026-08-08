@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { formatCurrency } from '../../app/displayFormat'
+import { formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
 import { ListToolbar, type ListPreferences } from '../../components/ListToolbar'
@@ -15,8 +15,8 @@ import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
 import {
   formatQuoteCustomerFacingTotal,
-  getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import './quotesOperations.css'
 
 interface QuotesListProps {
   quotes: QuoteListItem[]
@@ -26,6 +26,13 @@ interface QuotesListProps {
   selectedQuoteId: string | null
   onSelectQuote: (quote: QuoteListItem) => void
   onOpenDocument: (quote: QuoteListItem) => void
+}
+
+interface QuoteDirectorySection {
+  key: string
+  label: string
+  description: string
+  items: QuoteListItem[]
 }
 
 function buildClientDisplay(quote: QuoteListItem, clients: ClientListItem[]): string {
@@ -43,6 +50,14 @@ function buildPropertyDisplay(quote: QuoteListItem, properties: PropertyListItem
 
   const property = properties.find((item) => item.id === quote.property_id)
   return property ? formatPropertyLabel(property) : quote.property_display_code || quote.property_id
+}
+
+function getQuoteDirectoryBucket(quote: QuoteListItem) {
+  if (quote.status === 'accepted') return 'accepted'
+  if (quote.status === 'draft' || quote.status === 'sent') return 'followup'
+  if (quote.status === 'rejected' || quote.status === 'expired') return 'closed'
+  if (quote.status === 'archived' || quote.archived_at || quote.deleted_at) return 'archive'
+  return 'followup'
 }
 
 export function QuotesList({
@@ -99,6 +114,41 @@ export function QuotesList({
     })
   }, [clients, preferences, properties, quotes])
 
+  const directorySections = useMemo<QuoteDirectorySection[]>(() => {
+    const buckets: Record<string, QuoteDirectorySection> = {
+      followup: {
+        key: 'followup',
+        label: 'Seguimiento comercial',
+        description: 'Borradores y enviados que todavía están vivos.',
+        items: [],
+      },
+      accepted: {
+        key: 'accepted',
+        label: 'Aceptados',
+        description: 'Presupuestos ganados que ya empujan hacia operativa.',
+        items: [],
+      },
+      closed: {
+        key: 'closed',
+        label: 'Cerrados',
+        description: 'Rechazados o vencidos que no siguen en curso activo.',
+        items: [],
+      },
+      archive: {
+        key: 'archive',
+        label: 'Archivados',
+        description: 'Histórico retraído de la bandeja principal.',
+        items: [],
+      },
+    }
+
+    filteredQuotes.forEach((quote) => {
+      buckets[getQuoteDirectoryBucket(quote)].items.push(quote)
+    })
+
+    return Object.values(buckets).filter((section) => section.items.length > 0)
+  }, [filteredQuotes])
+
   return (
     <section className="data-section cc-module-list-section">
       <DSSectionHeader
@@ -121,7 +171,7 @@ export function QuotesList({
           { value: 'code', label: 'Codigo' },
           { value: 'client', label: 'Cliente' },
           { value: 'property', label: 'Propiedad' },
-          { value: 'total', label: getQuoteCustomerFacingTotalLabel() },
+          { value: 'total', label: 'Total' },
           { value: 'status', label: 'Estado' },
         ]}
         defaultPreferences={defaultPreferences}
@@ -156,57 +206,78 @@ export function QuotesList({
           description="No encontramos presupuestos que coincidan con tu busqueda y los filtros activos."
         />
       ) : (
-        <div className="cc-operational-list cc-bounded-list" role="listbox" aria-label="Lista de presupuestos">
-          {filteredQuotes.map((quote) => {
-            const isSelected = quote.id === selectedQuoteId
-            const clientLabel = buildClientDisplay(quote, clients)
-            const propertyLabel = buildPropertyDisplay(quote, properties)
+        <div className="cc-quotes-directory" aria-label="Lista de presupuestos">
+          {directorySections.map((section) => (
+            <section key={section.key} className="cc-quotes-directory__section">
+              <header className="cc-quotes-directory__section-header">
+                <div className="cc-quotes-directory__section-copy">
+                  <span>{section.label}</span>
+                  <strong>{section.items.length} presupuesto{section.items.length === 1 ? '' : 's'}</strong>
+                  <p>{section.description}</p>
+                </div>
+              </header>
 
-            return (
-              <OperationalListItem
-                key={quote.id}
-                selected={isSelected}
-                onSelect={() => onSelectQuote(quote)}
-                title={formatQuoteLabel({ ...quote, client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null, property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null })}
-                subtitle={propertyLabel}
-                status={<span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>}
-                aside={(
-                  <strong className="cc-record-card__amount">
-                    {formatQuoteCustomerFacingTotal({
-                      subtotal: Number(quote.subtotal || 0),
-                      total: Number(quote.total || 0),
-                    })}
-                  </strong>
-                )}
-                summary={clientLabel}
-                chips={[`${getQuoteCustomerFacingTotalLabel()} ${formatQuoteCustomerFacingTotal({ subtotal: Number(quote.subtotal || 0), total: Number(quote.total || 0) })}`, propertyLabel]}
-                meta={[
-                  { label: 'Base', value: formatCurrency(quote.subtotal) },
-                  {
-                    label: getQuoteCustomerFacingTotalLabel(),
-                    value: formatQuoteCustomerFacingTotal({
-                      subtotal: Number(quote.subtotal || 0),
-                      total: Number(quote.total || 0),
-                    }),
-                  },
-                ]}
-                actions={[
-                  {
-                    key: 'open',
-                    label: 'Abrir',
-                    tone: 'primary',
-                    onClick: () => onSelectQuote(quote),
-                  },
-                  {
-                    key: 'document',
-                    label: 'Abrir documento',
-                    onClick: () => onOpenDocument(quote),
-                  },
-                ]}
-                microhint={getStatusLabel(quote.status)}
-              />
-            )
-          })}
+              <div className="cc-operational-list cc-bounded-list cc-quotes-directory__rows" role="listbox">
+                {section.items.map((quote) => {
+                  const isSelected = quote.id === selectedQuoteId
+                  const clientLabel = buildClientDisplay(quote, clients)
+                  const propertyLabel = buildPropertyDisplay(quote, properties)
+                  const createdAtLabel = quote.created_at ? formatDateEs(quote.created_at) : 'Sin fecha'
+                  const quoteNumber = formatQuoteLabel({
+                    ...quote,
+                    client_name: clients.find((item) => item.id === quote.client_id)?.full_name ?? null,
+                    property_name: properties.find((item) => item.id === quote.property_id)?.name ?? null,
+                  })
+
+                  return (
+                    <OperationalListItem
+                      key={quote.id}
+                      selected={isSelected}
+                      onSelect={() => onSelectQuote(quote)}
+                      title={quoteNumber}
+                      subtitle={clientLabel}
+                      status={<span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>}
+                      aside={(
+                        <strong className="cc-record-card__amount">
+                          {formatQuoteCustomerFacingTotal({
+                            subtotal: Number(quote.subtotal || 0),
+                            total: Number(quote.total || 0),
+                          })}
+                        </strong>
+                      )}
+                      summary={propertyLabel}
+                      chips={[
+                        createdAtLabel,
+                        quote.job_id ? 'Con servicio' : 'Sin servicio',
+                      ]}
+                      meta={[
+                        { label: 'Lead/cliente', value: clientLabel },
+                        { label: 'Propiedad', value: propertyLabel },
+                      ]}
+                      actions={[
+                        {
+                          key: 'open',
+                          label: 'Abrir',
+                          tone: 'primary',
+                          onClick: () => onSelectQuote(quote),
+                        },
+                        {
+                          key: 'document',
+                          label: 'Abrir documento',
+                          onClick: () => onOpenDocument(quote),
+                        },
+                      ]}
+                      microhint={quote.job_id
+                        ? 'Ya existe servicio vinculado'
+                        : quote.status === 'accepted'
+                          ? 'Listo para convertir en operativa'
+                          : getStatusLabel(quote.status)}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       )}
     </section>

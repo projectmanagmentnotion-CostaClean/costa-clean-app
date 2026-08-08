@@ -109,6 +109,7 @@ These are the only duplicated screen families across packages:
 
 - Block 1 remains the source audit baseline and private inventory contract.
 - Block 2 now also covers the property avatar primitive and the property create StepFlow variants.
+- Block 7 now includes the service and quote master-detail references used to realign list density, workspace hierarchy and selected-state emphasis.
 - The property creation source evidence is present as desktop and tablet exports; the mobile property create composition implemented in the app is a derived presentational adaptation, not a new source artifact.
 
 ## 4. What this audit preserves

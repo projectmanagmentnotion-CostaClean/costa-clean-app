@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Avatar de cliente predeterminado</title>
+  <desc id="desc">Icono neutral de persona para clientes sin fotografía.</desc>
+  <defs>
+    <linearGradient id="bg" x1="30" y1="24" x2="224" y2="230" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#182632"/>
+      <stop offset="1" stop-color="#0B1520"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="64" fill="url(#bg)"/>
+  <circle cx="128" cy="96" r="45" fill="#8ED5FF" opacity=".94"/>
+  <path d="M46 222c8-50 40-78 82-78s74 28 82 78" fill="#38BDF8" opacity=".72"/>
+  <circle cx="128" cy="128" r="112" fill="none" stroke="#8ED5FF" stroke-opacity=".22" stroke-width="4"/>
+</svg>

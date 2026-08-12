@@ -22,6 +22,7 @@ interface WorkspaceScaffoldProps<TTab extends string> {
   backLabel: string
   eyebrow: string
   kicker: string
+  leading?: ReactNode
   title: string
   subtitle: string
   statusBadge: ReactNode
@@ -44,6 +45,7 @@ export function WorkspaceScaffold<TTab extends string>({
   backLabel,
   eyebrow,
   kicker,
+  leading,
   title,
   subtitle,
   statusBadge,
@@ -77,6 +79,7 @@ export function WorkspaceScaffold<TTab extends string>({
 
       <header className="cc-client-workspace__hero">
         <div className="cc-client-workspace__identity">
+          {leading ? <div className="cc-client-workspace__identity-leading">{leading}</div> : null}
           <div className="cc-client-workspace__identity-copy">
             <span className="cc-client-workspace__kicker">{kicker}</span>
             <h1>{title}</h1>

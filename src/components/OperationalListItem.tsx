@@ -18,6 +18,7 @@ interface OperationalListItemProps {
   compactVisibleSecondaryActionCount?: number
   microhint?: string
   selectionControl?: ReactNode
+  leading?: ReactNode
 }
 
 export function OperationalListItem({
@@ -35,6 +36,7 @@ export function OperationalListItem({
   compactVisibleSecondaryActionCount = 0,
   microhint,
   selectionControl,
+  leading,
 }: OperationalListItemProps) {
   return (
     <article data-qa={dataQa} className={selected ? 'cc-operational-item is-selected' : 'cc-operational-item'}>
@@ -46,6 +48,8 @@ export function OperationalListItem({
         aria-pressed={selected}
         onClick={onSelect}
       >
+        {leading ? <div className="cc-operational-item__leading">{leading}</div> : null}
+
         <div className="cc-operational-item__head">
           <div className="cc-operational-item__identity">
             <strong className="cc-operational-item__title">{title}</strong>
@@ -64,7 +68,7 @@ export function OperationalListItem({
 
         {chips.length > 0 ? (
           <div className="cc-operational-item__chips" aria-label="Contexto del registro">
-            {chips.slice(0, 1).map((chip) => (
+            {chips.slice(0, 2).map((chip) => (
               <span key={chip} className="cc-operational-item__chip">{chip}</span>
             ))}
           </div>
@@ -72,7 +76,7 @@ export function OperationalListItem({
 
         {meta.length > 0 ? (
           <div className="cc-operational-item__meta">
-            {meta.slice(0, 1).map((item) => (
+            {meta.slice(0, 2).map((item) => (
               <span key={`${item.label}-${item.value}`}>
                 <span className="cc-operational-item__meta-label">{item.label}</span>
                 <span className="cc-operational-item__meta-value">{item.value}</span>

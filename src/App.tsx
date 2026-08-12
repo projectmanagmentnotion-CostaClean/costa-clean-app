@@ -7,6 +7,8 @@ import { shouldShowBuildInfo } from './app/buildInfo'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
 import { createLogoutFlow } from './features/auth/logoutFlow'
+import { stitchAssetPaths } from './design-system/stitch/stitchAssets'
+import './design-system/stitch/stitchVisualParity.css'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
 import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
@@ -54,8 +56,8 @@ function App() {
     },
   }), [])
   const bootLogoSrc = theme === 'light'
-    ? '/branding/Costa_Clean-LOGO-AZUL.png'
-    : '/branding/Costa_Clean-LOGO-HORIZONTAL.png'
+    ? stitchAssetPaths.branding.horizontalLight
+    : stitchAssetPaths.branding.horizontalDark
 
   useEffect(() => {
     applyTheme(theme)
@@ -178,8 +180,10 @@ function App() {
   function renderWithBuildInfo(content: ReactNode) {
     return (
       <ToastProvider>
-        {content}
-        {showBuildInfo ? <BuildInfoBadge /> : null}
+        <div className="cc-stitch-prototype">
+          {content}
+          {showBuildInfo ? <BuildInfoBadge /> : null}
+        </div>
       </ToastProvider>
     )
   }
@@ -245,7 +249,7 @@ function App() {
   }
 
   if (!session) {
-    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} />)
+    return renderWithBuildInfo(<AuthPage theme={theme} onSignedIn={() => undefined} />)
   }
 
   return renderWithBuildInfo(

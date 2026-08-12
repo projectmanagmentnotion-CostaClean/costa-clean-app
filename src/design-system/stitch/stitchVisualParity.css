@@ -1,0 +1,418 @@
+/*
+ * Scoped visual primitives for the Stitch parity prototype.
+ * Nothing in this file affects production UI until a root element receives
+ * the `cc-stitch-prototype` class and the stylesheet is imported explicitly.
+ */
+
+.cc-stitch-prototype {
+  --stitch-canvas: #06101d;
+  --stitch-surface-lowest: #0a0f12;
+  --stitch-surface-low: #171c20;
+  --stitch-surface: #1b2024;
+  --stitch-surface-raised: #252b2e;
+  --stitch-surface-high: #303539;
+  --stitch-text: #dee3e8;
+  --stitch-text-muted: #bdc8d1;
+  --stitch-border: rgba(142, 213, 255, 0.16);
+  --stitch-border-strong: rgba(142, 213, 255, 0.28);
+  --stitch-primary: #38bdf8;
+  --stitch-primary-soft: rgba(56, 189, 248, 0.14);
+  --stitch-secondary: #22d3ee;
+  --stitch-success: #34d399;
+  --stitch-warning: #facc15;
+  --stitch-danger: #fb7185;
+  --stitch-focus: #8ed5ff;
+
+  --stitch-rail-width: 72px;
+  --stitch-topbar-height: 64px;
+  --stitch-mobile-topbar-height: 60px;
+  --stitch-mobile-dock-height: 72px;
+  --stitch-master-list-width: 384px;
+  --stitch-content-max: 1440px;
+
+  --stitch-radius-control: 12px;
+  --stitch-radius-row: 16px;
+  --stitch-radius-panel: 18px;
+  --stitch-radius-feature: 24px;
+  --stitch-radius-sheet: 28px;
+
+  --stitch-space-1: 4px;
+  --stitch-space-2: 8px;
+  --stitch-space-3: 12px;
+  --stitch-space-4: 16px;
+  --stitch-space-5: 20px;
+  --stitch-space-6: 24px;
+  --stitch-space-8: 32px;
+  --stitch-space-10: 40px;
+
+  min-height: 100dvh;
+  color: var(--stitch-text);
+  background: var(--stitch-canvas);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root[data-theme='light'] .cc-stitch-prototype {
+  --stitch-canvas: #f4f9fc;
+  --stitch-surface-lowest: #edf6fb;
+  --stitch-surface-low: #f7fbfd;
+  --stitch-surface: #ffffff;
+  --stitch-surface-raised: #f8fcff;
+  --stitch-surface-high: #eef7fb;
+  --stitch-text: #10243a;
+  --stitch-text-muted: #52677a;
+  --stitch-border: rgba(17, 73, 103, 0.16);
+  --stitch-border-strong: rgba(17, 73, 103, 0.28);
+  --stitch-primary: #0b83b4;
+  --stitch-primary-soft: rgba(11, 131, 180, 0.12);
+  --stitch-focus: #075f88;
+}
+
+.cc-stitch-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: var(--stitch-rail-width) minmax(0, 1fr);
+  background: var(--stitch-canvas);
+}
+
+.cc-stitch-rail {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--stitch-space-3);
+  padding: var(--stitch-space-3) var(--stitch-space-2);
+  border-right: 1px solid var(--stitch-border);
+  background: color-mix(in srgb, var(--stitch-surface-lowest) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.cc-stitch-topbar {
+  min-height: var(--stitch-topbar-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--stitch-space-4);
+  padding: 0 clamp(20px, 2vw, 32px);
+  border-bottom: 1px solid var(--stitch-border);
+  background: color-mix(in srgb, var(--stitch-surface-lowest) 88%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.cc-stitch-content {
+  width: min(100%, var(--stitch-content-max));
+  margin: 0 auto;
+  padding: clamp(20px, 2vw, 32px);
+}
+
+.cc-stitch-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--stitch-space-5);
+  margin-bottom: var(--stitch-space-6);
+}
+
+.cc-stitch-page-title {
+  margin: 0;
+  color: var(--stitch-text);
+  font-size: clamp(1.75rem, 2.4vw, 2rem);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.cc-stitch-page-copy {
+  margin: var(--stitch-space-2) 0 0;
+  color: var(--stitch-text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.cc-stitch-primary-action,
+.cc-stitch-secondary-action {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--stitch-space-2);
+  padding: 0 var(--stitch-space-4);
+  border-radius: var(--stitch-radius-control);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cc-stitch-primary-action {
+  border: 1px solid transparent;
+  background: var(--stitch-primary);
+  color: #04141e;
+  box-shadow: 0 10px 22px rgba(56, 189, 248, 0.18);
+}
+
+.cc-stitch-secondary-action {
+  border: 1px solid var(--stitch-border);
+  background: var(--stitch-surface-low);
+  color: var(--stitch-text);
+}
+
+.cc-stitch-primary-action:focus-visible,
+.cc-stitch-secondary-action:focus-visible,
+.cc-stitch-icon-button:focus-visible,
+.cc-stitch-row:focus-visible {
+  outline: 2px solid var(--stitch-focus);
+  outline-offset: 3px;
+}
+
+.cc-stitch-icon-button {
+  width: 44px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-control);
+  background: var(--stitch-surface-low);
+  color: var(--stitch-text-muted);
+}
+
+.cc-stitch-icon-button[aria-current='page'],
+.cc-stitch-icon-button[data-active='true'] {
+  border-color: color-mix(in srgb, var(--stitch-primary) 42%, transparent);
+  background: var(--stitch-primary-soft);
+  color: var(--stitch-primary);
+}
+
+.cc-stitch-search {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-control);
+  background: var(--stitch-surface-low);
+  color: var(--stitch-text);
+  padding: 0 var(--stitch-space-4);
+}
+
+.cc-stitch-search::placeholder {
+  color: color-mix(in srgb, var(--stitch-text-muted) 72%, transparent);
+}
+
+.cc-stitch-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(124px, 1fr));
+  gap: var(--stitch-space-3);
+}
+
+.cc-stitch-kpi {
+  min-height: 104px;
+  padding: var(--stitch-space-4);
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-row);
+  background: var(--stitch-surface-low);
+}
+
+.cc-stitch-kpi__label {
+  display: block;
+  color: var(--stitch-text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cc-stitch-kpi__value {
+  display: block;
+  margin-top: var(--stitch-space-2);
+  color: var(--stitch-text);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
+
+.cc-stitch-row {
+  min-height: 64px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--stitch-space-3);
+  padding: var(--stitch-space-3) var(--stitch-space-4);
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-row);
+  background: var(--stitch-surface-low);
+  color: var(--stitch-text);
+}
+
+.cc-stitch-row[data-selected='true'] {
+  border-color: color-mix(in srgb, var(--stitch-primary) 48%, transparent);
+  box-shadow: inset 3px 0 0 var(--stitch-primary);
+  background: color-mix(in srgb, var(--stitch-primary-soft) 68%, var(--stitch-surface-low));
+}
+
+.cc-stitch-avatar {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid var(--stitch-border-strong);
+  background: var(--stitch-surface-raised);
+}
+
+.cc-stitch-avatar__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cc-stitch-avatar__fallback {
+  display: inline-grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  color: var(--stitch-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.cc-stitch-avatar--account {
+  width: 36px;
+  height: 36px;
+}
+
+.cc-stitch-avatar--client {
+  width: 48px;
+  height: 48px;
+}
+
+.cc-stitch-avatar--property {
+  width: 52px;
+  height: 52px;
+}
+
+.cc-stitch-avatar--workspace {
+  width: 72px;
+  height: 72px;
+}
+
+.cc-stitch-avatar--staff {
+  width: 28px;
+  height: 28px;
+}
+
+.cc-stitch-panel {
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-panel);
+  background: var(--stitch-surface);
+}
+
+.cc-stitch-master-detail {
+  display: grid;
+  grid-template-columns: minmax(320px, var(--stitch-master-list-width)) minmax(0, 1fr);
+  min-height: calc(100dvh - var(--stitch-topbar-height));
+  border: 1px solid var(--stitch-border);
+  border-radius: var(--stitch-radius-feature);
+  overflow: clip;
+  background: var(--stitch-surface-lowest);
+}
+
+.cc-stitch-master-detail__list {
+  min-width: 0;
+  border-right: 1px solid var(--stitch-border);
+  background: var(--stitch-surface-lowest);
+}
+
+.cc-stitch-master-detail__detail {
+  min-width: 0;
+  background: var(--stitch-surface-low);
+}
+
+.cc-stitch-mobile-dock {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .cc-stitch-shell {
+    display: block;
+    padding-bottom: calc(var(--stitch-mobile-dock-height) + env(safe-area-inset-bottom, 0px));
+  }
+
+  .cc-stitch-rail {
+    display: none;
+  }
+
+  .cc-stitch-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    min-height: var(--stitch-mobile-topbar-height);
+    padding: 0 16px;
+  }
+
+  .cc-stitch-content {
+    padding: 16px;
+  }
+
+  .cc-stitch-page-header {
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .cc-stitch-primary-action {
+    min-height: 52px;
+  }
+
+  .cc-stitch-master-detail {
+    display: block;
+    min-height: auto;
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  .cc-stitch-master-detail__list {
+    border-right: 0;
+  }
+
+  .cc-stitch-mobile-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    min-height: calc(var(--stitch-mobile-dock-height) + env(safe-area-inset-bottom, 0px));
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: start;
+    padding: 8px 8px env(safe-area-inset-bottom, 0px);
+    border-top: 1px solid var(--stitch-border);
+    background: color-mix(in srgb, var(--stitch-surface-lowest) 92%, transparent);
+    backdrop-filter: blur(18px);
+  }
+
+  .cc-stitch-avatar--account {
+    width: 40px;
+    height: 40px;
+  }
+
+  .cc-stitch-avatar--property {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cc-stitch-prototype *,
+  .cc-stitch-prototype *::before,
+  .cc-stitch-prototype *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}

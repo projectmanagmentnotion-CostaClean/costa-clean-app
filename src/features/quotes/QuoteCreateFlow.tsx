@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -24,10 +23,11 @@ import { completeContextualActionFlow, type FullViewActionFlowProps } from '../s
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
+  calculateQuoteTax,
+  calculateQuoteTotal,
   createBlankQuoteLine,
   createLocalId,
   formatQuoteLineSubtotalInput,
-  roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
 import {
@@ -176,8 +176,8 @@ export function QuoteCreateFlow({
   )
 
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
-  const taxAmountValue = useMemo(() => roundMoney(subtotalValue * businessRules.defaultTaxRate), [subtotalValue])
-  const totalValue = useMemo(() => roundMoney(subtotalValue + taxAmountValue), [subtotalValue, taxAmountValue])
+  const taxAmountValue = useMemo(() => calculateQuoteTax(lines), [lines])
+  const totalValue = useMemo(() => calculateQuoteTotal(lines), [lines])
   const commercialSummary = useMemo(
     () => getQuoteCommercialSummary({ subtotal: subtotalValue, taxAmount: taxAmountValue, total: totalValue }),
     [subtotalValue, taxAmountValue, totalValue],
@@ -346,6 +346,12 @@ export function QuoteCreateFlow({
         }
       }
 
+      const createdQuote = {
+        id: quoteId,
+        client_id: form.client_id,
+        property_id: form.property_id || null,
+      }
+
       await saveQuoteWithLines(
         {
           id: quoteId,
@@ -361,13 +367,6 @@ export function QuoteCreateFlow({
         linePayloads,
       )
 
-      await onCreatedQuote?.({
-        id: quoteId,
-        client_id: form.client_id,
-        property_id: form.property_id || null,
-      })
-      await onRefreshData()
-
       setIsDirty(false)
       setSuccessState({
         quoteId,
@@ -375,6 +374,14 @@ export function QuoteCreateFlow({
         propertyId: form.property_id || null,
       })
       setCurrentStep(stepIndexById.success)
+
+      void Promise.resolve(onCreatedQuote?.(createdQuote)).catch((refreshError) => {
+        console.error('No se pudo aplicar la seleccion del presupuesto creado.', refreshError)
+      })
+
+      void Promise.resolve(onRefreshData()).catch((refreshError) => {
+        console.error('No se pudo refrescar el listado de presupuestos tras guardar.', refreshError)
+      })
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Error desconocido creando el presupuesto.')
     } finally {
@@ -832,7 +839,7 @@ export function QuoteCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 4</span>
               <strong>Define condiciones y seguimiento</strong>
-              <small>El estado comercial y las notas quedan juntos para no mezclarlos con lineas ni relaciones.</small>
+              <small>El alcance comercial y el estado quedan juntos para no mezclarlos con lineas ni relaciones.</small>
             </article>
 
             <div className="cc-create-flow__grid">
@@ -847,16 +854,16 @@ export function QuoteCreateFlow({
 
               <article className="cc-create-flow__panel">
                 <strong>{commercialSummary.totalLabel}</strong>
-                <small>{getQuoteCustomerFacingTotalNote()}</small>
+                <small>{getQuoteCustomerFacingTotalNote(taxAmountValue)}</small>
               </article>
 
               <label className="form-field form-field-full">
-                <span>Notas</span>
+                <span>Alcance presupuesto</span>
                 <textarea
                   value={form.notes}
                   onChange={(event) => updateField('notes', event.target.value)}
                   rows={5}
-                  placeholder="Condiciones, alcance, exclusiones o notas comerciales"
+                  placeholder="Servicio de camareros, condiciones o exclusiones"
                 />
               </label>
             </div>
@@ -950,7 +957,7 @@ export function QuoteCreateFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+                <small>{form.notes.trim() ? 'Con alcance comercial' : 'Sin alcance adicional'}</small>
               </article>
               <article className="cc-create-flow__review-card">
                 <span>{commercialSummary.totalLabel}</span>
@@ -966,7 +973,7 @@ export function QuoteCreateFlow({
 
             {form.notes.trim() ? (
               <article className="cc-create-flow__panel">
-                <strong>Notas comerciales</strong>
+                <strong>Alcance comercial</strong>
                 <small>{form.notes.trim()}</small>
               </article>
             ) : null}

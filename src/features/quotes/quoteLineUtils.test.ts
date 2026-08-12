@@ -24,8 +24,8 @@ describe('quoteLineUtils', () => {
     }
 
     expect(calculateQuoteSubtotal([firstLine, secondLine])).toBe(95.5)
-    expect(calculateQuoteTax([firstLine, secondLine])).toBe(20.06)
-    expect(calculateQuoteTotal([firstLine, secondLine])).toBe(115.56)
+    expect(calculateQuoteTax([firstLine, secondLine])).toBe(0)
+    expect(calculateQuoteTotal([firstLine, secondLine])).toBe(95.5)
   })
 
   it('rejects payload generation when a line is invalid', () => {

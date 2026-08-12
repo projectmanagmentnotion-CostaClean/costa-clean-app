@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Avatar de personal predeterminado</title>
+  <desc id="desc">Silueta neutral para personal sin fotografía.</desc>
+  <defs>
+    <linearGradient id="bg" x1="32" y1="28" x2="220" y2="228" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#22D3EE"/>
+      <stop offset="1" stop-color="#075F88"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="128" fill="url(#bg)"/>
+  <circle cx="128" cy="92" r="42" fill="#F4FBFF"/>
+  <path d="M56 226c9-47 37-73 72-73s63 26 72 73" fill="#E7F7FD"/>
+  <path d="M89 173h78l-18 31h-42Z" fill="#0F3C8A" opacity=".78"/>
+  <circle cx="128" cy="128" r="118" fill="none" stroke="#FFFFFF" stroke-opacity=".38" stroke-width="4"/>
+</svg>

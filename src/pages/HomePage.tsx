@@ -242,6 +242,14 @@ export function HomePage(props: HomePageProps) {
         summary="Acciones, importes del mes y alertas vivas."
         statusLabel={homeStatus}
         statusTone={criticalAlertsCount > 0 ? 'critical' : fiscalRiskCount > 0 ? 'warning' : 'success'}
+        primaryAction={{
+          label: 'Clientes',
+          onClick: () => onOpenView('clients'),
+        }}
+        secondaryAction={{
+          label: 'Facturas',
+          onClick: () => onOpenView('invoices'),
+        }}
       metricLabel={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? 'Abierto' : undefined}
       metricValue={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? formatCurrency(metrics.outstandingReceivablesTotal) : undefined}
       metricHint={hasMeaningfulAmount(metrics.outstandingReceivablesTotal) ? 'Pendiente real de cobro.' : undefined}

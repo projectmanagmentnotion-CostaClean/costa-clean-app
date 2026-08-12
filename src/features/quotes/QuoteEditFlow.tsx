@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react'
-import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -19,10 +18,11 @@ import { type FullViewActionFlowProps } from '../shared/actionFlowLifecycle'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
+  calculateQuoteTax,
+  calculateQuoteTotal,
   createBlankQuoteLine,
   formatQuoteLineSubtotalInput,
   getFormLinesFromQuote,
-  roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
 import {
@@ -165,8 +165,8 @@ export function QuoteEditFlow({
     [form.property_id, properties],
   )
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
-  const taxAmountValue = useMemo(() => roundMoney(subtotalValue * businessRules.defaultTaxRate), [subtotalValue])
-  const totalValue = useMemo(() => roundMoney(subtotalValue + taxAmountValue), [subtotalValue, taxAmountValue])
+  const taxAmountValue = useMemo(() => calculateQuoteTax(lines), [lines])
+  const totalValue = useMemo(() => calculateQuoteTotal(lines), [lines])
   const commercialSummary = useMemo(
     () => getQuoteCommercialSummary({ subtotal: subtotalValue, taxAmount: taxAmountValue, total: totalValue }),
     [subtotalValue, taxAmountValue, totalValue],
@@ -655,7 +655,7 @@ export function QuoteEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 4</span>
               <strong>Condiciones y seguimiento</strong>
-              <small>Estado y notas se editan juntos, separados de lineas y conversiones.</small>
+              <small>Estado y alcance se editan juntos, separados de lineas y conversiones.</small>
             </article>
 
             <div className="cc-create-flow__grid">
@@ -673,16 +673,16 @@ export function QuoteEditFlow({
 
               <article className="cc-create-flow__panel">
                 <strong>{commercialSummary.totalLabel}</strong>
-                <small>{getQuoteCustomerFacingTotalNote()}</small>
+                <small>{getQuoteCustomerFacingTotalNote(taxAmountValue)}</small>
               </article>
 
               <label className="form-field form-field-full">
-                <span>Notas</span>
+                <span>Alcance presupuesto</span>
                 <textarea
                   value={form.notes}
                   onChange={(event) => updateField('notes', event.target.value)}
                   rows={5}
-                  placeholder="Notas comerciales o de alcance"
+                  placeholder="Servicio de camareros, condiciones o exclusiones"
                 />
               </label>
             </div>
@@ -776,7 +776,7 @@ export function QuoteEditFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+                <small>{form.notes.trim() ? 'Con alcance comercial' : 'Sin alcance adicional'}</small>
               </article>
               <article className="cc-create-flow__review-card">
                 <span>{commercialSummary.totalLabel}</span>
@@ -792,7 +792,7 @@ export function QuoteEditFlow({
 
             {form.notes.trim() ? (
               <article className="cc-create-flow__panel">
-                <strong>Notas comerciales</strong>
+                <strong>Alcance comercial</strong>
                 <small>{form.notes.trim()}</small>
               </article>
             ) : null}

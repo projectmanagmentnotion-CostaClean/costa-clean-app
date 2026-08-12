@@ -434,6 +434,7 @@
 }
 
 .cc-shell-nav__rail-group-label {
+  display: none;
   padding-inline: 2px;
   color: rgba(148, 163, 184, 0.72);
   font-size: 0.58rem;
@@ -444,16 +445,16 @@
 
 .cc-shell-nav__rail-group-items {
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
 
 .cc-shell-nav__rail-button {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 46px;
-  padding: 0 14px;
-  border-radius: 15px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.04);
   color: rgba(226, 232, 240, 0.9);
@@ -467,8 +468,8 @@
 }
 
 .cc-shell-nav__rail-button.is-active {
-  border-color: rgba(125, 211, 252, 0.24);
-  background: rgba(125, 211, 252, 0.11);
+  border-color: rgba(125, 211, 252, 0.32);
+  background: rgba(125, 211, 252, 0.14);
   color: #f8fbff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
@@ -478,16 +479,16 @@
 .cc-shell-nav__rail-icon {
   display: inline-grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 9px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   background: rgba(255, 255, 255, 0.07);
-  flex: 0 0 26px;
+  flex: 0 0 24px;
 }
 
 .cc-shell-nav__rail-copy {
   display: grid;
-  gap: 1px;
+  gap: 0;
   text-align: left;
 }
 
@@ -498,6 +499,7 @@
 }
 
 .cc-shell-nav__rail-section {
+  display: none;
   font-size: 0.58rem;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -510,6 +512,7 @@
 }
 
 :root[data-theme="light"] .cc-shell-nav__rail-group-label {
+  display: none;
   color: #5f778b;
 }
 
@@ -530,6 +533,7 @@
 }
 
 :root[data-theme="light"] .cc-shell-nav__rail-section {
+  display: none;
   color: #5f778b;
 }
 

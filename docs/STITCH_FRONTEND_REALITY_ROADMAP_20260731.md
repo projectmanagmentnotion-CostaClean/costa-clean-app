@@ -41,10 +41,10 @@ When guidance conflicts, the real repository behavior, explicit sprint constrain
 
 The Stitch handoff reviewed for this roadmap contained:
 
-- 6 ZIP packages;
+- 4 ZIP packages;
 - 58 exported `code.html` screens;
 - 59 `screen.png` files;
-- 7 `DESIGN.md` variants;
+- 5 `DESIGN.md` variants;
 - 1 short technical handoff;
 - duplicate and superseded versions of several screens.
 

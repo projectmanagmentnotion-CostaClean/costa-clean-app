@@ -17,6 +17,7 @@ import {
   formatRecurringPlanLabel,
 } from '../../app/relationshipLabels'
 import { ClientDetailCard } from './ClientDetailCard'
+import { StitchAvatar } from '../../design-system/stitch/StitchAvatar'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
@@ -821,6 +822,14 @@ export function ClientWorkspace({
       backLabel="Volver a cartera"
       eyebrow="Workspace de cliente"
       kicker="Centro operativo"
+      leading={(
+        <StitchAvatar
+          label={client.full_name}
+          kind="client"
+          size="workspace"
+          className="cc-client-workspace__avatar"
+        />
+      )}
       title={client.full_name}
       subtitle={`${formatClientLabel(client)} - ${buildOriginLabel(client)}`}
       statusBadge={<span className="lead-badge">{getDisplayStatusLabel(client.status)}</span>}

@@ -1,4 +1,3 @@
-import { businessRules } from '../../app/businessRules'
 import { formatCurrency } from '../../app/displayFormat'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteLineItem, QuoteListItem } from './types'
@@ -139,12 +138,13 @@ export function calculateQuoteSubtotal(lines: QuoteLineFormState[]): number {
 }
 
 export function calculateQuoteTax(lines: QuoteLineFormState[]): number {
-  return roundMoney(calculateQuoteSubtotal(lines) * businessRules.defaultTaxRate)
+  const subtotal = calculateQuoteSubtotal(lines)
+  return roundMoney(subtotal * 0)
 }
 
 export function calculateQuoteTotal(lines: QuoteLineFormState[]): number {
   const subtotal = calculateQuoteSubtotal(lines)
-  const tax = roundMoney(subtotal * businessRules.defaultTaxRate)
+  const tax = calculateQuoteTax(lines)
   return roundMoney(subtotal + tax)
 }
 

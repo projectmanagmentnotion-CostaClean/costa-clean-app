@@ -11,6 +11,7 @@ import { WorkspaceRelationBrowser } from '../../components/WorkspaceRelationBrow
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
 import { DeferredContentFallback } from '../../components/DeferredContentFallback'
+import { StitchAvatar } from '../../design-system/stitch/StitchAvatar'
 import '../workspaces/workspaceSurfaceStyles'
 import { PropertyDetailCard } from './PropertyDetailCard'
 import type { PropertyWorkspaceTab } from './usePropertyWorkspaceNavigation'
@@ -371,6 +372,14 @@ export function PropertyWorkspace({
 
       <header className="cc-client-workspace__hero">
         <div className="cc-client-workspace__identity">
+          <div className="cc-client-workspace__identity-leading">
+            <StitchAvatar
+              label={property.name}
+              kind="property"
+              size="workspace"
+              className="cc-client-workspace__avatar"
+            />
+          </div>
           <div className="cc-client-workspace__identity-copy">
             <span className="cc-client-workspace__kicker">Contexto operativo</span>
             <h1>{property.name}</h1>
@@ -390,7 +399,7 @@ export function PropertyWorkspace({
             <small>{owner?.phone ?? owner?.email ?? 'Sin contacto principal'}</small>
           </article>
           <article className="cc-client-workspace__meta-card">
-            <span>Documento o agenda dominante</span>
+            <span>Ubicacion y agenda</span>
             <strong>
               {latestInvoice
                 ? formatInvoiceLabel(latestInvoice)

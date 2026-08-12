@@ -9,6 +9,7 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -187,7 +188,7 @@ export function QuoteDocumentA4({
   const propertyName = buildPropertyName(quote, properties)
   const propertyAddress = buildPropertyAddress(quote, properties)
   const documentLines = getDocumentLines(quote, properties)
-  const primaryConcept = documentLines[0]?.concept || 'Servicio de limpieza'
+  const quoteScope = buildQuoteScopeLabel(quote)
   const commercialSummary = getQuoteCommercialSummary({
     subtotal: Number(quote.subtotal || 0),
     taxAmount: Number(quote.tax_amount || 0),
@@ -226,7 +227,7 @@ export function QuoteDocumentA4({
           </div>
           <div className="cc-invoice-a4__doc-row">
             <span>Revision economica</span>
-            <strong>{getQuoteCustomerFacingTotalLabel()}</strong>
+            <strong>{getQuoteCustomerFacingTotalLabel(Number(quote.tax_amount || 0))}</strong>
           </div>
         </div>
       </header>
@@ -252,8 +253,8 @@ export function QuoteDocumentA4({
 
       <section className="cc-invoice-a4__references">
         <div className="cc-invoice-a4__reference-card">
-          <span className="cc-invoice-a4__label">Alcance propuesto</span>
-          <strong>{primaryConcept}</strong>
+          <span className="cc-invoice-a4__label">Alcance presupuesto</span>
+          <strong>{quoteScope}</strong>
           <p>{buildProposalReference(quote)}</p>
         </div>
 
@@ -297,7 +298,7 @@ export function QuoteDocumentA4({
 
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
             <span className="cc-invoice-a4__label">Observaciones</span>
-            <p>{quote.notes?.trim() ? quote.notes : 'Sin observaciones adicionales.'}</p>
+            <p>{quote.internal_notes?.trim() ? quote.internal_notes : 'Sin observaciones adicionales.'}</p>
           </div>
 
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">

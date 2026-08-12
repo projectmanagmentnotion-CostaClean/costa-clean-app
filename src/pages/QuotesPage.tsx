@@ -85,15 +85,25 @@ export function QuotesPage({
   const acceptedWithoutJobValue = acceptedWithoutJob.reduce(
     (sum, quote) => sum + getQuoteCustomerFacingTotalValue({
       subtotal: Number(quote.subtotal ?? 0),
+      taxAmount: Number(quote.tax_amount ?? 0),
       total: Number(quote.total ?? 0),
     }),
+    0,
+  )
+  const acceptedWithoutJobTaxValue = acceptedWithoutJob.reduce(
+    (sum, quote) => sum + Number(quote.tax_amount ?? 0),
     0,
   )
   const acceptedTotalValue = acceptedQuotes.reduce(
     (sum, quote) => sum + getQuoteCustomerFacingTotalValue({
       subtotal: Number(quote.subtotal ?? 0),
+      taxAmount: Number(quote.tax_amount ?? 0),
       total: Number(quote.total ?? 0),
     }),
+    0,
+  )
+  const acceptedTotalTaxValue = acceptedQuotes.reduce(
+    (sum, quote) => sum + Number(quote.tax_amount ?? 0),
     0,
   )
   const funnelPercent = acceptedQuotes.length > 0
@@ -195,7 +205,11 @@ export function QuotesPage({
       <VisualKpiCard
         key="quotes-accepted-value"
         label="Valor aceptado"
-        value={formatQuoteCustomerFacingTotal({ subtotal: acceptedTotalValue, total: acceptedTotalValue })}
+        value={formatQuoteCustomerFacingTotal({
+          subtotal: acceptedTotalValue - acceptedTotalTaxValue,
+          taxAmount: acceptedTotalTaxValue,
+          total: acceptedTotalValue,
+        })}
         hint="Suma de presupuestos aceptados con importe real visible."
         tone="info"
         priority="compact"
@@ -282,7 +296,11 @@ export function QuotesPage({
             }
             : undefined}
           metricLabel={hasMeaningfulAmount(acceptedWithoutJobValue) ? 'Potencial bloqueado' : undefined}
-          metricValue={hasMeaningfulAmount(acceptedWithoutJobValue) ? formatQuoteCustomerFacingTotal({ subtotal: acceptedWithoutJobValue, total: acceptedWithoutJobValue }) : undefined}
+          metricValue={hasMeaningfulAmount(acceptedWithoutJobValue) ? formatQuoteCustomerFacingTotal({
+            subtotal: acceptedWithoutJobValue - acceptedWithoutJobTaxValue,
+            taxAmount: acceptedWithoutJobTaxValue,
+            total: acceptedWithoutJobValue,
+          }) : undefined}
           metricHint={hasMeaningfulAmount(acceptedWithoutJobValue)
             ? 'Importe aceptado que todavia no se ha convertido en servicio.'
             : undefined}
@@ -337,6 +355,9 @@ export function QuotesPage({
                 expenses={expenses}
                 prefill={createPrefill}
                 onRefreshData={onQuoteCreated}
+                onCreatedQuote={(quote) => {
+                  setSelectedQuoteId(quote.id)
+                }}
                 onCompleted={handleQuoteCreated}
                 onOpenExistingQuote={(quoteId) => {
                   setHasCreateFormDirty(false)

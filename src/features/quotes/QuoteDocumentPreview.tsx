@@ -76,6 +76,7 @@ function QuoteDocumentPreviewContent({
           <span className="cc-doc-preview-panel__pill">
             {formatQuoteCustomerFacingTotal({
               subtotal: Number(hydratedQuote.subtotal || 0),
+              taxAmount: Number(hydratedQuote.tax_amount || 0),
               total: Number(hydratedQuote.total || 0),
             })}
           </span>

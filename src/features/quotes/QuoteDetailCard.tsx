@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
-import { businessRules } from '../../app/businessRules'
 import { getStatusLabel } from '../../app/displayText'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -15,11 +14,12 @@ import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import {
   buildQuoteLinePayloads,
   calculateQuoteSubtotal,
+  calculateQuoteTax,
+  calculateQuoteTotal,
   createBlankQuoteLine,
   formatQuoteLineSubtotalDisplay,
   formatQuoteLineSubtotalInput,
   getFormLinesFromQuote,
-  roundMoney,
 } from './quoteLineUtils'
 import type { QuoteLineFormState } from './quoteLineUtils'
 import {
@@ -27,7 +27,9 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import './quotesOperations.css'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
 interface QuoteDetailCardProps {
@@ -203,14 +205,8 @@ function QuoteDetailCardContent({
   }, [properties, form.client_id])
 
   const subtotalValue = useMemo(() => calculateQuoteSubtotal(lines), [lines])
-  const taxAmountValue = useMemo(
-    () => roundMoney(subtotalValue * businessRules.defaultTaxRate),
-    [subtotalValue],
-  )
-  const totalValue = useMemo(
-    () => roundMoney(subtotalValue + taxAmountValue),
-    [subtotalValue, taxAmountValue],
-  )
+  const taxAmountValue = useMemo(() => calculateQuoteTax(lines), [lines])
+  const totalValue = useMemo(() => calculateQuoteTotal(lines), [lines])
   const commercialSummary = useMemo(
     () => getQuoteCommercialSummary({
       subtotal: subtotalValue,
@@ -626,8 +622,12 @@ function QuoteDetailCardContent({
               <small>{displayLines.length} linea(s)</small>
             </div>
             <div className="cc-detail-panel__summary-card">
-              <span>{getQuoteCustomerFacingTotalLabel()}</span>
-              <strong>{formatQuoteCustomerFacingTotal({ subtotal: Number(hydratedQuote.subtotal || 0), total: Number(hydratedQuote.total || 0) })}</strong>
+              <span>{getQuoteCustomerFacingTotalLabel(Number(hydratedQuote.tax_amount || 0))}</span>
+              <strong>{formatQuoteCustomerFacingTotal({
+                subtotal: Number(hydratedQuote.subtotal || 0),
+                taxAmount: Number(hydratedQuote.tax_amount || 0),
+                total: Number(hydratedQuote.total || 0),
+              })}</strong>
               <small>{hydratedQuote.job_id ? 'Servicio ya generado' : 'Todavia sin servicio asociado'}</small>
             </div>
           </div>
@@ -791,7 +791,7 @@ function QuoteDetailCardContent({
             </label>
 
             <label className="form-field form-field-full">
-              <span>Notas</span>
+              <span>Alcance presupuesto</span>
               <textarea
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
@@ -872,8 +872,8 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Notas</span>
-              <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
+              <span className="detail-label">Alcance presupuesto</span>
+              <strong>{buildQuoteScopeLabel(hydratedQuote)}</strong>
             </div>
           </div>
           </>

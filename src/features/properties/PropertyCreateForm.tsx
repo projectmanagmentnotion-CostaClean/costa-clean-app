@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { FullscreenStepFlow } from '../../components/FullscreenStepFlow'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
@@ -9,6 +10,7 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
 import type { PropertyListItem } from './types'
 import type { ClientListItem } from '../clients/types'
+import './property-create-form.css'
 
 interface PropertyCreateFormProps {
   clients: ClientListItem[]
@@ -56,7 +58,7 @@ export function PropertyCreateForm({
   onOpenExistingProperty,
   onCancel,
   onDirtyChange,
-  title = 'Nueva propiedad',
+  title = 'Nueva Propiedad',
   description,
   submitLabel = 'Guardar propiedad',
 }: PropertyCreateFormProps) {
@@ -80,6 +82,12 @@ export function PropertyCreateForm({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPropertyDuplicateGroups>>([])
+  const [currentStep, setCurrentStep] = useState(0)
+  const steps = [
+    { id: 'base', label: 'Base', description: 'Cliente y titularidad' },
+    { id: 'operations', label: 'Datos operativos', description: 'Identidad y localizacion' },
+    { id: 'review', label: 'Revision', description: 'Comprobacion final' },
+  ] as const
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
@@ -180,6 +188,7 @@ export function PropertyCreateForm({
         notes: '',
       })
       setIsDirty(false)
+      setCurrentStep(0)
       setSuccessMessage('Propiedad creada correctamente.')
     } catch (err) {
       const message =
@@ -193,6 +202,11 @@ export function PropertyCreateForm({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    if (currentStep < steps.length - 1) {
+      setCurrentStep((value) => Math.min(value + 1, steps.length - 1))
+      return
+    }
+
     await submitProperty()
   }
 
@@ -206,71 +220,142 @@ export function PropertyCreateForm({
     setShowCancelConfirm(true)
   }
 
-  return (
-    <section className="data-section">
-      <div className="section-header">
-        <h2>{title}</h2>
-        {description ? <p>{description}</p> : null}
-      </div>
+  const stepStates = steps.map((_, index) => (
+    index < currentStep ? 'complete' : index === currentStep ? 'current' : 'pending'
+  )) as Array<'complete' | 'current' | 'pending'>
 
-      {clients.length === 0 ? (
-        <ContextualCreateSection
-          actionLabel="Crear cliente"
-          title="Falta el cliente base"
-          description="Crea el cliente sin salir del flujo y se seleccionará automáticamente para esta propiedad."
-          isOpen={showClientCreate}
-          onToggle={() => setShowClientCreate((current) => !current)}
+  const footerContent = (
+    <div className="cc-property-create-form__footer">
+      {onCancel ? (
+        <button type="button" className="secondary-button" onClick={requestCancel} disabled={isSubmitting}>
+          Cancelar
+        </button>
+      ) : null}
+
+      {currentStep > 0 ? (
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={() => setCurrentStep((value) => Math.max(value - 1, 0))}
+          disabled={isSubmitting}
         >
-          <ClientCreateForm
-            onCreated={onCreated}
-            onDirtyChange={setIsDirty}
-            title="Nuevo cliente en contexto"
-            description="Guarda el cliente y vuelve directamente al alta de propiedad."
-            submitLabel="Guardar cliente y volver"
-            onCreatedClient={async (client) => {
-              setForm((current) => ({
-                ...current,
-                client_id: client.id,
-              }))
-              setIsDirty(true)
-              setShowClientCreate(false)
-            }}
-          />
-        </ContextualCreateSection>
-      ) : (
-        <form className="lead-form" onSubmit={handleSubmit}>
-          <label className="form-field">
-            <span>Cliente *</span>
-            <select
-              value={form.client_id}
-              onChange={(event) => updateField('client_id', event.target.value)}
-              disabled={Boolean(contextualClient)}
-            >
-              {!contextualClient ? <option value="">Selecciona un cliente</option> : null}
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {formatClientLabel(client)}
-                </option>
-              ))}
-            </select>
-          </label>
+          Atrás
+        </button>
+      ) : null}
 
-          {!contextualClient ? (
-            <ContextualCreateSection
-              actionLabel="Crear cliente"
-              title="¿Falta el cliente?"
-              description="Abre un subflujo rápido para crear el cliente y seguir con esta propiedad sin perder lo ya escrito."
-              isOpen={showClientCreate}
-              onToggle={() => setShowClientCreate((current) => !current)}
-            >
-              <ClientCreateForm
-                onCreated={onCreated}
-                onDirtyChange={setIsDirty}
-                title="Nuevo cliente en contexto"
-                description="Al guardarlo, quedará seleccionado aquí automáticamente."
-                submitLabel="Guardar cliente y usarlo"
-                onCreatedClient={async (client) => {
-                  setForm((current) => ({
+      {currentStep < steps.length - 1 ? (
+        <button
+          type="button"
+          className="primary-button"
+          onClick={() => setCurrentStep((value) => Math.min(value + 1, steps.length - 1))}
+          disabled={isSubmitting}
+        >
+          Continuar
+        </button>
+      ) : (
+        <button type="button" className="primary-button" onClick={() => void submitProperty()} disabled={isSubmitting}>
+          {isSubmitting ? 'Guardando...' : submitLabel}
+        </button>
+      )}
+    </div>
+  )
+
+  const sharedStepFlow = (
+    <FullscreenStepFlow
+      eyebrow="Alta de activo"
+      title={title}
+      description={description ?? 'Alta guiada para vincular cliente, inmueble y ubicacion sin romper el contrato existente.'}
+      steps={steps.map((step) => ({
+        id: step.id,
+        label: step.label,
+        description: step.description,
+      }))}
+      currentStep={currentStep}
+      stepStates={stepStates}
+      onStepSelect={setCurrentStep}
+      contextItems={[
+        {
+          label: 'Cliente heredado',
+          value: contextualClient
+            ? formatClientLabel(contextualClient)
+            : form.client_id
+              ? formatClientLabel(clients.find((client) => client.id === form.client_id) ?? { id: form.client_id })
+              : 'Pendiente',
+          hint: contextualClient ? 'Heredado del contexto actual' : 'Se usara como propietario base',
+        },
+        {
+          label: 'Tipo operativo',
+          value: getPropertyTypeLabel(form.property_type),
+          hint: 'Define el contexto operativo principal',
+        },
+      ]}
+      sideContent={(
+        <div className="cc-property-create-form__summary">
+          <div className="cc-property-create-form__summary-top">
+            <span className="cc-property-create-form__summary-avatar" aria-hidden="true">
+              {(form.name.trim() || contextualClient?.full_name || 'N').trim().charAt(0).toUpperCase()}
+            </span>
+            <div className="cc-property-create-form__summary-copy">
+              <span>Revision</span>
+              <strong>{form.name.trim() || 'Nueva Propiedad'}</strong>
+              <small>{form.address.trim() || 'Sin direccion operativa'}</small>
+            </div>
+          </div>
+          <div className="cc-property-create-form__summary-grid">
+            <div>
+              <span>Cliente</span>
+              <strong>
+                {contextualClient
+                  ? formatClientLabel(contextualClient)
+                  : form.client_id
+                    ? formatClientLabel(clients.find((client) => client.id === form.client_id) ?? { id: form.client_id })
+                    : 'Pendiente'}
+              </strong>
+            </div>
+            <div>
+              <span>Tipo</span>
+              <strong>{getPropertyTypeLabel(form.property_type)}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+      footerContent={footerContent}
+    >
+      <form className="lead-form cc-property-create-form__flow" onSubmit={handleSubmit}>
+        {currentStep === 0 ? (
+          <section className="cc-property-create-form__step">
+            <label className="form-field">
+              <span>Cliente *</span>
+              <select
+                value={form.client_id}
+                onChange={(event) => updateField('client_id', event.target.value)}
+                disabled={Boolean(contextualClient)}
+              >
+                {!contextualClient ? <option value="">Selecciona un cliente</option> : null}
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {formatClientLabel(client)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {!contextualClient ? (
+              <ContextualCreateSection
+                actionLabel="Crear cliente"
+                title="¿Falta el cliente?"
+                description="Abre un subflujo rapido para crear el cliente y seguir con esta propiedad sin perder lo ya escrito."
+                isOpen={showClientCreate}
+                onToggle={() => setShowClientCreate((current) => !current)}
+              >
+                <ClientCreateForm
+                  onCreated={onCreated}
+                  onDirtyChange={setIsDirty}
+                  title="Nuevo cliente en contexto"
+                  description="Al guardarlo, quedara seleccionado aqui automaticamente."
+                  submitLabel="Guardar cliente y usarlo"
+                  onCreatedClient={async (client) => {
+                    setForm((current) => ({
                       ...current,
                       client_id: client.id,
                     }))
@@ -278,99 +363,103 @@ export function PropertyCreateForm({
                     setShowClientCreate(false)
                   }}
                 />
-            </ContextualCreateSection>
-          ) : null}
-
-          <label className="form-field">
-            <span>Nombre interno *</span>
-            <input
-              value={form.name}
-              onChange={(event) => updateField('name', event.target.value)}
-              placeholder="Ej. Piso Calella Centro"
-              required
-            />
-          </label>
-
-          <label className="form-field">
-            <span>Tipo de inmueble *</span>
-            <select
-              value={form.property_type}
-              onChange={(event) => updateField('property_type', event.target.value)}
-            >
-              <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
-              <option value="house">{getPropertyTypeLabel('house')}</option>
-              <option value="office">{getPropertyTypeLabel('office')}</option>
-              <option value="local">{getPropertyTypeLabel('local')}</option>
-              <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
-              <option value="community">{getPropertyTypeLabel('community')}</option>
-              <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
-            </select>
-          </label>
-
-          <label className="form-field form-field-full">
-            <span>Dirección *</span>
-            <input
-              value={form.address}
-              onChange={(event) => updateField('address', event.target.value)}
-              placeholder="Ej. Carrer Example 12, 2º 1ª"
-              required
-            />
-          </label>
-
-          <label className="form-field">
-            <span>Ciudad</span>
-            <input
-              value={form.city}
-              onChange={(event) => updateField('city', event.target.value)}
-              placeholder="Ej. Calella"
-            />
-          </label>
-
-          <label className="form-field">
-            <span>Código postal</span>
-            <input
-              value={form.postal_code}
-              onChange={(event) => updateField('postal_code', event.target.value)}
-              placeholder="Ej. 08370"
-            />
-          </label>
-
-          <label className="form-field form-field-full">
-            <span>Notas</span>
-            <textarea
-              value={form.notes}
-              onChange={(event) => updateField('notes', event.target.value)}
-              placeholder="Accesos, instrucciones o detalles operativos"
-              rows={4}
-            />
-          </label>
-
-          <div className="form-actions">
-            {onCancel ? (
-              <button type="button" className="secondary-button" onClick={requestCancel}>
-                Cancelar
-              </button>
+              </ContextualCreateSection>
             ) : null}
-            <button type="submit" className="primary-button" disabled={isSubmitting}>
-              {isSubmitting ? 'Guardando...' : submitLabel}
-            </button>
+          </section>
+        ) : null}
+
+        {currentStep === 1 ? (
+          <section className="cc-property-create-form__step">
+            <label className="form-field">
+              <span>Nombre interno *</span>
+              <input
+                value={form.name}
+                onChange={(event) => updateField('name', event.target.value)}
+                placeholder="Ej. Piso Calella Centro"
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Tipo de inmueble *</span>
+              <select
+                value={form.property_type}
+                onChange={(event) => updateField('property_type', event.target.value)}
+              >
+                <option value="apartment">{getPropertyTypeLabel('apartment')}</option>
+                <option value="house">{getPropertyTypeLabel('house')}</option>
+                <option value="office">{getPropertyTypeLabel('office')}</option>
+                <option value="local">{getPropertyTypeLabel('local')}</option>
+                <option value="tourist_apartment">{getPropertyTypeLabel('tourist_apartment')}</option>
+                <option value="community">{getPropertyTypeLabel('community')}</option>
+                <option value="construction_site">{getPropertyTypeLabel('construction_site')}</option>
+              </select>
+            </label>
+          </section>
+        ) : null}
+
+        {currentStep === 2 ? (
+          <section className="cc-property-create-form__step">
+            <label className="form-field form-field-full">
+              <span>Direccion *</span>
+              <input
+                value={form.address}
+                onChange={(event) => updateField('address', event.target.value)}
+                placeholder="Ej. Carrer Example 12, 2º 1ª"
+                required
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Ciudad</span>
+              <input
+                value={form.city}
+                onChange={(event) => updateField('city', event.target.value)}
+                placeholder="Ej. Calella"
+              />
+            </label>
+
+            <label className="form-field">
+              <span>Codigo postal</span>
+              <input
+                value={form.postal_code}
+                onChange={(event) => updateField('postal_code', event.target.value)}
+                placeholder="Ej. 08370"
+              />
+            </label>
+
+            <label className="form-field form-field-full">
+              <span>Notas</span>
+              <textarea
+                value={form.notes}
+                onChange={(event) => updateField('notes', event.target.value)}
+                placeholder="Accesos, instrucciones o detalles operativos"
+                rows={4}
+              />
+            </label>
+          </section>
+        ) : null}
+
+        {submitError ? (
+          <div className="empty-state">
+            <strong>No se pudo crear la propiedad</strong>
+            <p>{submitError}</p>
           </div>
+        ) : null}
 
-          {submitError ? (
-            <div className="empty-state">
-              <strong>No se pudo crear la propiedad</strong>
-              <p>{submitError}</p>
-            </div>
-          ) : null}
+        {successMessage ? (
+          <div className="empty-state">
+            <strong>Operacion correcta</strong>
+            <p>{successMessage}</p>
+          </div>
+        ) : null}
+      </form>
+    </FullscreenStepFlow>
+  )
 
-          {successMessage ? (
-            <div className="empty-state">
-              <strong>Operación correcta</strong>
-              <p>{successMessage}</p>
-            </div>
-          ) : null}
-        </form>
-      )}
+  return (
+    <section className="data-section cc-property-create-form">
+      {sharedStepFlow}
 
       <ConfirmDialog
         isOpen={showCancelConfirm}

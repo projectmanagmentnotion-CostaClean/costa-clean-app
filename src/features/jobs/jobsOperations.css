@@ -3,6 +3,53 @@
   gap: 14px;
 }
 
+.cc-jobs-directory {
+  display: grid;
+  gap: 16px;
+}
+
+.cc-jobs-directory__section {
+  display: grid;
+  gap: 10px;
+}
+
+.cc-jobs-directory__section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.cc-jobs-directory__section-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.cc-jobs-directory__section-copy span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cc-jobs-directory__section-copy strong {
+  color: var(--text);
+  font-size: 0.96rem;
+}
+
+.cc-jobs-directory__section-copy p {
+  margin: 0;
+  color: var(--muted-strong);
+  font-size: 0.84rem;
+  line-height: 1.36;
+}
+
+.cc-jobs-directory__rows {
+  padding-top: 2px;
+}
+
 .cc-recurring-service-readiness {
   display: flex;
   align-items: center;
@@ -44,5 +91,26 @@
 
   .cc-recurring-service-readiness .secondary-button {
     width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .cc-jobs-directory__section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 640px) {
+  .cc-jobs-directory {
+    gap: 14px;
+  }
+
+  .cc-jobs-directory__section {
+    gap: 8px;
+  }
+
+  .cc-jobs-directory__section-copy p {
+    font-size: 0.8rem;
   }
 }

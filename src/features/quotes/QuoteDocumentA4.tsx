@@ -69,8 +69,10 @@ function buildClientMeta(
   const client = clients.find((item) => item.id === quote.client_id)
 
   return [
-    client?.phone,
-    client?.email,
+    client?.tax_id ? `NIF/CIF: ${client.tax_id}` : null,
+    client?.billing_address?.trim() || null,
+    client?.phone?.trim() || null,
+    client?.email?.trim() || null,
   ].filter(Boolean) as string[]
 }
 

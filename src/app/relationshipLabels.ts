@@ -62,10 +62,8 @@ function getQuoteDescriptor(quote: {
   lead_name?: NullableText
   lead_display_code?: NullableText
 }): string | null {
-  const firstLineConcept = quote.lines?.[0]?.concept ?? quote.quote_lines?.[0]?.concept
   return truncateDescriptor(
     quote.notes
-      ?? firstLineConcept
       ?? quote.property_name
       ?? quote.client_name
       ?? quote.lead_name

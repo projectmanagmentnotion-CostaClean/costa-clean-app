@@ -791,7 +791,7 @@ function QuoteDetailCardContent({
             </label>
 
             <label className="form-field form-field-full">
-              <span>Notas</span>
+              <span>Alcance presupuesto</span>
               <textarea
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
@@ -872,7 +872,7 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Notas</span>
+              <span className="detail-label">Alcance presupuesto</span>
               <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
             </div>
           </div>

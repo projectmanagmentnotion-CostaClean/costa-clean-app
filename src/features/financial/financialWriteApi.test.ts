@@ -33,6 +33,71 @@ describe('financialWriteApi test utils', () => {
     )).toBe(false)
   })
 
+  it('returns the single saved quote row when Supabase confirms one object', () => {
+    expect(__financialWriteApiTestUtils.normalizeSavedQuoteRows({
+      id: 'quote-1',
+      display_code: 'QUO-0042',
+      status: 'sent',
+      subtotal: 120,
+      tax_amount: 25.2,
+      total: 145.2,
+      notes: 'Servicio de camareros',
+    })).toMatchObject({
+      id: 'quote-1',
+      status: 'sent',
+      total: 145.2,
+    })
+  })
+
+  it('fails with a controlled error when no saved quote row is returned', () => {
+    try {
+      __financialWriteApiTestUtils.normalizeSavedQuoteRows(null)
+      throw new Error('expected error')
+    } catch (error) {
+      expect(error instanceof Error ? error.message : null).toBe('No se pudo leer el presupuesto guardado.')
+    }
+  })
+
+  it('fails when the saved quote totals do not match the payload', () => {
+    try {
+      __financialWriteApiTestUtils.assertSavedQuoteMatchesExpectation(
+        {
+          id: 'quote-1',
+          subtotal: 100,
+          tax_amount: 21,
+          total: 121,
+          notes: 'Servicio de camareros',
+        },
+        {
+          id: 'quote-1',
+          display_code: 'QUO-0042',
+          status: 'sent',
+          subtotal: 99,
+          tax_amount: 21,
+          total: 120,
+          notes: 'Servicio de camareros',
+        },
+        [
+          {
+            id: 'line-1',
+            quote_id: 'quote-1',
+            sort_order: 1,
+            concept: 'Servicio de camareros',
+            quantity: 1,
+            unit: 'servicio',
+            unit_price: 99,
+            line_subtotal: 99,
+          },
+        ],
+      )
+      throw new Error('expected error')
+    } catch (error) {
+      expect(error instanceof Error ? error.message : null).toBe(
+        'El presupuesto se guardo con una base distinta a la esperada. Esperado 100 y Supabase devolvio 99.',
+      )
+    }
+  })
+
   it('fails when Supabase confirms a different fiscal number than expected', () => {
     try {
       __financialWriteApiTestUtils.assertSavedInvoiceNumberingMatchesExpectation(

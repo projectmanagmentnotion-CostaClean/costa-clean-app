@@ -338,6 +338,9 @@ export function QuotesPage({
                 prefill={createPrefill}
                 onRefreshData={onQuoteCreated}
                 onCompleted={handleQuoteCreated}
+                onCreatedQuote={(quote) => {
+                  setSelectedQuoteId(quote.id)
+                }}
                 onOpenExistingQuote={(quoteId) => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)

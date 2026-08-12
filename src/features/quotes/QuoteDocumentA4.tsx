@@ -9,6 +9,7 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -123,10 +124,6 @@ function buildFallbackConcept(
   }
 
   return simplifyLineConcept(quote.notes, 'Servicio de limpieza')
-}
-
-export function buildQuoteScopeLabel(quote: QuoteListItem): string {
-  return quote.notes?.trim() || 'Sin alcance definido'
 }
 
 function getPersistedDocumentLines(quote: QuoteListItem): DocumentLine[] {

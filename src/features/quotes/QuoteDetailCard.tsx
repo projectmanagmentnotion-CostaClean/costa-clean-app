@@ -27,7 +27,7 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
-import { buildQuoteScopeLabel } from './QuoteDocumentA4'
+import { buildQuoteScopeLabel } from './quoteScope'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import './quotesOperations.css'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'

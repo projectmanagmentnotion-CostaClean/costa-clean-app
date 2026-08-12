@@ -226,7 +226,7 @@ export function QuoteDocumentA4({
           </div>
           <div className="cc-invoice-a4__doc-row">
             <span>Revision economica</span>
-            <strong>{getQuoteCustomerFacingTotalLabel()}</strong>
+            <strong>{getQuoteCustomerFacingTotalLabel(Number(quote.tax_amount || 0))}</strong>
           </div>
         </div>
       </header>

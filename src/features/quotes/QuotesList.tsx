@@ -239,10 +239,11 @@ export function QuotesList({
                       status={<span className={`lead-badge cc-status-badge cc-status-badge--${quote.status}`}>{getStatusLabel(quote.status)}</span>}
                       aside={(
                         <strong className="cc-record-card__amount">
-                          {formatQuoteCustomerFacingTotal({
-                            subtotal: Number(quote.subtotal || 0),
-                            total: Number(quote.total || 0),
-                          })}
+                        {formatQuoteCustomerFacingTotal({
+                          subtotal: Number(quote.subtotal || 0),
+                          taxAmount: Number(quote.tax_amount || 0),
+                          total: Number(quote.total || 0),
+                        })}
                         </strong>
                       )}
                       summary={propertyLabel}

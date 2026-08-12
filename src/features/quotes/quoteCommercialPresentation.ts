@@ -9,38 +9,40 @@ interface QuoteCommercialAmountOptions {
 
 export function getQuoteCustomerFacingTotalValue({
   subtotal,
+  taxAmount,
   total,
-}: Pick<QuoteCommercialAmountOptions, 'subtotal' | 'total'>): number {
-  return businessRules.quotesIncludeTaxByDefault ? total : subtotal
+}: Pick<QuoteCommercialAmountOptions, 'subtotal' | 'taxAmount' | 'total'>): number {
+  return taxAmount > 0 ? total : subtotal
 }
 
-export function getQuoteCustomerFacingTotalLabel(): string {
-  return businessRules.quotesIncludeTaxByDefault ? 'Total estimado' : 'Total final'
+export function getQuoteCustomerFacingTotalLabel(taxAmount = 0): string {
+  return taxAmount > 0 ? 'Total estimado' : 'Total final'
 }
 
-export function getQuoteCustomerFacingTotalNote(): string {
-  return businessRules.quotesIncludeTaxByDefault
+export function getQuoteCustomerFacingTotalNote(taxAmount = 0): string {
+  return taxAmount > 0
     ? 'Importe final estimado para compartir con el cliente.'
     : businessRules.defaultQuoteLegalNote
 }
 
-export function getQuoteTaxReferenceLabel(): string {
-  return businessRules.quotesIncludeTaxByDefault
+export function getQuoteTaxReferenceLabel(taxAmount = 0): string {
+  return taxAmount > 0
     ? `IVA (${Math.round(businessRules.defaultTaxRate * 100)}%)`
     : 'Referencia IVA'
 }
 
-export function getQuoteTaxReferenceNote(): string {
-  return businessRules.quotesIncludeTaxByDefault
+export function getQuoteTaxReferenceNote(taxAmount = 0): string {
+  return taxAmount > 0
     ? 'Incluido en el total final mostrado.'
     : 'Dato interno de referencia. No se suma al total comercial.'
 }
 
 export function formatQuoteCustomerFacingTotal({
   subtotal,
+  taxAmount,
   total,
-}: Pick<QuoteCommercialAmountOptions, 'subtotal' | 'total'>): string {
-  return formatCurrency(getQuoteCustomerFacingTotalValue({ subtotal, total }))
+}: Pick<QuoteCommercialAmountOptions, 'subtotal' | 'taxAmount' | 'total'>): string {
+  return formatCurrency(getQuoteCustomerFacingTotalValue({ subtotal, taxAmount, total }))
 }
 
 export function getQuoteCommercialSummary({
@@ -51,11 +53,11 @@ export function getQuoteCommercialSummary({
   return {
     subtotalLabel: 'Base comercial',
     subtotalValue: formatCurrency(subtotal),
-    taxLabel: getQuoteTaxReferenceLabel(),
+    taxLabel: getQuoteTaxReferenceLabel(taxAmount),
     taxValue: formatCurrency(taxAmount),
-    taxNote: getQuoteTaxReferenceNote(),
-    totalLabel: getQuoteCustomerFacingTotalLabel(),
-    totalValue: formatQuoteCustomerFacingTotal({ subtotal, total }),
-    totalNote: getQuoteCustomerFacingTotalNote(),
+    taxNote: getQuoteTaxReferenceNote(taxAmount),
+    totalLabel: getQuoteCustomerFacingTotalLabel(taxAmount),
+    totalValue: formatQuoteCustomerFacingTotal({ subtotal, taxAmount, total }),
+    totalNote: getQuoteCustomerFacingTotalNote(taxAmount),
   }
 }

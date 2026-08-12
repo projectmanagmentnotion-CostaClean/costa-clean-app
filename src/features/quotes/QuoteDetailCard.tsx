@@ -27,6 +27,7 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
@@ -873,7 +874,7 @@ function QuoteDetailCardContent({
 
             <div className="detail-row">
               <span className="detail-label">Alcance presupuesto</span>
-              <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
+              <strong>{buildQuoteScopeLabel(hydratedQuote)}</strong>
             </div>
           </div>
           </>

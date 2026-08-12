@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { formatQuoteLabel } from '../../app/relationshipLabels'
-import { buildQuoteScopeLabel } from './QuoteDocumentA4'
+import { buildQuoteScopeLabel } from './quoteScope'
 
 describe('quote scope handling', () => {
   it('uses quote notes as the commercial scope and ignores line concepts', () => {

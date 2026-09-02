@@ -46,20 +46,20 @@
   box-shadow: none !important;
 }
 
-.cc-invoice-a4--export .cc-invoice-a4__header,
-.cc-invoice-a4--export .cc-invoice-a4__parties,
-.cc-invoice-a4--export .cc-invoice-a4__references,
-.cc-invoice-a4--export .cc-invoice-a4__footer-grid {
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__header,
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__parties,
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__references,
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__footer-grid {
   grid-template-columns: minmax(0, 1fr) minmax(260px, 340px) !important;
 }
 
-.cc-invoice-a4--export .cc-invoice-a4__parties,
-.cc-invoice-a4--export .cc-invoice-a4__references,
-.cc-invoice-a4--export .cc-invoice-a4__footer-grid {
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__parties,
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__references,
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__footer-grid {
   grid-template-columns: 1fr 1fr !important;
 }
 
-.cc-invoice-a4--export .cc-invoice-a4__logo {
+.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__logo {
   width: 220px !important;
 }
 

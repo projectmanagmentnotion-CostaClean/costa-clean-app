@@ -76,4 +76,12 @@ describe('InvoiceDocumentA4', () => {
 
     expect(html.includes('Nombre fiscal desde name')).toBe(true)
   })
+
+  it('marks PDF rendering explicitly so responsive screen rules cannot redefine the A4 layout', () => {
+    const html = renderToStaticMarkup(
+      <InvoiceDocumentA4 invoice={createInvoice()} variant="embedded" renderMode="pdf" />,
+    )
+
+    expect(html).toContain('cc-invoice-a4--embedded cc-invoice-a4--pdf')
+  })
 })

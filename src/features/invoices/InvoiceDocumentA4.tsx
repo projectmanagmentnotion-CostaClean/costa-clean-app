@@ -8,6 +8,7 @@ import type { InvoiceLineItem, InvoiceListItem } from './types'
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
   variant?: 'document' | 'embedded' | 'print'
+  renderMode?: 'screen' | 'pdf'
   logoSrc?: string
 }
 
@@ -145,17 +146,20 @@ function formatQuantity(line: DocumentLine): string {
 export function InvoiceDocumentA4({
   invoice,
   variant = 'document',
+  renderMode = 'screen',
   logoSrc = '/branding/logo-costa-clean-web.png',
 }: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
   const documentLines = getDocumentLines(invoice)
 
-  const articleClassName =
+  const articleClassName = [
     variant === 'embedded'
       ? 'cc-invoice-a4 cc-invoice-a4--embedded'
       : variant === 'print'
         ? 'cc-invoice-a4 cc-invoice-a4--print'
-        : 'cc-invoice-a4'
+        : 'cc-invoice-a4',
+    renderMode === 'pdf' ? 'cc-invoice-a4--pdf' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <article className={articleClassName}>

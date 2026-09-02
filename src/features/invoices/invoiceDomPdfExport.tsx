@@ -69,7 +69,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
       orientation: 'portrait',
       unit: 'mm',
     })
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, undefined, 'FAST')
+    pdf.addImage(canvas, 'PNG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, undefined, 'FAST')
 
     return new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' })
   } finally {

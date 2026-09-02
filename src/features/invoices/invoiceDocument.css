@@ -65,11 +65,12 @@
 
 .cc-invoice-pdf-export-host {
   position: fixed;
-  left: -100000px;
+  left: 0;
   top: 0;
-  z-index: -1;
+  z-index: 2147483647;
   overflow: hidden;
   background: #ffffff;
+  pointer-events: none;
 }
 
 .cc-invoice-a4--print {

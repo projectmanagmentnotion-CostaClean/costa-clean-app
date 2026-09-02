@@ -1,16 +1,15 @@
 import { useMemo, useState } from 'react'
 import { getStatusLabel } from '../../app/displayText'
-import { DSConfirmDialog } from '../../design-system/components/DSConfirmDialog'
 import { DSErrorState } from '../../design-system/components/DSErrorState'
 import { DSLoadingState } from '../../design-system/components/DSLoadingState'
 import '../documents/documentSurfaceStyles'
 import type { InvoiceListItem } from './types'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
-import { getInvoiceDocumentTitle } from './openInvoicePrintWindow'
 import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
 import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
 import { openInvoiceDocumentOutput } from '../documents/documentOutputRuntime'
+import { getInvoiceDocumentTitle } from './openInvoicePrintWindow'
 
 interface InvoiceDocumentScreenProps {
   invoice: InvoiceListItem
@@ -28,7 +27,6 @@ export function InvoiceDocumentScreen({
   invoice,
   onClose,
 }: InvoiceDocumentScreenProps) {
-  const [pendingOutputIntent, setPendingOutputIntent] = useState<'print' | 'pdf' | null>(null)
   const [outputError, setOutputError] = useState<string | null>(null)
   const [isOpeningOutput, setIsOpeningOutput] = useState(false)
   const {
@@ -38,38 +36,32 @@ export function InvoiceDocumentScreen({
   } = useInvoiceDocumentLines(invoice)
   const documentTitle = useMemo(() => getInvoiceDocumentTitle(hydratedInvoice), [hydratedInvoice])
 
-  function handlePrint() {
-    if (!isLoadingLines && !linesError) {
-      setOutputError(null)
-      setPendingOutputIntent('print')
+  async function handleOutput(intent: 'print' | 'pdf') {
+    if (isLoadingLines || linesError || isOpeningOutput) {
+      return
     }
-  }
-
-  function handleSavePdf() {
-    if (!isLoadingLines && !linesError) {
-      setOutputError(null)
-      setPendingOutputIntent('pdf')
-    }
-  }
-
-  async function handleConfirmOpenWindow() {
-    if (!pendingOutputIntent) return
 
     setIsOpeningOutput(true)
     setOutputError(null)
 
     try {
-      const didOpenOutput = await openInvoiceDocumentOutput(hydratedInvoice, pendingOutputIntent)
-      setPendingOutputIntent(null)
-      if (!didOpenOutput) {
-        setOutputError('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
+      const result = await openInvoiceDocumentOutput(hydratedInvoice, intent)
+      if (result === 'cancelled') {
+        return
       }
     } catch (err) {
-      setPendingOutputIntent(null)
-      setOutputError(err instanceof Error ? err.message : 'No se pudo abrir la salida del documento.')
+      setOutputError(err instanceof Error ? err.message : 'No se pudo generar el PDF de la factura.')
     } finally {
       setIsOpeningOutput(false)
     }
+  }
+
+  function handlePrint() {
+    void handleOutput('print')
+  }
+
+  function handleSavePdf() {
+    void handleOutput('pdf')
   }
 
   async function handleShare() {
@@ -93,6 +85,7 @@ export function InvoiceDocumentScreen({
         onPrint={handlePrint}
         onSavePdf={handleSavePdf}
         isOutputDisabled={isLoadingLines || Boolean(linesError)}
+        isOutputBusy={isOpeningOutput}
       >
         {outputError ? (
           <DSErrorState title="No se pudo abrir el documento" description={outputError} />
@@ -107,16 +100,6 @@ export function InvoiceDocumentScreen({
           <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />
         )}
       </DocumentScreenFrame>
-
-      <DSConfirmDialog
-        isOpen={Boolean(pendingOutputIntent)}
-        title={pendingOutputIntent === 'pdf' ? 'Abrir ventana para guardar PDF' : 'Abrir ventana de impresion'}
-        description="El navegador abrira una nueva ventana o pestana para preparar la factura. Si las ventanas emergentes estan bloqueadas, habilitalas temporalmente para continuar."
-        confirmLabel={pendingOutputIntent === 'pdf' ? 'Abrir y guardar PDF' : 'Abrir e imprimir'}
-        isBusy={isOpeningOutput}
-        onCancel={() => setPendingOutputIntent(null)}
-        onConfirm={() => void handleConfirmOpenWindow()}
-      />
     </>
   )
 }

@@ -14,6 +14,7 @@ interface DocumentScreenFrameProps {
   onPrint: () => void
   onSavePdf: () => void
   isOutputDisabled?: boolean
+  isOutputBusy?: boolean
   children: ReactNode
 }
 
@@ -196,6 +197,7 @@ export function DocumentScreenFrame({
   onPrint,
   onSavePdf,
   isOutputDisabled = false,
+  isOutputBusy = false,
   children,
 }: DocumentScreenFrameProps) {
   useEffect(() => {
@@ -227,24 +229,24 @@ export function DocumentScreenFrame({
             </span>
           </button>
 
-          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onShare} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onShare} disabled={isOutputDisabled || isOutputBusy}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <IosShareIcon />
               Compartir
             </span>
           </button>
 
-          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onPrint} disabled={isOutputDisabled}>
+          <button type="button" className="secondary-button cc-document-screen__action cc-document-screen__action--secondary" onClick={onPrint} disabled={isOutputDisabled || isOutputBusy}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <PrintIcon />
               Imprimir
             </span>
           </button>
 
-          <button type="button" className="primary-button cc-document-screen__action cc-document-screen__action--primary" onClick={onSavePdf} disabled={isOutputDisabled}>
+          <button type="button" className="primary-button cc-document-screen__action cc-document-screen__action--primary" onClick={onSavePdf} disabled={isOutputDisabled || isOutputBusy}>
             <span className="cc-document-screen__action-label" style={iconLabelStyle}>
               <DownloadIcon />
-              Guardar
+              {isOutputBusy ? 'Generando...' : 'Guardar'}
             </span>
           </button>
         </div>
@@ -272,8 +274,8 @@ export function DocumentScreenFrame({
         <button type="button" className="secondary-button cc-document-screen__footer-action" onClick={onClose}>
           Volver
         </button>
-        <button type="button" className="primary-button cc-document-screen__footer-action cc-document-screen__footer-action--primary" onClick={onSavePdf} disabled={isOutputDisabled}>
-          {isOutputDisabled ? 'Preparando...' : 'Guardar PDF'}
+        <button type="button" className="primary-button cc-document-screen__footer-action cc-document-screen__footer-action--primary" onClick={onSavePdf} disabled={isOutputDisabled || isOutputBusy}>
+          {isOutputBusy ? 'Generando...' : isOutputDisabled ? 'Preparando...' : 'Guardar PDF'}
         </button>
       </div>
     </div>

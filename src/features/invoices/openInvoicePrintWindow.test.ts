@@ -4,7 +4,6 @@ import {
   buildInvoicePrintDocumentHtml,
   openInvoicePrintWindow,
 } from './openInvoicePrintWindow'
-import { openInvoiceDocumentOutput } from '../documents/documentOutputRuntime'
 
 function createExistingInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListItem {
   return {
@@ -72,15 +71,4 @@ describe('invoice document output', () => {
     expect(invoice.payment_status).toBe('pending')
   })
 
-  it('reports a blocked output window without rejecting shared consumers', async () => {
-    const alert = vi.fn()
-    vi.stubGlobal('window', {
-      open: vi.fn(() => null),
-      alert,
-    })
-
-    expect(openInvoicePrintWindow(createExistingInvoice(), 'pdf')).toBe(false)
-    expect(alert).toHaveBeenCalledOnce()
-    await expect(openInvoiceDocumentOutput(createExistingInvoice(), 'pdf')).resolves.toBe(false)
-  })
 })

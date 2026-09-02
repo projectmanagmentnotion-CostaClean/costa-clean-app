@@ -53,14 +53,19 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
     await document.fonts.ready
     await waitForImages(documentElement)
 
+    const captureWidth = host.offsetWidth
+    const captureHeight = host.offsetHeight
+
     const canvas = await html2canvas(host, {
       backgroundColor: '#ffffff',
-      height: documentElement.scrollHeight,
+      height: captureHeight,
       scale: CAPTURE_SCALE,
+      scrollX: 0,
+      scrollY: 0,
       useCORS: true,
-      width: documentElement.scrollWidth,
-      windowHeight: documentElement.scrollHeight,
-      windowWidth: Math.max(document.documentElement.clientWidth, 1200),
+      width: captureWidth,
+      windowHeight: captureHeight,
+      windowWidth: captureWidth,
     })
 
     const pdf = new jsPDF({

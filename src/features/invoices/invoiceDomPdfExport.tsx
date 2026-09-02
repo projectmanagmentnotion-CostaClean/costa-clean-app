@@ -53,7 +53,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
     await document.fonts.ready
     await waitForImages(documentElement)
 
-    const canvas = await html2canvas(documentElement, {
+    const canvas = await html2canvas(host, {
       backgroundColor: '#ffffff',
       height: documentElement.scrollHeight,
       scale: CAPTURE_SCALE,

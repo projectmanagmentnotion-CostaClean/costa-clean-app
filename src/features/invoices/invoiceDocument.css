@@ -41,7 +41,7 @@
   width: 210mm !important;
   height: 297mm !important;
   min-height: 297mm !important;
-  padding: 1.65rem !important;
+  padding: 10mm 10mm 9mm !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
@@ -57,10 +57,6 @@
 .cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__references,
 .cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__footer-grid {
   grid-template-columns: 1fr 1fr !important;
-}
-
-.cc-invoice-a4--pdf.cc-invoice-a4--embedded .cc-invoice-a4__logo {
-  width: 220px !important;
 }
 
 .cc-invoice-pdf-export-host {

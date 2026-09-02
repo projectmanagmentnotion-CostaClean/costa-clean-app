@@ -36,7 +36,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
   const host = document.createElement('div')
   host.className = 'cc-invoice-pdf-export-host'
   host.innerHTML = renderToStaticMarkup(
-    <InvoiceDocumentA4 invoice={invoice} variant="embedded" renderMode="pdf" />,
+    <InvoiceDocumentA4 invoice={invoice} variant="print" renderMode="pdf" />,
   )
 
   const documentElement = host.firstElementChild

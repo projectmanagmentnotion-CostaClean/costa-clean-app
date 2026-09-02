@@ -61,10 +61,13 @@
 
 .cc-invoice-pdf-export-host {
   position: fixed;
-  left: 0;
+  left: -10000px;
   top: 0;
-  z-index: 2147483647;
-  overflow: hidden;
+  width: 210mm;
+  min-width: 210mm;
+  max-width: 210mm;
+  z-index: 0;
+  overflow: visible;
   background: #ffffff;
   pointer-events: none;
 }

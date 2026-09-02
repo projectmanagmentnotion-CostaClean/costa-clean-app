@@ -70,7 +70,21 @@ function downloadFile(file: Blob, fileName: string): PdfDownloadResult {
   return 'downloaded'
 }
 
+async function assertValidPdfFile(file: File): Promise<void> {
+  if (file.type !== 'application/pdf' || file.size <= 0) {
+    throw new Error('El archivo PDF generado no tiene un MIME o tamaño válido.')
+  }
+
+  const headerBytes = new Uint8Array(await file.slice(0, 5).arrayBuffer())
+  const header = String.fromCharCode(...headerBytes)
+  if (header !== '%PDF-') {
+    throw new Error('El archivo generado no contiene una cabecera PDF válida.')
+  }
+}
+
 export async function deliverPdfFile(file: File, fileName: string): Promise<PdfDownloadResult> {
+  await assertValidPdfFile(file)
+
   if (isIosStandaloneApp() && canSharePdfFile(file)) {
     return sharePdfFile(file)
   }

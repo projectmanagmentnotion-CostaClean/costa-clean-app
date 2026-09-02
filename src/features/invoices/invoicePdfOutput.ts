@@ -4,7 +4,6 @@ import { getInvoiceFiscalDisplayData } from '../clients/clientFiscalData'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import {
   buildBrandedDocumentTitle,
-  buildCustomerDocumentFileStem,
   sanitizeFilenamePart,
 } from '../documents/utils'
 import { deliverPdfFile, isIosStandaloneApp, type PdfDownloadResult } from '../documents/documentFileDelivery'
@@ -69,8 +68,29 @@ function getInvoiceDocumentTitle(invoice: InvoiceListItem): string {
   return buildBrandedDocumentTitle('Factura', getInvoiceRef(invoice), getClientName(invoice))
 }
 
-function getInvoicePdfFileStem(invoice: InvoiceListItem): string {
-  return buildCustomerDocumentFileStem('factura', getInvoiceRef(invoice))
+function sanitizeInvoiceFileNamePart(value: string): string {
+  let sanitized = ''
+
+  for (const char of value.normalize('NFC')) {
+    const code = char.codePointAt(0) ?? 0
+    if ('\\/:*?"<>|'.includes(char) || code <= 31) {
+      continue
+    }
+
+    sanitized += char
+  }
+
+  return sanitized
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function buildInvoicePdfFileName(invoice: InvoiceListItem): string {
+  const reference = sanitizeInvoiceFileNamePart(invoice.invoice_number ?? 'Sin numero')
+  const client = sanitizeInvoiceFileNamePart(getClientName(invoice))
+  const baseName = [reference, client, 'Factura CostaClean'].filter(Boolean).join(' - ')
+
+  return `${baseName || 'Factura CostaClean'}.pdf`
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {
@@ -478,7 +498,6 @@ function drawInvoiceTable(
 function buildPdfBytes(pages: string[]): Uint8Array {
   const header = '%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'
   const objects: string[] = [
-    '',
     '<< /Type /Catalog /Pages 2 0 R >>',
     '',
     '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
@@ -489,7 +508,7 @@ function buildPdfBytes(pages: string[]): Uint8Array {
   const pageObjectNumbers = pages.map((_, index) => firstPageObjectNumber + index * 2)
   const contentObjectNumbers = pageObjectNumbers.map((pageNumber) => pageNumber + 1)
 
-  objects[2] = `<< /Type /Pages /Kids [${pageObjectNumbers.map((pageNumber) => `${pageNumber} 0 R`).join(' ')}] /Count ${pages.length} >>`
+  objects[1] = `<< /Type /Pages /Kids [${pageObjectNumbers.map((pageNumber) => `${pageNumber} 0 R`).join(' ')}] /Count ${pages.length} >>`
 
   pages.forEach((pageContent, index) => {
     const pageObjectNumber = pageObjectNumbers[index]
@@ -505,7 +524,10 @@ function buildPdfBytes(pages: string[]): Uint8Array {
 
   for (let objectNumber = 1; objectNumber <= objects.length; objectNumber += 1) {
     const objectBody = objects[objectNumber - 1]
-    if (!objectBody) continue
+    if (!objectBody) {
+      offsets.push('0000000000 00000 f \n')
+      continue
+    }
 
     const serializedObject = `${objectNumber} 0 obj\n${objectBody}\nendobj\n`
     offsets.push(`${String(currentOffset).padStart(10, '0')} 00000 n \n`)
@@ -672,7 +694,7 @@ export function buildInvoicePdfBlob(invoice: InvoiceListItem): Blob {
 
 export function buildInvoicePdfFile(invoice: InvoiceListItem): File {
   const blob = buildInvoicePdfBlob(invoice)
-  const fileName = `${getInvoicePdfFileStem(invoice)}.pdf`
+  const fileName = buildInvoicePdfFileName(invoice)
 
   if (typeof File !== 'undefined') {
     return new File([blob], fileName, { type: 'application/pdf' })

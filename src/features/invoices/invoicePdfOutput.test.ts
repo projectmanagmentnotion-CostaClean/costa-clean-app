@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { InvoiceListItem } from './types'
 import {
+  buildInvoicePdfFile,
+  buildInvoicePdfFileName,
   buildInvoicePdfBlob,
   downloadInvoicePdf,
   openInvoiceDocumentOutput,
@@ -46,12 +48,37 @@ afterEach(() => {
 describe('invoice pdf output', () => {
   it('builds a real PDF blob for the invoice document', async () => {
     const blob = buildInvoicePdfBlob(createInvoice())
-    const text = await blob.text()
+    const bytes = new Uint8Array(await blob.arrayBuffer())
+    const text = new TextDecoder().decode(bytes)
 
-    expect(text.startsWith('%PDF-1.4')).toBe(true)
+    expect(new TextDecoder().decode(bytes.slice(0, 5))).toBe('%PDF-')
+    expect(blob.type).toBe('application/pdf')
+    expect(blob.size).toBeGreaterThan(0)
     expect(text).toContain('2026-049')
     expect(text).toContain('Cliente existente')
     expect(text).toContain('/Type /Page')
+  })
+
+  it('keeps the historical Costa Clean filename and only removes filesystem-invalid characters', async () => {
+    const invoice = createInvoice({
+      invoice_number: '2026-069',
+      client_name: 'COSTA DEL MARESME HOSPITALITY MNG, S.L / Centro',
+    })
+    const file = buildInvoicePdfFile(invoice)
+
+    expect(buildInvoicePdfFileName(invoice)).toBe('2026-069 - COSTA DEL MARESME HOSPITALITY MNG, S.L Centro - Factura CostaClean.pdf')
+    expect(file.name).toBe(buildInvoicePdfFileName(invoice))
+    expect(file.name.endsWith('.pdf')).toBe(true)
+    expect(file.type).toBe('application/pdf')
+    expect(new Uint8Array(await file.arrayBuffer()).slice(0, 5)).toEqual(new Uint8Array([37, 80, 68, 70, 45]))
+  })
+
+  it.each([
+    ['2026-061', 'ALCAPA SPORT SL', '2026-061 - ALCAPA SPORT SL - Factura CostaClean.pdf'],
+    ['2026-063', 'Miguel Angel Flores Castillo', '2026-063 - Miguel Angel Flores Castillo - Factura CostaClean.pdf'],
+    ['2026-069', 'COSTA DEL MARESME HOSPITALITY MNG, S.L', '2026-069 - COSTA DEL MARESME HOSPITALITY MNG, S.L - Factura CostaClean.pdf'],
+  ])('uses the Costa Clean filename for %s', (invoiceNumber, clientName, expectedFileName) => {
+    expect(buildInvoicePdfFileName(createInvoice({ invoice_number: invoiceNumber, client_name: clientName }))).toBe(expectedFileName)
   })
 
   it('downloads the invoice PDF without opening a new window in normal browsers', async () => {
@@ -127,6 +154,11 @@ describe('invoice pdf output', () => {
     expect(sharedResult).toBe('shared')
     expect(share).toHaveBeenCalledOnce()
     expect(canShare).toHaveBeenCalledOnce()
+    const sharedFile = share.mock.calls[0][0].files[0]
+    expect(sharedFile).toBeInstanceOf(File)
+    expect(sharedFile.type).toBe('application/pdf')
+    expect(sharedFile.name).toBe('2026-049 - Cliente existente - Factura CostaClean.pdf')
+    expect(new Uint8Array(await sharedFile.arrayBuffer()).slice(0, 5)).toEqual(new Uint8Array([37, 80, 68, 70, 45]))
     expect(open).not.toHaveBeenCalled()
     expect(createObjectURL).not.toHaveBeenCalled()
 

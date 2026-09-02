@@ -173,7 +173,7 @@ export function InvoiceDocumentA4({
 
           <div className="cc-invoice-a4__brand-copy">
             <span className="cc-invoice-a4__eyebrow">CostaClean BCN</span>
-            <h1>FACTURA</h1>
+            <h1>FACTURA {invoice.invoice_number ?? 'Sin numero'}</h1>
             <p>Documento fiscal emitido conforme a las condiciones acordadas.</p>
           </div>
         </div>

@@ -77,6 +77,14 @@ describe('InvoiceDocumentA4', () => {
     expect(html.includes('Nombre fiscal desde name')).toBe(true)
   })
 
+  it('renders the fiscal invoice number in the document title', () => {
+    const html = renderToStaticMarkup(
+      <InvoiceDocumentA4 invoice={createInvoice({ invoice_number: '2026-069' })} />,
+    )
+
+    expect(html).toContain('<h1>FACTURA 2026-069</h1>')
+  })
+
   it('marks PDF rendering explicitly so responsive screen rules cannot redefine the A4 layout', () => {
     const html = renderToStaticMarkup(
       <InvoiceDocumentA4 invoice={createInvoice()} variant="embedded" renderMode="pdf" />,

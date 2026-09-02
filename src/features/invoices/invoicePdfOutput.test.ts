@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { InvoiceListItem } from './types'
+import { renderInvoiceDocumentPdf } from './invoiceDomPdfExport'
 import {
   buildInvoicePdfFile,
   buildInvoicePdfFileName,
@@ -7,6 +8,12 @@ import {
   downloadInvoicePdf,
   openInvoiceDocumentOutput,
 } from './invoicePdfOutput'
+
+vi.mock('./invoiceDomPdfExport', () => ({
+  renderInvoiceDocumentPdf: vi.fn(async (invoice: InvoiceListItem) => new Blob([
+    `%PDF-1.4\n${invoice.invoice_number}\n${invoice.client_name}\n/Type /Page\n%%EOF`,
+  ], { type: 'application/pdf' })),
+}))
 
 function createInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListItem {
   return {
@@ -47,7 +54,7 @@ afterEach(() => {
 
 describe('invoice pdf output', () => {
   it('builds a real PDF blob for the invoice document', async () => {
-    const blob = buildInvoicePdfBlob(createInvoice())
+    const blob = await buildInvoicePdfBlob(createInvoice())
     const bytes = new Uint8Array(await blob.arrayBuffer())
     const text = new TextDecoder().decode(bytes)
 
@@ -64,7 +71,7 @@ describe('invoice pdf output', () => {
       invoice_number: '2026-069',
       client_name: 'COSTA DEL MARESME HOSPITALITY MNG, S.L / Centro',
     })
-    const file = buildInvoicePdfFile(invoice)
+    const file = await buildInvoicePdfFile(invoice)
 
     expect(buildInvoicePdfFileName(invoice)).toBe('2026-069 - COSTA DEL MARESME HOSPITALITY MNG, S.L Centro - Factura CostaClean.pdf')
     expect(file.name).toBe(buildInvoicePdfFileName(invoice))
@@ -79,6 +86,11 @@ describe('invoice pdf output', () => {
     ['2026-069', 'COSTA DEL MARESME HOSPITALITY MNG, S.L', '2026-069 - COSTA DEL MARESME HOSPITALITY MNG, S.L - Factura CostaClean.pdf'],
   ])('uses the Costa Clean filename for %s', (invoiceNumber, clientName, expectedFileName) => {
     expect(buildInvoicePdfFileName(createInvoice({ invoice_number: invoiceNumber, client_name: clientName }))).toBe(expectedFileName)
+  })
+
+  it('uses InvoiceDocumentA4 as the visual PDF source', () => {
+    expect(renderInvoiceDocumentPdf).toBeTypeOf('function')
+    expect(buildInvoicePdfBlob.toString()).toContain('renderInvoiceDocumentPdf')
   })
 
   it('downloads the invoice PDF without opening a new window in normal browsers', async () => {

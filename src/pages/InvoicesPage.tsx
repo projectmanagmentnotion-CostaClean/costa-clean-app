@@ -43,7 +43,7 @@ import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScr
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
-  default: (await import('../features/invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+  default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
 }))
 
 interface InvoicesPageProps {
@@ -603,6 +603,7 @@ export function InvoicesPage({
               quotes={quotes}
               allInvoices={allInvoices}
               expenses={expenses}
+              payments={payments}
               onRefreshData={onInvoiceCreated}
               onOpenExistingInvoice={(invoiceId) => {
                 setShowMajorEdit(false)
@@ -628,6 +629,7 @@ export function InvoicesPage({
 
         {isSelectionMode ? (
           <BulkSelectionToolbar
+            entityLabel="facturas"
             selectedCount={selectedInvoiceIds.length}
             totalVisibleCount={visibleInvoices.length}
             allVisibleSelected={allVisibleSelected}

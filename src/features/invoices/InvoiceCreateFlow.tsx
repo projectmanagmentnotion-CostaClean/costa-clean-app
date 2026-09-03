@@ -59,7 +59,7 @@ import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
-interface InvoiceCreateFlowProps extends FullViewActionFlowProps {
+export interface InvoiceCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   jobs: JobListItem[]

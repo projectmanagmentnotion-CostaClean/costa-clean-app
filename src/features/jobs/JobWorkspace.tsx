@@ -34,7 +34,7 @@ import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
-  default: (await import('../invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+  default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
 }))
 
 const LazyPaymentCreateFlow = lazy(async () => ({

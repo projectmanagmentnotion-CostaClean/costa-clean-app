@@ -39,7 +39,7 @@ import type { QuoteListItem } from './types'
 import './QuoteCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
-interface QuoteCreateFlowProps extends FullViewActionFlowProps {
+export interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes?: QuoteListItem[]

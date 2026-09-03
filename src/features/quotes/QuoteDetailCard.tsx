@@ -172,6 +172,7 @@ function QuoteDetailCardContent({
   const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
 
   useEffect(() => {
+    if (isDirty) return
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)

@@ -110,7 +110,7 @@ export function InvoicesList({
   }, [error, filteredInvoices, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
 
   return (
-    <section className="data-section cc-module-list-section">
+      <section className="data-section cc-module-list-section">
       <DSSectionHeader
         title="Facturas"
         description="Emision, cobro y trazabilidad documental con una sola bandeja de lectura operativa."

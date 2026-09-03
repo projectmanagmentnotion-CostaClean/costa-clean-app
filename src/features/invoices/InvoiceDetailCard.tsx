@@ -365,6 +365,7 @@ export function InvoiceDetailCard({
   )
 
   useEffect(() => {
+    if (isDirty || hasPaymentFormDirty) return
     if (!invoice) {
       setIsEditing(false)
       setSaveError(null)

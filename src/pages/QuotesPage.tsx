@@ -24,10 +24,14 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
+import { updateQuoteStatus } from '../features/financial/financialWriteApi'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
-  default: (await import('../features/quotes/QuoteCreateFlow')).QuoteCreateFlow,
+  default: (await import('../features/quotes/QuoteCreateEntry')).QuoteCreateEntry,
 }))
 
 interface QuotesPageProps {
@@ -70,10 +74,18 @@ export function QuotesPage({
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(null)
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([])
+  const [visibleQuotes, setVisibleQuotes] = useState<QuoteListItem[]>(quotes)
+  const [bulkDialog, setBulkDialog] = useState<{ mode: 'sent' | 'rejected' | 'expired' | 'archive'; title: string; description: string } | null>(null)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
   const selectedQuoteKey = selectedQuote?.id ?? null
+  const selectedQuotes = quotes.filter((quote) => selectedQuoteIds.includes(quote.id))
+  const allVisibleSelected = visibleQuotes.length > 0 && visibleQuotes.every((quote) => selectedQuoteIds.includes(quote.id))
 
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const sentQuotes = quotes.filter((quote) => quote.status === 'sent')
@@ -237,6 +249,47 @@ export function QuotesPage({
       setSelectedQuoteId(targetQuote.id)
       setShowDocumentScreen(true)
     })
+  }
+
+  function toggleSelectionMode() {
+    setIsSelectionMode((current) => {
+      if (current) setSelectedQuoteIds([])
+      return !current
+    })
+  }
+
+  function toggleSelectAllVisible() {
+    const visibleIds = visibleQuotes.map((quote) => quote.id)
+    setSelectedQuoteIds((current) => allVisibleSelected
+      ? current.filter((id) => !visibleIds.includes(id))
+      : [...new Set([...current, ...visibleIds])])
+  }
+
+  async function runBulkAction() {
+    if (!bulkDialog) return
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    let completed = 0
+    const failures: string[] = []
+    for (const quote of selectedQuotes) {
+      try {
+        if (bulkDialog.mode === 'archive') {
+          await patchLifecycleEntity('quotes', quote.id, { archived_at: new Date().toISOString() })
+        } else {
+          await updateQuoteStatus(quote.id, bulkDialog.mode)
+        }
+        completed += 1
+      } catch (error) {
+        failures.push(`${quote.display_code ?? quote.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    await onQuoteCreated()
+    setBulkFeedback(failures.length > 0
+      ? `${completed} completados. ${failures.length} fallidos: ${failures.join(' | ')}`
+      : `${completed} presupuesto(s) actualizados.`)
+    setSelectedQuoteIds([])
+    setBulkDialog(null)
+    setBulkBusy(false)
   }
 
   return (
@@ -422,6 +475,25 @@ export function QuotesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
+        {isSelectionMode ? (
+          <BulkSelectionToolbar
+            entityLabel="presupuestos"
+            selectedCount={selectedQuoteIds.length}
+            totalVisibleCount={visibleQuotes.length}
+            allVisibleSelected={allVisibleSelected}
+            onToggleSelectAllVisible={toggleSelectAllVisible}
+            onClearSelection={() => setSelectedQuoteIds([])}
+            actions={[
+              { id: 'sent', label: 'Marcar enviados', onClick: () => setBulkDialog({ mode: 'sent', title: 'Marcar presupuestos como enviados', description: `Se actualizarán ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'rejected', label: 'Rechazar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'rejected', title: 'Rechazar presupuestos', description: `Se marcarán como rechazados ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'expired', label: 'Caducar', onClick: () => setBulkDialog({ mode: 'expired', title: 'Caducar presupuestos', description: `Se marcarán como vencidos ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'archive', label: 'Archivar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'archive', title: 'Archivar presupuestos', description: `Se archivarán ${selectedQuotes.length} presupuesto(s).` }) },
+            ]}
+          />
+        ) : null}
+
+        {bulkFeedback ? <div className="cc-alert cc-alert--success"><strong>Operación masiva completada</strong><p>{bulkFeedback}</p></div> : null}
+
         <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">
             <QuotesList
@@ -431,6 +503,11 @@ export function QuotesPage({
               error={error}
               selectedQuoteId={selectedQuoteKey}
               onOpenDocument={openQuoteDocument}
+              selectedQuoteIds={selectedQuoteIds}
+              isSelectionMode={isSelectionMode}
+              onToggleSelectionMode={toggleSelectionMode}
+              onToggleQuoteSelection={(quoteId) => setSelectedQuoteIds((current) => current.includes(quoteId) ? current.filter((id) => id !== quoteId) : [...current, quoteId])}
+              onStateChange={(state) => { setVisibleQuotes(state.visibleQuotes) }}
               onSelectQuote={(quote) => {
                 if (quote.id === selectedQuoteKey) return
 
@@ -501,6 +578,17 @@ export function QuotesPage({
           />
         </Suspense>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={Boolean(bulkDialog)}
+        title={bulkDialog?.title ?? 'Confirmar acción masiva'}
+        description={bulkDialog?.description ?? ''}
+        confirmLabel="Aplicar acción"
+        tone="warning"
+        isBusy={bulkBusy}
+        onCancel={() => setBulkDialog(null)}
+        onConfirm={() => void runBulkAction()}
+      />
     </>
   )
 }

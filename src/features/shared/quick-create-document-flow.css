@@ -1,0 +1,18 @@
+.cc-quick-create { display: grid; gap: 18px; max-width: 680px; margin: 0 auto; padding: 8px 0 24px; }
+.cc-quick-create__context { display: grid; gap: 4px; color: var(--cc-muted, #68717b); }
+.cc-quick-create__context strong { color: var(--cc-ink, #17212b); font-size: 1.05rem; }
+.cc-quick-create__fields, .cc-quick-create__options-panel, .cc-quick-create__advanced-lines { display: grid; gap: 12px; }
+.cc-quick-create label { display: grid; gap: 6px; min-width: 0; }
+.cc-quick-create label > span { color: var(--cc-muted, #68717b); font-size: .82rem; font-weight: 700; }
+.cc-quick-create input, .cc-quick-create select, .cc-quick-create textarea { width: 100%; box-sizing: border-box; }
+.cc-quick-create__locked-value { min-height: 42px; display: flex; align-items: center; color: var(--cc-ink, #17212b); }
+.cc-quick-create__line { display: grid; grid-template-columns: minmax(0, 1fr) 150px auto; gap: 10px; align-items: end; }
+.cc-quick-create__line-tools, .cc-quick-create__actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.cc-quick-create__options { justify-self: start; border: 0; background: transparent; color: var(--cc-muted, #68717b); padding: 4px 0; text-decoration: underline; cursor: pointer; }
+.cc-quick-create__options-panel { padding: 14px 0 2px; border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.cc-quick-create__advanced-line { grid-template-columns: 120px minmax(0, 1fr); grid-auto-flow: column; }
+.cc-quick-create__summary { display: flex; justify-content: space-between; align-items: baseline; padding-top: 12px; border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent); }
+.cc-quick-create__summary strong { font-size: 1.35rem; }
+.cc-quick-create__actions { justify-content: flex-end; }
+.cc-quick-create__error { color: #a53131; margin: 0; }
+@media (max-width: 640px) { .cc-quick-create { padding: 0 2px 18px; } .cc-quick-create__line { grid-template-columns: minmax(0, 1fr) 120px; } .cc-quick-create__line .tertiary-button { grid-column: 1 / -1; justify-self: start; } .cc-quick-create__actions { flex-direction: column-reverse; align-items: stretch; } .cc-quick-create__actions > * { width: 100%; } }

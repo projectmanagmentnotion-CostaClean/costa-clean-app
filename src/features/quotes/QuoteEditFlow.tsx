@@ -134,6 +134,7 @@ export function QuoteEditFlow({
   const [successState, setSuccessState] = useState<QuoteEditSuccessState | null>(null)
 
   useEffect(() => {
+    if (isDirty) return
     setForm({
       client_id: quote.client_id ?? null,
       property_id: quote.property_id ?? '',

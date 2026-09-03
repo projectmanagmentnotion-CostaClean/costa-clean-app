@@ -7,6 +7,7 @@ interface BulkSelectionAction {
 }
 
 interface BulkSelectionToolbarProps {
+  entityLabel?: string
   selectedCount: number
   totalVisibleCount: number
   allVisibleSelected: boolean
@@ -16,6 +17,7 @@ interface BulkSelectionToolbarProps {
 }
 
 export function BulkSelectionToolbar({
+  entityLabel = 'registros',
   selectedCount,
   totalVisibleCount,
   allVisibleSelected,
@@ -29,7 +31,7 @@ export function BulkSelectionToolbar({
     <section className="data-section cc-bulk-toolbar" aria-label="Acciones masivas">
       <div className="cc-bulk-toolbar__summary">
         <strong>{hasSelection ? `${selectedCount} seleccionado(s)` : 'Modo seleccion activo'}</strong>
-        <span>{hasSelection ? `${totalVisibleCount} visibles en la lista actual` : 'Marca facturas concretas o selecciona todos los visibles para operar en lote.'}</span>
+        <span>{hasSelection ? `${totalVisibleCount} visibles en la lista actual` : `Marca ${entityLabel} concretos o selecciona todos los visibles para operar en lote.`}</span>
       </div>
 
       <div className="cc-bulk-toolbar__actions">

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatCurrency } from '../../app/displayFormat'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
@@ -26,6 +26,11 @@ interface QuotesListProps {
   selectedQuoteId: string | null
   onSelectQuote: (quote: QuoteListItem) => void
   onOpenDocument: (quote: QuoteListItem) => void
+  selectedQuoteIds?: string[]
+  isSelectionMode?: boolean
+  onToggleSelectionMode?: () => void
+  onToggleQuoteSelection?: (quoteId: string) => void
+  onStateChange?: (state: { visibleCount: number; totalCount: number; searchQuery: string; visibleQuotes: QuoteListItem[] }) => void
 }
 
 function buildClientDisplay(quote: QuoteListItem, clients: ClientListItem[]): string {
@@ -53,9 +58,15 @@ export function QuotesList({
   selectedQuoteId,
   onSelectQuote,
   onOpenDocument,
+  selectedQuoteIds = [],
+  isSelectionMode = false,
+  onToggleSelectionMode,
+  onToggleQuoteSelection,
+  onStateChange,
 }: QuotesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('code', 'desc', { status: 'active' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
+  const onStateChangeRef = useRef(onStateChange)
 
   const filteredQuotes = useMemo(() => {
     const lifecycleFilter = preferences.filters.status ?? 'active'
@@ -99,6 +110,19 @@ export function QuotesList({
     })
   }, [clients, preferences, properties, quotes])
 
+  useEffect(() => {
+    onStateChangeRef.current?.({
+      visibleCount: filteredQuotes.length,
+      totalCount: quotes.length,
+      searchQuery: preferences.searchQuery,
+      visibleQuotes: filteredQuotes,
+    })
+  }, [filteredQuotes, preferences.searchQuery, quotes.length])
+
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange
+  }, [onStateChange])
+
   return (
     <section className="data-section cc-module-list-section">
       <DSSectionHeader
@@ -140,6 +164,14 @@ export function QuotesList({
             { value: 'archived', label: 'Archivados' },
           ],
         }]}
+        toolbarActions={[{
+          id: 'selection-mode',
+          label: isSelectionMode ? 'Seleccionando' : 'Seleccionar',
+          detail: isSelectionMode ? `${selectedQuoteIds.length} marcados` : 'Acciones en lote',
+          badge: isSelectionMode && selectedQuoteIds.length > 0 ? String(selectedQuoteIds.length) : null,
+          active: isSelectionMode,
+          onClick: () => onToggleSelectionMode?.(),
+        }]}
         onChange={setPreferences}
       />
 
@@ -179,6 +211,12 @@ export function QuotesList({
                   </strong>
                 )}
                 summary={clientLabel}
+                selectionControl={isSelectionMode ? (
+                  <label className="cc-record-card__selection" onClick={(event) => event.stopPropagation()}>
+                    <input type="checkbox" checked={selectedQuoteIds.includes(quote.id)} onChange={() => onToggleQuoteSelection?.(quote.id)} />
+                    <span>Seleccionar presupuesto</span>
+                  </label>
+                ) : undefined}
                 chips={[`${getQuoteCustomerFacingTotalLabel()} ${formatQuoteCustomerFacingTotal({ subtotal: Number(quote.subtotal || 0), total: Number(quote.total || 0) })}`, propertyLabel]}
                 meta={[
                   { label: 'Base', value: formatCurrency(quote.subtotal) },

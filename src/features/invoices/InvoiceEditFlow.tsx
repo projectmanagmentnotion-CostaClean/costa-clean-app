@@ -16,6 +16,7 @@ import {
 import { findInvoiceDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { ExpenseListItem } from '../expenses/types'
+import type { PaymentListItem } from '../payments/types'
 import {
   InvoiceNumberingMismatchError,
   saveInvoiceWithLines,
@@ -58,6 +59,7 @@ interface InvoiceEditFlowProps extends FullViewActionFlowProps {
   submitLabel?: string
   allInvoices?: InvoiceListItem[]
   expenses?: ExpenseListItem[]
+  payments?: PaymentListItem[]
   onOpenExistingInvoice?: (invoiceId: string) => void
 }
 
@@ -173,6 +175,7 @@ export function InvoiceEditFlow({
   submitLabel = 'Guardar cambios',
   allInvoices = [],
   expenses = [],
+  payments = [],
   onOpenExistingInvoice,
 }: InvoiceEditFlowProps) {
   const [form, setForm] = useState<EditFormState>({
@@ -192,6 +195,7 @@ export function InvoiceEditFlow({
   const [internalCorrectionConfirmed, setInternalCorrectionConfirmed] = useState(false)
 
   useEffect(() => {
+    if (isDirty) return
     setForm({
       job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,
@@ -237,8 +241,8 @@ export function InvoiceEditFlow({
     [subtotalValue, taxAmountValue],
   )
   const paymentSummary = useMemo(
-    () => buildInvoicePaymentSummary(invoice, []),
-    [invoice],
+    () => buildInvoicePaymentSummary(invoice, payments.filter((payment) => payment.invoice_id === invoice.id)),
+    [invoice, payments],
   )
   const correctionCase = useMemo(
     () => getInvoiceCorrectionCase(invoice),

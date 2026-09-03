@@ -20,6 +20,7 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
   const [loadedLines, setLoadedLines] = useState<QuoteLineItem[] | null>(null)
   const [isLoadingLines, setIsLoadingLines] = useState(false)
   const [linesError, setLinesError] = useState<string | null>(null)
+  const quoteHasLines = hasQuoteLines(quote)
 
   useEffect(() => {
     let isActive = true
@@ -27,7 +28,7 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
     setLoadedLines(null)
     setLinesError(null)
 
-    if (hasQuoteLines(quote)) {
+    if (quoteHasLines) {
       setIsLoadingLines(false)
       return () => {
         isActive = false
@@ -61,7 +62,7 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
     return () => {
       isActive = false
     }
-  }, [quote])
+  }, [quote.id, quoteHasLines])
 
   const quoteWithLines = useMemo(() => {
     if (quote.lines?.length) {

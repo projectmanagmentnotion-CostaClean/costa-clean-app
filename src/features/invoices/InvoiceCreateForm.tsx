@@ -30,6 +30,7 @@ import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
 import { buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { resolveInvoiceJobId } from './invoiceJobContract'
 
 interface InvoiceCreateFormProps {
   clients: ClientListItem[]
@@ -446,7 +447,7 @@ export function InvoiceCreateForm({
       const savedInvoice = await saveInvoiceWithLines(
         {
           id: invoiceId,
-          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
           quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
           client_id: form.client_id,
           property_id: form.property_id || null,
@@ -467,7 +468,7 @@ export function InvoiceCreateForm({
         id: invoiceId,
         display_code: savedInvoice.display_code,
         invoice_number: savedInvoice.invoice_number,
-        job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
         quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
         client_id: form.client_id,
         client_display_code: selectedClient?.display_code ?? null,

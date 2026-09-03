@@ -56,6 +56,7 @@ import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { resolveInvoiceJobId } from './invoiceJobContract'
 import './InvoiceCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
@@ -579,7 +580,7 @@ export function InvoiceCreateFlow({
           id: invoiceId,
           display_code: null,
           invoice_number: null,
-          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
           job_display_code: selectedJob?.display_code ?? null,
           quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
           quote_display_code: selectedQuote?.display_code ?? null,
@@ -627,7 +628,7 @@ export function InvoiceCreateFlow({
       const savedInvoice = await saveInvoiceWithLines(
         {
           id: invoiceId,
-          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
           quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
           client_id: form.client_id,
           property_id: form.property_id || null,
@@ -658,7 +659,7 @@ export function InvoiceCreateFlow({
         id: invoiceId,
         display_code: savedInvoice.display_code,
         invoice_number: savedInvoice.invoice_number,
-        job_id: form.origin_mode === 'job' ? form.job_id : null,
+        job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
         quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
         client_id: form.client_id,
         client_display_code: selectedClient?.display_code ?? null,

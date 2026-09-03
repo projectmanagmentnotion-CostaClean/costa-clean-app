@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('./adapters/portalSupabaseClient', () => ({
   getPortalSupabaseClient: vi.fn(),
@@ -12,6 +12,12 @@ const mockedGetPortalSupabaseClient = vi.mocked(getPortalSupabaseClient)
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date('2026-08-04T12:00:00.000Z'))
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('portal read api', () => {

@@ -385,6 +385,28 @@
   gap: 8px;
 }
 
+.cc-bulk-toolbar__more {
+  position: relative;
+}
+
+.cc-bulk-toolbar__more > summary {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 0 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.cc-bulk-toolbar__more-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .cc-client-workspace__relationship-card,
 .cc-client-workspace__nested-item,
 .cc-client-workspace__timeline-item,

@@ -26,6 +26,7 @@ export function BulkSelectionToolbar({
   actions,
 }: BulkSelectionToolbarProps) {
   const hasSelection = selectedCount > 0
+  const [primaryAction, ...secondaryActions] = actions
 
   return (
     <section className="data-section cc-bulk-toolbar" aria-label="Acciones masivas">
@@ -51,17 +52,36 @@ export function BulkSelectionToolbar({
           Limpiar seleccion
         </button>
 
-        {actions.map((action) => (
+        {primaryAction ? (
           <button
-            key={action.id}
+            key={primaryAction.id}
             type="button"
-            className={action.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
-            onClick={action.onClick}
-            disabled={action.disabled || !hasSelection}
+            className={primaryAction.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
+            onClick={primaryAction.onClick}
+            disabled={primaryAction.disabled || !hasSelection}
           >
-            {action.label}
+            {primaryAction.label}
           </button>
-        ))}
+        ) : null}
+
+        {secondaryActions.length > 0 ? (
+          <details className="cc-bulk-toolbar__more">
+            <summary>Más</summary>
+            <div className="cc-bulk-toolbar__more-actions">
+              {secondaryActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className={action.tone === 'warning' ? 'secondary-button cc-confirm-dialog__confirm--warning' : 'secondary-button'}
+                  onClick={action.onClick}
+                  disabled={action.disabled || !hasSelection}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </details>
+        ) : null}
       </div>
     </section>
   )

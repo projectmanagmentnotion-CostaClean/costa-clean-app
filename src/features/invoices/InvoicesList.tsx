@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences, type ListToolbarAction } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
@@ -46,6 +46,7 @@ export function InvoicesList({
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
+  const onStateChangeRef = useRef(onStateChange)
 
   const filteredInvoices = useMemo(() => {
     const lifecycleFilter = preferences.filters.status ?? 'pending'
@@ -100,14 +101,18 @@ export function InvoicesList({
   }, [invoices, preferences])
 
   useEffect(() => {
-    onStateChange?.({
+    onStateChangeRef.current?.({
       visibleCount: filteredInvoices.length,
       totalCount: invoices.length,
       hasError: Boolean(error),
       searchQuery: preferences.searchQuery,
       visibleInvoices: filteredInvoices,
     })
-  }, [error, filteredInvoices, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
+  }, [error, filteredInvoices, filteredInvoices.length, invoices.length, preferences.searchQuery])
+
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange
+  }, [onStateChange])
 
   return (
       <section className="data-section cc-module-list-section">

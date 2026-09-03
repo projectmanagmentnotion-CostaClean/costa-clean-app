@@ -40,6 +40,9 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { buildCsv } from '../features/documents/csvExport'
+import { buildStoredZip, downloadBlob, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildInvoicePdfBlob, buildInvoicePdfFileName } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
@@ -379,35 +382,84 @@ export function InvoicesPage({
     setBulkFeedback(null)
 
     try {
-      if (bulkDialog.mode === 'transfer') {
-        for (const invoice of transferEligibleInvoices) {
-          await settleInvoiceByTransfer(invoice.id)
+      const targets = bulkDialog.mode === 'transfer'
+        ? transferEligibleInvoices
+        : bulkDialog.mode === 'cancel'
+          ? cancelEligibleInvoices
+          : selectedInvoices
+      const failures: string[] = []
+      let completed = 0
+
+      for (const invoice of targets) {
+        try {
+          if (bulkDialog.mode === 'transfer') await settleInvoiceByTransfer(invoice.id)
+          if (bulkDialog.mode === 'sync') await refreshInvoicePaymentStatus(invoice.id)
+          if (bulkDialog.mode === 'cancel') await updateInvoiceStatus(invoice.id, 'cancelled')
+          completed += 1
+        } catch (error) {
+          failures.push(`${invoice.display_code ?? invoice.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
         }
-        await onInvoiceCreated()
-        setBulkFeedback(`Regularizacion completada en ${transferEligibleInvoices.length} factura(s).`)
       }
 
-      if (bulkDialog.mode === 'sync') {
-        for (const invoice of selectedInvoices) {
-          await refreshInvoicePaymentStatus(invoice.id)
-        }
-        await onInvoiceCreated()
-        setBulkFeedback(`Sincronizacion completada en ${selectedInvoices.length} factura(s).`)
-      }
-
-      if (bulkDialog.mode === 'cancel') {
-        for (const invoice of cancelEligibleInvoices) {
-          await updateInvoiceStatus(invoice.id, 'cancelled')
-        }
-        await onInvoiceCreated()
-        setBulkFeedback(`Cancelacion administrativa aplicada en ${cancelEligibleInvoices.length} factura(s).`)
-      }
-
+      if (completed > 0) await onInvoiceCreated()
+      const actionLabel = bulkDialog.mode === 'transfer'
+        ? 'cobradas por transferencia'
+        : bulkDialog.mode === 'sync' ? 'sincronizadas' : 'canceladas'
+      setBulkFeedback(
+        failures.length > 0
+          ? `${completed} facturas ${actionLabel}. ${failures.length} no pudieron actualizarse: ${failures.join(' | ')}`
+          : `${completed} facturas ${actionLabel}.`,
+      )
       setSelectedInvoiceIds([])
       setBulkDialog(null)
     } finally {
       setBulkBusy(false)
     }
+  }
+
+  async function downloadSelectedInvoices() {
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    const entries = []
+    const failures: string[] = []
+    for (const invoice of selectedInvoices) {
+      try {
+        entries.push(await makeZipBlobEntry(buildInvoicePdfFileName(invoice), await buildInvoicePdfBlob(invoice)))
+      } catch (error) {
+        failures.push(`${invoice.display_code ?? invoice.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'facturas-seleccionadas.zip')
+    setBulkFeedback(
+      failures.length > 0
+        ? `${entries.length} PDFs descargados. ${failures.length} facturas no pudieron generarse: ${failures.join(' | ')}`
+        : `${entries.length} PDFs descargados en facturas-seleccionadas.zip.`,
+    )
+    setSelectedInvoiceIds([])
+    setBulkBusy(false)
+  }
+
+  function exportSelectedInvoices() {
+    const rows = selectedInvoices.map((invoice) => {
+      const client = clients.find((item) => item.id === invoice.client_id)
+      return [
+        invoice.invoice_number ?? invoice.display_code ?? invoice.id,
+        invoice.issue_date,
+        client?.full_name ?? invoice.client_name ?? invoice.client_display_code,
+        client?.tax_id ?? '',
+        invoice.subtotal,
+        invoice.tax_amount,
+        invoice.total,
+        getInvoicePaidAmount(invoice),
+        getInvoiceOutstandingAmount(invoice),
+        invoice.status,
+      ]
+    })
+    downloadBlob(new Blob([buildCsv(
+      ['Numero', 'Fecha', 'Cliente', 'CIF/NIF', 'Base', 'IVA', 'Total', 'Cobrado', 'Pendiente', 'Estado'],
+      rows,
+    )], { type: 'text/csv;charset=utf-8' }), 'facturas-seleccionadas.csv')
+    setBulkFeedback(`${selectedInvoices.length} facturas exportadas.`)
   }
 
   async function handleReviewSequence() {
@@ -640,14 +692,25 @@ export function InvoicesPage({
             onClearSelection={() => setSelectedInvoiceIds([])}
             actions={[
               {
+                id: 'download',
+                label: 'Descargar',
+                disabled: bulkBusy,
+                onClick: () => void downloadSelectedInvoices(),
+              },
+              {
                 id: 'transfer',
-                label: 'Marcar cobradas',
+                label: 'Marcar cobradas por transferencia',
                 disabled: transferEligibleInvoices.length === 0,
                 onClick: () => setBulkDialog({
                   mode: 'transfer',
                   title: 'Marcar facturas como cobradas',
                   description: `${transferEligibleInvoices.length} factura(s) se pueden cubrir por transferencia. Las ya cobradas o canceladas quedaran fuera.`,
                 }),
+              },
+              {
+                id: 'export',
+                label: 'Exportar CSV',
+                onClick: exportSelectedInvoices,
               },
               {
                 id: 'sync',
@@ -693,6 +756,8 @@ export function InvoicesPage({
               onStateChange={(state) => {
                 setListState(state)
                 setVisibleInvoices(state.visibleInvoices)
+                const visibleIds = new Set(state.visibleInvoices.map((invoice) => invoice.id))
+                setSelectedInvoiceIds((current) => current.filter((id) => visibleIds.has(id)))
               }}
               onToggleSelectionMode={toggleSelectionMode}
               onSelectInvoice={(invoice) => {

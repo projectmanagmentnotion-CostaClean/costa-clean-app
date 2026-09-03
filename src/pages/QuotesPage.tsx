@@ -24,6 +24,8 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { buildCsv } from '../features/documents/csvExport'
+import { downloadBlob } from '../features/documents/zipArchive'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
@@ -292,6 +294,28 @@ export function QuotesPage({
     setBulkBusy(false)
   }
 
+  function exportSelectedQuotes() {
+    const rows = selectedQuotes.map((quote) => {
+      const client = clients.find((item) => item.id === quote.client_id)
+      const property = properties.find((item) => item.id === quote.property_id)
+      return [
+        quote.display_code ?? quote.id,
+        quote.created_at ?? '',
+        client?.full_name ?? quote.client_name ?? quote.client_display_code ?? quote.lead_name ?? quote.lead_display_code,
+        property?.name ?? quote.property_display_code ?? '',
+        quote.subtotal,
+        quote.tax_amount,
+        quote.total,
+        quote.status,
+      ]
+    })
+    downloadBlob(new Blob([buildCsv(
+      ['Referencia', 'Fecha', 'Cliente/lead', 'Inmueble', 'Base', 'IVA', 'Total', 'Estado'],
+      rows,
+    )], { type: 'text/csv;charset=utf-8' }), 'presupuestos-seleccionados.csv')
+    setBulkFeedback(`${selectedQuotes.length} presupuestos exportados.`)
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -487,6 +511,7 @@ export function QuotesPage({
             onToggleSelectAllVisible={toggleSelectAllVisible}
             onClearSelection={() => setSelectedQuoteIds([])}
             actions={[
+              { id: 'export', label: 'Exportar CSV', onClick: exportSelectedQuotes },
               { id: 'sent', label: 'Marcar enviados', onClick: () => setBulkDialog({ mode: 'sent', title: 'Marcar presupuestos como enviados', description: `Se actualizarán ${selectedQuotes.length} presupuesto(s).` }) },
               { id: 'rejected', label: 'Rechazar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'rejected', title: 'Rechazar presupuestos', description: `Se marcarán como rechazados ${selectedQuotes.length} presupuesto(s).` }) },
               { id: 'expired', label: 'Caducar', onClick: () => setBulkDialog({ mode: 'expired', title: 'Caducar presupuestos', description: `Se marcarán como vencidos ${selectedQuotes.length} presupuesto(s).` }) },
@@ -510,7 +535,11 @@ export function QuotesPage({
               isSelectionMode={isSelectionMode}
               onToggleSelectionMode={toggleSelectionMode}
               onToggleQuoteSelection={(quoteId) => setSelectedQuoteIds((current) => current.includes(quoteId) ? current.filter((id) => id !== quoteId) : [...current, quoteId])}
-              onStateChange={(state) => { setVisibleQuotes(state.visibleQuotes) }}
+              onStateChange={(state) => {
+                setVisibleQuotes(state.visibleQuotes)
+                const visibleIds = new Set(state.visibleQuotes.map((quote) => quote.id))
+                setSelectedQuoteIds((current) => current.filter((id) => visibleIds.has(id)))
+              }}
               onSelectQuote={(quote) => {
                 if (quote.id === selectedQuoteKey) return
 

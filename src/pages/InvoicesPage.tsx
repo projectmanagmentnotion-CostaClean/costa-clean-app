@@ -41,7 +41,7 @@ import type { NavigationGuard } from '../app/navigationGuard'
 import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
 import { buildCsv } from '../features/documents/csvExport'
-import { buildStoredZip, downloadBlob, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
 import { buildInvoicePdfBlob, buildInvoicePdfFileName } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
@@ -421,10 +421,14 @@ export function InvoicesPage({
     setBulkBusy(true)
     setBulkFeedback(null)
     const entries = []
+    const usedPaths = new Set<string>()
     const failures: string[] = []
     for (const invoice of selectedInvoices) {
       try {
-        entries.push(await makeZipBlobEntry(buildInvoicePdfFileName(invoice), await buildInvoicePdfBlob(invoice)))
+        entries.push(await makeZipBlobEntry(
+          makeUniqueArchivePath(buildInvoicePdfFileName(invoice), usedPaths),
+          await buildInvoicePdfBlob(invoice),
+        ))
       } catch (error) {
         failures.push(`${invoice.display_code ?? invoice.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
       }

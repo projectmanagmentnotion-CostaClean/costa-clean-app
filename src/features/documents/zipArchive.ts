@@ -111,6 +111,27 @@ export function makeZipTextEntry(path: string, content: string): ZipEntry {
   return { path, data: encoder.encode(content), date: new Date() }
 }
 
+export function makeUniqueArchivePath(path: string, usedPaths: Set<string>): string {
+  if (!usedPaths.has(path)) {
+    usedPaths.add(path)
+    return path
+  }
+
+  const extensionIndex = path.lastIndexOf('.')
+  const stem = extensionIndex > 0 ? path.slice(0, extensionIndex) : path
+  const extension = extensionIndex > 0 ? path.slice(extensionIndex) : ''
+  let suffix = 2
+  let candidate = `${stem} (${suffix})${extension}`
+
+  while (usedPaths.has(candidate)) {
+    suffix += 1
+    candidate = `${stem} (${suffix})${extension}`
+  }
+
+  usedPaths.add(candidate)
+  return candidate
+}
+
 export function makeZipBlobEntry(path: string, blob: Blob): Promise<ZipEntry> {
   return blob.arrayBuffer().then((buffer) => ({ path, data: new Uint8Array(buffer), date: new Date() }))
 }

@@ -25,7 +25,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
 import { buildCsv } from '../features/documents/csvExport'
-import { buildStoredZip, downloadBlob, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
 import { buildQuotePdfBlob, buildQuotePdfFileName } from '../features/quotes/quotePdfOutput'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
@@ -321,11 +321,12 @@ export function QuotesPage({
     setBulkBusy(true)
     setBulkFeedback(null)
     const entries = []
+    const usedPaths = new Set<string>()
     const failures: string[] = []
     for (const quote of selectedQuotes) {
       try {
         entries.push(await makeZipBlobEntry(
-          buildQuotePdfFileName(quote, clients),
+          makeUniqueArchivePath(buildQuotePdfFileName(quote, clients), usedPaths),
           await buildQuotePdfBlob(quote, clients, properties),
         ))
       } catch (error) {

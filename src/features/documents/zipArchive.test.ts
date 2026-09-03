@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildStoredZip, makeZipTextEntry } from './zipArchive'
+import { buildStoredZip, makeUniqueArchivePath, makeZipTextEntry } from './zipArchive'
 
 describe('buildStoredZip', () => {
   it('creates a ZIP with local and central directory records', async () => {
@@ -11,5 +11,13 @@ describe('buildStoredZip', () => {
     expect(archiveText).toContain('factura.pdf')
     expect(archiveText).toContain('PK\x01\x02')
     expect(archiveText).toContain('PK\x05\x06')
+  })
+
+  it('disambiguates duplicate archive paths without changing extensions', () => {
+    const usedPaths = new Set<string>()
+
+    expect(makeUniqueArchivePath('PRE-0042 - Cliente.pdf', usedPaths)).toBe('PRE-0042 - Cliente.pdf')
+    expect(makeUniqueArchivePath('PRE-0042 - Cliente.pdf', usedPaths)).toBe('PRE-0042 - Cliente (2).pdf')
+    expect(makeUniqueArchivePath('PRE-0042 - Cliente.pdf', usedPaths)).toBe('PRE-0042 - Cliente (3).pdf')
   })
 })

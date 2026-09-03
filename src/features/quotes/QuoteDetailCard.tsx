@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -160,6 +160,7 @@ function QuoteDetailCardContent({
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showTrashConfirm, setShowTrashConfirm] = useState(false)
@@ -172,7 +173,11 @@ function QuoteDetailCardContent({
   const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
 
   useEffect(() => {
-    if (isDirty) return
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    if (isDirtyRef.current) return
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)

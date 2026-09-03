@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel, formatJobLabel, formatQuoteLabel } from '../../app/relationshipLabels'
@@ -191,11 +191,16 @@ export function InvoiceEditFlow({
   const [error, setError] = useState<string | null>(null)
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findInvoiceDuplicateGroups>>([])
   const [internalCorrectionConfirmed, setInternalCorrectionConfirmed] = useState(false)
 
   useEffect(() => {
-    if (isDirty) return
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    if (isDirtyRef.current) return
     setForm({
       job_id: invoice.job_id ?? '',
       client_id: invoice.client_id,

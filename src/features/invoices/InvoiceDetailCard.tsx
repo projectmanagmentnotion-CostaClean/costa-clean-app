@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
@@ -292,6 +292,8 @@ export function InvoiceDetailCard({
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showTrashConfirm, setShowTrashConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
+  const hasPaymentFormDirtyRef = useRef(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -300,6 +302,14 @@ export function InvoiceDetailCard({
     notes: '',
   })
   const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    hasPaymentFormDirtyRef.current = hasPaymentFormDirty
+  }, [hasPaymentFormDirty])
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === form.job_id) ?? null,
@@ -365,7 +375,7 @@ export function InvoiceDetailCard({
   )
 
   useEffect(() => {
-    if (isDirty || hasPaymentFormDirty) return
+    if (isDirtyRef.current || hasPaymentFormDirtyRef.current) return
     if (!invoice) {
       setIsEditing(false)
       setSaveError(null)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
@@ -130,11 +130,16 @@ export function QuoteEditFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showRejectedConfirm, setShowRejectedConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
   const [successState, setSuccessState] = useState<QuoteEditSuccessState | null>(null)
 
   useEffect(() => {
-    if (isDirty) return
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    if (isDirtyRef.current) return
     setForm({
       client_id: quote.client_id ?? null,
       property_id: quote.property_id ?? '',

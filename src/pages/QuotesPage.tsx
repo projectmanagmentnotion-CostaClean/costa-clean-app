@@ -25,7 +25,8 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
 import { buildCsv } from '../features/documents/csvExport'
-import { downloadBlob } from '../features/documents/zipArchive'
+import { buildStoredZip, downloadBlob, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildQuotePdfBlob, buildQuotePdfFileName } from '../features/quotes/quotePdfOutput'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
@@ -316,6 +317,31 @@ export function QuotesPage({
     setBulkFeedback(`${selectedQuotes.length} presupuestos exportados.`)
   }
 
+  async function downloadSelectedQuotes() {
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    const entries = []
+    const failures: string[] = []
+    for (const quote of selectedQuotes) {
+      try {
+        entries.push(await makeZipBlobEntry(
+          buildQuotePdfFileName(quote, clients),
+          await buildQuotePdfBlob(quote, clients, properties),
+        ))
+      } catch (error) {
+        failures.push(`${quote.display_code ?? quote.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'presupuestos-seleccionados.zip')
+    setBulkFeedback(
+      failures.length > 0
+        ? `${entries.length} PDFs descargados. ${failures.length} presupuestos no pudieron generarse: ${failures.join(' | ')}`
+        : `${entries.length} PDFs descargados en presupuestos-seleccionados.zip.`,
+    )
+    setSelectedQuoteIds([])
+    setBulkBusy(false)
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -511,6 +537,7 @@ export function QuotesPage({
             onToggleSelectAllVisible={toggleSelectAllVisible}
             onClearSelection={() => setSelectedQuoteIds([])}
             actions={[
+              { id: 'download', label: 'Descargar', disabled: bulkBusy, onClick: () => void downloadSelectedQuotes() },
               { id: 'export', label: 'Exportar CSV', onClick: exportSelectedQuotes },
               { id: 'sent', label: 'Marcar enviados', onClick: () => setBulkDialog({ mode: 'sent', title: 'Marcar presupuestos como enviados', description: `Se actualizarán ${selectedQuotes.length} presupuesto(s).` }) },
               { id: 'rejected', label: 'Rechazar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'rejected', title: 'Rechazar presupuestos', description: `Se marcarán como rechazados ${selectedQuotes.length} presupuesto(s).` }) },

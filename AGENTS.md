@@ -29,7 +29,7 @@ No code change starts before those six documents are read and understood.
 
 ## Product Direction
 
-The app must follow a modern, minimalist, mobile-first, intuitive UX with StepFlow for important flows.
+The app must follow a clean, professional, modern, minimalist, calm, intuitive, visually guided, mobile-first UX with StepFlow for important flows.
 
 Core principles:
 
@@ -38,6 +38,8 @@ Core principles:
 - One primary button equals one clear consequence.
 - Mobile-first is a real constraint, not a responsive afterthought.
 - Minimalism is functional, not decorative.
+- Visual guidance should come from hierarchy, proximity, sequence, and clear consequences instead of long explanatory copy.
+- The interface must not overwhelm with competing cards, colors, badges, text, icons, or equal-weight actions.
 - StepFlow is required for complex or high-friction flows.
 - Google Stitch exports are visual references only; the real repository architecture, contracts and `FRONTEND_GLOBAL_BLUEPRINT.md` remain authoritative.
 - “Maritime Professional” describes Costa Clean's visual atmosphere, never maritime logistics, fleet operations or property-investment functionality.
@@ -66,6 +68,7 @@ These rules are permanent and apply to all future authenticated app scaling:
 - If a debug or audit card exists for the same concept, the operational card must be hidden, replaced, or collapsed by default.
 - Secondary actions should collapse into `Mas` before the layout grows extra rows of large buttons.
 - Tablet is not desktop shrunk down: the shell and module header must respect viewport width and avoid inherited horizontal overflow.
+- From `768px`, iPad may reuse the desktop composition only when targets remain touch-safe, content is not compressed, reading order stays clear, and no horizontal overflow or forced columns appear.
 
 ## Scope Preservation
 
@@ -117,12 +120,15 @@ must read the mandatory documents above before acting.
 | documentation and roadmap | `documentation-roadmap` |
 | Supabase | `supabase-guardian` |
 | economic and fiscal rules | `business-rules-test-engineer` |
-| UX and accessibility | `frontend-ux-accessibility` |
+| scoped UX and accessibility correction | `frontend-ux-accessibility` |
+| full frontend Figma-level mobile-first audit | `senior-figma-mobile-first-auditor` |
 | GSAP and performance | `performance-gsap-motion` |
 | public SEO | `seo-local-structured-data` |
 | release and deployment | `release-deployment-guardian` |
 | enterprise agent architecture | `enterprise-agent-architect` |
 
+- Use `senior-figma-mobile-first-auditor` in `AUDIT_ONLY` mode before any app-wide visual transformation roadmap.
+- Use `frontend-ux-accessibility` for a bounded screen, component, accessibility, or responsive correction after scope is approved.
 - No agent replaces or weakens `AGENTS.md`.
 - Invocation remains manual; automatic model invocation is disabled.
 - The implementer never approves its own work.

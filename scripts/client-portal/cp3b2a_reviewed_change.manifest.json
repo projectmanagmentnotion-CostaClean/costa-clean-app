@@ -13,7 +13,7 @@
     "cp2bMigrationSha256": "ea10b4b3db30f6b27f60cd8fff6c8a7c711636e1d6ac439337966f5736cc6277",
     "cp3b0MigrationSha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731",
     "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
-    "cp3b0ManifestSha256": "cb6f22314875f3076194e7c49397b7785287e064bd2d92e2ca796f3782864934"
+    "cp3b0ManifestSha256": "bbe8d91581895379331864a38b8ab0fe802a0138acdf358cf12032b1f98b89a0"
   },
   "functions": [
     "portal_submit_profile_change_request_v2",

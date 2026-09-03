@@ -45,7 +45,7 @@
     },
     {
       "path": "package.json",
-      "sha256": "62f8fcc741bf5bc7780ff082586c309542e8fb8285863bb19e3b51a5696ba3c3"
+      "sha256": "6f3410db7febb6a12a441fe09ba0795f2bcb5caa9bb7413c93d428c63c5806b8"
     }
   ],
   "allowedCommands": [

@@ -7,7 +7,7 @@
   "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
   "migration": "supabase/migrations/20260728120000_portal_self_access_context.sql",
   "migrationSha256": "c6161ddb4d5d85e139aea98a47429feae21d20dd06c5e3d54b579f58c5468731",
-  "v1ManifestSha256": "cb6f22314875f3076194e7c49397b7785287e064bd2d92e2ca796f3782864934",
+  "v1ManifestSha256": "bbe8d91581895379331864a38b8ab0fe802a0138acdf358cf12032b1f98b89a0",
   "cp2bV5ManifestSha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd",
   "artifacts": [
     {

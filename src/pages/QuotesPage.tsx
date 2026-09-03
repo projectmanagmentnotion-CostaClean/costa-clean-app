@@ -355,9 +355,12 @@ export function QuotesPage({
         </ExecutiveHeader>
 
         {summaryKpis.length > 0 ? (
-          <div className="cc-kpi-grid cc-kpi-grid--compact">
-            {summaryKpis}
-          </div>
+          <details className="cc-secondary-summary">
+            <summary>Ver resumen</summary>
+            <div className="cc-kpi-grid cc-kpi-grid--compact">
+              {summaryKpis}
+            </div>
+          </details>
         ) : null}
 
         {showCreateForm ? (

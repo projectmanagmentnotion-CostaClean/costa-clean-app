@@ -476,9 +476,12 @@ export function InvoicesPage({
         </ExecutiveHeader>
 
         {summaryKpis.length > 0 ? (
-          <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
-            {summaryKpis}
-          </div>
+          <details className="cc-secondary-summary">
+            <summary>Ver resumen</summary>
+            <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
+              {summaryKpis}
+            </div>
+          </details>
         ) : null}
 
         <div className="cc-invoice-workspace__control-grid">

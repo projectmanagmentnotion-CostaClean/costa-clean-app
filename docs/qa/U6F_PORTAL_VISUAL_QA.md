@@ -18,8 +18,12 @@ properties, profile, security and read-only documents.
 ## Result
 
 Static and contract verification passed after the styling changes: lint, build,
-full Vitest suite and disposable CP-2A local proof. The sandbox visual harness
-was attempted but stopped before navigation because its reused target identity
-was `127.0.0.1` instead of the expected `CostaClean`; no screenshot or remote
-authenticated session was produced. Browser screenshots are kept out of the
-repository.
+full Vitest suite and disposable CP-2A local proof. The root cause of the first
+visual run was a stopped local preview at `127.0.0.1:4173`; the browser error
+page consequently had title `127.0.0.1`. After starting the current preview,
+the identity guard passed with the expected `CostaClean` marker. The next guard
+correctly stopped because the reused QA profile had no authenticated shell.
+The official auth-state setup was then attempted and timed out waiting for its
+CDP endpoint. No screenshot or remote authenticated session was produced, so
+the viewport and authenticated screen rows remain uncertified. Browser
+screenshots are kept out of the repository.

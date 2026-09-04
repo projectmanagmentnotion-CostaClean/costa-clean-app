@@ -5,14 +5,13 @@ interface ModuleFilterBarProps {
 
 export function ModuleFilterBar({ label, onClear }: ModuleFilterBarProps) {
   return (
-    <section className="data-section cc-module-filter-bar" aria-label="Filtro activo">
+    <section className="data-section cc-module-filter-bar" aria-label="Contexto de entrada">
       <div className="cc-module-filter-bar__content">
-        <span className="cc-module-filter-bar__eyebrow">Filtro activo</span>
+        <span className="cc-module-filter-bar__eyebrow">Mostrando</span>
         <strong className="cc-module-filter-bar__label">{label}</strong>
       </div>
 
       <button type="button" className="secondary-button" onClick={onClear}>
-        <span className="cc-module-filter-bar__button-icon" aria-hidden="true">+</span>
         Quitar filtro
       </button>
     </section>

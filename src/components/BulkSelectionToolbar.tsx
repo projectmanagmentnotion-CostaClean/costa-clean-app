@@ -25,14 +25,15 @@ export function BulkSelectionToolbar({
   onClearSelection,
   actions,
 }: BulkSelectionToolbarProps) {
-  const hasSelection = selectedCount > 0
+  if (selectedCount === 0) return null
+
   const [primaryAction, ...secondaryActions] = actions
 
   return (
-    <section className="data-section cc-bulk-toolbar" aria-label="Acciones masivas">
+    <section className="data-section cc-bulk-toolbar cc-bulk-toolbar--active" aria-label={`Acciones masivas para ${selectedCount} ${entityLabel}`}>
       <div className="cc-bulk-toolbar__summary">
-        <strong>{hasSelection ? `${selectedCount} seleccionado(s)` : 'Modo seleccion activo'}</strong>
-        <span>{hasSelection ? `${totalVisibleCount} visibles en la lista actual` : `Marca ${entityLabel} concretos o selecciona todos los visibles para operar en lote.`}</span>
+        <strong>{selectedCount} seleccionadas</strong>
+        <span>{totalVisibleCount} visibles</span>
       </div>
 
       <div className="cc-bulk-toolbar__actions">
@@ -58,7 +59,7 @@ export function BulkSelectionToolbar({
             type="button"
             className={primaryAction.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
             onClick={primaryAction.onClick}
-            disabled={primaryAction.disabled || !hasSelection}
+            disabled={primaryAction.disabled}
           >
             {primaryAction.label}
           </button>
@@ -74,7 +75,7 @@ export function BulkSelectionToolbar({
                   type="button"
                   className={action.tone === 'warning' ? 'secondary-button cc-confirm-dialog__confirm--warning' : 'secondary-button'}
                   onClick={action.onClick}
-                  disabled={action.disabled || !hasSelection}
+                  disabled={action.disabled}
                 >
                   {action.label}
                 </button>

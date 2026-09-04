@@ -8,6 +8,7 @@ import { PortalApp } from './PortalApp'
 import type { PortalPreviewShellProps } from './PortalPreviewShell'
 import { createPortalFoundationAdapter } from './adapters/portalFoundationAdapter'
 import type { PortalRuntimeAdapter } from './contracts'
+import { portalTokens } from './portalTokens'
 import './portal.css'
 
 interface PortalBootstrapRuntime {
@@ -53,7 +54,7 @@ export async function bootstrapPortal(rootElement: HTMLElement) {
   document.title = 'Área de clientes | Costa Clean'
   document
     .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-    ?.setAttribute('content', '#f4f8fa')
+    ?.setAttribute('content', portalTokens.color.surface)
 
   createRoot(rootElement).render(
     <StrictMode>

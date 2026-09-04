@@ -18,3 +18,6 @@ documentation. The following boundaries remain intact:
 The pre-change baseline passed lint, the full Vitest suite, production build and
 the disposable local CP-2A portal proof. The same checks must be repeated after
 the visual changes, together with portal boundary and artifact checks.
+
+The U6F-C synthetic visual run confirmed zero page/console errors, no runtime
+Google Fonts requests, no browser credentials and no remote auth use.

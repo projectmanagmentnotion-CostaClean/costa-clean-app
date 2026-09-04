@@ -2,6 +2,16 @@
 
 Date: 2026-09-04
 
+## Execution Evidence
+
+- Target: Vite dev server `http://127.0.0.1:5173/`
+- Runner: `node scripts/qa/run-u6fc-synthetic-visual.mjs`
+- Preview adapter: existing `src/portal/adapters/portalPreviewAdapter.ts`
+- Scenarios: `login`, `recovery`, `reset`, `session_expired`, `without_access`,
+  `pending_review`, `suspended`, `revoked`, `offline`, `active_admin` and
+  `empty`, plus existing property, service and request route states.
+- Evidence: `qa-reports/private/u6fc-synthetic-visual/latest.json` and private PNG captures.
+
 | Viewport | Surface | Checks |
 |---|---|---|
 | 390x844 | login, home, property, documents | hierarchy, no overflow, 44px controls, bottom nav |
@@ -17,13 +27,15 @@ properties, profile, security and read-only documents.
 
 ## Result
 
-Static and contract verification passed after the styling changes: lint, build,
-full Vitest suite and disposable CP-2A local proof. The root cause of the first
-visual run was a stopped local preview at `127.0.0.1:4173`; the browser error
-page consequently had title `127.0.0.1`. After starting the current preview,
-the identity guard passed with the expected `CostaClean` marker. The next guard
-correctly stopped because the reused QA profile had no authenticated shell.
-The official auth-state setup was then attempted and timed out waiting for its
-CDP endpoint. No screenshot or remote authenticated session was produced, so
-the viewport and authenticated screen rows remain uncertified. Browser
-screenshots are kept out of the repository.
+The official synthetic preview uses the real `portalPreviewAdapter` in the Vite
+dev server at `http://127.0.0.1:5173/`. It verifies the title
+`Área de clientes | Costa Clean`, the `CostaClean` target identity, portal root,
+viewport overflow and control sizing across 100 route/state visits and private
+screenshots. The final run passed all 100 visits at 320x568, 390x844, 768x1024
+and 1440x900. Unexpected console errors: 0. Page errors: 0. Material visual
+differences against the frozen portal masters: 0. Authentication is synthetic
+and remote authenticated QA is intentionally not executed until U6G.
+
+The external Google Fonts runtime import was removed. The approved Epilogue and
+Manrope family declarations remain in the portal stylesheet with local/system
+fallbacks, so third-party font requests during QA: 0.

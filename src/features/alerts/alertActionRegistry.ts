@@ -15,23 +15,23 @@ const alertActionMetaByRule: Partial<Record<AutomationAlertRuleId, AlertActionMe
     supportsDismiss: true,
   },
   unpaid_invoices_older_threshold: {
-    primaryLabel: 'Abrir cobros urgentes',
+    primaryLabel: 'Revisar cobros',
     supportsSeen: true,
     supportsSnooze: true,
   },
   completed_jobs_without_invoice_older_threshold: {
-    primaryLabel: 'Abrir pendientes de facturar',
+    primaryLabel: 'Facturar servicios',
     supportsSeen: true,
     supportsSnooze: true,
   },
   accepted_quotes_without_job_older_threshold: {
-    primaryLabel: 'Abrir presupuestos aceptados',
+    primaryLabel: 'Crear servicios',
     supportsSeen: true,
     supportsSnooze: true,
     supportsDismiss: true,
   },
   expenses_missing_support: {
-    primaryLabel: 'Abrir gastos sin soporte',
+    primaryLabel: 'Completar soportes',
     supportsSeen: true,
     supportsSnooze: true,
   },
@@ -63,4 +63,3 @@ export function getAlertActionMeta(alert: AutomationAlertItem): AlertActionMeta 
     supportsDismiss: alert.severity !== 'critical',
   }
 }
-

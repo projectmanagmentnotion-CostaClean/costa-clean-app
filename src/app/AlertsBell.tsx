@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   getAlertActionLabel,
   getAlertBucket,
@@ -46,6 +47,7 @@ export function AlertsBell({
 }: AlertsBellProps) {
   const [isOpen, setIsOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
   const triggerRef = useRef<HTMLButtonElement | null>(null)
   const readAlertKeys = useMemo(
     () => new Set(decisions.filter((decision) => decision.scope === 'user' && decision.read_at).map((decision) => `${decision.alert_key}:${decision.fingerprint}`)),
@@ -63,19 +65,14 @@ export function AlertsBell({
     ...groupedAlerts.action.slice(0, 2),
     ...groupedAlerts.follow_up.slice(0, 1),
   ].slice(0, 5)
-  const bucketChips = (['critical', 'action', 'follow_up'] as const)
-    .map((bucket) => ({
-      bucket,
-      count: groupedAlerts[bucket].length,
-      meta: getAlertBucketMeta(bucket),
-    }))
-    .filter((entry) => entry.count > 0)
-
   useEffect(() => {
     if (!isOpen) return
 
+    window.requestAnimationFrame(() => panelRef.current?.focus())
+
     function handlePointerDown(event: PointerEvent) {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+      const target = event.target as Node
+      if (rootRef.current && !rootRef.current.contains(target) && !panelRef.current?.contains(target)) {
         setIsOpen(false)
       }
     }
@@ -124,27 +121,17 @@ export function AlertsBell({
         ) : null}
       </button>
 
-      {isOpen ? (
-        <div className="cc-alerts-bell__panel" role="dialog" aria-label="Alertas recientes">
+      {isOpen ? createPortal(
+        <div ref={panelRef} className="cc-alerts-bell__panel" role="dialog" aria-label="Alertas recientes" tabIndex={-1}>
           <div className="cc-alerts-bell__panel-header">
             <div>
-              <span>Asuntos pendientes</span>
-              <strong>{activeAlerts.length} {activeAlerts.length === 1 ? 'asunto requiere' : 'asuntos requieren'} atención</strong>
+              <strong>Alertas</strong>
+              <span>{activeAlerts.length} {activeAlerts.length === 1 ? 'asunto pendiente' : 'asuntos pendientes'}</span>
             </div>
             <button type="button" className="secondary-button" onClick={handleOpenCenter}>
               Ver todas
             </button>
           </div>
-
-          {bucketChips.length > 0 ? (
-            <div className="cc-alerts-bell__chips" aria-label="Resumen de prioridades">
-              {bucketChips.map((chip) => (
-                <span key={chip.bucket} className={`cc-alerts-bell__chip cc-alerts-bell__chip--${chip.bucket}`}>
-                  {chip.count} {chip.meta.label}
-                </span>
-              ))}
-            </div>
-          ) : null}
 
           {topAlerts.length > 0 ? (
             <div className="cc-alerts-bell__list">
@@ -173,7 +160,11 @@ export function AlertsBell({
               <p>No hay asuntos nuevos que requieran atención ahora.</p>
             </div>
           )}
-        </div>
+          <button type="button" className="secondary-button cc-alerts-bell__footer" onClick={handleOpenCenter}>
+            Ver todas las alertas
+          </button>
+        </div>,
+        document.body,
       ) : null}
     </div>
   )

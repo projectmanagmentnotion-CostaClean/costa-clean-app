@@ -30,7 +30,7 @@ describe('alertPresentation', () => {
     })
 
     expect(getAlertBucket(alert)).toBe('critical')
-    expect(getAlertActionLabel(alert)).toBe('Abrir cobros urgentes')
+    expect(getAlertActionLabel(alert)).toBe('Revisar cobros')
   })
 
   it('maps follow-up rules into the follow_up bucket', () => {

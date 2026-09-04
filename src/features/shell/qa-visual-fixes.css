@@ -124,6 +124,98 @@
   }
 }
 
+/* Alert center stays a scan-friendly queue instead of a report. */
+.cc-alerts-page .cc-visual-executive-header {
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.cc-alerts-page .cc-alert-center-card {
+  gap: 8px;
+  padding: 13px 15px;
+  border-radius: 14px;
+}
+
+.cc-alerts-page .cc-alert-center-card__header h3 {
+  font-size: 0.96rem;
+}
+
+.cc-alerts-page .cc-alert-center-card__detail,
+.cc-alerts-page .cc-alert-center-card__examples {
+  display: none;
+}
+
+.cc-alerts-page .cc-alert-center-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 0.78rem;
+}
+
+.cc-alerts-page .cc-alert-center-card__actions {
+  align-items: center;
+  gap: 8px;
+}
+
+.cc-alerts-page .cc-alert-center-card__actions .primary-button,
+.cc-alerts-page .cc-alert-center-card__actions .secondary-button,
+.cc-alert-center-card__more > summary {
+  min-height: 40px;
+}
+
+.cc-alert-center-card__more {
+  position: relative;
+}
+
+.cc-alert-center-card__more > summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 800;
+}
+
+.cc-alert-center-card__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.cc-alert-center-card__more > div {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);
+  z-index: 2;
+  display: grid;
+  gap: 6px;
+  min-width: 170px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface, #102536);
+  box-shadow: 0 14px 28px rgba(2, 8, 23, 0.25);
+}
+
+.cc-alert-center-card__more button {
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .cc-alerts-page .cc-visual-executive-header {
+    padding: 15px;
+  }
+
+  .cc-alerts-page .cc-alert-center-card__actions {
+    flex-wrap: nowrap;
+  }
+
+  .cc-alerts-page .cc-alert-center-card__actions .primary-button {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}
+
 /* Compact mobile rhythm for dense operational modules */
 
 .cc-list-toolbar,
@@ -266,4 +358,44 @@
 
 .cc-operational-item__footer {
   padding-top: 4px;
+}
+/* Operational notification surfaces are detached from header overflow. */
+.cc-alerts-bell__panel {
+  position: fixed;
+  top: max(72px, env(safe-area-inset-top, 0px) + 64px);
+  right: max(16px, env(safe-area-inset-right, 0px));
+  left: auto;
+  z-index: 1000;
+  width: min(400px, calc(100vw - 32px));
+  max-width: calc(100vw - 32px);
+  max-height: min(560px, calc(100dvh - 96px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  outline: none;
+}
+
+.cc-alerts-bell__panel-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: inherit;
+}
+
+.cc-alerts-bell__footer {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@media (max-width: 640px) {
+  .cc-alerts-bell__panel {
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: none;
+    max-height: min(78dvh, 640px);
+    padding: 16px max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    border-radius: 22px 22px 0 0;
+  }
 }

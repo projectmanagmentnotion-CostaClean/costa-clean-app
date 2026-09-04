@@ -1,6 +1,6 @@
 # Costa Clean U6F Portal Screen Mapping
 
-Date: 2026-09-04  
+Date: 2026-09-04
 Scope: visual integration only; production contracts and route behavior remain unchanged.
 
 ## Authority

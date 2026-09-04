@@ -1,13 +1,19 @@
-const ALLOWED_PATHS = new Set([
-  '/?view=invoices&filter=overdue',
-  '/?view=expenses&filter=missing_support',
-  '/?view=jobs&filter=completed_without_invoice',
-  '/?view=quotes',
-  '/?view=alerts',
-])
-
 function safePath(value) {
-  return typeof value === 'string' && ALLOWED_PATHS.has(value) ? value : '/'
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || value.includes('://')) return '/'
+  const url = new URL(value, self.location.origin)
+  if (url.origin !== self.location.origin || url.pathname !== '/') return '/'
+  const viewRules = {
+    invoices: new Set(['overdue']),
+    expenses: new Set(['missing_support']),
+    jobs: new Set(['completed_without_invoice']),
+    quotes: new Set(['accepted_pending_action']),
+    alerts: new Set(['all']),
+  }
+  const view = url.searchParams.get('view')
+  const filter = url.searchParams.get('filter')
+  const entity = url.searchParams.get('invoice') ?? url.searchParams.get('job') ?? url.searchParams.get('quote') ?? url.searchParams.get('expense')
+  if (!view || !viewRules[view] || (filter && !viewRules[view].has(filter)) || (entity && !/^[A-Za-z0-9_-]{1,80}$/.test(entity))) return '/'
+  return `${url.pathname}${url.search}`
 }
 
 self.addEventListener('push', (event) => {

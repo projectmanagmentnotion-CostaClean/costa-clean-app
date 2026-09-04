@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ALLOWED_NOTIFICATION_PATHS, sanitizeNotificationPath } from './notificationSystem'
+import { sanitizeNotificationPath } from './notificationSystem'
 
 describe('notification routing', () => {
   it('keeps only Costa Clean contextual destinations', () => {
@@ -10,7 +10,9 @@ describe('notification routing', () => {
     expect(sanitizeNotificationPath('/admin')).toBe('/')
   })
 
-  it('keeps the allowlist finite and explicit', () => {
-    expect(ALLOWED_NOTIFICATION_PATHS.size).toBe(5)
+  it('accepts only known contextual filters', () => {
+    expect(sanitizeNotificationPath('/?view=jobs&filter=completed_without_invoice&job=JOB-0037')).toContain('job=JOB-0037')
+    expect(sanitizeNotificationPath('/?view=alerts&filter=all')).toBe('/?view=alerts&filter=all')
+    expect(sanitizeNotificationPath('/?view=expenses&filter=unknown')).toBe('/')
   })
 })

@@ -67,7 +67,7 @@ import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
 import { useToast } from '../shared/toasts/useToast'
 import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
-import { enableCostaCleanNotifications } from '../features/notifications/notificationSystem'
+import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
 
 interface AppShellProps {
   theme: AppTheme
@@ -1091,6 +1091,26 @@ export function AppShell({
     }
   }, [toast])
 
+  useEffect(() => {
+    let mounted = true
+    void hydrateCostaCleanNotificationState().then((state) => {
+      if (mounted) setNotificationStatus(state.subscription === 'active' ? 'active' : 'unavailable')
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleDisableNotifications = useCallback(async () => {
+    try {
+      await disableCostaCleanNotifications()
+      setNotificationStatus('unavailable')
+      toast.success('Notificaciones desactivadas', 'La alerta in-app seguirá disponible.')
+    } catch (error) {
+      toast.error('No se pudieron desactivar', error instanceof Error ? error.message : 'Inténtalo de nuevo.')
+    }
+  }, [toast])
+
   return (
     <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
       <section className="hero-card cc-shell cc-shell-frame">
@@ -1114,6 +1134,7 @@ export function AppShell({
           onSignOut={handleSignOut}
           notificationStatus={notificationStatus}
           onEnableNotifications={handleEnableNotifications}
+          onDisableNotifications={handleDisableNotifications}
         />
         <div className="cc-shell-content">
           <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>

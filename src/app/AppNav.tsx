@@ -29,6 +29,7 @@ interface AppNavProps {
   isSigningOut: boolean
   onSignOut: () => Promise<LogoutOutcome>
   onEnableNotifications?: () => Promise<void>
+  onDisableNotifications?: () => Promise<void>
   notificationStatus?: 'unknown' | 'active' | 'unavailable'
 }
 
@@ -331,6 +332,7 @@ export function AppNav({
   isSigningOut,
   onSignOut,
   onEnableNotifications,
+  onDisableNotifications,
   notificationStatus = 'unknown',
 }: AppNavProps) {
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
@@ -675,10 +677,9 @@ export function AppNav({
                           type="button"
                           className="cc-account-menu__logout"
                           role="menuitem"
-                          onClick={() => void onEnableNotifications()}
-                          disabled={notificationStatus === 'active'}
+                          onClick={() => void (notificationStatus === 'active' && onDisableNotifications ? onDisableNotifications() : onEnableNotifications())}
                         >
-                          {notificationStatus === 'active' ? 'Notificaciones activas' : 'Activar notificaciones'}
+                          {notificationStatus === 'active' ? 'Desactivar notificaciones' : 'Activar notificaciones'}
                         </button>
                       ) : null}
                       <button

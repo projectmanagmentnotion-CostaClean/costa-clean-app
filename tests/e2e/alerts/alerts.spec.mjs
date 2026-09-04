@@ -82,7 +82,7 @@ test.describe('alert system QA with isolated authenticated fixtures', () => {
     for (const viewport of [{ width: 390, height: 844 }, { width: 768, height: 1024 }, { width: 1366, height: 900 }]) {
       await page.setViewportSize(viewport)
       await openAuthenticated(page, fixtures, 'alerts')
-      await expect(page.locator('body')).toContainText('Centro de alertas')
+      await expect(page.locator('body')).toContainText('Alertas')
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBeTruthy()
       const trigger = page.getByRole('button', { name: /Alertas:/u }).first()
       await trigger.focus()

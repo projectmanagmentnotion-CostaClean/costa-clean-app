@@ -39,6 +39,35 @@ When guidance conflicts, the real repository behavior, explicit sprint constrain
 
 ## 3. Source audit
 
+### 3.0 Binding visual and media directive
+
+The Costa Clean Stitch + Media Legacy directive is now binding for U4/U5 and
+all later visual work:
+
+- Stitch is the visual source of truth. Existing application logic remains the
+  functional source of truth, and Supabase contracts/RLS remain authoritative
+  for backend and security behavior.
+- A screen is not implemented as final UI until its approved Stitch desktop
+  and mobile references exist. Missing references remain `WAITING_FOR_STITCH`.
+- Stitch references must be extracted into `docs/stitch/DESIGN.md` before
+  tokens, components or pages are authored. The extraction must preserve
+  geometry, typography, spacing, controls, imagery, responsive changes and
+  motion constraints rather than reinterpret the design.
+- Current `costacleanbcn.com` is a legacy public platform and media/content
+  source, not a final architectural decision. WordPress may be retained or
+  migrated only after an evidence-based comparison covering SEO, performance,
+  tracking, maintainability, security, deployment and rollback.
+- Existing website media is inventoried in
+  [`media/LEGACY_MEDIA_INVENTORY.md`](media/LEGACY_MEDIA_INVENTORY.md). Source
+  originals are never modified destructively; derivatives must be generated
+  separately and preserve the Stitch-required crop/aspect ratio.
+- Every completed screen requires the structured comparison in
+  [`qa/STITCH_VISUAL_QA.md`](qa/STITCH_VISUAL_QA.md) at `390x844`, `768x1024`
+  and `1440x900` where applicable, including `prefers-reduced-motion`.
+
+The first implementation gate is therefore `WAITING_FOR_STITCH` for any new
+public or portal visual screen not covered by an approved reference.
+
 The Stitch handoff reviewed for this roadmap contained:
 
 - 6 ZIP packages;

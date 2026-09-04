@@ -1,4 +1,7 @@
+import { clearVitePreloadRecovery, installVitePreloadRecovery } from './runtime/vitePreloadRecovery'
 import { resolveApplicationSurface } from './portal/applicationSurface'
+
+installVitePreloadRecovery()
 
 async function bootstrapApplication() {
   const rootElement = document.getElementById('root')
@@ -19,4 +22,6 @@ async function bootstrapApplication() {
   bootstrapCrm(rootElement)
 }
 
-void bootstrapApplication()
+void bootstrapApplication().then(() => {
+  clearVitePreloadRecovery()
+})

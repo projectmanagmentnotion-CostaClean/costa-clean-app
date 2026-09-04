@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildDuplicatePairResolutionKeys } from './duplicateResolution'
+import { buildDuplicateFingerprint, buildDuplicatePairResolutionKeys } from './duplicateResolution'
 import type { DuplicateGroup } from './types'
 
 describe('duplicateResolution', () => {
@@ -24,5 +24,21 @@ describe('duplicateResolution', () => {
       'invoice__a__c__same-client::same-total',
       'invoice__b__c__same-client::same-total',
     ]))
+  })
+
+  it('builds the same fingerprint regardless of record order', () => {
+    const base: DuplicateGroup<{ id: string }> = {
+      entityType: 'property',
+      groupId: 'property-a-b',
+      severity: 'probable',
+      reasons: [{ code: 'same-address', label: 'Direccion', severity: 'probable' }],
+      records: [
+        { entityType: 'property', record: { id: 'a' }, recordId: 'a', reasons: [], severity: 'probable', summary: { title: 'A', subtitle: 'A', meta: [], facts: [] } },
+        { entityType: 'property', record: { id: 'b' }, recordId: 'b', reasons: [], severity: 'probable', summary: { title: 'B', subtitle: 'B', meta: [], facts: [] } },
+      ],
+    }
+
+    expect(buildDuplicateFingerprint(base)).toBe('property__a__b__same-address')
+    expect(buildDuplicateFingerprint({ ...base, records: [...base.records].reverse() })).toBe(buildDuplicateFingerprint(base))
   })
 })

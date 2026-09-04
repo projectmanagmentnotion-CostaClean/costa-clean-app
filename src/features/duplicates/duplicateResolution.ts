@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { listAlertDecisions, saveAlertDecision } from '../alerts/alertDecisionApi'
 import type { DuplicateGroup } from './types'
-
-const duplicateResolutionStorageKey = 'costaclean-duplicate-resolutions'
 
 export type DuplicateResolutionStatus = 'reviewed' | 'ignored'
 
@@ -11,33 +10,6 @@ interface DuplicateResolutionEntry {
 }
 
 type DuplicateResolutionMap = Record<string, DuplicateResolutionEntry>
-
-function canUseStorage() {
-  return typeof window !== 'undefined' && Boolean(window.localStorage)
-}
-
-function readDuplicateResolutionMap(): DuplicateResolutionMap {
-  if (!canUseStorage()) return {}
-
-  try {
-    const storedValue = window.localStorage.getItem(duplicateResolutionStorageKey)
-    if (!storedValue) return {}
-    const parsed = JSON.parse(storedValue)
-    return parsed && typeof parsed === 'object' ? parsed as DuplicateResolutionMap : {}
-  } catch {
-    return {}
-  }
-}
-
-function writeDuplicateResolutionMap(nextMap: DuplicateResolutionMap) {
-  if (!canUseStorage()) return
-
-  try {
-    window.localStorage.setItem(duplicateResolutionStorageKey, JSON.stringify(nextMap))
-  } catch {
-    // Duplicate review persistence is helpful, not business-critical.
-  }
-}
 
 export function buildDuplicatePairResolutionKeys<TRecord>(group: DuplicateGroup<TRecord>) {
   const recordIds = [...group.records].map((record) => record.recordId).sort()
@@ -53,18 +25,41 @@ export function buildDuplicatePairResolutionKeys<TRecord>(group: DuplicateGroup<
   return keys
 }
 
+export function buildDuplicateFingerprint<TRecord>(group: DuplicateGroup<TRecord>) {
+  return buildDuplicatePairResolutionKeys(group).sort().join('||')
+}
+
 export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRecord>>) {
-  const [resolutionMap, setResolutionMap] = useState<DuplicateResolutionMap>(() => readDuplicateResolutionMap())
+  const [resolutionMap, setResolutionMap] = useState<DuplicateResolutionMap>({})
 
   useEffect(() => {
-    writeDuplicateResolutionMap(resolutionMap)
-  }, [resolutionMap])
+    let mounted = true
+    void listAlertDecisions()
+      .then((decisions) => {
+        if (!mounted) return
+        const nextMap: DuplicateResolutionMap = {}
+        for (const decision of decisions) {
+          if (!decision.alert_key.startsWith('duplicate:') || decision.scope !== 'global') continue
+          if (decision.status !== 'dismissed' && decision.status !== 'acknowledged') continue
+          nextMap[decision.fingerprint] = {
+            status: decision.status === 'dismissed' ? 'ignored' : 'reviewed',
+            updatedAt: decision.updated_at,
+          }
+        }
+        setResolutionMap(nextMap)
+      })
+      .catch(() => {
+        // A missing migration must not make duplicate review crash the workspace.
+      })
 
-  const resolutionKeyByGroupId = useMemo(() => {
-    const map = new Map<string, string[]>()
-    for (const group of groups) {
-      map.set(group.groupId, buildDuplicatePairResolutionKeys(group))
+    return () => {
+      mounted = false
     }
+  }, [])
+
+  const fingerprintByGroupId = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const group of groups) map.set(group.groupId, buildDuplicateFingerprint(group))
     return map
   }, [groups])
 
@@ -72,28 +67,23 @@ export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRe
     const nextState: Record<string, 'open' | DuplicateResolutionStatus> = {}
 
     for (const group of groups) {
-      const resolutionKeys = resolutionKeyByGroupId.get(group.groupId) ?? []
-      const statuses = resolutionKeys
-        .map((resolutionKey) => resolutionMap[resolutionKey]?.status)
-        .filter((status): status is DuplicateResolutionStatus => Boolean(status))
+      const fingerprint = fingerprintByGroupId.get(group.groupId)
+      const status = fingerprint ? resolutionMap[fingerprint]?.status : undefined
 
-      if (resolutionKeys.length === 0 || statuses.length === 0) {
+      if (!status) {
         nextState[group.groupId] = 'open'
         continue
       }
 
-      const allIgnored = statuses.length === resolutionKeys.length && statuses.every((status) => status === 'ignored')
-      if (allIgnored) {
+      if (status === 'ignored') {
         nextState[group.groupId] = 'ignored'
         continue
       }
-
-      const allResolved = statuses.length === resolutionKeys.length && statuses.every((status) => status === 'reviewed' || status === 'ignored')
-      nextState[group.groupId] = allResolved ? 'reviewed' : 'open'
+      nextState[group.groupId] = 'reviewed'
     }
 
     return nextState
-  }, [groups, resolutionKeyByGroupId, resolutionMap])
+  }, [fingerprintByGroupId, groups, resolutionMap])
 
   const unresolvedGroups = useMemo(
     () => groups.filter((group) => reviewStateByGroupId[group.groupId] === 'open'),
@@ -113,26 +103,34 @@ export function useDuplicateResolution<TRecord>(groups: Array<DuplicateGroup<TRe
   )
 
   function updateGroupState(groupId: string, status: DuplicateResolutionStatus | null) {
-    const resolutionKeys = resolutionKeyByGroupId.get(groupId)
-    if (!resolutionKeys || resolutionKeys.length === 0) return
+    const group = groups.find((candidate) => candidate.groupId === groupId)
+    const fingerprint = fingerprintByGroupId.get(groupId)
+    if (!group || !fingerprint) return
 
     setResolutionMap((current) => {
       if (status === null) {
         const next = { ...current }
-        for (const resolutionKey of resolutionKeys) {
-          delete next[resolutionKey]
-        }
+        delete next[fingerprint]
+        void saveAlertDecision({
+          alertKey: `duplicate:${group.entityType}:${fingerprint}`,
+          fingerprint,
+          scope: 'global',
+          status: 'open',
+          metadata: { entityType: group.entityType, recordIds: group.records.map((record) => record.recordId) },
+        }).catch(() => undefined)
         return next
       }
 
       const next = { ...current }
       const updatedAt = new Date().toISOString()
-      for (const resolutionKey of resolutionKeys) {
-        next[resolutionKey] = {
-          status,
-          updatedAt,
-        }
-      }
+      next[fingerprint] = { status, updatedAt }
+      void saveAlertDecision({
+        alertKey: `duplicate:${group.entityType}:${fingerprint}`,
+        fingerprint,
+        scope: 'global',
+        status: status === 'ignored' ? 'dismissed' : 'acknowledged',
+        metadata: { entityType: group.entityType, recordIds: group.records.map((record) => record.recordId) },
+      }).catch(() => undefined)
 
       return {
         ...next,

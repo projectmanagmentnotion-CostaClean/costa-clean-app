@@ -634,7 +634,7 @@ export function InvoicesPage({
 
         {unresolvedDuplicateGroups.length > 0 ? (
           <DuplicateNotice
-            title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
+            title={`${unresolvedDuplicateGroups.length} posibles facturas duplicadas`}
             description="Se han detectado coincidencias por referencia, servicio origen o contexto de emisión. Revísalas desde una surface corta antes de seguir emitiendo."
             actionLabel="Revisar duplicados"
             onAction={() => setShowDuplicateReview(true)}

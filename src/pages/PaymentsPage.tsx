@@ -259,7 +259,7 @@ export function PaymentsPage({
 
       {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles cobros duplicados`}
+          title={`${unresolvedDuplicateGroups.length} posibles cobros duplicados`}
           description="Se han detectado coincidencias por factura, fecha, importe o método. Revísalas sin ensuciar el control principal de cobros."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

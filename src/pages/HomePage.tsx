@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { AppView } from '../app/navigation'
 import { DSPageHeader } from '../design-system/components'
 import { HomeAlertSummaryStrip, type HomeAlertSummaryItem } from '../features/dashboard/components/HomeAlertSummaryStrip'
@@ -8,13 +8,7 @@ import { HomeMotionSection } from '../features/dashboard/motion/HomeMotionSectio
 import type { AutomationAlertItem } from '../features/automation/types'
 import { getAlertActionMeta } from '../features/alerts/alertActionRegistry'
 import { getAlertActionLabel } from '../features/automation/alertPresentation'
-import {
-  createTomorrowIsoReference,
-  getAlertAcknowledgementKey,
-  isAlertSuppressedInHome,
-  readAlertAcknowledgements,
-  upsertAlertAcknowledgement,
-} from '../features/alerts/alertAcknowledgements'
+import type { AlertDecision } from '../features/alerts/alertDecisionApi'
 import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import type { OperationalAction, OperationalIncident, OperationalQuickView } from '../features/dashboard/operationalControl'
 import type { DashboardKpiActionId } from '../features/dashboard/kpiActions'
@@ -85,7 +79,10 @@ interface HomePageProps {
   onOpenView: (view: AppView) => void
   onRunKpiAction: (actionId: DashboardKpiActionId) => void
   alerts: AutomationAlertItem[]
+  alertDecisions: AlertDecision[]
   onOpenAlert: (alert: AutomationAlertItem) => void
+  onMarkAlertRead: (alert: AutomationAlertItem) => void
+  onDismissAlert: (alert: AutomationAlertItem) => void
   operationalIncidents: OperationalIncident[]
   operationalQuickViews: OperationalQuickView[]
   onRunOperationalAction: (action: OperationalAction) => void
@@ -97,8 +94,7 @@ function getSafePercent(numerator: number, denominator: number) {
 }
 
 export function HomePage(props: HomePageProps) {
-  const { metrics, onOpenView, onRunKpiAction, alerts, onOpenAlert } = props
-  const [alertAcknowledgements, setAlertAcknowledgements] = useState(() => readAlertAcknowledgements())
+  const { metrics, onOpenView, onRunKpiAction, alerts, alertDecisions, onOpenAlert, onMarkAlertRead, onDismissAlert } = props
 
   const criticalAlertsCount = alerts.filter((alert) => alert.severity === 'critical').length
   const fiscalRiskCount = metrics.expensesMissingValidVatInvoiceCount + metrics.fiscalReviewExpensesCount + metrics.fiscalRiskExpensesCount
@@ -108,19 +104,9 @@ export function HomePage(props: HomePageProps) {
     alerts
       .filter((alert) => alert.count > 0)
       .filter((alert) => alert.severity === 'critical' || alert.severity === 'warning')
-      .filter((alert) => !isAlertSuppressedInHome(alert, alertAcknowledgements[getAlertAcknowledgementKey(alert)]))
+      .filter((alert) => !alertDecisions.some((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === (alert.fingerprint ?? alert.id) && (decision.status === 'dismissed' || decision.status === 'resolved')))
       .slice(0, 2)
-  ), [alertAcknowledgements, alerts])
-
-  function acknowledgeAlert(alert: AutomationAlertItem, status: 'seen' | 'snoozed' | 'dismissed') {
-    const alertKey = getAlertAcknowledgementKey(alert)
-    setAlertAcknowledgements((current) => upsertAlertAcknowledgement(
-      current,
-      alertKey,
-      status,
-      status === 'snoozed' ? { snoozeUntil: createTomorrowIsoReference() } : undefined,
-    ))
-  }
+  ), [alertDecisions, alerts])
 
   const fiscalKpis: HomeFiscalKpiItem[] = compactVisibleItems<HomeFiscalKpiItem>([
     hasMeaningfulAmount(metrics.invoicedThisMonthTotal) ? {
@@ -204,9 +190,8 @@ export function HomePage(props: HomePageProps) {
       primaryActionLabel: getAlertActionLabel(alert),
       tone: (alert.severity === 'critical' ? 'critical' : 'warning') as HomeAlertSummaryItem['tone'],
       onOpen: () => onOpenAlert(alert),
-      onSeen: getAlertActionMeta(alert).supportsSeen ? () => acknowledgeAlert(alert, 'seen') : undefined,
-      onSnooze: getAlertActionMeta(alert).supportsSnooze ? () => acknowledgeAlert(alert, 'snoozed') : undefined,
-      onDismiss: getAlertActionMeta(alert).supportsDismiss ? () => acknowledgeAlert(alert, 'dismissed') : undefined,
+      onSeen: getAlertActionMeta(alert).supportsSeen ? () => onMarkAlertRead(alert) : undefined,
+      onDismiss: getAlertActionMeta(alert).supportsDismiss ? () => onDismissAlert(alert) : undefined,
     })),
     ...(visiblePriorityAlerts.length < 3 && metrics.completedJobsWithoutInvoiceCount > 0 ? [{
       key: 'unbilled-jobs',

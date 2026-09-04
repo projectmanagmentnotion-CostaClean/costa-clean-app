@@ -7,6 +7,7 @@ import { AlertsBell } from './AlertsBell'
 import { ThemeToggle } from './ThemeToggle'
 import type { AppTheme } from './theme'
 import type { AutomationAlertItem } from '../features/automation/types'
+import type { AlertDecision } from '../features/alerts/alertDecisionApi'
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
 
 interface AppNavProps {
@@ -16,9 +17,10 @@ interface AppNavProps {
   compactMobile?: boolean
   syncStatus?: SyncStatus
   alerts?: AutomationAlertItem[]
-  reviewedAlertIds?: string[]
+  alertDecisions?: AlertDecision[]
   onOpenAlert?: (alert: AutomationAlertItem) => void
   onOpenAlertsCenter?: () => void
+  onMarkAlertRead?: (alert: AutomationAlertItem) => void
   theme?: AppTheme
   onToggleTheme?: () => void
   backTargetView?: AppView | null
@@ -315,9 +317,10 @@ export function AppNav({
   compactMobile = false,
   syncStatus = 'fresh',
   alerts = [],
-  reviewedAlertIds = [],
+  alertDecisions = [],
   onOpenAlert,
   onOpenAlertsCenter,
+  onMarkAlertRead,
   theme = 'dark',
   onToggleTheme,
   backTargetView = null,
@@ -438,9 +441,10 @@ export function AppNav({
           {onOpenAlert && onOpenAlertsCenter ? (
             <AlertsBell
               alerts={alerts}
-              reviewedAlertIds={reviewedAlertIds}
+              decisions={alertDecisions}
               onOpenAlert={onOpenAlert}
               onOpenAlertsCenter={onOpenAlertsCenter}
+              onMarkRead={onMarkAlertRead ?? (() => undefined)}
             />
           ) : null}
         </div>
@@ -631,9 +635,10 @@ export function AppNav({
                 {onOpenAlert && onOpenAlertsCenter ? (
                   <AlertsBell
                     alerts={alerts}
-                    reviewedAlertIds={reviewedAlertIds}
+                    decisions={alertDecisions}
                     onOpenAlert={onOpenAlert}
                     onOpenAlertsCenter={onOpenAlertsCenter}
+                    onMarkRead={onMarkAlertRead ?? (() => undefined)}
                   />
                 ) : null}
 

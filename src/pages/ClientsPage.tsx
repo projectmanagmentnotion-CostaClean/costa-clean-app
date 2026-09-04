@@ -272,7 +272,7 @@ export function ClientsPage({
 
           {duplicateGroups.length > 0 ? (
             <DuplicateNotice
-              title={`${duplicateGroups.length} grupo(s) de posibles clientes duplicados`}
+              title={`${duplicateGroups.length} posibles clientes duplicados`}
               description="Se han detectado coincidencias por NIF/CIF, teléfono, email o ficha fiscal. Revísalas sin ensuciar la lista principal."
               actionLabel="Revisar duplicados"
               onAction={() => setShowDuplicateReview(true)}

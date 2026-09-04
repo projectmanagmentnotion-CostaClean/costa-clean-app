@@ -474,7 +474,7 @@ export function QuotesPage({
 
         {duplicateGroups.length > 0 ? (
           <DuplicateNotice
-            title={`${duplicateGroups.length} grupo(s) de posibles presupuestos duplicados`}
+            title={`${duplicateGroups.length} posibles presupuestos duplicados`}
             description="Se han detectado coincidencias por cliente, propiedad y contexto económico. Revísalas desde una surface dedicada."
             actionLabel="Revisar duplicados"
             onAction={() => setShowDuplicateReview(true)}

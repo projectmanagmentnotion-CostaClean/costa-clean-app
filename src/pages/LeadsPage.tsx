@@ -170,7 +170,7 @@ export function LeadsPage({
 
       {duplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${duplicateGroups.length} grupo(s) de posibles leads duplicados`}
+        title={`${duplicateGroups.length} posibles leads duplicados`}
           description="Se han detectado coincidencias por teléfono, email o contexto comercial. Revísalas desde una surface corta antes de seguir ampliando el pipeline."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

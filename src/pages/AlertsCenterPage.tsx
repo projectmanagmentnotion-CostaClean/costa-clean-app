@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   getAlertActionLabel,
   getAlertBucket,
@@ -14,12 +15,16 @@ import { SeverityBadge, type SeverityTone } from '../components/SeverityBadge'
 import { VisualKpiCard } from '../components/VisualKpiCard'
 import { DSEmptyState } from '../design-system/components/DSEmptyState'
 import type { AutomationAlertItem } from '../features/automation/types'
+import type { AlertDecision } from '../features/alerts/alertDecisionApi'
 
 interface AlertsCenterPageProps {
   alerts: AutomationAlertItem[]
-  reviewedAlertIds: string[]
-  onToggleReviewed: (alertId: string) => void
+  decisions: AlertDecision[]
   onOpenAlert: (alert: AutomationAlertItem) => void
+  onMarkRead: (alert: AutomationAlertItem) => void
+  onAcknowledge: (alert: AutomationAlertItem) => void
+  onDismiss: (alert: AutomationAlertItem) => void
+  onReopen: (alert: AutomationAlertItem) => void
 }
 
 function formatCurrency(value: number | undefined): string | null {
@@ -40,14 +45,31 @@ function getBucketTone(bucket: AlertBucket): SeverityTone {
 
 export function AlertsCenterPage({
   alerts,
-  reviewedAlertIds,
-  onToggleReviewed,
+  decisions,
   onOpenAlert,
+  onMarkRead,
+  onAcknowledge,
+  onDismiss,
+  onReopen,
 }: AlertsCenterPageProps) {
-  const reviewedIds = new Set(reviewedAlertIds)
-  const activeAlerts = alerts.filter((alert) => !reviewedIds.has(alert.id))
-  const reviewedAlerts = alerts.filter((alert) => reviewedIds.has(alert.id))
-  const groupedAlerts = groupAlertsByBucket(activeAlerts)
+  const [filter, setFilter] = useState<'all' | 'pending' | 'critical' | 'resolved'>('pending')
+  const activeAlerts = alerts.filter((alert) => {
+    const fingerprint = alert.fingerprint ?? alert.id
+    const status = decisions.find((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === fingerprint)?.status
+    return status !== 'dismissed' && status !== 'resolved'
+  })
+  const reviewedAlerts = alerts.filter((alert) => {
+    const fingerprint = alert.fingerprint ?? alert.id
+    const status = decisions.find((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === fingerprint)?.status
+    return status === 'dismissed' || status === 'resolved'
+  })
+  const filteredActiveAlerts = filter === 'resolved'
+    ? []
+    : activeAlerts.filter((alert) => filter !== 'critical' || alert.severity === 'critical')
+  const filteredReviewedAlerts = filter === 'pending'
+    ? []
+    : reviewedAlerts.filter((alert) => filter !== 'critical' || alert.severity === 'critical')
+  const groupedAlerts = groupAlertsByBucket(filteredActiveAlerts)
   const criticalCount = groupedAlerts.critical.length
   const actionCount = groupedAlerts.action.length
   const followUpCount = groupedAlerts.follow_up.length
@@ -129,11 +151,14 @@ export function AlertsCenterPage({
                   ) : null}
 
                   <div className="cc-alert-center-card__actions">
-                    <button type="button" className="primary-button" onClick={() => onOpenAlert(alert)}>
+                    <button type="button" className="primary-button" onClick={() => { onMarkRead(alert); onOpenAlert(alert) }}>
                       {getAlertActionLabel(alert)}
                     </button>
-                    <button type="button" className="secondary-button" onClick={() => onToggleReviewed(alert.id)}>
-                      Marcar revisada
+                    <button type="button" className="secondary-button" onClick={() => onMarkRead(alert)}>
+                      Marcar como leída
+                    </button>
+                    <button type="button" className="secondary-button" onClick={() => alert.severity === 'critical' ? onAcknowledge(alert) : onDismiss(alert)}>
+                      {alert.severity === 'critical' ? 'Reconocer' : 'Descartar'}
                     </button>
                   </div>
                 </article>
@@ -175,8 +200,21 @@ export function AlertsCenterPage({
         <VisualKpiCard label="Criticas" value={String(criticalCount)} hint="Bloqueos que impactan cobro, facturacion o soporte hoy" tone={criticalCount > 0 ? 'critical' : 'neutral'} priority="compact" badgeLabel={criticalCount > 0 ? 'Bloquea' : 'Limpio'} />
         <VisualKpiCard label="Accion requerida" value={String(actionCount)} hint="Casos que conviene mover antes de que se enfrien" tone={actionCount > 0 ? 'warning' : 'neutral'} priority="compact" />
         <VisualKpiCard label="Seguimiento" value={String(followUpCount)} hint="Recordatorios y pendientes utiles pero no criticos" tone="info" priority="compact" />
-        <VisualKpiCard label="Revisadas" value={String(reviewedAlerts.length)} hint="Ocultadas localmente para mantener la cola limpia" tone="success" priority="compact" />
+        <VisualKpiCard label="Resueltas" value={String(reviewedAlerts.length)} hint="Condiciones cerradas o descartadas con decisión persistente" tone="success" priority="compact" />
       </section>
+
+      <nav className="cc-alerts-page__filters" aria-label="Filtrar alertas">
+        {([
+          ['all', 'Todas'],
+          ['pending', 'Pendientes'],
+          ['critical', 'Críticas'],
+          ['resolved', 'Resueltas'],
+        ] as const).map(([value, label]) => (
+          <button key={value} type="button" className={filter === value ? 'secondary-button is-active' : 'secondary-button'} onClick={() => setFilter(value)} aria-pressed={filter === value}>
+            {label}
+          </button>
+        ))}
+      </nav>
 
       {activeAlerts.length > 0 ? (
         <section className="cc-dashboard-block">
@@ -190,7 +228,7 @@ export function AlertsCenterPage({
         </section>
       ) : null}
 
-      {activeAlerts.length === 0 ? (
+      {filteredActiveAlerts.length === 0 && filteredReviewedAlerts.length === 0 ? (
         <section className="cc-dashboard-block">
           <DSEmptyState
             title="Sin alertas activas"
@@ -206,24 +244,24 @@ export function AlertsCenterPage({
       <section className="cc-dashboard-block">
         <CollapsibleDetailSection title="Revisadas" count={reviewedAlerts.length} tone="neutral">
 
-          {reviewedAlerts.length > 0 ? (
+          {filteredReviewedAlerts.length > 0 ? (
             <div className="cc-alerts-list cc-alerts-list--reviewed cc-bounded-list" style={{ marginTop: '0.75rem' }}>
-              {reviewedAlerts.map((alert) => (
+              {filteredReviewedAlerts.map((alert) => (
                 <article key={alert.id} className="cc-alert-center-card cc-alert-center-card--reviewed">
                   <div className="cc-alert-center-card__header">
                     <div>
-                      <SeverityBadge label="Revisada" tone="success" />
+                      <SeverityBadge label={decisions.find((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === (alert.fingerprint ?? alert.id))?.status === 'dismissed' ? 'Descartada' : 'Resuelta'} tone="success" />
                       <h3>{alert.title}</h3>
                     </div>
                     <SeverityBadge label={`${alert.count}`} tone="neutral" />
                   </div>
                   <p className="cc-alert-center-card__detail">{alert.summary}</p>
                   <div className="cc-alert-center-card__actions">
-                    <button type="button" className="secondary-button" onClick={() => onOpenAlert(alert)}>
+                    <button type="button" className="secondary-button" onClick={() => { onMarkRead(alert); onOpenAlert(alert) }}>
                       {getAlertActionLabel(alert)}
                     </button>
-                    <button type="button" className="secondary-button" onClick={() => onToggleReviewed(alert.id)}>
-                      Reactivar
+                    <button type="button" className="secondary-button" onClick={() => onReopen(alert)}>
+                      Volver a pendientes
                     </button>
                   </div>
                 </article>

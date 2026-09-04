@@ -284,7 +284,7 @@ export function ExpensesPage({
 
       {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles gastos duplicados`}
+          title={`${unresolvedDuplicateGroups.length} posibles gastos duplicados`}
           description="Se han detectado coincidencias por proveedor, referencia, fecha o importe. Revísalas desde una surface específica antes de seguir cargando gastos parecidos."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

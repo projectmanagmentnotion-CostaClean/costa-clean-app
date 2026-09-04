@@ -66,8 +66,7 @@ import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../feat
 import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/useJobWorkspaceNavigation'
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
 import { useToast } from '../shared/toasts/useToast'
-
-const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
+import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
 
 interface AppShellProps {
   theme: AppTheme
@@ -224,26 +223,22 @@ export function AppShell({
     intakeRealtimeNotifications,
     dismissIntakeRealtimeNotification,
   } = useAppData(currentView)
-  const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-
-    try {
-      const storedValue = window.localStorage.getItem(reviewedAlertsStorageKey)
-      if (!storedValue) return []
-      const parsedValue = JSON.parse(storedValue)
-      return Array.isArray(parsedValue) ? parsedValue.filter((value): value is string => typeof value === 'string') : []
-    } catch {
-      return []
-    }
-  })
+  const [alertDecisions, setAlertDecisions] = useState<AlertDecision[]>([])
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(reviewedAlertsStorageKey, JSON.stringify(reviewedAlertIds))
-    } catch {
-      // Keep alert review state best-effort and local-only.
+    let mounted = true
+    void listAlertDecisions()
+      .then((decisions) => {
+        if (mounted) setAlertDecisions(decisions)
+      })
+      .catch(() => {
+        if (mounted) setAlertDecisions([])
+      })
+
+    return () => {
+      mounted = false
     }
-  }, [reviewedAlertIds])
+  }, [])
 
   useEffect(() => {
     if (!unsavedChangesContext) return
@@ -568,10 +563,16 @@ export function AppShell({
     [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes, recurringInvoicePlansWithCodes],
   )
 
-  const activeReviewedAlertIds = useMemo(() => {
-    const activeIds = new Set(automationAlerts.map((alert) => alert.id))
-    return reviewedAlertIds.filter((id) => activeIds.has(id))
-  }, [automationAlerts, reviewedAlertIds])
+  const visibleAutomationAlerts = useMemo(() => {
+    return automationAlerts
+      .map((alert) => {
+        const fingerprint = alert.fingerprint ?? alert.id
+        const decision = alertDecisions.find((item) => item.scope === 'global' && item.alert_key === alert.id && item.fingerprint === fingerprint)
+        const userRead = alertDecisions.find((item) => item.scope === 'user' && item.alert_key === alert.id && item.fingerprint === fingerprint)
+        return { ...alert, lifecycle: decision?.status ?? 'open' as const, readAt: userRead?.read_at ?? null }
+      })
+      .filter((alert) => alert.lifecycle !== 'dismissed' && alert.lifecycle !== 'resolved')
+  }, [alertDecisions, automationAlerts])
 
   const quoteFilter = moduleFilters.quotes
   const jobFilter = moduleFilters.jobs
@@ -654,13 +655,38 @@ export function AppShell({
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
-  const handleToggleReviewedAlert = useCallback((alertId: string) => {
-    setReviewedAlertIds((current) =>
-      current.includes(alertId)
-        ? current.filter((value) => value !== alertId)
-        : [...current, alertId],
-    )
+  const persistAlertDecision = useCallback(async (alert: AutomationAlertItem, status: 'acknowledged' | 'dismissed' | 'resolved' | 'open', scope: 'global' | 'user') => {
+    const decision = await saveAlertDecision({
+      alertKey: alert.id,
+      fingerprint: alert.fingerprint ?? alert.id,
+      scope,
+      status,
+      readAt: scope === 'user' ? new Date().toISOString() : undefined,
+      metadata: { ruleId: alert.ruleId, title: alert.title },
+    })
+    setAlertDecisions((current) => [decision, ...current.filter((item) => !(
+      item.alert_key === decision.alert_key
+      && item.fingerprint === decision.fingerprint
+      && item.scope === decision.scope
+      && item.user_id === decision.user_id
+    ))])
   }, [])
+
+  const handleMarkAlertRead = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'open', 'user').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleAcknowledgeAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'acknowledged', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleDismissAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'dismissed', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleReopenAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'open', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
 
   const handleFiscalClosingNavigation = useCallback((
     view: 'invoices' | 'payments' | 'expenses',
@@ -1056,10 +1082,11 @@ export function AppShell({
           mobileViewport={isMobileViewport}
           compactMobile={compactMobileNav}
           syncStatus={syncStatus}
-          alerts={automationAlerts}
-          reviewedAlertIds={activeReviewedAlertIds}
+          alerts={visibleAutomationAlerts}
+          alertDecisions={alertDecisions}
           onOpenAlert={handleOpenAutomationAlert}
           onOpenAlertsCenter={() => navigateToView('alerts')}
+          onMarkAlertRead={handleMarkAlertRead}
           theme={theme}
           onToggleTheme={onToggleTheme}
           backTargetView={navigationBackTarget}
@@ -1089,9 +1116,12 @@ export function AppShell({
               {currentView === 'alerts' ? (
                 <AlertsCenterPage
                   alerts={automationAlerts}
-                  reviewedAlertIds={activeReviewedAlertIds}
-                  onToggleReviewed={handleToggleReviewedAlert}
+                  decisions={alertDecisions}
                   onOpenAlert={handleOpenAutomationAlert}
+                  onMarkRead={handleMarkAlertRead}
+                  onAcknowledge={handleAcknowledgeAlert}
+                  onDismiss={handleDismissAlert}
+                  onReopen={handleReopenAlert}
                 />
               ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
                 <FiscalClosingPage
@@ -1123,8 +1153,11 @@ export function AppShell({
                   onOpenClientWorkspace={handleOpenClientWorkspace}
                   onOpenView={navigateToView}
                   onRunKpiAction={handleDashboardKpiAction}
-                  alerts={automationAlerts}
+                  alerts={visibleAutomationAlerts}
+                  alertDecisions={alertDecisions}
                   onOpenAlert={handleOpenAutomationAlert}
+                  onMarkAlertRead={handleMarkAlertRead}
+                  onDismissAlert={handleDismissAlert}
                   operationalIncidents={operationalIncidents}
                   operationalQuickViews={operationalQuickViews}
                   onRunOperationalAction={handleRunOperationalAction}

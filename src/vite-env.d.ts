@@ -4,6 +4,10 @@ declare const __APP_BUILD_COMMIT__: string
 declare const __APP_BUILD_VERSION__: string
 declare const __APP_BUILD_DATE__: string
 
+interface ImportMetaEnv {
+  readonly VITE_COSTA_CLEAN_VAPID_PUBLIC_KEY?: string
+}
+
 interface Window {
   __COSTA_CLEAN_JOB_LINES_DEBUG__?: {
     authMode: 'session' | 'anon'

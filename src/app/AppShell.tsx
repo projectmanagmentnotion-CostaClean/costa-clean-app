@@ -67,6 +67,7 @@ import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
 import { useToast } from '../shared/toasts/useToast'
 import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
+import { enableCostaCleanNotifications } from '../features/notifications/notificationSystem'
 
 interface AppShellProps {
   theme: AppTheme
@@ -184,6 +185,7 @@ export function AppShell({
   } = useShellNavigation()
   const { showScrollTop, compactMobileNav, isMobileViewport } = useShellViewportState()
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
+  const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'active' | 'unavailable'>('unknown')
   const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
@@ -1073,6 +1075,22 @@ export function AppShell({
     return outcome
   }, [onSignOut, toast])
 
+  const handleEnableNotifications = useCallback(async () => {
+    try {
+      const result = await enableCostaCleanNotifications()
+      if (result.subscription) {
+        setNotificationStatus('active')
+        toast.success('Notificaciones activas', 'Este dispositivo recibirá avisos operativos.')
+      } else {
+        setNotificationStatus('unavailable')
+        toast.error('Notificaciones no activadas', 'El permiso del navegador no fue concedido.')
+      }
+    } catch (error) {
+      setNotificationStatus('unavailable')
+      toast.error('No se pudieron activar', error instanceof Error ? error.message : 'Inténtalo de nuevo.')
+    }
+  }, [toast])
+
   return (
     <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
       <section className="hero-card cc-shell cc-shell-frame">
@@ -1094,6 +1112,8 @@ export function AppShell({
           accountLabel={accountLabel}
           isSigningOut={isSigningOut}
           onSignOut={handleSignOut}
+          notificationStatus={notificationStatus}
+          onEnableNotifications={handleEnableNotifications}
         />
         <div className="cc-shell-content">
           <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>

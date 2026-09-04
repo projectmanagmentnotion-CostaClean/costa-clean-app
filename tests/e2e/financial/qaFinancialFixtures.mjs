@@ -79,9 +79,9 @@ export async function createQaFinancialFixtures({ runId = crypto.randomUUID() } 
     return await read('quotes', quoteId)
   }
 
-  async function invoiceFixture(owner, property, job, label) {
+  async function invoiceFixture(owner, property, job, label, { issueDate = today() } = {}) {
     const invoiceId = id('INVOICE', runId, label)
-    const value = { id: invoiceId, client_id: owner.id, job_id: job?.id ?? null, property_id: property?.id ?? null, quote_id: null, issue_date: today(), status: 'draft', subtotal: 100, tax_amount: 21, total: 121, notes: created.prefix }
+    const value = { id: invoiceId, client_id: owner.id, job_id: job?.id ?? null, property_id: property?.id ?? null, quote_id: null, issue_date: issueDate, status: 'draft', subtotal: 100, tax_amount: 21, total: 121, notes: created.prefix }
     await rpcWithFallback(['save_invoice_with_lines_v2', 'save_invoice_with_lines'], { p_invoice: value, p_lines: [{ id: id('BILLING-LINE', runId, label), invoice_id: invoiceId, sort_order: 1, concept: `${created.prefix}${label}`, quantity: 1, unit: 'servicio', unit_price: 100, line_subtotal: 100 }] })
     created.invoices.push(invoiceId)
     return await read('invoices', invoiceId)

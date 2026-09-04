@@ -53,6 +53,7 @@ api/tools/imports/*.csv
 *qa-browser-profile*
 playwright/.auth/
 test-results/auth/
+test-results/
 qa-screenshots/private/
 qa-reports/private/
 .project-agent/private/

@@ -521,10 +521,10 @@
 :root[data-theme="light"] .cc-shell-subnav--top .cc-shell-subnav__button,
 :root[data-theme="light"] .cc-shell-subnav__button,
 :root[data-theme="light"] .cc-bottom-dock__icon {
-  border-color: rgba(14, 84, 114, 0.1);
+  border-color: rgba(14, 84, 114, 0.12);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(244, 250, 255, 0.88));
-  color: var(--brand-ink);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(241, 248, 252, 0.94));
+  color: #10243a;
 }
 
 :root[data-theme="light"] .cc-shell-subnav__button::after,
@@ -540,6 +540,21 @@
   background:
     linear-gradient(180deg, rgba(11, 125, 176, 0.13), rgba(255, 255, 255, 0.9));
   border-color: rgba(11, 125, 176, 0.2);
+}
+
+:root[data-theme="light"] .cc-shell-nav__current-label,
+:root[data-theme="light"] .cc-account-menu__label,
+:root[data-theme="light"] .cc-account-menu__identity,
+:root[data-theme="light"] .cc-shell-nav__sync,
+:root[data-theme="light"] .cc-shell-nav__back,
+:root[data-theme="light"] .cc-theme-toggle,
+:root[data-theme="light"] .cc-alerts-bell__button {
+  color: #10243a;
+}
+
+:root[data-theme="light"] .cc-account-menu__label,
+:root[data-theme="light"] .cc-shell-nav__current-label {
+  opacity: 0.82;
 }
 
 :root[data-theme="light"] .primary-button {
@@ -651,14 +666,20 @@
 
 .cc-shell-nav__topline {
   align-items: center;
+  gap: 12px;
+}
+
+.cc-shell-nav__brand {
+  gap: 14px;
 }
 
 .cc-shell-nav__actions {
-  display: grid;
-  justify-items: end;
-  align-content: start;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
   gap: 8px;
-  max-width: min(100%, 520px);
+  max-width: min(100%, 620px);
 }
 
 .cc-shell-nav__utilities {
@@ -701,9 +722,10 @@
   justify-items: start;
   gap: 1px;
   max-width: 168px;
-  padding: 8px 12px;
+  padding: 7px 11px;
   justify-content: start;
   align-items: center;
+  flex: 0 1 168px;
 }
 
 .cc-shell-nav__current-label {
@@ -711,7 +733,7 @@
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  opacity: 0.68;
+  opacity: 0.78;
 }
 
 .cc-shell-nav__current-value {

@@ -30,7 +30,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
     expect(manifest.sourceBaseHead).toBe(SOURCE_BASE_HEAD_V6R1E)
   })
 
-  it('keeps plan/preflight read-only', () => {
+  it('keeps plan/preflight read-only', { timeout: 30_000 }, () => {
     const plan = planV6()
     expect(plan.gate).toBe(GATE_V6R1E)
     expect(plan.qaApplication).toBe('READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION')

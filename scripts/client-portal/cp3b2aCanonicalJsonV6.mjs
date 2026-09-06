@@ -16,15 +16,19 @@ function isPlainObject(value) {
   return Object.prototype.toString.call(value) === '[object Object]'
 }
 
+function sha256Bytes(bytes) {
+  return createHash('sha256').update(bytes).digest('hex')
+}
+
 function sha256Text(text) {
-  return createHash('sha256').update(text, 'utf8').digest('hex')
+  return sha256Bytes(Buffer.from(text, 'utf8'))
 }
 
 function readUtf8Text(filePath) {
   return readFileSync(filePath, 'utf8').replace(/^\uFEFF/u, '')
 }
 
-function runGit(repoRoot, args, input = null) {
+function runGitLine(repoRoot, args, input = null) {
   const result = spawnSync('git', args, {
     cwd: repoRoot,
     encoding: 'utf8',
@@ -40,6 +44,23 @@ function runGit(repoRoot, args, input = null) {
     })
   }
   return String(result.stdout ?? '').trim()
+}
+
+function runGitBlob(repoRoot, args) {
+  const result = spawnSync('git', args, {
+    cwd: repoRoot,
+    encoding: null,
+    windowsHide: true,
+    maxBuffer: 8 * 1024 * 1024,
+  })
+  if (result.error || result.status !== 0) {
+    fail('git_command_failed', {
+      args,
+      exitCode: result.status ?? null,
+      stderr: Buffer.from(result.stderr ?? '').toString('utf8').trim(),
+    })
+  }
+  return Buffer.from(result.stdout ?? Buffer.alloc(0))
 }
 
 function runGitOnWorkingTree(repoRoot, filePath) {
@@ -102,16 +123,20 @@ export function parseJsonFileV1(filePath) {
 
 export function gitBlobIdAtPath(repoRoot, relativePath) {
   const normalized = normalizeRelativePath(relativePath)
-  return runGit(repoRoot, ['rev-parse', `HEAD:${normalized}`])
+  return runGitLine(repoRoot, ['rev-parse', `HEAD:${normalized}`])
+}
+
+export function gitBlobBytesAtPath(repoRoot, relativePath) {
+  const oid = gitBlobIdAtPath(repoRoot, relativePath)
+  return runGitBlob(repoRoot, ['cat-file', 'blob', oid])
 }
 
 export function gitBlobTextAtPath(repoRoot, relativePath) {
-  const oid = gitBlobIdAtPath(repoRoot, relativePath)
-  return runGit(repoRoot, ['cat-file', 'blob', oid])
+  return gitBlobBytesAtPath(repoRoot, relativePath).toString('utf8')
 }
 
 export function gitBlobSha256AtPath(repoRoot, relativePath) {
-  return sha256Text(gitBlobTextAtPath(repoRoot, relativePath))
+  return sha256Bytes(gitBlobBytesAtPath(repoRoot, relativePath))
 }
 
 export function headBlobIdV1(relativePath) {

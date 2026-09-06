@@ -27,14 +27,14 @@
     {
       "path": "scripts/client-portal/cp3b2aCanonicalJsonV6.mjs",
       "kind": "mjs",
-      "gitBlobId": "817517415d4f7bd44e781bbe647755dc18f71b74",
-      "blobSha256": "c9e6f760210dac5a463a2e5824523611d60cb54e3c008511f86bad090a7ea76c"
+      "gitBlobId": "2d5d90211391e7195cb62ded3fc2b45d33815036",
+      "blobSha256": "a53ca0c8c3f0832ee01b641ef62f0e6f7010a393eaea860ea6f988c7d02149ad"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_matrix_v6.sql",
       "kind": "sql",
       "gitBlobId": "bb36551a5c8a3b4070c832770abee9bf547e043a",
-      "blobSha256": "4416f67c6e32554d3d0a5023c6d8cd393122523821f166b73142cb17741e0999"
+      "blobSha256": "63e6f39027ba4b2cb7cbd1820d26587b2d5e5617848554166d80ee0be3c8bfd8"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_concurrency_v6.mjs",
@@ -46,14 +46,14 @@
       "path": "scripts/client-portal/cp3b2a_qa_capability_map_v6.json",
       "kind": "json",
       "gitBlobId": "8838db97815678435f7183034653e9b06174ddfc",
-      "blobSha256": "9cca8ac9aea4a0539bd2ec2022ca2550e3168f3f2274c53d28857d38ce3738c6",
+      "blobSha256": "ca6e5e801d73a8e3b1618d2506b35d7d68a27e392a5b0961e9fc52a658cb5a25",
       "canonicalJsonSha256": "8e82d66e4796ec0dfa866ba948e306c21bbebde7814086a4ef6fb40a430ffd2c"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "f928b2d74041247c01614a997beafa2508c56ef1",
-      "blobSha256": "f92ac48ed7ff64a91d8a79b67c8d103b79989fdc39e413d9ca01b32ab94ae115"
+      "gitBlobId": "e8f7155672c517b1f582053d28850fc04a155970",
+      "blobSha256": "74361273eeea5156d1cc0bde9ef59bcf06302bb2dfe3123ca11c146fc77a9054"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
@@ -64,32 +64,26 @@
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "579579ad9f9ad644de22dc13280f8d486cf881d7",
-      "blobSha256": "92f0700d3185c9d4a27b73e816aaf6c2295db70cb740e390cfd0603272b489f2"
-    },
-    {
-      "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
-      "kind": "mjs",
-      "gitBlobId": "b60d489832d858a52240b0297a9b37bb2a04527b",
-      "blobSha256": "80c109bc752d766d19d30be3436a574893effc65af749ceb899d01a52677da53"
+      "gitBlobId": "8979feda7bfb7faede06dace877b47565799eedd",
+      "blobSha256": "d3eeb5d14d9461a6ae1ee3decdd70aa32417fa6d0afd6acf29839e9fc0499268"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_precheck_v6.sql",
       "kind": "sql",
       "gitBlobId": "ee7be0cf106416446df2874474fafc083a1e1dfc",
-      "blobSha256": "0499dffecd2a405c571a7c716911e482eb06931eae27a25c7565002b23cad142"
+      "blobSha256": "4018dcd66aad31cefcd0aa6606db8103c92f30ce19a40d43195bb0ab081399a3"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_postcheck_v6.sql",
       "kind": "sql",
       "gitBlobId": "a65e57d6775af7e19424e84376e0c04cacf636d7",
-      "blobSha256": "d9ec479074d357fb614505bfc930d462ee4eb3f864bfe27cac3978103af2e988"
+      "blobSha256": "93b4de13d9a1a688b1cbd4ccc9514fbbc9cc4f0ba1326fe9b205bf86b73cf666"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_rollback_v6.sql",
       "kind": "sql",
       "gitBlobId": "029d4e8e81294fbdd11615cafdc6281c709a9e8e",
-      "blobSha256": "317d9f8cfe96f96e897092f31ef26c115208b086089b513a79ddce88f0a82cf5"
+      "blobSha256": "ecf82803de573994d6e8861cc5ce998c559e6e40ec019bb7253c8caece2a1657"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql",
@@ -107,7 +101,13 @@
       "path": "scripts/client-portal/cp3b2a_qa_digest_v6.sql",
       "kind": "sql",
       "gitBlobId": "0e30957563cd6c070a057c62aaa98a013981fcc1",
-      "blobSha256": "439f38dded9bbd7d276f6764a87bb1faae5834dd3d8f12544a5a2e05b9187dd0"
+      "blobSha256": "88ddf1cfd9cac2193f668841be9781f3a1d56ca321601d33a08e94de61a9b9db"
+    },
+    {
+      "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
+      "kind": "mjs",
+      "gitBlobId": "04144bd1d687430b099b888e306c7869fa321006",
+      "blobSha256": "0de72e135ae44f845c990c195bfbbb77b11ea845f1795fff3e8f2f627d106959"
     },
     {
       "path": "docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md",
@@ -129,6 +129,3 @@
     }
   ]
 }
-
-
-

@@ -14,6 +14,7 @@ import {
   canonicalJsonSha256V1,
   readJsonFromWorkingTree,
   workingTreeBlobIdV1,
+  workingTreeSha256V1,
   workingTreeJsonContractIdentityV1,
 } from './cp3b2aCanonicalJsonV6.mjs'
 import { runCommandV3 } from './cp2b_command_launcher_v3.mjs'
@@ -312,7 +313,7 @@ function artifactRecord(relativePath, kind) {
     path: normalized,
     kind,
     gitBlobId: workingTreeBlobIdV1(filePath),
-    blobSha256: sha256Text(readFileSync(filePath, 'utf8')),
+    blobSha256: workingTreeSha256V1(filePath),
   }
   if (kind === 'json') {
     const identity = workingTreeJsonContractIdentityV1(filePath)
@@ -321,7 +322,7 @@ function artifactRecord(relativePath, kind) {
   return record
 }
 
-function expectedArtifacts() {
+export function expectedArtifacts() {
   return [
     artifactRecord('scripts/client-portal/cp3b2aCanonicalJsonV6.mjs', 'mjs'),
     artifactRecord('scripts/client-portal/cp3b2a_qa_matrix_v6.sql', 'sql'),

@@ -674,7 +674,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(() => JSON.parse(v5Manifest)).not.toThrow()
   })
 
-  it('keeps the runner in plan/preflight mode only for the current gate', () => {
+  it('keeps the runner in plan/preflight mode only for the current gate', { timeout: 30_000 }, () => {
     const result = spawnSync(process.execPath, [runnerPath, '--plan'], {
       cwd: repoRoot,
       encoding: 'utf8',

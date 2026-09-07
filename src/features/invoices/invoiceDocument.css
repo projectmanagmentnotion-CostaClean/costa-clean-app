@@ -59,7 +59,8 @@
   grid-template-columns: 1fr 1fr !important;
 }
 
-.cc-invoice-pdf-export-host {
+.cc-invoice-pdf-export-host,
+.cc-quote-pdf-export-host {
   position: fixed;
   left: -10000px;
   top: 0;

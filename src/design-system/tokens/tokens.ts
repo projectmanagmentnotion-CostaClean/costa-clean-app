@@ -8,6 +8,8 @@ export const dsSpacing = {
   7: 'var(--ds-space-7)',
   8: 'var(--ds-space-8)',
   9: 'var(--ds-space-9)',
+  10: 'var(--ds-space-10)',
+  11: 'var(--ds-space-11)',
 } as const
 
 export const dsRadius = {
@@ -25,8 +27,13 @@ export const dsTypography = {
   displayFont: 'var(--ds-font-display)',
   caption: 'var(--ds-font-size-caption)',
   body: 'var(--ds-font-size-body)',
+  metadata: 'var(--ds-font-size-metadata)',
+  label: 'var(--ds-font-size-label)',
+  cardTitle: 'var(--ds-font-size-card-title)',
+  sectionTitle: 'var(--ds-font-size-section-title)',
   title: 'var(--ds-font-size-title)',
   hero: 'var(--ds-font-size-hero)',
+  display: 'var(--ds-font-size-display)',
   lineHeightTight: 'var(--ds-line-height-tight)',
   lineHeightBody: 'var(--ds-line-height-body)',
   capsTracking: 'var(--ds-letter-spacing-caps)',

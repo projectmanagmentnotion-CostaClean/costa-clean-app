@@ -8,6 +8,8 @@
   --ds-space-7: var(--space-7);
   --ds-space-8: var(--space-8);
   --ds-space-9: var(--space-9);
+  --ds-space-10: var(--space-10);
+  --ds-space-11: var(--space-11);
 
   --ds-radius-xs: var(--radius-xs);
   --ds-radius-sm: var(--radius-sm);
@@ -17,12 +19,17 @@
   --ds-radius-2xl: var(--radius-2xl);
   --ds-radius-pill: var(--radius-pill);
 
-  --ds-font-body: inherit;
+  --ds-font-body: var(--cc-font-body);
   --ds-font-display: var(--cc-font-display);
   --ds-font-size-caption: 0.78rem;
   --ds-font-size-body: 0.95rem;
+  --ds-font-size-metadata: 0.82rem;
+  --ds-font-size-label: 0.875rem;
+  --ds-font-size-card-title: 1.0625rem;
+  --ds-font-size-section-title: clamp(1.125rem, 2vw, 1.5rem);
   --ds-font-size-title: clamp(1.4rem, 2.4vw, 2rem);
   --ds-font-size-hero: clamp(1.9rem, 4vw, 3rem);
+  --ds-font-size-display: clamp(2rem, 4vw, 2.5rem);
   --ds-line-height-tight: 1.1;
   --ds-line-height-body: 1.55;
   --ds-letter-spacing-caps: 0.08em;

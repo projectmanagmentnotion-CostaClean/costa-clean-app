@@ -311,6 +311,8 @@ Audit the current running frontend against the canonical blueprint before changi
 
 # STITCH-FE-02 — Token and theme convergence
 
+**Status:** `DONE_WITH_DOCUMENTED_DEBT`
+
 ### Objective
 
 Reconcile the existing CSS variables and themes with the normalized Maritime Professional system.
@@ -351,6 +353,16 @@ Reconcile the existing CSS variables and themes with the normalized Maritime Pro
 - dark and light modes tested;
 - no module business logic changed;
 - lint, tests and build pass.
+
+### Closeout — 2026-09-07
+
+- Canonical spacing now covers the approved 4–64px scale.
+- Semantic typography roles and the Inter-first family aliases are available
+  to the existing design-system registry without changing module contracts.
+- No backend, notification workflow, or business logic changed in this block.
+- `npm test`, `npm run lint`, and `npm run build` pass.
+- Live dark/light contrast validation remains documented debt for the shell
+  implementation block and does not authorize ad hoc visual changes here.
 
 ---
 

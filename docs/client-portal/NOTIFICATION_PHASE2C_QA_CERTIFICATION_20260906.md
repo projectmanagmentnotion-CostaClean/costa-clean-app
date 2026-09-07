@@ -103,3 +103,15 @@ extraction or production execution.
 
 Updated verdict: `OPEN - BLOCKED AT PREFERENCES AND UI DISABLE`.
 Authenticated deep-link: `PASS`. Product approval remains `PENDING`.
+
+## Roadmap disposition - 2026-09-07
+
+Phase 2C is now `DEFERRED / UI REDESIGN DEPENDENCY`. The already observed
+push, click, authenticated deep-link, dedupe, dispatcher, producer, 410
+handling, and cross-tab auth evidence is preserved. Preferences UI,
+notification disable UI, and their final certification/cleanup remain
+deferred until the approved app redesign provides those interfaces.
+
+This deferral does not close Phase 2C, does not change product approval, and
+does not block the main Costa Clean roadmap. No producer, dispatcher, QA data,
+or production project was modified for this disposition.

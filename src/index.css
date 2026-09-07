@@ -1,9 +1,9 @@
 :root {
   font-family:
+    Inter,
     "Avenir Next",
     "SF Pro Text",
     "Segoe UI",
-    Inter,
     system-ui,
     sans-serif;
   line-height: 1.5;
@@ -51,6 +51,13 @@
     radial-gradient(circle at left top, rgba(34,211,238,0.16), transparent 22%),
     radial-gradient(circle at right top, rgba(56,189,248,0.14), transparent 24%),
     linear-gradient(180deg, #06101d 0%, #081523 44%, #0a1b2b 100%);
+  --cc-font-body:
+    Inter,
+    "Avenir Next",
+    "SF Pro Text",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
 
   --bg: rgba(7, 14, 28, 0.78);
   --bg-soft: var(--cc-color-background-soft);
@@ -84,10 +91,10 @@
   --shadow-float: 0 18px 36px rgba(8, 21, 35, 0.26);
   --glass-blur: blur(24px);
   --cc-font-display:
+    Inter,
     "Avenir Next",
     "SF Pro Display",
     "Segoe UI",
-    Inter,
     system-ui,
     sans-serif;
   --cc-surface-section: rgba(255, 255, 255, 0.05);
@@ -114,6 +121,8 @@
   --space-7: 28px;
   --space-8: 32px;
   --space-9: 40px;
+  --space-10: 48px;
+  --space-11: 64px;
 
   --control-height-sm: 38px;
   --control-height-md: 44px;

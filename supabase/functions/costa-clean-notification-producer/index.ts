@@ -14,15 +14,24 @@ async function rows(supabase: ReturnType<typeof createClient>, table: string, se
 async function produce() {
   const supabase = createClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_SERVICE_ROLE_KEY'))
   const [invoices, payments, expenses, jobs, quotes, memberships, decisions] = await Promise.all([
-    rows(supabase, 'invoices', 'id,issue_date,status,total,archived_at,deleted_at,cancelled_at'),
+    rows(supabase, 'invoices', 'id,job_id,issue_date,status,total,archived_at,deleted_at,cancelled_at'),
     rows(supabase, 'payments', 'invoice_id,amount,archived_at,deleted_at,cancelled_at'),
     rows(supabase, 'expenses', 'id,document_support_status,receipt_file_path,archived_at,deleted_at,cancelled_at'),
-    rows(supabase, 'jobs', 'id,scheduled_date,status,invoice_id,archived_at,deleted_at,cancelled_at'),
-    rows(supabase, 'quotes', 'id,created_at,status,job_id,archived_at,deleted_at,cancelled_at'),
+    rows(supabase, 'jobs', 'id,quote_id,scheduled_date,status,archived_at,deleted_at,cancelled_at'),
+    rows(supabase, 'quotes', 'id,created_at,status,archived_at,deleted_at,cancelled_at'),
     rows(supabase, 'internal_staff_memberships', 'user_id,status,revoked_at'),
     rows(supabase, 'operational_alert_decisions', 'alert_key,fingerprint,scope,user_id,status'),
   ])
-  const conditions = buildProducerConditions({ invoices, payments, expenses, jobs, quotes, thresholds })
+  const invoiceByJob = new Map(invoices.filter((invoice) => invoice.job_id).map((invoice) => [invoice.job_id, invoice.id]))
+  const jobByQuote = new Map(jobs.filter((job) => job.quote_id).map((job) => [job.quote_id, job.id]))
+  const conditions = buildProducerConditions({
+    invoices,
+    payments,
+    expenses,
+    jobs: jobs.map((job) => ({ ...job, invoice_id: invoiceByJob.get(job.id) ?? null })),
+    quotes: quotes.map((quote) => ({ ...quote, job_id: jobByQuote.get(quote.id) ?? null })),
+    thresholds,
+  })
   const users = memberships.filter((membership) => membership.status === 'active' && !membership.revoked_at).map((membership) => membership.user_id).filter(Boolean)
   const result = await produceReminders({ conditions, users, decisions, insertReminder: async (reminder) => {
     const { error } = await supabase.from('notification_reminders').insert(reminder)

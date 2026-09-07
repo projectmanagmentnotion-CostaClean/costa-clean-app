@@ -37,3 +37,28 @@ EVIDENCE:
 route, state, auth and backend contracts, plus no material layout,
 typography, spacing, imagery, responsive or motion discrepancy. Test both
 normal motion and `prefers-reduced-motion: reduce`.
+
+## FE-03 shell evidence attempt — 2026-09-07
+
+Environment: local QA preview at `http://127.0.0.1:4174/`, with the normal
+authenticated Chrome session. The served QA build targets
+`kpvvydthlxupjjqqdpxy.supabase.co`; no production target was used.
+
+- `390x844`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
+  available through the current normal-Chrome control surface.
+- `768x1024`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
+  available through the current normal-Chrome control surface.
+- `1024x768`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
+  available through the current normal-Chrome control surface.
+- `1440x900`: `PARTIAL` — authenticated shell inspected in Chrome; grouped
+  navigation, active state, account, alerts, theme, contextual back and one
+  visible logout control were present, but exact viewport dimensions and
+  `scrollWidth` were not captured.
+- Dark/light: `NOT CERTIFIED` for the exact required viewports.
+- Mobile dock and `Mas` sheet: verified by code and focused tests, not granted
+  visual PASS without exact running-app evidence.
+
+The existing authenticated visual harness was attempted twice and could not
+connect to its CDP endpoint. No prior screenshots were reused as current
+proof. FE-03 remains `DONE_WITH_DOCUMENTED_DEBT`; FE-04 must not start until
+the four exact viewport measurements and dark/light evidence are captured.

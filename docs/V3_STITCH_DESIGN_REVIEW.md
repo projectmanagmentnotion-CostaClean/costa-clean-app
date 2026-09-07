@@ -1,6 +1,6 @@
-# Costa Clean App V3 — Stitch Design Review V3-0B
+# Costa Clean App V3 — Stitch Design Review V3-0C
 
-Status: `READY FOR HUMAN APPROVAL — NO IMPLEMENTATION`. The previous visual set A/B/C is rejected. The new V3-0B directions below are the only candidates for review; Stitch remains the visual evidence source and the repository remains authoritative for behavior, data and security.
+Status: `PARTIAL — WAITING_FOR_STITCH AND HUMAN FINAL APPROVAL — NO IMPLEMENTATION`. V3-0C selects Editorial SaaS Simplified as the only final visual direction, but the final Stitch batch generated only Home and Facturas list. Stitch remains the visual evidence source and the repository remains authoritative for behavior, data and security.
 
 ## Rejected visual baseline
 
@@ -12,17 +12,15 @@ The former Direction B recommendation is invalidated. The old A/B/C canvases are
 
 Only the functional learnings survive: mobile-first, entity workspaces, app-like navigation, quick actions, contextual selection, bottom navigation and fewer clicks.
 
-## V3-0B Stitch projects
+## V3-0C Stitch project
 
 | Direction | Stitch canvas | Evidence observed | State |
 | --- | --- | --- | --- |
-| Finance Minimal | [Project 16933552908903861488](https://stitch.withgoogle.com/projects/16933552908903861488?hl=es&pli=1) | Finance tokens, Facturas list, Home, Presupuestos list, Factura workspace, Cliente workspace, Clientes list, Servicios list visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
-| Friendly Business | [Project 5385378961807597557](https://stitch.withgoogle.com/projects/5385378961807597557?hl=es&pli=1) | Friendly shell, Home, Factura workspace, Facturas list, Presupuestos list and finance navigation visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
-| Editorial SaaS | [Project 6884707630640107069](https://stitch.withgoogle.com/projects/6884707630640107069?hl=es&pli=1) | Editorial tokens, Home, Factura workspace, Facturas list and Presupuestos list visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
+| Editorial SaaS Simplified | [Project 6884707630640107069](https://stitch.withgoogle.com/projects/6884707630640107069?hl=es&pli=1) | V3-0C prompt submitted in the existing canvas; simplified Home and Facturas list generated | `PARTIAL`; remaining screens and cleanup are `WAITING_FOR_STITCH` |
 
 No generated demo identity, company, address, amount or contact is production data. No credentials, screenshots, tokens or private QA artifacts are stored in the repository.
 
-## New direction scorecard
+## Superseded V3-0B scorecard
 
 Scores are comparative design-review judgments from the visible Stitch evidence, not implementation claims.
 
@@ -34,11 +32,11 @@ Scores are comparative design-review judgments from the visible Stitch evidence,
 
 ### Recommendation
 
-Recommend `Finance Minimal` as the working candidate because it gives invoices, receivables, payments and quote context the clearest financial hierarchy while remaining mobile-first and operationally dense. Borrow from Friendly Business its approachable shell and from Editorial SaaS its flat document surfaces. This is a recommendation only; no token or component is approved for production until the human reviewer selects one direction.
+The previous comparative recommendation is superseded by V3-0C. Editorial SaaS Simplified is now the sole visual direction under review; no token or component is approved for production until the final human gate passes.
 
 ## Required screen set
 
-Each direction was prompted with the complete required set. The visible canvas currently proves the first generated batches; the rest remain a Stitch-generation state, not a Codex implementation gap:
+The V3-0C prompt requests the complete final set. The visible canvas currently proves only the two newly generated simplified screens; the rest remain a Stitch-generation state, not a Codex implementation gap:
 
 1. Home — “Cómo va mi negocio hoy”
 2. Facturas list
@@ -52,17 +50,19 @@ Each direction was prompted with the complete required set. The visible canvas c
 10. Filters bottom sheet
 11. Multi-selection mode
 12. Nueva factura full-screen
+13. Service workspace (explicit V3-0C addition)
 
 The human review must mark each screen `PASS`, `PARTIAL` or `WAITING_FOR_STITCH` in the canvases before V3-1 begins. Mobile anchors remain 390x844, 768x1024 and 1440x900; 320px safe-failure remains required for critical surfaces.
 
 ## Review checklist
 
 - [x] Old Direction A/B/C explicitly rejected.
-- [x] Three materially different V3-0B directions generated in Stitch.
-- [x] New canvas links and project IDs recorded.
-- [x] Home, invoice, quote, client and service evidence visible in the generated canvases where available.
-- [x] Finance Minimal recommendation recorded with explicit trade-offs.
+- [x] V3-0C Editorial SaaS Simplified prompt submitted in the existing Stitch canvas.
+- [x] New canvas link and project ID recorded.
+- [x] Simplified Home and Facturas evidence inspected.
+- [x] Contract review and NO-action elimination matrix recorded.
 - [x] Functional contracts, routes, Supabase and auth untouched.
-- [ ] Human approval of one visual direction.
-- [ ] Complete screen-by-screen visual PASS for all 12 screens at required mobile/tablet/desktop anchors.
+- [ ] Complete Stitch generation of all requested screens.
+- [ ] Human approval of the final visual direction.
+- [ ] Complete screen-by-screen visual PASS for all requested screens at required mobile/tablet/desktop anchors.
 - [ ] V3-1 implementation authorization.

@@ -1,30 +1,26 @@
-# Costa Clean App V3 — Design System V3-0B Candidate
+# Costa Clean App V3 — Design System V3-0C Editorial Simplified
 
-Status: `CANDIDATE — HUMAN APPROVAL REQUIRED`. This document records the new Stitch evidence only. It is not an implementation contract yet. The old Direction B token set is rejected and must not be used as a visual base.
+Status: `PARTIAL CANDIDATE — HUMAN FINAL APPROVAL REQUIRED`. This document records the V3-0C Stitch evidence only. It is not an implementation contract yet. The old V3-0B alternatives and Direction B token set are superseded.
 
 ## Directional intent
 
-- Finance Minimal: strongest financial hierarchy and invoice/receivable scanability.
-- Friendly Business: warmest, most approachable shell and clearest tactile affordances.
-- Editorial SaaS: flattest surfaces, strongest typography and most generous whitespace.
-
-The recommended working candidate is Finance Minimal, with Friendly Business warmth and Editorial SaaS flatness as review references. This recommendation is not approval.
+Editorial SaaS Simplified is the only V3-0C direction under review: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. This is not approval for production.
 
 ## Candidate token evidence from new Stitch canvases
 
 | Area | Candidate evidence | State |
 | --- | --- | --- |
-| Base surface | `#F8F9FB` / white in Finance Minimal; `#FAFAF8` / white in Friendly Business; `#FCFCFB` / white in Editorial SaaS | Human selection required |
-| Ink | `#111827` / deep ink; Friendly Business also exposes `#1F2937` | Human selection required |
+| Base surface | `#FCFCFB` / white | Candidate; human approval required |
+| Ink | `#111827` | Candidate; human approval required |
 | Muted text | `#6B7280` | Candidate |
 | Structural border | `#E5E7EB`, hairline/1px separators | Candidate |
-| Costa Clean accent | Teal, used sparingly for primary/active states | Candidate |
+| Costa Clean accent | `#0D9488`, used sparingly for primary/active states | Candidate |
 | Semantic states | Soft green success, soft amber pending/review, soft red risk/error; status never color-only | Constitutional requirement |
 | Typography | Plus Jakarta Sans or Inter, one coherent family per approved direction | Human selection required |
 | Controls | Minimum 44px, preferred 48px; safe-area aware | Constitutional requirement |
 | Motion | Restrained functional motion with `prefers-reduced-motion` fallback | Constitutional requirement |
 
-Finance Minimal additionally exposed a generated Stitch system named `Nordic Operational Clarity` with Plus Jakarta Sans headline, Inter body/labels, `#1E3A8A` primary, `#2563EB` secondary, `#059669` tertiary and `#111827` neutral. These values are evidence to review, not approved production tokens.
+The V3-0C generated Stitch system exposes Plus Jakarta Sans for headlines, Inter for body/labels, `#0D9488` primary, `#059669` semantic success and `#111827` neutral. These values are evidence to review, not approved production tokens.
 
 ## Product hierarchy to preserve
 
@@ -39,10 +35,10 @@ Finance Minimal additionally exposed a generated Stitch system named `Nordic Ope
 ## Navigation candidates for review
 
 1. `Inicio · Trabajo · Clientes · Finanzas · Más`
-2. `Inicio · Clientes · Servicios · Facturas · Más`
+2. `Inicio · Facturas · Clientes · Servicios · Más`
 
-Finance Minimal is the current recommendation for making `Finanzas` explicit. The reviewer must select the final navigation before V3-1.
+V3-0C asks Stitch to compare both patterns and prioritize one-tap access to Facturas, Clientes and Servicios. The reviewer must approve the final navigation before V3-1.
 
 ## Approval gate
 
-Do not implement these tokens, directions or navigation candidates in the productive shell until the human reviewer approves one Stitch direction, completes the 12-screen visual review and confirms the regression contract. V3-1 remains blocked by design approval, not by an implementation defect.
+Do not implement these tokens, directions or navigation candidates in the productive shell until Stitch completes the requested screen set, invented content is removed, the human reviewer completes the visual review and the regression contract is confirmed. V3-1 remains blocked by design approval, not by an implementation defect.

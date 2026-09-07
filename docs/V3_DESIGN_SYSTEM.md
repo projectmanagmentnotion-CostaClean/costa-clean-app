@@ -1,64 +1,48 @@
-# Costa Clean App V3 — Design System
+# Costa Clean App V3 — Design System V3-0B Candidate
 
-Status: `CANDIDATE — HUMAN APPROVAL REQUIRED`. Three Stitch directions are generated and compared in `V3_STITCH_DESIGN_REVIEW.md`. Direction B is the recommended baseline; these tokens must not be implemented in production until the V3-0 approval gate is explicitly closed.
+Status: `CANDIDATE — HUMAN APPROVAL REQUIRED`. This document records the new Stitch evidence only. It is not an implementation contract yet. The old Direction B token set is rejected and must not be used as a visual base.
 
-## Design principles
+## Directional intent
 
-- Mobile-first, operational and calm.
-- One decision per screen and one consequence per primary action.
-- Flat, breathable surfaces instead of nested card stacks.
-- Costa Clean brand appears as accent, active state and CTA detail, not as a full-surface wash.
-- Accessibility, readability and one-hand reach outrank decoration.
+- Finance Minimal: strongest financial hierarchy and invoice/receivable scanability.
+- Friendly Business: warmest, most approachable shell and clearest tactile affordances.
+- Editorial SaaS: flattest surfaces, strongest typography and most generous whitespace.
 
-## Candidate tokens from Stitch evidence
+The recommended working candidate is Finance Minimal, with Friendly Business warmth and Editorial SaaS flatness as review references. This recommendation is not approval.
 
-| Area | V3 intent | Approval state |
+## Candidate token evidence from new Stitch canvases
+
+| Area | Candidate evidence | State |
 | --- | --- | --- |
-| Typography | Plus Jakarta Sans for headline/labels; Inter is acceptable for dense operational body copy | CANDIDATE: Stitch A/B/C |
-| Spacing | compact 8px-derived rhythm; preserve dense rows and 48px interactive targets | CANDIDATE: Stitch B/C |
-| Radius | restrained shared radius; avoid rounded containers around every child | CANDIDATE: Stitch A/B/C |
-| Surfaces | graphite/navy operational shell with warm-neutral content option for human review | CANDIDATE: Stitch B + C |
-| Borders | 1px structural separators for dense lists; no child-by-child outlines | APPROVED PRINCIPLE: Stitch B |
-| Elevation | shallow functional elevation only for filter sheets, sticky bars and dialogs | APPROVED PRINCIPLE: Stitch A/B/C |
-| Iconography | coherent Material-style outline family with visible text labels for primary actions | CANDIDATE: Stitch A/B/C |
-| Status | text-first semantic states; teal/green success, amber review/pending, red incident/error | APPROVED PRINCIPLE: Stitch B/C |
-| Motion | restrained functional motion with mandatory `prefers-reduced-motion` fallback | CONSTITUTIONAL REQUIREMENT |
+| Base surface | `#F8F9FB` / white in Finance Minimal; `#FAFAF8` / white in Friendly Business; `#FCFCFB` / white in Editorial SaaS | Human selection required |
+| Ink | `#111827` / deep ink; Friendly Business also exposes `#1F2937` | Human selection required |
+| Muted text | `#6B7280` | Candidate |
+| Structural border | `#E5E7EB`, hairline/1px separators | Candidate |
+| Costa Clean accent | Teal, used sparingly for primary/active states | Candidate |
+| Semantic states | Soft green success, soft amber pending/review, soft red risk/error; status never color-only | Constitutional requirement |
+| Typography | Plus Jakarta Sans or Inter, one coherent family per approved direction | Human selection required |
+| Controls | Minimum 44px, preferred 48px; safe-area aware | Constitutional requirement |
+| Motion | Restrained functional motion with `prefers-reduced-motion` fallback | Constitutional requirement |
 
-### Concrete Stitch references
+Finance Minimal additionally exposed a generated Stitch system named `Nordic Operational Clarity` with Plus Jakarta Sans headline, Inter body/labels, `#1E3A8A` primary, `#2563EB` secondary, `#059669` tertiary and `#111827` neutral. These values are evidence to review, not approved production tokens.
 
-- Direction A exposed `#0D9488` primary, `#0F172A` secondary, `#14B8A6` tertiary, `#64748B` neutral and Plus Jakarta Sans.
-- Direction B exposed `#0D9488` primary, `#14B8A6` secondary, `#38BDF8` tertiary, `#0B0F17` neutral, Plus Jakarta Sans headlines and Inter body/labels.
-- Direction C exposed `#0D9488` primary, `#1B2A38` secondary, `#D97706` tertiary, `#F5F2EC` neutral and Plus Jakarta Sans.
+## Product hierarchy to preserve
 
-The final implementation token set must be resolved during human review; do not average or silently merge these palettes.
+- Home answers “cómo va mi negocio hoy” with no more than five compact decision blocks.
+- Every KPI includes name, value, period/trend and a tap target to context.
+- Invoices, quotes and payments are first-class financial surfaces.
+- Entity workspaces are linear and flat: summary, identity, property/service, lines, payments, document and history; empty sections stay hidden.
+- Secondary actions collapse into `Más`; no essential action depends on hover.
+- Filters open in a bottom sheet. Multi-selection uses a compact selection bar.
+- New invoice opens full-screen/StepFlow with the first actionable field immediately visible.
 
-## Component contract to prototype
+## Navigation candidates for review
 
-The Stitch prototype must demonstrate these components in context, not as an isolated gallery:
+1. `Inicio · Trabajo · Clientes · Finanzas · Más`
+2. `Inicio · Clientes · Servicios · Facturas · Más`
 
-- `AppHeader` — back/title/status context, no overflow at 390px.
-- `BottomNavigation` — five destinations, active state and safe area.
-- `SectionTabs` — only where a real relationship decision exists.
-- `EntityListItem` — identity, status, key fact and one compact action cluster.
-- `EntityStatus` — semantic text plus accessible visual treatment.
-- `QuickAction`, `PrimaryAction`, `SecondaryAction` — explicit hierarchy.
-- `BottomSheet`, `FilterSheet`, `SelectionBar` — focus, dismiss, apply and sticky-safe behavior.
-- `EntityWorkspace`, `SummaryHero`, `DetailSection` — flat full-screen entity context.
-- `FormField`, `StickyCTA` — keyboard-safe and 44px minimum, preferably 48px targets.
-- `Toast`, `EmptyState`, `ErrorState`, `LoadingState` — same shell language and clear recovery.
-
-## Action hierarchy
-
-Each workspace has one primary action, a maximum of 2–3 quick actions and a `Más` group for rare/destructive/administrative actions. No essential action relies on hover.
-
-## Accessibility contract
-
-- Minimum interactive target: 44px CSS, preferred 48px.
-- Visible focus, readable contrast, semantic labels and keyboard-safe forms.
-- Bottom bars honor safe-area insets and never cover a required field or CTA.
-- Status is never communicated by color alone.
-- Reduced motion is mandatory.
+Finance Minimal is the current recommendation for making `Finanzas` explicit. The reviewer must select the final navigation before V3-1.
 
 ## Approval gate
 
-Do not implement these tokens in the productive shell until Direction A, B and C have been generated, compared and one direction is approved. V3-0 is now ready for that human decision; no V3-1 implementation is authorized by this work block.
+Do not implement these tokens, directions or navigation candidates in the productive shell until the human reviewer approves one Stitch direction, completes the 12-screen visual review and confirms the regression contract. V3-1 remains blocked by design approval, not by an implementation defect.

@@ -1,83 +1,68 @@
-# Costa Clean App V3 — Stitch Design Review
+# Costa Clean App V3 — Stitch Design Review V3-0B
 
-Status: READY FOR HUMAN APPROVAL. Stitch authentication was completed manually by the user. Three mobile-first directions were generated and reviewed in Stitch; no credentials or private repository data were entered by Codex.
+Status: `READY FOR HUMAN APPROVAL — NO IMPLEMENTATION`. The previous visual set A/B/C is rejected. The new V3-0B directions below are the only candidates for review; Stitch remains the visual evidence source and the repository remains authoritative for behavior, data and security.
 
-## Required project
+## Rejected visual baseline
 
-- Project name: `COSTA CLEAN APP V3`
-- Tool: Google Stitch
-- Target: mobile-first application design
-- Required reference viewports: 390x844 and 430x932
+The former Direction B recommendation is invalidated. The old A/B/C canvases are retained only as historical evidence and must not be used as the visual base:
 
-## Generated Stitch projects
+- [Old Direction A](https://stitch.withgoogle.com/projects/10976614506598796765?hl=es&pli=1) — `REJECTED`
+- [Old Direction B](https://stitch.withgoogle.com/projects/8650363538424131334?hl=es&pli=1) — `REJECTED`
+- [Old Direction C](https://stitch.withgoogle.com/projects/8323720746273301525?hl=es&pli=1) — `REJECTED`
 
-- Direction A — [COSTA CLEAN APP V3](https://stitch.withgoogle.com/projects/10976614506598796765?hl=es&pli=1) — `10976614506598796765`
-- Direction B — [COSTA CLEAN APP V3 — Dirección B](https://stitch.withgoogle.com/projects/8650363538424131334?hl=es&pli=1) — `8650363538424131334`
-- Direction C — [COSTA CLEAN APP V3 — Dirección C](https://stitch.withgoogle.com/projects/8323720746273301525?hl=es&pli=1) — `8323720746273301525`
+Only the functional learnings survive: mobile-first, entity workspaces, app-like navigation, quick actions, contextual selection, bottom navigation and fewer clicks.
 
-Stitch keeps the visual evidence in each project canvas. The generated demo records are not treated as Costa Clean production data and are intentionally not copied into the repository.
+## V3-0B Stitch projects
 
-## Directions to generate
+| Direction | Stitch canvas | Evidence observed | State |
+| --- | --- | --- | --- |
+| Finance Minimal | [Project 16933552908903861488](https://stitch.withgoogle.com/projects/16933552908903861488?hl=es&pli=1) | Finance tokens, Facturas list, Home, Presupuestos list, Factura workspace, Cliente workspace, Clientes list, Servicios list visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
+| Friendly Business | [Project 5385378961807597557](https://stitch.withgoogle.com/projects/5385378961807597557?hl=es&pli=1) | Friendly shell, Home, Factura workspace, Facturas list, Presupuestos list and finance navigation visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
+| Editorial SaaS | [Project 6884707630640107069](https://stitch.withgoogle.com/projects/6884707630640107069?hl=es&pli=1) | Editorial tokens, Home, Factura workspace, Facturas list and Presupuestos list visible in the canvas | Ready for human review; remaining requested screens are being generated in Stitch batches |
 
-### Direction A — Minimal SaaS / Apple-like
+No generated demo identity, company, address, amount or contact is production data. No credentials, screenshots, tokens or private QA artifacts are stored in the repository.
 
-Calm editorial utility. Warm light canvas, deep navy text, restrained teal accent, strong typography and very low chrome. Best candidate for speed and clarity if list density remains operational.
+## New direction scorecard
 
-### Direction B — Premium operational / Linear-like
+Scores are comparative design-review judgments from the visible Stitch evidence, not implementation claims.
 
-Dense but refined work queue. Darker navigation/headers, sharp state markers, high scanability and explicit keyboard/desktop lineage while remaining thumb-friendly on mobile. Risk: can become too tool-like for non-CRM users.
-
-### Direction C — Clean business native-app
-
-Friendly native utility. Clear sections, approachable status treatment, stronger tactile controls and practical sheets. Risk: too much surface/card language if not flattened aggressively.
-
-## Screens required in each direction
-
-1. Mobile shell
-2. Home priority queue
-3. Facturas list
-4. Factura workspace
-5. Leads list
-6. Lead workspace
-7. Servicios list
-8. Servicio workspace
-9. Filter bottom sheet
-10. Multi-selection mode
-11. Create/edit full-screen flow
-
-## Critical review criteria
-
-| Criterion | Question |
-| --- | --- |
-| Speed | Can staff identify and act within two seconds? |
-| Clarity | Is status and next action obvious without CRM knowledge? |
-| Mobile usability | Does it work at 390px and 430px without overflow or tiny controls? |
-| Hierarchy | Is there one primary consequence per workspace? |
-| Consistency | Do list, workspace, sheet and forms share one language? |
-| Scalability | Can all modules fit without card soup or special cases? |
-| Accessibility | Are contrast, focus, labels and status semantics clear? |
-| One-hand usage | Are bottom actions and frequent actions thumb-reachable? |
-| Density | Is useful operational information preserved without inflation? |
-| Professionalism | Does the system feel premium and trustworthy for business work? |
-
-## Comparative scorecard
-
-| Direction | Speed | Clarity | Mobile | Hierarchy | Consistency | Scale | Accessibility | One-hand | Density | Professionalism | Total |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| A | 9 | 9 | 8 | 9 | 8 | 8 | 8 | 8 | 8 | 9 | 84 |
-| B | 9 | 8 | 8 | 9 | 9 | 9 | 8 | 7 | 10 | 9 | 86 |
-| C | 8 | 9 | 9 | 9 | 8 | 8 | 9 | 9 | 8 | 8 | 85 |
+| Direction | Simplicity | Clarity | Hierarchy | Friendliness | Professionalism | Finance | Mobile | Speed | Scalability | Air | Density | Accessibility | Total |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Finance Minimal | 9 | 9 | 9 | 7 | 9 | 10 | 9 | 9 | 9 | 8 | 9 | 9 | 106 |
+| Friendly Business | 8 | 9 | 8 | 10 | 9 | 9 | 10 | 9 | 8 | 8 | 8 | 9 | 105 |
+| Editorial SaaS | 10 | 9 | 10 | 7 | 9 | 9 | 9 | 8 | 9 | 10 | 7 | 9 | 106 |
 
 ### Recommendation
 
-Recommend Direction B as the V3 baseline, with two explicit borrowings from C: C's warmer neutral surface treatment and C's more tactile service/filter affordances. A remains the fallback if human review prefers a lighter SaaS tone. B wins on operational density, scanability, selection mode, filter sheet and business-workspace hierarchy while preserving the five-destination mobile shell.
+Recommend `Finance Minimal` as the working candidate because it gives invoices, receivables, payments and quote context the clearest financial hierarchy while remaining mobile-first and operationally dense. Borrow from Friendly Business its approachable shell and from Editorial SaaS its flat document surfaces. This is a recommendation only; no token or component is approved for production until the human reviewer selects one direction.
 
-## Evidence checklist
+## Required screen set
 
-- [x] Stitch project created.
-- [x] Three materially different directions generated.
-- [x] Stitch canvas evidence captured for the required shell/list/workspace/filter/selection patterns; final screenshot export remains in the Stitch projects for human review.
-- [x] Project links recorded without secrets.
-- [x] Direction scorecard completed.
-- [x] One direction recommended with explicit trade-offs.
-- [x] Design System V3 candidate tokens promoted from approved evidence, pending human approval.
+Each direction was prompted with the complete required set. The visible canvas currently proves the first generated batches; the rest remain a Stitch-generation state, not a Codex implementation gap:
+
+1. Home — “Cómo va mi negocio hoy”
+2. Facturas list
+3. Factura workspace
+4. Presupuestos list
+5. Presupuesto workspace
+6. Clientes list
+7. Cliente workspace
+8. Servicios list
+9. Lead workspace
+10. Filters bottom sheet
+11. Multi-selection mode
+12. Nueva factura full-screen
+
+The human review must mark each screen `PASS`, `PARTIAL` or `WAITING_FOR_STITCH` in the canvases before V3-1 begins. Mobile anchors remain 390x844, 768x1024 and 1440x900; 320px safe-failure remains required for critical surfaces.
+
+## Review checklist
+
+- [x] Old Direction A/B/C explicitly rejected.
+- [x] Three materially different V3-0B directions generated in Stitch.
+- [x] New canvas links and project IDs recorded.
+- [x] Home, invoice, quote, client and service evidence visible in the generated canvases where available.
+- [x] Finance Minimal recommendation recorded with explicit trade-offs.
+- [x] Functional contracts, routes, Supabase and auth untouched.
+- [ ] Human approval of one visual direction.
+- [ ] Complete screen-by-screen visual PASS for all 12 screens at required mobile/tablet/desktop anchors.
+- [ ] V3-1 implementation authorization.

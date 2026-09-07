@@ -1,48 +1,37 @@
 # Costa Clean App V3 — Roadmap
 
-## V3-0 — Discovery + Stitch + mobile design system
+## V3-0B — Rediseño visual completo + Stitch
 
-Current state: discovery documentation and Stitch evidence complete; V3-0 is waiting for human visual approval before any implementation.
+Current state: three new V3-0B Stitch directions are generated and documented; old Directions A/B/C are rejected. Human visual approval is pending. No implementation, route, auth, Supabase or financial logic was changed in this work block.
 
-- [x] Create isolated V3 worktree and branch from certified base `3668c7b`.
-- [x] Audit current modules, protected contracts and simplification opportunities.
-- [x] Define user journeys and target click reductions.
-- [x] Define mobile information architecture hypothesis.
-- [x] Authenticate Stitch manually and create `COSTA CLEAN APP V3` project.
-- [x] Generate Directions A, B and C with required mobile screens.
-- [x] Record Stitch canvas evidence/links and complete comparative scorecard.
-- [x] Draft screen blueprint, regression contract and documentation structure.
-- [x] Promote Stitch evidence into candidate V3 Design System tokens; final promotion waits for human approval.
-- [x] Run tests/lint/build and close with a clean worktree.
+- [x] Preserve only functional learnings from the rejected set.
+- [x] Generate Finance Minimal, Friendly Business and Editorial SaaS in Stitch.
+- [x] Prompt the complete 12-screen mobile-first set for each direction.
+- [x] Record canvas evidence, links, project IDs, recommendation and trade-offs.
+- [x] Define the candidate palette, typography, KPI hierarchy and navigation alternatives.
+- [x] Run regression gates required for a docs-only block.
+- [x] Commit and push the documentation block.
+- [ ] Human approval of one direction.
+- [ ] Complete screen-by-screen visual PASS at 390x844, 768x1024 and 1440x900.
 
-## V3-1 — Mobile shell prototype (after V3-0 approval)
+## V3-1 — Mobile shell prototype (after V3-0B approval)
 
-- Implement only an isolated visual sandbox/prototype or feature-flagged shell.
-- Prove 390x844 and 430x932 first.
-- Do not migrate all production modules yet.
+- Implement only an isolated visual sandbox or feature-flagged shell.
+- Prove 390x844 and 768x1024 first; then validate 1440x900.
+- Do not migrate production modules yet.
 - Protect routes, auth, Supabase and financial contracts.
 
 ## V3-2 — Core entity workspaces
 
-- Invoice, lead and service list/workspace patterns.
-- Real data adapters remain unchanged.
+- Invoice, quote, client, lead and service list/workspace patterns.
+- Keep real data adapters and business logic unchanged.
 - Add visual QA and interaction evidence before expanding.
 
-## V3-3 — Client, quote, property and financial surfaces
+## V3-3 — Financial and secondary surfaces
 
-- Apply approved patterns to clients, properties, quotes, payments and expenses.
+- Apply the approved patterns to payments, expenses, alerts, closings and configuration.
 - Preserve selection, downloads, exports, lifecycle and duplicate flows.
-
-## V3-4 — Alerts, closings and secondary surfaces
-
-- Move alerts, closings, configuration and audit/duplicate tools into the approved secondary IA.
-- Validate deep links, period context and persistence.
-
-## V3-5 — iPad and desktop composition
-
-- Only after mobile approval and regression proof.
-- Derive responsive compositions from the mobile system; do not reverse the direction.
 
 ## Exit rule
 
-Do not start V3-1 until the V3-0 Stitch projects, three directions, recommendation, screenshot/canvas evidence, final design-system contract and regression contract are approved by the human reviewer.
+Do not start V3-1 until one V3-0B direction is human-approved and the complete 12-screen Stitch review has a visual PASS or an explicit documented exception at the required anchors.

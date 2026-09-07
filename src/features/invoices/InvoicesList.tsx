@@ -23,6 +23,7 @@ interface InvoicesListProps {
   onSelectInvoice: (invoice: InvoiceListItem) => void
   onToggleInvoiceSelection?: (invoiceId: string) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
+  onDownloadDocument: (invoice: InvoiceListItem) => void
   onStateChange?: (state: {
     visibleCount: number
     totalCount: number
@@ -42,6 +43,7 @@ export function InvoicesList({
   onSelectInvoice,
   onToggleInvoiceSelection,
   onOpenDocument,
+  onDownloadDocument,
   onStateChange,
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
@@ -226,6 +228,12 @@ export function InvoicesList({
                     label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
                     tone: 'primary',
                     onClick: () => onOpenDocument(invoice),
+                  },
+                  {
+                    key: 'download',
+                    label: 'Descargar',
+                    dataQa: 'invoice-quick-download',
+                    onClick: () => onDownloadDocument(invoice),
                   },
                   {
                     key: 'open',

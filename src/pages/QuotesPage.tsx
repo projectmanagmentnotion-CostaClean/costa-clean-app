@@ -26,12 +26,13 @@ import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
 import { buildCsv } from '../features/documents/csvExport'
 import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
-import { buildQuotePdfBlob, buildQuotePdfFileName } from '../features/quotes/quotePdfOutput'
+import { buildQuotePdfBlob, buildQuotePdfFileName, downloadQuotePdf } from '../features/quotes/quotePdfOutput'
 import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
 import { updateQuoteStatus } from '../features/financial/financialWriteApi'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import { useToast } from '../shared/toasts/useToast'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
   default: (await import('../features/quotes/QuoteCreateEntry')).QuoteCreateEntry,
@@ -68,6 +69,7 @@ export function QuotesPage({
   onUnsavedChange,
   confirmNavigation,
 }: QuotesPageProps) {
+  const toast = useToast()
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
@@ -252,6 +254,17 @@ export function QuotesPage({
       setSelectedQuoteId(targetQuote.id)
       setShowDocumentScreen(true)
     })
+  }
+
+  async function downloadQuoteDocument(targetQuote: QuoteListItem) {
+    try {
+      const result = await downloadQuotePdf(targetQuote, clients, properties)
+      if (result === 'downloaded' || result === 'shared') {
+        toast.success('PDF de presupuesto preparado', 'El presupuesto se ha descargado o compartido desde esta lista.')
+      }
+    } catch (error) {
+      toast.error('No se pudo descargar el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+    }
   }
 
   function toggleSelectionMode() {
@@ -559,6 +572,7 @@ export function QuotesPage({
               error={error}
               selectedQuoteId={selectedQuoteKey}
               onOpenDocument={openQuoteDocument}
+              onDownloadDocument={downloadQuoteDocument}
               selectedQuoteIds={selectedQuoteIds}
               isSelectionMode={isSelectionMode}
               onToggleSelectionMode={toggleSelectionMode}

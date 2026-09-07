@@ -26,6 +26,7 @@ interface QuotesListProps {
   selectedQuoteId: string | null
   onSelectQuote: (quote: QuoteListItem) => void
   onOpenDocument: (quote: QuoteListItem) => void
+  onDownloadDocument: (quote: QuoteListItem) => void
   selectedQuoteIds?: string[]
   isSelectionMode?: boolean
   onToggleSelectionMode?: () => void
@@ -58,6 +59,7 @@ export function QuotesList({
   selectedQuoteId,
   onSelectQuote,
   onOpenDocument,
+  onDownloadDocument,
   selectedQuoteIds = [],
   isSelectionMode = false,
   onToggleSelectionMode,
@@ -236,11 +238,18 @@ export function QuotesList({
                     onClick: () => onSelectQuote(quote),
                   },
                   {
+                    key: 'download',
+                    label: 'Descargar',
+                    dataQa: 'quote-quick-download',
+                    onClick: () => onDownloadDocument(quote),
+                  },
+                  {
                     key: 'document',
                     label: 'Abrir documento',
                     onClick: () => onOpenDocument(quote),
                   },
                 ]}
+                compactVisibleSecondaryActionCount={1}
                 microhint={getStatusLabel(quote.status)}
               />
             )

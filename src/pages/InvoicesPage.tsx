@@ -42,7 +42,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
 import { buildCsv } from '../features/documents/csvExport'
 import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
-import { buildInvoicePdfBlob, buildInvoicePdfFileName } from '../features/invoices/invoicePdfOutput'
+import { buildInvoicePdfBlob, buildInvoicePdfFileName, downloadInvoicePdf } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
@@ -347,6 +347,17 @@ export function InvoicesPage({
       setSelectedInvoiceId(targetInvoice.id)
       setShowDocumentScreen(true)
     })
+  }
+
+  async function downloadInvoiceDocument(targetInvoice: InvoiceListItem) {
+    try {
+      const result = await downloadInvoicePdf(targetInvoice)
+      if (result === 'downloaded' || result === 'shared') {
+        toast.success('PDF de factura preparado', 'La factura se ha descargado o compartido desde esta lista.')
+      }
+    } catch (error) {
+      toast.error('No se pudo descargar la factura', error instanceof Error ? error.message : 'Error desconocido.')
+    }
   }
 
   function toggleInvoiceSelection(invoiceId: string) {
@@ -757,6 +768,7 @@ export function InvoicesPage({
               isSelectionMode={isSelectionMode}
               onToggleInvoiceSelection={toggleInvoiceSelection}
               onOpenDocument={openInvoiceDocument}
+              onDownloadDocument={downloadInvoiceDocument}
               onStateChange={(state) => {
                 setListState(state)
                 setVisibleInvoices(state.visibleInvoices)

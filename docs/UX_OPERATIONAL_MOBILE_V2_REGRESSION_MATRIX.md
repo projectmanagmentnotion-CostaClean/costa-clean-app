@@ -9,6 +9,16 @@
 | Invoice bulk | Descargar | existing ZIP builder | unchanged |
 | Quote bulk | Descargar | existing ZIP builder | unchanged |
 
+## A3 scope
+
+| Surface | Eligibility | Action | Persistence |
+| --- | --- | --- | --- |
+| Invoice list | issued, pending or partially paid, non-cancelled/non-archived/non-deleted, outstanding > tolerance | `Marcar pagada` | real payment through `settle_invoice_by_transfer`; list refresh; reload remains paid |
+| Paid/zero balance | ineligible | no settlement action | no write |
+| Cancelled/archived/deleted | ineligible | no settlement action | no write |
+
+The individual action is guarded per invoice id against double click. Bulk settlement continues to use the same eligibility function and its existing confirmation flow.
+
 ## Automated checks
 
 - invoice PDF output remains a real `application/pdf` blob;
@@ -21,12 +31,12 @@
 
 | Viewport | Invoice list | Quote list | Horizontal overflow | CTA visibility |
 | --- | --- | --- | --- | --- |
-| 390x844 | pending | pending | pending | pending |
-| 430x932 | pending | pending | pending | pending |
-| 768x1024 | pending | pending | pending | pending |
-| 1440x900 | pending | pending | pending | pending |
+| 390x844 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
+| 430x932 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
+| 768x1024 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
+| 1440x900 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
 
-The viewport cells are only closed after running the app and inspecting the real rendered surfaces. Desktop success cannot compensate for a mobile partial/failure.
+The isolated origin `http://127.0.0.1:4175` was started from the UX V2 worktree and rendered the controlled `Error de arranque` state because the worktree has no Supabase environment variables. No authenticated QA session or fixture write was attempted. The viewport cells remain blocked until the QA-only environment is supplied; desktop success cannot compensate for a mobile partial/failure.
 
 ## Protected regression areas
 

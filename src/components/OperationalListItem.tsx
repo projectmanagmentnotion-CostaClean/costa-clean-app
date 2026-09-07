@@ -15,6 +15,7 @@ interface OperationalListItemProps {
   chips?: string[]
   meta?: Array<{ label: string; value: string }>
   actions?: OperationalListAction[]
+  visibleSecondaryActionCount?: number
   compactVisibleSecondaryActionCount?: number
   microhint?: string
   selectionControl?: ReactNode
@@ -32,6 +33,7 @@ export function OperationalListItem({
   chips = [],
   meta = [],
   actions = [],
+  visibleSecondaryActionCount = 1,
   compactVisibleSecondaryActionCount = 0,
   microhint,
   selectionControl,
@@ -87,6 +89,7 @@ export function OperationalListItem({
           {actions.length > 0 ? (
             <ActionGroup
               actions={actions}
+              visibleSecondaryActionCount={visibleSecondaryActionCount}
               compactVisibleSecondaryCount={compactVisibleSecondaryActionCount}
             />
           ) : <span />}

@@ -12,7 +12,7 @@
 
 - [x] A1: direct invoice PDF download from list.
 - [x] A2: direct quote PDF download from list.
-- [ ] A3: one-click invoice settlement through the existing financial contract.
+- [ ] A3: one-click invoice settlement through the existing financial contract (implementation PASS; authenticated QA persistence blocked by missing QA Supabase environment).
 - [ ] A4: persistent lead review state, separate from commercial status.
 - [ ] A5: reusable quick-action pattern after A1/A2 evidence.
 

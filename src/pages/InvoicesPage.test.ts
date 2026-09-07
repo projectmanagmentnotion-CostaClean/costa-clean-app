@@ -189,6 +189,7 @@ describe('InvoicesPage document actions', () => {
     const html = renderInvoicesPage([invoice], [createClient()])
 
     expect(html.includes('Abrir documento')).toBe(true)
+    expect(html.includes('Marcar pagada')).toBe(true)
     expect(html.includes('Registrar cobro')).toBe(true)
     expect(invoice.payment_status).toBe('pending')
     expect(invoice.paid_amount).toBe(0)
@@ -225,7 +226,9 @@ describe('InvoicesPage document actions', () => {
     ], [createClient()])
 
     expect(paidHtml.includes('Abrir documento')).toBe(true)
+    expect(paidHtml.includes('Marcar pagada')).toBe(false)
     expect(cancelledHtml.includes('Abrir documento')).toBe(true)
+    expect(cancelledHtml.includes('Marcar pagada')).toBe(false)
   })
 
   it('offers an explicit document preview for drafts', () => {

@@ -24,6 +24,14 @@ The list rows currently open the document/detail surfaces but do not expose a di
 
 Each invoice and quote row will expose a direct `Descargar` action. It generates the existing PDF and delivers it without selecting the row or opening the document preview. The action must keep the row scannable, remain keyboard accessible and preserve the compact mobile action pattern.
 
+## Quick Financial Action Contract
+
+Invoice settlement uses the existing `settleInvoiceByTransfer(invoice.id)` RPC wrapper. The wrapper creates a real transfer payment for the current outstanding balance and refreshes the financial status; the UI never writes `invoices.status = 'paid'` directly.
+
+`canSettleInvoiceByTransfer` is the single eligibility contract shared by individual and bulk settlement. It requires an issued invoice with outstanding balance above the financial tolerance and rejects draft, paid-status, cancelled, archived and deleted invoices. Partially paid invoices remain eligible and the backend determines the exact remaining amount.
+
+The individual list action is one click, has no confirmation dialog, and uses an invoice-id guard to prevent duplicate frontend requests. The action is disabled while pending, refreshes the invoice list only after persistence, and emits success only after the refresh completes. Errors keep the invoice state unchanged in the UI and use the real error message.
+
 ## Mobile architecture baseline
 
 Mobile remains a dedicated follow-up block. The current phase does not redesign navigation or detail composition. For A1/A2, the row action must remain reachable at `390x844`, `430x932` and `768x1024`, with no horizontal overflow or fixed-control overlap. Future mobile work must define navigation, full-screen detail, filters as sheets, selection action bars, safe-area handling and keyboard behavior before implementation.

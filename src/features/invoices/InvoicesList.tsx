@@ -12,6 +12,7 @@ import { applySortDirection, compareDate, compareNumber, compareText, createDefa
 import { getInvoiceFinancialStatusLabel } from './paymentState'
 import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { canSettleInvoiceByTransfer } from './invoiceSettlement'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -24,6 +25,8 @@ interface InvoicesListProps {
   onToggleInvoiceSelection?: (invoiceId: string) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
   onDownloadDocument: (invoice: InvoiceListItem) => void
+  onSettleInvoice: (invoice: InvoiceListItem) => void
+  isInvoiceSettling?: (invoiceId: string) => boolean
   onStateChange?: (state: {
     visibleCount: number
     totalCount: number
@@ -44,6 +47,8 @@ export function InvoicesList({
   onToggleInvoiceSelection,
   onOpenDocument,
   onDownloadDocument,
+  onSettleInvoice,
+  isInvoiceSettling = () => false,
   onStateChange,
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
@@ -189,6 +194,8 @@ export function InvoicesList({
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
             const isChecked = selectedInvoiceIds.includes(invoice.id)
+            const isSettlementEligible = canSettleInvoiceByTransfer(invoice)
+            const isSettling = isInvoiceSettling(invoice.id)
 
             return (
               <OperationalListItem
@@ -229,6 +236,13 @@ export function InvoicesList({
                     tone: 'primary',
                     onClick: () => onOpenDocument(invoice),
                   },
+                  ...(isSettlementEligible ? [{
+                    key: 'settle',
+                    label: isSettling ? 'Marcando...' : 'Marcar pagada',
+                    dataQa: 'invoice-quick-settle',
+                    disabled: isSettling,
+                    onClick: () => onSettleInvoice(invoice),
+                  }] : []),
                   {
                     key: 'download',
                     label: 'Descargar',
@@ -241,7 +255,8 @@ export function InvoicesList({
                     onClick: () => onSelectInvoice(invoice),
                   },
                 ]}
-                compactVisibleSecondaryActionCount={1}
+                visibleSecondaryActionCount={2}
+                compactVisibleSecondaryActionCount={2}
                 microhint={invoice.payment_status !== 'paid'
                   ? `Pendiente ${formatCurrency(invoice.outstanding_amount ?? invoice.total)}`
                   : 'Cobro cerrado'}

@@ -12,6 +12,7 @@ export interface ActionGroupItem {
 interface ActionGroupProps {
   actions: ActionGroupItem[]
   moreLabel?: string
+  visibleSecondaryActionCount?: number
   compactVisibleSecondaryCount?: number
 }
 
@@ -48,6 +49,7 @@ function ChevronDownIcon() {
 export function ActionGroup({
   actions,
   moreLabel = 'Mas acciones',
+  visibleSecondaryActionCount = 1,
   compactVisibleSecondaryCount = 0,
 }: ActionGroupProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -64,9 +66,9 @@ export function ActionGroup({
     () => (
       collapseSecondaryActions
         ? secondaryActions.slice(0, compactVisibleSecondaryCount)
-        : secondaryActions.slice(0, secondaryActions.length > 1 ? 1 : secondaryActions.length)
+        : secondaryActions.slice(0, Math.min(visibleSecondaryActionCount, secondaryActions.length))
     ),
-    [collapseSecondaryActions, compactVisibleSecondaryCount, secondaryActions],
+    [collapseSecondaryActions, compactVisibleSecondaryCount, secondaryActions, visibleSecondaryActionCount],
   )
   const menuActions = useMemo(
     () => secondaryActions.slice(visibleSecondaryActions.length),

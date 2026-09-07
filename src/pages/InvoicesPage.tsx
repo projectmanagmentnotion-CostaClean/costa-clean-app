@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
 import '../features/invoices/invoiceWorkspace.css'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
@@ -44,6 +44,7 @@ import { buildCsv } from '../features/documents/csvExport'
 import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
 import { buildInvoicePdfBlob, buildInvoicePdfFileName, downloadInvoicePdf } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -127,6 +128,8 @@ export function InvoicesPage({
     description: string
   } | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [settlingInvoiceIds, setSettlingInvoiceIds] = useState<string[]>([])
+  const settlementGuardRef = useRef(createInvoiceSettlementGuard())
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [listState, setListState] = useState({
@@ -152,7 +155,7 @@ export function InvoicesPage({
   }, [detailInvoice])
   const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
   const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
-  const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
+  const transferEligibleInvoices = selectedInvoices.filter(canSettleInvoiceByTransfer)
   const cancelEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status === 'draft' || invoice.status === 'issued')
   const rawDuplicateGroups = buildInvoiceDuplicateGroups(invoices)
   const {
@@ -357,6 +360,29 @@ export function InvoicesPage({
       }
     } catch (error) {
       toast.error('No se pudo descargar la factura', error instanceof Error ? error.message : 'Error desconocido.')
+    }
+  }
+
+  async function settleInvoiceFromList(targetInvoice: InvoiceListItem) {
+    if (!canSettleInvoiceByTransfer(targetInvoice) || !settlementGuardRef.current.begin(targetInvoice.id)) return
+
+    setSettlingInvoiceIds((current) => [...current, targetInvoice.id])
+
+    try {
+      const result = await settleInvoiceAndRefresh(targetInvoice.id, {
+        settleInvoice: settleInvoiceByTransfer,
+        refreshInvoices: onInvoiceCreated,
+      })
+      if (result.created_payment) {
+        toast.success('Factura marcada como pagada', 'Se registró el cobro pendiente.')
+      } else {
+        toast.info('Factura ya estaba pagada', 'El estado financiero se ha vuelto a sincronizar.')
+      }
+    } catch (error) {
+      toast.error('No se pudo registrar el cobro', error instanceof Error ? error.message : 'Error desconocido.')
+    } finally {
+      settlementGuardRef.current.end(targetInvoice.id)
+      setSettlingInvoiceIds((current) => current.filter((invoiceId) => invoiceId !== targetInvoice.id))
     }
   }
 
@@ -769,6 +795,8 @@ export function InvoicesPage({
               onToggleInvoiceSelection={toggleInvoiceSelection}
               onOpenDocument={openInvoiceDocument}
               onDownloadDocument={downloadInvoiceDocument}
+              onSettleInvoice={settleInvoiceFromList}
+              isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
               onStateChange={(state) => {
                 setListState(state)
                 setVisibleInvoices(state.visibleInvoices)

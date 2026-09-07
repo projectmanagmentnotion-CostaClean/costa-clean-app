@@ -53,7 +53,7 @@
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
       "gitBlobId": "efd98cd46b34de2acae984187b2094e9efa1b84d",
-      "blobSha256": "74361273eeea5156d1cc0bde9ef59bcf06302bb2dfe3123ca11c146fc77a9054"
+      "blobSha256": "5a30cdee0738412b172b684beb07de379a59acd8af6d7f06559a648d0064f9f7"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",

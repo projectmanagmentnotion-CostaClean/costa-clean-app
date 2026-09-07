@@ -3077,7 +3077,8 @@
     bottom: 0;
     z-index: 220;
     max-height: calc(100dvh - max(8px, env(safe-area-inset-top, 0px)));
-    overflow: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     padding:
       10px
       max(14px, env(safe-area-inset-right))

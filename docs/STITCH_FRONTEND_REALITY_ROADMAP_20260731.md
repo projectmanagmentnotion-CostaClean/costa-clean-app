@@ -368,9 +368,29 @@ Reconcile the existing CSS variables and themes with the normalized Maritime Pro
 
 # STITCH-FE-03 — App Shell and responsive navigation
 
+**Status:** `DONE_WITH_DOCUMENTED_DEBT`
+
 ### Objective
 
 Translate the approved shell hierarchy into the current `AppShell` and `AppNav` without changing view contracts.
+
+### Closeout — 2026-09-07
+
+- Desktop shell behavior was inspected in the authenticated QA Chrome tab:
+  grouped real destinations, active invoice state, account surface, alerts,
+  theme toggle, contextual back, and one visible logout control were present.
+- Mobile navigation keeps the primary dock separate from the secondary
+  destinations in the `Mas` dialog. The dialog now exposes modal semantics,
+  Escape/backdrop close, focus restoration, keyboard focus cycling, and safe
+  internal scrolling with the bottom safe area.
+- Public standalone routing remains outside `AppShell`; no view, auth,
+  backend, notification, or production contract changed.
+- Focused navigation tests were added. `npm test` passes with `612 passed` and
+  `4 skipped`; `npm run lint` and `npm run build` pass.
+- Exact running-app evidence for `390x844`, `768x1024`, `1024x768`, and
+  `1440x900` could not be recertified because the existing visual harness
+  could not connect to its CDP endpoint. The prior report is not reused as
+  current proof. FE-04 must not start until this visual debt is closed.
 
 ### Primary targets
 

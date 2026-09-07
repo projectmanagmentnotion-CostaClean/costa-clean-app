@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import { createPortal } from 'react-dom'
-import type { AppView } from './navigation'
+import {
+  isAppNavigationItemActive,
+  type AppView,
+} from './navigation'
 import { getAppViewLabel } from './displayText'
 import { getSyncStatusLabel, type SyncStatus } from './syncStatus'
 import { AlertsBell } from './AlertsBell'
@@ -304,14 +307,7 @@ function groupNavItems<TItem extends { section: string }>(items: TItem[]): NavSe
   }))
 }
 
-function isNavItemActive(itemView: AppView, currentView: AppView) {
-  if (itemView === currentView) {
-    return true
-  }
-
-  return itemView === 'fiscal_closing'
-    && (currentView === 'annual_closing' || currentView === 'quarterly_closing')
-}
+const isNavItemActive = isAppNavigationItemActive
 
 export function AppNav({
   currentView,
@@ -341,6 +337,7 @@ export function AppNav({
   const desktopLogoutRef = useRef<HTMLButtonElement>(null)
   const moreTriggerRef = useRef<HTMLButtonElement>(null)
   const mobileSheetCloseRef = useRef<HTMLButtonElement>(null)
+  const mobileSheetRef = useRef<HTMLElement>(null)
   const currentViewLabel = currentView === 'dashboard' ? 'Inicio' : getAppViewLabel(currentView)
   const currentViewMeta = topNavItems.find((item) => item.view === currentView)
     ?? ((currentView === 'annual_closing' || currentView === 'quarterly_closing')
@@ -364,6 +361,34 @@ export function AppNav({
     if (isMoreMenuOpen) {
       mobileSheetCloseRef.current?.focus()
     }
+  }, [isMoreMenuOpen])
+
+  useEffect(() => {
+    if (!isMoreMenuOpen) return undefined
+
+    function trapSheetFocus(event: KeyboardEvent) {
+      if (event.key !== 'Tab') return
+
+      const focusableElements = mobileSheetRef.current?.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled])',
+      )
+
+      if (!focusableElements || focusableElements.length === 0) return
+
+      const firstElement = focusableElements[0]
+      const lastElement = focusableElements[focusableElements.length - 1]
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault()
+        lastElement.focus()
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    document.addEventListener('keydown', trapSheetFocus)
+    return () => document.removeEventListener('keydown', trapSheetFocus)
   }, [isMoreMenuOpen])
 
   useEffect(() => {
@@ -498,6 +523,7 @@ export function AppNav({
             onClick={() => setIsMoreMenuOpen((currentState) => !currentState)}
             aria-expanded={isMoreMenuOpen}
             aria-controls="cc-mobile-nav-more-sheet"
+            aria-haspopup="dialog"
             aria-label="Abrir mas modulos"
           >
             <span className="cc-bottom-dock__icon" aria-hidden="true">
@@ -518,8 +544,11 @@ export function AppNav({
           />
 
           <section
+            ref={mobileSheetRef}
             id="cc-mobile-nav-more-sheet"
             className="cc-mobile-nav-sheet"
+            role="dialog"
+            aria-modal="true"
             aria-label="Mas modulos"
           >
             <div className="cc-mobile-nav-sheet__handle" aria-hidden="true" />
@@ -557,7 +586,7 @@ export function AppNav({
                           type="button"
                           className={isActive ? 'cc-mobile-nav-sheet__item is-active' : 'cc-mobile-nav-sheet__item'}
                           onClick={() => {
-                            setIsMoreMenuOpen(false)
+                            closeMobileMenu()
                             onChangeView(item.view)
                           }}
                           aria-current={isActive ? 'page' : undefined}

@@ -12,9 +12,9 @@ import { fileURLToPath } from 'node:url'
 import {
   CANONICAL_JSON_STANDARD_V6,
   canonicalJsonSha256V1,
+  gitBlobSha256AtPath,
   readJsonFromWorkingTree,
   workingTreeBlobIdV1,
-  workingTreeSha256V1,
   workingTreeJsonContractIdentityV1,
 } from './cp3b2aCanonicalJsonV6.mjs'
 import { runCommandV3 } from './cp2b_command_launcher_v3.mjs'
@@ -313,7 +313,7 @@ function artifactRecord(relativePath, kind) {
     path: normalized,
     kind,
     gitBlobId: workingTreeBlobIdV1(filePath),
-    blobSha256: workingTreeSha256V1(filePath),
+    blobSha256: gitBlobSha256AtPath(repoRoot, normalized),
   }
   if (kind === 'json') {
     const identity = workingTreeJsonContractIdentityV1(filePath)

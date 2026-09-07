@@ -1,5 +1,6 @@
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
+import { deliverPdfFile } from '../documents/documentFileDelivery'
 import type { QuoteListItem } from './types'
 import { renderQuoteDocumentPdf } from './quoteDomPdfExport'
 
@@ -38,4 +39,18 @@ export async function buildQuotePdfBlob(
   properties: PropertyListItem[],
 ): Promise<Blob> {
   return renderQuoteDocumentPdf(quote, clients, properties)
+}
+
+export async function downloadQuotePdf(
+  quote: QuoteListItem,
+  clients: ClientListItem[],
+  properties: PropertyListItem[],
+) {
+  const blob = await buildQuotePdfBlob(quote, clients, properties)
+  const fileName = buildQuotePdfFileName(quote, clients)
+  const file = typeof File !== 'undefined'
+    ? new File([blob], fileName, { type: 'application/pdf' })
+    : blob as File
+
+  return deliverPdfFile(file, fileName)
 }

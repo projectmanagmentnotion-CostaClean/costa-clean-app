@@ -19,6 +19,11 @@ export async function openQuoteDocumentOutput(
   properties: PropertyListItem[],
   intent: QuoteOutputIntent = 'print',
 ) {
+  if (intent === 'pdf') {
+    const { downloadQuotePdf } = await import('../quotes/quotePdfOutput')
+    return downloadQuotePdf(quote, clients, properties)
+  }
+
   const { openQuotePrintWindow } = await import('../quotes/openQuotePrintWindow')
   openQuotePrintWindow(quote, clients, properties, intent)
 }

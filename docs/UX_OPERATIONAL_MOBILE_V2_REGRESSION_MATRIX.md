@@ -31,12 +31,20 @@ The individual action is guarded per invoice id against double click. Bulk settl
 
 | Viewport | Invoice list | Quote list | Horizontal overflow | CTA visibility |
 | --- | --- | --- | --- | --- |
-| 390x844 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
-| 430x932 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
-| 768x1024 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
-| 1440x900 | BLOCKED | BLOCKED | BLOCKED | BLOCKED |
+| 390x844 | PASS | PASS | PASS | PASS |
+| 430x932 | PASS | PASS | PASS | PASS |
+| 768x1024 | PASS | PASS | PASS | PASS |
+| 1440x900 | PASS | PASS | PASS | PASS |
 
-The isolated origin `http://127.0.0.1:4175` was started from the UX V2 worktree and rendered the controlled `Error de arranque` state because the worktree has no Supabase environment variables. No authenticated QA session or fixture write was attempted. The viewport cells remain blocked until the QA-only environment is supplied; desktop success cannot compensate for a mobile partial/failure.
+Authenticated QA evidence (2026-09-07) ran from the isolated UX V2 origin `http://127.0.0.1:4175` against the QA Supabase project only. The official authenticated harness passed 357/360 checks; the three known `quotes-create` StepFlow checks are unrelated to A1/A2/A3 and were unchanged. Required A1/A2 surfaces were additionally checked at 1440x900 and 430x932: download actions were visible/usable, with zero horizontal overflow. The 390x844 and 768x1024 cells passed in the same authenticated run.
+
+## A3 real QA evidence
+
+- Fixture: isolated `QA_UXV2_A3_<RUN_ID>_` invoice, total `121.00 €`, pre-existing transfer payment `40.00 €`, outstanding `81.00 €`.
+- UI path: one click on `Marcar pagada` from the invoice list; no manual settlement RPC was used to simulate the result.
+- Backend after click: exactly one new `transfer_auto` payment for `81.00 €`; paid total `121.00 €`; outstanding `0.00 €`; financial status `paid`.
+- UI and reload: busy state disabled the button during the request; after refresh the invoice remained paid and the settlement action was absent for that invoice.
+- Cleanup: PASS. The authorized QA cleanup RPC reported `cleaned: true`; the synthetic invoice, payments and client were verified absent.
 
 ## Protected regression areas
 

@@ -53,6 +53,9 @@ function App() {
       setSession(null)
     },
   }), [])
+  const bootLogoSrc = theme === 'light'
+    ? '/branding/Costa_Clean-LOGO-AZUL.png'
+    : '/branding/Costa_Clean-LOGO-HORIZONTAL.png'
 
   useEffect(() => {
     applyTheme(theme)
@@ -203,7 +206,7 @@ function App() {
         <section className="cc-boot-card">
           <div className="cc-boot-card__brand" aria-hidden="true">
             <img
-              src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+              src={bootLogoSrc}
               alt=""
               className="cc-boot-card__logo"
             />

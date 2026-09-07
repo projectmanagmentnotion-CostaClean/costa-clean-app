@@ -87,3 +87,19 @@ Production was not modified.
 Current verdict: `OPEN - BLOCKED AT PREFERENCES AND UI DISABLE`.
 Product approval remains `PENDING`. This document does not authorize
 extraction or production execution.
+
+## Authenticated deep-link retest - 2026-09-07
+
+- Root cause confirmed in the served `4174` preview: the bundle had been
+  built with the production Supabase target instead of QA.
+- The app was rebuilt with `vite build --mode qa`; the served bundle contains
+  `kpvvydthlxupjjqqdpxy.supabase.co` and no production project ref.
+- The per-tab in-memory Supabase auth lock was removed in commit
+  `398525b`; transient bootstrap/network errors no longer clear persisted
+  auth storage. Explicit `SIGNED_OUT` cleanup remains intact.
+- Manual normal-Chrome retest: the notification destination loaded the
+  authenticated invoice detail for `QA_PUSH_FINAL_INV_0907` at
+  `/?view=invoices&filter=overdue&invoice=QA_PUSH_FINAL_INV_0907`.
+
+Updated verdict: `OPEN - BLOCKED AT PREFERENCES AND UI DISABLE`.
+Authenticated deep-link: `PASS`. Product approval remains `PENDING`.

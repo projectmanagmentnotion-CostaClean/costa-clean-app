@@ -8,20 +8,12 @@ import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type App
 import { AuthPage } from './features/auth/AuthPage'
 import { createLogoutFlow } from './features/auth/logoutFlow'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
+import { isRecoverableAuthBootstrapError } from './lib/authBootstrap'
 import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
-
-function isRecoverableAuthBootstrapError(message: string) {
-  const normalizedMessage = message.trim().toLowerCase()
-
-  return normalizedMessage.includes('failed to fetch')
-    || normalizedMessage.includes('networkerror')
-    || normalizedMessage.includes('load failed')
-    || normalizedMessage.includes('lock broken by another request')
-}
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -111,10 +103,8 @@ function App() {
 
         if (sessionError) {
           if (isRecoverableAuthBootstrapError(sessionError.message)) {
-            clearStoredSupabaseSession()
-
             if (isMounted) {
-              setSession(null)
+              setSession(currentSession)
               setIsBooting(false)
             }
             return

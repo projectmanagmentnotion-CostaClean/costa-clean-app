@@ -19,7 +19,7 @@ Expense support storage is the private QA bucket `expense-receipts`, limited to
 PDF/JPEG/PNG/WEBP files up to 10 MB. Internal staff policies constrain objects
 to the existing `expenses/<expenseId>/<timestamp>-<filename>` path contract;
 the UI reads documents through signed URLs. Provisioning is versioned in
-`supabase/migrations/20260908170000_expense_receipts_storage.sql` and was
+`supabase/migrations/20260908143530_expense_receipts_storage.sql` and was
 applied only to QA. Exact fixture deletion is isolated to the local
 `scripts/qa/cleanup-v3-3b-fixtures.mjs` harness and is not exposed through the
 product API.

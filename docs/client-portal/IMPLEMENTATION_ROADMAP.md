@@ -239,7 +239,9 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   shell, real profile/property read adapter, strict backend `publicRef`
   handling for properties, and reviewed-change forms. QA contract alignment is
   applied only to `kpvvydthlxupjjqqdpxy`; the remaining gate is exact
-  `390x844` visual certification, not a new roadmap block.
+  `390x844` visual certification. Its mobile workspace overflow fix is now in
+  the frontend; numeric DevTools metrics and console/network evidence remain
+  the gate, not a new roadmap block.
 - **CP-3B.3 — Services and requests:** real pending-review request workflow,
   cancellation, idempotency and explicit feedback.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and

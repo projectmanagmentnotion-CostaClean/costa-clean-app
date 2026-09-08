@@ -1243,6 +1243,37 @@ input {
   .portal-root .portal-detail-row,
   .portal-root .portal-record,
   .portal-root .portal-security-row { border-radius: 10px; }
+
+  .portal-root .portal-workspace__layout {
+    display: block;
+    width: 100%;
+    min-height: calc(100vh - 69px);
+  }
+
+  .portal-root .portal-decision-block {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .portal-root .portal-decision-block .portal-button {
+    width: 100%;
+  }
+
+  .portal-root .portal-workspace__header > * {
+    min-width: 0;
+  }
+
+  .portal-root .portal-page,
+  .portal-root .portal-page__header > p,
+  .portal-root .portal-decision-block > * {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .portal-root .portal-page h1,
+  .portal-root .portal-page__header > p {
+    overflow-wrap: anywhere;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1252,6 +1283,47 @@ input {
 }
 
 @media (max-width: 560px) {
+  .portal-root .portal-workspace__header {
+    min-height: 64px;
+    gap: 10px;
+    padding:
+      max(9px, env(safe-area-inset-top))
+      max(14px, env(safe-area-inset-right))
+      9px
+      max(14px, env(safe-area-inset-left));
+  }
+
+  .portal-root .portal-workspace__logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .portal-root .portal-workspace__brand span {
+    font-size: 0.8rem;
+  }
+
+  .portal-root .portal-workspace__brand {
+    min-width: 0;
+  }
+
+  .portal-root .portal-workspace__context {
+    max-width: 43vw;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+  }
+
+  .portal-root .portal-workspace__page-label {
+    max-width: 100%;
+    font-size: 0.68rem;
+  }
+
+  .portal-root .portal-workspace__context .portal-status {
+    min-height: 23px;
+    padding: 3px 7px;
+    font-size: 0.61rem;
+  }
+
   .portal-preview-bar {
     min-height: 64px;
     flex-direction: column;

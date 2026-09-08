@@ -209,3 +209,27 @@ Status: `PARTIAL — BLOCKED_PENDING_EXACT_390X844`
 - No visual code fix was necessary during this certification attempt.
 - Production requests: `0`; backend, RPCs, CRM and production were not
   modified.
+
+## CP-3B.2B-FINAL-FIX execution record
+
+Status: `PARTIAL — PENDING_DEVTOOLS_METRICS`
+
+- Confirmed responsive root cause: the authenticated workspace used
+  `portal-workspace__*` classes, while the existing mobile layout rules only
+  covered `portal-shell__*`. The workspace therefore retained its desktop
+  layout assumptions at mobile width; additionally, the frozen decision-block
+  selector overrode the generic mobile one-column rule.
+- Minimal frontend fix: mobile workspace layout now switches to a single
+  column, mobile workspace header spacing/context are constrained, flexible
+  children can shrink, headings wrap, and the Home decision CTA occupies the
+  available column width. No overflow mask was added.
+- Normal Chrome QA visual retest: Home, Account, Properties, Property Detail,
+  Property Correction and Services remain reachable; QA properties remain
+  `PRO-0074` and `PRO-0075`; no new remote data was created.
+- The owner-provided exact `390x844` Device Toolbar context was used for the
+  visible retest, but this control surface still did not expose console
+  execution or numeric `innerWidth`/`scrollWidth` readings. Exact metric,
+  console, network, keyboard, safe-area and pixel touch-target evidence remain
+  `NOT_EXECUTED`; `CP-3B.2B` is not marked `DONE` without those measurements.
+- Production requests: `0`. Auth, membership, RPC semantics, RLS, CRM and
+  production were not modified.

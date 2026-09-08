@@ -1,6 +1,6 @@
 # Stitch Visual QA
 
-**Status:** `WAITING_FOR_STITCH`  
+**Status:** `PASS`
 **Rule:** no screen receives `PASS` while important visual differences remain.
 
 This is the required comparison record for each completed screen. It must be
@@ -38,27 +38,25 @@ route, state, auth and backend contracts, plus no material layout,
 typography, spacing, imagery, responsive or motion discrepancy. Test both
 normal motion and `prefers-reduced-motion: reduce`.
 
-## FE-03 shell evidence attempt — 2026-09-07
+## FE-03 shell visual certification — 2026-09-08
 
-Environment: local QA preview at `http://127.0.0.1:4174/`, with the normal
-authenticated Chrome session. The served QA build targets
+Environment: fresh local QA preview at `http://127.0.0.1:4173/`, using the
+existing QA credential fixture in memory only. The runtime resolved to
 `kpvvydthlxupjjqqdpxy.supabase.co`; no production target was used.
 
-- `390x844`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
-  available through the current normal-Chrome control surface.
-- `768x1024`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
-  available through the current normal-Chrome control surface.
-- `1024x768`: `BLOCKED` — exact viewport and `scrollWidth` measurement were not
-  available through the current normal-Chrome control surface.
-- `1440x900`: `PARTIAL` — authenticated shell inspected in Chrome; grouped
-  navigation, active state, account, alerts, theme, contextual back and one
-  visible logout control were present, but exact viewport dimensions and
-  `scrollWidth` were not captured.
-- Dark/light: `NOT CERTIFIED` for the exact required viewports.
-- Mobile dock and `Mas` sheet: verified by code and focused tests, not granted
-  visual PASS without exact running-app evidence.
+- `390x844`: `PASS`; `scrollWidth=390`, `overflowX=false`.
+- `768x1024`: `PASS`; `scrollWidth=768`, `overflowX=false`.
+- `1024x768`: `PASS`; `scrollWidth=1024`, `overflowX=false`.
+- `1440x900`: `PASS`; `scrollWidth=1440`, `overflowX=false`.
+- Dark/light: `PASS` at `390x844` and `1440x900`.
+- Mobile dock, primary navigation, `Mas` sheet, modal semantics, safe internal
+  scrolling, focus trap, Escape close and focus restoration: `PASS`.
+- Desktop grouped navigation, active state, account menu and unique logout:
+  `PASS`.
+- Public `/quote-request` isolation: `PASS`; the authenticated shell was absent.
+- Reduced-motion media preference was exercised at every authenticated viewport.
 
-The existing authenticated visual harness was attempted twice and could not
-connect to its CDP endpoint. No prior screenshots were reused as current
-proof. FE-03 remains `DONE_WITH_DOCUMENTED_DEBT`; FE-04 must not start until
-the four exact viewport measurements and dark/light evidence are captured.
+Evidence is private and local at
+`qa-reports/private/fe03-responsive-cert/`; `report.json` records every check.
+No evidence files are committed. FE-03 is complete; FE-04 may now be planned,
+but is not implemented by this certification.

@@ -387,10 +387,15 @@ Translate the approved shell hierarchy into the current `AppShell` and `AppNav` 
   backend, notification, or production contract changed.
 - Focused navigation tests were added. `npm test` passes with `612 passed` and
   `4 skipped`; `npm run lint` and `npm run build` pass.
-- Exact running-app evidence for `390x844`, `768x1024`, `1024x768`, and
-  `1440x900` could not be recertified because the existing visual harness
-  could not connect to its CDP endpoint. The prior report is not reused as
-  current proof. FE-04 must not start until this visual debt is closed.
+- Fresh local QA evidence now passes at `390x844`, `768x1024`, `1024x768`, and
+  `1440x900`, with no horizontal overflow and the authenticated shell targeting
+  only `kpvvydthlxupjjqqdpxy.supabase.co`.
+- Dark/light evidence passes at `390x844` and `1440x900`. The mobile dock,
+  `Mas` sheet, account/logout gate, reduced-motion preference and public-route
+  isolation were exercised by the autonomous visual runner.
+- Private evidence is retained at
+  `qa-reports/private/fe03-responsive-cert/`; no screenshots or credentials are
+  committed.
 
 ### Primary targets
 

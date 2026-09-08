@@ -72,6 +72,8 @@ interface InvoicesPageProps {
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialInvoiceId?: string | null
 }
 
 export function InvoicesPage({
@@ -96,6 +98,8 @@ export function InvoicesPage({
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialInvoiceId = null,
 }: InvoicesPageProps) {
   const toast = useToast()
   function getInvoiceOutstandingAmount(invoice: InvoiceListItem) {
@@ -111,7 +115,7 @@ export function InvoicesPage({
     return Math.round((values.reduce((sum, value) => sum + value, 0) + Number.EPSILON) * 100) / 100
   }
 
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoiceId)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
@@ -138,9 +142,10 @@ export function InvoicesPage({
     hasError: Boolean(error),
     searchQuery: '',
   })
+  const listScrollYRef = useRef(0)
 
   const selectedInvoice =
-    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
+    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? (v3Mode ? null : invoices[0] ?? null)
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const effectiveCreatePrefill = localCreatePrefill ?? createPrefill
   const isCreateFormVisible = showCreateForm || Boolean(effectiveCreatePrefill)
@@ -533,7 +538,19 @@ export function InvoicesPage({
 
   return (
     <>
-      <section className="page-section cc-master-page cc-doc-page">
+      <section className={`page-section cc-master-page cc-doc-page${v3Mode ? ` cc-invoice-workspace--v3${detailInvoice ? ' cc-invoice-workspace--v3-detail' : ''}` : ''}`}>
+        {v3Mode && detailInvoice ? (
+          <button
+            type="button"
+            className="v3-invoice-back"
+            onClick={() => {
+              setSelectedInvoiceId(null)
+              window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
+            }}
+          >
+            ← Facturas
+          </button>
+        ) : null}
         <ExecutiveHeader
           eyebrow="Facturacion y cobro"
           title="Facturas"
@@ -808,6 +825,7 @@ export function InvoicesPage({
                 if (invoice.id === selectedInvoiceKey) return
 
                 runGuarded(() => {
+                  listScrollYRef.current = window.scrollY
                   setSelectedInvoiceId(invoice.id)
                   setShowDocumentScreen(false)
                 })

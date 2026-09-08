@@ -68,6 +68,8 @@ import type { LogoutOutcome } from '../features/auth/logoutFlow'
 import { useToast } from '../shared/toasts/useToast'
 import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
 import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
+import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
+import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
 
 interface AppShellProps {
   theme: AppTheme
@@ -157,6 +159,7 @@ export function AppShell({
   onSignOut,
 }: AppShellProps) {
   const toast = useToast()
+  const v3Enabled = useV3FeatureFlag()
   const {
     AlertsCenterPage,
     ClientsPage,
@@ -186,7 +189,17 @@ export function AppShell({
   const { showScrollTop, compactMobileNav, isMobileViewport } = useShellViewportState()
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
   const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'active' | 'unavailable'>('unknown')
-  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
+  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(() => ({
+    ...emptyModuleFilterState,
+    invoices: typeof window !== 'undefined'
+      ? (() => {
+        const invoiceId = readInvoiceDeepLink(window.location.search)
+        const filter = readInvoiceFilterDeepLink(window.location.search)
+        if (invoiceId) return { type: 'invoice', invoiceId, invoiceLabel: invoiceId }
+        return filter
+      })()
+      : null,
+  }))
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
@@ -879,6 +892,7 @@ export function AppShell({
           invoiceLabel,
         },
       }))
+      writeInvoiceDeepLink(invoiceId)
       commitViewChange('invoices')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta factura ahora, perderas esos cambios.`,
@@ -1112,7 +1126,7 @@ export function AppShell({
   }, [toast])
 
   return (
-    <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
+    <main className={`app-shell${compactMobileNav ? ' app-shell--mobile-scrolled' : ''}${v3Enabled ? ' app-shell--v3' : ''}`}>
       <section className="hero-card cc-shell cc-shell-frame">
         <AppNav
           currentView={currentView}
@@ -1301,6 +1315,8 @@ export function AppShell({
                   onOpenQuoteDetail={handleOpenQuoteDetail}
                   createPrefill={invoiceCreatePrefill}
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
+                  v3Mode={v3Enabled}
+                  initialInvoiceId={readInvoiceDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
                   onClearFilter={() => clearModuleFilter('invoices')}
                   onUnsavedChange={updateUnsavedChanges}

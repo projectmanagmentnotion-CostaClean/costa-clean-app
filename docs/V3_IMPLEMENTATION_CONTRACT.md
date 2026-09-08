@@ -1,15 +1,15 @@
 # Costa Clean App V3 — V3-1 Implementation Contract
 
-Status: `ACTIVE — MOBILE FOUNDATION + INVOICE VERTICAL SLICE`.
+Status: `ACTIVE — V3-1R STRUCTURAL REDESIGN`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
 ## Scope
 
-V3-1 adds a reversible V3 visual foundation and applies it to the mobile shell
-and the invoice list/workspace. The repository remains the functional source of
-truth. Existing `AppView`, query parameters, Supabase reads/writes, invoice
-numbering, PDF generation and payment settlement contracts remain authoritative.
+V3-1R replaces the earlier CSS adaptation with an independent V3 presentation
+tree. The repository remains the functional source of truth. Existing `AppView`,
+query parameters, Supabase reads/writes, invoice numbering, PDF generation and
+payment settlement contracts remain authoritative.
 
 QA activation is explicit with `?v3=1`. Without that query parameter the V2
 shell remains available during migration. The flag is presentation-only and is
@@ -25,6 +25,24 @@ never used as business state or persisted in local storage.
   `ModuleFilterState`; V3 adds presentation around the existing state only.
 - Entity navigation continues to use the existing `AppView` and workspace
   contracts.
+
+## Dedicated V3 tree
+
+- `src/v3/shell/V3ShellChrome.tsx` owns the V3 top bar, bottom navigation and
+  More sheet.
+- `src/v3/invoices/V3InvoicesPage.tsx` owns the V3 invoice list, row and
+  full-screen workspace.
+- V3 invoice markup does not render `hero-card`, `cc-master-layout`,
+  `OperationalListItem`, `cc-record-card` or `cc-list-toolbar`.
+- Legacy `InvoicesPage` remains the V2 branch only; it is an orchestration
+  boundary and retains the real callbacks/APIs.
+
+## Design Guardian checks
+
+`scripts/quality/v3DesignGuardian.test.mjs` verifies the dedicated V3 tree has no
+forbidden legacy visual names or hardcoded component colors. Token values live in
+`src/v3/design/tokens.css`; geometry, touch targets, safe areas and motion rules
+live in the V3 stylesheet.
 
 ## Hidden-until-real policy
 

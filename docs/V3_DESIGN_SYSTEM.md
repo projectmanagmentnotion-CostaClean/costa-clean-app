@@ -42,6 +42,10 @@ to primary/active states.
 V3-1 uses `Inicio · Facturas · Clientes · Servicios · Más` on mobile. Existing
 secondary `AppView` routes remain available through Más; no route is removed.
 
+The V3 invoice vertical slice uses dedicated `V3InvoiceRow`,
+`V3InvoiceWorkspace`, `V3Section`, `V3Status` and V3 action primitives. It does
+not reuse the legacy master/detail or operational-card composition.
+
 ## Implementation guardrails
 
 The V3 shell is activated only by `?v3=1` during migration. No business state,

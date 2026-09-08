@@ -70,6 +70,7 @@ import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../fe
 import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
 import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
 import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
+import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 
 interface AppShellProps {
   theme: AppTheme
@@ -1127,8 +1128,18 @@ export function AppShell({
 
   return (
     <main className={`app-shell${compactMobileNav ? ' app-shell--mobile-scrolled' : ''}${v3Enabled ? ' app-shell--v3' : ''}`}>
-      <section className="hero-card cc-shell cc-shell-frame">
-        <AppNav
+      <section className={v3Enabled ? 'v3-shell-frame' : 'hero-card cc-shell cc-shell-frame'}>
+        {v3Enabled ? (
+          <V3ShellChrome
+            currentView={currentView}
+            onChangeView={navigateToView}
+            onBack={navigateBack}
+            backTargetView={navigationBackTarget}
+            accountLabel={accountLabel}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+          />
+        ) : <AppNav
           currentView={currentView}
           onChangeView={navigateToView}
           mobileViewport={isMobileViewport}
@@ -1149,8 +1160,8 @@ export function AppShell({
           notificationStatus={notificationStatus}
           onEnableNotifications={handleEnableNotifications}
           onDisableNotifications={handleDisableNotifications}
-        />
-        <div className="cc-shell-content">
+        />}
+        <div className={v3Enabled ? 'v3-content' : 'cc-shell-content'}>
           <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>
               <DataHealthDebugPanel
                 domainErrors={{

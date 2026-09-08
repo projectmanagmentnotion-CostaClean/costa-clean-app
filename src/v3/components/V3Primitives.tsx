@@ -1,8 +1,8 @@
-import type { ReactNode } from 'react'
+import type { InputHTMLAttributes, MouseEvent, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
 interface V3ActionProps {
   children: ReactNode
-  onClick?: () => void
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void
   type?: 'button' | 'submit'
   disabled?: boolean
   ariaLabel?: string
@@ -37,6 +37,8 @@ export function V3EntityStatus({ label, tone = 'neutral' }: { label: string; ton
   return <span className={`v3-status v3-status--${tone}`}>{label}</span>
 }
 
+export const V3Status = V3EntityStatus
+
 export function V3PrimaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel }: V3ActionProps) {
   return <button type={type} className="v3-action v3-action--primary" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>{children}</button>
 }
@@ -47,6 +49,46 @@ export function V3SecondaryAction({ children, onClick, type = 'button', disabled
 
 export function V3DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className="v3-detail-section"><h2>{title}</h2>{children}</section>
+}
+
+export function V3Section({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
+  return <section className="v3-section"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
+}
+
+export function V3EntityList({ children, label }: { children: ReactNode; label: string }) {
+  return <div className="v3-entity-list" role="list" aria-label={label}>{children}</div>
+}
+
+export function V3EntityListItem({ children, onClick, ariaLabel }: { children: ReactNode; onClick: () => void; ariaLabel: string }) {
+  return <article className="v3-entity-list-item" role="listitem" tabIndex={0} aria-label={ariaLabel} onClick={onClick} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick() } }}>{children}</article>
+}
+
+export function V3QuickAction({ children, onClick, disabled = false }: V3ActionProps) {
+  return <button type="button" className="v3-action v3-action--ghost" onClick={(event) => { event.stopPropagation(); onClick?.(event) }} disabled={disabled}>{children}</button>
+}
+
+export function V3BottomSheet({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
+  return <div className="v3-bottom-sheet__layer"><button type="button" className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section className="v3-bottom-sheet" role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header"><h2>{title}</h2><button type="button" className="v3-action v3-action--secondary" onClick={onClose}>Cerrar</button></div>{children}</section></div>
+}
+
+export function V3Field({ label, children }: { label: string; children: ReactNode }) {
+  return <label className="v3-field"><span>{label}</span>{children}</label>
+}
+
+export function V3Input(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <input {...props} className={`v3-input ${props.className ?? ''}`.trim()} />
+}
+
+export function V3Search(props: InputHTMLAttributes<HTMLInputElement>) {
+  return <V3Input {...props} type="search" aria-label={props['aria-label'] ?? 'Buscar'} />
+}
+
+export function V3Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={`v3-input ${props.className ?? ''}`.trim()} />
+}
+
+export function V3Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`v3-input v3-textarea ${props.className ?? ''}`.trim()} />
 }
 
 export function V3Summary({ children }: { children: ReactNode }) {

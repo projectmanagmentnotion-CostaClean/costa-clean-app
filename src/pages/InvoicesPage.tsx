@@ -46,6 +46,7 @@ import { buildInvoicePdfBlob, buildInvoicePdfFileName, downloadInvoicePdf } from
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
 import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
+import { V3InvoicesPage } from '../v3/invoices/V3InvoicesPage'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -534,6 +535,25 @@ export function InvoicesPage({
     toast.success(
       'Secuencia revisada',
       'No hay saltos ni duplicados.',
+    )
+  }
+
+  if (v3Mode) {
+    return (
+      <V3InvoicesPage
+        invoices={invoices}
+        allInvoices={allInvoices}
+        clients={clients}
+        payments={payments}
+        error={error}
+        initialInvoiceId={selectedInvoiceId}
+        onCreateInvoice={() => setShowCreateForm(true)}
+        onDownloadInvoice={downloadInvoiceDocument}
+        onSettleInvoice={settleInvoiceFromList}
+        isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
+        onOpenDocument={openInvoiceDocument}
+        onViewPayments={onViewPayments}
+      />
     )
   }
 

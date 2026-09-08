@@ -14,6 +14,7 @@ import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
+import { DSErrorState } from './design-system/components'
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -224,7 +225,10 @@ function App() {
           <div className="auth-header">
             <p className="auth-kicker">CostaClean CRM</p>
             <h1>Error de arranque</h1>
-            <p>{bootError}</p>
+            <DSErrorState
+              title="No se pudo comprobar la sesión"
+              description="El entorno seguro no está disponible ahora. Recarga la página o inténtalo de nuevo."
+            />
           </div>
         </section>
       </main>

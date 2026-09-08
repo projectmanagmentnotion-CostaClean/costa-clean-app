@@ -1,5 +1,7 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
+import { DSButton, DSErrorState, DSInput } from '../../design-system/components'
 import { getSupabaseClient } from '../../lib/supabase'
+import { getAuthErrorMessage, getAuthSubmitLabel } from './authPresentation'
 import './auth.css'
 
 interface AuthPageProps {
@@ -11,6 +13,7 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const emailRef = useRef<HTMLInputElement>(null)
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -21,7 +24,8 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
       const { client, error: clientError } = getSupabaseClient()
 
       if (clientError || !client) {
-        setError(clientError ?? 'No se pudo crear el cliente de Supabase.')
+        setError(getAuthErrorMessage(clientError))
+        emailRef.current?.focus()
         return
       }
 
@@ -31,13 +35,15 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
       })
 
       if (signInError) {
-        setError(signInError.message)
+        setError(getAuthErrorMessage(signInError))
+        emailRef.current?.focus()
         return
       }
 
       await onSignedIn()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido iniciando sesión.')
+      setError(getAuthErrorMessage(err))
+      emailRef.current?.focus()
     } finally {
       setIsSubmitting(false)
     }
@@ -75,38 +81,42 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <label className="auth-field">
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="tuemail@empresa.com"
-              autoComplete="email"
-              required
-            />
-          </label>
+          <DSInput
+            ref={emailRef}
+            id="auth-email"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder="tuemail@empresa.com"
+            autoComplete="email"
+            required
+          />
 
-          <label className="auth-field">
-            <span>Contraseña</span>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-              autoComplete="current-password"
-              required
-            />
-          </label>
+          <DSInput
+            id="auth-password"
+            label="Contraseña"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="••••••••"
+            autoComplete="current-password"
+            required
+          />
 
-          <button type="submit" className="auth-submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Accediendo...' : 'Entrar al CRM'}
-          </button>
+          <DSButton
+            tone="primary"
+            fullWidth
+            loading={isSubmitting}
+            type="submit"
+            className="auth-submit"
+          >
+            {getAuthSubmitLabel(isSubmitting)}
+          </DSButton>
 
           {error ? (
-            <div className="auth-error">
-              <strong>No se pudo iniciar sesión</strong>
-              <p>{error}</p>
+            <div role="alert">
+              <DSErrorState title="No se pudo iniciar sesión" description={error} />
             </div>
           ) : null}
         </form>

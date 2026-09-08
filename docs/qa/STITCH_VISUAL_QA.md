@@ -84,3 +84,25 @@ changed.
 
 Documented debt: timeline, duplicate-review shell and broad master-detail
 migrations remain future slices. No duplicate component system was introduced.
+
+## FE-05 entry and Home audit - 2026-09-08
+
+Implementation scope reviewed: boot copy, authentication presentation and the
+existing data-driven Home cockpit. Home already derives its KPI, alert and
+quick-action surfaces from current application data and suppresses zero-value
+metrics while those data sources are not meaningful.
+
+- Boot: existing session bootstrap, recoverable-error handling and explicit
+  logout boundaries preserved; copy remains short and truthful.
+- Login: `DSInput`, `DSButton`, `DSErrorState`, autocomplete attributes,
+  loading/disabled state, normalized Spanish errors, focus restoration and
+  single form submission are implemented.
+- Home: existing priority, financial and quick-action composition retained;
+  no queries or business calculations changed.
+- QA visual certification: `BLOCKED`. The isolated profile resolved to an
+  unrelated account and the available QA credential fixture did not authenticate
+  `qa.financial.runner@qa.invalid`. Therefore authenticated Home, reload,
+  cross-tab and logout evidence cannot be truthfully certified in this run.
+- Login error presentation: `PASS` in the unauthenticated isolated context;
+  invalid credentials are localized and provider error details are not shown.
+- No production, Supabase, notification, portal or route changes were made.

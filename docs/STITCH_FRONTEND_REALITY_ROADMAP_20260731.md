@@ -504,6 +504,27 @@ Consolidate reusable patterns before module migrations.
 
 # STITCH-FE-05 — Splash, authentication and Home
 
+**Status:** `BLOCKED`
+
+### Blocker - 2026-09-08
+
+- The FE-05 code slice is implemented and local tests pass, but authenticated
+  visual certification cannot close: the isolated persistent profile resolves
+  to a different account and the available QA credential fixture is rejected.
+- Do not mark FE-05 `DONE` or start FE-06 until a valid session for
+  `qa.financial.runner@qa.invalid` is available. No password reset or remote
+  write was performed.
+
+### Implemented slice - 2026-09-08
+
+- Boot copy remains short and truthful while preserving the existing auth
+  bootstrap/recovery behavior.
+- AuthPage now uses shared DS inputs, button and error primitives, normalized
+  Spanish error messaging, autocomplete, loading/disabled state and focus
+  restoration after failure.
+- Home was not given new data or business logic; its existing real-data and
+  no-fake-zero behavior remains unchanged.
+
 ### Objective
 
 Bring the entry experience and daily cockpit to the canonical visual hierarchy.

@@ -13,7 +13,7 @@ function createInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListIte
 function renderPage(invoices: InvoiceListItem[], initialInvoiceId?: string) {
   return renderToStaticMarkup(createElement(V3InvoicesPage, {
     invoices, allInvoices: invoices, clients: [], payments: [], error: null, initialInvoiceId,
-    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {},
+    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
   }))
 }
 
@@ -23,6 +23,7 @@ describe('V3 dedicated invoice tree', () => {
     expect(html).toContain('v3-invoices-page')
     expect(html).toContain('v3-invoice-row__main')
     expect(html).toContain('Facturas')
+    expect(html).toContain('Filtros')
     expect(html).not.toContain('cc-master-layout')
     expect(html).not.toContain('cc-record-card')
     expect(html).not.toContain('OperationalListItem')

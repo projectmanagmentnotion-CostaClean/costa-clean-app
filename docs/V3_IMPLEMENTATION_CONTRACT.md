@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-1 Implementation Contract
 
-Status: `ACTIVE — V3-1R STRUCTURAL REDESIGN`.
+Status: `CERTIFIED — V3-1R AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -67,3 +67,7 @@ opaque local-only routing state.
 - `prefers-reduced-motion`, safe-area insets, focus visibility and bottom-sheet
   Escape/dismiss/scroll-lock behavior are mandatory.
 - No production deploy, migration, production write or main-branch change.
+
+Final authenticated visual certification is recorded in
+`docs/V3_DESIGN_GUARDIAN.md`. V3-2 remains a separate future sprint and is not
+started by this change.

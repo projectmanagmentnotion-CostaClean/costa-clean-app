@@ -76,6 +76,8 @@ interface InvoicesPageProps {
   confirmNavigation?: NavigationGuard
   v3Mode?: boolean
   initialInvoiceId?: string | null
+  onOpenInvoiceDeepLink?: (invoiceId: string) => void
+  onBackToInvoiceList?: () => void
 }
 
 export function InvoicesPage({
@@ -102,6 +104,8 @@ export function InvoicesPage({
   confirmNavigation,
   v3Mode = false,
   initialInvoiceId = null,
+  onOpenInvoiceDeepLink,
+  onBackToInvoiceList,
 }: InvoicesPageProps) {
   const toast = useToast()
   function getInvoiceOutstandingAmount(invoice: InvoiceListItem) {
@@ -553,6 +557,8 @@ export function InvoicesPage({
         isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
         onOpenDocument={openInvoiceDocument}
         onViewPayments={onViewPayments}
+        onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
+        onBackToInvoiceList={() => onBackToInvoiceList?.()}
       />
     )
   }

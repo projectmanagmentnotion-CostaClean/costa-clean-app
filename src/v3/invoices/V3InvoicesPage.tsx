@@ -6,7 +6,7 @@ import type { PaymentListItem } from '../../features/payments/types'
 import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { getInvoiceFinancialStatusLabel } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
-import { V3EntityListItem, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
+import { V3BottomSheet, V3EntityListItem, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
 
 interface V3InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -21,6 +21,8 @@ interface V3InvoicesPageProps {
   isInvoiceSettling: (invoiceId: string) => boolean
   onOpenDocument: (invoice: InvoiceListItem) => void
   onViewPayments: (invoiceId: string) => void
+  onOpenInvoiceDeepLink: (invoiceId: string) => void
+  onBackToInvoiceList: () => void
 }
 
 type ListFilter = 'pending' | 'paid' | 'all'
@@ -53,11 +55,14 @@ export function V3InvoicesPage({
   isInvoiceSettling,
   onOpenDocument,
   onViewPayments,
+  onOpenInvoiceDeepLink,
+  onBackToInvoiceList,
 }: V3InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoiceId)
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<ListFilter>('pending')
   const [sort, setSort] = useState<'recent' | 'oldest' | 'amount'>('recent')
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const listScrollYRef = useRef(0)
   const selectedInvoice = invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
 
@@ -94,6 +99,7 @@ export function V3InvoicesPage({
         clients={clients}
         onBack={() => {
           setSelectedInvoiceId(null)
+          onBackToInvoiceList()
           window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
         }}
         onDownloadInvoice={onDownloadInvoice}
@@ -115,18 +121,32 @@ export function V3InvoicesPage({
       </V3KpiGroup>
       <section className="v3-invoice-controls" aria-label="Buscar y filtrar facturas">
         <label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Número o cliente" /></label>
-        <label className="v3-field"><span>Orden</span><select className="v3-input" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="recent">Recientes</option><option value="oldest">Antiguas</option><option value="amount">Importe</option></select></label>
+        <button type="button" className="v3-filter-trigger" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterSheetOpen}>Filtros <span aria-hidden="true">⌄</span></button>
       </section>
       <div className="v3-filter-tabs" role="tablist" aria-label="Estado de factura">
         {([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => (
           <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>
         ))}
       </div>
+      {isFilterSheetOpen ? (
+        <V3BottomSheet title="Filtros" onClose={() => setIsFilterSheetOpen(false)}>
+          <div className="v3-filter-sheet__content">
+            <fieldset className="v3-filter-sheet__group"><legend>Estado de la factura</legend><div className="v3-filter-sheet__options">{([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? 'is-selected' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div></fieldset>
+            <label className="v3-field"><span>Ordenar por</span><select className="v3-input" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="recent">Más recientes</option><option value="oldest">Más antiguas</option><option value="amount">Mayor importe</option></select></label>
+            <V3PrimaryAction onClick={() => setIsFilterSheetOpen(false)}>Aplicar filtros</V3PrimaryAction>
+          </div>
+        </V3BottomSheet>
+      ) : null}
       {error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando facturas</strong><p>{error}</p></div> : null}
       {!error && visibleInvoices.length === 0 ? <div className="v3-state"><strong>Sin facturas visibles</strong><p>Ajusta la búsqueda o el estado para continuar.</p></div> : null}
       <div className="v3-entity-list" role="list" aria-label="Facturas">
         {visibleInvoices.map((invoice) => (
-          <V3InvoiceRow key={invoice.id} invoice={invoice} isSettling={isInvoiceSettling(invoice.id)} onOpen={() => { listScrollYRef.current = window.scrollY; setSelectedInvoiceId(invoice.id) }} onDownload={() => onDownloadInvoice(invoice)} onSettle={() => onSettleInvoice(invoice)} />
+          <V3InvoiceRow key={invoice.id} invoice={invoice} isSettling={isInvoiceSettling(invoice.id)} onOpen={() => {
+            listScrollYRef.current = window.scrollY
+            setSelectedInvoiceId(invoice.id)
+            onOpenInvoiceDeepLink(invoice.id)
+            window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }))
+          }} onDownload={() => onDownloadInvoice(invoice)} onSettle={() => onSettleInvoice(invoice)} />
         ))}
       </div>
     </V3Page>

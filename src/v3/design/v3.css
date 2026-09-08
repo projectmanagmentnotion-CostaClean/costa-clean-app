@@ -224,6 +224,15 @@
 .v3-more-sheet__backdrop,
 .v3-bottom-sheet__backdrop { background: var(--v3-color-overlay); border: 0; inset: 0; position: fixed; z-index: calc(var(--v3-z-sheet) - 1); }
 .v3-more-sheet { background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-lg) var(--v3-radius-lg) 0 0; bottom: 0; color: var(--v3-color-text-primary); left: 0; max-height: min(80dvh, 640px); overflow-y: auto; padding: var(--v3-space-3) var(--v3-space-5) calc(var(--v3-space-5) + var(--v3-safe-bottom)); position: fixed; right: 0; z-index: var(--v3-z-sheet); }
+.v3-bottom-sheet { background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-lg) var(--v3-radius-lg) 0 0; bottom: 0; color: var(--v3-color-text-primary); left: 0; padding: var(--v3-space-3) var(--v3-space-5) calc(var(--v3-space-5) + var(--v3-safe-bottom)); position: fixed; right: 0; z-index: var(--v3-z-sheet); }
+.v3-bottom-sheet__layer { inset: 0; position: fixed; z-index: var(--v3-z-sheet); }
+.v3-bottom-sheet__content, .v3-filter-sheet__content { display: grid; gap: var(--v3-space-5); margin-top: var(--v3-space-5); }
+.v3-filter-sheet__group { border: 0; display: grid; gap: var(--v3-space-2); margin: 0; padding: 0; }
+.v3-filter-sheet__group legend { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); font-weight: 700; padding: 0; }
+.v3-filter-sheet__options { display: grid; gap: var(--v3-space-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.v3-filter-sheet__options button { background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-md); color: var(--v3-color-text-primary); cursor: pointer; font: inherit; min-height: var(--v3-touch-preferred); padding: 0 var(--v3-space-2); }
+.v3-filter-sheet__options button.is-selected { background: var(--v3-color-accent-soft); border-color: var(--v3-color-accent); color: var(--v3-color-accent-strong); font-weight: 700; }
+.v3-filter-sheet__options button:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
 .v3-more-sheet__handle, .v3-bottom-sheet__handle { background: var(--v3-color-border); border-radius: var(--v3-radius-pill); height: 4px; margin: 0 auto var(--v3-space-4); width: 40px; }
 .v3-more-sheet__header, .v3-bottom-sheet__header { align-items: center; display: flex; justify-content: space-between; gap: var(--v3-space-4); }
 .v3-more-sheet__header span { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); }
@@ -234,11 +243,13 @@
 .v3-more-sheet__account { align-items: center; border-top: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; margin-top: var(--v3-space-5); padding-top: var(--v3-space-4); }
 
 .v3-invoices-page, .v3-invoice-workspace { gap: var(--v3-space-6); }
-.v3-invoice-controls { align-items: end; display: grid; gap: var(--v3-space-3); grid-template-columns: minmax(0, 1fr) minmax(150px, 0.35fr); }
+.v3-invoice-controls { align-items: end; display: grid; gap: var(--v3-space-3); grid-template-columns: minmax(0, 1fr) auto; }
 .v3-field { display: grid; gap: var(--v3-space-2); }
 .v3-field > span { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); font-weight: 700; }
 .v3-input { background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-md); color: var(--v3-color-text-primary); font: inherit; min-height: var(--v3-touch-preferred); padding: 0 var(--v3-space-3); width: 100%; }
 .v3-input:focus { border-color: var(--v3-color-accent); box-shadow: var(--v3-focus-ring); outline: 0; }
+.v3-filter-trigger { align-items: center; background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-md); color: var(--v3-color-text-primary); cursor: pointer; display: inline-flex; font: inherit; gap: var(--v3-space-2); justify-content: center; min-height: var(--v3-touch-preferred); padding: 0 var(--v3-space-4); }
+.v3-filter-trigger:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
 .v3-filter-tabs { border-bottom: 1px solid var(--v3-color-border); display: flex; gap: var(--v3-space-4); overflow-x: auto; }
 .v3-filter-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--v3-color-text-secondary); cursor: pointer; font: inherit; font-size: var(--v3-font-size-sm); min-height: var(--v3-touch-preferred); padding: 0 var(--v3-space-1); white-space: nowrap; }
 .v3-filter-tabs button.is-active { border-bottom-color: var(--v3-color-accent); color: var(--v3-color-accent-strong); font-weight: 700; }

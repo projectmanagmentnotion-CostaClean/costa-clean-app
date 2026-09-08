@@ -14,16 +14,16 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Human final approval of the direction.
 - [x] Complete screen-by-screen Stitch visual PASS at the approved anchors.
 
-## V3-1R — Full structural redesign + invoice vertical slice — ACTIVE
+## V3-1R — Full structural redesign + invoice vertical slice — CLOSED
 
 - [x] Add reversible V3 tokens, primitives and reduced-motion/safe-area rules.
 - [x] Replace the V2 shell branch with a dedicated V3 shell chrome.
 - [x] Replace the V2 invoice list/workspace tree with dedicated V3 components.
 - [x] Add Design Guardian structural/token checks.
 - [x] Preserve real PDF, settlement, lifecycle and deep-link contracts.
-- [ ] Complete authenticated visual QA at 390x844 and 430x932.
-- [ ] Complete 768x1024 regression and desktop no-regression.
-- [ ] Close V3-1 with QA evidence and final commit/push.
+- [x] Complete authenticated visual QA at 390x844 and 430x932.
+- [x] Complete 768x1024 regression and desktop no-regression.
+- [x] Close V3-1R with QA evidence and final commit/push.
 
 ## V3-2 — Core entity workspaces
 
@@ -38,5 +38,6 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 
 ## Exit rule
 
-Do not start V3-2 until V3-1R is closed with authenticated QA evidence and no
-financial, route, auth or deep-link regression.
+V3-1R is closed with authenticated QA evidence and no financial, route, auth or
+deep-link regression. V3-2 remains a separate future sprint and is not started
+by this change.

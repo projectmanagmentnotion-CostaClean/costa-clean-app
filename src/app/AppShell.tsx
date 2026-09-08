@@ -196,7 +196,7 @@ export function AppShell({
       ? (() => {
         const invoiceId = readInvoiceDeepLink(window.location.search)
         const filter = readInvoiceFilterDeepLink(window.location.search)
-        if (invoiceId) return { type: 'invoice', invoiceId, invoiceLabel: invoiceId }
+        if (invoiceId) return null
         return filter
       })()
       : null,
@@ -1328,6 +1328,8 @@ export function AppShell({
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
                   v3Mode={v3Enabled}
                   initialInvoiceId={readInvoiceDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenInvoiceDeepLink={(invoiceId) => writeInvoiceDeepLink(invoiceId)}
+                  onBackToInvoiceList={() => writeInvoiceDeepLink(null, true)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
                   onClearFilter={() => clearModuleFilter('invoices')}
                   onUnsavedChange={updateUnsavedChanges}

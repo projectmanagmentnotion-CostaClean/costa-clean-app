@@ -141,3 +141,18 @@ Status: `BLOCKED_PENDING_PORTAL_AUTH`
 - Profile, properties, detail and reviewed-change checks: `NOT_EXECUTED` because portal authentication was unavailable.
 - Mobile measurements and console/network certification: `NOT_EXECUTED`.
 - No remote writes, user creation, password reset, backend change or production request was made.
+
+## CP-3B.2B-QA fixture authorization result
+
+- QA-only fixture created in `kpvvydthlxupjjqqdpxy`: one synthetic client
+  (`QA-CP3B2B-PORTAL-20260908-CLIENT`), two synthetic properties and one
+  active `client_admin` membership for the existing QA user.
+- Portal authorization: `PASS`; `/portal` no longer shows `Acceso no asignado`.
+- Profile and account bootstrap: `PASS`; the synthetic client profile loads.
+- Properties certification: `BLOCKED`; the current remote
+  `portal_list_properties` and `portal_get_property` RPC responses omit the
+  `publicRef` field required by the existing portal read adapter. No backend
+  contract or schema change was made in this block.
+- Property detail, correction flow, mobile certification and regression remain
+  `NOT_EXECUTED` until that contract mismatch is resolved through its own
+  authorized backend block.

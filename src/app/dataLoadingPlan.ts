@@ -31,7 +31,7 @@ const viewDomainMap: Record<AppView, AppDataDomain[]> = {
   fiscal_closing: ['clients', 'properties', 'quotes', 'invoices', 'payments', 'expenses', 'quarterlyClosings', 'annualClosings'],
   quarterly_closing: ['clients', 'properties', 'quotes', 'invoices', 'payments', 'expenses', 'quarterlyClosings', 'annualClosings'],
   annual_closing: ['clients', 'properties', 'quotes', 'invoices', 'payments', 'expenses', 'quarterlyClosings', 'annualClosings'],
-  leads: ['leads', 'leadDrafts', 'clients'],
+  leads: ['leads', 'leadDrafts', 'clients', 'quotes', 'invoices'],
   clients: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments', 'recurringInvoicePlans'],
   properties: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments'],
   quotes: ['clients', 'properties', 'quotes', 'jobs', 'invoices'],

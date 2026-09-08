@@ -73,6 +73,7 @@ import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
 import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
 import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
 import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDeepLink'
+import { readLeadDeepLink, writeLeadDeepLink } from '../v3/navigation/leadDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 
 interface AppShellProps {
@@ -239,7 +240,6 @@ export function AppShell({
     refreshOperations,
     refreshClosings,
     reloadInvoicesAndPayments,
-    reloadLeadsAndClients,
     intakeRealtimeNotifications,
     dismissIntakeRealtimeNotification,
   } = useAppData(currentView)
@@ -949,6 +949,20 @@ export function AppShell({
     })
   }, [commitViewChange, quotesWithCodes, runWithNavigationGuard, unsavedChangesContext])
 
+  const handleOpenLeadWorkspace = useCallback((leadId: string) => {
+    runWithNavigationGuard(() => {
+      writeLeadDeepLink(leadId)
+      commitViewChange('leads')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este lead ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir lead',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleBackToLeadList = useCallback(() => {
+    writeLeadDeepLink(null, true)
+  }, [])
+
   const handleViewPaymentsForInvoice = useCallback((invoiceId: string) => {
     const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
     const invoiceLabel = invoice
@@ -1255,7 +1269,7 @@ export function AppShell({
                   onRunOperationalAction={handleRunOperationalAction}
                 />
               ) : currentView === 'leads' ? (
-                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
+                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} quotes={quotesWithCodes} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={async () => { await Promise.all([refreshOperations(), refreshBilling()]) }} v3Mode={v3Enabled} initialLeadId={readLeadDeepLink(typeof window !== 'undefined' ? window.location.search : '')} onOpenLeadDeepLink={handleOpenLeadWorkspace} onBackToLeadList={handleBackToLeadList} onOpenQuote={handleOpenQuoteDetail} onOpenClient={handleOpenClientWorkspace} />
               ) : currentView === 'clients' ? (
                 <ClientsPage
                   clients={clientsWithContext}

@@ -68,7 +68,8 @@ Do not assign numeric/aesthetic values until Stitch evidence exists.
 - `frames`: `PORTAL_IPHONE_PROFILE_V2`, `PORTAL_IPHONE_PROPERTIES_LIST_V2`, `PORTAL_IPHONE_PROPERTY_DETAIL_V2`, `PORTAL_IPHONE_PROPERTY_CORRECTION_V2`
 - `viewport`: `390x844`
 - `status`: `OWNER_APPROVED` for Profile, Properties List, Property Detail and Property Correction only
-- `navigation`: compact mobile portal navigation with Inicio, Servicios, Propiedades, Facturas and Cuenta; correction flow uses a clear back action
+- `navigation`: final owner decision uses Inicio, Inmuebles, Servicios, Facturas, Cuenta and Más as six compact mobile controls; Más opens the existing secondary sheet and correction flow uses a clear back action
+- `global contact`: persistent WhatsApp action uses `https://wa.me/34698911517` and remains independent from the primary navigation
 - `layout`: customer identity first on Profile; compact scannable property rows on the list; property identity/address before operational context on detail; focused reviewed-change form on correction
 - `typography`: Be Vietnam Pro
 - `colors`: Primary `#00ABEC`; Secondary `#0077C0`; Tertiary `#F8FAFC`; Neutral `#1E293B`

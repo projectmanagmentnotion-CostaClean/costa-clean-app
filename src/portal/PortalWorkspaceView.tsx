@@ -232,7 +232,6 @@ function MobilePortalNavigation({
             {item.shortLabel}
           </a>
         ))}
-      </nav>
       <details className="portal-mobile-more">
         <summary className={isMoreActive ? 'portal-mobile-nav__link portal-mobile-more__trigger is-active' : 'portal-mobile-nav__link portal-mobile-more__trigger'}>
           <span className="portal-mobile-nav__more-icon" aria-hidden="true">···</span>
@@ -259,6 +258,7 @@ function MobilePortalNavigation({
           </button>
         </div>
       </details>
+      </nav>
     </div>
   )
 }

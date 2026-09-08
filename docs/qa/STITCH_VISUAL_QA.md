@@ -261,10 +261,12 @@ Status: `IMPLEMENTED — PENDING_FINAL_DEVTOOLS_CERTIFICATION`
 
 - Source of truth: the existing `Costa Clean Client Portal` Stitch project,
   owner-approved iPhone direction at `390x844`.
-- Mobile navigation now has exactly five primary destinations in one fixed
-  touch row: `Inicio`, `Servicios`, `Propiedades`, `Facturas` and `Cuenta`.
-  `Más` is a separate floating control that opens the existing bottom sheet;
-  it is not a sixth grid item and cannot create a second navigation row.
+- Owner decision update: mobile navigation now has six integrated controls in
+  one fixed touch row: `Inicio`, `Inmuebles`, `Servicios`, `Facturas`, `Cuenta`
+  and `Más`. `Más` remains a secondary control that opens the existing bottom
+  sheet and does not navigate to a fake page.
+- WhatsApp remains a persistent floating action, independent from the nav, at
+  `https://wa.me/34698911517`.
 - Navigation controls use explicit line icons, preserve the active state and
   keep the existing customer-facing routes and portal capabilities unchanged.
 - QA bundle verification: `npm run build -- --mode qa` passed; the generated
@@ -273,9 +275,9 @@ Status: `IMPLEMENTED — PENDING_FINAL_DEVTOOLS_CERTIFICATION`
 - The prior login failure was caused by serving the default production-mode
   preview. The local preview was rebuilt with the existing `.env.qa.local`
   configuration and restarted on `127.0.0.1:4174`.
-- Normal Chrome QA retest: authenticated portal loaded and the five-item
-  navigation plus floating `Más` control were visible at the owner-provided
-  `390x844` Device Toolbar viewport. No remote data was created.
+- Normal Chrome QA retest: authenticated portal loaded at the owner-provided
+  `390x844` Device Toolbar viewport. The final six-item nav and persistent
+  WhatsApp action require the remaining manual visual/telemetry certification.
 - Tests: `npm test` passed (`102` files, `618` passed, `4` skipped), lint and
   QA build passed.
 - Final console/network, keyboard, safe-area and pixel touch-target evidence

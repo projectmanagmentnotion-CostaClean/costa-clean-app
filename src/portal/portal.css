@@ -1684,26 +1684,30 @@ input {
   .portal-root .portal-mobile-nav {
     position: relative;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     min-height: calc(72px + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .portal-root .portal-mobile-controls > .portal-mobile-more {
-    position: absolute;
-    right: 12px;
-    bottom: calc(100% + 10px);
-    z-index: 2;
-    display: block;
-  }
-
   .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger {
-    display: inline-flex;
-    min-width: 64px;
-    min-height: 44px;
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 72px;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    padding: 8px 2px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger:hover,
+  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger.is-active {
+    border: 0;
+    background: var(--portal-accent);
   }
 }
 

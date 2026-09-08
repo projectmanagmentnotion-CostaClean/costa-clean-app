@@ -156,3 +156,36 @@ Status: `BLOCKED_PENDING_PORTAL_AUTH`
 - Property detail, correction flow, mobile certification and regression remain
   `NOT_EXECUTED` until that contract mismatch is resolved through its own
   authorized backend block.
+
+## CP-3B.2B-CONTRACT QA closeout evidence
+
+Status: `PARTIAL — BLOCKED_PENDING_390X844_VISUAL_QA`
+
+- Root cause: the QA `portal_list_properties` and `portal_get_property` RPCs
+  omitted the required customer-safe `publicRef` field.
+- Canonical source: `public.properties.display_code`, protected by the
+  existing unique partial index. No new identifier source was introduced.
+- QA contract patch: `PASS`; both RPCs now return `publicRef` and preserve the
+  existing membership/property filters, `security definer` boundary and
+  `search_path`. The versioned SQL is
+  `supabase/migrations/20260908115621_portal_property_public_ref_contract_alignment.sql`.
+- Production contract patch: `NOT APPLIED`; production ref was not queried or
+  modified.
+- QA fixture list/detail: `PASS`; `PRO-0074` and `PRO-0075` are returned and
+  link to the matching property routes.
+- Property correction flow: `PASS`; the request was submitted as
+  `pending_review` with a public request reference, while the canonical
+  property address remained unchanged.
+- Session reload: `PASS`; the authenticated portal session persisted after a
+  full same-origin navigation.
+- Unknown public reference: `PASS`; an unknown ref returned the authorized
+  property directory without exposing a property detail.
+- Frontend fixes: property detail now derives its correction route from the
+  selected `publicRef`, and property correction routes resolve under
+  `/portal/properties/{publicRef}/correction/...`.
+- Exact `390x844` responsive measurements, console/network capture and
+  touch/safe-area visual certification: `NOT_EXECUTED` because the available
+  normal Chrome control surface did not expose responsive viewport or
+  DevTools telemetry APIs. No isolated browser or incognito context was used.
+- Production requests: `0`. CRM UI, RLS, notification code and Supabase Auth
+  were not modified.

@@ -365,7 +365,7 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
   const requestRoute = resolvePortalRequestRoute(pathname)
   const routeStep = resolveCorrectionStep(pathname, 'property')
   const selectedProperty = data.propertyDetail
-  const propertyRef = requestRoute?.propertyRef ?? ''
+  const propertyRef = requestRoute?.propertyRef ?? selectedProperty?.publicRef ?? ''
   const propertyBasePath = withCurrentSearch(getPortalPropertyPath(propertyRef))
   if (requestRoute?.scope === 'property') {
     if (requestRoute.reference) {
@@ -494,7 +494,10 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
 }
 
 function resolveCorrectionStep(pathname: string, scope: 'profile' | 'property') {
-  if (!pathname.includes(`/portal/${scope}/correction/`)) return null
+  const correctionPrefix = scope === 'property'
+    ? '/portal/properties/'
+    : `/portal/${scope}/correction/`
+  if (!pathname.includes(correctionPrefix) || !pathname.includes('/correction/')) return null
   if (pathname.endsWith('/fields')) return 'fields' as const
   if (pathname.endsWith('/values')) return 'values' as const
   if (pathname.endsWith('/review')) return 'review' as const

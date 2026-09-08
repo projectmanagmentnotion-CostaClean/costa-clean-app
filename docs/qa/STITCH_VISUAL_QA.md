@@ -130,3 +130,14 @@ Status: `BLOCKED_FOR_AUTHENTICATED_QA`
 - Production evidence: `NOT_EXECUTED`
 
 The Stitch copy-cleanup request was submitted against only the four approved V2 frames. No legacy frame was edited or deleted by the repository work.
+
+## CP-3B.2B-QA authenticated iPhone certification
+
+Status: `BLOCKED_PENDING_PORTAL_AUTH`
+
+- Runtime bundle verification: `PASS`; the QA build targets `kpvvydthlxupjjqqdpxy.supabase.co` and does not target production.
+- Browser: existing normal Chrome profile, no isolated profile or incognito.
+- Portal route: `/portal` redirected to `/portal/login`; the available browser session was authenticated for the CRM surface, not the client portal.
+- Profile, properties, detail and reviewed-change checks: `NOT_EXECUTED` because portal authentication was unavailable.
+- Mobile measurements and console/network certification: `NOT_EXECUTED`.
+- No remote writes, user creation, password reset, backend change or production request was made.

@@ -1,10 +1,10 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-2C CLOSED / V3-2D NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-2D CLOSED / V3-3 NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
 
 ## Directional intent
 
-Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-2C applies the same approved primitives to leads without changing business contracts.
+Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-2D applies the same approved primitives to services without changing business contracts. Work Report PDF is an operational summary, not a certification or tracking surface.
 
 ## Candidate token evidence from new Stitch canvases
 

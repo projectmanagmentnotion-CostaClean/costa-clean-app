@@ -24,6 +24,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
+import { V3JobsPage } from '../v3/jobs/V3JobsPage'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -48,6 +49,9 @@ interface JobsPageProps {
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialJobId?: string | null
+  onCreateInvoiceFromJob?: (job: JobListItem) => void
 }
 
 export function JobsPage({
@@ -69,6 +73,9 @@ export function JobsPage({
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialJobId = null,
+  onCreateInvoiceFromJob,
 }: JobsPageProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -131,6 +138,38 @@ export function JobsPage({
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
     return () => onUnsavedChange?.(false)
   }, [hasPendingWork, onUnsavedChange])
+
+  if (v3Mode) {
+    return <>
+      <V3JobsPage
+        jobs={jobs}
+        clients={clients}
+        properties={properties}
+        quotes={quotes}
+        invoices={invoices}
+        payments={payments}
+        error={error}
+        initialJobId={initialJobId}
+        duplicateCount={duplicateGroups.length}
+        onReviewDuplicates={() => setShowDuplicateReview(true)}
+        onCreateJob={() => setShowCreateForm(true)}
+        onRefresh={onJobCreated}
+        onOpenClient={(id) => onOpenClientWorkspace(id)}
+        onOpenProperty={(id) => onOpenPropertyWorkspace(id)}
+        onOpenQuote={onOpenQuoteDetail}
+        onOpenInvoice={onOpenInvoiceDetail}
+        onCreateInvoice={(job) => onCreateInvoiceFromJob?.(job)}
+      />
+      {isCreateFormVisible ? (
+        <ActionFlowOverlay isOpen={isCreateFormVisible} title="Nuevo servicio" description="Planifica el servicio en un flujo dedicado." onClose={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }}>
+          <Suspense fallback={<DeferredContentFallback title="Cargando flujo de servicio" description="Preparando el alta operativa completa." />}>
+            <LazyJobCreateFlow clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} />
+          </Suspense>
+        </ActionFlowOverlay>
+      ) : null}
+      {showDuplicateReview ? <DuplicateReviewOverlay isOpen title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
+    </>
+  }
 
   function runGuarded(action: () => void) {
     if (!hasPendingWork || !confirmNavigation) {

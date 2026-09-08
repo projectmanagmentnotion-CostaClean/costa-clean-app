@@ -1,6 +1,6 @@
-# Costa Clean App V3 — V3-1 Implementation Contract
+# Costa Clean App V3 — V3-2D Implementation Contract
 
-Status: `CERTIFIED — V3-2C AUTHENTICATED VISUAL QA`.
+Status: `CERTIFIED — V3-2D AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -116,6 +116,15 @@ opaque local-only routing state.
   Escape/dismiss/scroll-lock behavior are mandatory.
 - No production deploy, migration, production write or main-branch change.
 
+## V3-2D service and work-report actions
+
+- `src/v3/jobs/` owns the services list, operational row and full-screen
+  workspace, using real status, billing, relation and lifecycle contracts.
+- Completed unbilled services use `buildInvoiceCreatePrefillFromJob()` and the
+  existing invoice create flow; an active invoice relation blocks duplicates.
+- Work Report PDF is generated from real service data and delivered locally or
+  through the existing native-share fallback. It is an operational summary,
+  not a certification, signature, GPS, tracking or telemetry surface.
+
 Final authenticated visual certification is recorded in
-`docs/V3_DESIGN_GUARDIAN.md`. V3-2D remains a separate future sprint and is not
-started by this change.
+`docs/V3_DESIGN_GUARDIAN.md`. V3-3 is the next separate sprint.

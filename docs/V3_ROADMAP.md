@@ -69,8 +69,17 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - Apply the approved patterns to payments, expenses, alerts, closings and configuration.
 - Preserve selection, downloads, exports, lifecycle and duplicate flows.
 
+## V3-2D — Servicios / Jobs — CLOSED
+
+- [x] Dedicated `src/v3/jobs/` list, row and full-screen workspace.
+- [x] Real operational statuses, billing state, relations and lifecycle writes.
+- [x] Completed unbilled services connect to the existing invoice prefill/create flow with duplicate protection.
+- [x] Real work-report PDF with local download and native-share fallback.
+- [x] Deep link/back restoration, existing create/edit contracts and authenticated visual QA.
+- [x] Full tests, lint, build, commit and push.
+
 ## Exit rule
 
-V3-1R, V3-2A, V3-2B and V3-2C are closed with authenticated QA evidence and no
-financial, route, auth or deep-link regression. V3-2D is the next separate
-sprint and is not started by this change.
+V3-1R, V3-2A, V3-2B, V3-2C and V3-2D are closed with authenticated QA evidence
+and no financial, route, auth or deep-link regression. V3-3 is the next
+separate sprint and is not started by this change.

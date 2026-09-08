@@ -74,6 +74,7 @@ import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } 
 import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
 import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDeepLink'
 import { readLeadDeepLink, writeLeadDeepLink } from '../v3/navigation/leadDeepLink'
+import { readJobDeepLink, writeJobDeepLink } from '../v3/jobs/jobDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 
 interface AppShellProps {
@@ -894,13 +895,17 @@ export function AppShell({
         ...current,
         jobs: null,
       }))
-      setJobWorkspaceLocation({ jobId, tab })
+      if (v3Enabled) {
+        writeJobDeepLink(jobId)
+      } else {
+        setJobWorkspaceLocation({ jobId, tab })
+      }
       commitViewChange('jobs')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este servicio ahora, perderas esos cambios.`,
       confirmLabel: 'Abrir servicio',
     })
-  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext, v3Enabled])
 
   const handleOpenInvoiceDetail = useCallback((invoiceId: string) => {
     const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
@@ -956,6 +961,19 @@ export function AppShell({
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este lead ahora, perderas esos cambios.`,
       confirmLabel: 'Abrir lead',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleCreateInvoiceFromJob = useCallback((job: JobListItem) => {
+    runWithNavigationGuard(() => {
+      const prefill = buildInvoiceCreatePrefillFromJob(job)
+      if (!prefill) return
+      setInvoiceCreatePrefill(prefill)
+      writeJobDeepLink(null, true)
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear factura',
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
@@ -1365,6 +1383,9 @@ export function AppShell({
                   onClearFilter={() => clearModuleFilter('jobs')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
+                  v3Mode={v3Enabled}
+                  initialJobId={readJobDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
                 />
               ) : currentView === 'invoices' ? (
                 <InvoicesPage

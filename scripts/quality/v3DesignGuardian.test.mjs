@@ -14,6 +14,10 @@ const v3TreeFiles = [
   'src/v3/leads/V3LeadsPage.tsx',
   'src/v3/leads/V3LeadRow.tsx',
   'src/v3/leads/V3LeadWorkspace.tsx',
+  'src/v3/jobs/V3JobsPage.tsx',
+  'src/v3/jobs/V3JobRow.tsx',
+  'src/v3/jobs/V3JobWorkspace.tsx',
+  'src/v3/jobs/jobWorkReport.tsx',
 ]
 
 function readV3Tree() {
@@ -48,5 +52,20 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toContain('LeadDetailCard')
     expect(source).not.toContain('reviewed_at')
     expect(source).not.toContain('reviewed_by')
+  })
+
+  it('keeps services presentation free of legacy composition and fictional work claims', () => {
+    const source = [
+      'src/v3/jobs/V3JobsPage.tsx',
+      'src/v3/jobs/V3JobRow.tsx',
+      'src/v3/jobs/V3JobWorkspace.tsx',
+      'src/v3/jobs/jobWorkReport.tsx',
+    ].map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n').replaceAll('V3JobWorkspace', '')
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+    for (const forbiddenName of ['JobsList', 'JobWorkspace', 'JobDetailCard', 'Firmado por cliente', 'Servicio verificado', 'GPS completado', 'biometría']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).toContain('No es un certificado de ejecución')
   })
 })

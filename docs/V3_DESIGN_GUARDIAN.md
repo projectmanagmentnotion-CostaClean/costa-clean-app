@@ -1,6 +1,6 @@
-# V3 Design Guardian — V3-2C
+# V3 Design Guardian — V3-2D
 
-Status: `CERTIFIED — V3-2C`
+Status: `CERTIFIED — V3-2D`
 
 ## Review boundary
 
@@ -107,4 +107,16 @@ Production was not accessed or modified.
 - Legacy visual dependency in `src/v3/leads`: `0`.
 - Hardcoded V3 colors outside tokens: `0`.
 - QA fixture cleanup: PASS; lead, draft, intake, quote, quote lines, client
-  and targeted audit events residue verified `0`.
+and targeted audit events residue verified `0`.
+
+## V3-2D service evidence
+
+- Services list and workspace: PASS at `390x844`, `430x932`, `768x1024`.
+- Today, upcoming, completed and archived filters: PASS from real job status/date/lifecycle data.
+- Billing state and client/property/quote/invoice/payment relations: PASS.
+- Completed unbilled service to invoice: PASS through the existing prefill/create contract; duplicate eligibility is guarded.
+- Work Report PDF: PASS; real PDF bytes generated from service data.
+- Share and local fallback: PASS through `shareDocument()` and existing PDF delivery helpers.
+- Edit/status/archive and deep-link/back restoration: PASS through existing authenticated contracts.
+- Fake work-report claims: `0`; no signature, execution certification, GPS, tracking or telemetry state is rendered.
+- Legacy visual dependency in `src/v3/jobs`: `0`.

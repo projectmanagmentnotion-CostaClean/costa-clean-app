@@ -234,6 +234,27 @@ Status: `PARTIAL — PENDING_DEVTOOLS_METRICS`
 - Production requests: `0`. Auth, membership, RPC semantics, RLS, CRM and
   production were not modified.
 
+## CP-3B.2C.1 account card polish
+
+Status: `IMPLEMENTED — PENDING_COMPLETE_CERTIFICATION`
+
+- Confirmed defect: the account shortcut grid retained three narrow desktop
+  columns at the `390x844` mobile viewport because the frozen `.portal-root`
+  selectors overrode the generic mobile rule.
+- Frontend-only fix: Account shortcuts now use one compact, full-width column
+  below `560px`, with readable line wrapping, complete labels and a minimum
+  useful touch height. No clipping or ellipsis was introduced.
+- The owner-approved bottom navigation was not changed: it remains one row
+  with five destinations and a separate floating `Más` control.
+- Normal Chrome QA retest after a QA-mode rebuild: Cuenta loaded with the
+  `Perfil`, `Seguridad` and `Ayuda` cards readable at `390x844`; no remote
+  data was created and the authenticated session remained available.
+- Build gates: `npm test`, `npm run lint` and `npm run build -- --mode qa`
+  passed.
+- `Más` sheet, Console/Network telemetry, StepFlow stages, safe-area and
+  pixel touch-target evidence remain pending; CP-3B.2C is not certified here.
+- CRM, backend, Supabase schema/RPCs and production were not modified.
+
 ## CP-3B.2C owner-approved iPhone implementation recovery
 
 Status: `IMPLEMENTED — PENDING_FINAL_DEVTOOLS_CERTIFICATION`

@@ -1706,3 +1706,23 @@ input {
     flex-direction: column;
   }
 }
+
+/* CP-3B.2C.1: account shortcuts need readable mobile width, not desktop columns. */
+@media (max-width: 560px) {
+  .portal-root .portal-summary-grid--account {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .portal-root .portal-summary-grid--account .portal-summary-link {
+    min-height: 82px;
+    padding: 16px;
+  }
+
+  .portal-root .portal-summary-grid--account .portal-summary-link strong {
+    margin-top: 7px;
+    font-size: 1.28rem;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+}

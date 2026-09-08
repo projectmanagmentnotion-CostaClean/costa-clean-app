@@ -88,19 +88,21 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
 - [x] Close with full tests, lint, build, commit and push.
 
-## V3-3B — Payments + Expenses — NEXT
+## V3-3B — Payments + Expenses — CLOSED / CERTIFIED
 
-- [ ] Add dedicated `src/v3/payments/` list and payment workspace.
-- [ ] Add dedicated `src/v3/expenses/` list and expense workspace.
-- [ ] Preserve payment settlement, duplicate, expense support and fiscal contracts.
-- [ ] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
-- [ ] Close with full tests, lint, build, commit and push.
+- [x] Add dedicated `src/v3/payments/` list and payment workspace.
+- [x] Add dedicated `src/v3/expenses/` list and expense workspace.
+- [x] Preserve payment settlement, duplicate, expense support and fiscal contracts.
+- [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
+- [x] Provision the private `expense-receipts` bucket in QA with signed-URL access.
+- [x] Close with exact QA cleanup, full tests, lint, build, commit and push.
 
-Implementation is in progress; V3-3B is not closed until the full QA and cleanup
-gate passes.
+V3-3B is closed after authenticated runtime QA and zero exact fixture residue.
+The QA-only hard cleanup harness is `scripts/qa/cleanup-v3-3b-fixtures.mjs` and
+never belongs to the product API or production cleanup path.
 
 ## Exit rule
 
-V3-1R, V3-2A, V3-2B, V3-2C, V3-2D and V3-3A are closed with authenticated QA
-evidence and no financial, route, auth or deep-link regression. V3-3B is the
+V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated
+QA evidence and no financial, route, auth or deep-link regression. V3-3C is the
 next separate sprint and is not started by this change.

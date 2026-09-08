@@ -1,6 +1,6 @@
 # V3 Design Guardian — V3-3B
 
-Status: `IN PROGRESS — V3-3B`
+Status: `CLOSED / CERTIFIED — V3-3B`
 
 ## Review boundary
 
@@ -18,6 +18,8 @@ contracts before any extension is considered.
 - Reference: approved Stitch project `6884707630640107069`.
 - Private screenshots: `.auth/costaclean-v3/` (ignored; not committed).
 - Viewports reviewed: `390x844`, `430x932`, `768x1024`.
+- Runtime storage unblock: private QA `expense-receipts` bucket with signed URLs;
+  no visual contract changes.
 
 ## Gate scores
 

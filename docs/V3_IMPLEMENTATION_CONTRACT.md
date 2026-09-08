@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-3B Implementation Contract
 
-Status: `IN PROGRESS — V3-3B PAYMENTS + EXPENSES`.
+Status: `CLOSED / CERTIFIED — V3-3B PAYMENTS + EXPENSES`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -14,6 +14,15 @@ payment settlement contracts remain authoritative.
 QA activation is explicit with `?v3=1`. Without that query parameter the V2
 shell remains available during migration. The flag is presentation-only and is
 never used as business state or persisted in local storage.
+
+Expense support storage is the private QA bucket `expense-receipts`, limited to
+PDF/JPEG/PNG/WEBP files up to 10 MB. Internal staff policies constrain objects
+to the existing `expenses/<expenseId>/<timestamp>-<filename>` path contract;
+the UI reads documents through signed URLs. Provisioning is versioned in
+`supabase/migrations/20260908170000_expense_receipts_storage.sql` and was
+applied only to QA. Exact fixture deletion is isolated to the local
+`scripts/qa/cleanup-v3-3b-fixtures.mjs` harness and is not exposed through the
+product API.
 
 ## Real actions kept
 

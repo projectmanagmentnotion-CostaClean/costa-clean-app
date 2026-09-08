@@ -1,6 +1,6 @@
-# V3 Design Guardian — V3-3A
+# V3 Design Guardian — V3-3B
 
-Status: `CERTIFIED — V3-3A`
+Status: `IN PROGRESS — V3-3B`
 
 ## Review boundary
 
@@ -53,6 +53,16 @@ filter sheet, safe-area padding and no horizontal overflow.
 - Priority queue: PASS; deterministic critical-first ordering and alert/incident deduplication.
 - KPI routing: PASS; invoice, quote and job destinations preserve their module filter context.
 - Existing alert and operational action routing: PASS.
+
+## V3-3B secondary financial evidence
+
+- Dedicated Payments and Expenses trees: implemented; final authenticated
+  workspace/create/edit certification pending.
+- Legacy visual dependencies in the V3 trees: `0` by static guardian.
+- Payment origin guard: `transfer_auto` remains an internal origin and is not
+  editable through the generic manual-payment editor.
+- Expense document and fiscal copy: assistive/internal semantics preserved;
+  certification language is not rendered.
 
 ## Real flow evidence
 

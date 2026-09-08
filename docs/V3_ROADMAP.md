@@ -90,8 +90,14 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 
 ## V3-3B — Payments + Expenses — NEXT
 
-This sprint is not started by V3-3A. It must reuse the certified V3 shell and
-financial contracts, with separate visual and authenticated QA evidence.
+- [ ] Add dedicated `src/v3/payments/` list and payment workspace.
+- [ ] Add dedicated `src/v3/expenses/` list and expense workspace.
+- [ ] Preserve payment settlement, duplicate, expense support and fiscal contracts.
+- [ ] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
+- [ ] Close with full tests, lint, build, commit and push.
+
+Implementation is in progress; V3-3B is not closed until the full QA and cleanup
+gate passes.
 
 ## Exit rule
 

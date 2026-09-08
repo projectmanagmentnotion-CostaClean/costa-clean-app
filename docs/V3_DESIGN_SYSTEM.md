@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-3A CLOSED / V3-3B NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-3B IN PROGRESS / V3-3C NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
 
 ## Directional intent
 
@@ -63,6 +63,11 @@ The V3 Home surface uses `V3HomeHeroKpi`, `V3HomeMetric` and
 `V3HomePriorityQueue` from `src/v3/home/`. Its KPI actions route through the
 existing module filter contracts and its priority actions route through the
 existing alert/operational action handlers.
+
+V3-3B derives Payments and Expenses from the certified invoice, client and
+workspace geometry. Both modules use flat entity rows, one small KPI area,
+token-backed filters and the same full-screen workspace sections. No new card,
+shadow, radius, status family, header or sheet geometry is introduced.
 
 ## Implementation guardrails
 

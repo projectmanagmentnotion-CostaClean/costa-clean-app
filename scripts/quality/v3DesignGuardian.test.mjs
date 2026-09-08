@@ -23,6 +23,12 @@ const v3TreeFiles = [
   'src/v3/home/V3HomeMetric.tsx',
   'src/v3/home/V3HomePriorityQueue.tsx',
   'src/v3/home/homePriorities.ts',
+  'src/v3/payments/V3PaymentsPage.tsx',
+  'src/v3/payments/V3PaymentRow.tsx',
+  'src/v3/payments/V3PaymentWorkspace.tsx',
+  'src/v3/expenses/V3ExpensesPage.tsx',
+  'src/v3/expenses/V3ExpenseRow.tsx',
+  'src/v3/expenses/V3ExpenseWorkspace.tsx',
 ]
 
 function readV3Tree() {
@@ -89,5 +95,24 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
     expect(source).not.toMatch(/border-radius\s*:/i)
     expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+  })
+
+  it('keeps payments and expenses presentation free of legacy master/detail and invented finance UI', () => {
+    const source = [
+      'src/v3/payments/V3PaymentsPage.tsx',
+      'src/v3/payments/V3PaymentRow.tsx',
+      'src/v3/payments/V3PaymentWorkspace.tsx',
+      'src/v3/expenses/V3ExpensesPage.tsx',
+      'src/v3/expenses/V3ExpenseRow.tsx',
+      'src/v3/expenses/V3ExpenseWorkspace.tsx',
+    ].map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
+    for (const forbiddenName of ['PaymentsList', 'PaymentDetailCard', 'ExpensesList', 'ExpenseDetailCard', 'ExecutiveHeader', 'VisualKpiCard', 'cc-master-layout', 'saldo bancario', 'SEPA', 'conciliación bancaria']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+    expect(source).toContain('Estimación fiscal asistida')
+    expect(source).toContain('Origen automático')
   })
 })

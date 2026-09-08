@@ -1,6 +1,6 @@
-# Costa Clean App V3 — V3-3A Implementation Contract
+# Costa Clean App V3 — V3-3B Implementation Contract
 
-Status: `CERTIFIED — V3-3A AUTHENTICATED VISUAL QA`.
+Status: `IN PROGRESS — V3-3B PAYMENTS + EXPENSES`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -106,7 +106,28 @@ active module filter context.
   suppression when the same domain is already represented by an alert.
 - Empty state is explicit and quiet. Alert actions continue through the
   existing alert decision/router contract; incidents continue through the
-  existing operational action contract.
+existing operational action contract.
+
+## V3-3B secondary financial surfaces
+
+- `src/v3/payments/` owns the flat payment list, row and full-screen workspace.
+  Payments remain auxiliary to invoices and every row requires the existing
+  `invoice_id` relation. `transfer_auto` is displayed only as an internal
+  origin; it is never called a confirmed bank transfer or reconciliation.
+- `src/v3/expenses/` owns the flat expense list, row and full-screen workspace.
+  The workspace keeps support, fiscal review, payment and deterministic data
+  separate without card soup or a second persistence model.
+- Existing `PaymentCreateFlow`, `savePaymentAndRefreshInvoice`, duplicate
+  guards, `ExpenseCreateFlow`, `ExpenseEditFlow`, attachment APIs and fiscal
+  intelligence APIs remain the source of truth for writes.
+- Manual payments may be edited through the existing write contract. Automatic
+  settlement records are read-only in V3.
+- Expense document copy is internal: `Soporte marcado como factura válida` is
+  not an AEAT or fiscal certification. AI output is always labelled
+  `Estimación fiscal asistida` and remains secondary to deterministic values.
+- Payment and expense deep links are `payment=<id>` and `expense=<id>`; module
+  filters continue to be supplied by `PaymentModuleFilter` and
+  `ExpenseModuleFilter`.
 
 `scripts/quality/v3DesignGuardian.test.mjs` verifies the dedicated V3 tree has no
 forbidden legacy visual names or hardcoded component colors. Token values live in

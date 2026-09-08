@@ -1,10 +1,10 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-2B CLOSED / V3-2C NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-2C CLOSED / V3-2D NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
 
 ## Directional intent
 
-Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-2B applies the same approved primitives to quotes without changing business contracts.
+Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-2C applies the same approved primitives to leads without changing business contracts.
 
 ## Candidate token evidence from new Stitch canvases
 
@@ -49,8 +49,14 @@ quote surface uses the same approved row, status, section, workspace and
 document-action primitives. Quote PDF, native share fallback and conversion
 are real contracts; delivery/read/tracking claims remain excluded.
 
+The V3 lead surface uses the same approved row, status, section, workspace,
+contact and bottom-sheet primitives. Draft review means only the real
+`lead_drafts.ai_draft_status` review; it must not be presented as business-lead
+review without a separate source-of-truth contract.
+
 ## Implementation guardrails
 
 The V3 shell is activated only by `?v3=1` during migration. No business state,
-auth state or Supabase contract is stored in the flag. Share, contact actions,
-work-report PDF and lead-review actions remain hidden until real contracts exist.
+auth state or Supabase contract is stored in the flag. Share and contact
+actions are real local/browser actions; work-report PDF and business-lead
+review claims remain hidden until real contracts exist.

@@ -47,6 +47,17 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
 - [x] Close with full tests, lint, build, commit and push.
 
+## V3-2C — Leads / commercial workspace — CLOSED
+
+- [x] Add the dedicated `src/v3/leads/` list, row and full-screen workspace tree.
+- [x] Reuse real lead statuses, contact URL helpers, intake drafts, duplicate guards and write APIs.
+- [x] Keep `ai_draft_status = reviewed` separate from any business lead-review state; no fake `reviewed_at` or `reviewed_by` was added.
+- [x] Add real draft review, quote-from-draft, client conversion, edit/status, archive/restore and regeneration actions.
+- [x] Preserve `?v3=1&view=leads&lead=<id>` and list/back restoration.
+- [x] Extend Design Guardian and add lead list, deep-link and structural tests.
+- [x] Complete authenticated QA at `390x844`, `430x932` and `768x1024`, including temporary fixture cleanup.
+- [x] Close with full tests, lint, build, commit and push.
+
 ## V3-2 — Core entity workspaces
 
 - Invoice, quote, client, lead and service list/workspace patterns.
@@ -60,6 +71,6 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 
 ## Exit rule
 
-V3-1R, V3-2A and V3-2B are closed with authenticated QA evidence and no
-financial, route, auth or deep-link regression. V3-2C is the next separate
+V3-1R, V3-2A, V3-2B and V3-2C are closed with authenticated QA evidence and no
+financial, route, auth or deep-link regression. V3-2D is the next separate
 sprint and is not started by this change.

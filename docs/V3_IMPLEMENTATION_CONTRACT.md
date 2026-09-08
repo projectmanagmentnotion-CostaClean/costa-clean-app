@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-1 Implementation Contract
 
-Status: `CERTIFIED — V3-2B AUTHENTICATED VISUAL QA`.
+Status: `CERTIFIED — V3-2C AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -41,6 +41,10 @@ never used as business state or persisted in local storage.
 - `src/v3/quotes/` owns the V3 quote list, filters, rows and full-screen quote
   workspace. Quote lines are loaded from the existing `quote_lines` contract;
   no visual quote fixture is used as source of truth.
+- `src/v3/leads/` owns the V3 lead list, row and full-screen commercial
+  workspace. It does not import `LeadsList` or `LeadDetailCard`; legacy
+  `LeadsPage` remains an orchestration boundary for the non-V3 branch and
+  existing create-flow business contract.
 - Client relations are derived from existing IDs. Financial totals use current
   invoice/payment data; no LTV, margin, delivery or tracking state is invented.
 
@@ -51,6 +55,24 @@ never used as business state or persisted in local storage.
 - Email uses a validated `mailto:` URL.
 - New invoice and new quote use the existing create flows and client prefills.
 - No action claims sent, delivered, read, verified, GPS, tracking or telemetry.
+
+## V3-2C lead and intake actions
+
+- Neutral WhatsApp, `tel:` and `mailto:` actions reuse `V3ContactActions` and
+  show only when the existing contact value is valid.
+- Intake data is summarized from `normalized_input`, `quote_draft_seed` and
+  `pricing_breakdown`; raw JSON is not rendered as a visual source of truth.
+- Manual draft review calls `markLeadDraftReviewed()` and persists only
+  `lead_drafts.ai_draft_status = 'reviewed'`. This is explicitly different
+  from business review of the lead: there is no `reviewed_at`, `reviewed_by`,
+  `lead.status` alias or alert/read state used for that meaning.
+- Quote creation calls `convertReviewedLeadDraftToQuote()` and preserves the
+  real `lead_id`, `intake_submission_id`, pricing metadata, VAT and lines.
+- Client creation/linking calls the existing reviewed-draft/client conversion
+  contract and keeps duplicate protection, `source_lead_id` and
+  `converted_client_id` authoritative.
+- Edit, status, archive/restore and regeneration call existing write APIs;
+  regeneration resets the draft to `drafted`, requiring a new review.
 
 ## V3-2B document and conversion actions
 
@@ -73,10 +95,9 @@ live in the V3 stylesheet.
 
 ## Hidden-until-real policy
 
-V3-1 does not expose Parte de Trabajo PDF or Lead
-“Marcar revisado”. These remain backlog items until their real contracts and
-tests exist. No fake delivery, read, verification, GPS, telemetry, eIDAS or
-IBAN state is rendered.
+V3 does not expose Parte de Trabajo PDF or business-lead “revisado” state
+without a source-of-truth contract. No fake delivery, read, verification, GPS,
+telemetry, eIDAS or IBAN state is rendered.
 
 ## Deep-link and back contract
 
@@ -96,5 +117,5 @@ opaque local-only routing state.
 - No production deploy, migration, production write or main-branch change.
 
 Final authenticated visual certification is recorded in
-`docs/V3_DESIGN_GUARDIAN.md`. V3-2C remains a separate future sprint and is not
+`docs/V3_DESIGN_GUARDIAN.md`. V3-2D remains a separate future sprint and is not
 started by this change.

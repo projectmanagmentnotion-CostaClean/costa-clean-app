@@ -1,6 +1,6 @@
-# V3 Design Guardian — V3-2B
+# V3 Design Guardian — V3-2C
 
-Status: `CERTIFIED — V3-2B`
+Status: `CERTIFIED — V3-2C`
 
 ## Review boundary
 
@@ -85,3 +85,26 @@ Production was not accessed or modified.
 - Hardcoded V3 colors outside tokens: `0`.
 - QA fixture cleanup: PASS; quote, quote lines, invoice and invoice lines
   residue verified `0`.
+
+## V3-2C lead evidence
+
+- Lead list and workspace: PASS at `390x844`, `430x932`, `768x1024`.
+- Real statuses and relations: PASS; only `new`, `contacted`, `quoted`,
+  `won`, `lost` and archived are exposed.
+- Neutral WhatsApp, call and email: PASS through the shared V3 contact helper;
+  invalid values remain hidden.
+- AI draft review: PASS; `markLeadDraftReviewed()` persisted
+  `ai_draft_status = 'reviewed'` across reload.
+- Business lead review fake state: `0`; no `reviewed_at` or `reviewed_by` was
+  added or inferred.
+- Quote from reviewed draft: PASS; real quote linked to `lead_id` and intake.
+- Client conversion: PASS; real client linked through `source_lead_id`, lead
+  became `won`, and the second conversion path exposed the linked client rather
+  than creating a duplicate.
+- Edit/status/archive/regenerate paths: PASS through existing authenticated
+  write contracts; regeneration requires a fresh draft review.
+- Lead deep link/back restoration: PASS.
+- Legacy visual dependency in `src/v3/leads`: `0`.
+- Hardcoded V3 colors outside tokens: `0`.
+- QA fixture cleanup: PASS; lead, draft, intake, quote, quote lines, client
+  and targeted audit events residue verified `0`.

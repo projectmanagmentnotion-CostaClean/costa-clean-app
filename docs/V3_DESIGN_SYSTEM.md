@@ -1,10 +1,10 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-0E CLOSED / V3-1 ACTIVE`. The Editorial Simplified tokens below are now implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-2B CLOSED / V3-2C NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
 
 ## Directional intent
 
-Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-1 applies this to the shell and invoice vertical slice only.
+Editorial SaaS Simplified is the only V3 direction: flat document surfaces, strong typography, generous whitespace, compact operational rows and one decision per screen. V3-2B applies the same approved primitives to quotes without changing business contracts.
 
 ## Candidate token evidence from new Stitch canvases
 
@@ -44,7 +44,10 @@ secondary `AppView` routes remain available through Más; no route is removed.
 
 The V3 invoice vertical slice uses dedicated `V3InvoiceRow`,
 `V3InvoiceWorkspace`, `V3Section`, `V3Status` and V3 action primitives. It does
-not reuse the legacy master/detail or operational-card composition.
+not reuse the legacy master/detail or operational-card composition. The V3
+quote surface uses the same approved row, status, section, workspace and
+document-action primitives. Quote PDF, native share fallback and conversion
+are real contracts; delivery/read/tracking claims remain excluded.
 
 ## Implementation guardrails
 

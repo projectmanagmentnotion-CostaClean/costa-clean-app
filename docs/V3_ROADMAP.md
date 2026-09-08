@@ -36,6 +36,17 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Complete authenticated QA at 390x844, 430x932 and 768x1024.
 - [x] Close with lint, build, full tests, commit and push.
 
+## V3-2B — Quotes / presupuestos — CLOSED
+
+- [x] Add the dedicated `src/v3/quotes/` list and workspace tree.
+- [x] Render real quote rows, statuses, totals, lines and client/property/job/invoice relations.
+- [x] Preserve real quote PDF generation and add privacy-safe native share with local download fallback.
+- [x] Connect conversion to the existing `accept_quote_workflow` with quote identity, lines, VAT, duplicate protection and invoice relation.
+- [x] Preserve `?v3=1&view=quotes&quote=<id>` and list/back restoration.
+- [x] Extend Design Guardian and add quote, share, deep-link and conversion tests.
+- [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
+- [x] Close with full tests, lint, build, commit and push.
+
 ## V3-2 — Core entity workspaces
 
 - Invoice, quote, client, lead and service list/workspace patterns.
@@ -49,6 +60,6 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 
 ## Exit rule
 
-V3-1R and V3-2A are closed with authenticated QA evidence and no financial,
-route, auth or deep-link regression. V3-2B remains a separate future sprint and
-is not started by this change.
+V3-1R, V3-2A and V3-2B are closed with authenticated QA evidence and no
+financial, route, auth or deep-link regression. V3-2C is the next separate
+sprint and is not started by this change.

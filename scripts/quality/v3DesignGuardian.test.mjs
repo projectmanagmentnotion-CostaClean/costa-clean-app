@@ -9,6 +9,8 @@ const v3TreeFiles = [
   'src/v3/clients/V3ClientsPage.tsx',
   'src/v3/clients/V3ContactActions.tsx',
   'src/v3/clients/contactActions.ts',
+  'src/v3/quotes/V3QuotesPage.tsx',
+  'src/v3/documents/shareDocument.ts',
 ]
 
 function readV3Tree() {
@@ -25,5 +27,13 @@ describe('V3 Design Guardian structural checks', () => {
 
   it('keeps hardcoded colors inside the token file only', () => {
     expect(readV3Tree()).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+  })
+
+  it('keeps quote presentation free of private geometry and legacy composition', () => {
+    const source = readV3Tree()
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+    expect(source).not.toContain('QuotesList')
+    expect(source).not.toContain('QuoteDetailCard')
   })
 })

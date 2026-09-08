@@ -1,10 +1,10 @@
-# V3 Design Guardian — V3-2A
+# V3 Design Guardian — V3-2B
 
-Status: `CERTIFIED — V3-2A`
+Status: `CERTIFIED — V3-2B`
 
 ## Review boundary
 
-The guardian reviews the V3 shell, invoice list/workspace and client
+The guardian reviews the V3 shell, invoice, quote and client
 list/workspace against the
 approved Stitch Editorial Simplified reference. It is a reviewer, not a source
 of screen-specific invention. New V3 screens must reuse the existing tokens,
@@ -69,3 +69,19 @@ Production was not accessed or modified.
   restored the client list.
 - Legacy visual dependency in `src/v3/clients`: `0`.
 - Hardcoded V3 colors outside tokens: `0`.
+
+## V3-2B quote evidence
+
+- Quote list and workspace: PASS at `390x844`, `430x932`, `768x1024`.
+- Real quote lines and relations: PASS; client, property, job and invoice
+  references are rendered only when present in the existing data contracts.
+- Quote PDF download: PASS; existing renderer produced the real PDF.
+- Share capability and fallback: PASS; unit coverage verifies the native PDF
+  `File` payload and local download fallback without external upload.
+- Quote-to-invoice conversion: PASS; existing workflow preserved `quote_id`,
+  lines, VAT/total, duplicate protection and invoice navigation.
+- Quote deep link/back restoration: PASS.
+- Legacy visual dependency in `src/v3/quotes`: `0`.
+- Hardcoded V3 colors outside tokens: `0`.
+- QA fixture cleanup: PASS; quote, quote lines, invoice and invoice lines
+  residue verified `0`.

@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-1 Implementation Contract
 
-Status: `CERTIFIED — V3-2A AUTHENTICATED VISUAL QA`.
+Status: `CERTIFIED — V3-2B AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -38,6 +38,9 @@ never used as business state or persisted in local storage.
   boundary and retains the real callbacks/APIs.
 - `src/v3/clients/` owns the V3 client list, client workspace and contact action
   presentation. It does not import legacy list/workspace visual components.
+- `src/v3/quotes/` owns the V3 quote list, filters, rows and full-screen quote
+  workspace. Quote lines are loaded from the existing `quote_lines` contract;
+  no visual quote fixture is used as source of truth.
 - Client relations are derived from existing IDs. Financial totals use current
   invoice/payment data; no LTV, margin, delivery or tracking state is invented.
 
@@ -49,6 +52,18 @@ never used as business state or persisted in local storage.
 - New invoice and new quote use the existing create flows and client prefills.
 - No action claims sent, delivered, read, verified, GPS, tracking or telemetry.
 
+## V3-2B document and conversion actions
+
+- Quote PDF download uses the existing quote renderer.
+- Share builds a local `File` from that PDF and uses `navigator.share`/
+  `navigator.canShare` when available; the fallback downloads locally. No
+  external upload, delivery tracking or read state is invented.
+- Quote-to-invoice uses `accept_quote_workflow` with the real quote id, lines,
+  VAT and duplicate protection. The resulting invoice keeps the `quote_id`
+  relation and refreshes the invoice workspace data.
+- Quote deep links use `quote=<id>` and browser history; back returns to the
+  quote list and clears the module deep-link state.
+
 ## Design Guardian checks
 
 `scripts/quality/v3DesignGuardian.test.mjs` verifies the dedicated V3 tree has no
@@ -58,7 +73,7 @@ live in the V3 stylesheet.
 
 ## Hidden-until-real policy
 
-V3-1 does not expose Share, WhatsApp, call/email, Parte de Trabajo PDF or Lead
+V3-1 does not expose Parte de Trabajo PDF or Lead
 “Marcar revisado”. These remain backlog items until their real contracts and
 tests exist. No fake delivery, read, verification, GPS, telemetry, eIDAS or
 IBAN state is rendered.
@@ -81,5 +96,5 @@ opaque local-only routing state.
 - No production deploy, migration, production write or main-branch change.
 
 Final authenticated visual certification is recorded in
-`docs/V3_DESIGN_GUARDIAN.md`. V3-2B remains a separate future sprint and is not
+`docs/V3_DESIGN_GUARDIAN.md`. V3-2C remains a separate future sprint and is not
 started by this change.

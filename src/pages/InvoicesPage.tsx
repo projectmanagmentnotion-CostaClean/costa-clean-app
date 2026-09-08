@@ -68,6 +68,8 @@ interface InvoicesPageProps {
   onOpenQuoteDetail: (quoteId: string) => void
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
+  focusedInvoiceId?: string | null
+  onFocusedInvoiceConsumed?: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
@@ -92,6 +94,8 @@ export function InvoicesPage({
   onOpenQuoteDetail,
   createPrefill,
   onPrefillConsumed,
+  focusedInvoiceId = null,
+  onFocusedInvoiceConsumed,
   activeFilterLabel,
   onClearFilter,
   onUnsavedChange,
@@ -138,6 +142,12 @@ export function InvoicesPage({
     hasError: Boolean(error),
     searchQuery: '',
   })
+
+  useEffect(() => {
+    if (!focusedInvoiceId || !invoices.some((invoice) => invoice.id === focusedInvoiceId)) return
+    setSelectedInvoiceId(focusedInvoiceId)
+    onFocusedInvoiceConsumed?.()
+  }, [focusedInvoiceId, invoices, onFocusedInvoiceConsumed])
 
   const selectedInvoice =
     invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null

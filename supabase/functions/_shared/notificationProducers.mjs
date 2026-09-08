@@ -37,6 +37,13 @@ const RULES = Object.freeze({
   },
 })
 
+const ENTITY_PARAMS = Object.freeze({
+  invoices: 'invoice',
+  expenses: 'expense',
+  jobs: 'job',
+  quotes: 'quote',
+})
+
 export const PRODUCER_RULES = RULES
 
 function hasId(value) {
@@ -45,6 +52,14 @@ function hasId(value) {
 
 function decisionKey(rule, sourceId) {
   return `${rule.ruleId}:${sourceId}`
+}
+
+function buildDestinationPath(rule, sourceId) {
+  const entityParam = ENTITY_PARAMS[rule.sourceTable]
+  if (!entityParam) return rule.destinationPath
+  const url = new URL(rule.destinationPath, 'https://app.costacleanbcn.com')
+  url.searchParams.set(entityParam, sourceId)
+  return `${url.pathname}${url.search}`
 }
 
 export function buildProducerConditions({ invoices = [], payments = [], expenses = [], jobs = [], quotes = [], now = new Date(), thresholds = {} }) {
@@ -95,7 +110,7 @@ export function buildReminder(condition, userId) {
     category: condition.rule.category,
     title: condition.rule.title,
     body: condition.rule.body,
-    destination_path: condition.rule.destinationPath,
+    destination_path: buildDestinationPath(condition.rule, condition.sourceId),
     dedupe_key: `v1:${fingerprint}`,
     source_table: condition.rule.sourceTable,
     source_id: condition.sourceId,

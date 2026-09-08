@@ -13,7 +13,12 @@ describe('notification producers', () => {
     const conditions = buildProducerConditions({ now, thresholds, invoices: [{ id: 'inv-1', issue_date: '2026-08-01', status: 'issued', total: 10 }], payments: [], expenses: [{ id: 'exp-1', document_support_status: 'missing', receipt_file_path: null }], jobs: [{ id: 'job-1', status: 'completed', invoice_id: null, scheduled_date: '2026-08-01' }], quotes: [{ id: 'quote-1', status: 'accepted', job_id: null, created_at: '2026-08-01T00:00:00Z' }] })
     expect(conditions).toHaveLength(4)
     const reminders = conditions.map((condition) => buildReminder(condition, 'user-1'))
-    expect(reminders.map((item) => item.destination_path)).toEqual(expect.arrayContaining(['/?view=invoices&filter=overdue', '/?view=expenses&filter=missing_support', '/?view=jobs&filter=completed_without_invoice', '/?view=quotes&filter=accepted_pending_action']))
+    expect(reminders.map((item) => item.destination_path)).toEqual(expect.arrayContaining([
+      '/?view=invoices&filter=overdue&invoice=inv-1',
+      '/?view=expenses&filter=missing_support&expense=exp-1',
+      '/?view=jobs&filter=completed_without_invoice&job=job-1',
+      '/?view=quotes&filter=accepted_pending_action&quote=quote-1',
+    ]))
     expect(JSON.stringify(reminders)).not.toMatch(/client|supplier|email|phone|address/i)
   })
 

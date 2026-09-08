@@ -68,6 +68,7 @@ import type { LogoutOutcome } from '../features/auth/logoutFlow'
 import { useToast } from '../shared/toasts/useToast'
 import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
 import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
+import { parseNotificationDestination, type NotificationDeepLink } from '../features/notifications/notificationDeepLink'
 
 interface AppShellProps {
   theme: AppTheme
@@ -170,6 +171,10 @@ export function AppShell({
     PropertiesPage,
     QuotesPage,
   } = AppShellPages
+  const [initialNotificationDeepLink] = useState<NotificationDeepLink | null>(() => {
+    if (typeof window === 'undefined') return null
+    return parseNotificationDestination(`${window.location.pathname}${window.location.search}`, window.location.origin)
+  })
   const {
     currentView,
     unsavedChangesContext,
@@ -186,7 +191,14 @@ export function AppShell({
   const { showScrollTop, compactMobileNav, isMobileViewport } = useShellViewportState()
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
   const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'active' | 'unavailable'>('unknown')
-  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
+  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(() => ({
+    ...emptyModuleFilterState,
+    invoices: initialNotificationDeepLink?.view === 'invoices' ? 'unpaid_older_7d' : null,
+    expenses: initialNotificationDeepLink?.view === 'expenses' ? 'missing_receipt' : null,
+    jobs: initialNotificationDeepLink?.view === 'jobs' ? 'completed_without_invoice' : null,
+    quotes: initialNotificationDeepLink?.view === 'quotes' ? 'accepted_without_job' : null,
+  }))
+  const [focusedInvoiceId, setFocusedInvoiceId] = useState<string | null>(initialNotificationDeepLink?.entityId ?? null)
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
@@ -1111,6 +1123,32 @@ export function AppShell({
     }
   }, [toast])
 
+  const applyNotificationDeepLink = useCallback((destinationPath: unknown) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://app.costacleanbcn.com'
+    const link = parseNotificationDestination(destinationPath, origin)
+    if (!link) return
+
+    setModuleFilters((current) => ({
+      ...current,
+      invoices: link.view === 'invoices' ? 'unpaid_older_7d' : current.invoices,
+      expenses: link.view === 'expenses' ? 'missing_receipt' : current.expenses,
+      jobs: link.view === 'jobs' ? 'completed_without_invoice' : current.jobs,
+      quotes: link.view === 'quotes' ? 'accepted_without_job' : current.quotes,
+    }))
+    setFocusedInvoiceId(link.entityType === 'invoice' ? link.entityId : null)
+    commitViewChange(link.view)
+  }, [commitViewChange])
+
+  useEffect(() => {
+    const handleNotificationMessage = (event: MessageEvent<{ type?: unknown; destinationPath?: unknown }>) => {
+      if (event.data?.type !== 'COSTA_CLEAN_NOTIFICATION_NAVIGATE') return
+      applyNotificationDeepLink(event.data.destinationPath)
+    }
+
+    navigator.serviceWorker?.addEventListener('message', handleNotificationMessage)
+    return () => navigator.serviceWorker?.removeEventListener('message', handleNotificationMessage)
+  }, [applyNotificationDeepLink])
+
   return (
     <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
       <section className="hero-card cc-shell cc-shell-frame">
@@ -1301,6 +1339,8 @@ export function AppShell({
                   onOpenQuoteDetail={handleOpenQuoteDetail}
                   createPrefill={invoiceCreatePrefill}
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
+                  focusedInvoiceId={focusedInvoiceId}
+                  onFocusedInvoiceConsumed={() => setFocusedInvoiceId(null)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
                   onClearFilter={() => clearModuleFilter('invoices')}
                   onUnsavedChange={updateUnsavedChanges}

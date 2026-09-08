@@ -20,7 +20,7 @@ export function sanitizeDestinationPath(value) {
   const view = url.searchParams.get('view')
   const filter = url.searchParams.get('filter')
   const entity = url.searchParams.get('invoice') ?? url.searchParams.get('job') ?? url.searchParams.get('quote') ?? url.searchParams.get('expense')
-  if (!view || !SAFE_FILTERS[view] || (filter && !SAFE_FILTERS[view].has(filter)) || (entity && !/^[A-Za-z0-9_-]{1,80}$/.test(entity))) return '/'
+  if (!view || !SAFE_FILTERS[view] || (filter && !SAFE_FILTERS[view].has(filter)) || (entity && !/^[A-Za-z0-9_-]{1,255}$/.test(entity))) return '/'
   return `${url.pathname}${url.search}`
 }
 export function preferencesAllow(preferences, category) {

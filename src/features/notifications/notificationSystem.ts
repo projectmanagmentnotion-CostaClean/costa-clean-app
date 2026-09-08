@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../../lib/supabase'
+import { parseNotificationDestination } from './notificationDeepLink'
 
 export type NotificationCategory = 'collections' | 'operations' | 'administration'
 export type NotificationCapability = 'supported' | 'install_required' | 'unsupported'
@@ -29,26 +30,9 @@ export const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
 
 const PUBLIC_VAPID_KEY = import.meta.env.VITE_COSTA_CLEAN_VAPID_PUBLIC_KEY ?? ''
 
-const allowedFilters = {
-  invoices: new Set(['overdue']),
-  expenses: new Set(['missing_support']),
-  jobs: new Set(['completed_without_invoice']),
-  quotes: new Set(['accepted_pending_action']),
-  alerts: new Set(['all']),
-} as const
-
 export function sanitizeNotificationPath(path: unknown) {
-  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//') || path.includes('://')) return '/'
   const origin = typeof window !== 'undefined' ? window.location.origin : 'https://app.costacleanbcn.com'
-  const url = new URL(path, origin)
-  if (url.origin !== origin || url.pathname !== '/') return '/'
-  const view = url.searchParams.get('view') as keyof typeof allowedFilters | null
-  if (!view || !(view in allowedFilters)) return '/'
-  const filter = url.searchParams.get('filter')
-  const entityId = url.searchParams.get('invoice') ?? url.searchParams.get('job') ?? url.searchParams.get('quote') ?? url.searchParams.get('expense')
-  if (filter && !(allowedFilters[view] as ReadonlySet<string>).has(filter)) return '/'
-  if (entityId && !/^[A-Za-z0-9_-]{1,80}$/.test(entityId)) return '/'
-  return `${url.pathname}${url.search}`
+  return parseNotificationDestination(path, origin)?.destinationPath ?? '/'
 }
 
 export function readNotificationRuntimeState(): NotificationRuntimeState {

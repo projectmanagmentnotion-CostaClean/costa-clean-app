@@ -805,8 +805,7 @@ function selectPortalProperty(
   properties: PortalPropertySummary[],
   route: PortalPropertyRoute | null,
 ): PortalPropertySummary | null {
-  if (!properties.length) return null
-  if (!route) return properties[0]
+  if (!properties.length || !route) return null
   return properties.find((property) => property.publicRef === route.publicRef) ?? null
 }
 

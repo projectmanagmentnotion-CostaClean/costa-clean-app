@@ -1726,3 +1726,131 @@ input {
     overflow-wrap: anywhere;
   }
 }
+
+.portal-whatsapp-action {
+  position: fixed;
+  right: 18px;
+  bottom: 24px;
+  z-index: 24;
+  display: inline-flex;
+  min-width: 48px;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 13px;
+  border: 1px solid #0b9e67;
+  border-radius: 999px;
+  color: #fff;
+  background: #16b978;
+  box-shadow: 0 10px 24px rgb(11 25 36 / 18%);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.portal-whatsapp-action svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.portal-whatsapp-action:hover,
+.portal-whatsapp-action:focus-visible {
+  color: #fff;
+  background: #0b9e67;
+  outline: 3px solid rgb(0 174 240 / 28%);
+  outline-offset: 2px;
+}
+
+.portal-back-link {
+  width: fit-content;
+  min-height: 48px;
+}
+
+.portal-stepflow__steps {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portal-stepflow__step-item {
+  min-width: 0;
+  list-style: none;
+}
+
+.portal-stepflow__step {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+@media (max-width: 900px) {
+  .portal-root .portal-mobile-nav {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .portal-root .portal-mobile-nav > .portal-mobile-more {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    display: block;
+    min-width: 0;
+  }
+
+  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger {
+    width: 100%;
+    min-width: 0;
+    min-height: 72px;
+    padding: 8px 2px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger:hover,
+  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger.is-active {
+    border: 0;
+    background: var(--portal-accent);
+  }
+
+  .portal-root .portal-mobile-more .portal-mobile-more__panel {
+    right: 8px;
+    bottom: calc(100% + 8px);
+  }
+
+  .portal-root .portal-whatsapp-action {
+    width: 52px;
+    right: 14px;
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    min-width: 52px;
+    padding: 10px;
+    border-radius: 50%;
+  }
+
+  .portal-root .portal-whatsapp-action span {
+    display: none;
+  }
+
+  .portal-root .portal-main {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 380px) {
+  .portal-root .portal-mobile-nav__link {
+    font-size: 0.63rem;
+  }
+
+  .portal-root .portal-mobile-nav__icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .portal-root .portal-whatsapp-action span {
+    display: none;
+  }
+}

@@ -7,6 +7,7 @@ import {
   getPortalPropertyPath,
   getPortalPropertyRequestPath,
   getPortalPropertyRequestsPath,
+  resolvePortalPropertyRoute,
   resolvePortalRequestRoute,
 } from './portalNavigation'
 import { PortalProfileChangeFlow, PortalPropertyChangeFlow } from './PortalReviewedChangeForms'
@@ -362,6 +363,7 @@ function renderProfilePage(pathname: string, data: PortalFoundationData, onRefre
 }
 
 function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRefreshData?: () => void | Promise<void>) {
+  const propertyRoute = resolvePortalPropertyRoute(pathname)
   const requestRoute = resolvePortalRequestRoute(pathname)
   const routeStep = resolveCorrectionStep(pathname, 'property')
   const selectedProperty = data.propertyDetail
@@ -397,6 +399,53 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
           emptyMessage="No hay solicitudes activas para esta propiedad."
           detailHref={(reference) => getPortalPropertyRequestPath(propertyRef, reference)}
         />
+      </PortalPageFrame>
+    )
+  }
+
+  if (propertyRoute?.step === null && selectedProperty) {
+    return (
+      <PortalPageFrame
+        eyebrow="Espacios"
+        title={selectedProperty.nameLabel}
+        description="Consulta la información operativa visible de esta propiedad."
+      >
+        <a className="portal-button portal-button--secondary portal-back-link" href="/portal/properties">
+          Volver a propiedades
+        </a>
+        <section className="portal-property-detail portal-property-detail--dedicated">
+          <div className="portal-property-detail__header">
+            <div>
+              <p className="portal-eyebrow">Propiedad registrada</p>
+              <h2>{selectedProperty.nameLabel}</h2>
+            </div>
+            <span className="portal-status portal-status--info">{selectedProperty.reviewStateLabel}</span>
+          </div>
+          <div className="portal-detail-list portal-detail-list--compact">
+            <PortalDetailRow label="Tipo" value={selectedProperty.propertyTypeLabel} />
+            <PortalDetailRow label="Dirección" value={selectedProperty.addressLabel} />
+            <PortalDetailRow label="Ciudad" value={selectedProperty.cityLabel} />
+            <PortalDetailRow label="Código postal" value={selectedProperty.postalCodeLabel} />
+          </div>
+          <section className="portal-decision-block portal-decision-block--compact">
+            <div>
+              <span className="portal-decision-block__label">Corrección revisable</span>
+              <h2>Solicitar cambios de propiedad</h2>
+              <p>Estás enviando una solicitud a Costa Clean. La ficha solo cambia después de su revisión.</p>
+            </div>
+            <a className="portal-button portal-button--primary" href={`${propertyBasePath}/correction/fields`}>
+              Solicitar corrección
+            </a>
+          </section>
+        </section>
+        <section className="portal-request-history" aria-label="Solicitudes de propiedad">
+          <h3>Solicitudes recientes</h3>
+          <PortalRequestHistoryList
+            requests={data.propertyRequests}
+            emptyMessage="No hay solicitudes activas para esta propiedad."
+            detailHref={(reference) => getPortalPropertyRequestPath(propertyRef, reference)}
+          />
+        </section>
       </PortalPageFrame>
     )
   }

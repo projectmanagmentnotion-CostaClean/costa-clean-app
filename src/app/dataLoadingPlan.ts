@@ -34,7 +34,7 @@ const viewDomainMap: Record<AppView, AppDataDomain[]> = {
   leads: ['leads', 'leadDrafts', 'clients'],
   clients: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments', 'recurringInvoicePlans'],
   properties: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments'],
-  quotes: ['clients', 'properties', 'quotes'],
+  quotes: ['clients', 'properties', 'quotes', 'jobs', 'invoices'],
   jobs: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments'],
   invoices: ['clients', 'properties', 'quotes', 'jobs', 'invoices', 'payments'],
   expenses: ['expenses'],

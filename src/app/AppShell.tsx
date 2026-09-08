@@ -72,6 +72,7 @@ import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateC
 import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
 import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
 import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
+import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 
 interface AppShellProps {
@@ -916,6 +917,7 @@ export function AppShell({
           invoiceLabel,
         },
       }))
+      writeQuoteDeepLink(null, true)
       writeInvoiceDeepLink(invoiceId)
       commitViewChange('invoices')
     }, {
@@ -939,6 +941,7 @@ export function AppShell({
           quoteLabel,
         },
       }))
+      writeQuoteDeepLink(quoteId)
       commitViewChange('quotes')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este presupuesto ahora, perderas esos cambios.`,
@@ -1302,14 +1305,27 @@ export function AppShell({
                   quotes={filteredQuotes}
                   allQuotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
+                  jobs={jobsWithCodes}
                   expenses={expenses}
                   clients={clientsWithContext}
                   properties={properties}
                   error={quoteError}
                   onQuoteCreated={refreshOperations}
+                  onInvoicesChanged={reloadInvoicesAndPayments}
                   onCreateJobFromQuote={handleCreateJobFromQuote}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
+                  onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
+                  onOpenJobWorkspace={handleOpenJobWorkspace}
+                  onOpenInvoiceDetail={handleOpenInvoiceDetail}
                   initialCreatePrefill={quoteCreatePrefill}
                   onInitialCreatePrefillConsumed={() => setQuoteCreatePrefill(null)}
+                  v3Mode={v3Enabled}
+                  initialQuoteId={readQuoteDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenQuoteDeepLink={(quoteId) => writeQuoteDeepLink(quoteId)}
+                  onBackToQuoteList={() => {
+                    writeQuoteDeepLink(null, true)
+                    clearModuleFilter('quotes')
+                  }}
                   activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
                   onClearFilter={() => clearModuleFilter('quotes')}
                   onUnsavedChange={updateUnsavedChanges}

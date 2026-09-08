@@ -21,6 +21,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
@@ -33,6 +34,9 @@ import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
 import { updateQuoteStatus } from '../features/financial/financialWriteApi'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 import { useToast } from '../shared/toasts/useToast'
+import { canConvertQuoteToInvoice, convertQuoteToInvoice } from '../features/quotes/quoteConversion'
+import { shareDocument } from '../v3/documents/shareDocument'
+import { V3QuotesPage } from '../v3/quotes/V3QuotesPage'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
   default: (await import('../features/quotes/QuoteCreateEntry')).QuoteCreateEntry,
@@ -42,36 +46,56 @@ interface QuotesPageProps {
   quotes: QuoteListItem[]
   allQuotes: QuoteListItem[]
   invoices: InvoiceListItem[]
+  jobs: JobListItem[]
   expenses: ExpenseListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   error: string | null
   onQuoteCreated: () => Promise<void>
+  onInvoicesChanged?: () => Promise<void>
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenPropertyWorkspace: (propertyId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
   initialCreatePrefill?: QuoteCreatePrefill | null
   onInitialCreatePrefillConsumed?: () => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   activeFilterLabel: string | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialQuoteId?: string | null
+  onOpenQuoteDeepLink?: (quoteId: string) => void
+  onBackToQuoteList?: () => void
 }
 
 export function QuotesPage({
   quotes,
   allQuotes,
   invoices,
+  jobs,
   expenses,
   clients,
   properties,
   error,
   onQuoteCreated,
+  onInvoicesChanged,
   onCreateJobFromQuote,
+  onOpenClientWorkspace,
+  onOpenPropertyWorkspace,
+  onOpenJobWorkspace,
   initialCreatePrefill = null,
   onInitialCreatePrefillConsumed,
+  onOpenInvoiceDetail,
   activeFilterLabel,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialQuoteId = null,
+  onOpenQuoteDeepLink,
+  onBackToQuoteList,
 }: QuotesPageProps) {
   const toast = useToast()
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
@@ -275,6 +299,35 @@ export function QuotesPage({
     }
   }
 
+  async function shareQuoteDocument(targetQuote: QuoteListItem) {
+    try {
+      const blob = await buildQuotePdfBlob(targetQuote, clients, properties)
+      const result = await shareDocument({
+        blob,
+        filename: buildQuotePdfFileName(targetQuote, clients),
+        title: `Presupuesto ${targetQuote.display_code ?? targetQuote.id}`,
+      })
+      if (result === 'shared') toast.success('Compartir abierto', 'El diálogo de compartir del dispositivo está disponible.')
+      if (result === 'downloaded') toast.info('PDF descargado', 'Este navegador no permite compartir archivos directamente.')
+    } catch (error) {
+      toast.error('No se pudo compartir el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+    }
+  }
+
+  async function convertQuoteDocument(targetQuote: QuoteListItem): Promise<string | null> {
+    if (!canConvertQuoteToInvoice(targetQuote, invoices)) return null
+    try {
+      const invoiceId = await convertQuoteToInvoice(targetQuote)
+      await onQuoteCreated()
+      await onInvoicesChanged?.()
+      toast.success('Factura creada', 'La factura real vinculada al presupuesto está lista.')
+      return invoiceId
+    } catch (error) {
+      toast.error('No se pudo convertir el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+      return null
+    }
+  }
+
   function toggleSelectionMode() {
     setIsSelectionMode((current) => {
       if (current) setSelectedQuoteIds([])
@@ -362,6 +415,65 @@ export function QuotesPage({
     )
     setSelectedQuoteIds([])
     setBulkBusy(false)
+  }
+
+  if (v3Mode) {
+    const createVisible = showCreateForm || Boolean(createPrefill)
+    return (
+      <>
+        <V3QuotesPage
+          quotes={allQuotes}
+          allQuotes={allQuotes}
+          clients={clients}
+          properties={properties}
+          jobs={jobs}
+          invoices={invoices}
+          error={error}
+          initialQuoteId={initialQuoteId}
+          onCreateQuote={() => setShowCreateForm(true)}
+          onDownloadQuote={downloadQuoteDocument}
+          onShareQuote={shareQuoteDocument}
+          onConvertQuote={convertQuoteDocument}
+          onOpenClientWorkspace={onOpenClientWorkspace}
+          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenInvoiceDetail={onOpenInvoiceDetail}
+          onOpenQuoteDeepLink={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
+          onBackToQuoteList={() => onBackToQuoteList?.()}
+        />
+        {createVisible ? (
+          <ActionFlowOverlay
+            isOpen={createVisible}
+            title="Nuevo presupuesto"
+            description="La creación usa el flujo comercial real y conserva el contexto del cliente."
+            onClose={() => {
+              setShowCreateForm(false)
+              setCreatePrefill(null)
+              onInitialCreatePrefillConsumed?.()
+            }}
+          >
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de presupuesto" description="Preparando el formulario comercial." />}>
+              <LazyQuoteCreateFlow
+                clients={clients}
+                properties={properties}
+                quotes={allQuotes}
+                invoices={invoices}
+                expenses={expenses}
+                prefill={createPrefill}
+                onRefreshData={onQuoteCreated}
+                onCompleted={handleQuoteCreated}
+                onCancel={() => {
+                  setShowCreateForm(false)
+                  setCreatePrefill(null)
+                  onInitialCreatePrefillConsumed?.()
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </Suspense>
+          </ActionFlowOverlay>
+        ) : null}
+      </>
+    )
   }
 
   return (

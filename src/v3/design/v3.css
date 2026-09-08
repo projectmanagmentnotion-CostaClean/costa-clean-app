@@ -266,6 +266,16 @@
 .v3-client-row__main strong, .v3-client-row__side > strong { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; }
 .v3-client-row__main span { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
 .v3-client-row__side { justify-items: end; }
+.v3-quote-row__main, .v3-quote-row__side { display: grid; gap: var(--v3-space-1); }
+.v3-quote-row__main strong, .v3-quote-row__side > strong { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; }
+.v3-quote-row__main span, .v3-quote-row__main small { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-quote-row__side { justify-items: end; }
+.v3-quote-row__actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); grid-column: 1 / -1; }
+.v3-inline-link { background: transparent; border: 0; color: var(--v3-color-accent-strong); cursor: pointer; font: inherit; font-weight: 700; overflow-wrap: anywhere; padding: 0; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+.v3-inline-link:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
+.v3-related-links { display: flex; flex-wrap: wrap; gap: var(--v3-space-4); }
+.v3-line-row span { display: grid; gap: var(--v3-space-1); }
+.v3-line-row small { color: var(--v3-color-text-secondary); }
 .v3-contact-actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); }
 .v3-contact-actions--compact { margin-top: var(--v3-space-2); }
 .v3-contact-action { align-items: center; background: var(--v3-color-accent-soft); border-radius: var(--v3-radius-sm); color: var(--v3-color-accent-strong); display: inline-flex; font-size: var(--v3-font-size-xs); font-weight: 700; min-height: 40px; padding: 0 var(--v3-space-3); text-decoration: none; }
@@ -289,7 +299,7 @@
 .v3-facts { display: grid; gap: var(--v3-space-3); margin: 0; }
 .v3-facts div { display: flex; justify-content: space-between; gap: var(--v3-space-4); }
 .v3-facts dt { color: var(--v3-color-text-secondary); }
-.v3-facts dd { font-weight: 700; margin: 0; text-align: right; }
+.v3-facts dd { font-weight: 700; margin: 0; overflow-wrap: anywhere; text-align: right; }
 .v3-line-list { display: grid; }
 .v3-line-row { border-bottom: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; gap: var(--v3-space-3); padding: var(--v3-space-3) 0; }
 .v3-line-row:last-child { border-bottom: 0; }

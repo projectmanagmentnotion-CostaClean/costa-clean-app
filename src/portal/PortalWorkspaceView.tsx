@@ -7,6 +7,22 @@ import type { PortalFoundationData } from './portalWorkspaceData'
 
 type AuthenticatedPortalAccess = Extract<PortalAccessState, { status: 'active_member' }>
 
+function PortalNavIcon({ page }: { page: PortalPage }) {
+  const paths: Record<string, string> = {
+    home: 'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z',
+    services: 'M12 3v18M3 12h18M5.5 5.5h13v13h-13z',
+    properties: 'M4 21V9l8-6 8 6v12M8 21v-6h8v6M9 10h.01M15 10h.01',
+    documents: 'M6 3h9l3 3v15H6zM15 3v4h4M9 12h6M9 16h6',
+    account: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21a8 8 0 0 1 16 0',
+  }
+
+  return (
+    <svg className="portal-mobile-nav__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d={paths[page] ?? paths.home} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  )
+}
+
 export type PortalWorkspaceDataState =
   | { status: 'loading' }
   | { status: 'ready'; data: PortalFoundationData }
@@ -189,21 +205,23 @@ function MobilePortalNavigation({
   const isMoreActive = moreItems.some((item) => item.page === currentPage)
 
   return (
-    <nav className="portal-mobile-nav" aria-label="Navegación móvil del área de clientes">
-      {primaryItems.map((item) => (
-        <a
-          key={item.page}
-          href={getHref(item.page)}
-          className={currentPage === item.page ? 'portal-mobile-nav__link is-active' : 'portal-mobile-nav__link'}
-          aria-current={currentPage === item.page ? 'page' : undefined}
-        >
-          <span className="portal-mobile-nav__mark" aria-hidden="true" />
-          {item.shortLabel}
-        </a>
-      ))}
+    <div className="portal-mobile-controls">
+      <nav className="portal-mobile-nav" aria-label="Navegación móvil del área de clientes">
+        {primaryItems.map((item) => (
+          <a
+            key={item.page}
+            href={getHref(item.page)}
+            className={currentPage === item.page ? 'portal-mobile-nav__link is-active' : 'portal-mobile-nav__link'}
+            aria-current={currentPage === item.page ? 'page' : undefined}
+          >
+            <PortalNavIcon page={item.page} />
+            {item.shortLabel}
+          </a>
+        ))}
+      </nav>
       <details className="portal-mobile-more">
-        <summary className={isMoreActive ? 'portal-mobile-nav__link is-active' : 'portal-mobile-nav__link'}>
-          <span className="portal-mobile-nav__mark" aria-hidden="true" />
+        <summary className={isMoreActive ? 'portal-mobile-nav__link portal-mobile-more__trigger is-active' : 'portal-mobile-nav__link portal-mobile-more__trigger'}>
+          <span className="portal-mobile-nav__more-icon" aria-hidden="true">···</span>
           Más
         </summary>
         <div className="portal-mobile-more__panel">
@@ -227,7 +245,7 @@ function MobilePortalNavigation({
           </button>
         </div>
       </details>
-    </nav>
+    </div>
   )
 }
 

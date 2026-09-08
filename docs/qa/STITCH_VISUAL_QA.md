@@ -233,3 +233,31 @@ Status: `PARTIAL — PENDING_DEVTOOLS_METRICS`
   `NOT_EXECUTED`; `CP-3B.2B` is not marked `DONE` without those measurements.
 - Production requests: `0`. Auth, membership, RPC semantics, RLS, CRM and
   production were not modified.
+
+## CP-3B.2C owner-approved iPhone implementation recovery
+
+Status: `IMPLEMENTED — PENDING_FINAL_DEVTOOLS_CERTIFICATION`
+
+- Source of truth: the existing `Costa Clean Client Portal` Stitch project,
+  owner-approved iPhone direction at `390x844`.
+- Mobile navigation now has exactly five primary destinations in one fixed
+  touch row: `Inicio`, `Servicios`, `Propiedades`, `Facturas` and `Cuenta`.
+  `Más` is a separate floating control that opens the existing bottom sheet;
+  it is not a sixth grid item and cannot create a second navigation row.
+- Navigation controls use explicit line icons, preserve the active state and
+  keep the existing customer-facing routes and portal capabilities unchanged.
+- QA bundle verification: `npm run build -- --mode qa` passed; the generated
+  bundle contains `kpvvydthlxupjjqqdpxy.supabase.co` and does not contain
+  `wfxnwfcdjainpojhbdri.supabase.co` as its runtime target.
+- The prior login failure was caused by serving the default production-mode
+  preview. The local preview was rebuilt with the existing `.env.qa.local`
+  configuration and restarted on `127.0.0.1:4174`.
+- Normal Chrome QA retest: authenticated portal loaded and the five-item
+  navigation plus floating `Más` control were visible at the owner-provided
+  `390x844` Device Toolbar viewport. No remote data was created.
+- Tests: `npm test` passed (`102` files, `618` passed, `4` skipped), lint and
+  QA build passed.
+- Final console/network, keyboard, safe-area and pixel touch-target evidence
+  remain pending; this record does not declare final `390x844` certification.
+- Production requests: `0`; CRM, Supabase schema/RPCs, Auth and production
+  were not modified.

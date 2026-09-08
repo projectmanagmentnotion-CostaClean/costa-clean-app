@@ -102,6 +102,7 @@ function V3MoreSheet({ currentView, onChangeView, accountLabel, isSigningOut, on
 }
 
 function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick<V3ShellChromeProps, 'currentView' | 'onChangeView'> & { onOpenMore: () => void; isMoreOpen: boolean }) {
+  const isSecondaryContext = secondaryItems.some((item) => isActive(item.view, currentView))
   return (
     <nav className="v3-bottom-nav" aria-label="Navegación principal">
       {primaryItems.map((item) => (
@@ -109,7 +110,7 @@ function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick
           <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
         </button>
       ))}
-      <button type="button" className={isMoreOpen ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet">
+      <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet">
         <span aria-hidden="true">•••</span><small>Más</small>
       </button>
     </nav>

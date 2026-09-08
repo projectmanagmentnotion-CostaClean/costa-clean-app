@@ -11,6 +11,7 @@ import { DuplicateReviewOverlay } from '../features/duplicates/DuplicateReviewOv
 import { buildExpenseDuplicateGroups } from '../features/duplicates/duplicateEngine'
 import { buildExpenseCreatePrefillFromExpense, type ExpenseCreatePrefill } from '../features/expenses/expenseCreatePrefill'
 import { ExpenseCreateFlow } from '../features/expenses/ExpenseCreateFlow'
+import { ExpenseEditFlow } from '../features/expenses/ExpenseEditFlow'
 import { ExpenseDetailCard } from '../features/expenses/ExpenseDetailCard'
 import { ExpensesList } from '../features/expenses/ExpensesList'
 import { buildExpenseFiscalSummary } from '../features/expenses/fiscalIntelligenceSummary'
@@ -20,6 +21,8 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import type { ExpenseModuleFilter } from '../app/moduleFilters'
+import { V3ExpensesPage } from '../v3/expenses/V3ExpensesPage'
 
 interface ExpensesPageProps {
   expenses: ExpenseListItem[]
@@ -32,6 +35,11 @@ interface ExpensesPageProps {
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialExpenseId?: string | null
+  onOpenExpenseDeepLink?: (expenseId: string) => void
+  onBackToExpenseList?: () => void
+  activeFilter?: ExpenseModuleFilter | null
 }
 
 export function ExpensesPage({
@@ -45,9 +53,15 @@ export function ExpensesPage({
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialExpenseId = null,
+  onOpenExpenseDeepLink,
+  onBackToExpenseList,
+  activeFilter = null,
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditFlow, setShowEditFlow] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
@@ -174,6 +188,14 @@ export function ExpensesPage({
     setShowCreateForm(false)
     setHasCreateFormDirty(false)
     setCreatePrefill(null)
+  }
+
+  if (v3Mode) {
+    return <>
+      <V3ExpensesPage expenses={expenses} allExpenses={allExpenses} error={error} initialExpenseId={initialExpenseId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreateExpense={() => setShowCreateForm(true)} onRefresh={onExpenseCreated} onEditExpense={(expense) => { setSelectedExpenseId(expense.id); setShowEditFlow(true) }} onCreateSimilarExpense={(expense) => { setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense)); setShowCreateForm(true) }} onOpenExpenseDeepLink={(expenseId) => onOpenExpenseDeepLink?.(expenseId)} onBackToExpenseList={() => onBackToExpenseList?.()} />
+      {showCreateForm ? <ActionFlowOverlay isOpen hasInternalFooter title="Nuevo gasto" description="El alta conserva el contrato real de gastos, duplicados y soporte documental." onClose={() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false) }}><ExpenseCreateFlow expenses={allExpenses} quotes={quotes} invoices={invoices} prefill={createPrefill} onOpenExistingExpense={(expenseId) => { setShowCreateForm(false); setCreatePrefill(null); onOpenExpenseDeepLink?.(expenseId) }} onRefreshData={onExpenseCreated} onCompleted={handleExpenseCreated} onCancel={() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false) }} onDirtyChange={setHasCreateFormDirty} /></ActionFlowOverlay> : null}
+      {showEditFlow && selectedExpense ? <ActionFlowOverlay isOpen hasInternalFooter title="Editar gasto" description="La edición conserva totales, IVA, soporte y revisión fiscal." onClose={() => { setShowEditFlow(false); setHasCreateFormDirty(false) }}><ExpenseEditFlow expense={selectedExpense} allExpenses={allExpenses} quotes={quotes} invoices={invoices} onRefreshData={onExpenseCreated} onCompleted={async () => { setShowEditFlow(false); setHasCreateFormDirty(false) }} onCancel={() => { setShowEditFlow(false); setHasCreateFormDirty(false) }} onDirtyChange={setHasCreateFormDirty} /></ActionFlowOverlay> : null}
+    </>
   }
 
   return (

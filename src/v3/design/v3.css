@@ -358,10 +358,26 @@
 .v3-line-row:last-child { border-bottom: 0; }
 .v3-line-row strong { font-variant-numeric: tabular-nums; }
 
+.v3-payments-page, .v3-payment-workspace, .v3-expenses-page, .v3-expense-workspace { gap: var(--v3-space-6); }
+.v3-module-controls { align-items: end; display: grid; gap: var(--v3-space-3); grid-template-columns: minmax(0, 1fr) minmax(160px, 220px); }
+.v3-payment-row__main, .v3-payment-row__side, .v3-expense-row__main, .v3-expense-row__side { display: grid; gap: var(--v3-space-1); }
+.v3-payment-row__main strong, .v3-payment-row__side > strong, .v3-expense-row__main strong, .v3-expense-row__side > strong { font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; }
+.v3-payment-row__main span, .v3-payment-row__main small, .v3-payment-row__side small, .v3-expense-row__main span, .v3-expense-row__main small, .v3-expense-row__side small { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-payment-row__side, .v3-expense-row__side { align-items: end; text-align: right; }
+.v3-form-grid, .v3-form { display: grid; gap: var(--v3-space-4); }
+.v3-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v3-form-grid .v3-field:last-of-type, .v3-form-grid .v3-action { grid-column: 1 / -1; }
+.v3-inline-message { margin: 0; color: var(--v3-color-accent-strong); }
+.v3-inline-message--error { color: var(--v3-color-danger); }
+.v3-assistive-note { background: var(--v3-color-accent-soft); border-left: 3px solid var(--v3-color-accent); display: grid; gap: var(--v3-space-2); padding: var(--v3-space-3); }
+.v3-assistive-note p, .v3-assistive-note small { color: var(--v3-color-text-secondary); margin: 0; }
+.v3-visually-hidden { height: 1px; margin: -1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }
+
 @media (max-width: 640px) {
   .app-shell--v3 .v3-content { padding-inline: var(--v3-space-4); padding-top: var(--v3-space-5); }
   .v3-invoice-controls { grid-template-columns: 1fr; }
   .v3-leads-controls { grid-template-columns: 1fr; }
+  .v3-module-controls, .v3-form-grid { grid-template-columns: 1fr; }
   .v3-invoice-row__side { text-align: right; }
 }
 

@@ -75,6 +75,8 @@ import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
 import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDeepLink'
 import { readLeadDeepLink, writeLeadDeepLink } from '../v3/navigation/leadDeepLink'
 import { readJobDeepLink, writeJobDeepLink } from '../v3/jobs/jobDeepLink'
+import { readPaymentDeepLink, writePaymentDeepLink } from '../v3/navigation/paymentDeepLink'
+import { readExpenseDeepLink, writeExpenseDeepLink } from '../v3/navigation/expenseDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 import { V3HomePage } from '../v3/home/V3HomePage'
 
@@ -1438,6 +1440,11 @@ export function AppShell({
                   invoices={invoicesWithCodes}
                   error={expenseError}
                   onExpenseCreated={refreshBilling}
+                  v3Mode={v3Enabled}
+                  initialExpenseId={readExpenseDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenExpenseDeepLink={(expenseId) => writeExpenseDeepLink(expenseId)}
+                  onBackToExpenseList={() => writeExpenseDeepLink(null, true)}
+                  activeFilter={expenseFilter}
                   activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
                   onClearFilter={() => clearModuleFilter('expenses')}
                   onUnsavedChange={updateUnsavedChanges}
@@ -1453,6 +1460,12 @@ export function AppShell({
                   quotes={quotesWithCodes}
                   error={paymentError}
                   onPaymentCreated={reloadInvoicesAndPayments}
+                  allPayments={paymentsWithCodes}
+                  v3Mode={v3Enabled}
+                  initialPaymentId={readPaymentDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenPaymentDeepLink={(paymentId) => writePaymentDeepLink(paymentId)}
+                  onBackToPaymentList={() => writePaymentDeepLink(null, true)}
+                  activeFilter={paymentFilter}
                   onOpenInvoiceDetail={handleOpenInvoiceDetail}
                   onOpenClientWorkspace={handleOpenClientWorkspace}
                   activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}

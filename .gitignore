@@ -57,3 +57,4 @@ test-results/
 qa-screenshots/private/
 qa-reports/private/
 .project-agent/private/
+.qa/*.json

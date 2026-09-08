@@ -1,6 +1,6 @@
-# Costa Clean App V3 — Stitch Design Review V3-0C
+# Costa Clean App V3 — Stitch Design Review V3-0E
 
-Status: `PARTIAL — WAITING_FOR_STITCH AND HUMAN FINAL APPROVAL — NO IMPLEMENTATION`. V3-0C selects Editorial SaaS Simplified as the only final visual direction, but the final Stitch batch generated only Home and Facturas list. Stitch remains the visual evidence source and the repository remains authoritative for behavior, data and security.
+Status: `READY FOR HUMAN FINAL APPROVAL — NO IMPLEMENTATION`. V3-0E closes the clean export for the 13-screen Editorial SaaS Simplified set. Stitch remains the visual evidence source and the repository remains authoritative for behavior, data and security.
 
 ## Rejected visual baseline
 
@@ -12,11 +12,11 @@ The former Direction B recommendation is invalidated. The old A/B/C canvases are
 
 Only the functional learnings survive: mobile-first, entity workspaces, app-like navigation, quick actions, contextual selection, bottom navigation and fewer clicks.
 
-## V3-0C Stitch project
+## V3-0E Stitch project
 
 | Direction | Stitch canvas | Evidence observed | State |
 | --- | --- | --- | --- |
-| Editorial SaaS Simplified | [Project 6884707630640107069](https://stitch.withgoogle.com/projects/6884707630640107069?hl=es&pli=1) | V3-0C prompt submitted in the existing canvas; simplified Home and Facturas list generated | `PARTIAL`; remaining screens and cleanup are `WAITING_FOR_STITCH` |
+| Editorial SaaS Simplified | [Project 6884707630640107069](https://stitch.withgoogle.com/projects/6884707630640107069?hl=es&pli=1) | Active canvas cleaned to 13 final screens plus optional design-system frame; obsolete frames moved out of the active export set | `PASS` for export scope; human visual approval pending |
 
 No generated demo identity, company, address, amount or contact is production data. No credentials, screenshots, tokens or private QA artifacts are stored in the repository.
 
@@ -52,7 +52,9 @@ The V3-0C prompt requests the complete final set. The visible canvas currently p
 12. Nueva factura full-screen
 13. Service workspace (explicit V3-0C addition)
 
-The human review must mark each screen `PASS`, `PARTIAL` or `WAITING_FOR_STITCH` in the canvases before V3-1 begins. Mobile anchors remain 390x844, 768x1024 and 1440x900; 320px safe-failure remains required for critical surfaces.
+The 13-screen inventory above is the final export contract. Mobile anchors remain
+390x844, 768x1024 and 1440x900; 320px safe-failure remains required for critical
+surfaces. Human approval is still required before V3-1 begins.
 
 ## Review checklist
 
@@ -62,7 +64,9 @@ The human review must mark each screen `PASS`, `PARTIAL` or `WAITING_FOR_STITCH`
 - [x] Simplified Home and Facturas evidence inspected.
 - [x] Contract review and NO-action elimination matrix recorded.
 - [x] Functional contracts, routes, Supabase and auth untouched.
-- [ ] Complete Stitch generation of all requested screens.
+- [x] Complete Stitch generation of all requested screens.
+- [x] Remove/archive obsolete frames from the active canvas and exclude them from the clean ZIP.
+- [x] Produce and inventory a clean ZIP containing only the 13 final screens plus the optional design-system frame.
 - [ ] Human approval of the final visual direction.
-- [ ] Complete screen-by-screen visual PASS for all requested screens at required mobile/tablet/desktop anchors.
+- [ ] Complete human screen-by-screen visual PASS at required mobile/tablet/desktop anchors.
 - [ ] V3-1 implementation authorization.

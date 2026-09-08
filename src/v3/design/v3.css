@@ -241,6 +241,18 @@
   min-width: 0;
 }
 
+.app-shell--v3 .v3-invoice-header {
+  display: grid;
+  gap: var(--v3-space-5);
+  margin-bottom: var(--v3-space-5);
+}
+
+.app-shell--v3 .cc-invoice-workspace--v3 .cc-secondary-summary,
+.app-shell--v3 .cc-invoice-workspace--v3 .cc-invoice-workspace__control-grid,
+.app-shell--v3 .cc-invoice-workspace--v3 .cc-invoice-workspace__workspace-notices {
+  display: none;
+}
+
 .app-shell--v3 .cc-invoice-workspace--v3 .cc-record-card,
 .app-shell--v3 .cc-invoice-workspace--v3 .cc-operational-list > * {
   border-color: var(--v3-color-border);

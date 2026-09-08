@@ -45,6 +45,7 @@ import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry }
 import { buildInvoicePdfBlob, buildInvoicePdfFileName, downloadInvoicePdf } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
+import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -551,6 +552,27 @@ export function InvoicesPage({
             ← Facturas
           </button>
         ) : null}
+        {v3Mode ? (
+          <div className="v3-invoice-header">
+            <V3PageTitle
+              eyebrow="Facturación"
+              title={detailInvoice ? `Factura ${detailInvoice.invoice_number ?? detailInvoice.display_code ?? detailInvoice.id}` : 'Facturas'}
+              description={detailInvoice ? 'Workspace financiero con el estado y las acciones reales de esta factura.' : 'Revisa emisión, cobro y saldo pendiente en una sola bandeja.'}
+              action={(
+                <V3PrimaryAction onClick={() => setShowCreateForm(true)}>
+                  + Nueva factura
+                </V3PrimaryAction>
+              )}
+            />
+            {!detailInvoice ? (
+              <V3KpiGroup>
+                <V3Kpi label="Cobrado" value={formatCurrency(collectedAmount)} hint="Cobro registrado" />
+                <V3Kpi label="Por cobrar" value={formatCurrency(pendingCollectionAmount)} hint="Saldo pendiente real" />
+                <V3Kpi label="Abiertas" value={String(openCollectionInvoices.length)} hint="Facturas con saldo" />
+              </V3KpiGroup>
+            ) : null}
+          </div>
+        ) : (
         <ExecutiveHeader
           eyebrow="Facturacion y cobro"
           title="Facturas"
@@ -584,6 +606,7 @@ export function InvoicesPage({
         >
           {collectionChecklistItems.length > 0 ? <ActionChecklist items={collectionChecklistItems} compact /> : null}
         </ExecutiveHeader>
+        )}
 
         {summaryKpis.length > 0 ? (
           <details className="cc-secondary-summary">

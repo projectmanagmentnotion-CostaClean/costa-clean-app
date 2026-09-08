@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-0E Clean Final Stitch Export Gate
 
-Status: `READY FOR HUMAN FINAL APPROVAL`. No production implementation is authorized.
+Status: `V3-0E CLOSED / HUMAN APPROVED`. V3-1 implementation is now active under its own contract.
 
 ## Scope closed in this work block
 
@@ -104,6 +104,5 @@ collection, invented LTV, invented margins and invented certifications.
 
 ## Exit condition
 
-V3-1 remains blocked until the human reviewer approves this complete export gate.
-The next implementation slice must be separately authorized; V3-0E itself does
-not implement the backlog.
+V3-0E is closed. V3-1 may proceed only within `docs/V3_IMPLEMENTATION_CONTRACT.md`;
+its authenticated visual QA remains a separate completion gate.

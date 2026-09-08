@@ -33,6 +33,11 @@ const v3TreeFiles = [
   'src/v3/closing/V3ClosingPage.tsx',
 ]
 
+const v3Styles = [
+  'src/v3/design/tokens.css',
+  'src/v3/design/v3.css',
+].map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
+
 function readV3Tree() {
   return v3TreeFiles.map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
 }
@@ -131,5 +136,12 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toMatch(/height\s*:\s*\d+px/i)
     expect(source).toContain('buildClosingSummary')
     expect(source).toContain('Guardar preparación')
+  })
+
+  it('uses one tokenized opaque dock clearance contract', () => {
+    expect(v3Styles).toContain('--v3-bottom-nav-clearance')
+    expect(v3Styles).toContain('padding: calc(var(--v3-space-7) + var(--v3-safe-top)) var(--v3-space-6) var(--v3-bottom-nav-clearance)')
+    expect(v3Styles).toContain('background: var(--v3-color-surface)')
+    expect(v3Styles).not.toMatch(/calc\(96px|padding-bottom:\s*96px/i)
   })
 })

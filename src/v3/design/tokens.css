@@ -40,6 +40,7 @@
   --v3-font-size-xl: 1.75rem;
   --v3-touch-min: 44px;
   --v3-touch-preferred: 48px;
+  --v3-bottom-nav-clearance: calc(var(--v3-touch-preferred) + var(--v3-space-2) + var(--v3-space-2) + var(--v3-safe-bottom) + var(--v3-space-3));
   --v3-content-max: 1120px;
   --v3-motion-fast: 140ms;
   --v3-motion-base: 220ms;

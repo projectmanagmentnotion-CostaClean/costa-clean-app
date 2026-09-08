@@ -242,7 +242,7 @@
   margin: 0 auto;
   max-width: var(--v3-content-max);
   min-height: 100dvh;
-  padding: calc(var(--v3-space-7) + var(--v3-safe-top)) var(--v3-space-6) calc(96px + var(--v3-safe-bottom));
+  padding: calc(var(--v3-space-7) + var(--v3-safe-top)) var(--v3-space-6) var(--v3-bottom-nav-clearance);
 }
 
 .v3-top-bar {
@@ -263,7 +263,7 @@
 .v3-top-bar__back { align-items: center; background: transparent; border: 0; border-radius: var(--v3-radius-sm); color: var(--v3-color-accent-strong); cursor: pointer; display: inline-flex; font-size: 1.4rem; justify-content: center; min-height: var(--v3-touch-preferred); min-width: var(--v3-touch-preferred); }
 .v3-top-bar__back:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
 
-.v3-bottom-nav { align-items: stretch; background: var(--v3-color-surface-solid-translucent); border-top: 1px solid var(--v3-color-border); bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); left: 0; padding: var(--v3-space-2) max(var(--v3-space-2), var(--v3-safe-left)) max(var(--v3-space-2), var(--v3-safe-bottom)) max(var(--v3-space-2), var(--v3-safe-right)); position: fixed; right: 0; z-index: var(--v3-z-dock); }
+.v3-bottom-nav { align-items: stretch; background: var(--v3-color-surface); border-top: 1px solid var(--v3-color-border); bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); left: 0; padding: var(--v3-space-2) max(var(--v3-space-2), var(--v3-safe-left)) max(var(--v3-space-2), var(--v3-safe-bottom)) max(var(--v3-space-2), var(--v3-safe-right)); position: fixed; right: 0; z-index: var(--v3-z-dock); }
 .v3-bottom-nav button { align-items: center; background: transparent; border: 0; border-radius: var(--v3-radius-md); color: var(--v3-color-text-secondary); cursor: pointer; display: grid; gap: 2px; justify-items: center; min-height: var(--v3-touch-preferred); padding: var(--v3-space-1); }
 .v3-bottom-nav button span { font-size: 1.2rem; line-height: 1; }
 .v3-bottom-nav button small { font: inherit; font-size: var(--v3-font-size-xs); }

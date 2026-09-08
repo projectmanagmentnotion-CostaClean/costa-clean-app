@@ -1,12 +1,12 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { getDSButtonClassNames, type DSButtonTone } from './buttonModel'
 import './design-system.css'
 
-type DSButtonTone = 'primary' | 'secondary' | 'danger'
-
-interface DSButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface DSButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
   tone?: DSButtonTone
   fullWidth?: boolean
+  loading?: boolean
 }
 
 export function DSButton({
@@ -14,20 +14,17 @@ export function DSButton({
   className,
   tone = 'primary',
   fullWidth = false,
+  loading = false,
   type = 'button',
+  disabled,
   ...props
 }: DSButtonProps) {
   return (
     <button
       type={type}
-      className={[
-        'ds-button',
-        `ds-button--${tone}`,
-        fullWidth ? 'ds-button--full' : '',
-        tone === 'primary' ? 'primary-button' : '',
-        tone === 'secondary' ? 'secondary-button' : '',
-        className ?? '',
-      ].filter(Boolean).join(' ')}
+      className={[getDSButtonClassNames({ tone, fullWidth, loading }), className ?? ''].filter(Boolean).join(' ')}
+      disabled={loading || disabled}
+      aria-busy={loading || undefined}
       {...props}
     >
       {children}

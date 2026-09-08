@@ -66,6 +66,21 @@
   box-shadow: var(--ds-shadow-sm);
 }
 
+.ds-button--tertiary {
+  background: transparent;
+  border-color: var(--ds-color-border);
+  color: var(--ds-color-text-muted);
+}
+
+.ds-button--tertiary:hover {
+  background: var(--ds-color-surface-raised);
+  color: var(--ds-color-text);
+}
+
+.ds-button--loading {
+  cursor: wait;
+}
+
 .ds-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;

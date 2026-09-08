@@ -431,6 +431,8 @@ Any change to shell, session or protected/public boundaries must satisfy the rep
 
 # STITCH-FE-04 — Shared operational primitives
 
+**Status:** `DONE_WITH_DOCUMENTED_DEBT`
+
 ### Objective
 
 Consolidate reusable patterns before module migrations.
@@ -472,6 +474,25 @@ Consolidate reusable patterns before module migrations.
 - advanced filters open on demand;
 - skeletons match final structure;
 - do not migrate all modules in one commit.
+
+### Closeout - 2026-09-08
+
+- Existing design-system primitives were inventoried and reused rather than
+  duplicated. The controlled reference integration is the authenticated
+  `Clientes` list, which already exercises `DSPageHeader` and
+  `DSListControlBar`.
+- `DSButton` now provides the four semantic action tones and accessible loading
+  and disabled states. `DSBadge` now exposes semantic tones and maps `danger`
+  to the existing critical visual treatment.
+- Focused primitive tests pass. No AppView, route, auth, backend, Supabase,
+  business, portal, notification or production contract changed.
+- Autonomous reference QA passes at `390x844`, `768x1024`, `1024x768` and
+  `1440x900`; dark/light passes at `390x844` and `1440x900`; reduced-motion
+  preference was exercised; no document horizontal overflow was observed.
+- Private evidence is retained at `qa-reports/private/fe04-primitives/` and is
+  not committed.
+- Remaining debt is intentional: timeline, duplicate-review visual shell and
+  broad master-detail/module migrations are deferred to later slices.
 
 ### Exit gate
 

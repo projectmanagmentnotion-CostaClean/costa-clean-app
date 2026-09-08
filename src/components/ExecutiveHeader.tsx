@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { DSButton } from '../design-system/components/DSButton'
 import { SeverityBadge, type SeverityTone } from './SeverityBadge'
 import './visual-ux-system.css'
 
@@ -51,14 +52,14 @@ export function ExecutiveHeader({
         {(primaryAction || secondaryAction) ? (
           <div className="cc-visual-executive-header__actions">
             {primaryAction ? (
-              <button type="button" className="primary-button" onClick={primaryAction.onClick}>
+              <DSButton tone="primary" onClick={primaryAction.onClick}>
                 {primaryAction.label}
-              </button>
+              </DSButton>
             ) : null}
             {secondaryAction ? (
-              <button type="button" className="secondary-button" onClick={secondaryAction.onClick}>
+              <DSButton tone="secondary" onClick={secondaryAction.onClick}>
                 {secondaryAction.label}
-              </button>
+              </DSButton>
             ) : null}
           </div>
         ) : null}

@@ -60,3 +60,27 @@ Evidence is private and local at
 `qa-reports/private/fe03-responsive-cert/`; `report.json` records every check.
 No evidence files are committed. FE-03 is complete; FE-04 may now be planned,
 but is not implemented by this certification.
+
+## FE-04 shared primitives reference integration - 2026-09-08
+
+Reference surface: authenticated `Clientes` list using the existing
+`DSPageHeader`/`ExecutiveHeader` path. The page actions now render through the
+shared `DSButton` contract; no list filtering or client workflow behavior was
+changed.
+
+- Reused: `DSCard`, `DSPageHeader`, `DSListControlBar`, `DSSearchInput`,
+  `DSFilterChip`, `DSActiveFilters`, `DSConfirmDialog`, `DSEmptyState`,
+  `DSErrorState`, `DSPageLoading`, `DSSkeleton`, `ToastProvider` and
+  `DSBottomActionBar`.
+- Extended: `DSButton` with primary, secondary, tertiary and danger semantic
+  tones plus disabled/loading state; `DSBadge` with semantic danger mapping.
+- `390x844`, `768x1024`, `1024x768`, `1440x900`: `PASS`; document
+  `scrollWidth` stayed within the viewport.
+- Dark/light: `PASS` at `390x844` and `1440x900`.
+- Keyboard semantics: focused primitive model tests and existing dialog/shell
+  keyboard behavior pass.
+- Reduced motion: exercised at every reference viewport.
+- Private visual evidence: `qa-reports/private/fe04-primitives/`.
+
+Documented debt: timeline, duplicate-review shell and broad master-detail
+migrations remain future slices. No duplicate component system was introduced.

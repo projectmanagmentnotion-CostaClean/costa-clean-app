@@ -1668,7 +1668,7 @@ input {
   }
 }
 
-/* CP-3B.2C: keep the five approved mobile destinations in one touch row. */
+/* CP-3B.2C: keep the six approved mobile destinations in one touch row. */
 @media (max-width: 900px) {
   .portal-root .portal-mobile-controls {
     position: fixed;
@@ -1687,6 +1687,15 @@ input {
     grid-template-columns: repeat(6, minmax(0, 1fr));
     min-height: calc(72px + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .portal-root .portal-mobile-nav > .portal-mobile-more {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    z-index: auto;
+    display: block;
+    min-width: 0;
   }
 
   .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger {
@@ -1794,12 +1803,13 @@ input {
   .portal-root .portal-mobile-more .portal-mobile-more__panel {
     right: 8px;
     bottom: calc(100% + 8px);
+    z-index: 30;
   }
 
   .portal-root .portal-whatsapp-action {
     width: 52px;
     right: 14px;
-    bottom: calc(80px + env(safe-area-inset-bottom));
+    bottom: calc(72px + env(safe-area-inset-bottom) + 16px);
     min-width: 52px;
     padding: 10px;
     border-radius: 50%;

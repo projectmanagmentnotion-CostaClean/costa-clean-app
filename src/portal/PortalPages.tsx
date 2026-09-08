@@ -70,7 +70,7 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
             href={getHref('properties')}
           />
           <PortalSummaryLink
-            label="Documentos"
+            label="Facturas"
             value={String(data.dashboard.availableDocumentCount)}
             hint="Vista base, sin descarga"
             href={getHref('documents')}
@@ -138,9 +138,9 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
   if (page === 'documents' || page === 'invoices') {
     return (
       <PortalPageFrame
-        eyebrow="Documentos"
-        title="Documentos"
-        description="Estados de demostración sin validez fiscal, importes reales, descarga ni modificación financiera."
+        eyebrow="Facturas"
+        title="Facturas"
+        description="Consulta el estado de las facturas disponibles en tu portal."
       >
         <div className="portal-record-list">
           {data.invoices.length > 0 ? data.invoices.map((invoice) => (
@@ -153,7 +153,7 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
             </article>
           )) : (
             <section className="portal-empty-state">
-              <p>No hay documentos privados disponibles en esta vista.</p>
+              <p>No hay facturas disponibles en esta vista.</p>
             </section>
           )}
         </div>
@@ -328,7 +328,7 @@ function renderProfilePage(pathname: string, data: PortalFoundationData, onRefre
     <PortalPageFrame
       eyebrow="Cuenta"
       title="Mi perfil"
-      description="Vista oficial de solo lectura con corrección revisable."
+      description="Consulta tus datos de cuenta y solicita cambios para revisión."
     >
       <section className="portal-detail-list" aria-label="Datos del perfil">
         <PortalDetailRow label="Nombre" value={data.profile.fullNameLabel} />
@@ -340,12 +340,12 @@ function renderProfilePage(pathname: string, data: PortalFoundationData, onRefre
 
       <section className="portal-decision-block portal-decision-block--compact">
         <div>
-          <span className="portal-decision-block__label">Corrección revisable</span>
-          <h2>Solicitar cambios de perfil</h2>
-          <p>Un StepFlow de cuatro pasos permite seleccionar campos, revisar valores y enviar la petición sin tocar tablas internas.</p>
+          <span className="portal-decision-block__label">Solicitud revisable</span>
+          <h2>Solicitar cambio de datos</h2>
+          <p>Indica qué debe cambiar. Costa Clean revisará la solicitud antes de actualizar la ficha.</p>
         </div>
         <a className="portal-button portal-button--primary" href={withCurrentSearch('/portal/profile/correction/fields')}>
-          Iniciar corrección
+          Solicitar cambio
         </a>
       </section>
 
@@ -429,7 +429,7 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
     <PortalPageFrame
       eyebrow="Espacios"
       title="Propiedades"
-      description="Listado compacto y aislado. No existe acceso directo a la tabla canónica de propiedades."
+      description="Tus propiedades registradas y su contexto operativo disponible."
     >
       <div className="portal-record-list">
         {data.properties.length > 0 ? data.properties.map((property) => (
@@ -447,7 +447,7 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
         )) : (
           <section className="portal-empty-state">
             <p>Esta propiedad no está disponible.</p>
-            <p>¿Falta una propiedad? Contactar con Costa Clean.</p>
+            <p>¿Falta una propiedad? Solicita ayuda a Costa Clean.</p>
           </section>
         )}
       </div>
@@ -456,7 +456,7 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
         <section className="portal-property-detail">
           <div className="portal-property-detail__header">
             <div>
-              <p className="portal-eyebrow">Referencia pública {data.propertyDetail.publicRefLabel}</p>
+              <p className="portal-eyebrow">Propiedad registrada</p>
               <h2>{data.propertyDetail.nameLabel}</h2>
             </div>
             <span className="portal-status portal-status--info">{data.propertyDetail.reviewStateLabel}</span>
@@ -472,10 +472,10 @@ function renderPropertiesPage(pathname: string, data: PortalFoundationData, onRe
             <div>
               <span className="portal-decision-block__label">Corrección revisable</span>
               <h2>Solicitar cambios de propiedad</h2>
-              <p>La referencia pública visible queda aislada del identificador interno y la corrección se tramita mediante revisión.</p>
+              <p>Estás enviando una solicitud a Costa Clean. La ficha solo cambia después de su revisión.</p>
             </div>
             <a className="portal-button portal-button--primary" href={`${propertyBasePath}/correction/fields`}>
-              Iniciar corrección
+              Solicitar corrección
             </a>
           </section>
         </section>

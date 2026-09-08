@@ -41,10 +41,10 @@ interface PropertyFlowProps extends Omit<ReviewedChangeFlowProps, 'scope' | 'sco
 }
 
 const stepLabels: Record<ChangeStep, string> = {
-  fields: 'Datos',
-  values: 'Cambios',
-  review: 'Revisar',
-  success: 'Enviado',
+  fields: 'Indicar cambios',
+  values: 'Añadir información',
+  review: 'Revisar solicitud',
+  success: 'Confirmación',
 }
 
 export function PortalProfileChangeFlow(props: ProfileFlowProps) {
@@ -214,13 +214,15 @@ function ReviewedChangeFlow({
   }
 
   const currentStepLabel = stepLabels[step]
+  const currentStepNumber = stepOrder.indexOf(step) + 1
   const capabilityTone = capabilityStatus === 'REAL' ? 'success' : capabilityStatus === 'UNAVAILABLE' ? 'warning' : 'danger'
 
   return (
     <section className="portal-form-section" aria-label={scope === 'profile' ? 'Cambio de perfil' : 'Cambio de propiedad'}>
       <header className="portal-page__header portal-page__header--compact">
         <p className="portal-eyebrow">{scopeLabel}</p>
-        <h2>{scope === 'profile' ? 'Solicitud revisable de perfil' : 'Solicitud revisable de propiedad'}</h2>
+        <h2>{scope === 'profile' ? 'Solicitar cambio de datos' : 'Solicitar corrección'}</h2>
+        <p>Estás enviando una solicitud a Costa Clean. La revisaremos antes de actualizar la ficha.</p>
         <p>{capabilityMessage}</p>
         <span className={`portal-status portal-status--${capabilityTone}`}>{capabilityStatus}</span>
       </header>
@@ -247,7 +249,7 @@ function ReviewedChangeFlow({
 
         <section className="portal-stepflow__surface">
           <div className="portal-stepflow__surface-header">
-            <p className="portal-eyebrow">Paso {currentStepLabel}</p>
+            <p className="portal-eyebrow">Paso {currentStepNumber} de {stepOrder.length}</p>
             <h3>{currentStepLabel}</h3>
           </div>
 

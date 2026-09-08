@@ -115,3 +115,18 @@ metrics while those data sources are not meaningful.
   open Stitch project was a client-portal project and was not accepted as the
   CRM FE-05 reference; no new Stitch screen was created.
 - No production, Supabase, notification, portal or route changes were made.
+# CP-3B.2 authenticated portal implementation evidence
+
+Status: `BLOCKED_FOR_AUTHENTICATED_QA`
+
+- Stitch project: Costa Clean Client Portal (`7915940018854753326`)
+- Approved iPhone references: `PORTAL_IPHONE_PROFILE_V2`, `PORTAL_IPHONE_PROPERTIES_LIST_V2`, `PORTAL_IPHONE_PROPERTY_DETAIL_V2`, `PORTAL_IPHONE_PROPERTY_CORRECTION_V2`
+- Canonical viewport: `390x844`
+- Scope: Profile, Properties List, Property Detail and reviewed Property Correction only
+- Design approval: `OWNER_APPROVED`
+- Authenticated browser evidence: `NOT_EXECUTED` (no QA portal tab was available in the existing browser session)
+- Runtime visual evidence at `390x844`: `NOT_EXECUTED`
+- Tablet and desktop evidence: `NOT_IN_SCOPE`
+- Production evidence: `NOT_EXECUTED`
+
+The Stitch copy-cleanup request was submitted against only the four approved V2 frames. No legacy frame was edited or deleted by the repository work.

@@ -35,7 +35,9 @@ Desktop approval never overrides an unresolved mobile discrepancy.
 | QUOTE REQUEST / confirmation | pending | pending | interpolate only | WAITING_FOR_STITCH | existing lead contract |
 | PORTAL LOGIN | pending | pending | interpolate only | WAITING_FOR_STITCH | `src/portal/auth` |
 | PORTAL HOME | pending | pending | interpolate only | WAITING_FOR_STITCH | `src/portal` |
-| PORTAL LIST/DETAIL | pending | pending | interpolate only | WAITING_FOR_STITCH | portal contracts |
+| PORTAL PROFILE | n/a | `PORTAL_IPHONE_PROFILE_V2` | not in scope | OWNER_APPROVED | portal contracts |
+| PORTAL PROPERTIES LIST/DETAIL | n/a | `PORTAL_IPHONE_PROPERTIES_LIST_V2`, `PORTAL_IPHONE_PROPERTY_DETAIL_V2` | not in scope | OWNER_APPROVED | portal contracts |
+| PORTAL PROPERTY CORRECTION | n/a | `PORTAL_IPHONE_PROPERTY_CORRECTION_V2` | not in scope | OWNER_APPROVED | reviewed-change contract |
 | INVOICES / list | pending | pending | interpolate only | WAITING_FOR_STITCH | portal invoice contract |
 | INVOICES / detail | pending | pending | interpolate only | WAITING_FOR_STITCH | private document contract |
 
@@ -45,9 +47,9 @@ Do not assign numeric/aesthetic values until Stitch evidence exists.
 
 | Token family | Status | Source |
 |---|---|---|
-| colors | WAITING_FOR_STITCH | pending approved screen(s) |
-| typography | WAITING_FOR_STITCH | pending approved screen(s) |
-| spacing | WAITING_FOR_STITCH | pending approved screen(s) |
+| colors | OWNER_APPROVED | Costa Clean Client Portal, project `7915940018854753326`, iPhone V2 frames |
+| typography | OWNER_APPROVED | Costa Clean Client Portal, project `7915940018854753326`, iPhone V2 frames |
+| spacing | OWNER_APPROVED | Costa Clean Client Portal, project `7915940018854753326`, iPhone V2 frames |
 | grid / containers | WAITING_FOR_STITCH | pending approved screen(s) |
 | radii | WAITING_FOR_STITCH | pending approved screen(s) |
 | borders | WAITING_FOR_STITCH | pending approved screen(s) |
@@ -59,6 +61,31 @@ Do not assign numeric/aesthetic values until Stitch evidence exists.
 | navigation geometry | WAITING_FOR_STITCH | pending approved screen(s) |
 | motion / easing / duration | WAITING_FOR_STITCH | pending approved screen(s) |
 | layering / overlays | WAITING_FOR_STITCH | pending approved screen(s) |
+
+## CP-3B.2 iPhone portal reference
+
+- `project`: Costa Clean Client Portal (`7915940018854753326`)
+- `frames`: `PORTAL_IPHONE_PROFILE_V2`, `PORTAL_IPHONE_PROPERTIES_LIST_V2`, `PORTAL_IPHONE_PROPERTY_DETAIL_V2`, `PORTAL_IPHONE_PROPERTY_CORRECTION_V2`
+- `viewport`: `390x844`
+- `status`: `OWNER_APPROVED` for Profile, Properties List, Property Detail and Property Correction only
+- `navigation`: compact mobile portal navigation with Inicio, Servicios, Propiedades, Facturas and Cuenta; correction flow uses a clear back action
+- `layout`: customer identity first on Profile; compact scannable property rows on the list; property identity/address before operational context on detail; focused reviewed-change form on correction
+- `typography`: Be Vietnam Pro
+- `colors`: Primary `#00ABEC`; Secondary `#0077C0`; Tertiary `#F8FAFC`; Neutral `#1E293B`
+- `spacing`: 20px mobile gutter; minimum 48px interactive area observed in Stitch
+- `radii`: 8px Round Eight
+- `buttons`: one dominant action per screen; secondary contact/back actions remain subordinate
+- `list pattern`: interactive property rows with public name, address and operational status/date only
+- `detail pattern`: property/address, supported service context, related reviewed requests and `Solicitar corrección`
+- `correction pattern`: select fields, enter requested values, review, send; explicit pending/review language; no direct CRM update claim
+- `safe-area`: retain top and bottom insets; fixed navigation must not cover content or primary actions
+- `responsive boundary`: this approval is iPhone-only; tablet and desktop remain pending
+
+## CP-3B.2 exceptions
+
+- Representative names, addresses and dates in Stitch are visual examples only.
+- Runtime contracts remain authoritative for available data and reviewed-change mutations.
+- Unsupported financial, access-code, staff, certification, direct-edit and download concepts are not part of this approved surface.
 
 ## Extraction schema
 

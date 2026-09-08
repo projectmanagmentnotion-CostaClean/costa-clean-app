@@ -101,8 +101,18 @@ V3-3B is closed after authenticated runtime QA and zero exact fixture residue.
 The QA-only hard cleanup harness is `scripts/qa/cleanup-v3-3b-fixtures.mjs` and
 never belongs to the product API or production cleanup path.
 
+## V3-3C — Alerts + Closings — IN IMPLEMENTATION
+
+- [x] Add dedicated V3 alerts list/workspace using real alert decisions and routing.
+- [x] Add unified V3 closing workspace for quarter/year periods using the existing deterministic summary engine.
+- [x] Preserve fiscal incidence filters and save through existing quarterly/annual APIs only.
+- [x] Keep fake settings, delivery/read claims, official certification and unsupported fiscal states out of the V3 tree.
+- [x] Extend the static design guardian for alerts and closings.
+- [ ] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
+- [ ] Close with full tests, lint, build, commit and push.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated
-QA evidence and no financial, route, auth or deep-link regression. V3-3C is the
-next separate sprint and is not started by this change.
+QA evidence and no financial, route, auth or deep-link regression. V3-3C remains
+open until its authenticated visual and release gates pass.

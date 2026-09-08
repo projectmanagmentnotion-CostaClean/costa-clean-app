@@ -79,6 +79,8 @@ import { readPaymentDeepLink, writePaymentDeepLink } from '../v3/navigation/paym
 import { readExpenseDeepLink, writeExpenseDeepLink } from '../v3/navigation/expenseDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 import { V3HomePage } from '../v3/home/V3HomePage'
+import { V3AlertsPage } from '../v3/alerts/V3AlertsPage'
+import { V3ClosingPage } from '../v3/closing/V3ClosingPage'
 
 interface AppShellProps {
   theme: AppTheme
@@ -1241,17 +1243,25 @@ export function AppShell({
                 }}
               />
               {currentView === 'alerts' ? (
-                <AlertsCenterPage
-                  alerts={automationAlerts}
-                  decisions={alertDecisions}
-                  onOpenAlert={handleOpenAutomationAlert}
-                  onMarkRead={handleMarkAlertRead}
-                  onAcknowledge={handleAcknowledgeAlert}
-                  onDismiss={handleDismissAlert}
-                  onReopen={handleReopenAlert}
-                />
+                v3Enabled ? <V3AlertsPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} /> : <AlertsCenterPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} />
               ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
-                <FiscalClosingPage
+                v3Enabled ? <V3ClosingPage
+                  availableYears={fiscalClosingAvailableYears}
+                  initialSelection={fiscalClosingInitialSelection}
+                  quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}
+                  annualSummaryByYear={annualClosingSummaryByYear}
+                  quarterlyClosings={quarterlyClosings}
+                  annualClosings={annualClosings}
+                  invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
+                  expenses={expenses}
+                  quotes={quotesWithCodes}
+                  jobs={jobsWithCodes}
+                  error={quarterlyClosingError ?? annualClosingError}
+                  onNavigateToIncidence={handleFiscalClosingNavigation}
+                  onSaveQuarterlyClosing={handleSaveQuarterlyClosing}
+                  onSaveAnnualClosing={handleSaveAnnualClosing}
+                /> : <FiscalClosingPage
                   availableYears={fiscalClosingAvailableYears}
                   initialSelection={fiscalClosingInitialSelection}
                   quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}

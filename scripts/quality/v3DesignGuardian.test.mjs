@@ -29,6 +29,8 @@ const v3TreeFiles = [
   'src/v3/expenses/V3ExpensesPage.tsx',
   'src/v3/expenses/V3ExpenseRow.tsx',
   'src/v3/expenses/V3ExpenseWorkspace.tsx',
+  'src/v3/alerts/V3AlertsPage.tsx',
+  'src/v3/closing/V3ClosingPage.tsx',
 ]
 
 function readV3Tree() {
@@ -114,5 +116,20 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toMatch(/height\s*:\s*\d+px/i)
     expect(source).toContain('Estimación fiscal asistida')
     expect(source).toContain('Origen automático')
+  })
+
+  it('keeps alerts and closings on real contracts without fake state or settings', () => {
+    const source = [
+      'src/v3/alerts/V3AlertsPage.tsx',
+      'src/v3/closing/V3ClosingPage.tsx',
+    ].map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
+    for (const forbiddenName of ['NotificationsSettings', 'SettingsPage', 'read_at', 'delivered', 'verified', 'GPS', 'eIDAS', 'biometría', 'AEAT', 'certificado oficial']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+    expect(source).toContain('buildClosingSummary')
+    expect(source).toContain('Guardar preparación')
   })
 })

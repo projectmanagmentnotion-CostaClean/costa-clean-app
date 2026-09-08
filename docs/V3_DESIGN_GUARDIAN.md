@@ -1,6 +1,6 @@
-# V3 Design Guardian — V3-3B
+# V3 Design Guardian — V3-3C
 
-Status: `CLOSED / CERTIFIED — V3-3B`
+Status: `V3-3C IMPLEMENTATION CHECK — AUTHENTICATED CERTIFICATION PENDING`
 
 ## Review boundary
 
@@ -44,6 +44,8 @@ filter sheet, safe-area padding and no horizontal overflow.
 - Forbidden legacy visual classes in the dedicated V3 tree: `0`.
 - Legacy visual dependency in the rendered V3 invoice tree: `0`.
 - Legacy visual dependency in the rendered V3 Home tree: `0`.
+- Legacy visual dependency in the rendered V3 Alerts and Closings trees: `0`.
+- Fake alert lifecycle/settings/fiscal certification claims in new V3 trees: `0`.
 - Home queue entries at maximum: `3`.
 - `prefers-reduced-motion`: covered by the V3 stylesheet.
 

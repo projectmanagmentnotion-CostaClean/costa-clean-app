@@ -25,6 +25,7 @@ import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoi
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { DSPageHeader } from '../design-system/components/DSPageHeader'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import { V3ClientsPage } from '../v3/clients/V3ClientsPage'
 
 interface ClientsPageProps {
   clients: ClientListItem[]
@@ -42,9 +43,13 @@ interface ClientsPageProps {
   onOpenInvoiceDetail: (invoiceId: string) => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialClientId?: string | null
+  onCreateInvoiceForClient?: (client: ClientListItem) => void
+  onCreateQuoteForClient?: (client: ClientListItem) => void
 }
 
-export function ClientsPage({
+function LegacyClientsPage({
   clients,
   properties,
   jobs,
@@ -416,4 +421,11 @@ export function ClientsPage({
       )}
     </section>
   )
+}
+
+export function ClientsPage(props: ClientsPageProps) {
+  if (props.v3Mode) {
+    return <V3ClientsPage clients={props.clients} properties={props.properties} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} recurringInvoicePlans={props.recurringInvoicePlans} error={props.error} initialClientId={props.initialClientId} onCreateInvoiceForClient={(client) => props.onCreateInvoiceForClient?.(client)} onCreateQuoteForClient={(client) => props.onCreateQuoteForClient?.(client)} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenQuoteDetail={props.onOpenQuoteDetail} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
+  }
+  return <LegacyClientsPage {...props} />
 }

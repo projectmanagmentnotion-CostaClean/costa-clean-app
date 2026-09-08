@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-1 Implementation Contract
 
-Status: `CERTIFIED — V3-1R AUTHENTICATED VISUAL QA`.
+Status: `CERTIFIED — V3-2A AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -36,6 +36,18 @@ never used as business state or persisted in local storage.
   `OperationalListItem`, `cc-record-card` or `cc-list-toolbar`.
 - Legacy `InvoicesPage` remains the V2 branch only; it is an orchestration
   boundary and retains the real callbacks/APIs.
+- `src/v3/clients/` owns the V3 client list, client workspace and contact action
+  presentation. It does not import legacy list/workspace visual components.
+- Client relations are derived from existing IDs. Financial totals use current
+  invoice/payment data; no LTV, margin, delivery or tracking state is invented.
+
+## V3-2A useful actions
+
+- WhatsApp uses a normalized `wa.me` URL with optional contextual text.
+- Call uses a validated `tel:` URL.
+- Email uses a validated `mailto:` URL.
+- New invoice and new quote use the existing create flows and client prefills.
+- No action claims sent, delivered, read, verified, GPS, tracking or telemetry.
 
 ## Design Guardian checks
 
@@ -69,5 +81,5 @@ opaque local-only routing state.
 - No production deploy, migration, production write or main-branch change.
 
 Final authenticated visual certification is recorded in
-`docs/V3_DESIGN_GUARDIAN.md`. V3-2 remains a separate future sprint and is not
+`docs/V3_DESIGN_GUARDIAN.md`. V3-2B remains a separate future sprint and is not
 started by this change.

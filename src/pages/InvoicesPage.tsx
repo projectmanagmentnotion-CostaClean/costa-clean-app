@@ -544,22 +544,56 @@ export function InvoicesPage({
 
   if (v3Mode) {
     return (
-      <V3InvoicesPage
-        invoices={invoices}
-        allInvoices={allInvoices}
-        clients={clients}
-        payments={payments}
-        error={error}
-        initialInvoiceId={selectedInvoiceId}
-        onCreateInvoice={() => setShowCreateForm(true)}
-        onDownloadInvoice={downloadInvoiceDocument}
-        onSettleInvoice={settleInvoiceFromList}
-        isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
-        onOpenDocument={openInvoiceDocument}
-        onViewPayments={onViewPayments}
-        onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
-        onBackToInvoiceList={() => onBackToInvoiceList?.()}
-      />
+      <>
+        <V3InvoicesPage
+          invoices={invoices}
+          allInvoices={allInvoices}
+          clients={clients}
+          payments={payments}
+          error={error}
+          initialInvoiceId={selectedInvoiceId}
+          onCreateInvoice={() => setShowCreateForm(true)}
+          onDownloadInvoice={downloadInvoiceDocument}
+          onSettleInvoice={settleInvoiceFromList}
+          isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
+          onOpenDocument={openInvoiceDocument}
+          onViewPayments={onViewPayments}
+          onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
+          onBackToInvoiceList={() => onBackToInvoiceList?.()}
+        />
+        {isCreateFormVisible ? (
+          <ActionFlowOverlay
+            isOpen={isCreateFormVisible}
+            title="Nueva factura"
+            description="La emisión se abre en el flujo financiero actual y conserva el cliente precargado."
+            onClose={() => {
+              setShowCreateForm(false)
+              setLocalCreatePrefill(null)
+              onPrefillConsumed()
+            }}
+          >
+            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando el formulario de emisión." />}>
+              <LazyInvoiceCreateFlow
+                clients={clients}
+                properties={properties}
+                jobs={jobs}
+                quotes={quotes}
+                invoices={allInvoices}
+                expenses={expenses}
+                onRefreshData={onInvoiceCreated}
+                onCompleted={handleInvoiceCreated}
+                prefill={effectiveCreatePrefill}
+                onCancel={() => {
+                  setShowCreateForm(false)
+                  setLocalCreatePrefill(null)
+                  onPrefillConsumed()
+                }}
+                onDirtyChange={setHasCreateFormDirty}
+              />
+            </Suspense>
+          </ActionFlowOverlay>
+        ) : null}
+      </>
     )
   }
 

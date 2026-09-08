@@ -36,7 +36,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { buildJobCreatePrefillFromQuote } from '../features/jobs/jobCreatePrefill'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
-import { buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
+import { buildInvoiceCreatePrefillFromClient, buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
 import { buildInvoicePaymentSummary } from '../features/invoices/paymentState'
 import { settleInvoiceByTransfer } from '../features/financial/financialWriteApi'
@@ -61,6 +61,7 @@ import { buildRecurringPlanPersistenceInput } from '../features/recurringInvoice
 import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../features/recurringInvoices/recurringInvoiceApi'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
 import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relationshipLabels'
+import { buildQuoteCreatePrefillFromClient } from '../features/quotes/quoteCreatePrefill'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/useJobWorkspaceNavigation'
@@ -70,6 +71,7 @@ import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../fe
 import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
 import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
 import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
+import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 
 interface AppShellProps {
@@ -204,6 +206,7 @@ export function AppShell({
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
+  const [quoteCreatePrefill, setQuoteCreatePrefill] = useState<ReturnType<typeof buildQuoteCreatePrefillFromClient> | null>(null)
   const {
     isCurrentViewDataLoading,
     syncStatus,
@@ -854,6 +857,26 @@ export function AppShell({
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
+  const handleCreateInvoiceForClient = useCallback((client: Parameters<typeof buildInvoiceCreatePrefillFromClient>[0]) => {
+    runWithNavigationGuard(() => {
+      setInvoiceCreatePrefill(buildInvoiceCreatePrefillFromClient(client))
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear factura',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleCreateQuoteForClient = useCallback((client: Parameters<typeof buildQuoteCreatePrefillFromClient>[0]) => {
+    runWithNavigationGuard(() => {
+      setQuoteCreatePrefill(buildQuoteCreatePrefillFromClient(client))
+      commitViewChange('quotes')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas el presupuesto ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear presupuesto',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
   const handleOpenPropertyWorkspace = useCallback((propertyId: string, tab: PropertyWorkspaceTab = 'summary') => {
     runWithNavigationGuard(() => {
       setPropertyWorkspaceLocation({ propertyId, tab })
@@ -1250,6 +1273,10 @@ export function AppShell({
                   onOpenJobWorkspace={handleOpenJobWorkspace}
                   onOpenQuoteDetail={handleOpenQuoteDetail}
                   onOpenInvoiceDetail={handleOpenInvoiceDetail}
+                  v3Mode={v3Enabled}
+                  initialClientId={readClientDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onCreateInvoiceForClient={handleCreateInvoiceForClient}
+                  onCreateQuoteForClient={handleCreateQuoteForClient}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
                 />
@@ -1281,6 +1308,8 @@ export function AppShell({
                   error={quoteError}
                   onQuoteCreated={refreshOperations}
                   onCreateJobFromQuote={handleCreateJobFromQuote}
+                  initialCreatePrefill={quoteCreatePrefill}
+                  onInitialCreatePrefillConsumed={() => setQuoteCreatePrefill(null)}
                   activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
                   onClearFilter={() => clearModuleFilter('quotes')}
                   onUnsavedChange={updateUnsavedChanges}

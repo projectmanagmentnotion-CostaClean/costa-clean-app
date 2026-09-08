@@ -25,6 +25,17 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Complete 768x1024 regression and desktop no-regression.
 - [x] Close V3-1R with QA evidence and final commit/push.
 
+## V3-2A — Clients + real contact actions — CLOSED
+
+- [x] Add dedicated `src/v3/clients/` list and full-screen client workspace.
+- [x] Render only real client, property, service, quote, invoice, payment and recurring-plan relations.
+- [x] Add guarded WhatsApp, `tel:` and `mailto:` actions with valid-number/email checks.
+- [x] Connect contextual invoice and quote creation to existing financial/commercial flows with client prefills.
+- [x] Preserve `?v3=1&view=clients&client=<id>` and list/back restoration.
+- [x] Add dedicated-tree, deep-link, contact URL and workspace tests.
+- [x] Complete authenticated QA at 390x844, 430x932 and 768x1024.
+- [x] Close with lint, build, full tests, commit and push.
+
 ## V3-2 — Core entity workspaces
 
 - Invoice, quote, client, lead and service list/workspace patterns.
@@ -38,6 +49,6 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 
 ## Exit rule
 
-V3-1R is closed with authenticated QA evidence and no financial, route, auth or
-deep-link regression. V3-2 remains a separate future sprint and is not started
-by this change.
+V3-1R and V3-2A are closed with authenticated QA evidence and no financial,
+route, auth or deep-link regression. V3-2B remains a separate future sprint and
+is not started by this change.

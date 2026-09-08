@@ -2,6 +2,7 @@ import { getServiceTypeLabel } from '../../app/displayFormat'
 import { getJobBillingLines } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import { simplifyLineConcept } from '../quotes/lineConcepts'
+import type { ClientListItem } from '../clients/types'
 
 export interface InvoiceCreatePrefillLine {
   concept: string
@@ -74,5 +75,19 @@ export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreat
     notes: buildInvoiceNotes(job),
     lines: billingLines,
     title: job.display_code ?? job.id,
+  }
+}
+
+export function buildInvoiceCreatePrefillFromClient(client: ClientListItem): InvoiceCreatePrefill {
+  return {
+    request_id: createPrefillId(),
+    origin_kind: 'manual',
+    job_id: '',
+    quote_id: '',
+    client_id: client.id,
+    property_id: '',
+    notes: '',
+    lines: [],
+    title: client.display_code ?? client.full_name,
   }
 }

@@ -48,6 +48,8 @@ interface QuotesPageProps {
   error: string | null
   onQuoteCreated: () => Promise<void>
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  initialCreatePrefill?: QuoteCreatePrefill | null
+  onInitialCreatePrefillConsumed?: () => void
   activeFilterLabel: string | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
@@ -64,6 +66,8 @@ export function QuotesPage({
   error,
   onQuoteCreated,
   onCreateJobFromQuote,
+  initialCreatePrefill = null,
+  onInitialCreatePrefillConsumed,
   activeFilterLabel,
   onClearFilter,
   onUnsavedChange,
@@ -71,20 +75,24 @@ export function QuotesPage({
 }: QuotesPageProps) {
   const toast = useToast()
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
-  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showCreateForm, setShowCreateForm] = useState(Boolean(initialCreatePrefill))
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
-  const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(null)
+  const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(initialCreatePrefill)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([])
   const [visibleQuotes, setVisibleQuotes] = useState<QuoteListItem[]>(quotes)
   const [bulkDialog, setBulkDialog] = useState<{ mode: 'sent' | 'rejected' | 'expired' | 'archive'; title: string; description: string } | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (initialCreatePrefill) onInitialCreatePrefillConsumed?.()
+  }, [initialCreatePrefill, onInitialCreatePrefillConsumed])
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null

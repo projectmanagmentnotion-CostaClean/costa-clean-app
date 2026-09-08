@@ -1,4 +1,5 @@
 import type { QuoteListItem } from './types'
+import type { ClientListItem } from '../clients/types'
 
 export interface QuoteCreatePrefillLine {
   concept: string
@@ -46,5 +47,15 @@ export function buildQuoteCreatePrefillFromQuote(quote: QuoteListItem): QuoteCre
     property_id: quote.property_id ?? '',
     notes: quote.notes?.trim() || '',
     lines,
+  }
+}
+
+export function buildQuoteCreatePrefillFromClient(client: ClientListItem): QuoteCreatePrefill {
+  return {
+    request_id: createPrefillId(),
+    client_id: client.id,
+    property_id: '',
+    notes: '',
+    lines: [],
   }
 }

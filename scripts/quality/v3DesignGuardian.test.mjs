@@ -6,6 +6,9 @@ const v3TreeFiles = [
   'src/v3/components/V3Primitives.tsx',
   'src/v3/invoices/V3InvoicesPage.tsx',
   'src/v3/shell/V3ShellChrome.tsx',
+  'src/v3/clients/V3ClientsPage.tsx',
+  'src/v3/clients/V3ContactActions.tsx',
+  'src/v3/clients/contactActions.ts',
 ]
 
 function readV3Tree() {

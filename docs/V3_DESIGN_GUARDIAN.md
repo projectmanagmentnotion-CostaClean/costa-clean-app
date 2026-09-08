@@ -1,10 +1,11 @@
-# V3 Design Guardian — V3-1R
+# V3 Design Guardian — V3-2A
 
-Status: `CERTIFIED — V3-1R`
+Status: `CERTIFIED — V3-2A`
 
 ## Review boundary
 
-The guardian reviews the V3 shell and invoice list/workspace against the
+The guardian reviews the V3 shell, invoice list/workspace and client
+list/workspace against the
 approved Stitch Editorial Simplified reference. It is a reviewer, not a source
 of screen-specific invention. New V3 screens must reuse the existing tokens,
 buttons, inputs, status, sections, rows, workspace, navigation and sheet
@@ -53,3 +54,18 @@ filter sheet, safe-area padding and no horizontal overflow.
 - QA fixture cleanup: PASS; residue verified `0`.
 
 Production was not accessed or modified.
+
+## V3-2A client evidence
+
+- Client list and workspace: PASS at `390x844`, `430x932`, `768x1024`.
+- Real QA rows and relations: PASS; invoice balance and historical totals came
+  from existing invoice/payment data.
+- WhatsApp, call and email: PASS with valid contact data; invalid contact data
+  is guarded and hidden.
+- Invoice prefill: PASS; existing financial create flow selected the client.
+- Quote prefill: PASS; existing commercial quick flow opened with client
+  context.
+- Client deep link/back: PASS; `client=<id>` opened the workspace and back
+  restored the client list.
+- Legacy visual dependency in `src/v3/clients`: `0`.
+- Hardcoded V3 colors outside tokens: `0`.

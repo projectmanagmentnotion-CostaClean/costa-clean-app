@@ -43,8 +43,8 @@ const portalNavigationItems: Array<{
   group: 'primary' | 'more'
 }> = [
   { page: 'home', label: 'Inicio', shortLabel: 'Inicio', group: 'primary' },
-  { page: 'services', label: 'Servicios', shortLabel: 'Servicios', group: 'primary' },
   { page: 'properties', label: 'Propiedades', shortLabel: 'Inmuebles', group: 'primary' },
+  { page: 'services', label: 'Servicios', shortLabel: 'Servicios', group: 'primary' },
   { page: 'documents', label: 'Facturas', shortLabel: 'Facturas', group: 'primary' },
   { page: 'account', label: 'Cuenta', shortLabel: 'Cuenta', group: 'primary' },
   { page: 'service-requests', label: 'Solicitudes', shortLabel: 'Solicitudes', group: 'more' },

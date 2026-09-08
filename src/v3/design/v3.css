@@ -7,6 +7,32 @@
   margin-inline: auto;
 }
 
+.v3-home-page { gap: var(--v3-space-5); }
+.v3-home-hero { align-items: end; border-bottom: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; gap: var(--v3-space-4); padding: var(--v3-space-4) 0 var(--v3-space-6); }
+.v3-home-hero > div { display: grid; gap: var(--v3-space-2); }
+.v3-home-eyebrow { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.v3-home-hero strong { color: var(--v3-color-text-primary); font-size: clamp(2rem, 9vw, 3.5rem); font-variant-numeric: tabular-nums; letter-spacing: -0.06em; line-height: 1; }
+.v3-home-hero p, .v3-home-all-clear { color: var(--v3-color-text-secondary); margin: 0; }
+.v3-home-metrics { display: grid; gap: var(--v3-space-2); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.v3-home-metrics .v3-action { align-items: start; justify-content: stretch; min-height: var(--v3-touch-preferred); padding: var(--v3-space-3); text-align: left; }
+.v3-home-metric { display: grid; gap: var(--v3-space-1); width: 100%; }
+.v3-home-metric small { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); }
+.v3-home-metric strong { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; }
+.v3-home-priority-list { display: grid; }
+.v3-home-priority { align-items: center; border-bottom: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; gap: var(--v3-space-4); padding: var(--v3-space-4) 0; }
+.v3-home-priority > div { display: grid; gap: var(--v3-space-1); min-width: 0; }
+.v3-home-priority strong { color: var(--v3-color-text-primary); }
+.v3-home-priority span { color: var(--v3-color-text-primary); font-variant-numeric: tabular-nums; font-weight: 700; }
+.v3-home-priority small { color: var(--v3-color-text-secondary); overflow-wrap: anywhere; }
+
+@media (max-width: 600px) {
+  .v3-home-hero { align-items: stretch; flex-direction: column; }
+  .v3-home-hero .v3-action { align-self: start; }
+  .v3-home-metrics { grid-template-columns: 1fr; }
+  .v3-home-priority { align-items: start; flex-direction: column; }
+  .v3-home-priority .v3-action { align-self: start; }
+}
+
 .v3-jobs-controls { align-items: center; display: grid; gap: var(--v3-space-3); grid-template-columns: minmax(0, 1fr) auto; }
 .v3-job-row__main, .v3-job-row__side { display: grid; gap: var(--v3-space-1); }
 .v3-job-row__main strong, .v3-job-row__side strong { color: var(--v3-color-text-primary); }

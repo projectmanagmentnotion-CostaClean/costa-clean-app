@@ -76,6 +76,7 @@ import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDee
 import { readLeadDeepLink, writeLeadDeepLink } from '../v3/navigation/leadDeepLink'
 import { readJobDeepLink, writeJobDeepLink } from '../v3/jobs/jobDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
+import { V3HomePage } from '../v3/home/V3HomePage'
 
 interface AppShellProps {
   theme: AppTheme
@@ -1268,24 +1269,35 @@ export function AppShell({
                   onSaveAnnualClosing={handleSaveAnnualClosing}
                 />
               ) : currentView === 'dashboard' ? (
-                <HomePage
-                  metrics={dashboardMetrics}
-                  agenda={dashboardAgenda}
-                  clientBalanceLeaders={clientBalanceLeaders}
-                  dueRecurringPlans={dueRecurringPlansPreview}
-                  onOpenJobWorkspace={handleOpenJobWorkspace}
-                  onOpenClientWorkspace={handleOpenClientWorkspace}
-                  onOpenView={navigateToView}
-                  onRunKpiAction={handleDashboardKpiAction}
-                  alerts={visibleAutomationAlerts}
-                  alertDecisions={alertDecisions}
-                  onOpenAlert={handleOpenAutomationAlert}
-                  onMarkAlertRead={handleMarkAlertRead}
-                  onDismissAlert={handleDismissAlert}
-                  operationalIncidents={operationalIncidents}
-                  operationalQuickViews={operationalQuickViews}
-                  onRunOperationalAction={handleRunOperationalAction}
-                />
+                v3Enabled ? (
+                  <V3HomePage
+                    metrics={dashboardMetrics}
+                    alerts={visibleAutomationAlerts}
+                    operationalIncidents={operationalIncidents}
+                    onRunKpiAction={handleDashboardKpiAction}
+                    onOpenAlert={handleOpenAutomationAlert}
+                    onRunOperationalAction={handleRunOperationalAction}
+                  />
+                ) : (
+                  <HomePage
+                    metrics={dashboardMetrics}
+                    agenda={dashboardAgenda}
+                    clientBalanceLeaders={clientBalanceLeaders}
+                    dueRecurringPlans={dueRecurringPlansPreview}
+                    onOpenJobWorkspace={handleOpenJobWorkspace}
+                    onOpenClientWorkspace={handleOpenClientWorkspace}
+                    onOpenView={navigateToView}
+                    onRunKpiAction={handleDashboardKpiAction}
+                    alerts={visibleAutomationAlerts}
+                    alertDecisions={alertDecisions}
+                    onOpenAlert={handleOpenAutomationAlert}
+                    onMarkAlertRead={handleMarkAlertRead}
+                    onDismissAlert={handleDismissAlert}
+                    operationalIncidents={operationalIncidents}
+                    operationalQuickViews={operationalQuickViews}
+                    onRunOperationalAction={handleRunOperationalAction}
+                  />
+                )
               ) : currentView === 'leads' ? (
                 <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} quotes={quotesWithCodes} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={async () => { await Promise.all([refreshOperations(), refreshBilling()]) }} v3Mode={v3Enabled} initialLeadId={readLeadDeepLink(typeof window !== 'undefined' ? window.location.search : '')} onOpenLeadDeepLink={handleOpenLeadWorkspace} onBackToLeadList={handleBackToLeadList} onOpenQuote={handleOpenQuoteDetail} onOpenClient={handleOpenClientWorkspace} />
               ) : currentView === 'clients' ? (
@@ -1359,6 +1371,7 @@ export function AppShell({
                     clearModuleFilter('quotes')
                   }}
                   activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
+                  activeFilter={quoteFilter}
                   onClearFilter={() => clearModuleFilter('quotes')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
@@ -1380,6 +1393,7 @@ export function AppShell({
                   createPrefill={jobCreatePrefill}
                   onPrefillConsumed={() => setJobCreatePrefill(null)}
                   activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
+                  activeFilter={jobFilter}
                   onClearFilter={() => clearModuleFilter('jobs')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
@@ -1411,6 +1425,7 @@ export function AppShell({
                   onOpenInvoiceDeepLink={(invoiceId) => writeInvoiceDeepLink(invoiceId)}
                   onBackToInvoiceList={() => writeInvoiceDeepLink(null, true)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
+                  activeFilter={invoiceFilter}
                   onClearFilter={() => clearModuleFilter('invoices')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}

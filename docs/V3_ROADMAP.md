@@ -78,8 +78,23 @@ Current state: the existing Stitch project `6884707630640107069` contains the 13
 - [x] Deep link/back restoration, existing create/edit contracts and authenticated visual QA.
 - [x] Full tests, lint, build, commit and push.
 
+## V3-3A — Home / Negocio hoy — CLOSED
+
+- [x] Add the dedicated `src/v3/home/` executive Home tree behind `?v3=1`.
+- [x] Use real invoiced-this-month, outstanding-receivables, open-quotes and completed-unbilled-jobs metrics.
+- [x] Keep the secondary KPI set to exactly three compact decision actions.
+- [x] Add a deterministic priority queue capped at three items with alert/incident deduplication.
+- [x] Preserve existing KPI routing, alert decisions and operational action contracts.
+- [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
+- [x] Close with full tests, lint, build, commit and push.
+
+## V3-3B — Payments + Expenses — NEXT
+
+This sprint is not started by V3-3A. It must reuse the certified V3 shell and
+financial contracts, with separate visual and authenticated QA evidence.
+
 ## Exit rule
 
-V3-1R, V3-2A, V3-2B, V3-2C and V3-2D are closed with authenticated QA evidence
-and no financial, route, auth or deep-link regression. V3-3 is the next
-separate sprint and is not started by this change.
+V3-1R, V3-2A, V3-2B, V3-2C, V3-2D and V3-3A are closed with authenticated QA
+evidence and no financial, route, auth or deep-link regression. V3-3B is the
+next separate sprint and is not started by this change.

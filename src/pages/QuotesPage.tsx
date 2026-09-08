@@ -37,6 +37,7 @@ import { useToast } from '../shared/toasts/useToast'
 import { canConvertQuoteToInvoice, convertQuoteToInvoice } from '../features/quotes/quoteConversion'
 import { shareDocument } from '../v3/documents/shareDocument'
 import { V3QuotesPage } from '../v3/quotes/V3QuotesPage'
+import type { QuoteModuleFilter } from '../app/moduleFilters'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
   default: (await import('../features/quotes/QuoteCreateEntry')).QuoteCreateEntry,
@@ -61,6 +62,7 @@ interface QuotesPageProps {
   onInitialCreatePrefillConsumed?: () => void
   onOpenInvoiceDetail: (invoiceId: string) => void
   activeFilterLabel: string | null
+  activeFilter?: QuoteModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
@@ -89,6 +91,7 @@ export function QuotesPage({
   onInitialCreatePrefillConsumed,
   onOpenInvoiceDetail,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
@@ -440,6 +443,8 @@ export function QuotesPage({
           onOpenInvoiceDetail={onOpenInvoiceDetail}
           onOpenQuoteDeepLink={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
           onBackToQuoteList={() => onBackToQuoteList?.()}
+          activeFilter={activeFilter}
+          activeFilterLabel={activeFilterLabel}
         />
         {createVisible ? (
           <ActionFlowOverlay

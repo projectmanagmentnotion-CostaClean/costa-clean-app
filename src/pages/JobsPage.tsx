@@ -25,6 +25,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
 import { V3JobsPage } from '../v3/jobs/V3JobsPage'
+import type { JobModuleFilter } from '../app/moduleFilters'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -46,6 +47,7 @@ interface JobsPageProps {
   createPrefill: JobCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
+  activeFilter?: JobModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
@@ -70,6 +72,7 @@ export function JobsPage({
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
@@ -159,6 +162,8 @@ export function JobsPage({
         onOpenQuote={onOpenQuoteDetail}
         onOpenInvoice={onOpenInvoiceDetail}
         onCreateInvoice={(job) => onCreateInvoiceFromJob?.(job)}
+        activeFilter={activeFilter}
+        activeFilterLabel={activeFilterLabel}
       />
       {isCreateFormVisible ? (
         <ActionFlowOverlay isOpen={isCreateFormVisible} title="Nuevo servicio" description="Planifica el servicio en un flujo dedicado." onClose={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }}>

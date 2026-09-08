@@ -1,6 +1,6 @@
-# V3 Design Guardian — V3-2D
+# V3 Design Guardian — V3-3A
 
-Status: `CERTIFIED — V3-2D`
+Status: `CERTIFIED — V3-3A`
 
 ## Review boundary
 
@@ -41,7 +41,18 @@ filter sheet, safe-area padding and no horizontal overflow.
 - Hardcoded V3 colors outside `src/v3/design/tokens.css`: `0`.
 - Forbidden legacy visual classes in the dedicated V3 tree: `0`.
 - Legacy visual dependency in the rendered V3 invoice tree: `0`.
+- Legacy visual dependency in the rendered V3 Home tree: `0`.
+- Home queue entries at maximum: `3`.
 - `prefers-reduced-motion`: covered by the V3 stylesheet.
+
+## V3-3A Home evidence
+
+- Home Negocio hoy: PASS at `390x844`, `430x932` and `768x1024`.
+- Legacy dashboard visual dependency: `0` when `?v3=1`.
+- Hero and three secondary KPIs: PASS; values come from `dashboardMetrics`.
+- Priority queue: PASS; deterministic critical-first ordering and alert/incident deduplication.
+- KPI routing: PASS; invoice, quote and job destinations preserve their module filter context.
+- Existing alert and operational action routing: PASS.
 
 ## Real flow evidence
 

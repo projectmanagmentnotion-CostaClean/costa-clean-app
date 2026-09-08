@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-2D CLOSED / V3-3 NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-3A CLOSED / V3-3B NEXT`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
 
 ## Directional intent
 
@@ -23,6 +23,11 @@ Editorial SaaS Simplified is the only V3 direction: flat document surfaces, stro
 V3-1 selects Inter as the coherent family. Plus Jakarta Sans is not introduced in
 this slice. Financial values use tabular numerals and the accent remains limited
 to primary/active states.
+
+V3-3A Home uses the Negocio hoy hierarchy: one hero financial decision, exactly
+three compact secondary actions and one capped priority queue. It does not add
+dashboard card duplication, GSAP dashboard motion, targets, margins or
+synthetic executive metrics.
 
 ## Product hierarchy to preserve
 
@@ -53,6 +58,11 @@ The V3 lead surface uses the same approved row, status, section, workspace,
 contact and bottom-sheet primitives. Draft review means only the real
 `lead_drafts.ai_draft_status` review; it must not be presented as business-lead
 review without a separate source-of-truth contract.
+
+The V3 Home surface uses `V3HomeHeroKpi`, `V3HomeMetric` and
+`V3HomePriorityQueue` from `src/v3/home/`. Its KPI actions route through the
+existing module filter contracts and its priority actions route through the
+existing alert/operational action handlers.
 
 ## Implementation guardrails
 

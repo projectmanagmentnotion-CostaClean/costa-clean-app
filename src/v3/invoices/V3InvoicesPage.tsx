@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import type { InvoiceModuleFilter } from '../../app/moduleFilters'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../../features/clients/types'
@@ -23,9 +24,15 @@ interface V3InvoicesPageProps {
   onViewPayments: (invoiceId: string) => void
   onOpenInvoiceDeepLink: (invoiceId: string) => void
   onBackToInvoiceList: () => void
+  activeFilter?: InvoiceModuleFilter | null
+  activeFilterLabel?: string | null
 }
 
 type ListFilter = 'pending' | 'paid' | 'all'
+
+function getInitialInvoiceFilter(activeFilter: InvoiceModuleFilter | null | undefined): ListFilter {
+  return activeFilter === 'pending' || activeFilter === 'unpaid_older_7d' ? 'pending' : 'all'
+}
 
 function invoiceLabel(invoice: InvoiceListItem): string {
   return formatInvoiceLabel(invoice)
@@ -57,10 +64,12 @@ export function V3InvoicesPage({
   onViewPayments,
   onOpenInvoiceDeepLink,
   onBackToInvoiceList,
+  activeFilter = null,
+  activeFilterLabel = null,
 }: V3InvoicesPageProps) {
   const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoiceId)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<ListFilter>('pending')
+  const [filter, setFilter] = useState<ListFilter>(() => getInitialInvoiceFilter(activeFilter))
   const [sort, setSort] = useState<'recent' | 'oldest' | 'amount'>('recent')
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
   const listScrollYRef = useRef(0)
@@ -113,7 +122,7 @@ export function V3InvoicesPage({
 
   return (
     <V3Page className="v3-invoices-page">
-      <V3PageTitle eyebrow="Facturación" title="Facturas" description="Emisión, cobro y saldo pendiente en una sola lectura." action={<V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction>} />
+      <V3PageTitle eyebrow="Facturación" title="Facturas" description={`${activeFilterLabel ? `${activeFilterLabel} · ` : ''}Emisión, cobro y saldo pendiente en una sola lectura.`} action={<V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction>} />
       <V3KpiGroup>
         <V3Kpi label="Este mes" value={formatCurrency(billedAmount)} hint="Importe facturado" />
         <V3Kpi label="Por cobrar" value={formatCurrency(pendingAmount)} hint="Saldo pendiente" />

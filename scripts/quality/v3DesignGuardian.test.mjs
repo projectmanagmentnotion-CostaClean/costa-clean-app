@@ -18,6 +18,11 @@ const v3TreeFiles = [
   'src/v3/jobs/V3JobRow.tsx',
   'src/v3/jobs/V3JobWorkspace.tsx',
   'src/v3/jobs/jobWorkReport.tsx',
+  'src/v3/home/V3HomePage.tsx',
+  'src/v3/home/V3HomeHeroKpi.tsx',
+  'src/v3/home/V3HomeMetric.tsx',
+  'src/v3/home/V3HomePriorityQueue.tsx',
+  'src/v3/home/homePriorities.ts',
 ]
 
 function readV3Tree() {
@@ -67,5 +72,22 @@ describe('V3 Design Guardian structural checks', () => {
       expect(source).not.toContain(forbiddenName)
     }
     expect(source).toContain('No es un certificado de ejecución')
+  })
+
+  it('keeps home presentation free of legacy dashboard, motion and fake metric composition', () => {
+    const homeFiles = [
+      'src/v3/home/V3HomePage.tsx',
+      'src/v3/home/V3HomeHeroKpi.tsx',
+      'src/v3/home/V3HomeMetric.tsx',
+      'src/v3/home/V3HomePriorityQueue.tsx',
+      'src/v3/home/homePriorities.ts',
+    ]
+    const source = homeFiles.map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
+    for (const forbiddenName of ['DSPageHeader', 'HomeFiscalKpiGrid', 'HomeQuickActionsPanel', 'HomeAlertSummaryStrip', 'HomeMotionSection', 'home-gsap-dashboard', 'monthlyGoal', 'target', 'LTV', 'margen', 'beneficio']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
   })
 })

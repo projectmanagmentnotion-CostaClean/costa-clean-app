@@ -1,6 +1,6 @@
-# Costa Clean App V3 — V3-2D Implementation Contract
+# Costa Clean App V3 — V3-3A Implementation Contract
 
-Status: `CERTIFIED — V3-2D AUTHENTICATED VISUAL QA`.
+Status: `CERTIFIED — V3-3A AUTHENTICATED VISUAL QA`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -87,6 +87,26 @@ never used as business state or persisted in local storage.
   quote list and clears the module deep-link state.
 
 ## Design Guardian checks
+
+The V3 Home surface lives in `src/v3/home/` and owns one hero KPI, exactly
+three secondary KPI actions and a capped priority queue. It consumes
+`dashboardMetrics`, existing alert decisions and operational action handlers;
+it does not create a second accounting model. Home KPI actions use the existing
+`dashboardKpiActionConfig`, and invoice/quote/job destinations receive the
+active module filter context.
+
+### V3-3A Home contract
+
+- Hero: `metrics.invoicedThisMonthTotal`, routed by `invoiced_this_month`.
+- Secondary KPIs: outstanding receivables, open quotes and completed jobs
+  without invoice; no targets, margins, LTV, forecast or synthetic financial
+  values are rendered.
+- Priority queue: active critical/warning automation alerts plus operational
+  incidents, deterministic severity ordering, maximum three entries, and
+  suppression when the same domain is already represented by an alert.
+- Empty state is explicit and quiet. Alert actions continue through the
+  existing alert decision/router contract; incidents continue through the
+  existing operational action contract.
 
 `scripts/quality/v3DesignGuardian.test.mjs` verifies the dedicated V3 tree has no
 forbidden legacy visual names or hardcoded component colors. Token values live in

@@ -47,6 +47,7 @@ import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '..
 import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
 import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
 import { V3InvoicesPage } from '../v3/invoices/V3InvoicesPage'
+import type { InvoiceModuleFilter } from '../app/moduleFilters'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -71,6 +72,7 @@ interface InvoicesPageProps {
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
+  activeFilter?: InvoiceModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
@@ -99,6 +101,7 @@ export function InvoicesPage({
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
@@ -560,6 +563,8 @@ export function InvoicesPage({
           onViewPayments={onViewPayments}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
+          activeFilter={activeFilter}
+          activeFilterLabel={activeFilterLabel}
         />
         {isCreateFormVisible ? (
           <ActionFlowOverlay

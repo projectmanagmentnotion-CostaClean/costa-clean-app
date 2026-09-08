@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import type { QuoteModuleFilter } from '../../app/moduleFilters'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatClientLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusLabel } from '../../app/displayText'
@@ -34,6 +35,14 @@ interface V3QuotesPageProps {
   onOpenInvoiceDetail: (invoiceId: string) => void
   onOpenQuoteDeepLink: (quoteId: string) => void
   onBackToQuoteList: () => void
+  activeFilter?: QuoteModuleFilter | null
+  activeFilterLabel?: string | null
+}
+
+function getInitialQuoteFilter(activeFilter: QuoteModuleFilter | null | undefined): QuoteFilter {
+  if (activeFilter === 'open') return 'open'
+  if (activeFilter === 'accepted_without_job' || activeFilter === 'accepted_without_job_3d') return 'accepted'
+  return 'all'
 }
 
 function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
@@ -50,7 +59,7 @@ function quoteLines(quote: QuoteListItem) {
 export function V3QuotesPage(props: V3QuotesPageProps) {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(props.initialQuoteId ?? (typeof window !== 'undefined' ? readQuoteDeepLink(window.location.search) : null))
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<QuoteFilter>('all')
+  const [filter, setFilter] = useState<QuoteFilter>(() => getInitialQuoteFilter(props.activeFilter))
   const [sort, setSort] = useState<QuoteSort>('recent')
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [busyQuoteId, setBusyQuoteId] = useState<string | null>(null)
@@ -123,7 +132,7 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
   if (selectedQuote) return <V3QuoteWorkspace quote={selectedQuote} clients={props.clients} properties={props.properties} jobs={props.jobs} invoices={props.invoices} busy={busyQuoteId === selectedQuote.id} onBack={closeQuote} onDownload={() => props.onDownloadQuote(selectedQuote)} onShare={() => props.onShareQuote(selectedQuote)} onConvert={() => void convertQuote(selectedQuote)} onOpenClientWorkspace={props.onOpenClientWorkspace} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
 
   return <V3Page className="v3-quotes-page">
-    <V3PageTitle eyebrow="Propuesta comercial" title="Presupuestos" description="Seguimiento comercial, documento y conversión real en una sola lectura." action={<V3PrimaryAction onClick={props.onCreateQuote}>+ Nuevo presupuesto</V3PrimaryAction>} />
+    <V3PageTitle eyebrow="Propuesta comercial" title="Presupuestos" description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}Seguimiento comercial, documento y conversión real en una sola lectura.`} action={<V3PrimaryAction onClick={props.onCreateQuote}>+ Nuevo presupuesto</V3PrimaryAction>} />
     <V3KpiGroup><V3Kpi label="En curso" value={String(openQuotes.length)} hint="Borradores y enviados" /><V3Kpi label="Importe en curso" value={formatCurrency(openAmount)} hint="Total real" /><V3Kpi label="Aceptados" value={String(acceptedQuotes.length)} hint="Estado comercial" /></V3KpiGroup>
     <section className="v3-invoice-controls" aria-label="Buscar presupuestos"><label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Referencia, cliente o estado" /></label><button type="button" className="v3-filter-trigger" onClick={() => setIsFilterOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterOpen}>Filtros <span aria-hidden="true">⌄</span></button></section>
     <div className="v3-filter-tabs" role="tablist" aria-label="Estado del presupuesto">{([['all', 'Todos'], ['open', 'En curso'], ['accepted', 'Aceptados'], ['rejected', 'Rechazados'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}</div>

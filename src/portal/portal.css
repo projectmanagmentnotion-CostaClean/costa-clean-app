@@ -1787,36 +1787,6 @@ input {
 }
 
 @media (max-width: 900px) {
-  .portal-root .portal-mobile-nav {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .portal-root .portal-mobile-nav > .portal-mobile-more {
-    position: relative;
-    right: auto;
-    bottom: auto;
-    z-index: auto;
-    display: block;
-    min-width: 0;
-  }
-
-  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger {
-    width: 100%;
-    min-width: 0;
-    min-height: 72px;
-    padding: 8px 2px;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger:hover,
-  .portal-root .portal-mobile-more > summary.portal-mobile-more__trigger.is-active {
-    border: 0;
-    background: var(--portal-accent);
-  }
-
   .portal-root .portal-mobile-more .portal-mobile-more__panel {
     right: 8px;
     bottom: calc(100% + 8px);

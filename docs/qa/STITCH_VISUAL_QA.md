@@ -189,3 +189,23 @@ Status: `PARTIAL — BLOCKED_PENDING_390X844_VISUAL_QA`
   DevTools telemetry APIs. No isolated browser or incognito context was used.
 - Production requests: `0`. CRM UI, RLS, notification code and Supabase Auth
   were not modified.
+
+## CP-3B.2B-FINAL-VISUAL execution record
+
+Status: `PARTIAL — BLOCKED_PENDING_EXACT_390X844`
+
+- Browser: existing authenticated QA session in normal Chrome; no incognito or
+  isolated automation context.
+- Functional visual pass at the currently visible portal session: Profile/
+  Account, Properties List, Property Detail, Property Correction fields and
+  Services navigation are reachable and render the expected customer-facing
+  labels. Mobile bottom navigation and correction StepFlow are present.
+- QA properties observed: `PRO-0074` and `PRO-0075`; no new rows were created.
+- Exact CSS viewport metrics (`innerWidth`, `innerHeight`, `scrollWidth`,
+  `scrollHeight`), console error capture, network capture, touch-target pixel
+  measurement, keyboard simulation and safe-area measurement:
+  `NOT_EXECUTED`. The available normal-Chrome control surface did not expose
+  DevTools or responsive viewport controls, so these values are not claimed.
+- No visual code fix was necessary during this certification attempt.
+- Production requests: `0`; backend, RPCs, CRM and production were not
+  modified.

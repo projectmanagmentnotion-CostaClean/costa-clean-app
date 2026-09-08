@@ -99,10 +99,19 @@ metrics while those data sources are not meaningful.
   single form submission are implemented.
 - Home: existing priority, financial and quick-action composition retained;
   no queries or business calculations changed.
-- QA visual certification: `BLOCKED`. The isolated profile resolved to an
-  unrelated account and the available QA credential fixture did not authenticate
-  `qa.financial.runner@qa.invalid`. Therefore authenticated Home, reload,
-  cross-tab and logout evidence cannot be truthfully certified in this run.
+- QA runtime: `PASS` in the existing normal Chrome session at
+  `http://127.0.0.1:4174`, targeting the QA Supabase host. The visible account
+  was `qa.financial.runner@qa.invalid`.
+- Authenticated Home, reload persistence, same-origin cross-tab persistence,
+  mobile account access and public `/quote-request` isolation: `PASS`.
+- Responsive measurements: `390x844` (`scrollWidth=375`), `768x1024`
+  (`scrollWidth=753`), `1024x768` (`scrollWidth=1009`) and `1440x900`
+  (`scrollWidth=1425`); all had `overflowX=false`.
+- Dark/light visual checks passed at `390x844` and `1440x900`; reduced motion
+  was exercised. Direct logout was not run against the live QA tab.
 - Login error presentation: `PASS` in the unauthenticated isolated context;
   invalid credentials are localized and provider error details are not shown.
+- Stitch evidence debt: `DESIGN.md` remains `WAITING_FOR_STITCH`. The only
+  open Stitch project was a client-portal project and was not accepted as the
+  CRM FE-05 reference; no new Stitch screen was created.
 - No production, Supabase, notification, portal or route changes were made.

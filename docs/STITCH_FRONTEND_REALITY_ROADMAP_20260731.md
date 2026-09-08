@@ -504,16 +504,29 @@ Consolidate reusable patterns before module migrations.
 
 # STITCH-FE-05 — Splash, authentication and Home
 
-**Status:** `BLOCKED`
+**Status:** `DONE_WITH_DOCUMENTED_DEBT`
 
-### Blocker - 2026-09-08
+### Closure evidence - 2026-09-08
 
-- The FE-05 code slice is implemented and local tests pass, but authenticated
-  visual certification cannot close: the isolated persistent profile resolves
-  to a different account and the available QA credential fixture is rejected.
-- Do not mark FE-05 `DONE` or start FE-06 until a valid session for
-  `qa.financial.runner@qa.invalid` is available. No password reset or remote
-  write was performed.
+- The normal Chrome session now resolves to the existing QA user
+  `qa.financial.runner@qa.invalid` on the QA build at `127.0.0.1:4174`.
+- Authenticated Home, reload persistence, same-origin cross-tab persistence,
+  mobile navigation/account access and public `/quote-request` isolation pass.
+- Visual checks pass at `390x844`, `768x1024`, `1024x768` and `1440x900` with
+  no horizontal overflow. Dark/light checks pass at mobile and desktop; the
+  reduced-motion media preference was exercised.
+- No password reset, notification action, Supabase write or production access
+  was performed.
+
+### Documented debt
+
+- `docs/stitch/DESIGN.md` remains `WAITING_FOR_STITCH`: the currently open
+  Stitch project is a client-portal project, not an unequivocal CRM Splash,
+  Login or Home reference. No new or duplicate Stitch screen was created.
+- Direct logout regression was not executed against the user's live QA tab;
+  the existing logout implementation and local regression coverage remain the
+  protected contract. Re-run it in a disposable authenticated context when
+  such a context is available.
 
 ### Implemented slice - 2026-09-08
 

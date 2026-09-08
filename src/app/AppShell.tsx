@@ -1257,6 +1257,8 @@ export function AppShell({
                   expenses={expenses}
                   quotes={quotesWithCodes}
                   jobs={jobsWithCodes}
+                  clients={clientsWithContext}
+                  properties={propertiesWithCodes}
                   error={quarterlyClosingError ?? annualClosingError}
                   onNavigateToIncidence={handleFiscalClosingNavigation}
                   onSaveQuarterlyClosing={handleSaveQuarterlyClosing}

@@ -123,7 +123,7 @@ describe('V3 Design Guardian structural checks', () => {
       'src/v3/alerts/V3AlertsPage.tsx',
       'src/v3/closing/V3ClosingPage.tsx',
     ].map((file) => readFileSync(join(process.cwd(), file), 'utf8')).join('\n')
-    for (const forbiddenName of ['NotificationsSettings', 'SettingsPage', 'read_at', 'delivered', 'verified', 'GPS', 'eIDAS', 'biometría', 'AEAT', 'certificado oficial']) {
+    for (const forbiddenName of ['NotificationsSettings', 'SettingsPage', 'delivered', 'verified', 'GPS', 'eIDAS', 'biometría', 'AEAT', 'certificado oficial']) {
       expect(source).not.toContain(forbiddenName)
     }
     expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)

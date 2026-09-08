@@ -16,14 +16,22 @@ interface V3AlertsPageProps {
 
 type AlertFilter = 'pending' | 'critical' | 'reviewed' | 'all'
 
+function decisionFor(alert: AutomationAlertItem, decisions: AlertDecision[]) {
+  return decisions.find((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === (alert.fingerprint ?? alert.id))
+}
+
 function statusFor(alert: AutomationAlertItem, decisions: AlertDecision[]) {
-  return decisions.find((decision) => decision.scope === 'global' && decision.alert_key === alert.id && decision.fingerprint === (alert.fingerprint ?? alert.id))?.status ?? alert.lifecycle ?? 'open'
+  return decisionFor(alert, decisions)?.status ?? alert.lifecycle ?? 'open'
+}
+
+function isReadFor(alert: AutomationAlertItem, decisions: AlertDecision[]) {
+  return decisions.some((decision) => decision.scope === 'user' && decision.alert_key === alert.id && decision.fingerprint === (alert.fingerprint ?? alert.id) && Boolean(decision.read_at))
 }
 
 export function V3AlertsPage(props: V3AlertsPageProps) {
   const [filter, setFilter] = useState<AlertFilter>('pending')
   const [selected, setSelected] = useState<AutomationAlertItem | null>(null)
-  const states = useMemo(() => props.alerts.map((alert) => ({ alert, status: statusFor(alert, props.decisions) })), [props.alerts, props.decisions])
+  const states = useMemo(() => props.alerts.map((alert) => ({ alert, status: statusFor(alert, props.decisions), isRead: isReadFor(alert, props.decisions) })), [props.alerts, props.decisions])
   const pending = states.filter(({ status }) => status === 'open' || status === 'acknowledged')
   const critical = pending.filter(({ alert }) => alert.severity === 'critical')
   const reviewed = states.filter(({ status }) => status === 'resolved' || status === 'dismissed')
@@ -36,9 +44,9 @@ export function V3AlertsPage(props: V3AlertsPageProps) {
       {([['pending', 'Pendientes'], ['critical', 'Críticas'], ['reviewed', 'Revisadas'], ['all', 'Todas']] as const).map(([value, label]) => <V3SecondaryAction key={value} onClick={() => setFilter(value)} aria-pressed={filter === value}>{label}</V3SecondaryAction>)}
     </div>
     {visible.length === 0 ? <V3EmptyState title="Sin alertas en este filtro" description="No hay decisiones operativas que mostrar ahora." /> : <V3EntityList label="Alertas">
-      {visible.map(({ alert, status }) => <V3EntityListItem key={alert.id} ariaLabel={alert.title} onClick={() => setSelected(alert)}>
+      {visible.map(({ alert, status, isRead }) => <V3EntityListItem key={alert.id} ariaLabel={alert.title} onClick={() => setSelected(alert)}>
         <div className="v3-alert-row__main"><V3EntityStatus label={alert.severity === 'critical' ? 'Crítica' : alert.severity === 'warning' ? 'Prioritaria' : 'Informativa'} tone={alert.severity === 'critical' ? 'danger' : alert.severity === 'warning' ? 'warning' : 'neutral'} /><strong>{alert.title}</strong><span>{alert.summary}</span></div>
-        <div className="v3-alert-row__side"><strong>{alert.count}</strong><small>{status === 'acknowledged' ? 'Reconocida' : status === 'resolved' ? 'Resuelta' : status === 'dismissed' ? 'Descartada' : 'Pendiente'}</small></div>
+        <div className="v3-alert-row__side"><strong>{alert.count}</strong><small>{status === 'acknowledged' ? 'Reconocida' : status === 'resolved' ? 'Resuelta' : status === 'dismissed' ? 'Descartada' : isRead ? 'Leída' : 'Pendiente'}</small></div>
       </V3EntityListItem>)}
     </V3EntityList>}
     {selected ? <V3BottomSheet title={selected.title} onClose={() => setSelected(null)}>

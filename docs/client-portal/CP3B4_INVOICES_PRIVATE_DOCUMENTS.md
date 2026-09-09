@@ -4,10 +4,11 @@ Date: 2026-09-09
 
 ## Status
 
-`FIXTURE_BLOCKED`
+`PARTIAL — implementation complete; browser download certification pending`
 
-This block is not implemented or certified. No runtime, CRM, schema, or
-production changes were made.
+The narrow portal contract and download integration are implemented. QA contains
+one synthetic invoice/document fixture. Browser-only download, expiry and
+negative authorization evidence still require authenticated manual execution.
 
 ## Contract Audit
 
@@ -26,9 +27,9 @@ customer-safe fields:
 - paid amount
 - outstanding amount
 
-The current portal adapter maps only id, invoice number, issue date, and status
-into `PortalInvoiceSummary`. It has no document availability metadata, invoice
-detail adapter, or frontend download adapter.
+The portal adapter maps the customer-safe financial fields plus
+`documentAvailable` and `documentId`. The frontend invokes the existing
+`portal-invoice-download` Edge Function and never exposes the storage object key.
 
 The existing `portal-invoice-download` Edge Function is present in source and
 uses `portal_get_invoice_download_authorization_trusted`, the private
@@ -37,38 +38,34 @@ URL. The browser is not given service-role credentials.
 
 ## QA Evidence
 
-Read-only QA counts on 2026-09-09:
+QA evidence on 2026-09-09:
 
-- canonical invoice rows: `7`
-- invoice document registry rows: `0`
-- `invoice-documents` storage objects: `0`
+- CP-3.4 synthetic invoice: `INV-QA-CP3B4-20260909-001`
+- generated invoice number: `2026-001`
+- generated display code: `INV-0001`
+- invoice document id: `f1feb5e2-faf7-4039-9c40-8db248964993`
+- private object: `f93c6df4-13b7-4795-8e9e-a8c0fc2af8b5/9b0a2a8d-cf2b-45e2-b27b-8b7876f3a5ad.pdf`
+- object size: `27126` bytes; MIME: `application/pdf`
+- invoice document status: `ready`
 - bucket public flag: `false`
 
 The invoice list can be validated as a real read surface, but no authorized
 document exists for a fresh signed-URL download, expiry, or cross-tenant
 document denial test.
 
-## Blocker
+## Remaining Evidence
 
-`QA_FIXTURE_REQUIRED`
+The source migration is `20260909130000_portal_invoice_document_availability`.
+It changes only the `portal_list_invoices` function and adds the safe metadata
+fields `documentAvailable` and `documentId`. The existing private bucket and
+trusted download function remain unchanged.
 
-The minimum missing fixture is one clearly synthetic QA invoice linked to an
-existing QA portal client plus one PDF-only `invoice_document_records` row and
-matching private `invoice-documents` object. The fixture must be created only
-through the separately authorized QA fixture process and must have an exact
-cleanup identity. No production data may be used.
-
-Until that fixture exists, these remain `NOT_EXECUTED`:
-
-- secure download through the Edge Function
-- signed URL lifetime and expiry
-- direct unsigned storage denial
-- own/foreign/mismatched/unknown document denial
-- 390x844 download UX certification
-- browser Console and Network evidence for the download flow
+The following are implemented but `NOT_EXECUTED` in authenticated browser
+evidence: own download, signed URL expiry/refresh, unsigned storage denial,
+unknown/foreign/mismatched document denial, 390x844 download UX, and browser
+Console/Network capture.
 
 ## Next Action
 
-Authorize and run the minimal QA fixture process, then implement the narrow
-frontend adapter and invoice states without changing the approved portal shell.
+Run the authenticated QA browser certification against this single fixture.
 Do not start CP-3B.5.

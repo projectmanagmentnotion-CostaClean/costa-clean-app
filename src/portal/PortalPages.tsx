@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { PortalFoundationData } from './portalWorkspaceData'
 import type { PortalPage } from './portalNavigation'
 import {
@@ -10,6 +10,7 @@ import {
   resolvePortalPropertyRoute,
   resolvePortalRequestRoute,
 } from './portalNavigation'
+import { requestPortalInvoiceDownload } from './portalReadApi'
 import { PortalProfileChangeFlow, PortalPropertyChangeFlow } from './PortalReviewedChangeForms'
 import {
   PortalServiceRequestsPage,
@@ -143,24 +144,7 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
         title="Facturas"
         description="Consulta el estado de las facturas disponibles en tu portal."
       >
-        <div className="portal-record-list">
-          {data.invoices.length > 0 ? data.invoices.map((invoice) => (
-            <article key={invoice.id} className="portal-record">
-              <div>
-                <h2>{invoice.referenceLabel}</h2>
-                <p>{invoice.issuedLabel}</p>
-              </div>
-              <span className="portal-status portal-status--info">{invoice.paymentStatusLabel}</span>
-            </article>
-          )) : (
-            <section className="portal-empty-state">
-              <p>No hay facturas disponibles en esta vista.</p>
-            </section>
-          )}
-        </div>
-        <p className="portal-inline-note">
-          La descarga privada con URL firmada de 60 segundos pertenece a CP-3B.4.
-        </p>
+        <PortalInvoicesPage invoices={data.invoices} clientId={data.account.clientContextId} />
       </PortalPageFrame>
     )
   }
@@ -262,6 +246,105 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
       </section>
     </PortalPageFrame>
   )
+}
+
+function PortalInvoicesPage({
+  invoices,
+  clientId,
+}: {
+  invoices: PortalFoundationData['invoices']
+  clientId: string
+}) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [downloadError, setDownloadError] = useState(false)
+
+  async function downloadInvoice(invoice: PortalFoundationData['invoices'][number]) {
+    if (!invoice.documentAvailable || !invoice.documentId || downloadingId) return
+    setDownloadingId(invoice.id)
+    setDownloadError(false)
+    try {
+      const result = await requestPortalInvoiceDownload({
+        clientId,
+        invoiceId: invoice.id,
+        documentId: invoice.documentId,
+      })
+      const link = document.createElement('a')
+      link.href = result.signedUrl
+      link.download = `${invoice.referenceLabel || 'factura'}.pdf`
+      link.rel = 'noreferrer'
+      link.style.display = 'none'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+    } catch {
+      setDownloadError(true)
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  return (
+    <>
+      <div className="portal-record-list">
+        {invoices.length > 0 ? invoices.map((invoice) => (
+          <article key={invoice.id} className="portal-record portal-invoice-record">
+            <div className="portal-invoice-record__content">
+              <div className="portal-invoice-record__heading">
+                <div>
+                  <span className="portal-invoice-record__label">Factura</span>
+                  <h2>{invoice.referenceLabel}</h2>
+                </div>
+                <span className="portal-status portal-status--info">{invoice.paymentStatusLabel}</span>
+              </div>
+              <p>{invoice.issuedLabel}</p>
+              <dl className="portal-invoice-record__facts">
+                <InvoiceFact label="Base imponible" value={formatEur(invoice.subtotal)} />
+                <InvoiceFact label="IVA" value={formatEur(invoice.taxAmount)} />
+                <InvoiceFact label="Total" value={formatEur(invoice.total)} />
+                <InvoiceFact label="Pagado" value={formatEur(invoice.paidAmount)} />
+                <InvoiceFact label="Pendiente" value={formatEur(invoice.outstandingAmount)} />
+              </dl>
+              {invoice.documentAvailable && invoice.documentId ? (
+                <button
+                  type="button"
+                  className="portal-button portal-button--primary portal-invoice-record__download"
+                  onClick={() => void downloadInvoice(invoice)}
+                  disabled={downloadingId !== null}
+                  aria-busy={downloadingId === invoice.id}
+                >
+                  {downloadingId === invoice.id ? 'Preparando descarga...' : 'Descargar factura'}
+                </button>
+              ) : null}
+            </div>
+          </article>
+        )) : (
+          <section className="portal-empty-state">
+            <p>No hay facturas disponibles en esta vista.</p>
+          </section>
+        )}
+      </div>
+      {downloadError ? (
+        <p className="portal-inline-note portal-inline-note--error" role="alert">
+          No hemos podido preparar la descarga. Inténtalo de nuevo.
+        </p>
+      ) : null}
+    </>
+  )
+}
+
+function InvoiceFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  )
+}
+
+function formatEur(value: number): string {
+  return Number.isFinite(value)
+    ? new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value)
+    : 'No disponible'
 }
 
 function renderProfilePage(pathname: string, data: PortalFoundationData, onRefreshData?: () => void | Promise<void>) {

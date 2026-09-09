@@ -254,10 +254,11 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   unrecoverable session-scoped key is explicit certification debt. Existing
   trusted contract-matrix coverage remains independent supporting evidence,
   not a substitute for the authenticated portal retry.
-- **CP-3B.4 — Invoices and private documents:** read-only financial states and
-  private 60-second signed downloads. Status: `FIXTURE_BLOCKED`; QA has seven
-  invoice rows but zero invoice document registry rows and zero private
-  `invoice-documents` objects. Evidence: `CP3B4_INVOICES_PRIVATE_DOCUMENTS.md`.
+- **CP-3B.4 — Invoices and private documents:** customer-safe financial states,
+  one private QA PDF fixture, and the narrow `documentAvailable` /
+  `documentId` contract are implemented. Status: `PARTIAL — authenticated
+  browser download, expiry and negative authorization evidence pending`.
+  Evidence: `CP3B4_INVOICES_PRIVATE_DOCUMENTS.md`.
 - **CP-3B.5 — Members, security and legal acceptance:** client roles,
   invitations/revocation, account security, versioned terms and layered privacy.
 - **CP-3C.1 — Controlled QA identities and fixtures:** separately authorized,

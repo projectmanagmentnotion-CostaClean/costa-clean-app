@@ -120,6 +120,14 @@ export interface PortalInvoiceSummary {
   referenceLabel: string
   issuedLabel: string
   paymentStatusLabel: string
+  status: string
+  subtotal: number
+  taxAmount: number
+  total: number
+  paidAmount: number
+  outstandingAmount: number
+  documentAvailable: boolean
+  documentId: string | null
   isSynthetic: boolean
 }
 

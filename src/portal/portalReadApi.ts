@@ -389,6 +389,37 @@ export async function cancelServiceRequest(
   return readServiceRequestReceipt(raw)
 }
 
+export interface PortalInvoiceDownloadResult {
+  signedUrl: string
+  expiresIn: 60
+}
+
+export async function requestPortalInvoiceDownload(input: {
+  clientId: string
+  invoiceId: string
+  documentId: string
+}): Promise<PortalInvoiceDownloadResult> {
+  const { client, error } = getPortalSupabaseClient()
+  if (!client || error) throw new Error('portal_invoice_download_unavailable')
+
+  const { data, error: invokeError } = await client.functions.invoke<unknown>('portal-invoice-download', {
+    body: {
+      action: 'downloadInvoice',
+      clientId: input.clientId,
+      invoiceId: input.invoiceId,
+      documentId: input.documentId,
+    },
+  })
+  if (invokeError || !data) throw new Error('portal_invoice_download_failed')
+
+  const record = objectValue(data)
+  const signedUrl = stringValue(record.signedUrl)
+  const expiresIn = numberValue(record.expiresIn)
+  if (!signedUrl || expiresIn !== 60) throw new Error('portal_invoice_download_invalid')
+
+  return { signedUrl, expiresIn: 60 }
+}
+
 interface CapabilityLoadResult<T> {
   status: PortalCapabilityStatus
   data: T
@@ -727,11 +758,20 @@ function buildInvoiceSummaries(raw: unknown): PortalInvoiceSummary[] {
     const invoiceNumber = stringValue(record.invoiceNumber)
     const issueDate = stringValue(record.issueDate)
     const status = stringValue(record.status)
+    const documentId = stringValue(record.documentId) || null
     return {
       id: stringValue(record.id) || `invoice-${index + 1}`,
       referenceLabel: invoiceNumber || `Factura ${index + 1}`,
       issuedLabel: dateLabel(issueDate),
       paymentStatusLabel: invoiceStatusLabel(status),
+      status,
+      subtotal: numberValue(record.subtotal),
+      taxAmount: numberValue(record.taxAmount),
+      total: numberValue(record.total),
+      paidAmount: numberValue(record.paidAmount),
+      outstandingAmount: numberValue(record.outstandingAmount),
+      documentAvailable: booleanValue(record.documentAvailable) && Boolean(documentId),
+      documentId,
       isSynthetic: false,
     }
   })
@@ -887,6 +927,10 @@ function serviceRequestStatusLabel(value: string): string {
 
 function invoiceStatusLabel(value: string): string {
   if (!value) return 'Documento privado'
+  if (value === 'draft') return 'Borrador'
+  if (value === 'issued') return 'Emitida'
+  if (value === 'paid') return 'Pagada'
+  if (value === 'cancelled') return 'Cancelada'
   return value
     .split('_')
     .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))

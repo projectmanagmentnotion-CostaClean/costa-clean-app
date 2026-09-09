@@ -622,6 +622,62 @@ input {
   line-height: 1.55;
 }
 
+.portal-inline-note--error {
+  color: #a52222;
+  background: #fdecec;
+}
+
+.portal-invoice-record {
+  align-items: stretch;
+}
+
+.portal-invoice-record__content {
+  width: 100%;
+}
+
+.portal-invoice-record__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portal-invoice-record__label {
+  display: block;
+  color: var(--portal-brand-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.portal-invoice-record__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 16px 0 0;
+}
+
+.portal-invoice-record__facts div {
+  min-width: 0;
+}
+
+.portal-invoice-record__facts dt {
+  color: var(--portal-muted);
+  font-size: 0.75rem;
+}
+
+.portal-invoice-record__facts dd {
+  margin: 3px 0 0;
+  color: var(--portal-ink);
+  font-weight: 700;
+}
+
+.portal-invoice-record__download {
+  margin-top: 18px;
+  min-height: 48px;
+}
+
 .portal-empty-state,
 .portal-page-state {
   max-width: 620px;

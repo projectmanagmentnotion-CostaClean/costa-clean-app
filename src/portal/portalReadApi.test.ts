@@ -6,7 +6,7 @@ vi.mock('./adapters/portalSupabaseClient', () => ({
 
 import { getPortalSupabaseClient } from './adapters/portalSupabaseClient'
 import { getPortalPropertyPath, getPortalServicePath, getPortalServiceRequestPath } from './portalNavigation'
-import { loadPortalFoundationData } from './portalReadApi'
+import { loadPortalFoundationData, requestPortalInvoiceDownload } from './portalReadApi'
 
 const mockedGetPortalSupabaseClient = vi.mocked(getPortalSupabaseClient)
 
@@ -608,6 +608,106 @@ describe('portal read api', () => {
     expect(data.serviceRequestDetail?.reference).toBe('CC-SR-REAL-001')
     expect(data.serviceRequestDetail?.serviceType).toBe('regular_cleaning')
     expect(data.serviceRequestDetail?.propertyPublicRef).toBe('PRO-9001')
+  })
+
+  it('maps invoice financial values and ready document metadata', async () => {
+    const client = createMockPortalClient(async (functionName: string) => {
+      if (functionName === 'portal_get_client_profile') {
+        return {
+          data: {
+            fullName: 'Cliente QA',
+            phone: '',
+            email: 'cliente.qa@example.invalid',
+            taxId: '',
+            billingAddress: '',
+            status: 'active',
+          },
+          error: null,
+        }
+      }
+      if (functionName === 'portal_list_invoices') {
+        return {
+          data: [
+            {
+              id: 'invoice-qa-1',
+              invoiceNumber: '2026-001',
+              issueDate: '2026-09-09',
+              status: 'issued',
+              subtotal: 100,
+              taxAmount: 21,
+              total: 121,
+              paidAmount: 0,
+              outstandingAmount: 121,
+              documentAvailable: true,
+              documentId: 'f1feb5e2-faf7-4039-9c40-8db248964993',
+            },
+            {
+              id: 'invoice-qa-2',
+              invoiceNumber: '2026-002',
+              issueDate: '2026-09-08',
+              status: 'draft',
+              subtotal: 50,
+              taxAmount: 10.5,
+              total: 60.5,
+              paidAmount: 0,
+              outstandingAmount: 60.5,
+              documentAvailable: false,
+              documentId: null,
+            },
+          ],
+          error: null,
+        }
+      }
+      return { data: [], error: null }
+    })
+
+    mockedGetPortalSupabaseClient.mockReturnValue({ client, error: null })
+    const data = await loadPortalFoundationData(
+      { clientContextId: 'client-qa', role: 'client_member' },
+      '/portal',
+    )
+
+    expect(data.invoices[0]).toMatchObject({
+      referenceLabel: '2026-001',
+      subtotal: 100,
+      taxAmount: 21,
+      total: 121,
+      paidAmount: 0,
+      outstandingAmount: 121,
+      documentAvailable: true,
+      documentId: 'f1feb5e2-faf7-4039-9c40-8db248964993',
+    })
+    expect(data.invoices[1].documentAvailable).toBe(false)
+    expect(data.invoices[1].documentId).toBeNull()
+  })
+
+  it('accepts only the secure 60-second invoice download response', async () => {
+    const client = {
+      functions: {
+        invoke: vi.fn().mockResolvedValue({
+          data: { ok: true, signedUrl: 'https://qa.invalid/signed', expiresIn: 60 },
+          error: null,
+        }),
+      },
+    }
+    mockedGetPortalSupabaseClient.mockReturnValue({
+      client: client as never,
+      error: null,
+    })
+
+    await expect(requestPortalInvoiceDownload({
+      clientId: 'client-qa',
+      invoiceId: 'invoice-qa-1',
+      documentId: 'f1feb5e2-faf7-4039-9c40-8db248964993',
+    })).resolves.toEqual({ signedUrl: 'https://qa.invalid/signed', expiresIn: 60 })
+    expect(client.functions.invoke).toHaveBeenCalledWith('portal-invoice-download', {
+      body: {
+        action: 'downloadInvoice',
+        clientId: 'client-qa',
+        invoiceId: 'invoice-qa-1',
+        documentId: 'f1feb5e2-faf7-4039-9c40-8db248964993',
+      },
+    })
   })
 })
 

@@ -52,6 +52,10 @@ function resolveCodex() {
 
 function startJob(job) {
   if (running) return
+  if (job.status === 'awaiting_approval') {
+    persist(job)
+    return
+  }
   running = true
   const project = PROJECTS[Object.keys(PROJECTS).find((key) => PROJECTS[key].key === job.projectKey)]
   if (!project || !fs.existsSync(project.root) || !workspaceMatches(project)) {
@@ -73,6 +77,7 @@ function startJob(job) {
     buildExecutionPrompt(job.prompt),
     '--ephemeral',
     '--sandbox', 'workspace-write',
+    '--full-auto',
     '--cd', project.root,
     '--output-last-message', outputPath,
     '--color', 'never',
@@ -132,11 +137,29 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/api/jobs') {
       return json(res, 200, [...jobs.values()].map(({ prompt, ...safe }) => safe))
     }
-    if (req.method === 'GET' && req.url.startsWith('/api/jobs/')) {
-      const id = req.url.split('/').pop()
+    const jobRoute = /^\/api\/jobs\/([a-f0-9]{16})(?:\/(approve|reject))?$/u.exec(req.url || '')
+    if (jobRoute && req.method === 'GET') {
+      const [, id] = jobRoute
       const job = jobs.get(id)
       if (!job) return json(res, 404, { error: 'Unknown job.' })
       return json(res, 200, job)
+    }
+    if (jobRoute && req.method === 'POST' && jobRoute[2]) {
+      const [, id, action] = jobRoute
+      const job = jobs.get(id)
+      if (!job) return json(res, 404, { error: 'Unknown job.' })
+      if (job.status !== 'awaiting_approval') return json(res, 409, { error: 'Job is not awaiting approval.' })
+      if (action === 'approve') {
+        job.status = 'queued'
+        job.approvedAt = new Date().toISOString()
+        persist(job)
+        startJob(job)
+        return json(res, 202, { accepted: true, jobId: job.id })
+      }
+      job.status = 'rejected'
+      job.finishedAt = new Date().toISOString()
+      persist(job)
+      return json(res, 200, { accepted: true, jobId: job.id })
     }
     if (req.method === 'POST' && req.url === '/api/prompts') {
       const body = await readBody(req)

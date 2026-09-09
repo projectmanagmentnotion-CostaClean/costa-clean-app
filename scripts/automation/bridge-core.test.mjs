@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CONVERSATION_URL, CONVERSATION_URLS, createJob, hashPrompt, isAllowedSource, projectForSource, PROJECTS } from './bridge-core.mjs'
+import { approvalReason, CONVERSATION_URL, CONVERSATION_URLS, createJob, hashPrompt, isAllowedSource, projectForSource, PROJECTS } from './bridge-core.mjs'
 
 describe('prompt bridge boundaries', () => {
   it('accepts only the configured conversation', () => {
@@ -24,5 +24,12 @@ describe('prompt bridge boundaries', () => {
     const job = createJob('task', CONVERSATION_URL)
     expect(job.id).toHaveLength(16)
     expect(job.status).toBe('queued')
+  })
+
+  it('runs ordinary tasks automatically and gates sensitive tasks', () => {
+    expect(approvalReason('fix the mobile spacing and run tests')).toBe('')
+    expect(createJob('fix the mobile spacing', CONVERSATION_URL).status).toBe('queued')
+    expect(approvalReason('apply the Supabase migration in production')).toBe('production access or deployment')
+    expect(createJob('apply the Supabase migration in production', CONVERSATION_URL).status).toBe('awaiting_approval')
   })
 })

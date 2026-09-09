@@ -1,10 +1,12 @@
 /* global chrome */
 
 const bridgeOrigin = 'http://127.0.0.1:4319'
-const allowedPaths = new Set(['/api/jobs', '/api/prompts'])
+function isAllowedPath(path) {
+  return path === '/api/jobs' || path === '/api/prompts' || /^\/api\/jobs\/[a-f0-9]{16}\/(approve|reject)$/u.test(path)
+}
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type !== 'costa-bridge-fetch' || !allowedPaths.has(message.path)) return false
+  if (message?.type !== 'costa-bridge-fetch' || !isAllowedPath(message.path)) return false
 
   fetch(`${bridgeOrigin}${message.path}`, {
     method: message.method || 'GET',

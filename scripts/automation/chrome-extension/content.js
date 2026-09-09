@@ -117,6 +117,20 @@
     }
   }
 
+  async function approveSensitiveJobs() {
+    const response = await bridgeFetch('/api/jobs')
+    if (!response.ok) return
+    const pending = response.body
+      .filter((candidate) => candidate.status === 'awaiting_approval' && candidate.sourceUrl === conversationUrl)
+      .sort((left, right) => Date.parse(left.receivedAt || '') - Date.parse(right.receivedAt || ''))
+    const job = pending[0]
+    if (!job || sessionStorage.getItem(`costaPromptBridgeApproval:${job.id}`)) return
+    sessionStorage.setItem(`costaPromptBridgeApproval:${job.id}`, 'shown')
+    const approved = window.confirm(`Costa Clean necesita aprobación para continuar.\n\nMotivo: ${job.approvalReason || 'operación sensible'}\n\nAceptar para ejecutar este trabajo.`)
+    const action = approved ? 'approve' : 'reject'
+    await bridgeFetch(`/api/jobs/${job.id}/${action}`, { method: 'POST' })
+  }
+
   async function tick() {
     if (pageGone || contextInvalidated) return
     try {
@@ -148,6 +162,7 @@
         assistantCandidateSince = 0
       }
       await publishCompletedJob()
+      await approveSensitiveJobs()
     } catch {
       // ChatGPT's DOM and extension context can change during navigation.
     }

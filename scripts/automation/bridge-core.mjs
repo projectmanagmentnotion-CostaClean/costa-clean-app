@@ -26,6 +26,36 @@ export function hashPrompt(prompt) {
   return crypto.createHash('sha256').update(prompt.trim(), 'utf8').digest('hex')
 }
 
+const APPROVAL_RULES = Object.freeze([
+  ['production', 'production access or deployment'],
+  ['prod', 'production access or deployment'],
+  ['supabase', 'Supabase or database access'],
+  ['migration', 'database migration'],
+  ['schema', 'database schema change'],
+  ['auth', 'authentication or authorization change'],
+  ['secret', 'secret or credential handling'],
+  ['token', 'token or credential handling'],
+  ['password', 'password handling'],
+  ['financial', 'financial or fiscal operation'],
+  ['invoice', 'invoice or numbering operation'],
+  ['payment', 'payment operation'],
+  ['factura', 'facturación or numbering operation'],
+  ['pago', 'payment operation'],
+  ['deploy', 'deployment or external release'],
+  ['release', 'deployment or external release'],
+  ['push', 'remote Git publication'],
+  ['commit', 'Git history change'],
+  ['delete', 'destructive deletion'],
+  ['drop ', 'destructive database operation'],
+  ['reset --hard', 'destructive Git operation'],
+])
+
+export function approvalReason(prompt) {
+  const normalized = prompt.toLowerCase()
+  const match = APPROVAL_RULES.find(([term]) => normalized.includes(term))
+  return match?.[1] ?? ''
+}
+
 export function isAllowedSource(sourceUrl) {
   try {
     return CONVERSATION_URLS.includes(new URL(sourceUrl).href)
@@ -70,12 +100,14 @@ export function createJob(prompt, sourceUrl) {
   const trimmed = prompt.trim()
   if (!trimmed) throw new Error('Prompt is empty.')
   if (!isAllowedSource(sourceUrl)) throw new Error('Prompt source is not the configured conversation.')
+  const reason = approvalReason(trimmed)
   return {
     id: hashPrompt(trimmed).slice(0, 16),
     prompt: trimmed,
     sourceUrl: new URL(sourceUrl).href,
     projectKey: projectForSource(sourceUrl).key,
     receivedAt: new Date().toISOString(),
-    status: 'queued',
+    status: reason ? 'awaiting_approval' : 'queued',
+    approvalReason: reason,
   }
 }

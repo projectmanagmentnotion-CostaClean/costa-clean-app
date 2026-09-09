@@ -199,12 +199,16 @@ const server = http.createServer(async (req, res) => {
       if (!isAllowedSource(body.sourceUrl)) return json(res, 403, { error: 'Only the configured conversation is accepted.' })
       const project = projectForSource(body.sourceUrl)
       if (!project) return json(res, 403, { error: 'No project is mapped to this conversation.' })
-      const promptHash = hashPrompt(String(body.prompt || ''))
+      const incomingPrompt = String(body.prompt || '').trim()
+      if (project.key === 'ecosystem-config' && !/^#\s*COSTA CLEAN\b/iu.test(incomingPrompt)) {
+        return json(res, 200, { accepted: false, ignored: true, reason: 'Only # COSTA CLEAN prompts are executable.' })
+      }
+      const promptHash = hashPrompt(incomingPrompt)
       const existing = [...jobs.values()].find((job) => job.projectKey === project.key && job.promptHash === promptHash)
       if (existing && !['failed', 'rejected'].includes(existing.status) && existing.prompt) {
         return json(res, 200, { accepted: false, duplicate: true, jobId: existing.id })
       }
-      const job = createJob(String(body.prompt || ''), body.sourceUrl)
+      const job = createJob(incomingPrompt, body.sourceUrl)
       job.projectKey = project.key
       job.promptHash = promptHash
       jobs.set(job.id, job)

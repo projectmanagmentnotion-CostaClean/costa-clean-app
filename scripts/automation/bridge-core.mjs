@@ -27,6 +27,13 @@ export function hashPrompt(prompt) {
   return crypto.createHash('sha256').update(prompt.trim(), 'utf8').digest('hex')
 }
 
+export function isUsableCodexOutput(output) {
+  const normalized = String(output ?? '').trim()
+  if (normalized.length < 40) return false
+  if (/^codex termin[oó] sin informe\.?$/iu.test(normalized)) return false
+  return true
+}
+
 const APPROVAL_RULES = Object.freeze([
   ['production', 'production access or deployment'],
   ['prod', 'production access or deployment'],

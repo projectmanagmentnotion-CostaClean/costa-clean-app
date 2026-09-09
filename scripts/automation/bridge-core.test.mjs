@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { approvalReason, CONVERSATION_URL, CONVERSATION_URLS, createJob, hashPrompt, isAllowedSource, projectForSource, PROJECTS } from './bridge-core.mjs'
+import { approvalReason, CONVERSATION_URL, CONVERSATION_URLS, createJob, hashPrompt, isAllowedSource, isUsableCodexOutput, projectForSource, PROJECTS } from './bridge-core.mjs'
 
 describe('prompt bridge boundaries', () => {
   it('accepts only the configured conversation', () => {
@@ -31,5 +31,11 @@ describe('prompt bridge boundaries', () => {
     expect(createJob('fix the mobile spacing', CONVERSATION_URL).status).toBe('queued')
     expect(approvalReason('apply the Supabase migration in production')).toBe('production access or deployment')
     expect(createJob('apply the Supabase migration in production', CONVERSATION_URL).status).toBe('awaiting_approval')
+  })
+
+  it('rejects empty or placeholder Codex completions', () => {
+    expect(isUsableCodexOutput('')).toBe(false)
+    expect(isUsableCodexOutput('Codex terminó sin informe.')).toBe(false)
+    expect(isUsableCodexOutput('CP-3B.5A.3 FINAL\nEstado: completado con verificación y archivos revisados.')).toBe(true)
   })
 })

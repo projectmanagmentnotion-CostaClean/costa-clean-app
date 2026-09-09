@@ -135,7 +135,7 @@
       if (sendButton && !sendButton.disabled) {
         sendButton.click()
       } else {
-        composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
+        throw new Error('ChatGPT send button is unavailable; keeping the job unpublished for retry.')
       }
       sessionStorage.setItem(`costaPromptBridgePublished:v2:${job.id}`, '1')
     } finally {

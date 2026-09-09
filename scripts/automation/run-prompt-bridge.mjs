@@ -4,7 +4,7 @@ import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { buildExecutionPrompt, createJob, hashPrompt, isAllowedSource, PROJECTS, projectForSource } from './bridge-core.mjs'
+import { buildExecutionPrompt, createJob, hashPrompt, isAllowedSource, isUsableCodexOutput, PROJECTS, projectForSource } from './bridge-core.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'prompt-bridge')
@@ -157,16 +157,28 @@ const server = http.createServer(async (req, res) => {
       if (!job) return json(res, 404, { error: 'Unknown job.' })
       if (action === 'dispatch') {
         if (job.status !== 'awaiting_codex_app') return json(res, 409, { error: 'Job is not awaiting Codex app dispatch.' })
+        const body = Number(req.headers['content-length'] || 0) > 0 ? await readBody(req) : {}
+        const turnId = String(body.turnId || '').trim()
+        if (!turnId) return json(res, 422, { error: 'Codex dispatch requires the exact new turnId.' })
         job.status = 'dispatched_to_codex_app'
         job.dispatchedAt = new Date().toISOString()
+        job.codexTurnId = turnId
         persist(job)
         return json(res, 202, { accepted: true, jobId: job.id, codexThreadId: job.codexThreadId })
       }
       if (action === 'complete') {
         if (job.status !== 'dispatched_to_codex_app') return json(res, 409, { error: 'Job is not dispatched to the Codex app.' })
         const body = await readBody(req)
+        const turnId = String(body.turnId || '').trim()
+        if (!turnId || turnId !== job.codexTurnId) return json(res, 409, { error: 'Codex completion does not match the dispatched turnId.' })
+        const output = String(body.output || '').trim()
+        if (!isUsableCodexOutput(output)) {
+          job.error = 'Codex completion rejected: final report is empty or too short.'
+          persist(job)
+          return json(res, 422, { error: job.error, jobId: job.id })
+        }
         job.status = 'complete'
-        job.output = String(body.output || '').slice(0, 100_000)
+        job.output = output.slice(0, 100_000)
         job.finishedAt = new Date().toISOString()
         job.completedBy = job.codexThreadId
         persist(job)

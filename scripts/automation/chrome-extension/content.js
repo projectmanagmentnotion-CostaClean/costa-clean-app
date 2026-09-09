@@ -10,6 +10,7 @@
   let busy = false
   let contextInvalidated = false
   let intervalId
+  let pageGone = false
 
   if (!conversationUrls.includes(conversationUrl)) return
 
@@ -77,12 +78,13 @@
   }
 
   async function publishCompletedJob() {
-    if (busy) return
+    if (busy || pageGone) return
     const response = await bridgeFetch('/api/jobs')
     if (!response.ok) return
     const jobs = response.body
     const job = jobs.find((candidate) => candidate.status === 'complete' && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
     if (!job) return
+    if (!composer()) return
     busy = true
     try {
       setComposer(job.output || 'Codex terminó sin informe.')
@@ -95,14 +97,20 @@
   }
 
   async function tick() {
+    if (pageGone || contextInvalidated) return
     try {
       const newest = messages().at(-1)
       if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT')) await submitPrompt(newest)
       await publishCompletedJob()
-    } catch (error) {
-      console.warn('[Costa Prompt Bridge]', error)
+    } catch {
+      // ChatGPT's DOM and extension context can change during navigation.
     }
   }
+
+  window.addEventListener('pagehide', () => {
+    pageGone = true
+    clearInterval(intervalId)
+  }, { once: true })
 
   intervalId = setInterval(tick, 2500)
   tick()

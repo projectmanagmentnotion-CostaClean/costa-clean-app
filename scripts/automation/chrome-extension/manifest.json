@@ -5,6 +5,9 @@
   "description": "Bridges one exact ChatGPT conversation to the local Costa Clean Codex runner.",
   "permissions": ["storage"],
   "host_permissions": ["http://127.0.0.1:4319/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": [

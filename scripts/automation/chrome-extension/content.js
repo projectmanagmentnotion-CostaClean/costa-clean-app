@@ -1,10 +1,11 @@
+/* global chrome */
+
 (() => {
   const conversationUrls = [
     'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e',
     'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b',
   ]
   const conversationUrl = `${location.origin}${location.pathname}`
-  const bridgeUrl = 'http://127.0.0.1:4319'
   const sent = new Set(JSON.parse(sessionStorage.getItem('costaPromptBridgeSent') || '[]'))
   let busy = false
 
@@ -34,15 +35,24 @@
     }
   }
 
-  async function submitPrompt(prompt) {
-    const response = await fetch(`${bridgeUrl}/api/prompts`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ prompt, sourceUrl: conversationUrl }),
+  function bridgeFetch(path, options = {}) {
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage({
+        type: 'costa-bridge-fetch',
+        path,
+        method: options.method || 'GET',
+        body: options.body,
+      }, (result) => resolve(result || { ok: false, status: 0, body: { error: 'Bridge unavailable.' } }))
     })
-    const result = await response.json()
-    if (!response.ok) throw new Error(result.error || 'Bridge rejected prompt.')
-    if (result.jobId) {
+  }
+
+  async function submitPrompt(prompt) {
+    const result = await bridgeFetch('/api/prompts', {
+      method: 'POST',
+      body: { prompt, sourceUrl: conversationUrl },
+    })
+    if (!result.ok) throw new Error(result.body?.error || 'Bridge rejected prompt.')
+    if (result.body?.jobId) {
       sent.add(prompt)
       sessionStorage.setItem('costaPromptBridgeSent', JSON.stringify([...sent].slice(-20)))
     }
@@ -50,9 +60,9 @@
 
   async function publishCompletedJob() {
     if (busy) return
-    const response = await fetch(`${bridgeUrl}/api/jobs`)
+    const response = await bridgeFetch('/api/jobs')
     if (!response.ok) return
-    const jobs = await response.json()
+    const jobs = response.body
     const job = jobs.find((candidate) => candidate.status === 'complete' && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
     if (!job) return
     busy = true

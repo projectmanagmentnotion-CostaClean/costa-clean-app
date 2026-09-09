@@ -19,6 +19,7 @@ export const PROJECTS = Object.freeze({
     conversationUrl: CONVERSATION_URLS[1],
     root: 'C:\\Users\\USUARIO\\costa-clean-app',
     branch: 'codex/ux-operational-mobile-v2',
+    codexThreadId: '01a067cf-c5ad-7cb3-a376-428538dea1cc',
   }),
 })
 

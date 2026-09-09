@@ -66,6 +66,13 @@ function startJob(job) {
     persist(job)
     return
   }
+  if (project.codexThreadId) {
+    job.status = 'awaiting_codex_app'
+    job.codexThreadId = project.codexThreadId
+    running = false
+    persist(job)
+    return
+  }
   job.status = 'running'
   const jobDir = path.join(privateRoot, project.key, job.id)
   fs.mkdirSync(jobDir, { recursive: true })
@@ -114,7 +121,7 @@ function workspaceMatches(project) {
 }
 
 function persist(job) {
-  fs.writeFileSync(path.join(privateRoot, `${job.id}.json`), `${JSON.stringify({ ...job, prompt: undefined }, null, 2)}\n`, 'utf8')
+  fs.writeFileSync(path.join(privateRoot, `${job.id}.json`), `${JSON.stringify(job, null, 2)}\n`, 'utf8')
 }
 
 const server = http.createServer(async (req, res) => {
@@ -137,7 +144,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/api/jobs') {
       return json(res, 200, [...jobs.values()].map(({ prompt, ...safe }) => safe))
     }
-    const jobRoute = /^\/api\/jobs\/([a-f0-9]{16})(?:\/(approve|reject))?$/u.exec(req.url || '')
+    const jobRoute = /^\/api\/jobs\/([a-f0-9]{16})(?:\/(approve|reject|dispatch|complete))?$/u.exec(req.url || '')
     if (jobRoute && req.method === 'GET') {
       const [, id] = jobRoute
       const job = jobs.get(id)
@@ -148,6 +155,23 @@ const server = http.createServer(async (req, res) => {
       const [, id, action] = jobRoute
       const job = jobs.get(id)
       if (!job) return json(res, 404, { error: 'Unknown job.' })
+      if (action === 'dispatch') {
+        if (job.status !== 'awaiting_codex_app') return json(res, 409, { error: 'Job is not awaiting Codex app dispatch.' })
+        job.status = 'dispatched_to_codex_app'
+        job.dispatchedAt = new Date().toISOString()
+        persist(job)
+        return json(res, 202, { accepted: true, jobId: job.id, codexThreadId: job.codexThreadId })
+      }
+      if (action === 'complete') {
+        if (job.status !== 'dispatched_to_codex_app') return json(res, 409, { error: 'Job is not dispatched to the Codex app.' })
+        const body = await readBody(req)
+        job.status = 'complete'
+        job.output = String(body.output || '').slice(0, 100_000)
+        job.finishedAt = new Date().toISOString()
+        job.completedBy = job.codexThreadId
+        persist(job)
+        return json(res, 200, { accepted: true, jobId: job.id })
+      }
       if (job.status !== 'awaiting_approval') return json(res, 409, { error: 'Job is not awaiting approval.' })
       if (action === 'approve') {
         job.status = 'queued'
@@ -161,6 +185,15 @@ const server = http.createServer(async (req, res) => {
       persist(job)
       return json(res, 200, { accepted: true, jobId: job.id })
     }
+    if (req.method === 'GET' && req.url.startsWith('/api/codex/next')) {
+      const query = new URL(req.url, `http://127.0.0.1:${port}`).searchParams
+      const projectKey = query.get('projectKey')
+      const job = [...jobs.values()]
+        .filter((candidate) => candidate.status === 'awaiting_codex_app' && (!projectKey || candidate.projectKey === projectKey))
+        .sort((left, right) => Date.parse(left.receivedAt || '') - Date.parse(right.receivedAt || ''))[0]
+      if (!job) return json(res, 204, {})
+      return json(res, 200, { id: job.id, prompt: job.prompt, sourceUrl: job.sourceUrl, projectKey: job.projectKey, codexThreadId: job.codexThreadId })
+    }
     if (req.method === 'POST' && req.url === '/api/prompts') {
       const body = await readBody(req)
       if (!isAllowedSource(body.sourceUrl)) return json(res, 403, { error: 'Only the configured conversation is accepted.' })
@@ -168,7 +201,7 @@ const server = http.createServer(async (req, res) => {
       if (!project) return json(res, 403, { error: 'No project is mapped to this conversation.' })
       const promptHash = hashPrompt(String(body.prompt || ''))
       const existing = [...jobs.values()].find((job) => job.projectKey === project.key && job.promptHash === promptHash)
-      if (existing && !['failed', 'rejected'].includes(existing.status)) {
+      if (existing && !['failed', 'rejected'].includes(existing.status) && existing.prompt) {
         return json(res, 200, { accepted: false, duplicate: true, jobId: existing.id })
       }
       const job = createJob(String(body.prompt || ''), body.sourceUrl)

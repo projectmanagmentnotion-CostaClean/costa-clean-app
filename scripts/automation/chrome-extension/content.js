@@ -82,9 +82,11 @@
     const response = await bridgeFetch('/api/jobs')
     if (!response.ok) return
     const jobs = response.body
-    const job = jobs.find((candidate) => candidate.status === 'complete'
-      && candidate.sourceUrl === conversationUrl
-      && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
+    const job = jobs
+      .filter((candidate) => candidate.status === 'complete'
+        && candidate.sourceUrl === conversationUrl
+        && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
+      .sort((left, right) => Date.parse(right.finishedAt || '') - Date.parse(left.finishedAt || ''))[0]
     if (!job) return
     if (!composer()) return
     busy = true

@@ -94,6 +94,10 @@ function createProvider(
       ok: true,
       value: null,
     })),
+    signInWithGoogle: vi.fn(async (): Promise<PortalProviderResult<null>> => ({
+      ok: true,
+      value: null,
+    })),
     signOut: vi.fn(async (): Promise<PortalProviderResult<null>> => ({
       ok: true,
       value: null,
@@ -359,6 +363,20 @@ describe('portal Auth lifecycle', () => {
     await eventually(() => resolutions.at(-1) === 'pending_review')
 
     expect(provider.resolveCalls).toBe(2)
+    stop()
+  })
+
+  it('keeps Google sign-in inside the same auth lifecycle', async () => {
+    const provider = createProvider()
+    const { lifecycle, stop } = startLifecycle(provider)
+
+    const result = await lifecycle.signInWithGoogle()
+
+    expect(result).toEqual({
+      ok: true,
+      message: 'Continuando con Google. Comprobando permisos.',
+    })
+    expect(provider.signInWithGoogle).toHaveBeenCalledTimes(1)
     stop()
   })
 

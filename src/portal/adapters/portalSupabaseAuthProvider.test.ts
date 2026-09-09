@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createPortalSupabaseAuthProvider } from './portalFoundationAdapter'
+import { createPortalOAuthRedirect } from './portalSupabaseClient'
 
 const validSelfContext = {
   applicationStatus: null,
@@ -21,10 +22,15 @@ interface CreateClientOptions {
     message: string
     status: number
   } | null
+  oauthError?: {
+    message: string
+    status: number
+  } | null
 }
 
 function createClient(options: CreateClientOptions = {}) {
   const rpcCalls: unknown[][] = []
+  const oauthCalls: unknown[] = []
   let authListener:
     | ((
         event: string,
@@ -60,6 +66,12 @@ function createClient(options: CreateClientOptions = {}) {
       signInWithPassword: async () => ({
         error: options.signInError ?? null,
       }),
+      signInWithOAuth: async (value: unknown) => {
+        oauthCalls.push(value)
+        return {
+        error: options.oauthError ?? null,
+        }
+      },
       signOut: async () => ({ error: null }),
       updateUser: async () => ({ error: null }),
     },
@@ -81,6 +93,7 @@ function createClient(options: CreateClientOptions = {}) {
       authListener?.(event, session)
     },
     getRpcCalls: () => rpcCalls,
+    getOauthCalls: () => oauthCalls,
     getUnsubscribeCalls: () => unsubscribeCalls,
   }
 }
@@ -154,5 +167,43 @@ describe('portal Supabase Auth/RPC provider', () => {
       ok: false,
       reason: 'unknown',
     })
+  })
+
+  it('builds the exact portal callback without adding OAuth scopes', () => {
+    expect(createPortalOAuthRedirect('http://127.0.0.1:4174')).toBe(
+      'http://127.0.0.1:4174/portal',
+    )
+    expect(createPortalOAuthRedirect('https://app.costacleanbcn.com')).toBe(
+      'https://app.costacleanbcn.com/portal',
+    )
+    expect(createPortalOAuthRedirect('https://app.costacleanbcn.com/portal?next=x')).toBeNull()
+  })
+
+  it('delegates Google sign-in to Supabase with only the portal callback', async () => {
+    const originalWindow = globalThis.window
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { location: { origin: 'http://127.0.0.1:4174' } },
+    })
+
+    try {
+      const testClient = createClient()
+      const provider = createPortalSupabaseAuthProvider(testClient.client)
+
+      expect(await provider.signInWithGoogle()).toEqual({ ok: true, value: null })
+      expect(testClient.getOauthCalls()).toEqual([{
+        provider: 'google',
+        options: { redirectTo: 'http://127.0.0.1:4174/portal' },
+      }])
+    } finally {
+      if (originalWindow === undefined) {
+        Reflect.deleteProperty(globalThis, 'window')
+      } else {
+        Object.defineProperty(globalThis, 'window', {
+          configurable: true,
+          value: originalWindow,
+        })
+      }
+    }
   })
 })

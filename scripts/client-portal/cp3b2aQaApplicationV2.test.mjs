@@ -19,6 +19,7 @@ import {
   verifyPackageManifestV2,
   verifyPrivateBackupV2,
 } from './run-cp3b2a-qa-v2.mjs'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 const migrationPath =
   'supabase/migrations/20260728160000_portal_reviewed_change_contract.sql'
@@ -91,7 +92,8 @@ describe('CP-3B.2A.1 QA application V2 package', () => {
     expect(manifest.status).toBe('PREPARED_NOT_AUTHORIZED')
     expect(manifest.artifacts.some((artifact) => artifact.path === manifestPath)).toBe(false)
     for (const artifact of manifest.artifacts) {
-      expect(sha256(artifact.path), artifact.path).toBe(artifact.sha256)
+      expect(matchesFrozenArtifact(artifact.path, artifact.path, artifact.sha256), artifact.path)
+        .toBe(true)
     }
   })
 

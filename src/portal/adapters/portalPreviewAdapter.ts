@@ -246,6 +246,14 @@ export function createPortalPreviewAdapter(
         })
         return { ok: true, message: 'Acceso de vista previa confirmado.' }
       },
+      async signInWithGoogle() {
+        emit({
+          status: 'active_member',
+          selectedClientId: signedInMembership.clientId,
+          membership: signedInMembership,
+        })
+        return { ok: true, message: 'Acceso de vista previa confirmado.' }
+      },
       async requestPasswordRecovery() {
         return {
           ok: true,

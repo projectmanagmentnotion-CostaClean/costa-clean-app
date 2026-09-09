@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 const CP2B_MIGRATION = 'supabase/migrations/20260723160000_client_portal_security_boundary.sql'
 const CP3B0_MIGRATION = 'supabase/migrations/20260728120000_portal_self_access_context.sql'
@@ -153,7 +154,8 @@ describe('CP-3B.0 self access context contract', () => {
     expect(manifest.status).toBe('PREPARED_NOT_AUTHORIZED')
     expect(manifest.migrationSha256).toBe(sha256(CP3B0_MIGRATION))
     for (const artifact of manifest.artifacts) {
-      expect(sha256(artifact.path), artifact.path).toBe(artifact.sha256)
+      expect(matchesFrozenArtifact(artifact.path, artifact.path, artifact.sha256), artifact.path)
+        .toBe(true)
     }
   })
 
@@ -174,7 +176,8 @@ describe('CP-3B.0 self access context contract', () => {
       sha256('scripts/client-portal/cp2b_qa_package_v5.manifest.json'),
     )
     for (const artifact of frozenArtifacts) {
-      expect(sha256(artifact.path), artifact.path).toBe(artifact.sha256)
+      expect(matchesFrozenArtifact(artifact.path, artifact.path, artifact.sha256), artifact.path)
+        .toBe(true)
     }
   })
 })

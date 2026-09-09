@@ -112,6 +112,25 @@ function LoginForm({ lifecycle, onNavigate }: AuthFormProps) {
         Consulta el estado de tu acceso de forma segura.
       </p>
 
+      <button
+        type="button"
+        className="portal-button portal-button--secondary portal-button--full"
+        onClick={async () => {
+          if (status.status === 'submitting') return
+          setStatus({ status: 'submitting' })
+          const result = await lifecycle.signInWithGoogle()
+          setStatus({ status: 'result', result })
+          if (!result.ok) focusResult(resultRef)
+        }}
+        disabled={status.status === 'submitting'}
+      >
+        Continuar con Google
+      </button>
+
+      <div className="portal-auth__divider" role="separator">
+        <span>o continúa con email</span>
+      </div>
+
       <form className="portal-form" onSubmit={handleSubmit} noValidate>
         <PortalResult status={status} resultRef={resultRef} />
         <label className="portal-field">

@@ -35,6 +35,7 @@ function createProvider(): PortalAuthProvider {
     }),
     sanitizeRecoveryUrl: vi.fn(),
     signIn: async () => ({ ok: true, value: null }),
+    signInWithGoogle: async () => ({ ok: true, value: null }),
     signOut: async () => ({ ok: true, value: null }),
     updatePassword: async () => ({ ok: true, value: null }),
   }
@@ -66,6 +67,7 @@ describe('production portal foundation adapter', () => {
       'requestPasswordRecovery',
       'retry',
       'signIn',
+      'signInWithGoogle',
       'signOut',
       'start',
       'updatePassword',

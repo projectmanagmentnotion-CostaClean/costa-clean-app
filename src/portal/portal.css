@@ -1615,6 +1615,24 @@ input {
   border-color: #cce3e7;
 }
 
+.portal-auth__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: var(--portal-muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.portal-auth__divider::before,
+.portal-auth__divider::after {
+  flex: 1;
+  height: 1px;
+  background: var(--portal-line);
+  content: '';
+}
+
 .portal-summary-grid--account {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }

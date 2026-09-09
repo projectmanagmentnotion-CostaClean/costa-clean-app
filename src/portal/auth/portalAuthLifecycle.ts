@@ -38,6 +38,7 @@ export interface PortalAuthProvider {
   resolveSelfAccess(): Promise<PortalProviderResult<PortalAccessResolution>>
   sanitizeRecoveryUrl(): void
   signIn(email: string, password: string): Promise<PortalProviderResult<null>>
+  signInWithGoogle(): Promise<PortalProviderResult<null>>
   signOut(): Promise<PortalProviderResult<null>>
   updatePassword(password: string): Promise<PortalProviderResult<null>>
 }
@@ -301,6 +302,19 @@ export function createPortalAuthLifecycle(
 
           void refreshSession(false)
           return safeResult(true, 'Acceso validado. Comprobando permisos.')
+        },
+        safeResult(false, genericCredentialsMessage),
+      )
+    },
+
+    signInWithGoogle() {
+      return runAction(
+        'signInWithGoogle',
+        async () => {
+          const result = await provider.signInWithGoogle()
+          if (!result.ok) return safeResult(false, genericCredentialsMessage)
+
+          return safeResult(true, 'Continuando con Google. Comprobando permisos.')
         },
         safeResult(false, genericCredentialsMessage),
       )

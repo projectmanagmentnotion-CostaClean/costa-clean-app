@@ -9,6 +9,7 @@ supabase/functions/portal-*/** text eol=lf
 supabase/migrations/20260723160000_client_portal_security_boundary.sql text eol=lf
 supabase/migrations/20260728120000_portal_self_access_context.sql text eol=lf
 supabase/migrations/20260728160000_portal_reviewed_change_contract.sql text eol=lf
+supabase/migrations/20260909150000_portal_billing_onboarding_v2.sql text eol=lf
 
 scripts/client-portal/cp3b2a_qa_precheck_v3.sql text eol=lf
 scripts/client-portal/cp3b2a_qa_postcheck_v3.sql text eol=lf

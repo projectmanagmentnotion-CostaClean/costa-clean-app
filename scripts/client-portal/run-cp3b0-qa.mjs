@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runPsqlV5 } from './cp2b_postgres_transport_v5.mjs'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 const QA_REF = 'kpvvydthlxupjjqqdpxy'
 const PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
@@ -41,7 +42,7 @@ function readAndVerifyManifest() {
 
   for (const artifact of manifest.artifacts) {
     const filePath = path.join(repoRoot, artifact.path)
-    if (sha256(filePath) !== artifact.sha256) {
+    if (!matchesFrozenArtifact(filePath, artifact.path, artifact.sha256)) {
       fail(`manifest_hash_mismatch:${artifact.path}`)
     }
   }
@@ -60,7 +61,7 @@ function readAndVerifyManifest() {
   ]
   for (const artifact of cp2bArtifacts) {
     const filePath = path.join(repoRoot, artifact.path)
-    if (sha256(filePath) !== artifact.sha256) {
+    if (!matchesFrozenArtifact(filePath, artifact.path, artifact.sha256)) {
       fail(`cp2b_frozen_hash_mismatch:${artifact.path}`)
     }
   }

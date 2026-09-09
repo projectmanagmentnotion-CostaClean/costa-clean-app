@@ -261,6 +261,10 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   Evidence: `CP3B4_INVOICES_PRIVATE_DOCUMENTS.md`.
 - **CP-3B.5 — Members, security and legal acceptance:** client roles,
   invitations/revocation, account security, versioned terms and layered privacy.
+  Current audit status: `PARTIAL — backend QA deployed; authenticated E2E
+  identity/configuration pending`. Evidence:
+  `CP3B5_ACCOUNT_SECURITY_GOOGLE_ONBOARDING.md` and
+  `cp3b5a_qa_package.manifest.json`. Production remains unchanged.
 - **CP-3C.1 — Controlled QA identities and fixtures:** separately authorized,
   synthetic, exact-cleanup dataset.
 - **CP-3C.2 — End-to-end authorization QA:** positive and negative journeys,

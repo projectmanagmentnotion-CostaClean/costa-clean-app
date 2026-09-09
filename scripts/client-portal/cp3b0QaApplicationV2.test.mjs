@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import { preparePostgresEnvironmentV5 } from './cp2b_postgres_transport_v5.mjs'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 import {
   AUTHORIZATION_ID,
   MIGRATION_SHA256,
@@ -77,7 +78,8 @@ describe('CP-3B.0A QA application V2 package', () => {
     expect(manifest.authorizationId).toBe(AUTHORIZATION_ID)
     expect(manifest.artifacts.some((artifact) => artifact.path === manifestPath)).toBe(false)
     for (const artifact of manifest.artifacts) {
-      expect(sha256(artifact.path), artifact.path).toBe(artifact.sha256)
+      expect(matchesFrozenArtifact(artifact.path, artifact.path, artifact.sha256), artifact.path)
+        .toBe(true)
     }
   })
 

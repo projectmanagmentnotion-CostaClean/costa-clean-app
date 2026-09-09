@@ -13,6 +13,26 @@ export type PortalRequest =
       contactPhone: string | null
       privacyNoticeVersion: string
     }
+  | {
+      action: 'submitApplicationV2'
+      customerType: 'individual' | 'business'
+      firstName: string | null
+      lastName: string | null
+      legalName: string | null
+      tradeName: string | null
+      taxId: string | null
+      contactPerson: string | null
+      contactPhone: string | null
+      billingAddress: string | null
+      postalCode: string | null
+      city: string | null
+      region: string | null
+      country: string | null
+      marketingOptIn: boolean
+      locale: string
+      legalAccepted: boolean
+      idempotencyKey: string
+    }
   | { action: 'acceptInvitation'; token: string }
   | { action: 'submitProfileChange'; clientId: string; changes: JsonObject }
   | { action: 'submitPropertyChange'; clientId: string; propertyId: string; changes: JsonObject }
@@ -37,7 +57,7 @@ export type PortalRequest =
   | { action: 'downloadInvoice'; clientId: string; invoiceId: string; documentId: string }
 
 const surfaceActions: Record<PortalSurface, Set<PortalRequest['action']>> = {
-  account: new Set(['submitApplication', 'acceptInvitation']),
+  account: new Set(['submitApplication', 'submitApplicationV2', 'acceptInvitation']),
   service: new Set([
     'submitProfileChange',
     'submitPropertyChange',
@@ -51,8 +71,9 @@ const surfaceActions: Record<PortalSurface, Set<PortalRequest['action']>> = {
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u
 const clientIdPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/u
 const datePattern = /^\d{4}-\d{2}-\d{2}$/u
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u
-const tokenPattern = /^[A-Za-z0-9_-]{43,128}$/u
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u
+  const tokenPattern = /^[A-Za-z0-9_-]{43,128}$/u
+const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 
 export function validatePortalRequest(surface: PortalSurface, value: unknown): PortalRequest | null {
   if (!isObject(value) || typeof value.action !== 'string') return null
@@ -78,6 +99,49 @@ export function validatePortalRequest(surface: PortalSurface, value: unknown): P
         || typeof value.token !== 'string'
         || !tokenPattern.test(value.token)) return null
       return { action, token: value.token }
+    case 'submitApplicationV2':
+      if (!hasExactKeys(value, [
+        'action', 'customerType', 'firstName', 'lastName', 'legalName', 'tradeName', 'taxId',
+        'contactPerson', 'contactPhone', 'billingAddress', 'postalCode', 'city', 'region', 'country',
+        'marketingOptIn', 'locale', 'legalAccepted', 'idempotencyKey',
+      ])
+        || !oneOf(value.customerType, ['individual', 'business'])
+        || !nullableString(value.firstName, 120)
+        || !nullableString(value.lastName, 160)
+        || !nullableString(value.legalName, 200)
+        || !nullableString(value.tradeName, 200)
+        || !nullableString(value.taxId, 40)
+        || !nullableString(value.contactPerson, 160)
+        || !nullableString(value.contactPhone, 40)
+        || !nullableString(value.billingAddress, 320)
+        || !nullableString(value.postalCode, 20)
+        || !nullableString(value.city, 120)
+        || !nullableString(value.region, 120)
+        || !nullableString(value.country, 2)
+        || typeof value.marketingOptIn !== 'boolean'
+        || typeof value.locale !== 'string' || !localePattern.test(value.locale)
+        || typeof value.legalAccepted !== 'boolean'
+        || !requiredString(value.idempotencyKey, 128)) return null
+      return {
+        action,
+        customerType: value.customerType,
+        firstName: normalizeNullable(value.firstName),
+        lastName: normalizeNullable(value.lastName),
+        legalName: normalizeNullable(value.legalName),
+        tradeName: normalizeNullable(value.tradeName),
+        taxId: normalizeNullable(value.taxId),
+        contactPerson: normalizeNullable(value.contactPerson),
+        contactPhone: normalizeNullable(value.contactPhone),
+        billingAddress: normalizeNullable(value.billingAddress),
+        postalCode: normalizeNullable(value.postalCode),
+        city: normalizeNullable(value.city),
+        region: normalizeNullable(value.region),
+        country: normalizeNullable(value.country)?.toUpperCase() ?? null,
+        marketingOptIn: value.marketingOptIn,
+        locale: value.locale,
+        legalAccepted: value.legalAccepted,
+        idempotencyKey: value.idempotencyKey.trim(),
+      }
     case 'submitProfileChange':
       if (!hasExactKeys(value, ['action', 'clientId', 'changes'])
         || !validClientId(value.clientId)

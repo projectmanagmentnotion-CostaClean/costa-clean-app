@@ -39,6 +39,7 @@ export interface PortalLifecycleAdapter {
   start(onResolution: (resolution: PortalLifecycleResolution) => void): () => void
   retry(): void
   signIn(email: string, password: string): Promise<PortalAuthActionResult>
+  signInWithGoogle(): Promise<PortalAuthActionResult>
   requestPasswordRecovery(email: string): Promise<PortalAuthActionResult>
   updatePassword(password: string): Promise<PortalAuthActionResult>
   signOut(): Promise<PortalAuthActionResult>

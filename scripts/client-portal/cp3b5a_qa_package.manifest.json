@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "identity": "CP3B5A_PORTAL_ONBOARDING_QA_V1",
+  "gate": "CP-3B.5A",
+  "status": "QA_DEPLOYED_PENDING_E2E",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "edgeFunction": "portal-account-actions",
+  "edgeVersion": 11,
+  "edgeSha256": "aa9b0521efe1f7bc1e59abca6b9be0ba630cce72dfb7f8b370ee93d743e1710d",
+  "legalFixture": {
+    "documentKey": "portal_privacy",
+    "documentVersion": "qa-v1",
+    "locale": "es-ES",
+    "sha256": "0793bb1df8388a08b3dc4960477b49e8da09ca57020e194ec58fa3ec28070185"
+  },
+  "artifacts": [
+    {
+      "path": "supabase/migrations/20260909150000_portal_billing_onboarding_v2.sql",
+      "sha256": "78d856190dfce7a615aabbb8773a9b3ba6daf5a387ed89fe6d1cc62ecd291d35"
+    },
+    {
+      "path": "supabase/functions/portal-account-actions/index.ts",
+      "sha256": "2c42f3ba84beb5ab766d38416fd969bc6a8e968ed39d3f758288148541cfffd9"
+    },
+    {
+      "path": "supabase/functions/_shared/portalHandler.ts",
+      "sha256": "b207112e987c14b44e19d8e36fb8702c4113be0d2b6c7c3edcc1d8a2dfff1f9a"
+    },
+    {
+      "path": "supabase/functions/_shared/portalContract.ts",
+      "sha256": "69a8fe99bb096168917a014ec3a2eb68bbecbe1f3be8911657128d8afa0afbd3"
+    },
+    {
+      "path": "docs/client-portal/legal/QA_PRIVACY_NOTICE_V1.md",
+      "sha256": "0793bb1df8388a08b3dc4960477b49e8da09ca57020e194ec58fa3ec28070185"
+    },
+    {
+      "path": "scripts/client-portal/frozenArtifact.mjs",
+      "sha256": "68c94246eda107e747a74e4f8475ca3c5d7973b7a81e44c20d097d94fe9948c5"
+    }
+  ],
+  "remoteEffects": {
+    "target": "QA_ONLY",
+    "productionWrites": 0,
+    "canonicalClientWrites": 0,
+    "membershipWrites": 0,
+    "googleProviderChanges": 0
+  },
+  "e2e": "PENDING_AUTHENTICATED_QA_IDENTITY",
+  "nextGate": "authenticated synthetic matrix"
+}

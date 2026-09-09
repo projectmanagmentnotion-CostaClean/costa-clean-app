@@ -131,6 +131,30 @@ async function dispatch(
         p_correlation_id: correlationUuid,
       })
       return accepted()
+    case 'submitApplicationV2':
+      await rpc(configuration, dependencies.fetch, 'portal_submit_application_trusted_v2', {
+        p_actor_user_id: user.id,
+        p_customer_type: payload.customerType,
+        p_first_name: payload.firstName,
+        p_last_name: payload.lastName,
+        p_legal_name: payload.legalName,
+        p_trade_name: payload.tradeName,
+        p_tax_id: payload.taxId,
+        p_contact_person: payload.contactPerson,
+        p_contact_phone: payload.contactPhone,
+        p_billing_address: payload.billingAddress,
+        p_postal_code: payload.postalCode,
+        p_city: payload.city,
+        p_region: payload.region,
+        p_country: payload.country,
+        p_marketing_opt_in: payload.marketingOptIn,
+        p_locale: payload.locale,
+        p_legal_accepted: payload.legalAccepted,
+        p_idempotency_key: payload.idempotencyKey,
+        p_rate_limit_subject_hash: subject,
+        p_correlation_id: correlationUuid,
+      })
+      return accepted()
     case 'acceptInvitation': {
       const tokenHash = await hmacHex(configuration.invitationPepper, payload.token)
       const result = await rpc(configuration, dependencies.fetch, 'portal_accept_invitation_trusted', {

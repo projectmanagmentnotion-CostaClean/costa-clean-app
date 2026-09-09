@@ -11,6 +11,7 @@ import { parsePortalSelfAccessContext } from '../auth/selfAccessContext'
 import {
   clearStoredPortalSession,
   getPortalRecoveryRedirect,
+  getPortalOAuthRedirect,
   getPortalSupabaseClient,
   sanitizePortalRecoveryUrl,
 } from './portalSupabaseClient'
@@ -49,6 +50,10 @@ interface PortalSupabaseClientLike {
     signInWithPassword(credentials: {
       email: string
       password: string
+    }): Promise<{ error: PortalSupabaseError | null }>
+    signInWithOAuth(options: {
+      provider: 'google'
+      options: { redirectTo: string }
     }): Promise<{ error: PortalSupabaseError | null }>
     signOut(): Promise<{ error: PortalSupabaseError | null }>
     updateUser(attributes: {
@@ -149,6 +154,21 @@ export function createPortalSupabaseAuthProvider(
       }
     },
 
+    async signInWithGoogle() {
+      const redirectTo = getPortalOAuthRedirect()
+      if (!redirectTo) return { ok: false, reason: 'configuration' }
+
+      try {
+        const { error } = await client.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo },
+        })
+        return error ? providerFailure(error) : { ok: true, value: null }
+      } catch {
+        return { ok: false, reason: 'network' }
+      }
+    },
+
     async requestPasswordRecovery(email) {
       const redirectTo = getPortalRecoveryRedirect()
       if (!redirectTo) return { ok: false, reason: 'configuration' }
@@ -200,6 +220,7 @@ function createUnavailableAuthProvider(): PortalAuthProvider {
     resolveSelfAccess: unavailable,
     sanitizeRecoveryUrl: sanitizePortalRecoveryUrl,
     signIn: unavailable,
+    signInWithGoogle: unavailable,
     signOut: unavailable,
     updatePassword: unavailable,
   }

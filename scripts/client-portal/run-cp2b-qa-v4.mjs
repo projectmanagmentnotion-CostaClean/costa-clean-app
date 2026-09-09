@@ -23,6 +23,7 @@ import {
   runCommandV3,
   runSupabaseCliV3,
 } from './cp2b_command_launcher_v3.mjs'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const manifestPath = path.join(repoRoot, 'scripts', 'client-portal', 'cp2b_qa_package_v4.manifest.json')
@@ -146,7 +147,7 @@ export function verifyManifestV4(manifest) {
     ...manifest.reusedOriginalArtifacts,
   ]) {
     const filePath = path.join(repoRoot, artifact.path)
-    if (!existsSync(filePath) || sha256(filePath) !== artifact.sha256) {
+    if (!matchesFrozenArtifact(filePath, artifact.path, artifact.sha256)) {
       throw new Error('v4_manifest_hash_mismatch')
     }
   }

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 const MIGRATION = 'supabase/migrations/20260728160000_portal_reviewed_change_contract.sql'
 const CP2B = 'supabase/migrations/20260723160000_client_portal_security_boundary.sql'
@@ -200,7 +201,8 @@ describe('CP-3B.2A reviewed change contract', () => {
       storageObjectsChanged: 0,
     })
     for (const artifact of manifest.artifacts) {
-      expect(sha256(artifact.path), artifact.path).toBe(artifact.sha256)
+      expect(matchesFrozenArtifact(artifact.path, artifact.path, artifact.sha256), artifact.path)
+        .toBe(true)
     }
   })
 })

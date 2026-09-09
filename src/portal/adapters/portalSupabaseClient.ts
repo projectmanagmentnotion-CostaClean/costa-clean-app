@@ -74,9 +74,38 @@ export function createPortalRecoveryRedirect(origin: string): string | null {
   }
 }
 
+export function createPortalOAuthRedirect(origin: string): string | null {
+  try {
+    const url = new URL(origin)
+    const isLocalDevelopment =
+      url.protocol === 'http:'
+      && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)
+
+    if (
+      (url.protocol !== 'https:' && !isLocalDevelopment)
+      || url.username
+      || url.password
+      || url.pathname !== '/'
+      || url.search
+      || url.hash
+    ) {
+      return null
+    }
+
+    return new URL('/portal', url.origin).toString()
+  } catch {
+    return null
+  }
+}
+
 export function getPortalRecoveryRedirect(): string | null {
   if (typeof window === 'undefined') return null
   return createPortalRecoveryRedirect(window.location.origin)
+}
+
+export function getPortalOAuthRedirect(): string | null {
+  if (typeof window === 'undefined') return null
+  return createPortalOAuthRedirect(window.location.origin)
 }
 
 export function sanitizePortalRecoveryUrl() {

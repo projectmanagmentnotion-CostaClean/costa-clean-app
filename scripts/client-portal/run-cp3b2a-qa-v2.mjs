@@ -15,6 +15,7 @@ import {
   preparePostgresEnvironmentV5,
   runPsqlV5,
 } from './cp2b_postgres_transport_v5.mjs'
+import { matchesFrozenArtifact } from './frozenArtifact.mjs'
 
 export const QA_REF = 'kpvvydthlxupjjqqdpxy'
 export const PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
@@ -120,7 +121,7 @@ function verifyArtifacts(artifacts, errorCode) {
   if (!Array.isArray(artifacts) || artifacts.length === 0) fail(errorCode)
   for (const artifact of artifacts) {
     const filePath = artifactPath(artifact.path)
-    if (!existsSync(filePath) || sha256(filePath) !== artifact.sha256) fail(errorCode)
+    if (!matchesFrozenArtifact(filePath, artifact.path, artifact.sha256)) fail(errorCode)
   }
 }
 

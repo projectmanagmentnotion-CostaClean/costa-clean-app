@@ -1,6 +1,6 @@
-# Costa Clean App V3 — V3-3C Implementation Contract
+# Costa Clean App V3 — V3-3D Implementation Contract
 
-Status: `CLOSED / CERTIFIED — V3-3C ALERTS + CLOSINGS`.
+Status: `CLOSED / CERTIFIED — V3-3D PROPERTIES + RELATIONS`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 

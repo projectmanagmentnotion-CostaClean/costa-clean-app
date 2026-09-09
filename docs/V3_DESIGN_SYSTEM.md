@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-3C CLOSED / CERTIFIED`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security.
+Status: `V3-3D CLOSED / CERTIFIED`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
 
 ## Directional intent
 

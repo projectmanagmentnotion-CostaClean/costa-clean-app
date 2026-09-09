@@ -111,6 +111,15 @@ never belongs to the product API or production cleanup path.
 - [x] Complete authenticated visual QA at `390x844`, `430x932` and `768x1024`.
 - [x] Close with exact QA cleanup, full tests, lint, build, commit and push.
 
+## V3-3D — Properties + mobile legacy audit — CLOSED / CERTIFIED
+
+- [x] Native V3 property list, workspace, create and edit flows.
+- [x] Persisted client, service, quote, invoice and payment relations certified.
+- [x] Exact authenticated QA cleanup completed with residue `0`.
+- [x] `MOBILE MAIN LEGACY SURFACES = 0`.
+
+Next: `GLOBAL SELECTION SYSTEM V3`.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated

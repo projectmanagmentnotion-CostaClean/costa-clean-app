@@ -1359,6 +1359,7 @@ export function AppShell({
                     onOpenJob={handleOpenJobWorkspace}
                     onOpenQuote={handleOpenQuoteDetail}
                     onOpenInvoice={handleOpenInvoiceDetail}
+                    onOpenPayment={(paymentId) => { writePaymentDeepLink(paymentId); commitViewChange('payments') }}
                     onCreateJob={(property) => {
                       setJobCreatePrefill({ request_id: `property-${property.id}-${Date.now()}`, origin_kind: 'property', client_id: property.client_id, property_id: property.id, quote_id: '', notes: property.notes?.trim() ?? '', billing_concept: '' })
                       commitViewChange('jobs')

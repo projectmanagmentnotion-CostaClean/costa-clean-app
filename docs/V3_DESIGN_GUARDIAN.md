@@ -1,6 +1,14 @@
-# V3 Design Guardian — V3-3C
+# V3 Design Guardian — V3-3D
 
-Status: `V3-3C CLOSED / CERTIFIED`
+Status: `V3-3D CLOSED / CERTIFIED`
+
+## V3-3D property certification
+
+- Native V3 property creation/edit: PASS.
+- Legacy property presentation dependency: `0`.
+- Forbidden legacy property creation dependencies: `0`.
+- Mobile main legacy surfaces: `0`.
+- Exact QA relation cleanup: residue `0`.
 
 ## Review boundary
 

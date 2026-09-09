@@ -35,7 +35,7 @@
   }
 
   function composer() {
-    return document.querySelector('#prompt-textarea, textarea[placeholder], [contenteditable="true"]')
+    return document.querySelector('#prompt-textarea, textarea[placeholder], [contenteditable="true"][role="textbox"], [contenteditable="true"]')
   }
 
   function setComposer(value) {
@@ -43,6 +43,8 @@
     if (!target) throw new Error('ChatGPT composer not found.')
     target.focus()
     if (target.matches('[contenteditable="true"]')) {
+      target.textContent = ''
+      document.execCommand('insertText', false, value)
       target.textContent = value
       target.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: value }))
     } else {
@@ -113,7 +115,7 @@
     const job = jobs
       .filter((candidate) => candidate.status === 'complete'
         && candidate.sourceUrl === conversationUrl
-        && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
+        && !sessionStorage.getItem(`costaPromptBridgePublished:v2:${candidate.id}`))
       .sort((left, right) => Date.parse(right.finishedAt || '') - Date.parse(left.finishedAt || ''))[0]
     if (!job) return
     if (!composer()) return
@@ -123,9 +125,14 @@
       setComposer(output)
       sent.add(output)
       sessionStorage.setItem('costaPromptBridgeSent', JSON.stringify([...sent].slice(-20)))
-      sessionStorage.setItem(`costaPromptBridgePublished:${job.id}`, '1')
       await new Promise((resolve) => setTimeout(resolve, 300))
-      composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
+      const sendButton = document.querySelector('button[data-testid="send-button"], button[aria-label*="Enviar" i], button[aria-label*="Send" i]')
+      if (sendButton && !sendButton.disabled) {
+        sendButton.click()
+      } else {
+        composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
+      }
+      sessionStorage.setItem(`costaPromptBridgePublished:v2:${job.id}`, '1')
     } finally {
       busy = false
     }

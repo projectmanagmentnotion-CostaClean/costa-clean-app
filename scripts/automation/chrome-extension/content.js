@@ -11,6 +11,9 @@
   let contextInvalidated = false
   let intervalId
   let pageGone = false
+  let assistantCandidate = ''
+  let assistantCandidateSince = 0
+  let assistantLastSeen = null
 
   if (!conversationUrls.includes(conversationUrl)) return
 
@@ -18,6 +21,12 @@
     return [...document.querySelectorAll('[data-message-author-role="user"]')]
       .map((node) => node.innerText.trim())
       .filter(Boolean)
+  }
+
+  function assistantMessages() {
+    return [...document.querySelectorAll('[data-message-author-role="assistant"]')]
+      .map((node) => node.innerText.trim())
+      .filter((message) => /^#\s*COSTA CLEAN\b/i.test(message))
   }
 
   function composer() {
@@ -91,7 +100,10 @@
     if (!composer()) return
     busy = true
     try {
-      setComposer(job.output || 'Codex terminó sin informe.')
+      const output = job.output || 'Codex terminó sin informe.'
+      setComposer(output)
+      sent.add(output)
+      sessionStorage.setItem('costaPromptBridgeSent', JSON.stringify([...sent].slice(-20)))
       sessionStorage.setItem(`costaPromptBridgePublished:${job.id}`, '1')
       await new Promise((resolve) => setTimeout(resolve, 300))
       composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
@@ -105,6 +117,26 @@
     try {
       const newest = messages().at(-1)
       if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT')) await submitPrompt(newest)
+      const newestAssistantPrompt = assistantMessages().at(-1)
+      if (assistantLastSeen === null) {
+        assistantLastSeen = newestAssistantPrompt || ''
+      } else if (newestAssistantPrompt && newestAssistantPrompt !== assistantLastSeen && !sent.has(newestAssistantPrompt)) {
+        if (newestAssistantPrompt !== assistantCandidate) {
+          assistantCandidate = newestAssistantPrompt
+          assistantCandidateSince = Date.now()
+        } else if (Date.now() - assistantCandidateSince >= 1500) {
+          await submitPrompt(newestAssistantPrompt)
+          assistantLastSeen = newestAssistantPrompt
+          assistantCandidate = ''
+          assistantCandidateSince = 0
+        }
+      } else if (newestAssistantPrompt === assistantLastSeen) {
+        assistantCandidate = ''
+        assistantCandidateSince = 0
+      } else {
+        assistantCandidate = ''
+        assistantCandidateSince = 0
+      }
       await publishCompletedJob()
     } catch {
       // ChatGPT's DOM and extension context can change during navigation.

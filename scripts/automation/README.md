@@ -35,7 +35,7 @@ The extension accepts prompts only from these exact URLs. Network calls are made
 - `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e`
 - `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b`
 
-It sends them to the local bridge, which runs the existing `codex exec` CLI in this repository. Jobs are queued and executed one at a time. When a run completes, the report is inserted into the same conversation composer that originated the prompt.
+It sends them to the local bridge, which runs the existing `codex exec` CLI in this repository. Jobs are queued and executed one at a time. When a run completes, the report is inserted into the same conversation composer that originated the prompt. The report is marked as processed before submission, so it cannot feed itself back into Codex. For automatic chaining, the next ChatGPT task must be an assistant message beginning with `# COSTA CLEAN`; it is held briefly for DOM stability, then sent to the same project mapping. Ordinary ChatGPT replies are never treated as jobs.
 
 ## Safety boundaries
 

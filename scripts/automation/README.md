@@ -30,7 +30,7 @@ Then in Chrome:
 4. Choose `C:\Users\USUARIO\costa-clean-app\scripts\automation\chrome-extension`.
 5. Open only the configured conversation URL and reload it.
 
-The extension accepts prompts only from these exact URLs:
+The extension accepts prompts only from these exact URLs. If Chrome reports `Failed to fetch` after a bridge restart, use **Reload** on the unpacked extension so its current manifest/content script is active.
 
 - `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e`
 - `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b`

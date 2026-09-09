@@ -114,10 +114,14 @@ function persist(job) {
 
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || ''
-  if (origin === 'https://chatgpt.com') {
+  if (origin === 'https://chatgpt.com' || origin.startsWith('chrome-extension://')) {
     res.setHeader('access-control-allow-origin', origin)
     res.setHeader('access-control-allow-headers', 'content-type')
     res.setHeader('access-control-allow-methods', 'GET,POST,OPTIONS')
+    res.setHeader('vary', 'Origin')
+    if (req.headers['access-control-request-private-network'] === 'true') {
+      res.setHeader('access-control-allow-private-network', 'true')
+    }
   }
   if (req.method === 'OPTIONS') return json(res, 204, {})
   try {

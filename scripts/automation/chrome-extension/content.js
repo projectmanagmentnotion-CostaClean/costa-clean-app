@@ -8,6 +8,8 @@
   const conversationUrl = `${location.origin}${location.pathname}`
   const sent = new Set(JSON.parse(sessionStorage.getItem('costaPromptBridgeSent') || '[]'))
   let busy = false
+  let contextInvalidated = false
+  let intervalId
 
   if (!conversationUrls.includes(conversationUrl)) return
 
@@ -36,13 +38,29 @@
   }
 
   function bridgeFetch(path, options = {}) {
+    if (contextInvalidated) return Promise.resolve({ ok: false, status: 0, body: { error: 'Extension context unavailable.' } })
     return new Promise((resolve) => {
-      chrome.runtime.sendMessage({
-        type: 'costa-bridge-fetch',
-        path,
-        method: options.method || 'GET',
-        body: options.body,
-      }, (result) => resolve(result || { ok: false, status: 0, body: { error: 'Bridge unavailable.' } }))
+      try {
+        chrome.runtime.sendMessage({
+          type: 'costa-bridge-fetch',
+          path,
+          method: options.method || 'GET',
+          body: options.body,
+        }, (result) => {
+          const runtimeError = chrome.runtime.lastError
+          if (runtimeError?.message?.includes('Extension context invalidated')) {
+            contextInvalidated = true
+            clearInterval(intervalId)
+          }
+          resolve(result || { ok: false, status: 0, body: { error: runtimeError?.message || 'Bridge unavailable.' } })
+        })
+      } catch (error) {
+        if (String(error).includes('Extension context invalidated')) {
+          contextInvalidated = true
+          clearInterval(intervalId)
+        }
+        resolve({ ok: false, status: 0, body: { error: String(error) } })
+      }
     })
   }
 
@@ -86,6 +104,6 @@
     }
   }
 
-  setInterval(tick, 2500)
+  intervalId = setInterval(tick, 2500)
   tick()
 })()

@@ -26,7 +26,12 @@
   function assistantMessages() {
     return [...document.querySelectorAll('[data-message-author-role="assistant"]')]
       .map((node) => node.innerText.trim())
-      .filter((message) => /^#\s*COSTA CLEAN\b/i.test(message))
+      .map((message) => {
+        const matches = [...message.matchAll(/#\s*COSTA CLEAN\b/gi)]
+        const lastMatch = matches.at(-1)
+        return lastMatch ? message.slice(lastMatch.index).trim() : ''
+      })
+      .filter(Boolean)
   }
 
   function composer() {

@@ -14,6 +14,11 @@ functional request path passed for one controlled synthetic request. This
 closeout does not claim the unobserved idempotency retry or DevTools
 console/network checks as executed.
 
+The unrecoverable session-scoped idempotency key is recorded as explicit
+certification debt. Existing contract/integration coverage proves the trusted
+RPC's atomic uniqueness behavior, but it does not replace an authenticated
+portal retry with the original browser key.
+
 ## What Was Corrected
 
 - The QA migration gap was fixed with a new corrective migration that uses the
@@ -78,6 +83,9 @@ console/network checks as executed.
   not counted as an idempotency PASS or FAIL.
 - Console and Network DevTools gates were not observed in this run and remain
   `NOT_EXECUTED`.
+- Existing automated coverage independently exercises same-key idempotency in
+  the trusted contract matrix; no authenticated portal equivalent is available
+  without the closed tab's session-scoped key.
 
 ## Evidence Not Executed
 
@@ -89,6 +97,8 @@ console/network checks as executed.
 - Reload/session persistence evidence for this exact request flow remains
   unexecuted; general authenticated portal reload is already `PASS` above.
 - Remote synthetic-residue query after cancellation.
+
+These items are deferred certification debt, not evidence of a runtime defect.
 
 ## Notes
 

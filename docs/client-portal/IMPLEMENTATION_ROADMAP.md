@@ -250,7 +250,10 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3B.3 — Services and requests:** `PARTIAL — authenticated QA evidence
   captured`; pending-review workflow, cancellation, explicit feedback and
   zero-duplicate remote reconciliation are evidenced. DevTools console/
-  network and authenticated same-key response remain `NOT_EXECUTED`.
+  network and authenticated same-key response remain `NOT_EXECUTED`; the
+  unrecoverable session-scoped key is explicit certification debt. Existing
+  trusted contract-matrix coverage remains independent supporting evidence,
+  not a substitute for the authenticated portal retry.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and
   private 60-second signed downloads.
 - **CP-3B.5 — Members, security and legal acceptance:** client roles,

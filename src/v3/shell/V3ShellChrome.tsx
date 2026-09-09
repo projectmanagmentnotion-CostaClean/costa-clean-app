@@ -26,6 +26,7 @@ const secondaryItems: Array<{ view: AppView; label: string; icon: string }> = [
   { view: 'expenses', label: 'Gastos', icon: '▥' },
   { view: 'alerts', label: 'Alertas', icon: '!' },
   { view: 'fiscal_closing', label: 'Cierres', icon: '⌑' },
+  { view: 'properties', label: 'Inmuebles', icon: '⌂' },
 ]
 
 function isActive(view: AppView, currentView: AppView): boolean {

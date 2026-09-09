@@ -81,6 +81,9 @@ import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
 import { V3HomePage } from '../v3/home/V3HomePage'
 import { V3AlertsPage } from '../v3/alerts/V3AlertsPage'
 import { V3ClosingPage } from '../v3/closing/V3ClosingPage'
+import { V3PropertiesPage } from '../v3/properties/V3PropertiesPage'
+import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
+import type { QuoteCreatePrefill } from '../features/quotes/quoteCreatePrefill'
 
 interface AppShellProps {
   theme: AppTheme
@@ -1341,8 +1344,35 @@ export function AppShell({
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
                 />
-                ) : currentView === 'properties' ? (
-                  <PropertiesPage
+              ) : currentView === 'properties' ? (
+                  v3Enabled ? <V3PropertiesPage
+                    properties={propertiesWithCodes}
+                    clients={clientsWithContext}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    error={propertyError}
+                    onRefresh={refreshOperations}
+                    onOpenClient={handleOpenClientWorkspace}
+                    onOpenJob={handleOpenJobWorkspace}
+                    onOpenQuote={handleOpenQuoteDetail}
+                    onOpenInvoice={handleOpenInvoiceDetail}
+                    onCreateJob={(property) => {
+                      setJobCreatePrefill({ request_id: `property-${property.id}-${Date.now()}`, origin_kind: 'property', client_id: property.client_id, property_id: property.id, quote_id: '', notes: property.notes?.trim() ?? '', billing_concept: '' })
+                      commitViewChange('jobs')
+                    }}
+                    onCreateQuote={(property) => {
+                      const prefill: QuoteCreatePrefill = { request_id: `property-${property.id}-${Date.now()}`, client_id: property.client_id, property_id: property.id, notes: property.notes?.trim() ?? '', lines: [] }
+                      setQuoteCreatePrefill(prefill)
+                      commitViewChange('quotes')
+                    }}
+                    onCreateInvoice={(property) => {
+                      const prefill: InvoiceCreatePrefill = { request_id: `property-${property.id}-${Date.now()}`, origin_kind: 'manual', job_id: '', quote_id: '', client_id: property.client_id, property_id: property.id, notes: property.notes?.trim() ?? '', lines: [], title: property.display_code ?? property.name }
+                      setInvoiceCreatePrefill(prefill)
+                      commitViewChange('invoices')
+                    }}
+                  /> : <PropertiesPage
                     properties={propertiesWithCodes}
                     clients={clientsWithContext}
                     jobs={jobsWithCodes}

@@ -1,10 +1,10 @@
-import { spawn } from 'node:child_process'
+import { spawn, spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
-import { buildExecutionPrompt, createJob, hashPrompt, isAllowedSource } from './bridge-core.mjs'
+import { buildExecutionPrompt, createJob, hashPrompt, isAllowedSource, PROJECTS, projectForSource } from './bridge-core.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'prompt-bridge')
@@ -53,8 +53,17 @@ function resolveCodex() {
 function startJob(job) {
   if (running) return
   running = true
+  const project = PROJECTS[Object.keys(PROJECTS).find((key) => PROJECTS[key].key === job.projectKey)]
+  if (!project || !fs.existsSync(project.root) || !workspaceMatches(project)) {
+    job.status = 'failed'
+    job.error = 'Configured project worktree or branch identity does not match.'
+    job.finishedAt = new Date().toISOString()
+    running = false
+    persist(job)
+    return
+  }
   job.status = 'running'
-  const jobDir = path.join(privateRoot, job.id)
+  const jobDir = path.join(privateRoot, project.key, job.id)
   fs.mkdirSync(jobDir, { recursive: true })
   const outputPath = path.join(jobDir, 'output.md')
   const invocation = resolveCodex()
@@ -64,7 +73,7 @@ function startJob(job) {
     buildExecutionPrompt(job.prompt),
     '--ephemeral',
     '--sandbox', 'workspace-write',
-    '--cd', repoRoot,
+    '--cd', project.root,
     '--output-last-message', outputPath,
     '--color', 'never',
   ], { cwd: repoRoot, windowsHide: false, stdio: ['ignore', 'pipe', 'pipe'] })
@@ -90,6 +99,15 @@ function startJob(job) {
   persist(job)
 }
 
+function workspaceMatches(project) {
+  const branch = spawnSync('git', ['-C', project.root, 'branch', '--show-current'], { encoding: 'utf8' })
+  const remote = spawnSync('git', ['-C', project.root, 'remote', 'get-url', 'origin'], { encoding: 'utf8' })
+  return branch.status === 0
+    && remote.status === 0
+    && branch.stdout.trim() === project.branch
+    && remote.stdout.trim().replace(/\.git$/iu, '') === 'https://github.com/projectmanagmentnotion-CostaClean/costa-clean-app'
+}
+
 function persist(job) {
   fs.writeFileSync(path.join(privateRoot, `${job.id}.json`), `${JSON.stringify({ ...job, prompt: undefined }, null, 2)}\n`, 'utf8')
 }
@@ -104,6 +122,9 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return json(res, 204, {})
   try {
     if (req.method === 'GET' && req.url === '/health') return json(res, 200, { ok: true, conversationOnly: true, running })
+    if (req.method === 'GET' && req.url === '/api/projects') {
+      return json(res, 200, Object.values(PROJECTS).map(({ key, conversationUrl, root, branch }) => ({ key, conversationUrl, root, branch })))
+    }
     if (req.method === 'GET' && req.url === '/api/jobs') {
       return json(res, 200, [...jobs.values()].map(({ prompt, ...safe }) => safe))
     }
@@ -116,10 +137,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/api/prompts') {
       const body = await readBody(req)
       if (!isAllowedSource(body.sourceUrl)) return json(res, 403, { error: 'Only the configured conversation is accepted.' })
+      const project = projectForSource(body.sourceUrl)
+      if (!project) return json(res, 403, { error: 'No project is mapped to this conversation.' })
       const promptHash = hashPrompt(String(body.prompt || ''))
-      const existing = [...jobs.values()].find((job) => job.promptHash === promptHash)
+      const existing = [...jobs.values()].find((job) => job.projectKey === project.key && job.promptHash === promptHash)
       if (existing) return json(res, 200, { accepted: false, duplicate: true, jobId: existing.id })
       const job = createJob(String(body.prompt || ''), body.sourceUrl)
+      job.projectKey = project.key
       job.promptHash = promptHash
       jobs.set(job.id, job)
       persist(job)

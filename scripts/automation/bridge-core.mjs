@@ -1,6 +1,26 @@
 import crypto from 'node:crypto'
 
-export const CONVERSATION_URL = 'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b'
+export const CONVERSATION_URLS = Object.freeze([
+  'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e',
+  'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b',
+])
+
+export const CONVERSATION_URL = CONVERSATION_URLS[1]
+
+export const PROJECTS = Object.freeze({
+  uxMobile: Object.freeze({
+    key: 'ux-mobile-v2',
+    conversationUrl: CONVERSATION_URLS[0],
+    root: 'C:\\Users\\USUARIO\\costa-clean-app-v3',
+    branch: 'codex/app-v3-mobile-first-redesign',
+  }),
+  ecosystem: Object.freeze({
+    key: 'ecosystem-config',
+    conversationUrl: CONVERSATION_URLS[1],
+    root: 'C:\\Users\\USUARIO\\costa-clean-app',
+    branch: 'codex/ux-operational-mobile-v2',
+  }),
+})
 
 export function hashPrompt(prompt) {
   return crypto.createHash('sha256').update(prompt.trim(), 'utf8').digest('hex')
@@ -8,9 +28,18 @@ export function hashPrompt(prompt) {
 
 export function isAllowedSource(sourceUrl) {
   try {
-    return new URL(sourceUrl).href === CONVERSATION_URL
+    return CONVERSATION_URLS.includes(new URL(sourceUrl).href)
   } catch {
     return false
+  }
+}
+
+export function projectForSource(sourceUrl) {
+  try {
+    const canonical = new URL(sourceUrl).href
+    return Object.values(PROJECTS).find((project) => project.conversationUrl === canonical) ?? null
+  } catch {
+    return null
   }
 }
 
@@ -44,7 +73,8 @@ export function createJob(prompt, sourceUrl) {
   return {
     id: hashPrompt(trimmed).slice(0, 16),
     prompt: trimmed,
-    sourceUrl: CONVERSATION_URL,
+    sourceUrl: new URL(sourceUrl).href,
+    projectKey: projectForSource(sourceUrl).key,
     receivedAt: new Date().toISOString(),
     status: 'queued',
   }

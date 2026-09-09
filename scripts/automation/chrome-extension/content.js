@@ -1,10 +1,14 @@
 (() => {
-  const conversationUrl = 'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b'
+  const conversationUrls = [
+    'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e',
+    'https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b',
+  ]
+  const conversationUrl = `${location.origin}${location.pathname}`
   const bridgeUrl = 'http://127.0.0.1:4319'
   const sent = new Set(JSON.parse(sessionStorage.getItem('costaPromptBridgeSent') || '[]'))
   let busy = false
 
-  if (location.href.split('#')[0] !== conversationUrl) return
+  if (!conversationUrls.includes(conversationUrl)) return
 
   function messages() {
     return [...document.querySelectorAll('[data-message-author-role="user"]')]

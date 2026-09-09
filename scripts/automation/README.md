@@ -1,6 +1,17 @@
 # Costa Clean Prompt Bridge
 
-This is a local, opt-in bridge for one exact ChatGPT conversation. It is not a background Codex task and it does not monitor other tabs.
+This is a local, opt-in bridge for two exact ChatGPT conversations. It is not a background Codex task and it does not monitor other tabs.
+
+## Project isolation
+
+Each conversation is bound to its verified worktree and branch:
+
+| Conversation | Worktree | Branch |
+| --- | --- | --- |
+| `6a9930f5-635c-83ed-8178-357662a0c88e` | `C:\Users\USUARIO\costa-clean-app-v3` | `codex/app-v3-mobile-first-redesign` |
+| `6a9988a6-ddac-83eb-9230-300f27403e6b` | `C:\Users\USUARIO\costa-clean-app` | `codex/ux-operational-mobile-v2` |
+
+The bridge refuses unmapped conversations and never runs a job in the other project's worktree. Jobs are still serialized per process because each worktree may have local uncommitted work that must remain under owner control.
 
 ## Start
 
@@ -19,7 +30,12 @@ Then in Chrome:
 4. Choose `C:\Users\USUARIO\costa-clean-app\scripts\automation\chrome-extension`.
 5. Open only the configured conversation URL and reload it.
 
-The extension accepts prompts only from that exact URL. It sends them to the local bridge, which runs the existing `codex exec` CLI in this repository. When the run completes, the report is inserted into the same conversation composer.
+The extension accepts prompts only from these exact URLs:
+
+- `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e`
+- `https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9988a6-ddac-83eb-9230-300f27403e6b`
+
+It sends them to the local bridge, which runs the existing `codex exec` CLI in this repository. Jobs are queued and executed one at a time. When a run completes, the report is inserted into the same conversation composer that originated the prompt.
 
 ## Safety boundaries
 

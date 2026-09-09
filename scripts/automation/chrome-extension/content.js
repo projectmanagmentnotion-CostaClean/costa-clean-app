@@ -82,7 +82,9 @@
     const response = await bridgeFetch('/api/jobs')
     if (!response.ok) return
     const jobs = response.body
-    const job = jobs.find((candidate) => candidate.status === 'complete' && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
+    const job = jobs.find((candidate) => candidate.status === 'complete'
+      && candidate.sourceUrl === conversationUrl
+      && !sessionStorage.getItem(`costaPromptBridgePublished:${candidate.id}`))
     if (!job) return
     if (!composer()) return
     busy = true

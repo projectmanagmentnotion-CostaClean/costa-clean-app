@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { formatCurrency, formatDateEs, getPropertyTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import type { ClientListItem } from '../../features/clients/types'
@@ -10,12 +10,12 @@ import type { QuoteListItem } from '../../features/quotes/types'
 import type { PropertyWorkspaceTab } from '../../features/properties/usePropertyWorkspaceNavigation'
 import { V3BottomSheet, V3EntityList, V3Field, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3Textarea } from '../components/V3Primitives'
 import { usePropertyWorkspaceNavigation } from '../../features/properties/usePropertyWorkspaceNavigation'
-import { PropertyCreateFlow } from '../../features/properties/PropertyCreateFlow'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
+import { findPropertyDuplicateGroups } from '../../features/duplicates/duplicateEngine'
 import { V3PropertyRow } from './V3PropertyRow'
 
-interface Props { properties: PropertyListItem[]; clients: ClientListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; error: string | null; onRefresh: () => Promise<void>; onOpenClient: (id: string) => void; onOpenJob: (id: string) => void; onOpenQuote: (id: string) => void; onOpenInvoice: (id: string) => void; onCreateJob: (property: PropertyListItem) => void; onCreateQuote: (property: PropertyListItem) => void; onCreateInvoice: (property: PropertyListItem) => void }
+interface Props { properties: PropertyListItem[]; clients: ClientListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; error: string | null; onRefresh: () => Promise<void>; onOpenClient: (id: string) => void; onOpenClients: () => void; onOpenJob: (id: string) => void; onOpenQuote: (id: string) => void; onOpenInvoice: (id: string) => void; onCreateJob: (property: PropertyListItem) => void; onCreateQuote: (property: PropertyListItem) => void; onCreateInvoice: (property: PropertyListItem) => void }
 
 export function V3PropertiesPage(props: Props) {
   const [query, setQuery] = useState('')
@@ -42,16 +42,45 @@ export function V3PropertiesPage(props: Props) {
       setEdit(null)
     } finally { setIsSaving(false) }
   }
-  if (selected) return <V3PropertyWorkspace property={selected} clients={props.clients} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} activeTab={navigation.activeTab} onTabChange={navigation.setActiveTab} onBack={close} onEdit={() => setEdit(selected)} onOpenClient={props.onOpenClient} onOpenJob={props.onOpenJob} onOpenQuote={props.onOpenQuote} onOpenInvoice={props.onOpenInvoice} onCreateJob={() => props.onCreateJob(selected)} onCreateQuote={() => props.onCreateQuote(selected)} onCreateInvoice={() => props.onCreateInvoice(selected)} />
+  if (selected) return <><V3PropertyWorkspace property={selected} clients={props.clients} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} activeTab={navigation.activeTab} onTabChange={navigation.setActiveTab} onBack={close} onEdit={() => setEdit(selected)} onOpenClient={props.onOpenClient} onOpenJob={props.onOpenJob} onOpenQuote={props.onOpenQuote} onOpenInvoice={props.onOpenInvoice} onCreateJob={() => props.onCreateJob(selected)} onCreateQuote={() => props.onCreateQuote(selected)} onCreateInvoice={() => props.onCreateInvoice(selected)} />{edit ? <V3BottomSheet title="Editar inmueble" onClose={() => setEdit(null)}><V3PropertyEdit property={edit} clients={props.clients} isSaving={isSaving} onClose={() => setEdit(null)} onSave={saveEdit} /></V3BottomSheet> : null}</>
   return <V3Page className="v3-properties-page">
     <V3PageTitle eyebrow="Operativa" title="Inmuebles" description="Ubicaciones reales, relaciones y siguiente acción en una lista compacta." action={<V3PrimaryAction onClick={() => setShowCreate(true)}>+ Nuevo inmueble</V3PrimaryAction>} />
     <div className="v3-properties-controls"><V3Field label="Buscar"><V3Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nombre, código, cliente, dirección o ciudad" /></V3Field><span>{visible.length} visibles</span></div>
     {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando inmuebles</strong><p>{props.error}</p></div> : null}
     {!props.error && visible.length === 0 ? <div className="v3-state"><strong>Sin inmuebles visibles</strong><p>Ajusta la búsqueda o crea el primero.</p></div> : null}
     <V3EntityList label="Inmuebles">{visible.map((property) => <V3PropertyRow key={property.id} property={property} onOpen={() => open(property.id)} />)}</V3EntityList>
-    {showCreate ? <V3BottomSheet title="Nuevo inmueble" onClose={() => setShowCreate(false)}><PropertyCreateFlow clients={props.clients} properties={props.properties} onRefreshData={props.onRefresh} onCompleted={async () => { setShowCreate(false) }} onCreatedProperty={async (property) => { setShowCreate(false); open(property.id) }} onCancel={() => setShowCreate(false)} /></V3BottomSheet> : null}
+    {showCreate ? <V3BottomSheet title="Nuevo inmueble" onClose={() => setShowCreate(false)}><V3PropertyCreateForm clients={props.clients} properties={props.properties} onRefresh={props.onRefresh} onCreated={async (property) => { setShowCreate(false); open(property.id) }} onCancel={() => setShowCreate(false)} onOpenClients={props.onOpenClients} /></V3BottomSheet> : null}
     {edit ? <V3BottomSheet title="Editar inmueble" onClose={() => setEdit(null)}><V3PropertyEdit property={edit} clients={props.clients} isSaving={isSaving} onClose={() => setEdit(null)} onSave={saveEdit} /></V3BottomSheet> : null}
   </V3Page>
+}
+
+function V3PropertyCreateForm({ clients, properties, onRefresh, onCreated, onCancel, onOpenClients }: { clients: ClientListItem[]; properties: PropertyListItem[]; onRefresh: () => Promise<void>; onCreated: (property: PropertyListItem) => Promise<void>; onCancel: () => void; onOpenClients: () => void }) {
+  const [value, setValue] = useState({ client_id: clients[0]?.id ?? '', name: '', property_type: 'apartment', address: '', city: '', postal_code: '', notes: '' })
+  const [error, setError] = useState<string | null>(null)
+  const [duplicateFound, setDuplicateFound] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const update = (key: keyof typeof value) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setValue((current) => ({ ...current, [key]: event.target.value }))
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    if (!value.client_id) { setError('Debes seleccionar un cliente.'); return }
+    if (!value.name.trim()) { setError('Debes indicar un nombre interno para el inmueble.'); return }
+    if (!value.address.trim()) { setError('Debes indicar la dirección operativa del inmueble.'); return }
+    const client = clients.find((item) => item.id === value.client_id)
+    const draft: PropertyListItem = { id: 'PROPERTY-DRAFT', display_code: null, client_id: value.client_id, client_display_code: client?.display_code ?? null, client_name: client?.full_name ?? null, name: value.name.trim(), status: 'active', archived_at: null, deleted_at: null, property_type: value.property_type, address: value.address.trim(), city: value.city.trim() || null, postal_code: value.postal_code.trim() || null, notes: value.notes.trim() || null }
+    if (findPropertyDuplicateGroups(draft, properties).length > 0) { setDuplicateFound(true); return }
+    setIsSaving(true)
+    try {
+      const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? `PROPERTY-${crypto.randomUUID()}` : `PROPERTY-${Date.now()}`
+      const response = await fetchAuthenticatedSupabaseWrite(operationalWriteRpcPaths.createProperty, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ p_property: { id, client_id: value.client_id, name: value.name.trim(), property_type: value.property_type, address: value.address.trim(), city: value.city.trim() || null, postal_code: value.postal_code.trim() || null, notes: value.notes.trim() || null } }) })
+      const row = await readSingleAuthenticatedWriteRow<Partial<PropertyListItem>>(response, 'El inmueble no se pudo crear. Revisa tu sesión o permisos.')
+      const created: PropertyListItem = { ...draft, id: row?.id ?? id, display_code: row?.display_code ?? null, client_id: row?.client_id ?? draft.client_id, name: row?.name ?? draft.name, property_type: row?.property_type ?? draft.property_type, address: row?.address ?? draft.address, city: row?.city ?? draft.city, postal_code: row?.postal_code ?? draft.postal_code, notes: row?.notes ?? draft.notes }
+      await onRefresh()
+      await onCreated(created)
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo crear el inmueble.') } finally { setIsSaving(false) }
+  }
+  if (clients.length === 0) return <div className="v3-property-create-empty"><p>Necesitas un cliente antes de crear un inmueble.</p><V3PrimaryAction onClick={onOpenClients}>Ir a Clientes V3</V3PrimaryAction></div>
+  return <form className="v3-property-create-form" onSubmit={(event) => void submit(event)}><V3Field label="Cliente"><V3Select value={value.client_id} onChange={update('client_id')} required>{clients.map((client) => <option key={client.id} value={client.id}>{client.full_name}</option>)}</V3Select></V3Field><V3Field label="Nombre"><V3Input value={value.name} onChange={update('name')} required autoFocus /></V3Field><V3Field label="Tipo"><V3Select value={value.property_type} onChange={update('property_type')}><option value="apartment">Apartamento</option><option value="house">Casa</option><option value="office">Oficina</option><option value="local">Local</option><option value="tourist_apartment">Piso turístico</option><option value="community">Comunidad</option><option value="construction_site">Obra</option></V3Select></V3Field><V3Field label="Dirección"><V3Input value={value.address} onChange={update('address')} required /></V3Field><V3Field label="Ciudad"><V3Input value={value.city} onChange={update('city')} /></V3Field><V3Field label="Código postal"><V3Input value={value.postal_code} onChange={update('postal_code')} /></V3Field><V3Field label="Notas"><V3Textarea value={value.notes} onChange={update('notes')} /></V3Field>{error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{error}</p> : null}{duplicateFound ? <div className="v3-state v3-state--error" role="alert"><strong>Posible inmueble duplicado</strong><p>Ya existe una coincidencia con este cliente y dirección. No se ha guardado ningún registro.</p></div> : null}<div className="v3-workspace-actions"><V3SecondaryAction onClick={onCancel}>Cancelar</V3SecondaryAction><V3PrimaryAction type="submit" disabled={isSaving || duplicateFound}>{isSaving ? 'Guardando…' : 'Crear inmueble'}</V3PrimaryAction></div></form>
 }
 
 export function V3PropertyWorkspace({ property, clients, jobs, quotes, invoices, payments, activeTab, onTabChange, onBack, onEdit, onOpenClient, onOpenJob, onOpenQuote, onOpenInvoice, onCreateJob, onCreateQuote, onCreateInvoice }: { property: PropertyListItem; clients: ClientListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; activeTab: PropertyWorkspaceTab; onTabChange: (tab: PropertyWorkspaceTab) => void; onBack: () => void; onEdit: () => void; onOpenClient: (id: string) => void; onOpenJob: (id: string) => void; onOpenQuote: (id: string) => void; onOpenInvoice: (id: string) => void; onCreateJob: () => void; onCreateQuote: () => void; onCreateInvoice: () => void }) {

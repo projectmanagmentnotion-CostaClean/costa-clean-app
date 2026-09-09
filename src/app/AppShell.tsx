@@ -1355,6 +1355,7 @@ export function AppShell({
                     error={propertyError}
                     onRefresh={refreshOperations}
                     onOpenClient={handleOpenClientWorkspace}
+                    onOpenClients={() => commitViewChange('clients')}
                     onOpenJob={handleOpenJobWorkspace}
                     onOpenQuote={handleOpenQuoteDetail}
                     onOpenInvoice={handleOpenInvoiceDetail}

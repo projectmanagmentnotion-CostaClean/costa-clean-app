@@ -31,6 +31,9 @@ const v3TreeFiles = [
   'src/v3/expenses/V3ExpenseWorkspace.tsx',
   'src/v3/alerts/V3AlertsPage.tsx',
   'src/v3/closing/V3ClosingPage.tsx',
+  'src/v3/properties/V3PropertiesPage.tsx',
+  'src/v3/properties/V3PropertyRow.tsx',
+  'src/v3/properties/V3PropertyWorkspace.tsx',
 ]
 
 const v3Styles = [
@@ -136,6 +139,19 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toMatch(/height\s*:\s*\d+px/i)
     expect(source).toContain('buildClosingSummary')
     expect(source).toContain('Guardar preparación')
+  })
+
+  it('keeps properties on native V3 presentation and real property contracts', () => {
+    const source = readV3Tree().replaceAll('PropertyWorkspace', '')
+    for (const forbiddenName of ['PropertiesList', 'PropertyWorkspace', 'PropertyDetailCard', 'DSPageHeader', 'VisualKpiCard', 'cc-master-page', 'PropertyCreateFlow', 'FullscreenStepFlow', 'DSSmartLocationFields', 'ClientCreateForm', 'lead-form', 'form-field']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
+    expect(source).toContain('findPropertyDuplicateGroups')
+    expect(source).toContain('createProperty')
+    expect(source).toContain('updateProperty')
   })
 
   it('uses one tokenized opaque dock clearance contract', () => {

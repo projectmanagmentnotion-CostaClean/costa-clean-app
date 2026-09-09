@@ -420,6 +420,16 @@ export function QuotesPage({
     setBulkBusy(false)
   }
 
+  async function bulkDownloadQuotesV3(targets: QuoteListItem[]) {
+    const entries = []; const usedPaths = new Set<string>()
+    for (const quote of targets) entries.push(await makeZipBlobEntry(makeUniqueArchivePath(buildQuotePdfFileName(quote, clients), usedPaths), await buildQuotePdfBlob(quote, clients, properties)))
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'presupuestos-seleccionados.zip')
+  }
+  function bulkExportQuotesV3(targets: QuoteListItem[]) {
+    const rows = targets.map((quote) => { const client = clients.find((item) => item.id === quote.client_id); const property = properties.find((item) => item.id === quote.property_id); return [quote.display_code ?? quote.id, quote.created_at ?? '', client?.full_name ?? quote.client_name ?? quote.client_display_code ?? quote.lead_name ?? quote.lead_display_code, property?.name ?? quote.property_display_code ?? '', quote.subtotal, quote.tax_amount, quote.total, quote.status] })
+    downloadBlob(new Blob([buildCsv(['Referencia', 'Fecha', 'Cliente/lead', 'Inmueble', 'Base', 'IVA', 'Total', 'Estado'], rows)], { type: 'text/csv;charset=utf-8' }), 'presupuestos-seleccionados.csv')
+  }
+
   if (v3Mode) {
     const createVisible = showCreateForm || Boolean(createPrefill)
     return (
@@ -437,6 +447,8 @@ export function QuotesPage({
           onDownloadQuote={downloadQuoteDocument}
           onShareQuote={shareQuoteDocument}
           onConvertQuote={convertQuoteDocument}
+          onBulkDownload={bulkDownloadQuotesV3}
+          onBulkExportCsv={bulkExportQuotesV3}
           onOpenClientWorkspace={onOpenClientWorkspace}
           onOpenPropertyWorkspace={onOpenPropertyWorkspace}
           onOpenJobWorkspace={onOpenJobWorkspace}

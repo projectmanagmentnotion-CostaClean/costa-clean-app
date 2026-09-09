@@ -34,6 +34,9 @@ const v3TreeFiles = [
   'src/v3/properties/V3PropertiesPage.tsx',
   'src/v3/properties/V3PropertyRow.tsx',
   'src/v3/properties/V3PropertyWorkspace.tsx',
+  'src/v3/selection/V3SelectionPrimitives.tsx',
+  'src/v3/selection/useV3Selection.ts',
+  'src/v3/selection/selectionEligibility.ts',
 ]
 
 const v3Styles = [
@@ -48,9 +51,17 @@ function readV3Tree() {
 describe('V3 Design Guardian structural checks', () => {
   it('keeps the dedicated V3 tree free of legacy visual composition names', () => {
     const source = readV3Tree()
-    for (const forbiddenName of ['hero-card', 'cc-master-layout', 'OperationalListItem', 'cc-record-card', 'cc-list-toolbar']) {
+    for (const forbiddenName of ['hero-card', 'cc-master-layout', 'OperationalListItem', 'cc-record-card', 'cc-list-toolbar', 'BulkSelectionToolbar', 'LegacySelectionToolbar']) {
       expect(source).not.toContain(forbiddenName)
     }
+  })
+
+  it('keeps global selection UI token-based and limited to approved modules', () => {
+    const source = readV3Tree()
+    expect(v3Styles).toContain('v3-bottom-nav-clearance')
+    expect(source).not.toContain('localStorage')
+    expect(source).toContain('V3SelectionPrimitives')
+    expect(source).not.toContain('V3SelectionToolbar')
   })
 
   it('keeps hardcoded colors inside the token file only', () => {

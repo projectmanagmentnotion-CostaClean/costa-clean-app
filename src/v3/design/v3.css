@@ -396,3 +396,8 @@
     transition-duration: 0ms !important;
   }
 }
+.v3-selection-bar { align-items: center; background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-lg); bottom: var(--v3-bottom-nav-clearance); box-shadow: var(--v3-shadow-lg); display: flex; flex-wrap: wrap; gap: var(--v3-space-2); justify-content: flex-end; left: var(--v3-space-4); padding: var(--v3-space-3); position: fixed; right: var(--v3-space-4); z-index: var(--v3-z-dock); }
+.v3-selection-bar > span { color: var(--v3-color-text-primary); font-weight: 700; margin-right: auto; }
+.v3-selection-control { align-items: center; display: inline-flex; justify-content: center; min-height: var(--v3-touch-preferred); min-width: var(--v3-touch-preferred); }
+.v3-selection-control input { accent-color: var(--v3-color-accent); }
+.v3-selection-actions, .v3-selection-confirm { display: grid; gap: var(--v3-space-3); margin-top: var(--v3-space-5); }

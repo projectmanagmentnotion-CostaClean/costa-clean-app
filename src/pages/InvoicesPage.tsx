@@ -545,6 +545,21 @@ export function InvoicesPage({
     )
   }
 
+  async function bulkDownloadInvoicesV3(targets: InvoiceListItem[]) {
+    const entries = []; const usedPaths = new Set<string>()
+    for (const invoice of targets) entries.push(await makeZipBlobEntry(makeUniqueArchivePath(buildInvoicePdfFileName(invoice), usedPaths), await buildInvoicePdfBlob(invoice)))
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'facturas-seleccionadas.zip')
+  }
+  function bulkExportInvoicesV3(targets: InvoiceListItem[]) {
+    const rows = targets.map((invoice) => { const client = clients.find((item) => item.id === invoice.client_id); return [invoice.invoice_number ?? invoice.display_code ?? invoice.id, invoice.issue_date, client?.full_name ?? invoice.client_name ?? invoice.client_display_code, client?.tax_id ?? '', invoice.subtotal, invoice.tax_amount, invoice.total, getInvoicePaidAmount(invoice), getInvoiceOutstandingAmount(invoice), invoice.status] })
+    downloadBlob(new Blob([buildCsv(['Numero', 'Fecha', 'Cliente', 'CIF/NIF', 'Base', 'IVA', 'Total', 'Cobrado', 'Pendiente', 'Estado'], rows)], { type: 'text/csv;charset=utf-8' }), 'facturas-seleccionadas.csv')
+  }
+  async function bulkSettleInvoicesV3(targets: InvoiceListItem[]) {
+    const completedIds: string[] = []; const failedIds: string[] = []
+    for (const invoice of targets) { if (!canSettleInvoiceByTransfer(invoice) || !settlementGuardRef.current.begin(invoice.id)) continue; try { await settleInvoiceAndRefresh(invoice.id, { settleInvoice: settleInvoiceByTransfer, refreshInvoices: onInvoiceCreated }); completedIds.push(invoice.id) } catch { failedIds.push(invoice.id) } finally { settlementGuardRef.current.end(invoice.id) } }
+    return { completedIds, failedIds }
+  }
+
   if (v3Mode) {
     return (
       <>
@@ -565,6 +580,9 @@ export function InvoicesPage({
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
+          onBulkDownload={bulkDownloadInvoicesV3}
+          onBulkExportCsv={bulkExportInvoicesV3}
+          onBulkSettle={bulkSettleInvoicesV3}
         />
         {isCreateFormVisible ? (
           <ActionFlowOverlay

@@ -86,7 +86,8 @@ console/network checks as executed.
   reproduce `auth.uid()`).
 - DevTools console error review and request-by-request QA/production network
   capture.
-- Reload/session persistence evidence for this exact request flow.
+- Reload/session persistence evidence for this exact request flow remains
+  unexecuted; general authenticated portal reload is already `PASS` above.
 - Remote synthetic-residue query after cancellation.
 
 ## Notes

@@ -14,6 +14,9 @@
   let assistantCandidate = ''
   let assistantCandidateSince = 0
   let assistantLastSeen = null
+  let awaitingNextPromptSince = 0
+  let nextPromptRequestSent = false
+  const bridgeControlPrefix = '# COSTA CLEAN BRIDGE CONTROL'
 
   if (!conversationUrls.includes(conversationUrl)) return
 
@@ -133,9 +136,22 @@
         composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
       }
       sessionStorage.setItem(`costaPromptBridgePublished:v2:${job.id}`, '1')
+      awaitingNextPromptSince = Date.now()
+      nextPromptRequestSent = false
     } finally {
       busy = false
     }
+  }
+
+  async function requestNextPromptIfNeeded() {
+    if (!awaitingNextPromptSince || nextPromptRequestSent || Date.now() - awaitingNextPromptSince < 8_000) return
+    nextPromptRequestSent = true
+    const request = `${bridgeControlPrefix}\nGenera ahora el siguiente prompt completo para Codex. Debe comenzar exactamente por # COSTA CLEAN y contener solo la siguiente tarea implementable. No expliques el informe anterior.`
+    setComposer(request)
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    const sendButton = document.querySelector('button[data-testid="send-button"], button[aria-label*="Enviar" i], button[aria-label*="Send" i]')
+    if (sendButton && !sendButton.disabled) sendButton.click()
+    else composer()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', bubbles: true }))
   }
 
   async function approveSensitiveJobs() {
@@ -157,7 +173,7 @@
     try {
       const newest = messages().at(-1)
       if (newest) await retryIfPreviouslyFailed(newest)
-      if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT')) await submitPrompt(newest)
+      if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT') && !newest.startsWith(bridgeControlPrefix)) await submitPrompt(newest)
       const newestAssistantPrompt = assistantMessages().at(-1)
       if (newestAssistantPrompt) await retryIfPreviouslyFailed(newestAssistantPrompt)
       if (assistantLastSeen === null) {
@@ -174,6 +190,8 @@
         } else if (Date.now() - assistantCandidateSince >= 1500) {
           await submitPrompt(newestAssistantPrompt)
           assistantLastSeen = newestAssistantPrompt
+          awaitingNextPromptSince = 0
+          nextPromptRequestSent = false
           assistantCandidate = ''
           assistantCandidateSince = 0
         }
@@ -185,6 +203,7 @@
         assistantCandidateSince = 0
       }
       await publishCompletedJob()
+      await requestNextPromptIfNeeded()
       await approveSensitiveJobs()
     } catch {
       // ChatGPT's DOM and extension context can change during navigation.

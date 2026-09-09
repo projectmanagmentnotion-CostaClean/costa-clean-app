@@ -204,3 +204,11 @@ contracts. Bulk settlement uses the existing eligibility and settlement RPCs.
 
 V3-4B adoption allowlist is exact: `Invoices`, `Quotes`. All other modules
 remain selection-free until a separate real-contract decision approves them.
+
+## V3-5 responsive shell contract — OPEN
+
+At 768px and 834px the certified bottom navigation remains the only primary
+navigation. At 1024px and wider iPad targets, the same navigation model is
+rendered as a compact rail; it does not introduce a second route state or
+duplicate More content. Selection clearance changes only with the responsive
+layout contract and remains token-backed.

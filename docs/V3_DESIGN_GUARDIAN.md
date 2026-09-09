@@ -185,3 +185,11 @@ and targeted audit events residue verified `0`.
 - Remaining modules audited and not adopted: Jobs, Expenses, Payments, Leads,
   Clients, Properties, Alerts and Closings.
 - Fake bulk actions: `0`; legacy bulk toolbar in V3: `0`.
+
+## V3-5 responsive shell evidence — OPEN
+
+- Responsive shell contract: PASS in source and geometry checks.
+- 768/834 bottom navigation and 1024+ rail are mutually exclusive by CSS.
+- Horizontal overflow: `0` in checked shell viewports.
+- Full authenticated surface matrix and orientation regression: pending before
+  V3-5 certification.

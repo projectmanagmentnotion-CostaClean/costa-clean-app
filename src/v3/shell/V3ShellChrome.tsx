@@ -118,6 +118,15 @@ function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick
   )
 }
 
+function V3NavigationRail({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick<V3ShellChromeProps, 'currentView' | 'onChangeView'> & { onOpenMore: () => void; isMoreOpen: boolean }) {
+  const isSecondaryContext = secondaryItems.some((item) => isActive(item.view, currentView))
+  return <nav className="v3-navigation-rail" aria-label="Navegación principal para iPad">
+    <span className="v3-navigation-rail__mark" aria-hidden="true">CC</span>
+    {primaryItems.map((item) => <button key={item.view} type="button" className={isActive(item.view, currentView) ? 'is-active' : ''} onClick={() => onChangeView(item.view)} aria-current={isActive(item.view, currentView) ? 'page' : undefined}><span aria-hidden="true">{item.icon}</span><small>{item.label}</small></button>)}
+    <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet"><span aria-hidden="true">•••</span><small>Más</small></button>
+  </nav>
+}
+
 export function V3ShellChrome(props: V3ShellChromeProps) {
   const [isMoreOpen, setIsMoreOpen] = useState(false)
   return (
@@ -125,6 +134,7 @@ export function V3ShellChrome(props: V3ShellChromeProps) {
       <V3TopBar currentView={props.currentView} onBack={props.onBack} backTargetView={props.backTargetView} />
       {props.children}
       <V3BottomNav currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={() => setIsMoreOpen(true)} isMoreOpen={isMoreOpen} />
+      <V3NavigationRail currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={() => setIsMoreOpen(true)} isMoreOpen={isMoreOpen} />
       {isMoreOpen ? <V3MoreSheet currentView={props.currentView} onChangeView={props.onChangeView} accountLabel={props.accountLabel} isSigningOut={props.isSigningOut} onSignOut={props.onSignOut} onClose={() => setIsMoreOpen(false)} /> : null}
     </>
   )

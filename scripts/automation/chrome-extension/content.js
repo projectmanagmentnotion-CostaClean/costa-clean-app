@@ -37,6 +37,10 @@
       .filter(Boolean)
   }
 
+  function isCodexPrompt(value) {
+    return /^#\s*COSTA CLEAN\b/iu.test(value.trim())
+  }
+
   function composer() {
     return document.querySelector('#prompt-textarea, textarea[placeholder], [contenteditable="true"][role="textbox"], [contenteditable="true"]')
   }
@@ -173,7 +177,7 @@
     try {
       const newest = messages().at(-1)
       if (newest) await retryIfPreviouslyFailed(newest)
-      if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT') && !newest.startsWith(bridgeControlPrefix)) await submitPrompt(newest)
+      if (newest && isCodexPrompt(newest) && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT') && !newest.startsWith(bridgeControlPrefix)) await submitPrompt(newest)
       const newestAssistantPrompt = assistantMessages().at(-1)
       if (newestAssistantPrompt) await retryIfPreviouslyFailed(newestAssistantPrompt)
       if (assistantLastSeen === null) {

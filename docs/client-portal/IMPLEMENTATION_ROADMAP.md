@@ -247,8 +247,10 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   while preserving its bottom sheet. WhatsApp is a persistent portal action.
   This updates the implementation target but does not itself certify the
   `390x844` manual evidence gate.
-- **CP-3B.3 — Services and requests:** real pending-review request workflow,
-  cancellation, idempotency and explicit feedback.
+- **CP-3B.3 — Services and requests:** `PARTIAL — authenticated QA evidence
+  captured`; pending-review workflow, cancellation, explicit feedback and
+  zero-duplicate remote reconciliation are evidenced. DevTools console/
+  network and authenticated same-key response remain `NOT_EXECUTED`.
 - **CP-3B.4 — Invoices and private documents:** read-only financial states and
   private 60-second signed downloads.
 - **CP-3B.5 — Members, security and legal acceptance:** client roles,

@@ -66,9 +66,24 @@ console/network checks as executed.
   row remained and no property/service mutation was observed.
 - No producer or dispatcher was run, and no production target was used.
 
+### Final Evidence Reconciliation
+
+- Session reload: `PASS`; the existing normal Chrome session returned to the
+  authenticated portal cockpit without redirecting to `/portal/login`.
+- Read-only QA reconciliation: one matching request row, one distinct
+  idempotency key, status `cancelled`, and zero duplicate rows.
+- The same-key retry was attempted only through the existing key. The
+  administrative SQL context returned `resource_not_found` before creating a
+  row because it cannot reproduce the authenticated portal identity. This is
+  not counted as an idempotency PASS or FAIL.
+- Console and Network DevTools gates were not observed in this run and remain
+  `NOT_EXECUTED`.
+
 ## Evidence Not Executed
 
 - Same-key idempotency retry with a measured duplicate count.
+- Authenticated same-key idempotency response (the admin-context retry cannot
+  reproduce `auth.uid()`).
 - DevTools console error review and request-by-request QA/production network
   capture.
 - Reload/session persistence evidence for this exact request flow.

@@ -1,8 +1,23 @@
-# Costa Clean App V3 — V3-3B Implementation Contract
+# Costa Clean App V3 — V3-3C Implementation Contract
 
-Status: `CLOSED / CERTIFIED — V3-3B PAYMENTS + EXPENSES`.
+Status: `CLOSED / CERTIFIED — V3-3C ALERTS + CLOSINGS`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
+
+## V3-3C closure evidence
+
+- Authenticated QA target: `kpvvydthlxupjjqqdpxy`; production was not accessed.
+- Alert runtime was previously certified; no prior alert fixtures were recreated.
+- A new isolated `QA V3-3C` fiscal fixture reached `Listo` for T4 2024 and
+  persisted both quarterly and annual snapshots across reload.
+- The temporary QA-only `qa_cleanup_v3_3c_fixture(...)` RPC removed the exact
+  client, invoice, payment, expense, quarterly snapshot and annual snapshot;
+  post-cleanup verification returned zero rows and zero targeted audit events.
+- Bottom navigation geometry returned zero overlap at `390x844`, `430x932` and
+  `768x1024` across Home, Invoices, Clients, Quotes, Leads, Services, Payments,
+  Expenses, Alerts and Closings.
+- Regression gates: `649 passed`, `4 skipped`, lint PASS and build PASS.
+- V3-3D is not included in this contract and requires separate approval.
 
 ## Scope
 

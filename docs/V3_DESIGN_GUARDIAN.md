@@ -1,6 +1,6 @@
 # V3 Design Guardian — V3-3C
 
-Status: `V3-3C IMPLEMENTATION CHECK — AUTHENTICATED CERTIFICATION PENDING`
+Status: `V3-3C CLOSED / CERTIFIED`
 
 ## Review boundary
 
@@ -20,6 +20,12 @@ contracts before any extension is considered.
 - Viewports reviewed: `390x844`, `430x932`, `768x1024`.
 - Runtime storage unblock: private QA `expense-receipts` bucket with signed URLs;
   no visual contract changes.
+- V3-3C final authenticated run: Alerts, Closing issues, Closing ready, saved
+  quarter/year snapshots and More sheet reviewed at the required viewports.
+- Bottom dock geometry: `getBoundingClientRect()` reported `0` overlap across
+  the ten V3 modules at `390x844`, `430x932` and `768x1024`.
+- Exact QA cleanup: temporary `qa_cleanup_v3_3c_fixture(...)` returned
+  `qa_only: true`; all targeted fixture tables and audit events verified at `0`.
 
 ## Gate scores
 
@@ -48,6 +54,8 @@ filter sheet, safe-area padding and no horizontal overflow.
 - Fake alert lifecycle/settings/fiscal certification claims in new V3 trees: `0`.
 - Home queue entries at maximum: `3`.
 - `prefers-reduced-motion`: covered by the V3 stylesheet.
+- Bottom dock clearance: tokenized through `--v3-bottom-nav-clearance`; no
+  hardcoded `96px` remains in the V3 content clearance contract.
 
 ## V3-3A Home evidence
 
@@ -79,6 +87,11 @@ filter sheet, safe-area padding and no horizontal overflow.
 - QA fixture cleanup: PASS; residue verified `0`.
 
 Production was not accessed or modified.
+
+## V3-3C final verdict
+
+Alerts and Closings are `CLOSED / CERTIFIED`. V3-3D is not started and needs a
+separate human approval.
 
 ## V3-2A client evidence
 

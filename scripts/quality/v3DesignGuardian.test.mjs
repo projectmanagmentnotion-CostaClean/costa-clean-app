@@ -37,6 +37,7 @@ const v3TreeFiles = [
   'src/v3/selection/V3SelectionPrimitives.tsx',
   'src/v3/selection/useV3Selection.ts',
   'src/v3/selection/selectionEligibility.ts',
+  'src/v3/selection/selectionAdoptionAudit.ts',
 ]
 
 const v3Styles = [
@@ -62,6 +63,7 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toContain('localStorage')
     expect(source).toContain('V3SelectionPrimitives')
     expect(source).not.toContain('V3SelectionToolbar')
+    expect(source).toContain("['Invoices', 'Quotes']")
   })
 
   it('keeps hardcoded colors inside the token file only', () => {

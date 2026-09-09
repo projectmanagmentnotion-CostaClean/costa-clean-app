@@ -120,6 +120,16 @@ never belongs to the product API or production cleanup path.
 
 Next: `GLOBAL SELECTION SYSTEM V3`.
 
+## V3-4A — Global Selection Foundation — CLOSED / CERTIFIED
+
+- [x] UI-only selection foundation with visible selection, pruning, reset and eligibility.
+- [x] Adopted only in V3 Invoices and Quotes.
+- [x] Real settlement, PDF ZIP and CSV contracts certified.
+- [x] Exact QA cleanup completed with residue `0`.
+- [x] Mobile selection dock verified at `390x844`, `430x932` and `768x1024`.
+
+Next: `V3-4B — SELECTION ADOPTION AUDIT`.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated

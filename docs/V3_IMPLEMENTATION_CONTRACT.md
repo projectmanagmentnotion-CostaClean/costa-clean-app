@@ -193,3 +193,11 @@ opaque local-only routing state.
 
 Final authenticated visual certification is recorded in
 `docs/V3_DESIGN_GUARDIAN.md`. V3-3 is the next separate sprint.
+
+## V3-4A selection contract
+
+Selection state is ephemeral UI state only. It resets on search, filter and
+module changes, prunes against the current dataset, and is never stored in the
+URL, localStorage or Supabase. Invoices expose only existing PDF ZIP, CSV and
+eligible settlement contracts. Quotes expose only existing PDF ZIP and CSV
+contracts. Bulk settlement uses the existing eligibility and settlement RPCs.

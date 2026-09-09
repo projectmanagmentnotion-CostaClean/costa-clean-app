@@ -166,3 +166,14 @@ and targeted audit events residue verified `0`.
 - Edit/status/archive and deep-link/back restoration: PASS through existing authenticated contracts.
 - Fake work-report claims: `0`; no signature, execution certification, GPS, tracking or telemetry state is rendered.
 - Legacy visual dependency in `src/v3/jobs`: `0`.
+
+## V3-4A selection evidence
+
+- Selection foundation and eligibility: PASS; UI-only state, no persistence.
+- Invoice runtime: PASS; 2 eligible and 1 ineligible, exactly one
+  `transfer_auto` settlement per eligible invoice, and no new payment for the
+  paid invoice.
+- Invoice and quote ZIP/CSV exports: PASS through existing generators.
+- Reset, dataset pruning and selection dock geometry: PASS; overlap `0` at
+  `390x844`, `430x932` and `768x1024`.
+- Exact QA cleanup via `qa_cleanup_v3_4a_fixture(...)`: PASS; all residue `0`.

@@ -110,7 +110,7 @@ export function V3InvoicesPage({
   const selection = useV3Selection({ visibleIds: visibleInvoices.map((invoice) => invoice.id), resetKey: `${filter}|${searchQuery}` })
   const [selectionSheet, setSelectionSheet] = useState(false)
   const [settleConfirm, setSettleConfirm] = useState(false)
-  const [selectionResult, setSelectionResult] = useState<string | null>(null)
+  const [selectionResult, setSelectionResult] = useState<{ message: string; completedIds: string[]; failedIds: string[] } | null>(null)
   const selectedInvoices = invoices.filter((invoice) => selection.selectedIds.includes(invoice.id))
   const eligibleSelectedInvoices = selectedInvoices.filter(canSettleInvoiceByTransfer)
 
@@ -175,8 +175,8 @@ export function V3InvoicesPage({
       </div>
       {selection.isSelectionMode ? <V3SelectionBar selectedCount={selection.selectedCount} visibleSelectedCount={selection.visibleSelectedCount} visibleCount={visibleInvoices.length} allVisibleSelected={selection.allVisibleSelected} onSelectVisible={selection.selectVisible} onActions={() => setSelectionSheet(true)} onCancel={selection.exit} /> : null}
       {selectionSheet ? <V3SelectionActionSheet onClose={() => setSelectionSheet(false)}><V3SecondaryAction onClick={() => { setSelectionSheet(false); void onBulkDownload?.(selectedInvoices) }} disabled={selectedInvoices.length === 0}>Descargar PDFs</V3SecondaryAction><V3SecondaryAction onClick={() => { setSelectionSheet(false); onBulkExportCsv?.(selectedInvoices) }} disabled={selectedInvoices.length === 0}>Exportar CSV</V3SecondaryAction>{eligibleSelectedInvoices.length > 0 && onBulkSettle ? <V3PrimaryAction onClick={() => { setSelectionSheet(false); setSettleConfirm(true) }}>Marcar pagadas ({eligibleSelectedInvoices.length})</V3PrimaryAction> : null}</V3SelectionActionSheet> : null}
-      {settleConfirm ? <V3SelectionConfirmSheet title="Confirmar cobro" description={`${eligibleSelectedInvoices.length} factura(s) elegible(s), por ${formatCurrency(eligibleSelectedInvoices.reduce((sum, invoice) => sum + Number(invoice.outstanding_amount ?? invoice.total ?? 0), 0))}. Las no elegibles no se tocarán.`} onClose={() => setSettleConfirm(false)} onConfirm={async () => { setSettleConfirm(false); const result = await onBulkSettle?.(eligibleSelectedInvoices); if (result) setSelectionResult(`${result.completedIds.length} cobro(s) registrado(s). ${result.failedIds.length} fallido(s).`) }} /> : null}
-      {selectionResult ? <V3SelectionResultSheet message={selectionResult} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}
+       {settleConfirm ? <V3SelectionConfirmSheet title="Confirmar cobro" description={`${eligibleSelectedInvoices.length} factura(s) elegible(s), por ${formatCurrency(eligibleSelectedInvoices.reduce((sum, invoice) => sum + Number(invoice.outstanding_amount ?? invoice.total ?? 0), 0))}. Las no elegibles no se tocarán.`} onClose={() => setSettleConfirm(false)} onConfirm={async () => { setSettleConfirm(false); const result = await onBulkSettle?.(eligibleSelectedInvoices); if (result) setSelectionResult({ message: `${result.completedIds.length} cobro(s) registrado(s). ${result.failedIds.length} fallido(s).`, completedIds: result.completedIds, failedIds: result.failedIds }) }} /> : null}
+       {selectionResult ? <V3SelectionResultSheet message={selectionResult.message} completedIds={selectionResult.completedIds} failedIds={selectionResult.failedIds} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}
     </V3Page>
   )
 }

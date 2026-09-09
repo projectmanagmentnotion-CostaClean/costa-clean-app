@@ -75,3 +75,11 @@ The V3 shell is activated only by `?v3=1` during migration. No business state,
 auth state or Supabase contract is stored in the flag. Share and contact
 actions are real local/browser actions; work-report PDF and business-lead
 review claims remain hidden until real contracts exist.
+
+## V3-4A selection surfaces
+
+The selection trigger, checkbox, action bar, action sheet, confirmation sheet
+and result sheet are token-backed V3 primitives. The action bar sits above
+`--v3-bottom-nav-clearance`; it does not introduce a second dock or fixed magic
+height. Selection controls retain accessible checkbox semantics and support an
+indeterminate state.

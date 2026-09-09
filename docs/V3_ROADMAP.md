@@ -130,6 +130,10 @@ Next: `GLOBAL SELECTION SYSTEM V3`.
 
 Next: `V3-4B — SELECTION ADOPTION AUDIT`.
 
+V3-4B audit result: selection remains adopted only in Invoices and Quotes.
+Jobs, Expenses, Payments, Leads, Clients, Properties, Alerts and Closings were
+audited and deliberately not adopted.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated

@@ -201,3 +201,6 @@ module changes, prunes against the current dataset, and is never stored in the
 URL, localStorage or Supabase. Invoices expose only existing PDF ZIP, CSV and
 eligible settlement contracts. Quotes expose only existing PDF ZIP and CSV
 contracts. Bulk settlement uses the existing eligibility and settlement RPCs.
+
+V3-4B adoption allowlist is exact: `Invoices`, `Quotes`. All other modules
+remain selection-free until a separate real-contract decision approves them.

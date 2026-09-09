@@ -177,3 +177,11 @@ and targeted audit events residue verified `0`.
 - Reset, dataset pruning and selection dock geometry: PASS; overlap `0` at
   `390x844`, `430x932` and `768x1024`.
 - Exact QA cleanup via `qa_cleanup_v3_4a_fixture(...)`: PASS; all residue `0`.
+
+## V3-4B adoption audit
+
+- Adopted allowlist: `Invoices`, `Quotes` only.
+- Selection clones: `0`.
+- Remaining modules audited and not adopted: Jobs, Expenses, Payments, Leads,
+  Clients, Properties, Alerts and Closings.
+- Fake bulk actions: `0`; legacy bulk toolbar in V3: `0`.

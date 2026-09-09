@@ -83,3 +83,7 @@ and result sheet are token-backed V3 primitives. The action bar sits above
 `--v3-bottom-nav-clearance`; it does not introduce a second dock or fixed magic
 height. Selection controls retain accessible checkbox semantics and support an
 indeterminate state.
+
+The V3-4B audit does not add new selection visuals. The certified foundation is
+used only by Invoices and Quotes; all remaining modules keep their compact
+single-record rows and workspaces.

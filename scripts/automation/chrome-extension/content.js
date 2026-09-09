@@ -125,6 +125,11 @@
       const newestAssistantPrompt = assistantMessages().at(-1)
       if (assistantLastSeen === null) {
         assistantLastSeen = newestAssistantPrompt || ''
+        const bootstrapKey = `costaPromptBridgeBootstrapped:${conversationUrl}`
+        if (newestAssistantPrompt && !sessionStorage.getItem(bootstrapKey)) {
+          sessionStorage.setItem(bootstrapKey, '1')
+          await submitPrompt(newestAssistantPrompt)
+        }
       } else if (newestAssistantPrompt && newestAssistantPrompt !== assistantLastSeen && !sent.has(newestAssistantPrompt)) {
         if (newestAssistantPrompt !== assistantCandidate) {
           assistantCandidate = newestAssistantPrompt

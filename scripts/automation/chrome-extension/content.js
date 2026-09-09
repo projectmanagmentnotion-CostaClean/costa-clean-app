@@ -91,6 +91,20 @@
     }
   }
 
+  async function promptId(prompt) {
+    const bytes = new TextEncoder().encode(prompt.trim())
+    const digest = await crypto.subtle.digest('SHA-256', bytes)
+    return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 16)
+  }
+
+  async function retryIfPreviouslyFailed(prompt) {
+    if (!sent.has(prompt)) return
+    const id = await promptId(prompt)
+    const response = await bridgeFetch('/api/jobs')
+    const previous = response.ok ? response.body.find((candidate) => candidate.id === id && candidate.sourceUrl === conversationUrl) : null
+    if (previous?.status === 'failed' || previous?.status === 'rejected') sent.delete(prompt)
+  }
+
   async function publishCompletedJob() {
     if (busy || pageGone) return
     const response = await bridgeFetch('/api/jobs')
@@ -135,12 +149,14 @@
     if (pageGone || contextInvalidated) return
     try {
       const newest = messages().at(-1)
+      if (newest) await retryIfPreviouslyFailed(newest)
       if (newest && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT')) await submitPrompt(newest)
       const newestAssistantPrompt = assistantMessages().at(-1)
+      if (newestAssistantPrompt) await retryIfPreviouslyFailed(newestAssistantPrompt)
       if (assistantLastSeen === null) {
         assistantLastSeen = newestAssistantPrompt || ''
         const bootstrapKey = `costaPromptBridgeBootstrapped:${conversationUrl}`
-        if (newestAssistantPrompt && !sessionStorage.getItem(bootstrapKey)) {
+        if (newestAssistantPrompt && (!sessionStorage.getItem(bootstrapKey) || !sent.has(newestAssistantPrompt))) {
           sessionStorage.setItem(bootstrapKey, '1')
           await submitPrompt(newestAssistantPrompt)
         }

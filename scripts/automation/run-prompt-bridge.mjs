@@ -77,7 +77,7 @@ function startJob(job) {
     buildExecutionPrompt(job.prompt),
     '--ephemeral',
     '--sandbox', 'workspace-write',
-    '--full-auto',
+    '--approve-for-me',
     '--cd', project.root,
     '--output-last-message', outputPath,
     '--color', 'never',
@@ -168,7 +168,9 @@ const server = http.createServer(async (req, res) => {
       if (!project) return json(res, 403, { error: 'No project is mapped to this conversation.' })
       const promptHash = hashPrompt(String(body.prompt || ''))
       const existing = [...jobs.values()].find((job) => job.projectKey === project.key && job.promptHash === promptHash)
-      if (existing) return json(res, 200, { accepted: false, duplicate: true, jobId: existing.id })
+      if (existing && !['failed', 'rejected'].includes(existing.status)) {
+        return json(res, 200, { accepted: false, duplicate: true, jobId: existing.id })
+      }
       const job = createJob(String(body.prompt || ''), body.sourceUrl)
       job.projectKey = project.key
       job.promptHash = promptHash

@@ -1,0 +1,87 @@
+# CP-3C.2 Authenticated Authorization E2E QA
+
+Date: 2026-09-10  
+Target: QA project `kpvvydthlxupjjqqdpxy` only  
+Status: `PARTIAL — evidence captured; certification debt remains`
+
+This report is sanitized. It contains no passwords, tokens, signed URLs,
+private bearer material or raw invitation tokens. CP-3C.3 was not started.
+
+## Environment And Identity Matrix
+
+| Identity | Password auth | Self-access / runtime result |
+|---|---|---|
+| `ADMIN_A` | NOT_VERIFIED — stored credential rejected | NOT_EXECUTED |
+| `MEMBER_A` | NOT_VERIFIED — reused credential unavailable | NOT_EXECUTED |
+| `ADMIN_B` | NOT_VERIFIED — reused credential unavailable | NOT_EXECUTED |
+| `APPLICANT_INDIVIDUAL` | PASS | Authenticated without access before onboarding; onboarding produced `pending_review` |
+| `APPLICANT_BUSINESS` | PASS | Authenticated without access before onboarding; onboarding produced `pending_review` |
+| `SUSPENDED_OR_INACTIVE_A` | PASS | `suspended` state returned |
+| `REVOKED_A` | PASS | `revoked` state returned |
+| `INVITEE` | PASS | Active Client B member context |
+
+The three reused identities were not reset or replaced. Their missing private
+credentials are a certification blocker, not a reason to weaken identity
+isolation.
+
+## Completed Evidence
+
+- Email match without tenancy: `PASS`. The individual applicant matched the
+  synthetic Client B email but had zero membership and no tenant context.
+- Individual onboarding: `PASS` at HTTP level; status `pending_review`, legal
+  acceptance present, marketing false, no membership or automatic client link.
+- Business onboarding: `PASS` at HTTP level; status `pending_review`, legal
+  acceptance present, marketing true, one granted versioned marketing consent,
+  no membership or automatic client link.
+- Onboarding idempotency: `PASS`. Exact repeat returned `202`; same key with a
+  different payload returned `409`.
+- Forged application fields and unknown extra key: `PASS` denied with `400`.
+- Service request: `PASS` through an active synthetic Client B member. One
+  request was created, exact repeat did not duplicate it, a changed payload
+  conflicted, cancellation preserved history, and a second cancellation was
+  denied. The transient row was removed during cleanup.
+- Marketing preference: `PASS` for read, grant, read, withdraw and read.
+- RLS/direct writes: `PASS` for the inspected portal tables. Sensitive portal
+  tables have RLS and FORCE RLS; authenticated direct insert grants are false.
+- Invoice cross-tenant download: `PASS` denied with `404` from Client B toward
+  the existing Client A invoice. The invoice and document were not mutated.
+- Cleanup: `PASS`. Two applications, two legal acceptances, two consents and
+  one service request were removed by an exact QA transaction. CP-3C.1
+  identities and fixtures remain `KEEP_UNTIL_CP3C3`.
+
+## Remaining Certification Debt
+
+- Full active-client matrix for `ADMIN_A`, `MEMBER_A` and `ADMIN_B` is pending
+  private credentials. No reused account was reset.
+- Active invitation acceptance is blocked by a CP-3C.1 fixture collision: the
+  active invitation targets the invitee that already owns the accepted-used
+  invitation membership. Replay, expired, revoked and invalid tokens were
+  safely denied. No email was sent.
+- Invoice owner read, PDF retrieval, 60-second expiry, refresh, unsigned
+  access and document mismatch checks were not executed because the owner
+  identity was unavailable.
+- Integrated browser Console and Network certification was not executed by
+  the direct API run. Production requests remain zero by target lock and no
+  production endpoint was called.
+- Cross-tenant profile/property/invoice RPC attempts returned no data but three
+  returned HTTP `500` instead of the preferred uniform `404`; this is a
+  contract error-handling defect to resolve before full certification.
+- Rate-limit runtime: `NOT_EXECUTED_AVOID_FIXTURE_LOCKOUT`.
+
+## Cleanup And Invariants
+
+- Private ledger: `.auth/cp3c2/ledger.json`, ignored and not tracked.
+- Cleanup planner: `scripts/client-portal/cp3c2_qa_cleanup_plan.mjs`.
+- Package manifest: `scripts/client-portal/cp3c2_qa_package.manifest.json`.
+- Cleanup dry-run matched the ledger exactly before deletion.
+- CP-3C.1 Client B/property B, Auth users, invitations and membership states
+  remain intact.
+- Existing invoice/document, legal catalog and fiscal numbering remain intact.
+- Production writes, deploys, Auth mutations and requests: `0`.
+
+## Gate Decision
+
+`CP-3C.2` remains `PARTIAL`. It must not be marked `DONE` or promote CP-3B.3,
+CP-3B.4 or CP-3B.5 to full certification until the listed identity, browser,
+invoice and fixture-collision evidence is completed. CP-3C.3 remains not
+started.

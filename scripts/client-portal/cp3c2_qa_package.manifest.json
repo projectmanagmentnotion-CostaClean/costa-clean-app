@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "identity": "CP3C2_AUTHORIZATION_E2E_QA_V1",
+  "gate": "CP-3C.2",
+  "status": "PARTIAL_WITH_DOCUMENTED_DEBT",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3c2_qa_cleanup_plan.mjs",
+      "sha256": "41fa1e552b8fb06dd512d188be3c0305bcef80c38bf9beedd3bbccf7a5ea2438"
+    },
+    {
+      "path": "scripts/client-portal/cp3c2CleanupPlan.test.mjs",
+      "sha256": "f16ec5784c60864cdcf5ac1e32027ed0af07a98fe49d6b9e7f20899e712c89b7"
+    },
+    {
+      "path": "docs/client-portal/CP3C2_AUTHORIZATION_E2E_QA.md",
+      "sha256": "43e901bbd4c4379ea77275659b2539c787cf98ead4fd952212566e66ad21a904"
+    }
+  ],
+  "remoteEffects": {
+    "target": "QA_ONLY",
+    "productionWrites": 0,
+    "productionDeploys": 0,
+    "productionAuthMutations": 0,
+    "transientRowsCreated": "CLEANED_EXACTLY",
+    "cp3c1Fixtures": "KEPT_UNTIL_CP3C3",
+    "googleProviderChanges": 0,
+    "invitationEmailDelivery": 0,
+    "invoiceMutations": 0
+  },
+  "privateArtifacts": {
+    "ledgerPath": ".auth/cp3c2/ledger.json",
+    "gitTracked": 0,
+    "secretsEmitted": false
+  },
+  "nextGate": "CP-3C.3",
+  "nextGateStarted": false
+}

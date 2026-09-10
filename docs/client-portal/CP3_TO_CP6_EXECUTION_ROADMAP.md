@@ -375,10 +375,10 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `PARTIAL — authenticated evidence captured; certification debt remains` |
 | Objective | Prove portal journeys and denial boundaries end to end with controlled QA identities. |
 | User outcome | Evidence shows each client can use intended features and cannot reach another client's data or revoked states. |
-| Dependencies | CP-3C.1 fixtures active; carried CP-3B.3/3B.4/3B.5A authenticated evidence debt is in scope; visible QA environment and exact cleanup stop criteria available. |
+| Dependencies | CP-3C.1 fixtures active; carried CP-3B.3/3B.4/3B.5A authenticated evidence debt is in scope. Partial evidence is recorded in `CP3C2_AUTHORIZATION_E2E_QA.md`; full identity, browser, invoice and invitation-collision gates remain. |
 | Agents | Primary `qa-e2e-specialist`; specialists `security-privacy-auditor`, `supabase-guardian`; reviewer `pr-quality-gate`. |
 | In scope | Login, isolation, revoked/suspended, invitation replay, requests, cancellation, invoice download/expiry and cleanup. |
 | Out of scope | Production smoke, load testing, real customer journeys and defect fixes unrelated to reproduced failures. |

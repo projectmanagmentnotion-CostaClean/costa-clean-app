@@ -67,5 +67,9 @@ Console/Network capture.
 
 ## Next Action
 
-Run the authenticated QA browser certification against this single fixture.
-Do not start CP-3B.5.
+Run the authenticated QA browser certification against this single fixture
+when a human-authenticated QA session is open. On 2026-09-10 the available
+browser was at `/portal/login`, so download, expiry, denial, Console, Network,
+and 390x844 evidence remain `NOT_EXECUTED`; no credentials or remote writes
+were attempted. Local verification passed: `npm test` (629 passed, 4
+skipped), `npm run lint`, `npm run build -- --mode qa`, and `git diff --check`.

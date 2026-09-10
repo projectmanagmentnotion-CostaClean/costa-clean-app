@@ -109,7 +109,11 @@ negatives.
 
 ## Manual next action
 
-Provide a private QA Auth identity/session and run the synthetic CP-3C.1/CP-3C.2
-identity and cross-tenant matrix. Google provider configuration remains
+Provide a private QA Auth identity/session and run the authenticated onboarding
+matrix. On 2026-09-10 the available browser was at `/portal/login`, so this
+certification block could not execute authenticated requests. No credentials,
+remote writes, or production requests were attempted. Local verification
+passed: `npm test` (629 passed, 4 skipped), `npm run lint`, `npm run build --
+--mode qa`, and `git diff --check`. Google provider configuration remains
 `PRIVATE_CONFIG_PENDING`. Do not start CP-3C automatically or touch production
 configuration.

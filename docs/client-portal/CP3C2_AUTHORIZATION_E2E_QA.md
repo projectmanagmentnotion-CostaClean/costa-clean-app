@@ -2,7 +2,7 @@
 
 Date: 2026-09-10
 Target: QA project `kpvvydthlxupjjqqdpxy` only
-Status: `PARTIAL — CP-3C.2R remediation evidence captured; certification debt remains`
+Status: `PARTIAL — CP-3C.2R2 replacement identities verified; certification debt remains`
 
 This report is sanitized. It contains no passwords, tokens, signed URLs,
 private bearer material or raw invitation tokens. CP-3C.3 was not started.
@@ -51,18 +51,18 @@ isolation.
 
 ## Remaining Certification Debt
 
-- Full active-client matrix for `ADMIN_A`, `MEMBER_A` and `ADMIN_B` is pending
-  private credentials. No reused account was reset.
-- Active invitation acceptance is blocked by a CP-3C.1 fixture collision: the
-  active invitation targets the invitee that already owns the accepted-used
-  invitation membership. Replay, expired, revoked and invalid tokens were
-  safely denied. No email was sent.
+- The original corrupted `MEMBER_A` and `ADMIN_B` rows remain untouched. Their
+  exact CP-3C.1 memberships were rebound to the authorized V2 replacements;
+  no duplicate memberships were created.
+- Active invitation acceptance/replay remains deferred because the raw
+  ephemeral token is absent from the private ledger. No token was invented and
+  no email was sent.
 - Invoice owner read, PDF retrieval, 60-second expiry, refresh, unsigned
   access and document mismatch checks were not executed because the owner
   identity was unavailable.
-- Integrated browser Console and Network certification was not executed by
-  the direct API run. Production requests remain zero by target lock and no
-  production endpoint was called.
+- Integrated browser Console and Network certification remains incomplete: the
+  members Edge Function rejects the local origin with its generic safe error
+  before member RPC execution. Production requests remain zero by target lock.
 - Cross-tenant profile/property/invoice RPC attempts returned no data but three
   returned HTTP `500` instead of the preferred uniform `404`; this is a
   contract error-handling defect to resolve before full certification.

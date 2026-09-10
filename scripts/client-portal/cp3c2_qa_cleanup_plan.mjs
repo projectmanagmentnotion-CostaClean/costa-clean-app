@@ -27,6 +27,8 @@ export function buildCp3c2CleanupPlan(ledger) {
       reusedClientA: true,
       existingInvoice: 'INV-QA-CP3B4-20260909-001',
       authUsers: 'CP3C1_KEEP_UNTIL_CP3C3',
+      cp3c2r2ReplacementUsers: ['MEMBER_A_V2', 'ADMIN_B_V2'],
+      cp3c2r2ActiveInvitation: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
       legalCatalog: 'portal_privacy:qa-v1:es-ES',
     },
   }

@@ -2,7 +2,7 @@
 
 Date: 2026-09-10  
 Target: QA project `kpvvydthlxupjjqqdpxy` only  
-Status: `PARTIAL — remediation evidence captured; Auth and invitation certification remain blocked`
+Status: `PARTIAL — replacement identities verified; invitation and integrated browser certification remain blocked`
 
 ## QA Boundary
 
@@ -15,8 +15,8 @@ Status: `PARTIAL — remediation evidence captured; Auth and invitation certific
 ## Identity Remediation
 
 - `ADMIN_A`: password repaired; password auth `200`; `/auth/v1/user` `200`; self-access is active `client_admin` on Client A.
-- `MEMBER_A`: password repair was attempted on the verified synthetic identity, but Auth still returns `500 unexpected_failure`; no membership or role was changed.
-- `ADMIN_B`: password repair was attempted on the verified synthetic identity, but Auth still returns `500 unexpected_failure`; no membership or role was changed.
+- `MEMBER_A`: preserved unchanged after confirmed Auth row corruption; replacement `MEMBER_A_V2` authenticates normally and owns only the original Client A member row.
+- `ADMIN_B`: preserved unchanged after confirmed Auth row corruption; replacement `ADMIN_B_V2` authenticates normally and owns only the original Client B admin row.
 - `INVITEE_ACTIVE`: one new synthetic `@qa.invalid` identity was created with no membership, application or consent; it is retained until CP3C.3.
 
 ## Cross-Tenant Denial
@@ -44,23 +44,25 @@ returned `400`.
 
 ## Invitation Certification
 
-The original active invitation was repointed only to `INVITEE_ACTIVE`; used,
-expired and revoked lifecycle fixtures were not changed. Acceptance returned
-neutral `404`; the invitation remains pending and the new identity has zero
-memberships. This remains a contract/fixture certification debt, not a
-successful acceptance.
+The active invitation remains pending, unexpired, Client B and
+`client_member`. Its stored hash is not the legacy all-zero fixture value, so
+the database row alone does not prove runtime pepper parity. The raw token is
+not present in the private ledger and was not invented or regenerated.
+Acceptance/replay therefore remain deferred rather than being reported as
+PASS. Used, expired and revoked fixtures were not changed.
 
 ## Browser Evidence
 
-The local portal was restarted against `.env.qa.local` because the prior
-`4174` process pointed at the production Supabase URL. The QA browser loaded
-the authenticated portal at `390x844`. Full multi-identity integrated
-Console/Network certification was not completed: MEMBER_A and ADMIN_B Auth
-fail before portal access, and the browser DevTools evidence is therefore
-incomplete. No production request was made by the QA scripts or QA server.
+The local portal was restarted against `.env.qa.local` and the QA browser
+loaded the authenticated portal at `390x844` as `ADMIN_A`. The replacement
+identities also pass direct Auth, `/auth/v1/user` and self-access checks. The
+members Edge Function returns the generic `request_unavailable` for the local
+origin before its member RPCs, so integrated member Console/Network evidence
+is incomplete. No production request was made by the QA scripts or QA server.
 
 ## Gate Decision
 
 `CP-3C.2` remains `PARTIAL`. CP-3C.3 must not start automatically. Remaining
-debt is limited to the two Auth `unexpected_failure` identities, active
-invitation acceptance/replay, and full integrated Console/Network matrix.
+debt is limited to active invitation acceptance/replay and the integrated
+browser member Console/Network matrix; the two corrupted Auth identities are
+preserved and have verified V2 replacements.

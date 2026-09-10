@@ -7,6 +7,8 @@ export const CP3C1_FIXTURE_ALIASES = Object.freeze([
   'ADMIN_A',
   'MEMBER_A',
   'ADMIN_B',
+  'MEMBER_A_V2',
+  'ADMIN_B_V2',
   'APPLICANT_INDIVIDUAL',
   'APPLICANT_BUSINESS',
   'SUSPENDED_OR_INACTIVE_A',
@@ -26,6 +28,8 @@ export const SYNTHETIC_EMAILS = Object.freeze([
 ])
 
 const IDENTITY_EMAILS = Object.freeze({
+  MEMBER_A_V2: 'member-a-v2.cp3c2r2@qa.invalid',
+  ADMIN_B_V2: 'admin-b-v2.cp3c2r2@qa.invalid',
   APPLICANT_INDIVIDUAL: 'applicant-individual.cp3c1@qa.invalid',
   APPLICANT_BUSINESS: 'applicant-business.cp3c1@qa.invalid',
   SUSPENDED_OR_INACTIVE_A: 'suspended-a.cp3c1@qa.invalid',

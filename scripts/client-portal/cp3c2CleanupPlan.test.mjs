@@ -25,5 +25,7 @@ describe('CP-3C.2 ledger-bound cleanup', () => {
     expect(plan.deleteOnly.serviceRequests).toEqual(['request-a'])
     expect(plan.protected.cp3c1Fixtures).toBe(true)
     expect(plan.protected.existingInvoice).toBe('INV-QA-CP3B4-20260909-001')
+    expect(plan.protected.cp3c2r2ReplacementUsers).toEqual(['MEMBER_A_V2', 'ADMIN_B_V2'])
+    expect(plan.protected.cp3c2r2ActiveInvitation).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
   })
 })

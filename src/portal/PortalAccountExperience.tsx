@@ -1,14 +1,7 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import type { PortalMembershipRole } from './contracts'
-import {
-  getPortalMarketingPreference,
-  listPortalMembers,
-  listPortalPendingInvitations,
-  revokePortalMember,
-  setPortalMarketingPreference,
-  type PortalMember,
-  type PortalPendingInvitation,
-} from './adapters/portalAccountActions'
+import { createPortalAccountAdapter, type PortalAccountAdapter } from './adapters/portalAccountAdapter'
+import type { PortalMember, PortalPendingInvitation } from './adapters/portalAccountActions'
 
 interface PortalAccountExperienceProps {
   role: PortalMembershipRole
@@ -20,14 +13,15 @@ interface PortalAccountExperienceProps {
 }
 
 export function PortalAccountExperience({ role, pathname, clientId, accountLabel, onSignOut, getHref }: PortalAccountExperienceProps) {
+  const accountAdapter = useMemo(() => createPortalAccountAdapter(window.location.search), [])
   const route = pathname.replace('/portal/', '').replace(/\/$/u, '')
-  if (route === 'members' || route.startsWith('members/')) return <MembersSurface role={role} pathname={pathname} clientId={clientId} getHref={getHref} />
+  if (route === 'members' || route.startsWith('members/')) return <MembersSurface adapter={accountAdapter} role={role} pathname={pathname} clientId={clientId} getHref={getHref} />
   if (route === 'security/password') return <PasswordSurface />
   if (route === 'security/google') return <GoogleSurface />
   if (route === 'security') return <SecuritySurface getHref={getHref} />
   if (route === 'legal/privacy') return <LegalSurface title="Política de privacidad" description="Texto informativo pendiente de revisión legal profesional. La información de privacidad es independiente del consentimiento comercial." />
   if (route === 'legal/document') return <LegalSurface title="Condiciones del servicio" description="Documento contractual pendiente de validación legal profesional. El contenido mostrado en QA no constituye una publicación definitiva." />
-  if (route === 'preferences/marketing') return <MarketingSurface clientId={clientId} />
+  if (route === 'preferences/marketing') return <MarketingSurface adapter={accountAdapter} clientId={clientId} />
   if (route === 'errors/session-expired') return <SafeErrorSurface title="Sesión caducada" description="Por seguridad, vuelve a iniciar sesión para continuar." />
   if (route === 'errors/network') return <SafeErrorSurface title="Problema de conexión" description="No pudimos sincronizar tu información. Comprueba la red e inténtalo de nuevo." />
   if (route === 'errors/forbidden') return <SafeErrorSurface title="Sección restringida" description="Tu rol actual no permite acceder a esta sección." />
@@ -52,13 +46,13 @@ export function PortalAccountExperience({ role, pathname, clientId, accountLabel
   )
 }
 
-function MembersSurface({ role, pathname, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'pathname' | 'clientId' | 'getHref'>) {
+function MembersSurface({ adapter, role, pathname, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'pathname' | 'clientId' | 'getHref'> & { adapter: PortalAccountAdapter }) {
   if (pathname.endsWith('/invite')) return <InviteSurface />
   if (pathname.endsWith('/revoke')) return <RevokeSurface />
-  return <MembersListSurface role={role} clientId={clientId} getHref={getHref} />
+  return <MembersListSurface adapter={adapter} role={role} clientId={clientId} getHref={getHref} />
 }
 
-function MembersListSurface({ role, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'clientId' | 'getHref'>) {
+function MembersListSurface({ adapter, role, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'clientId' | 'getHref'> & { adapter: PortalAccountAdapter }) {
   const [members, setMembers] = useState<PortalMember[]>([])
   const [pending, setPending] = useState<PortalPendingInvitation[]>([])
   const [loading, setLoading] = useState(true)
@@ -71,8 +65,8 @@ function MembersListSurface({ role, clientId, getHref }: Pick<PortalAccountExper
     async function load() {
       setLoading(true)
       try {
-        const memberResult = await listPortalMembers(clientId)
-        const invitationResult = role === 'client_admin' ? await listPortalPendingInvitations(clientId) : []
+        const memberResult = await adapter.listMembers(clientId)
+        const invitationResult = role === 'client_admin' ? await adapter.listPendingInvitations(clientId) : []
         if (!cancelled) {
           setMembers(memberResult)
           setPending(invitationResult)
@@ -86,13 +80,13 @@ function MembersListSurface({ role, clientId, getHref }: Pick<PortalAccountExper
     }
     void load()
     return () => { cancelled = true }
-  }, [clientId, role])
+  }, [adapter, clientId, role])
 
   async function revokeSelected() {
     if (!selected || selected.isSelf || revoking) return
     setRevoking(true)
     try {
-      await revokePortalMember(clientId, selected.membershipId)
+      await adapter.revokeMember(clientId, selected.membershipId)
       setMembers((current) => current.filter((member) => member.membershipId !== selected.membershipId))
       setSelected(null)
     } catch {
@@ -130,7 +124,7 @@ function SecuritySurface({ getHref }: Pick<PortalAccountExperienceProps, 'getHre
 function PasswordSurface() { return <ActionUnavailable title="Cambiar contraseña" description="El cambio se ejecutará mediante el proveedor de autenticación. La política efectiva la valida el servidor; no mostramos requisitos inventados." /> }
 function GoogleSurface() { return <ActionUnavailable title="Cuenta de Google" description="Google autentica tu identidad, pero no concede por sí solo acceso a una cuenta de cliente. La vinculación se muestra únicamente cuando existe evidencia del proveedor." /> }
 function LegalSurface({ title, description }: { title: string; description: string }) { return <PortalAccountFrame eyebrow="Legal" title={title} description={description}><section className="portal-legal-placeholder"><strong>PLACEHOLDER LEGAL — REVISIÓN PROFESIONAL PENDIENTE</strong><p>Consulta la versión aprobada antes de usar este contenido con clientes reales.</p></section><a className="portal-text-button" href="/portal/account">Volver a Cuenta</a></PortalAccountFrame> }
-function MarketingSurface({ clientId }: Pick<PortalAccountExperienceProps, 'clientId'>) {
+function MarketingSurface({ adapter, clientId }: Pick<PortalAccountExperienceProps, 'clientId'> & { adapter: PortalAccountAdapter }) {
   const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -139,17 +133,17 @@ function MarketingSurface({ clientId }: Pick<PortalAccountExperienceProps, 'clie
 
   useEffect(() => {
     let cancelled = false
-    getPortalMarketingPreference(clientId, locale).then((preference) => {
+    adapter.getMarketingPreference(clientId, locale).then((preference) => {
       if (!cancelled) { setEnabled(preference.enabled); setError(false) }
     }).catch(() => { if (!cancelled) setError(true) }).finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [clientId])
+  }, [adapter, clientId])
 
   async function save() {
     if (saving || loading) return
     setSaving(true)
     try {
-      const preference = await setPortalMarketingPreference(clientId, enabled, locale)
+      const preference = await adapter.setMarketingPreference(clientId, enabled, locale)
       setEnabled(preference.enabled)
       setError(false)
     } catch {

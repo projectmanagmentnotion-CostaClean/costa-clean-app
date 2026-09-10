@@ -64,6 +64,9 @@
     "qa:flow:agent:write-clean": "node scripts/qa/run-end-user-flow-agent.mjs --mode=write-and-clean",
     "qa:visual:auth": "node scripts/qa/run-authenticated-visual-qa.mjs",
     "qa:visual:a11y": "node scripts/client-portal/cp3c3rA11yScan.mjs",
+    "qa:preview:network": "node scripts/client-portal/cp3c3r2PreviewNetwork.mjs",
+    "qa:visual:authenticated": "node scripts/client-portal/cp3c3r2AuthenticatedVisualQa.mjs",
+    "qa:performance:evidence": "node scripts/client-portal/cp3c3r2PerformanceEvidence.mjs",
     "test": "vitest run --config vitest.config.mjs",
     "test:watch": "vitest --config vitest.config.mjs"
   },

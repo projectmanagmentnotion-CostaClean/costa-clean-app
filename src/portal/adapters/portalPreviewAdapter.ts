@@ -11,6 +11,8 @@ import {
   type PortalServiceSummary,
   type PortalRuntimeAdapter,
 } from '../contracts'
+import type { PortalAccountAdapter } from './portalAccountAdapter'
+import type { PortalMarketingPreference, PortalMember } from './portalAccountActions'
 
 const previewScenarioSet = new Set<PortalPreviewScenario>(portalPreviewScenarios)
 const previewClientId = 'client-preview-main'
@@ -275,6 +277,53 @@ export function createPortalPreviewAdapter(
     },
     reads,
     previewScenario: scenario,
+  }
+}
+
+export function createPortalPreviewAccountAdapter(scenario: PortalPreviewScenario): PortalAccountAdapter {
+  const admin = {
+    membershipId: '11111111-1111-4111-8111-111111111111',
+    displayName: 'Administrador de vista previa',
+    email: 'admin@example.invalid',
+    role: 'client_admin' as const,
+    status: 'active' as const,
+    isSelf: true,
+  }
+  const member = {
+    membershipId: '22222222-2222-4222-8222-222222222222',
+    displayName: 'Miembro de vista previa',
+    email: 'member@example.invalid',
+    role: 'client_member' as const,
+    status: 'active' as const,
+    isSelf: false,
+  }
+  let members: PortalMember[] = scenario === 'active_member' ? [{ ...admin, role: 'client_member', isSelf: true }] : [admin, member]
+  let marketing: PortalMarketingPreference = {
+    enabled: false,
+    status: 'withdrawn',
+    version: 'preview-v1',
+    textReference: 'Vista previa sintética',
+    updatedAt: null,
+  }
+  return {
+    async listMembers() { return members },
+    async listPendingInvitations() {
+      return scenario === 'active_member' ? [] : [{
+        email: 'pending@example.invalid',
+        role: 'client_member',
+        status: 'pending',
+        expiresAt: '2026-12-31T00:00:00Z',
+        invitationRef: 'preview-invitation-1',
+      }]
+    },
+    async revokeMember(_clientId, membershipId) {
+      members = members.filter((current) => current.membershipId !== membershipId)
+    },
+    async getMarketingPreference() { return marketing },
+    async setMarketingPreference(_clientId, enabled) {
+      marketing = { ...marketing, enabled, status: enabled ? 'granted' : 'withdrawn', updatedAt: new Date().toISOString() }
+      return marketing
+    },
   }
 }
 

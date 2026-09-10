@@ -399,10 +399,11 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R (2026-09-10) remains `PARTIAL`: Axe/reflow automation is clean after
-bounded contrast and landmark remediation, while authenticated state coverage,
-members-preview 401s, native reader/zoom and Lighthouse evidence remain open.
-CP-4.1 is not started.
+CP-3C.3R2 (2026-09-10) remains `PARTIAL`: the deterministic preview account
+adapter removes the members/marketing 401s and Axe/reflow automation is clean,
+but private credentials are unavailable for the authenticated matrix and
+Lighthouse LCP is `5558.7ms` against the `2500ms` QA target. CP-4.1 is not
+started.
 
 No production release is part of CP-3.
 

@@ -152,3 +152,55 @@ Status: `PARTIAL — automated accessibility remediation passed; authenticated a
 after remediation, but authenticated state coverage, the members preview 401s,
 native-reader/zoom evidence and Lighthouse remain unresolved. CP-4.1 is not
 started and CP3C fixtures remain retained.
+
+## CP-3C.3R2 Final Closeout
+
+Date: **2026-09-10**
+Status: `PARTIAL — preview defect fixed; authenticated matrix and LCP budget remain open`
+
+### QA harness
+
+- Authentication root cause: `LEGACY_MANUAL_PROFILE_HARNESS`.
+- Deterministic UI-login runner added at
+  `scripts/client-portal/cp3c3r2AuthenticatedVisualQa.mjs`; it uses isolated
+  Playwright contexts and never injects service-role credentials or writes
+  storage state.
+- Runner result: `NOT_EXECUTED_PRIVATE_CREDENTIAL_INPUT_MISSING`. The required
+  ignored `.auth/cp3c3/credentials.json` is absent; no credentials were
+  inferred from browser profiles or printed.
+- Portal Auth was not modified.
+
+### Preview isolation
+
+- `PortalAccountAdapter` now selects the existing production Edge actions only
+  outside preview, and a deterministic synthetic adapter inside preview.
+- Active-admin preview has a synthetic self, member and pending invitation;
+  active-member preview exposes only member-safe state. Marketing preference
+  changes remain local to the preview adapter.
+- `npm run qa:preview:network`: PASS. Members and marketing emitted zero
+  `portal-member-actions`/`portal-account-actions` requests and zero console
+  errors, including the prior 401s.
+
+### Final automated evidence
+
+- `npm run qa:visual:a11y`: PASS, `0` violations across 14 scenarios and
+  `390x844`/`1440x900`; overflow `false` everywhere.
+- CDP zoom attempt: `Emulation.setPageScaleFactor(2)`. This is recorded as a
+  CDP scale attempt, not native browser zoom certification.
+- Reflow fallback at `320px`: PASS; html/body width `320`, no clipped controls.
+- Native screen reader: `NOT_AVAILABLE_NONBLOCKING_TOOL_LIMIT`.
+- Lighthouse via one pre-launched Chrome CDP workaround: Accessibility `1.00`,
+  Best Practices `1.00`, CLS `0`, TBT `5ms`, LCP `5558.7ms`.
+- LCP exceeds the QA target of `2500ms`; no performance pass is claimed.
+- `npm run qa:performance:evidence`: PASS for no overflow and navigation timing;
+  LCP was unavailable through the page observer in this harness and is not
+  substituted for the Lighthouse LCP result.
+
+### Gate decision
+
+`CP-3C.3 = PARTIAL`. The preview 401 defect is fixed, Axe/keyboard/focus/
+landmarks/reflow are clean, and production requests remain zero. The gate
+cannot close because the required authenticated identity matrix was not run
+without private credentials and the Lighthouse LCP budget is exceeded.
+CP3C fixtures remain retained; no cleanup was attempted. CP-4.1 remains not
+started.

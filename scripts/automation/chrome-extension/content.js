@@ -92,9 +92,13 @@
       body: { prompt, sourceUrl: conversationUrl },
     })
     if (!result.ok) throw new Error(result.body?.error || 'Bridge rejected prompt.')
-    if (result.body?.jobId) {
+    if (result.body?.jobId || result.body?.duplicate) {
       sent.add(prompt)
       sessionStorage.setItem('costaPromptBridgeSent', JSON.stringify([...sent].slice(-20)))
+      console.info('[Costa Clean Bridge] prompt accepted', {
+        jobId: result.body.jobId || null,
+        duplicate: Boolean(result.body.duplicate),
+      })
     }
   }
 
@@ -104,12 +108,20 @@
     return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('').slice(0, 16)
   }
 
-  async function retryIfPreviouslyFailed(prompt) {
+  async function reconcileSentPrompt(prompt) {
     if (!sent.has(prompt)) return
     const id = await promptId(prompt)
     const response = await bridgeFetch('/api/jobs')
-    const previous = response.ok ? response.body.find((candidate) => candidate.id === id && candidate.sourceUrl === conversationUrl) : null
-    if (previous?.status === 'failed' || previous?.status === 'rejected') sent.delete(prompt)
+    if (!response.ok) return
+    const previous = response.body.find((candidate) => candidate.id === id && candidate.sourceUrl === conversationUrl)
+    if (!previous || previous.status === 'failed' || previous.status === 'rejected') {
+      sent.delete(prompt)
+      sessionStorage.setItem('costaPromptBridgeSent', JSON.stringify([...sent].slice(-20)))
+      console.warn('[Costa Clean Bridge] clearing stale sent marker', {
+        promptId: id,
+        previousStatus: previous?.status || 'missing',
+      })
+    }
   }
 
   async function publishCompletedJob() {
@@ -161,10 +173,10 @@
     if (pageGone || contextInvalidated) return
     try {
       const newest = messages().at(-1)
-      if (newest) await retryIfPreviouslyFailed(newest)
+      if (newest) await reconcileSentPrompt(newest)
       if (newest && isCodexPrompt(newest) && !sent.has(newest) && !newest.startsWith('CP-3B.4 RESULT') && !newest.startsWith(bridgeControlPrefix)) await submitPrompt(newest)
       const newestAssistantPrompt = assistantMessages().at(-1)
-      if (newestAssistantPrompt) await retryIfPreviouslyFailed(newestAssistantPrompt)
+      if (newestAssistantPrompt) await reconcileSentPrompt(newestAssistantPrompt)
       if (assistantLastSeen === null) {
         assistantLastSeen = newestAssistantPrompt || ''
         const bootstrapKey = `costaPromptBridgeBootstrapped:${conversationUrl}`
@@ -191,8 +203,9 @@
       }
       await publishCompletedJob()
       await approveSensitiveJobs()
-    } catch {
+    } catch (error) {
       // ChatGPT's DOM and extension context can change during navigation.
+      console.warn('[Costa Clean Bridge] tick failed; retrying', String(error))
     }
   }
 

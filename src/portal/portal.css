@@ -1277,7 +1277,7 @@ input {
   .portal-mobile-more__trigger.is-active {
     border-color: #00AEF0;
     background: #E5F6FD;
-    color: #0088BD;
+    color: #006F9B;
   }
 
   .portal-mobile-nav__more-icon {
@@ -1342,7 +1342,7 @@ input {
   --portal-ink: #0B1924;
   --portal-muted: #425466;
   --portal-brand: #00AEF0;
-  --portal-brand-dark: #0088BD;
+  --portal-brand-dark: #006F9B;
   --portal-accent: #E5F6FD;
   --portal-line: #D2E3EE;
   --portal-surface: #FFFFFF;
@@ -1389,7 +1389,7 @@ input {
 }
 
 .portal-root .portal-button:hover {
-  background: #0088BD;
+  background: #006F9B;
   color: #FFFFFF;
   transform: translateY(-2px);
 }
@@ -1405,7 +1405,7 @@ input {
 .portal-root .portal-nav-link.is-active,
 .portal-root .portal-mobile-nav__link.is-active {
   background: #E5F6FD;
-  color: #0088BD;
+  color: #006F9B;
 }
 
 .portal-root .portal-field input,
@@ -1495,9 +1495,14 @@ input {
 }
 
 .portal-root .portal-status--success { color: #0B8256; background: #E7F7EF; }
-.portal-root .portal-status--info { color: #0088BD; background: #E5F6FD; }
+.portal-root .portal-status--info { color: #006F9B; background: #E5F6FD; }
 .portal-root .portal-status--warning { color: #8B5A00; background: #FFF3D6; }
 .portal-root .portal-status--danger { color: #A52222; background: #FDECEC; }
+
+/* Dark text variants preserve the approved cyan as an accent while meeting WCAG AA. */
+.portal-root .portal-eyebrow,
+.portal-root .portal-decision-block__label { color: #006F9B; }
+.portal-root .portal-status--success { color: #087047; }
 
 @media (min-width: 768px) and (max-width: 1199px) {
   .portal-root .portal-workspace__layout { grid-template-columns: 208px minmax(0, 1fr); }
@@ -2005,10 +2010,10 @@ input {
   justify-content: center;
   gap: 7px;
   padding: 10px 13px;
-  border: 1px solid #0b9e67;
+  border: 1px solid #075F3D;
   border-radius: 999px;
   color: #fff;
-  background: #16b978;
+  background: #087047;
   box-shadow: 0 10px 24px rgb(11 25 36 / 18%);
   font-size: 0.78rem;
   font-weight: 800;
@@ -2024,7 +2029,7 @@ input {
 .portal-whatsapp-action:hover,
 .portal-whatsapp-action:focus-visible {
   color: #fff;
-  background: #0b9e67;
+  background: #075F3D;
   outline: 3px solid rgb(0 174 240 / 28%);
   outline-offset: 2px;
 }

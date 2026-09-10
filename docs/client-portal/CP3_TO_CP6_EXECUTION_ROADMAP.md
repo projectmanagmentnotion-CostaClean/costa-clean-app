@@ -399,7 +399,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL — P1 focus defect fixed; final authenticated/native-tool evidence remains` |
+| Status | `PARTIAL — automated Axe/reflow evidence clean; authenticated/native-tool evidence remains` |
 | Objective | Validate complete portal states across devices, assistive interaction and performance budgets. |
 | User outcome | The portal is usable on mobile, iPad and desktop, with keyboard/screen reader support and respectful motion. |
 | Dependencies | CP-3C.2 passes; stable visible QA build; representative synthetic states; agreed budgets. |

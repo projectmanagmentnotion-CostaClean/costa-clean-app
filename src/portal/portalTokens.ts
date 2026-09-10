@@ -6,7 +6,7 @@
 export const portalTokens = {
   color: {
     brand: '#00AEF0',
-    brandStrong: '#0088BD',
+    brandStrong: '#006F9B',
     ocean: '#0B1924',
     slate: '#132230',
     surface: '#F5F9FC',

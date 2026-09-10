@@ -170,19 +170,21 @@ export function PortalWorkspaceView({
         </main>
       </div>
 
-      <a
-        className="portal-whatsapp-action"
-        href="https://wa.me/34698911517"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Escribir a Costa Clean por WhatsApp"
-      >
-        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-          <path d="M16 3.2a12.8 12.8 0 0 0-11 19.35L3.2 28.8l6.42-1.68A12.8 12.8 0 1 0 16 3.2Z" fill="none" stroke="currentColor" strokeWidth="2.1" />
-          <path d="M11.1 9.8c.3-.34.68-.38 1.08-.24l1.18 2.84c.12.3.08.58-.12.82l-.76.85c.62 1.27 1.66 2.31 2.93 2.93l.85-.76c.24-.2.52-.24.82-.12l2.84 1.18c.4.17.5.56.24 1.08-.43.87-1.3 1.42-2.27 1.35-4.48-.34-8.01-3.87-8.35-8.35-.07-.97.48-1.84 1.35-2.27Z" fill="currentColor" />
-        </svg>
-        <span>WhatsApp</span>
-      </a>
+      <aside className="portal-whatsapp-landmark" aria-label="Contacto directo">
+        <a
+          className="portal-whatsapp-action"
+          href="https://wa.me/34698911517"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Escribir a Costa Clean por WhatsApp"
+        >
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+            <path d="M16 3.2a12.8 12.8 0 0 0-11 19.35L3.2 28.8l6.42-1.68A12.8 12.8 0 1 0 16 3.2Z" fill="none" stroke="currentColor" strokeWidth="2.1" />
+            <path d="M11.1 9.8c.3-.34.68-.38 1.08-.24l1.18 2.84c.12.3.08.58-.12.82l-.76.85c.62 1.27 1.66 2.31 2.93 2.93l.85-.76c.24-.2.52-.24.82-.12l2.84 1.18c.4.17.5.56.24 1.08-.43.87-1.3 1.42-2.27 1.35-4.48-.34-8.01-3.87-8.35-8.35-.07-.97.48-1.84 1.35-2.27Z" fill="currentColor" />
+          </svg>
+          <span>WhatsApp</span>
+        </a>
+      </aside>
 
       <MobilePortalNavigation
         currentPage={currentPage}

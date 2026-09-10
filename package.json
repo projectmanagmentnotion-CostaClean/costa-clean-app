@@ -63,6 +63,7 @@
     "qa:flow:agent:dry": "node scripts/qa/run-end-user-flow-agent.mjs --mode=dry-run",
     "qa:flow:agent:write-clean": "node scripts/qa/run-end-user-flow-agent.mjs --mode=write-and-clean",
     "qa:visual:auth": "node scripts/qa/run-authenticated-visual-qa.mjs",
+    "qa:visual:a11y": "node scripts/client-portal/cp3c3rA11yScan.mjs",
     "test": "vitest run --config vitest.config.mjs",
     "test:watch": "vitest --config vitest.config.mjs"
   },
@@ -76,6 +77,7 @@
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.39.4",
     "@playwright/test": "^1.62.1",
     "@types/node": "^24.12.0",

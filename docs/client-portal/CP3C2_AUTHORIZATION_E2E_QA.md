@@ -2,7 +2,7 @@
 
 Date: 2026-09-10
 Target: QA project `kpvvydthlxupjjqqdpxy` only
-Status: `PARTIAL — evidence captured; certification debt remains`
+Status: `PARTIAL — CP-3C.2R remediation evidence captured; certification debt remains`
 
 This report is sanitized. It contains no passwords, tokens, signed URLs,
 private bearer material or raw invitation tokens. CP-3C.3 was not started.
@@ -85,3 +85,8 @@ isolation.
 CP-3B.4 or CP-3B.5 to full certification until the listed identity, browser,
 invoice and fixture-collision evidence is completed. CP-3C.3 remains not
 started.
+
+See [`CP3C2R_AUTHENTICATED_CERTIFICATION_REMEDIATION.md`](./CP3C2R_AUTHENTICATED_CERTIFICATION_REMEDIATION.md)
+for the remediation run. The cross-tenant 500 defect and CP-3B.4 invoice
+download/TTL debt were addressed in QA; two Auth identities, active invitation
+acceptance and integrated browser Console/Network evidence remain pending.

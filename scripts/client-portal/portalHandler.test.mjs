@@ -114,7 +114,10 @@ describe('client portal Edge trust boundary', () => {
     const signingCall = deps.fetch.mock.calls[2]
     expect(signingCall[0]).toContain(`/invoice-documents/${objectKey}`)
     expect(JSON.parse(signingCall[1].body)).toEqual({ expiresIn: 60 })
-    expect(await response.json()).toMatchObject({ expiresIn: 60 })
+    expect(await response.json()).toMatchObject({
+      expiresIn: 60,
+      signedUrl: `${QA_URL}/storage/v1/object/sign/invoice-documents/runtime-signature`,
+    })
   })
 
   it('hashes invitation tokens before RPC and never returns them', async () => {

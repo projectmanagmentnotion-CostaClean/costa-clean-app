@@ -393,7 +393,9 @@ async function signExactObject(
   const body = await response.json().catch(() => null) as { signedURL?: unknown; signedUrl?: unknown } | null
   const signedUrl = body?.signedURL ?? body?.signedUrl
   if (typeof signedUrl !== 'string' || signedUrl.length > 4096) throw new Error('sign_denied')
-  return signedUrl
+  return signedUrl.startsWith('/')
+    ? `${configuration.supabaseUrl}/storage/v1${signedUrl}`
+    : signedUrl
 }
 
 function projectRefFromUrl(value: string | undefined): string | null {

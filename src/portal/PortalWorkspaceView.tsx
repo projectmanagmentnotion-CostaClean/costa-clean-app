@@ -100,9 +100,12 @@ export function PortalWorkspaceView({
       <header className="portal-workspace__header">
         <a className="portal-workspace__brand" href={getHref('home')} aria-label="Ir al inicio del área de clientes">
           <img
-            src="/branding/Costa_Clean-LOGO-AZUL.png"
+            src="/branding/logo-costa-clean.svg"
             alt="Costa Clean"
             className="portal-workspace__logo"
+            width="48"
+            height="35"
+            fetchPriority="high"
           />
           <span>Área de clientes</span>
         </a>

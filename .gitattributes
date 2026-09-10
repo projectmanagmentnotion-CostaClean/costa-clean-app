@@ -16,6 +16,7 @@ src/portal/*.tsx text eol=lf
 src/portal/*.ts text eol=lf
 src/portal/*.css text eol=lf
 src/portal/adapters/** text eol=lf
+index.html text eol=lf
 scripts/client-portal/portalUiGuardrails.test.mjs text eol=lf
 docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md text eol=lf
 scripts/client-portal/cp3c3_qa_package.manifest.json text eol=lf

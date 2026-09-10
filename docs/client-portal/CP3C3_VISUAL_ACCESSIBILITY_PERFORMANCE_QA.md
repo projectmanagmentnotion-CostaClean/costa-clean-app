@@ -204,3 +204,56 @@ cannot close because the required authenticated identity matrix was not run
 without private credentials and the Lighthouse LCP budget is exceeded.
 CP3C fixtures remain retained; no cleanup was attempted. CP-4.1 remains not
 started.
+
+## CP-3C.3R3 Final Authenticated Matrix + LCP Performance Remediation
+
+Date: **2026-09-10**
+Status: `PARTIAL — authenticated matrix blocked; LCP improved but remains above budget`
+
+### Credential and authentication gate
+
+- Required QA password rotation was not performed: no safe private admin
+  channel or service-role credential was available in this workspace.
+- `.auth/cp3c3/credentials.json` was not created or inferred. The deterministic
+  authenticated runner returned `NOT_EXECUTED_PRIVATE_CREDENTIAL_INPUT_MISSING`.
+- No Auth, database, Edge Function, Supabase or production mutation occurred.
+
+### Preview, responsive and accessibility evidence
+
+- `npm run qa:visual:a11y`: PASS; 14 synthetic scenarios at `390x844` and
+  `1440x900`, 0 axe violations, 0 console errors and overflow `false`.
+- `npm run qa:preview:network`: PASS; 0 portal action requests, 0 console
+  errors and 0 production requests in preview.
+- `npm run qa:performance:evidence`: PASS for 390px width, no horizontal
+  overflow, CLS `0` and production requests `0`; its observer does not provide
+  a substitutable LCP value.
+- CDP scale and 320px reflow evidence remain non-native zoom substitutes as
+  recorded in R2. Native screen-reader evidence remains unavailable.
+
+### Lighthouse performance evidence
+
+- Baseline, three runs: LCP `5559.475`, `5556.9722`, `5557.4032 ms`; median
+  `5557.4032 ms`; CLS `0`.
+- The LCP element is `.portal-auth__intro`. The concrete avoidable cost was
+  `Costa_Clean-LOGO-AZUL.png` at 564,779 bytes and 5952x4380.
+- Remediation uses the existing `logo-costa-clean.svg` plus an image preload;
+  no visual design or route contract changed.
+- Post-remediation, three runs: LCP `2704.4811`, `2703.9592`, `2705.1286 ms`;
+  median `2704.4811 ms`; CLS `0`; TBT `16`, `5`, `15.21785 ms`;
+  Accessibility `1.00`; Best Practices `1.00`; Performance `0.96`.
+- LCP improved by `2852.9221 ms` (about 51.3%), but remains `204.4811 ms`
+  above the `2500 ms` QA target. No LCP PASS is claimed.
+
+### Regression and closeout decision
+
+- `npm test`: default 5s timeout reproduced two historical slow-test timeouts;
+  rerun with `--testTimeout=20000`: 106 files passed, 643 tests passed,
+  4 skipped.
+- `npm run lint`: PASS.
+- `npm run build -- --mode qa`: PASS.
+- CP3C fixtures remain retained because authenticated and performance gates are
+  open. CP-4.1 and CP-3C.4 are not started.
+
+Gate decision: `CP-3C.3 = PARTIAL` with
+`AUTHENTICATED_MATRIX_BLOCKED_PRIVATE_CREDENTIAL_INPUT_MISSING` and
+`LCP_ABOVE_2500MS_AFTER_BOUNDED_REMEDIATION`.

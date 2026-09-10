@@ -2,10 +2,10 @@
   "version": 1,
   "identity": "CP3C3_FINAL_VISUAL_ACCESSIBILITY_PERFORMANCE_QA",
   "gate": "CP-3C.3",
-  "status": "PARTIAL_R2_PREVIEW_FIXED_LCP_OPEN",
-  "sourceCommit": "b5d883c",
+  "status": "PARTIAL_R3_AUTH_LCP_OPEN",
+  "sourceCommit": "2037017",
   "artifacts": [
-    { "path": "src/portal/PortalWorkspaceView.tsx", "sha256": "cde8dfc8a44527a7e7987158dc1e30cf684ad71d6d7751c09a36e6b32ded386d" },
+    { "path": "src/portal/PortalWorkspaceView.tsx", "sha256": "b5100fababc3ed846b3411df408e6d867ae194755eae8ece1d3d870994fdba26" },
     { "path": "src/portal/portal.css", "sha256": "454e7d348a10f06caf5649d5ae3cc1424d9f3f64b5cdae5befdcb27054d4f7b7" },
     { "path": "src/portal/portalTokens.ts", "sha256": "ffde762c3bdedd60a7605cfeade6ee2423c9e28bc26461d52a6430d4a3f5fa0a" },
     { "path": "scripts/client-portal/cp3c3rA11yScan.mjs", "sha256": "87350b4fe5bc7990c5702f37bae1f2abd89265d33440f39ce883255b1eb85e97" },
@@ -16,6 +16,10 @@
     { "path": "scripts/client-portal/cp3c3r2PreviewNetwork.mjs", "sha256": "0534c0f33134c82b61fb67d9b790886b155711e0d57ddabe7bce1003ede810aa" },
     { "path": "scripts/client-portal/cp3c3r2PerformanceEvidence.mjs", "sha256": "9bb76c1f9522bd11fb637939919226eb34f57d5739622b6edcdb344df0873d74" },
     { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "5cf45ac92358c5807d31ddf12e98f5321d2afed4603c76d08dcd98c0a974f06b" }
+    ,{ "path": "index.html", "sha256": "f03a0e2b0b22ba2182ff7a9bad1711c55f72948ebebbe6360674eb5d2a722d01" }
+    ,{ "path": "src/portal/PortalBrand.tsx", "sha256": "13a059d7ff938a8175537fe4d1b60e5871a0040d88581dda9093440d78d01b4c" }
+    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "6b3dc7e83edf04dcfddf62c146448296759717ef681983fffc5d903694d8bd63" }
+    ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "644aebcbc90355f89f2e2645c9fce225573d54d5f3820e95054bed4d304eae8b" }
   ],
   "remoteEffects": {
     "target": "LOCAL_QA_PREVIEW_ONLY",
@@ -28,10 +32,11 @@
   },
   "toolingLimits": [
     "NATIVE_SCREEN_READER_NOT_AVAILABLE",
-    "LIGHTHOUSE_LCP_ABOVE_QA_TARGET",
+    "LIGHTHOUSE_LCP_ABOVE_QA_TARGET_AFTER_LOGO_REMEDIATION",
     "CDP_SCALE_ATTEMPT_NOT_NATIVE_ZOOM",
     "FULL_AUTHENTICATED_STATE_MATRIX_NOT_REEXECUTED",
-    "AUTHENTICATED_CREDENTIAL_INPUT_MISSING"
+    "AUTHENTICATED_CREDENTIAL_INPUT_MISSING",
+    "QA_PRIVATE_ADMIN_CHANNEL_MISSING_FOR_PASSWORD_ROTATION"
   ],
   "nextGate": "CP-4.1",
   "nextGateStarted": false

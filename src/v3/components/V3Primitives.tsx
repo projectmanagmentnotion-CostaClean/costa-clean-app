@@ -1,4 +1,4 @@
-import { useEffect, type InputHTMLAttributes, type MouseEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
+import { useEffect, useRef, type InputHTMLAttributes, type MouseEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
 export type V3IconName = 'back' | 'chevronDown'
 
@@ -77,17 +77,41 @@ export function V3QuickAction({ children, onClick, disabled = false }: V3ActionP
   return <button type="button" className="v3-action v3-action--ghost" onClick={(event) => { event.stopPropagation(); onClick?.(event) }} disabled={disabled}>{children}</button>
 }
 
-export function V3BottomSheet({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
-  return <div className="v3-bottom-sheet__layer"><button type="button" className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section className="v3-bottom-sheet" role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header"><h2>{title}</h2><button type="button" className="v3-action v3-action--secondary" onClick={onClose}>Cerrar</button></div>{children}</section></div>
+export function V3BottomSheet({ title, children, onClose, closeOnEscape = true }: { title: string; children: ReactNode; onClose: () => void; closeOnEscape?: boolean }) {
+  const dialogRef = useRef<HTMLElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    closeRef.current?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (closeOnEscape) onCloseRef.current()
+        return
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return
+      const focusable = Array.from(dialogRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])')).filter((element) => element.offsetParent !== null)
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus()
+    }
+  }, [closeOnEscape])
+
+  return <div className="v3-bottom-sheet__layer"><button type="button" tabIndex={-1} className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section ref={dialogRef} className="v3-bottom-sheet" role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header"><h2>{title}</h2><button ref={closeRef} type="button" className="v3-action v3-action--secondary" onClick={onClose}>Cerrar</button></div>{children}</section></div>
 }
 
 export function V3ConfirmSheet({ title, description, confirmLabel, cancelLabel = 'Cancelar', busy = false, onConfirm, onCancel }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; busy?: boolean; onConfirm: () => void; onCancel: () => void }) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !busy) onCancel() }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [busy, onCancel])
-  return <V3BottomSheet title={title} onClose={onCancel}><p>{description}</p><div className="v3-workspace-actions"><V3SecondaryAction onClick={onCancel} disabled={busy}>{cancelLabel}</V3SecondaryAction><V3PrimaryAction onClick={onConfirm} disabled={busy}>{busy ? 'Procesando…' : confirmLabel}</V3PrimaryAction></div></V3BottomSheet>
+  return <V3BottomSheet title={title} closeOnEscape={!busy} onClose={onCancel}><p>{description}</p><div className="v3-workspace-actions"><V3SecondaryAction onClick={onCancel} disabled={busy}>{cancelLabel}</V3SecondaryAction><V3PrimaryAction onClick={onConfirm} disabled={busy}>{busy ? 'Procesando…' : confirmLabel}</V3PrimaryAction></div></V3BottomSheet>
 }
 
 export function V3Field({ label, children }: { label: string; children: ReactNode }) {

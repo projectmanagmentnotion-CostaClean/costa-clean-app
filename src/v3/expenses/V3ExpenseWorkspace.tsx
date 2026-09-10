@@ -2,8 +2,9 @@ import { useState, type ChangeEvent } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatExpenseLabel } from '../../app/relationshipLabels'
 import { analyzeExpenseFiscalIntelligence, saveExpenseFiscalIntelligenceResult } from '../../features/expenses/fiscalIntelligenceApi'
-import { createExpenseReceiptSignedUrl, deleteExpenseReceipt, uploadExpenseReceipt, validateExpenseReceipt } from '../../features/expenses/expenseAttachmentsApi'
+import { createExpenseReceiptSignedUrl, deleteExpenseReceipt, validateExpenseReceipt } from '../../features/expenses/expenseAttachmentsApi'
 import { updateExpense, updateExpenseAttachment } from '../../features/expenses/expenseApi'
+import { replaceExpenseReceipt } from '../../features/expenses/expenseReceiptWorkflow'
 import { getExpenseAiFiscalClassificationLabel, getExpenseCategoryLabel, getExpenseDocumentSupportStatusLabel, getExpenseDocumentTypeLabel, getExpenseFiscalReviewStatusLabel, getExpenseFiscalRiskLevelLabel, getExpensePaymentMethodLabel, getExpensePaymentStatusLabel, type ExpenseListItem } from '../../features/expenses/types'
 import { V3ConfirmSheet, V3DetailSection, V3EntityStatus, V3Icon, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3StickyActionBar } from '../components/V3Primitives'
 
@@ -42,7 +43,7 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
     if (!file) return
     const validationError = validateExpenseReceipt(file)
     if (validationError) { setError(validationError); return }
-    await run(async () => { const { filePath } = await uploadExpenseReceipt(expense.id, file); await updateExpenseAttachment(expense.id, filePath) }, 'Documento añadido correctamente.')
+    await run(async () => { await replaceExpenseReceipt(expense.id, file, expense.receipt_file_path) }, expense.receipt_file_path ? 'Documento reemplazado correctamente.' : 'Documento añadido correctamente.')
   }
 
   async function openDocument() {

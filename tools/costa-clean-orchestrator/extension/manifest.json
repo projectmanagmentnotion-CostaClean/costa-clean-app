@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "Costa Clean Local Orchestrator",
+  "version": "0.1.0",
+  "description": "Observa una única conversación y entrega borradores al orquestador local.",
+  "permissions": ["storage"],
+  "host_permissions": ["https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e*", "http://127.0.0.1:4179/*"],
+  "content_scripts": [{ "matches": ["https://chatgpt.com/g/g-p-694bbc0385b08191b39857e9dfffd1f5/c/6a9930f5-635c-83ed-8178-357662a0c88e*"], "js": ["content.js"], "run_at": "document_idle" }],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "options_page": "options.html"
+}

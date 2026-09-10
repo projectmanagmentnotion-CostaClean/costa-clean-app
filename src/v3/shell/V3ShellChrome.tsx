@@ -12,22 +12,31 @@ interface V3ShellChromeProps {
   children?: ReactElement
 }
 
-const primaryItems: Array<{ view: AppView; label: string; icon: string }> = [
-  { view: 'dashboard', label: 'Inicio', icon: '⌂' },
-  { view: 'invoices', label: 'Facturas', icon: '▣' },
-  { view: 'clients', label: 'Clientes', icon: '♧' },
-  { view: 'jobs', label: 'Servicios', icon: '◫' },
+type V3IconName = 'home' | 'invoice' | 'clients' | 'jobs' | 'quotes' | 'leads' | 'payments' | 'expenses' | 'alerts' | 'closing' | 'properties' | 'more'
+
+const primaryItems: Array<{ view: AppView; label: string; icon: V3IconName }> = [
+  { view: 'dashboard', label: 'Inicio', icon: 'home' },
+  { view: 'invoices', label: 'Facturas', icon: 'invoice' },
+  { view: 'clients', label: 'Clientes', icon: 'clients' },
+  { view: 'jobs', label: 'Servicios', icon: 'jobs' },
 ]
 
-const secondaryItems: Array<{ view: AppView; label: string; icon: string }> = [
-  { view: 'quotes', label: 'Presupuestos', icon: '▤' },
-  { view: 'leads', label: 'Leads', icon: '＋' },
-  { view: 'payments', label: 'Cobros', icon: '¤' },
-  { view: 'expenses', label: 'Gastos', icon: '▥' },
-  { view: 'alerts', label: 'Alertas', icon: '!' },
-  { view: 'fiscal_closing', label: 'Cierres', icon: '⌑' },
-  { view: 'properties', label: 'Inmuebles', icon: '⌂' },
+const secondaryItems: Array<{ view: AppView; label: string; icon: V3IconName }> = [
+  { view: 'quotes', label: 'Presupuestos', icon: 'quotes' },
+  { view: 'leads', label: 'Leads', icon: 'leads' },
+  { view: 'payments', label: 'Cobros', icon: 'payments' },
+  { view: 'expenses', label: 'Gastos', icon: 'expenses' },
+  { view: 'alerts', label: 'Alertas', icon: 'alerts' },
+  { view: 'fiscal_closing', label: 'Cierres', icon: 'closing' },
+  { view: 'properties', label: 'Inmuebles', icon: 'properties' },
 ]
+
+function V3NavIcon({ name }: { name: V3IconName }) {
+  const paths: Record<V3IconName, string> = {
+    home: 'M3 10.5 12 3l9 7.5M5 9v11h14V9M9 20v-6h6v6', invoice: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6', clients: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM16 3.1a4 4 0 0 1 0 7.8M20 20v-2a4 4 0 0 0-3-3.9', jobs: 'M4 5h16v14H4zM8 3v4M16 3v4M4 10h16', quotes: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', leads: 'M12 20V10M7 20V4M17 20v-7M4 4h6M14 13h6', payments: 'M12 3v18M17 7.5c0-1.4-1.9-2.5-4.5-2.5S8 6.1 8 7.5 9.9 10 12.5 10s4.5 1.1 4.5 2.5-1.9 2.5-4.5 2.5S8 13.9 8 12.5', expenses: 'M4 5h16v14H4zM8 9h8M8 13h5', alerts: 'M12 4 3 20h18L12 4ZM12 10v4M12 17h.01', closing: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', properties: 'M3 20V9l9-6 9 6v11M7 20v-6h10v6', more: 'M5 12h.01M12 12h.01M19 12h.01',
+  }
+  return <svg aria-hidden="true" className="v3-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d={paths[name]} /></svg>
+}
 
 function isActive(view: AppView, currentView: AppView): boolean {
   if (view === currentView) return true
@@ -87,7 +96,7 @@ function V3MoreSheet({ currentView, onChangeView, accountLabel, isSigningOut, on
               onClick={() => { onClose(); onChangeView(item.view) }}
               aria-current={isActive(item.view, currentView) ? 'page' : undefined}
             >
-              <span aria-hidden="true">{item.icon}</span><strong>{item.label}</strong>
+              <V3NavIcon name={item.icon} /><strong>{item.label}</strong>
             </button>
           ))}
         </div>
@@ -108,11 +117,11 @@ function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick
     <nav className="v3-bottom-nav" aria-label="Navegación principal">
       {primaryItems.map((item) => (
         <button key={item.view} type="button" className={isActive(item.view, currentView) ? 'is-active' : ''} onClick={() => onChangeView(item.view)} aria-current={isActive(item.view, currentView) ? 'page' : undefined}>
-          <span aria-hidden="true">{item.icon}</span><small>{item.label}</small>
+          <V3NavIcon name={item.icon} /><small>{item.label}</small>
         </button>
       ))}
       <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet">
-        <span aria-hidden="true">•••</span><small>Más</small>
+        <V3NavIcon name="more" /><small>Más</small>
       </button>
     </nav>
   )
@@ -122,8 +131,8 @@ function V3NavigationRail({ currentView, onChangeView, onOpenMore, isMoreOpen }:
   const isSecondaryContext = secondaryItems.some((item) => isActive(item.view, currentView))
   return <nav className="v3-navigation-rail" aria-label="Navegación principal para iPad">
     <span className="v3-navigation-rail__mark" aria-hidden="true">CC</span>
-    {primaryItems.map((item) => <button key={item.view} type="button" className={isActive(item.view, currentView) ? 'is-active' : ''} onClick={() => onChangeView(item.view)} aria-current={isActive(item.view, currentView) ? 'page' : undefined}><span aria-hidden="true">{item.icon}</span><small>{item.label}</small></button>)}
-    <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet"><span aria-hidden="true">•••</span><small>Más</small></button>
+    {primaryItems.map((item) => <button key={item.view} type="button" className={isActive(item.view, currentView) ? 'is-active' : ''} onClick={() => onChangeView(item.view)} aria-current={isActive(item.view, currentView) ? 'page' : undefined}><V3NavIcon name={item.icon} /><small>{item.label}</small></button>)}
+    <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet"><V3NavIcon name="more" /><small>Más</small></button>
   </nav>
 }
 

@@ -25,6 +25,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
 import { V3JobsPage } from '../v3/jobs/V3JobsPage'
+import { V3JobCreateFlow } from '../v3/jobs/V3JobCreateFlow'
 import type { JobModuleFilter } from '../app/moduleFilters'
 
 const LazyJobCreateFlow = lazy(async () => ({
@@ -165,13 +166,7 @@ export function JobsPage({
         activeFilter={activeFilter}
         activeFilterLabel={activeFilterLabel}
       />
-      {isCreateFormVisible ? (
-        <ActionFlowOverlay isOpen={isCreateFormVisible} title="Nuevo servicio" description="Planifica el servicio en un flujo dedicado." onClose={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }}>
-          <Suspense fallback={<DeferredContentFallback title="Cargando flujo de servicio" description="Preparando el alta operativa completa." />}>
-            <LazyJobCreateFlow clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} />
-          </Suspense>
-        </ActionFlowOverlay>
-      ) : null}
+      {isCreateFormVisible ? <V3JobCreateFlow clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} /> : null}
       {showDuplicateReview ? <DuplicateReviewOverlay isOpen title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
     </>
   }

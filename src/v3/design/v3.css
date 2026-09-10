@@ -267,7 +267,8 @@
 
 .v3-bottom-nav { align-items: stretch; background: var(--v3-color-surface); border-top: 1px solid var(--v3-color-border); bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); left: 0; padding: var(--v3-space-2) max(var(--v3-space-2), var(--v3-safe-left)) max(var(--v3-space-2), var(--v3-safe-bottom)) max(var(--v3-space-2), var(--v3-safe-right)); position: fixed; right: 0; z-index: var(--v3-z-dock); }
 .v3-bottom-nav button { align-items: center; background: transparent; border: 0; border-radius: var(--v3-radius-md); color: var(--v3-color-text-secondary); cursor: pointer; display: grid; gap: 2px; justify-items: center; min-height: var(--v3-touch-preferred); padding: var(--v3-space-1); }
-.v3-bottom-nav button span { font-size: 1.2rem; line-height: 1; }
+.v3-nav-icon { height: 20px; width: 20px; }
+.v3-bottom-nav button .v3-nav-icon { height: 20px; width: 20px; }
 .v3-bottom-nav button small { font: inherit; font-size: var(--v3-font-size-xs); }
 .v3-bottom-nav button.is-active { background: var(--v3-color-accent-soft); color: var(--v3-color-accent-strong); font-weight: 700; }
 .v3-bottom-nav button:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
@@ -411,7 +412,7 @@
   .v3-navigation-rail { align-items: center; background: var(--v3-color-surface); border-right: 1px solid var(--v3-color-border); bottom: 0; display: grid; gap: var(--v3-space-2); grid-template-rows: auto repeat(5, minmax(var(--v3-touch-preferred), auto)); left: 0; padding: var(--v3-space-4) var(--v3-space-2) max(var(--v3-space-4), var(--v3-safe-bottom)); position: fixed; top: 0; width: var(--v3-nav-rail-width); z-index: var(--v3-z-dock); }
   .v3-navigation-rail__mark { color: var(--v3-color-accent-strong); font-size: var(--v3-font-size-sm); font-weight: 800; letter-spacing: 0.08em; text-align: center; }
   .v3-navigation-rail button { align-items: center; background: transparent; border: 0; border-radius: var(--v3-radius-md); color: var(--v3-color-text-secondary); cursor: pointer; display: grid; gap: var(--v3-space-1); justify-items: center; min-height: var(--v3-touch-preferred); padding: var(--v3-space-2) var(--v3-space-1); }
-  .v3-navigation-rail button span { font-size: 1.2rem; line-height: 1; }
+  .v3-navigation-rail button .v3-nav-icon { height: 20px; width: 20px; }
   .v3-navigation-rail button small { font: inherit; font-size: var(--v3-font-size-xs); }
   .v3-navigation-rail button.is-active { background: var(--v3-color-accent-soft); color: var(--v3-color-accent-strong); font-weight: 700; }
   .v3-navigation-rail button:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }

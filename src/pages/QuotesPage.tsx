@@ -37,6 +37,8 @@ import { useToast } from '../shared/toasts/useToast'
 import { canConvertQuoteToInvoice, convertQuoteToInvoice } from '../features/quotes/quoteConversion'
 import { shareDocument } from '../v3/documents/shareDocument'
 import { V3QuotesPage } from '../v3/quotes/V3QuotesPage'
+import { V3QuoteCreateFlow } from '../v3/quotes/V3QuoteCreateFlow'
+import { V3QuoteEditFlow } from '../v3/quotes/V3QuoteEditFlow'
 import type { QuoteModuleFilter } from '../app/moduleFilters'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
@@ -447,6 +449,7 @@ export function QuotesPage({
           onDownloadQuote={downloadQuoteDocument}
           onShareQuote={shareQuoteDocument}
           onConvertQuote={convertQuoteDocument}
+          onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setShowMajorEdit(true) }}
           onBulkDownload={bulkDownloadQuotesV3}
           onBulkExportCsv={bulkExportQuotesV3}
           onOpenClientWorkspace={onOpenClientWorkspace}
@@ -458,37 +461,8 @@ export function QuotesPage({
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
         />
-        {createVisible ? (
-          <ActionFlowOverlay
-            isOpen={createVisible}
-            title="Nuevo presupuesto"
-            description="La creación usa el flujo comercial real y conserva el contexto del cliente."
-            onClose={() => {
-              setShowCreateForm(false)
-              setCreatePrefill(null)
-              onInitialCreatePrefillConsumed?.()
-            }}
-          >
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de presupuesto" description="Preparando el formulario comercial." />}>
-              <LazyQuoteCreateFlow
-                clients={clients}
-                properties={properties}
-                quotes={allQuotes}
-                invoices={invoices}
-                expenses={expenses}
-                prefill={createPrefill}
-                onRefreshData={onQuoteCreated}
-                onCompleted={handleQuoteCreated}
-                onCancel={() => {
-                  setShowCreateForm(false)
-                  setCreatePrefill(null)
-                  onInitialCreatePrefillConsumed?.()
-                }}
-                onDirtyChange={setHasCreateFormDirty}
-              />
-            </Suspense>
-          </ActionFlowOverlay>
-        ) : null}
+        {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => { setShowCreateForm(false); setCreatePrefill(null); onInitialCreatePrefillConsumed?.() }} /> : null}
+        {showMajorEdit && selectedQuote ? <V3QuoteEditFlow quote={selectedQuote} onRefreshData={onQuoteCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
       </>
     )
   }

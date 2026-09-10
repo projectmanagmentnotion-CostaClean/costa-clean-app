@@ -95,3 +95,12 @@ The iPad shell uses `--v3-nav-rail-width`, `--v3-content-gutter-tablet` and
 five primary entries, not a new routing system. Authenticated certification
 passed `384/384` checks across the required iPad, landscape and mobile
 regression viewports.
+
+## V3-6 desktop adaptation — CLOSED / CERTIFIED
+
+Desktop reuses `V3ShellChrome`, `currentView` and the certified navigation
+contract. From 1280px, the same rail expands presentation-only, while content
+uses the tokenized desktop max width, gutter and section gap values. No desktop
+router, module-specific list or selection clone was introduced. Authenticated
+QA covered the seven required desktop sizes plus iPad/mobile regression:
+`1536/1536` checks passed.

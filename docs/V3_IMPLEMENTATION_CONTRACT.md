@@ -214,3 +214,13 @@ duplicate More content. Selection clearance changes only with the responsive
 layout contract and remains token-backed. V3-5 authenticated certification
 passed `384/384` checks, with mobile regression and landscape orientation
 included.
+
+## V3-6 desktop contract — CLOSED / CERTIFIED
+
+Desktop is a presentation extension of the existing V3 shell. The breakpoint
+at 1280px changes only rail presentation, content max width, gutters and
+selection positioning through design tokens; `currentView`, More, entity rows,
+workspaces, forms and the Invoices/Quotes selection foundation remain shared.
+No new backend contract, route, persistence, fake action or production write
+was introduced. Authenticated QA passed `1536/1536` checks across the required
+desktop and responsive regression matrix.

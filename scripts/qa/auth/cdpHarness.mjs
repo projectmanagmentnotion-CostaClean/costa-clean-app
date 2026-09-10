@@ -30,9 +30,18 @@ const DEFAULT_FLOW_SCENARIOS = [
 ]
 
 const DEFAULT_VIEWPORTS = [
-  { id: 'mobile', width: 390, height: 844 },
-  { id: 'tablet', width: 768, height: 1024 },
-  { id: 'desktop', width: 1366, height: 900 },
+  { id: 'desktop-1280', width: 1280, height: 800 },
+  { id: 'desktop-1366', width: 1366, height: 768 },
+  { id: 'desktop-1440', width: 1440, height: 900 },
+  { id: 'desktop-1536', width: 1536, height: 864 },
+  { id: 'desktop-1728', width: 1728, height: 1117 },
+  { id: 'desktop-1920', width: 1920, height: 1080 },
+  { id: 'desktop-2560', width: 2560, height: 1440 },
+  { id: 'ipad-1024', width: 1024, height: 1366 },
+  { id: 'ipad-834', width: 834, height: 1194 },
+  { id: 'ipad-768', width: 768, height: 1024 },
+  { id: 'mobile-430', width: 430, height: 932 },
+  { id: 'mobile-390', width: 390, height: 844 },
 ]
 
 const LOGIN_MARKERS = [
@@ -957,6 +966,16 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
 
     await delay(250)
   }
+
+  // Short desktop viewports can place the first field below the fold of the
+  // scrollable flow body. Prove it is reachable, rather than treating the
+  // initial scroll position as a product failure.
+  await evaluateJson(connection, sessionId, `(() => {
+    const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
+    const field = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])')
+    field?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    return Boolean(field)
+  })()`)
 
   return await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()

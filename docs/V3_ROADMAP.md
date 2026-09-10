@@ -148,9 +148,23 @@ audited and deliberately not adopted.
 - [x] Horizontal overflow, responsive navigation overlap and selection geometry
   passed; production and Supabase remained untouched.
 
+## V3-6 — Desktop Adaptation — CLOSED / CERTIFIED
+
+- [x] Extend the single V3 shell with a token-backed desktop presentation layer
+  from 1280px; no second router, module fork or default master-detail.
+- [x] Expand the shared rail and content contract without changing navigation,
+  selection allowlist or business writes.
+- [x] Add automated guardian coverage for desktop forks, fake Settings and
+  selection clones.
+- [x] Authenticated desktop matrix and responsive regression: `1536/1536`
+  checks passed across all required desktop, iPad and mobile viewports.
+- [x] Tests: `666 passed | 4 skipped`; lint, build and `git diff --check` pass.
+- [x] Production, Supabase, schema, storage and business contracts untouched.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated
 QA evidence and no financial, route, auth or deep-link regression. V3-3C is closed
 after its authenticated visual, snapshot persistence, exact cleanup and release
-gates passed. V3-3D requires a separate approval.
+gates passed. V3-3D requires a separate approval. V3-5 and V3-6 are closed only
+after their authenticated responsive matrices and regression gates pass.

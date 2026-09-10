@@ -194,3 +194,13 @@ and targeted audit events residue verified `0`.
 - Full authenticated surface matrix and orientation regression: PASS (`384/384`).
 - 768/834 bottom navigation, 1024+ rail, More, native forms, selection flows
   and mobile regression were certified with zero horizontal overflow.
+
+## V3-6 desktop system evidence — CLOSED / CERTIFIED
+
+- Shared shell/router: PASS; no desktop shell, router or module forks.
+- Desktop rail/content tokens: PASS at 1280px and above.
+- Selection allowlist remains exact: Invoices and Quotes only; clones `0`.
+- Fake Settings and legacy desktop toolbar resurrection: `0`.
+- Authenticated matrix: `1536/1536` checks passed; horizontal overflow, rail
+  overlap, selection overlap and clipped dialog checks: `0`.
+- Mobile/iPad regression: PASS at all five required regression viewports.

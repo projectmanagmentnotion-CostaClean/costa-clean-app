@@ -107,6 +107,7 @@ export function QuotesPage({
   const [showCreateForm, setShowCreateForm] = useState(Boolean(initialCreatePrefill))
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
+  const [majorEditQuote, setMajorEditQuote] = useState<QuoteListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
@@ -449,7 +450,7 @@ export function QuotesPage({
           onDownloadQuote={downloadQuoteDocument}
           onShareQuote={shareQuoteDocument}
           onConvertQuote={convertQuoteDocument}
-          onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setShowMajorEdit(true) }}
+          onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setMajorEditQuote(quote); setShowMajorEdit(true) }}
           onBulkDownload={bulkDownloadQuotesV3}
           onBulkExportCsv={bulkExportQuotesV3}
           onOpenClientWorkspace={onOpenClientWorkspace}
@@ -468,7 +469,7 @@ export function QuotesPage({
           activeFilterLabel={activeFilterLabel}
         />
         {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onDirtyChange={setHasCreateFormDirty} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false); onInitialCreatePrefillConsumed?.() })} /> : null}
-        {showMajorEdit && selectedQuote ? <V3QuoteEditFlow quote={selectedQuote} onDirtyChange={setHasMajorEditDirty} onRefreshData={onQuoteCreated} onCompleted={() => { setHasMajorEditDirty(false); setShowMajorEdit(false) }} onCancel={() => runGuarded(() => { setHasMajorEditDirty(false); setShowMajorEdit(false) })} /> : null}
+        {showMajorEdit && (majorEditQuote ?? selectedQuote) ? <V3QuoteEditFlow quote={majorEditQuote ?? selectedQuote!} onDirtyChange={setHasMajorEditDirty} onRefreshData={onQuoteCreated} onCompleted={() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) }} onCancel={() => runGuarded(() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) })} /> : null}
       </>
     )
   }

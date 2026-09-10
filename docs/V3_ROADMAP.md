@@ -161,6 +161,19 @@ audited and deliberately not adopted.
 - [x] Tests: `666 passed | 4 skipped`; lint, build and `git diff --check` pass.
 - [x] Production, Supabase, schema, storage and business contracts untouched.
 
+## V3-6R — Zero Legacy Presentation — OPEN
+
+- [x] Audit document created at `docs/V3_LEGACY_PRESENTATION_AUDIT.md`.
+- [x] P0 `Nuevo servicio` migrated to `V3JobCreateFlow` with native V3
+  presentation and preserved job write/duplicate contracts.
+- [x] V3 navigation iconography foundation no longer uses improvised Unicode.
+- [ ] Migrate remaining invoice, quote, client, lead, property, payment and
+  expense create/edit flows before re-certifying zero legacy presentation.
+
+Official sequence after closure: `V3-7A — Client Profile Media + Iconography`,
+`V3-7B — Final Functional Parity Audit`, `V3-8 — Global E2E / Release`, and
+`V3-9 — Controlled Production Activation`.
+
 ## Exit rule
 
 V3-1R, V3-2A, V3-2B, V3-2C, V3-2D, V3-3A and V3-3B are closed with authenticated

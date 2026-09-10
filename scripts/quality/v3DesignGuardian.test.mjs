@@ -15,6 +15,7 @@ const v3TreeFiles = [
   'src/v3/leads/V3LeadRow.tsx',
   'src/v3/leads/V3LeadWorkspace.tsx',
   'src/v3/jobs/V3JobsPage.tsx',
+  'src/v3/jobs/V3JobCreateFlow.tsx',
   'src/v3/jobs/V3JobRow.tsx',
   'src/v3/jobs/V3JobWorkspace.tsx',
   'src/v3/jobs/jobWorkReport.tsx',
@@ -96,6 +97,17 @@ describe('V3 Design Guardian structural checks', () => {
       expect(source).not.toContain(forbiddenName)
     }
     expect(source).toContain('V3SelectionPrimitives')
+  })
+
+  it('keeps V3 service creation native and iconography professional', () => {
+    const shell = readFileSync(join(process.cwd(), 'src/v3/shell/V3ShellChrome.tsx'), 'utf8')
+    const jobCreate = readFileSync(join(process.cwd(), 'src/v3/jobs/V3JobCreateFlow.tsx'), 'utf8')
+    expect(jobCreate).not.toContain('FullscreenStepFlow')
+    expect(jobCreate).not.toContain('ActionFlowOverlay')
+    expect(jobCreate).toContain('saveJobWithLines')
+    expect(jobCreate).toContain('findJobDuplicateGroups')
+    expect(shell).toContain('V3NavIcon')
+    expect(shell).not.toMatch(/[⌂▣♧◫▤¤▥⌑•]/u)
   })
 
   it('keeps hardcoded colors inside the token file only', () => {

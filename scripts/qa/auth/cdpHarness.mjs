@@ -981,6 +981,7 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
       const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
     const panelRect = panel ? panel.getBoundingClientRect() : null
+    const legacyVisualMarkers = panel?.querySelector('.cc-action-flow__panel, .cc-step-flow, [data-qa="fullscreen-step-flow"], .cc-create-flow__hero-card')
     const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
     const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
     const fieldCandidates = Array.from(panel?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
@@ -1008,6 +1009,7 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
         actionFlowFirstFieldVisible: Boolean(firstVisibleFieldRect),
         actionFlowNoHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + 1,
         actionFlowStepFlowVisible: Boolean(flowSurface),
+        noLegacyVisualMarkers: !legacyVisualMarkers,
       },
       snippets: {
         firstViewportText: (panel?.innerText ?? '').slice(0, 900),

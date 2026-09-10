@@ -104,3 +104,10 @@ uses the tokenized desktop max width, gutter and section gap values. No desktop
 router, module-specific list or selection clone was introduced. Authenticated
 QA covered the seven required desktop sizes plus iPad/mobile regression:
 `1536/1536` checks passed.
+
+## V3-6R zero legacy presentation — OPEN
+
+The first P0 migration is `V3JobCreateFlow`, which uses the existing V3 field,
+input, select, textarea, action and bottom-sheet primitives while reusing the
+real job write and duplicate contracts. Remaining create/edit flows are tracked
+in `docs/V3_LEGACY_PRESENTATION_AUDIT.md`; V3-6R is not certified closed.

@@ -224,3 +224,10 @@ workspaces, forms and the Invoices/Quotes selection foundation remain shared.
 No new backend contract, route, persistence, fake action or production write
 was introduced. Authenticated QA passed `1536/1536` checks across the required
 desktop and responsive regression matrix.
+
+## V3-6R legacy presentation contract — OPEN
+
+V3 may reuse headless business logic, validators, adapters and RPC callers, but
+must not render legacy flow shells. `V3JobCreateFlow` is the first native
+replacement. Invoice, quote, client, lead, property, payment and expense flow
+replacements remain required before the zero-legacy gate can close.

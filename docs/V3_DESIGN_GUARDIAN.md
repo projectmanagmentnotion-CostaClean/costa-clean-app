@@ -204,3 +204,11 @@ and targeted audit events residue verified `0`.
 - Authenticated matrix: `1536/1536` checks passed; horizontal overflow, rail
   overlap, selection overlap and clipped dialog checks: `0`.
 - Mobile/iPad regression: PASS at all five required regression viewports.
+
+## V3-6R legacy presentation gate — OPEN
+
+- P0 Services create: PASS; `V3JobCreateFlow` uses V3 primitives and the real
+  job write/duplicate contracts.
+- V3 navigation improvised Unicode icons: `0`; shell uses `V3NavIcon` vectors.
+- Remaining reachable legacy create/edit flows: documented in
+  `docs/V3_LEGACY_PRESENTATION_AUDIT.md`; gate is not closed.

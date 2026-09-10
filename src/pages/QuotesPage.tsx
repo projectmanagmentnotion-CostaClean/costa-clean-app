@@ -467,8 +467,8 @@ export function QuotesPage({
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
         />
-        {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => { setShowCreateForm(false); setCreatePrefill(null); onInitialCreatePrefillConsumed?.() }} /> : null}
-        {showMajorEdit && selectedQuote ? <V3QuoteEditFlow quote={selectedQuote} onRefreshData={onQuoteCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
+        {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onDirtyChange={setHasCreateFormDirty} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false); onInitialCreatePrefillConsumed?.() })} /> : null}
+        {showMajorEdit && selectedQuote ? <V3QuoteEditFlow quote={selectedQuote} onDirtyChange={setHasMajorEditDirty} onRefreshData={onQuoteCreated} onCompleted={() => { setHasMajorEditDirty(false); setShowMajorEdit(false) }} onCancel={() => runGuarded(() => { setHasMajorEditDirty(false); setShowMajorEdit(false) })} /> : null}
       </>
     )
   }

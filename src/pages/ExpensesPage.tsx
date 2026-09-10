@@ -193,8 +193,8 @@ export function ExpensesPage({
   if (v3Mode) {
     return <>
       <V3ExpensesPage expenses={expenses} allExpenses={allExpenses} error={error} initialExpenseId={initialExpenseId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreateExpense={() => setShowCreateForm(true)} onRefresh={onExpenseCreated} onEditExpense={(expense) => { setSelectedExpenseId(expense.id); setShowEditFlow(true) }} onCreateSimilarExpense={(expense) => { setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense)); setShowCreateForm(true) }} onOpenExpenseDeepLink={(expenseId) => onOpenExpenseDeepLink?.(expenseId)} onBackToExpenseList={() => onBackToExpenseList?.()} />
-      {showCreateForm ? <V3ExpenseFormFlow mode="create" expenses={allExpenses} onRefresh={onExpenseCreated} onCompleted={handleExpenseCreated} onCancel={() => { setShowCreateForm(false); setCreatePrefill(null) }} /> : null}
-      {showEditFlow && selectedExpense ? <V3ExpenseFormFlow mode="edit" expense={selectedExpense} expenses={allExpenses} onRefresh={onExpenseCreated} onCompleted={async () => { setShowEditFlow(false) }} onCancel={() => setShowEditFlow(false)} /> : null}
+      {showCreateForm ? <V3ExpenseFormFlow mode="create" expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={handleExpenseCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false) })} /> : null}
+      {showEditFlow && selectedExpense ? <V3ExpenseFormFlow mode="edit" expense={selectedExpense} expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={async () => { setHasCreateFormDirty(false); setShowEditFlow(false) }} onCancel={() => runGuarded(() => { setHasCreateFormDirty(false); setShowEditFlow(false) })} /> : null}
     </>
   }
 

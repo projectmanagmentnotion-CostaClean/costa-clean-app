@@ -48,6 +48,7 @@ import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoice
 import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
 import { V3InvoicesPage } from '../v3/invoices/V3InvoicesPage'
 import { V3InvoiceCreateFlow } from '../v3/invoices/V3InvoiceCreateFlow'
+import { V3InvoiceEditFlow } from '../v3/invoices/V3InvoiceEditFlow'
 import type { InvoiceModuleFilter } from '../app/moduleFilters'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
@@ -579,6 +580,7 @@ export function InvoicesPage({
           onViewPayments={onViewPayments}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
+          onEditInvoice={() => setShowMajorEdit(true)}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
           onBulkDownload={bulkDownloadInvoicesV3}
@@ -586,6 +588,7 @@ export function InvoicesPage({
           onBulkSettle={bulkSettleInvoicesV3}
         />
         {isCreateFormVisible ? <V3InvoiceCreateFlow clients={clients} properties={properties} jobs={jobs} quotes={quotes} invoices={allInvoices} prefillClientId={effectiveCreatePrefill?.client_id} prefillJobId={effectiveCreatePrefill?.job_id} prefillQuoteId={effectiveCreatePrefill?.quote_id} onRefreshData={onInvoiceCreated} onCompleted={handleInvoiceCreated} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} /> : null}
+        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
       </>
     )
   }

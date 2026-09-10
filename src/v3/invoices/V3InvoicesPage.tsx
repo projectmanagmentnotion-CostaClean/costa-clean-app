@@ -24,6 +24,7 @@ interface V3InvoicesPageProps {
   isInvoiceSettling: (invoiceId: string) => boolean
   onOpenDocument: (invoice: InvoiceListItem) => void
   onViewPayments: (invoiceId: string) => void
+  onEditInvoice?: () => void
   onOpenInvoiceDeepLink: (invoiceId: string) => void
   onBackToInvoiceList: () => void
   activeFilter?: InvoiceModuleFilter | null
@@ -67,6 +68,7 @@ export function V3InvoicesPage({
   isInvoiceSettling,
   onOpenDocument,
   onViewPayments,
+  onEditInvoice = () => undefined,
   onOpenInvoiceDeepLink,
   onBackToInvoiceList,
   activeFilter = null,
@@ -130,6 +132,7 @@ export function V3InvoicesPage({
         isInvoiceSettling={isInvoiceSettling(selectedInvoice.id)}
         onOpenDocument={onOpenDocument}
         onViewPayments={onViewPayments}
+        onEditInvoice={onEditInvoice}
       />
     )
   }
@@ -195,7 +198,7 @@ function V3InvoiceRow({ invoice, selectionMode, selected, onToggleSelect, isSett
   )
 }
 
-function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onSettleInvoice, isInvoiceSettling, onOpenDocument, onViewPayments }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onSettleInvoice: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void }) {
+function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onSettleInvoice, isInvoiceSettling, onOpenDocument, onViewPayments, onEditInvoice }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onSettleInvoice: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onEditInvoice: () => void }) {
   const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
   const client = clients.find((item) => item.id === invoice.client_id)
   const financialStatus = invoice.payment_status ?? (invoice.status === 'issued' ? 'pending' : invoice.status) as 'pending' | 'partially_paid' | 'paid' | 'cancelled'
@@ -206,7 +209,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
       <button type="button" className="v3-workspace-back" onClick={onBack}>← Facturas</button>
       <V3PageTitle eyebrow={invoiceLabel(invoice)} title={getInvoiceFinancialStatusLabel(financialStatus)} description={`${client?.full_name ?? formatClientLabel(invoice)} · ${formatDateEs(invoice.issue_date)}`} />
       <div className="v3-workspace-total"><strong>{formatCurrency(invoice.total)}</strong><span>Pendiente {formatCurrency(outstanding)}</span></div>
-      <div className="v3-workspace-actions">{canSettleInvoiceByTransfer(invoice) ? <V3PrimaryAction onClick={() => onSettleInvoice(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Marcando…' : 'Marcar pagada'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar</V3SecondaryAction><V3SecondaryAction onClick={() => onOpenDocument(invoice)}>Documento</V3SecondaryAction></div>
+      <div className="v3-workspace-actions">{canSettleInvoiceByTransfer(invoice) ? <V3PrimaryAction onClick={() => onSettleInvoice(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Marcando…' : 'Marcar pagada'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onEditInvoice}>Editar</V3SecondaryAction><V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar</V3SecondaryAction><V3SecondaryAction onClick={() => onOpenDocument(invoice)}>Documento</V3SecondaryAction></div>
       <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client?.full_name ?? formatClientLabel(invoice)}</dd></div><div><dt>Fecha</dt><dd>{formatDateEs(invoice.issue_date)}</dd></div><div><dt>Estado</dt><dd><V3Status label={getInvoiceFinancialStatusLabel(financialStatus)} tone={getStatusTone(financialStatus)} /></dd></div></dl></V3Section>
       <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
       <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div key={line.id} className="v3-line-row"><span>{line.concept}</span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas detalladas disponibles.</p>}</div></V3Section>

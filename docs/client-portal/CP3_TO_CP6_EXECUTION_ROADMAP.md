@@ -4,7 +4,7 @@ Date: 2026-09-10
 
 Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
 `PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
-`STITCH_OWNER_REVIEW_PENDING`; CP-3C.1 onward `NOT STARTED`.
+`DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`; CP-3C.1 onward `NOT STARTED`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -27,9 +27,9 @@ frames.
 
 CP-3B.5B is design-only and owner-review pending in Stitch project
 `7915940018854753326`, iPhone `390x844` only. Block 1 contains the eight named
-Google/login/onboarding frames; Block 2 remains intentionally uncreated until
-owner approval. No React, Supabase, CRM or production work is part of this
-gate.
+Google/login/onboarding frames and Block 2 contains the 25 named members,
+security, legal, marketing and error-state frames. No React, Supabase, CRM or
+production work is part of this gate.
 
 ## CP-3A — Portal UI foundation
 
@@ -308,13 +308,13 @@ gate.
 
 | Field | Specification |
 |---|---|
-| Status | `STITCH_OWNER_REVIEW_PENDING` |
+| Status | `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING` |
 | Objective | Produce owner-reviewable iPhone frames for Google login and the complete onboarding flow without implementing code. |
 | Project | `Costa Clean Client Portal`; Stitch ID `7915940018854753326` |
 | Viewport | iPhone `390x844` only; no iPad or desktop |
-| Generated frames | `PORTAL_LOGIN_GOOGLE_V1`, `PORTAL_ONBOARDING_TYPE_V1`, `PORTAL_ONBOARDING_INDIVIDUAL_V1`, `PORTAL_ONBOARDING_BUSINESS_V1`, `PORTAL_ONBOARDING_BILLING_V1`, `PORTAL_ONBOARDING_PRIVACY_MARKETING_V1`, `PORTAL_ONBOARDING_REVIEW_V1`, `PORTAL_ONBOARDING_PENDING_REVIEW_V1` |
+| Generated frames | Block 1: `PORTAL_LOGIN_GOOGLE_V1`, `PORTAL_ONBOARDING_TYPE_V1`, `PORTAL_ONBOARDING_INDIVIDUAL_V1`, `PORTAL_ONBOARDING_BUSINESS_V1`, `PORTAL_ONBOARDING_BILLING_V1`, `PORTAL_ONBOARDING_PRIVACY_MARKETING_V1`, `PORTAL_ONBOARDING_REVIEW_V1`, `PORTAL_ONBOARDING_PENDING_REVIEW_V1`. Block 2: `PORTAL_MEMBERS_LIST_V1`, `PORTAL_MEMBERS_MEMBER_VIEW_V1`, `PORTAL_MEMBER_INVITE_V1`, `PORTAL_MEMBER_INVITE_SENT_V1`, `PORTAL_MEMBER_DETAIL_V1`, `PORTAL_MEMBER_REVOKE_V1`, `PORTAL_INVITATION_ACCEPT_V1`, `PORTAL_INVITATION_EXPIRED_V1`, `PORTAL_INVITATION_REVOKED_V1`, `PORTAL_INVITATION_USED_V1`, `PORTAL_INVITATION_INVALID_V1`, `PORTAL_ACCOUNT_SECURITY_V1`, `PORTAL_ACCOUNT_SECURITY_PASSWORD_V1`, `PORTAL_ACCOUNT_SECURITY_GOOGLE_V1`, `PORTAL_LEGAL_PRIVACY_V1`, `PORTAL_LEGAL_DOCUMENT_V1`, `PORTAL_MARKETING_PREFERENCES_V1`, `PORTAL_MARKETING_PREFERENCES_UPDATED_V1`, `PORTAL_ERROR_SESSION_EXPIRED_V1`, `PORTAL_ERROR_NETWORK_V1`, `PORTAL_ERROR_FORBIDDEN_V1`, `PORTAL_ERROR_GENERIC_V1`, `PORTAL_FORM_VALIDATION_V1`, `PORTAL_ACTION_LOADING_V1`, `PORTAL_MEMBERS_EMPTY_V1` |
 | Preserved | Approved Profile/Properties frames, six-cell navigation, Más bottom sheet and independent WhatsApp action |
-| Deferred | Block 2 member/security/legal/error frames until owner approval; internal Stitch numeric frame IDs are not exposed in the current project view |
+| Deferred | Owner visual approval and subsequent implementation; internal Stitch numeric frame IDs are not exposed in the current project view |
 | Out of scope | React, routing, Supabase, CRM, production, iPad/desktop and authenticated QA |
 | Next gate | CP-3B.5C — implement approved Stitch UI |
 

@@ -52,9 +52,9 @@ dated closeout notes are retained as historical evidence and are not reopened.
   expiry and denial evidence remain certification debt`.
 - **CP-3B.5A:** `PARTIAL — backend QA contract deployed; authenticated E2E and
   provider configuration evidence remain pending`.
-- **CP-3B.5B:** `STITCH_OWNER_REVIEW_PENDING`. Block 1 was generated in the
-  existing `Costa Clean Client Portal` Stitch project at iPhone `390x844`.
-  Block 2 is intentionally not created until owner approval.
+- **CP-3B.5B:** `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`. Block 1 and Block 2
+  were generated in the existing `Costa Clean Client Portal` Stitch project at
+  iPhone `390x844`. No implementation is authorized until owner approval.
 - **CP-3C.1/CP-3C.2/CP-3C.3:** `NOT STARTED`. Their final authenticated and
   visual certification work consumes the carried evidence debt; it does not
   block the CP-3B.5C implementation gate by status label alone.
@@ -67,7 +67,7 @@ they must remain visible as debt and cannot be silently treated as PASS.
 
 ### CP-3B.5B — Stitch owner-review package
 
-Status: `STITCH_OWNER_REVIEW_PENDING`
+Status: `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`
 
 Project: `Costa Clean Client Portal` (Stitch ID `7915940018854753326`)
 
@@ -85,9 +85,36 @@ Viewport: iPhone `390x844` only. Generated Block 1 frames:
 The existing approved Profile, Properties, Property Detail, Property
 Correction, six-cell navigation and independent WhatsApp action were preserved.
 No iPad/desktop frames, React code or runtime changes were made. Block 2
-(members, security, legal and reusable error states) is deferred pending owner
-approval. Stitch's internal numeric frame identifiers are not exposed in the
-current project view; the names above are the exact owner-review identifiers.
+contains the following exact owner-review identifiers:
+
+- `PORTAL_MEMBERS_LIST_V1`
+- `PORTAL_MEMBERS_MEMBER_VIEW_V1`
+- `PORTAL_MEMBER_INVITE_V1`
+- `PORTAL_MEMBER_INVITE_SENT_V1`
+- `PORTAL_MEMBER_DETAIL_V1`
+- `PORTAL_MEMBER_REVOKE_V1`
+- `PORTAL_INVITATION_ACCEPT_V1`
+- `PORTAL_INVITATION_EXPIRED_V1`
+- `PORTAL_INVITATION_REVOKED_V1`
+- `PORTAL_INVITATION_USED_V1`
+- `PORTAL_INVITATION_INVALID_V1`
+- `PORTAL_ACCOUNT_SECURITY_V1`
+- `PORTAL_ACCOUNT_SECURITY_PASSWORD_V1`
+- `PORTAL_ACCOUNT_SECURITY_GOOGLE_V1`
+- `PORTAL_LEGAL_PRIVACY_V1`
+- `PORTAL_LEGAL_DOCUMENT_V1`
+- `PORTAL_MARKETING_PREFERENCES_V1`
+- `PORTAL_MARKETING_PREFERENCES_UPDATED_V1`
+- `PORTAL_ERROR_SESSION_EXPIRED_V1`
+- `PORTAL_ERROR_NETWORK_V1`
+- `PORTAL_ERROR_FORBIDDEN_V1`
+- `PORTAL_ERROR_GENERIC_V1`
+- `PORTAL_FORM_VALIDATION_V1`
+- `PORTAL_ACTION_LOADING_V1`
+- `PORTAL_MEMBERS_EMPTY_V1`
+
+Stitch's internal numeric frame identifiers are not exposed in the current
+project view; the names above are the exact owner-review identifiers.
 
 Next gate after owner approval: **CP-3B.5C — implement approved Stitch UI**.
 
@@ -318,9 +345,9 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   `CP3B5_ACCOUNT_SECURITY_GOOGLE_ONBOARDING.md` and
   `cp3b5a_qa_package.manifest.json`. Production remains unchanged.
 - **CP-3B.5B — Stitch owner-review package:**
-  `STITCH_OWNER_REVIEW_PENDING`; the eight iPhone Block 1 frames are recorded
-  in the current reconciliation above. No code or runtime work is authorized
-  by this design-only gate.
+  `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`; the eight iPhone Block 1 frames and
+  25 iPhone Block 2 frames are recorded in the current reconciliation above.
+  No code or runtime work is authorized by this design-only gate.
 - **2026-09-10 authenticated certification attempt:** the available Chrome
   portal tab was unauthenticated at `/portal/login`. CP-3B.4 download/expiry/
   denial evidence and CP-3B.5A authenticated onboarding evidence remain

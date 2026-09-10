@@ -399,12 +399,12 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R3 (2026-09-10) remains `PARTIAL`: preview accessibility/network/build
+CP-3C.3R4 (2026-09-10) remains `PARTIAL`: preview accessibility/network/build
 evidence passes, but the authenticated matrix is blocked by missing private QA
-credential input. The original Lighthouse LCP of `5557.4ms` was reduced to a
-stable `2704.5ms` median by replacing the oversized logo PNG with the existing
-SVG and preloading it; this remains above the `2500ms` QA target. CP-4.1 is not
-started.
+credential input. The logo remediation reduced LCP to a stable `2704.5ms`
+median; the controlled motion A/B changed it by less than `1ms`, proving motion
+is not the remaining cause. LCP remains above the `2500ms` QA target. CP-4.1
+is not started.
 
 No production release is part of CP-3.
 

@@ -2,8 +2,8 @@
   "version": 1,
   "identity": "CP3C3_FINAL_VISUAL_ACCESSIBILITY_PERFORMANCE_QA",
   "gate": "CP-3C.3",
-  "status": "PARTIAL_R3_AUTH_LCP_OPEN",
-  "sourceCommit": "2037017",
+  "status": "PARTIAL_R4_AUTH_LCP_OPEN",
+  "sourceCommit": "42764fa",
   "artifacts": [
     { "path": "src/portal/PortalWorkspaceView.tsx", "sha256": "b5100fababc3ed846b3411df408e6d867ae194755eae8ece1d3d870994fdba26" },
     { "path": "src/portal/portal.css", "sha256": "454e7d348a10f06caf5649d5ae3cc1424d9f3f64b5cdae5befdcb27054d4f7b7" },
@@ -15,11 +15,12 @@
     { "path": "scripts/client-portal/cp3c3r2AuthenticatedVisualQa.mjs", "sha256": "00047bf22cd72a7848936d0f5c05efecb1205542ff2136a5623b128ce01e0231" },
     { "path": "scripts/client-portal/cp3c3r2PreviewNetwork.mjs", "sha256": "0534c0f33134c82b61fb67d9b790886b155711e0d57ddabe7bce1003ede810aa" },
     { "path": "scripts/client-portal/cp3c3r2PerformanceEvidence.mjs", "sha256": "9bb76c1f9522bd11fb637939919226eb34f57d5739622b6edcdb344df0873d74" },
-    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "5cf45ac92358c5807d31ddf12e98f5321d2afed4603c76d08dcd98c0a974f06b" }
+    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "2ac3fbebb07a6e46c872f4206e68f9a03e54293f87a933ff0344be10b1f5bc9c" }
     ,{ "path": "index.html", "sha256": "f03a0e2b0b22ba2182ff7a9bad1711c55f72948ebebbe6360674eb5d2a722d01" }
     ,{ "path": "src/portal/PortalBrand.tsx", "sha256": "13a059d7ff938a8175537fe4d1b60e5871a0040d88581dda9093440d78d01b4c" }
-    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "6b3dc7e83edf04dcfddf62c146448296759717ef681983fffc5d903694d8bd63" }
-    ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "644aebcbc90355f89f2e2645c9fce225573d54d5f3820e95054bed4d304eae8b" }
+    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "01bdf0e7eeb1f19a97fd33d95a66a5c708fe2bbb828e840bfb58d2a456ad2243" }
+    ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "b918207ecf7a52e9c7a4a13756f9a6c185588d9eb69b8da91541a697f385efc7" }
+    ,{ "path": "docs/client-portal/CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md", "sha256": "4d049ee6ecdfbe098cddcc282bb164122568e892a824e381fba1c223285afc01" }
   ],
   "remoteEffects": {
     "target": "LOCAL_QA_PREVIEW_ONLY",

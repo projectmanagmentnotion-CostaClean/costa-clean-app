@@ -257,3 +257,68 @@ Status: `PARTIAL — authenticated matrix blocked; LCP improved but remains abov
 Gate decision: `CP-3C.3 = PARTIAL` with
 `AUTHENTICATED_MATRIX_BLOCKED_PRIVATE_CREDENTIAL_INPUT_MISSING` and
 `LCP_ABOVE_2500MS_AFTER_BOUNDED_REMEDIATION`.
+
+## CP-3C.3R4 Final Two-Blocker Closeout
+
+Date: **2026-09-10**
+Status: `PARTIAL — authenticated matrix blocked; LCP remains above budget`
+
+### Portal/CRM boundary
+
+- `src/main.tsx` dynamically imports `./portal/bootstrapPortal` for `/portal`
+  and `./bootstrapCrm` for CRM. Portal/CRM bootstrap isolation: `PASS`.
+- No CRM source, route, Supabase schema, production environment or tenancy
+  behavior was changed.
+
+### Lighthouse baseline and motion A/B
+
+- Same QA preview build, route `/portal/login`, CDP port `9229`, and Lighthouse
+  methodology were used for all measurements.
+- Current-motion baseline LCP: `2704.6758`, `2704.1654`, `2704.4182 ms`;
+  median `2704.4182 ms`.
+- Motion-off experiment using the existing preview-only
+  `portalReducedMotion=1` switch: `2703.6125`, `2703.9493`, `2703.7562 ms`;
+  median `2703.7562 ms`.
+- The difference is `0.6620 ms`; motion is not the LCP cause. The experiment
+  was not committed as a production behavior change.
+
+### LCP diagnosis and decision
+
+- LCP element remains `.portal-auth__intro`.
+- The prior concrete resource issue was the 564,779-byte 5952x4380 logo PNG;
+  the existing SVG plus preload remains the bounded fix.
+- Lighthouse breakdown shows fast document response and no CSS waste; the
+  remaining delay is after the initial document/resource phase while the
+  portal bootstrap and React render the auth surface. No further speculative
+  rewrite is justified by this A/B.
+- Final post-fix LCP: `2704.4811`, `2703.9592`, `2705.1286 ms`; median
+  `2704.4811 ms`. CLS `0`; TBT `16`, `5`, `15.21785 ms`; Accessibility `1.00`;
+  Best Practices `1.00`.
+- LCP budget: `FAIL` (`204.4811 ms` above `2500 ms`).
+
+### Private authentication gate
+
+- Historical private ledgers were inventoried by filenames and metadata only;
+  contents were not printed. The QA identity creation/reset scripts were
+  inspected without executing remote mutations.
+- Safe QA admin channel: `NOT_AVAILABLE`.
+- Direct Auth SQL: `NO`.
+- Credential file: absent; ignored: `YES`; secrets printed: `NO`.
+- Required aliases `ADMIN_A`, `MEMBER_A_V2`, `ADMIN_B_V2`, `SUSPENDED` and
+  `REVOKED`: `BLOCKED_EXTERNAL_PRIVATE_INPUT`.
+- Human handoff: [`CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md`](./CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md).
+
+### Regression evidence
+
+- Axe: PASS, 0 violations across 14 scenarios at `390x844` and `1440x900`.
+- Preview network: PASS, 0 action requests and 0 production requests.
+- Responsive: `390x844 PASS`, `768x1024 PASS`, `1440x900 PASS`, `320px reflow PASS`.
+- Console/network preview: 0 unexpected errors; QA-only preview traffic;
+  production host requests `0`; service-role browser `NO`.
+- Full tests with `--testTimeout=20000`: 106 files, 643 passed, 4 skipped.
+- Lint: PASS. QA build: PASS. Diff check: PASS.
+
+Gate decision: `CP-3C.3 = PARTIAL` under CASE D. Both blockers remain
+independent and explicit: `AUTHENTICATED_MATRIX_BLOCKED_EXTERNAL_PRIVATE_INPUT`
+and `LCP_ABOVE_2500MS_AFTER_BOUNDED_REMEDIATION`. Fixtures remain protected;
+cleanup is not authorized. CP-4.1 was not started.

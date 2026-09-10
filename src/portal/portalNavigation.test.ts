@@ -41,6 +41,7 @@ describe('portal page routing', () => {
     expect(getPortalPagePath('requests')).toBe('/portal/requests')
     expect(getPortalPagePath('documents')).toBe('/portal/documents')
     expect(getPortalPagePath('security')).toBe('/portal/security')
+    expect(getPortalPagePath('members')).toBe('/portal/members')
   })
 
   it('isolates canonical authentication routes from protected pages', () => {
@@ -61,6 +62,12 @@ describe('portal page routing', () => {
     expect(resolvePortalPage('/portal/properties/ref-espacio-norte/correction/success')).toBe('properties')
     expect(resolvePortalPage('/portal/help')).toBe('help')
     expect(resolvePortalPage('/portal/preferences')).toBe('preferences')
+    expect(resolvePortalPage('/portal/members')).toBe('members')
+    expect(resolvePortalPage('/portal/members/invite')).toBe('members')
+    expect(resolvePortalPage('/portal/security/password')).toBe('account')
+    expect(resolvePortalPage('/portal/legal/privacy')).toBe('account')
+    expect(resolvePortalPage('/portal/preferences/marketing')).toBe('account')
+    expect(resolvePortalPage('/portal/errors/network')).toBe('account')
     expect(getPortalPropertyPath('ref-espacio-norte')).toBe('/portal/properties/ref-espacio-norte')
     expect(getPortalServicePath('CC-SV-PREV-001')).toBe('/portal/services/CC-SV-PREV-001')
     expect(getPortalServiceRequestsPath()).toBe('/portal/service-requests')

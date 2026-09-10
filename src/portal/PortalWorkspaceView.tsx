@@ -52,6 +52,7 @@ const portalNavigationItems: Array<{
   { page: 'security', label: 'Seguridad', shortLabel: 'Seguridad', group: 'more' },
   { page: 'preferences', label: 'Preferencias', shortLabel: 'Preferencias', group: 'more' },
   { page: 'help', label: 'Ayuda', shortLabel: 'Ayuda', group: 'more' },
+  { page: 'members', label: 'Equipo y accesos', shortLabel: 'Equipo', group: 'more' },
 ]
 
 const portalPageLabels: Record<PortalPage, string> = {
@@ -67,6 +68,7 @@ const portalPageLabels: Record<PortalPage, string> = {
   security: 'Seguridad',
   preferences: 'Preferencias',
   help: 'Ayuda',
+  members: 'Equipo',
 }
 
 export function PortalWorkspaceView({
@@ -162,6 +164,7 @@ export function PortalWorkspaceView({
               data={workspaceData!}
               getHref={getHref}
               onRefreshData={onRefreshData}
+              onSignOut={onSignOut}
             />
           )}
         </main>

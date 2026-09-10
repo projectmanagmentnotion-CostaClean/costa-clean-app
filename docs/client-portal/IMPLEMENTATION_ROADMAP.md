@@ -1,14 +1,15 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2 implementation, CP-3B.3 implementation, CP-3B.4 implementation and CP-3B.5A backend QA contract are complete or partial as recorded below; authenticated runtime certification remains a separate evidence gate.
+Current state: CP-3B.2 implementation, CP-3B.3 implementation, CP-3B.4 implementation and CP-3B.5A backend QA contract are complete or partial as recorded below; CP-3B.5B is owner-approved and CP-3B.5C has a safe UI implementation with authenticated runtime certification and unavailable trusted actions carried as separate gates.
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Current design gate: **CP-3B.5B — complete iPhone Stitch design package**, pending
-  owner visual approval before implementation.
+- Current implementation gate: **CP-3B.5C — owner-approved iPhone Stitch UI**,
+  implemented without production or Supabase changes; authenticated runtime
+  certification remains a separate gate.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -52,9 +53,15 @@ dated closeout notes are retained as historical evidence and are not reopened.
   expiry and denial evidence remain certification debt`.
 - **CP-3B.5A:** `PARTIAL — backend QA contract deployed; authenticated E2E and
   provider configuration evidence remain pending`.
-- **CP-3B.5B:** `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`. Block 1 and Block 2
-  were generated in the existing `Costa Clean Client Portal` Stitch project at
-  iPhone `390x844`. No implementation is authorized until owner approval.
+- **CP-3B.5B:** `OWNER_APPROVED` on 2026-09-10. Block 1 and Block 2 remain the
+  visual source of truth in the existing `Costa Clean Client Portal` Stitch
+  project at iPhone `390x844`.
+- **CP-3B.5C:** `IMPLEMENTATION_PARTIAL — safe UI integrated; trusted action
+  contracts and authenticated certification remain pending`. Google login,
+  onboarding, account, members, security, legal, marketing and error surfaces
+  are wired into portal routing. Member reads/delivery, marketing persistence
+  and onboarding submission are intentionally unavailable until their trusted
+  server contracts are exposed.
 - **CP-3C.1/CP-3C.2/CP-3C.3:** `NOT STARTED`. Their final authenticated and
   visual certification work consumes the carried evidence debt; it does not
   block the CP-3B.5C implementation gate by status label alone.
@@ -67,7 +74,7 @@ they must remain visible as debt and cannot be silently treated as PASS.
 
 ### CP-3B.5B — Stitch owner-review package
 
-Status: `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`
+Status: `OWNER_APPROVED` (2026-09-10)
 
 Project: `Costa Clean Client Portal` (Stitch ID `7915940018854753326`)
 
@@ -116,7 +123,28 @@ contains the following exact owner-review identifiers:
 Stitch's internal numeric frame identifiers are not exposed in the current
 project view; the names above are the exact owner-review identifiers.
 
-Next gate after owner approval: **CP-3B.5C — implement approved Stitch UI**.
+Next gate: **CP-3B.5C implementation and CP-3C authenticated certification**.
+
+### CP-3B.5C — Owner-approved Stitch UI implementation
+
+Status: `IMPLEMENTATION_PARTIAL — safe UI integrated; certification pending`
+
+Implemented in `src/portal/**`: Google login entry, five-step onboarding,
+account hub, members/security/legal/marketing routes, role-safe member surfaces,
+loading/error/validation states and existing six-cell navigation/WhatsApp
+preservation. No CRM, production, Supabase schema, Edge Function or secret was
+modified.
+
+Explicit contract gaps: the current browser-safe boundary has no member-list
+read contract, invitation delivery action, marketing-preference update action,
+or onboarding submission persistence/idempotency path for this client. Those
+surfaces therefore stop honestly with unavailable/pending states rather than
+claiming success or creating records. Exact `390x844` authenticated visual,
+Console and Network certification is deferred to CP-3C.
+
+Verification: focused portal tests pass; lint, QA build and diff-check pass.
+The full suite retains the three known CP-3B.2A timeout failures documented in
+the current work report and is not represented as a full PASS.
 
 CP-3B.2A QA application V6R1E remains the current reproducible rebaseline gate.
 It is still separate from the full CP-3B.2 Definition of Ready. The real QA

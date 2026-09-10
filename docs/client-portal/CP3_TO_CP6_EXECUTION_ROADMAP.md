@@ -4,7 +4,8 @@ Date: 2026-09-10
 
 Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
 `PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
-`DESIGN_COMPLETE_OWNER_APPROVAL_PENDING`; CP-3C.1 onward `NOT STARTED`.
+`OWNER_APPROVED`; CP-3B.5C `IMPLEMENTATION_PARTIAL`; CP-3C.1 onward
+`NOT STARTED`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -25,11 +26,9 @@ appropriate QA gate and is not represented as a false PASS. It does not prevent
 the CP-3B.5C implementation gate once the owner approves the CP-3B.5B Stitch
 frames.
 
-CP-3B.5B is design-only and owner-review pending in Stitch project
-`7915940018854753326`, iPhone `390x844` only. Block 1 contains the eight named
-Google/login/onboarding frames and Block 2 contains the 25 named members,
-security, legal, marketing and error-state frames. No React, Supabase, CRM or
-production work is part of this gate.
+CP-3B.5B was approved by the owner on 2026-09-10 in Stitch project
+`7915940018854753326`, iPhone `390x844` only. CP-3B.5C now integrates the
+approved direction in React without Supabase, CRM or production changes.
 
 ## CP-3A — Portal UI foundation
 
@@ -308,15 +307,26 @@ production work is part of this gate.
 
 | Field | Specification |
 |---|---|
-| Status | `DESIGN_COMPLETE_OWNER_APPROVAL_PENDING` |
+| Status | `OWNER_APPROVED` (2026-09-10) |
 | Objective | Produce owner-reviewable iPhone frames for Google login and the complete onboarding flow without implementing code. |
 | Project | `Costa Clean Client Portal`; Stitch ID `7915940018854753326` |
 | Viewport | iPhone `390x844` only; no iPad or desktop |
 | Generated frames | Block 1: `PORTAL_LOGIN_GOOGLE_V1`, `PORTAL_ONBOARDING_TYPE_V1`, `PORTAL_ONBOARDING_INDIVIDUAL_V1`, `PORTAL_ONBOARDING_BUSINESS_V1`, `PORTAL_ONBOARDING_BILLING_V1`, `PORTAL_ONBOARDING_PRIVACY_MARKETING_V1`, `PORTAL_ONBOARDING_REVIEW_V1`, `PORTAL_ONBOARDING_PENDING_REVIEW_V1`. Block 2: `PORTAL_MEMBERS_LIST_V1`, `PORTAL_MEMBERS_MEMBER_VIEW_V1`, `PORTAL_MEMBER_INVITE_V1`, `PORTAL_MEMBER_INVITE_SENT_V1`, `PORTAL_MEMBER_DETAIL_V1`, `PORTAL_MEMBER_REVOKE_V1`, `PORTAL_INVITATION_ACCEPT_V1`, `PORTAL_INVITATION_EXPIRED_V1`, `PORTAL_INVITATION_REVOKED_V1`, `PORTAL_INVITATION_USED_V1`, `PORTAL_INVITATION_INVALID_V1`, `PORTAL_ACCOUNT_SECURITY_V1`, `PORTAL_ACCOUNT_SECURITY_PASSWORD_V1`, `PORTAL_ACCOUNT_SECURITY_GOOGLE_V1`, `PORTAL_LEGAL_PRIVACY_V1`, `PORTAL_LEGAL_DOCUMENT_V1`, `PORTAL_MARKETING_PREFERENCES_V1`, `PORTAL_MARKETING_PREFERENCES_UPDATED_V1`, `PORTAL_ERROR_SESSION_EXPIRED_V1`, `PORTAL_ERROR_NETWORK_V1`, `PORTAL_ERROR_FORBIDDEN_V1`, `PORTAL_ERROR_GENERIC_V1`, `PORTAL_FORM_VALIDATION_V1`, `PORTAL_ACTION_LOADING_V1`, `PORTAL_MEMBERS_EMPTY_V1` |
 | Preserved | Approved Profile/Properties frames, six-cell navigation, Más bottom sheet and independent WhatsApp action |
-| Deferred | Owner visual approval and subsequent implementation; internal Stitch numeric frame IDs are not exposed in the current project view |
+| Deferred | CP-3B.5C implementation was authorized after approval; internal Stitch numeric frame IDs are not exposed in the current project view |
 | Out of scope | React, routing, Supabase, CRM, production, iPad/desktop and authenticated QA |
-| Next gate | CP-3B.5C — implement approved Stitch UI |
+| Next gate | CP-3B.5C implementation, then CP-3C authenticated certification |
+
+## CP-3B.5C — Owner-approved Stitch UI implementation
+
+| Field | Specification |
+|---|---|
+| Status | `IMPLEMENTATION_PARTIAL — safe UI integrated; certification pending` |
+| Scope | Google login entry, five-step onboarding, account, members, security, legal, marketing and safe error/loading/validation surfaces |
+| Boundary | No CRM UI, Supabase schema, Edge Function, production request or secret was modified |
+| Honest unavailable states | Member-list read, invitation delivery, marketing persistence and onboarding submission remain pending until trusted server contracts are available |
+| Validation | Focused portal tests PASS; lint, QA build and diff-check PASS; full suite retains three known CP-3B.2A timeout failures |
+| Next gate | CP-3C authenticated visual, Console, Network and contract certification |
 
 ## CP-3C.1 — Controlled QA identities and fixtures
 

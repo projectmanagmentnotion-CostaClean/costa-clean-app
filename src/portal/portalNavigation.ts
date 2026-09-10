@@ -13,6 +13,7 @@ export const portalPages = [
   'security',
   'preferences',
   'help',
+  'members',
 ] as const
 
 export const portalAuthRoutes = ['login', 'recover', 'reset-password'] as const
@@ -54,6 +55,7 @@ const portalPageByPath = new Map<string, PortalPage>([
   ['/portal/security', 'security'],
   ['/portal/preferences', 'preferences'],
   ['/portal/help', 'help'],
+  ['/portal/members', 'members'],
 ])
 
 const portalLegacyPageAliases = new Map<string, PortalPage>([
@@ -80,6 +82,7 @@ const portalPathByPage: Record<PortalPage, string> = {
   security: '/portal/security',
   preferences: '/portal/preferences',
   help: '/portal/help',
+  members: '/portal/members',
 }
 
 const portalPathByAuthRoute: Record<PortalAuthRoute, string> = {
@@ -227,5 +230,7 @@ function resolveNestedPortalPage(pathname: string): PortalPage | null {
   if (pathname.startsWith('/portal/properties/')) return 'properties'
   if (pathname.startsWith('/portal/services/')) return 'services'
   if (pathname.startsWith('/portal/service-requests/')) return 'service-requests'
+  if (pathname.startsWith('/portal/members/') || pathname.startsWith('/portal/invitations/')) return 'members'
+  if (pathname.startsWith('/portal/security/') || pathname.startsWith('/portal/legal/') || pathname.startsWith('/portal/preferences/') || pathname.startsWith('/portal/errors/') || pathname.startsWith('/portal/states/')) return 'account'
   return null
 }

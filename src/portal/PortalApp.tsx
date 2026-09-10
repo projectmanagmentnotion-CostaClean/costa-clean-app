@@ -18,6 +18,7 @@ import { PortalAccessScreen } from './PortalAccessScreen'
 import { PortalAuthScreen } from './PortalAuthScreen'
 import { PortalShell } from './PortalShell'
 import type { PortalShellProps } from './PortalShell'
+import { PortalOnboardingFlow } from './PortalOnboardingFlow'
 import {
   getPortalAuthPath,
   resolvePortalAuthRoute,
@@ -141,6 +142,8 @@ export function PortalApp({
         onNavigate={navigate}
       />
     )
+  } else if (accessState.status === 'authenticated_without_access') {
+    content = <PortalOnboardingFlow onSignOut={handleSignOut} />
   } else {
     content = (
       <PortalAccessScreen

@@ -16,6 +16,7 @@ import {
   PortalServiceRequestsPage,
   PortalServicesPage,
 } from './PortalServiceArea'
+import { PortalAccountExperience } from './PortalAccountExperience'
 
 interface PortalPagesProps {
   page: PortalPage | null
@@ -23,9 +24,10 @@ interface PortalPagesProps {
   data: PortalFoundationData
   getHref: (page: PortalPage) => string
   onRefreshData?: () => void | Promise<void>
+  onSignOut?: () => void | Promise<void>
 }
 
-export function PortalPages({ page, pathname, data, getHref, onRefreshData }: PortalPagesProps) {
+export function PortalPages({ page, pathname, data, getHref, onRefreshData, onSignOut = () => undefined }: PortalPagesProps) {
   if (!page) {
     return (
       <PortalPageFrame eyebrow="Área protegida" title="Página no disponible">
@@ -83,6 +85,9 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
   }
 
   if (page === 'account') {
+    if (pathname !== '/portal/account') {
+      return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
+    }
     return (
       <PortalPageFrame
         eyebrow="Cuenta"
@@ -178,45 +183,11 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
   }
 
   if (page === 'security') {
-    return (
-      <PortalPageFrame
-        eyebrow="Protección"
-        title="Seguridad de la cuenta"
-        description="Arquitectura preparada para sesiones, recuperación y MFA sin activarlos antes de CP-3B.1."
-      >
-        <section className="portal-security-list" aria-label="Controles de seguridad preparados">
-          <PortalSecurityRow
-            title="Separación CRM / portal"
-            description="El portal usa un bootstrap y una navegación independientes."
-            status="Activo en CP-3A"
-          />
-          <PortalSecurityRow
-            title="Membresía explícita"
-            description="El email nunca selecciona ni crea un cliente."
-            status="Frontera definida"
-          />
-          <PortalSecurityRow
-            title="MFA"
-            description="La interfaz está preparada; la política y el flujo pertenecen a una fase posterior."
-            status="No habilitado"
-          />
-        </section>
-      </PortalPageFrame>
-    )
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   if (page === 'preferences') {
-    return (
-      <PortalPageFrame
-        eyebrow="Preferencias"
-        title="Preferencias"
-        description="Ajustes de experiencia y accesibilidad sin impacto operativo."
-      >
-        <section className="portal-empty-state">
-          <p>Este panel se completará cuando existan preferencias reales para el portal.</p>
-        </section>
-      </PortalPageFrame>
-    )
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   if (page === 'help') {
@@ -233,6 +204,10 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData }: Po
         </section>
       </PortalPageFrame>
     )
+  }
+
+  if (page === 'members') {
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   return (
@@ -764,24 +739,4 @@ function formatDateTime(value: string) {
 function withCurrentSearch(pathname: string): string {
   const search = window.location.search
   return search ? `${pathname}${search}` : pathname
-}
-
-function PortalSecurityRow({
-  title,
-  description,
-  status,
-}: {
-  title: string
-  description: string
-  status: string
-}) {
-  return (
-    <article className="portal-security-row">
-      <div>
-        <h2>{title}</h2>
-        <p>{description}</p>
-      </div>
-      <span className="portal-status portal-status--info">{status}</span>
-    </article>
-  )
 }

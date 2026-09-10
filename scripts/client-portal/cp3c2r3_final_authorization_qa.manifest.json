@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "identity": "CP3C2R3_FINAL_AUTHORIZATION_QA",
+  "gate": "CP-3C.2",
+  "status": "DONE_QA_ONLY",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "artifacts": [
+    { "path": "supabase/functions/_shared/portalHandler.ts", "sha256": "aec5a41a477bd221230dc6cb3e232f5e45df86aca8f3daf165959c57b3301d0a" },
+    { "path": "scripts/client-portal/portalHandler.test.mjs", "sha256": "87e7cc0cb4cbc9418e8e43ced166a9e58bac205e9951c48a07fa9902fa5227a3" },
+    { "path": "scripts/client-portal/cp3c2_qa_cleanup_plan.mjs", "sha256": "cf468445235d34888ecc4e4b632a76d64944f501788483818e9f79c477fa6522" },
+    { "path": "docs/client-portal/CP3C2_AUTHORIZATION_E2E_QA.md", "sha256": "859fac0765006d24450cf48c9ff936e9dab4fdab07601a31d4147007f7da2816" },
+    { "path": "docs/client-portal/CP3C2R_AUTHENTICATED_CERTIFICATION_REMEDIATION.md", "sha256": "a77930458ce492a477590867281224b4bde7fa83698dfdaedf92f56cc65e3041" },
+    { "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "93e1740ebfb7cc454e5c6f1bcbe296262baa61559211630d2b64d6edb99a6991" },
+    { "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "4845b2c2b9386515a9526fcea574752aabaffbceb7beb4bf77ebaa8b8a7134cc" }
+  ],
+  "qaDeployments": {
+    "portal-account-actions": { "version": 15, "verifyJwt": true },
+    "portal-service-actions": { "version": 13, "verifyJwt": false },
+    "portal-member-actions": { "version": 14, "verifyJwt": false },
+    "portal-invoice-download": { "version": 15, "verifyJwt": false }
+  },
+  "remoteEffects": {
+    "target": "QA_ONLY",
+    "productionRequests": 0,
+    "productionWrites": 0,
+    "productionDeploys": 0,
+    "productionAuthMutations": 0,
+    "invitationEmailDelivery": 0,
+    "cp3c1Fixtures": "KEEP_UNTIL_CP3C3",
+    "cp3c2TransientRows": "CLEANED_EXACTLY"
+  },
+  "privateArtifacts": {
+    "tokenLedger": ".auth/cp3c2r3/invitations.json",
+    "pepperLedger": ".auth/cp3c2r3/pepper.txt",
+    "gitTracked": 0,
+    "secretsEmitted": false
+  },
+  "nextGate": "CP-3C.3",
+  "nextGateStarted": false
+}

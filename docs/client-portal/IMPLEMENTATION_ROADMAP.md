@@ -67,9 +67,9 @@ dated closeout notes are retained as historical evidence and are not reopened.
 - **CP-3C.1:** `FIXTURES_ACTIVE_READY_FOR_CP3C2`. The separately authorized QA
   identities, deterministic states, protected prestate, private ledger,
   sanitized manifest and dry-run cleanup package are active in QA only.
-- **CP-3C.2:** `PARTIAL — CP-3.2R2 replaced corrupted QA identities and
-  preserved the original rows; invitation acceptance and integrated browser
-  evidence remain`. See
+- **CP-3C.2:** `DONE — CP-3C.2R3 QA CORS, invitation lifecycle and
+  authenticated authorization certification complete; Google provider and
+  CP4.3 email delivery remain external debts`. See
   [`CP3C2_AUTHORIZATION_E2E_QA.md`](./CP3C2_AUTHORIZATION_E2E_QA.md).
 - **CP-3C.3:** `NOT STARTED`. Its final authenticated and
   visual certification work consumes the carried evidence debt; it does not

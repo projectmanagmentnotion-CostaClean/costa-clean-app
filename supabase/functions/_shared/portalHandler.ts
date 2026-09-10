@@ -36,7 +36,7 @@ interface Configuration {
   serviceKey: string
   invitationPepper: string
   rateLimitPepper: string
-  allowedOrigin: string
+  allowedOrigins: string[]
 }
 
 export function createPortalHandler(surface: PortalSurface, dependencies: HandlerDependencies) {
@@ -48,15 +48,18 @@ export function createPortalHandler(surface: PortalSurface, dependencies: Handle
       return genericError(503, correlationId)
     }
 
-    const corsHeaders = createCorsHeaders(configuration.allowedOrigin)
     if (request.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: corsHeaders })
+      const requestOrigin = readAllowedOrigin(request, configuration.allowedOrigins)
+      if (!requestOrigin) return genericError(403, correlationId)
+      return new Response(null, { status: 204, headers: createCorsHeaders(requestOrigin) })
     }
-    if (request.method !== 'POST') return genericError(405, correlationId, corsHeaders, { Allow: 'POST' })
-    if (request.headers.get('origin') !== configuration.allowedOrigin) {
+    const requestOrigin = readAllowedOrigin(request, configuration.allowedOrigins)
+    if (!requestOrigin) {
       dependencies.log({ event: 'origin_denied', status: 403, correlationId })
-      return genericError(403, correlationId, corsHeaders)
+      return genericError(403, correlationId)
     }
+    const corsHeaders = createCorsHeaders(requestOrigin)
+    if (request.method !== 'POST') return genericError(405, correlationId, corsHeaders, { Allow: 'POST' })
     if (request.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase() !== 'application/json') {
       return genericError(415, correlationId, corsHeaders)
     }
@@ -320,12 +323,36 @@ function readConfiguration(dependencies: HandlerDependencies): Configuration | n
   const serviceKey = dependencies.env('SUPABASE_SERVICE_ROLE_KEY')?.trim()
   const invitationPepper = dependencies.env('PORTAL_INVITATION_PEPPER')?.trim()
   const rateLimitPepper = dependencies.env('PORTAL_RATE_LIMIT_PEPPER')?.trim()
-  const allowedOrigin = dependencies.env('PORTAL_ALLOWED_ORIGIN')?.trim()
+  const configuredOrigins = [
+    dependencies.env('PORTAL_ALLOWED_ORIGIN'),
+    dependencies.env('PORTAL_QA_LOCAL_ORIGIN'),
+  ]
+  const allowedOrigins = configuredOrigins
+    .map((value) => normalizeConfiguredOrigin(value))
+  if (configuredOrigins.some((value, index) => value?.trim() && allowedOrigins[index] === null)) return null
+  const validAllowedOrigins = allowedOrigins.filter((value): value is string => value !== null)
   const projectRef = projectRefFromUrl(supabaseUrl)
   if (!supabaseUrl || !anonKey || !serviceKey || !invitationPepper || !rateLimitPepper
     || invitationPepper.length < 43 || rateLimitPepper.length < 43
-    || !allowedOrigin || projectRef !== QA_REF || projectRef === PRODUCTION_REF) return null
-  return { supabaseUrl, anonKey, serviceKey, invitationPepper, rateLimitPepper, allowedOrigin }
+    || validAllowedOrigins.length === 0 || projectRef !== QA_REF || projectRef === PRODUCTION_REF) return null
+  return { supabaseUrl, anonKey, serviceKey, invitationPepper, rateLimitPepper, allowedOrigins: validAllowedOrigins }
+}
+
+function normalizeConfiguredOrigin(value: string | undefined): string | null {
+  if (!value?.trim()) return null
+  try {
+    const url = new URL(value.trim())
+    if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) return null
+    if (url.protocol === 'http:' && (url.hostname === '127.0.0.1' || url.hostname === 'localhost') && url.port !== '4174') return null
+    return url.origin
+  } catch {
+    return null
+  }
+}
+
+function readAllowedOrigin(request: Request, allowedOrigins: string[]): string | null {
+  const origin = request.headers.get('origin')
+  return origin && allowedOrigins.includes(origin) ? origin : null
 }
 
 async function readVerifiedUser(

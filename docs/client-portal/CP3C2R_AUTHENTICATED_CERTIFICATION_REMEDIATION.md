@@ -2,7 +2,7 @@
 
 Date: 2026-09-10  
 Target: QA project `kpvvydthlxupjjqqdpxy` only  
-Status: `PARTIAL — replacement identities verified; invitation and integrated browser certification remain blocked`
+Status: `DONE — CP-3C.2R3 consolidated QA certification`
 
 ## QA Boundary
 
@@ -44,25 +44,24 @@ returned `400`.
 
 ## Invitation Certification
 
-The active invitation remains pending, unexpired, Client B and
-`client_member`. Its stored hash is not the legacy all-zero fixture value, so
-the database row alone does not prove runtime pepper parity. The raw token is
-not present in the private ledger and was not invented or regenerated.
-Acceptance/replay therefore remain deferred rather than being reported as
-PASS. Used, expired and revoked fixtures were not changed.
+The prior active token was classified as unrecoverable and not reused. A new
+CP-3C-owned token was generated privately with the rotated QA pepper and its
+HMAC-SHA256 hash was stored only in the QA fixture. Acceptance returned `200`
+and consumed the invitation; replay returned neutral `404`. The invitee has
+exactly one Client B `client_member` membership. Expired, revoked, used and
+invalid token cases returned neutral denial with no membership creation.
 
 ## Browser Evidence
 
 The local portal was restarted against `.env.qa.local` and the QA browser
-loaded the authenticated portal at `390x844` as `ADMIN_A`. The replacement
-identities also pass direct Auth, `/auth/v1/user` and self-access checks. The
-members Edge Function returns the generic `request_unavailable` for the local
-origin before its member RPCs, so integrated member Console/Network evidence
-is incomplete. No production request was made by the QA scripts or QA server.
+loaded the authenticated portal. After the explicit local-origin allowlist,
+the members surface loaded the real Client A list. Browser console logs showed
+no unexpected errors; direct authenticated browser-origin calls verified the
+member and invitation requests. No production request was made by the QA
+scripts or QA server.
 
 ## Gate Decision
 
-`CP-3C.2` remains `PARTIAL`. CP-3C.3 must not start automatically. Remaining
-debt is limited to active invitation acceptance/replay and the integrated
-browser member Console/Network matrix; the two corrupted Auth identities are
-preserved and have verified V2 replacements.
+`CP-3C.2` is `DONE` for the authorized QA scope. CP-3C.3 must not start
+automatically. Google provider private configuration and CP4.3 invitation
+delivery remain explicitly external debts.

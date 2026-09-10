@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { createHmac } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { createPortalHandler } from '../../supabase/functions/_shared/portalHandler.ts'
 
@@ -30,13 +31,13 @@ function dependencies(overrides = {}) {
   }
 }
 
-function request(body) {
+function request(body, origin = ORIGIN, method = 'POST') {
   return new Request('https://edge.example.invalid', {
-    method: 'POST',
+    method,
     headers: {
       authorization: 'Bearer browser-token-placeholder',
       'content-type': 'application/json',
-      origin: ORIGIN,
+      origin,
       'x-forwarded-for': '127.0.0.1',
     },
     body: JSON.stringify(body),
@@ -53,6 +54,43 @@ function authResponse() {
 }
 
 describe('client portal Edge trust boundary', () => {
+  it('allows only exact configured origins and returns request-specific CORS headers', async () => {
+    const deps = dependencies({ env: (name) => ({
+      SUPABASE_URL: QA_URL,
+      SUPABASE_ANON_KEY: 'anon-placeholder',
+      SUPABASE_SERVICE_ROLE_KEY: 'server-placeholder',
+      PORTAL_INVITATION_PEPPER: PEPPER,
+      PORTAL_RATE_LIMIT_PEPPER: PEPPER,
+      PORTAL_ALLOWED_ORIGIN: ORIGIN,
+      PORTAL_QA_LOCAL_ORIGIN: 'http://127.0.0.1:4174',
+    }[name]) })
+    const options = await createPortalHandler('account', deps)(request({}, 'http://127.0.0.1:4174', 'OPTIONS'))
+    expect(options.status).toBe(204)
+    expect(options.headers.get('access-control-allow-origin')).toBe('http://127.0.0.1:4174')
+    expect(options.headers.get('vary')).toContain('Origin')
+
+    const foreign = await createPortalHandler('account', deps)(request({}, 'http://127.0.0.1:41740', 'OPTIONS'))
+    expect(foreign.status).toBe(403)
+    expect(foreign.headers.get('access-control-allow-origin')).toBeNull()
+  })
+
+  it('rejects malformed, lookalike and missing configured origins', async () => {
+    for (const origin of ['http://127.0.0.1:41740', 'https://evil.example/?origin=http://127.0.0.1:4174', null]) {
+      const deps = dependencies({ env: (name) => ({
+        SUPABASE_URL: QA_URL,
+        SUPABASE_ANON_KEY: 'anon-placeholder',
+        SUPABASE_SERVICE_ROLE_KEY: 'server-placeholder',
+        PORTAL_INVITATION_PEPPER: PEPPER,
+        PORTAL_RATE_LIMIT_PEPPER: PEPPER,
+        PORTAL_ALLOWED_ORIGIN: ORIGIN,
+        PORTAL_QA_LOCAL_ORIGIN: 'http://127.0.0.1:4174',
+      }[name]) })
+      const headersOrigin = origin ?? ''
+      const response = await createPortalHandler('account', deps)(request({}, headersOrigin, 'OPTIONS'))
+      expect(response.status).toBe(403)
+    }
+  })
+
   it('rejects production before any network request', async () => {
     const values = {
       SUPABASE_URL: PROD_URL,
@@ -142,6 +180,7 @@ describe('client portal Edge trust boundary', () => {
     expect(rpcBody.p_token_hash).not.toBe(deliveredToken)
     expect(JSON.stringify(rpcBody)).not.toContain(deliveredToken)
     expect(JSON.stringify(await response.json())).not.toContain(deliveredToken)
+    expect(rpcBody.p_token_hash).toBe(createHmac('sha256', PEPPER).update(deliveredToken, 'utf8').digest('hex'))
   })
 
   it('dispatches account and member reads through trusted RPCs', async () => {

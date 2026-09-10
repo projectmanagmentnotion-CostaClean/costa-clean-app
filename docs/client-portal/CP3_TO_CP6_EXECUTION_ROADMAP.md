@@ -375,7 +375,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL — CP-3C.2R2 verified replacement Auth identities; invitation and integrated browser member evidence remain` |
+| Status | `DONE — CP-3C.2R3 QA CORS, invitation lifecycle and authenticated authorization certification complete` |
 | Objective | Prove portal journeys and denial boundaries end to end with controlled QA identities. |
 | User outcome | Evidence shows each client can use intended features and cannot reach another client's data or revoked states. |
 | Dependencies | CP-3C.1 fixtures active; carried CP-3B.3/3B.4/3B.5A authenticated evidence debt is in scope. Partial evidence is recorded in `CP3C2_AUTHORIZATION_E2E_QA.md`; full identity, browser, invoice and invitation-collision gates remain. |

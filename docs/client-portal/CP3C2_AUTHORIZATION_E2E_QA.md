@@ -4,6 +4,21 @@ Date: 2026-09-10
 Target: QA project `kpvvydthlxupjjqqdpxy` only
 Status: `PARTIAL — CP-3C.2R2 replacement identities verified; certification debt remains`
 
+## Current Consolidated Status
+
+CP-3C.2R3 completed the QA-only CORS remediation and invitation lifecycle
+certification. The canonical origin remains preserved, the exact local QA
+origin is allowlisted, and the four affected portal Edge Functions were
+deployed consistently in QA. `ADMIN_A`, `MEMBER_A_V2` and `ADMIN_B_V2` pass
+authenticated self-access and their member authorization matrix; the member
+role receives safe denial for admin-only actions. The active invitation was
+accepted once and replayed safely with exactly one Client B membership.
+
+The initial cross-tenant 500 defect and invoice TTL evidence below are
+historical evidence from the earlier run, not current open blockers. Current
+remaining external debts are Google provider configuration and invitation
+email delivery; CP-3C.3 remains not started.
+
 This report is sanitized. It contains no passwords, tokens, signed URLs,
 private bearer material or raw invitation tokens. CP-3C.3 was not started.
 

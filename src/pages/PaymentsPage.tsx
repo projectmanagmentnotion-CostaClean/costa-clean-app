@@ -23,6 +23,7 @@ import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '..
 import type { PaymentModuleFilter } from '../app/moduleFilters'
 import { V3PaymentsPage } from '../v3/payments/V3PaymentsPage'
 import { V3PaymentCreateFlow } from '../v3/payments/V3PaymentCreateFlow'
+import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../features/payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -168,7 +169,7 @@ export function PaymentsPage({
     return <>
       <V3PaymentsPage payments={payments} allPayments={allPayments} invoices={invoices} clients={clients} error={error} initialPaymentId={initialPaymentId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreatePayment={() => setShowCreateForm(true)} onRefresh={onPaymentCreated} onOpenInvoice={onOpenInvoiceDetail} onOpenClient={onOpenClientWorkspace} onOpenPaymentDeepLink={(paymentId) => onOpenPaymentDeepLink?.(paymentId)} onBackToPaymentList={() => onBackToPaymentList?.()} />
       {showCreateForm ? <V3PaymentCreateFlow invoices={invoices} clients={clients} payments={allPayments} onRefreshData={onPaymentCreated} onCompleted={handlePaymentFlowCompleted} onCancel={() => { setShowCreateForm(false); setHasCreateFormDirty(false) }} onDirtyChange={setHasCreateFormDirty} /> : null}
-      {unresolvedDuplicateGroups.length > 0 ? <DuplicateReviewOverlay isOpen={showDuplicateReview} title="Revisión de cobros duplicados" description="Coincidencias por factura, fecha, importe o método. Revisa antes de registrar otro cobro." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(paymentId) => { setShowDuplicateReview(false); onOpenPaymentDeepLink?.(paymentId) }} /> : null}
+      {unresolvedDuplicateGroups.length > 0 && showDuplicateReview ? <V3DuplicateReviewSheet title="Revisión de cobros duplicados" description="Coincidencias por factura, fecha, importe o método. Revisa antes de registrar otro cobro." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(paymentId) => { setShowDuplicateReview(false); onOpenPaymentDeepLink?.(paymentId) }} /> : null}
     </>
   }
 

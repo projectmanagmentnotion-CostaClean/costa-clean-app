@@ -418,3 +418,69 @@
   .v3-more-sheet { border-radius: var(--v3-radius-lg); bottom: var(--v3-space-5); left: calc(var(--v3-nav-rail-width) + var(--v3-space-4)); max-width: 420px; right: auto; }
   .v3-selection-bar { bottom: var(--v3-space-6); left: calc(var(--v3-nav-rail-width) + var(--v3-content-gutter-tablet)); right: var(--v3-content-gutter-tablet); }
 }
+
+/* Desktop uses the same V3 shell and navigation contract as iPad, with a
+   wider presentation layer. Module markup stays shared so behavior and
+   business contracts cannot drift between breakpoints. */
+@media (min-width: 1280px) {
+  .app-shell--v3 {
+    --v3-nav-rail-width: var(--v3-desktop-rail-width);
+  }
+
+  .app-shell--v3 .v3-content {
+    max-width: var(--v3-desktop-content-max);
+    padding: var(--v3-desktop-section-gap) var(--v3-desktop-gutter) var(--v3-desktop-section-gap);
+  }
+
+  .app-shell--v3 .v3-top-bar {
+    padding-inline: var(--v3-desktop-gutter);
+  }
+
+  .v3-page {
+    width: min(100%, var(--v3-desktop-content-max));
+  }
+
+  .v3-navigation-rail {
+    align-items: stretch;
+    gap: var(--v3-space-3);
+    padding: var(--v3-space-6) var(--v3-space-4) var(--v3-space-6);
+  }
+
+  .v3-navigation-rail__mark {
+    text-align: left;
+    padding-inline: var(--v3-space-3);
+  }
+
+  .v3-navigation-rail button {
+    grid-template-columns: 28px minmax(0, 1fr);
+    justify-items: start;
+    padding-inline: var(--v3-space-3);
+    text-align: left;
+  }
+
+  .v3-navigation-rail button small {
+    font-size: var(--v3-font-size-sm);
+  }
+
+  .v3-home-page {
+    column-gap: var(--v3-desktop-section-gap);
+  }
+
+  .v3-home-metrics {
+    gap: var(--v3-space-4);
+  }
+
+  .v3-entity-list-item {
+    column-gap: var(--v3-space-6);
+  }
+
+  .v3-selection-bar {
+    bottom: var(--v3-space-6);
+    left: calc(var(--v3-nav-rail-width) + var(--v3-desktop-gutter));
+    right: var(--v3-desktop-gutter);
+  }
+
+  .v3-more-sheet {
+    left: calc(var(--v3-nav-rail-width) + var(--v3-space-4));
+  }
+}

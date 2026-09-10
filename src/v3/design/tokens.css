@@ -43,6 +43,11 @@
   --v3-bottom-nav-clearance: calc(var(--v3-touch-preferred) + var(--v3-space-2) + var(--v3-space-2) + var(--v3-safe-bottom) + var(--v3-space-3));
   --v3-content-max: 1120px;
   --v3-ipad-content-max: 1280px;
+  --v3-desktop-content-max: 1440px;
+  --v3-desktop-gutter: 48px;
+  --v3-desktop-section-gap: 32px;
+  --v3-desktop-aside-width: 320px;
+  --v3-desktop-rail-width: 224px;
   --v3-nav-rail-width: 88px;
   --v3-content-gutter-tablet: 32px;
   --v3-motion-fast: 140ms;

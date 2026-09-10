@@ -76,6 +76,28 @@ describe('V3 Design Guardian structural checks', () => {
     expect(styles).toContain('.v3-bottom-nav { display: none; }')
   })
 
+  it('keeps desktop as a presentation layer over the shared V3 shell', () => {
+    const shell = readFileSync(join(process.cwd(), 'src/v3/shell/V3ShellChrome.tsx'), 'utf8')
+    const styles = readFileSync(join(process.cwd(), 'src/v3/design/v3.css'), 'utf8')
+    const tokens = readFileSync(join(process.cwd(), 'src/v3/design/tokens.css'), 'utf8')
+    expect(shell).toContain('currentView')
+    expect(shell).not.toContain('V3DesktopShell')
+    expect(shell).not.toContain('DesktopRouter')
+    expect(styles).toContain('@media (min-width: 1280px)')
+    expect(styles).toContain('--v3-desktop-content-max')
+    expect(styles).toContain('--v3-desktop-rail-width')
+    expect(tokens).toContain('--v3-desktop-section-gap')
+    expect(v3TreeFiles.some((file) => file.includes('Desktop'))).toBe(false)
+  })
+
+  it('keeps desktop free of legacy forks, fake settings and selection clones', () => {
+    const source = readV3Tree()
+    for (const forbiddenName of ['V3DesktopModalSystem', 'V3TabletSheetSystem', 'V3MobileBottomSheetSystem', 'DesktopInvoicesPage', 'DesktopQuotesPage', 'DesktopRouter', 'SettingsPage', 'V3SelectionToolbar', 'BulkSelectionToolbar']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).toContain('V3SelectionPrimitives')
+  })
+
   it('keeps hardcoded colors inside the token file only', () => {
     expect(readV3Tree()).not.toMatch(/#[0-9a-f]{3,8}\b/i)
   })

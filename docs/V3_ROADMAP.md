@@ -134,15 +134,19 @@ V3-4B audit result: selection remains adopted only in Invoices and Quotes.
 Jobs, Expenses, Payments, Leads, Clients, Properties, Alerts and Closings were
 audited and deliberately not adopted.
 
-## V3-5 — iPad Adaptation — OPEN
+## V3-5 — iPad Adaptation — CLOSED / CERTIFIED
 
 - [x] Add one adaptive V3 shell contract: bottom navigation below 1024px and
   compact navigation rail at 1024px and above.
 - [x] Preserve the same `currentView`, More content and semantic active state.
 - [x] Add tokenized iPad rail/content/selection geometry with no desktop master-detail.
 - [x] Verify shell overflow and navigation visibility at the primary iPad sizes.
-- [ ] Complete authenticated visual certification for every required surface,
-  forms, selection, deep links and mobile regression.
+- [x] Complete authenticated visual certification for every required surface,
+  forms, selection, deep links and mobile regression at `768x1024`, `834x1194`,
+  `1024x1366`, `1024x768`, `1194x834`, `390x844` and `430x932`.
+- [x] Authenticated runner: `384/384` checks passed, `0` failed.
+- [x] Horizontal overflow, responsive navigation overlap and selection geometry
+  passed; production and Supabase remained untouched.
 
 ## Exit rule
 

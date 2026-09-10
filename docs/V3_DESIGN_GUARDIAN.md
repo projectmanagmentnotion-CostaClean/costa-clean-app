@@ -186,10 +186,11 @@ and targeted audit events residue verified `0`.
   Clients, Properties, Alerts and Closings.
 - Fake bulk actions: `0`; legacy bulk toolbar in V3: `0`.
 
-## V3-5 responsive shell evidence — OPEN
+## V3-5 responsive shell evidence — CLOSED / CERTIFIED
 
 - Responsive shell contract: PASS in source and geometry checks.
 - 768/834 bottom navigation and 1024+ rail are mutually exclusive by CSS.
 - Horizontal overflow: `0` in checked shell viewports.
-- Full authenticated surface matrix and orientation regression: pending before
-  V3-5 certification.
+- Full authenticated surface matrix and orientation regression: PASS (`384/384`).
+- 768/834 bottom navigation, 1024+ rail, More, native forms, selection flows
+  and mobile regression were certified with zero horizontal overflow.

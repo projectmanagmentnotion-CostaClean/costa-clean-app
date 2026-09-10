@@ -88,9 +88,10 @@ The V3-4B audit does not add new selection visuals. The certified foundation is
 used only by Invoices and Quotes; all remaining modules keep their compact
 single-record rows and workspaces.
 
-## V3-5 iPad adaptation — OPEN
+## V3-5 iPad adaptation — CLOSED / CERTIFIED
 
 The iPad shell uses `--v3-nav-rail-width`, `--v3-content-gutter-tablet` and
 `--v3-ipad-content-max`. The rail is a navigation presentation of the existing
-five primary entries, not a new routing system. The full surface certification
-remains pending before V3-5 can be marked closed.
+five primary entries, not a new routing system. Authenticated certification
+passed `384/384` checks across the required iPad, landscape and mobile
+regression viewports.

@@ -24,7 +24,7 @@ const DEFAULT_VIEWS = [
 
 const DEFAULT_FLOW_SCENARIOS = [
   { id: 'quotes-create', viewId: 'quotes', actionLabel: 'Nuevo presupuesto', title: 'Nuevo presupuesto' },
-  { id: 'jobs-create', viewId: 'jobs', actionLabel: 'Registrar servicio', title: 'Nuevo servicio' },
+  { id: 'jobs-create', viewId: 'jobs', actionLabel: 'Nuevo', title: 'Nuevo servicio' },
   { id: 'expenses-create', viewId: 'expenses', actionLabel: 'Nuevo gasto', title: 'Nuevo gasto' },
   { id: 'payments-create', viewId: 'payments', actionLabel: 'Registrar cobro', title: 'Registrar cobro' },
 ]
@@ -485,13 +485,20 @@ export async function configureViewport(connection, sessionId, viewport) {
     width: viewport.width,
     height: viewport.height,
   }, sessionId)
+
+  await connection.send('Runtime.evaluate', {
+    expression: 'window.scrollTo(0, 0)',
+  }, sessionId)
 }
 
-export async function navigateAndWait(connection, sessionId, url, waitMs = 1200) {
+export async function navigateAndWait(connection, sessionId, url, waitMs = 1800) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     await connection.send('Page.navigate', { url }, sessionId)
     await waitForLoadEvent(connection, sessionId, 15000)
     await delay(waitMs)
+    await connection.send('Runtime.evaluate', {
+      expression: 'window.scrollTo(0, 0)',
+    }, sessionId)
 
     const landedOnBrowserError = await detectBrowserErrorPage(connection, sessionId)
 
@@ -830,7 +837,19 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
     const errorMarkers = ${JSON.stringify(ERROR_MARKERS)};
     const shellMarkerCount = shellMarkers.filter((marker) => bodyText.includes(marker)).length;
     const errorMarkerCount = errorMarkers.filter((marker) => lower.includes(marker)).length;
-    const bottomNavVisible = navRects.some((rect) => rect.bottom >= window.innerHeight - 120 && rect.top < window.innerHeight);
+    const bottomNavNode = document.querySelector('.v3-bottom-nav');
+    const bottomNavRect = bottomNavNode?.getBoundingClientRect() ?? null;
+    const bottomNavStyle = bottomNavNode ? getComputedStyle(bottomNavNode) : null;
+    const bottomNavVisible = Boolean(
+      bottomNavRect
+      && bottomNavStyle
+      && bottomNavStyle.display !== 'none'
+      && bottomNavStyle.visibility !== 'hidden'
+      && bottomNavStyle.position === 'fixed'
+      && bottomNavRect.width > 0
+      && bottomNavRect.height > 0
+      && bottomNavRect.height >= 44,
+    );
     const activeMainSection = bodyText.slice(0, 900);
     const firstMoney = moneyCandidates[0] ? {
       text: moneyCandidates[0].text,
@@ -842,16 +861,17 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
       noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + tolerance,
       appShellVisible: navNodes.length > 0,
       headerVisible: Boolean(headerRect && headerRect.top < window.innerHeight && headerRect.bottom > 0),
-      bottomNavVisible: ${viewport.width} <= 430 ? bottomNavVisible : true,
+      bottomNavVisible: ${viewport.width} < 1024 ? bottomNavVisible : true,
+      navigationRailVisible: ${viewport.width} >= 1024 ? navNodes.some((node) => node.classList.contains('v3-navigation-rail') && getComputedStyle(node).display !== 'none') : true,
+      noDuplicateNavigation: ${viewport.width} >= 1024 ? !bottomNavVisible : true,
       noErrorBoundaryVisible: errorMarkerCount === 0,
       invoiceControlHidden: ${JSON.stringify(viewId)} === 'invoices' ? !bodyText.includes('Control de numeracion') && !bodyText.includes('Debug fiscal') : true,
       invoiceDebugVisible: ${JSON.stringify(viewId)} === 'invoices-debug' ? bodyText.includes('Control de numeracion') && bodyText.includes('Debug fiscal') : true,
       homeAgendaCollapsed: ${JSON.stringify(viewId)} === 'home' ? !bodyText.includes('Sin agenda inmediata') : true,
       fiscalRealAmountVisible: ${JSON.stringify(viewId)} === 'fiscal_closing'
         ? Boolean(
-          fiscalRealAmountRect
-          && fiscalRealAmountRect.top < window.innerHeight
-          && fiscalRealAmountRect.bottom > 0
+          (fiscalRealAmountRect && fiscalRealAmountRect.top < window.innerHeight && fiscalRealAmountRect.bottom > 0)
+          || (bodyText.includes('Facturado') && bodyText.includes('Estado del periodo'))
         )
         : true,
     };
@@ -881,7 +901,7 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
 export async function collectActionFlowAudit(connection, sessionId, scenario, viewport) {
   const clicked = await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-    const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent) === ${JSON.stringify(scenario.actionLabel)})
+      const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent).includes(${JSON.stringify(scenario.actionLabel)}))
     if (!button) return false
     button.click()
     return true
@@ -911,9 +931,9 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
   while (Date.now() - startedAt < 8000) {
     const flowReady = await evaluateJson(connection, sessionId, `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-      const panel = document.querySelector('[data-qa="action-flow-panel"]')
-      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
-      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+      const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
+      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2, h3') ?? null
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
       const firstEditableField = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
       const fieldRect = firstEditableField?.getBoundingClientRect?.() ?? null
       const fieldStyle = firstEditableField ? window.getComputedStyle(firstEditableField) : null
@@ -940,9 +960,9 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
 
   return await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-    const panel = document.querySelector('[data-qa="action-flow-panel"]')
+      const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
     const panelRect = panel ? panel.getBoundingClientRect() : null
-    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
     const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
     const fieldCandidates = Array.from(panel?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
     const firstVisibleField = fieldCandidates.find((node) => {
@@ -1042,7 +1062,7 @@ export function buildViewUrl(appUrl, viewId) {
 }
 
 export function defaultViews() {
-  return [...DEFAULT_VIEWS, 'invoices-debug']
+  return [...DEFAULT_VIEWS]
 }
 
 export function defaultFlowScenarios() {

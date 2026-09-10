@@ -1527,7 +1527,7 @@ export function AppShell({
         onClick={handleScrollToTop}
         aria-label="Volver arriba"
       >
-        <span aria-hidden="true">↑</span>
+        <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
       </button>
       {operationalToast ? (
         <div className="cc-realtime-toast" role="status" aria-live="polite" aria-atomic="true">

@@ -1,5 +1,15 @@
 import type { InputHTMLAttributes, MouseEvent, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
 
+export type V3IconName = 'back' | 'chevronDown'
+
+export function V3Icon({ name, size = 16 }: { name: V3IconName; size?: number }) {
+  const paths: Record<V3IconName, string> = {
+    back: 'M19 12H5M11 18l-6-6 6-6',
+    chevronDown: 'm5 9 7 7 7-7',
+  }
+  return <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d={paths[name]} /></svg>
+}
+
 interface V3ActionProps {
   children: ReactNode
   onClick?: (event: MouseEvent<HTMLButtonElement>) => void

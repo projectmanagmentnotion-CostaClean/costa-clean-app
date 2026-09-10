@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
+import { V3Icon } from '../components/V3Primitives'
 
 interface V3ShellChromeProps {
   currentView: AppView
@@ -53,7 +54,7 @@ function V3TopBar({ currentView, onBack, backTargetView }: Pick<V3ShellChromePro
       <div className="v3-top-bar__leading">
         {currentView !== 'dashboard' ? (
           <button type="button" className="v3-top-bar__back" onClick={onBack} aria-label={backTargetView ? 'Volver' : 'Ir al inicio'}>
-            ←
+            <V3Icon name="back" size={18} />
           </button>
         ) : null}
         <div>

@@ -7,7 +7,7 @@ import type { PaymentListItem } from '../../features/payments/types'
 import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { getInvoiceFinancialStatusLabel } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
-import { V3BottomSheet, V3EntityListItem, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
+import { V3BottomSheet, V3EntityListItem, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
 import { useV3Selection } from '../selection/useV3Selection'
 import { V3SelectionActionSheet, V3SelectionBar, V3SelectionConfirmSheet, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
 
@@ -147,7 +147,7 @@ export function V3InvoicesPage({
       </V3KpiGroup>
       <section className="v3-invoice-controls" aria-label="Buscar y filtrar facturas">
         <label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Número o cliente" /></label>
-        <button type="button" className="v3-filter-trigger" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterSheetOpen}>Filtros <span aria-hidden="true">⌄</span></button>
+        <button type="button" className="v3-filter-trigger" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterSheetOpen}>Filtros <V3Icon name="chevronDown" /></button>
       </section>
       <div className="v3-filter-tabs" role="tablist" aria-label="Estado de factura">
         {([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => (
@@ -206,7 +206,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
   const outstanding = Number(invoice.outstanding_amount ?? Math.max(Number(invoice.total ?? 0) - invoicePayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0), 0))
   return (
     <V3Page className="v3-invoice-workspace">
-      <button type="button" className="v3-workspace-back" onClick={onBack}>← Facturas</button>
+      <button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Facturas</button>
       <V3PageTitle eyebrow={invoiceLabel(invoice)} title={getInvoiceFinancialStatusLabel(financialStatus)} description={`${client?.full_name ?? formatClientLabel(invoice)} · ${formatDateEs(invoice.issue_date)}`} />
       <div className="v3-workspace-total"><strong>{formatCurrency(invoice.total)}</strong><span>Pendiente {formatCurrency(outstanding)}</span></div>
       <div className="v3-workspace-actions">{canSettleInvoiceByTransfer(invoice) ? <V3PrimaryAction onClick={() => onSettleInvoice(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Marcando…' : 'Marcar pagada'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onEditInvoice}>Editar</V3SecondaryAction><V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar</V3SecondaryAction><V3SecondaryAction onClick={() => onOpenDocument(invoice)}>Documento</V3SecondaryAction></div>

@@ -39,4 +39,11 @@ describe('V3 dedicated invoice tree', () => {
     expect(workspace).toContain('Cobros')
     expect(workspace).toContain('Documento')
   })
+
+  it('does not render Unicode icons or technical UUIDs in user-facing invoice markup', () => {
+    const html = renderPage([createInvoice({ id: 'e1643c33-ae20-48cd-a2c7-99fd41184533', display_code: null, invoice_number: null, client_id: 'client-1', client_name: null })])
+    expect(html).not.toContain('←')
+    expect(html).not.toContain('⌄')
+    expect(html).not.toMatch(/[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}/i)
+  })
 })

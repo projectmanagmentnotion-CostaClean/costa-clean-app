@@ -7,6 +7,18 @@ function normalizeText(value: NullableText): string | null {
   return trimmed ? trimmed : null
 }
 
+const TECHNICAL_UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+
+export function isTechnicalUuid(value: NullableText): boolean {
+  const normalized = normalizeText(value)
+  return normalized ? TECHNICAL_UUID_PATTERN.test(normalized) : false
+}
+
+export function toUserFacingReference(value: NullableText): string | null {
+  const normalized = normalizeText(value)
+  return normalized && !isTechnicalUuid(normalized) ? normalized : null
+}
+
 function joinLabelParts(...parts: Array<NullableText>): string {
   const normalizedParts = parts
     .map((part) => normalizeText(part))
@@ -15,8 +27,12 @@ function joinLabelParts(...parts: Array<NullableText>): string {
   return normalizedParts.length > 0 ? normalizedParts.join(' - ') : 'Sin referencia'
 }
 
-function resolveCode(code: NullableText, fallback: NullableText): string {
-  return normalizeText(code) ?? normalizeText(fallback) ?? 'Sin referencia'
+function resolveCode(code: NullableText, fallback: NullableText, emptyLabel: string | null = 'Sin referencia'): string | null {
+  return toUserFacingReference(code) ?? toUserFacingReference(fallback) ?? emptyLabel
+}
+
+function withFallback(label: string, fallback: string): string {
+  return label === 'Sin referencia' ? fallback : label
 }
 
 function truncateDescriptor(value: NullableText, maxLength = 56): string | null {
@@ -34,9 +50,9 @@ export function formatClientLabel(client: {
   client_display_code?: NullableText
   client_name?: NullableText
 }): string {
-  const code = resolveCode(client.display_code ?? client.client_display_code, client.id ?? client.client_id)
+  const code = resolveCode(client.display_code ?? client.client_display_code, client.id ?? client.client_id, null)
   const name = normalizeText(client.full_name ?? client.client_name)
-  return joinLabelParts(code, name)
+  return withFallback(joinLabelParts(code, name), 'Cliente sin referencia')
 }
 
 export function formatPropertyLabel(property: {
@@ -45,10 +61,10 @@ export function formatPropertyLabel(property: {
   name?: NullableText
   city?: NullableText
 }): string {
-  const code = resolveCode(property.display_code, property.id)
+  const code = resolveCode(property.display_code, property.id, null)
   const descriptor = truncateDescriptor(property.name)
   const city = normalizeText(property.city)
-  return joinLabelParts(code, descriptor, city)
+  return withFallback(joinLabelParts(code, descriptor, city), 'Inmueble sin referencia')
 }
 
 function getQuoteDescriptor(quote: {
@@ -86,10 +102,10 @@ export function formatQuoteLabel(quote: {
   lead_name?: NullableText
   lead_display_code?: NullableText
 }): string {
-  const code = resolveCode(quote.display_code, quote.id)
+  const code = resolveCode(quote.display_code, quote.id, null)
   const descriptor = getQuoteDescriptor(quote)
   const context = normalizeText(quote.client_name ?? quote.lead_name ?? quote.property_name ?? quote.property_display_code)
-  return joinLabelParts(code, descriptor, context)
+  return withFallback(joinLabelParts(code, descriptor, context), 'Presupuesto sin referencia')
 }
 
 function getJobDescriptor(job: {
@@ -112,10 +128,10 @@ export function formatJobLabel(job: {
   client_name?: NullableText
   client_display_code?: NullableText
 }): string {
-  const code = resolveCode(job.display_code, job.id)
+  const code = resolveCode(job.display_code, job.id, null)
   const descriptor = getJobDescriptor(job)
   const context = normalizeText(job.property_name ?? job.client_name ?? job.property_display_code ?? job.client_display_code)
-  return joinLabelParts(code, descriptor, context)
+  return withFallback(joinLabelParts(code, descriptor, context), 'Servicio sin referencia')
 }
 
 export function formatJobWithClientLabel(job: {
@@ -129,7 +145,7 @@ export function formatJobWithClientLabel(job: {
   client_display_code?: NullableText
   client_name?: NullableText
 }): string {
-  return joinLabelParts(formatJobLabel(job), normalizeText(job.client_name ?? job.client_display_code ?? job.client_id))
+  return joinLabelParts(formatJobLabel(job), toUserFacingReference(job.client_name ?? job.client_display_code ?? job.client_id))
 }
 
 export function formatInvoiceLabel(invoice: {
@@ -144,17 +160,17 @@ export function formatInvoiceLabel(invoice: {
   property_name?: NullableText
   property_display_code?: NullableText
 }): string {
-  const code = resolveCode(invoice.display_code, invoice.id)
-  const number = normalizeText(invoice.invoice_number)
+  const code = toUserFacingReference(invoice.display_code)
+  const number = toUserFacingReference(invoice.invoice_number)
   const descriptor = truncateDescriptor(
     invoice.client_name
       ?? invoice.service_description
       ?? invoice.property_name
       ?? invoice.service_reference
       ?? invoice.client_display_code
-      ?? invoice.client_id,
+      ?? toUserFacingReference(invoice.client_id),
   )
-  return joinLabelParts(code, number, descriptor)
+  return withFallback(joinLabelParts(code, number, descriptor), 'Factura sin referencia')
 }
 
 export function formatRecurringPlanLabel(plan: {
@@ -165,8 +181,8 @@ export function formatRecurringPlanLabel(plan: {
   client_name?: NullableText
   client_display_code?: NullableText
 }): string {
-  const code = resolveCode(plan.id, plan.title)
+  const code = resolveCode(plan.title, plan.id, null)
   const descriptor = truncateDescriptor(plan.title)
   const context = normalizeText(plan.property_name ?? plan.client_name ?? plan.property_display_code ?? plan.client_display_code)
-  return joinLabelParts(code, descriptor, context)
+  return withFallback(joinLabelParts(code, descriptor, context), 'Plan sin referencia')
 }

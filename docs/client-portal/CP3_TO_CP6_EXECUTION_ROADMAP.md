@@ -399,7 +399,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `PARTIAL — P1 focus defect fixed; final authenticated/native-tool evidence remains` |
 | Objective | Validate complete portal states across devices, assistive interaction and performance budgets. |
 | User outcome | The portal is usable on mobile, iPad and desktop, with keyboard/screen reader support and respectful motion. |
 | Dependencies | CP-3C.2 passes; stable visible QA build; representative synthetic states; agreed budgets. |
@@ -417,7 +417,7 @@ automatically.
 | Stop conditions | P0/P1 accessibility failure, overflow, regression in authorization, private evidence or unexplained performance breach. |
 | Closeout documentation | Device/state matrix, accessibility/performance evidence, accepted debt and next gate. |
 | Expected commit | `test: close portal visual accessibility and performance QA` |
-| Next gate | CP-4.1 |
+| Next gate | CP-4.1, not started |
 
 ## CP-4.1 — WordPress source and deployment prerequisite
 

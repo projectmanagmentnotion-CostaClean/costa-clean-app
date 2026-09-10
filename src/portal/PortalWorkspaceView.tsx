@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { PortalAccessState } from './accessMachine'
 import type { PortalPreviewScenario } from './contracts'
 import { PortalPages } from './PortalPages'
@@ -217,6 +217,44 @@ function MobilePortalNavigation({
   getHref: (page: PortalPage) => string
   onSignOut: () => void
 }) {
+  const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const moreRef = useRef<HTMLDetailsElement>(null)
+  const moreTriggerRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!isMoreOpen) return
+
+    const firstAction = moreRef.current?.querySelector<HTMLElement>('.portal-mobile-more__link')
+    window.requestAnimationFrame(() => firstAction?.focus())
+  }, [isMoreOpen])
+
+  function closeMore() {
+    setIsMoreOpen(false)
+    window.requestAnimationFrame(() => moreTriggerRef.current?.focus())
+  }
+
+  function handleMoreKeyDown(event: KeyboardEvent<HTMLDetailsElement>) {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closeMore()
+      return
+    }
+
+    if (event.key !== 'Tab') return
+    const focusable = [...(moreRef.current?.querySelectorAll<HTMLElement>('.portal-mobile-more__link') ?? [])]
+    const first = focusable[0]
+    const last = focusable.at(-1)
+    if (!first || !last) return
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
   const primaryItems = portalNavigationItems.filter((item) => item.group === 'primary')
   const moreItems = portalNavigationItems.filter((item) => item.group === 'more')
   const isMoreActive = moreItems.some((item) => item.page === currentPage)
@@ -235,12 +273,23 @@ function MobilePortalNavigation({
             {item.shortLabel}
           </a>
         ))}
-      <details className="portal-mobile-more">
-        <summary className={isMoreActive ? 'portal-mobile-nav__link portal-mobile-more__trigger is-active' : 'portal-mobile-nav__link portal-mobile-more__trigger'}>
+      <details
+        ref={moreRef}
+        className="portal-mobile-more"
+        open={isMoreOpen}
+        onKeyDown={handleMoreKeyDown}
+        onToggle={(event) => setIsMoreOpen(event.currentTarget.open)}
+      >
+        <summary
+          ref={moreTriggerRef}
+          aria-controls="portal-mobile-more-panel"
+          aria-expanded={isMoreOpen}
+          className={isMoreActive || isMoreOpen ? 'portal-mobile-nav__link portal-mobile-more__trigger is-active' : 'portal-mobile-nav__link portal-mobile-more__trigger'}
+        >
           <span className="portal-mobile-nav__more-icon" aria-hidden="true">···</span>
           Más
         </summary>
-        <div className="portal-mobile-more__panel">
+        <div id="portal-mobile-more-panel" className="portal-mobile-more__panel" role="dialog" aria-label="Más opciones">
           <strong>Más opciones</strong>
           {moreItems.map((item) => (
             <a

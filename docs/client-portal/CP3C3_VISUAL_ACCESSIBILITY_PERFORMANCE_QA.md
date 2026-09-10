@@ -1,0 +1,113 @@
+# CP-3C.3 Visual, Accessibility, Responsive And Performance QA
+
+Date: 2026-09-10  
+Target: local QA build and synthetic Portal preview only  
+Certified source: `636523f` plus the bounded `Más` focus fix in this block  
+Status: `PARTIAL — P1 fixed; final native-tool and authenticated-state evidence remains`
+
+## Boundary
+
+- Portal only. No CRM UI, CRM contracts or production environment were changed.
+- No Supabase migration, policy, Edge Function, Auth or Storage change was made.
+- Preview data is synthetic and is not a customer record.
+- CP-4 remains not started.
+
+## Device Matrix
+
+| Device | Viewport | Overflow | Responsive result | Evidence |
+|---|---:|---|---|---|
+| iPhone | 390x844 | `scrollWidth = 390` | PASS for audited states | Playwright QA preview |
+| iPad | 768x1024 | `scrollWidth = 768` | PASS for audited states | Playwright QA preview |
+| Desktop | 1440x900 | `scrollWidth = 1440` | PASS for audited states | Playwright QA preview |
+
+The exact authenticated browser session was not resized by the available CUA
+surface in this block. The exact 390x844 visual contract therefore remains
+backed by the existing approved evidence plus the automated synthetic preview
+check, not by a new authenticated screenshot in this block.
+
+## Audited States
+
+| State family | Result | Notes |
+|---|---|---|
+| Login / Google CTA / password fields | PASS | Accessible names, labels, errors and 44px controls present |
+| Inicio / Cuenta / Inmuebles / property detail | PASS | Synthetic preview loaded without console errors or horizontal overflow |
+| Servicios / solicitudes / Facturas | PASS | Synthetic preview loaded without console errors or horizontal overflow |
+| Más bottom sheet | PASS after fix | Focus enters, Tab cycles, Escape closes, focus returns |
+| WhatsApp | PASS | `wa.me/34698911517`, visible and named on authenticated surfaces |
+| Onboarding, invitation, member, legal, error variants | NOT_REEXECUTED_IN_THIS_BLOCK | Existing CP-3B/CP-3C evidence remains authoritative; full matrix is deferred |
+
+## Visual Fidelity
+
+The approved iPhone composition, six-control navigation and Coastal Luminous
+direction were not redesigned. The only visual-adjacent change is semantic
+focus behavior for the existing `Más` control. No material Stitch difference
+was introduced.
+
+## Accessibility
+
+| Check | Result |
+|---|---|
+| Visible interactive targets | PASS; no audited visible target below 44px |
+| Form labels and field errors | PASS by existing portal guardrails and accessibility tree |
+| Landmarks / headings / accessible names | PASS for audited login and active portal states |
+| Reduced motion | PASS; `prefers-reduced-motion: reduce` active and transition reduced |
+| Más focus management | PASS after bounded fix |
+| Automated axe scan | NOT_AVAILABLE; axe is not installed in the repository |
+| Native screen reader | NOT_AVAILABLE |
+| 200% browser zoom | NOT_EXECUTED; available browser harness has no zoom control |
+
+The accessibility tree was inspected with Playwright. No NVDA, VoiceOver or
+JAWS result is claimed.
+
+## Performance
+
+Measurement mode: production-like QA build served by `vite preview` on localhost.
+
+| Route family | DOM ready | Load event | CLS | Errors |
+|---|---:|---:|---:|---|
+| Login, Inicio, Inmuebles, Facturas, Cuenta | 9–26ms | 16–38ms | 0 | 0 |
+
+LCP and reliable lab INP were not exposed by the available run; therefore no
+invented values are reported. `INP LAB = NOT DIRECTLY AVAILABLE`.
+Lighthouse was not available in the environment. Standard QA lab targets remain
+the reference thresholds: LCP <= 2.5s, CLS <= 0.10 and INP <= 200ms.
+
+## Defects And Fixes
+
+| Severity | Defect | Resolution |
+|---|---|---|
+| P1 | `Más` left focus on its trigger, did not close with Escape and had no focus cycle/return | Fixed in `PortalWorkspaceView.tsx`; regression guard added |
+| P0 | None found | None |
+| P2 | None newly found | None |
+
+## Quality Results
+
+- Portal-focused tests: `76/76 PASS`.
+- Full default suite: `643 PASS`, `4 skipped`, no timeout in the isolated final
+  run. A concurrent earlier run exposed the known slow `cp3b2a*` checks; the
+  established higher-timeout diagnostic passed `643/643`.
+- `npm run lint`: PASS.
+- `npm run build -- --mode qa`: PASS.
+- `git diff --check`: PASS.
+- Production requests/writes/deploys/auth mutations: `0`.
+
+## Fixture And External Debts
+
+CP3C-created QA fixtures were not cleaned because CP-3C.3 did not fully close;
+the exact cleanup authorization remains available for a future completed gate.
+The private ledgers remain ignored and untracked.
+
+- Google source/UI: implemented.
+- Google provider QA/runtime: `PRIVATE_CONFIG_PENDING` / `NOT_EXECUTED`.
+- Invitation email delivery: `DEFERRED_CP4_3`.
+
+## Gate Decision
+
+`CP-3C.3 = PARTIAL`. The bounded P1 was fixed and the audited responsive portal
+surface is clean, but native-reader/zoom/Lighthouse evidence and the complete
+authenticated state matrix were not available in this run. Do not promote this
+to `DONE` or start CP-4.1 automatically.
+
+Next action: run the remaining authenticated visible state matrix with a tool
+that supports exact viewport control, native accessibility tooling, browser
+zoom and Lighthouse, then rerun the same checks before cleanup and closeout.

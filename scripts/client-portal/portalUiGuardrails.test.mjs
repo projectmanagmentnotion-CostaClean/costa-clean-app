@@ -13,6 +13,10 @@ const motionSurfaceSource = readFileSync(
   new URL('../../src/portal/PortalMotionSurface.tsx', import.meta.url),
   'utf8',
 )
+const workspaceSource = readFileSync(
+  new URL('../../src/portal/PortalWorkspaceView.tsx', import.meta.url),
+  'utf8',
+)
 const portalCssSource = readFileSync(
   new URL('../../src/portal/portal.css', import.meta.url),
   'utf8',
@@ -64,5 +68,14 @@ describe('portal authentication UI guardrails', () => {
   it('defines a reduced-motion fallback without hiding semantic content in CSS', () => {
     expect(portalCssSource.includes('@media (prefers-reduced-motion: reduce)')).toBe(true)
     expect(portalCssSource.includes('visibility: hidden')).toBe(false)
+  })
+
+  it('keeps the Más sheet keyboard-manageable', () => {
+    expect(workspaceSource.includes('aria-controls="portal-mobile-more-panel"')).toBe(true)
+    expect(workspaceSource.includes('aria-expanded={isMoreOpen}')).toBe(true)
+    expect(workspaceSource.includes('role="dialog" aria-label="Más opciones"')).toBe(true)
+    expect(workspaceSource.includes("event.key === 'Escape'" )).toBe(true)
+    expect(workspaceSource.includes('firstAction?.focus()')).toBe(true)
+    expect(workspaceSource.includes('moreTriggerRef.current?.focus()')).toBe(true)
   })
 })

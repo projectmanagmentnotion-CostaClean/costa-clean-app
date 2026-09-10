@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "identity": "CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA",
+  "gate": "CP-3C.3",
+  "status": "PARTIAL_P1_FIXED",
+  "sourceCommit": "636523f",
+  "artifacts": [
+    { "path": "src/portal/PortalWorkspaceView.tsx", "sha256": "83fabd7336f095391248e22b41d4653c3c1200338fe33f13b6b63b30b08a3c4c" },
+    { "path": "scripts/client-portal/portalUiGuardrails.test.mjs", "sha256": "c9e26615f723dde9578a86496aae8ce418172b7522e8f31bcad9c6978996962c" },
+    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "81c6f56cc9be4bda4c8b12cb51114394c81f80814df65d2549451c9cefb4a469" }
+  ],
+  "remoteEffects": {
+    "target": "LOCAL_QA_PREVIEW_ONLY",
+    "productionRequests": 0,
+    "productionWrites": 0,
+    "productionDeploys": 0,
+    "productionAuthMutations": 0,
+    "supabaseModified": false,
+    "fixtures": "KEPT_CP3C3_PARTIAL"
+  },
+  "toolingLimits": [
+    "NATIVE_SCREEN_READER_NOT_AVAILABLE",
+    "LIGHTHOUSE_NOT_AVAILABLE",
+    "REAL_BROWSER_ZOOM_NOT_AVAILABLE",
+    "FULL_AUTHENTICATED_STATE_MATRIX_NOT_REEXECUTED"
+  ],
+  "nextGate": "CP-4.1",
+  "nextGateStarted": false
+}

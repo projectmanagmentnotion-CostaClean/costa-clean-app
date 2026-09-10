@@ -71,9 +71,10 @@ dated closeout notes are retained as historical evidence and are not reopened.
   authenticated authorization certification complete; Google provider and
   CP4.3 email delivery remain external debts`. See
   [`CP3C2_AUTHORIZATION_E2E_QA.md`](./CP3C2_AUTHORIZATION_E2E_QA.md).
-- **CP-3C.3:** `NOT STARTED`. Its final authenticated and
-  visual certification work consumes the carried evidence debt; it does not
-  block the CP-3B.5C implementation gate by status label alone.
+- **CP-3C.3:** `PARTIAL — responsive preview and accessibility P1 remediation
+  executed; native reader, Lighthouse, browser-zoom and full authenticated
+  state evidence remain`. See
+  [`CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md`](./CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md).
 - **CP-4, CP-5 and CP-6:** `NOT STARTED`.
 
 Dependency semantics: an implementation gate may proceed when its source,

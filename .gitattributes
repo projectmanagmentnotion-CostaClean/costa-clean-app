@@ -11,6 +11,10 @@ supabase/migrations/20260728120000_portal_self_access_context.sql text eol=lf
 supabase/migrations/20260728160000_portal_reviewed_change_contract.sql text eol=lf
 supabase/migrations/20260909150000_portal_billing_onboarding_v2.sql text eol=lf
 supabase/migrations/20260910170000_cp3c2r2_rebind_replacement_memberships_qa.sql text eol=lf
+src/portal/PortalWorkspaceView.tsx text eol=lf
+scripts/client-portal/portalUiGuardrails.test.mjs text eol=lf
+docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md text eol=lf
+scripts/client-portal/cp3c3_qa_package.manifest.json text eol=lf
 
 scripts/client-portal/cp3b2a_qa_precheck_v3.sql text eol=lf
 scripts/client-portal/cp3b2a_qa_postcheck_v3.sql text eol=lf

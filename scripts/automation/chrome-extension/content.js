@@ -14,6 +14,8 @@
   let assistantCandidate = ''
   let assistantCandidateSince = 0
   let assistantLastSeen = null
+  let tickScheduled = false
+  let tickTimer
   const bridgeControlPrefix = '# COSTA CLEAN BRIDGE CONTROL'
 
   if (!conversationUrls.includes(conversationUrl)) return
@@ -87,6 +89,9 @@
   }
 
   async function submitPrompt(prompt) {
+    const signal = { type: 'prompt_detected', promptId: await promptId(prompt), source: 'chatgpt-dom' }
+    console.info('[Costa Clean Bridge] signal', signal)
+    window.dispatchEvent(new CustomEvent('costa-prompt-bridge-signal', { detail: signal }))
     const result = await bridgeFetch('/api/prompts', {
       method: 'POST',
       body: { prompt, sourceUrl: conversationUrl },
@@ -150,6 +155,9 @@
         throw new Error('ChatGPT send button is unavailable; keeping the job unpublished for retry.')
       }
       sessionStorage.setItem(`costaPromptBridgePublished:v2:${job.id}`, '1')
+      const signal = { type: 'codex_output_ready', jobId: job.id, source: 'local-bridge' }
+      console.info('[Costa Clean Bridge] signal', signal)
+      window.dispatchEvent(new CustomEvent('costa-prompt-bridge-signal', { detail: signal }))
     } finally {
       busy = false
     }
@@ -209,9 +217,24 @@
     }
   }
 
+  function scheduleTick() {
+    if (pageGone || contextInvalidated || tickScheduled) return
+    tickScheduled = true
+    clearTimeout(tickTimer)
+    tickTimer = setTimeout(() => {
+      tickScheduled = false
+      void tick()
+    }, 500)
+  }
+
+  const observer = new MutationObserver(scheduleTick)
+  observer.observe(document.body, { childList: true, subtree: true, characterData: true })
+
   window.addEventListener('pagehide', () => {
     pageGone = true
     clearInterval(intervalId)
+    clearTimeout(tickTimer)
+    observer.disconnect()
   }, { once: true })
 
   intervalId = setInterval(tick, 2500)

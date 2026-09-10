@@ -37,6 +37,8 @@ The extension accepts prompts only from these exact URLs. Network calls are made
 
 For `ecosystem-config`, prompts are relayed to the Codex app task `01a067cf-c5ad-7cb3-a376-428538dea1cc` (“Configura ecosistema digital”); the bridge does not run `codex exec` for that project. The Codex app task must claim `/api/codex/next`, execute the prompt in its own conversation, and publish its final report to `/api/jobs/:id/complete`. The report is then inserted into the same Chrome conversation and submitted automatically. Jobs remain serialized and sensitive prompts still require approval before dispatch.
 
+The extension exposes two diagnostic signals in the page console and as `costa-prompt-bridge-signal` events: `prompt_detected` when a new `# COSTA CLEAN` prompt is queued, and `codex_output_ready` when a verified Codex report is inserted into Chrome. These signals are observability only; the local bridge remains the source of truth and never accepts an empty or stale Codex turn.
+
 Tasks that mention production, Supabase, migrations/schema, auth, secrets, financial/fiscal operations, deployment, Git publication/history changes, or destructive operations pause in `awaiting_approval`. The extension asks for approval in Chrome and resumes the job without requiring the user to press Enter.
 
 ## Safety boundaries

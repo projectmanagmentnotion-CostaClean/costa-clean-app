@@ -1,7 +1,7 @@
 # CP-3C.2 Authenticated Authorization E2E QA
 
-Date: 2026-09-10  
-Target: QA project `kpvvydthlxupjjqqdpxy` only  
+Date: 2026-09-10
+Target: QA project `kpvvydthlxupjjqqdpxy` only
 Status: `PARTIAL — evidence captured; certification debt remains`
 
 This report is sanitized. It contains no passwords, tokens, signed URLs,

@@ -16,8 +16,8 @@ describe('portal account experience boundaries', () => {
   it('keeps marketing separate and conservative until the trusted contract exists', () => {
     expect(accountExperienceSource).toContain('novedades comerciales')
     expect(accountExperienceSource).toContain('disabled')
-    expect(onboardingSource).toContain('const [marketing, setMarketing] = useState(false)')
-    expect(onboardingSource).toContain('Envío pendiente de contrato seguro')
+    expect(onboardingSource).toContain('marketingOptIn: false')
+    expect(onboardingSource).toContain("'pending_review'")
     expect(onboardingSource).not.toContain('clients')
   })
 })

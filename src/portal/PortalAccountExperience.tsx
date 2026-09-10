@@ -1,23 +1,33 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import type { PortalMembershipRole } from './contracts'
+import {
+  getPortalMarketingPreference,
+  listPortalMembers,
+  listPortalPendingInvitations,
+  revokePortalMember,
+  setPortalMarketingPreference,
+  type PortalMember,
+  type PortalPendingInvitation,
+} from './adapters/portalAccountActions'
 
 interface PortalAccountExperienceProps {
   role: PortalMembershipRole
   pathname: string
+  clientId: string
   accountLabel: string
   onSignOut: () => void
   getHref: (page: 'home' | 'account' | 'help') => string
 }
 
-export function PortalAccountExperience({ role, pathname, accountLabel, onSignOut, getHref }: PortalAccountExperienceProps) {
+export function PortalAccountExperience({ role, pathname, clientId, accountLabel, onSignOut, getHref }: PortalAccountExperienceProps) {
   const route = pathname.replace('/portal/', '').replace(/\/$/u, '')
-  if (route === 'members' || route.startsWith('members/')) return <MembersSurface role={role} pathname={pathname} getHref={getHref} />
+  if (route === 'members' || route.startsWith('members/')) return <MembersSurface role={role} pathname={pathname} clientId={clientId} getHref={getHref} />
   if (route === 'security/password') return <PasswordSurface />
   if (route === 'security/google') return <GoogleSurface />
   if (route === 'security') return <SecuritySurface getHref={getHref} />
   if (route === 'legal/privacy') return <LegalSurface title="Política de privacidad" description="Texto informativo pendiente de revisión legal profesional. La información de privacidad es independiente del consentimiento comercial." />
   if (route === 'legal/document') return <LegalSurface title="Condiciones del servicio" description="Documento contractual pendiente de validación legal profesional. El contenido mostrado en QA no constituye una publicación definitiva." />
-  if (route === 'preferences/marketing') return <MarketingSurface />
+  if (route === 'preferences/marketing') return <MarketingSurface clientId={clientId} />
   if (route === 'errors/session-expired') return <SafeErrorSurface title="Sesión caducada" description="Por seguridad, vuelve a iniciar sesión para continuar." />
   if (route === 'errors/network') return <SafeErrorSurface title="Problema de conexión" description="No pudimos sincronizar tu información. Comprueba la red e inténtalo de nuevo." />
   if (route === 'errors/forbidden') return <SafeErrorSurface title="Sección restringida" description="Tu rol actual no permite acceder a esta sección." />
@@ -42,15 +52,64 @@ export function PortalAccountExperience({ role, pathname, accountLabel, onSignOu
   )
 }
 
-function MembersSurface({ role, pathname, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'pathname' | 'getHref'>) {
+function MembersSurface({ role, pathname, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'pathname' | 'clientId' | 'getHref'>) {
   if (pathname.endsWith('/invite')) return <InviteSurface />
   if (pathname.endsWith('/revoke')) return <RevokeSurface />
+  return <MembersListSurface role={role} clientId={clientId} getHref={getHref} />
+}
+
+function MembersListSurface({ role, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'clientId' | 'getHref'>) {
+  const [members, setMembers] = useState<PortalMember[]>([])
+  const [pending, setPending] = useState<PortalPendingInvitation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [selected, setSelected] = useState<PortalMember | null>(null)
+  const [revoking, setRevoking] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      setLoading(true)
+      try {
+        const memberResult = await listPortalMembers(clientId)
+        const invitationResult = role === 'client_admin' ? await listPortalPendingInvitations(clientId) : []
+        if (!cancelled) {
+          setMembers(memberResult)
+          setPending(invitationResult)
+          setError(false)
+        }
+      } catch {
+        if (!cancelled) setError(true)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [clientId, role])
+
+  async function revokeSelected() {
+    if (!selected || selected.isSelf || revoking) return
+    setRevoking(true)
+    try {
+      await revokePortalMember(clientId, selected.membershipId)
+      setMembers((current) => current.filter((member) => member.membershipId !== selected.membershipId))
+      setSelected(null)
+    } catch {
+      setError(true)
+    } finally {
+      setRevoking(false)
+    }
+  }
+
   return (
     <PortalAccountFrame eyebrow="Equipo y accesos" title="Miembros del equipo" description={role === 'client_admin' ? 'Invita y revisa los accesos autorizados a esta cuenta.' : 'Consulta los accesos de esta cuenta sin funciones de administración.'}>
-      {role === 'client_admin' ? <>
-        <section className="portal-empty-state"><span className="portal-status portal-status--info">Administrador</span><h2>Sin colaboradores adicionales</h2><p>Los miembros se mostrarán aquí cuando exista una lectura autorizada de la cuenta.</p><a className="portal-button portal-button--primary" href="/portal/members/invite">Invitar miembro</a></section>
-        <p className="portal-account-note">La invitación requiere el canal seguro de cuenta. No se crea ninguna membresía desde esta pantalla.</p>
-      </> : <section className="portal-empty-state"><span className="portal-status portal-status--info">Miembro</span><h2>Visualización de equipo</h2><p>No tienes controles para invitar, revocar o cambiar roles.</p><a className="portal-text-button" href={getHref('account')}>Volver a Cuenta</a></section>}
+      {loading ? <section className="portal-empty-state"><span className="portal-status portal-status--info">Cargando</span><h2>Consultando accesos</h2><p>Estamos consultando los miembros autorizados.</p></section> : error ? <section className="portal-empty-state"><span className="portal-status portal-status--danger">No disponible</span><h2>No pudimos cargar los miembros</h2><p>La consulta segura no está disponible ahora. Inténtalo de nuevo más tarde.</p></section> : <>
+        {members.length === 0 ? <section className="portal-empty-state"><span className="portal-status portal-status--info">{role === 'client_admin' ? 'Administrador' : 'Miembro'}</span><h2>Sin accesos adicionales</h2><p>{role === 'client_admin' ? 'No hay otros miembros activos en esta cuenta.' : 'Solo se muestra tu acceso actual.'}</p></section> : <div className="portal-member-list" aria-label="Miembros autorizados">{members.map((member) => <article className="portal-member-row" key={member.membershipId}><div><strong>{member.displayName || (member.isSelf ? 'Tu acceso' : 'Miembro de la cuenta')}</strong><span>{member.email || 'Correo no disponible'}</span></div><span className="portal-status portal-status--info">{member.role === 'client_admin' ? 'Administrador' : 'Miembro'}</span>{role === 'client_admin' && !member.isSelf ? <button type="button" className="portal-text-button" onClick={() => setSelected(member)}>Ver acceso</button> : null}</article>)}</div>}
+        {role === 'client_admin' && pending.length > 0 ? <section className="portal-member-pending"><h2>Invitaciones pendientes</h2>{pending.map((invitation) => <p key={invitation.invitationRef}><strong>{invitation.email}</strong><span>{invitation.role === 'client_admin' ? 'Administrador' : 'Miembro'} · Pendiente</span></p>)}</section> : null}
+        {role === 'client_admin' ? <><a className="portal-button portal-button--primary" href="/portal/members/invite">Invitar miembro</a><p className="portal-account-note">El envío de invitaciones permanece pendiente del proveedor autorizado. No se muestran tokens.</p></> : <a className="portal-text-button" href={getHref('account')}>Volver a Cuenta</a>}
+      </>}
+      {selected ? <div className="portal-member-detail" role="dialog" aria-label="Detalle de acceso"><h2>Detalle de acceso</h2><p>{selected.email || 'Correo no disponible'}</p><p>{selected.role === 'client_admin' ? 'Administrador' : 'Miembro'}</p><button type="button" className="portal-button portal-button--primary" onClick={() => void revokeSelected()} disabled={revoking}>{revoking ? 'Revocando…' : 'Revocar acceso'}</button><button type="button" className="portal-text-button" onClick={() => setSelected(null)}>Cancelar</button></div> : null}
     </PortalAccountFrame>
   )
 }
@@ -71,7 +130,37 @@ function SecuritySurface({ getHref }: Pick<PortalAccountExperienceProps, 'getHre
 function PasswordSurface() { return <ActionUnavailable title="Cambiar contraseña" description="El cambio se ejecutará mediante el proveedor de autenticación. La política efectiva la valida el servidor; no mostramos requisitos inventados." /> }
 function GoogleSurface() { return <ActionUnavailable title="Cuenta de Google" description="Google autentica tu identidad, pero no concede por sí solo acceso a una cuenta de cliente. La vinculación se muestra únicamente cuando existe evidencia del proveedor." /> }
 function LegalSurface({ title, description }: { title: string; description: string }) { return <PortalAccountFrame eyebrow="Legal" title={title} description={description}><section className="portal-legal-placeholder"><strong>PLACEHOLDER LEGAL — REVISIÓN PROFESIONAL PENDIENTE</strong><p>Consulta la versión aprobada antes de usar este contenido con clientes reales.</p></section><a className="portal-text-button" href="/portal/account">Volver a Cuenta</a></PortalAccountFrame> }
-function MarketingSurface() { const [enabled, setEnabled] = useState(false); return <PortalAccountFrame eyebrow="Comunicaciones" title="Preferencias de comunicación" description="Los avisos necesarios para tus servicios permanecen activos. Las novedades comerciales son opcionales y están desactivadas inicialmente."><label className="portal-toggle"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /><span><strong>Novedades y protocolos de temporada</strong><small>{enabled ? 'Activado de forma opcional' : 'Desactivado'}</small></span></label><button type="button" className="portal-button portal-button--primary" disabled>Guardar preferencias</button><p className="portal-account-note">El contrato de actualización de preferencias todavía no está disponible en este cliente.</p></PortalAccountFrame> }
+function MarketingSurface({ clientId }: Pick<PortalAccountExperienceProps, 'clientId'>) {
+  const [enabled, setEnabled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(false)
+  const locale = 'es-ES'
+
+  useEffect(() => {
+    let cancelled = false
+    getPortalMarketingPreference(clientId, locale).then((preference) => {
+      if (!cancelled) { setEnabled(preference.enabled); setError(false) }
+    }).catch(() => { if (!cancelled) setError(true) }).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [clientId])
+
+  async function save() {
+    if (saving || loading) return
+    setSaving(true)
+    try {
+      const preference = await setPortalMarketingPreference(clientId, enabled, locale)
+      setEnabled(preference.enabled)
+      setError(false)
+    } catch {
+      setError(true)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return <PortalAccountFrame eyebrow="Comunicaciones" title="Preferencias de comunicación" description="Los avisos necesarios para tus servicios permanecen activos. Las novedades comerciales son opcionales y están desactivadas inicialmente."><label className="portal-toggle"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} disabled={loading || saving} /><span><strong>Novedades y protocolos de temporada</strong><small>{loading ? 'Consultando estado…' : enabled ? 'Activado de forma opcional' : 'Desactivado'}</small></span></label>{error ? <p className="portal-status portal-status--danger" role="alert">No se pudo consultar o guardar esta preferencia. No se ha modificado tu acceso.</p> : null}<button type="button" className="portal-button portal-button--primary" onClick={() => void save()} disabled={loading || saving}>{saving ? 'Guardando…' : 'Guardar preferencias'}</button><p className="portal-account-note">El consentimiento comercial es opcional, revocable y no afecta a membresías, servicios ni facturas.</p></PortalAccountFrame>
+}
 function SafeErrorSurface({ title, description }: { title: string; description: string }) { return <ActionUnavailable title={title} description={description} /> }
 function ActionUnavailable({ title, description }: { title: string; description: string }) { return <PortalAccountFrame eyebrow="Área de clientes" title={title} description={description}><span className="portal-status portal-status--warning">No disponible en este entorno</span><a className="portal-text-button" href="/portal/account">Volver a Cuenta</a></PortalAccountFrame> }
 function AccountLink({ label, value, href }: { label: string; value: string; href: string }) { return <a className="portal-summary-link" href={href}><span>{label}</span><strong>{value}</strong><small>Consultar</small></a> }

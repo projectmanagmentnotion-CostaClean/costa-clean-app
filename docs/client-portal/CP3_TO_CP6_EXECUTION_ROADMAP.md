@@ -4,7 +4,8 @@ Date: 2026-09-10
 
 Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
 `PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
-`OWNER_APPROVED`; CP-3B.5C `IMPLEMENTATION_PARTIAL`; CP-3C.1 onward
+`OWNER_APPROVED`; CP-3B.5C `IMPLEMENTATION_COMPLETE`; CP-3B.5D
+`CONTRACT_AND_WIRING_COMPLETE`; CP-3C.1 onward
 `NOT STARTED`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
@@ -27,8 +28,9 @@ the CP-3B.5C implementation gate once the owner approves the CP-3B.5B Stitch
 frames.
 
 CP-3B.5B was approved by the owner on 2026-09-10 in Stitch project
-`7915940018854753326`, iPhone `390x844` only. CP-3B.5C now integrates the
-approved direction in React without Supabase, CRM or production changes.
+`7915940018854753326`, iPhone `390x844` only. CP-3B.5C integrates the approved
+direction in React and CP-3B.5D wires the QA trusted contracts. No production
+or CRM changes were made.
 
 ## CP-3A — Portal UI foundation
 
@@ -327,6 +329,23 @@ approved direction in React without Supabase, CRM or production changes.
 | Honest unavailable states | Member-list read, invitation delivery, marketing persistence and onboarding submission remain pending until trusted server contracts are available |
 | Validation | Focused portal tests PASS; lint, QA build and diff-check PASS; full suite retains three known CP-3B.2A timeout failures |
 | Next gate | CP-3C authenticated visual, Console, Network and contract certification |
+
+## CP-3B.5D — Trusted contract gap closure and real UI wiring
+
+| Field | Specification |
+| --- | --- |
+| Status | `CONTRACT_AND_WIRING_COMPLETE` in QA |
+| Scope | Onboarding submission, member-safe reads, pending-invitation reads, revoke, and versioned marketing preference read/write |
+| QA migration | `20260910105357_portal_account_member_preferences_v1.sql`, applied with explicit QA authorization |
+| Edge deployment | `portal-account-actions` version 12 (`verify_jwt=true`); `portal-member-actions` version 11 (`verify_jwt=false`, handler-authenticated) |
+| Security | FORCE RLS retained; new RPCs execute only for `service_role`; no direct table writes from the client; no CRM overwrite |
+| Deferred | Authenticated browser evidence, Google provider verification, and invitation delivery; delivery remains CP-4.3 |
+| Validation | `633` tests passed, `4` skipped across `104` files; lint, QA build and diff check passed |
+| Production | No production migration, deployment, configuration, data, or request |
+
+The implementation gate is closed without claiming full certification. CP-3C
+remains the next separately scheduled authenticated QA gate and must not start
+automatically.
 
 ## CP-3C.1 — Controlled QA identities and fixtures
 

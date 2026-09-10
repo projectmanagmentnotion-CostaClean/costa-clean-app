@@ -34,6 +34,8 @@ export type PortalRequest =
       idempotencyKey: string
     }
   | { action: 'acceptInvitation'; token: string }
+  | { action: 'getMarketingPreference'; clientId: string; locale: string }
+  | { action: 'setMarketingPreference'; clientId: string; enabled: boolean; locale: string }
   | { action: 'submitProfileChange'; clientId: string; changes: JsonObject }
   | { action: 'submitPropertyChange'; clientId: string; propertyId: string; changes: JsonObject }
   | {
@@ -53,18 +55,20 @@ export type PortalRequest =
       expectedVersion: number
     }
   | { action: 'inviteMember'; clientId: string; email: string; role: string }
+  | { action: 'listMembers'; clientId: string }
+  | { action: 'listPendingInvitations'; clientId: string }
   | { action: 'revokeMember'; clientId: string; membershipId: string }
   | { action: 'downloadInvoice'; clientId: string; invoiceId: string; documentId: string }
 
 const surfaceActions: Record<PortalSurface, Set<PortalRequest['action']>> = {
-  account: new Set(['submitApplication', 'submitApplicationV2', 'acceptInvitation']),
+  account: new Set(['submitApplication', 'submitApplicationV2', 'acceptInvitation', 'getMarketingPreference', 'setMarketingPreference']),
   service: new Set([
     'submitProfileChange',
     'submitPropertyChange',
     'submitServiceRequest',
     'cancelServiceRequest',
   ]),
-  members: new Set(['inviteMember', 'revokeMember']),
+  members: new Set(['inviteMember', 'listMembers', 'listPendingInvitations', 'revokeMember']),
   invoice: new Set(['downloadInvoice']),
 }
 
@@ -99,6 +103,17 @@ export function validatePortalRequest(surface: PortalSurface, value: unknown): P
         || typeof value.token !== 'string'
         || !tokenPattern.test(value.token)) return null
       return { action, token: value.token }
+    case 'getMarketingPreference':
+      if (!hasExactKeys(value, ['action', 'clientId', 'locale'])
+        || !validClientId(value.clientId)
+        || typeof value.locale !== 'string' || !localePattern.test(value.locale)) return null
+      return { action, clientId: value.clientId, locale: value.locale }
+    case 'setMarketingPreference':
+      if (!hasExactKeys(value, ['action', 'clientId', 'enabled', 'locale'])
+        || !validClientId(value.clientId)
+        || typeof value.enabled !== 'boolean'
+        || typeof value.locale !== 'string' || !localePattern.test(value.locale)) return null
+      return { action, clientId: value.clientId, enabled: value.enabled, locale: value.locale }
     case 'submitApplicationV2':
       if (!hasExactKeys(value, [
         'action', 'customerType', 'firstName', 'lastName', 'legalName', 'tradeName', 'taxId',
@@ -196,6 +211,12 @@ export function validatePortalRequest(surface: PortalSurface, value: unknown): P
         || !emailPattern.test(value.email.trim())
         || !oneOf(value.role, ['client_admin', 'client_member'])) return null
       return { action, clientId: value.clientId, email: value.email.trim().toLowerCase(), role: value.role }
+    case 'listMembers':
+      if (!hasExactKeys(value, ['action', 'clientId']) || !validClientId(value.clientId)) return null
+      return { action, clientId: value.clientId }
+    case 'listPendingInvitations':
+      if (!hasExactKeys(value, ['action', 'clientId']) || !validClientId(value.clientId)) return null
+      return { action, clientId: value.clientId }
     case 'revokeMember':
       if (!hasExactKeys(value, ['action', 'clientId', 'membershipId'])
         || !validClientId(value.clientId)

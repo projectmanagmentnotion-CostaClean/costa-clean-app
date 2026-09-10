@@ -86,7 +86,7 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData, onSi
 
   if (page === 'account') {
     if (pathname !== '/portal/account') {
-      return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
+      return <PortalAccountExperience role={data.account.role} pathname={pathname} clientId={data.account.clientContextId} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
     }
     return (
       <PortalPageFrame
@@ -183,11 +183,11 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData, onSi
   }
 
   if (page === 'security') {
-    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} clientId={data.account.clientContextId} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   if (page === 'preferences') {
-    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} clientId={data.account.clientContextId} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   if (page === 'help') {
@@ -207,7 +207,7 @@ export function PortalPages({ page, pathname, data, getHref, onRefreshData, onSi
   }
 
   if (page === 'members') {
-    return <PortalAccountExperience role={data.account.role} pathname={pathname} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
+    return <PortalAccountExperience role={data.account.role} pathname={pathname} clientId={data.account.clientContextId} accountLabel={data.account.clientDisplayName} onSignOut={onSignOut} getHref={getHref} />
   }
 
   return (

@@ -165,6 +165,27 @@ async function dispatch(
       })
       return jsonResponse({ ok: true, result }, 200)
     }
+    case 'getMarketingPreference': {
+      const result = await rpc(configuration, dependencies.fetch, 'portal_get_marketing_preference_trusted', {
+        p_actor_user_id: user.id,
+        p_client_id: payload.clientId,
+        p_locale: payload.locale,
+        p_rate_limit_subject_hash: subject,
+        p_correlation_id: correlationUuid,
+      })
+      return jsonResponse({ ok: true, result }, 200)
+    }
+    case 'setMarketingPreference': {
+      const result = await rpc(configuration, dependencies.fetch, 'portal_set_marketing_preference_trusted', {
+        p_actor_user_id: user.id,
+        p_client_id: payload.clientId,
+        p_enabled: payload.enabled,
+        p_locale: payload.locale,
+        p_rate_limit_subject_hash: subject,
+        p_correlation_id: correlationUuid,
+      })
+      return jsonResponse({ ok: true, result }, 200)
+    }
     case 'submitProfileChange': {
       const id = await rpc(configuration, dependencies.fetch, 'portal_submit_profile_change_trusted', {
         p_actor_user_id: user.id,
@@ -238,6 +259,24 @@ async function dispatch(
       })
       if (!delivered) throw new Error('delivery_unavailable')
       return jsonResponse({ ok: true, invitationId }, 202)
+    }
+    case 'listMembers': {
+      const result = await rpc(configuration, dependencies.fetch, 'portal_list_members_trusted', {
+        p_actor_user_id: user.id,
+        p_client_id: payload.clientId,
+        p_rate_limit_subject_hash: subject,
+        p_correlation_id: correlationUuid,
+      })
+      return jsonResponse({ ok: true, result }, 200)
+    }
+    case 'listPendingInvitations': {
+      const result = await rpc(configuration, dependencies.fetch, 'portal_list_pending_invitations_trusted', {
+        p_actor_user_id: user.id,
+        p_client_id: payload.clientId,
+        p_rate_limit_subject_hash: subject,
+        p_correlation_id: correlationUuid,
+      })
+      return jsonResponse({ ok: true, result }, 200)
     }
     case 'revokeMember':
       if (dependencies.env('PORTAL_REQUIRE_AAL2_FOR_ADMIN') === 'true' && user.aal !== 'aal2') {
@@ -374,7 +413,11 @@ function readBearer(value: string | null): string | null {
 }
 
 function readNetworkValue(headers: Headers): string | null {
-  const forwarded = headers.get('x-forwarded-for')?.split(',', 1)[0].trim().toLowerCase()
+  const forwarded = [
+    headers.get('cf-connecting-ip'),
+    headers.get('x-real-ip'),
+    headers.get('x-forwarded-for')?.split(',', 1)[0],
+  ].find((value) => value?.trim())?.trim().toLowerCase()
   if (!forwarded || forwarded.length > 64 || !/^[0-9a-f:.]+$/iu.test(forwarded)) return null
   return forwarded
 }

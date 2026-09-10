@@ -64,4 +64,32 @@ describe('client portal strict contracts', () => {
     })).toBeNull()
     expect(validatePortalRequest('account', { action: 'acceptInvitation', token: 'too-short' })).toBeNull()
   })
+
+  it('accepts only the narrow account and member read/preference actions', () => {
+    expect(validatePortalRequest('members', {
+      action: 'listMembers',
+      clientId: CLIENT_A,
+    })).toMatchObject({ action: 'listMembers', clientId: CLIENT_A })
+    expect(validatePortalRequest('members', {
+      action: 'listPendingInvitations',
+      clientId: CLIENT_A,
+    })).toMatchObject({ action: 'listPendingInvitations', clientId: CLIENT_A })
+    expect(validatePortalRequest('account', {
+      action: 'getMarketingPreference',
+      clientId: CLIENT_A,
+      locale: 'es-ES',
+    })).not.toBeNull()
+    expect(validatePortalRequest('account', {
+      action: 'setMarketingPreference',
+      clientId: CLIENT_A,
+      enabled: false,
+      locale: 'es-ES',
+    })).not.toBeNull()
+    expect(validatePortalRequest('account', {
+      action: 'setMarketingPreference',
+      clientId: CLIENT_A,
+      enabled: false,
+      locale: 'España',
+    })).toBeNull()
+  })
 })

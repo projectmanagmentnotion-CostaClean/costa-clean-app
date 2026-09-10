@@ -141,6 +141,23 @@ describe('client portal Edge trust boundary', () => {
     expect(JSON.stringify(await response.json())).not.toContain(deliveredToken)
   })
 
+  it('dispatches account and member reads through trusted RPCs', async () => {
+    const cases = [
+      ['account', { action: 'getMarketingPreference', clientId: CLIENT_A, locale: 'es-ES' }, 'portal_get_marketing_preference_trusted'],
+      ['account', { action: 'setMarketingPreference', clientId: CLIENT_A, enabled: false, locale: 'es-ES' }, 'portal_set_marketing_preference_trusted'],
+      ['members', { action: 'listMembers', clientId: CLIENT_A }, 'portal_list_members_trusted'],
+      ['members', { action: 'listPendingInvitations', clientId: CLIENT_A }, 'portal_list_pending_invitations_trusted'],
+    ]
+    for (const [surface, body, functionName] of cases) {
+      const deps = dependencies()
+      deps.fetch.mockResolvedValueOnce(authResponse())
+      deps.fetch.mockResolvedValueOnce(new Response(JSON.stringify([]), { status: 200 }))
+      const response = await createPortalHandler(surface, deps)(request(body))
+      expect(response.status).toBe(200)
+      expect(deps.fetch.mock.calls[1][0]).toContain(`/rpc/${functionName}`)
+    }
+  })
+
   it('keeps service-role use outside frontend sources and forbids email ownership matching', () => {
     const handler = readFileSync('supabase/functions/_shared/portalHandler.ts', 'utf8')
     const contract = readFileSync('supabase/functions/_shared/portalContract.ts', 'utf8')

@@ -1,6 +1,18 @@
 ﻿import { getSupabaseClient } from '../../lib/supabase'
 
 export const EXPENSE_RECEIPTS_BUCKET = 'expense-receipts'
+export const EXPENSE_RECEIPT_MAX_BYTES = 10 * 1024 * 1024
+export const EXPENSE_RECEIPT_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'] as const
+
+export function validateExpenseReceipt(file: Pick<File, 'type' | 'size'>): string | null {
+  if (!EXPENSE_RECEIPT_MIME_TYPES.includes(file.type as (typeof EXPENSE_RECEIPT_MIME_TYPES)[number])) {
+    return 'El documento debe ser PDF, JPEG, PNG o WEBP.'
+  }
+  if (file.size > EXPENSE_RECEIPT_MAX_BYTES) {
+    return 'El documento no puede superar 10 MB.'
+  }
+  return null
+}
 
 function sanitizeFileName(fileName: string): string {
   const dotIndex = fileName.lastIndexOf('.')
@@ -25,6 +37,9 @@ export function buildExpenseReceiptPath(expenseId: string, fileName: string): st
 }
 
 export async function uploadExpenseReceipt(expenseId: string, file: File) {
+  const validationError = validateExpenseReceipt(file)
+  if (validationError) throw new Error(validationError)
+
   const { client, error } = getSupabaseClient()
 
   if (error || !client) {

@@ -47,6 +47,7 @@ import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '..
 import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
 import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
 import { V3InvoicesPage } from '../v3/invoices/V3InvoicesPage'
+import { V3InvoiceCreateFlow } from '../v3/invoices/V3InvoiceCreateFlow'
 import type { InvoiceModuleFilter } from '../app/moduleFilters'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
@@ -584,38 +585,7 @@ export function InvoicesPage({
           onBulkExportCsv={bulkExportInvoicesV3}
           onBulkSettle={bulkSettleInvoicesV3}
         />
-        {isCreateFormVisible ? (
-          <ActionFlowOverlay
-            isOpen={isCreateFormVisible}
-            title="Nueva factura"
-            description="La emisión se abre en el flujo financiero actual y conserva el cliente precargado."
-            onClose={() => {
-              setShowCreateForm(false)
-              setLocalCreatePrefill(null)
-              onPrefillConsumed()
-            }}
-          >
-            <Suspense fallback={<DeferredContentFallback title="Cargando flujo de factura" description="Preparando el formulario de emisión." />}>
-              <LazyInvoiceCreateFlow
-                clients={clients}
-                properties={properties}
-                jobs={jobs}
-                quotes={quotes}
-                invoices={allInvoices}
-                expenses={expenses}
-                onRefreshData={onInvoiceCreated}
-                onCompleted={handleInvoiceCreated}
-                prefill={effectiveCreatePrefill}
-                onCancel={() => {
-                  setShowCreateForm(false)
-                  setLocalCreatePrefill(null)
-                  onPrefillConsumed()
-                }}
-                onDirtyChange={setHasCreateFormDirty}
-              />
-            </Suspense>
-          </ActionFlowOverlay>
-        ) : null}
+        {isCreateFormVisible ? <V3InvoiceCreateFlow clients={clients} properties={properties} jobs={jobs} quotes={quotes} invoices={allInvoices} prefillClientId={effectiveCreatePrefill?.client_id} prefillJobId={effectiveCreatePrefill?.job_id} prefillQuoteId={effectiveCreatePrefill?.quote_id} onRefreshData={onInvoiceCreated} onCompleted={handleInvoiceCreated} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} /> : null}
       </>
     )
   }

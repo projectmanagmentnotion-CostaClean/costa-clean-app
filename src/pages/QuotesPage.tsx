@@ -458,6 +458,12 @@ export function QuotesPage({
           onOpenInvoiceDetail={onOpenInvoiceDetail}
           onOpenQuoteDeepLink={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
           onBackToQuoteList={() => onBackToQuoteList?.()}
+          duplicateGroups={duplicateGroups}
+          reviewStateByGroupId={reviewStateByGroupId}
+          onMarkDuplicateReviewed={markReviewed}
+          onIgnoreDuplicateGroup={ignoreGroup}
+          onReopenDuplicateGroup={reopenGroup}
+          onOpenDuplicateRecord={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
         />

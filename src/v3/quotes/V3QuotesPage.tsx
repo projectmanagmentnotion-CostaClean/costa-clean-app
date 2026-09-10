@@ -11,6 +11,8 @@ import type { QuoteLineItem, QuoteListItem } from '../../features/quotes/types'
 import { fetchSupabaseRestList } from '../../lib/supabaseRest'
 import { canConvertQuoteToInvoice } from '../../features/quotes/quoteConversion'
 import { V3BottomSheet, V3EntityListItem, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
+import { V3DuplicateReviewSheet } from '../components/V3DuplicateReviewSheet'
+import type { DuplicateGroup } from '../../features/duplicates/types'
 import { readQuoteDeepLink } from '../navigation/quoteDeepLink'
 import { useV3Selection } from '../selection/useV3Selection'
 import { V3SelectionActionSheet, V3SelectionBar, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
@@ -38,6 +40,12 @@ interface V3QuotesPageProps {
   onOpenInvoiceDetail: (invoiceId: string) => void
   onOpenQuoteDeepLink: (quoteId: string) => void
   onBackToQuoteList: () => void
+  duplicateGroups?: Array<DuplicateGroup<QuoteListItem>>
+  reviewStateByGroupId?: Record<string, 'open' | 'reviewed' | 'ignored'>
+  onMarkDuplicateReviewed?: (groupId: string) => void
+  onIgnoreDuplicateGroup?: (groupId: string) => void
+  onReopenDuplicateGroup?: (groupId: string) => void
+  onOpenDuplicateRecord?: (quoteId: string) => void
   activeFilter?: QuoteModuleFilter | null
   activeFilterLabel?: string | null
   onBulkDownload?: (quotes: QuoteListItem[]) => Promise<unknown>
@@ -112,6 +120,7 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
   const selection = useV3Selection({ visibleIds: visibleQuotes.map((quote) => quote.id), resetKey: `${filter}|${searchQuery}` })
   const [selectionSheet, setSelectionSheet] = useState(false)
   const [selectionResult, setSelectionResult] = useState<string | null>(null)
+  const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const selectedQuotes = quotesWithLines.filter((quote) => selection.selectedIds.includes(quote.id))
 
   function openQuote(quoteId: string) {
@@ -141,7 +150,7 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
   if (selectedQuote) return <V3QuoteWorkspace quote={selectedQuote} clients={props.clients} properties={props.properties} jobs={props.jobs} invoices={props.invoices} busy={busyQuoteId === selectedQuote.id} onBack={closeQuote} onDownload={() => props.onDownloadQuote(selectedQuote)} onShare={() => props.onShareQuote(selectedQuote)} onConvert={() => void convertQuote(selectedQuote)} onEdit={() => props.onEditQuote?.(selectedQuote)} onOpenClientWorkspace={props.onOpenClientWorkspace} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
 
   return <V3Page className="v3-quotes-page">
-    <V3PageTitle eyebrow="Propuesta comercial" title="Presupuestos" description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}Seguimiento comercial, documento y conversión real en una sola lectura.`} action={<><V3SelectionTrigger onClick={selection.enter} /><V3PrimaryAction onClick={props.onCreateQuote}>+ Nuevo presupuesto</V3PrimaryAction></>} />
+    <V3PageTitle eyebrow="Propuesta comercial" title="Presupuestos" description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}Seguimiento comercial, documento y conversión real en una sola lectura.`} action={<div className="v3-workspace-actions"><V3SelectionTrigger onClick={selection.enter} />{(props.duplicateGroups?.length ?? 0) > 0 ? <V3SecondaryAction onClick={() => setShowDuplicateReview(true)}>Revisar duplicados</V3SecondaryAction> : null}<V3PrimaryAction onClick={props.onCreateQuote}>+ Nuevo presupuesto</V3PrimaryAction></div>} />
     <V3KpiGroup><V3Kpi label="En curso" value={String(openQuotes.length)} hint="Borradores y enviados" /><V3Kpi label="Importe en curso" value={formatCurrency(openAmount)} hint="Total real" /><V3Kpi label="Aceptados" value={String(acceptedQuotes.length)} hint="Estado comercial" /></V3KpiGroup>
     <section className="v3-invoice-controls" aria-label="Buscar presupuestos"><label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Referencia, cliente o estado" /></label><button type="button" className="v3-filter-trigger" onClick={() => setIsFilterOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterOpen}>Filtros <span aria-hidden="true">⌄</span></button></section>
     <div className="v3-filter-tabs" role="tablist" aria-label="Estado del presupuesto">{([['all', 'Todos'], ['open', 'En curso'], ['accepted', 'Aceptados'], ['rejected', 'Rechazados'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}</div>
@@ -152,6 +161,7 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
     {selection.isSelectionMode ? <V3SelectionBar selectedCount={selection.selectedCount} visibleSelectedCount={selection.visibleSelectedCount} visibleCount={visibleQuotes.length} allVisibleSelected={selection.allVisibleSelected} onSelectVisible={selection.selectVisible} onActions={() => setSelectionSheet(true)} onCancel={selection.exit} /> : null}
     {selectionSheet ? <V3SelectionActionSheet onClose={() => setSelectionSheet(false)}><V3SecondaryAction onClick={() => { setSelectionSheet(false); void props.onBulkDownload?.(selectedQuotes).then(() => setSelectionResult(`${selectedQuotes.length} presupuesto(s) preparados en ZIP.`)) }} disabled={selectedQuotes.length === 0}>Descargar PDFs</V3SecondaryAction><V3PrimaryAction onClick={() => { setSelectionSheet(false); props.onBulkExportCsv?.(selectedQuotes); setSelectionResult(`${selectedQuotes.length} presupuesto(s) exportados.`) }} disabled={selectedQuotes.length === 0}>Exportar CSV</V3PrimaryAction></V3SelectionActionSheet> : null}
     {selectionResult ? <V3SelectionResultSheet message={selectionResult} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}
+    {showDuplicateReview && props.duplicateGroups?.length ? <V3DuplicateReviewSheet title="Revisión de presupuestos duplicados" description="Revisa coincidencias antes de crear o convertir otro presupuesto." groups={props.duplicateGroups} reviewStateByGroupId={props.reviewStateByGroupId} onMarkReviewed={props.onMarkDuplicateReviewed ?? (() => undefined)} onIgnoreGroup={props.onIgnoreDuplicateGroup ?? (() => undefined)} onReopenGroup={props.onReopenDuplicateGroup ?? (() => undefined)} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(quoteId) => { setShowDuplicateReview(false); props.onOpenDuplicateRecord?.(quoteId) }} /> : null}
   </V3Page>
 }
 

@@ -22,6 +22,7 @@ import type { NavigationGuard } from '../app/navigationGuard'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 import type { PaymentModuleFilter } from '../app/moduleFilters'
 import { V3PaymentsPage } from '../v3/payments/V3PaymentsPage'
+import { V3PaymentCreateFlow } from '../v3/payments/V3PaymentCreateFlow'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../features/payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -166,7 +167,7 @@ export function PaymentsPage({
   if (v3Mode) {
     return <>
       <V3PaymentsPage payments={payments} allPayments={allPayments} invoices={invoices} clients={clients} error={error} initialPaymentId={initialPaymentId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreatePayment={() => setShowCreateForm(true)} onRefresh={onPaymentCreated} onOpenInvoice={onOpenInvoiceDetail} onOpenClient={onOpenClientWorkspace} onOpenPaymentDeepLink={(paymentId) => onOpenPaymentDeepLink?.(paymentId)} onBackToPaymentList={() => onBackToPaymentList?.()} />
-      {showCreateForm ? <ActionFlowOverlay isOpen title="Registrar cobro" description="El cobro se registra con el contrato financiero existente y la factura sigue siendo el contexto principal." onClose={() => { setShowCreateForm(false); setHasCreateFormDirty(false) }}><Suspense fallback={<DeferredContentFallback title="Cargando flujo de cobro" description="Preparando el registro completo del cobro." />}><LazyPaymentCreateFlow invoices={invoices} clients={clients} properties={properties} jobs={jobs} quotes={quotes} payments={allPayments} onRefreshData={onPaymentCreated} onCompleted={handlePaymentFlowCompleted} onCancel={() => { setShowCreateForm(false); setHasCreateFormDirty(false) }} onDirtyChange={setHasCreateFormDirty} /></Suspense></ActionFlowOverlay> : null}
+      {showCreateForm ? <V3PaymentCreateFlow invoices={invoices} clients={clients} payments={allPayments} onRefreshData={onPaymentCreated} onCompleted={handlePaymentFlowCompleted} onCancel={() => { setShowCreateForm(false); setHasCreateFormDirty(false) }} onDirtyChange={setHasCreateFormDirty} /> : null}
       {unresolvedDuplicateGroups.length > 0 ? <DuplicateReviewOverlay isOpen={showDuplicateReview} title="Revisión de cobros duplicados" description="Coincidencias por factura, fecha, importe o método. Revisa antes de registrar otro cobro." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(paymentId) => { setShowDuplicateReview(false); onOpenPaymentDeepLink?.(paymentId) }} /> : null}
     </>
   }

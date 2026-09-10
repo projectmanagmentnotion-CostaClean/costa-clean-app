@@ -1400,7 +1400,7 @@ export function AppShell({
                   clients={clientsWithContext}
                   properties={properties}
                   error={quoteError}
-                  onQuoteCreated={refreshOperations}
+                  onQuoteCreated={refreshBilling}
                   onInvoicesChanged={reloadInvoicesAndPayments}
                   onCreateJobFromQuote={handleCreateJobFromQuote}
                   onOpenClientWorkspace={handleOpenClientWorkspace}

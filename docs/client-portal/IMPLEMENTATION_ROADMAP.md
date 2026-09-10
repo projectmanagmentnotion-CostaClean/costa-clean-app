@@ -1,14 +1,14 @@
 # Client Portal Implementation Roadmap
 
-Date: 2026-08-04
-Current state: CP-0/CP-1/CP-2A/CP-2A.1/CP-2A.2/CP-2A.3/CP-2A.4/CP-2B/CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1/CP-3B.2A/CP-3B.2A.1/CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5 and CP-3B.2A real QA closeout complete; CP-3B.2A.6R.1E prepared; CP-3B.2A.2 remains blocked by missing V2 detail; CP-3B.2 authorized and in progress
+Date: 2026-09-10
+Current state: CP-3B.2 implementation, CP-3B.3 implementation, CP-3B.4 implementation and CP-3B.5A backend QA contract are complete or partial as recorded below; authenticated runtime certification remains a separate evidence gate.
 
 ## Progress and execution authority
 
 - Weighted scope estimate: approximately **65% complete / 35% remaining**.
 - This is a scope-weighted orientation, not an hours or delivery-date estimate.
-- Next gate: **CP-3B.2 frontend implementation**, following the documented
-  documentation reconciliation and local-only implementation scope.
+- Current design gate: **CP-3B.5B — complete iPhone Stitch design package**, pending
+  owner visual approval before implementation.
 - Detailed executable sequence:
   [`CP3_TO_CP6_EXECUTION_ROADMAP.md`](./CP3_TO_CP6_EXECUTION_ROADMAP.md).
 - Agent permissions and separation of duties:
@@ -38,6 +38,58 @@ the exact prestate; its authorization is exhausted. CP-3B.2A.2 demonstrates
   blocked and CP-3B.3 has not started. This
 document remains the canonical status roadmap; the
 detailed roadmap expands it without changing its authority.
+
+## Current Reconciliation — 2026-09-10
+
+This section is authoritative for current sequencing. Earlier paragraphs and
+dated closeout notes are retained as historical evidence and are not reopened.
+
+- **CP-3B.2:** implementation complete; exact `390x844` visual/telemetry
+  certification debt remains explicit.
+- **CP-3B.3:** `PARTIAL — implementation complete; authenticated Console,
+  Network and same-key browser evidence remain certification debt`.
+- **CP-3B.4:** `PARTIAL — implementation complete; authenticated download,
+  expiry and denial evidence remain certification debt`.
+- **CP-3B.5A:** `PARTIAL — backend QA contract deployed; authenticated E2E and
+  provider configuration evidence remain pending`.
+- **CP-3B.5B:** `STITCH_OWNER_REVIEW_PENDING`. Block 1 was generated in the
+  existing `Costa Clean Client Portal` Stitch project at iPhone `390x844`.
+  Block 2 is intentionally not created until owner approval.
+- **CP-3C.1/CP-3C.2/CP-3C.3:** `NOT STARTED`. Their final authenticated and
+  visual certification work consumes the carried evidence debt; it does not
+  block the CP-3B.5C implementation gate by status label alone.
+- **CP-4, CP-5 and CP-6:** `NOT STARTED`.
+
+Dependency semantics: an implementation gate may proceed when its source,
+contract and design prerequisites are complete. Final authenticated QA,
+provider verification and owner approval are independent certification gates;
+they must remain visible as debt and cannot be silently treated as PASS.
+
+### CP-3B.5B — Stitch owner-review package
+
+Status: `STITCH_OWNER_REVIEW_PENDING`
+
+Project: `Costa Clean Client Portal` (Stitch ID `7915940018854753326`)
+
+Viewport: iPhone `390x844` only. Generated Block 1 frames:
+
+- `PORTAL_LOGIN_GOOGLE_V1`
+- `PORTAL_ONBOARDING_TYPE_V1`
+- `PORTAL_ONBOARDING_INDIVIDUAL_V1`
+- `PORTAL_ONBOARDING_BUSINESS_V1`
+- `PORTAL_ONBOARDING_BILLING_V1`
+- `PORTAL_ONBOARDING_PRIVACY_MARKETING_V1`
+- `PORTAL_ONBOARDING_REVIEW_V1`
+- `PORTAL_ONBOARDING_PENDING_REVIEW_V1`
+
+The existing approved Profile, Properties, Property Detail, Property
+Correction, six-cell navigation and independent WhatsApp action were preserved.
+No iPad/desktop frames, React code or runtime changes were made. Block 2
+(members, security, legal and reusable error states) is deferred pending owner
+approval. Stitch's internal numeric frame identifiers are not exposed in the
+current project view; the names above are the exact owner-review identifiers.
+
+Next gate after owner approval: **CP-3B.5C — implement approved Stitch UI**.
 
 CP-3B.2A QA application V6R1E remains the current reproducible rebaseline gate.
 It is still separate from the full CP-3B.2 Definition of Ready. The real QA
@@ -232,7 +284,7 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   two-session concurrency harness passed and cleanup left zero residual QA or
   production writes. This closeout does not authorize CP-3B.2 or later gates.
 - **CP-3B.2 — Profile and properties:**
-  `AUTHORIZED_AND_IN_PROGRESS`; account context, read models and reviewed
+  `IMPLEMENTATION_COMPLETE — 390x844 visual/telemetry certification debt`; account context, read models and reviewed
   change requests without canonical-table writes. The customer-safe canonical
   status and opaque-ID mappings are frozen and the frontend implementation is
   the active gate. Local implementation now includes the isolated `/portal`
@@ -259,12 +311,16 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
   `documentId` contract are implemented. Status: `PARTIAL — authenticated
   browser download, expiry and negative authorization evidence pending`.
   Evidence: `CP3B4_INVOICES_PRIVATE_DOCUMENTS.md`.
-- **CP-3B.5 — Members, security and legal acceptance:** client roles,
+- **CP-3B.5A — Backend members, security and onboarding contract:** client roles,
   invitations/revocation, account security, versioned terms and layered privacy.
   Current audit status: `PARTIAL — backend QA deployed; authenticated E2E
   identity/configuration pending`. Evidence:
   `CP3B5_ACCOUNT_SECURITY_GOOGLE_ONBOARDING.md` and
   `cp3b5a_qa_package.manifest.json`. Production remains unchanged.
+- **CP-3B.5B — Stitch owner-review package:**
+  `STITCH_OWNER_REVIEW_PENDING`; the eight iPhone Block 1 frames are recorded
+  in the current reconciliation above. No code or runtime work is authorized
+  by this design-only gate.
 - **2026-09-10 authenticated certification attempt:** the available Chrome
   portal tab was unauthenticated at `/portal/login`. CP-3B.4 download/expiry/
   denial evidence and CP-3B.5A authenticated onboarding evidence remain

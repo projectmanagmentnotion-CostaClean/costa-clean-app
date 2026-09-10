@@ -1,12 +1,10 @@
 # Client Portal CP-3 to CP-6 Execution Roadmap
 
-Date: 2026-08-04
+Date: 2026-09-10
 
-Status: CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA application/CP-3B.1,
-CP-3B.2A and CP-3B.2A.1 `DONE`; CP-3B.2A real QA closeout `DONE`; CP-3B.2A.2
-`BLOCKED_PENDING_EXACT_TRIGGER_EVIDENCE`; CP-3B.2A.3/CP-3B.2A.4/CP-3B.2A.5
-`DONE`; CP-3B.2 `AUTHORIZED_AND_IN_PROGRESS`; CP-3B.3 `BLOCKED_PENDING_AUTHENTICATED_BROWSER_PROOF_AND_RESIDUE`; later gates
-`NOT STARTED`
+Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
+`PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
+`STITCH_OWNER_REVIEW_PENDING`; CP-3C.1 onward `NOT STARTED`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -17,6 +15,21 @@ Start every block with `project-continuation`, confirm its Definition of Ready,
 and close it independently before opening the next gate. Remote QA, production,
 WordPress and email-provider operations always need their own exact human gate.
 Suggested file paths are forecasts, not permission to rewrite those modules.
+
+## Current sequencing reconciliation — 2026-09-10
+
+Implementation readiness and final certification are separate gates. CP-3B.3,
+CP-3B.4 and CP-3B.5A have implementation/backend evidence but retain explicit
+authenticated-browser or provider evidence debt. That debt is carried into the
+appropriate QA gate and is not represented as a false PASS. It does not prevent
+the CP-3B.5C implementation gate once the owner approves the CP-3B.5B Stitch
+frames.
+
+CP-3B.5B is design-only and owner-review pending in Stitch project
+`7915940018854753326`, iPhone `390x844` only. Block 1 contains the eight named
+Google/login/onboarding frames; Block 2 remains intentionally uncreated until
+owner approval. No React, Supabase, CRM or production work is part of this
+gate.
 
 ## CP-3A — Portal UI foundation
 
@@ -199,10 +212,10 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `AUTHORIZED_AND_IN_PROGRESS` |
+| Status | `IMPLEMENTATION_COMPLETE — certification debt carried` |
 | Objective | Present account context, profile and properties through narrow read models and reviewed change requests. |
 | User outcome | A client sees only their account/property data and can request a correction without directly rewriting CRM records. |
-| Dependencies | CP-3B.1, CP-3B.2A, CP-3B.2A.1, CP-3B.2A.3, CP-3B.2A.4 and CP-3B.2A.5 are closed; CP-3B.2A.2 remains blocked. The reviewed-change migration still requires separately authorized V5 QA application; customer-safe canonical-status and opaque-ID mappings must then be frozen before implementation. |
+| Dependencies | Source contract and reviewed-change QA evidence are closed. Exact `390x844` visual/telemetry certification remains a separate carried debt. |
 | Agents | Primary `senior-fullstack-builder`; specialists `frontend-ux-accessibility`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Account context, profile, property list/detail, change-request StepFlow, loading/empty/error/forbidden states. |
 | Out of scope | Direct `clients`/`properties` updates, address normalization rewrite, staff approval UI and cross-client support access. |
@@ -217,16 +230,16 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Direct canonical write, user-supplied client ID trusted, internal/fiscal field exposure or request saved without receipt. |
 | Closeout documentation | Field exposure map, denial evidence, reviewed-request behavior and next gate. |
 | Expected commit | `feat: add portal profile and property views` |
-| Next gate | CP-3B.3 after CP-3B.2 closes |
+| Next gate | CP-3B.3 implementation is complete; authenticated certification debt is carried forward |
 
 ## CP-3B.3 — Services and requests
 
 | Field | Specification |
 |---|---|
-| Status | `BLOCKED_PENDING_AUTHENTICATED_BROWSER_PROOF_AND_RESIDUE` |
+| Status | `PARTIAL — implementation complete; authenticated certification pending` |
 | Objective | Expose service history and a real pending-review service-request lifecycle. |
 | User outcome | Clients can inspect their services, submit/cancel eligible requests and see truthful review status. |
-| Dependencies | CP-3B.2 closed; request RPC/Edge contracts, allowed transitions and idempotency rules verified. |
+| Dependencies | CP-3B.2 implementation and request RPC/Edge contracts are complete; authenticated browser proof remains a certification dependency. |
 | Agents | Primary `senior-fullstack-builder`; specialists `business-rules-test-engineer`, `qa-e2e-specialist`; reviewer `pr-quality-gate`. |
 | In scope | Service list/detail, request StepFlow, pending-review receipt, eligible cancellation, idempotency and retry feedback. |
 | Out of scope | Auto-booking, staff scheduling, price commitment, invoice creation, direct `jobs/services` writes and simulated saves. |
@@ -247,10 +260,10 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `PARTIAL — implementation complete; authenticated certification pending` |
 | Objective | Provide read-only invoice views and expiring private document downloads. |
 | User outcome | A client sees only their invoices/payment status and can download an authorized PDF through a 60-second signed URL. |
-| Dependencies | CP-3B.3 closed; private bucket and signing boundary verified; no financial writes required. |
+| Dependencies | CP-3B.3 implementation and private signing boundary are complete; authenticated download/expiry/denial proof remains pending. |
 | Agents | Primary `senior-fullstack-builder`; specialists `business-rules-test-engineer`, `security-privacy-auditor`, `supabase-guardian`; reviewer `pr-quality-gate`. |
 | In scope | Invoice list/detail, payment-state display, request-to-sign/download, expiry and safe missing/forbidden errors. |
 | Out of scope | Invoice/payment edits, regeneration, numbering, fiscal close, public objects, permanent URLs and frontend signing keys. |
@@ -267,14 +280,14 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Expected commit | `feat: add private portal invoice downloads` |
 | Next gate | CP-3B.5 |
 
-## CP-3B.5 — Members, security and legal acceptance
+## CP-3B.5A — Backend members, security, legal acceptance and onboarding contract
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `PARTIAL — backend QA deployed; authenticated E2E/provider evidence pending` |
 | Objective | Expose bounded membership administration, account security and versioned legal acceptance. |
 | User outcome | A `client_admin` can invite/revoke members; members understand security and accept current portal terms separately from privacy/marketing/cookies. |
-| Dependencies | CP-3B.4 closed; role matrix, invitation lifecycle, acceptance versions and legal copy specifications approved. |
+| Dependencies | CP-3B.4 implementation is complete; authenticated document evidence remains carried debt. Role matrix, invitation lifecycle, acceptance versions and legal copy specifications are defined. |
 | Agents | Primary `senior-fullstack-builder`; specialists `security-privacy-auditor`, `enterprise-agent-architect`; reviewer `pr-quality-gate`. |
 | In scope | `client_admin`/`client_member`, invitation/revocation UI, account security, versioned terms, layered privacy and a separate email-adapter interface. |
 | Out of scope | Email provider deployment, public signup, marketing opt-in bundling, cookie consent, production members and professional legal approval claim. |
@@ -289,7 +302,21 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Stop conditions | Role escalation, token exposure, bundled consent, ambiguous legal version or provider mutation. |
 | Closeout documentation | Role/acceptance evidence, legal-review debt, email-adapter boundary and next gate. |
 | Expected commit | `feat: add portal members and legal acceptance` |
-| Next gate | CP-3C.1 |
+| Next gate | CP-3B.5B owner visual approval, then CP-3B.5C implementation |
+
+## CP-3B.5B — Complete Stitch design gate
+
+| Field | Specification |
+|---|---|
+| Status | `STITCH_OWNER_REVIEW_PENDING` |
+| Objective | Produce owner-reviewable iPhone frames for Google login and the complete onboarding flow without implementing code. |
+| Project | `Costa Clean Client Portal`; Stitch ID `7915940018854753326` |
+| Viewport | iPhone `390x844` only; no iPad or desktop |
+| Generated frames | `PORTAL_LOGIN_GOOGLE_V1`, `PORTAL_ONBOARDING_TYPE_V1`, `PORTAL_ONBOARDING_INDIVIDUAL_V1`, `PORTAL_ONBOARDING_BUSINESS_V1`, `PORTAL_ONBOARDING_BILLING_V1`, `PORTAL_ONBOARDING_PRIVACY_MARKETING_V1`, `PORTAL_ONBOARDING_REVIEW_V1`, `PORTAL_ONBOARDING_PENDING_REVIEW_V1` |
+| Preserved | Approved Profile/Properties frames, six-cell navigation, Más bottom sheet and independent WhatsApp action |
+| Deferred | Block 2 member/security/legal/error frames until owner approval; internal Stitch numeric frame IDs are not exposed in the current project view |
+| Out of scope | React, routing, Supabase, CRM, production, iPad/desktop and authenticated QA |
+| Next gate | CP-3B.5C — implement approved Stitch UI |
 
 ## CP-3C.1 — Controlled QA identities and fixtures
 
@@ -298,7 +325,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Status | `NOT STARTED` |
 | Objective | Create a separately authorized, deterministic synthetic dataset for final QA. |
 | User outcome | No direct feature change; the team gains safe evidence for roles, states and cross-client isolation. |
-| Dependencies | CP-3B.5 closed; exact QA identity, backup, manifest, fixtures, ledger and cleanup reviewed; independent human authorization. |
+| Dependencies | CP-3B.5 implementation gates are complete; final authenticated evidence debt is explicit. Exact QA identity, backup, manifest, fixtures, ledger and cleanup still require independent human authorization. |
 | Agents | Primary `qa-e2e-specialist`; specialists `supabase-guardian`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Controlled QA users, two synthetic clients, admin/member and pending/suspended/revoked states, exact private ledger and cleanup. |
 | Out of scope | Real PII, production, public signup, canonical financial data and untracked manual fixtures. |
@@ -322,7 +349,7 @@ Suggested file paths are forecasts, not permission to rewrite those modules.
 | Status | `NOT STARTED` |
 | Objective | Prove portal journeys and denial boundaries end to end with controlled QA identities. |
 | User outcome | Evidence shows each client can use intended features and cannot reach another client's data or revoked states. |
-| Dependencies | CP-3C.1 fixtures active; visible QA environment; exact cleanup and stop criteria available. |
+| Dependencies | CP-3C.1 fixtures active; carried CP-3B.3/3B.4/3B.5A authenticated evidence debt is in scope; visible QA environment and exact cleanup stop criteria available. |
 | Agents | Primary `qa-e2e-specialist`; specialists `security-privacy-auditor`, `supabase-guardian`; reviewer `pr-quality-gate`. |
 | In scope | Login, isolation, revoked/suspended, invitation replay, requests, cancellation, invoice download/expiry and cleanup. |
 | Out of scope | Production smoke, load testing, real customer journeys and defect fixes unrelated to reproduced failures. |

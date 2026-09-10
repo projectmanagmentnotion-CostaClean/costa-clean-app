@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "identity": "CP3C1_CONTROLLED_QA_IDENTITIES_FIXTURES_V1",
+  "gate": "CP-3C.1",
+  "status": "FIXTURES_ACTIVE_READY_FOR_CP3C2",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp3c1_qa_fixture_plan.mjs",
+      "sha256": "8b4485574847cbd943784878c4698e527dc023d86e53f5d33f5b4f0cf0f5a209"
+    },
+    {
+      "path": "scripts/client-portal/cp3c1_qa_fixture_cleanup.mjs",
+      "sha256": "b034868d222e0ef71c79bcc7d17312ffd021fdaf3625b3fcf994d8d7a8c970b4"
+    },
+    {
+      "path": "scripts/client-portal/cp3c1FixturePackage.test.mjs",
+      "sha256": "dfc6046b09441f5152c3d243e75cf0dda32cbc4119b64cbf52426da19e78fb80"
+    },
+    {
+      "path": "docs/client-portal/CP3C1_CONTROLLED_QA_IDENTITIES_AND_FIXTURES.md",
+      "sha256": "747d7d6ff68bff9c25b854ab1973fb274eef8b75034dc43209c5325859ddb231"
+    }
+  ],
+  "remoteEffects": {
+    "target": "QA_ONLY",
+    "productionWrites": 0,
+    "productionAuthMutations": 0,
+    "googleProviderChanges": 0,
+    "emailDelivery": 0,
+    "financialFixtureWrites": 0,
+    "cleanupMode": "DRY_RUN_ONLY"
+  },
+  "privateArtifacts": {
+    "ledgerPath": ".auth/cp3c1/ledger.json",
+    "prestatePath": ".auth/cp3c1/prestate.json",
+    "gitTracked": 0
+  },
+  "nextGate": "CP-3C.2"
+}

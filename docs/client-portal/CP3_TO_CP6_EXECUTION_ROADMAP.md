@@ -351,23 +351,23 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `FIXTURES_ACTIVE_READY_FOR_CP3C2` |
 | Objective | Create a separately authorized, deterministic synthetic dataset for final QA. |
 | User outcome | No direct feature change; the team gains safe evidence for roles, states and cross-client isolation. |
-| Dependencies | CP-3B.5 implementation gates are complete; final authenticated evidence debt is explicit. Exact QA identity, backup, manifest, fixtures, ledger and cleanup still require independent human authorization. |
+| Dependencies | CP-3B.5 implementation gates are complete; final authenticated evidence debt is explicit. QA identity, backup, manifest, fixtures, private ledger and cleanup authorization are recorded in the CP-3C.1 closeout. |
 | Agents | Primary `qa-e2e-specialist`; specialists `supabase-guardian`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
 | In scope | Controlled QA users, two synthetic clients, admin/member and pending/suspended/revoked states, exact private ledger and cleanup. |
 | Out of scope | Real PII, production, public signup, canonical financial data and untracked manual fixtures. |
 | Likely files/modules | Frozen QA fixture/cleanup tooling and private ignored ledger only; versioned changes require a separate reviewed gate. |
 | Definition of Ready | QA triple identity, 9/9 private inputs if applicable, backup/manifest, exact IDs strategy, hashes, cleanup and authorization all pass. |
-| Implementation steps | Preflight; record ledger; create only authorized identities/fixtures; verify expected counts/states; preserve cleanup handles. |
+| Implementation steps | Preflight, ledger and prestate recorded; authorized QA identities/fixtures created; expected counts/states verified; exact cleanup handles preserved. |
 | Acceptance | Two clients and all planned roles/states exist, are synthetic and deterministic; no real/cross-environment data; cleanup is executable. |
-| Validations | Target identity, hashes, backup, fixture counts, private-file tracking zero, production rejection and dry cleanup verification. |
+| Validations | Target identity, hashes, backup, manifest, fixture counts, private-file tracking zero, production rejection and dry cleanup verification passed. |
 | Visual QA | Not required beyond confirming identities can reach intended portal states; UI assertions belong to CP-3C.2/3. |
 | Security/privacy | Synthetic names/emails, secrets only in ignored private files, least privilege and no values printed. |
 | Rollback | Run exact ledger-bound cleanup, verify zero synthetic residue and restore only from backup if the approved recovery condition occurs. |
 | Stop conditions | Target ambiguity, production appearance, missing backup/ledger, real PII, hash drift or cleanup not proven. |
-| Closeout documentation | Sanitized counts, authorization reference, cleanup plan and next gate; never commit private IDs. |
+| Closeout documentation | Sanitized counts, authorization reference, cleanup plan and next gate recorded; secrets remain private and untracked. |
 | Expected commit | `test: prepare controlled client portal QA fixtures` |
 | Next gate | CP-3C.2 |
 

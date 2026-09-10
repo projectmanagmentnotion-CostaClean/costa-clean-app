@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. Authenticated runtime/provider certification remains separate debt.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt.
 
 ## Progress and execution authority
 
@@ -64,7 +64,10 @@ dated closeout notes are retained as historical evidence and are not reopened.
   RPCs. Authenticated browser certification, Google provider verification and
   invitation delivery remain explicit debt; invitation delivery is deferred to
   CP-4.3.
-- **CP-3C.1/CP-3C.2/CP-3C.3:** `NOT STARTED`. Their final authenticated and
+- **CP-3C.1:** `FIXTURES_ACTIVE_READY_FOR_CP3C2`. The separately authorized QA
+  identities, deterministic states, protected prestate, private ledger,
+  sanitized manifest and dry-run cleanup package are active in QA only.
+- **CP-3C.2/CP-3C.3:** `NOT STARTED`. Their final authenticated and
   visual certification work consumes the carried evidence debt; it does not
   block the CP-3B.5C implementation gate by status label alone.
 - **CP-4, CP-5 and CP-6:** `NOT STARTED`.

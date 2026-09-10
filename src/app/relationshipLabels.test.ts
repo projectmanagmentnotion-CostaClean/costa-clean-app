@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatClientLabel, formatInvoiceLabel, isTechnicalUuid, toUserFacingReference } from './relationshipLabels'
+import { formatClientLabel, formatExpenseLabel, formatInvoiceLabel, formatPaymentLabel, isTechnicalUuid, toUserFacingReference } from './relationshipLabels'
 
 const uuid = 'e1643c33-ae20-48cd-a2c7-99fd41184533'
 
@@ -19,5 +19,12 @@ describe('user-facing relationship labels', () => {
     expect(formatInvoiceLabel({ id: uuid, display_code: 'INV-0042', invoice_number: '2026-045', client_name: 'Hotel Las Vegas' })).toBe('INV-0042 - 2026-045 - Hotel Las Vegas')
     expect(formatClientLabel({ id: uuid, full_name: 'Hotel Las Vegas' })).toBe('Hotel Las Vegas')
     expect(formatClientLabel({ id: uuid, display_code: 'CLIENT-0012', full_name: 'Hotel Las Vegas' })).toBe('CLIENT-0012 - Hotel Las Vegas')
+  })
+
+  it('sanitizes payment and expense labels without losing human references', () => {
+    expect(formatPaymentLabel({ id: uuid, display_code: uuid })).toBe('Cobro')
+    expect(formatPaymentLabel({ id: uuid, display_code: 'PAY-0042' })).toBe('PAY-0042')
+    expect(formatExpenseLabel({ id: uuid, display_code: uuid })).toBe('Gasto')
+    expect(formatExpenseLabel({ id: uuid, display_code: 'EXP-0021' })).toBe('EXP-0021')
   })
 })

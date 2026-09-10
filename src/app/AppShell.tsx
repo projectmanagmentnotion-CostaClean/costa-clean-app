@@ -60,7 +60,7 @@ import { resolveFiscalPeriod } from '../features/closing/fiscalPeriods'
 import { buildRecurringPlanPersistenceInput } from '../features/recurringInvoices/planPersistence'
 import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../features/recurringInvoices/recurringInvoiceApi'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
-import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relationshipLabels'
+import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel, toUserFacingReference } from './relationshipLabels'
 import { buildQuoteCreatePrefillFromClient } from '../features/quotes/quoteCreatePrefill'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
@@ -78,6 +78,7 @@ import { readJobDeepLink, writeJobDeepLink } from '../v3/jobs/jobDeepLink'
 import { readPaymentDeepLink, writePaymentDeepLink } from '../v3/navigation/paymentDeepLink'
 import { readExpenseDeepLink, writeExpenseDeepLink } from '../v3/navigation/expenseDeepLink'
 import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
+import { V3ConfirmSheet } from '../v3/components/V3Primitives'
 import { V3HomePage } from '../v3/home/V3HomePage'
 import { V3AlertsPage } from '../v3/alerts/V3AlertsPage'
 import { V3ClosingPage } from '../v3/closing/V3ClosingPage'
@@ -467,7 +468,7 @@ export function AppShell({
       const linkedInvoice = invoiceById.get(payment.invoice_id)
       return {
         ...payment,
-        invoice_display_code: linkedInvoice?.display_code ?? payment.invoice_id,
+        invoice_display_code: toUserFacingReference(linkedInvoice?.display_code),
         invoice_number: linkedInvoice?.invoice_number ?? null,
       }
     }),
@@ -1543,15 +1544,25 @@ export function AppShell({
           <p>{latestIntakeNotification.summary}</p>
         </div>
       ) : null}
-      <ConfirmDialog
-        isOpen={Boolean(pendingGuardedAction)}
-        title={pendingGuardedAction?.title ?? 'Salir sin guardar'}
-        description={pendingGuardedAction?.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
-        confirmLabel={pendingGuardedAction?.confirmLabel ?? 'Salir sin guardar'}
-        tone="warning"
-        onCancel={() => setPendingGuardedAction(null)}
-        onConfirm={handleConfirmGuardedAction}
-      />
+      {v3Enabled ? (
+        pendingGuardedAction ? <V3ConfirmSheet
+          title={pendingGuardedAction.title ?? 'Salir sin guardar'}
+          description={pendingGuardedAction.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
+          confirmLabel={pendingGuardedAction.confirmLabel ?? 'Salir sin guardar'}
+          onCancel={() => setPendingGuardedAction(null)}
+          onConfirm={handleConfirmGuardedAction}
+        /> : null
+      ) : (
+        <ConfirmDialog
+          isOpen={Boolean(pendingGuardedAction)}
+          title={pendingGuardedAction?.title ?? 'Salir sin guardar'}
+          description={pendingGuardedAction?.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
+          confirmLabel={pendingGuardedAction?.confirmLabel ?? 'Salir sin guardar'}
+          tone="warning"
+          onCancel={() => setPendingGuardedAction(null)}
+          onConfirm={handleConfirmGuardedAction}
+        />
+      )}
     </main>
   )
 }

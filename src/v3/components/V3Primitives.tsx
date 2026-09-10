@@ -1,4 +1,4 @@
-import type { InputHTMLAttributes, MouseEvent, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react'
+import { useEffect, type InputHTMLAttributes, type MouseEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
 export type V3IconName = 'back' | 'chevronDown'
 
@@ -79,6 +79,15 @@ export function V3QuickAction({ children, onClick, disabled = false }: V3ActionP
 
 export function V3BottomSheet({ title, children, onClose }: { title: string; children: ReactNode; onClose: () => void }) {
   return <div className="v3-bottom-sheet__layer"><button type="button" className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section className="v3-bottom-sheet" role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header"><h2>{title}</h2><button type="button" className="v3-action v3-action--secondary" onClick={onClose}>Cerrar</button></div>{children}</section></div>
+}
+
+export function V3ConfirmSheet({ title, description, confirmLabel, cancelLabel = 'Cancelar', busy = false, onConfirm, onCancel }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; busy?: boolean; onConfirm: () => void; onCancel: () => void }) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === 'Escape' && !busy) onCancel() }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [busy, onCancel])
+  return <V3BottomSheet title={title} onClose={onCancel}><p>{description}</p><div className="v3-workspace-actions"><V3SecondaryAction onClick={onCancel} disabled={busy}>{cancelLabel}</V3SecondaryAction><V3PrimaryAction onClick={onConfirm} disabled={busy}>{busy ? 'Procesando…' : confirmLabel}</V3PrimaryAction></div></V3BottomSheet>
 }
 
 export function V3Field({ label, children }: { label: string; children: ReactNode }) {

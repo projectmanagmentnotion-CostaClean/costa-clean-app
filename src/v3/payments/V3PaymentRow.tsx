@@ -1,5 +1,5 @@
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
-import { formatInvoiceLabel } from '../../app/relationshipLabels'
+import { formatInvoiceLabel, formatPaymentLabel, toUserFacingReference } from '../../app/relationshipLabels'
 import { getPaymentOriginLabel } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
@@ -14,10 +14,10 @@ interface V3PaymentRowProps {
 
 export function V3PaymentRow({ payment, invoice, clientName, onOpen }: V3PaymentRowProps) {
   return (
-    <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir cobro ${payment.display_code ?? payment.id}`}>
+    <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir ${formatPaymentLabel(payment)}`}>
       <div className="v3-payment-row__main">
         <strong>{formatCurrency(payment.amount)}</strong>
-        <span>{invoice ? formatInvoiceLabel(invoice) : payment.invoice_display_code ?? payment.invoice_id}</span>
+        <span>{invoice ? formatInvoiceLabel(invoice) : toUserFacingReference(payment.invoice_display_code) ?? 'Factura vinculada'}</span>
         <small>{clientName} · {formatDateEs(payment.payment_date)}</small>
       </div>
       <div className="v3-payment-row__side">

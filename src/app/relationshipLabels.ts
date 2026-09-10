@@ -186,3 +186,12 @@ export function formatRecurringPlanLabel(plan: {
   const context = normalizeText(plan.property_name ?? plan.client_name ?? plan.property_display_code ?? plan.client_display_code)
   return withFallback(joinLabelParts(code, descriptor, context), 'Plan sin referencia')
 }
+
+export function formatPaymentLabel(payment: { id?: NullableText; display_code?: NullableText }): string {
+  return toUserFacingReference(payment.display_code) ?? 'Cobro'
+}
+
+export function formatExpenseLabel(expense: { id?: NullableText; display_code?: NullableText; expense_number?: number | null }): string {
+  return toUserFacingReference(expense.display_code)
+    ?? (typeof expense.expense_number === 'number' ? `Gasto ${expense.expense_number}` : 'Gasto')
+}

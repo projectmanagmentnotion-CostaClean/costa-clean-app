@@ -322,3 +322,51 @@ Gate decision: `CP-3C.3 = PARTIAL` under CASE D. Both blockers remain
 independent and explicit: `AUTHENTICATED_MATRIX_BLOCKED_EXTERNAL_PRIVATE_INPUT`
 and `LCP_ABOVE_2500MS_AFTER_BOUNDED_REMEDIATION`. Fixtures remain protected;
 cleanup is not authorized. CP-4.1 was not started.
+
+## CP-3C.3R5 — Public Auth First-Paint Performance Remediation
+
+Date: **2026-09-14**
+Status: `PARTIAL_AUTH_AND_PERFORMANCE`
+
+### Early-auth A/B
+
+- Baseline on the established Lighthouse method: `2704.6758`, `2704.1654`,
+  `2704.4182 ms`; median `2704.4182 ms`.
+- Temporary early public-auth experiment on `/portal/login`: the same
+  `PortalAuthScreen` rendered while state was `booting` for only `login` and
+  `recover`; lifecycle execution and protected routing were unchanged.
+- Early-auth results: `2707.1318`, `2704.0634`, `2704.1199 ms`; median
+  `2704.1199 ms`.
+- Difference versus baseline: `0.2983 ms`; hypothesis rejected. The experiment
+  was completely reverted and is not part of the runtime.
+
+### Temporary QA instrumentation
+
+- Development-only marks measured document load at `73.4 ms`, Portal dynamic
+  import at `129.0 ms`, Portal bootstrap at `5.8 ms`, and first auth commit at
+  approximately `246.3 ms` in a Playwright Chromium run at `390x844`.
+- The evidence does not show session resolution delaying the first auth commit;
+  no lifecycle, tenant read or protected data was exposed before authorization.
+- The remaining Lighthouse LCP gap is not attributable to the tested
+  early-auth hypothesis. Instrumentation was removed before closeout; no
+  telemetry was left in production code.
+
+### Final state
+
+- The bounded SVG/preload logo fix remains the only accepted performance change.
+- Final prior post-fix Lighthouse set remains `2704.4811`, `2703.9592`,
+  `2705.1286 ms`; median `2704.4811 ms`; CLS `0`; Accessibility `1.00`;
+  Best Practices `1.00`.
+- LCP budget remains `FAIL` by `204.4811 ms`; no speculative rewrite was made.
+- Focused boundary test: `7 passed`; full suite: `643 passed`, `4 skipped`;
+  lint and QA build: PASS.
+- The final R5 rerun used the Vite development server with
+  `QA_APP_URL=http://127.0.0.1:4177`, which is required for the synthetic
+  `portalPreview` adapter; it produced the same 14-scenario Axe PASS and
+  preview-network PASS. The production-like preview on `4174` intentionally
+  disables synthetic preview and was not counted as matrix evidence.
+- Authenticated visual matrix remains `BLOCKED_EXTERNAL_PRIVATE_INPUT`; the
+  private credential handoff is unchanged. CP3C fixtures remain protected.
+
+Gate decision: `CP-3C.3 = PARTIAL_AUTH_AND_PERFORMANCE`. CP-4.1 was not
+started.

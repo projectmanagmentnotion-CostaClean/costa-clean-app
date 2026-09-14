@@ -399,12 +399,12 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R4 (2026-09-10) remains `PARTIAL`: preview accessibility/network/build
-evidence passes, but the authenticated matrix is blocked by missing private QA
-credential input. The logo remediation reduced LCP to a stable `2704.5ms`
-median; the controlled motion A/B changed it by less than `1ms`, proving motion
-is not the remaining cause. LCP remains above the `2500ms` QA target. CP-4.1
-is not started.
+CP-3C.3R5 (2026-09-14) remains `PARTIAL_AUTH_AND_PERFORMANCE`: preview
+accessibility/network/build evidence passes, but the authenticated matrix is
+blocked by missing private QA credential input. A controlled early-public-auth
+A/B changed LCP by only `0.2983ms`, rejecting session wait as the cause. The
+logo remediation remains at a stable `2704.5ms` median, above the `2500ms` QA
+target. CP-4.1 is not started.
 
 No production release is part of CP-3.
 

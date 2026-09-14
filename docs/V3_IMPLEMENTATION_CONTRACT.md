@@ -281,7 +281,7 @@ available outside the flag.
 Exact viewport matrix is still `DEFERRED TO V3-8`; no exact viewport PASS is
 claimed here. Production and Supabase production were not accessed or modified.
 
-## V3-7A client profile media — OPEN
+## V3-7A client profile media — CLOSED / CERTIFIED
 
 The canonical client model now has an optional `profile_image_path` in the
 local frontend contract. It stores only a private object path; signed URLs are
@@ -291,7 +291,15 @@ pattern as expense receipts. The V3 list and workspace use initials fallback,
 private image rendering and V3-native media/confirmation actions.
 
 The required column, `update_client(jsonb)` extension, private bucket and RLS
-policies are local-only in
-`supabase/migrations/20260914131413_client_profile_media.sql`. No remote SQL or
-QA storage write was performed. The remaining status is
-`OPEN — QA MEDIA INFRASTRUCTURE AUTHORIZATION REQUIRED`.
+policies were applied externally to QA only and certified through the
+authenticated media lifecycle. The exact QA fixture marker was
+`QA V3-7A CLIENT MEDIA`, client `CLIENT-DRAFT`, display code `CLI-0126`,
+created at `2026-09-14T13:44:02.77365Z`. Before guarded deletion its pointer was
+`NULL`, audit and related-entity counts were `0`, and Storage had no objects
+under `clients/CLIENT-DRAFT/*`. The guarded cleanup deleted exactly one client;
+post-cleanup DB and Storage residue were both `0`.
+
+The contract remains internal CRM-only. The field stores only a private object
+path using `clients/<client-id>/<uuid>.<ext>`; signed URLs are runtime-derived,
+and no public URL, base64 or blob URL is persisted. The exact viewport matrix is
+`DEFERRED TO V3-8`. Production and production Supabase were not modified.

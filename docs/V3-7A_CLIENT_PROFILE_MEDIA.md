@@ -1,68 +1,94 @@
 # V3-7A — Client profile media foundation
 
-Status: `OPEN — QA MEDIA INFRASTRUCTURE AUTHORIZATION REQUIRED`
+Status: `V3-7A CLOSED / CERTIFIED`
 
-## Audit result
+## Certified QA evidence
 
-- Existing persisted client media contract: absent.
-- `public.clients` has no profile media pointer in the repository baseline.
-- `update_client(jsonb)` rejected `profile_image_path`; the local migration extends
-  that existing authenticated RPC instead of adding a direct table-write path.
-- Existing private storage conventions are defined by the expense receipt bucket:
-  internal staff policies, signed URLs, and exact object paths.
-- No generated Supabase database types are present in this repository.
+The V3-7A migration was applied externally to QA only. No SQL was executed by
+this closeout, no migration was redeployed, and production was not accessed or
+modified.
 
-## Local implementation
+- QA project: `kpvvydthlxupjjqqdpxy`.
+- `clients.profile_image_path`: PASS.
+- Private bucket `client-profile-media`: PASS.
+- Bucket limit: 5 MB.
+- Allowed MIME types: JPEG, PNG and WEBP.
+- Internal staff storage policies: PASS.
+- Protected `update_client(jsonb)` support: PASS; security definer preserved.
+- Authenticated media lifecycle: upload, persistence, signed display, reload,
+  replacement, old-object cleanup, removal and fallback restoration: PASS.
+- Invalid GIF and files above 5 MB: rejected locally without remote upload.
+- Accessibility and focus behavior: PASS.
+- V3 iconography: PASS; Unicode-as-icon `0`; emoji-as-icon `0`; inline SVG
+  outside `V3Icon` on the changed surface `0`.
+- Static responsive safety: PASS. Exact viewport matrix remains deferred to
+  V3-8 and is not claimed here.
 
-The frontend foundation is implemented but remains backward-compatible until the
-remote contract is authorized:
+## Final QA fixture cleanup
 
-- `ClientListItem.profile_image_path` is optional and the client list first tries
-  the canonical column, then falls back to the current select if the column is
-  not yet present.
-- `src/features/clients/clientProfileMedia.ts` validates JPEG, PNG and WEBP up
-  to 5 MB, creates `clients/<client-id>/<uuid>.<ext>` paths, uses private
-  signed URLs with a memory-only cache, and models upload, replacement and
-  removal ordering.
-- A pointer failure after upload is cleaned up; replacement deletes
-  the old object only after the new pointer is authoritative; removal clears
-  the pointer before storage cleanup and reports cleanup failure without reverting
-  the truthful DB state.
-- V3 client list rows use compact initials/photo avatars. The client workspace
-  uses a native V3 media action sheet and V3 confirmation sheet. Client creation
-  and the text edit flow remain unchanged.
-- `V3Icon` now owns the camera, replace and trash vectors used by this surface.
+The exact project-scoped QA cleanup completed externally after media removal.
+The fixture was isolated and created through the real V3 client flow:
 
-## Proposed QA migration — not applied
+- Marker: `QA V3-7A CLIENT MEDIA`.
+- Client ID: `CLIENT-DRAFT`.
+- Display code: `CLI-0126`.
+- Created at: `2026-09-14T13:44:02.77365Z`.
+- Profile pointer before guarded deletion: `NULL`.
+- Audit events, properties, jobs, quotes, invoices, recurring plans and portal
+  relations before deletion: `0`.
+- Exact guarded delete result: `1` client deleted.
+- Post-cleanup client, marker, audit, related-entity and storage residue: `0`.
+- Clients with non-null `profile_image_path`: `0`.
 
-File: `supabase/migrations/20260914131413_client_profile_media.sql`
+## Data and security contract
 
-- Add nullable `public.clients.profile_image_path text`.
-- Create private bucket `client-profile-media` with a 5 MB limit and MIME types
-  `image/jpeg`, `image/png`, `image/webp`.
-- Add authenticated internal-staff select/insert/update/delete policies limited
-  to `clients/%` paths and UUID image objects.
-- Extend the existing protected `public.update_client(jsonb)` contract to accept
-  only the new pointer field, validate the client-scoped path, and return the
-  canonical client row.
+The persisted field is `clients.profile_image_path`, and it contains only the
+private object path. The bucket is private and named `client-profile-media`.
+The path contract is:
 
-The migration is a local review artifact only. It has not been applied to QA or
-production, and no QA bucket, row, object or policy was changed.
+`clients/<client-id>/<uuid>.<ext>`
 
-## Rollback / reversibility
+Signed URLs are derived at runtime and cached only in memory. No public URL,
+signed URL, base64 value, blob URL, client name, email, phone or tax ID is
+persisted in the client row or object path.
 
-Before application, review the migration in the normal Supabase change gate.
-If the migration must be rolled back after a controlled deployment, first stop
-the V3 media UI, remove or null all authorized `profile_image_path` values, and
-remove exact `clients/<client-id>/...` objects. Then, in a separately reviewed
-SQL change, drop the four named storage policies, delete the empty
-`client-profile-media` bucket, restore the previous `update_client(jsonb)` body,
-and `alter table public.clients drop column profile_image_path`. Never execute
-this rollback against production from this slice.
+The allowed file contract is:
 
-## Remaining gate
+- `image/jpeg`
+- `image/png`
+- `image/webp`
+- maximum 5 MB
 
-Remote QA media E2E is not run because the new column, RPC contract, bucket and
-storage policies require explicit authorization. The required future fixture
-marker is `QA V3-7A CLIENT MEDIA`; it must track exact client and object paths
-and finish with DB pointer `null` and storage residue `0`.
+## Safe lifecycle contract
+
+Initial upload performs upload, pointer persistence, canonical client refresh and
+signed display. If pointer persistence fails, the new object is cleaned up.
+
+Replacement uploads the new object, persists the new pointer, then removes the
+old object. The old object is never removed before the new pointer is
+authoritative.
+
+Removal persists a `NULL` pointer, refreshes canonical state and then removes
+the old object. Storage cleanup errors remain separate from the truthful DB
+state.
+
+## UI and privacy contract
+
+- Client list avatar: compact 44px identity treatment.
+- Client workspace avatar: 72px identity treatment.
+- Fallback: deterministic initials, maximum two characters.
+- Actions: `Añadir foto`, `Cambiar foto`, `Eliminar foto`.
+- Actions use the V3 media sheet and `V3ConfirmSheet`; no legacy modal and no
+  `window.confirm`.
+- Camera, replace and trash vectors are owned by `V3Icon`.
+- Client creation keeps photo optional; text editing remains separate from the
+  media transaction.
+- Profile media is internal CRM media only. It is not exposed automatically to
+  public quote pages, client portal, invoice PDFs, quote PDFs, emails or
+  notifications.
+
+## Production boundary
+
+Production project `wfxnwfcdjainpojhbdri` remains untouched. The migration
+`20260914131413_client_profile_media.sql`, the `client-profile-media` bucket,
+the production `clients` table and production `update_client` were not changed.

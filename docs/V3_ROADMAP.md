@@ -207,11 +207,21 @@ after its authenticated visual, snapshot persistence, exact cleanup and release
 gates passed. V3-3D requires a separate approval. V3-5 and V3-6 are closed only
 after their authenticated responsive matrices and regression gates pass.
 
-## V3-7A — Client profile media + iconography — OPEN
+## V3-7A — Client profile media + iconography — CLOSED / CERTIFIED
 
-The local client media foundation and V3 icon extension are implemented and
-covered by focused contract tests. The persisted field, protected RPC extension,
-private bucket and storage policies are prepared in
-`supabase/migrations/20260914131413_client_profile_media.sql`, but are not
-applied. V3-7A remains open until the explicit QA media infrastructure gate
-authorizes and certifies the remote lifecycle E2E. Production is untouched.
+- [x] QA migration, `clients.profile_image_path`, private bucket and storage
+  policies certified in `kpvvydthlxupjjqqdpxy`.
+- [x] Authenticated fallback, upload, private signed display, reload,
+  replacement, old-object cleanup, removal and fallback restoration certified.
+- [x] Invalid MIME and 5 MB validation, accessibility, V3 confirmation and
+  `V3Icon` camera/replace/trash coverage certified.
+- [x] Exact isolated fixture cleanup completed externally: DB residue `0` and
+  Storage residue `0`.
+- [x] Production and production Supabase remain untouched.
+
+Fixture evidence: marker `QA V3-7A CLIENT MEDIA`, client `CLIENT-DRAFT`, display
+code `CLI-0126`, created at `2026-09-14T13:44:02.77365Z`; the guarded cleanup
+deleted exactly one client after the media pointer was `NULL`.
+
+The exact viewport matrix is deferred to `V3-8`; this gate claims static
+responsive safety only. Do not begin `V3-7B` inside this closeout.

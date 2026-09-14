@@ -250,7 +250,7 @@ exact responsive matrix deferred to V3-8.
 - Exact viewport matrix: `DEFERRED TO V3-8`; the controlled browser still does
   not expose deterministic viewport resizing/CDP metrics.
 
-## V3-7A client profile media — local foundation / OPEN
+## V3-7A client profile media — CLOSED / CERTIFIED
 
 - Client list avatar: compact 44px initials/photo identity treatment.
 - Client workspace avatar: 72px identity treatment with visible mobile actions.
@@ -260,5 +260,14 @@ exact responsive matrix deferred to V3-8.
   client surfaces contain no Unicode-as-icon candidates.
 - Private media uses runtime signed URLs and initials fallback; no URL, blob or
   base64 value is stored in the client model.
-- The storage/schema proposal is local-only. V3-7A cannot be certified until
-  the QA media infrastructure authorization and exact cleanup E2E pass.
+- QA migration, private bucket and storage policies: `PASS` in
+  `kpvvydthlxupjjqqdpxy`.
+- Authenticated upload, signed display, reload, replacement, old-object
+  cleanup, removal, pointer `NULL` and fallback restoration: `PASS`.
+- Exact fixture cleanup: client `CLIENT-DRAFT` / `CLI-0126`, DB residue `0`,
+  Storage residue `0`, related entities `0`.
+- Accessibility, focus, static responsive safety and V3 confirmation: `PASS`.
+- Unicode-as-icon, emoji-as-icon and inline SVG outside `V3Icon`: `0`.
+- Exact viewport matrix remains `DEFERRED TO V3-8`; no exact viewport PASS is
+  claimed here.
+- Production and production Supabase: untouched.

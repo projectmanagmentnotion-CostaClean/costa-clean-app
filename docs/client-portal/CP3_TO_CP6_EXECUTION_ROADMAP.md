@@ -617,3 +617,23 @@ automatically.
 No further blind provider retries are authorized by this evidence. The next
 action is provider remediation using the sanitized support package or a new
 exactly authorized integration path; CP-4.2 must not start around this gate.
+
+## CP-4.1F — SiteGround provider support escalation
+
+| Field | Result |
+|---|---|
+| Support channel | Authenticated technical chat |
+| Submission time | `2026-09-14 16:05 Europe/Madrid` |
+| Case ID | `NOT_VISIBLE_CHAT_OPEN` |
+| Support agent / response | `Daniel V.` / acknowledged at `16:06`, awaiting review |
+| Support case | `OPEN_AWAITING_PROVIDER_REVIEW` |
+| Integration reset | `NO` |
+| Retry after support opened | `NO` |
+| SiteGround preview | `NOT_CREATED` |
+| CP-4.1 | `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED` |
+| CP-4.2 | `NOT_STARTED` |
+
+The owner-authorized support message was sent with the production/DNS/email
+change prohibitions. No immediate provider fix or supported alternative has
+been supplied; do not perform another technical workaround while this case is
+open.

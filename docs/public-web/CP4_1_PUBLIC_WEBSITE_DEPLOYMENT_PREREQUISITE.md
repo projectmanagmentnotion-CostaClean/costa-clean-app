@@ -374,6 +374,32 @@ authorization headers.
 `CP-4.1 = PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
 `CP-4.2 = NOT_STARTED`
 
+## CP-4.1F - SiteGround provider support escalation
+
+**Submission date/time:** 2026-09-14 16:05 (Europe/Madrid)
+**Support channel:** authenticated technical chat
+**Case ID:** `NOT_VISIBLE_CHAT_OPEN`
+**Support agent:** `Daniel V.`
+**Initial response:** `ACKNOWLEDGED_16:06_AWAITING_REVIEW`
+
+The owner-authorized support message was submitted for `costacleanbcn.com`,
+the GrowBig account, `projectmanagmentnotion-CostaClean/costa-clean-web` and
+branch `main`. It requests investigation of the SiteGround GitHub integration,
+repository discovery/callback and Node.js import flow, and explicitly forbids
+DNS, production hosting, WordPress, email-DNS and domain changes.
+
+SiteGround has not yet supplied a technical fix, reset/reconnect instruction or
+supported alternative. No retry was executed after opening support and no
+Node.js project or preview URL exists.
+
+`SUPPORT_CASE_OPEN = YES`
+`GITHUB_INTEGRATION_RESET = NO`
+`RETRY_EXECUTED = NO`
+`SITEGROUND_PREVIEW = NOT_CREATED`
+`SUPPORT_CASE_STATUS = OPEN_AWAITING_PROVIDER_REVIEW`
+`CP-4.1 = PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
+`CP-4.2 = NOT_STARTED`
+
 The next action is to resolve the SiteGround GitHub integration/Node.js preview selector and capture the native preview build, URL, HTTPS, noindex, responsive and console evidence. Do not promote the preview, connect the production domain or begin CP-4.2.
 
 ## CP-4.1B - SiteGround target proof, private export and Vercel containment

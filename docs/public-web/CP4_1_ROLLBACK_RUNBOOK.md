@@ -89,3 +89,20 @@ The private files and database artifacts are not authorization for a production 
 Rollback action for this attempt: none required. The import did not create a
 project or alter a production target. Do not repeat the import blindly; use the
 prepared support package or a separately authorized provider remediation.
+
+## CP-4.1F SiteGround provider support escalation - 2026-09-14
+
+- Support channel: authenticated technical chat.
+- Submission time: `2026-09-14 16:05 Europe/Madrid`.
+- Case ID: `NOT_VISIBLE_CHAT_OPEN`; the chat remains open and no ticket identifier is visible.
+- Agent: `Daniel V.`.
+- Initial response: acknowledged at `16:06` and stated that the request was being reviewed.
+- No provider fix, integration reset, alternative deployment path or retry occurred in this interaction.
+- Production safety remains unchanged: no WordPress, database, DNS, email, domain or cutover action.
+
+`SUPPORT_CASE_OPEN = YES`
+`SUPPORT_CASE_STATUS = OPEN_AWAITING_PROVIDER_REVIEW`
+`GITHUB_INTEGRATION_RESET = NO`
+`RETRY_EXECUTED = NO`
+`CP-4.1 = PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
+`CP-4.2 = NOT_STARTED`

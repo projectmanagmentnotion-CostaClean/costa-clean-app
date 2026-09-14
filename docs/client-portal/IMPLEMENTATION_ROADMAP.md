@@ -511,3 +511,13 @@ project or temporary URL was created. The remaining issue is classified as
 `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`. Support evidence is prepared
 but unsent; production, DNS, email, WordPress and CRM remain unchanged.
 CP-4.2 remains `NOT_STARTED`.
+
+## CP-4.1F — SiteGround provider support escalation
+
+An owner-authorized technical chat was opened for `costacleanbcn.com` on
+2026-09-14 at 16:05 Europe/Madrid. No ticket ID is visible while the chat is
+open (`CASE_ID = NOT_VISIBLE_CHAT_OPEN`). Agent `Daniel V.` acknowledged the
+request at 16:06 and is reviewing it. No integration reset, retry, preview
+creation or technical fix has occurred. `SUPPORT_CASE_OPEN = YES` and
+`SUPPORT_CASE_STATUS = OPEN_AWAITING_PROVIDER_REVIEW`. CP-4.1 remains
+`PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`; CP-4.2 remains `NOT_STARTED`.

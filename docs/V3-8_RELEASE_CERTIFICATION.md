@@ -4,7 +4,7 @@ Status: `OPEN — V3-8_AUTH_REQUIRED`
 
 ## Run identity
 
-- Commit tested: `cd01af1` before release-harness changes
+- Commit tested: `2dac426`
 - Branch: `codex/app-v3-mobile-first-redesign`
 - QA project: `kpvvydthlxupjjqqdpxy`
 - Production project: `wfxnwfcdjainpojhbdri` — prohibited
@@ -74,7 +74,7 @@ Repository quality gates for this block passed:
 - Lint: `PASS`
 - Build: `PASS`
 - Diff: `PASS`
-- Worktree: dirty until the authorized harness/docs commit is created
+- Worktree: `CLEAN` after the harness/docs commit and push
 
 ## Re-entry condition
 

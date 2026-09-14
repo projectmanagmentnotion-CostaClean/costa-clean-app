@@ -246,7 +246,7 @@ responsive safety only.
 
 Next: `V3-8 — GLOBAL E2E / RELEASE`.
 
-## V3-8 — Global E2E / Release — OPEN (authenticated run, coverage incomplete)
+## V3-8 — Global E2E / Release — CLOSED / CERTIFIED
 
 - [x] Add the Playwright release harness with explicit viewport, QA backend and
   production-request guards.
@@ -255,13 +255,17 @@ Next: `V3-8 — GLOBAL E2E / RELEASE`.
   `1280x800` and `1920x1080`.
 - [x] Certify module navigation and console/network cleanliness in the
   authenticated read-only run.
-- [ ] Add assertions and data coverage for deep links, relations, recurring
-  plans, accessibility, reduced motion, PWA smoke, QA deltas and zero legacy
-  runtime markers.
+- [x] Assert shell breakpoints, hydrated deep links/back, client media,
+  recurring empty state, relations, keyboard smoke, reduced motion, PWA
+  assets, QA deltas and zero legacy runtime markers.
 - [x] Close the authentication blocker using the existing ignored QA profile.
 
-The authenticated suite passed `5/5`, but V3-8 remains open because the
-current harness records rather than asserts several required rows and all
-deep-link probes were unavailable in the read-only data set. No credentials,
-tokens, cookies, QA writes or production access were used. See
-`docs/V3-8_RELEASE_CERTIFICATION.md`. Do not start V3-9.
+V3-8 is `CLOSED / CERTIFIED`: authenticated release E2E passed `5/5`, required
+existing-record deep links and cross-module relations passed, Quotes/Jobs/
+Payments/recurring persisted runtime were correctly classified N/A for the
+zero-record QA baseline, and external pre/post comparison certified DB delta
+`0` and Storage delta `0`. No credentials, tokens, cookies, QA writes or
+production access were used. See `docs/V3-8_RELEASE_CERTIFICATION.md`.
+
+V3-9 remains gated by explicit production activation authorization and its
+documented deployment, smoke, rollback and feature-flag prerequisites.

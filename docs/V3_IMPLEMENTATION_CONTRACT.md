@@ -325,7 +325,7 @@ Home, alerts and the client workspace re-read authoritative plan data. No QA
 fixtures, SQL, storage writes, credentials or production resources were used
 in this audit block. Exact viewport resizing remains `DEFERRED TO V3-8`.
 
-## V3-8 release gate — OPEN (authenticated run, coverage incomplete)
+## V3-8 release gate — CLOSED / CERTIFIED
 
 `playwright.v3-release.config.mjs` and `tests/e2e/v3-release.spec.mjs` provide
 the deterministic four-viewport read-only harness. The harness uses the
@@ -336,11 +336,13 @@ request. It does not perform writes.
 
 The authenticated read-only rerun passed `5/5` after the harness default was
 aligned with `.auth/costa-clean-storage-state.json`. It measured the four
-required viewports and recorded clean production/network/runtime counters.
-However, deep-link probes reported no available records, invoice/service
-workspace probes were unavailable, and several required signals are recorded
-but not asserted by the harness. The exact gaps are recorded in
-`docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 remains open; V3-9 is not started.
+required viewports, asserted shell ownership, hydrated deep links/back,
+cross-module Client → Property/Invoice relations, client media, recurring
+empty state, keyboard smoke, reduced motion, PWA assets and zero-legacy
+signals. Quotes, Jobs, Payments and persisted recurring-plan runtime are N/A
+for the zero-record QA baseline. External read-only comparison certifies QA DB
+delta `0` and Storage delta `0`. The exact evidence is recorded in
+`docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 is closed; V3-9 is not started.
 
 Before V3-9, require explicit authorization for: production activation,
 V3-7A production media migration, production environment verification,

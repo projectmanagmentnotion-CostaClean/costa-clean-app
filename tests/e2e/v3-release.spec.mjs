@@ -34,14 +34,14 @@ const surfaces = [
 ]
 
 const deepLinkSurfaces = [
-  { view: 'clients', param: 'client', row: '[aria-label^="Abrir cliente"]', workspace: '.v3-client-workspace' },
-  { view: 'leads', param: 'lead', row: '[aria-label^="Abrir lead"]', workspace: '.v3-lead-workspace' },
-  { view: 'properties', param: 'property', row: '[aria-label^="Abrir inmueble"]', workspace: '.v3-property-workspace' },
-  { view: 'quotes', param: 'quote', row: '[aria-label^="Abrir presupuesto"]', workspace: '.v3-quote-workspace' },
-  { view: 'jobs', param: 'job', row: '[aria-label^="Abrir servicio"]', workspace: '.v3-job-workspace' },
-  { view: 'invoices', param: 'invoice', row: '[aria-label^="Abrir factura"]', workspace: '.v3-invoice-workspace' },
-  { view: 'payments', param: 'payment', row: '[aria-label^="Abrir "]', workspace: '.v3-payment-workspace' },
-  { view: 'expenses', param: 'expense', row: '[aria-label^="Abrir "]', workspace: '.v3-expense-workspace' },
+  { view: 'clients', heading: 'Clientes', param: 'client', row: '[aria-label^="Abrir cliente"]', emptyText: 'Sin clientes visibles', workspace: '.v3-client-workspace' },
+  { view: 'leads', heading: 'Leads', param: 'lead', row: '[aria-label^="Abrir lead"]', emptyText: 'Sin leads visibles', workspace: '.v3-lead-workspace' },
+  { view: 'properties', heading: 'Inmuebles', param: 'property', row: '[aria-label^="Abrir inmueble"]', emptyText: 'Sin inmuebles visibles', workspace: '.v3-property-workspace' },
+  { view: 'quotes', heading: 'Presupuestos', param: 'quote', row: '[aria-label^="Abrir presupuesto"]', emptyText: 'Sin presupuestos visibles', workspace: '.v3-quote-workspace' },
+  { view: 'jobs', heading: 'Servicios', param: 'job', row: '[aria-label^="Abrir servicio"]', emptyText: 'Sin servicios visibles', workspace: '.v3-job-workspace' },
+  { view: 'invoices', heading: 'Facturas', param: 'invoice', row: '[aria-label^="Abrir "]', emptyText: 'Sin facturas visibles', workspace: '.v3-invoice-workspace', showAll: true },
+  { view: 'payments', heading: 'Cobros', param: 'payment', row: '[aria-label^="Abrir "]', emptyText: 'Sin cobros visibles', workspace: '.v3-payment-workspace' },
+  { view: 'expenses', heading: 'Gastos', param: 'expense', row: '[aria-label^="Abrir "]', emptyText: 'Sin gastos visibles', workspace: '.v3-expense-workspace' },
 ]
 
 function readAuthMetadata() {
@@ -66,8 +66,16 @@ function buildViewUrl(viewId) {
 function registerGuards(page, state) {
   page.on('request', (request) => {
     const url = request.url()
-    if (url.includes(productionProjectRef)) state.violations.push('production_request')
-    if (url.includes('.supabase.co') && !url.includes(qaProjectRef)) state.violations.push('non_qa_supabase_request')
+    const method = request.method()
+    if (url.includes(productionProjectRef)) {
+      state.productionRequests += 1
+      state.violations.push('production_request')
+    }
+    if (url.includes('.supabase.co') && !url.includes(qaProjectRef)) {
+      state.nonQaSupabaseRequests += 1
+      state.violations.push('non_qa_supabase_request')
+    }
+    if (url.includes('.supabase.co') && !['GET', 'HEAD', 'OPTIONS'].includes(method)) state.qaMutationRequests += 1
   })
   page.on('requestfailed', (request) => {
     const url = request.url()
@@ -78,7 +86,7 @@ function registerGuards(page, state) {
 }
 
 async function launchQaContext(metadata, viewport, reducedMotion = false) {
-  const state = { violations: [], failedRequests: 0, pageErrors: 0, consoleErrors: 0 }
+  const state = { violations: [], productionRequests: 0, nonQaSupabaseRequests: 0, qaMutationRequests: 0, failedRequests: 0, pageErrors: 0, consoleErrors: 0 }
   const context = await chromium.launchPersistentContext(metadata.profileDir, {
     headless: true,
     viewport: { width: viewport.width, height: viewport.height },
@@ -158,15 +166,26 @@ async function collectGeometry(page, viewport, surfaceId) {
   }, { viewport, surfaceId })
 }
 
-async function inspectWorkspace(page, selector, workspaceSelector) {
+async function waitForRowsOrEmpty(page, { rowSelector, emptyText }) {
+  await page.waitForFunction(({ rowSelector, emptyText }) => {
+    const hasRow = Boolean(document.querySelector(rowSelector))
+    const body = document.body?.innerText ?? ''
+    return hasRow || body.includes(emptyText)
+  }, { rowSelector, emptyText }, { timeout: 30000 })
+}
+
+async function inspectWorkspace(page, selector, workspaceSelector, { emptyText, heading, inspect } = {}) {
+  if (emptyText) await waitForRowsOrEmpty(page, { rowSelector: selector, emptyText })
   const row = page.locator(selector).first()
-  if (await row.count() === 0) return { available: false }
+  if (await row.count() === 0) return { available: false, emptyState: true }
   await row.click()
   await expect(page.locator(workspaceSelector).first()).toBeVisible({ timeout: 15000 })
   const relationCount = await page.locator('.v3-relation-row, .v3-related-links button').count()
+  const extra = inspect ? await inspect() : {}
   const back = page.locator('.v3-workspace-back').first().or(page.getByRole('button', { name: 'Volver', exact: true }).first())
   await back.click()
-  return { available: true, relationCount }
+  if (heading) await expect(page.getByRole('heading', { name: heading, exact: true }).first()).toBeVisible()
+  return { available: true, relationCount, ...extra }
 }
 
 async function inspectMore(page) {
@@ -181,10 +200,46 @@ async function inspectMore(page) {
   return true
 }
 
+async function inspectAccessibilityKeyboard(page) {
+  const more = page.getByRole('button', { name: 'Más', exact: true }).last()
+  await more.focus()
+  await page.keyboard.press('Enter')
+  const dialog = page.getByRole('dialog', { name: 'Más módulos' })
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Tab')
+  const focusIsInsideDialog = await page.evaluate(() => {
+    const dialog = document.querySelector('[role="dialog"][aria-label="Más módulos"]')
+    return Boolean(dialog && dialog.contains(document.activeElement))
+  })
+  expect(focusIsInsideDialog, 'keyboard focus must remain inside the open More dialog').toBe(true)
+  await page.keyboard.press('Escape')
+  return true
+}
+
+async function reopenFirstClientWorkspace(page) {
+  await navigateToSurface(page, { id: 'clients', heading: 'Clientes' })
+  await waitForRowsOrEmpty(page, { rowSelector: '[aria-label^="Abrir cliente"]', emptyText: 'Sin clientes visibles' })
+  const row = page.locator('[aria-label^="Abrir cliente"]').first()
+  await expect(row).toHaveCount(1)
+  await row.click()
+  await expect(page.locator('.v3-client-workspace').first()).toBeVisible({ timeout: 15000 })
+}
+
+async function inspectClientRelationNavigation(page, sectionLabel, workspaceSelector) {
+  const section = page.locator('.v3-client-workspace .v3-section').filter({ has: page.getByRole('heading', { name: sectionLabel, exact: true }) }).first()
+  const relation = section.locator('.v3-relation-row').first()
+  if (await relation.count() === 0) return false
+  await relation.click()
+  await expect(page.locator(workspaceSelector).first()).toBeVisible({ timeout: 15000 })
+  return true
+}
+
 async function inspectReadOnlyDeepLink(page, definition) {
-  await page.goto(buildViewUrl(definition.view), { waitUntil: 'domcontentloaded' })
+  await navigateToSurface(page, { id: definition.view, heading: definition.heading })
+  if (definition.showAll) await showAllInvoices(page)
+  await waitForRowsOrEmpty(page, { rowSelector: definition.row, emptyText: definition.emptyText })
   const row = page.locator(definition.row).first()
-  if (await row.count() === 0) return { available: false }
+  if (await row.count() === 0) return { available: false, emptyState: true }
   await row.click()
   await expect(page.locator(definition.workspace).first()).toBeVisible({ timeout: 15000 })
   const url = new URL(page.url())
@@ -194,21 +249,51 @@ async function inspectReadOnlyDeepLink(page, definition) {
   await expect(page.locator(definition.workspace).first()).toBeVisible({ timeout: 15000 })
   const back = page.locator('.v3-workspace-back').first().or(page.getByRole('button', { name: 'Volver', exact: true }).first())
   await back.click()
-  return { available: true, persisted: page.url().includes(`view=${definition.view}`) }
+  await expect(page.getByRole('heading', { name: definition.heading, exact: true }).first()).toBeVisible()
+  return { available: true, persisted: page.url().includes(`view=${definition.view}`), back: true }
+}
+
+async function showAllInvoices(page) {
+  const all = page.getByRole('tab', { name: 'Todas', exact: true })
+  if (await all.count() === 0) return
+  if (await all.getAttribute('aria-selected') !== 'true') await all.click()
+}
+
+function assertGeometry(geometry, viewport) {
+  expect(geometry.innerWidth).toBe(viewport.width)
+  expect(geometry.innerHeight).toBe(viewport.height)
+  expect(geometry.clientWidth).toBe(viewport.width)
+  expect(geometry.clientHeight).toBe(viewport.height)
+  expect(geometry.scrollWidth).toBeLessThanOrEqual(geometry.clientWidth)
+  expect(geometry.rootOverflow).toBe(false)
+  expect(geometry.duplicateShell).toBe(false)
+  expect(geometry.legacyRuntimeMarkers).toBe(0)
+  expect(geometry.visibleUuid).toBe(0)
+  expect(geometry.accessibleUuid).toBe(0)
+  expect(geometry.unicodeAsIcon).toBe(0)
+  expect(geometry.confirmCalls).toBe(0)
+  const compact = viewport.width < 1024
+  expect(geometry.bottomNavVisible).toBe(compact)
+  expect(geometry.railVisible).toBe(!compact)
 }
 
 async function runViewport(metadata, viewport) {
   const { context, page, state } = await launchQaContext(metadata, viewport, viewport.id === '390x844')
-  const result = { viewport, surfaces: [], workspaces: {}, deepLinks: {}, screenshots: [], more: false, serviceWorker: false, manifest: false, geometry: [] }
+  const result = { viewport, surfaces: [], workspaces: {}, deepLinks: {}, screenshots: [], more: false, accessibilityKeyboard: false, reducedMotion: false, serviceWorker: false, manifest: false, geometry: [] }
   try {
     await page.goto(appUrl, { waitUntil: 'domcontentloaded' })
     await waitForAuthenticatedShell(page)
-    result.serviceWorker = await page.evaluate(() => Boolean(navigator.serviceWorker?.controller || navigator.serviceWorker?.getRegistrations))
+    const serviceWorkerResponse = await page.request.get(new URL('/notification-sw.js', page.url()).toString())
+    result.serviceWorker = serviceWorkerResponse.ok()
+    expect(result.serviceWorker).toBe(true)
     result.manifest = await page.locator('link[rel="manifest"]').count() > 0
+    expect(result.manifest).toBe(true)
     for (const surface of surfaces) {
       await navigateToSurface(page, surface)
       result.surfaces.push(surface.id)
-      result.geometry.push(await collectGeometry(page, viewport, surface.id))
+      const geometry = await collectGeometry(page, viewport, surface.id)
+      assertGeometry(geometry, viewport)
+      result.geometry.push(geometry)
       if (['dashboard', 'clients', 'invoices'].includes(surface.id)) {
         const file = path.join(releaseReportDir, `${surface.id}-${viewport.id}.png`)
         await page.screenshot({ path: file, fullPage: true })
@@ -216,21 +301,66 @@ async function runViewport(metadata, viewport) {
       }
     }
     await navigateToSurface(page, { id: 'clients', heading: 'Clientes' })
-    result.workspaces.client = await inspectWorkspace(page, '[aria-label^="Abrir cliente"]', '.v3-client-workspace')
+    result.workspaces.client = await inspectWorkspace(page, '[aria-label^="Abrir cliente"]', '.v3-client-workspace', {
+      emptyText: 'Sin clientes visibles',
+      heading: 'Clientes',
+      inspect: async () => {
+        const clientSection = page.locator('.v3-client-workspace').first()
+        const propertySection = clientSection.locator('.v3-section').filter({ has: page.getByRole('heading', { name: 'Inmuebles', exact: true }) }).first()
+        const invoiceSection = clientSection.locator('.v3-section').filter({ has: page.getByRole('heading', { name: 'Facturas', exact: true }) }).first()
+        const recurringSection = clientSection.locator('.v3-section').filter({ has: page.getByRole('heading', { name: 'Planes recurrentes', exact: true }) }).first()
+        const recurringEmptyState = await recurringSection.getByText('Sin planes recurrentes', { exact: true }).count() > 0
+        const recurringCreateEntry = await recurringSection.getByRole('button', { name: '+ Nuevo plan', exact: true }).count() > 0
+        if (recurringCreateEntry) {
+          await recurringSection.getByRole('button', { name: '+ Nuevo plan', exact: true }).click()
+          await expect(page.getByRole('dialog', { name: 'Nuevo plan recurrente' })).toBeVisible()
+          await page.keyboard.press('Escape')
+        }
+        const propertyNavigation = await inspectClientRelationNavigation(page, 'Inmuebles', '.v3-property-workspace')
+        if (propertyNavigation) await reopenFirstClientWorkspace(page)
+        const invoiceNavigation = await inspectClientRelationNavigation(page, 'Facturas', '.v3-invoice-workspace')
+        if (invoiceNavigation) await reopenFirstClientWorkspace(page)
+        return {
+          recurringPlanSection: await recurringSection.count() > 0,
+          recurringEmptyState,
+          recurringCreateEntry,
+          mediaPresentation: await clientSection.locator('[aria-label*="foto de"], .v3-client-avatar').count() > 0,
+          propertyRelation: await propertySection.locator('.v3-relation-row').count() > 0,
+          invoiceRelation: await invoiceSection.locator('.v3-relation-row').count() > 0,
+          propertyNavigation,
+          invoiceNavigation,
+        }
+      },
+    })
     if (result.workspaces.client.available) {
-      result.workspaces.client.recurringPlanSection = await page.getByText('Planes recurrentes', { exact: true }).count() > 0
-      result.workspaces.client.mediaPresentation = await page.locator('[aria-label*="foto de"], .v3-client-avatar').count() > 0
+      expect(result.workspaces.client.mediaPresentation).toBe(true)
+      expect(result.workspaces.client.recurringPlanSection).toBe(true)
+      expect(result.workspaces.client.recurringEmptyState).toBe(true)
+      expect(result.workspaces.client.recurringCreateEntry).toBe(true)
+      expect(result.workspaces.client.propertyRelation).toBe(true)
+      expect(result.workspaces.client.invoiceRelation).toBe(true)
+      expect(result.workspaces.client.propertyNavigation).toBe(true)
+      expect(result.workspaces.client.invoiceNavigation).toBe(true)
     }
     await navigateToSurface(page, { id: 'invoices', heading: 'Facturas' })
-    result.workspaces.invoice = await inspectWorkspace(page, '[aria-label^="Abrir factura"]', '.v3-invoice-workspace')
+    await showAllInvoices(page)
+    result.workspaces.invoice = await inspectWorkspace(page, '[aria-label^="Abrir "]', '.v3-invoice-workspace', { emptyText: 'Sin facturas visibles', heading: 'Facturas' })
     await navigateToSurface(page, { id: 'jobs', heading: 'Servicios' })
-    result.workspaces.service = await inspectWorkspace(page, '[aria-label^="Abrir servicio"]', '.v3-job-workspace')
+    result.workspaces.service = await inspectWorkspace(page, '[aria-label^="Abrir servicio"]', '.v3-job-workspace', { emptyText: 'Sin servicios visibles', heading: 'Servicios' })
     await navigateToSurface(page, { id: 'dashboard', heading: 'Negocio hoy' })
     result.more = await inspectMore(page)
+    result.accessibilityKeyboard = await inspectAccessibilityKeyboard(page)
+    expect(result.accessibilityKeyboard).toBe(true)
+    result.reducedMotion = await page.evaluate(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    expect(result.reducedMotion).toBe(viewport.id === '390x844')
     for (const definition of deepLinkSurfaces) result.deepLinks[definition.view] = await inspectReadOnlyDeepLink(page, definition)
     result.finalGeometry = await collectGeometry(page, viewport, 'release-final')
     if (state.violations.length > 0) throw new Error(`V3-8_PRODUCTION_GUARD: ${state.violations.join(',')}`)
+    expect(state.productionRequests).toBe(0)
+    expect(state.nonQaSupabaseRequests).toBe(0)
+    expect(state.qaMutationRequests).toBe(0)
     if (state.pageErrors > 0 || state.consoleErrors > 0) throw new Error(`V3-8_RUNTIME_ERRORS: pageerror=${state.pageErrors}, console_error=${state.consoleErrors}`)
+    expect(state.failedRequests).toBe(0)
     return { ...result, state }
   } finally {
     await context.close()

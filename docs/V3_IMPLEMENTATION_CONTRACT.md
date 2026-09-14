@@ -324,3 +324,17 @@ creation flow was introduced.
 Home, alerts and the client workspace re-read authoritative plan data. No QA
 fixtures, SQL, storage writes, credentials or production resources were used
 in this audit block. Exact viewport resizing remains `DEFERRED TO V3-8`.
+
+## V3-8 release gate — OPEN
+
+`playwright.v3-release.config.mjs` and `tests/e2e/v3-release.spec.mjs` provide
+the deterministic four-viewport read-only harness. The harness uses the
+ignored QA profile, records exact CSS geometry, captures private screenshots,
+checks root overflow, shell breakpoint ownership, deep-link/back behavior,
+accessibility/reduced-motion signals and rejects any production Supabase
+request. It does not perform writes.
+
+The first run stopped at the manual authentication gate because the existing
+profile reached Login with an invalid persisted session. The exact blocker and
+the measured-value policy are recorded in
+`docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 remains open; V3-9 is not started.

@@ -325,7 +325,7 @@ Home, alerts and the client workspace re-read authoritative plan data. No QA
 fixtures, SQL, storage writes, credentials or production resources were used
 in this audit block. Exact viewport resizing remains `DEFERRED TO V3-8`.
 
-## V3-8 release gate — OPEN
+## V3-8 release gate — OPEN (authenticated run, coverage incomplete)
 
 `playwright.v3-release.config.mjs` and `tests/e2e/v3-release.spec.mjs` provide
 the deterministic four-viewport read-only harness. The harness uses the
@@ -334,7 +334,15 @@ checks root overflow, shell breakpoint ownership, deep-link/back behavior,
 accessibility/reduced-motion signals and rejects any production Supabase
 request. It does not perform writes.
 
-The first run stopped at the manual authentication gate because the existing
-profile reached Login with an invalid persisted session. The exact blocker and
-the measured-value policy are recorded in
+The authenticated read-only rerun passed `5/5` after the harness default was
+aligned with `.auth/costa-clean-storage-state.json`. It measured the four
+required viewports and recorded clean production/network/runtime counters.
+However, deep-link probes reported no available records, invoice/service
+workspace probes were unavailable, and several required signals are recorded
+but not asserted by the harness. The exact gaps are recorded in
 `docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 remains open; V3-9 is not started.
+
+Before V3-9, require explicit authorization for: production activation,
+V3-7A production media migration, production environment verification,
+controlled deployment, production smoke, rollback planning and the
+feature-flag activation decision. None is authorized by this contract.

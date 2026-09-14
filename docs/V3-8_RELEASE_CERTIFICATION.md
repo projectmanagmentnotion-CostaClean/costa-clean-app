@@ -1,94 +1,129 @@
 # V3-8 — GLOBAL E2E / RELEASE CERTIFICATION
 
-Status: `OPEN — V3-8_AUTH_REQUIRED`
+Status: `OPEN — authenticated run passed, release coverage incomplete`
 
 ## Run identity
 
-- Commit tested: `2dac426`
+- Baseline: `4595237`
 - Branch: `codex/app-v3-mobile-first-redesign`
 - QA project: `kpvvydthlxupjjqqdpxy`
 - Production project: `wfxnwfcdjainpojhbdri` — prohibited
-- Test timestamp: `2026-09-14 16:47 Europe/Madrid` (unit/integration run)
 - Harness: `playwright.v3-release.config.mjs` + `tests/e2e/v3-release.spec.mjs`
-- Browser: Playwright managed Chromium, executable present locally
-- QA writes: `NONE`
+- Browser: Playwright managed Chromium
+- Successful command: `npx playwright test --config playwright.v3-release.config.mjs`
+- Result: `5 passed (1.7m)`
+- QA writes: `NONE` by harness design
 
-## Concrete blocker
+The manual QA session was already authenticated by the user. No credentials,
+tokens, cookies or auth metadata were requested, printed, copied or committed.
+The harness default was corrected to the canonical metadata path produced by
+`qa:auth:setup`: `.auth/costa-clean-storage-state.json`.
 
-The Playwright authentication gate launched the existing ignored QA profile
-from `.auth/costaclean-v3/costa-clean-storage-state.json` and reached the V3
-login surface instead of an authenticated shell. The reproducible result was:
+## Exact viewport evidence
 
-`V3-8_AUTH_REQUIRED: manual authenticated QA login is required in the ignored QA profile`
+The values below are taken from the successful private artifacts. Each row was
+measured at the first inspected authenticated surface for that viewport.
 
-No password, token, cookie, storage secret or credential was requested,
-printed, copied or added to the repository. The release matrix stops at this
-gate until the user completes manual QA login in the existing QA profile.
-
-## Exact viewport matrix
-
-The cases are implemented but were not executed after the auth gate stopped:
-
-| Requested viewport | innerWidth | innerHeight | clientWidth | clientHeight | scrollWidth | scrollHeight | Result |
+| Requested | innerWidth | innerHeight | clientWidth | clientHeight | scrollWidth | scrollHeight | Root overflow observed |
 |---|---:|---:|---:|---:|---:|---:|---|
-| 390x844 | N/A | N/A | N/A | N/A | N/A | N/A | NOT RUN — auth gate |
-| 768x1024 | N/A | N/A | N/A | N/A | N/A | N/A | NOT RUN — auth gate |
-| 1280x800 | N/A | N/A | N/A | N/A | N/A | N/A | NOT RUN — auth gate |
-| 1920x1080 | N/A | N/A | N/A | N/A | N/A | N/A | NOT RUN — auth gate |
+| 390x844 | 390 | 844 | 390 | 844 | 390 | 1464 | PASS (`390 <= 390`) |
+| 768x1024 | 768 | 1024 | 768 | 1024 | 768 | 1208 | PASS (`768 <= 768`) |
+| 1280x800 | 1280 | 800 | 1280 | 800 | 1280 | 1033 | PASS (`1280 <= 1280`) |
+| 1920x1080 | 1920 | 1080 | 1920 | 1080 | 1920 | 1270 | PASS (`1920 <= 1920`) |
 
-No viewport is classified as PASS without measurements.
+Observed shell ownership was bottom navigation at `390x844` and `768x1024`,
+and navigation rail at `1280x800` and `1920x1080`. The harness records these
+values but does not assert them, so the Shell breakpoints row remains
+`NOT CERTIFIED`.
 
 ## Release matrix
 
+Only rows backed by successful Playwright assertions are marked `PASS`.
+
 | Area | Result | Evidence/status |
 |---|---|---|
-| QA backend | NOT CERTIFIED | Authenticated release run did not start |
-| Production request guard | PASS | Executable guard rejects `wfxnwfcdjainpojhbdri` |
-| Home, Alerts, Closings | NOT RUN | Auth gate |
-| Leads, Clients, Properties | NOT RUN | Auth gate |
-| Quotes, Services, Invoices | NOT RUN | Auth gate |
-| Payments, Expenses | NOT RUN | Auth gate |
-| Client media | NOT RUN | Read-only release smoke pending auth |
-| Recurring plans | NOT RUN | Read-only client-workspace smoke pending auth |
-| More/navigation | NOT RUN | Auth gate |
-| Deep links/back/relations | NOT RUN | Auth gate |
-| Auth/reload/loading/recovery | BLOCKED | Manual QA login required |
-| PWA/service worker | NOT RUN | Auth gate |
-| Accessibility/keyboard | NOT RUN | Auth gate |
-| Reduced motion | NOT RUN | Auth gate |
-| Console/page errors | NOT CERTIFIED | Auth gate; no release claim |
-| Unexpected failed requests | NOT CERTIFIED | Auth gate; no release claim |
-| Legacy runtime / UUID / Unicode / `window.confirm` | NOT RUN | Auth gate |
+| QA authentication | PASS | Authentication gate passed |
+| QA backend / non-QA request guard | PASS | No guard violation recorded |
+| Production request guard | PASS | No production request recorded |
+| Home | PASS | Authenticated heading assertion at all four viewports |
+| Clients | PASS | Authenticated heading assertion at all four viewports |
+| Leads | PASS | Authenticated heading assertion at all four viewports |
+| Properties | PASS | Authenticated heading assertion at all four viewports |
+| Quotes | PASS | Authenticated heading assertion at all four viewports |
+| Services | PASS | Authenticated heading assertion at all four viewports |
+| Invoices | PASS | Authenticated heading assertion at all four viewports |
+| Payments | PASS | Authenticated heading assertion at all four viewports |
+| Expenses | PASS | Authenticated heading assertion at all four viewports |
+| Alerts | PASS | Authenticated heading assertion at all four viewports |
+| Closings | PASS | Authenticated heading assertion at all four viewports |
+| More/navigation | PASS | Dialog and module labels asserted |
+| Shell breakpoints | NOT CERTIFIED | Geometry recorded, not asserted |
+| Hard reload session | NOT CERTIFIED | Reload is only exercised when a deep-link record is available |
+| Client media | NOT CERTIFIED | Presentation recorded, not asserted |
+| Recurring plans | NOT CERTIFIED | `recurringPlanSection=false` in all four artifacts |
+| Deep links/back | NOT CERTIFIED | All eight deep-link probes reported `available=false` |
+| Cross-module relations | NOT CERTIFIED | Client relation count recorded as `3`, not asserted; invoice/service unavailable |
+| Loading/recovery | NOT CERTIFIED | No recovery path assertion in this harness |
+| PWA/service worker | NOT CERTIFIED | Manifest/service-worker values recorded, not asserted |
+| Accessibility | NOT CERTIFIED | No accessibility assertion in this harness |
+| Reduced motion | NOT CERTIFIED | Reduced-motion context is created only for the mobile case; behavior is not asserted |
 
-The harness is read-only by design. It does not create, edit, settle, upload,
-change status, save closings or acknowledge alerts. Existing write
-certifications from V3-3B through V3-7B are intentionally reused rather than
-repeated without new QA-write authorization.
+The release suite is read-only. It does not create fixtures or exercise
+invoice, quote, payment, expense, storage, closing or alert writes. Earlier
+write certifications remain authoritative and were intentionally not repeated.
+
+## Zero-marker and runtime evidence
+
+The artifacts observed the following values at every inspected surface and
+viewport; the current harness records them but does not assert them:
+
+- Legacy runtime markers: `0`
+- Visible UUID: `0`
+- Accessible UUID: `0`
+- Unicode-as-icon: `0`
+- `window.confirm`: `0`
+
+Network/runtime counters were asserted for guard violations and page/console
+errors. The successful run recorded, for each viewport:
+
+- Production requests: `0`
+- Non-QA Supabase violations: `0`
+- Page errors: `0`
+- Console errors: `0`
+- Critical failed requests recorded: `0` (the harness does not fail on this counter)
+
+QA DB and Storage deltas were not instrumented by this read-only suite. No QA
+writes were issued, so no cleanup was run and no fresh fixtures were created.
+The deltas therefore remain `NOT CERTIFIED`, rather than being presented as a
+measured zero.
 
 ## Quality gates
 
-Repository quality gates for this block passed:
+The release suite itself passed after the path correction. The repository
+quality gates must be rerun after this documentation update before any commit:
 
-- Unit/integration tests: `702 passed | 4 skipped`
-- Release E2E: `1 failed at authentication gate; 4 viewport cases did not run`
-- Lint: `PASS`
-- Build: `PASS`
-- Diff: `PASS`
-- Worktree: `CLEAN` after the harness/docs commit and push
+- Unit/integration tests: pending
+- Lint: pending
+- Build: pending
+- Diff: pending
+- Worktree: pending
 
-## Re-entry condition
+## V3-9 prerequisites — not authorized
 
-After manual login in the ignored QA profile, rerun:
+V3-9 must not start from this open gate. Before any controlled production
+activation, all of the following require explicit authorization and review:
 
-```text
-npx playwright test --config playwright.v3-release.config.mjs
-```
+1. Explicit production activation authorization.
+2. Review and application of the V3-7A production media migration.
+3. Production environment verification.
+4. Controlled deployment.
+5. Production smoke certification.
+6. Rollback plan.
+7. Feature-flag activation decision.
 
-Only a fresh run with measured `390x844`, `768x1024`, `1280x800` and
-`1920x1080` results may move this document to `CLOSED / CERTIFIED`. V3-9 is not
-started. Production deployment, migration, storage, auth mutation, DNS and
-feature-flag activation remain prohibited.
+No production deployment, SQL, migration, storage, auth mutation, DNS change,
+feature-flag activation or production data change was performed here.
 
 ## Verdict
 
-`V3-8 OPEN — manual authenticated QA login required in the existing ignored QA profile.`
+`V3-8 OPEN — authenticated Playwright run passed, but the release harness does not certify the required deep-link, relation, recurring-plan, accessibility, reduced-motion and QA-delta rows.`

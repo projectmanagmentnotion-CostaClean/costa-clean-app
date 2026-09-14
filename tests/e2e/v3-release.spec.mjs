@@ -7,7 +7,7 @@ const rootDir = process.cwd()
 const qaProjectRef = 'kpvvydthlxupjjqqdpxy'
 const productionProjectRef = 'wfxnwfcdjainpojhbdri'
 const releaseReportDir = path.join(rootDir, 'qa-reports', 'private', 'v3-8-release')
-const authMetadataPath = path.resolve(process.env.QA_AUTH_METADATA ?? '.auth/costaclean-v3/costa-clean-storage-state.json')
+const authMetadataPath = path.resolve(process.env.QA_AUTH_METADATA ?? '.auth/costa-clean-storage-state.json')
 const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:4176/?v3=1'
 
 const viewports = [

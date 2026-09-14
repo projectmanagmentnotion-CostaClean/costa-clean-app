@@ -246,19 +246,22 @@ responsive safety only.
 
 Next: `V3-8 — GLOBAL E2E / RELEASE`.
 
-## V3-8 — Global E2E / Release — OPEN
+## V3-8 — Global E2E / Release — OPEN (authenticated run, coverage incomplete)
 
 - [x] Add the Playwright release harness with explicit viewport, QA backend and
   production-request guards.
 - [x] Confirm Playwright managed Chromium is present.
-- [ ] Run the authenticated read-only release matrix at `390x844`, `768x1024`,
+- [x] Run the authenticated read-only release matrix at `390x844`, `768x1024`,
   `1280x800` and `1920x1080`.
-- [ ] Certify module navigation, deep links, relations, accessibility,
-  reduced motion, PWA smoke, console/network cleanliness and zero legacy
+- [x] Certify module navigation and console/network cleanliness in the
+  authenticated read-only run.
+- [ ] Add assertions and data coverage for deep links, relations, recurring
+  plans, accessibility, reduced motion, PWA smoke, QA deltas and zero legacy
   runtime markers.
-- [ ] Close the auth gate using manual login in the existing ignored QA profile.
+- [x] Close the authentication blocker using the existing ignored QA profile.
 
-Current blocker: `V3-8_AUTH_REQUIRED` — the reusable QA profile currently
-lands on Login because its persisted session is not valid. No credentials,
+The authenticated suite passed `5/5`, but V3-8 remains open because the
+current harness records rather than asserts several required rows and all
+deep-link probes were unavailable in the read-only data set. No credentials,
 tokens, cookies, QA writes or production access were used. See
 `docs/V3-8_RELEASE_CERTIFICATION.md`. Do not start V3-9.

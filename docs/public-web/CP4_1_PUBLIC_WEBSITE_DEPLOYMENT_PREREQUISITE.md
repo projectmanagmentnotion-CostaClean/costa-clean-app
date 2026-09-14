@@ -1,7 +1,7 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+**Status:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
@@ -109,7 +109,7 @@ Important production observations:
 | Next.js deployment path | `PASS_PREVIEW_ONLY` | Owned Vercel project and explicit preview deployment are verified; production promotion remains unauthorized |
 | Rollback procedure | `PARTIAL` | Runbook is documented and provider controls are visible, but private artifact rehearsal is blocked |
 | Production visual certification | `PASS_390_768_1440` | Read-only baseline completed at all required viewports |
-| Production changes | `PASS` | Zero DNS, WordPress, tracking, deployment and content changes |
+| Public production runtime changes | `PASS` | Zero DNS, WordPress, tracking, domain or content changes |
 
 ## Security and non-goals
 
@@ -123,7 +123,7 @@ Important production observations:
 
 CP-4.1 remains:
 
-`PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+`PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 
 The block can close only after a separately authorized CP-4.1A remediation proves:
 
@@ -139,7 +139,7 @@ Until those conditions pass, CP-4.2 is `NOT_STARTED` and no public website redes
 
 **Execution date:** 2026-09-14
 **Authorization:** CP-4.1A owner authorization in the task prompt.
-**Result:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+**Result:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 
 ### Repository precheck
 
@@ -192,7 +192,7 @@ The preview is protected by Vercel deployment protection. With the authenticated
 
 ### Vercel target incident
 
-The first unqualified `vercel --yes` invocation created `dpl_5A4mQ5XB21zyCv99d2vWBwBNHNJP` with Vercel `target=production`. It has no `costacleanbcn.com` or `www.costacleanbcn.com` alias and did not change SiteGround, DNS or the public production runtime. It was not promoted or connected to the production domain. It remains an explicit review item because the CP-4.1A gate requires zero production-target deployments. No further production-target deployment was made; the canonical preview is `dpl_6VBmKmnn1othArph1babKHfVmvh2`.
+The first unqualified `vercel --yes` invocation created `dpl_5A4mQ5XB21zyCv99d2vWBwBNHNJP` with Vercel `target=production`. It has no `costacleanbcn.com` or `www.costacleanbcn.com` alias and did not change SiteGround, DNS or the public production runtime. It was not promoted or connected to the production domain. After the web commit was pushed to `main`, the connected GitHub integration also created `dpl_D8S8abHTQ3g2AruoEksooHzAkxGF` with `target=production` and `readyState=BLOCKED`, with no Costa Clean domain alias. This proves the current `main` integration can create production-target deployments automatically. Both are explicit review items because the CP-4.1A gate requires zero unauthorized production-target deployments. The canonical preview remains `dpl_6VBmKmnn1othArph1babKHfVmvh2`.
 
 ### Production visual baseline
 
@@ -247,11 +247,11 @@ TTL reduction, apex/www redirect behavior and certificate provisioning must be p
 | Rollback runbook | `PASS_DOCUMENTED` |
 | Non-destructive rehearsal | `NOT_READY_PRIVATE_EXPORT_MISSING` |
 | Production visual baseline | `PASS_390_768_1440` |
-| Production changes | `0` |
+| Public production runtime changes | `0` |
 | DNS/email changes | `0` |
 
-`CP-4.1 = PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+`CP-4.1 = PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 
 `CP-4.2 = NOT_STARTED`
 
-The next action is to obtain an approved private export/download capability from SiteGround and resolve the Vercel production-target incident before attempting closeout. Do not promote the preview, connect the production domain or begin CP-4.2.
+The next action is to obtain an approved private export/download capability from SiteGround and resolve the Vercel production-target/autodeploy review items before attempting closeout. Do not promote the preview, connect the production domain or begin CP-4.2.

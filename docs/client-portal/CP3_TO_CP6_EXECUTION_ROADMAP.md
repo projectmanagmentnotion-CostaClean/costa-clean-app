@@ -423,7 +423,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING` |
+| Status | `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING` |
 | Objective | Establish owned, recoverable public website source and deployment control before any public-site edit; use WordPress only if the audit requires it. |
 | User outcome | No visible change; the public website becomes safely changeable and recoverable. |
 | Dependencies | CP-3C.3 closed; hosting owner available; export/staging access separately authorized. |

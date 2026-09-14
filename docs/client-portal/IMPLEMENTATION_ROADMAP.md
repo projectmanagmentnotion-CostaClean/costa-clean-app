@@ -432,14 +432,15 @@ CP-3B.0 QA application evidence:
 
 ## CP-4 — Public website and legal integration
 
-Status: `PARTIAL_CP4_1_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+Status: `PARTIAL_CP4_1_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 
 - **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** `PARTIAL`.
   The source repository, production WordPress runtime, SiteGround hosting
   boundary, DNS and provider backup/restore capability are verified read-only.
   The isolated Next.js preview is ready, but a private hashed export and
   complete rollback proof remain blocked by the SiteGround plan; an unexpected
-  Vercel production-target deployment is also documented for review. See
+  Vercel production-target deployments and the GitHub auto-deploy behavior are
+  also documented for review. See
   `docs/public-web/CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md`.
 - **CP-4.1A — Private export and isolated preview proof:** next prerequisite;
   requires separate authorization before any remote export, staging mutation or

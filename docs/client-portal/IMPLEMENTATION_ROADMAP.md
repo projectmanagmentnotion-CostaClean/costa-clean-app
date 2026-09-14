@@ -565,3 +565,34 @@ cause. `PUBLIC_PRODUCTION_TARGET = SITEGROUND`,
 `WORDPRESS_ROLE = ROLLBACK_AND_MIGRATION_SOURCE_ONLY`, and
 `VERCEL_ROLE = TEMPORARY_PREVIEW_ONLY`. CP-4.1 is `DONE`; CP-4.2 remains
 `NOT_STARTED`.
+
+## CP-4.2B — Safe public lead intake and QA CRM contract
+
+| Field | Result |
+|---|---|
+| Scope | `QA_ONLY`; public lead/request intake; no CP-4.3 |
+| QA project | `kpvvydthlxupjjqqdpxy` (`CostaClean QA`) |
+| Production changes | `0` |
+| Public transport | SiteGround server `/api/quote` -> signed QA Edge Function -> narrow QA RPC |
+| Supabase migration | Applied: `20260914170000_cp42b_public_lead_intake_qa.sql` |
+| Edge Function | `public-lead-intake`, `ACTIVE`, JWT verification disabled because HMAC is mandatory |
+| HMAC/replay | SHA-256 body binding; five-minute timestamp window; constant-time comparison |
+| Idempotency | Submission UUID is required and ledger-backed |
+| CRM writes | QA `leads` only; no client/property/job/quote/invoice/payment creation or links |
+| RLS | `leads` and intake ledger `ENABLE ROW LEVEL SECURITY` plus `FORCE ROW LEVEL SECURITY` |
+| RPC grants | `service_role` only; `anon` and `authenticated` denied |
+| QA state | Ledger `0`; leads `2`; existing QA entities unchanged |
+| Legal state | Notice/privacy substantive recovery; cookie/terms `SHORTCODE_ONLY`; professional review pending |
+| SiteGround private env | `BLOCKED`; current project controls do not expose env vars and `SITE TOOLS` redirected to login |
+| Synthetic lead | `NOT_EXECUTED`; no residue to clean |
+| CP-4.1 | `DONE` |
+| CP-4.2 | `PARTIAL_SITEGROUND_ENV_CONFIGURATION_BLOCKED` |
+| CP-4.3 | `NOT_STARTED` |
+
+The route fails closed when the exact QA endpoint, secret or environment is
+missing. The secret is stored in the QA Edge Function secret store and was
+not committed or exposed in browser code. The remaining gate is a supported
+way to set the same secret and endpoint as private SiteGround server
+variables, followed by one synthetic create/idempotency/cleanup certification
+against the temporary preview URL. DNS, production WordPress, email DNS,
+production Supabase and customer data remain unchanged.

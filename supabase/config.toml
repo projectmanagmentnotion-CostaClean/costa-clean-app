@@ -397,6 +397,9 @@ verify_jwt = false
 [functions.portal-invoice-download]
 verify_jwt = false
 
+[functions.public-lead-intake]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

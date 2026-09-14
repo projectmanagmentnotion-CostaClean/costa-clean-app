@@ -12,6 +12,7 @@ import { readClientDeepLink, writeClientDeepLink } from '../navigation/clientDee
 import { V3ContactActions } from './V3ContactActions'
 import { V3ClientAvatar, V3ClientProfileMedia } from './V3ClientProfileMedia'
 import { V3ClientWriteFlow } from './V3ClientWriteFlow'
+import { V3RecurringPlansSection } from '../recurring/V3RecurringPlans'
 
 type ClientFilter = 'all' | 'active' | 'inactive' | 'archived' | 'balance'
 
@@ -28,6 +29,7 @@ interface V3ClientsPageProps {
   onCreateInvoiceForClient: (client: ClientListItem) => void
   onCreateQuoteForClient: (client: ClientListItem) => void
   onClientSaved?: () => Promise<void>
+  onRecurringPlanChanged?: () => Promise<void>
   onOpenPropertyWorkspace: (propertyId: string) => void
   onOpenJobWorkspace: (jobId: string) => void
   onOpenQuoteDetail: (quoteId: string) => void
@@ -85,7 +87,7 @@ export function V3ClientsPage(props: V3ClientsPageProps) {
   }
 
   if (selectedClient) {
-    return <><V3ClientWorkspace client={selectedClient} properties={props.properties} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} recurringInvoicePlans={props.recurringInvoicePlans} balance={balanceByClient.get(selectedClient.id) ?? 0} onBack={closeClient} onEdit={() => setEditClient(selectedClient)} onSaved={props.onClientSaved} onCreateInvoice={() => props.onCreateInvoiceForClient(selectedClient)} onCreateQuote={() => props.onCreateQuoteForClient(selectedClient)} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenQuoteDetail={props.onOpenQuoteDetail} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />{editClient ? <V3ClientWriteFlow existingClients={props.clients} client={editClient} onSaved={props.onClientSaved ?? (async () => undefined)} onCancel={() => setEditClient(null)} onOpenExisting={openClient} /> : null}</>
+    return <><V3ClientWorkspace client={selectedClient} properties={props.properties} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} recurringInvoicePlans={props.recurringInvoicePlans} balance={balanceByClient.get(selectedClient.id) ?? 0} onBack={closeClient} onEdit={() => setEditClient(selectedClient)} onSaved={props.onClientSaved} onRecurringPlanChanged={props.onRecurringPlanChanged} onCreateInvoice={() => props.onCreateInvoiceForClient(selectedClient)} onCreateQuote={() => props.onCreateQuoteForClient(selectedClient)} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenQuoteDetail={props.onOpenQuoteDetail} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />{editClient ? <V3ClientWriteFlow existingClients={props.clients} client={editClient} onSaved={props.onClientSaved ?? (async () => undefined)} onCancel={() => setEditClient(null)} onOpenExisting={openClient} /> : null}</>
   }
 
   return <V3Page className="v3-clients-page">
@@ -106,13 +108,12 @@ function V3ClientRow({ client, balance, onOpen }: { client: ClientListItem; bala
   return <V3EntityListItem className="v3-client-row" onClick={onOpen} ariaLabel={`Abrir cliente ${client.full_name}`}><V3ClientAvatar client={client} size="compact" /><div className="v3-client-row__main"><strong>{client.full_name}</strong><span>{client.display_code ?? 'Sin código'} · {client.email ?? client.phone ?? 'Sin contacto'}</span><V3ContactActions phone={client.phone} email={client.email} clientName={client.full_name} compact /></div><div className="v3-client-row__side"><strong>{formatCurrency(balance)}</strong><V3Status label={statusLabel} tone={statusTone(client.status)} /></div></V3EntityListItem>
 }
 
-function V3ClientWorkspace({ client, properties, jobs, quotes, invoices, payments, recurringInvoicePlans, balance, onBack, onEdit, onSaved, onCreateInvoice, onCreateQuote, onOpenPropertyWorkspace, onOpenJobWorkspace, onOpenQuoteDetail, onOpenInvoiceDetail }: { client: ClientListItem; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; recurringInvoicePlans: RecurringInvoicePlanListItem[]; balance: number; onBack: () => void; onEdit: () => void; onSaved?: () => Promise<void>; onCreateInvoice: () => void; onCreateQuote: () => void; onOpenPropertyWorkspace: (id: string) => void; onOpenJobWorkspace: (id: string) => void; onOpenQuoteDetail: (id: string) => void; onOpenInvoiceDetail: (id: string) => void }) {
+function V3ClientWorkspace({ client, properties, jobs, quotes, invoices, payments, recurringInvoicePlans, balance, onBack, onEdit, onSaved, onRecurringPlanChanged, onCreateInvoice, onCreateQuote, onOpenPropertyWorkspace, onOpenJobWorkspace, onOpenQuoteDetail, onOpenInvoiceDetail }: { client: ClientListItem; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; recurringInvoicePlans: RecurringInvoicePlanListItem[]; balance: number; onBack: () => void; onEdit: () => void; onSaved?: () => Promise<void>; onRecurringPlanChanged?: () => Promise<void>; onCreateInvoice: () => void; onCreateQuote: () => void; onOpenPropertyWorkspace: (id: string) => void; onOpenJobWorkspace: (id: string) => void; onOpenQuoteDetail: (id: string) => void; onOpenInvoiceDetail: (id: string) => void }) {
   const relatedProperties = properties.filter((item) => item.client_id === client.id)
   const relatedJobs = jobs.filter((item) => item.client_id === client.id)
   const relatedQuotes = quotes.filter((item) => item.client_id === client.id)
   const relatedInvoices = invoices.filter((item) => item.client_id === client.id)
   const relatedPayments = payments.filter((payment) => relatedInvoices.some((invoice) => invoice.id === payment.invoice_id))
-  const relatedPlans = recurringInvoicePlans.filter((plan) => plan.client_id === client.id)
   return <V3Page className="v3-client-workspace"><button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Clientes</button><V3ClientProfileMedia client={client} onEdit={onEdit} onSaved={onSaved} /><div className="v3-workspace-actions"><V3ContactActions phone={client.phone} email={client.email} clientName={client.full_name} /><V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction><V3SecondaryAction onClick={onCreateQuote}>Nuevo presupuesto</V3SecondaryAction></div>
     <V3Section label="Datos"><dl className="v3-facts"><div><dt>Teléfono</dt><dd>{client.phone ?? 'No disponible'}</dd></div><div><dt>Email</dt><dd>{client.email ?? 'No disponible'}</dd></div><div><dt>Fiscal</dt><dd>{client.tax_id ?? 'Sin NIF/CIF'}</dd></div><div><dt>Dirección</dt><dd>{client.billing_address ?? 'Sin dirección'}</dd></div></dl></V3Section>
     <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Saldo pendiente</dt><dd>{formatCurrency(balance)}</dd></div><div><dt>Inmuebles</dt><dd>{relatedProperties.length}</dd></div><div><dt>Servicios</dt><dd>{relatedJobs.length}</dd></div><div><dt>Presupuestos</dt><dd>{relatedQuotes.length}</dd></div><div><dt>Facturas</dt><dd>{relatedInvoices.length}</dd></div></dl></V3Section>
@@ -120,7 +121,8 @@ function V3ClientWorkspace({ client, properties, jobs, quotes, invoices, payment
     <V3RelationSection label="Servicios" empty="Sin servicios relacionados." items={relatedJobs.map((item) => ({ id: item.id, title: item.display_code ?? item.service_type, detail: `${formatDateEs(item.scheduled_date)} · ${item.status}`, onClick: () => onOpenJobWorkspace(item.id) }))} />
     <V3RelationSection label="Presupuestos" empty="Sin presupuestos relacionados." items={relatedQuotes.map((item) => ({ id: item.id, title: item.display_code ?? 'Presupuesto', detail: `${formatCurrency(item.total)} · ${item.status}`, onClick: () => onOpenQuoteDetail(item.id) }))} />
     <V3RelationSection label="Facturas" empty="Sin facturas relacionadas." items={relatedInvoices.map((item) => ({ id: item.id, title: item.display_code ?? item.invoice_number ?? 'Factura', detail: `${formatCurrency(item.total)} · ${item.status}`, onClick: () => onOpenInvoiceDetail(item.id) }))} />
-    <V3Section label="Cobros"><p className="v3-section-copy">{relatedPayments.length > 0 ? `${relatedPayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section><V3Section label="Notas"><p className="v3-section-copy">Las notas del cliente se gestionan en la ficha operativa actual.</p></V3Section>{relatedPlans.length > 0 ? <V3Section label="Planes recurrentes"><p className="v3-section-copy">{relatedPlans.length} plan(es) recurrente(s) conectado(s).</p></V3Section> : null}
+    <V3Section label="Cobros"><p className="v3-section-copy">{relatedPayments.length > 0 ? `${relatedPayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section><V3Section label="Notas"><p className="v3-section-copy">Las notas del cliente se gestionan en la ficha operativa actual.</p></V3Section>
+    <V3RecurringPlansSection client={client} plans={recurringInvoicePlans} properties={properties} quotes={quotes} onRefresh={onRecurringPlanChanged ?? (async () => undefined)} onOpenProperty={onOpenPropertyWorkspace} onOpenQuote={onOpenQuoteDetail} onOpenInvoice={onOpenInvoiceDetail} />
   </V3Page>
 }
 

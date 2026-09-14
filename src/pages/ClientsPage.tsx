@@ -37,6 +37,7 @@ interface ClientsPageProps {
   recurringInvoicePlans: RecurringInvoicePlanListItem[]
   error: string | null
   onClientCreated: () => Promise<void>
+  onRecurringPlanChanged?: () => Promise<void>
   onOpenPropertyWorkspace: (propertyId: string) => void
   onOpenJobWorkspace: (jobId: string) => void
   onOpenQuoteDetail: (quoteId: string) => void
@@ -425,7 +426,7 @@ function LegacyClientsPage({
 
 export function ClientsPage(props: ClientsPageProps) {
   if (props.v3Mode) {
-    return <V3ClientsPage clients={props.clients} properties={props.properties} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} recurringInvoicePlans={props.recurringInvoicePlans} error={props.error} initialClientId={props.initialClientId} onCreateInvoiceForClient={(client) => props.onCreateInvoiceForClient?.(client)} onCreateQuoteForClient={(client) => props.onCreateQuoteForClient?.(client)} onClientSaved={props.onClientCreated} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenQuoteDetail={props.onOpenQuoteDetail} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
+    return <V3ClientsPage clients={props.clients} properties={props.properties} jobs={props.jobs} quotes={props.quotes} invoices={props.invoices} payments={props.payments} recurringInvoicePlans={props.recurringInvoicePlans} error={props.error} initialClientId={props.initialClientId} onCreateInvoiceForClient={(client) => props.onCreateInvoiceForClient?.(client)} onCreateQuoteForClient={(client) => props.onCreateQuoteForClient?.(client)} onClientSaved={props.onClientCreated} onRecurringPlanChanged={props.onRecurringPlanChanged} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenQuoteDetail={props.onOpenQuoteDetail} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
   }
   return <LegacyClientsPage {...props} />
 }

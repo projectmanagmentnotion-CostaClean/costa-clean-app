@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-3D Implementation Contract
 
-Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`.
+Status: `V3-7B CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -303,3 +303,24 @@ The contract remains internal CRM-only. The field stores only a private object
 path using `clients/<client-id>/<uuid>.<ext>`; signed URLs are runtime-derived,
 and no public URL, base64 or blob URL is persisted. The exact viewport matrix is
 `DEFERRED TO V3-8`. Production and production Supabase were not modified.
+
+## V3-7B functional parity — CLOSED / CERTIFIED
+
+The complete row-by-row audit is `docs/V3-7B_FUNCTIONAL_PARITY_AUDIT.md`.
+It covers every active operational domain and records `0` unknown rows, `0`
+remaining D gaps and `0` reachable legacy presentation fallbacks in the
+audited V3 surfaces.
+
+Recurring plans are now native in `src/v3/recurring/V3RecurringPlans.tsx`.
+The client workspace uses the existing `saveRecurringInvoicePlan`,
+`generateInvoiceFromRecurringPlan`, `buildRecurringPlanPersistenceInput`,
+schedule helpers and duplicate engine. Create/edit uses V3 fields and a V3
+bottom sheet; duplicate decisions use `V3DuplicateReviewSheet`; pause, resume
+and archive require the V3 confirmation sheet; generated invoices reopen in
+the existing invoice workspace. No new route, RPC, schema or nested legacy
+creation flow was introduced.
+
+`AppShell` passes the existing billing refresh callback after plan mutations so
+Home, alerts and the client workspace re-read authoritative plan data. No QA
+fixtures, SQL, storage writes, credentials or production resources were used
+in this audit block. Exact viewport resizing remains `DEFERRED TO V3-8`.

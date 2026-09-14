@@ -1,6 +1,6 @@
 # V3 Design Guardian — V3-3D
 
-Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`
+Status: `V3-7B CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`
 
 ## V3-3D property certification
 
@@ -271,3 +271,21 @@ exact responsive matrix deferred to V3-8.
 - Exact viewport matrix remains `DEFERRED TO V3-8`; no exact viewport PASS is
   claimed here.
 - Production and production Supabase: untouched.
+
+## V3-7B functional parity — CLOSED / CERTIFIED
+
+The parity audit is recorded in `docs/V3-7B_FUNCTIONAL_PARITY_AUDIT.md`.
+Recurring-plan management is a native V3 client-workspace section using the
+existing V3 primitives, `V3DuplicateReviewSheet` and protected recurring
+invoice contracts. The V3 tree does not import the legacy recurring flow or
+its legacy modal/overlay/form dependencies. The Guardian result for this
+surface is:
+
+- Native V3 recurring list/workspace/create/edit: `PASS`.
+- Duplicate review, dirty close guard and status confirmation: `PASS`.
+- Existing property/quote relations and invoice generation: `PASS`.
+- Legacy recurring presentation dependency in `src/v3/`: `0`.
+- New design tokens or primitives: `0`; existing approved V3 tokens/primitives
+  remain authoritative.
+- QA writes, SQL and production access: `0`.
+- Exact viewport matrix: `DEFERRED TO V3-8`.

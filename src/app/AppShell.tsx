@@ -1334,6 +1334,7 @@ export function AppShell({
                       reloadInvoicesAndPayments(),
                     ])
                   }}
+                  onRecurringPlanChanged={refreshBilling}
                   onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
                   onOpenJobWorkspace={handleOpenJobWorkspace}
                   onOpenQuoteDetail={handleOpenQuoteDetail}

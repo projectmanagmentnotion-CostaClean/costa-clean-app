@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
+Status: `V3-7B CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
 
 ## Directional intent
 
@@ -152,3 +152,12 @@ replacement, old-object cleanup, removal, fallback restoration, accessibility
 and iconography. The exact QA fixture cleanup returned DB residue `0` and
 Storage residue `0`; production remained untouched. Exact viewport values stay
 `DEFERRED TO V3-8`.
+
+## V3-7B functional parity — CLOSED / CERTIFIED
+
+The final functional parity audit is `docs/V3-7B_FUNCTIONAL_PARITY_AUDIT.md`.
+Recurring plans now use the existing V3 visual language inside the client
+workspace: approved fields, bottom sheets, confirmation sheets, relation rows,
+entity status and the existing duplicate review sheet. No private visual
+system, new token set or alternate navigation surface was introduced. The
+exact viewport matrix remains `DEFERRED TO V3-8`.

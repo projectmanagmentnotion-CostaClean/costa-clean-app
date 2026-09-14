@@ -9,6 +9,7 @@ const v3TreeFiles = [
   'src/v3/clients/V3ClientsPage.tsx',
   'src/v3/clients/V3ContactActions.tsx',
   'src/v3/clients/contactActions.ts',
+  'src/v3/recurring/V3RecurringPlans.tsx',
   'src/v3/quotes/V3QuotesPage.tsx',
   'src/v3/documents/shareDocument.ts',
   'src/v3/leads/V3LeadsPage.tsx',
@@ -209,6 +210,20 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).toContain('findPropertyDuplicateGroups')
     expect(source).toContain('createProperty')
     expect(source).toContain('updateProperty')
+  })
+
+  it('keeps recurring plans on native V3 presentation and protected contracts', () => {
+    const source = readFileSync(join(process.cwd(), 'src/v3/recurring/V3RecurringPlans.tsx'), 'utf8')
+    for (const forbiddenName of ['FullscreenStepFlow', 'ConfirmDialog', 'DuplicateReviewOverlay', 'ClientCreateForm', 'PropertyCreateFlow', 'QuoteCreateFlow']) {
+      expect(source).not.toContain(forbiddenName)
+    }
+    expect(source).toContain('V3DuplicateReviewSheet')
+    expect(source).toContain('saveRecurringInvoicePlan')
+    expect(source).toContain('generateInvoiceFromRecurringPlan')
+    expect(source).toContain('buildRecurringPlanPersistenceInput')
+    expect(source).not.toMatch(/#[0-9a-f]{3,8}\b/i)
+    expect(source).not.toMatch(/border-radius\s*:/i)
+    expect(source).not.toMatch(/height\s*:\s*\d+px/i)
   })
 
   it('uses one tokenized opaque dock clearance contract', () => {

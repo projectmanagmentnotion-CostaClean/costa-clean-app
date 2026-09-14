@@ -224,4 +224,24 @@ code `CLI-0126`, created at `2026-09-14T13:44:02.77365Z`; the guarded cleanup
 deleted exactly one client after the media pointer was `NULL`.
 
 The exact viewport matrix is deferred to `V3-8`; this gate claims static
-responsive safety only. Do not begin `V3-7B` inside this closeout.
+responsive safety only.
+
+## V3-7B — Final functional parity audit — CLOSED / CERTIFIED
+
+- [x] Audit Home, Alerts, Closings, Leads, Clients/media, Properties, Jobs,
+  Quotes, Invoices, Payments, Expenses, recurring plans, navigation,
+  search/filter, duplicates, selection/export, notifications, auth, recovery
+  and relationships against the existing contracts.
+- [x] Classify every audited capability A/B/C/D with zero unknown rows in
+  `docs/V3-7B_FUNCTIONAL_PARITY_AUDIT.md`.
+- [x] Close the one real gap found: native V3 recurring-plan list, workspace,
+  create/edit, duplicate review, pause/resume/archive and invoice generation.
+- [x] Reuse existing recurring RPC wrappers, persistence mapping, schedule
+  helpers and `V3DuplicateReviewSheet`; no schema, route or legacy wrapper was
+  added.
+- [x] Add focused native-surface coverage and pass the full test, lint, build
+  and diff gates.
+- [x] No QA writes or production access; exact viewport certification remains
+  deferred to `V3-8 — Global E2E / Release`.
+
+Next: `V3-8 — GLOBAL E2E / RELEASE`.

@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2 remains not started.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B remains pending.
 
 ## Progress and execution authority
 
@@ -432,20 +432,20 @@ CP-3B.0 QA application evidence:
 
 ## CP-4 — Public website and legal integration
 
-Status: `CP4_1_DONE_CP4_2_NOT_STARTED`
+Status: `CP4_1_DONE_CP4_2A_PARTIAL_CP4_2B_PENDING`
 
 - **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** `DONE`.
   The source repository, production WordPress runtime, SiteGround hosting
   boundary, DNS and provider backup/restore capability are verified read-only.
   Private WordPress files and database exports are now held in ignored local
   custody with matching hashes. The native SiteGround Node.js preview is active
-  at the temporary URL recorded in CP-4.1G. A restore rehearsal remains
-  unexecuted and Vercel remains preview-only. See
+  at the temporary URL recorded in CP-4.1G. `ROLLBACK_REHEARSAL =
+  PASS_ISOLATED_NON_PRODUCTION_RESTORE`; Vercel remains preview-only. See
   `docs/public-web/CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md`.
 - **CP-4.1C — Private database export and native preview integration proof:**
   database export and cleanup pass; SiteGround native preview is closed in
   CP-4.1G with an active temporary project.
-- **CP-4.2 — Public website and legal integration:** `NOT STARTED`; canonical client-area link,
+- **CP-4.2 — Public website and legal integration:** `PARTIAL`; CP-4.2A foundation is implemented in the independent public-web preview, while CP-4.2B remains pending; canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.
 
@@ -461,7 +461,26 @@ completed an active non-production Node.js deployment at
 overflow and console checks passed; production WordPress, DNS, email and the
 production domain were unchanged. No new technical response from Daniel V.
 was visible, so no provider root cause is claimed. CP-4.1 is `DONE` and
-CP-4.2 remains `NOT_STARTED`.
+CP-4.2A is `PARTIAL_FOUNDATION_COMPLETE_CP4_2B_PENDING`.
+
+## CP-4.2A — Public legal, consent and portal foundation
+
+Status: `PARTIAL_FOUNDATION_COMPLETE_CP4_2B_PENDING`.
+
+The independent public-web repository now contains centralized portal URL
+configuration, an Área cliente entry point, legal route/redirect scaffolding,
+versioned source registry, revocable necessary/analytics/marketing consent,
+separate optional marketing consent in the preview quote flow, and a typed
+tracking abstraction that does not activate production tags in preview. The
+current production legal pages were identified read-only, but their
+substantive content was not readable because the public provider challenge
+intercepted the direct routes; no legal copy or fingerprint is claimed as
+migrated. The verified external portal target is
+`https://app.costacleanbcn.com/portal`.
+
+No CRM runtime, Supabase schema, production WordPress, production database,
+DNS, email DNS, domain cutover or real lead intake changed. CP-4.2B remains the
+next block for the separately certified public lead contract.
 - **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,
   domain authentication, rate limits, audit, safe logs, fallback and monitoring.
 

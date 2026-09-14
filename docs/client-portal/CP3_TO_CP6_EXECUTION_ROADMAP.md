@@ -6,7 +6,8 @@ Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
 `PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
 `OWNER_APPROVED`; CP-3B.5C `IMPLEMENTATION_COMPLETE`; CP-3B.5D
 `CONTRACT_AND_WIRING_COMPLETE`; CP-3C.1 onward
-`NOT STARTED`; CP-4.1 `DONE`; CP-4.2 `NOT_STARTED`.
+`NOT STARTED`; CP-4.1 `DONE`; CP-4.2A
+`PARTIAL_FOUNDATION_COMPLETE_CP4_2B_PENDING`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -447,7 +448,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `PARTIAL_FOUNDATION_COMPLETE_CP4_2B_PENDING` |
 | Objective | Connect the public site to the canonical portal and implement the specified legal/consent surfaces. |
 | User outcome | Visitors find Área de clientes and receive clear layered notices with separate privacy, contract, marketing and cookie choices. |
 | Dependencies | CP-4.1 closed; canonical portal URL live; copy/content spec approved; professional legal review status explicit. |
@@ -466,6 +467,18 @@ automatically.
 | Closeout documentation | Content versions, consent/tracker evidence, legal-review debt, deployment/rollback result and next gate. |
 | Expected commit | `docs: integrate public website and portal legal surfaces` |
 | Next gate | CP-4.3 |
+
+## CP-4.2A — Public legal, consent and portal foundation
+
+| Field | Result |
+|---|---|
+| Status | `PARTIAL_FOUNDATION_COMPLETE_CP4_2B_PENDING` |
+| Scope | Independent `costa-clean-web` public foundation and SiteGround preview only |
+| Evidence | Centralized portal URL, legal routes/registry, layered consent, optional marketing separation, typed tracking and preview-safe SEO |
+| Legal status | `REVIEW_REQUIRED`; direct production legal routes were intercepted by a provider challenge, so no substantive copy or fingerprint is claimed as migrated |
+| Portal target | Verified external app shell at `https://app.costacleanbcn.com/portal`; public navigation only, no auth bypass or tenancy inference |
+| Production effects | WordPress `0`; database `0`; DNS `0`; email DNS `0`; domain cutover `0`; real leads `0`; ads spend `0` |
+| Next gate | CP-4.2B — safe public lead intake, QA CRM contract and tracking E2E |
 
 ## CP-4.3 — Invitation email delivery adapter
 

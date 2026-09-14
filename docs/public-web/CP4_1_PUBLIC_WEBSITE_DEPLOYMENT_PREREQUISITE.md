@@ -1,12 +1,12 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_HOSTING_ACCESS_VERIFIED_EXPORT_AND_STAGING_PENDING`  
+**Status:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
 
-CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are now identified, and the preferred Next.js source is reproducible locally. The required recoverable export, isolated preview/staging identity, deployment procedure and rollback rehearsal are not yet established. CP-4.2 remains `NOT_STARTED`.
+CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, and an isolated Vercel preview is ready. The required recoverable export, private custody and complete rollback rehearsal are not yet established. CP-4.2 remains `NOT_STARTED`.
 
 The exact next block is **CP-4.1A: private WordPress export and isolated preview/deployment proof**. It must be separately authorized before any export download, staging mutation or deployment preparation that can create remote state.
 
@@ -105,10 +105,10 @@ Important production observations:
 | Hosting access | `PASS` | Authenticated SiteGround account and Site Tools were inspected |
 | Private full export | `NOT_READY` | No versioned WordPress files/database export and checksum |
 | Backup custody | `NOT_READY` | No approved private destination, retention or encryption record |
-| Isolated staging/preview | `NOT_READY` | No staging identity or proof that it is isolated from production data |
-| Next.js deployment path | `NOT_READY` | No owned Vercel/SiteGround target, project link or CI procedure verified |
-| Rollback procedure | `NOT_READY` | Provider restore actions are available, but no exact artifact/runbook rehearsal exists |
-| Production visual certification | `PARTIAL` | Home was inspected read-only; exact 390x844, 768x1024 and 1440x900 production certification was not completed in this audit |
+| Isolated staging/preview | `PASS_PREVIEW` | Vercel preview has no environment variables, production domain or WordPress/CRM connection |
+| Next.js deployment path | `PASS_PREVIEW_ONLY` | Owned Vercel project and explicit preview deployment are verified; production promotion remains unauthorized |
+| Rollback procedure | `PARTIAL` | Runbook is documented and provider controls are visible, but private artifact rehearsal is blocked |
+| Production visual certification | `PASS_390_768_1440` | Read-only baseline completed at all required viewports |
 | Production changes | `PASS` | Zero DNS, WordPress, tracking, deployment and content changes |
 
 ## Security and non-goals
@@ -116,23 +116,142 @@ Important production observations:
 - No SiteGround password, session token or private credential was copied into the repository or reports.
 - No DNS record, MX, SPF, DKIM or DMARC record was modified.
 - No WordPress page, plugin, theme, form, cookie setting or cache was modified.
-- No production deployment, preview deployment, backup creation/download/restore or migration was executed.
+- No public production-domain deployment, backup creation/download/restore or migration was executed. One Vercel deployment with `target=production` was created accidentally by the initial CLI invocation; it has no Costa Clean production domain and is documented as an open review item.
 - No Supabase, CRM, portal, OAuth, email provider or advertising configuration was changed.
 
 ## Acceptance decision
 
 CP-4.1 remains:
 
-`PARTIAL_HOSTING_ACCESS_VERIFIED_EXPORT_AND_STAGING_PENDING`
+`PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
 
-The block can close only after a separately authorized CP-4.1A proves:
+The block can close only after a separately authorized CP-4.1A remediation proves:
 
 1. a private, hashed and recoverable WordPress files/database export;
 2. documented backup custody and retention;
-3. an isolated preview/staging identity with no production database or customer data exposure;
-4. an owned deployment path for the selected source artifact;
-5. an exact rollback procedure with non-destructive evidence; and
-6. the required production-versus-preview visual baseline.
+3. resolution of the Vercel production-target review item;
+4. an exact rollback procedure with non-destructive evidence; and
+5. the required production-versus-preview visual baseline reconciled against the approved migration content.
 
 Until those conditions pass, CP-4.2 is `NOT_STARTED` and no public website redesign or production migration should begin.
 
+## CP-4.1A - Private Export and Isolated Preview Proof
+
+**Execution date:** 2026-09-14
+**Authorization:** CP-4.1A owner authorization in the task prompt.
+**Result:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+
+### Repository precheck
+
+| Repository | Branch | Commit | Worktree |
+|---|---|---|---|
+| `costa-clean-app` | `codex/ux-operational-mobile-v2` | `97fdb60ed39182d439057392354d3293adc69928` | clean after governance commit |
+| `costa-clean-web` | `main` | `f1dcaf2` | clean except preserved pre-existing `qa-reports/` |
+
+The web repository remote remains `https://github.com/projectmanagmentnotion-CostaClean/costa-clean-web.git`. The Vercel project was linked to this repository. `.vercel/`, `.auth/`, `qa-reports/` and test output are excluded from deployment or Git as appropriate; the existing `qa-reports/` directory was not deleted or committed.
+
+### Private export result
+
+| Criterion | Result | Evidence |
+|---|---|---|
+| Private export artifact | `BLOCKED` | SiteGround `Descargar` opened a Premium Backups offer; no download started |
+| Artifact count | `0` | No file was downloaded |
+| SHA-256 | `NOT_AVAILABLE` | No artifact exists to hash |
+| Integrity | `NOT_EXECUTED` | No archive/database artifact exists to test |
+| Private custody | `NOT_READY` | `.auth/cp4/backups/` is ignored, but contains no export |
+| Export in Git | `PASS` | `0`; no backup or customer data was staged or committed |
+| Production restore | `0` | No restore action was clicked |
+
+Existing SiteGround system backups remain visible, including daily entries from 25/08/2026 through 13/09/2026, and the UI reports 5 manual backups available. The provider offered restore actions, but downloadable custody is not available on the current plan without Premium Backups. No purchase or plan change was made.
+
+### WordPress role
+
+`WORDPRESS_ROLE = ROLLBACK_AND_MIGRATION_SOURCE_ONLY`
+
+WordPress remains the current production runtime and a migration/rollback source. It is not the future canonical source; the preferred canonical source remains `costa-clean-web`.
+
+### Isolated Next.js preview
+
+| Field | Evidence |
+|---|---|
+| Provider | Vercel, Hobby team `projectmanagmentnotion-costaclean` |
+| Project | `costa-clean-web` |
+| Project ID | `prj_pOwhnuDamDWa0DnDoLfa3r0ZYOvN` |
+| Deployment ID | `dpl_6VBmKmnn1othArph1babKHfVmvh2` |
+| Preview URL | `https://costa-clean-dwtphhebs.vercel.app` |
+| Source commit | `f1dcaf2` |
+| Deployment command | `vercel deploy --target preview --yes --format json` |
+| Ready state | `READY` |
+| Environment variables | none configured in the Vercel project |
+| Production domain attached | `NO`; no `costacleanbcn.com` or `www.costacleanbcn.com` association found |
+| WordPress DB/customer data | none connected |
+| Supabase service role | not present in source or preview environment |
+| Real leads | `0`; no POST/form submission was sent |
+
+The preview is protected by Vercel deployment protection. With the authenticated CLI bypass, all smoke routes returned HTML successfully: `/`, `/servicios`, `/contacto`, `/presupuesto`, `/zonas`, `/guias`, `/casos-de-exito` and a not-found route. The home HTML contains the canonical WhatsApp link and noindex metadata. `/robots.txt` returns `User-agent: *` and `Disallow: /`. The preview source contains no production tracking IDs or private secrets.
+
+### Vercel target incident
+
+The first unqualified `vercel --yes` invocation created `dpl_5A4mQ5XB21zyCv99d2vWBwBNHNJP` with Vercel `target=production`. It has no `costacleanbcn.com` or `www.costacleanbcn.com` alias and did not change SiteGround, DNS or the public production runtime. It was not promoted or connected to the production domain. It remains an explicit review item because the CP-4.1A gate requires zero production-target deployments. No further production-target deployment was made; the canonical preview is `dpl_6VBmKmnn1othArph1babKHfVmvh2`.
+
+### Production visual baseline
+
+Read-only Playwright checks against `https://costacleanbcn.com/` completed at the exact required viewports:
+
+| Viewport | HTTP | Overflow X | Header | Primary CTA | WhatsApp | Footer | Cookie banner |
+|---|---:|---:|---|---|---|---|---|
+| `390x844` | 200 | false | present | present | present | present | present |
+| `768x1024` | 200 | false | present | present | present | present | present |
+| `1440x900` | 200 | false | present | present | present | present | present |
+
+Screenshots were kept only in ignored local `test-results/cp4-1a-production/`; none are in Git.
+
+### Deployment, DNS and email safety
+
+The repeatable non-production path is:
+
+`GitHub main at f1dcaf2 -> Vercel preview target -> noindex/protection -> QA -> owner approval`
+
+Production promotion and domain cutover are not authorized by this block and were not executed. Future DNS planning is deliberately unresolved until the Vercel domain is separately verified:
+
+| Record | Current | Future plan | Rollback |
+|---|---|---|---|
+| Apex A | `34.175.186.33` | Use provider-assigned verified Vercel apex value only after approval | restore `34.175.186.33` |
+| `www` A | `34.175.186.33` | Use provider-assigned verified Vercel alias/value only after approval | restore `34.175.186.33` |
+| Nameservers | `ns1.siteground.net`, `ns2.siteground.net` | keep SiteGround delegation unless separately approved | keep current values |
+| HTTPS | SiteGround certificate/redirect | provision and validate on the approved target | validate SiteGround HTTPS |
+
+TTL reduction, apex/www redirect behavior and certificate provisioning must be planned immediately before any future authorized cutover. No DNS record was changed.
+
+`EMAIL DNS CHANGE REQUIRED FOR WEB MIGRATION = NO` based on the current architecture. MX, SPF, DKIM and DMARC remain frozen.
+
+### Rollback and security
+
+- Rollback reference is documented in [`CP4_1_ROLLBACK_RUNBOOK.md`](./CP4_1_ROLLBACK_RUNBOOK.md).
+- Provider restore actions and old endpoint availability were verified non-destructively.
+- `ROLLBACK_REHEARSAL = NOT_READY_PRIVATE_EXPORT_MISSING`.
+- Source secret scan across `src/`, `public/`, `next.config.ts`, `package.json` and `.env.example` returned no credential-pattern matches.
+- No private key, service role, production credential, customer database or real email destination is configured in the preview.
+- Preview browser protection and `noindex, nofollow` were verified through the authenticated CLI response.
+
+### CP-4.1A acceptance matrix
+
+| Criterion | Result |
+|---|---|
+| Private export | `FAIL_PLAN_DOWNLOAD_UNAVAILABLE` |
+| Hash and integrity | `NOT_EXECUTED_NO_ARTIFACT` |
+| Private custody | `NOT_READY_NO_ARTIFACT` |
+| Isolated Next.js preview | `PASS` |
+| Preview noindex | `PASS` |
+| Deployment path | `PASS_PREVIEW_ONLY`; production-target incident remains open |
+| Rollback runbook | `PASS_DOCUMENTED` |
+| Non-destructive rehearsal | `NOT_READY_PRIVATE_EXPORT_MISSING` |
+| Production visual baseline | `PASS_390_768_1440` |
+| Production changes | `0` |
+| DNS/email changes | `0` |
+
+`CP-4.1 = PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING`
+
+`CP-4.2 = NOT_STARTED`
+
+The next action is to obtain an approved private export/download capability from SiteGround and resolve the Vercel production-target incident before attempting closeout. Do not promote the preview, connect the production domain or begin CP-4.2.

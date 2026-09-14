@@ -423,7 +423,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_HOSTING_ACCESS_VERIFIED_EXPORT_AND_STAGING_PENDING` |
+| Status | `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGET_REVIEW_PENDING` |
 | Objective | Establish owned, recoverable public website source and deployment control before any public-site edit; use WordPress only if the audit requires it. |
 | User outcome | No visible change; the public website becomes safely changeable and recoverable. |
 | Dependencies | CP-3C.3 closed; hosting owner available; export/staging access separately authorized. |
@@ -441,7 +441,7 @@ automatically.
 | Stop conditions | No owner, incomplete export, backup exposure, staging points to production DB or any unapproved content change. |
 | Closeout documentation | Public website deployment/rollback runbook, private backup reference and next gate. |
 | Expected commit | `docs: establish public website deployment prerequisite` |
-| Next gate | CP-4.1A closeout prerequisite; CP-4.2 remains `NOT STARTED` |
+| Next gate | CP-4.1A export/target remediation; CP-4.2 remains `NOT STARTED` |
 
 ## CP-4.2 — Public website and legal integration
 

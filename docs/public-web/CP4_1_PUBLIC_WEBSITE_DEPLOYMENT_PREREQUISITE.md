@@ -1,14 +1,14 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
+**Status:** `DONE_SITEGROUND_NATIVE_PREVIEW_ESTABLISHED`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
 
-CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, an isolated Vercel preview is ready, and private WordPress files plus database exports are held and hashed. After owner GitHub sudo reauthentication, SiteGround still leaves the native Node.js GitHub import in indefinite loading without presenting the repository or branch selector. CP-4.2 remains `NOT_STARTED`.
+CP-4.1 is closed for the deployment prerequisite. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, an isolated Vercel preview remains available, and private WordPress files plus database exports are held and hashed. The authenticated SiteGround retry exposed the repository and accepted the `main` branch, creating an active non-production Node.js preview. CP-4.2 remains `NOT_STARTED`.
 
-The exact remaining gate is **CP-4.1E: SiteGround provider integration remediation**. Do not promote a preview, connect the production domain, change DNS/email, or begin CP-4.2.
+The native preview prerequisite is complete. Do not promote the preview, connect the production domain, change DNS/email, or begin CP-4.2.
 
 ## Verified ownership and runtime map
 
@@ -325,6 +325,53 @@ The evidence is insufficient to attribute the failure solely to GitHub permissio
 > Hello SiteGround Support. In the authenticated GrowBig account for `costacleanbcn.com`, the native Node.js project flow reaches `Importar repositorio Git`, but after selecting GitHub import the `CONTINUAR` button remains disabled and no repository/branch selector appears. The GitHub SiteGround App is installed for the owner account, the source repository is `projectmanagmentnotion-CostaClean/costa-clean-web` on branch `main`, and the repository is valid and reachable from the owner account. Please verify the SiteGround GitHub integration callback, repository permission discovery and the provider-side reason the continuation control remains disabled. No production domain or project was created. Please do not change DNS or production hosting while diagnosing.
 
 `CP-4.1 = PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+`CP-4.2 = NOT_STARTED`
+
+## CP-4.1G - SiteGround native preview closeout
+
+**Audit date:** 2026-09-14
+**Execution:** authenticated normal Chrome session
+**Result:** `DONE_SITEGROUND_NATIVE_PREVIEW_ESTABLISHED`
+
+The SiteGround Node.js import was retried once after the owner had completed
+GitHub authentication and granted the installed SiteGround app access to all
+repositories. The target repository was visible, the `main` branch was
+accepted, and the deployment completed without attaching the production
+domain. No new technical response from Daniel V. was visible in the support
+chat; this section records observed provider behavior only and does not infer
+a provider root-cause statement.
+
+| Criterion | Result |
+|---|---|
+| Repository visible | `PASS` - `projectmanagmentnotion-CostaClean/costa-clean-web` |
+| Branch accepted | `PASS` - `main` |
+| SiteGround project | `PASS` - active Node.js project |
+| Temporary preview URL | `https://vilmatibisayg1.sg-host.com` |
+| Build | `PASS` - deployment reached `Desplegado` |
+| Runtime | `PASS` - homepage rendered and routes loaded |
+| HTTPS | `PASS` |
+| Noindex | `PASS` - `noindex, nofollow` on public preview routes; `noindex` on 404 |
+| Responsive overflow | `PASS` at `390x844`, `768x1024`, `1440x900` |
+| Console critical errors | `0` on preview |
+| Real leads | `0` - no forms submitted |
+| Production WordPress, DNS and email changes | `0` |
+| Production domain cutover | `0` |
+
+Verified routes were `/`, `/servicios`, `/contacto`, `/presupuesto`,
+`/zonas`, `/guias`, `/casos-de-exito` and a missing-route 404. The preview
+contains the expected navigation and WhatsApp links. The production domain
+remains unchanged and unattached.
+
+`SUPPORT_RESPONSE = NOT_VISIBLE_AT_EXECUTION`
+`SUPPORT_AGENT = Daniel V.`
+`CASE_ID = NOT_VISIBLE_CHAT_OPEN`
+`PROVIDER_ACTION = NATIVE_RETRY_SUCCEEDED; TECHNICAL_ROOT_CAUSE_NOT_ASSERTED`
+`INTEGRATION_RESET = NO`
+`RETRY = PASS`
+`PUBLIC_PRODUCTION_TARGET = SITEGROUND`
+`WORDPRESS_ROLE = ROLLBACK_AND_MIGRATION_SOURCE_ONLY`
+`VERCEL_ROLE = TEMPORARY_PREVIEW_ONLY`
+`CP-4.1 = DONE`
 `CP-4.2 = NOT_STARTED`
 
 ## CP-4.1E - GitHub reauthentication and SiteGround native preview final proof

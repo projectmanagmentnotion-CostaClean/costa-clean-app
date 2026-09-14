@@ -6,7 +6,7 @@ Status: CP-3B.2 implementation complete with certification debt; CP-3B.3
 `PARTIAL`; CP-3B.4 `PARTIAL`; CP-3B.5A `PARTIAL`; CP-3B.5B
 `OWNER_APPROVED`; CP-3B.5C `IMPLEMENTATION_COMPLETE`; CP-3B.5D
 `CONTRACT_AND_WIRING_COMPLETE`; CP-3C.1 onward
-`NOT STARTED`.
+`NOT STARTED`; CP-4.1 `DONE`; CP-4.2 `NOT_STARTED`.
 
 Canonical status: [`IMPLEMENTATION_ROADMAP.md`](./IMPLEMENTATION_ROADMAP.md)
 
@@ -423,7 +423,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED` |
+| Status | `DONE_SITEGROUND_NATIVE_PREVIEW_ESTABLISHED` |
 | Objective | Establish owned, recoverable public website source and deployment control before any public-site edit; use WordPress only if the audit requires it. |
 | User outcome | No visible change; the public website becomes safely changeable and recoverable. |
 | Dependencies | CP-3C.3 closed; hosting owner available; export/staging access separately authorized. |
@@ -441,7 +441,7 @@ automatically.
 | Stop conditions | No owner, incomplete export, backup exposure, staging points to production DB or any unapproved content change. |
 | Closeout documentation | Public website deployment/rollback runbook, private backup reference and next gate. |
 | Expected commit | `docs: establish public website deployment prerequisite` |
-| Next gate | Provider remediation for SiteGround native GitHub/Node.js preview integration; isolated restore rehearsal passed; CP-4.2 remains `NOT_STARTED` |
+| Next gate | CP-4.2 remains `NOT_STARTED`; production cutover still requires its own authorization |
 
 ## CP-4.2 — Public website and legal integration
 
@@ -637,3 +637,32 @@ The owner-authorized support message was sent with the production/DNS/email
 change prohibitions. No immediate provider fix or supported alternative has
 been supplied; do not perform another technical workaround while this case is
 open.
+
+## CP-4.1G — SiteGround native preview closeout
+
+| Field | Result |
+|---|---|
+| Support response | `NOT_VISIBLE_AT_EXECUTION`; no provider root cause inferred |
+| Support agent | `Daniel V.` |
+| Case ID | `NOT_VISIBLE_CHAT_OPEN` |
+| Integration reset | `NO` |
+| Repository visible | `PASS` - `projectmanagmentnotion-CostaClean/costa-clean-web` |
+| Branch visible and accepted | `PASS` - `main` |
+| SiteGround project | `PASS` - active non-production Node.js project |
+| Preview URL | `https://vilmatibisayg1.sg-host.com` |
+| Build / runtime / HTTPS | `PASS / PASS / PASS` |
+| Noindex | `PASS` |
+| Responsive overflow | `PASS` at `390x844`, `768x1024`, `1440x900` |
+| Critical console errors | `0` |
+| Real leads | `0` |
+| Production WordPress, DNS, email and domain cutover | `0` |
+| Public production target | `SITEGROUND` |
+| WordPress role | `ROLLBACK_AND_MIGRATION_SOURCE_ONLY` |
+| Vercel role | `TEMPORARY_PREVIEW_ONLY` |
+| CP-4.1 | `DONE` |
+| CP-4.2 | `NOT_STARTED` |
+
+The target routes `/`, `/servicios`, `/contacto`, `/presupuesto`, `/zonas`,
+`/guias`, `/casos-de-exito` and a missing-route 404 rendered successfully.
+WhatsApp links and navigation were present. No form was submitted and no
+production resource was modified. Do not start CP-4.2 automatically.

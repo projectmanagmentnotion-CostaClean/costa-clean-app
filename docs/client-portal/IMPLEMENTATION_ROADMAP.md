@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2 remains not started.
 
 ## Progress and execution authority
 
@@ -432,28 +432,36 @@ CP-3B.0 QA application evidence:
 
 ## CP-4 — Public website and legal integration
 
-Status: `PARTIAL_CP4_1_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+Status: `CP4_1_DONE_CP4_2_NOT_STARTED`
 
-- **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** `PARTIAL`.
+- **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** `DONE`.
   The source repository, production WordPress runtime, SiteGround hosting
   boundary, DNS and provider backup/restore capability are verified read-only.
   Private WordPress files and database exports are now held in ignored local
-  custody with matching hashes. The remaining blocker is the native SiteGround
-  GitHub/Node.js preview selector, which leaves `CONTINUAR` disabled without
-  exposing a repository selector. A restore rehearsal remains unexecuted and
-  Vercel remains preview-only. See
+  custody with matching hashes. The native SiteGround Node.js preview is active
+  at the temporary URL recorded in CP-4.1G. A restore rehearsal remains
+  unexecuted and Vercel remains preview-only. See
   `docs/public-web/CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md`.
 - **CP-4.1C — Private database export and native preview integration proof:**
-  database export and cleanup pass; SiteGround native preview remains blocked by
-  the disabled GitHub import continuation control.
+  database export and cleanup pass; SiteGround native preview is closed in
+  CP-4.1G with an active temporary project.
 - **CP-4.2 — Public website and legal integration:** `NOT STARTED`; canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.
 
-CP-4.1D update: private files/database custody and an isolated local restore
-rehearsal now pass. Native SiteGround Node.js preview remains blocked because
-the GitHub import selector leaves `CONTINUAR` disabled; no repository grant was
-expanded and no production change was made. CP-4.2 remains `NOT STARTED`.
+CP-4.1D historical update: private files/database custody and an isolated local
+restore rehearsal passed. The earlier native SiteGround selector blocker was
+superseded by the CP-4.1G retry; no production change was made. CP-4.2 remains
+`NOT STARTED`.
+
+CP-4.1G update: the authenticated SiteGround retry exposed
+`projectmanagmentnotion-CostaClean/costa-clean-web`, accepted `main`, and
+completed an active non-production Node.js deployment at
+`https://vilmatibisayg1.sg-host.com`. Route, HTTPS, noindex, responsive
+overflow and console checks passed; production WordPress, DNS, email and the
+production domain were unchanged. No new technical response from Daniel V.
+was visible, so no provider root cause is claimed. CP-4.1 is `DONE` and
+CP-4.2 remains `NOT_STARTED`.
 - **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,
   domain authentication, rate limits, audit, safe logs, fallback and monitoring.
 
@@ -521,3 +529,20 @@ request at 16:06 and is reviewing it. No integration reset, retry, preview
 creation or technical fix has occurred. `SUPPORT_CASE_OPEN = YES` and
 `SUPPORT_CASE_STATUS = OPEN_AWAITING_PROVIDER_REVIEW`. CP-4.1 remains
 `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`; CP-4.2 remains `NOT_STARTED`.
+
+## CP-4.1G — SiteGround native preview closeout
+
+The provider retry was executed in the authenticated normal Chrome session.
+The repository and `main` branch became visible and selectable, the build
+reached `Desplegado`, and the resulting non-production project is active at
+`https://vilmatibisayg1.sg-host.com`. The preview passed route rendering,
+HTTPS, `noindex`, critical-console-error and overflow checks at
+`390x844`, `768x1024` and `1440x900`; no form was submitted and no real lead
+was created. No production WordPress, DNS, email or domain cutover changed.
+
+The support chat showed no new technical provider response at execution time,
+so the observed retry success is recorded without asserting a provider root
+cause. `PUBLIC_PRODUCTION_TARGET = SITEGROUND`,
+`WORDPRESS_ROLE = ROLLBACK_AND_MIGRATION_SOURCE_ONLY`, and
+`VERCEL_ROLE = TEMPORARY_PREVIEW_ONLY`. CP-4.1 is `DONE`; CP-4.2 remains
+`NOT_STARTED`.

@@ -12,7 +12,7 @@ import type { LeadListItem } from '../../features/leads/types'
 import type { QuoteListItem } from '../../features/quotes/types'
 import { buildMailtoUrl, buildWhatsAppUrl } from '../clients/contactActions'
 import { V3ContactActions } from '../clients/V3ContactActions'
-import { V3BottomSheet, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3Textarea } from '../components/V3Primitives'
+import { V3BottomSheet, V3ConfirmSheet, V3Icon, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3Textarea } from '../components/V3Primitives'
 
 interface V3LeadWorkspaceProps {
   lead: LeadListItem
@@ -37,6 +37,7 @@ export function V3LeadWorkspace({ lead, draft, quotes, client, onBack, onRefresh
   const [isMoreOpen, setIsMoreOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false)
   const [feedback, setFeedback] = useState<string | null>(null)
   const [form, setForm] = useState({ full_name: lead.full_name, phone: lead.phone, city: lead.city ?? '', status: lead.status })
   const pricing = draft ? draftPricing(draft) : null
@@ -81,13 +82,12 @@ export function V3LeadWorkspace({ lead, draft, quotes, client, onBack, onRefresh
 
   function toggleArchive() {
     const nextArchived = !lead.archived_at
-    if (nextArchived && !window.confirm('¿Archivar este lead? No se borrará y podrás restaurarlo después.')) return
     void run(async () => { await updateLeadAuthenticated(lead.id, { archived_at: nextArchived ? new Date().toISOString() : null }) }, nextArchived ? 'Lead archivado.' : 'Lead restaurado.')
   }
 
   return <V3Page className="v3-lead-workspace">
-    <button type="button" className="v3-workspace-back" onClick={onBack}>← Leads</button>
-    <V3PageTitle eyebrow="Workspace comercial" title={lead.full_name} description={`${lead.display_code ?? lead.id} · ${lead.city ?? 'Sin ciudad'}`} />
+    <button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Leads</button>
+    <V3PageTitle eyebrow="Workspace comercial" title={lead.full_name} description={`${lead.display_code ?? 'Sin código'} · ${lead.city ?? 'Sin ciudad'}`} />
     <div className="v3-lead-workspace__status"><V3Status label={lead.archived_at ? 'Archivado' : getStatusLabel(lead.status)} tone={lead.archived_at ? 'neutral' : lead.status === 'won' ? 'success' : lead.status === 'lost' ? 'danger' : 'warning'} /><span>{lead.phone}{lead.email ? ` · ${lead.email}` : ''}</span></div>
     <div className="v3-workspace-actions"><V3ContactActions phone={lead.phone} email={lead.email} clientName={lead.full_name} /><V3PrimaryAction onClick={runPrimary} disabled={isBusy || Boolean(lead.archived_at && !client)}>{primaryLabel}</V3PrimaryAction></div>
     {feedback ? <div className="v3-state" role="status"><strong>{feedback}</strong></div> : null}
@@ -119,12 +119,13 @@ export function V3LeadWorkspace({ lead, draft, quotes, client, onBack, onRefresh
         </>
       ) : <p className="v3-section-copy">No hay borrador asociado.</p>}
     </V3Section>
-    <V3Section label="Presupuestos">{quotes.length ? <div className="v3-relation-list">{quotes.map((quote) => <button key={quote.id} type="button" className="v3-relation-row" onClick={() => onOpenQuote(quote.id)}><span><strong>{quote.display_code ?? quote.id}</strong><small>{formatCurrency(quote.total)} · {getStatusLabel(quote.status)}</small></span><span aria-hidden="true">→</span></button>)}</div> : <p className="v3-section-copy">Sin presupuestos relacionados.</p>}</V3Section>
-    <V3Section label="Cliente">{client ? <button type="button" className="v3-relation-row" onClick={() => onOpenClient(client.id)}><span><strong>Cliente vinculado</strong><small>{client.display_code ?? client.full_name}</small></span><span aria-hidden="true">→</span></button> : <p className="v3-section-copy">Sin cliente vinculado.</p>}</V3Section>
+    <V3Section label="Presupuestos">{quotes.length ? <div className="v3-relation-list">{quotes.map((quote) => <button key={quote.id} type="button" className="v3-relation-row" onClick={() => onOpenQuote(quote.id)}><span><strong>{quote.display_code ?? 'Presupuesto'}</strong><small>{formatCurrency(quote.total)} · {getStatusLabel(quote.status)}</small></span><V3Icon name="forward" size={16} /></button>)}</div> : <p className="v3-section-copy">Sin presupuestos relacionados.</p>}</V3Section>
+    <V3Section label="Cliente">{client ? <button type="button" className="v3-relation-row" onClick={() => onOpenClient(client.id)}><span><strong>Cliente vinculado</strong><small>{client.display_code ?? client.full_name}</small></span><V3Icon name="forward" size={16} /></button> : <p className="v3-section-copy">Sin cliente vinculado.</p>}</V3Section>
     <V3Section label="Datos"><dl className="v3-facts"><div><dt>Nombre</dt><dd>{lead.full_name}</dd></div><div><dt>Teléfono</dt><dd>{lead.phone}</dd></div><div><dt>Email</dt><dd>{lead.email ?? 'No disponible'}</dd></div><div><dt>Ciudad</dt><dd>{lead.city ?? 'No disponible'}</dd></div></dl></V3Section>
     <V3Section label="Historial"><p className="v3-section-copy">Estado actual: {getStatusLabel(lead.status)}. {draft ? `Borrador ${reviewed ? 'revisado' : 'pendiente'}.` : 'Sin borrador asociado.'}</p></V3Section>
     <V3SecondaryAction onClick={() => setIsMoreOpen(true)}>Más</V3SecondaryAction>
-    {isMoreOpen ? <V3BottomSheet title="Más acciones del lead" onClose={() => setIsMoreOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreOpen(false); setIsEditOpen(true) }}>Editar lead</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreOpen(false); toggleArchive() }}>{lead.archived_at ? 'Restaurar lead' : 'Archivar lead'}</V3SecondaryAction>{draft ? <V3SecondaryAction onClick={() => void run(async () => { await regenerateLeadDraftMessages(draft) }, 'Borradores regenerados; requieren nueva revisión.')}>Regenerar borradores</V3SecondaryAction> : null}</div></V3BottomSheet> : null}
+    {isMoreOpen ? <V3BottomSheet title="Más acciones del lead" onClose={() => setIsMoreOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreOpen(false); setIsEditOpen(true) }}>Editar lead</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreOpen(false); setIsArchiveConfirmOpen(true) }}>{lead.archived_at ? 'Restaurar lead' : 'Archivar lead'}</V3SecondaryAction>{draft ? <V3SecondaryAction onClick={() => void run(async () => { await regenerateLeadDraftMessages(draft) }, 'Borradores regenerados; requieren nueva revisión.')}>Regenerar borradores</V3SecondaryAction> : null}</div></V3BottomSheet> : null}
+    {isArchiveConfirmOpen ? <V3ConfirmSheet title={lead.archived_at ? 'Restaurar lead' : 'Archivar lead'} description={lead.archived_at ? 'El lead volverá al pipeline activo.' : 'El lead quedará archivado y podrás restaurarlo después.'} confirmLabel={lead.archived_at ? 'Restaurar lead' : 'Archivar lead'} onCancel={() => setIsArchiveConfirmOpen(false)} onConfirm={() => { setIsArchiveConfirmOpen(false); toggleArchive() }} /> : null}
     {isEditOpen ? <V3BottomSheet title="Editar lead" onClose={() => setIsEditOpen(false)}><div className="v3-bottom-sheet__content"><label className="v3-field"><span>Nombre completo</span><V3Input value={form.full_name} onChange={(event) => setForm({ ...form, full_name: event.target.value })} /></label><label className="v3-field"><span>Teléfono</span><V3Input value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} /></label><label className="v3-field"><span>Ciudad</span><V3Input value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} /></label><label className="v3-field"><span>Estado</span><select className="v3-input" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value })}><option value="new">Nuevo</option><option value="contacted">Contactado</option><option value="quoted">Presupuestado</option><option value="won">Ganado</option><option value="lost">Perdido</option></select></label><V3Textarea aria-label="Notas" placeholder="Notas del lead" /><V3PrimaryAction onClick={saveEdit} disabled={isBusy}>Guardar cambios</V3PrimaryAction></div></V3BottomSheet> : null}
   </V3Page>
 }

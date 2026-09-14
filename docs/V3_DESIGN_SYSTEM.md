@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-3D CLOSED / CERTIFIED`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
+Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
 
 ## Directional intent
 
@@ -111,4 +111,16 @@ Financial V3 list, workspace and create/edit surfaces use the dedicated V3
 flows and primitives. Runtime reachability checks found zero required legacy
 DOM markers, zero visible/accessibility UUID leaks and zero Unicode-as-icon
 usage. Legacy implementations remain available to the V2 branch by design.
-CRM zero-legacy remains open and is tracked separately in the audit document.
+## V3-6R CRM zero-legacy — CLOSED / CERTIFIED
+
+Clients, Leads, Properties and nested Services use native V3 presentation and
+the existing contracts for create, edit, persistence, duplicate protection,
+prefills, relations, deep links and back navigation. Authenticated CRM E2E,
+accessibility/focus, QA residue and static responsive safety passed. Legacy
+runtime markers, visible UUIDs, accessible UUIDs and Unicode-as-icon candidates
+are `0`.
+
+The exact four-viewport matrix is explicitly deferred to `V3-8 — Global E2E /
+Release`; no exact viewport PASS is claimed here because the current controlled
+browser lacks deterministic viewport resizing/CDP/device metrics. `V3-6R
+GLOBAL` remains open for the V2 global background and preload/loading surfaces.

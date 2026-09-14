@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-3D Implementation Contract
 
-Status: `CLOSED / CERTIFIED — V3-3D PROPERTIES + RELATIONS`.
+Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -234,4 +234,25 @@ must not render legacy flow shells. Financial V3 branches render
 `V3PaymentCreateFlow`/`V3DuplicateReviewSheet` and
 `V3ExpenseFormFlow` for their reachable create/edit paths. Runtime audit
 found zero required legacy markers. Legacy implementations remain behind the
-V2 branch; CRM replacement work remains open.
+V2 branch.
+
+## V3-6R CRM zero-legacy contract — CLOSED / CERTIFIED
+
+The V3 CRM presentation owns Clients, Leads, Properties and nested Services.
+It reuses the existing authenticated write, duplicate, prefill, relation,
+deep-link and back-navigation contracts without adding a route, schema or
+production write. The certified runtime evidence is:
+
+- authenticated CRM E2E: `PASS`;
+- legacy runtime markers: `0`;
+- visible and accessible UUIDs: `0`;
+- Unicode-as-icon: `0`;
+- accessibility/focus and QA DB/Storage residue: `PASS`;
+- static responsive safety: `PASS` with the existing V3 shell thresholds.
+
+The exact `390x844`, `768x1024`, `1280x800` and `1920x1080` viewport matrix is
+`DEFERRED TO V3-8 — Global E2E / Release`. The controlled browser in this
+environment exposes no deterministic viewport resizing/CDP/device metrics, so
+no exact viewport PASS is claimed and no application responsive failure was
+identified. `V3-6R GLOBAL` remains open for the global V2 background and
+preload/loading presentation.

@@ -1,6 +1,6 @@
 # V3 Design Guardian — V3-3D
 
-Status: `V3-3D CLOSED / CERTIFIED`
+Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`
 
 ## V3-3D property certification
 
@@ -213,5 +213,21 @@ and targeted audit events residue verified `0`.
 - Financial V3 runtime reachability audit: PASS for Invoices, Quotes, Payments
   and Expenses. Required legacy DOM markers: `0`; V2-only implementations may
   remain after the `v3Mode` branch.
-- CRM zero-legacy remains open for Clients, Leads, Properties and nested
-  Services.
+## V3-6R CRM zero-legacy evidence
+
+- Clients, Leads, Properties and nested Services: native V3 presentation and
+  authenticated E2E `PASS`.
+- Client/lead/property create and edit contracts, duplicate protection,
+  service prefills, relations, deep links and back navigation: `PASS`.
+- Legacy CRM runtime markers: `0`.
+- Visible UUIDs, accessible/ARIA UUIDs and Unicode-as-icon: `0`.
+- Accessibility/focus baseline, QA DB residue and QA Storage residue: `PASS`.
+- Static responsive safety: `PASS`; no CRM-specific breakpoint system, width
+  contract, desktop fork, second component tree or viewport-specific router.
+- Exact CRM viewports `390x844`, `768x1024`, `1280x800` and `1920x1080`:
+  `DEFERRED TO V3-8` because deterministic viewport/CDP control is not exposed
+  by the current browser environment. This is not an application failure.
+
+`V3-6R CRM ZERO-LEGACY` is `CLOSED / CERTIFIED` with the exact responsive
+matrix deferred. `V3-6R GLOBAL` remains open for global V2 background and
+preload/loading presentation.

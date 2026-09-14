@@ -16,6 +16,7 @@ import { applyTextSearch, recentFirstSort } from '../features/lists/utils'
 import type { LeadListItem } from '../features/leads/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import { V3LeadsPage } from '../v3/leads/V3LeadsPage'
+import { V3LeadCreateFlow } from '../v3/leads/V3LeadCreateFlow'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
@@ -148,9 +149,7 @@ export function LeadsPage({
   if (v3Mode) {
     return <>
       <V3LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} quotes={quotes} error={error} initialLeadId={initialLeadId} onCreateLead={() => setShowCreateForm(true)} onRefresh={onLeadConverted} onOpenQuote={onOpenQuote} onOpenClient={onOpenClient} onOpenLeadDeepLink={onOpenLeadDeepLink} onBackToLeadList={onBackToLeadList} />
-      <ResponsiveActionFlow isOpen={showCreateForm} title="Nuevo lead" description="Registra el contacto inicial y el contexto comercial." onClose={() => setShowCreateForm(false)}>
-        <LeadCreateForm onCreated={async () => { await onLeadCreated(); setShowCreateForm(false) }} existingLeads={leads} />
-      </ResponsiveActionFlow>
+      {showCreateForm ? <V3LeadCreateFlow existingLeads={leads} onCreated={onLeadCreated} onCancel={() => setShowCreateForm(false)} onOpenExistingLead={(leadId) => { setShowCreateForm(false); setSelectedLeadId(leadId); onOpenLeadDeepLink(leadId) }} onDirtyChange={() => undefined} /> : null}
     </>
   }
 

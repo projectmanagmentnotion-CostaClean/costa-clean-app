@@ -14,7 +14,7 @@ export function V3LeadRow({ lead, onOpen }: { lead: LeadListItem; onOpen: () => 
     <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir lead ${lead.full_name}`}>
       <div className="v3-lead-row__main">
         <strong>{lead.full_name}</strong>
-        <span>{lead.display_code ?? lead.id} · {lead.city ?? lead.phone}</span>
+        <span>{lead.display_code ?? 'Sin código'} · {lead.city ?? lead.phone}</span>
       </div>
       <div className="v3-lead-row__side">
         <V3Status label={getStatusLabel(lead.status)} tone={statusTone(lead.status)} />

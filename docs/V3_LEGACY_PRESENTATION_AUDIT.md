@@ -1,6 +1,6 @@
 # V3 Legacy Presentation Audit
 
-Status: `V3-6R FINANCIAL ZERO-LEGACY CLOSED / CERTIFIED — CRM surfaces remain open`
+Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL remains open`
 
 Scope: every surface reachable from `?v3=1`, separating reusable business
 logic from visible legacy presentation. No Supabase, auth, route or production
@@ -11,9 +11,9 @@ contract is changed by this audit.
 | Servicios / Nuevo | `JobCreateFlow`, `FullscreenStepFlow`, `ActionFlowOverlay` | `saveJobWithLines`, prefills, validators, duplicate engine | `V3JobCreateFlow` + V3 primitives | PASS |
 | Facturas / Nuevo-edición | V2 orchestration imports remain after the V3 branch | Existing invoice write/PDF/validation contracts | `V3InvoiceCreateFlow` + `V3InvoiceEditFlow` | PASS |
 | Presupuestos / Nuevo-edición | V2 orchestration imports remain after the V3 branch | Existing quote lifecycle/PDF/share contracts | `V3QuoteCreateFlow` + `V3QuoteEditFlow` | PASS |
-| Clientes / Nuevo-edición | `ClientCreateForm`, legacy detail/edit surfaces | Existing client writes/contact contracts | Pending native V3 flow | OPEN |
-| Leads / Nuevo-edición | Legacy page flow surfaces | Existing lead lifecycle/conversion contracts | Pending native V3 flow | OPEN |
-| Inmuebles / Nuevo-edición | `PropertyCreateFlow` where reached from parent wrappers | Existing property RPC/duplicate contracts | V3 list/workspace native; create entry audit pending | OPEN |
+| Clientes / Nuevo-edición | `ClientCreateForm`, legacy detail/edit surfaces | Existing client writes/contact contracts | `V3ClientWriteFlow` + V3 workspace | PASS |
+| Leads / Nuevo-edición | Legacy page flow surfaces | Existing lead lifecycle/conversion contracts | `V3LeadCreateFlow` + V3 workspace | PASS |
+| Inmuebles / Nuevo-edición | `PropertyCreateFlow` where reached from parent wrappers | Existing property RPC/duplicate contracts | V3 list/workspace/create/edit native boundary | PASS |
 | Cobros / Nuevo-edición | V2 orchestration imports remain after the V3 branch | Existing settlement/payment contracts | `V3PaymentCreateFlow` + `V3DuplicateReviewSheet` | PASS |
 | Gastos / Nuevo-edición | V2 orchestration imports remain after the V3 branch | Existing expense/support contracts | `V3ExpenseFormFlow` create/edit | PASS |
 | Filtros, selección, alertas, cierres | V3 primitives | Existing filter/selection/decision/snapshot contracts | V3 primitives | PASS |
@@ -28,7 +28,32 @@ contract is changed by this audit.
 - Financial V3-6R is closed because runtime reachability checks found native V3
   presentation for the financial surfaces and zero required legacy markers.
 - Legacy implementations may remain for V2; their imports after a `v3Mode`
-  return are not V3 reachability failures. CRM rows remain open.
+  return are not V3 reachability failures.
+
+## V3-6R CRM zero-legacy closure
+
+Authenticated QA reached Clients, Leads, Properties and nested Services through
+native V3 list, workspace and action surfaces. Client create/persistence, lead
+create/detail, property create/edit/reload, duplicate protection, service
+prefill/persistence, relations, deep links and back navigation passed without
+new fixtures or production writes. Legacy CRM runtime markers, visible UUIDs,
+accessible/ARIA UUIDs and Unicode-as-icon candidates are all `0`.
+
+Static responsive safety is `PASS`: the CRM changes introduce no new breakpoint
+system, hardcoded page-width contract, `min-width` overflow dependency,
+desktop-only fork, viewport-specific router or absolute-positioned responsive
+architecture. CRM continues to use the certified V3 shell and primitives:
+bottom navigation below `1024px`, rail at `1024px+`, and expanded desktop
+treatment at `1280px+`.
+
+The exact `390x844`, `768x1024`, `1280x800` and `1920x1080` matrix is deferred
+to `V3-8 — Global E2E / Release` because this controlled-browser environment
+does not expose deterministic viewport resizing or CDP/device metrics. This is
+not an application failure and is not recorded as a viewport PASS.
+
+`V3-6R CRM ZERO-LEGACY` is therefore `CLOSED / CERTIFIED` with the exact
+responsive matrix deferred to V3-8. `V3-6R GLOBAL` remains open for the known
+V2 global background and preload/loading presentation debt.
 
 ## CSS and icons
 

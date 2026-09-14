@@ -1,11 +1,12 @@
 import { useEffect, useRef, type InputHTMLAttributes, type MouseEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react'
 
-export type V3IconName = 'back' | 'chevronDown'
+export type V3IconName = 'back' | 'chevronDown' | 'forward'
 
 export function V3Icon({ name, size = 16 }: { name: V3IconName; size?: number }) {
   const paths: Record<V3IconName, string> = {
     back: 'M19 12H5M11 18l-6-6 6-6',
     chevronDown: 'm5 9 7 7 7-7',
+    forward: 'M5 12h14M13 6l6 6-6 6',
   }
   return <svg aria-hidden="true" focusable="false" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d={paths[name]} /></svg>
 }
@@ -77,15 +78,43 @@ export function V3QuickAction({ children, onClick, disabled = false }: V3ActionP
   return <button type="button" className="v3-action v3-action--ghost" onClick={(event) => { event.stopPropagation(); onClick?.(event) }} disabled={disabled}>{children}</button>
 }
 
+function getFocusReturnDescriptor(element: HTMLElement | null) {
+  if (!element) return null
+  return {
+    ariaLabel: element.getAttribute('aria-label'),
+    text: element.textContent?.trim().replace(/\s+/gu, ' ') || null,
+  }
+}
+
+function restoreFocus(previous: HTMLElement | null, descriptor: ReturnType<typeof getFocusReturnDescriptor>) {
+  if (previous?.isConnected) {
+    previous.focus()
+    return true
+  }
+
+  if (!descriptor) return false
+
+  const candidates = Array.from(document.querySelectorAll<HTMLElement>('button, a[href], [role="button"], [tabindex]:not([tabindex="-1"])'))
+    .filter((element) => element.offsetParent !== null && !element.hasAttribute('disabled'))
+  const fallback = candidates.find((element) => descriptor.ariaLabel && element.getAttribute('aria-label') === descriptor.ariaLabel)
+    ?? candidates.find((element) => descriptor.text && element.textContent?.trim().replace(/\s+/gu, ' ') === descriptor.text)
+
+  fallback?.focus()
+  return Boolean(fallback)
+}
+
 export function V3BottomSheet({ title, children, onClose, closeOnEscape = true }: { title: string; children: ReactNode; onClose: () => void; closeOnEscape?: boolean }) {
   const dialogRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
-  const previousFocusRef = useRef<HTMLElement | null>(null)
+  // Capture the trigger during render, before a descendant with autoFocus can
+  // move focus into the newly mounted sheet.
+  const initialFocus = typeof document !== 'undefined' && document.activeElement instanceof HTMLElement ? document.activeElement : null
+  const previousFocusRef = useRef<HTMLElement | null>(initialFocus)
+  const previousFocusDescriptorRef = useRef<ReturnType<typeof getFocusReturnDescriptor>>(getFocusReturnDescriptor(initialFocus))
   const onCloseRef = useRef(onClose)
   useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
-    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     closeRef.current?.focus()
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -101,9 +130,14 @@ export function V3BottomSheet({ title, children, onClose, closeOnEscape = true }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus() }
     }
     document.addEventListener('keydown', onKeyDown)
+    const previousFocus = previousFocusRef.current
+    const previousFocusDescriptor = previousFocusDescriptorRef.current
     return () => {
       document.removeEventListener('keydown', onKeyDown)
-      if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus()
+      restoreFocus(previousFocus, previousFocusDescriptor)
+      // React may move focus to body after this cleanup removes the sheet.
+      // Retry after the commit so the trigger is restored in the final DOM.
+      window.setTimeout(() => restoreFocus(previousFocus, previousFocusDescriptor), 0)
     }
   }, [closeOnEscape])
 

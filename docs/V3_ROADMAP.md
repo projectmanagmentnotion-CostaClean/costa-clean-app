@@ -172,13 +172,17 @@ audited and deliberately not adopted.
 - [x] Confirm legacy implementations remain V2-only orchestration after the V3
   branch and are not V3 presentation dependencies.
 - [x] Certify financial zero-legacy runtime and the associated QA/quality gates.
-- [ ] CRM zero-legacy remains a separate follow-up for Clients, Leads,
-  Properties and nested Services.
+- [x] CRM zero-legacy closed for Clients, Leads, Properties and nested Services
+  with authenticated E2E evidence and zero legacy runtime markers.
+- [x] Static responsive safety audit passed; CRM reuses the certified V3 shell
+  and primitives without introducing a second responsive architecture.
+- [ ] Exact CRM viewport matrix (`390x844`, `768x1024`, `1280x800` and
+  `1920x1080`) deferred to `V3-8 — Global E2E / Release` because the current
+  controlled browser exposes no deterministic viewport resizing/CDP metrics.
 
-V3-6R CRM zero-legacy must be completed before the official sequence continues.
-Official sequence after CRM closure: `V3-7A — Client Profile Media + Iconography`,
-`V3-7B — Final Functional Parity Audit`, `V3-8 — Global E2E / Release`, and
-`V3-9 — Controlled Production Activation`.
+`V3-6R CRM ZERO-LEGACY` is `CLOSED / CERTIFIED` with no application responsive
+failure identified. `V3-6R GLOBAL` remains `OPEN`; the next required slice is
+the global shell/background/preload zero-legacy work. Do not start V3-7A yet.
 
 ## Exit rule
 

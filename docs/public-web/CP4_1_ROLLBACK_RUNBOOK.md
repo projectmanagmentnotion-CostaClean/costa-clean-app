@@ -57,3 +57,17 @@ The private files and database artifacts are not authorization for a production 
 - Temporary SSH key: created for this export, removed from SiteGround, and deleted locally: `PASS`.
 - Native SiteGround preview: `BLOCKED_GITHUB_IMPORT_CONTINUE_DISABLED`; no project was created and no production domain was attached.
 - Restore rehearsal: `NOT_EXECUTED`; no production restore or DNS operation was performed.
+
+## CP-4.1D isolated restore rehearsal - 2026-09-14
+
+- Files archive extracted into the ignored local rehearsal workspace: `PASS`.
+- Database dump imported into a temporary loopback-only MariaDB `11.4.13` database with `58` tables: `PASS`.
+- Temporary `wp-config.php` localized to the loopback database and local URL: `PASS`.
+- WordPress home, login page and a static asset returned HTTP `200` through PHP `8.5.10`: `PASS`.
+- Production plugin/theme bootstrap was bypassed only in the local copy after a timeout; a minimal sandbox theme and must-use network/mail blockers were used for structural boot proof.
+- External HTTP, mail, cron and public exposure were blocked; no production or third-party request was made.
+- Temporary database, extracted files, PHP/MariaDB binaries and logs were destroyed after proof; the original private files/database artifacts remain in ignored custody.
+
+`ROLLBACK_REHEARSAL = PASS_ISOLATED_NON_PRODUCTION_RESTORE`
+`RESTORE_TEST_DB_REMOVED = YES`
+`RESTORE_EXTRACTED_FILES_REMOVED = YES`

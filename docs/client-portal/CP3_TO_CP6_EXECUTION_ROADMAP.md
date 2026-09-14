@@ -441,7 +441,7 @@ automatically.
 | Stop conditions | No owner, incomplete export, backup exposure, staging points to production DB or any unapproved content change. |
 | Closeout documentation | Public website deployment/rollback runbook, private backup reference and next gate. |
 | Expected commit | `docs: establish public website deployment prerequisite` |
-| Next gate | Resolve SiteGround native GitHub/Node.js preview integration; CP-4.2 remains `NOT_STARTED` |
+| Next gate | Resolve SiteGround native GitHub/Node.js preview integration; isolated restore rehearsal passed; CP-4.2 remains `NOT_STARTED` |
 
 ## CP-4.2 — Public website and legal integration
 

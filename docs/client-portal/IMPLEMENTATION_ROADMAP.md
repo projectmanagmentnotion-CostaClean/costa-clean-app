@@ -449,6 +449,11 @@ Status: `PARTIAL_CP4_1_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
 - **CP-4.2 — Public website and legal integration:** `NOT STARTED`; canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.
+
+CP-4.1D update: private files/database custody and an isolated local restore
+rehearsal now pass. Native SiteGround Node.js preview remains blocked because
+the GitHub import selector leaves `CONTINUAR` disabled; no repository grant was
+expanded and no production change was made. CP-4.2 remains `NOT STARTED`.
 - **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,
   domain authentication, rate limits, audit, safe logs, fallback and monitoring.
 

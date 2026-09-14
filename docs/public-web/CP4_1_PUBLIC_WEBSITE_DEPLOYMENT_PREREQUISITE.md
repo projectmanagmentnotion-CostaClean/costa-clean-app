@@ -33,7 +33,7 @@ SiteGround Site Tools > Copias de seguridad was inspected for `costacleanbcn.com
 - The available recovery actions were visible for the latest backup: restore all files and databases, restore files, restore databases, restore emails, and download.
 - No backup was created, downloaded, restored or deleted.
 
-Provider capability evidence is supplemented by the ignored local files and database artifacts recorded in CP-4.1C. The artifacts have matching checksums and are not tracked, but no restore rehearsal has been executed yet; backup recoverability therefore remains only partially certified for CP-4.1.
+Provider capability evidence is supplemented by the ignored local files and database artifacts recorded in CP-4.1C. The artifacts have matching checksums and are not tracked; CP-4.1D also completed an isolated local restore rehearsal without exposing the restored data publicly.
 
 ## Source repository audit
 
@@ -107,7 +107,7 @@ Important production observations:
 | Backup custody | `PASS_IGNORED_LOCAL_CUSTODY` | Artifacts are outside Git; temporary server files and SSH key were removed |
 | Isolated staging/preview | `PASS_PREVIEW` | Vercel preview has no environment variables, production domain or WordPress/CRM connection |
 | Next.js deployment path | `PASS_PREVIEW_ONLY` | Owned Vercel project and explicit preview deployment are verified; production promotion remains unauthorized |
-| Rollback procedure | `PARTIAL` | Runbook and artifacts are ready; a non-production restore rehearsal has not been executed |
+| Rollback procedure | `PASS_ISOLATED_NON_PRODUCTION_RESTORE` | Local files/database restore and WordPress boot passed; no production restore was executed |
 | Production visual certification | `PASS_390_768_1440` | Read-only baseline completed at all required viewports |
 | Public production runtime changes | `PASS` | Zero DNS, WordPress, tracking, domain or content changes |
 
@@ -252,6 +252,79 @@ The following matrix is the historical CP-4.1A snapshot from before CP-4.1B. The
 
 `CP-4.1 = PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
 
+`CP-4.2 = NOT_STARTED`
+
+## CP-4.1D - Native SiteGround preview and isolated restore rehearsal
+
+**Audit date:** 2026-09-14
+**Authorization:** CP-4.1D task authorization.
+**Result:** `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+
+### Repository and source precheck
+
+- App HEAD: `bafe57934639d6dd8e6fbe2c70f3b47b8d10b123` on `codex/ux-operational-mobile-v2`.
+- Web HEAD: `8e6e0079911a698bfdc859d287d810c1a14c7654` on `main`.
+- Web source scripts are `npm install`, `npm run build`, `npm run start`; the repository does not pin an engine. The previous SiteGround preview used Node `22.23.2` and npm `10.9.8`; current local verification used Node `24.12.0` and npm `11.6.2`.
+- No `output: 'export'` change was made; the Next.js runtime remains server-rendered where required.
+
+### SiteGround/GitHub integration diagnosis
+
+- Authenticated SiteGround Node.js manager showed no existing Node.js projects.
+- The native flow reached `Importar repositorio Git`, but `CONTINUAR` remained disabled after the GitHub option was selected; no repository or branch selector appeared.
+- Authenticated GitHub settings showed the SiteGround GitHub App installed for the owner account. Opening its configuration required GitHub sudo/re-authentication, so the exact selected-repository grant, organization approval and repository visibility to SiteGround could not be verified without owner interaction.
+- No new GitHub permission was granted, no unrelated organization was authorized, and no repository write permission was requested.
+- No SiteGround project, temporary URL or build was created. The earlier manual archive-upload provider error remains the last alternative-path evidence; it was not blindly repeated.
+
+`SITEGROUND_GITHUB_APP = INSTALLED`
+`SITEGROUND_REPO_VISIBLE = NOT_VERIFIED_REQUIRES_SUDO`
+`SITEGROUND_CONTINUE_ENABLED = NO`
+`SITEGROUND_BLOCKER_ROOT_CAUSE = SITEGROUND_GITHUB_IMPORT_SELECTOR_UNRESOLVED`
+`SITEGROUND_PROJECT_CREATED = NO`
+
+The evidence is insufficient to attribute the failure solely to GitHub permissions or solely to SiteGround. The exact support escalation is recorded below and was not sent.
+
+### Isolated local restore rehearsal
+
+- Temporary workspace `.auth/cp4/restore-rehearsal/` was verified ignored before use.
+- Existing WordPress files archive extracted successfully; the original private artifacts were not modified.
+- Existing database dump imported into a temporary MariaDB `11.4.13` database on `127.0.0.1:3307`; `58` tables were present after import.
+- The extracted `wp-config.php` was localized only in the temporary copy to the loopback database and local URL. No production credentials were printed or retained in the repository.
+- PHP `8.5.10` served the restored copy on `127.0.0.1:8089`; home, `wp-login.php` and a WordPress static asset returned HTTP `200`.
+- Production plugins were disabled only through a temporary must-use sandbox filter and a minimal local theme was selected because the restored production plugin/theme bootstrap exceeded the local execution limit. This proves database connectivity and WordPress boot, not pixel parity.
+- External effects were blocked by loopback-only listeners, `WP_HTTP_BLOCK_EXTERNAL`, `pre_http_request`, `pre_wp_mail`, disabled cron and `allow_url_fopen=Off`. No real email, webhook, analytics, Ads or production request was made.
+- The temporary PHP/MariaDB processes, database, extracted files, portable binaries and logs were destroyed after proof. Only the original ignored files and database artifacts remain.
+
+`FILES_RESTORE = PASS`
+`DATABASE_IMPORT = PASS_58_TABLES`
+`WP_CONFIG_LOCALIZED = PASS`
+`WORDPRESS_LOCAL_BOOT = PASS_HOME_LOGIN_ASSET_200`
+`EXTERNAL_SIDE_EFFECTS = BLOCKED`
+`RESTORE_TEST_DB_REMOVED = YES`
+`RESTORE_EXTRACTED_FILES_REMOVED = YES`
+`ROLLBACK_REHEARSAL = PASS_ISOLATED_NON_PRODUCTION_RESTORE`
+
+### CP-4.1D acceptance matrix
+
+| Criterion | Result |
+|---|---|
+| Files backup | `PASS` |
+| Database backup | `PASS` |
+| Hashes and private custody | `PASS` |
+| Isolated local restore rehearsal | `PASS` |
+| SiteGround native web preview | `BLOCKED_SITEGROUND_GITHUB_IMPORT` |
+| SiteGround HTTPS/noindex/responsive evidence | `NOT_EXECUTED_NO_PROJECT` |
+| Vercel role | `TEMPORARY_PREVIEW_ONLY` |
+| Vercel production build containment | `PASS` |
+| Production WordPress/database changes | `0` |
+| DNS/email/cutover/Ads changes | `0` |
+| CP-4.1 | `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED` |
+| CP-4.2 | `NOT_STARTED` |
+
+### SiteGround support message, not sent
+
+> Hello SiteGround Support. In the authenticated GrowBig account for `costacleanbcn.com`, the native Node.js project flow reaches `Importar repositorio Git`, but after selecting GitHub import the `CONTINUAR` button remains disabled and no repository/branch selector appears. The GitHub SiteGround App is installed for the owner account, the source repository is `projectmanagmentnotion-CostaClean/costa-clean-web` on branch `main`, and the repository is valid and reachable from the owner account. Please verify the SiteGround GitHub integration callback, repository permission discovery and the provider-side reason the continuation control remains disabled. No production domain or project was created. Please do not change DNS or production hosting while diagnosing.
+
+`CP-4.1 = PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
 `CP-4.2 = NOT_STARTED`
 
 The next action is to resolve the SiteGround GitHub integration/Node.js preview selector and capture the native preview build, URL, HTTPS, noindex, responsive and console evidence. Do not promote the preview, connect the production domain or begin CP-4.2.

@@ -123,7 +123,22 @@ export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
 }
 
 export async function listClients(): Promise<ClientListItem[]> {
-  return fetchSupabaseRestList<ClientListItem>('clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,archived_at,deleted_at,source_lead_id&order=created_at.desc')
+  const clientSelect = 'id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,archived_at,deleted_at,source_lead_id,profile_image_path'
+  try {
+    return await fetchSupabaseRestList<ClientListItem>(`clients?select=${clientSelect}&order=created_at.desc`)
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (!message.includes('REST 400') || !message.includes('profile_image_path')) {
+      throw error
+    }
+
+    // Keep the existing client shell readable until the authorized media
+    // migration has been applied. The field remains optional in this interim
+    // state; after migration the first query is the canonical read path.
+    return fetchSupabaseRestList<ClientListItem>(
+      'clients?select=id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,archived_at,deleted_at,source_lead_id&order=created_at.desc',
+    )
+  }
 }
 
 export function groupJobLines(lines: JobLineRecord[]) {

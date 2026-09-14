@@ -11,6 +11,7 @@ export interface ClientListItem {
   archived_at?: string | null
   deleted_at?: string | null
   source_lead_id: string | null
+  profile_image_path?: string | null
   source_lead_display_code?: string | null
   source_lead_name?: string | null
 }

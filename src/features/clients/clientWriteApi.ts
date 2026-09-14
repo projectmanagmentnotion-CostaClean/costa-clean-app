@@ -158,6 +158,7 @@ function buildClientPayload(input: ClientRecordInput): ClientRecordInput {
   if ('status' in input) payload.status = normalizeClientStatus(input.status)
   if ('archived_at' in input) payload.archived_at = input.archived_at ?? null
   if ('source_lead_id' in input) payload.source_lead_id = trimNullable(input.source_lead_id)
+  if ('profile_image_path' in input) payload.profile_image_path = trimNullable(input.profile_image_path)
 
   return payload
 }
@@ -233,6 +234,7 @@ interface ClientRecordInput {
   status?: string
   archived_at?: string | null
   source_lead_id?: string | null
+  profile_image_path?: string | null
 }
 
 export async function createClientRecord(input: ClientRecordInput): Promise<ClientListItem> {

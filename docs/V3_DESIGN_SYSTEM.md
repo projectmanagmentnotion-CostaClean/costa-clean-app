@@ -139,3 +139,13 @@ Global background, boot/preload, auth restoration, AppView/lazy loading,
 deep-link recovery, notifications, global confirmation, accessibility and
 static responsive safety are `PASS`; visible UUID, accessible UUID and
 Unicode-as-icon counts are `0`. Exact viewports remain `DEFERRED TO V3-8`.
+
+## V3-7A client profile media — OPEN
+
+Client identity media follows the Editorial Simplified density contract: a
+44px compact avatar in list rows and a 72px workspace avatar, both with
+deterministic initials fallback. The workspace exposes camera/replace/trash
+actions through the existing V3 vector primitive and bottom-sheet patterns.
+Images are private, derived through signed URLs and never persisted as public
+URLs or base64. The local storage/schema proposal remains awaiting explicit QA
+infrastructure authorization; no V3-7A certification is claimed.

@@ -280,3 +280,18 @@ available outside the flag.
 
 Exact viewport matrix is still `DEFERRED TO V3-8`; no exact viewport PASS is
 claimed here. Production and Supabase production were not accessed or modified.
+
+## V3-7A client profile media — OPEN
+
+The canonical client model now has an optional `profile_image_path` in the
+local frontend contract. It stores only a private object path; signed URLs are
+derived at runtime and cached in memory. Upload, replacement and removal use
+the existing authenticated client RPC boundary and the same private-storage
+pattern as expense receipts. The V3 list and workspace use initials fallback,
+private image rendering and V3-native media/confirmation actions.
+
+The required column, `update_client(jsonb)` extension, private bucket and RLS
+policies are local-only in
+`supabase/migrations/20260914131413_client_profile_media.sql`. No remote SQL or
+QA storage write was performed. The remaining status is
+`OPEN — QA MEDIA INFRASTRUCTURE AUTHORIZATION REQUIRED`.

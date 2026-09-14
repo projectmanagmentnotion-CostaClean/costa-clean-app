@@ -249,3 +249,16 @@ exact responsive matrix deferred to V3-8.
   Invoices, Clients, Services, Payments and Expenses.
 - Exact viewport matrix: `DEFERRED TO V3-8`; the controlled browser still does
   not expose deterministic viewport resizing/CDP metrics.
+
+## V3-7A client profile media — local foundation / OPEN
+
+- Client list avatar: compact 44px initials/photo identity treatment.
+- Client workspace avatar: 72px identity treatment with visible mobile actions.
+- Profile actions: V3 bottom sheet and V3 confirmation sheet; no legacy modal,
+  `window.confirm`, emoji or Unicode control glyph.
+- Iconography: `V3Icon` owns camera, replace and trash vectors; changed V3
+  client surfaces contain no Unicode-as-icon candidates.
+- Private media uses runtime signed URLs and initials fallback; no URL, blob or
+  base64 value is stored in the client model.
+- The storage/schema proposal is local-only. V3-7A cannot be certified until
+  the QA media infrastructure authorization and exact cleanup E2E pass.

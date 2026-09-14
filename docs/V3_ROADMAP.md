@@ -206,3 +206,12 @@ QA evidence and no financial, route, auth or deep-link regression. V3-3C is clos
 after its authenticated visual, snapshot persistence, exact cleanup and release
 gates passed. V3-3D requires a separate approval. V3-5 and V3-6 are closed only
 after their authenticated responsive matrices and regression gates pass.
+
+## V3-7A — Client profile media + iconography — OPEN
+
+The local client media foundation and V3 icon extension are implemented and
+covered by focused contract tests. The persisted field, protected RPC extension,
+private bucket and storage policies are prepared in
+`supabase/migrations/20260914131413_client_profile_media.sql`, but are not
+applied. V3-7A remains open until the explicit QA media infrastructure gate
+authorizes and certifies the remote lifecycle E2E. Production is untouched.

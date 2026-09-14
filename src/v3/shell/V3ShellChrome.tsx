@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
-import { V3Icon } from '../components/V3Primitives'
+import { V3Icon, type V3IconName } from '../components/V3Primitives'
 
 interface V3ShellChromeProps {
   currentView: AppView
@@ -12,8 +12,6 @@ interface V3ShellChromeProps {
   onSignOut: () => Promise<unknown>
   children?: ReactElement
 }
-
-type V3IconName = 'home' | 'invoice' | 'clients' | 'jobs' | 'quotes' | 'leads' | 'payments' | 'expenses' | 'alerts' | 'closing' | 'properties' | 'more'
 
 const primaryItems: Array<{ view: AppView; label: string; icon: V3IconName }> = [
   { view: 'dashboard', label: 'Inicio', icon: 'home' },
@@ -33,10 +31,7 @@ const secondaryItems: Array<{ view: AppView; label: string; icon: V3IconName }> 
 ]
 
 function V3NavIcon({ name }: { name: V3IconName }) {
-  const paths: Record<V3IconName, string> = {
-    home: 'M3 10.5 12 3l9 7.5M5 9v11h14V9M9 20v-6h6v6', invoice: 'M6 3h9l3 3v15H6zM9 11h6M9 15h6', clients: 'M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2M9.5 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM16 3.1a4 4 0 0 1 0 7.8M20 20v-2a4 4 0 0 0-3-3.9', jobs: 'M4 5h16v14H4zM8 3v4M16 3v4M4 10h16', quotes: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', leads: 'M12 20V10M7 20V4M17 20v-7M4 4h6M14 13h6', payments: 'M12 3v18M17 7.5c0-1.4-1.9-2.5-4.5-2.5S8 6.1 8 7.5 9.9 10 12.5 10s4.5 1.1 4.5 2.5-1.9 2.5-4.5 2.5S8 13.9 8 12.5', expenses: 'M4 5h16v14H4zM8 9h8M8 13h5', alerts: 'M12 4 3 20h18L12 4ZM12 10v4M12 17h.01', closing: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5', properties: 'M3 20V9l9-6 9 6v11M7 20v-6h10v6', more: 'M5 12h.01M12 12h.01M19 12h.01',
-  }
-  return <svg aria-hidden="true" className="v3-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d={paths[name]} /></svg>
+  return <V3Icon name={name} size={20} className="v3-nav-icon" />
 }
 
 function isActive(view: AppView, currentView: AppView): boolean {

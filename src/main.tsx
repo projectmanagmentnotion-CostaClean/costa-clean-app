@@ -3,6 +3,9 @@ import { resolveApplicationSurface } from './portal/applicationSurface'
 
 installVitePreloadRecovery()
 
+const isV3Surface = new URLSearchParams(window.location.search).get('v3') === '1'
+document.documentElement.dataset.appSurface = isV3Surface ? 'v3' : 'legacy'
+
 async function bootstrapApplication() {
   const rootElement = document.getElementById('root')
 

@@ -14,6 +14,8 @@ import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
+import { useV3FeatureFlag } from './v3/navigation/useV3FeatureFlag'
+import { V3GlobalErrorState, V3GlobalLoadingState } from './v3/shell/V3GlobalPresentation'
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -21,6 +23,7 @@ function App() {
   const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
   const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
   const isDevStepFlowPreview = import.meta.env.DEV && pathname === '/dev/step-flow-preview'
+  const isV3Surface = useV3FeatureFlag()
   const showBuildInfo = shouldShowBuildInfo()
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
@@ -185,7 +188,7 @@ function App() {
 
   if (isBooting) {
     return renderWithBuildInfo(
-      <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
+      isV3Surface ? <V3GlobalLoadingState /> : <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
         <div className="cc-boot-screen__wave" aria-hidden="true" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--one" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--two" />
@@ -213,13 +216,13 @@ function App() {
             <span />
           </div>
         </section>
-      </main>
+      </main>,
     )
   }
 
   if (bootError) {
     return renderWithBuildInfo(
-      <main className="auth-page">
+      isV3Surface ? <V3GlobalErrorState /> : <main className="auth-page">
         <section className="auth-card">
           <div className="auth-header">
             <p className="auth-kicker">CostaClean CRM</p>
@@ -227,12 +230,12 @@ function App() {
             <p>{bootError}</p>
           </div>
         </section>
-      </main>
+      </main>,
     )
   }
 
   if (!session) {
-    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} />)
+    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} surface={isV3Surface ? 'v3' : 'legacy'} />)
   }
 
   return renderWithBuildInfo(

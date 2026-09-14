@@ -1229,7 +1229,7 @@ export function AppShell({
           onDisableNotifications={handleDisableNotifications}
         />}
         <div className={v3Enabled ? 'v3-content' : 'cc-shell-content'}>
-          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>
+          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading} isV3Surface={v3Enabled}>
               <DataHealthDebugPanel
                 domainErrors={{
                   leads: leadError,

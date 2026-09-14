@@ -1,6 +1,6 @@
 # Costa Clean App V3 — Editorial Simplified Design System
 
-Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
+Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`. The Editorial Simplified tokens below are implemented behind the reversible `?v3=1` presentation flag. The repository remains authoritative for behavior, data and security. Mobile main legacy surfaces: `0`.
 
 ## Directional intent
 
@@ -123,4 +123,19 @@ are `0`.
 The exact four-viewport matrix is explicitly deferred to `V3-8 — Global E2E /
 Release`; no exact viewport PASS is claimed here because the current controlled
 browser lacks deterministic viewport resizing/CDP/device metrics. `V3-6R
-GLOBAL` remains open for the V2 global background and preload/loading surfaces.
+GLOBAL` is now closed: the V3 root owns the background and preload/loading
+surfaces while the V2 branch remains available outside the flag.
+
+## V3-6R GLOBAL shell ownership — CLOSED / CERTIFIED
+
+Under `?v3=1`, the existing tokens now own the document canvas from the first
+paint through the authenticated shell. The V3 global loading, error, auth
+restoration and deferred module states use the same token family, accessible
+status semantics and reduced-motion rule. Existing V2 presentation remains
+available on the non-V3 branch and no business, auth, Supabase or service-worker
+contract was changed.
+
+Global background, boot/preload, auth restoration, AppView/lazy loading,
+deep-link recovery, notifications, global confirmation, accessibility and
+static responsive safety are `PASS`; visible UUID, accessible UUID and
+Unicode-as-icon counts are `0`. Exact viewports remain `DEFERRED TO V3-8`.

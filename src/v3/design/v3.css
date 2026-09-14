@@ -7,6 +7,240 @@
   margin-inline: auto;
 }
 
+/* V3 owns the document canvas only when the reversible V3 surface is active. */
+html[data-app-surface="v3"],
+html[data-app-surface="v3"] body,
+html[data-app-surface="v3"] #root {
+  background: var(--v3-color-background);
+  color: var(--v3-color-text-primary);
+}
+
+html[data-app-surface="v3"] body::before,
+html[data-app-surface="v3"] body::after {
+  display: none;
+}
+
+html[data-app-surface="v3"] #root {
+  min-height: 100dvh;
+}
+
+.v3-global-state,
+.v3-auth-page {
+  align-items: center;
+  background: var(--v3-color-background);
+  color: var(--v3-color-text-primary);
+  display: grid;
+  justify-items: center;
+  min-height: 100dvh;
+  padding: max(var(--v3-space-6), var(--v3-safe-top)) max(var(--v3-space-5), var(--v3-safe-right)) max(var(--v3-space-6), var(--v3-safe-bottom)) max(var(--v3-space-5), var(--v3-safe-left));
+}
+
+.v3-global-state__content,
+.v3-auth-card {
+  width: min(100%, 520px);
+}
+
+.v3-global-state__content {
+  display: grid;
+  gap: var(--v3-space-3);
+  justify-items: start;
+}
+
+.v3-global-state__eyebrow,
+.v3-auth-page .auth-kicker {
+  color: var(--v3-color-accent-strong);
+  font-size: var(--v3-font-size-xs);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.v3-global-state h1,
+.v3-auth-page .auth-header h1 {
+  color: var(--v3-color-text-primary);
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.98;
+  margin: 0;
+  max-width: 12ch;
+}
+
+.v3-global-state__description,
+.v3-auth-page .auth-header p,
+.v3-auth-page .auth-brand__subtitle {
+  color: var(--v3-color-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.v3-global-state__progress {
+  animation: v3-global-progress 1.8s ease-in-out infinite;
+  background: var(--v3-color-accent);
+  border-radius: var(--v3-radius-pill);
+  display: block;
+  height: 4px;
+  margin-top: var(--v3-space-3);
+  transform-origin: left center;
+  width: min(12rem, 60vw);
+}
+
+.v3-global-state--error .v3-global-state__content {
+  border-left: 3px solid var(--v3-color-danger);
+  padding-left: var(--v3-space-5);
+}
+
+.v3-global-state--error .v3-action {
+  margin-top: var(--v3-space-3);
+}
+
+.v3-auth-card {
+  background: var(--v3-color-surface);
+  border: 1px solid var(--v3-color-border);
+  border-radius: var(--v3-radius-lg);
+  display: grid;
+  gap: var(--v3-space-6);
+  padding: clamp(var(--v3-space-5), 5vw, var(--v3-space-8));
+}
+
+.v3-auth-page .auth-card__topbar,
+.v3-auth-page .auth-header,
+.v3-auth-page .auth-form {
+  position: relative;
+  z-index: 1;
+}
+
+.v3-auth-page .auth-card__topbar {
+  align-items: start;
+}
+
+.v3-auth-page .auth-brand__logo {
+  display: none;
+}
+
+.v3-auth-page .auth-brand__copy,
+.v3-auth-page .auth-header,
+.v3-auth-page .auth-form {
+  display: grid;
+  gap: var(--v3-space-3);
+}
+
+.v3-auth-page .auth-status-pill {
+  background: var(--v3-color-accent-soft);
+  border: 0;
+  border-radius: var(--v3-radius-pill);
+  color: var(--v3-color-accent-strong);
+  font-size: var(--v3-font-size-xs);
+  padding: var(--v3-space-2) var(--v3-space-3);
+}
+
+.v3-auth-page .auth-header h1 {
+  font-size: clamp(2rem, 8vw, 3rem);
+  max-width: 16ch;
+}
+
+.v3-auth-page .auth-field {
+  display: grid;
+  gap: var(--v3-space-2);
+}
+
+.v3-auth-page .auth-field span {
+  color: var(--v3-color-text-primary);
+  font-size: var(--v3-font-size-sm);
+  font-weight: 700;
+}
+
+.v3-auth-page .auth-field input {
+  background: var(--v3-color-surface);
+  border: 1px solid var(--v3-color-border);
+  border-radius: var(--v3-radius-md);
+  color: var(--v3-color-text-primary);
+  min-height: var(--v3-touch-preferred);
+  padding: 0 var(--v3-space-4);
+}
+
+.v3-auth-page .auth-field input::placeholder {
+  color: var(--v3-color-text-secondary);
+}
+
+.v3-auth-page .auth-field input:focus {
+  border-color: var(--v3-color-accent);
+  box-shadow: var(--v3-focus-ring);
+}
+
+.v3-auth-page .auth-submit {
+  background: var(--v3-color-accent);
+  border: 0;
+  border-radius: var(--v3-radius-md);
+  box-shadow: none;
+  color: var(--v3-color-on-accent);
+  min-height: var(--v3-touch-preferred);
+}
+
+.v3-auth-page .auth-error {
+  background: var(--v3-color-danger-soft);
+  border: 1px solid color-mix(in srgb, var(--v3-color-danger) 28%, var(--v3-color-border));
+  border-radius: var(--v3-radius-md);
+  color: var(--v3-color-danger);
+}
+
+.v3-auth-page .auth-error strong,
+.v3-auth-page .auth-error p {
+  color: inherit;
+}
+
+html[data-app-surface="v3"] .cc-toast,
+html[data-app-surface="v3"] .cc-realtime-toast,
+html[data-app-surface="v3"] .cc-build-badge,
+html[data-app-surface="v3"] .cc-theme-toast {
+  background: var(--v3-color-surface);
+  border-color: var(--v3-color-border);
+  box-shadow: var(--v3-shadow-navigation);
+  color: var(--v3-color-text-primary);
+}
+
+html[data-app-surface="v3"] .cc-toast strong,
+html[data-app-surface="v3"] .cc-toast__description,
+html[data-app-surface="v3"] .cc-realtime-toast strong,
+html[data-app-surface="v3"] .cc-realtime-toast p,
+html[data-app-surface="v3"] .cc-build-badge,
+html[data-app-surface="v3"] .cc-theme-toast {
+  color: var(--v3-color-text-primary);
+}
+
+html[data-app-surface="v3"] .cc-toast__action-button,
+html[data-app-surface="v3"] .cc-toast__close-button {
+  align-items: center;
+  background: var(--v3-color-neutral-soft);
+  color: var(--v3-color-text-primary);
+  display: inline-flex;
+  justify-content: center;
+}
+
+html[data-app-surface="v3"] .cc-realtime-toast span {
+  color: var(--v3-color-accent-strong);
+}
+
+html[data-app-surface="v3"] .cc-scroll-top {
+  background: var(--v3-color-surface);
+  border-color: var(--v3-color-border);
+  color: var(--v3-color-accent-strong);
+  box-shadow: var(--v3-shadow-navigation);
+}
+
+@keyframes v3-global-progress {
+  0%, 100% { opacity: 0.45; transform: scaleX(0.42); }
+  50% { opacity: 1; transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v3-global-state__progress {
+    animation: none;
+    opacity: 0.72;
+    transform: none;
+  }
+}
+
 .v3-home-page { gap: var(--v3-space-5); }
 .v3-home-hero { align-items: end; border-bottom: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; gap: var(--v3-space-4); padding: var(--v3-space-4) 0 var(--v3-space-6); }
 .v3-home-hero > div { display: grid; gap: var(--v3-space-2); }

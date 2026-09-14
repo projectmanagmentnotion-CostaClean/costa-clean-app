@@ -1,6 +1,6 @@
 # V3 Design Guardian — V3-3D
 
-Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`
+Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`
 
 ## V3-3D property certification
 
@@ -228,6 +228,24 @@ and targeted audit events residue verified `0`.
   `DEFERRED TO V3-8` because deterministic viewport/CDP control is not exposed
   by the current browser environment. This is not an application failure.
 
-`V3-6R CRM ZERO-LEGACY` is `CLOSED / CERTIFIED` with the exact responsive
-matrix deferred. `V3-6R GLOBAL` remains open for global V2 background and
-preload/loading presentation.
+`V3-6R CRM ZERO-LEGACY` and `V3-6R GLOBAL` are `CLOSED / CERTIFIED` with the
+exact responsive matrix deferred to V3-8.
+
+## V3-6R GLOBAL presentation evidence
+
+- Global root/background: `PASS`; V3 owns `html`, `body` and `#root` from the
+  early surface marker through the authenticated shell.
+- Boot/preload/auth restoration: `PASS`; V3 global loading and error states are
+  accessible, token-backed and contain no legacy boot card or raw technical
+  error details.
+- AppView, lazy/Suspense, deep-link loading and recovery: `PASS`; V3 branches
+  use native status states while existing recovery and navigation logic remains.
+- Notification presentation and global confirm: `PASS`; V3 confirmation remains
+  `V3ConfirmSheet`, and toast state/placement contracts are unchanged.
+- Legacy global runtime: `0`; visible UUID: `0`; accessible UUID: `0`;
+  Unicode-as-icon: `0`.
+- Reduced motion, accessibility and static responsive safety: `PASS`.
+- Non-destructive controlled-browser smoke: `PASS` after reload on Home,
+  Invoices, Clients, Services, Payments and Expenses.
+- Exact viewport matrix: `DEFERRED TO V3-8`; the controlled browser still does
+  not expose deterministic viewport resizing/CDP metrics.

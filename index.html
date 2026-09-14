@@ -23,6 +23,11 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>CostaClean CRM | Gestión y presupuestos de limpieza</title>
+    <script>
+      if (new URLSearchParams(window.location.search).get('v3') === '1') {
+        document.documentElement.dataset.appSurface = 'v3';
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

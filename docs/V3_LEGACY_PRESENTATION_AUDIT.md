@@ -1,6 +1,6 @@
 # V3 Legacy Presentation Audit
 
-Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL remains open`
+Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`
 
 Scope: every surface reachable from `?v3=1`, separating reusable business
 logic from visible legacy presentation. No Supabase, auth, route or production
@@ -51,9 +51,8 @@ to `V3-8 — Global E2E / Release` because this controlled-browser environment
 does not expose deterministic viewport resizing or CDP/device metrics. This is
 not an application failure and is not recorded as a viewport PASS.
 
-`V3-6R CRM ZERO-LEGACY` is therefore `CLOSED / CERTIFIED` with the exact
-responsive matrix deferred to V3-8. `V3-6R GLOBAL` remains open for the known
-V2 global background and preload/loading presentation debt.
+`V3-6R CRM ZERO-LEGACY` and `V3-6R GLOBAL` are therefore `CLOSED / CERTIFIED`
+with the exact responsive matrix deferred to V3-8.
 
 ## CSS and icons
 
@@ -64,3 +63,25 @@ renders its selectors. Runtime audit of financial V3 list, workspace and create
 surfaces found all required legacy DOM markers at `0`. V3 shell navigation
 now uses inline vector paths through `V3NavIcon`; it does not use emoji or
 improvised Unicode symbols.
+
+## V3-6R GLOBAL closure audit
+
+The global presentation boundary is now explicit and limited to `?v3=1`:
+
+| Area | Result | Evidence |
+| --- | --- | --- |
+| Root/background ownership | PASS | V3 tokens own `html`, `body` and `#root`; V2 pseudo-elements are suppressed only under the V3 marker |
+| Boot/preload/auth restoration | PASS | Native V3 loading/error/auth states; session behavior unchanged |
+| AppView/lazy/Suspense fallbacks | PASS | V3 status/loading primitives; no V2 loader card in the V3 branch |
+| Deep-link/recovery presentation | PASS | Existing navigation and preload recovery contracts preserved |
+| Notifications/global confirmation | PASS | Toast state unchanged; V3 confirmation remains `V3ConfirmSheet` |
+| Legacy global runtime | `0` | Static sweep plus controlled-browser smoke |
+| Visible/accessibility UUID | `0` / `0` | No new global presentation leaks |
+| Unicode-as-icon | `0` | Toast close control and V3 states use vector markup or no icon |
+| Reduced motion/accessibility | PASS | Scoped V3 reduced-motion rule and semantic status/alert states |
+
+Authenticated QA reload persisted the session. Non-destructive smoke passed for
+Home, Invoices, Clients, Services, Payments and Expenses. Exact viewport matrix
+remains `DEFERRED TO V3-8`; production and Supabase production were untouched.
+
+`V3-6R GLOBAL` is `CLOSED / CERTIFIED`. Do not start V3-7A in this slice.

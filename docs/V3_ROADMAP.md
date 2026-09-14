@@ -181,8 +181,23 @@ audited and deliberately not adopted.
   controlled browser exposes no deterministic viewport resizing/CDP metrics.
 
 `V3-6R CRM ZERO-LEGACY` is `CLOSED / CERTIFIED` with no application responsive
-failure identified. `V3-6R GLOBAL` remains `OPEN`; the next required slice is
-the global shell/background/preload zero-legacy work. Do not start V3-7A yet.
+failure identified. `V3-6R GLOBAL` is now `CLOSED / CERTIFIED` after the global
+shell/background/preload presentation gate passed. Do not start V3-7A yet.
+
+### V3-6R GLOBAL — shell/background/preload zero-legacy — CLOSED / CERTIFIED
+
+- [x] V3 owns `html`, `body`, `#root`, boot, auth restoration and shell canvas
+  under `?v3=1`; the V2 canvas remains available outside the flag.
+- [x] V3-native boot, error, AppView initial loading and deferred fallbacks use
+  token-backed accessible states with reduced-motion behavior.
+- [x] Global toast, recovery and theme feedback presentation remains compatible
+  with the existing state/routing contracts and receives the V3 surface boundary.
+- [x] Authenticated reload and non-destructive smoke passed on Home, Invoices,
+  Clients, Services, Payments and Expenses in the controlled QA browser.
+- [x] Static legacy marker, UUID/icon and responsive safety audit passed.
+
+Evidence: `694 passed`, `4 skipped`, lint PASS, build PASS and `git diff --check`
+PASS. Exact viewport matrix remains `DEFERRED TO V3-8`.
 
 ## Exit rule
 

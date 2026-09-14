@@ -1,6 +1,6 @@
 # Costa Clean App V3 — V3-3D Implementation Contract
 
-Status: `V3-6R CRM ZERO-LEGACY CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8; V3-6R GLOBAL OPEN`.
+Status: `V3-6R GLOBAL CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -254,5 +254,29 @@ The exact `390x844`, `768x1024`, `1280x800` and `1920x1080` viewport matrix is
 `DEFERRED TO V3-8 — Global E2E / Release`. The controlled browser in this
 environment exposes no deterministic viewport resizing/CDP/device metrics, so
 no exact viewport PASS is claimed and no application responsive failure was
-identified. `V3-6R GLOBAL` remains open for the global V2 background and
-preload/loading presentation.
+identified. `V3-6R GLOBAL` is now closed after the global V2 background and
+preload/loading presentation gate passed.
+
+## V3-6R GLOBAL shell/background/preload certification
+
+The `?v3=1` document surface sets its presentation boundary before React mounts:
+`html`, `body` and `#root` use the certified V3 background tokens and the V2
+canvas pseudo-elements are suppressed only for that surface. V2 styles remain
+available outside the flag.
+
+- Global background: `PASS`.
+- Boot/preload: `PASS`; `V3GlobalLoadingState` replaces the V2 boot card under V3.
+- Auth restoration presentation: `PASS`; V3 auth/error states do not expose raw
+  technical error details.
+- AppView, lazy and Suspense loading: `PASS`; V3 branches use token-backed
+  status/loading primitives.
+- Deep-link and recovery presentation: `PASS`; existing routing and preload
+  recovery logic is unchanged.
+- Notification and global confirm presentation: `PASS`; toast state is intact
+  and the existing V3 confirmation sheet remains the V3 guard.
+- Legacy global runtime, visible/accessibility UUID and Unicode-as-icon: `0`.
+- Reduced motion, accessibility and static responsive safety: `PASS`.
+- Finance and CRM non-destructive regression smoke: `PASS`.
+
+Exact viewport matrix is still `DEFERRED TO V3-8`; no exact viewport PASS is
+claimed here. Production and Supabase production were not accessed or modified.

@@ -76,8 +76,8 @@ filter sheet, safe-area padding and no horizontal overflow.
 
 ## V3-3B secondary financial evidence
 
-- Dedicated Payments and Expenses trees: implemented; final authenticated
-  workspace/create/edit certification pending.
+- Dedicated Payments and Expenses trees: list, workspace and create/edit
+  runtime certification PASS.
 - Legacy visual dependencies in the V3 trees: `0` by static guardian.
 - Payment origin guard: `transfer_auto` remains an internal origin and is not
   editable through the generic manual-payment editor.
@@ -205,10 +205,13 @@ and targeted audit events residue verified `0`.
   overlap, selection overlap and clipped dialog checks: `0`.
 - Mobile/iPad regression: PASS at all five required regression viewports.
 
-## V3-6R legacy presentation gate — OPEN
+## V3-6R financial legacy presentation gate — CLOSED / CERTIFIED
 
 - P0 Services create: PASS; `V3JobCreateFlow` uses V3 primitives and the real
   job write/duplicate contracts.
 - V3 navigation improvised Unicode icons: `0`; shell uses `V3NavIcon` vectors.
-- Remaining reachable legacy create/edit flows: documented in
-  `docs/V3_LEGACY_PRESENTATION_AUDIT.md`; gate is not closed.
+- Financial V3 runtime reachability audit: PASS for Invoices, Quotes, Payments
+  and Expenses. Required legacy DOM markers: `0`; V2-only implementations may
+  remain after the `v3Mode` branch.
+- CRM zero-legacy remains open for Clients, Leads, Properties and nested
+  Services.

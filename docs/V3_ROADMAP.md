@@ -161,16 +161,22 @@ audited and deliberately not adopted.
 - [x] Tests: `666 passed | 4 skipped`; lint, build and `git diff --check` pass.
 - [x] Production, Supabase, schema, storage and business contracts untouched.
 
-## V3-6R — Zero Legacy Presentation — OPEN
+## V3-6R — Financial Zero Legacy Presentation — CLOSED / CERTIFIED
 
 - [x] Audit document created at `docs/V3_LEGACY_PRESENTATION_AUDIT.md`.
 - [x] P0 `Nuevo servicio` migrated to `V3JobCreateFlow` with native V3
   presentation and preserved job write/duplicate contracts.
 - [x] V3 navigation iconography foundation no longer uses improvised Unicode.
-- [ ] Migrate remaining invoice, quote, client, lead, property, payment and
-  expense create/edit flows before re-certifying zero legacy presentation.
+- [x] Re-audit V3 runtime reachability for invoice, quote, payment and expense
+  list, workspace and create/edit surfaces. Required legacy DOM markers: `0`.
+- [x] Confirm legacy implementations remain V2-only orchestration after the V3
+  branch and are not V3 presentation dependencies.
+- [x] Certify financial zero-legacy runtime and the associated QA/quality gates.
+- [ ] CRM zero-legacy remains a separate follow-up for Clients, Leads,
+  Properties and nested Services.
 
-Official sequence after closure: `V3-7A — Client Profile Media + Iconography`,
+V3-6R CRM zero-legacy must be completed before the official sequence continues.
+Official sequence after CRM closure: `V3-7A — Client Profile Media + Iconography`,
 `V3-7B — Final Functional Parity Audit`, `V3-8 — Global E2E / Release`, and
 `V3-9 — Controlled Production Activation`.
 

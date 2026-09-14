@@ -225,9 +225,13 @@ No new backend contract, route, persistence, fake action or production write
 was introduced. Authenticated QA passed `1536/1536` checks across the required
 desktop and responsive regression matrix.
 
-## V3-6R legacy presentation contract — OPEN
+## V3-6R financial legacy presentation contract — CLOSED / CERTIFIED
 
 V3 may reuse headless business logic, validators, adapters and RPC callers, but
-must not render legacy flow shells. `V3JobCreateFlow` is the first native
-replacement. Invoice, quote, client, lead, property, payment and expense flow
-replacements remain required before the zero-legacy gate can close.
+must not render legacy flow shells. Financial V3 branches render
+`V3InvoiceCreateFlow`/`V3InvoiceEditFlow`,
+`V3QuoteCreateFlow`/`V3QuoteEditFlow`,
+`V3PaymentCreateFlow`/`V3DuplicateReviewSheet` and
+`V3ExpenseFormFlow` for their reachable create/edit paths. Runtime audit
+found zero required legacy markers. Legacy implementations remain behind the
+V2 branch; CRM replacement work remains open.

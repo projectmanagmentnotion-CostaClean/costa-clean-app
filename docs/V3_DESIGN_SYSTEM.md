@@ -105,9 +105,10 @@ router, module-specific list or selection clone was introduced. Authenticated
 QA covered the seven required desktop sizes plus iPad/mobile regression:
 `1536/1536` checks passed.
 
-## V3-6R zero legacy presentation — OPEN
+## V3-6R financial zero legacy presentation — CLOSED / CERTIFIED
 
-The first P0 migration is `V3JobCreateFlow`, which uses the existing V3 field,
-input, select, textarea, action and bottom-sheet primitives while reusing the
-real job write and duplicate contracts. Remaining create/edit flows are tracked
-in `docs/V3_LEGACY_PRESENTATION_AUDIT.md`; V3-6R is not certified closed.
+Financial V3 list, workspace and create/edit surfaces use the dedicated V3
+flows and primitives. Runtime reachability checks found zero required legacy
+DOM markers, zero visible/accessibility UUID leaks and zero Unicode-as-icon
+usage. Legacy implementations remain available to the V2 branch by design.
+CRM zero-legacy remains open and is tracked separately in the audit document.

@@ -99,14 +99,14 @@ measured zero.
 
 ## Quality gates
 
-The release suite itself passed after the path correction. The repository
-quality gates must be rerun after this documentation update before any commit:
+The release suite and repository quality gates passed after the path
+correction:
 
-- Unit/integration tests: pending
-- Lint: pending
-- Build: pending
-- Diff: pending
-- Worktree: pending
+- Unit/integration tests: `702 passed | 4 skipped`
+- Lint: `PASS`
+- Build: `PASS`
+- Diff: `PASS`
+- Worktree: `CLEAN` after commit and push
 
 ## V3-9 prerequisites — not authorized
 

@@ -34,7 +34,7 @@
 
 ## Non-destructive rehearsal result
 
-The current SiteGround backup UI, DNS values, old public endpoint and provider restore actions were verified without executing restore or DNS changes. A private files archive was subsequently created, downloaded, hashed and removed from the production file manager. The database export endpoint was blocked by the authenticated browser and no SQL artifact exists, so a complete rehearsal remains `NOT_READY_DATABASE_EXPORT_MISSING`.
+The current SiteGround backup UI, DNS values, old public endpoint and provider restore actions were verified without executing restore or DNS changes. A private files archive and private database dump are now held outside Git and hashed; no restore was executed, so a complete rehearsal remains `NOT_EXECUTED` until a separately authorized non-production restore target exists.
 
 ## CP-4.1B evidence update - 2026-09-14
 
@@ -43,6 +43,17 @@ The current SiteGround backup UI, DNS values, old public endpoint and provider r
 - Files integrity: `PASS`; `32294` archive entries and expected WordPress paths verified.
 - Temporary production archive: created outside `public_html`, downloaded, then removed: `PASS`.
 - Database export: `NOT_EXECUTED_AUTHENTICATED_DOWNLOAD_BLOCKED`; phpMyAdmin's `/export` POST was blocked with `ERR_BLOCKED_BY_CLIENT`, and the normal Chrome tab had no SiteTools-authenticated session.
-- Restore rehearsal: no restore or DNS operation was executed. It remains `NOT_READY_DATABASE_EXPORT_MISSING`.
+- Restore rehearsal: no restore or DNS operation was executed. The missing database artifact blocker is resolved; rehearsal remains `NOT_EXECUTED` pending a non-production restore target.
 
-The private files artifact is not sufficient to authorize a database restore or a public cutover. The next operator must obtain and hash a matching private database dump, verify custody, and rehearse only reversible controls before any future production change.
+The private files and database artifacts are not authorization for a production restore or public cutover. The next operator must use a non-production target for any separately authorized restore rehearsal and preserve the recorded DNS/email values before future production change.
+
+## CP-4.1C evidence update - 2026-09-14
+
+- Database artifact: `.auth/cp4/backups/cp4-1c-wordpress-db-20260914.sql` (ignored custody only).
+- Database size: `36837793` bytes.
+- Database SHA-256: `971D7DF2B1D5E1B69FD6E5698404403A605F78FF282009688F07293C2E7C6DF8`.
+- Database structural integrity: `PASS`; `58` table definitions, `63` insert blocks, `58` unlock markers and a final dump marker were verified without printing SQL data.
+- Remote SQL temporary file: created outside `public_html`, transferred, then removed: `PASS`.
+- Temporary SSH key: created for this export, removed from SiteGround, and deleted locally: `PASS`.
+- Native SiteGround preview: `BLOCKED_GITHUB_IMPORT_CONTINUE_DISABLED`; no project was created and no production domain was attached.
+- Restore rehearsal: `NOT_EXECUTED`; no production restore or DNS operation was performed.

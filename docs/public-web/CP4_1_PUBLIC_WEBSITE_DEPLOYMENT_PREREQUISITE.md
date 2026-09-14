@@ -1,14 +1,14 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`
+**Status:** `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
 
-CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, and an isolated Vercel preview is ready. A private WordPress files export is now held and hashed, but the database export remains blocked by the authenticated phpMyAdmin download path and a new SiteGround preview upload returned a provider error. CP-4.2 remains `NOT_STARTED`.
+CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, an isolated Vercel preview is ready, and private WordPress files plus database exports are held and hashed. The remaining blocker is the native SiteGround Node.js preview: after selecting GitHub import, SiteGround left `CONTINUAR` disabled without presenting the repository selector or a recoverable provider error. CP-4.2 remains `NOT_STARTED`.
 
-The exact next block is **CP-4.1A: private WordPress export and isolated preview/deployment proof**. It must be separately authorized before any export download, staging mutation or deployment preparation that can create remote state.
+The exact remaining gate is **CP-4.1C: SiteGround native preview integration proof**. Do not promote a preview, connect the production domain, change DNS/email, or begin CP-4.2.
 
 ## Verified ownership and runtime map
 
@@ -33,7 +33,7 @@ SiteGround Site Tools > Copias de seguridad was inspected for `costacleanbcn.com
 - The available recovery actions were visible for the latest backup: restore all files and databases, restore files, restore databases, restore emails, and download.
 - No backup was created, downloaded, restored or deleted.
 
-This is provider capability evidence only. No private backup artifact, checksum, retention location, encryption record or restoration rehearsal is yet held by the project. Therefore backup recoverability is not accepted as a CP-4.1 closeout criterion.
+Provider capability evidence is supplemented by the ignored local files and database artifacts recorded in CP-4.1C. The artifacts have matching checksums and are not tracked, but no restore rehearsal has been executed yet; backup recoverability therefore remains only partially certified for CP-4.1.
 
 ## Source repository audit
 
@@ -103,11 +103,11 @@ Important production observations:
 | Versioned source | `PASS` | Next.js repo and audited commit are identified |
 | Current runtime identified | `PASS` | WordPress/Astra/Elementor/WPForms/Complianz on SiteGround |
 | Hosting access | `PASS` | Authenticated SiteGround account and Site Tools were inspected |
-| Private full export | `NOT_READY` | No versioned WordPress files/database export and checksum |
-| Backup custody | `NOT_READY` | No approved private destination, retention or encryption record |
+| Private full export | `PASS_FILES_DATABASE` | WordPress files and database artifacts are held in ignored local custody with checksums |
+| Backup custody | `PASS_IGNORED_LOCAL_CUSTODY` | Artifacts are outside Git; temporary server files and SSH key were removed |
 | Isolated staging/preview | `PASS_PREVIEW` | Vercel preview has no environment variables, production domain or WordPress/CRM connection |
 | Next.js deployment path | `PASS_PREVIEW_ONLY` | Owned Vercel project and explicit preview deployment are verified; production promotion remains unauthorized |
-| Rollback procedure | `PARTIAL` | Runbook is documented and provider controls are visible, but private artifact rehearsal is blocked |
+| Rollback procedure | `PARTIAL` | Runbook and artifacts are ready; a non-production restore rehearsal has not been executed |
 | Production visual certification | `PASS_390_768_1440` | Read-only baseline completed at all required viewports |
 | Public production runtime changes | `PASS` | Zero DNS, WordPress, tracking, domain or content changes |
 
@@ -116,22 +116,20 @@ Important production observations:
 - No SiteGround password, session token or private credential was copied into the repository or reports.
 - No DNS record, MX, SPF, DKIM or DMARC record was modified.
 - No WordPress page, plugin, theme, form, cookie setting or cache was modified.
-- No public production-domain deployment, backup creation/download/restore or migration was executed. One Vercel deployment with `target=production` was created accidentally by the initial CLI invocation; it has no Costa Clean production domain and is documented as an open review item.
+- No public production-domain deployment, restore or migration was executed. Private backup files were downloaded to ignored local custody. One Vercel deployment with `target=production` was created accidentally by the initial CLI invocation; it has no Costa Clean production domain and is documented as an unaliased historical review item.
 - No Supabase, CRM, portal, OAuth, email provider or advertising configuration was changed.
 
 ## Acceptance decision
 
 CP-4.1 remains:
 
-`PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
+`PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
 
-The block can close only after a separately authorized CP-4.1A remediation proves:
+The block can close only after the remaining CP-4.1C gate proves:
 
-1. a private, hashed and recoverable WordPress files/database export;
-2. documented backup custody and retention;
-3. resolution of the Vercel production-target review item;
-4. an exact rollback procedure with non-destructive evidence; and
-5. the required production-versus-preview visual baseline reconciled against the approved migration content.
+1. a successful native SiteGround Node.js preview from the approved GitHub source;
+2. an exact rollback procedure with non-production restore evidence; and
+3. the required production-versus-preview visual baseline reconciled against the approved migration content.
 
 Until those conditions pass, CP-4.2 is `NOT_STARTED` and no public website redesign or production migration should begin.
 
@@ -256,7 +254,7 @@ The following matrix is the historical CP-4.1A snapshot from before CP-4.1B. The
 
 `CP-4.2 = NOT_STARTED`
 
-The next action is to obtain an approved private database export/download capability from SiteGround and, if required, retry the isolated SiteGround preview upload. Do not promote the preview, connect the production domain or begin CP-4.2.
+The next action is to resolve the SiteGround GitHub integration/Node.js preview selector and capture the native preview build, URL, HTTPS, noindex, responsive and console evidence. Do not promote the preview, connect the production domain or begin CP-4.2.
 
 ## CP-4.1B - SiteGround target proof, private export and Vercel containment
 
@@ -317,3 +315,54 @@ Existing target-production deployments `dpl_5A4mQ5XB21zyCv99d2vWBwBNHNJP` and `d
 | CP-4.2 | `NOT_STARTED` |
 
 `CP-4.1 = PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`
+
+## CP-4.1C - Private database export and native preview integration proof
+
+**Audit date:** 2026-09-14
+**Authorization:** CP-4.1C task authorization.
+**Result:** `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+
+### Private database export
+
+- The authenticated SiteGround SSH manager provided a temporary key named `cp4-1c-temporary-backup`; the key was removed from SiteGround after use and its local private key/passphrase were deleted.
+- SSH discovery found `wp` and `mysqldump`; the preferred `wp db export` path was used against the WordPress installation without printing `wp-config.php` or database credentials.
+- The dump was written temporarily outside `public_html`, transferred to ignored local custody at `.auth/cp4/backups/cp4-1c-wordpress-db-20260914.sql`, and the remote temporary SQL file was removed.
+- Size: `36837793` bytes.
+- SHA-256: `971D7DF2B1D5E1B69FD6E5698404403A605F78FF282009688F07293C2E7C6DF8` (local hash matched the remote hash).
+- Structural verification passed with `58` `CREATE TABLE` blocks, `63` `INSERT INTO` blocks, `58` `UNLOCK TABLES` markers, one `SET NAMES` statement and a final dump marker.
+
+`PRIVATE_WORDPRESS_DATABASE_EXPORT = PASS`
+`DATABASE_PRIVATE_CUSTODY = PASS`
+`DATABASE_REMOTE_TEMP_REMOVED = PASS`
+`TEMP_SSH_KEY_ACTIVE = NO`
+
+No restore was executed against production or another remote database. The export package is now sufficient for a future separately authorized rehearsal, but a restore rehearsal remains `NOT_EXECUTED`.
+
+### Native SiteGround preview attempt
+
+- The authenticated SiteGround account is `GrowBig` and currently has no Node.js projects.
+- The native flow was opened through `CREAR PROYECTO DE NODE.JS AHORA` and `Importar repositorio Git` was selected.
+- After selection, SiteGround kept `CONTINUAR` disabled for at least 15 seconds and did not expose a GitHub account/repository selector, branch selector, project creation result or actionable error.
+- No Node.js project was created, no production domain was attached, and no manual archive retry was made after the previously documented provider upload failures.
+
+`SITEGROUND_NATIVE_PREVIEW = BLOCKED_GITHUB_IMPORT_CONTINUE_DISABLED`
+`SITEGROUND_PROJECTS_CREATED = 0`
+`PRODUCTION_DOMAIN_ATTACHED = 0`
+
+### CP-4.1C acceptance matrix
+
+| Criterion | Result |
+|---|---|
+| WordPress files export | `PASS` |
+| WordPress database export | `PASS_WP_DB_EXPORT` |
+| Private custody and SHA-256 | `PASS` |
+| Remote temporary SQL/key cleanup | `PASS` |
+| Non-destructive restore rehearsal | `NOT_EXECUTED` |
+| SiteGround native Node.js preview | `BLOCKED_GITHUB_IMPORT_CONTINUE_DISABLED` |
+| Vercel preview-only deployment | `PASS` |
+| Vercel production-build containment | `PASS_ONLY_BUILD_PRE_PRODUCTION` |
+| Production WordPress/DNS/email changes | `0` |
+| CP-4.2 | `NOT_STARTED` |
+
+`CP-4.1 = PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+`CP-4.2 = NOT_STARTED`

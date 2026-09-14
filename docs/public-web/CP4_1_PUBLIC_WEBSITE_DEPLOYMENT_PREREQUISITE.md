@@ -1,14 +1,14 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+**Status:** `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
 
-CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, an isolated Vercel preview is ready, and private WordPress files plus database exports are held and hashed. The remaining blocker is the native SiteGround Node.js preview: after selecting GitHub import, SiteGround left `CONTINUAR` disabled without presenting the repository selector or a recoverable provider error. CP-4.2 remains `NOT_STARTED`.
+CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, an isolated Vercel preview is ready, and private WordPress files plus database exports are held and hashed. After owner GitHub sudo reauthentication, SiteGround still leaves the native Node.js GitHub import in indefinite loading without presenting the repository or branch selector. CP-4.2 remains `NOT_STARTED`.
 
-The exact remaining gate is **CP-4.1C: SiteGround native preview integration proof**. Do not promote a preview, connect the production domain, change DNS/email, or begin CP-4.2.
+The exact remaining gate is **CP-4.1E: SiteGround provider integration remediation**. Do not promote a preview, connect the production domain, change DNS/email, or begin CP-4.2.
 
 ## Verified ownership and runtime map
 
@@ -325,6 +325,53 @@ The evidence is insufficient to attribute the failure solely to GitHub permissio
 > Hello SiteGround Support. In the authenticated GrowBig account for `costacleanbcn.com`, the native Node.js project flow reaches `Importar repositorio Git`, but after selecting GitHub import the `CONTINUAR` button remains disabled and no repository/branch selector appears. The GitHub SiteGround App is installed for the owner account, the source repository is `projectmanagmentnotion-CostaClean/costa-clean-web` on branch `main`, and the repository is valid and reachable from the owner account. Please verify the SiteGround GitHub integration callback, repository permission discovery and the provider-side reason the continuation control remains disabled. No production domain or project was created. Please do not change DNS or production hosting while diagnosing.
 
 `CP-4.1 = PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED`
+`CP-4.2 = NOT_STARTED`
+
+## CP-4.1E - GitHub reauthentication and SiteGround native preview final proof
+
+**Audit date:** 2026-09-14
+**Result:** `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
+
+The owner completed GitHub sudo reauthentication in the authenticated browser.
+The installed SiteGround GitHub App is active and reports read access to code
+and metadata. Repository access is `ALL_REPOSITORIES`; the target private
+repository `projectmanagmentnotion-CostaClean/costa-clean-web` is accessible in
+GitHub on branch `main`. No broader permissions were granted and no repository
+access setting was changed.
+
+The SiteGround Node.js flow was retried once after reauthentication. The
+`Importar repositorio Git` option was selected and `CONTINUAR` was activated,
+but the provider remained in an indefinite loading state. No GitHub account,
+repository selector, branch selector, project creation result or actionable
+error appeared. The account remains on GrowBig with zero Node.js projects.
+
+`GITHUB_REAUTH = PASS_OWNER_COMPLETED`
+`SITEGROUND_GITHUB_APP = ACTIVE`
+`SITEGROUND_PERMISSION_CATEGORIES = READ_CODE_AND_METADATA`
+`SITEGROUND_APP_ACCESS_MODE = ALL_REPOSITORIES`
+`TARGET_REPO_AUTHORIZED = YES`
+`TARGET_REPO_VISIBLE_IN_GITHUB = YES`
+`TARGET_BRANCH_VISIBLE_IN_SITEGROUND = NO`
+`SITEGROUND_CONTINUE_RESULT = INDEFINITE_LOADING`
+`SITEGROUND_PROJECT_CREATED = NO`
+`SITEGROUND_BLOCKER = PROVIDER_GITHUB_INTEGRATION_FAILURE`
+
+No SiteGround temporary URL, build, runtime, HTTPS or noindex evidence exists
+because the provider did not reach project creation. No production customer
+data, leads, CRM writes, WordPress calls, ads conversions, production email,
+DNS change or domain attachment occurred. Vercel remains temporary preview
+only and its pre-production build containment remains unchanged.
+
+Support evidence is prepared but not sent. It identifies the GrowBig account,
+the exact repository and `main` branch, the verified GitHub access, the absent
+selector and indefinite `CONTINUAR` loading, and the instruction not to modify
+DNS or the production site. It contains no credentials, tokens, cookies or
+authorization headers.
+
+`SUPPORT_MESSAGE_PREPARED = YES`
+`SUPPORT_MESSAGE_SENT = NO`
+`PRODUCTION_CHANGES = 0`
+`CP-4.1 = PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
 `CP-4.2 = NOT_STARTED`
 
 The next action is to resolve the SiteGround GitHub integration/Node.js preview selector and capture the native preview build, URL, HTTPS, noindex, responsive and console evidence. Do not promote the preview, connect the production domain or begin CP-4.2.

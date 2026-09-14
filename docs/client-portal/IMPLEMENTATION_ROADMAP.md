@@ -499,3 +499,15 @@ internal staff trust split
 ```
 
 No downstream gate may run around a failed upstream security boundary.
+
+## CP-4.1E — GitHub reauthentication and SiteGround native preview final proof
+
+Owner GitHub sudo reauthentication completed. SiteGround's GitHub App is
+active with read-only code/metadata access and `ALL_REPOSITORIES`;
+`projectmanagmentnotion-CostaClean/costa-clean-web` on `main` is accessible in
+GitHub. SiteGround still leaves its GitHub import flow in indefinite loading
+after `CONTINUAR`, without repository or branch selectors, so no Node.js
+project or temporary URL was created. The remaining issue is classified as
+`PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`. Support evidence is prepared
+but unsent; production, DNS, email, WordPress and CRM remain unchanged.
+CP-4.2 remains `NOT_STARTED`.

@@ -423,7 +423,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_SITEGROUND_NATIVE_PREVIEW_BLOCKED` |
+| Status | `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED` |
 | Objective | Establish owned, recoverable public website source and deployment control before any public-site edit; use WordPress only if the audit requires it. |
 | User outcome | No visible change; the public website becomes safely changeable and recoverable. |
 | Dependencies | CP-3C.3 closed; hosting owner available; export/staging access separately authorized. |
@@ -441,7 +441,7 @@ automatically.
 | Stop conditions | No owner, incomplete export, backup exposure, staging points to production DB or any unapproved content change. |
 | Closeout documentation | Public website deployment/rollback runbook, private backup reference and next gate. |
 | Expected commit | `docs: establish public website deployment prerequisite` |
-| Next gate | Resolve SiteGround native GitHub/Node.js preview integration; isolated restore rehearsal passed; CP-4.2 remains `NOT_STARTED` |
+| Next gate | Provider remediation for SiteGround native GitHub/Node.js preview integration; isolated restore rehearsal passed; CP-4.2 remains `NOT_STARTED` |
 
 ## CP-4.2 — Public website and legal integration
 
@@ -598,3 +598,22 @@ automatically.
 - MFA is designed as ready but is not enforced by the completed CP-2 boundary.
 - Production authorization, cohort, support owner and release window do not
   exist until CP-5's separate human gates.
+
+## CP-4.1E — GitHub reauthentication and SiteGround native preview final proof
+
+| Field | Result |
+|---|---|
+| GitHub sudo reauthentication | `PASS_OWNER_COMPLETED` |
+| SiteGround GitHub App | `ACTIVE`; read access to code and metadata |
+| Repository access | `ALL_REPOSITORIES` |
+| Target repository and branch | `projectmanagmentnotion-CostaClean/costa-clean-web`, `main`; accessible in GitHub |
+| SiteGround import flow | `CONTINUAR` activated, then indefinite loading; no selector appeared |
+| SiteGround project / preview URL | `NOT_CREATED` / `NOT_AVAILABLE` |
+| Production, DNS, email, WordPress and CRM changes | `0` |
+| Support package | `PREPARED_NOT_SENT` |
+| CP-4.1 | `PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED` |
+| CP-4.2 | `NOT_STARTED` |
+
+No further blind provider retries are authorized by this evidence. The next
+action is provider remediation using the sanitized support package or a new
+exactly authorized integration path; CP-4.2 must not start around this gate.

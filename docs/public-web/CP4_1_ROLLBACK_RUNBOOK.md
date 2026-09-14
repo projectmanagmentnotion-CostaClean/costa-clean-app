@@ -71,3 +71,21 @@ The private files and database artifacts are not authorization for a production 
 `ROLLBACK_REHEARSAL = PASS_ISOLATED_NON_PRODUCTION_RESTORE`
 `RESTORE_TEST_DB_REMOVED = YES`
 `RESTORE_EXTRACTED_FILES_REMOVED = YES`
+
+## CP-4.1E GitHub reauthentication and provider blocker - 2026-09-14
+
+- Owner GitHub sudo reauthentication: `PASS_OWNER_COMPLETED`.
+- SiteGround GitHub App: `ACTIVE`; permission category: read access to code and metadata.
+- Repository access: `ALL_REPOSITORIES`; target `projectmanagmentnotion-CostaClean/costa-clean-web`, branch `main`, is accessible in GitHub.
+- SiteGround Node.js import: `Importar repositorio Git` selected; `CONTINUAR` activated; provider remained indefinitely loading without repository or branch selectors.
+- SiteGround project: not created; temporary URL, build, runtime, HTTPS and noindex checks were therefore not executable.
+- Production safety: no domain, DNS, email, WordPress, CRM, customer, lead or production database change.
+- Support package: prepared with sanitized provider evidence and not sent.
+
+`SITEGROUND_BLOCKER = PROVIDER_GITHUB_INTEGRATION_FAILURE`
+`CP-4.1 = PARTIAL_SITEGROUND_PROVIDER_PLATFORM_BLOCKED`
+`CP-4.2 = NOT_STARTED`
+
+Rollback action for this attempt: none required. The import did not create a
+project or alter a production target. Do not repeat the import blindly; use the
+prepared support package or a separately authorized provider remediation.

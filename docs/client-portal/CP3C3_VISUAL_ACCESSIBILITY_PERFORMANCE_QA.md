@@ -205,6 +205,63 @@ without private credentials and the Lighthouse LCP budget is exceeded.
 CP3C fixtures remain retained; no cleanup was attempted. CP-4.1 remains not
 started.
 
+## CP-3C.3R6 — Portal Entry Waterfall Investigation
+
+Date: **2026-09-14**
+Status: `PARTIAL_AUTH_AND_PERFORMANCE`
+
+### Baseline waterfall
+
+- Lighthouse baseline LCP: `2554.5803`, `2704.3279`, `2704.1377 ms`;
+  median `2704.1377 ms`.
+- LCP element remained `.portal-auth__intro`.
+- Current request sequence was verified: main entry
+  `index-Lv8rbS0l.js` (`3,034 bytes` transfer) completed around `34.9 ms`,
+  then `bootstrapPortal-Cl6pUHt1.js` began around `43.5 ms` and transferred
+  `32,374 bytes`. Portal entry discovery is therefore sequential after main
+  module execution.
+- The eight initial script requests transferred `168,952 bytes` in the
+  production-like QA run. This includes the Portal dependency chunks and does
+  not include CRM page chunks.
+
+### Static-entry A/B
+
+- Temporary static Portal import removed the sequential Portal entry request.
+- Static A/B LCP: `2576.5833`, `2577.7615`, `2578.1675 ms`; median
+  `2577.7615 ms`, an improvement of `126.3762 ms` versus baseline, but still
+  `77.7615 ms` above the `2500 ms` target.
+- Static entry produced a `559.81 KB` main JavaScript chunk and transferred
+  `165,790 bytes` across its initial scripts, versus the isolated dynamic
+  entry's `3.03 KB` main request. It would pull Portal code into CRM startup.
+- Decision: waterfall hypothesis is **partially confirmed as a contributor**,
+  but static import is rejected because it misses the LCP budget and violates
+  the stronger Portal/CRM startup isolation boundary.
+
+### Final architecture and final evidence
+
+- Dynamic Portal import restored; CRM import remains dynamic. No CRM source or
+  behavior was changed and no hashed entry was hardcoded into HTML.
+- Final dynamic-entry Lighthouse LCP: `2703.842`, `2704.5891`, `2554.016 ms`;
+  median `2703.842 ms`. CLS `0`; TBT `4`, `6`, `2 ms`; Accessibility `1.00`;
+  Best Practices `1.00`.
+- Final architecture keeps the existing separated bundles. No further
+  speculative performance source change is authorized in this block.
+- CRM startup smoke: source boundary remains isolated; no CRM route or UI was
+  modified. Production requests/writes remain `0`.
+
+### Regression and gate
+
+- Axe: PASS, 0 violations; preview network: PASS, 0 action requests.
+- Responsive/reflow evidence remains PASS at `390x844`, `768x1024`,
+  `1440x900` and `320px`.
+- Full tests: 106 files, 643 passed, 4 skipped; lint PASS; QA build PASS;
+  diff check PASS.
+- Authenticated matrix remains `BLOCKED_EXTERNAL_PRIVATE_INPUT`; private
+  credential handoff remains active and fixtures remain protected.
+
+Gate decision: `CP-3C.3 = PARTIAL_AUTH_AND_PERFORMANCE`. CP-4.1 was not
+started.
+
 ## CP-3C.3R3 Final Authenticated Matrix + LCP Performance Remediation
 
 Date: **2026-09-10**

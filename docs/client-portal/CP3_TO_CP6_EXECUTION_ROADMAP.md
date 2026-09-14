@@ -399,7 +399,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_AUTH_AND_PERFORMANCE — early public-auth A/B negative; authenticated matrix blocked; LCP 2704.5ms remains above 2500ms` |
+| Status | `PARTIAL_AUTH_AND_PERFORMANCE — static entry A/B contributor confirmed but rejected; authenticated matrix blocked; LCP 2703.8ms remains above 2500ms` |
 | Objective | Validate complete portal states across devices, assistive interaction and performance budgets. |
 | User outcome | The portal is usable on mobile, iPad and desktop, with keyboard/screen reader support and respectful motion. |
 | Dependencies | CP-3C.2 passes; stable visible QA build; representative synthetic states; agreed budgets. |

@@ -432,13 +432,18 @@ CP-3B.0 QA application evidence:
 
 ## CP-4 — Public website and legal integration
 
-Status: `NOT STARTED`
+Status: `PARTIAL_CP4_1_HOSTING_ACCESS_VERIFIED_EXPORT_AND_STAGING_PENDING`
 
-- **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** audit
-  source, backup, ownership, staging and rollback before any edit; preferred
-  implementation is `costa-clean-web`, with WordPress only if required by the
-  current-site audit.
-- **CP-4.2 — Public website and legal integration:** canonical client-area link,
+- **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** `PARTIAL`.
+  The source repository, production WordPress runtime, SiteGround hosting
+  boundary, DNS and provider backup/restore capability are verified read-only.
+  A private hashed export, isolated staging/preview identity, owned deployment
+  path and rollback rehearsal remain pending. See
+  `docs/public-web/CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md`.
+- **CP-4.1A — Private export and isolated preview proof:** next prerequisite;
+  requires separate authorization before any remote export, staging mutation or
+  deployment preparation.
+- **CP-4.2 — Public website and legal integration:** `NOT STARTED`; canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.
 - **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,

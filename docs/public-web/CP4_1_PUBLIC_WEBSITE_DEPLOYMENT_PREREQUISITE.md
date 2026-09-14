@@ -1,12 +1,12 @@
 # CP-4.1 Public Website Deployment Prerequisite
 
 **Audit date:** 2026-09-14  
-**Status:** `PARTIAL_PRIVATE_EXPORT_UNAVAILABLE_AND_VERCEL_PRODUCTION_TARGETS_REVIEW_PENDING`
+**Status:** `PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`
 **Scope:** read-only source, production, DNS and hosting audit. No production or DNS change was made.
 
 ## Decision
 
-CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, and an isolated Vercel preview is ready. The required recoverable export, private custody and complete rollback rehearsal are not yet established. CP-4.2 remains `NOT_STARTED`.
+CP-4.1 is not closed. The current public website, its hosting account and its DNS boundary are identified, the preferred Next.js source is reproducible locally, and an isolated Vercel preview is ready. A private WordPress files export is now held and hashed, but the database export remains blocked by the authenticated phpMyAdmin download path and a new SiteGround preview upload returned a provider error. CP-4.2 remains `NOT_STARTED`.
 
 The exact next block is **CP-4.1A: private WordPress export and isolated preview/deployment proof**. It must be separately authorized before any export download, staging mutation or deployment preparation that can create remote state.
 
@@ -236,6 +236,8 @@ TTL reduction, apex/www redirect behavior and certificate provisioning must be p
 
 ### CP-4.1A acceptance matrix
 
+The following matrix is the historical CP-4.1A snapshot from before CP-4.1B. The current CP-4.1B result is recorded below and supersedes its open-export labels.
+
 | Criterion | Result |
 |---|---|
 | Private export | `FAIL_PLAN_DOWNLOAD_UNAVAILABLE` |
@@ -254,4 +256,64 @@ TTL reduction, apex/www redirect behavior and certificate provisioning must be p
 
 `CP-4.2 = NOT_STARTED`
 
-The next action is to obtain an approved private export/download capability from SiteGround and resolve the Vercel production-target/autodeploy review items before attempting closeout. Do not promote the preview, connect the production domain or begin CP-4.2.
+The next action is to obtain an approved private database export/download capability from SiteGround and, if required, retry the isolated SiteGround preview upload. Do not promote the preview, connect the production domain or begin CP-4.2.
+
+## CP-4.1B - SiteGround target proof, private export and Vercel containment
+
+**Audit date:** 2026-09-14
+**Authorization:** CP-4.1B task authorization.
+**Result:** `PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`
+
+### Private WordPress file export
+
+- Production target was `costacleanbcn.com` in SiteGround Site Tools; no WordPress content, DNS record, cache, email setting or restore action was changed.
+- A temporary archive was created outside `public_html`, downloaded, and then removed from the production file manager: `cp4-1b-wordpress-files-20260914.zip`.
+- The downloaded artifact is held only in ignored local custody at `.auth/cp4/backups/`; it is not tracked, committed or pushed.
+- Size: `226739508` bytes.
+- SHA-256: `4F5036EEE2A5EC770B45C77984E5C0F55FBB4F07E8E3E01E8BB208AC2D2EB81E`.
+- Structural verification passed with `32294` entries and the expected `public_html/`, `public_html/wp-content/` and `public_html/wp-config.php` paths.
+
+`PRIVATE_WORDPRESS_FILES_EXPORT = PASS`
+`PRIVATE_CUSTODY = PASS`
+`TEMP_PRODUCTION_ARCHIVE_REMOVED = PASS`
+
+### Database export limitation
+
+The authenticated phpMyAdmin session reached database `dbianszo0zelq1` and exposed the SQL export form for the 58-table, 45.7 MB production database. The export POST endpoint `route=/export` was blocked by the Codex in-app browser with `ERR_BLOCKED_BY_CLIENT`; the normal Chrome phpMyAdmin tab was unauthenticated and showed `Please login through your SiteTools`. No SQL file was produced, no rows were changed and no admin SQL context was used as a substitute.
+
+`PRIVATE_WORDPRESS_DATABASE_EXPORT = NOT_EXECUTED_AUTHENTICATED_DOWNLOAD_BLOCKED`
+`DATABASE_HASH = NOT_AVAILABLE`
+`ROLLBACK_REHEARSAL = NOT_READY_DATABASE_EXPORT_MISSING`
+
+### SiteGround hosting proof
+
+The authenticated SiteGround account is on `GrowBig` and reports up to five Node.js projects. A Next.js preview was previously deployed from a manual archive at `vilmatibisayg.sg-host.com` with Node `22.23.2` and npm `10.9.8`; it was intentionally removed after the source asset fix so the final evidence would not point at stale remote WordPress media. A new upload of the corrected package returned the provider message `Error. Por favor, inténtalo más tarde o contacta con soporte.` and did not create a project. No production domain was attached or altered.
+
+The corrected web source remains reproducible and pushed at `costa-clean-web` commit `4a72d93`, with the official logo served locally from `/media/costa-clean-logo.svg`. A fresh Vercel preview was created only as a fallback preview proof: `dpl_82ggYVFNQd3YwDtq4AfifycLyypy`, `https://costa-clean-cskbwyncm.vercel.app`, `READY`, target `preview`. Its protected response was checked through `vercel curl`: local logo asset present and `noindex, nofollow` present.
+
+`SITEGROUND_NEXT_PREVIEW = NOT_EXECUTED_PROVIDER_UPLOAD_ERROR`
+`VERCEL_PREVIEW = PASS_PREVIEW_ONLY`
+
+### Vercel containment and unrelated-project audit
+
+Project `costa-clean-web` is connected to GitHub, but its Vercel Ignored Build Step is now persisted as `Only build pre-production`, with command `if [ "$VERCEL_ENV" == "preview" ]; then exit 1; else exit 0; fi`. This prevents production builds from the connected Git flow while preserving preview builds. No custom production domain is attached and production requests remain `0`.
+
+Existing target-production deployments `dpl_5A4mQ5XB21zyCv99d2vWBwBNHNJP` and `dpl_D8S8abHTQ3g2AruoEksooHzAkxGF` remain historical, unaliased and not promoted. The non-Costa-Clean projects `_coachx_sync_1`, `coachx` and `ridaos` each have recent ready production deployments, so none met the conclusive-unused threshold and none was deleted.
+
+### CP-4.1B acceptance matrix
+
+| Criterion | Result |
+|---|---|
+| WordPress files export | `PASS` |
+| Private custody and SHA-256 | `PASS` |
+| Archive structural integrity | `PASS_32294_ENTRIES` |
+| WordPress database export | `NOT_EXECUTED_AUTHENTICATED_DOWNLOAD_BLOCKED` |
+| Complete files plus database rollback package | `NOT_READY` |
+| SiteGround Next.js preview | `NOT_EXECUTED_PROVIDER_UPLOAD_ERROR` |
+| Vercel preview-only deployment | `PASS` |
+| Vercel production-build containment | `PASS_ONLY_BUILD_PRE_PRODUCTION` |
+| Unrelated Vercel deletion | `NONE_CONCLUSIVE_UNUSED` |
+| Production WordPress/DNS/email changes | `0` |
+| CP-4.2 | `NOT_STARTED` |
+
+`CP-4.1 = PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`

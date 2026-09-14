@@ -34,5 +34,15 @@
 
 ## Non-destructive rehearsal result
 
-The current SiteGround backup UI, DNS values, old public endpoint and provider restore actions were verified without executing restore or DNS changes. A complete rehearsal is still `NOT_READY` because the private export artifact and checksum are unavailable on the current backup plan.
+The current SiteGround backup UI, DNS values, old public endpoint and provider restore actions were verified without executing restore or DNS changes. A private files archive was subsequently created, downloaded, hashed and removed from the production file manager. The database export endpoint was blocked by the authenticated browser and no SQL artifact exists, so a complete rehearsal remains `NOT_READY_DATABASE_EXPORT_MISSING`.
 
+## CP-4.1B evidence update - 2026-09-14
+
+- Files artifact: `.auth/cp4/backups/cp4-1b-wordpress-files-20260914.zip` (ignored custody only).
+- Files SHA-256: `4F5036EEE2A5EC770B45C77984E5C0F55FBB4F07E8E3E01E8BB208AC2D2EB81E`.
+- Files integrity: `PASS`; `32294` archive entries and expected WordPress paths verified.
+- Temporary production archive: created outside `public_html`, downloaded, then removed: `PASS`.
+- Database export: `NOT_EXECUTED_AUTHENTICATED_DOWNLOAD_BLOCKED`; phpMyAdmin's `/export` POST was blocked with `ERR_BLOCKED_BY_CLIENT`, and the normal Chrome tab had no SiteTools-authenticated session.
+- Restore rehearsal: no restore or DNS operation was executed. It remains `NOT_READY_DATABASE_EXPORT_MISSING`.
+
+The private files artifact is not sufficient to authorize a database restore or a public cutover. The next operator must obtain and hash a matching private database dump, verify custody, and rehearse only reversible controls before any future production change.

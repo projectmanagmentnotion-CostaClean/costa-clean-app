@@ -12,6 +12,12 @@ The final corrective sprint added a secure centralized logout using the existing
 
 Optional asset optimization, CSS consolidation and P3/P4 polish remain deferred and do not block operation. Reopen only with a new scoped roadmap. Evidence: [GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md](GATE_5_PRODUCTION_FUNCTIONAL_SMOKE_FINAL_20260723.md) and [READY_FOR_NORMAL_OPERATION_20260723.md](READY_FOR_NORMAL_OPERATION_20260723.md).
 
+## CP-4.1B Public Website Target Proof - 2026-09-14
+
+CP-4.1B remains `PARTIAL_DB_EXPORT_BLOCKED_SITEGROUND_PREVIEW_UPLOAD_BLOCKED`. The WordPress files export is privately held, hashed and structurally verified; the database export could not be downloaded because the authenticated phpMyAdmin `/export` response was blocked by the browser, and no substitute admin SQL context was used. Vercel is contained to preview builds only, with no production domain cutover. The SiteGround Next.js preview upload returned a provider error and was not left as a stale final artifact. CP-4.2 remains `NOT_STARTED`.
+
+Evidence: [CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md](public-web/CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md) and [CP4_1_ROLLBACK_RUNBOOK.md](public-web/CP4_1_ROLLBACK_RUNBOOK.md).
+
 ## Operating Rules
 
 - Diagnose first.

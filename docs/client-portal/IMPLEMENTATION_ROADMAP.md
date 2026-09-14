@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B remains pending.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B is partially implemented with SiteGround private environment configuration blocked.
 
 ## Progress and execution authority
 
@@ -445,7 +445,7 @@ Status: `CP4_1_DONE_CP4_2A_PARTIAL_CP4_2B_PENDING`
 - **CP-4.1C — Private database export and native preview integration proof:**
   database export and cleanup pass; SiteGround native preview is closed in
   CP-4.1G with an active temporary project.
-- **CP-4.2 — Public website and legal integration:** `PARTIAL`; CP-4.2A foundation is implemented in the independent public-web preview, while CP-4.2B remains pending; canonical client-area link,
+- **CP-4.2 — Public website and legal integration:** `PARTIAL`; CP-4.2A foundation and the CP-4.2B QA lead contract are implemented in the independent public-web preview, while SiteGround private environment configuration blocks final preview intake certification; canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.
 
@@ -479,8 +479,9 @@ migrated. The verified external portal target is
 `https://app.costacleanbcn.com/portal`.
 
 No CRM runtime, Supabase schema, production WordPress, production database,
-DNS, email DNS, domain cutover or real lead intake changed. CP-4.2B remains the
-next block for the separately certified public lead contract.
+DNS, email DNS, domain cutover or real lead intake changed. CP-4.2B remains
+partial until the separately certified public lead contract is exercised from
+the SiteGround preview.
 - **CP-4.3 — Invitation email delivery adapter:** provider boundary, templates,
   domain authentication, rate limits, audit, safe logs, fallback and monitoring.
 

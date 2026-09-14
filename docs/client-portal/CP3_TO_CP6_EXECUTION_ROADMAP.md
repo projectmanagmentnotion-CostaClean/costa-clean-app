@@ -399,7 +399,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_AUTH_PRIVATE_INPUT_ONLY — owner accepted LCP 2703.8ms as P2 debt; authenticated matrix blocked by private input` |
+| Status | `DONE_WITH_EXTERNAL_PROVIDER_DEBTS — owner accepted LCP 2703.8ms as P2 debt; authenticated QA matrix and exact cleanup passed` |
 | Objective | Validate complete portal states across devices, assistive interaction and performance budgets. |
 | User outcome | The portal is usable on mobile, iPad and desktop, with keyboard/screen reader support and respectful motion. |
 | Dependencies | CP-3C.2 passes; stable visible QA build; representative synthetic states; agreed budgets. |

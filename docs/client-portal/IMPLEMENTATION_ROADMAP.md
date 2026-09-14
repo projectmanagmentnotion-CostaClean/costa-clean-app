@@ -71,9 +71,8 @@ dated closeout notes are retained as historical evidence and are not reopened.
   authenticated authorization certification complete; Google provider and
   CP4.3 email delivery remain external debts`. See
   [`CP3C2_AUTHORIZATION_E2E_QA.md`](./CP3C2_AUTHORIZATION_E2E_QA.md).
-- **CP-3C.3:** `PARTIAL — responsive preview and accessibility P1 remediation
-  executed; native reader, Lighthouse, browser-zoom and full authenticated
-  state evidence remain`. See
+- **CP-3C.3:** `DONE — authenticated QA matrix, responsive/accessibility
+  evidence and exact QA cleanup complete; external provider debts remain`. See
   [`CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md`](./CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md).
 - **CP-4, CP-5 and CP-6:** `NOT STARTED`.
 
@@ -399,12 +398,12 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R8 (2026-09-14) remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`: the owner accepts
-the dynamic-entry LCP median of `2703.8ms` as explicit P2 performance debt;
-the `2500ms` budget remains missed, not passed. The Codex-operated authenticated
-matrix could not start because no authorized Supabase admin channel or private
-identity input was available. Portal/CRM isolation is preserved and no more
-CP-3 performance experiments are planned. CP-4.1 is not started.
+CP-3C.3R8.1 (2026-09-14) closes the authenticated QA matrix and exact cleanup
+in QA. The owner accepts the dynamic-entry LCP median of `2703.8ms` as
+explicit P2 performance debt; the `2500ms` budget remains missed, not passed.
+Google QA provider configuration/runtime and invitation email delivery remain
+external debts. Portal/CRM isolation is preserved and no more CP-3 performance
+experiments are planned. CP-4.1 is not started.
 
 No production release is part of CP-3.
 

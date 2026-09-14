@@ -476,3 +476,40 @@ Status: `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`
   target `2500 ms`, `P2_ACCEPTED_OWNER`, non-blocking.
 
 CP-3C.3 remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`; CP-4.1 was not started.
+
+## CP-3C.3R8.1 - Authenticated QA closeout
+
+Date: **2026-09-14**
+Status: `DONE_WITH_EXTERNAL_PROVIDER_DEBTS`
+
+- The integrated Chrome session opened `CostaClean QA` at project
+  `kpvvydthlxupjjqqdpxy`. Human login/2FA was not required and the production
+  project was not opened or mutated.
+- A temporary QA secret was created only for this certification, used for
+  password-only rotation of the five controlled identities, and revoked from
+  the QA Dashboard after cleanup. Its value was never committed or printed.
+- Authenticated visual matrix: `PASS`. `ADMIN_A`, `MEMBER_A_V2` and
+  `ADMIN_B_V2` passed the required mobile/tablet/desktop matrix; the suspended
+  and revoked identities reached safe blocked states. No overflow or console
+  errors were observed, and no production request occurred.
+- Tenant and role checks: `PASS`. Client A and Client B remained isolated,
+  A-to-B and B-to-A access was denied, and `MEMBER_A_V2` was denied member
+  administration. The reused and replacement identities were preserved.
+- Accessibility and preview evidence remains green: Axe `14/14`, `0`
+  violations, overflow false, `0` console errors, and preview network PASS.
+  The accepted LCP debt remains `2703.8 ms` median versus the `2500 ms`
+  target, classified `P2_ACCEPTED_OWNER` and non-blocking.
+- Exact QA cleanup passed. CP3C-created transient audit events, memberships,
+  invitations, Client B, Property B and six CP3C-created Auth identities were
+  removed and verified absent. Client A, its properties, the protected invoice
+  and document, the legal catalog, and unrelated QA data were preserved.
+- Private `.auth/cp3c3/admin.env` and `.auth/cp3c3/credentials.json` were
+  removed after cleanup. No private files are tracked.
+- Regression: `643 passed`, `4 skipped`; lint, QA build and diff check pass.
+
+External debts remain explicit: Google QA provider configuration/runtime is
+pending, and invitation email delivery remains deferred to CP-4.3. CP-4.1
+was not started.
+
+CP-3C.3 is `DONE`; CP-3 overall is
+`QA_CERTIFIED_EXCEPT_EXPLICIT_EXTERNAL_PROVIDER_DEBTS`.

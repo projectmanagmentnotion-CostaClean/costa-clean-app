@@ -399,13 +399,11 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R6 (2026-09-14) remains `PARTIAL_AUTH_AND_PERFORMANCE`: preview
-accessibility/network/build evidence passes, but the authenticated matrix is
-blocked by missing private QA credential input. Static Portal entry removes
-the sequential request and improves LCP by `126.4ms`, but remains at
-`2577.8ms` and inflates the main chunk to `559.81KB`, so it was rejected to
-preserve Portal/CRM isolation. The final dynamic-entry median is `2703.8ms`,
-above the `2500ms` target. CP-4.1 is not started.
+CP-3C.3R7 (2026-09-14) is `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`: the owner accepts
+the dynamic-entry LCP median of `2703.8ms` as explicit P2 performance debt;
+the `2500ms` budget remains missed, not passed. The authenticated matrix is
+blocked by missing private QA input. Portal/CRM isolation is preserved and no
+more CP-3 performance experiments are planned. CP-4.1 is not started.
 
 No production release is part of CP-3.
 
@@ -436,8 +434,10 @@ CP-3B.0 QA application evidence:
 
 Status: `NOT STARTED`
 
-- **CP-4.1 — WordPress source and deployment prerequisite:** export, backup,
-  ownership, staging and rollback before any edit.
+- **CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite:** audit
+  source, backup, ownership, staging and rollback before any edit; preferred
+  implementation is `costa-clean-web`, with WordPress only if required by the
+  current-site audit.
 - **CP-4.2 — Public website and legal integration:** canonical client-area link,
   legal surfaces, first layers and separated privacy/contract/marketing/cookie
   controls, with professional legal review still pending.

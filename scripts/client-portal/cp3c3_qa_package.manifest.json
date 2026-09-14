@@ -2,8 +2,8 @@
   "version": 1,
   "identity": "CP3C3_FINAL_VISUAL_ACCESSIBILITY_PERFORMANCE_QA",
   "gate": "CP-3C.3",
-  "status": "PARTIAL_R6_AUTH_LCP_OPEN",
-  "sourceCommit": "ca8948d",
+  "status": "PARTIAL_AUTH_PRIVATE_INPUT_ONLY",
+  "sourceCommit": "b91a9b3",
   "artifacts": [
     { "path": "src/portal/PortalWorkspaceView.tsx", "sha256": "b5100fababc3ed846b3411df408e6d867ae194755eae8ece1d3d870994fdba26" },
     { "path": "src/portal/portal.css", "sha256": "454e7d348a10f06caf5649d5ae3cc1424d9f3f64b5cdae5befdcb27054d4f7b7" },
@@ -15,12 +15,13 @@
     { "path": "scripts/client-portal/cp3c3r2AuthenticatedVisualQa.mjs", "sha256": "00047bf22cd72a7848936d0f5c05efecb1205542ff2136a5623b128ce01e0231" },
     { "path": "scripts/client-portal/cp3c3r2PreviewNetwork.mjs", "sha256": "0534c0f33134c82b61fb67d9b790886b155711e0d57ddabe7bce1003ede810aa" },
     { "path": "scripts/client-portal/cp3c3r2PerformanceEvidence.mjs", "sha256": "9bb76c1f9522bd11fb637939919226eb34f57d5739622b6edcdb344df0873d74" },
-    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "687b0b8b469d9310a9ffac8856cf2d8ae8596569acb90f3b9b9f7ae28acb11a7" }
+    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "7ea6d3e9b21485f37e5073b86103dafa9acaccdeb9127da0153fc74b08d2c207" }
     ,{ "path": "index.html", "sha256": "f03a0e2b0b22ba2182ff7a9bad1711c55f72948ebebbe6360674eb5d2a722d01" }
     ,{ "path": "src/portal/PortalBrand.tsx", "sha256": "13a059d7ff938a8175537fe4d1b60e5871a0040d88581dda9093440d78d01b4c" }
-    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "bc38ca2e3ce5357c542a6319689800afa9c907a3c132a20ebcf130be44e55de5" }
-    ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "5003955edd35a65d6b045e29b3eae838733c3548209752d8480a5bb1fa0ff1e1" }
     ,{ "path": "docs/client-portal/CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md", "sha256": "4d049ee6ecdfbe098cddcc282bb164122568e892a824e381fba1c223285afc01" }
+    ,{ "path": "docs/client-portal/CP3C3_CREDENTIALS_TEMPLATE.example.json", "sha256": "277e54f5673c33351c033d227f6de12833c97c1d5afac8a5b1f1dcc90da5700c" }
+    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "597869769b51fa22b49082db9e4b51f2c19000b4b3ca5e1118be610418825bff" }
+    ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "7678062ea5c9c10ccd834d8a7b861b8a64c67a5ca2d3efd8cf6dc3310a718536" }
   ],
   "remoteEffects": {
     "target": "LOCAL_QA_PREVIEW_ONLY",
@@ -31,6 +32,7 @@
     "supabaseModified": false,
     "fixtures": "KEPT_CP3C3_PARTIAL"
   },
+  "performanceDebt": "P2_ACCEPTED_OWNER",
   "toolingLimits": [
     "NATIVE_SCREEN_READER_NOT_AVAILABLE",
     "LIGHTHOUSE_LCP_ABOVE_QA_TARGET_AFTER_LOGO_REMEDIATION",

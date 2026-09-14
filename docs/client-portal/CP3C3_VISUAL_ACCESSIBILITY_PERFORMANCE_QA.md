@@ -427,3 +427,28 @@ Status: `PARTIAL_AUTH_AND_PERFORMANCE`
 
 Gate decision: `CP-3C.3 = PARTIAL_AUTH_AND_PERFORMANCE`. CP-4.1 was not
 started.
+
+## CP-3C.3R7 — Owner Performance Debt Acceptance
+
+Date: **2026-09-14**
+Status: `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`
+
+- Owner decision: accept the measured dynamic-entry LCP of approximately
+  `2703.8 ms` median as explicit P2 performance debt for CP-3 QA.
+- Performance debt: `P2_ACCEPTED_OWNER`; blocking: `NO`; follow-up is
+  post-CP-3 performance optimization and real-deployment RUM.
+- The `2500 ms` budget remains `MISSED_BUT_OWNER_ACCEPTED_AS_P2`; it is not a
+  PASS. The isolated dynamic Portal/CRM architecture is preserved.
+- The remaining CP-3 blocker is the authenticated visual matrix. The real
+  `.auth/cp3c3/credentials.json` is absent, ignored, and was not invented or
+  reconstructed from historical ledgers. No direct Auth SQL, service-role
+  browser code, production credentials or fixture cleanup was used.
+- Safe QA admin channel: `NOT_AVAILABLE`; authenticated matrix:
+  `BLOCKED_EXTERNAL_PRIVATE_INPUT`.
+- Human input is documented in
+  [`CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md`](./CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md).
+  The placeholders-only committed template is
+  [`CP3C3_CREDENTIALS_TEMPLATE.example.json`](./CP3C3_CREDENTIALS_TEMPLATE.example.json).
+
+CP-3C.3 remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`; fixtures stay protected.
+CP-4.1 was not started.

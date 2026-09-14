@@ -399,7 +399,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `PARTIAL_AUTH_AND_PERFORMANCE — static entry A/B contributor confirmed but rejected; authenticated matrix blocked; LCP 2703.8ms remains above 2500ms` |
+| Status | `PARTIAL_AUTH_PRIVATE_INPUT_ONLY — owner accepted LCP 2703.8ms as P2 debt; authenticated matrix blocked by private input` |
 | Objective | Validate complete portal states across devices, assistive interaction and performance budgets. |
 | User outcome | The portal is usable on mobile, iPad and desktop, with keyboard/screen reader support and respectful motion. |
 | Dependencies | CP-3C.2 passes; stable visible QA build; representative synthetic states; agreed budgets. |
@@ -419,12 +419,12 @@ automatically.
 | Expected commit | `test: close portal visual accessibility and performance QA` |
 | Next gate | CP-4.1, not started |
 
-## CP-4.1 — WordPress source and deployment prerequisite
+## CP-4.1 — Public Website Source, Hosting & Deployment Prerequisite
 
 | Field | Specification |
 |---|---|
 | Status | `NOT STARTED` |
-| Objective | Establish owned, recoverable WordPress source and deployment control before any public-site edit. |
+| Objective | Establish owned, recoverable public website source and deployment control before any public-site edit; use WordPress only if the audit requires it. |
 | User outcome | No visible change; the public website becomes safely changeable and recoverable. |
 | Dependencies | CP-3C.3 closed; hosting owner available; export/staging access separately authorized. |
 | Agents | Primary `implementation-planner`; specialists `release-deployment-guardian`, `security-privacy-auditor`; reviewer `pr-quality-gate`. |
@@ -439,8 +439,8 @@ automatically.
 | Security/privacy | Backups remain encrypted/private; credentials and customer/form submissions never enter Git or reports. |
 | Rollback | No runtime change; discard staging test and retain approved private backup according to retention. |
 | Stop conditions | No owner, incomplete export, backup exposure, staging points to production DB or any unapproved content change. |
-| Closeout documentation | WordPress deployment/rollback runbook, private backup reference and next gate. |
-| Expected commit | `docs: establish WordPress deployment prerequisite` |
+| Closeout documentation | Public website deployment/rollback runbook, private backup reference and next gate. |
+| Expected commit | `docs: establish public website deployment prerequisite` |
 | Next gate | CP-4.2 |
 
 ## CP-4.2 — Public website and legal integration

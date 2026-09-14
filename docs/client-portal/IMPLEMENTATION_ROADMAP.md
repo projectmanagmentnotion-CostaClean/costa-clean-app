@@ -399,11 +399,12 @@ Status: `IN PROGRESS — CP-3A/CP-3B.0/CP-3B.0A/CP-3B.0 QA APPLICATION/CP-3B.1/C
 - **CP-3C.3 — Visual, accessibility and performance QA:** mobile, iPad, desktop,
   keyboard, screen readers, reduced motion and Web Vitals.
 
-CP-3C.3R7 (2026-09-14) is `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`: the owner accepts
+CP-3C.3R8 (2026-09-14) remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`: the owner accepts
 the dynamic-entry LCP median of `2703.8ms` as explicit P2 performance debt;
-the `2500ms` budget remains missed, not passed. The authenticated matrix is
-blocked by missing private QA input. Portal/CRM isolation is preserved and no
-more CP-3 performance experiments are planned. CP-4.1 is not started.
+the `2500ms` budget remains missed, not passed. The Codex-operated authenticated
+matrix could not start because no authorized Supabase admin channel or private
+identity input was available. Portal/CRM isolation is preserved and no more
+CP-3 performance experiments are planned. CP-4.1 is not started.
 
 No production release is part of CP-3.
 

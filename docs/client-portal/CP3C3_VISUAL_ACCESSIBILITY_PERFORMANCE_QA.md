@@ -452,3 +452,27 @@ Status: `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`
 
 CP-3C.3 remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`; fixtures stay protected.
 CP-4.1 was not started.
+
+## CP-3C.3R8 — Full Codex-Operated Supabase QA Closeout
+
+Date: **2026-09-14**
+Status: `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`
+
+- QA-only boundary was verified from the repository configuration and no
+  production mutation, Auth mutation, database write or Edge deploy was made.
+- No authenticated Supabase admin channel was available: the Supabase CLI is
+  not installed, no Management API token or admin secret was exposed, and no
+  Supabase Dashboard session was available to this process.
+- The five controlled identities could not be resolved or rotated without
+  inventing private input. `.auth/cp3c3/credentials.json` remains absent and
+  ignored; no passwords, UUIDs or tokens were printed or reconstructed.
+- Authenticated visual matrix: `NOT_EXECUTED_PRIVATE_INPUT_MISSING`.
+  Cleanup: `NOT_EXECUTED`; CP3C fixtures remain protected.
+- Unauthenticated QA evidence remains green: Axe `14/14`, `0` violations,
+  overflow false, `0` console errors, preview network PASS and `0` portal
+  action requests.
+- Regression suite: `643 passed`, `4 skipped`; lint, QA build and diff check
+  pass. The owner-accepted performance debt remains LCP `2703.8 ms` median,
+  target `2500 ms`, `P2_ACCEPTED_OWNER`, non-blocking.
+
+CP-3C.3 remains `PARTIAL_AUTH_PRIVATE_INPUT_ONLY`; CP-4.1 was not started.

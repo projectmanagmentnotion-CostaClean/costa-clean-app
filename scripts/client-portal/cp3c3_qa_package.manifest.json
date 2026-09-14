@@ -15,12 +15,12 @@
     { "path": "scripts/client-portal/cp3c3r2AuthenticatedVisualQa.mjs", "sha256": "00047bf22cd72a7848936d0f5c05efecb1205542ff2136a5623b128ce01e0231" },
     { "path": "scripts/client-portal/cp3c3r2PreviewNetwork.mjs", "sha256": "0534c0f33134c82b61fb67d9b790886b155711e0d57ddabe7bce1003ede810aa" },
     { "path": "scripts/client-portal/cp3c3r2PerformanceEvidence.mjs", "sha256": "9bb76c1f9522bd11fb637939919226eb34f57d5739622b6edcdb344df0873d74" },
-    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "7ea6d3e9b21485f37e5073b86103dafa9acaccdeb9127da0153fc74b08d2c207" }
+    { "path": "docs/client-portal/CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md", "sha256": "4feaa802cd843959013b99c85981a7b02bbc9b17127df1df892cd5e440f54cf9" }
     ,{ "path": "index.html", "sha256": "f03a0e2b0b22ba2182ff7a9bad1711c55f72948ebebbe6360674eb5d2a722d01" }
     ,{ "path": "src/portal/PortalBrand.tsx", "sha256": "13a059d7ff938a8175537fe4d1b60e5871a0040d88581dda9093440d78d01b4c" }
     ,{ "path": "docs/client-portal/CP3C3_PRIVATE_CREDENTIAL_HANDOFF.md", "sha256": "4d049ee6ecdfbe098cddcc282bb164122568e892a824e381fba1c223285afc01" }
     ,{ "path": "docs/client-portal/CP3C3_CREDENTIALS_TEMPLATE.example.json", "sha256": "277e54f5673c33351c033d227f6de12833c97c1d5afac8a5b1f1dcc90da5700c" }
-    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "597869769b51fa22b49082db9e4b51f2c19000b4b3ca5e1118be610418825bff" }
+    ,{ "path": "docs/client-portal/IMPLEMENTATION_ROADMAP.md", "sha256": "9742ad32dc24cfa0ddae39491ce3d2fe5674120a30f9ddb9bf9c047b7cf7e68a" }
     ,{ "path": "docs/client-portal/CP3_TO_CP6_EXECUTION_ROADMAP.md", "sha256": "7678062ea5c9c10ccd834d8a7b861b8a64c67a5ca2d3efd8cf6dc3310a718536" }
   ],
   "remoteEffects": {
@@ -39,7 +39,8 @@
     "CDP_SCALE_ATTEMPT_NOT_NATIVE_ZOOM",
     "FULL_AUTHENTICATED_STATE_MATRIX_NOT_REEXECUTED",
     "AUTHENTICATED_CREDENTIAL_INPUT_MISSING",
-    "QA_PRIVATE_ADMIN_CHANNEL_MISSING_FOR_PASSWORD_ROTATION"
+    "QA_PRIVATE_ADMIN_CHANNEL_MISSING_FOR_PASSWORD_ROTATION",
+    "R8_AUTH_MATRIX_NOT_EXECUTED_NO_PRIVATE_CHANNEL"
   ],
   "nextGate": "CP-4.1",
   "nextGateStarted": false

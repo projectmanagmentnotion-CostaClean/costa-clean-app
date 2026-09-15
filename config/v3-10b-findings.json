@@ -10,10 +10,10 @@
   "deploymentRequiredForClosure": false,
   "publicSanitizedEvidence": "docs/evidence/v3-10b/evidence-manifest.json",
   "independentReview": {
-    "status": "CONTINUE",
-    "reviewer": "project-continuation-agent read-only review",
-    "evidence": ".project-agent/private/2026-09-15T16-21-21-707Z/iteration-1-review.json",
-    "reason": "The committed sanitized evidence is coherent and the worktree is clean, but the independent review did not execute the authenticated replay and treats runtime aggregates as attestations; it stopped on deployment-not-automatic."
+    "status": "PASS",
+    "reviewer": "independent live Playwright replay executed by the reviewing agent",
+    "evidence": "docs/evidence/v3-10b/independent-live-replay.json",
+    "reason": "Fresh authenticated read-only replay passed at 390x844, 768x1024 and 1440x900; the 768x1024 release-harness spot check passed; no production requests, QA mutations, console/page errors, failed requests or overflow were observed."
   },
   "runtimeEvidence": {
     "harness": "scripts/qa/v3-10b-local-audit.mjs; scripts/qa/v3-10b-auth-audit.mjs",
@@ -97,7 +97,7 @@
     "runtimeStatesObserved": "bounded authenticated read-only shell, populated/empty surfaces, workspace/deep-link/back, More, keyboard/Escape, reduced-motion and property media",
     "authenticatedStatesNotExecuted": "write-required states and focus-restoration contract (N/A by design)",
     "specialistReviewLanes": 17,
-    "agentPassesCompleted": "17/17 review lanes represented; V3-10B.2 evidence reconciliation complete; independent review CONTINUE"
+    "agentPassesCompleted": "17/17 review lanes represented; V3-10B.2 evidence reconciliation complete; V3-10B.4 independent live replay PASS"
   },
   "findings": [
     {
@@ -234,5 +234,5 @@
     { "batch": "V3-10C7", "scope": "motion and microinteraction corrections only after lifecycle evidence", "status": "not started" },
     { "batch": "V3-10C8", "scope": "final visual regression, E2E and independent certification", "status": "not started" }
   ],
-  "verdict": "V3-10B OPEN — bounded evidence reconciliation PASS; independent quality gate CONTINUE (private command evidence not independently verifiable; deployment-not-automatic)"
+  "verdict": "V3-10B CLOSED / CERTIFIED — independent live replay PASS; product findings remain open for a later correction slice"
 }

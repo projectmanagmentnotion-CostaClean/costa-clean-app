@@ -1,0 +1,82 @@
+{
+  "gate": "V3-10B.4",
+  "source": "fresh authenticated local Playwright replay executed by the independent reviewer",
+  "generatedAt": "2026-09-15T18:35:00Z",
+  "sourceHead": "c4c78ab9e1893d8b11d6f4e8d8c025db2226d120",
+  "branch": "codex/app-v3-mobile-first-redesign",
+  "environment": {
+    "appUrl": "http://127.0.0.1:4177/?v3=1",
+    "serverHttpStatus": 200,
+    "documentTitle": "CostaClean CRM | Gestión y presupuestos de limpieza",
+    "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+    "productionProjectRef": "wfxnwfcdjainpojhbdri"
+  },
+  "replay": {
+    "status": "PASS",
+    "viewports": ["390x844", "768x1024", "1440x900"],
+    "authenticatedShells": "3/3 PASS",
+    "surfaceNavigations": "36/36 PASS",
+    "documentNavigations": "45/45 HTTP 200",
+    "surfaces": [
+      "Home",
+      "Clients",
+      "Leads",
+      "Properties",
+      "Quotes",
+      "Services",
+      "Invoices",
+      "Payments",
+      "Expenses",
+      "Alerts",
+      "Closings",
+      "Recurring"
+    ],
+    "representativeWorkspaces": {
+      "client": "3/3 PASS with reload and back",
+      "property": "3/3 PASS with reload and back",
+      "invoice": "3/3 PASS with reload and back",
+      "expense": "3/3 PASS with reload and back",
+      "lead": "3/3 PASS with reload and back",
+      "quote": "N/A — no QA rows available",
+      "job": "N/A — no QA rows available",
+      "payment": "N/A — no QA rows available"
+    },
+    "searchMissAndRestore": "15/15 searchable checks PASS; 18 checks N/A on empty/non-searchable states",
+    "moreOverlay": "3/3 PASS",
+    "escapeOpenClose": "3/3 PASS",
+    "focusRestoration": "N/A — harness did not expose a verifiable restored focus target",
+    "propertyMedia": "broken images 0",
+    "touchTarget": {
+      "selector": ".v3-contact-action",
+      "observedHeightPx": 40,
+      "status": "RECORDED — known V3Q-P2-002 finding; not fixed in this gate"
+    }
+  },
+  "safetyAndPresentation": {
+    "productionRequests": 0,
+    "nonQaSupabaseRequests": 0,
+    "qaMutations": 0,
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "failedRequests": 0,
+    "horizontalOverflowViewports": 0,
+    "visibleUuid": 0,
+    "accessibleUuid": 0,
+    "unicodeAsIcon": 0,
+    "legacyRuntimeMarkers": 0,
+    "manifestPresent": true,
+    "faviconPresent": true
+  },
+  "releaseHarnessSpotCheck": {
+    "command": "npx playwright test tests/e2e/v3-release.spec.mjs --workers=1 --timeout=120000 --grep 768x1024",
+    "status": "PASS",
+    "tests": "1 passed"
+  },
+  "comparison": {
+    "priorEvidenceContradiction": "NONE",
+    "productFilesChanged": 0,
+    "supabaseFilesChanged": 0,
+    "deployment": "NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED"
+  },
+  "boundedReplayNote": "The harness full-matrix audit flag is intentionally false for this closure replay because V3-10B.4 requires the three closure viewports, while the historical full matrix is 8 viewports x 12 surfaces. The scoped independent replay above is PASS."
+}

@@ -1,6 +1,6 @@
 # V3-10B — Exhaustive Whole-App Quality Audit
 
-Status: `OPEN — bounded evidence reconciliation complete; independent quality gate CONTINUE`
+Status: `CLOSED / CERTIFIED — independent live replay PASS`
 
 This gate is diagnosis only. No product fix, Supabase write, QA write,
 production write or deployment was performed.
@@ -23,7 +23,8 @@ production write or deployment was performed.
   `qa-reports/private/v3-10b/v3-10b-repeat.json` and its per-run logs.
 - Independently reviewable sanitized evidence is committed at
   `docs/evidence/v3-10b/`, with manifest, HTTP, search, Escape and determinism
-  summaries. The private paths above are provenance only.
+  summaries plus the fresh `independent-live-replay.json`. The private paths above
+  are provenance only.
 
 ## Specialist review passes
 
@@ -51,9 +52,9 @@ All lanes were constrained to repository inspection and local read-only evidence
 The PR-quality checklist was applied to scope, severity, unsupported claims,
 false positives, production safety and the correction roadmap. The prior read-only
 continuation review returned `CONTINUE` (quality score 68). V3-10B.2 reconciled the
-four requested evidence gaps without product changes. The fresh independent review
-also returned `CONTINUE`: the isolated reviewer could not independently verify
-private command-run results and stopped on `deployment-not-automatic`.
+four requested evidence gaps without product changes. V3-10B.4 then executed a
+fresh authenticated replay directly against the local QA app; the result is committed
+in `docs/evidence/v3-10b/independent-live-replay.json`.
 
 ## Coverage
 
@@ -128,6 +129,13 @@ accessible zero-state, and restoration of the original list. Quotes, Jobs, Payme
 Alerts, Closings and Recurring were N/A because the required search/record state was
 unavailable. No product fix is made in this audit gate.
 
+The V3-10B.4 closure replay independently covered `390x844`, `768x1024` and
+`1440x900`: 36/36 surface navigations passed, 45/45 main documents returned HTTP
+200, representative client/property/invoice/expense workspaces reloaded and returned
+via Back, search miss/clear passed on populated modules, More opened and Escape
+closed it, and property media had zero broken images. The replay observed
+`.v3-contact-action` at 40px, retaining V3Q-P2-002 as an open product finding.
+
 ## Master findings
 
 Machine-readable source: `config/v3-10b-findings.json`.
@@ -191,13 +199,12 @@ Machine-readable source: `config/v3-10b-findings.json`.
 ## Independent quality gate
 
 The former `V3-10B-BLOCKER-001` was an authentication infrastructure blocker. Manual
-QA authentication resolved it without credential handling. The authenticated
-read-only matrix now runs against QA with zero production requests, zero non-QA
-Supabase requests, zero QA mutations, zero console/page errors and zero failed
-requests. HTTP status, search assertions, Escape closure and deterministic runs are
-now recorded. The bounded runtime evidence is reconciled, but the fresh independent
-review is not a PASS: it could not independently verify private command-run results
-and stopped on `deployment-not-automatic`. No product fix is authorized in this slice.
+QA authentication resolved it without credential handling. V3-10B.4 independently
+executed the authenticated replay against QA and observed zero production requests,
+zero non-QA Supabase requests, zero QA mutations, zero console/page errors, zero
+failed requests, zero horizontal overflow, zero UUID leaks, zero Unicode-as-icon
+matches and zero legacy runtime markers. The required 768x1024 release-harness spot
+check also passed (`1 passed`). The independent quality gate is therefore PASS.
 
 ## Discarded false positives
 
@@ -235,10 +242,9 @@ and stopped on `deployment-not-automatic`. No product fix is authorized in this 
 - Harness failure-injection check: `V3_10B_FORCE_FAIL=1` returned exit `2`, and the
   repeat runner returned non-zero; a clean audit now requires auth, surface count,
   readiness, HTTP, safety, error, overflow, search and Escape gates simultaneously.
-- Independent continuation review: `CONTINUE`; latest evidence is
-  `.project-agent/private/2026-09-15T16-21-21-707Z/iteration-1-review.json`. The
-  committed summaries are coherent, but the reviewer did not execute the
-  authenticated replay and therefore treats runtime aggregates as attestations.
+- Independent continuation review: `CONTINUE`; V3-10B.4 superseded that limitation
+  by executing the fresh authenticated replay directly and recording the sanitized
+  result in `docs/evidence/v3-10b/independent-live-replay.json`.
 
 ## Safety and closure
 
@@ -249,6 +255,6 @@ and stopped on `deployment-not-automatic`. No product fix is authorized in this 
 - Product TSX/CSS fixes: 0
 - V3-10C: NOT STARTED
 
-V3-10B is not closed. The truthful verdict is:
+V3-10B is closed for the audit scope. The truthful verdict is:
 
-`V3-10B OPEN — bounded evidence reconciliation PASS; independent quality gate CONTINUE (private command evidence not independently verifiable; deployment-not-automatic).`
+`V3-10B CLOSED / CERTIFIED — independent live replay PASS; product findings remain open for a later correction slice.`

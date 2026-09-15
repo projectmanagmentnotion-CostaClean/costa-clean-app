@@ -1,8 +1,8 @@
 {
-  "gate": "V3-10B.3",
-  "sourceHead": "eb0910dfedd2c71aa3127d0fcf6b9b76c79ee0dc",
+  "gate": "V3-10B.4",
+  "sourceHead": "c4c78ab9e1893d8b11d6f4e8d8c025db2226d120",
   "branch": "codex/app-v3-mobile-first-redesign",
-  "generatedAt": "2026-09-15T16:15:50.0594642Z",
+  "generatedAt": "2026-09-15T18:35:00Z",
   "auditHarnessPaths": ["scripts/qa/v3-10b-auth-audit.mjs", "scripts/qa/v3-10b-repeat.mjs"],
   "releaseHarnessPath": "tests/e2e/v3-release.spec.mjs",
   "sanitizedEvidenceFiles": [
@@ -11,7 +11,8 @@
     "http-navigation-summary.json",
     "search-summary.json",
     "escape-summary.json",
-    "determinism-summary.json"
+    "determinism-summary.json",
+    "independent-live-replay.json"
   ],
   "privateSourceReports": [
     "qa-reports/private/v3-10b/v3-10b-auth-audit.json",
@@ -25,7 +26,8 @@
     "http-navigation-summary.json": "5087fd055200dda0bf3c61a8d35df9ab2f509a3d8e87593416fa6032253cf007",
     "search-summary.json": "878d2c93f46c22e61bfa15c6c9ad84d9553407bbac74658278314e2615362a0c",
     "escape-summary.json": "ef4bffd43ffacd9f0a84900336c2fcdfae749c9e1ae3cca079b4a5d73e32d4c6",
-    "determinism-summary.json": "b032acc2d4be0fc3e770b0fba9214aa7e30e8c13f68d22b98466448804e7345f"
+    "determinism-summary.json": "b032acc2d4be0fc3e770b0fba9214aa7e30e8c13f68d22b98466448804e7345f",
+    "independent-live-replay.json": "3b3aa4e012c038b5ac06eae2b45088138eb525f129adaa7d13482fdda3fd536e"
   },
   "productionWrites": 0,
   "qaWrites": 0,

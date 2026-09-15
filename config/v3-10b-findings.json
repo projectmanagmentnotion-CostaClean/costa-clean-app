@@ -1,0 +1,160 @@
+{
+  "gate": "V3-10B",
+  "mode": "audit-only",
+  "startingHead": "c8117b740094e395a9f4800120df51bb6bb8c5ee",
+  "productionWrites": 0,
+  "qaWrites": 0,
+  "supabaseChanges": 0,
+  "productionDeployment": "NOT_EXECUTED",
+  "independentReview": {
+    "status": "BLOCKED",
+    "reviewer": "project-continuation-agent read-only review",
+    "evidence": ".project-agent/private/2026-09-15T10-45-17-579Z/iteration-1-review.json",
+    "reason": "The review contract requires a blocked verdict when the next certification step depends on a manually established authenticated local QA session."
+  },
+  "runtimeEvidence": {
+    "harness": "scripts/qa/v3-10b-local-audit.mjs",
+    "report": "qa-reports/private/v3-10b/v3-10b-local-audit.json",
+    "environment": "http://127.0.0.1:4177/?v3=1",
+    "authentication": "BLOCKED",
+    "pages": 112,
+    "viewCandidates": 14,
+    "viewports": ["320x568", "390x844", "430x932", "768x1024", "1024x1366", "1280x800", "1440x900", "1920x1080"],
+    "http200": 112,
+    "consoleErrorPages": 0,
+    "pageErrorPages": 0,
+    "failedRequestPages": 0,
+    "horizontalOverflowPages": 0,
+    "productionRequests": 0,
+    "supabaseMutations": 0,
+    "observedState": "unauthenticated login shell only"
+  },
+  "coverage": {
+    "surfacesInInventory": 18,
+    "statesInMatrix": 22,
+    "runtimeStatesObserved": 4,
+    "authenticatedStatesNotExecuted": 18,
+    "specialistReviewLanes": 17,
+    "agentPassesCompleted": "17/17 review lanes represented; authenticated execution blocked"
+  },
+  "findings": [
+    {
+      "id": "V3Q-P2-001",
+      "severity": "P2",
+      "confidence": "CONFIRMED",
+      "module": "Auth / Brand",
+      "routeSurface": "?v3=1&view=dashboard unauthenticated entry",
+      "viewportState": "390x844, unauthenticated",
+      "category": ["brand", "visual", "hierarchy"],
+      "evidence": [
+        "scripts/qa/v3-10b-local-audit.mjs captured dashboard-390x844.png with no visible canonical logo image.",
+        "src/v3/design/v3.css:117 sets .v3-auth-page .auth-brand__logo { display: none; }.",
+        "src/features/auth/AuthPage.tsx:61-65 renders the canonical registry asset but CSS suppresses it on V3 auth."
+      ],
+      "observed": "The first V3 login viewport shows the textual CostaClean CRM kicker but the canonical logo asset is hidden.",
+      "expected": "The approved V3 auth direction should expose a deliberate, proportionally sized canonical brand mark or document an explicit text-only decision.",
+      "rootCause": "A V3-specific CSS rule hides the semantic logo registry output.",
+      "designPrinciple": "Brand presence should be restrained but the authenticated entry surface must remain recognizably Costa Clean.",
+      "impact": "Weakens brand recognition at the first operational entry point; does not block login.",
+      "recommendedFix": "In a later approved visual slice, either remove the hide rule and validate the canonical asset at mobile/tablet/desktop, or replace the hidden asset with an explicitly approved text-only treatment.",
+      "filesLikelyAffected": ["src/v3/design/v3.css", "src/features/auth/AuthPage.tsx"],
+      "regressionRisk": "Low to medium; auth card height and first-viewport hierarchy can change.",
+      "testRequired": "Visual auth baseline at 390x844, 768x1024 and 1440x900 plus asset-load assertion.",
+      "dependencies": ["approved visual direction", "canonical brand registry"],
+      "status": "OPEN — audit only"
+    },
+    {
+      "id": "V3Q-P2-002",
+      "severity": "P2",
+      "confidence": "SUPPORTED",
+      "module": "V3 shared actions",
+      "routeSurface": "client contact actions, V3 shell ghost actions and related workspaces",
+      "viewportState": "mobile/tablet static CSS; authenticated runtime unavailable",
+      "category": ["accessibility", "responsive", "touch-targets"],
+      "evidence": [
+        "src/v3/design/v3.css:600 sets .v3-contact-action min-height: 40px.",
+        "src/v3/design/v3.css:608 sets .v3-action--ghost min-height: 40px.",
+        "src/v3/clients/V3ContactActions.tsx uses .v3-contact-action for operational contact links.",
+        "src/v3/shell/V3ShellChrome.tsx uses .v3-action--ghost for a shell action.",
+        "AGENTS.md requires interactive targets to be at least 44x44 CSS px."
+      ],
+      "observed": "Two reusable V3 action classes explicitly permit a 40 px minimum height, below the repository accessibility contract.",
+      "expected": "Interactive V3 controls should meet a 44 px minimum target, or have a documented native/semantic exception.",
+      "rootCause": "Shared V3 action CSS uses a smaller minimum than the cross-module touch-target rule.",
+      "impact": "Potentially undersized contact and secondary actions on touch devices; exact rendered geometry remains unverified for authenticated surfaces.",
+      "recommendedFix": "In a later correction slice, raise the shared minimum to the approved touch token or document a verified exception, then rerun geometry and keyboard checks.",
+      "filesLikelyAffected": ["src/v3/design/v3.css", "src/v3/clients/V3ContactActions.tsx", "src/v3/shell/V3ShellChrome.tsx"],
+      "regressionRisk": "Medium; changing shared action height affects shell and CRM density.",
+      "testRequired": "Authenticated geometry at 390x844, 768x1024 and 1440x900; keyboard focus and hit-area assertions.",
+      "dependencies": ["V3 design tokens", "authenticated QA session"],
+      "status": "OPEN — audit only"
+    },
+    {
+      "id": "V3Q-P3-001",
+      "severity": "P3",
+      "confidence": "SUPPORTED",
+      "module": "Document output",
+      "routeSurface": "invoice/quote print and clipboard fallback actions",
+      "viewportState": "static source review",
+      "category": ["ux", "accessibility", "error-recovery"],
+      "evidence": [
+        "src/features/documents/utils.ts:54-56 uses window.alert for clipboard fallback feedback.",
+        "src/features/invoices/openInvoicePrintWindow.tsx:77 uses window.alert when popups are blocked.",
+        "src/features/quotes/openQuotePrintWindow.tsx:92 uses window.alert when popups are blocked."
+      ],
+      "observed": "Some document-action failures use browser-native blocking alerts instead of the app's inline/status feedback system.",
+      "expected": "Non-destructive document failures should preserve context and provide an accessible, dismissible in-app status where the surrounding flow supports it.",
+      "rootCause": "Legacy utility and print-window fallback paths still call window.alert.",
+      "impact": "Interrupts flow and makes feedback inconsistent; not a data-integrity issue.",
+      "recommendedFix": "Evaluate a later document-output UX slice; preserve native popup-blocker guidance where technically necessary and add focused focus/announcement tests.",
+      "filesLikelyAffected": ["src/features/documents/utils.ts", "src/features/invoices/openInvoicePrintWindow.tsx", "src/features/quotes/openQuotePrintWindow.tsx"],
+      "regressionRisk": "Low to medium; changing feedback timing can affect existing export tests.",
+      "testRequired": "Popup-blocked and clipboard-unavailable local tests with focus and accessible status assertions.",
+      "dependencies": ["document output contract", "browser popup behavior"],
+      "status": "OPEN — audit only"
+    }
+  ],
+  "auditBlockers": [
+    {
+      "id": "V3-10B-BLOCKER-001",
+      "status": "BLOCKED",
+      "evidence": "npx playwright test tests/e2e/v3-release.spec.mjs --workers=1 failed at V3-8_AUTH_REQUIRED because .auth/costa-clean-storage-state.json points to a profile without an authenticated shell; four viewport tests were skipped.",
+      "impact": "Authenticated routes, real data states, relationships, deep links, write-protected actions, sheets, workspace geometry, and full accessibility cannot be certified in this gate.",
+      "requiredNextAction": "User must manually authenticate the existing local QA browser/profile, or provide an already authorized authenticated local session through the approved environment. No credentials were requested or manipulated.",
+      "doesNotAuthorize": ["production", "Supabase writes", "QA writes", "credential handling", "business logic changes"]
+    }
+  ],
+  "discardedFalsePositives": [
+    "Teal V3 accent is documented as an approved semantic product token and is not automatically a brand defect.",
+    "Inline styles in the generated work report are document-local output styling, not a V3 runtime token violation by themselves.",
+    "Unreferenced legacy branding variants are retained intentionally for auditability after V3-10A.1 and are not runtime dependencies.",
+    "No production request, Supabase mutation, console error, page error, failed asset request or horizontal overflow was observed in the local unauthenticated matrix."
+  ],
+  "counts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 2,
+    "P3": 1,
+    "functional": 0,
+    "ux": 1,
+    "visual": 1,
+    "responsive": 1,
+    "accessibility": 2,
+    "motion": 0,
+    "performance": 0,
+    "brand": 1,
+    "state": 0
+  },
+  "roadmap": [
+    { "batch": "V3-10C0", "scope": "none", "status": "not required; no P0 found" },
+    { "batch": "V3-10C1", "scope": "certify authenticated states first, then address shared touch targets", "findings": ["V3-10B-BLOCKER-001", "V3Q-P2-002"] },
+    { "batch": "V3-10C2", "scope": "auth brand treatment and document feedback consistency", "findings": ["V3Q-P2-001", "V3Q-P3-001"] },
+    { "batch": "V3-10C3", "scope": "Home + CRM authenticated state matrix", "status": "pending authenticated evidence" },
+    { "batch": "V3-10C4", "scope": "Finance authenticated state matrix", "status": "pending authenticated evidence" },
+    { "batch": "V3-10C5", "scope": "Operations authenticated state matrix", "status": "pending authenticated evidence" },
+    { "batch": "V3-10C6", "scope": "responsive/tablet/desktop normalization after evidence", "status": "pending authenticated evidence" },
+    { "batch": "V3-10C7", "scope": "motion and microinteraction corrections only after lifecycle evidence", "status": "not started" },
+    { "batch": "V3-10C8", "scope": "final visual regression, E2E and independent certification", "status": "not started" }
+  ],
+  "verdict": "V3-10B BLOCKED — authenticated QA session unavailable; audit artifacts contain only local read-only evidence"
+}

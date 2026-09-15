@@ -317,4 +317,22 @@ Evidence: `docs/V3-10C1_CORE_CORRECTIONS.md`.
 
 Evidence: `docs/V3-10C2_GLOBAL_VISUAL_SYSTEM.md`.
 
-Next: `V3-10C3` remains not started.
+Next: `V3-10C3` is now open for final gate verification.
+
+## V3-10C3 — Home + CRM module refinement — OPEN / AUTHENTICATED RUNTIME CERTIFICATION PENDING
+
+- [x] Audit Home, Clients, Leads, Properties and shared CRM composition.
+- [x] Move existing attention/search tasks ahead of secondary KPI summaries.
+- [x] Refine responsive property media and CRM row composition without changing contracts.
+- [x] Add focused module composition regression coverage.
+- [x] Complete pre-auth diff, contract-freeze, relationship, search, empty-state,
+  accessibility, property-media and responsive source audits.
+- [x] Record the exact authenticated replay checklist.
+- [ ] Complete authenticated before/after visual evidence and 8-view runtime gate.
+- [ ] Complete independent `pr-quality-gate` after authenticated evidence.
+- [x] Complete pre-auth tests, lint, build and diff validation.
+- [ ] Commit/push the checkpoint and later certification closeout.
+
+Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md`.
+
+Next: `V3-10C4` remains not started; C3 must close first.

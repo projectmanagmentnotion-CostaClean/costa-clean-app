@@ -11,7 +11,7 @@ function statusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger
 
 export function V3LeadRow({ lead, onOpen }: { lead: LeadListItem; onOpen: () => void }) {
   return (
-    <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir lead ${lead.full_name}`}>
+    <V3EntityListItem className="v3-lead-row" onClick={onOpen} ariaLabel={`Abrir lead ${lead.full_name}`}>
       <div className="v3-lead-row__main">
         <strong>{lead.full_name}</strong>
         <span>{lead.display_code ?? 'Sin código'} · {lead.city ?? lead.phone}</span>

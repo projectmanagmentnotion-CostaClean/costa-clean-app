@@ -68,9 +68,9 @@ export function V3LeadsPage(props: V3LeadsPageProps) {
   if (selectedLead) return <V3LeadWorkspace lead={selectedLead} draft={matchingDraft(selectedLead, props.leadDrafts)} quotes={selectedQuotes} client={selectedClient} onBack={closeLead} onRefresh={props.onRefresh} onOpenQuote={props.onOpenQuote} onOpenClient={props.onOpenClient} />
 
   return <V3Page className="v3-leads-page">
-    <V3PageTitle eyebrow="Pipeline comercial" title="Leads" description="Oportunidades, intake y siguiente acción comercial." action={<V3PrimaryAction onClick={props.onCreateLead}>+ Nuevo</V3PrimaryAction>} />
-    <V3KpiGroup><V3Kpi label="Activos" value={String(open)} hint="Oportunidades abiertas" /><V3Kpi label="Nuevos" value={String(newCount)} hint="Estado new" /><V3Kpi label="Presupuestados" value={String(quotedCount)} hint="Estado quoted" /></V3KpiGroup>
+    <V3PageTitle eyebrow="Pipeline comercial" title="Leads" description="Oportunidades, intake y siguiente acción comercial." action={<V3PrimaryAction onClick={props.onCreateLead}>+ Nuevo lead</V3PrimaryAction>} />
     <div className="v3-leads-controls"><V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, teléfono, email, ciudad o código" /><span className="v3-leads-count">{visibleLeads.length} visibles</span></div>
+    <V3KpiGroup><V3Kpi label="Activos" value={String(open)} hint="Oportunidades abiertas" /><V3Kpi label="Nuevos" value={String(newCount)} hint="Estado new" /><V3Kpi label="Presupuestados" value={String(quotedCount)} hint="Estado quoted" /></V3KpiGroup>
     <div className="v3-filter-tabs" role="tablist" aria-label="Estado de lead">{([['all', 'Todos'], ['new', 'Nuevos'], ['contacted', 'Contactados'], ['quoted', 'Presupuestados'], ['won', 'Ganados'], ['lost', 'Perdidos'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}</div>
     {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando leads</strong><p>{props.error}</p></div> : null}
     {!props.error && visibleLeads.length === 0 ? <div className="v3-state"><strong>Sin leads visibles</strong><p>Ajusta la búsqueda o el estado para continuar.</p></div> : null}

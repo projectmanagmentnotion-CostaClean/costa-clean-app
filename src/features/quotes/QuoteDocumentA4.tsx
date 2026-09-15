@@ -10,6 +10,7 @@ import {
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
 import { buildQuoteScopeLabel } from './quoteScope'
+import { brandAssets } from '../../v3/brand/brandAssets'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -202,7 +203,7 @@ export function QuoteDocumentA4({
       <header className="cc-invoice-a4__header">
         <div className="cc-invoice-a4__brand">
           <img
-            src="/branding/logo-costa-clean-web.png"
+            src={brandAssets.logoPrimary.src}
             alt="CostaClean"
             className="cc-invoice-a4__logo"
           />

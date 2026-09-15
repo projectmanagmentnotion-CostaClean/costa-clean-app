@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { getSupabaseClient } from '../../lib/supabase'
+import { brandAssets } from '../../v3/brand/brandAssets'
 import './auth.css'
 
 interface AuthPageProps {
@@ -59,7 +60,7 @@ export function AuthPage({ onSignedIn, surface = 'legacy' }: AuthPageProps) {
             <div className="auth-brand__copy">
               <p className="auth-kicker">CostaClean CRM</p>
               <img
-                src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+                src={brandAssets.logoPrimary.src}
                 alt="CostaClean"
                 className="auth-brand__logo"
               />

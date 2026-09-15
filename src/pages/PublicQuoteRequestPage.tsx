@@ -1,5 +1,6 @@
 import { PublicQuoteRequestForm } from '../features/publicIntake/PublicQuoteRequestForm'
 import '../features/publicIntake/public-intake.css'
+import { brandAssets } from '../v3/brand/brandAssets'
 
 export function PublicQuoteRequestPage() {
   return (
@@ -8,7 +9,7 @@ export function PublicQuoteRequestPage() {
         <div className="cc-public-intake-hero__topbar">
           <div className="cc-public-intake-hero__brand">
             <img
-              src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+              src={brandAssets.logoPrimary.src}
               alt="CostaClean"
               className="cc-public-intake-hero__logo"
             />

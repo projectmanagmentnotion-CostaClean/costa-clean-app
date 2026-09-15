@@ -1,8 +1,10 @@
+import { brandAssets } from '../v3/brand/brandAssets'
+
 export function PortalBrand() {
   return (
     <div className="portal-brand">
       <img
-        src="/branding/Costa_Clean-LOGO-AZUL.png"
+        src={brandAssets.logoPrimary.src}
         alt="Costa Clean"
         className="portal-brand__logo"
       />

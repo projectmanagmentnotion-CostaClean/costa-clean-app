@@ -16,6 +16,7 @@ import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
 import { useV3FeatureFlag } from './v3/navigation/useV3FeatureFlag'
 import { V3GlobalErrorState, V3GlobalLoadingState } from './v3/shell/V3GlobalPresentation'
+import { brandAssets } from './v3/brand/brandAssets'
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -196,7 +197,7 @@ function App() {
         <section className="cc-boot-card">
           <div className="cc-boot-card__brand" aria-hidden="true">
             <img
-              src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+              src={brandAssets.logoPrimary.src}
               alt=""
               className="cc-boot-card__logo"
             />

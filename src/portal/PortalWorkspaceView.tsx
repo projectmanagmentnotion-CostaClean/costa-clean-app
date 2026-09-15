@@ -4,6 +4,7 @@ import type { PortalPreviewScenario } from './contracts'
 import { PortalPages } from './PortalPages'
 import { getPortalPagePath, resolvePortalPage, type PortalPage } from './portalNavigation'
 import type { PortalFoundationData } from './portalWorkspaceData'
+import { brandAssets } from '../v3/brand/brandAssets'
 
 type AuthenticatedPortalAccess = Extract<PortalAccessState, { status: 'active_member' }>
 
@@ -82,7 +83,7 @@ export function PortalWorkspaceView({
       <header className="portal-workspace__header">
         <a className="portal-workspace__brand" href={getHref('home')} aria-label="Ir al inicio del área de clientes">
           <img
-            src="/branding/Costa_Clean-LOGO-AZUL.png"
+            src={brandAssets.logoPrimary.src}
             alt="Costa Clean"
             className="portal-workspace__logo"
           />

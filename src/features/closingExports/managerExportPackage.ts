@@ -19,6 +19,7 @@ import {
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { PropertyListItem } from '../properties/types'
+import { brandAssets } from '../../v3/brand/brandAssets'
 import {
   buildQuotePrintDocumentHtml,
   getQuoteDocumentFileStem,
@@ -609,10 +610,10 @@ export async function downloadManagerExportPackage(input: ExportPackageInput): P
     input.folderName || buildExternalAccountingPackageStem(input.label),
   ) || buildExternalAccountingPackageStem(input.label)
   const entries: ZipEntry[] = []
-  let exportLogoSrc = '/branding/logo-costa-clean-web.png'
+  let exportLogoSrc: string = brandAssets.logoPrimary.src
 
   try {
-    exportLogoSrc = await fetchAsDataUrl('/branding/logo-costa-clean-web.png')
+    exportLogoSrc = await fetchAsDataUrl(brandAssets.logoPrimary.src)
   } catch {
     // Keep fallback public path for robustness.
   }

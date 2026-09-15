@@ -26,8 +26,8 @@ self.addEventListener('push', (event) => {
     body,
     tag: typeof payload.tag === 'string' ? payload.tag : 'costaclean-notification',
     renotify: false,
-    icon: '/branding/costaclean-icon-192.png',
-    badge: '/branding/costaclean-icon-192.png',
+    icon: '/branding/app-icon-192.png',
+    badge: '/branding/app-icon-192.png',
     data: { destinationPath },
   }))
 })

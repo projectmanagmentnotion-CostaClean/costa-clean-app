@@ -4,6 +4,7 @@ import { getStatusLabel } from '../../app/displayText'
 import { getInvoiceFiscalDisplayData } from '../clients/clientFiscalData'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
+import { brandAssets } from '../../v3/brand/brandAssets'
 
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
@@ -147,7 +148,7 @@ export function InvoiceDocumentA4({
   invoice,
   variant = 'document',
   renderMode = 'screen',
-  logoSrc = '/branding/logo-costa-clean-web.png',
+  logoSrc = brandAssets.logoPrimary.src,
 }: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
   const documentLines = getDocumentLines(invoice)

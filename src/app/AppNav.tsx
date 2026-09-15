@@ -9,6 +9,7 @@ import type { AppTheme } from './theme'
 import type { AutomationAlertItem } from '../features/automation/types'
 import type { AlertDecision } from '../features/alerts/alertDecisionApi'
 import type { LogoutOutcome } from '../features/auth/logoutFlow'
+import { brandAssets } from '../v3/brand/brandAssets'
 
 interface AppNavProps {
   currentView: AppView
@@ -419,7 +420,7 @@ export function AppNav({
 
           <div className="cc-mobile-shell-header__brand">
             <img
-              src="/branding/Costa_Clean-LOGO.png"
+              src={brandAssets.brandSymbol.src}
               alt=""
               className="cc-mobile-shell-header__logo"
               aria-hidden="true"
@@ -613,7 +614,7 @@ export function AppNav({
           <div className="cc-shell-nav__topline">
             <div className="cc-shell-nav__brand">
               <img
-                src="/branding/Costa_Clean-LOGO.png"
+                src={brandAssets.brandSymbol.src}
                 alt=""
                 className="cc-shell-nav__logo"
                 aria-hidden="true"

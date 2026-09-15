@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
 function readV3Flag(): boolean {
-  if (typeof window === 'undefined') return false
-  return new URL(window.location.href).searchParams.get('v3') === '1'
+  if (typeof window === 'undefined') return true
+  return isV3FeatureFlagEnabled(window.location.search)
 }
 
 function subscribeToLocation(onChange: () => void): () => void {
@@ -11,9 +11,9 @@ function subscribeToLocation(onChange: () => void): () => void {
 }
 
 export function useV3FeatureFlag(): boolean {
-  return useSyncExternalStore(subscribeToLocation, readV3Flag, () => false)
+  return useSyncExternalStore(subscribeToLocation, readV3Flag, () => true)
 }
 
 export function isV3FeatureFlagEnabled(search: string): boolean {
-  return new URLSearchParams(search).get('v3') === '1'
+  return new URLSearchParams(search).get('v2') !== '1'
 }

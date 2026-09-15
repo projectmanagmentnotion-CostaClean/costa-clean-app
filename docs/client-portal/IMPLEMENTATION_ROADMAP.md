@@ -624,11 +624,11 @@ The completed owner-review package is maintained in the web repository:
 It audits the legacy app and current web flow, defines six apparent customer
 stages, service-specific branches, all required safe states, responsive gates,
 consent separation, attribution rules, derived internal fields and the owner
-review frame register. The new project contains provisional actual iPhone
-content frames, but exact generated-frame titles, the complete manifest,
-tablet/desktop coverage and copy cleanup remain incomplete. The evidence index
-is `costa-clean-web/docs/quote/STITCH_OWNER_REVIEW.md`. It does not change
-source code, schemas, CRM behavior, routes, redirects, Supabase, SiteGround or
+review frame register. The new project contains eight titled provisional
+iPhone content frames, but the complete manifest, tablet/desktop coverage and
+copy cleanup remain incomplete. The evidence index is
+`costa-clean-web/docs/quote/STITCH_OWNER_REVIEW.md`. It does not change source
+code, schemas, CRM behavior, routes, redirects, Supabase, SiteGround or
 production.
 
 SiteGround remains independently blocked under CP-4.2B.1. CP-4.2B.3 remains

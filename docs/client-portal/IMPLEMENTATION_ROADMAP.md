@@ -606,7 +606,7 @@ unchanged. CP-4.3 remains `NOT_STARTED`.
 
 ## CP-4.2B.2 - Canonical quote experience design gate
 
-**Status:** `STITCH_DESIGN_COMPLETE_AWAITING_OWNER_APPROVAL`
+**Status:** `PARTIAL_STITCH_VISUAL_EVIDENCE_INCOMPLETE`
 **Implementation status:** `NOT_AUTHORIZED`
 **Canonical route:** `costa-clean-web` `/presupuesto` -> `costacleanbcn.com/presupuesto`
 **Visual project:** public-web Stitch project `Costa Clean Web Design System`,
@@ -622,7 +622,11 @@ The completed owner-review package is maintained in the web repository:
 It audits the legacy app and current web flow, defines six apparent customer
 stages, service-specific branches, all required safe states, responsive gates,
 consent separation, attribution rules, derived internal fields and the owner
-review frame register. It does not change source code, schemas, CRM behavior,
+review frame register. The authenticated CP-4.2B.2R canvas audit could not
+access the required public-web Stitch project: its URL returned `404 - This
+page doesn't exist or isn't shared with you`. The evidence index is
+`costa-clean-web/docs/quote/STITCH_OWNER_REVIEW.md`; no actual frames were
+verified or created. It does not change source code, schemas, CRM behavior,
 routes, redirects, Supabase, SiteGround or production.
 
 SiteGround remains independently blocked under CP-4.2B.1. CP-4.2B.3 remains
@@ -630,13 +634,15 @@ SiteGround remains independently blocked under CP-4.2B.1. CP-4.2B.3 remains
 
 ## Canonical quote roadmap: CP-4.2B.2 through CP-4.2B.7
 
-The following sequence is owner-approved for future work only. CP-4.2B.2 is
-now documented as a design gate; the remaining sequence is recorded without
-implementing, redesigning or redirecting any quote flow.
+The following sequence is owner-approved for future work only. CP-4.2B.2 has
+its information-architecture package documented, but its visual evidence gate
+is partial; the remaining sequence is recorded without implementing,
+redesigning or redirecting any quote flow.
 
-- **CP-4.2B.2 — Canonical quote experience / Stitch UX/UI gate:** complete;
-  owner approval pending. The package defines one iPhone-first `/presupuesto`,
-  all service branches and all required states in the public-web Stitch project.
+- **CP-4.2B.2 — Canonical quote experience / Stitch UX/UI gate:** partial;
+  actual Stitch frame evidence is incomplete. Owner approval cannot begin until
+  the correct public-web project is accessible and the required frames are
+  inspectable.
 - **CP-4.2B.3 — Quote intelligence data contract:** define customer-entered
   fields, derived fields, estimate model, hours, operators, range, confidence,
   recurrence, demand category, lead value, campaign attribution and
@@ -672,8 +678,8 @@ implementing, redesigning or redirecting any quote flow.
   any future redirect targets `costa-clean-web` `/presupuesto` only after full
   certification.
 
-CP-4.2B.2 cannot enter implementation until the package is owner-approved. The
-package covers entry, service selection,
+CP-4.2B.2 cannot enter implementation until the package is owner-approved and
+the visual evidence is complete. The package covers entry, service selection,
 property/context, location, service-specific requirements, schedule,
 frequency, contact, review, privacy/marketing, submitting, success,
 recoverable error, duplicate/rate-limit and resumed-draft states. Validation

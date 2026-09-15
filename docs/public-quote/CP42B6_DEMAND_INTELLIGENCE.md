@@ -107,9 +107,9 @@ are not emitted in the aggregate report.
 
 `DEFAULT_AGGREGATION_THRESHOLD = 3`. Campaign, UTM-source, UTM-campaign and
 attribution-classification rows with fewer than three unique submissions are
-suppressed. This is the security default for marketing intelligence and is
-`SECURITY_DEFAULT_PENDING_OWNER_REVIEW` until a stricter business-approved
-threshold exists. Operational service, city and time reporting remains
+suppressed. This is the owner-approved minimum for marketing intelligence:
+`AGGREGATION_THRESHOLD = 3`, `OWNER_APPROVED_2026_09_15`. It is not a guarantee
+of anonymization. Operational service, city and time reporting remains
 available to authorized internal staff and is not a person-level export.
 
 ## CRM and Future Integrations

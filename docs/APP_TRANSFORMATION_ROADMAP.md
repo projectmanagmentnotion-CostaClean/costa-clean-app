@@ -30,11 +30,24 @@ Evidence: [CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md](public-web/CP4_1_PUB
 - Local aggregate demand and attribution intelligence is implemented and
   locally QA-certified over the existing B.5 internal read sources.
 - The layer deduplicates by submission ID and emits no PII, raw click IDs,
-  free text or internal pricing. Campaign and attribution outputs use a
-  minimum aggregation threshold of `k=3` pending owner review.
+  free text or internal pricing. Campaign and attribution outputs use the
+  owner-approved minimum aggregation threshold `k=3`
+  (`OWNER_APPROVED_2026_09_15`); this is not a guarantee of anonymization.
 - No CRM redesign, Supabase remote object, QA write, production write,
   SiteGround change or external advertising activation was performed.
 - Evidence: [CP42B6_DEMAND_INTELLIGENCE.md](public-quote/CP42B6_DEMAND_INTELLIGENCE.md).
+
+## CP-4.2B.7 Full Funnel Certification - 2026-09-15
+
+- Status: `PARTIAL_QA_CERTIFICATION`.
+- The owner-approved `k=3` threshold is recorded and tested locally.
+- QA security/read evidence remains valid: intake tables use RLS and FORCE RLS,
+  and the quote submission RPC is service-role-only.
+- Full WEB `/api/quote` -> HMAC -> QA Edge -> RPC runtime certification was not
+  executed because the local WEB runtime has no safe QA signer configured.
+- Exact blocker: `HMAC_SIGNER_SECRET_UNAVAILABLE`. No signer was displayed,
+  regenerated, or committed. No new QA schema or remote deployment was made.
+- Evidence: [CP42B7_FULL_FUNNEL_CERTIFICATION.md](public-quote/CP42B7_FULL_FUNNEL_CERTIFICATION.md).
 
 ## Cross-Cutting UI Scaling Rule
 

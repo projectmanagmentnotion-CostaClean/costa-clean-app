@@ -74,12 +74,50 @@ rows explicitly marked `contract_version = 'cp42b-v2'` after review. Do not
 delete CRM leads by email or phone and do not alter the existing v1 ledger or
 conversion RPCs.
 
-## Evidence and Gate
+## QA Runtime Evidence - 2026-09-15
 
-Local contract/evaluator tests cover v2/v1 compatibility, advertising gating,
-all eight service families, RES-A/B/C values, complex residential manual
-review and no customer-price output. The migration is prepared at
-`supabase/migrations/20260915174434_cp42b5_public_quote_lead_seed_qa.sql` but
-has not been applied. No QA Supabase write, Edge deployment or synthetic
-fixture has been performed in this work block, so `FULL QA SYNTHETIC =
-NOT_EXECUTED` and the gate cannot be marked certified.
+Owner authorization was limited explicitly to Supabase QA
+`kpvvydthlxupjjqqdpxy`; production remained prohibited and received zero
+writes.
+
+Applied QA migrations:
+
+- `20260915184220_cp42b5_public_quote_lead_seed_qa`
+- `20260915184611_cp42b5_receipt_case_compat_qa`
+
+The second migration is a runtime-discovered compatibility fix. The existing
+ledger check accepted only uppercase hexadecimal UUID characters while
+PostgreSQL emits UUID text in lowercase. The fix preserves the `QA-CP42B-`
+prefix and accepts canonical UUID hexadecimal case. No production schema was
+changed.
+
+`public-lead-intake` was deployed to QA as active version 8 with
+`verify_jwt=false`; HMAC authentication remains mandatory in the function body.
+The four restricted tables have both RLS and FORCE RLS enabled. Anonymous users
+have no seed/consent read grant, generic authenticated access is filtered by the
+internal-staff policy, and only `service_role` can execute
+`submit_public_quote_request_qa`.
+
+A synthetic direct-RPC runtime fixture for RES-B produced exactly one lead, one
+intake row and one `quote_draft_seed_v1`. The persisted estimate was 1 operator,
+4 elapsed hours, 4 operator-hours, 80 EUR internal base and 40 EUR internal
+labor. `customer_price`, VAT and commercial total remained null and human review
+remained required. Independent consent rows were correct; advertising consent
+false stored no click IDs. Replaying the same submission/hash returned
+`idempotent` without duplicates; changing the payload hash returned
+`idempotency_conflict`.
+
+During the fixture, clients, properties, jobs, quotes, invoices and payments had
+zero delta. The synthetic lead/intake/seed/consent/attribution/audit fixture was
+then removed safely and all entity counts returned to their pre-test baseline.
+
+The full web -> HMAC Edge -> RPC runtime path is still `NOT_EXECUTED` because the
+current execution context does not have the server-side HMAC signing secret and
+SiteGround private environment configuration remains a separate deployment
+debt. This is not counted as PASS.
+
+Therefore CP-4.2B.5 remains
+`IMPLEMENTED_AWAITING_QA_RUNTIME_CERTIFICATION` until one signed synthetic
+request traverses the complete web/Edge path successfully. Database persistence,
+RLS, RPC idempotency/conflict behavior and the deployed QA Edge artifact are
+runtime-verified.

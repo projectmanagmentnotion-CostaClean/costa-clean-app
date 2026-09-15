@@ -1,6 +1,6 @@
 # CP-4.2B.5 Public Quote CRM Integration
 
-Status: `IMPLEMENTED_AWAITING_QA_RUNTIME_CERTIFICATION`
+Status: `QA_CERTIFIED`
 
 ## Scope
 
@@ -76,11 +76,24 @@ conversion RPCs.
 
 ## QA Runtime Evidence - 2026-09-15
 
-Owner authorization was limited explicitly to Supabase QA
-`kpvvydthlxupjjqqdpxy`; production remained prohibited and received zero
-writes.
+Local contract/evaluator tests cover v2/v1 compatibility, advertising gating,
+all eight service families, RES-A/B/C values, complex residential manual
+review and no customer-price output.
 
-Applied QA migrations:
+Runtime certification was executed on 2026-09-15 against QA project
+`kpvvydthlxupjjqqdpxy` only. The server-only QA signer was rotated and
+configured without recording its value or digest. The local web boundary used
+was `http://127.0.0.1:3010/api/quote`; the secret was not placed in tracked
+files or exposed through a `NEXT_PUBLIC_*` variable.
+
+The synthetic submission was correlated by submission ID
+`ab5c57bc-4476-4f86-8751-59a70475ef30` and traversed the real path:
+local web `/api/quote` -> HMAC -> `public-lead-intake` Edge Function v8
+(`ACTIVE`, `verify_jwt=false` by design) -> `submit_public_quote_request_qa`.
+Two identical requests returned HTTP 200 with the safe public response
+`{"ok":true}`. No lead, seed or internal estimate identifiers were returned.
+
+The applied QA migrations were:
 
 - `20260915184220_cp42b5_public_quote_lead_seed_qa`
 - `20260915184611_cp42b5_receipt_case_compat_qa`
@@ -121,3 +134,33 @@ Therefore CP-4.2B.5 remains
 request traverses the complete web/Edge path successfully. Database persistence,
 RLS, RPC idempotency/conflict behavior and the deployed QA Edge artifact are
 runtime-verified.
+=======
+During the fixture there was exactly one intake, one lead, one seed, four
+consent records, one attribution record and five audit events, including
+`idempotent_replay`. The intake was `cp42b-v2` and `pending_review`; the seed
+was `quote_draft_seed_v1` using `estimate_v1`. RES-B persisted as 1 operator,
+4 elapsed hours, 4 operator-hours, 80 EUR internal base and 40 EUR labor.
+`commercial_draft.status` was `needs_review`, `reviewer_required` was true,
+and customer price, VAT and commercial total were null. Marketing and
+analytics consent were false; advertising consent was false, so click IDs
+were absent while the consent-permitted UTM source was retained. PII was
+absent from intelligence, pricing support, estimate and attribution summary.
+
+The replay was idempotent: no duplicate lead or seed was created. Clients,
+properties, jobs, quotes, invoices and payments all had zero delta. The
+synthetic records were deleted by exact submission ID and generated lead ID;
+all QA counts were restored to baseline. RLS and FORCE RLS remained enabled,
+anonymous and generic authenticated reads were denied, and the RPC remained
+service-role-only.
+
+The web contract fix in commit `5afa78f` gates only raw click identifiers when
+advertising consent is false and preserves UTM attribution. Web quality
+checks passed: unit tests 28/28, E2E 65 passed and 3 skipped, lint,
+typecheck and build. App targeted CP42B5 tests were previously 14/14, with
+app lint and build passing.
+
+`SITEGROUND_QA_PREVIEW_DEPLOYMENT` remains
+`BLOCKED_EXTERNAL_INFRASTRUCTURE`, separately from this local runtime gate.
+Because the QA signer was rotated, `SITEGROUND_QA_SIGNER_SYNC_REQUIRED` is
+recorded for a future authorized SiteGround QA preview attempt. No
+SiteGround, production, DNS or email changes were made.

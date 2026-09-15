@@ -331,8 +331,19 @@ Next: `V3-10C3` is now open for final gate verification.
 - [ ] Complete authenticated before/after visual evidence and 8-view runtime gate.
 - [ ] Complete independent `pr-quality-gate` after authenticated evidence.
 - [x] Complete pre-auth tests, lint, build and diff validation.
-- [ ] Commit/push the checkpoint and later certification closeout.
+- [x] Commit/push the implementation checkpoint (`4e3e1ed`).
+- [ ] Commit/push the later certification closeout after authenticated QA.
 
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md`.
 
-Next: `V3-10C4` remains not started; C3 must close first.
+## V3-10C4 — Finance refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
+
+- [x] Complete read-only finance architecture and protected-contract discovery.
+- [x] Record invoice, quote, payment and expense findings and priorities.
+- [x] Prepare bounded implementation batches and future authenticated matrix.
+- [ ] Start finance product implementation.
+
+Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md` and
+`docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md`.
+
+Next: C3 authenticated runtime certification; no C4 product work started.

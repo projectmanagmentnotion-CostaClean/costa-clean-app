@@ -5,6 +5,10 @@ Status: `OPEN / AUTHENTICATED RUNTIME CERTIFICATION PENDING`
 Starting HEAD: `18a8885a90a58c390d37ece02c918ac3cdc9c6d1`
 Branch: `codex/app-v3-mobile-first-redesign`
 
+Implementation checkpoint: `COMMITTED / PUSHED` (`4e3e1ed`)
+Authenticated runtime: `PENDING`
+Final C3 certification: `PENDING`
+
 This slice refines module composition for Home, Clients, Leads and Properties.
 It inherits the C2 token, navigation, control and accessibility contracts. It
 does not change routes, persistence, business rules, Supabase, production or

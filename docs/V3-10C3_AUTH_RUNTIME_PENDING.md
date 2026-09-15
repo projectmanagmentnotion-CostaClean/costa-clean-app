@@ -3,6 +3,9 @@
 This is the only remaining replay required to close V3-10C3. Do not start
 V3-10C4 before it passes.
 
+The implementation checkpoint is already committed and pushed at `4e3e1ed`.
+Only authenticated runtime evidence and the independent final gate remain.
+
 ## Viewports
 
 - 320x568

@@ -28,6 +28,7 @@ import {
   listQuarterlyClosings,
   listQuotes,
   listRecurringInvoicePlans,
+  listPublicQuoteReviews,
 } from './appDataApi'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
@@ -41,6 +42,7 @@ import type { AnnualClosingRecord } from '../features/annualClosing/types'
 import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
+import type { PublicQuoteReviewRecord } from '../features/publicQuoteReview/types'
 import { getSupabaseClient } from '../lib/supabase'
 
 const foregroundRefreshStaleTimeMs = 30_000
@@ -91,6 +93,7 @@ export function useAppData(currentView: AppView) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>(() => (isBrowserOnline() ? 'fresh' : 'offline'))
   const [leads, setLeads] = useState<LeadListItem[]>([])
   const [leadDrafts, setLeadDrafts] = useState<LeadDraftRecord[]>([])
+  const [publicQuoteReviews, setPublicQuoteReviews] = useState<PublicQuoteReviewRecord[]>([])
   const [clients, setClients] = useState<ClientListItem[]>([])
   const [properties, setProperties] = useState<PropertyListItem[]>([])
   const [quotes, setQuotes] = useState<QuoteListItem[]>([])
@@ -125,7 +128,12 @@ export function useAppData(currentView: AppView) {
   const loadLeads = useCallback(async () => {
     try {
       setLeadError(null)
-      setLeads(await listLeads())
+      const [loadedLeads, loadedPublicQuoteReviews] = await Promise.all([
+        listLeads(),
+        listPublicQuoteReviews(),
+      ])
+      setLeads(loadedLeads)
+      setPublicQuoteReviews(loadedPublicQuoteReviews)
     } catch (err) {
       setLeadError(getErrorMessage(err, 'Error desconocido cargando leads.'))
     }
@@ -494,6 +502,7 @@ export function useAppData(currentView: AppView) {
     syncStatus,
     leads,
     leadDrafts,
+    publicQuoteReviews,
     clients,
     properties,
     quotes,

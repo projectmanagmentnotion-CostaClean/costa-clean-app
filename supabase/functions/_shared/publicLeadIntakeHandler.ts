@@ -7,6 +7,7 @@ import {
   type PublicLeadResponse,
   validatePublicLeadRequest,
 } from './publicLeadIntakeContract.ts'
+import { evaluatePublicQuoteRequest } from './quoteIntelligence.ts'
 
 const QA_PROJECT_REF = 'kpvvydthlxupjjqqdpxy'
 const corsHeaders = {
@@ -80,8 +81,9 @@ export function createPublicLeadIntakeHandler(dependencies: PublicLeadIntakeHand
       }
 
       const abuseKey = await hmacHex(secret, `network:${readClientNetworkKey(request.headers)}`)
+      const isVersion2 = payload.version === 'cp42b-v2'
       const rpcResponse = await dependencies.fetch(
-        `${supabaseUrl}/rest/v1/rpc/submit_public_lead_intake_qa`,
+        `${supabaseUrl}/rest/v1/rpc/${isVersion2 ? 'submit_public_quote_request_qa' : 'submit_public_lead_intake_qa'}`,
         {
           method: 'POST',
           headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}`, 'Content-Type': 'application/json' },
@@ -93,6 +95,7 @@ export function createPublicLeadIntakeHandler(dependencies: PublicLeadIntakeHand
             },
             p_abuse_key: abuseKey,
             p_payload_sha256: bodyHash,
+            ...(isVersion2 ? { p_intelligence: evaluatePublicQuoteRequest(payload) } : {}),
           }),
         },
       )

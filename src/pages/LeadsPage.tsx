@@ -14,10 +14,12 @@ import { LeadsList } from '../features/leads/LeadsList'
 import { compareText, createDefaultPreferences } from '../features/lists/listPreferences'
 import { applyTextSearch, recentFirstSort } from '../features/lists/utils'
 import type { LeadListItem } from '../features/leads/types'
+import type { PublicQuoteReviewRecord } from '../features/publicQuoteReview/types'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
   leadDrafts: LeadDraftRecord[]
+  publicQuoteReviews: PublicQuoteReviewRecord[]
   clients: ClientListItem[]
   error: string | null
   onLeadCreated: () => Promise<void>
@@ -47,6 +49,7 @@ function isVisibleDraftForLead(draft: LeadDraftRecord, lead: LeadListItem): bool
 export function LeadsPage({
   leads,
   leadDrafts,
+  publicQuoteReviews,
   clients,
   error,
   onLeadCreated,
@@ -104,6 +107,10 @@ export function LeadsPage({
 
     return leadDrafts.find((draft) => isVisibleDraftForLead(draft, selectedLead)) ?? null
   }, [leadDrafts, selectedLead])
+  const selectedPublicQuoteReview = useMemo(
+    () => selectedLead ? publicQuoteReviews.find((review) => review.lead_id === selectedLead.id) ?? null : null,
+    [publicQuoteReviews, selectedLead],
+  )
 
   const convertedLeadIds = useMemo(() => {
     return new Set(
@@ -249,6 +256,7 @@ export function LeadsPage({
           <LeadDetailCard
             lead={selectedLead}
             leadDraft={selectedLeadDraft}
+            publicQuoteReview={selectedPublicQuoteReview}
             alreadyConverted={selectedLeadAlreadyConverted}
             onLeadUpdated={onLeadCreated}
             onLeadConverted={onLeadConverted}

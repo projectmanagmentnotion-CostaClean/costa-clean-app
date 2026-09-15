@@ -5,12 +5,14 @@ import { FeedbackDialog } from '../../components/FeedbackDialog'
 import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
+import type { PublicQuoteReviewRecord } from '../publicQuoteReview/types'
 import type { LeadListItem } from './types'
 import { updateLeadAuthenticated } from './leadWriteApi'
 
 interface LeadDetailCardProps {
   lead: LeadListItem | null
   leadDraft: LeadDraftRecord | null
+  publicQuoteReview: PublicQuoteReviewRecord | null
   alreadyConverted: boolean
   onLeadUpdated: () => Promise<void>
   onLeadConverted: () => Promise<void>
@@ -26,6 +28,7 @@ interface EditFormState {
 export function LeadDetailCard({
   lead,
   leadDraft,
+  publicQuoteReview,
   alreadyConverted,
   onLeadUpdated,
   onLeadConverted,
@@ -372,6 +375,38 @@ export function LeadDetailCard({
               leadDraft={leadDraft}
               onWorkflowUpdated={onLeadConverted}
             />
+          ) : null}
+
+          {!isEditing && publicQuoteReview ? (
+            <section className="cc-intake-draft-card" aria-labelledby="public-quote-review-title">
+              <div className="cc-intake-draft-card__header">
+                <div>
+                  <p>Solicitud web</p>
+                  <h4 id="public-quote-review-title">Revisión interna</h4>
+                </div>
+                <span className="lead-badge lead-badge--summary">{publicQuoteReview.commercial_draft.status ?? 'needs_review'}</span>
+              </div>
+              <div className="cc-intake-draft-card__body">
+                <div className="cc-intake-draft-grid">
+                  <div><span>Servicio</span><strong>{publicQuoteReview.operational_summary.service_family ?? 'Sin dato'}</strong></div>
+                  <div><span>Espacio</span><strong>{publicQuoteReview.operational_summary.space_type ?? 'Sin dato'}</strong></div>
+                  <div><span>Necesidades</span><strong>{publicQuoteReview.operational_summary.size_band ?? 'A revisar'}</strong></div>
+                  <div><span>Zona</span><strong>{publicQuoteReview.operational_summary.city ?? 'Sin dato'}</strong></div>
+                  <div><span>Cuándo</span><strong>{publicQuoteReview.operational_summary.time_window ?? 'Flexible'}</strong></div>
+                  <div><span>Canal</span><strong>{publicQuoteReview.operational_summary.preferred_response_channel ?? 'A revisar'}</strong></div>
+                </div>
+                <p className="detail-helper">
+                  {publicQuoteReview.estimate
+                    ? `Estimación interna: ${publicQuoteReview.estimate.operator_count} operario(s) x ${publicQuoteReview.estimate.elapsed_hours} h · ${publicQuoteReview.estimate.operator_hours} horas-operario · ${publicQuoteReview.estimate.rule_id}.`
+                    : 'Estimación automática no disponible.'}
+                  {' '}Revisión manual requerida.
+                </p>
+                {publicQuoteReview.review.reason_codes?.length ? (
+                  <p className="detail-helper">Motivos: {publicQuoteReview.review.reason_codes.join(', ')}.</p>
+                ) : null}
+                <p className="detail-helper">Precio cliente: pendiente de revisión humana. No se ha creado un presupuesto comercial.</p>
+              </div>
+            </section>
           ) : null}
 
           <FeedbackDialog

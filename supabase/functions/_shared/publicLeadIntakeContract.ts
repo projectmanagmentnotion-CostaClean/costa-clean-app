@@ -16,7 +16,7 @@ export type PublicLeadAttribution = {
 }
 
 export type PublicLeadRequest = {
-  version: 'cp42b-v1'
+  version: 'cp42b-v1' | 'cp42b-v2'
   environment: 'qa'
   source: 'public_web'
   submission_id: string
@@ -31,7 +31,8 @@ export type PublicLeadRequest = {
   privacy_acknowledged: true
   marketing_contact_opt_in: boolean
   analytics_consent: boolean
-  marketing_cookie_consent: boolean
+  marketing_cookie_consent?: boolean
+  advertising_cookie_consent?: boolean
   attribution: PublicLeadAttribution
 }
 
@@ -54,7 +55,7 @@ export type PublicLeadResponse = {
 const allowedKeys = new Set([
   'version', 'environment', 'source', 'submission_id', 'full_name', 'phone', 'email',
   'service_type', 'property_type', 'city', 'postal_code', 'notes', 'privacy_acknowledged',
-  'marketing_contact_opt_in', 'analytics_consent', 'marketing_cookie_consent', 'attribution',
+  'marketing_contact_opt_in', 'analytics_consent', 'marketing_cookie_consent', 'advertising_cookie_consent', 'attribution',
 ])
 const attributionKeys = new Set([
   'landing_path', 'referrer', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content',
@@ -79,7 +80,7 @@ export function validatePublicLeadRequest(value: unknown): PublicLeadRequest | n
   if (!isRecord(value)) return null
   const keys = Object.keys(value)
   if (keys.some((key) => !allowedKeys.has(key))) return null
-  if (value.version !== 'cp42b-v1' || value.environment !== 'qa' || value.source !== 'public_web') return null
+  if ((value.version !== 'cp42b-v1' && value.version !== 'cp42b-v2') || value.environment !== 'qa' || value.source !== 'public_web') return null
   if (!isUuid(value.submission_id)) return null
   if (!isBoundedText(value.full_name, 120, 1) || !isBoundedText(value.phone, 40, 5)) return null
   if (value.email !== undefined && (!isBoundedText(value.email, 254, 3) || !value.email.includes('@'))) return null
@@ -88,16 +89,21 @@ export function validatePublicLeadRequest(value: unknown): PublicLeadRequest | n
   if (value.postal_code !== undefined && (!isBoundedText(value.postal_code, 5, 5) || !/^\d{5}$/.test(value.postal_code))) return null
   if (!isRecord(value.notes) || JSON.stringify(value.notes).length > 6_000) return null
   if (value.privacy_acknowledged !== true) return null
-  if (typeof value.marketing_contact_opt_in !== 'boolean'
-    || typeof value.analytics_consent !== 'boolean'
-    || typeof value.marketing_cookie_consent !== 'boolean') return null
+  if (typeof value.marketing_contact_opt_in !== 'boolean' || typeof value.analytics_consent !== 'boolean') return null
+  if (value.version === 'cp42b-v1' && typeof value.marketing_cookie_consent !== 'boolean') return null
+  if (value.version === 'cp42b-v1' && value.advertising_cookie_consent !== undefined) return null
+  if (value.version === 'cp42b-v2' && (typeof value.advertising_cookie_consent !== 'boolean' || value.marketing_cookie_consent !== undefined)) return null
   if (!isRecord(value.attribution)) return null
-  if (Object.keys(value.attribution).some((key) => !attributionKeys.has(key))) return null
-  if (!isBoundedText(value.attribution.landing_path, 2_048, 1)) return null
+  const attribution = value.attribution
+  if (Object.keys(attribution).some((key) => !attributionKeys.has(key))) return null
+  if (!isBoundedText(attribution.landing_path, 2_048, 1)) return null
   for (const key of attributionKeys) {
-    const item = value.attribution[key]
+    const item = attribution[key]
     if (item !== undefined && !isBoundedText(item, key === 'landing_path' || key === 'referrer' ? 2_048 : 500)) return null
   }
-  if (!value.marketing_cookie_consent && adIdentifierKeys.some((key) => value.attribution[key] !== undefined)) return null
+  const advertisingConsent = value.version === 'cp42b-v2'
+    ? value.advertising_cookie_consent
+    : value.marketing_cookie_consent
+  if (!advertisingConsent && adIdentifierKeys.some((key) => attribution[key] !== undefined)) return null
   return value as PublicLeadRequest
 }

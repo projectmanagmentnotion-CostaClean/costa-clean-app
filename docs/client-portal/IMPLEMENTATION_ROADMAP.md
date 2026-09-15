@@ -686,3 +686,15 @@ property/context, location, service-specific requirements, schedule,
 frequency, contact, review, privacy/marketing, submitting, success,
 recoverable error, duplicate/rate-limit and resumed-draft states. Validation
 must be iPhone-first, then tablet and desktop.
+## CP-4.2B.5 - Public quote CRM integration
+
+- Status: `IMPLEMENTED_AWAITING_QA_RUNTIME_CERTIFICATION`.
+- Local implementation prepares the additive QA migration, v2 Edge contract,
+  atomic trusted RPC, restricted consent/attribution/audit storage and a
+  minimal read-only lead review section.
+- The current B.4 payload was incompatible with the historical v1 validator
+  because it used canonical service families and
+  `advertising_cookie_consent`. The versioned v2 contract resolves this
+  without silently dropping fields; v1 remains isolated for compatibility.
+- No remote migration, Edge deployment, QA fixture or production write has
+  been performed. Full QA E2E remains required before certification.

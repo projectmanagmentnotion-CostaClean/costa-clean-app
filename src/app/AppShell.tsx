@@ -207,6 +207,7 @@ export function AppShell({
     syncStatus,
     leads,
     leadDrafts,
+    publicQuoteReviews,
     clients,
     properties,
     quotes,
@@ -1242,7 +1243,7 @@ export function AppShell({
                   onRunOperationalAction={handleRunOperationalAction}
                 />
               ) : currentView === 'leads' ? (
-                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
+                <LeadsPage leads={leads} leadDrafts={leadDrafts} publicQuoteReviews={publicQuoteReviews} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
               ) : currentView === 'clients' ? (
                 <ClientsPage
                   clients={clientsWithContext}

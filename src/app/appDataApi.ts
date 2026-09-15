@@ -7,6 +7,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { LeadDraftRecord } from '../features/leadDrafts/types'
 import type { LeadListItem } from '../features/leads/types'
+import type { PublicQuoteReviewRecord } from '../features/publicQuoteReview/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import { listQuarterlyClosings } from '../features/quarterlyClosing/quarterlyClosingApi'
@@ -74,6 +75,19 @@ function groupInvoiceLines(lines: NonNullable<InvoiceListItem['lines']>) {
 
 export async function listLeads(): Promise<LeadListItem[]> {
   return fetchSupabaseRestList<LeadListItem>('leads?select=id,display_code,full_name,phone,email,city,status,archived_at,public_intake_last_submission_id,converted_client_id,converted_at&order=created_at.desc')
+}
+
+export async function listPublicQuoteReviews(): Promise<PublicQuoteReviewRecord[]> {
+  try {
+    return await fetchSupabaseRestList<PublicQuoteReviewRecord>(
+      'public_quote_draft_seeds?select=seed_id,submission_id,lead_id,schema_version,contract_version,estimate_model_version,seed_version,operational_summary,review_context,estimate,pricing_support,confidence,review,commercial_draft,attribution_summary,intelligence,created_at,updated_at&order=created_at.desc',
+    )
+  } catch (error) {
+    // The table is additive and may be absent until the QA migration is applied.
+    const message = error instanceof Error ? error.message : ''
+    if (message.includes('REST 404') || message.includes('REST 400')) return []
+    throw error
+  }
 }
 
 async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord[]> {

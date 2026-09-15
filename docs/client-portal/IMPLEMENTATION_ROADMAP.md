@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B.1 remains partial because SiteGround private environment synchronization is blocked by the site's inode quota.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B.1 is `BLOCKED_SITEGROUND_QUOTA_REGRESSION`. CP-4.2B.2 design documentation is complete and awaiting owner approval; it is independent of the SiteGround blocker and does not authorize implementation.
 
 ## Progress and execution authority
 
@@ -604,14 +604,39 @@ consent/cleanup certification against the temporary preview URL. DNS,
 production WordPress, email DNS, production Supabase and customer data remain
 unchanged. CP-4.3 remains `NOT_STARTED`.
 
+## CP-4.2B.2 - Canonical quote experience design gate
+
+**Status:** `STITCH_DESIGN_COMPLETE_AWAITING_OWNER_APPROVAL`
+**Implementation status:** `NOT_AUTHORIZED`
+**Canonical route:** `costa-clean-web` `/presupuesto` -> `costacleanbcn.com/presupuesto`
+**Visual project:** public-web Stitch project `Costa Clean Web Design System`,
+ID `14999894204309662486`
+**Excluded visual project:** client portal Stitch project `7915940018854753326`
+
+The completed owner-review package is maintained in the web repository:
+
+- [`CANONICAL_QUOTE_UX.md`](../../../costa-clean-web/docs/quote/CANONICAL_QUOTE_UX.md)
+- [`QUOTE_FIELD_MATRIX.md`](../../../costa-clean-web/docs/quote/QUOTE_FIELD_MATRIX.md)
+- [`QUOTE_DATA_CLASSIFICATION.md`](../../../costa-clean-web/docs/quote/QUOTE_DATA_CLASSIFICATION.md)
+
+It audits the legacy app and current web flow, defines six apparent customer
+stages, service-specific branches, all required safe states, responsive gates,
+consent separation, attribution rules, derived internal fields and the owner
+review frame register. It does not change source code, schemas, CRM behavior,
+routes, redirects, Supabase, SiteGround or production.
+
+SiteGround remains independently blocked under CP-4.2B.1. CP-4.2B.3 remains
+`NOT_STARTED` and must not begin until this design package is approved.
+
 ## Canonical quote roadmap: CP-4.2B.2 through CP-4.2B.7
 
-The following sequence is owner-approved for future work only. It is recorded
-here without implementing, redesigning or redirecting any quote flow.
+The following sequence is owner-approved for future work only. CP-4.2B.2 is
+now documented as a design gate; the remaining sequence is recorded without
+implementing, redesigning or redirecting any quote flow.
 
-- **CP-4.2B.2 — Canonical quote experience / Stitch UX/UI gate:** audit the
-  legacy app and current web flows, define one iPhone-first `/presupuesto`,
-  design all states in Stitch, and require owner approval before implementation.
+- **CP-4.2B.2 — Canonical quote experience / Stitch UX/UI gate:** complete;
+  owner approval pending. The package defines one iPhone-first `/presupuesto`,
+  all service branches and all required states in the public-web Stitch project.
 - **CP-4.2B.3 — Quote intelligence data contract:** define customer-entered
   fields, derived fields, estimate model, hours, operators, range, confidence,
   recurrence, demand category, lead value, campaign attribution and
@@ -647,8 +672,8 @@ here without implementing, redesigning or redirecting any quote flow.
   any future redirect targets `costa-clean-web` `/presupuesto` only after full
   certification.
 
-CP-4.2B.2 cannot enter implementation until the Stitch package is complete
-and owner-approved. The package must cover entry, service selection,
+CP-4.2B.2 cannot enter implementation until the package is owner-approved. The
+package covers entry, service selection,
 property/context, location, service-specific requirements, schedule,
 frequency, contact, review, privacy/marketing, submitting, success,
 recoverable error, duplicate/rate-limit and resumed-draft states. Validation

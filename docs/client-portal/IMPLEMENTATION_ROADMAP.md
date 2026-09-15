@@ -603,3 +603,53 @@ SiteGround variables, redeploy once, and run synthetic create/idempotency/
 consent/cleanup certification against the temporary preview URL. DNS,
 production WordPress, email DNS, production Supabase and customer data remain
 unchanged. CP-4.3 remains `NOT_STARTED`.
+
+## Canonical quote roadmap: CP-4.2B.2 through CP-4.2B.7
+
+The following sequence is owner-approved for future work only. It is recorded
+here without implementing, redesigning or redirecting any quote flow.
+
+- **CP-4.2B.2 — Canonical quote experience / Stitch UX/UI gate:** audit the
+  legacy app and current web flows, define one iPhone-first `/presupuesto`,
+  design all states in Stitch, and require owner approval before implementation.
+- **CP-4.2B.3 — Quote intelligence data contract:** define customer-entered
+  fields, derived fields, estimate model, hours, operators, range, confidence,
+  recurrence, demand category, lead value, campaign attribution and
+  `quote_draft_seed`. Internal prices must never be automatically shown or
+  sent to the customer.
+- **CP-4.2B.4 — Canonical quote web implementation:** implement the approved
+  Stitch experience in `costa-clean-web` at `costacleanbcn.com/presupuesto`.
+  The public web becomes the only canonical public quote experience.
+- **CP-4.2B.5 — CRM lead and quote-draft integration:** surface structured
+  request and estimate data in the existing CRM through strict integration
+  changes only; no CRM redesign.
+- **CP-4.2B.6 — Demand intelligence and attribution:** support aggregated
+  service, area, seasonality, source, campaign, conversion, acceptance and
+  legally permitted revenue/margin attribution without using PII for
+  analytics or ad segmentation.
+- **CP-4.2B.7 — Full funnel certification:** certify source/campaign,
+  landing, quote, lead, estimate, draft, review and outcome with consent,
+  attribution, security, idempotency, responsive, accessibility and analytics
+  evidence.
+
+### Canonical quote principles
+
+- Customer experience remains lightweight, with five or six apparent stages
+  maximum where possible; the data model may remain rich behind the interface.
+- Questions adapt to the selected service. Residential, tourist, hotel and
+  gym flows must capture only the fields relevant to that service.
+- Attribution is lawful and consent-based; analytics never receives PII.
+- A public request never auto-creates or links a CRM client.
+- Internal estimates assist Costa Clean; the owner or team reviews the actual
+  quote before it is sent.
+- Existing `costa-clean-app` `/presupuesto` and `/quote-request` remain legacy
+  public-intake references for now. No redirect is implemented in this block;
+  any future redirect targets `costa-clean-web` `/presupuesto` only after full
+  certification.
+
+CP-4.2B.2 cannot enter implementation until the Stitch package is complete
+and owner-approved. The package must cover entry, service selection,
+property/context, location, service-specific requirements, schedule,
+frequency, contact, review, privacy/marketing, submitting, success,
+recoverable error, duplicate/rate-limit and resumed-draft states. Validation
+must be iPhone-first, then tablet and desktop.

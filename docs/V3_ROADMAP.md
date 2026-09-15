@@ -347,3 +347,20 @@ Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md` and
 `docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md`.
 
 Next: C3 authenticated runtime certification; no C4 product work started.
+
+## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
+
+- [x] Complete read-only architecture and protected-contract discovery for
+  Services/Jobs, Service Workspace, Work Report, Alerts, Closings and
+  Recurring Plans.
+- [x] Record current state, relationship, search/filter, accessibility and
+  responsive-source findings with O-C5-P1/P2/P3 severity.
+- [x] Prepare bounded implementation batches and the future authenticated
+  eight-viewport runtime matrix.
+- [ ] Start operations product implementation.
+
+Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md` and
+`docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md`.
+
+Next: C3 authenticated runtime certification; no C4 or C5 product work
+started.

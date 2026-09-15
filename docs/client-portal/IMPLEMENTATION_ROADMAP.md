@@ -1,7 +1,7 @@
 # Client Portal Implementation Roadmap
 
 Date: 2026-09-10
-Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B is partially implemented with SiteGround private environment configuration blocked.
+Current state: CP-3B.2, CP-3B.3, CP-3B.4 and CP-3B.5A remain complete or partial as recorded below; CP-3B.5B is owner-approved, CP-3B.5C implementation is complete and CP-3B.5D closes the QA trusted contracts and real UI wiring. CP-3C.1 controlled QA fixtures are active and ready for CP-3C.2; authenticated runtime/provider certification remains separate debt. CP-4.1 is closed with an active SiteGround non-production preview; CP-4.2A is partial and CP-4.2B.1 remains partial because SiteGround private environment synchronization is blocked by the site's inode quota.
 
 ## Progress and execution authority
 
@@ -591,9 +591,15 @@ cause. `PUBLIC_PRODUCTION_TARGET = SITEGROUND`,
 | CP-4.3 | `NOT_STARTED` |
 
 The route fails closed when the exact QA endpoint, secret or environment is
-missing. The secret is stored in the QA Edge Function secret store and was
-not committed or exposed in browser code. The remaining gate is a supported
-way to set the same secret and endpoint as private SiteGround server
-variables, followed by one synthetic create/idempotency/cleanup certification
-against the temporary preview URL. DNS, production WordPress, email DNS,
-production Supabase and customer data remain unchanged.
+missing. The QA Supabase dashboard accepted a secret replacement without
+exposing its value. SiteGround then blocked the corresponding update because
+the preview site exceeded its inode quota (`99.79%`; disk usage reported as
+`53.58%`) and disabled Site Tools. The deployed origin guard moved the live
+preview request from `403` to the HMAC boundary (`401`), but the synchronized
+secret could not be installed in SiteGround. No synthetic lead or ledger row
+was created. The remaining gate is to re-enable Site Tools without deleting
+production resources, set the same QA secret and endpoint as private
+SiteGround variables, redeploy once, and run synthetic create/idempotency/
+consent/cleanup certification against the temporary preview URL. DNS,
+production WordPress, email DNS, production Supabase and customer data remain
+unchanged. CP-4.3 remains `NOT_STARTED`.

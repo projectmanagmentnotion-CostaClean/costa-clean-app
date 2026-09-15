@@ -6,6 +6,7 @@
   "qaWrites": 0,
   "supabaseChanges": 0,
   "productionDeployment": "NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED",
+  "deploymentStatus": "NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED",
   "deploymentRequiredForClosure": false,
   "publicSanitizedEvidence": "docs/evidence/v3-10b/evidence-manifest.json",
   "independentReview": {

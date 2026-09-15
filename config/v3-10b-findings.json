@@ -11,8 +11,8 @@
   "independentReview": {
     "status": "CONTINUE",
     "reviewer": "project-continuation-agent read-only review",
-    "evidence": ".project-agent/private/2026-09-15T16-09-03-697Z/iteration-1-review.json",
-    "reason": "Runtime reconciliation and hardened fail gates are complete, but the independent review could not independently verify private command-run results and stopped on deployment-not-automatic."
+    "evidence": ".project-agent/private/2026-09-15T16-21-21-707Z/iteration-1-review.json",
+    "reason": "The committed sanitized evidence is coherent and the worktree is clean, but the independent review did not execute the authenticated replay and treats runtime aggregates as attestations; it stopped on deployment-not-automatic."
   },
   "runtimeEvidence": {
     "harness": "scripts/qa/v3-10b-local-audit.mjs; scripts/qa/v3-10b-auth-audit.mjs",

@@ -236,7 +236,9 @@ and stopped on `deployment-not-automatic`. No product fix is authorized in this 
   repeat runner returned non-zero; a clean audit now requires auth, surface count,
   readiness, HTTP, safety, error, overflow, search and Escape gates simultaneously.
 - Independent continuation review: `CONTINUE`; latest evidence is
-  `.project-agent/private/2026-09-15T16-09-03-697Z/iteration-1-review.json`.
+  `.project-agent/private/2026-09-15T16-21-21-707Z/iteration-1-review.json`. The
+  committed summaries are coherent, but the reviewer did not execute the
+  authenticated replay and therefore treats runtime aggregates as attestations.
 
 ## Safety and closure
 

@@ -25,6 +25,17 @@ Evidence: [CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md](public-web/CP4_1_PUB
 - Use the UX manual and quality gates as the control layer for every phase.
 - Favor small, validated increments over broad redesign attempts.
 
+## CP-4.2B.6 Demand Intelligence Foundation - 2026-09-15
+
+- Local aggregate demand and attribution intelligence is implemented and
+  locally QA-certified over the existing B.5 internal read sources.
+- The layer deduplicates by submission ID and emits no PII, raw click IDs,
+  free text or internal pricing. Campaign and attribution outputs use a
+  minimum aggregation threshold of `k=3` pending owner review.
+- No CRM redesign, Supabase remote object, QA write, production write,
+  SiteGround change or external advertising activation was performed.
+- Evidence: [CP42B6_DEMAND_INTELLIGENCE.md](public-quote/CP42B6_DEMAND_INTELLIGENCE.md).
+
 ## Cross-Cutting UI Scaling Rule
 
 - Reduce encapsulation before adding new cards.

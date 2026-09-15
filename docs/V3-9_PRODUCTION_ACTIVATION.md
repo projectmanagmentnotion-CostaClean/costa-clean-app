@@ -1,15 +1,16 @@
-# V3-9 — Stage-1 production V3 opt-in
+# V3-9 — Default production V3 activation
 
-Estado: `STAGE-1 CLOSED / CERTIFIED`  
+Estado: `V3-9 CLOSED / CERTIFIED`
 Fecha de certificación: `2026-09-15`
 
 ## Alcance y autorización
 
-Este registro cubre únicamente el despliegue de Stage-1 en el proyecto Vercel canónico, manteniendo V2 como comportamiento por defecto y V3 detrás de `?v3=1`. No autoriza ni ejecuta la activación global de V3.
+Este registro cubre Stage-1 y la activación final autorizada de V3 en el proyecto Vercel canónico. V3 queda como comportamiento por defecto; `?v2=1` permanece como escape diagnóstico reversible y `?v3=1` sigue siendo compatible.
 
 - Repositorio: `projectmanagmentnotion-CostaClean/costa-clean-app`
 - Rama: `codex/app-v3-mobile-first-redesign`
 - Commit fuente certificado: `50bf05a8d11aff8b7b44cc3d79644532803988be`
+- Commit de activación: `3bb29fc2cc2e5627561fc1b3d1a8c3ce0b90f680`
 - Proyecto Vercel: `costa-clean-app`
 - Project ID: `prj_SjR3KtjAoBMhP5foigsyCEmxHojh`
 - Team ID: `team_VEreq24eKfIaRjeflStguIw9`
@@ -25,9 +26,10 @@ La configuración local `.vercel/project.json` quedó enlazada explícitamente a
 
 ## Deployment
 
-- Pre-Stage-1 / rollback: `dpl_6SKXizLD3wi8qCqTpeTjAYdJAdbF`
-- Stage-1: `dpl_AdTgyDsaKiWSveVreqzMztsPrcEK`
-- URL de deployment: `https://costa-clean-ft1rrk4k7.vercel.app`
+- Historical V2 rollback: `dpl_6SKXizLD3wi8qCqTpeTjAYdJAdbF`
+- Stage-1 rollback: `dpl_AdTgyDsaKiWSveVreqzMztsPrcEK`
+- Final activation: `dpl_BtBXiCoBwfwUFF4ghn5wtUKji4x7`
+- URL de deployment: `https://costa-clean-6vmth7x1f.vercel.app`
 - Target: `production`
 - Estado: `READY`
 - Framework: `vite`
@@ -48,7 +50,7 @@ La identidad del proyecto, el target, el commit y el estado READY fueron verific
 
 ## Verificación autenticada read-only
 
-La sesión existente se confirmó manualmente y persistió después de reload. La URL normal mantuvo V2; la URL con `?v3=1` mostró el shell V3 autenticado. Se revisaron en modo lectura:
+La sesión existente se confirmó manualmente y persistió después de reload. La URL normal mostró V3; `?v3=1` siguió mostrando V3 y `?v2=1` mostró V2. Se revisaron en modo lectura:
 
 - Home: `PASS`
 - Clients: `PASS`
@@ -66,6 +68,8 @@ La sesión existente se confirmó manualmente y persistió después de reload. L
 - Selection mode: `PASS`, cancelado sin mutación
 - Back/deep-link navigation: `PASS`
 - Hard reload: `PASS`
+- Default deep links de cliente y factura: `PASS`
+- Back desde deep links: `PASS`
 - Client media: `PASS` con fallback/estado existente; no se subió media
 - Recurring section: `N/A` si no existe registro recurrente representativo; no se creó ni modificó ninguno
 
@@ -82,7 +86,10 @@ No se ejecutaron altas, ediciones, conversiones, settlements, acknowledgements, 
 - Página con error no explicado: `0` observados durante el smoke
 - Runtime errors Vercel, últimos 15 minutos: `0`
 - Logs 5xx Vercel, últimos 15 minutos: `0`
+- Logs 5xx Vercel, últimos 30 minutos post-activation: `0`
 - Fallos críticos de deployment: `0`
+- Responsive `390x844`: `PASS`, bottom nav y overflow `0`
+- Responsive `1280x800`: `PASS`, rail, sin bottom nav y overflow `0`
 - Service worker/manifest y hard reload: `PASS`
 
 El navegador controlado no expuso un stream independiente de consola; por ello el resultado de errores se contrasta con el smoke visible y la observabilidad runtime de Vercel, sin afirmar una captura de consola no disponible.
@@ -96,15 +103,15 @@ El navegador controlado no expuso un stream independiente de consola; por ello e
 
 ## Entrega
 
-Este documento es la única modificación documental de este cierre. Se versiona en un commit separado; no se modificó código de producto ni la configuración de Supabase.
+La activación fue el único cambio de producto de este cierre. Este documento y el roadmap/contrato se versionan después del smoke; no se modificó la configuración de Supabase.
 
 ## Verdict
 
-`V3-9 STAGE-1 CLOSED / CERTIFIED`
+`V3-9 CLOSED / CERTIFIED`
 
-- Production V3 opt-in: `PASS`
-- V2 default: `PRESERVED`
-- Default V3 activation: `NOT EXECUTED`
-- Rollback readiness: `PASS` — `dpl_6SKXizLD3wi8qCqTpeTjAYdJAdbF`
+- Production V3 default: `PASS`
+- `?v3=1` compatibility: `PASS`
+- `?v2=1` fallback: `PASS`
+- Rollback readiness: `PASS` — `dpl_AdTgyDsaKiWSveVreqzMztsPrcEK`
 
-La activación de V3 como default requiere un checkpoint y autorización separados.
+V3 queda activa como default en producción. El fallback `?v2=1` es diagnóstico y no se expone como acción de producto.

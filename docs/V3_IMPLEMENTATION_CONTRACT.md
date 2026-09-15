@@ -1,6 +1,6 @@
-# Costa Clean App V3 — V3-3D Implementation Contract
+# Costa Clean App V3 — Implementation Contract
 
-Status: `V3-7B CLOSED / CERTIFIED — exact viewport matrix deferred to V3-8`.
+Status: `V3-9 CLOSED / CERTIFIED — V3 active by default in production`.
 
 Base commit: `09d923622bc2053f2fce46abacc666d9f934e60c`
 
@@ -26,9 +26,10 @@ tree. The repository remains the functional source of truth. Existing `AppView`,
 query parameters, Supabase reads/writes, invoice numbering, PDF generation and
 payment settlement contracts remain authoritative.
 
-QA activation is explicit with `?v3=1`. Without that query parameter the V2
-shell remains available during migration. The flag is presentation-only and is
-never used as business state or persisted in local storage.
+V3 is the default presentation. `?v3=1` remains a backwards-compatible explicit
+V3 URL, while `?v2=1` is a temporary diagnostic escape hatch to the V2 shell;
+`v2=1` wins when both parameters are present. The flag is presentation-only and
+is never used as business state or persisted in local storage.
 
 Expense support storage is the private QA bucket `expense-receipts`, limited to
 PDF/JPEG/PNG/WEBP files up to 10 MB. Internal staff policies constrain objects
@@ -342,9 +343,12 @@ empty state, keyboard smoke, reduced motion, PWA assets and zero-legacy
 signals. Quotes, Jobs, Payments and persisted recurring-plan runtime are N/A
 for the zero-record QA baseline. External read-only comparison certifies QA DB
 delta `0` and Storage delta `0`. The exact evidence is recorded in
-`docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 is closed; V3-9 is not started.
+`docs/V3-8_RELEASE_CERTIFICATION.md`. V3-8 is closed. V3-9 final activation is
+also closed after the canonical production deployment and read-only smoke
+recorded in `docs/V3-9_PRODUCTION_ACTIVATION.md`.
 
-Before V3-9, require explicit authorization for: production activation,
-V3-7A production media migration, production environment verification,
-controlled deployment, production smoke, rollback planning and the
-feature-flag activation decision. None is authorized by this contract.
+V3-9 final evidence: activation commit `3bb29fc2cc2e5627561fc1b3d1a8c3ce0b90f680`,
+canonical production deployment `dpl_BtBXiCoBwfwUFF4ghn5wtUKji4x7`, production
+Supabase `wfxnwfcdjainpojhbdri`, QA requests `0`, production writes `0`, and
+rollback readiness through `dpl_AdTgyDsaKiWSveVreqzMztsPrcEK`. No migration,
+policy change, fixture or media upload was performed in the activation step.

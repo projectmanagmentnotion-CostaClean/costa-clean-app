@@ -267,5 +267,25 @@ zero-record QA baseline, and external pre/post comparison certified DB delta
 `0` and Storage delta `0`. No credentials, tokens, cookies, QA writes or
 production access were used. See `docs/V3-8_RELEASE_CERTIFICATION.md`.
 
-V3-9 remains gated by explicit production activation authorization and its
-documented deployment, smoke, rollback and feature-flag prerequisites.
+## V3-9 — Final default production activation — CLOSED / CERTIFIED
+
+- [x] Preserve V2 as the reversible `?v2=1` diagnostic fallback while making V3
+  the default presentation.
+- [x] Keep `?v3=1` backwards compatible and give `v2=1` precedence when both
+  parameters are present.
+- [x] Add focused activation and deep-link flag coverage.
+- [x] Deploy only the certified activation commit to the canonical Vercel
+  project in Production.
+- [x] Verify the canonical deployment identity, production backend target and
+  rollback deployment.
+- [x] Complete authenticated read-only production smoke across V3 modules,
+  representative deep links, hard reload and back navigation.
+- [x] Complete responsive smoke at `390x844` and `1280x800` with root overflow
+  `0`.
+- [x] Verify zero production writes, fixture writes, media uploads, migrations
+  and QA backend requests during activation.
+- [x] Close with tests, lint, build, diff, documentation, commit and push.
+
+V3-9 is `CLOSED / CERTIFIED`. V3 is active by default in production; V2 remains
+available only through the diagnostic `?v2=1` escape hatch. Evidence:
+`docs/V3-9_PRODUCTION_ACTIVATION.md`.

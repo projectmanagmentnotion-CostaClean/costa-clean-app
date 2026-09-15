@@ -134,7 +134,8 @@ The V3-10B.4 closure replay independently covered `390x844`, `768x1024` and
 200, representative client/property/invoice/expense workspaces reloaded and returned
 via Back, search miss/clear passed on populated modules, More opened and Escape
 closed it, and property media had zero broken images. The replay observed
-`.v3-contact-action` at 40px, retaining V3Q-P2-002 as an open product finding.
+`.v3-contact-action` at 40px; that historical observation was corrected and verified
+in V3-10C1.
 
 ## Master findings
 
@@ -150,9 +151,9 @@ Machine-readable source: `config/v3-10b-findings.json`.
   component renders the canonical registry asset at `src/features/auth/AuthPage.tsx:61-65`.
 - Impact: the first operational entry point shows only text branding and does not
   expose the canonical logo asset.
-- Fix: later approved visual slice only; decide between showing the canonical mark
-  with responsive sizing or explicitly approving text-only treatment.
-- Status: OPEN; not fixed in V3-10B.
+- Fix: completed in V3-10C1 by exposing the existing canonical registry asset with
+  restrained proportional sizing.
+- Status: FIXED / VERIFIED — V3-10C1.
 
 ### V3Q-P2-002 — shared V3 actions below touch-target contract
 
@@ -166,9 +167,9 @@ Machine-readable source: `config/v3-10b-findings.json`.
   was not rendered in the sampled data states.
 - Impact: contact actions are undersized on touch devices; ghost-action geometry remains
   N/A for the sampled states.
-- Fix: later correction slice must raise the shared token or document a verified exception,
-  then rerun geometry and keyboard checks.
-- Status: OPEN; not fixed in V3-10B.
+- Fix: completed in V3-10C1 by routing both shared rules through `--v3-touch-min`,
+  followed by authenticated geometry verification.
+- Status: FIXED / VERIFIED — V3-10C1.
 
 ### V3Q-P3-001 — native blocking alerts in document fallback paths
 
@@ -180,8 +181,9 @@ Machine-readable source: `config/v3-10b-findings.json`.
   `src/features/invoices/openInvoicePrintWindow.tsx:77` and
   `src/features/quotes/openQuotePrintWindow.tsx:92`.
 - Impact: feedback is blocking and inconsistent with the app's inline status model.
-- Fix: evaluate in a later document-output UX slice with focus and announcement tests.
-- Status: OPEN; not fixed in V3-10B.
+- Fix: completed in V3-10C1 through the existing toast/status feedback path and
+  popup-blocked state propagation, with focused coverage.
+- Status: FIXED / VERIFIED — V3-10C1.
 
 ### V3Q-P3-002 — historical serial release harness flake at 768x1024
 

@@ -289,3 +289,18 @@ production access were used. See `docs/V3-8_RELEASE_CERTIFICATION.md`.
 V3-9 is `CLOSED / CERTIFIED`. V3 is active by default in production; V2 remains
 available only through the diagnostic `?v2=1` escape hatch. Evidence:
 `docs/V3-9_PRODUCTION_ACTIVATION.md`.
+
+## V3-10C1 — Core certified findings correction — CLOSED / CERTIFIED
+
+- [x] Restore the canonical Costa Clean login logo without changing the auth contract.
+- [x] Raise shared contact and ghost action geometry to the `--v3-touch-min` 44px contract.
+- [x] Replace V3-reachable blocking document alerts with the existing accessible toast/status path.
+- [x] Add focused brand, touch-target and document-feedback regression coverage.
+- [x] Re-run the authenticated read-only 8-viewport runtime matrix with zero production requests,
+  QA mutations, errors, overflow, UUID leaks, Unicode-as-icon matches and legacy markers.
+- [x] Preserve V3Q-P3-002 as historical `RESOLVED_BY_EVIDENCE`; no product fix claimed.
+- [x] Close with tests, lint, build, diff, documentation, independent review, commit and push.
+
+Evidence: `docs/V3-10C1_CORE_CORRECTIONS.md`.
+
+Next: `V3-10C2 — GLOBAL VISUAL SYSTEM REFINEMENT` (not started).

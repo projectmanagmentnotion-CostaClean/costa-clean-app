@@ -303,4 +303,18 @@ available only through the diagnostic `?v2=1` escape hatch. Evidence:
 
 Evidence: `docs/V3-10C1_CORE_CORRECTIONS.md`.
 
-Next: `V3-10C2 — GLOBAL VISUAL SYSTEM REFINEMENT` (not started).
+## V3-10C2 — Global visual system refinement — CLOSED / CERTIFIED
+
+- [x] Audit shared V3 tokens, primitives, shell, controls, sheets and responsive frame.
+- [x] Separate canonical brand primitives from semantic action/status tokens.
+- [x] Normalize semantic typography, spacing, radius, elevation and icon geometry tokens.
+- [x] Reduce redundant borders and nested visual chrome without changing module logic.
+- [x] Preserve the C1 44px target, focus, Escape, reduced-motion and routing contracts.
+- [x] Capture private before/after visual evidence at the required anchor viewports.
+- [x] Add focused global design-system regression coverage.
+- [x] Complete independent `pr-quality-gate` review and final 8-view runtime gate.
+- [x] Close with tests, lint, build, diff, documentation, commit and push.
+
+Evidence: `docs/V3-10C2_GLOBAL_VISUAL_SYSTEM.md`.
+
+Next: `V3-10C3` remains not started.

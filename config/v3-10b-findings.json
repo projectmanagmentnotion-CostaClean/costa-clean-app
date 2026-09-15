@@ -1,35 +1,40 @@
 {
   "gate": "V3-10B",
   "mode": "audit-only",
-  "startingHead": "c8117b740094e395a9f4800120df51bb6bb8c5ee",
+  "startingHead": "eb0910dfedd2c71aa3127d0fcf6b9b76c79ee0dc",
   "productionWrites": 0,
   "qaWrites": 0,
   "supabaseChanges": 0,
-  "productionDeployment": "NOT_EXECUTED",
+  "productionDeployment": "NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED",
+  "deploymentRequiredForClosure": false,
+  "publicSanitizedEvidence": "docs/evidence/v3-10b/evidence-manifest.json",
   "independentReview": {
     "status": "CONTINUE",
     "reviewer": "project-continuation-agent read-only review",
-    "evidence": ".project-agent/private/2026-09-15T12-10-29-926Z/iteration-1-review.json",
-    "reason": "Independent review reconciled the evidence but requires bounded artifact corrections before closure; no production or product action is authorized."
+    "evidence": ".project-agent/private/2026-09-15T16-09-03-697Z/iteration-1-review.json",
+    "reason": "Runtime reconciliation and hardened fail gates are complete, but the independent review could not independently verify private command-run results and stopped on deployment-not-automatic."
   },
   "runtimeEvidence": {
     "harness": "scripts/qa/v3-10b-local-audit.mjs; scripts/qa/v3-10b-auth-audit.mjs",
     "report": "qa-reports/private/v3-10b/v3-10b-local-audit.json; qa-reports/private/v3-10b/v3-10b-auth-audit.json",
     "environment": "http://127.0.0.1:4177/?v3=1",
     "authentication": "PASS",
-    "pages": 208,
+    "pages": 232,
     "viewCandidates": 14,
     "viewports": ["320x568", "390x844", "430x932", "768x1024", "1024x1366", "1280x800", "1440x900", "1920x1080"],
-    "http200": 112,
+    "http200": 232,
     "authenticatedNavigationPasses": 96,
-    "authenticatedHttpStatus": "NOT_CAPTURED",
+    "authenticatedDocumentNavigations": 120,
+    "authenticatedHttp200": 120,
+    "authenticatedClientSideNavigationNoDocumentResponse": 0,
+    "authenticatedHttpStatus": "PASS",
     "consoleErrorPages": 0,
     "pageErrorPages": 0,
     "failedRequestPages": 0,
     "horizontalOverflowPages": 0,
     "productionRequests": 0,
     "supabaseMutations": 0,
-    "observedState": "unauthenticated and authenticated read-only local evidence"
+    "observedState": "unauthenticated and authenticated read-only local evidence with bounded evidence reconciliation"
   },
   "authenticatedEvidence": {
     "status": "PASS",
@@ -38,10 +43,36 @@
     "shellViewports": ["320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
     "surfaceNavigations": 96,
     "navigationPasses": 96,
-    "searchMissAssertions": "0 PASS; 64 NO_EMPTY_ASSERTION; 32 N/A",
-    "escapeAssertion": "key press recorded; dialog-closure assertion not recorded",
-    "headlessOptIn": "NOT_ESTABLISHED",
+    "documentNavigations": 120,
+    "mainDocumentHttp200": 120,
+    "clientSideNavigationNoDocumentResponse": 0,
+    "mainDocumentStatusNotObserved": 0,
+    "searchMiss": {
+      "modulesTested": ["clients", "leads", "properties", "invoices", "expenses"],
+      "pass": 40,
+      "fail": 0,
+      "na": 48,
+      "passModules": ["clients", "leads", "properties", "invoices", "expenses"],
+      "failModules": [],
+      "naModules": ["quotes", "jobs", "payments", "alerts", "fiscal_closing", "recurring"]
+    },
+    "searchRoundtrip": "8/8 PASS",
+    "escape": { "openAssertionPass": 8, "closeAssertionPass": 8, "focusRestoration": "N/A", "focusRestorationNA": 8 },
+    "determinism": { "releaseRuns": 3, "releasePasses": 3, "auditRuns": 2, "auditPasses": 2, "auditSummaryStable": true },
+    "headlessOptIn": "bounded local QA harness execution",
     "authenticatedShells": 8,
+    "expectedSurfaceCount": 96,
+    "surfaceCountPass": true,
+    "authenticatedPass": true,
+    "surfaceNavigationPass": true,
+    "surfaceReadinessPass": true,
+    "httpStatusPass": true,
+    "safetyPass": true,
+    "errorPass": true,
+    "overflowPass": true,
+    "escapeAssertionsPass": true,
+    "auditPass": true,
+    "forcedFailureExitCheck": "PASS — V3_10B_FORCE_FAIL=1 returned exit 2; repeat runner returned non-zero",
     "moreDialog": "PASS",
     "keyboardMoreEscape": "PASS",
     "productionRequests": 0,
@@ -63,9 +94,9 @@
     "surfacesInInventory": 18,
     "statesInMatrix": 22,
     "runtimeStatesObserved": "bounded authenticated read-only shell, populated/empty surfaces, workspace/deep-link/back, More, keyboard/Escape, reduced-motion and property media",
-    "authenticatedStatesNotExecuted": "write-required states and unasserted search-miss/Escape-closure states",
+    "authenticatedStatesNotExecuted": "write-required states and focus-restoration contract (N/A by design)",
     "specialistReviewLanes": 17,
-    "agentPassesCompleted": "17/17 review lanes represented; independent review CONTINUE"
+    "agentPassesCompleted": "17/17 review lanes represented; V3-10B.2 evidence reconciliation complete; independent review CONTINUE"
   },
   "findings": [
     {
@@ -153,11 +184,11 @@
       "viewportState": "768x1024, serial multi-surface run",
       "category": ["runtime", "state", "test-reliability"],
       "evidence": [
-        "A full serial run with --timeout=120000 passed 390x844 and failed at 768x1024 while waiting for the Facturas heading.",
-        "An isolated rerun of the same 768x1024 test passed in 47.2s.",
-        "The authenticated audit harness completed 8/8 viewports with 0 surface errors and saw the Facturas heading at 768x1024."
+        "Historical evidence recorded one serial 768x1024 wait failure while waiting for the Facturas heading.",
+        "Three consecutive complete serial release runs with --workers=1 and --timeout=120000 passed all 5 tests, including 768x1024.",
+        "Two consecutive authenticated audit runs produced identical sanitized summaries: 120 document navigations, 120 HTTP 200, 0 surface errors and 0 mutations."
       ],
-      "observed": "The existing release test has a non-deterministic serial navigation/assertion failure at 768x1024 that is not reproduced by an isolated rerun or the independent audit harness.",
+      "observed": "The historical release-test flake was not reproduced in 3 consecutive equivalent release runs.",
       "expected": "The release gate should be deterministic when the same authenticated read-only state and viewport are executed repeatedly.",
       "rootCause": "Not established; likely timing/state coupling in the existing serial release harness rather than a confirmed product failure.",
       "impact": "Reduces confidence in repeatable certification and can create false-negative release runs.",
@@ -166,7 +197,7 @@
       "regressionRisk": "Low for product; medium for test timing and runtime budget.",
       "testRequired": "Repeat the 768x1024 serial matrix at least three times and require deterministic PASS with production/mutation guards unchanged.",
       "dependencies": ["authenticated QA profile", "read-only release harness"],
-      "status": "OPEN — audit only"
+      "status": "RESOLVED_BY_EVIDENCE — historical flake retained; no harness fix claimed"
     }
   ],
   "auditBlockers": [],
@@ -202,5 +233,5 @@
     { "batch": "V3-10C7", "scope": "motion and microinteraction corrections only after lifecycle evidence", "status": "not started" },
     { "batch": "V3-10C8", "scope": "final visual regression, E2E and independent certification", "status": "not started" }
   ],
-  "verdict": "V3-10B OPEN — authenticated evidence complete; independent quality gate and audit artifact validation pending"
+  "verdict": "V3-10B OPEN — bounded evidence reconciliation PASS; independent quality gate CONTINUE (private command evidence not independently verifiable; deployment-not-automatic)"
 }

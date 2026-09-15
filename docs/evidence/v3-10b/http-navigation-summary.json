@@ -1,0 +1,13 @@
+{
+  "gate": "V3-10B.3",
+  "sourceHead": "eb0910dfedd2c71aa3127d0fcf6b9b76c79ee0dc",
+  "documentChecks": 120,
+  "documentHttp200": 120,
+  "failures": 0,
+  "clientSideNavigation": 0,
+  "statusNotObserved": 0,
+  "productionRequests": 0,
+  "nonQaSupabaseRequests": 0,
+  "qaMutations": 0,
+  "result": "PASS"
+}

@@ -1,0 +1,52 @@
+{
+  "gate": "V3-10B.3",
+  "syntheticQuery": "AUDIT_NON_MATCH_TOKEN",
+  "testedAssertions": 40,
+  "pass": 40,
+  "fail": 0,
+  "na": 48,
+  "modules": [
+    {
+      "module": "clients",
+      "viewports": ["390x844", "768x1024", "1440x900", "320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
+      "searchControlAvailable": true,
+      "searchMissAsserted": 8,
+      "clearRestoredState": 8,
+      "roundtripAsserted": 8
+    },
+    {
+      "module": "leads",
+      "viewports": ["390x844", "768x1024", "1440x900", "320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
+      "searchControlAvailable": true,
+      "searchMissAsserted": 8,
+      "clearRestoredState": 8,
+      "roundtripAsserted": 8
+    },
+    {
+      "module": "properties",
+      "viewports": ["390x844", "768x1024", "1440x900", "320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
+      "searchControlAvailable": true,
+      "searchMissAsserted": 8,
+      "clearRestoredState": 8,
+      "roundtripAsserted": 8
+    },
+    {
+      "module": "invoices",
+      "viewports": ["390x844", "768x1024", "1440x900", "320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
+      "searchControlAvailable": true,
+      "searchMissAsserted": 8,
+      "clearRestoredState": 8,
+      "roundtripAsserted": 8
+    },
+    {
+      "module": "expenses",
+      "viewports": ["390x844", "768x1024", "1440x900", "320x568", "430x932", "1024x1366", "1280x800", "1920x1080"],
+      "searchControlAvailable": true,
+      "searchMissAsserted": 8,
+      "clearRestoredState": 8,
+      "roundtripAsserted": 8
+    }
+  ],
+  "naModules": ["quotes", "jobs", "payments", "alerts", "fiscal_closing", "recurring"],
+  "result": "PASS"
+}

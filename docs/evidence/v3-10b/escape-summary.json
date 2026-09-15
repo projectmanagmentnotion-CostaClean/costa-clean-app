@@ -1,0 +1,18 @@
+{
+  "gate": "V3-10B.3",
+  "viewportsTested": 8,
+  "openAssertionsPass": 8,
+  "closeAssertionsPass": 8,
+  "focusRestore": "N/A — no restoration contract claimed",
+  "viewports": [
+    {"viewport": "390x844", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "768x1024", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "1440x900", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "320x568", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "430x932", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "1024x1366", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "1280x800", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"},
+    {"viewport": "1920x1080", "overlayDialogOpened": true, "escapeSent": true, "overlayDialogClosed": true, "focusRestore": "N/A"}
+  ],
+  "result": "PASS"
+}

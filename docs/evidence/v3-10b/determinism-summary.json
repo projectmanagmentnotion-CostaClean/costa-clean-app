@@ -1,0 +1,15 @@
+{
+  "gate": "V3-10B.3",
+  "releaseHarness": [
+    {"run": 1, "result": "PASS", "source": "existing sanitized run log"},
+    {"run": 2, "result": "PASS", "source": "existing sanitized run log"},
+    {"run": 3, "result": "PASS", "source": "existing sanitized run log"}
+  ],
+  "auditHarness": [
+    {"run": 1, "result": "PASS", "durationMs": 639889, "navigationCount": 120, "consoleErrors": 0, "pageErrors": 0, "failedRequests": 0, "productionRequests": 0, "qaMutations": 0, "overflow": 0},
+    {"run": 2, "result": "PASS", "durationMs": 634148, "navigationCount": 120, "consoleErrors": 0, "pageErrors": 0, "failedRequests": 0, "productionRequests": 0, "qaMutations": 0, "overflow": 0}
+  ],
+  "historical768x1024Flake": "NOT REPRODUCED AFTER CONTROLLED DETERMINISM RUNS",
+  "rootCauseClaim": "NONE",
+  "result": "PASS"
+}

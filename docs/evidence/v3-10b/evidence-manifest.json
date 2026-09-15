@@ -1,0 +1,34 @@
+{
+  "gate": "V3-10B.3",
+  "sourceHead": "eb0910dfedd2c71aa3127d0fcf6b9b76c79ee0dc",
+  "branch": "codex/app-v3-mobile-first-redesign",
+  "generatedAt": "2026-09-15T16:15:50.0594642Z",
+  "auditHarnessPaths": ["scripts/qa/v3-10b-auth-audit.mjs", "scripts/qa/v3-10b-repeat.mjs"],
+  "releaseHarnessPath": "tests/e2e/v3-release.spec.mjs",
+  "sanitizedEvidenceFiles": [
+    "README.md",
+    "evidence-manifest.json",
+    "http-navigation-summary.json",
+    "search-summary.json",
+    "escape-summary.json",
+    "determinism-summary.json"
+  ],
+  "privateSourceReports": [
+    "qa-reports/private/v3-10b/v3-10b-auth-audit.json",
+    "qa-reports/private/v3-10b/v3-10b-repeat.json"
+  ],
+  "privateSourceSha256": {
+    "v3-10b-auth-audit.json": "91e59954d2364a647f0907e0a69a96cabb4e2e3e61a865755d87f2b090d1b3fa",
+    "v3-10b-repeat.json": "b87ec8d720f89736839762b03f33a4ce3c15951140114948e6cd3efefaf9e02f"
+  },
+  "sanitizedSha256": {
+    "http-navigation-summary.json": "5087fd055200dda0bf3c61a8d35df9ab2f509a3d8e87593416fa6032253cf007",
+    "search-summary.json": "878d2c93f46c22e61bfa15c6c9ad84d9553407bbac74658278314e2615362a0c",
+    "escape-summary.json": "ef4bffd43ffacd9f0a84900336c2fcdfae749c9e1ae3cca079b4a5d73e32d4c6",
+    "determinism-summary.json": "b032acc2d4be0fc3e770b0fba9214aa7e30e8c13f68d22b98466448804e7345f"
+  },
+  "productionWrites": 0,
+  "qaWrites": 0,
+  "deploymentStatus": "NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED",
+  "deploymentRequiredForClosure": false
+}

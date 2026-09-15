@@ -1,13 +1,13 @@
 # V3-10B — Exhaustive Whole-App Quality Audit
 
-Status: `OPEN — authenticated evidence complete; independent quality gate pending`
+Status: `OPEN — bounded evidence reconciliation complete; independent quality gate CONTINUE`
 
 This gate is diagnosis only. No product fix, Supabase write, QA write,
 production write or deployment was performed.
 
 ## Scope and evidence boundary
 
-- Starting HEAD: `c8117b740094e395a9f4800120df51bb6bb8c5ee`
+- Starting HEAD: `eb0910dfedd2c71aa3127d0fcf6b9b76c79ee0dc`
 - Branch: `codex/app-v3-mobile-first-redesign`
 - Local app inspected at `http://127.0.0.1:4177/?v3=1`
 - Authenticated execution completed with the existing ignored local QA profile after
@@ -19,6 +19,11 @@ production write or deployment was performed.
   `qa-reports/private/v3-10b/v3-10b-local-audit.json`.
 - Authenticated runtime evidence is private and ignored at
   `qa-reports/private/v3-10b/v3-10b-auth-audit.json`.
+- Determinism evidence is private and ignored at
+  `qa-reports/private/v3-10b/v3-10b-repeat.json` and its per-run logs.
+- Independently reviewable sanitized evidence is committed at
+  `docs/evidence/v3-10b/`, with manifest, HTTP, search, Escape and determinism
+  summaries. The private paths above are provenance only.
 
 ## Specialist review passes
 
@@ -44,11 +49,11 @@ The V3-10A specialist architecture was used as ordered review lanes:
 
 All lanes were constrained to repository inspection and local read-only evidence.
 The PR-quality checklist was applied to scope, severity, unsupported claims,
-false positives, production safety and the correction roadmap. The separate
-read-only continuation review was rerun against this authenticated addendum and
-returned `CONTINUE` (quality score 68). It verified the aggregate navigation and
-source findings but identified bounded evidence gaps that keep this gate open; it
-did not authorize product changes, QA writes, production work or commit/push actions.
+false positives, production safety and the correction roadmap. The prior read-only
+continuation review returned `CONTINUE` (quality score 68). V3-10B.2 reconciled the
+four requested evidence gaps without product changes. The fresh independent review
+also returned `CONTINUE`: the isolated reviewer could not independently verify
+private command-run results and stopped on `deployment-not-automatic`.
 
 ## Coverage
 
@@ -76,15 +81,18 @@ gate is audit-only and performed no QA writes.
 The local harness captured safe unauthenticated login baselines and authenticated
 read-only surface evidence for the required mobile/tablet/desktop anchors. No customer
 names, financial records, tokens, cookies or session files were captured or committed.
-The authenticated harness covered 12 surfaces × 8 viewports (96 navigations), plus
-More, recurring via client workspace and read-only workspace/deep-link/back checks.
+The authenticated harness covered 12 surfaces × 8 viewports (96 surface navigations),
+plus initial/final shell and search-roundtrip navigations: 120 document navigations in
+total. Two consecutive audit runs were compared using sanitized aggregate counters.
 
 ## Runtime audit results
 
 | Check | Result |
 |---|---:|
 | Local unauthenticated navigations | 112/112 HTTP 200 |
-| Authenticated read-only navigations | 96/96 navigation completions; HTTP status not captured |
+| Authenticated read-only surface navigations | 96/96 navigation completions |
+| Authenticated main-document navigations | 120/120 HTTP 200 |
+| Client-side navigation without document response | 0 |
 | Authenticated viewports | 8/8 |
 | Console-error pages | 0 |
 | Page-error pages | 0 |
@@ -96,20 +104,29 @@ More, recurring via client workspace and read-only workspace/deep-link/back chec
 | Visible/accessibility UUIDs | 0 / 0 |
 | Unicode-as-icon / legacy markers | 0 / 0 |
 | Property media broken images | 0 |
-| Authenticated read-only navigation harness | PASS for navigation completion; full state coverage and HTTP status not claimed |
+| Authenticated read-only navigation harness | PASS |
+| Harness surface count/readiness gate | 96/96 PASS |
+| Harness safety/error/HTTP gate | PASS |
+| Search-miss assertions | 40 PASS, 0 FAIL, 48 N/A across 8 viewports |
+| Search → workspace → Back roundtrip | 8/8 PASS |
+| Escape open assertion | 8/8 PASS |
+| Escape close assertion | 8/8 PASS |
+| Focus restoration | N/A in 8/8; no restoration contract claimed |
+| Release determinism | 3/3 PASS |
+| Audit repeatability | 2/2 PASS; summaries identical |
 
-The existing release matrix passed at `390x844`. Its serial run had one
-`768x1024` wait failure; an isolated rerun passed in 47.2s, and the authenticated
-audit harness passed all 8 viewports with zero surface errors. This is recorded as
-`V3Q-P3-002`, a supported QA-harness reliability finding rather than a confirmed
-product failure.
+The historical release matrix had one serial `768x1024` wait failure. Three
+consecutive equivalent full serial runs then passed all five tests, including
+`768x1024`; `V3Q-P3-002` is therefore resolved by evidence without claiming a root
+cause fix. Two consecutive authenticated audit runs also produced identical sanitized
+summaries.
 
-The independent review also identified these evidence limits: search-miss assertions
-were not recorded as PASS (`0` PASS, `64` no-empty assertion, `32` N/A); the More
-Escape check recorded the key press but did not assert dialog closure; and the
-authenticated harness did not capture response status. The authenticated harness was
-run read-only, but a separate explicit headless opt-in was not established in the
-review artifact. These are audit-evidence limitations, not product failures.
+Search-miss coverage is now explicit. Clients, Leads, Properties, Invoices and
+Expenses passed the full assertion (`40` passes across 8 viewports). The assertion
+requires the deterministic no-match token, zero visible rows, a valid explicit or
+accessible zero-state, and restoration of the original list. Quotes, Jobs, Payments,
+Alerts, Closings and Recurring were N/A because the required search/record state was
+unavailable. No product fix is made in this audit gate.
 
 ## Master findings
 
@@ -158,19 +175,18 @@ Machine-readable source: `config/v3-10b-findings.json`.
 - Fix: evaluate in a later document-output UX slice with focus and announcement tests.
 - Status: OPEN; not fixed in V3-10B.
 
-### V3Q-P3-002 — serial release harness flake at 768x1024
+### V3Q-P3-002 — historical serial release harness flake at 768x1024
 
 - Severity: P3
 - Confidence: SUPPORTED
 - Surface: V3-8 read-only release matrix
 - Category: runtime / state / test reliability
-- Evidence: a full serial run passed `390x844` and failed at `768x1024` while waiting
-  for the Facturas heading; an isolated rerun of the same viewport passed in 47.2s;
-  the authenticated audit harness completed all eight viewports and saw the heading.
-- Impact: can create false-negative certification runs.
-- Fix: stabilize release-harness waits and state reset in a later QA tooling slice;
-  do not change product code from this evidence alone.
-- Status: OPEN; audit only.
+- Evidence: the historical failure is retained; three consecutive equivalent full
+  serial runs passed all five tests, including `768x1024`. No harness fix or root cause
+  claim was introduced.
+- Impact: historical false-negative risk is documented, but not reproduced in the
+  controlled 3-run sequence.
+- Status: `RESOLVED_BY_EVIDENCE`; historical finding retained.
 
 ## Independent quality gate
 
@@ -178,10 +194,10 @@ The former `V3-10B-BLOCKER-001` was an authentication infrastructure blocker. Ma
 QA authentication resolved it without credential handling. The authenticated
 read-only matrix now runs against QA with zero production requests, zero non-QA
 Supabase requests, zero QA mutations, zero console/page errors and zero failed
-requests. The independent review result is `CONTINUE`, because the artifact must
-distinguish navigation completion from HTTP status and must preserve the search-miss,
-Escape-closure and command-result limitations above. The former auth blocker is
-resolved; the gate is open for evidence reconciliation only.
+requests. HTTP status, search assertions, Escape closure and deterministic runs are
+now recorded. The bounded runtime evidence is reconciled, but the fresh independent
+review is not a PASS: it could not independently verify private command-run results
+and stopped on `deployment-not-automatic`. No product fix is authorized in this slice.
 
 ## Discarded false positives
 
@@ -213,20 +229,24 @@ resolved; the gate is open for evidence reconciliation only.
 - Lint: `PASS`.
 - Build: `PASS`.
 - `git diff --check`: `PASS`.
-- Independent continuation review: `CONTINUE` with quality score `68`; evidence
-  path is `.project-agent/private/2026-09-15T12-10-29-926Z/iteration-1-review.json`
-  and remains ignored/private.
+- Release determinism: `3/3 PASS` with `--workers=1 --timeout=120000`.
+- Authenticated audit repeatability: `2/2 PASS`; sanitized summaries identical
+  (`40` search-miss PASS, `0` FAIL, `48` N/A on both runs).
+- Harness failure-injection check: `V3_10B_FORCE_FAIL=1` returned exit `2`, and the
+  repeat runner returned non-zero; a clean audit now requires auth, surface count,
+  readiness, HTTP, safety, error, overflow, search and Escape gates simultaneously.
+- Independent continuation review: `CONTINUE`; latest evidence is
+  `.project-agent/private/2026-09-15T16-09-03-697Z/iteration-1-review.json`.
 
 ## Safety and closure
 
 - Production writes: 0
 - QA writes: 0
 - Supabase changes: 0
-- Production deployment: NOT EXECUTED
+- Production deployment: `NOT_APPLICABLE — AUDIT ONLY / DEPLOYMENT PROHIBITED`
 - Product TSX/CSS fixes: 0
 - V3-10C: NOT STARTED
 
-V3-10B is not closed. The independent quality gate returned `CONTINUE` and the
-truthful verdict is:
+V3-10B is not closed. The truthful verdict is:
 
-`V3-10B OPEN — authenticated read-only navigation evidence complete; bounded audit-evidence reconciliation required.`
+`V3-10B OPEN — bounded evidence reconciliation PASS; independent quality gate CONTINUE (private command evidence not independently verifiable; deployment-not-automatic).`

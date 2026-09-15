@@ -74,7 +74,6 @@ export function openInvoicePrintWindow(
   const printWindow = window.open('', '_blank', 'width=1100,height=1400')
 
   if (!printWindow) {
-    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
     return false
   }
 

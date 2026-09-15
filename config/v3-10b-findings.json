@@ -111,19 +111,21 @@
       "evidence": [
         "scripts/qa/v3-10b-local-audit.mjs captured dashboard-390x844.png with no visible canonical logo image.",
         "src/v3/design/v3.css:117 sets .v3-auth-page .auth-brand__logo { display: none; }.",
-        "src/features/auth/AuthPage.tsx:61-65 renders the canonical registry asset but CSS suppresses it on V3 auth."
+        "src/features/auth/AuthPage.tsx:61-65 renders the canonical registry asset but CSS suppresses it on V3 auth.",
+        "V3-10C1 changes the V3-only rule to display the existing registry asset with restrained proportional sizing.",
+        "Independent runtime replay observed the canonical /branding/logo-primary.png at 390x844, 768x1024 and 1440x900."
       ],
-      "observed": "The first V3 login viewport shows the textual CostaClean CRM kicker but the canonical logo asset is hidden.",
+      "observed": "Historical V3 login evidence showed the canonical asset hidden. V3-10C1 now renders it visibly above the form without replacing the existing asset or changing auth behavior.",
       "expected": "The approved V3 auth direction should expose a deliberate, proportionally sized canonical brand mark or document an explicit text-only decision.",
       "rootCause": "A V3-specific CSS rule hides the semantic logo registry output.",
       "designPrinciple": "Brand presence should be restrained but the authenticated entry surface must remain recognizably Costa Clean.",
       "impact": "Weakens brand recognition at the first operational entry point; does not block login.",
-      "recommendedFix": "In a later approved visual slice, either remove the hide rule and validate the canonical asset at mobile/tablet/desktop, or replace the hidden asset with an explicitly approved text-only treatment.",
+      "recommendedFix": "Completed in V3-10C1; retain the canonical asset and recheck it when the broader visual system is refined.",
       "filesLikelyAffected": ["src/v3/design/v3.css", "src/features/auth/AuthPage.tsx"],
       "regressionRisk": "Low to medium; auth card height and first-viewport hierarchy can change.",
       "testRequired": "Visual auth baseline at 390x844, 768x1024 and 1440x900 plus asset-load assertion.",
       "dependencies": ["approved visual direction", "canonical brand registry"],
-      "status": "OPEN — audit only"
+      "status": "FIXED / VERIFIED — V3-10C1"
     },
     {
       "id": "V3Q-P2-002",
@@ -139,18 +141,20 @@
         "src/v3/clients/V3ContactActions.tsx uses .v3-contact-action for operational contact links.",
         "src/v3/shell/V3ShellChrome.tsx uses .v3-action--ghost for a shell action.",
         "AGENTS.md requires interactive targets to be at least 44x44 CSS px.",
-        "scripts/qa/v3-10b-auth-audit.mjs measured .v3-contact-action at 40px height in all 8 authenticated viewports; .v3-action--ghost was not visible in the sampled data states."
+        "scripts/qa/v3-10b-auth-audit.mjs measured .v3-contact-action at 40px height in all 8 authenticated viewports; .v3-action--ghost was not visible in the sampled data states.",
+        "V3-10C1 routes both shared rules through --v3-touch-min, whose contract is 44px.",
+        "The post-fix authenticated matrix measured 352 contact actions at 44px across all 8 viewports; ghost actions were N/A because none rendered in the sampled data state."
       ],
-      "observed": "Rendered contact actions are 40px high across all 8 authenticated viewports, below the 44px contract. Ghost actions were not rendered in the sampled states, so their runtime geometry remains N/A.",
+      "observed": "Historical contact actions were 40px high. After V3-10C1, all rendered contact actions measured 44px across the 8-view matrix; ghost actions remained N/A where not rendered.",
       "expected": "Interactive V3 controls should meet a 44 px minimum target, or have a documented native/semantic exception.",
       "rootCause": "Shared V3 action CSS uses a smaller minimum than the cross-module touch-target rule.",
       "impact": "Contact actions are undersized on touch devices; secondary ghost action runtime geometry remains unverified for the sampled records.",
-      "recommendedFix": "In a later correction slice, raise the shared minimum to the approved touch token or document a verified exception, then rerun geometry and keyboard checks.",
+      "recommendedFix": "Completed in V3-10C1 through the shared --v3-touch-min token; retain the runtime geometry assertion in future visual gates.",
       "filesLikelyAffected": ["src/v3/design/v3.css", "src/v3/clients/V3ContactActions.tsx", "src/v3/shell/V3ShellChrome.tsx"],
       "regressionRisk": "Medium; changing shared action height affects shell and CRM density.",
       "testRequired": "Authenticated geometry at 390x844, 768x1024 and 1440x900; keyboard focus and hit-area assertions.",
       "dependencies": ["V3 design tokens", "authenticated QA session"],
-      "status": "OPEN — audit only"
+      "status": "FIXED / VERIFIED — V3-10C1"
     },
     {
       "id": "V3Q-P3-001",
@@ -163,18 +167,20 @@
       "evidence": [
         "src/features/documents/utils.ts:54-56 uses window.alert for clipboard fallback feedback.",
         "src/features/invoices/openInvoicePrintWindow.tsx:77 uses window.alert when popups are blocked.",
-        "src/features/quotes/openQuotePrintWindow.tsx:92 uses window.alert when popups are blocked."
+        "src/features/quotes/openQuotePrintWindow.tsx:92 uses window.alert when popups are blocked.",
+        "V3-10C1 routes clipboard success/failure through the existing ToastProvider API and returns popup-blocked state to the V3 quote screen for contextual feedback.",
+        "Focused tests cover clipboard success/failure and popup-blocked output without invoking a native alert; source audit finds zero window.alert calls."
       ],
-      "observed": "Some document-action failures use browser-native blocking alerts instead of the app's inline/status feedback system.",
+      "observed": "Historical document fallbacks used browser-native blocking alerts. V3-10C1 now provides accessible, dismissible toast feedback for V3 clipboard fallback and contextual popup-blocked guidance, with no blocking alert remaining in the covered paths.",
       "expected": "Non-destructive document failures should preserve context and provide an accessible, dismissible in-app status where the surrounding flow supports it.",
-      "rootCause": "Legacy utility and print-window fallback paths still call window.alert.",
+      "rootCause": "Legacy utility and print-window fallback paths coupled failure feedback directly to window.alert instead of returning state to the existing feedback layer.",
       "impact": "Interrupts flow and makes feedback inconsistent; not a data-integrity issue.",
-      "recommendedFix": "Evaluate a later document-output UX slice; preserve native popup-blocker guidance where technically necessary and add focused focus/announcement tests.",
+      "recommendedFix": "Completed in V3-10C1 without changing PDF/document engines; future document UX may refine copy while retaining the shared toast contract.",
       "filesLikelyAffected": ["src/features/documents/utils.ts", "src/features/invoices/openInvoicePrintWindow.tsx", "src/features/quotes/openQuotePrintWindow.tsx"],
       "regressionRisk": "Low to medium; changing feedback timing can affect existing export tests.",
       "testRequired": "Popup-blocked and clipboard-unavailable local tests with focus and accessible status assertions.",
       "dependencies": ["document output contract", "browser popup behavior"],
-      "status": "OPEN — audit only"
+      "status": "FIXED / VERIFIED — V3-10C1"
     },
     {
       "id": "V3Q-P3-002",
@@ -225,8 +231,8 @@
   },
   "roadmap": [
     { "batch": "V3-10C0", "scope": "none", "status": "not required; no P0 found" },
-    { "batch": "V3-10C1", "scope": "address shared touch targets and stabilize read-only release QA", "findings": ["V3Q-P2-002", "V3Q-P3-002"] },
-    { "batch": "V3-10C2", "scope": "auth brand treatment and document feedback consistency", "findings": ["V3Q-P2-001", "V3Q-P3-001"] },
+    { "batch": "V3-10C1", "scope": "close certified brand, touch-target and document-feedback findings; preserve historical QA evidence", "findings": ["V3Q-P2-001", "V3Q-P2-002", "V3Q-P3-001", "V3Q-P3-002"] },
+    { "batch": "V3-10C2", "scope": "global visual system refinement after core corrections", "status": "not started" },
     { "batch": "V3-10C3", "scope": "Home + CRM authenticated state matrix", "status": "pending authenticated evidence" },
     { "batch": "V3-10C4", "scope": "Finance authenticated state matrix", "status": "pending authenticated evidence" },
     { "batch": "V3-10C5", "scope": "Operations authenticated state matrix", "status": "pending authenticated evidence" },
@@ -234,5 +240,5 @@
     { "batch": "V3-10C7", "scope": "motion and microinteraction corrections only after lifecycle evidence", "status": "not started" },
     { "batch": "V3-10C8", "scope": "final visual regression, E2E and independent certification", "status": "not started" }
   ],
-  "verdict": "V3-10B CLOSED / CERTIFIED — independent live replay PASS; product findings remain open for a later correction slice"
+  "verdict": "V3-10B CLOSED / CERTIFIED — findings corrected and independently verified in V3-10C1; V3-10C2 not started"
 }

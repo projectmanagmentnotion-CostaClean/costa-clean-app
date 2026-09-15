@@ -10,6 +10,7 @@ import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
 import { useInvoiceDocumentLines } from './useInvoiceDocumentLines'
 import { openInvoiceDocumentOutput } from '../documents/documentOutputRuntime'
 import { getInvoiceDocumentTitle } from './openInvoicePrintWindow'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface InvoiceDocumentScreenProps {
   invoice: InvoiceListItem
@@ -27,6 +28,7 @@ export function InvoiceDocumentScreen({
   invoice,
   onClose,
 }: InvoiceDocumentScreenProps) {
+  const toast = useToast()
   const [outputError, setOutputError] = useState<string | null>(null)
   const [isOpeningOutput, setIsOpeningOutput] = useState(false)
   const {
@@ -70,6 +72,7 @@ export function InvoiceDocumentScreen({
       [`Total: ${formatCurrency(hydratedInvoice.total)}`, `Estado: ${getStatusLabel(hydratedInvoice.status)}`],
       'Resumen de la factura copiado al portapapeles.',
       'Compartir no esta disponible en este dispositivo.',
+      toast,
     )
   }
 

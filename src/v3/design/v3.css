@@ -115,7 +115,11 @@ html[data-app-surface="v3"] #root {
 }
 
 .v3-auth-page .auth-brand__logo {
-  display: none;
+  display: block;
+  height: auto;
+  max-height: 120px;
+  object-fit: contain;
+  width: clamp(112px, 24vw, 144px);
 }
 
 .v3-auth-page .auth-brand__copy,
@@ -597,7 +601,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-line-row small { color: var(--v3-color-text-secondary); }
 .v3-contact-actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); }
 .v3-contact-actions--compact { margin-top: var(--v3-space-2); }
-.v3-contact-action { align-items: center; background: var(--v3-color-accent-soft); border-radius: var(--v3-radius-sm); color: var(--v3-color-accent-strong); display: inline-flex; font-size: var(--v3-font-size-xs); font-weight: 700; min-height: 40px; padding: 0 var(--v3-space-3); text-decoration: none; }
+.v3-contact-action { align-items: center; background: var(--v3-color-accent-soft); border-radius: var(--v3-radius-sm); color: var(--v3-color-accent-strong); display: inline-flex; font-size: var(--v3-font-size-xs); font-weight: 700; min-height: var(--v3-touch-min); padding: 0 var(--v3-space-3); text-decoration: none; }
 .v3-contact-action:focus-visible, .v3-contact-action:hover { box-shadow: var(--v3-focus-ring); outline: 0; }
 .v3-relation-list { display: grid; }
 .v3-relation-row { align-items: center; background: transparent; border: 0; border-bottom: 1px solid var(--v3-color-border); color: var(--v3-color-text-primary); cursor: pointer; display: flex; font: inherit; justify-content: space-between; min-height: var(--v3-touch-preferred); padding: var(--v3-space-3) 0; text-align: left; width: 100%; }
@@ -605,7 +609,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-relation-row span:first-child { display: grid; gap: var(--v3-space-1); }
 .v3-relation-row small { color: var(--v3-color-text-secondary); }
 .v3-relation-row:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
-.v3-action--ghost { background: transparent; color: var(--v3-color-accent-strong); min-height: 40px; padding-inline: var(--v3-space-2); }
+.v3-action--ghost { background: transparent; color: var(--v3-color-accent-strong); min-height: var(--v3-touch-min); padding-inline: var(--v3-space-2); }
 .v3-workspace-back { background: transparent; border: 0; color: var(--v3-color-accent-strong); cursor: pointer; font: inherit; font-weight: 700; justify-self: start; min-height: var(--v3-touch-preferred); padding: 0; }
 .v3-workspace-total { border-bottom: 1px solid var(--v3-color-border); display: grid; gap: var(--v3-space-2); padding: var(--v3-space-4) 0 var(--v3-space-6); }
 .v3-workspace-total strong { font-size: 2.25rem; font-variant-numeric: tabular-nums; letter-spacing: -0.05em; }

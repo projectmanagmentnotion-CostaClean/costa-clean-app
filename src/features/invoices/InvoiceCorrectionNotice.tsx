@@ -6,6 +6,7 @@ import {
   getInvoiceCorrectionCase,
 } from './invoiceCorrectionCases'
 import type { InvoiceListItem } from './types'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface InvoiceCorrectionNoticeProps {
   invoice: InvoiceListItem
@@ -18,6 +19,7 @@ export function InvoiceCorrectionNotice({
   correctionPrefill = null,
   onPrepareDraft,
 }: InvoiceCorrectionNoticeProps) {
+  const toast = useToast()
   const resolvedCorrectionCase = getInvoiceCorrectionCase(invoice)
   if (!resolvedCorrectionCase) return null
   const correctionCase = resolvedCorrectionCase
@@ -31,6 +33,7 @@ export function InvoiceCorrectionNotice({
       buildInvoiceCorrectionSummaryLines(correctionCase),
       'Resumen de correccion copiado al portapapeles.',
       'No se pudo copiar el resumen de correccion.',
+      toast,
     )
   }
 

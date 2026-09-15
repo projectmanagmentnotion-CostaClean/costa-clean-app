@@ -71,4 +71,12 @@ describe('invoice document output', () => {
     expect(invoice.payment_status).toBe('pending')
   })
 
+  it('fails without a blocking native alert when the popup is blocked', () => {
+    const alert = vi.fn()
+    vi.stubGlobal('window', { open: vi.fn(() => null), alert })
+
+    expect(openInvoicePrintWindow(createExistingInvoice(), 'pdf')).toBe(false)
+    expect(alert).not.toHaveBeenCalled()
+  })
+
 })

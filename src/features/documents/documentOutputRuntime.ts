@@ -25,5 +25,5 @@ export async function openQuoteDocumentOutput(
   }
 
   const { openQuotePrintWindow } = await import('../quotes/openQuotePrintWindow')
-  openQuotePrintWindow(quote, clients, properties, intent)
+  return openQuotePrintWindow(quote, clients, properties, intent)
 }

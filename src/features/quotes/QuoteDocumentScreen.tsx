@@ -13,6 +13,7 @@ import { shareDocumentSummary } from '../documents/utils'
 import { DocumentScreenFrame } from '../documents/DocumentScreenFrame'
 import { useQuoteDocumentLines } from './useQuoteDocumentLines'
 import { openQuoteDocumentOutput } from '../documents/documentOutputRuntime'
+import { useToast } from '../../shared/toasts/useToast'
 
 interface QuoteDocumentScreenProps {
   quote: QuoteListItem
@@ -34,6 +35,7 @@ export function QuoteDocumentScreen({
   properties,
   onClose,
 }: QuoteDocumentScreenProps) {
+  const toast = useToast()
   const [pendingOutputIntent, setPendingOutputIntent] = useState<'print' | 'pdf' | null>(null)
   const {
     quote: hydratedQuote,
@@ -57,7 +59,14 @@ export function QuoteDocumentScreen({
   async function handleConfirmOpenWindow() {
     if (!pendingOutputIntent) return
 
-    await openQuoteDocumentOutput(hydratedQuote, clients, properties, pendingOutputIntent)
+    const didOpen = await openQuoteDocumentOutput(hydratedQuote, clients, properties, pendingOutputIntent)
+    if (didOpen === false) {
+      toast.error(
+        'No se pudo abrir la ventana',
+        'El navegador bloqueó la ventana de impresión. Permite las ventanas emergentes e inténtalo de nuevo.',
+        { persistent: true },
+      )
+    }
     setPendingOutputIntent(null)
   }
 
@@ -67,6 +76,7 @@ export function QuoteDocumentScreen({
       [`Total: ${formatCurrency(hydratedQuote.total)}`, `Estado: ${getStatusLabel(hydratedQuote.status)}`],
       'Resumen del presupuesto copiado al portapapeles.',
       'Compartir no esta disponible en este dispositivo.',
+      toast,
     )
   }
 

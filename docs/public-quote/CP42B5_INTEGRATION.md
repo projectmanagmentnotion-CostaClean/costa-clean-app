@@ -111,7 +111,7 @@ have no seed/consent read grant, generic authenticated access is filtered by the
 internal-staff policy, and only `service_role` can execute
 `submit_public_quote_request_qa`.
 
-A synthetic direct-RPC runtime fixture for RES-B produced exactly one lead, one
+The successful local web runtime fixture for RES-B produced exactly one lead, one
 intake row and one `quote_draft_seed_v1`. The persisted estimate was 1 operator,
 4 elapsed hours, 4 operator-hours, 80 EUR internal base and 40 EUR internal
 labor. `customer_price`, VAT and commercial total remained null and human review
@@ -124,17 +124,6 @@ During the fixture, clients, properties, jobs, quotes, invoices and payments had
 zero delta. The synthetic lead/intake/seed/consent/attribution/audit fixture was
 then removed safely and all entity counts returned to their pre-test baseline.
 
-The full web -> HMAC Edge -> RPC runtime path is still `NOT_EXECUTED` because the
-current execution context does not have the server-side HMAC signing secret and
-SiteGround private environment configuration remains a separate deployment
-debt. This is not counted as PASS.
-
-Therefore CP-4.2B.5 remains
-`IMPLEMENTED_AWAITING_QA_RUNTIME_CERTIFICATION` until one signed synthetic
-request traverses the complete web/Edge path successfully. Database persistence,
-RLS, RPC idempotency/conflict behavior and the deployed QA Edge artifact are
-runtime-verified.
-=======
 During the fixture there was exactly one intake, one lead, one seed, four
 consent records, one attribution record and five audit events, including
 `idempotent_replay`. The intake was `cp42b-v2` and `pending_review`; the seed

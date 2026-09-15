@@ -1,0 +1,4 @@
+interface:
+  display_name: "Bug Root Cause Investigator"
+  short_description: "Reproduce y aísla causas raíz"
+  default_prompt: "Usa $bug-root-cause-investigator para investigar un fallo reproducible."

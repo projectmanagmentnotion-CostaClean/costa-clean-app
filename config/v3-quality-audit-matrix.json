@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "gate": "V3-10A",
+  "mode": "local-foundation-only",
+  "production": "prohibited",
+  "supabaseWrites": "prohibited",
+  "requiredViewports": [
+    { "width": 390, "height": 844, "label": "mobile-anchor" },
+    { "width": 768, "height": 1024, "label": "tablet-anchor" },
+    { "width": 1440, "height": 900, "label": "desktop-anchor" }
+  ],
+  "surfaces": [
+    "home", "invoices", "quotes", "clients", "properties", "jobs", "payments", "expenses", "leads", "alerts", "closings", "forms", "more", "selection", "shell", "auth", "brand", "property-media"
+  ],
+  "states": ["loading", "empty", "success", "error", "permission", "duplicate", "dirty", "cancel", "recovery"],
+  "dimensions": [
+    "visual-hierarchy", "density", "navigation-and-back", "deep-links", "accessibility", "keyboard-focus", "touch-targets", "safe-areas", "geometry", "reduced-motion", "legacy-reachability", "brand-provenance", "property-media-fallback", "no-data-loss"
+  ],
+  "evidence": ["command-output", "test-result", "browser-measurement", "screenshot-or-diff", "file-and-line"],
+  "requiredCommands": ["npm run qa:agents", "npm test", "npm run lint", "npm run build", "git diff --check"]
+}

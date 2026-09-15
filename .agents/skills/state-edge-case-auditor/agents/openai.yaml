@@ -1,0 +1,4 @@
+interface:
+  display_name: "State Edge Case Auditor"
+  short_description: "Audita estados límite y recuperación"
+  default_prompt: "Usa $state-edge-case-auditor para recorrer estados límite de una superficie V3."

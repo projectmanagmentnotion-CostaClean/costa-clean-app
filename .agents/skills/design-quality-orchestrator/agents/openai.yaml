@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Quality Orchestrator"
+  short_description: "Coordina auditorías exhaustivas de calidad V3"
+  default_prompt: "Usa $design-quality-orchestrator para coordinar una auditoría exhaustiva local y trazable."

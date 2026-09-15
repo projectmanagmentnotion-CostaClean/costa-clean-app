@@ -1,0 +1,4 @@
+interface:
+  display_name: "UX Flow Architect"
+  short_description: "Audita journeys y estados operativos"
+  default_prompt: "Usa $ux-flow-architect para revisar un journey V3 completo."

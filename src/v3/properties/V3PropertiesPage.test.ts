@@ -14,6 +14,7 @@ describe('V3PropertiesPage', () => {
     expect(html).toContain('Apartamento Centro')
     expect(html).toContain('Ana Costa')
     expect(html).toContain('Calle Mayor 1')
+    expect(html).toContain('/assets/properties/apartment.webp')
     expect(html).not.toContain('VisualKpiCard')
   })
 

@@ -23,6 +23,24 @@ const expectedAgents = [
   'senior-fullstack-builder',
   'seo-local-structured-data',
   'supabase-guardian',
+  'brand-asset-guardian',
+  'design-quality-orchestrator',
+  'design-system-guardian',
+  'interaction-motion-director',
+  'property-media-curator',
+  'responsive-layout-inspector',
+  'state-edge-case-auditor',
+  'ux-flow-architect',
+  'visual-design-director',
+  'visual-regression-auditor',
+]
+const skillsDirectory = path.join(repositoryRoot, '.agents', 'skills')
+const expectedSkills = [
+  'brand-asset-guardian', 'bug-root-cause-investigator', 'design-quality-orchestrator', 'design-system-guardian',
+  'frontend-ux-accessibility', 'interaction-motion-director', 'pr-quality-gate',
+  'property-media-curator', 'project-continuation-agent', 'qa-e2e-specialist',
+  'responsive-layout-inspector', 'state-edge-case-auditor', 'ux-flow-architect',
+  'visual-design-director', 'visual-regression-auditor', 'performance-gsap-motion',
 ]
 const allowedWildcardTools = new Map(
   expectedAgents.map((name) => [
@@ -30,7 +48,7 @@ const allowedWildcardTools = new Map(
     new Set([
       'github/*',
       ...(
-        ['frontend-ux-accessibility', 'performance-gsap-motion', 'qa-e2e-specialist'].includes(name)
+        ['frontend-ux-accessibility', 'performance-gsap-motion', 'qa-e2e-specialist', 'responsive-layout-inspector', 'visual-regression-auditor'].includes(name)
           ? ['playwright/*']
           : []
       ),
@@ -114,7 +132,7 @@ async function main() {
   const unexpected = actualNames.filter((name) => !expectedAgents.includes(name))
   record(
     'exact-profile-set',
-    filenames.length === 15 && missing.length === 0 && unexpected.length === 0 ? 'PASS' : 'FAIL',
+    filenames.length === expectedAgents.length && missing.length === 0 && unexpected.length === 0 ? 'PASS' : 'FAIL',
     `found=${filenames.length}; missing=${missing.join(',') || 'none'}; unexpected=${unexpected.join(',') || 'none'}`,
   )
 
@@ -199,7 +217,7 @@ async function main() {
   if (manifest) {
     record(
       'manifest:identity',
-      manifest.schemaVersion === 1
+      manifest.schemaVersion === 2
         && manifest.project === 'Costa Clean Client Portal'
         && manifest.sourceRepository === 'projectmanagmentnotion-CostaClean/production-agents'
         && /^\d{4}-\d{2}-\d{2}$/.test(manifest.installedAt)
@@ -218,8 +236,18 @@ async function main() {
       `value=${String(manifest.manualInvocation)}`,
     )
     record(
+      'manifest:quality-extensions',
+      manifest.extensions?.qualitySystemVersion === '1.0.0'
+        && manifest.extensions?.skillSystem === '.agents/skills'
+        && manifest.extensions?.qualityMatrix === 'config/v3-quality-audit-matrix.json'
+        && manifest.extensions?.brandRegistry === 'src/v3/brand/brandAssets.ts'
+        && manifest.extensions?.propertyMediaRegistry === 'src/v3/properties/propertyMedia.ts'
+        ? 'PASS' : 'FAIL',
+      `extensions=${manifest.extensions ? 'present' : 'missing'}`,
+    )
+    record(
       'manifest:count',
-      manifest.totalAgents === 15 && Array.isArray(manifest.agents) && manifest.agents.length === 15 ? 'PASS' : 'FAIL',
+      manifest.totalAgents === expectedAgents.length && Array.isArray(manifest.agents) && manifest.agents.length === expectedAgents.length ? 'PASS' : 'FAIL',
       `declared=${manifest.totalAgents}; entries=${manifest.agents?.length ?? 'missing'}`,
     )
 
@@ -262,6 +290,30 @@ async function main() {
     for (const check of ['identity', 'source-commit', 'manual-invocation', 'count', 'names', 'file-alignment', 'secret-scan']) {
       record(`manifest:${check}`, 'NOT_EXECUTED', 'manifest unavailable')
     }
+  }
+
+  let skillNames
+  try {
+    skillNames = (await readdir(skillsDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .sort()
+    const missingSkills = expectedSkills.filter((name) => !skillNames.includes(name))
+    const unexpectedSkills = skillNames.filter((name) => !expectedSkills.includes(name))
+    record(
+      'skill-system:exact-set',
+      missingSkills.length === 0 && unexpectedSkills.length === 0 ? 'PASS' : 'FAIL',
+      `found=${skillNames.length}; missing=${missingSkills.join(',') || 'none'}; unexpected=${unexpectedSkills.join(',') || 'none'}`,
+    )
+    for (const skillName of expectedSkills) {
+      const skillPath = path.join(skillsDirectory, skillName)
+      const skillMarkdown = await readFile(path.join(skillPath, 'SKILL.md'), 'utf8')
+      const openaiYaml = await readFile(path.join(skillPath, 'agents', 'openai.yaml'), 'utf8')
+      record(`skill:${skillName}:files`, 'PASS', `SKILL.md and agents/openai.yaml present`)
+      record(`skill:${skillName}:secret-scan`, findSecretIndicators(`${skillMarkdown}\n${openaiYaml}`).length === 0 ? 'PASS' : 'FAIL', 'no secret indicators')
+    }
+  } catch (error) {
+    record('skill-system:availability', 'NOT_AVAILABLE', error.message)
   }
 
   const failed = results.filter((result) => ['FAIL', 'NOT_AVAILABLE', 'NOT_EXECUTED'].includes(result.status))

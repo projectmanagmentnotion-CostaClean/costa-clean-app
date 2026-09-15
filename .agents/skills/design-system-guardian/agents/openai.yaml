@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design System Guardian"
+  short_description: "Protege tokens y reglas visuales V3"
+  default_prompt: "Usa $design-system-guardian para auditar drift del sistema de diseño."

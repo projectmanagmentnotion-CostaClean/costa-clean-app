@@ -148,9 +148,33 @@ must read the mandatory documents above before acting.
 | public SEO | `seo-local-structured-data` |
 | release and deployment | `release-deployment-guardian` |
 | enterprise agent architecture | `enterprise-agent-architect` |
+| quality orchestration | `design-quality-orchestrator` |
+| visual direction | `visual-design-director` |
+| design system | `design-system-guardian` |
+| UX flow architecture | `ux-flow-architect` |
+| responsive inspection | `responsive-layout-inspector` |
+| visual regression | `visual-regression-auditor` |
+| edge-case states | `state-edge-case-auditor` |
+| brand assets | `brand-asset-guardian` |
+| property media | `property-media-curator` |
+| interaction and motion | `interaction-motion-director` |
 
 - No agent replaces or weakens `AGENTS.md`.
 - Invocation remains manual; automatic model invocation is disabled.
 - The implementer never approves its own work.
 - Production access is prohibited by default.
 - Remote Supabase work requires a separate exact human authorization gate.
+
+## Exhaustive Quality Review Order
+
+For V3 quality or release gates, invoke the profiles manually in this order and keep the evidence separate:
+
+1. `design-quality-orchestrator`: establish scope, matrix, fixtures, non-goals and stop conditions.
+2. `design-system-guardian` and `brand-asset-guardian`: verify tokens, iconography, brand primitives, provenance and legacy boundaries.
+3. `visual-design-director` and `ux-flow-architect`: review hierarchy, density, decisions, navigation, back, deep links and complete states.
+4. `responsive-layout-inspector` and `visual-regression-auditor`: measure real geometry and compare equivalent states at required viewports.
+5. `state-edge-case-auditor` and `qa-e2e-specialist`: exercise empty/loading/error/permission/duplicate/recovery paths and exact cleanup.
+6. `property-media-curator` when property media is in scope, then `interaction-motion-director`, `frontend-ux-accessibility` and `performance-gsap-motion`.
+7. `bug-root-cause-investigator` for reproducible failures and `pr-quality-gate` as an independent final review.
+
+Every profile must read this file and the mandatory documents before acting. A missing baseline, unexecuted check, infrastructure limitation or absent Stitch evidence must remain explicit; it is never converted into PASS by assumption.

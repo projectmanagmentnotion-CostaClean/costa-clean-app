@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Regression Auditor"
+  short_description: "Compara regresiones visuales V3"
+  default_prompt: "Usa $visual-regression-auditor para comparar estados visuales sin ocultar diferencias."

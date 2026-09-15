@@ -1,0 +1,4 @@
+interface:
+  display_name: "Visual Design Director"
+  short_description: "Audita fidelidad visual y jerarquía V3"
+  default_prompt: "Usa $visual-design-director para auditar una superficie V3 contra Stitch y sus tokens."

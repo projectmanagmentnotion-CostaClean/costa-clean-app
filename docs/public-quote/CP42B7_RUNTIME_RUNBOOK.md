@@ -1,10 +1,10 @@
 # CP-4.2B.7 Runtime Runbook
 
-Status: `PARTIAL_QA_CERTIFICATION`
+Status: `QA_CERTIFIED`
 
-This runbook prepares, but does not execute, the final full-funnel runtime
-certification. The exact remaining blocker is
-`OWNER_AUTHENTICATED_QA_SIGNER_REQUIRED` / `HMAC_SIGNER_SECRET_UNAVAILABLE`.
+The final full-funnel QA runtime certification completed on `2026-09-16`.
+The private report is present locally, remains Git-ignored, and records only
+safe assertion data. It is not source-controlled.
 
 ## Safety boundary
 
@@ -67,7 +67,23 @@ single synthetic campaign is expected to be suppressed by the owner-approved
 `k=3` threshold; service, city, week/month and recurrence remain operational
 internal dimensions.
 
-## Owner return sequence
+## Certified execution
+
+- The real local WEB `/api/quote` -> HMAC -> QA Edge -> RPC path passed.
+- The QA target was `kpvvydthlxupjjqqdpxy`; production writes were `0`.
+- The public response was minimal, and the RES-C assertion passed: 2
+  operators, 3 elapsed hours, 6 operator-hours, 120 EUR internal base and 60
+  EUR internal labor cost in restricted QA data only.
+- Consent separation, advertising click-ID gating, audit persistence,
+  idempotency, B.6 intelligence loading and the owner-approved `k=3`
+  suppression all passed.
+- Canonical business entities had zero delta. The exact synthetic fixture was
+  removed by the guarded QA cleanup RPC and the baseline counts were restored.
+- The QA migration `cp42b7_guarded_runtime_fixture_cleanup` is applied. Its
+  append-only audit trigger remains active; the cleanup RPC is restricted to
+  the exact synthetic fixture guard set.
+
+## Controlled rerun procedure
 
 1. Authenticate Supabase normally and confirm the project is
    `kpvvydthlxupjjqqdpxy`.
@@ -77,10 +93,10 @@ internal dimensions.
 4. Run `npm run qa:cp42b7`.
 5. Review `qa-reports/private/cp42b7-runtime.json` for safe PASS/FAIL data.
 6. Remove the ephemeral signer and QA admin key from the local environment.
-7. If every assertion passes, update B.7 status to `QA_CERTIFIED`; otherwise
-   preserve the exact blocker.
+7. Preserve `QA_CERTIFIED` only when a rerun also passes every assertion;
+   otherwise record the exact new blocker.
 
 SiteGround remains separate:
 `SITEGROUND=BLOCKED_EXTERNAL_INFRASTRUCTURE` and
-`SITEGROUND_QA_SIGNER_SYNC_REQUIRED=YES`. Do not start CP-4.3 until B.7 is
-actually `QA_CERTIFIED`.
+`SITEGROUND_QA_SIGNER_SYNC_REQUIRED=YES`. This is a separate deployment debt
+and does not invalidate the certified local/QA funnel.

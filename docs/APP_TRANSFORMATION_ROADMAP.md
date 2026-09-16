@@ -37,16 +37,21 @@ Evidence: [CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md](public-web/CP4_1_PUB
   SiteGround change or external advertising activation was performed.
 - Evidence: [CP42B6_DEMAND_INTELLIGENCE.md](public-quote/CP42B6_DEMAND_INTELLIGENCE.md).
 
-## CP-4.2B.7 Full Funnel Certification - 2026-09-15
+## CP-4.2B.7 Full Funnel Certification - 2026-09-16
 
-- Status: `PARTIAL_QA_CERTIFICATION`.
+- Status: `QA_CERTIFIED` on `2026-09-16`; CP-4.2B is `QA_CERTIFIED` and
+  CP-4.3 is `READY_TO_START`.
 - The owner-approved `k=3` threshold is recorded and tested locally.
 - QA security/read evidence remains valid: intake tables use RLS and FORCE RLS,
   and the quote submission RPC is service-role-only.
-- Full WEB `/api/quote` -> HMAC -> QA Edge -> RPC runtime certification was not
-  executed because the local WEB runtime has no safe QA signer configured.
-- Exact blocker: `HMAC_SIGNER_SECRET_UNAVAILABLE`. No signer was displayed,
-  regenerated, or committed. No new QA schema or remote deployment was made.
+- The real WEB `/api/quote` -> HMAC -> QA Edge -> RPC runtime path passed with
+  a minimal public response, exact restricted RES-C assertion, consent and
+  attribution isolation, idempotency, BI `k=3` suppression, zero canonical
+  business-entity delta, guarded cleanup and restored baseline.
+- The QA-only guarded cleanup migration is applied. Production writes remain
+  `0`; no CRM redesign, SiteGround, DNS or production changes were made.
+- SiteGround remains a separate external-infrastructure debt and does not
+  invalidate the local/QA certification.
 - Evidence: [CP42B7_FULL_FUNNEL_CERTIFICATION.md](public-quote/CP42B7_FULL_FUNNEL_CERTIFICATION.md).
 
 ## Cross-Cutting UI Scaling Rule

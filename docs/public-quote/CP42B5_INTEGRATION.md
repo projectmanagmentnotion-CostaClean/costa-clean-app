@@ -156,8 +156,7 @@ SiteGround, production, DNS or email changes were made.
 
 ## CP-4.2B.7 certification state
 
-The full funnel certification is `PARTIAL_QA_CERTIFICATION`. The existing QA
-RPC/database evidence remains valid, but a new web-runtime submission was not
-executed because no safe `PUBLIC_LEAD_INTAKE_SECRET` is available in the local
-WEB runtime. No secret was recorded, displayed, regenerated or committed. The
-exact blocker is `HMAC_SIGNER_SECRET_UNAVAILABLE`.
+The full funnel certification is `QA_CERTIFIED`. The owner executed the real
+local WEB -> HMAC -> QA Edge -> RPC path, with exact synthetic cleanup and
+baseline restoration. The private runtime report remains Git-ignored; no
+secret, service-role key or synthetic contact identity was committed.

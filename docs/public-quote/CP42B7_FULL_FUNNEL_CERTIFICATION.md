@@ -1,7 +1,7 @@
 # CP-4.2B.7 Full Funnel Certification
 
-Status: `PARTIAL_QA_CERTIFICATION`
-Date: `2026-09-15`
+Status: `QA_CERTIFIED`
+Date: `2026-09-16`
 
 ## Scope
 
@@ -44,24 +44,26 @@ reporting are separate internal operational views.
 - B.7 local tests cover the owner-approved threshold and the Tier-A/manual
   aggregate branches.
 
-### Not certified in this run
+### Runtime certification
 
-The real local WEB runtime request could not be executed because no safe
-`PUBLIC_LEAD_INTAKE_SECRET` is available in the WEB runtime configuration.
-Only `.env.example` exists and it contains no secret. The signer was not
-regenerated or changed, and no secret was read from, printed, or written to
-tracked files.
+The owner executed the real local WEB runtime path in QA. The private,
+Git-ignored report records `PASS` for the exact QA project
+`kpvvydthlxupjjqqdpxy` and confirms the full `/api/quote` -> HMAC -> Edge ->
+RPC path.
 
-Therefore the following remain `NOT_EXECUTED` rather than PASS:
-
-- `/api/quote` -> real HMAC -> QA Edge -> RPC runtime chain;
-- brand-new B.7 synthetic runtime fixture and database verification;
-- real WEB idempotent replay;
-- runtime cleanup and baseline restoration for that B.7 fixture;
-- runtime BI loading while the synthetic fixture exists.
-
-The exact blocker is `HMAC_SIGNER_SECRET_UNAVAILABLE` for the local WEB
-runtime. This gate must not be marked `QA_CERTIFIED` until that path is run.
+- The public response was minimal and did not expose restricted identifiers or
+  estimate data.
+- RES-C persisted the restricted expected values: 2 operators, 3 elapsed
+  hours, 6 operator-hours, 120 EUR internal base and 60 EUR labor cost.
+- The request persisted one lead, one intake, one quote draft seed, four
+  consent records, one attribution record and the expected audit lifecycle.
+- Consent separation, attribution gating, idempotent replay, B.6 intelligence
+  classification and owner-approved `k=3` campaign suppression passed.
+- Clients, properties, jobs, quotes, invoices and payments had zero delta.
+- `cleanup_cp42b7_runtime_fixture_qa` removed only the exact synthetic
+  fixture, restored baseline counts and preserved the append-only audit
+  trigger.
+- Production writes remained `0`.
 
 ## Synthetic matrix prepared
 
@@ -89,7 +91,5 @@ SiteGround change was attempted in this gate.
 
 ## Next gate action
 
-Provide the already-approved QA signer to the local WEB runtime through a
-private, ignored environment mechanism, without committing or displaying it.
-Then run the real B.7 synthetic path and record the exact counts, receipt,
-cleanup and restored baseline before changing this status.
+`CP-4.2B` is `QA_CERTIFIED`. `CP-4.3` is `READY_TO_START` but is not
+implemented by this certification closeout.

@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
+import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import {
+  CLEANUP_RPC_NAME,
   QA_INTAKE_ENDPOINT,
   QA_PROJECT_REF,
   assertBaselineRestored,
   assertNoForbiddenReportContent,
   assertPublicResponseSafe,
   buildFixture,
+  cleanupFixture,
   startWebRuntime,
   validatePreflight,
 } from './certify-cp42b7.mjs'
@@ -116,6 +119,52 @@ describe('CP42B7 Windows web runtime', () => {
 })
 
 describe('CP42B7 runtime harness safety assertions', () => {
+  it('cleans fixtures only through the guarded RPC with exact identifiers', async () => {
+    let request
+    const result = await cleanupFixture('qa-admin-placeholder', '11111111-1111-4111-8111-111111111117', 'LEAD-CP42B-test', async (url, options) => {
+      request = { url, options }
+      return { ok: true, json: async () => ({ ok: true, submission_deleted: true, lead_deleted: true }) }
+    })
+
+    assert.equal(result.status, 'cleaned')
+    assert.equal(request.url, `https://${QA_PROJECT_REF}.supabase.co/rest/v1/rpc/${CLEANUP_RPC_NAME}`)
+    assert.equal(request.options.method, 'POST')
+    assert.deepEqual(JSON.parse(request.options.body), {
+      p_submission_id: '11111111-1111-4111-8111-111111111117',
+      p_lead_id: 'LEAD-CP42B-test',
+    })
+    assert.doesNotMatch(request.options.body, /table|delete|audit/iu)
+  })
+
+  it('fails closed when the guarded cleanup RPC fails', async () => {
+    await assert.rejects(
+      cleanupFixture('qa-admin-placeholder', '11111111-1111-4111-8111-111111111117', 'LEAD-CP42B-test', async () => ({ ok: false, json: async () => ({}) })),
+      /QA_CLEANUP_RPC_FAILED/,
+    )
+  })
+
+  it('keeps the append-only trigger and verifies migration privileges and guards', async () => {
+    const [migration, runner, intakeMigration] = await Promise.all([
+      readFile('supabase/migrations/20260916101722_cp42b7_guarded_runtime_fixture_cleanup.sql', 'utf8'),
+      readFile('scripts/qa/certify-cp42b7.mjs', 'utf8'),
+      readFile('supabase/migrations/20260915174434_cp42b5_public_quote_lead_seed_qa.sql', 'utf8'),
+    ])
+    assert.match(migration, /security definer/i)
+    assert.match(migration, /set search_path = pg_catalog/i)
+    assert.match(migration, /owner to postgres/i)
+    assert.match(migration, /revoke all on function .* from public, anon, authenticated, service_role/is)
+    assert.match(migration, /grant execute on function .* to service_role/is)
+    for (const guard of ['QA CP42B7 Runtime', 'qa\.cp42b7\.runtime@qa\.invalid', '\\+34999999999', 'qa_b7_runtime', 'internal_qa', 'cp42b7_certification', 'cp42b-v2', 'quote_draft_seed_v1', 'costa_clean_quote_intelligence@1\.0\.0', 'estimate_v1']) {
+      assert.match(migration, new RegExp(guard))
+    }
+    assert.match(migration, /CP42B7_QA_CLEANUP_GUARD_FAILED/)
+    assert.match(migration, /delete from public\.public_quote_intake_audit/i)
+    assert.doesNotMatch(migration, /drop trigger|disable trigger|prevent_public_quote_audit_mutation/is)
+    assert.doesNotMatch(runner, /method:\s*'DELETE'/)
+    assert.match(intakeMigration, /create trigger public_quote_intake_audit_append_only/i)
+    assert.match(intakeMigration, /current_user <> 'postgres'/i)
+  })
+
   it('builds a fresh RES-C synthetic fixture without click IDs', () => {
     const fixture = buildFixture('11111111-1111-4111-8111-111111111117')
     assert.equal(fixture.service, 'residential')

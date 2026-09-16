@@ -11,6 +11,7 @@ export const QA_SUPABASE_URL = `https://${QA_PROJECT_REF}.supabase.co`
 export const QA_INTAKE_ENDPOINT = `${QA_SUPABASE_URL}/functions/v1/public-lead-intake`
 export const DEFAULT_WEB_URL = 'http://127.0.0.1:3217'
 export const REPORT_PATH = 'qa-reports/private/cp42b7-runtime.json'
+export const CLEANUP_RPC_NAME = 'cleanup_cp42b7_runtime_fixture_qa'
 export const EXPECTED_CONSENTS = [
   ['necessary_privacy', true],
   ['marketing_contact', false],
@@ -228,31 +229,24 @@ async function rows(adminKey, query) {
   return data
 }
 
-async function deleteExact(adminKey, table, filter) {
+export async function cleanupFixture(adminKey, submissionId, leadId, request = fetch) {
+  if (!submissionId || !leadId) throw failure('QA_CLEANUP_RPC_FAILED')
+
   let response
+  let data
   try {
-    response = await fetch(restUrl(`${table}?${filter}`), {
-      method: 'DELETE',
-      headers: { ...jsonHeaders(adminKey), Prefer: 'return=minimal' },
+    response = await request(restUrl(`rpc/${CLEANUP_RPC_NAME}`), {
+      method: 'POST',
+      headers: jsonHeaders(adminKey),
+      body: JSON.stringify({ p_submission_id: submissionId, p_lead_id: leadId }),
     })
+    data = await response.json().catch(() => null)
   } catch {
-    throw failure(`QA_CLEANUP_FAILED:${table}`)
+    throw failure('QA_CLEANUP_RPC_FAILED')
   }
-  if (!response.ok) throw failure(`QA_CLEANUP_FAILED:${table}`)
-}
-
-async function cleanupFixture(adminKey, submissionId, leadId) {
-  const encodedSubmission = encodeURIComponent(submissionId)
-  const intake = await rows(adminKey, `public_lead_intake_requests?select=lead_id&submission_id=eq.${encodedSubmission}`)
-  const exactLeadId = leadId || intake[0]?.lead_id
-  if (!exactLeadId) return { status: 'no_fixture_found' }
-
-  await deleteExact(adminKey, 'public_quote_intake_audit', `submission_id=eq.${encodedSubmission}`)
-  await deleteExact(adminKey, 'public_quote_draft_seeds', `submission_id=eq.${encodedSubmission}`)
-  await deleteExact(adminKey, 'public_quote_intake_attribution', `submission_id=eq.${encodedSubmission}`)
-  await deleteExact(adminKey, 'public_quote_intake_consents', `submission_id=eq.${encodedSubmission}`)
-  await deleteExact(adminKey, 'public_lead_intake_requests', `submission_id=eq.${encodedSubmission}`)
-  await deleteExact(adminKey, 'leads', `id=eq.${encodeURIComponent(exactLeadId)}`)
+  if (!response.ok || data?.ok !== true || data?.submission_deleted !== true || data?.lead_deleted !== true) {
+    throw failure('QA_CLEANUP_RPC_FAILED')
+  }
   return { status: 'cleaned' }
 }
 

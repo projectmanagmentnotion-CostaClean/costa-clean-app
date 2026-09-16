@@ -10,7 +10,10 @@ The agent audits a completed sprint output, verifies its claims against the repo
 - Execution runs use `workspace-write`; approval and sandbox bypass flags are never used.
 - One launch gate enables the bounded loop: `PROJECT_CONTINUATION_ALLOW_EXEC=1`.
 - The loop stops on `complete`, `blocked`, `stop`, suspected secrets, unsafe prompt content, Codex failure, a fresh approval requirement, or the configured iteration limit.
-- Automatic prompts cannot commit, push, deploy, emit invoices, create payments, mutate production schema/auth/fiscal state, or send external messages.
+- Automatic prompts cannot commit, push, switch branches, deploy, emit invoices, create payments, mutate production schema/auth/fiscal state, or send external messages.
+- The workspace-write executor always requires a clean initial worktree. Publication is disabled by default; when a separate explicit publication capability is enabled, only the outer runner may publish from a verified safe local feature branch.
+- The runner follows this fixed lifecycle: planning review → executor → changed-file secret scan → tests/agent validation/lint/build/diff checks (including an isolated temporary-index check of all reviewed candidates) → independent read-only post-execution review → branch and reviewed-set revalidation → stage/commit/push.
+- Any missing, failed, malformed, timed-out, or unsafe gate blocks publication without staging, commit, push, stash, reset, or cleanup.
 - Artifacts live under `.project-agent/private/` and are ignored by Git.
 
 ## Usage

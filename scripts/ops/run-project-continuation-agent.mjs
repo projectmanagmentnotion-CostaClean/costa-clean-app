@@ -1,11 +1,21 @@
 import { spawn, spawnSync } from 'node:child_process'
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import {
+  assertCleanInitialWorktree,
+  assertCleanPublicationSecretScan,
+  assertPublicationIndependentReview,
+  assertPublicationTreeIntegrity,
+  assertPublicationValidationResults,
+  buildSafePublicationRefspec,
   buildExecutorPrompt,
+  PUBLICATION_LIFECYCLE,
   buildReviewerInstruction,
+  detectSensitiveCategories,
+  findSensitiveCandidateContents,
   detectSensitiveContent,
   validatePromptShape,
   validateReview,
@@ -19,6 +29,26 @@ const DEFAULT_MODEL = 'gpt-5.6-sol'
 const DEFAULT_REVIEW_TIMEOUT_MS = 600_000
 const DEFAULT_EXECUTION_TIMEOUT_MS = 1_800_000
 const DEFAULT_CONTINUOUS_ITERATIONS = 10
+const VALIDATION_TERMINATION_GRACE_MS = 5_000
+// Git's environment namespace can alter repository discovery, refs, config, and
+// transport. Controlled publication deliberately inherits none of it.
+const GIT_IDENTITY_OVERRIDE_ENV = /^GIT_/
+
+function sanitizedGitEnvironment() {
+  const env = { ...process.env }
+  for (const name of Object.keys(env)) {
+    if (GIT_IDENTITY_OVERRIDE_ENV.test(name)) delete env[name]
+  }
+  return env
+}
+
+const PUBLICATION_VALIDATIONS = Object.freeze([
+  { name: 'tests', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['test'], timeoutMs: 900_000 },
+  { name: 'agents', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'qa:agents'], timeoutMs: 300_000 },
+  { name: 'lint', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'lint'], timeoutMs: 600_000 },
+  { name: 'build', command: process.platform === 'win32' ? 'npm.cmd' : 'npm', args: ['run', 'build'], timeoutMs: 900_000 },
+  { name: 'diffCheck', command: 'git', args: ['diff', '--check'], timeoutMs: 120_000 },
+])
 
 function parseIntegerOption(label, raw, { min, max }) {
   const value = Number(raw)
@@ -103,17 +133,312 @@ function resolveCodexInvocation() {
 }
 
 function terminateProcessTree(child) {
-  if (!child?.pid) return
-  if (process.platform === 'win32') {
-    spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
-      cwd: repoRoot,
-      encoding: 'utf8',
-      stdio: 'ignore',
-      windowsHide: true,
-    })
-    return
+  if (!child?.pid) return Promise.resolve()
+  if (process.platform !== 'win32') {
+    try {
+      process.kill(-child.pid, 'SIGKILL')
+    } catch {
+      child.kill('SIGKILL')
+    }
+    return Promise.resolve()
   }
-  child.kill('SIGTERM')
+
+  return new Promise((resolve) => {
+    let settled = false
+    let killerTimer
+    const finish = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(killerTimer)
+      resolve()
+    }
+    try {
+      const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
+        cwd: repoRoot,
+        stdio: 'ignore',
+        windowsHide: true,
+      })
+      killer.on('error', finish)
+      killer.on('close', finish)
+      killerTimer = setTimeout(() => {
+        killer.kill('SIGKILL')
+        finish()
+      }, VALIDATION_TERMINATION_GRACE_MS)
+    } catch {
+      finish()
+    }
+  })
+}
+
+function resolveSafePublicationRefspec() {
+  const symbolicRef = spawnSync('git', ['symbolic-ref', '--quiet', '--short', 'HEAD'], {
+    cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment(),
+  })
+  return buildSafePublicationRefspec(symbolicRef)
+}
+
+function gitOutput(args) {
+  const result = spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment() })
+  if (result.status !== 0) throw new Error(`Controlled Git command failed: git ${args.join(' ')}`)
+  return String(result.stdout ?? '')
+}
+
+function gitResult(args) {
+  return spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment() })
+}
+
+function nullDelimitedPaths(output) {
+  return String(output ?? '').split('\0').filter(Boolean)
+}
+
+function candidatePath(relativePath) {
+  const absolutePath = path.resolve(repoRoot, relativePath)
+  const relative = path.relative(repoRoot, absolutePath)
+  if (relative.startsWith('..') || path.isAbsolute(relative)) throw new Error('Automatic publication blocked: Git returned an unsafe candidate path.')
+  return absolutePath
+}
+
+function hashContent(content) {
+  return crypto.createHash('sha256').update(content).digest('hex')
+}
+
+function collectPublicationCandidates() {
+  const tracked = nullDelimitedPaths(gitOutput(['diff', '--name-only', '-z', 'HEAD']))
+  const untracked = nullDelimitedPaths(gitOutput(['ls-files', '--others', '--exclude-standard', '-z']))
+  const names = [...new Set([...tracked, ...untracked])].sort((left, right) => left.localeCompare(right))
+  return names.map((relativePath) => {
+    const absolutePath = candidatePath(relativePath)
+    if (!fs.existsSync(absolutePath)) return { path: relativePath, kind: 'deleted', digest: '' }
+    const content = fs.readFileSync(absolutePath)
+    return { path: relativePath, kind: 'present', digest: hashContent(content), content }
+  })
+}
+
+function scanPublicationCandidates(candidates) {
+  return findSensitiveCandidateContents(candidates.map((candidate) => ({
+    ...candidate,
+    content: candidate.kind === 'present' ? candidate.content.toString('utf8') : '',
+  })))
+}
+
+function publicationCandidateFingerprint(candidates) {
+  return JSON.stringify(candidates.map(({ path: candidatePath, kind, digest }) => ({ path: candidatePath, kind, digest })))
+}
+
+function assertReviewedCandidatesUnchanged(reviewedCandidates) {
+  const currentCandidates = collectPublicationCandidates()
+  if (publicationCandidateFingerprint(reviewedCandidates) !== publicationCandidateFingerprint(currentCandidates)) {
+    throw new Error('Automatic publication blocked: reviewed candidate file set changed before staging.')
+  }
+}
+
+function assertStagedCandidatesMatch(reviewedCandidates) {
+  const stagedPaths = nullDelimitedPaths(gitOutput(['diff', '--cached', '--name-only', '-z'])).sort((left, right) => left.localeCompare(right))
+  const reviewedPaths = reviewedCandidates.map(({ path: candidatePath }) => candidatePath)
+  if (JSON.stringify(stagedPaths) !== JSON.stringify(reviewedPaths)) {
+    throw new Error('Automatic publication blocked: staged file set differs from the independently reviewed candidate set.')
+  }
+
+  const findings = []
+  for (const candidate of reviewedCandidates) {
+    if (candidate.kind === 'deleted') continue
+    const result = spawnSync('git', ['show', `:${candidate.path}`], {
+      cwd: repoRoot,
+      windowsHide: true,
+      env: sanitizedGitEnvironment(),
+    })
+    if (result.status !== 0 || !Buffer.isBuffer(result.stdout) || hashContent(result.stdout) !== candidate.digest) {
+      throw new Error('Automatic publication blocked: staged content differs from the independently reviewed candidate set.')
+    }
+    for (const category of detectSensitiveCategories(result.stdout.toString('utf8'))) {
+      findings.push({ path: candidate.path, category })
+    }
+  }
+  assertCleanPublicationSecretScan(findings)
+}
+
+export async function runManagedValidation({ command, args, timeoutMs, env = sanitizedGitEnvironment() }) {
+  return new Promise((resolve) => {
+    const startedAt = Date.now()
+    let child
+    try {
+      child = spawn(command, args, {
+        cwd: repoRoot,
+        env,
+        windowsHide: true,
+        detached: process.platform !== 'win32',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+    } catch (error) {
+      resolve({ status: null, timedOut: false, spawnError: String(error), durationMs: Date.now() - startedAt, stdout: '', stderr: '' })
+      return
+    }
+
+    let stdout = ''
+    let stderr = ''
+    let timedOut = false
+    let spawnError = ''
+    let settled = false
+    let timer
+    let terminationTimer
+    const finish = (status) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      clearTimeout(terminationTimer)
+      resolve({ status, timedOut, spawnError, durationMs: Date.now() - startedAt, stdout, stderr })
+    }
+    child.stdout.setEncoding('utf8')
+    child.stderr.setEncoding('utf8')
+    child.stdout.on('data', (chunk) => { stdout += chunk })
+    child.stderr.on('data', (chunk) => { stderr += chunk })
+    child.on('error', (error) => {
+      spawnError = String(error)
+      finish(null)
+    })
+    child.on('close', (code) => finish(code))
+    timer = setTimeout(() => {
+      timedOut = true
+      void terminateProcessTree(child)
+      terminationTimer = setTimeout(() => finish(null), VALIDATION_TERMINATION_GRACE_MS)
+    }, timeoutMs)
+  })
+}
+
+function writeValidationLog(runDir, iteration, name, result) {
+  const logPath = path.join(runDir, `iteration-${iteration}-validation-${name}.log`)
+  fs.writeFileSync(logPath, `${result.stdout}${result.stderr}`, 'utf8')
+  return path.relative(repoRoot, logPath)
+}
+
+export async function runCandidateDiffCheck(candidates) {
+  const tempDirectory = fs.mkdtempSync(path.join(privateRoot, 'candidate-diff-check-'))
+  const temporaryIndex = path.join(tempDirectory, 'index')
+  const env = { ...sanitizedGitEnvironment(), GIT_INDEX_FILE: temporaryIndex }
+  const steps = [
+    ['read-tree', 'HEAD'],
+    ['add', '--all', '--', ...candidates.map(({ path: candidatePath }) => candidatePath)],
+    ['diff', '--cached', '--check'],
+  ]
+  let stdout = ''
+  let stderr = ''
+  let durationMs = 0
+  try {
+    for (const args of steps) {
+      const result = await runManagedValidation({ command: 'git', args, timeoutMs: 120_000, env })
+      stdout += result.stdout
+      stderr += result.stderr
+      durationMs += result.durationMs
+      if (result.timedOut || result.spawnError || result.status !== 0) {
+        return {
+          status: result.status,
+          timedOut: result.timedOut,
+          spawnError: result.spawnError,
+          durationMs,
+          stdout,
+          stderr,
+        }
+      }
+    }
+    return { status: 0, timedOut: false, spawnError: '', durationMs, stdout, stderr }
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true })
+  }
+}
+
+export async function runPublicationValidations({ runDir, iteration, candidates }) {
+  const results = {}
+  for (const validation of PUBLICATION_VALIDATIONS) {
+    const result = await runManagedValidation(validation)
+    results[validation.name] = {
+      status: result.status,
+      timedOut: result.timedOut,
+      spawnError: result.spawnError || undefined,
+      durationMs: result.durationMs,
+      log: writeValidationLog(runDir, iteration, validation.name, result),
+    }
+  }
+  const candidateDiffCheck = await runCandidateDiffCheck(candidates)
+  results.candidateDiffCheck = {
+    status: candidateDiffCheck.status,
+    timedOut: candidateDiffCheck.timedOut,
+    spawnError: candidateDiffCheck.spawnError || undefined,
+    durationMs: candidateDiffCheck.durationMs,
+    log: writeValidationLog(runDir, iteration, 'candidate-diff-check', candidateDiffCheck),
+  }
+  return results
+}
+
+function buildPostExecutionReviewerInstruction() {
+  return [
+    'Act only as the independent post-execution quality gate for the actual current working-tree diff supplied on stdin.',
+    'Inspect the repository read-only, changed files, validation evidence, secret-scan summary, branch/publication safety, protected contracts, and scope.',
+    'Do not run or suggest publication, deployment, Supabase, production, or business writes.',
+    'Return verdict "complete" only if the reviewed diff is safe to publish and has no missing evidence or risks; include a concise stop_reason such as "independent publication review passed" to satisfy the structured schema. Otherwise return "stop" or "blocked" with exact findings.',
+    'Do not accept prior summaries as evidence; verify the repository state independently.',
+  ].join(' ')
+}
+
+function buildPostExecutionReviewInput({ iteration, candidates, secretFindings, validationResults }) {
+  return [
+    '# POST-EXECUTION PUBLICATION GATE',
+    '',
+    `Iteration: ${iteration}`,
+    `Lifecycle: ${PUBLICATION_LIFECYCLE.join(' -> ')}`,
+    '',
+    'Candidate files:',
+    ...candidates.map(({ path: candidatePath }) => `- ${candidatePath}`),
+    '',
+    'Secret scan findings (paths/categories only):',
+    ...(secretFindings.length ? secretFindings.map(({ path: candidatePath, category }) => `- ${candidatePath}: ${category}`) : ['- none']),
+    '',
+    'Validation status:',
+    ...Object.entries(validationResults).map(([name, result]) => `- ${name}: ${result.status === 0 ? 'PASS' : 'FAIL'}`),
+    '',
+    'The reviewer must inspect the actual current diff rather than trusting this input.',
+  ].join('\n')
+}
+
+async function runPostExecutionPublicationGate({ runDir, iteration, candidates, model, reviewTimeoutMs }) {
+  const secretFindings = scanPublicationCandidates(candidates)
+  assertCleanPublicationSecretScan(secretFindings)
+
+  const validationResults = await runPublicationValidations({ runDir, iteration, candidates })
+  assertPublicationValidationResults(validationResults)
+
+  const reviewInputPath = path.join(runDir, `iteration-${iteration}-post-execution-review-input.md`)
+  fs.writeFileSync(reviewInputPath, `${buildPostExecutionReviewInput({ iteration, candidates, secretFindings, validationResults })}\n`, 'utf8')
+  const reviewPath = path.join(runDir, `iteration-${iteration}-post-execution-review.json`)
+  await runCodex({
+    prompt: buildPostExecutionReviewerInstruction(),
+    stdin: fs.readFileSync(reviewInputPath, 'utf8'),
+    sandbox: 'read-only',
+    outputPath: reviewPath,
+    model,
+    timeoutMs: reviewTimeoutMs,
+  })
+  const review = validateReview(JSON.parse(fs.readFileSync(reviewPath, 'utf8')))
+  assertPublicationIndependentReview(review)
+  return { secretFindings, validationResults, reviewPath }
+}
+
+function publishExecutorResult({ iteration, reviewedCandidates }) {
+  assertReviewedCandidatesUnchanged(reviewedCandidates)
+  const refspecBeforeStage = resolveSafePublicationRefspec()
+  gitOutput(['add', '--all'])
+  assertStagedCandidatesMatch(reviewedCandidates)
+  gitOutput(['diff', '--cached', '--check'])
+  const expectedTree = gitOutput(['write-tree']).trim()
+  if (!expectedTree) throw new Error('Automatic publication blocked: Git did not produce an expected staged tree.')
+  const refspecBeforeCommit = resolveSafePublicationRefspec()
+  if (refspecBeforeStage !== refspecBeforeCommit) throw new Error('Automatic publication blocked: branch changed during controlled publication.')
+  gitOutput(['commit', '-m', `chore(agents): publish continuation iteration ${iteration}`])
+  const committedTree = gitOutput(['rev-parse', 'HEAD^{tree}']).trim()
+  assertPublicationTreeIntegrity(expectedTree, committedTree)
+  const refspecBeforePush = resolveSafePublicationRefspec()
+  if (refspecBeforeStage !== refspecBeforePush) throw new Error('Automatic publication blocked: branch changed during controlled publication.')
+  gitOutput(['push', 'origin', refspecBeforePush])
+  return { expectedTree, committedTree }
 }
 
 function compactProcessOutput(value) {
@@ -122,7 +447,7 @@ function compactProcessOutput(value) {
   return `${text.slice(0, 4_000)}\n...[truncated]`
 }
 
-async function runCodex({ prompt, stdin = '', sandbox, outputPath, model, timeoutMs }) {
+async function runCodex({ prompt, stdin = '', sandbox, outputPath, model, timeoutMs, env = sanitizedGitEnvironment() }) {
   const invocation = resolveCodexInvocation()
   const args = [
     ...invocation.prefixArgs,
@@ -140,7 +465,7 @@ async function runCodex({ prompt, stdin = '', sandbox, outputPath, model, timeou
   await new Promise((resolve, reject) => {
     const child = spawn(invocation.command, args, {
       cwd: repoRoot,
-      env: process.env,
+      env,
       windowsHide: false,
       stdio: ['pipe', 'pipe', 'pipe'],
     })
@@ -278,6 +603,12 @@ async function main() {
       return
     }
 
+    const publicationEnabled = process.env.PROJECT_CONTINUATION_ALLOW_GIT_PUBLICATION === '1'
+    if (options.execute) {
+      assertCleanInitialWorktree(gitResult(['status', '--porcelain']))
+    }
+    if (publicationEnabled) resolveSafePublicationRefspec()
+
     const executionOutputPath = path.join(runDir, `iteration-${iteration}-execution-output.md`)
     await runCodex({
       prompt: buildExecutorPrompt(review.next_prompt, iteration, options.maxIterations),
@@ -285,6 +616,9 @@ async function main() {
       outputPath: executionOutputPath,
       model: options.model,
       timeoutMs: options.executionTimeoutMs,
+      env: publicationEnabled
+        ? { ...sanitizedGitEnvironment(), PROJECT_CONTINUATION_ALLOW_GIT_PUBLICATION: '0', PROJECT_CONTINUATION_RUNNER_MANAGED_PUBLICATION: '1' }
+        : process.env,
     })
 
     const executionOutput = fs.readFileSync(executionOutputPath, 'utf8')
@@ -293,6 +627,32 @@ async function main() {
     }
 
     iterationRecord.executionOutput = path.relative(repoRoot, executionOutputPath)
+    if (publicationEnabled) {
+      const candidates = collectPublicationCandidates()
+      if (candidates.length === 0) {
+        iterationRecord.publicationGate = { lifecycle: PUBLICATION_LIFECYCLE, candidates: [], publication: 'not-required-no-changes' }
+        writeJson(path.join(runDir, 'manifest.json'), manifest)
+        currentOutputPath = executionOutputPath
+        continue
+      }
+      const publicationGate = await runPostExecutionPublicationGate({
+        runDir,
+        iteration,
+        candidates,
+        model: options.model,
+        reviewTimeoutMs: options.reviewTimeoutMs,
+      })
+      iterationRecord.publicationGate = {
+        lifecycle: PUBLICATION_LIFECYCLE,
+        candidates: candidates.map(({ path: candidatePath }) => candidatePath),
+        secretFindings: publicationGate.secretFindings,
+        validationResults: publicationGate.validationResults,
+        review: path.relative(repoRoot, publicationGate.reviewPath),
+      }
+      const publication = publishExecutorResult({ iteration, reviewedCandidates: candidates })
+      iterationRecord.publicationGate.expectedTree = publication.expectedTree
+      iterationRecord.publicationGate.committedTree = publication.committedTree
+    }
     writeJson(path.join(runDir, 'manifest.json'), manifest)
     currentOutputPath = executionOutputPath
   }
@@ -304,9 +664,11 @@ async function main() {
   process.stdout.write(`STOP: maximum iterations reached (${options.maxIterations}).\nArtifacts: ${runDir}\n`)
 }
 
-try {
-  await main()
-} catch (error) {
-  process.stderr.write(`PROJECT CONTINUATION STOPPED: ${error instanceof Error ? error.message : String(error)}\n`)
-  process.exitCode = 1
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    await main()
+  } catch (error) {
+    process.stderr.write(`PROJECT CONTINUATION STOPPED: ${error instanceof Error ? error.message : String(error)}\n`)
+    process.exitCode = 1
+  }
 }

@@ -5,7 +5,9 @@ const launcher = readFileSync('scripts/ops/start-detached-project-autopilot.ps1'
 
 describe('detached project autopilot launcher', () => {
   it('guards protected branches and dirty worktrees', () => {
-    expect(launcher).toContain("$branch -in @('main', 'master')")
+    expect(launcher).toContain('symbolic-ref --quiet --short HEAD')
+    expect(launcher).toContain("$branchIdentity -in @('main', 'master')")
+    expect(launcher).toContain("$branchIdentity.StartsWith('codex/')")
     expect(launcher).toContain('status --porcelain')
   })
 
@@ -18,8 +20,12 @@ describe('detached project autopilot launcher', () => {
 
   it('requires a detached smoke artifact before the continuous loop', () => {
     expect(launcher).toContain('Start-Process')
-    expect(launcher).toContain('--bootstrap --review-timeout-ms 600000')
+    expect(launcher).toContain("@('--bootstrap')")
+    expect(launcher).toContain('@reviewArgs --review-timeout-ms 600000')
     expect(launcher).toContain('Detached reviewer smoke produced no structured artifact.')
     expect(launcher).toContain('--continuous --bootstrap --max-iterations 10')
+    expect(launcher).toContain('[switch]$SmokeOnly')
+    expect(launcher).toContain("if ($SmokeOnly)")
+    expect(launcher).toContain('[string]$ReviewInput')
   })
 })

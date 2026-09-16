@@ -1,11 +1,16 @@
-const SECRET_PATTERNS = [
-  /\bsk-[A-Za-z0-9_-]{16,}\b/,
-  /\b(?:OPENAI|CODEX|SUPABASE)_[A-Z0-9_]*(?:KEY|TOKEN|SECRET)\s*=\s*\S+/i,
-  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+import { spawnSync } from 'node:child_process'
+
+const SECRET_CATEGORIES = [
+  { category: 'openai-or-provider-key', pattern: /\bsk-[A-Za-z0-9_-]{16,}\b/ },
+  { category: 'secret-environment-assignment', pattern: /\b(?:OPENAI|CODEX|SUPABASE)_[A-Z0-9_]*(?:KEY|TOKEN|SECRET)\s*=\s*\S+/i },
+  { category: 'provider-access-token', pattern: /\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[baprs]-[A-Za-z0-9-]{10,})\b/ },
+  { category: 'credential-bearing-url', pattern: /\bhttps?:\/\/[^\s/:@]+:[^\s@/]+@/i },
+  { category: 'private-key', pattern: /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/ },
 ]
 
 const FORBIDDEN_AUTOMATIC_PATTERNS = [
-  { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic', capability: 'gitPublication' },
+  { pattern: /\bgit\s+(?:commit|push)\b/i, reason: 'git-publication-not-automatic' },
+  { pattern: /\bgit\s+(?:switch|checkout|branch\s+(?:-[mM]|--move|--move-force)|worktree|symbolic-ref|update-ref|reset|rebase|merge|remote|config)\b/i, reason: 'git-branch-mutation-not-automatic' },
   { pattern: /\b(?:deploy|deployment|desplegar|despliegue)\b/i, reason: 'deployment-not-automatic', capability: 'qaDeployment' },
   { pattern: /\b(?:emitir|emit)\b[^\n]{0,40}\bfactura/i, reason: 'invoice-emission-not-safe' },
   { pattern: /\b(?:registrar|create|crear)\b[^\n]{0,40}\b(?:cobro|payment)\b/i, reason: 'payment-write-not-safe' },
@@ -24,6 +29,96 @@ const PRODUCTION_SAFETY_LANGUAGE = [
 const PROTECTED_BRANCH_SAFETY_LANGUAGE = /\b(?:do not|don't|never|must not|shall not|avoid|forbidden|prohibited|blocked|denied|no|sin|prohibid[oa]|bloquead[oa])\b/i
 
 export const REVIEW_VERDICTS = new Set(['continue', 'complete', 'blocked', 'stop'])
+
+export const PUBLICATION_LIFECYCLE = Object.freeze([
+  'planning-review',
+  'executor',
+  'post-execution-diff-and-secret-scan',
+  'post-execution-validation',
+  'post-execution-independent-review',
+  'publication-boundary-revalidation',
+  'stage-commit-push',
+])
+
+export function normalizeBranchIdentity(value) {
+  return String(value ?? '').trim().toLowerCase()
+}
+
+export function isSafePublicationBranch(value) {
+  const raw = String(value ?? '')
+  const branch = raw.trim()
+  if (!branch || raw !== branch || /^(?:refs\/|origin\/)/i.test(branch)) return false
+  if (branch.split('/').includes('@')) return false
+  if (normalizeBranchIdentity(branch) === 'main' || normalizeBranchIdentity(branch) === 'master') return false
+  return spawnSync('git', ['check-ref-format', '--branch', branch], {
+    encoding: 'utf8', windowsHide: true,
+  }).status === 0
+}
+
+export function assertSafePublicationBranchResolution(result) {
+  const branch = String(result?.stdout ?? '').trimEnd()
+  if (result?.status !== 0 || !isSafePublicationBranch(branch)) {
+    throw new Error('Automatic publication blocked: current branch identity is missing, detached, protected, malformed, or not a safe local feature branch.')
+  }
+  return normalizeBranchIdentity(branch)
+}
+
+export function buildSafePublicationRefspec(result) {
+  const branch = assertSafePublicationBranchResolution(result)
+  return `HEAD:refs/heads/${branch}`
+}
+
+export function assertCleanInitialWorktree(statusResult) {
+  if (statusResult?.status !== 0 || String(statusResult?.stdout ?? '').trim()) {
+    throw new Error('Automatic execution blocked: initial worktree must be clean and free of Git operation state.')
+  }
+}
+
+export function detectSensitiveCategories(value) {
+  const text = String(value ?? '')
+  return SECRET_CATEGORIES.filter(({ pattern }) => pattern.test(text)).map(({ category }) => category)
+}
+
+export function findSensitiveCandidateContents(candidates) {
+  const findings = []
+  for (const candidate of candidates ?? []) {
+    if (candidate?.kind && candidate.kind !== 'present') continue
+    for (const category of detectSensitiveCategories(candidate?.content)) {
+      findings.push({ path: String(candidate?.path ?? ''), category })
+    }
+  }
+  return findings
+}
+
+export function assertPublicationValidationResults(results) {
+  const required = ['tests', 'agents', 'lint', 'build', 'diffCheck', 'candidateDiffCheck']
+  for (const name of required) {
+    if (results?.[name]?.timedOut) {
+      throw new Error(`Automatic publication blocked: VALIDATION_TIMEOUT (${name}).`)
+    }
+    if (results?.[name]?.status !== 0) {
+      throw new Error(`Automatic publication blocked: required ${name} validation did not pass.`)
+    }
+  }
+}
+
+export function assertCleanPublicationSecretScan(findings) {
+  if (!Array.isArray(findings) || findings.length > 0) {
+    throw new Error('Automatic publication blocked: candidate changes contain a secret indicator.')
+  }
+}
+
+export function assertPublicationIndependentReview(review) {
+  if (!review || review.verdict !== 'complete' || review.missing_evidence.length > 0 || review.risks.length > 0) {
+    throw new Error('Automatic publication blocked: post-execution independent review did not pass.')
+  }
+}
+
+export function assertPublicationTreeIntegrity(expectedTree, committedTree) {
+  if (!expectedTree || !committedTree || expectedTree !== committedTree) {
+    throw new Error('Automatic publication blocked: committed HEAD tree differs from the independently reviewed staged tree.')
+  }
+}
 
 function automaticCapabilities() {
   return {
@@ -74,8 +169,7 @@ function containsProtectedBranchPublication(text) {
 }
 
 export function detectSensitiveContent(value) {
-  const text = String(value ?? '')
-  return SECRET_PATTERNS.some((pattern) => pattern.test(text))
+  return detectSensitiveCategories(value).length > 0
 }
 
 export function findAutomaticStopReason(prompt) {
@@ -161,7 +255,7 @@ export function buildExecutorPrompt(nextPrompt, iteration, maxIterations) {
   ]
 
   if (capabilities.gitPublication) {
-    boundaries.push('Commit and push are permitted only for the bounded reviewed changes on the current non-main feature branch after validation and secret scanning. Never push directly to main or master.')
+    boundaries.push('Never run git commit, git push, git switch, git checkout, or alter Git remotes. If the outer runner was explicitly launched with publication capability, it alone may validate and publish the clean feature-branch result after this executor exits.')
   } else {
     boundaries.push('Never commit or push.')
   }

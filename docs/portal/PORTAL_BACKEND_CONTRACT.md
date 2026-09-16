@@ -18,7 +18,7 @@ Audit date: 2026-09-04
 - Client A/client B isolation is a named contract and is covered by the access and QA matrices.
 - Invoice access is read-only from the portal perspective; download is mediated by a dedicated Edge Function.
 - Reviewed changes and service requests use narrow contracts, explicit states, and idempotency/replay controls.
-- Invitation security documentation covers hashing, expiry, single use, and replay protection. Delivery/runtime certification remains a separate QA concern.
+- Invitation security documentation covers hashing, expiry, single use, and replay protection. CP-4.3A provides an unconfigured server-only provider port; delivery/runtime certification remains a separately authorized QA concern.
 
 ## RLS and RPC posture
 
@@ -35,4 +35,3 @@ The repository contains explicit security-boundary migrations and allowlisted co
 ## Backend decision
 
 Preserve the current contracts and migrations as the authoritative local design. Do not copy portal tables into a new public-web project, expose service-role credentials, or apply migrations remotely as part of unification.
-

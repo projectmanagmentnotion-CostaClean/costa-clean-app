@@ -21,6 +21,7 @@ const PRODUCTION_SAFETY_LANGUAGE = [
   /\b(?:forbidden|prohibited|blocked|denied|not authorized|out of scope|no autorizado|prohibid[oa]|bloquead[oa])\b[^\n]{0,80}\b(?:production|produccion|producción)\b/i,
   /^\s*(?:stop|abort|detenerse|abortar)\s+(?:if|si)\b/i,
 ]
+const PROTECTED_BRANCH_SAFETY_LANGUAGE = /\b(?:do not|don't|never|must not|shall not|avoid|forbidden|prohibited|blocked|denied|no|sin|prohibid[oa]|bloquead[oa])\b/i
 
 export const REVIEW_VERDICTS = new Set(['continue', 'complete', 'blocked', 'stop'])
 
@@ -60,6 +61,18 @@ function containsUnauthorizedProductionDeployment(text, forbiddenProductionRef) 
   return false
 }
 
+function containsProtectedBranchPublication(text) {
+  const pushPattern = /\bgit\s+push\b/i
+  const protectedRefPattern = /(?:^|[\s/:])(?:main|master)(?:$|[\s~^:])/i
+  for (const rawLine of String(text ?? '').split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!pushPattern.test(line) || !protectedRefPattern.test(line)) continue
+    if (PROTECTED_BRANCH_SAFETY_LANGUAGE.test(line)) continue
+    return true
+  }
+  return false
+}
+
 export function detectSensitiveContent(value) {
   const text = String(value ?? '')
   return SECRET_PATTERNS.some((pattern) => pattern.test(text))
@@ -68,6 +81,7 @@ export function detectSensitiveContent(value) {
 export function findAutomaticStopReason(prompt) {
   const text = String(prompt ?? '')
   if (detectSensitiveContent(text)) return 'suspected-secret'
+  if (containsProtectedBranchPublication(text)) return 'protected-branch-publication-not-allowed'
   const capabilities = automaticCapabilities()
   if (containsUnauthorizedProductionDeployment(text, capabilities.forbiddenProductionRef)) {
     return 'production-deployment-not-authorized'
@@ -143,7 +157,7 @@ export function buildExecutorPrompt(nextPrompt, iteration, maxIterations) {
   ]
 
   if (capabilities.gitPublication) {
-    boundaries.push('Commit and push are permitted only for the bounded, reviewed Gate 4B changes after validation and secret scanning.')
+    boundaries.push('Commit and push are permitted only for the bounded reviewed changes on the current non-main feature branch after validation and secret scanning. Never push directly to main or master.')
   } else {
     boundaries.push('Never commit or push.')
   }

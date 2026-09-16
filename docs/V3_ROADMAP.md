@@ -317,9 +317,10 @@ Evidence: `docs/V3-10C1_CORE_CORRECTIONS.md`.
 
 Evidence: `docs/V3-10C2_GLOBAL_VISUAL_SYSTEM.md`.
 
-Next: `V3-10C3` is now open for final gate verification.
+Next: `V3-10C3` must complete final authenticated runtime verification before
+any product implementation in a later module.
 
-## V3-10C3 — Home + CRM module refinement — OPEN / AUTHENTICATED RUNTIME CERTIFICATION PENDING
+## V3-10C3 — Home + CRM module refinement — CLOSED / CERTIFIED
 
 - [x] Audit Home, Clients, Leads, Properties and shared CRM composition.
 - [x] Move existing attention/search tasks ahead of secondary KPI summaries.
@@ -328,13 +329,14 @@ Next: `V3-10C3` is now open for final gate verification.
 - [x] Complete pre-auth diff, contract-freeze, relationship, search, empty-state,
   accessibility, property-media and responsive source audits.
 - [x] Record the exact authenticated replay checklist.
-- [ ] Complete authenticated before/after visual evidence and 8-view runtime gate.
-- [ ] Complete independent `pr-quality-gate` after authenticated evidence.
+- [x] Complete authenticated before/after visual evidence and 8-view runtime gate.
+- [x] Complete independent `pr-quality-gate` after authenticated evidence.
 - [x] Complete pre-auth tests, lint, build and diff validation.
 - [x] Commit/push the implementation checkpoint (`4e3e1ed`).
-- [ ] Commit/push the later certification closeout after authenticated QA.
+- [x] Commit/push the certification closeout after authenticated QA.
 
-Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md`.
+Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
+`docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
 ## V3-10C4 — Finance refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
 
@@ -346,7 +348,8 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md`.
 Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md` and
 `docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md`.
 
-Next: C3 authenticated runtime certification; no C4 product work started.
+Next: C4 remains not started; its preparation evidence may be used only after
+explicit implementation authorization.
 
 ## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
 
@@ -362,5 +365,4 @@ Next: C3 authenticated runtime certification; no C4 product work started.
 Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md` and
 `docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md`.
 
-Next: C3 authenticated runtime certification; no C4 or C5 product work
-started.
+Next: no C4 or C5 product work started.

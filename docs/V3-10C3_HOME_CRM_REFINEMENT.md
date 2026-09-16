@@ -1,13 +1,13 @@
 # V3-10C3 — Home + CRM Module Refinement
 
-Status: `OPEN / AUTHENTICATED RUNTIME CERTIFICATION PENDING`
+Status: `CLOSED / CERTIFIED`
 
 Starting HEAD: `18a8885a90a58c390d37ece02c918ac3cdc9c6d1`
 Branch: `codex/app-v3-mobile-first-redesign`
 
 Implementation checkpoint: `COMMITTED / PUSHED` (`4e3e1ed`)
-Authenticated runtime: `PENDING`
-Final C3 certification: `PENDING`
+Authenticated runtime: `PASS`
+Final C3 certification: `PASS`
 
 This slice refines module composition for Home, Clients, Leads and Properties.
 It inherits the C2 token, navigation, control and accessibility contracts. It
@@ -94,13 +94,14 @@ Private ignored baseline captured before C3:
 
 - `qa-screenshots/private/2026-09-15T19-38-30`
 
-The final C3 capture will be recorded here after the authenticated visual
-runner completes. Customer/QA screenshots remain ignored and are not committed.
+Final private/ignored evidence was captured at 390x844, 768x1024 and
+1440x900. Customer/QA screenshots remain ignored and are not committed.
 
 ## Scorecard
 
-Scores are provisional until the independent visual review compares the final
-capture against the baseline.
+The independent visual review compared the final captures with the recorded
+baseline. The score changes reflect improved operational ordering, scanability
+and bounded property media; no category decreased.
 
 | Module | Hierarchy | Scanability | Density | CTA clarity | Section structure | Relationship clarity | Mobile | Desktop | Brand | Polish |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -108,7 +109,10 @@ capture against the baseline.
 | Clients before | 3 | 3 | 2 | 3 | 3 | 3 | 2 | 3 | 3 | 3 |
 | Leads before | 3 | 3 | 2 | 3 | 3 | 3 | 2 | 3 | 3 | 3 |
 | Properties before | 3 | 3 | 2 | 3 | 3 | 3 | 2 | 3 | 3 | 3 |
-| After | pending | pending | pending | pending | pending | pending | pending | pending | pending | pending |
+| Home after | 4 | 4 | 4 | 4 | 4 | N/A | 4 | 4 | 4 | 4 |
+| Clients after | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| Leads after | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
+| Properties after | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 | 4 |
 
 ## Protected scope
 
@@ -144,21 +148,33 @@ GSAP remains review-only and deferred to C7.
 - Local validation: `725 passed | 4 skipped`; QA agent validator `294/294`;
   lint PASS; build PASS; diff check PASS.
 
-## B. AUTHENTICATED RUNTIME STILL REQUIRED
+## B. Authenticated runtime evidence
 
-The authenticated visual runner could not be executed because the QA login is
-not available on the current machine. Previous screenshots served by the
-occupied 4177 process were verified as stale and were not accepted as C3
-evidence. Therefore no rendered PASS is claimed for viewports, console/page
-errors, network safety, overflow, UUIDs, broken images, deep-link reloads or
-the before/after visual comparison.
+The final read-only QA replay ran against `http://127.0.0.1:4178/?v3=1` using
+the canonical `costaclean-v3` profile. It passed all eight required viewports
+and all 32 selected C3 surfaces (Home, Clients, Leads and Properties):
 
-The exact replay is recorded in
-`docs/V3-10C3_AUTH_RUNTIME_PENDING.md`. C3 remains OPEN until that checklist
-and the independent final gate are completed.
+- authentication, direct navigation, workspace opening, hard reload and Back:
+  PASS;
+- Clients/Leads/Properties search miss and clear/restoration: PASS where rows
+  existed; 12 empty-state checks are recorded as N/A, with no failed check;
+- More, keyboard Escape and close behavior: PASS across all eight viewports;
+- a focused live replay at 390x844, 768x1024 and 1440x900 confirms that More
+  now returns focus to the opener after Escape;
+- production requests, non-QA Supabase requests and QA mutations: `0`;
+- console errors, page errors, failed requests, overflow, UUID exposure,
+  Unicode-as-icon, legacy markers and broken images: `0`.
+
+The minimum contact-action geometry observed in the replay was `54.84 × 44`
+CSS px across 176 measurements. Private ignored evidence is retained under
+`qa-screenshots/private/v3-10c3-2026-09-16T08-46-16` and
+`qa-screenshots/private/v3-10c3-2026-09-16T11-06-00`; it is not committed.
+The sanitized command evidence is recorded in
+`docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
 ## Final gate
 
-V3-10C3 closes only after the independent quality gate confirms module
-composition, private before/after evidence, responsive runtime invariants,
-accessibility, search/back/deep-link behavior, tests, lint, build and diff.
+The evidence review confirmed the requested module composition, private visual
+evidence, responsive invariants, keyboard/focus behavior, search/back/deep-link
+behavior and protected-contract freeze. The independent quality checklist is
+PASS, subject to the recorded commands in the certification evidence.

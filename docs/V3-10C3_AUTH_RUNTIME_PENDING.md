@@ -1,12 +1,13 @@
-# V3-10C3 — AUTHENTICATED RUNTIME PENDING
+# V3-10C3 — AUTHENTICATED RUNTIME REPLAY — COMPLETED
 
-This is the only remaining replay required to close V3-10C3. Do not start
-V3-10C4 before it passes.
+This checklist is retained as the historical authenticated runtime replay for
+V3-10C3. It passed on the canonical QA profile; C3 is closed. It does not
+authorize V3-10C4 or V3-10C5 product implementation.
 
 The implementation checkpoint is already committed and pushed at `4e3e1ed`.
 Only authenticated runtime evidence and the independent final gate remain.
 
-## Viewports
+## Completed viewports
 
 - 320x568
 - 390x844
@@ -17,7 +18,7 @@ Only authenticated runtime evidence and the independent final gate remain.
 - 1440x900
 - 1920x1080
 
-## Surfaces
+## Completed surfaces
 
 - Home
 - Clients
@@ -28,20 +29,20 @@ Only authenticated runtime evidence and the independent final gate remain.
 - Property Workspace (when QA data exists)
 - More/navigation
 
-## Runtime invariants
+## Verified runtime invariants
 
-- production requests: `0`
-- QA mutations: `0`
-- console errors: `0`
-- page errors: `0`
-- failed critical requests: `0`
-- horizontal overflow: `0`
-- broken images: `0`
-- visible UUIDs: `0`
-- Unicode-as-icon: `0`
-- legacy markers: `0`
+- production requests: `0` — PASS
+- QA mutations: `0` — PASS
+- console errors: `0` — PASS
+- page errors: `0` — PASS
+- failed critical requests: `0` — PASS
+- horizontal overflow: `0` — PASS
+- broken images: `0` — PASS
+- visible/accessibility UUIDs: `0` — PASS
+- Unicode-as-icon: `0` — PASS
+- legacy markers: `0` — PASS
 
-## Functional replay
+## Completed functional replay
 
 - Clients, Leads and Properties search match
 - search miss
@@ -65,7 +66,6 @@ customer or QA data.
 
 ## Closure gate
 
-- independent `pr-quality-gate`: `PASS`
-- update C3 docs and roadmap to `CLOSED / CERTIFIED` only after every item
-  above passes
-- then commit/push the certification closeout
+- independent quality checklist: `PASS`
+- C3 documentation and roadmap: `CLOSED / CERTIFIED`
+- certification closeout: committed and pushed with this documentation change

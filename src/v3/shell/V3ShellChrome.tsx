@@ -134,13 +134,35 @@ function V3NavigationRail({ currentView, onChangeView, onOpenMore, isMoreOpen }:
 
 export function V3ShellChrome(props: V3ShellChromeProps) {
   const [isMoreOpen, setIsMoreOpen] = useState(false)
+  const moreTriggerRef = useRef<HTMLElement | null>(null)
+  const shouldRestoreMoreFocusRef = useRef(false)
+
+  useEffect(() => {
+    if (!isMoreOpen && shouldRestoreMoreFocusRef.current) {
+      shouldRestoreMoreFocusRef.current = false
+      moreTriggerRef.current?.focus()
+    }
+  }, [isMoreOpen])
+
+  function openMore() {
+    moreTriggerRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null
+    setIsMoreOpen(true)
+  }
+
+  function closeMore() {
+    shouldRestoreMoreFocusRef.current = true
+    setIsMoreOpen(false)
+  }
+
   return (
     <>
       <V3TopBar currentView={props.currentView} onBack={props.onBack} backTargetView={props.backTargetView} />
       {props.children}
-      <V3BottomNav currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={() => setIsMoreOpen(true)} isMoreOpen={isMoreOpen} />
-      <V3NavigationRail currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={() => setIsMoreOpen(true)} isMoreOpen={isMoreOpen} />
-      {isMoreOpen ? <V3MoreSheet currentView={props.currentView} onChangeView={props.onChangeView} accountLabel={props.accountLabel} isSigningOut={props.isSigningOut} onSignOut={props.onSignOut} onClose={() => setIsMoreOpen(false)} /> : null}
+      <V3BottomNav currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={openMore} isMoreOpen={isMoreOpen} />
+      <V3NavigationRail currentView={props.currentView} onChangeView={props.onChangeView} onOpenMore={openMore} isMoreOpen={isMoreOpen} />
+      {isMoreOpen ? <V3MoreSheet currentView={props.currentView} onChangeView={props.onChangeView} accountLabel={props.accountLabel} isSigningOut={props.isSigningOut} onSignOut={props.onSignOut} onClose={closeMore} /> : null}
     </>
   )
 }

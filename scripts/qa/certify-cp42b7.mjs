@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import { spawn } from 'node:child_process'
+import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
 export const QA_PROJECT_REF = 'kpvvydthlxupjjqqdpxy'
@@ -258,6 +259,7 @@ async function cleanupFixture(adminKey, submissionId, leadId) {
 async function waitForWeb(webProcess, webUrl) {
   const deadline = Date.now() + 60_000
   while (Date.now() < deadline) {
+    if (webProcess.cp42b7SpawnError) throw failure(webProcess.cp42b7SpawnError)
     if (webProcess.exitCode !== null) throw failure('WEB_ROUTE_UNAVAILABLE')
     try {
       const response = await fetch(`${webUrl}/api/quote`, { signal: AbortSignal.timeout(3_000) })
@@ -270,23 +272,47 @@ async function waitForWeb(webProcess, webUrl) {
   throw failure('WEB_ROUTE_UNAVAILABLE')
 }
 
-function startWebRuntime(webRoot, config, port) {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm'
+function spawnFailureCode(error) {
+  const code = normalized(error?.code).toUpperCase()
+  return /^[A-Z0-9_]{1,64}$/u.test(code) ? code : 'UNKNOWN'
+}
+
+export function resolveWebNextRuntime(webRoot, exists = existsSync) {
+  const nextRuntime = resolve(webRoot, 'node_modules', 'next', 'dist', 'bin', 'next')
+  if (!exists(nextRuntime)) throw failure('WEB_NEXT_RUNTIME_UNAVAILABLE')
+  return nextRuntime
+}
+
+export function startWebRuntime(webRoot, config, port, {
+  exists = existsSync,
+  nodeExecutable = process.execPath,
+  spawnProcess = spawn,
+} = {}) {
+  const nextRuntime = resolveWebNextRuntime(webRoot, exists)
   const childEnv = { ...process.env }
   delete childEnv.SUPABASE_QA_SERVICE_ROLE_KEY
   delete childEnv.SUPABASE_SERVICE_ROLE_KEY
   delete childEnv.SUPABASE_SECRET_KEY
-  const child = spawn(npmCommand, ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', String(port)], {
-    cwd: webRoot,
-    env: {
-      ...childEnv,
-      PUBLIC_LEAD_INTAKE_URL: config.endpoint,
-      PUBLIC_LEAD_INTAKE_ENV: config.environment,
-      PUBLIC_LEAD_INTAKE_SECRET: config.secret,
-      NEXT_TELEMETRY_DISABLED: '1',
-    },
-    stdio: 'ignore',
-    windowsHide: true,
+  let child
+  try {
+    child = spawnProcess(nodeExecutable, [nextRuntime, 'dev', '--hostname', '127.0.0.1', '--port', String(port)], {
+      cwd: webRoot,
+      env: {
+        ...childEnv,
+        PUBLIC_LEAD_INTAKE_URL: config.endpoint,
+        PUBLIC_LEAD_INTAKE_ENV: config.environment,
+        PUBLIC_LEAD_INTAKE_SECRET: config.secret,
+        NEXT_TELEMETRY_DISABLED: '1',
+      },
+      stdio: 'ignore',
+      windowsHide: true,
+    })
+  } catch (error) {
+    throw failure(`WEB_RUNTIME_SPAWN_FAILED:${spawnFailureCode(error)}`)
+  }
+  child.cp42b7SpawnError = null
+  child.once('error', (error) => {
+    child.cp42b7SpawnError = `WEB_RUNTIME_SPAWN_FAILED:${spawnFailureCode(error)}`
   })
   return child
 }

@@ -1,6 +1,6 @@
 # V3-10C4P — FINANCE REFINEMENT IMPLEMENTATION PLAN
 
-Status: `PREPARATION ONLY — V3-10C4 NOT STARTED`
+Status: `PREPARATION COMPLETE — V3-10C4 PRODUCT IMPLEMENTATION NOT STARTED`
 
 This plan is derived from the read-only discovery in
 `docs/V3-10C4_FINANCE_DISCOVERY.md`. It proposes bounded UI/composition work
@@ -54,7 +54,9 @@ Tests:
 - C2 regression suite.
 
 Risk: medium; shared visual changes can regress all finance modules.
-Dependency: C3 must be runtime-certified first.
+Dependency: C3 is closed/certified at `a0c5b60fd0b1431c09204213868b87a2f3567543`.
+Product work still requires a separate human-authorized C4 implementation
+prompt; this preparation audit is not that authorization.
 
 ### C4.2 — Invoices and Invoice Workspace
 
@@ -205,6 +207,5 @@ The future C4 closeout requires:
 
 ## Current dependency gate
 
-V3-10C3 is still OPEN because authenticated runtime certification is pending.
-V3-10C4 product implementation must not begin until C3 closes and a separate
-human-authorized C4 implementation prompt is provided.
+V3-10C3 is closed/certified. V3-10C4 product implementation must not begin
+until a separate human-authorized C4 implementation prompt is provided.

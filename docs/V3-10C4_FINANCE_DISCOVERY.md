@@ -1,13 +1,14 @@
 # V3-10C4P — FINANCE DISCOVERY AUDIT
 
-Status: `PREPARATION COMPLETE / C4 NOT STARTED`
+Status: `PREPARATION COMPLETE / C4 PRODUCT IMPLEMENTATION NOT STARTED`
 
 Repository: `C:\Users\USUARIO\costa-clean-app-v3`
 Branch: `codex/app-v3-mobile-first-redesign`
-Audited HEAD: `4e3e1ed8237dfe2ab70e62704303f6381744b690`
-C3 status: `OPEN — AUTHENTICATED RUNTIME CERTIFICATION PENDING`
+Audited HEAD: `a0c5b60fd0b1431c09204213868b87a2f3567543`
+C3 status: `CLOSED / CERTIFIED`
 
-This document is a static/read-only discovery audit. No finance product code,
+This document is a static/read-only discovery audit with a bounded authenticated,
+read-only preparation review. No finance product code,
 write API, Supabase object, schema, policy, storage object or business data
 was changed.
 
@@ -24,6 +25,24 @@ was changed.
 | Quote documents | `src/features/quotes/quotePdfOutput.ts`, `quoteDomPdfExport.tsx`, `openQuotePrintWindow.tsx` | Reuse current PDF/export engine. |
 
 ## 2. Architecture inventory
+
+### Integration boundary and flow map
+
+| Flow | UI and local state | Parent/state boundary | Protected business API/RPC | Persistence boundary |
+| --- | --- | --- | --- | --- |
+| Invoice list, workspace and settlement | `src/v3/invoices/V3InvoicesPage.tsx`; local selected id, query, status/filter/sort sheet and `useV3Selection` | `src/pages/InvoicesPage.tsx` owns create/edit visibility, refresh and settlement callbacks | `canSettleInvoiceByTransfer` and `settleInvoiceByTransfer` in the invoice/financial layers | `settle_invoice_by_transfer`; payment/audit records are owned by the existing RPC path |
+| Invoice create/edit | `V3InvoiceCreateFlow.tsx`, `V3InvoiceEditFlow.tsx` | `InvoicesPage.tsx` refreshes the canonical list after a completed flow | Existing invoice write/trace and document utilities | Existing invoice tables/RPCs; C4 must not change inputs or lifecycle writes |
+| Quote list, workspace and conversion | `src/v3/quotes/V3QuotesPage.tsx`; selected id, query, filters, duplicate-review state and selection | `src/pages/QuotesPage.tsx` owns create/edit visibility and relation/deep-link callbacks | `canConvertQuoteToInvoice`, `quoteAcceptanceWorkflow`, `quoteConversion`, `acceptQuoteWorkflow` | `accept_quote_workflow` remains the authority for acceptance/conversion and duplicate-safe outcomes |
+| Quote create/edit | `V3QuoteCreateFlow.tsx`, `V3QuoteEditFlow.tsx` | `QuotesPage.tsx` owns dirty guards, refresh and prefill consumption | Existing quote create/edit and duplicate utilities | Existing quote persistence; no C4 data-model or workflow change |
+| Payment list, workspace and create/edit | `V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx`, `V3PaymentCreateFlow.tsx` | `src/pages/PaymentsPage.tsx` owns sheet visibility, duplicate review, refresh and relationship navigation | `savePaymentAndRefreshInvoice` and duplicate grouping | `save_payment_and_refresh_invoice` remains the only payment-plus-invoice-refresh path |
+| Expense list, workspace and form | `V3ExpensesPage.tsx`, `V3ExpenseRow.tsx`, `V3ExpenseWorkspace.tsx`, `V3ExpenseFormFlow.tsx` | `src/pages/ExpensesPage.tsx` owns create/edit visibility, dirty guard and refresh | `createExpense`, `updateExpense`, `updateExpenseAttachment`, duplicate utilities and attachment helpers | Existing expense persistence followed by optional private attachment upload; no-data-loss ordering stays intact |
+| Expense private document | Workspace/form document controls | Existing expense refresh and error feedback | `uploadExpenseReceipt`, `createExpenseReceiptSignedUrl`, `deleteExpenseReceipt` | Private `expense-receipts` object path plus the existing attachment reference; 10 MB/type validation stays unchanged |
+
+Shared V3 presentation dependencies are `src/v3/components/V3Primitives.tsx`,
+`src/v3/selection/V3SelectionPrimitives.tsx`, `src/v3/design/tokens.css` and
+`src/v3/design/v3.css`. C4 may refine finance-specific composition using those
+primitives, but it may not reopen the certified C2 global system without a
+separately evidenced regression.
 
 ### Invoices
 
@@ -221,10 +240,46 @@ Preparation findings:
 - `F-C4-P3`: document and financial amount labels need rendered contrast and
   accessible-name verification.
 
-No rendered PASS is claimed in this document. Required runtime replay is the
-authenticated 8-viewport matrix described in the implementation plan.
+The static review in this section is not a rendered certification. The future
+implementation closeout still requires the authenticated 8-viewport matrix
+described in the implementation plan.
 
-## 9. C2 compliance and scope result
+## 9. Authenticated read-only preparation review
+
+On 2026-09-16, QA was opened through the canonical local profile
+`.auth/costaclean-v3/qa-browser-profile` at
+`http://127.0.0.1:4178/?v3=1`. The review navigated only; it did not open a
+create/edit flow, activate a document/settlement/conversion control or create
+any QA fixture.
+
+The list surfaces for Invoices, Quotes, Payments and Expenses were inspected
+at `390x844`, `768x1024` and `1440x900`. The populated Invoice workspace was
+also inspected at each anchor. Private screenshots are kept under the ignored
+QA evidence directory and are not source-controlled.
+
+| Check across 12 list surface/viewport combinations | Result |
+| --- | --- |
+| Authenticated V3 shell and route readiness | PASS |
+| Horizontal overflow | `0` |
+| Visible UUID matches | `0` |
+| Visible legacy/V2 markers | `0` |
+| Broken images | `0` |
+| Visible interactive elements below 44px height | `0` |
+| QA business writes | `0` — navigation-only review |
+| Production requests/writes | `0` — local QA URL only; no production target used |
+
+Observed preparation evidence confirms, rather than closes, the existing
+ledger items: mobile Invoice/Quote KPI groups precede search; the Invoice
+workspace presents settlement, edit and document actions at comparable visual
+weight; empty Quote/Payment pages remain intentionally observable states; and
+desktop empty surfaces have a composition opportunity rather than an objective
+defect. Quote and Payment workspaces were unavailable in the current read-only
+QA dataset, so conversion, duplicate, document and workspace-state evidence
+remain future C4 runtime work. Expense list data was observable; expense
+workspace/document actions were deliberately not exercised because this phase
+prohibits business writes and document-side effects.
+
+## 10. C2 compliance and scope result
 
 The inspected modules consume C2 V3 primitives and semantic CSS, but contain
 module-specific composition drift listed above. C2 is not reopened globally.
@@ -235,4 +290,4 @@ Supabase: `UNCHANGED`
 Production: `UNCHANGED`
 Business writes: `0`
 
-V3-10C4 remains `NOT STARTED — PREPARATION ONLY`.
+V3-10C4 remains `PREPARATION COMPLETE — PRODUCT IMPLEMENTATION NOT STARTED`.

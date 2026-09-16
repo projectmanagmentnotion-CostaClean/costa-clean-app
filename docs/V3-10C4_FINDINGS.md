@@ -1,0 +1,53 @@
+# V3-10C4 — FINANCE FINDINGS LEDGER
+
+Status: `PREPARATION COMPLETE / PRODUCT IMPLEMENTATION NOT STARTED`
+
+Audited HEAD: `a0c5b60fd0b1431c09204213868b87a2f3567543`
+
+This is a planning ledger, not a defect declaration. Objective defects and
+visual/UX refinement opportunities are intentionally separated. No product
+file, business contract, Supabase object or QA business data changed while
+collecting this evidence.
+
+## P0 — objective blockers
+
+None found in the bounded read-only inspection. This is not a release or C4
+certification result; future implementation and runtime gates remain required.
+
+## P1 — safety or business-meaning clarity
+
+| ID | Type | Surface / state | Reproduction and root cause | Likely files | Expected correction | Acceptance criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| F-C4-P1-001 | Objective meaning ambiguity | Payments list/workspace; `origin_type=transfer_auto` | Existing labels say `Automatico por transferencia` / `Origen automático`; protected behavior explicitly defines this as provenance, not reconciliation. | `src/v3/payments/V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx`, shared payment label helper | Clarify provenance in UI copy and hierarchy only. | No text claims automatic reconciliation; generated records remain read-only; `savePaymentAndRefreshInvoice` contract is unchanged. |
+| F-C4-P1-002 | Objective action-safety ambiguity | Invoice list/workspace, issued invoice with outstanding balance | The guarded action is rendered as `Marcar pagada` while the true operation is a transfer settlement with eligibility, outstanding amount and partial-payment semantics. | `src/v3/invoices/V3InvoicesPage.tsx`, invoice workspace/row, existing settlement tests | Explain eligibility, outstanding amount and outcome; preserve the current guarded callback. | `canSettleInvoiceByTransfer`, `settleInvoiceByTransfer` and `settle_invoice_by_transfer` are unchanged; no direct paid-state mutation; disabled/partial/terminal states are explicit. |
+
+## P2 — meaningful operational or composition refinements
+
+| ID | Type | Surface / viewport | Reproduction and root cause | Likely files | Expected correction | Acceptance criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| F-C4-P2-001 | Visual/UX refinement | Invoice and Quote lists, 390x844 and wider | KPI group appears before the primary find/open controls, placing analytics before the routine lookup task. | `V3InvoicesPage.tsx`, `V3QuotesPage.tsx` | Reorder or visually demote secondary KPIs without losing the data. | Search/open path is visible before secondary analytics at mobile; desktop retains useful summary without card-wall regression. |
+| F-C4-P2-002 | Visual/UX refinement | Invoice list row | Total and status scan quickly, but outstanding balance is not equally available despite settlement being a core task. | `V3InvoicesPage.tsx` | Give outstanding/paid context a semantic secondary line. | Invoice number/client/primary total/status/outstanding follow one readable order; no calculation changes. |
+| F-C4-P2-003 | Visual/UX refinement | Invoice workspace, 768x1024 read-only observation | Settlement, edit, download and document actions compete at the same hierarchy, while financial reading repeats across summary areas. | `V3InvoicesPage.tsx`, shared workspace/action primitives if necessary | Establish one primary next action and group document/secondary controls. | Issued/partial/paid/cancelled states communicate safe next action; all callbacks and PDF engine remain unchanged. |
+| F-C4-P2-004 | Visual/UX refinement | Quote workspace and conversion states | Base/IVA/total repeat and conversion availability is not sufficiently explanatory in static source. | `V3QuotesPage.tsx`, `V3DuplicateReviewSheet.tsx` | Consolidate financial reading and explain accepted/already-converted/unavailable states. | `canConvertQuoteToInvoice`, duplicate review and acceptance/conversion behavior are unchanged. |
+| F-C4-P2-005 | Visual/UX refinement | Payment list/workspace | Relation is available, but amount/date/method/origin compete and there is no V3 status/type filter. | `V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx` | Improve scan order; assess whether existing type information can be surfaced without a new backend filter. | No speculative filter or reconciliation state is added; relation and manual/generated protections remain intact. |
+| F-C4-P2-006 | Visual/UX refinement | Expense workspace and form | Summary, attachment, fiscal, payment, data and notes sections coexist with both top and sticky actions. | `V3ExpenseWorkspace.tsx`, `V3ExpenseFormFlow.tsx` | Group document/review work and establish a single primary next action per state. | Private signed URL, 10 MB/type validation, dirty guard, duplicate guard and no-data-loss ordering remain unchanged. |
+| F-C4-P2-007 | Visual/UX refinement | Finance create/edit flows, mobile | Line editors, reviews, fiscal fields and document controls are dense before a controlled mobile replay. | V3 invoice/quote/payment/expense create/edit flows | Improve grouping and review order in bounded module batches. | First actionable input, labels, error order, dirty guard and touch targets meet runtime acceptance without changing persistence payloads. |
+
+## P3 — polish, consistency or evidence follow-up
+
+| ID | Type | Surface / state | Reproduction and root cause | Likely files | Expected correction | Acceptance criteria |
+| --- | --- | --- | --- | --- | --- | --- |
+| F-C4-P3-001 | Visual consistency | All finance lists | Search/filter/control compositions are related but not identical. | Four V3 page components and existing shared primitives | Adopt the C2-finance hierarchy convention in C4.1. | Shared control order is consistent where the capability exists; no unrelated global redesign. |
+| F-C4-P3-002 | Visual consistency | Lists and workspaces | Amounts use differing orders for total, paid, outstanding, base and IVA. | Four V3 finance modules, formatting helpers | Define one module-level monetary reading order. | Meaningful label accompanies every amount; no totals/IVA calculation change. |
+| F-C4-P3-003 | Visual consistency | Invoice/Quote/Expense document actions | Functional labels vary between download/open/replace/add. | Finance V3 workspaces and document adapters | Normalize vocabulary by intent while keeping callbacks. | Accessible names state the action and target; PDF/export/private-media behavior remains unchanged. |
+| F-C4-P3-004 | Evidence / composition opportunity | Empty Quote/Payment pages and desktop 1440x900 | Current QA data exposes empty states; desktop whitespace is calm but can be composed more intentionally during C4. | Quote/Payment pages and empty-state primitive | Refine only if it improves task guidance using existing actions. | No fabricated metrics, no marketing illustration, no loss of clear create path. |
+
+## Read-only runtime evidence boundary
+
+The authenticated QA review at `390x844`, `768x1024` and `1440x900` found
+zero horizontal overflow, visible UUIDs, legacy/V2 markers, broken images and
+visible undersized interactive controls across the four list surfaces. It did
+not activate documents, forms, settlement, conversion, duplicate review or
+payment/expense writes. Quote and Payment workspaces were unavailable from
+the current read-only QA dataset. These are C4 implementation/replay items,
+not failures of the preparation audit.

@@ -338,15 +338,18 @@ any product implementation in a later module.
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 `docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
-## V3-10C4 — Finance refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
+## V3-10C4 — Finance refinement — PREPARATION COMPLETE / PRODUCT IMPLEMENTATION NOT STARTED
 
 - [x] Complete read-only finance architecture and protected-contract discovery.
 - [x] Record invoice, quote, payment and expense findings and priorities.
 - [x] Prepare bounded implementation batches and future authenticated matrix.
+- [x] Reconcile the authoritative scope, read-only QA preparation evidence and
+  standalone findings ledger after C3 certification.
 - [ ] Start finance product implementation.
 
-Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md` and
-`docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md`.
+Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
+`docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md` and
+`docs/V3-10C4_FINDINGS.md`.
 
 Next: C4 remains not started; its preparation evidence may be used only after
 explicit implementation authorization.

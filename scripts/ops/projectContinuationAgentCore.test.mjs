@@ -100,22 +100,32 @@ describe('projectContinuationAgentCore', () => {
 
   it('blocks secrets and automatic publication actions by default', () => {
     expect(detectSensitiveContent('OPENAI_API_KEY=secret-value')).toBe(true)
-    expect(findAutomaticStopReason('Run git push origin main')).toBe('git-publication-not-automatic')
+    expect(findAutomaticStopReason('Run git push origin feature/test')).toBe('git-publication-not-automatic')
     expect(findAutomaticStopReason('Deploy the QA build')).toBe('deployment-not-automatic')
     expect(findAutomaticStopReason('Emitir una factura real')).toBe('invoice-emission-not-safe')
   })
 
-  it('permits explicitly authorized QA deployment and publication while still blocking positive production deployment', () => {
+  it('permits explicitly authorized QA deployment and feature-branch publication while protecting main', () => {
     withAuthorizedQaCapabilities(() => {
-      expect(findAutomaticStopReason('Deploy the QA build and run git push origin main')).toBeNull()
+      expect(findAutomaticStopReason('Deploy the QA build and run git push origin codex/app-v3-mobile-first-redesign')).toBeNull()
+      expect(findAutomaticStopReason('git push origin main')).toBe('protected-branch-publication-not-allowed')
+      expect(findAutomaticStopReason('git push origin master')).toBe('protected-branch-publication-not-allowed')
       expect(findAutomaticStopReason('Deploy to production prod-ref')).toBe('production-deployment-not-authorized')
       expect(findAutomaticStopReason('Production deployment to prod-ref is required now')).toBe('production-deployment-not-authorized')
       const prompt = buildExecutorPrompt(authorizedQaPrompt, 1, 3)
       expect(prompt).toContain('QA-only deployment is permitted')
       expect(prompt).toContain('Commit and push are permitted')
+      expect(prompt).toContain('Never push directly to main or master')
       expect(prompt).toContain('Never deploy to production')
       expect(prompt).toContain('qa-ref')
       expect(prompt).toContain('prod-ref')
+    })
+  })
+
+  it('does not misclassify explicit protected-branch publication prohibitions', () => {
+    withAuthorizedQaCapabilities(() => {
+      expect(findAutomaticStopReason('Do not git push origin main.')).toBeNull()
+      expect(findAutomaticStopReason('Never git push origin master.')).toBeNull()
     })
   })
 

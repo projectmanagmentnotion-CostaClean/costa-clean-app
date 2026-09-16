@@ -1,19 +1,25 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { V3SelectionResultSheet } from './V3SelectionPrimitives'
+import { V3SelectionConfirmSheet } from './V3SelectionPrimitives'
 
-describe('V3 selection result presentation', () => {
-  it('renders counts instead of technical selection ids', () => {
-    const uuid = 'e1643c33-ae20-48cd-a2c7-99fd41184533'
-    const html = renderToStaticMarkup(createElement(V3SelectionResultSheet, {
-      message: 'Proceso completado',
-      completedIds: [uuid, 'invoice-2'],
-      failedIds: [uuid],
+describe('V3SelectionConfirmSheet', () => {
+  it('uses a caller-provided confirmation label without changing the shared default', () => {
+    const invoiceHtml = renderToStaticMarkup(createElement(V3SelectionConfirmSheet, {
+      title: 'Confirmar cobros por transferencia',
+      description: 'Se registrará un cobro por transferencia.',
+      confirmLabel: 'Registrar cobros',
       onClose: () => undefined,
+      onConfirm: () => undefined,
     }))
-    expect(html).toContain('Completadas: 2')
-    expect(html).toContain('Fallidas: 1')
-    expect(html).not.toContain(uuid)
+    const defaultHtml = renderToStaticMarkup(createElement(V3SelectionConfirmSheet, {
+      title: 'Confirmar',
+      description: 'Acción pendiente.',
+      onClose: () => undefined,
+      onConfirm: () => undefined,
+    }))
+
+    expect(invoiceHtml).toContain('Registrar cobros')
+    expect(defaultHtml).toContain('Confirmar')
   })
 })

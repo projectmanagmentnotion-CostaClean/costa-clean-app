@@ -1,6 +1,6 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `PREPARATION COMPLETE / PRODUCT IMPLEMENTATION NOT STARTED`
+Status: `C4.1 CLOSED / C4.2 IMPLEMENTED — AUTHENTICATED REPLAY PENDING`
 
 Audited HEAD: `a0c5b60fd0b1431c09204213868b87a2f3567543`
 
@@ -25,6 +25,34 @@ collecting this evidence.
 | F-C4-P3-002 | STILL OPEN — C4.2–C4.5 | Monetary reading order is module-specific and will be refined with each workspace. |
 | F-C4-P3-003 | STILL OPEN — C4.2–C4.5 | Document vocabulary remains tied to the protected module-specific document paths. |
 | F-C4-P3-004 | PARTIALLY FIXED | All four list pages use shared `V3EmptyState` and `V3ErrorState`. Finance-specific document, guard and permission copy remains later batch work. |
+
+## C4.2 invoice resolution status
+
+The C4.2 implementation is intentionally limited to the Invoice list and
+Invoice Workspace. It does not alter invoice persistence, calculations, PDF
+generation, selection exports, settlement RPCs or any Supabase object.
+
+| Finding | Status after C4.2 implementation | Evidence / boundary |
+| --- | --- | --- |
+| F-C4-P1-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Eligible invoices now use the accurate action label `Registrar cobro`, expose total/cobrado/pendiente before confirmation, and require the existing confirmation surface. The sole callback remains the established guarded settlement callback. A post-change authenticated replay is still required because the local QA session returned to Login after reload. |
+| F-C4-P2-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Rows use the shared financial facts helper to render `Total`, `Cobrado` and `Pendiente` in semantic scan order. No financial calculation changed. |
+| F-C4-P2-003 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | The workspace puts invoice identity first, separates status, consolidates the three financial values, gives settlement one primary lane, and moves edit/document controls behind a secondary `Más acciones` sheet. PDF remains directly available. |
+| F-C4-P2-007 | PARTIALLY FIXED | Invoice create/edit flows remain contract-preserving and unchanged; C4.2 did not find or introduce a form-persistence issue. The finance-wide form grouping review remains scoped to C4.3–C4.5. |
+| F-C4-P3-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Invoice list and workspace now use total → paid → outstanding as the concise monetary reading order. Quote, Payment and Expense surfaces remain open. |
+| F-C4-P3-003 | PARTIALLY FIXED | Invoice uses explicit `Descargar PDF` and `Ver documento` labels. Other finance-module vocabulary remains open. |
+
+### C4.2 authenticated replay boundary
+
+The first read-only authenticated replay before the final mobile action-group
+adjustment passed list, filter, workspace, confirmation (without confirmation
+submission), deep-link reload and Back at `390x844`, `768x1024` and
+`1440x900`, with zero production requests, QA mutations, overflow, visible
+UUIDs, Unicode-as-icon matches, legacy markers, console errors and page errors.
+
+The follow-up replay discovered that both local QA profiles render Login after
+reload. No credentials, cookies, tokens or storage were read, copied or
+changed, and no financial action was confirmed. C4.2 therefore remains open
+until the post-change authenticated replay can be repeated.
 
 ## P0 — objective blockers
 

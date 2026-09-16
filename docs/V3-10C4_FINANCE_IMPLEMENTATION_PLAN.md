@@ -64,7 +64,7 @@ responsive supporting KPIs and common list empty/error states. It does not
 change settlement, conversion, payment provenance, expense persistence or
 document behavior.
 
-### C4.2 — Invoices and Invoice Workspace — NOT STARTED
+### C4.2 — Invoices and Invoice Workspace — IMPLEMENTED / AUTHENTICATED REPLAY PENDING
 
 Likely files:
 
@@ -82,6 +82,22 @@ Scope:
 - Group PDF/document/payment actions without changing callbacks.
 - Preserve selection PDF ZIP, CSV and eligible bulk settlement.
 
+Implemented presentation boundary:
+
+- rows now expose total, paid and outstanding in the shared scan order;
+- the workspace separates invoice identity, status and the three financial
+  values, with one eligible settlement action;
+- confirmation states the exact outstanding transfer, total, already-paid and
+  outstanding values before the pre-existing settlement callback is invoked;
+- edit and document controls are grouped under `Más acciones`; PDF remains a
+  direct secondary action;
+- bulk confirmation has a precise `Registrar cobros` action label while
+  retaining its original default component label for all other consumers.
+
+Unchanged: `canSettleInvoiceByTransfer`, `settleInvoiceByTransfer`,
+`settle_invoice_by_transfer`, invoice totals/IVA, persistence, numbering,
+PDF/export implementation, selection export callbacks and Supabase.
+
 Tests:
 
 - settlement guard matrix and busy duplicate guard;
@@ -92,6 +108,11 @@ Tests:
 - deep link, Back and hard reload runtime.
 
 Risk: high because financial action proximity is safety-sensitive.
+
+Completion status: focused tests, lint, build and diff checks pass. The initial
+authenticated read-only matrix passed before the final mobile action grouping;
+the required post-change replay is pending because the QA profiles currently
+show Login after reload. Do not label C4.2 certified until that replay passes.
 
 ### C4.3 — Quotes and Quote Workspace — NOT STARTED
 

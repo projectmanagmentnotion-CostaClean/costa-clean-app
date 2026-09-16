@@ -22,6 +22,32 @@ cd C:\Users\USUARIO\costa-clean-app
 node scripts/automation/run-prompt-bridge.mjs
 ```
 
+### Continuation orchestration
+
+The bridge remains passive by default. To enable bounded project continuation
+for a deliberately started bridge process, use PowerShell:
+
+```powershell
+cd C:\Users\USUARIO\costa-clean-app
+$env:PROJECT_CONTINUATION_ALLOW_EXEC = '1'
+$env:PROJECT_CONTINUATION_MAX_ITERATIONS = '10'
+npm run agent:orchestrator
+```
+
+`PROJECT_CONTINUATION_MAX_ITERATIONS` accepts only `1` through `10`; the
+default is `10`. A completed Codex job is reviewed read-only against the real
+repository before a next prompt is queued. The executor remains bound to the
+same configured Codex thread and worktree. Sensitive next work creates an
+`awaiting_approval` job and is never dispatched automatically.
+
+Observe only safe chain metadata:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:4319/api/chains
+```
+
+The endpoint excludes prompts, Codex reports, secrets and private artifacts.
+
 Then in Chrome:
 
 1. Open `chrome://extensions`.

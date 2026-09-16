@@ -1,16 +1,20 @@
 import { spawn, spawnSync } from 'node:child_process'
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import http from 'node:http'
 import path from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import { buildExecutionPrompt, createJob, hashPrompt, isAllowedSource, isUsableCodexOutput, PROJECTS, projectForSource } from './bridge-core.mjs'
+import { ContinuationChainStore, ContinuationOrchestrator, safeChainMetadata } from './continuation-orchestrator-core.mjs'
+import { buildReviewerInstruction } from '../ops/projectContinuationAgentCore.mjs'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const privateRoot = path.join(repoRoot, '.project-agent', 'private', 'prompt-bridge')
 const port = Number(process.env.PROMPT_BRIDGE_PORT || 4319)
 const jobs = new Map()
 let running = false
+const continuationEnabled = process.env.PROJECT_CONTINUATION_ALLOW_EXEC === '1'
 
 fs.mkdirSync(privateRoot, { recursive: true })
 
@@ -50,6 +54,49 @@ function resolveCodex() {
   return { command: 'codex', prefix: [] }
 }
 
+function inspectWorkspace(project) {
+  const branch = spawnSync('git', ['-C', project.root, 'branch', '--show-current'], { encoding: 'utf8' })
+  const head = spawnSync('git', ['-C', project.root, 'rev-parse', 'HEAD'], { encoding: 'utf8' })
+  const status = spawnSync('git', ['-C', project.root, 'status', '--short'], { encoding: 'utf8' })
+  const diff = spawnSync('git', ['-C', project.root, 'diff', '--no-ext-diff', '--binary'], { encoding: 'utf8' })
+  return {
+    matchesProject: workspaceMatches(project),
+    clean: status.status === 0 && !status.stdout.trim(),
+    head: head.status === 0 ? head.stdout.trim() : '',
+    trackedDiffFingerprint: hashPrompt(`${branch.stdout}\n${status.stdout}\n${diff.stdout}`),
+  }
+}
+
+function runContinuationReviewer({ output, project }) {
+  const reviewPath = path.join(privateRoot, `continuation-review-${crypto.randomUUID()}.json`)
+  const invocation = resolveCodex()
+  const result = spawnSync(invocation.command, [
+    ...invocation.prefix,
+    'exec',
+    buildReviewerInstruction(),
+    '--ephemeral',
+    '--sandbox', 'read-only',
+    '--cd', project.root,
+    '--output-last-message', reviewPath,
+    '--output-schema', path.join(repoRoot, 'scripts', 'ops', 'project-continuation-review.schema.json'),
+    '--color', 'never',
+  ], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+    input: output,
+    maxBuffer: 10 * 1024 * 1024,
+    windowsHide: true,
+  })
+  if (result.error || result.status !== 0 || !fs.existsSync(reviewPath)) {
+    throw new Error('READ_ONLY_REVIEWER_FAILED')
+  }
+  try {
+    return JSON.parse(fs.readFileSync(reviewPath, 'utf8'))
+  } finally {
+    fs.rmSync(reviewPath, { force: true })
+  }
+}
+
 function startJob(job) {
   if (running) return
   if (job.status === 'awaiting_approval') {
@@ -84,7 +131,6 @@ function startJob(job) {
     buildExecutionPrompt(job.prompt),
     '--ephemeral',
     '--sandbox', 'workspace-write',
-    '--approve-for-me',
     '--cd', project.root,
     '--output-last-message', outputPath,
     '--color', 'never',
@@ -124,6 +170,26 @@ function persist(job) {
   fs.writeFileSync(path.join(privateRoot, `${job.id}.json`), `${JSON.stringify(job, null, 2)}\n`, 'utf8')
 }
 
+function enqueueContinuationJob(prompt, previousJob, chain) {
+  const job = createJob(prompt, previousJob.sourceUrl)
+  job.projectKey = chain.projectKey
+  job.promptHash = hashPrompt(prompt)
+  job.chainId = chain.chainId
+  jobs.set(job.id, job)
+  persist(job)
+  return job
+}
+
+const continuationStore = new ContinuationChainStore(path.join(privateRoot, 'continuation-chains'))
+const continuationOrchestrator = new ContinuationOrchestrator({
+  store: continuationStore,
+  enabled: continuationEnabled,
+  maxIterations: process.env.PROJECT_CONTINUATION_MAX_ITERATIONS,
+  inspectWorkspace,
+  reviewer: runContinuationReviewer,
+  enqueue: enqueueContinuationJob,
+})
+
 const server = http.createServer(async (req, res) => {
   const origin = req.headers.origin || ''
   if (origin === 'https://chatgpt.com' || origin.startsWith('chrome-extension://')) {
@@ -143,6 +209,15 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'GET' && req.url === '/api/jobs') {
       return json(res, 200, [...jobs.values()].map(({ prompt, ...safe }) => safe))
+    }
+    if (req.method === 'GET' && req.url === '/api/chains') {
+      return json(res, 200, [...continuationStore.chains.values()].map(safeChainMetadata))
+    }
+    const chainRoute = /^\/api\/chains\/([0-9a-f-]{36})$/u.exec(req.url || '')
+    if (chainRoute && req.method === 'GET') {
+      const chain = continuationStore.chains.get(chainRoute[1])
+      if (!chain) return json(res, 404, { error: 'Unknown chain.' })
+      return json(res, 200, safeChainMetadata(chain))
     }
     const jobRoute = /^\/api\/jobs\/([a-f0-9]{16})(?:\/(approve|reject|dispatch|complete))?$/u.exec(req.url || '')
     if (jobRoute && req.method === 'GET') {
@@ -182,19 +257,36 @@ const server = http.createServer(async (req, res) => {
         job.finishedAt = new Date().toISOString()
         job.completedBy = job.codexThreadId
         persist(job)
-        return json(res, 200, { accepted: true, jobId: job.id })
+        const project = PROJECTS[Object.keys(PROJECTS).find((key) => PROJECTS[key].key === job.projectKey)]
+        const continuation = project ? await continuationOrchestrator.complete(job, output, project) : null
+        if (continuation?.nextJob) {
+          persist(continuation.nextJob)
+          if (continuation.nextJob.status === 'queued') startJob(continuation.nextJob)
+        }
+        return json(res, 200, {
+          accepted: true,
+          jobId: job.id,
+          ...(continuation ? { continuation: safeChainMetadata(continuation.chain) } : {}),
+        })
       }
       if (job.status !== 'awaiting_approval') return json(res, 409, { error: 'Job is not awaiting approval.' })
       if (action === 'approve') {
         job.status = 'queued'
         job.approvedAt = new Date().toISOString()
         persist(job)
+        continuationOrchestrator.resume(job)
         startJob(job)
         return json(res, 202, { accepted: true, jobId: job.id })
       }
       job.status = 'rejected'
       job.finishedAt = new Date().toISOString()
       persist(job)
+      const chain = continuationStore.forJob(job.id)
+      if (chain) {
+        chain.status = 'stopped'
+        chain.stopReason = 'APPROVAL_REJECTED'
+        continuationStore.save(chain)
+      }
       return json(res, 200, { accepted: true, jobId: job.id })
     }
     if (req.method === 'GET' && req.url.startsWith('/api/codex/next')) {
@@ -223,6 +315,10 @@ const server = http.createServer(async (req, res) => {
       const job = createJob(incomingPrompt, body.sourceUrl)
       job.projectKey = project.key
       job.promptHash = promptHash
+      if (continuationEnabled) {
+        const chain = continuationOrchestrator.start(job, project)
+        if (chain) job.chainId = chain.chainId
+      }
       jobs.set(job.id, job)
       persist(job)
       startJob(job)
@@ -236,5 +332,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, '127.0.0.1', () => {
   console.log(`Prompt bridge listening on http://127.0.0.1:${port}`)
-  console.log('Scope: exact configured ChatGPT conversation only; git publish is disabled.')
+  console.log(`Scope: exact configured ChatGPT conversation only; continuation=${continuationEnabled ? 'enabled' : 'disabled'}; git publish is disabled.`)
 })

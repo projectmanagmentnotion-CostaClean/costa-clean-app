@@ -8,40 +8,52 @@ import {
 } from './projectContinuationAgentCore.mjs'
 
 const safePrompt = `
-# Objective
+# Goal
 Fix the isolated UI regression.
-# Evidence
-The current output reports a reproducible viewport failure.
+# Verified baseline
+The repository HEAD and clean worktree were inspected before this prompt.
+# Current head
+The reviewer must preserve the verified current commit.
 # Scope
 Inspect and adjust the shared overlay.
 # Non-goals
 Do not alter persistence or routes.
-# Acceptance criteria
-The CTA remains visible in all required viewports.
-# Validation
+# Files/areas
+Only the shared overlay and its focused tests are in scope.
+# Implementation requirements
+Keep the fix bounded and preserve existing contracts.
+# Security constraints
+Do not access remote services, credentials, or private artifacts.
+# Tests
 Run lint, build, tests, and visible QA.
 # Stop conditions
 Stop if authenticated QA is unavailable.
-# Delivery
+# Return format
 Report files, evidence, and blockers.
 `
 
 const authorizedQaPrompt = `
-# Objective
+# Goal
 Deploy the reviewed quiz protection to QA and publish the validated repository changes.
-# Evidence
+# Verified baseline
 The versioned Gate 4B authorization limits work to the approved QA project.
+# Current head
+Use the reviewed commit only.
 # Scope
 Run git commit and git push after the QA-only deployment passes validation.
 # Non-goals
 Do not deploy to production or touch financial flows.
-# Acceptance criteria
+# Files/areas
+Only the reviewed quiz protection files are in scope.
+# Implementation requirements
 QA is verified and production remains unchanged.
-# Validation
+# Security constraints
+Never deploy to production or expose private provider access.
+# Tests
 Run lint, build, tests, QA probes, and secret scanning.
 # Stop conditions
 Stop on any production deployment target or missing private provider access.
-# Delivery
+# Return format
 Report QA evidence, commit, push, and blockers.
 `
 
@@ -82,7 +94,7 @@ describe('projectContinuationAgentCore', () => {
       next_prompt: safePrompt,
     })
     expect(review.verdict).toBe('continue')
-    expect(validatePromptShape(review.next_prompt)).toContain('Acceptance criteria')
+    expect(validatePromptShape(review.next_prompt)).toContain('Implementation requirements')
   })
 
   it('requires a reason for non-continuation verdicts', () => {
@@ -100,6 +112,7 @@ describe('projectContinuationAgentCore', () => {
 
   it('blocks secrets and automatic publication actions by default', () => {
     expect(detectSensitiveContent('OPENAI_API_KEY=secret-value')).toBe(true)
+    expect(detectSensitiveContent('BREVO_API_KEY=secret-value')).toBe(true)
     expect(findAutomaticStopReason('Run git push origin main')).toBe('git-publication-not-automatic')
     expect(findAutomaticStopReason('Deploy the QA build')).toBe('deployment-not-automatic')
     expect(findAutomaticStopReason('Emitir una factura real')).toBe('invoice-emission-not-safe')

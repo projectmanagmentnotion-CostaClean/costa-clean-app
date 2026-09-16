@@ -38,6 +38,16 @@ const APPROVAL_RULES = Object.freeze([
   ['production', 'production access or deployment'],
   ['prod', 'production access or deployment'],
   ['supabase', 'Supabase or database access'],
+  ['siteground', 'SiteGround access or configuration'],
+  ['dns', 'DNS change'],
+  ['brevo api', 'Brevo provider configuration or delivery'],
+  ['brevo credential', 'Brevo provider configuration or delivery'],
+  ['brevo account', 'Brevo provider configuration or delivery'],
+  ['send email', 'external email delivery'],
+  ['send ', 'external message delivery'],
+  ['campaign', 'advertising or marketing campaign'],
+  ['advertising', 'advertising operation'],
+  ['ads', 'advertising operation'],
   ['migration', 'database migration'],
   ['schema', 'database schema change'],
   ['auth', 'authentication or authorization change'],
@@ -53,14 +63,19 @@ const APPROVAL_RULES = Object.freeze([
   ['release', 'deployment or external release'],
   ['push', 'remote Git publication'],
   ['commit', 'Git history change'],
+  ['merge', 'Git merge operation'],
   ['delete', 'destructive deletion'],
   ['drop ', 'destructive database operation'],
   ['reset --hard', 'destructive Git operation'],
 ])
 
 export function approvalReason(prompt) {
-  const normalized = prompt.toLowerCase()
-  const match = APPROVAL_RULES.find(([term]) => normalized.includes(term))
+  const negativeInstruction = /\b(?:do not|don't|never|must not|without|forbidden|prohibited|blocked|no|sin|nunca|prohibid[oa]|no tocar)\b/i
+  const actionableLines = String(prompt ?? '')
+    .split(/\r?\n/)
+    .filter((line) => !negativeInstruction.test(line))
+    .map((line) => line.toLowerCase())
+  const match = APPROVAL_RULES.find(([term]) => actionableLines.some((line) => line.includes(term)))
   return match?.[1] ?? ''
 }
 

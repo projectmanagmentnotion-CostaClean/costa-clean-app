@@ -652,12 +652,13 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-workspace-total { border-bottom: 1px solid var(--v3-color-border); display: grid; gap: var(--v3-space-2); padding: var(--v3-space-4) 0 var(--v3-space-6); }
 .v3-workspace-total strong { font-size: var(--v3-font-size-kpi); font-variant-numeric: tabular-nums; letter-spacing: -0.05em; }
 .v3-workspace-total span { color: var(--v3-color-text-secondary); }
-.v3-invoice-workspace__status { justify-self: start; }
-.v3-invoice-financial-summary { border-bottom: var(--v3-border-width) solid var(--v3-color-border-subtle); display: grid; gap: var(--v3-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: var(--v3-space-4) 0; }
-.v3-invoice-financial-summary div { display: grid; gap: var(--v3-space-1); min-width: 0; }
-.v3-invoice-financial-summary dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
-.v3-invoice-financial-summary dd { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; }
-.v3-invoice-settlement-status { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); margin: 0; }
+.v3-invoice-workspace__status, .v3-quote-workspace__status { justify-self: start; }
+.v3-invoice-financial-summary, .v3-quote-financial-summary { border-bottom: var(--v3-border-width) solid var(--v3-color-border-subtle); display: grid; gap: var(--v3-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: var(--v3-space-4) 0; }
+.v3-invoice-financial-summary div, .v3-quote-financial-summary div { display: grid; gap: var(--v3-space-1); min-width: 0; }
+.v3-invoice-financial-summary dt, .v3-quote-financial-summary dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-invoice-financial-summary dd, .v3-quote-financial-summary dd { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; }
+.v3-quote-financial-summary div:last-child dd { color: var(--v3-color-accent-strong); }
+.v3-invoice-settlement-status, .v3-quote-conversion-status { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); margin: 0; }
 .v3-workspace-actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); }
 .v3-section { display: grid; gap: var(--v3-space-4); padding: var(--v3-space-section) 0; }
 .v3-section__header { align-items: center; display: flex; justify-content: space-between; gap: var(--v3-space-3); }

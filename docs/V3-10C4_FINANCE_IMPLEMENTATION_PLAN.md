@@ -115,7 +115,7 @@ change at `390x844`, `768x1024` and `1440x900`, including filter/Escape/focus,
 financial confirmation without submission, `Más acciones`, deep link, reload
 and Back. Production requests/mutations and QA mutations were `0`.
 
-### C4.3 — Quotes and Quote Workspace — NOT STARTED
+### C4.3 — Quotes and Quote Workspace — CLOSED / CERTIFIED
 
 Likely files:
 
@@ -131,6 +131,20 @@ Scope:
   inventing a new status or workflow.
 - Keep duplicate review, PDF/share, ZIP/CSV and relationship callbacks.
 
+Implemented presentation boundary:
+
+- quote identity, status and Base/IVA/Total are separated in the workspace;
+- conversion uses one confirmation-backed primary action with accurate
+  acceptance/linked-invoice wording;
+- existing linked-invoice, archived and unavailable states use an explanation
+  rather than a duplicate conversion affordance;
+- PDF remains direct while edit/share move to `Más acciones`;
+- quote rows expose the same labelled financial facts compactly.
+
+Unchanged: `acceptQuoteWorkflow`, `accept_quote_workflow`,
+`canConvertQuoteToInvoice`, duplicate review, status/totals/IVA, quote
+persistence, PDF/share engines, exports and Supabase.
+
 Tests:
 
 - conversion guard and accepted-state regression;
@@ -140,6 +154,14 @@ Tests:
 - deep link/Back/hard reload runtime.
 
 Risk: high around duplicate and conversion semantics.
+
+Completion status: certified after implementation, focused/full validation, a read-only authenticated list
+replay pass at `390x844`, `768x1024` and `1440x900`. The QA baseline had no
+visible quote record; workspace, conversion, document invocation, selection
+and relationship replay are honestly `N/A — no existing QA quote`. No QA
+fixture, acceptance or conversion was created. The independent `pr-quality-gate`
+review passed against the actual C4.3 diff; its structured private artifact is
+`qa-reports/private/v3-10c4-3-independent-review.json`.
 
 ### C4.4 — Payments — NOT STARTED
 

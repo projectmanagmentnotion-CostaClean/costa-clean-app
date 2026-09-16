@@ -1,8 +1,8 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `C4.1 CLOSED / C4.2 CLOSED / C4.3–C4.6 NOT STARTED`
+Status: `C4.1 CLOSED / C4.2 CLOSED / C4.3 CLOSED / C4.4–C4.6 NOT STARTED`
 
-Audited HEAD: `a0c5b60fd0b1431c09204213868b87a2f3567543`
+Audited HEAD: `d783567f60ef87195fccb7dc34358a7bfd5c3f1f`
 
 This is a planning ledger, not a defect declaration. Objective defects and
 visual/UX refinement opportunities are intentionally separated. No product
@@ -54,6 +54,33 @@ horizontal overflow, undersized actions, clipped financial values, UUIDs,
 Unicode-as-icon, legacy markers and broken images were `0`. Two blank CDP
 `Document` abort events during target replacement were not critical requests:
 they had no URL and each was followed by successful app navigation.
+
+## C4.3 quote resolution status
+
+The C4.3 implementation is intentionally limited to Quote list/workspace presentation. It does not alter quote persistence, acceptance/conversion, duplicate review, PDF/share, exports or Supabase.
+
+| Finding | Status after C4.3 | Evidence / boundary |
+| --- | --- | --- |
+| F-C4-P2-004 | FIXED / VERIFIED | Quote identity, status and Base/IVA/Total are separated. The sole primary conversion action now explains the existing accept-and-linked-invoice outcome in a shared confirmation sheet and reports an existing linked invoice instead of offering duplicate conversion. `canConvertQuoteToInvoice`, acceptance and duplicate review remain unchanged. |
+| F-C4-P2-007 | N/A FOR C4.3 | Quote create/edit flows were inspected but no source-level field grouping defect justified altering their established persistence order. Finance form review remains C4.4–C4.5 work. |
+| F-C4-P3-002 | FIXED / VERIFIED FOR QUOTES | Quote rows and workspace label Base, IVA and Total in a single semantic reading order. No financial calculation changed. |
+| F-C4-P3-003 | FIXED / VERIFIED FOR QUOTES | `Descargar PDF`, `Editar presupuesto` and `Compartir presupuesto` are explicit action labels; PDF remains a direct action and secondary actions are grouped. |
+
+### C4.3 authenticated replay evidence
+
+The authenticated, read-only Quote List replay passed at `390x844`, `768x1024` and `1440x900`: no overflow, undersized relevant control, UUID, Unicode-as-icon, legacy marker, broken image, console/page error or critical failed request. Production requests/mutations and QA mutations were `0`.
+
+The QA baseline contained zero visible quote rows, so Quote Workspace, conversion confirmation, PDF invocation, selection and related navigation were recorded `N/A — no existing QA quote`; no certification fixture or conversion was created. Empty-URL CDP Document aborts during target replacement were not critical requests and were followed by successful local app navigation.
+
+### C4.3 independent review
+
+`pr-quality-gate` independently reviewed the actual C4.3 dirty diff and
+returned `PASS`; the structured private artifact is
+`qa-reports/private/v3-10c4-3-independent-review.json`. It found no P0/P1
+findings and confirmed the protected conversion, duplicate, financial,
+document, route and Supabase contracts remain unchanged. The unavailable
+workspace replay and potential extreme-value/hydration presentation refinements
+remain non-blocking follow-up scope.
 
 ## P0 — objective blockers
 

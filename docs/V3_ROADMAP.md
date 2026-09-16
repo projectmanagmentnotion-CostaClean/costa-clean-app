@@ -338,7 +338,7 @@ any product implementation in a later module.
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 `docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
-## V3-10C4 — Finance refinement — OPEN / C4.1–C4.2 CLOSED / C4.3–C4.6 NOT STARTED
+## V3-10C4 — Finance refinement — OPEN / C4.1–C4.3 CLOSED / C4.4–C4.6 NOT STARTED
 
 - [x] Complete read-only finance architecture and protected-contract discovery.
 - [x] Record invoice, quote, payment and expense findings and priorities.
@@ -349,7 +349,11 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 - [x] C4.2: invoices and Invoice Workspace — settlement clarity, financial
   hierarchy and action grouping certified through final authenticated read-only
   QA at `390x844`, `768x1024` and `1440x900`.
-- [ ] C4.3: quotes and Quote Workspace.
+- [x] C4.3: quotes and Quote Workspace — certified presentation: status,
+  Base/IVA/Total hierarchy, explicit conversion confirmation and document/action
+  grouping. Authenticated list QA passed at `390x844`, `768x1024` and `1440x900`;
+  workspace actions are N/A because the controlled QA baseline has no visible
+  quote record. Independent `pr-quality-gate` review passed.
 - [ ] C4.4: payments.
 - [ ] C4.5: expenses.
 - [ ] C4.6: cross-module certification.
@@ -357,11 +361,12 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 `docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md` and
 `docs/V3-10C4_FINDINGS.md`, plus
-`docs/V3-10C4-1_SHARED_FINANCE_HIERARCHY.md` and
-`docs/V3-10C4-2_INVOICES_REFINEMENT.md`.
+`docs/V3-10C4-1_SHARED_FINANCE_HIERARCHY.md`,
+`docs/V3-10C4-2_INVOICES_REFINEMENT.md` and
+`docs/V3-10C4-3_QUOTES_REFINEMENT.md`.
 
-Next: C4 remains open. C4.2 may begin only with explicit implementation
-authorization; C4.3–C4.6 remain not started.
+Next: C4 remains open. C4.4–C4.6 remain not started and require explicit
+authorization.
 
 ## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
 

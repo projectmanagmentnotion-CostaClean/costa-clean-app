@@ -1,3 +1,5 @@
+import { createBrevoTransactionalEmailProvider, type BrevoTransactionalEmailDependencies } from './brevoTransactionalEmail.ts'
+
 /**
  * Server-only transactional email port. Provider selection and delivery wiring
  * remain an explicit later approval; this module must never be imported by UI code.
@@ -26,6 +28,8 @@ export interface TransactionalEmailResult {
 export interface TransactionalEmailProvider {
   sendTransactionalEmail(input: TransactionalEmailRequest): Promise<TransactionalEmailResult>
 }
+
+export type TransactionalEmailEnvironment = (name: string) => string | undefined
 
 export interface PortalInvitationEmailInput {
   recipient: string
@@ -74,6 +78,25 @@ export function createDisabledTransactionalEmailProvider(
       }
     },
   }
+}
+
+/**
+ * Environment resolution is server-only and defaults to disabled. It never falls back to another provider.
+ */
+export function createTransactionalEmailProviderFromEnvironment(
+  env: TransactionalEmailEnvironment,
+  dependencies?: BrevoTransactionalEmailDependencies,
+): TransactionalEmailProvider {
+  const provider = env('TRANSACTIONAL_EMAIL_PROVIDER')?.trim().toLowerCase() || 'disabled'
+  if (provider === 'disabled') return createDisabledTransactionalEmailProvider('provider_disabled')
+  if (provider !== 'brevo') return createDisabledTransactionalEmailProvider('provider_unsupported')
+
+  return createBrevoTransactionalEmailProvider({
+    apiKey: env('BREVO_API_KEY') ?? '',
+    senderEmail: env('BREVO_SENDER_EMAIL') ?? '',
+    senderName: env('BREVO_SENDER_NAME') ?? '',
+    replyToEmail: env('BREVO_REPLY_TO_EMAIL'),
+  }, dependencies)
 }
 
 /**

@@ -484,7 +484,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `FOUNDATION_IMPLEMENTED_PROVIDER_PENDING_OWNER_APPROVAL` |
+| Status | `CP-4.3B_IMPLEMENTED_LOCAL_PROVIDER_ADAPTER` |
 | Objective | Connect invitations to a bounded, observable email provider adapter. |
 | User outcome | Invited clients receive clear, secure, deliverable messages without token leakage. |
 | Dependencies | CP-4.2 closed; provider/DPA/region approved; sending domain and templates owned; remote deployment separately authorized. |
@@ -502,14 +502,15 @@ automatically.
 | Stop conditions | Token in log, unauthenticated domain, unknown processor/region, missing rate limit, secret in frontend or unapproved production send. |
 | Closeout documentation | Provider/subprocessor record, DNS evidence, template version, runbook, deployment/rollback and next gate. |
 | Expected commit | `feat: add secure portal invitation email adapter` |
-| Next gate | CP-5.1 |
+| Next gate | CP-4.3C — delivery state/outbox and QA provider configuration gate |
 
-CP-4.3A adds a provider-neutral, server-only transactional-email port and
-redacted audit contract for `PORTAL_INVITATION`. It is deliberately disconnected
-from `portal-member-actions`; invitation delivery remains disabled until the
-owner approves a provider, DPA/region, sending domain, private credentials,
-delivery policy and an exact QA deployment. No provider, DNS, SiteGround,
-Supabase remote configuration or email send was performed.
+CP-4.3A added a provider-neutral, server-only transactional-email port and
+redacted audit contract for `PORTAL_INVITATION`. CP-4.3B adds the owner-approved
+Brevo adapter to that port, still deliberately disconnected from
+`portal-member-actions`. Invitation delivery remains disabled until CP-4.3C
+approves a trusted delivery state/outbox, private QA credentials, sender-domain
+authentication and an exact QA deployment. No DNS, SiteGround, Supabase remote
+configuration or email send was performed.
 
 ## CP-5.1 — Production readiness gate
 

@@ -55,8 +55,8 @@ export function V3Kpi({ label, value, hint }: { label: string; value: string; hi
   return <article className="v3-kpi"><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</article>
 }
 
-export function V3KpiGroup({ children }: { children: ReactNode }) {
-  return <div className="v3-kpi-group">{children}</div>
+export function V3KpiGroup({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'supporting' }) {
+  return <div className={`v3-kpi-group v3-kpi-group--${variant}`}>{children}</div>
 }
 
 export function V3EntityStatus({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger' }) {
@@ -71,6 +71,10 @@ export function V3PrimaryAction({ children, onClick, type = 'button', disabled =
 
 export function V3SecondaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel }: V3ActionProps) {
   return <button type={type} className="v3-action v3-action--secondary" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>{children}</button>
+}
+
+export function V3ActionGroup({ children, className = '' }: { children: ReactNode; className?: string }) {
+  return <div className={`v3-action-group ${className}`.trim()}>{children}</div>
 }
 
 export function V3DetailSection({ title, children }: { title: string; children: ReactNode }) {

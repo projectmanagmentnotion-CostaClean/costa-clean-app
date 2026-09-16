@@ -24,7 +24,7 @@ contracts remain frozen.
 
 ## Ordered implementation batches
 
-### C4.1 — Finance shared hierarchy and list conventions
+### C4.1 — Finance shared hierarchy and list conventions — CLOSED / CERTIFIED
 
 Likely files:
 
@@ -58,7 +58,13 @@ Dependency: C3 is closed/certified at `a0c5b60fd0b1431c09204213868b87a2f3567543`
 Product work still requires a separate human-authorized C4 implementation
 prompt; this preparation audit is not that authorization.
 
-### C4.2 — Invoices and Invoice Workspace
+Completion: `docs/V3-10C4-1_SHARED_FINANCE_HIERARCHY.md`. The completed scope
+is controls-before-summary order, shared header/workspace action grouping,
+responsive supporting KPIs and common list empty/error states. It does not
+change settlement, conversion, payment provenance, expense persistence or
+document behavior.
+
+### C4.2 — Invoices and Invoice Workspace — NOT STARTED
 
 Likely files:
 
@@ -87,7 +93,7 @@ Tests:
 
 Risk: high because financial action proximity is safety-sensitive.
 
-### C4.3 — Quotes and Quote Workspace
+### C4.3 — Quotes and Quote Workspace — NOT STARTED
 
 Likely files:
 
@@ -113,7 +119,7 @@ Tests:
 
 Risk: high around duplicate and conversion semantics.
 
-### C4.4 — Payments
+### C4.4 — Payments — NOT STARTED
 
 Likely files:
 
@@ -140,7 +146,7 @@ Tests:
 
 Risk: medium/high due to provenance wording.
 
-### C4.5 — Expenses
+### C4.5 — Expenses — NOT STARTED
 
 Likely files:
 
@@ -170,7 +176,7 @@ Tests:
 Risk: high because attachments and persistence are destructive/data-loss
 boundaries.
 
-### C4.6 — Cross-module regression and responsive certification
+### C4.6 — Cross-module regression and responsive certification — NOT STARTED
 
 Scope:
 

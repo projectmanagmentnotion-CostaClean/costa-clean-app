@@ -9,6 +9,23 @@ visual/UX refinement opportunities are intentionally separated. No product
 file, business contract, Supabase object or QA business data changed while
 collecting this evidence.
 
+## C4.1 resolution status
+
+| Finding | Status after C4.1 | Evidence / boundary |
+| --- | --- | --- |
+| F-C4-P1-001 | STILL OPEN — C4.4 | Payment origin wording is business-meaning specific; C4.1 deliberately did not alter `transfer_auto` presentation or persistence. |
+| F-C4-P1-002 | STILL OPEN — C4.2 | Invoice settlement copy and guard explanation remain untouched; C4.1 only establishes the shared action grouping around the existing callback. |
+| F-C4-P2-001 | FIXED | All four finance lists now render their find controls before a shared supporting KPI summary. Authenticated QA confirms the geometric order at 390x844, 768x1024 and 1440x900. |
+| F-C4-P2-003 | PARTIALLY FIXED | Invoice action controls now use the shared finance action group, with one mobile-primary lane. Settlement meaning and duplicated financial reading remain C4.2 work. |
+| F-C4-P2-004 | STILL OPEN — C4.3 | Quote financial/conversion explanation requires quote-specific state treatment. |
+| F-C4-P2-005 | PARTIALLY FIXED | Payment header/list hierarchy uses shared controls and action grouping. Payment scan order and provenance wording remain C4.4 work. |
+| F-C4-P2-006 | PARTIALLY FIXED | Expense top actions now use the same shared group. Workspace section regrouping and document workflow remain C4.5 work. |
+| F-C4-P2-007 | STILL OPEN — C4.2–C4.5 | C4.1 intentionally does not alter create/edit flow content or persistence order. |
+| F-C4-P3-001 | PARTIALLY FIXED | Shared header action group, controls-before-summary order and supporting KPI treatment now cover all four lists. Module-specific list rows remain later batch work. |
+| F-C4-P3-002 | STILL OPEN — C4.2–C4.5 | Monetary reading order is module-specific and will be refined with each workspace. |
+| F-C4-P3-003 | STILL OPEN — C4.2–C4.5 | Document vocabulary remains tied to the protected module-specific document paths. |
+| F-C4-P3-004 | PARTIALLY FIXED | All four list pages use shared `V3EmptyState` and `V3ErrorState`. Finance-specific document, guard and permission copy remains later batch work. |
+
 ## P0 — objective blockers
 
 None found in the bounded read-only inspection. This is not a release or C4

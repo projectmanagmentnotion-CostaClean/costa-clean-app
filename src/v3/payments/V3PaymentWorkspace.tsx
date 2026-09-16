@@ -7,7 +7,7 @@ import { getPaymentOriginLabel } from '../../features/invoices/paymentState'
 import type { ClientListItem } from '../../features/clients/types'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
-import { V3DetailSection, V3EntityStatus, V3Field, V3Icon, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Select, V3Textarea, V3StickyActionBar } from '../components/V3Primitives'
+import { V3ActionGroup, V3DetailSection, V3EntityStatus, V3Field, V3Icon, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Select, V3Textarea, V3StickyActionBar } from '../components/V3Primitives'
 
 interface V3PaymentWorkspaceProps {
   payment: PaymentListItem
@@ -68,10 +68,10 @@ export function V3PaymentWorkspace(props: V3PaymentWorkspaceProps) {
       <button type="button" className="v3-workspace-back" onClick={props.onBack}><V3Icon name="back" /> Cobros</button>
       <V3PageTitle eyebrow="Cobros" title={formatPaymentLabel(payment)} description={payment.notes ?? 'Registro vinculado a una factura existente.'} />
       <div className="v3-workspace-total"><strong>{formatCurrency(payment.amount)}</strong><span>{formatDateEs(payment.payment_date)} · {getPaymentMethodLabel(payment.payment_method)}</span></div>
-      <div className="v3-workspace-actions">
+      <V3ActionGroup className="v3-finance-action-group">
         <V3PrimaryAction onClick={() => props.onOpenInvoice(payment.invoice_id)}>Ver factura</V3PrimaryAction>
         {isManual ? <V3SecondaryAction onClick={() => { setEditing((value) => !value); setError(null); setMessage(null) }}>{editing ? 'Cancelar edición' : 'Editar cobro'}</V3SecondaryAction> : null}
-      </div>
+      </V3ActionGroup>
       {message ? <p className="v3-inline-message" role="status">{message}</p> : null}
       {error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{error}</p> : null}
       {editing && isManual ? (

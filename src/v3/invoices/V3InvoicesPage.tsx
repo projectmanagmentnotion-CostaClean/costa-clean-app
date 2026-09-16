@@ -7,7 +7,7 @@ import type { PaymentListItem } from '../../features/payments/types'
 import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { getInvoiceFinancialStatusLabel } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
-import { V3BottomSheet, V3EntityListItem, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
+import { V3ActionGroup, V3BottomSheet, V3EmptyState, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
 import { useV3Selection } from '../selection/useV3Selection'
 import { V3SelectionActionSheet, V3SelectionBar, V3SelectionConfirmSheet, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
 
@@ -138,17 +138,17 @@ export function V3InvoicesPage({
   }
 
   return (
-    <V3Page className="v3-invoices-page">
-      <V3PageTitle eyebrow="Facturación" title="Facturas" description={`${activeFilterLabel ? `${activeFilterLabel} · ` : ''}Emisión, cobro y saldo pendiente en una sola lectura.`} action={<><V3SelectionTrigger onClick={selection.enter} /><V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction></>} />
-      <V3KpiGroup>
-        <V3Kpi label="Este mes" value={formatCurrency(billedAmount)} hint="Importe facturado" />
-        <V3Kpi label="Por cobrar" value={formatCurrency(pendingAmount)} hint="Saldo pendiente" />
-        <V3Kpi label="Cobradas" value={String(paidInvoices.length)} hint="Estado financiero real" />
-      </V3KpiGroup>
+    <V3Page className="v3-invoices-page v3-finance-page">
+      <V3PageTitle eyebrow="Facturación" title="Facturas" description={`${activeFilterLabel ? `${activeFilterLabel} · ` : ''}Emisión, cobro y saldo pendiente en una sola lectura.`} action={<V3ActionGroup><V3SelectionTrigger onClick={selection.enter} /><V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction></V3ActionGroup>} />
       <section className="v3-invoice-controls" aria-label="Buscar y filtrar facturas">
         <label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Número o cliente" /></label>
         <button type="button" className="v3-filter-trigger" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterSheetOpen}>Filtros <V3Icon name="chevronDown" /></button>
       </section>
+      <V3KpiGroup variant="supporting">
+        <V3Kpi label="Este mes" value={formatCurrency(billedAmount)} hint="Importe facturado" />
+        <V3Kpi label="Por cobrar" value={formatCurrency(pendingAmount)} hint="Saldo pendiente" />
+        <V3Kpi label="Cobradas" value={String(paidInvoices.length)} hint="Estado financiero real" />
+      </V3KpiGroup>
       <div className="v3-filter-tabs" role="tablist" aria-label="Estado de factura">
         {([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => (
           <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>
@@ -163,8 +163,8 @@ export function V3InvoicesPage({
           </div>
         </V3BottomSheet>
       ) : null}
-      {error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando facturas</strong><p>{error}</p></div> : null}
-      {!error && visibleInvoices.length === 0 ? <div className="v3-state"><strong>Sin facturas visibles</strong><p>Ajusta la búsqueda o el estado para continuar.</p></div> : null}
+      {error ? <V3ErrorState title="Error cargando facturas" description={error} /> : null}
+      {!error && visibleInvoices.length === 0 ? <V3EmptyState title="Sin facturas visibles" description="Ajusta la búsqueda o el estado para continuar." /> : null}
       <div className="v3-entity-list" role="list" aria-label="Facturas">
         {visibleInvoices.map((invoice) => (
           <V3InvoiceRow key={invoice.id} invoice={invoice} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(invoice.id)} onToggleSelect={() => selection.toggle(invoice.id)} isSettling={isInvoiceSettling(invoice.id)} onOpen={() => {
@@ -209,7 +209,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
       <button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Facturas</button>
       <V3PageTitle eyebrow={invoiceLabel(invoice)} title={getInvoiceFinancialStatusLabel(financialStatus)} description={`${client?.full_name ?? formatClientLabel(invoice)} · ${formatDateEs(invoice.issue_date)}`} />
       <div className="v3-workspace-total"><strong>{formatCurrency(invoice.total)}</strong><span>Pendiente {formatCurrency(outstanding)}</span></div>
-      <div className="v3-workspace-actions">{canSettleInvoiceByTransfer(invoice) ? <V3PrimaryAction onClick={() => onSettleInvoice(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Marcando…' : 'Marcar pagada'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onEditInvoice}>Editar</V3SecondaryAction><V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar</V3SecondaryAction><V3SecondaryAction onClick={() => onOpenDocument(invoice)}>Documento</V3SecondaryAction></div>
+      <V3ActionGroup className="v3-finance-action-group">{canSettleInvoiceByTransfer(invoice) ? <V3PrimaryAction onClick={() => onSettleInvoice(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Marcando…' : 'Marcar pagada'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onEditInvoice}>Editar</V3SecondaryAction><V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar</V3SecondaryAction><V3SecondaryAction onClick={() => onOpenDocument(invoice)}>Documento</V3SecondaryAction></V3ActionGroup>
       <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client?.full_name ?? formatClientLabel(invoice)}</dd></div><div><dt>Fecha</dt><dd>{formatDateEs(invoice.issue_date)}</dd></div><div><dt>Estado</dt><dd><V3Status label={getInvoiceFinancialStatusLabel(financialStatus)} tone={getStatusTone(financialStatus)} /></dd></div></dl></V3Section>
       <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
       <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div key={line.id} className="v3-line-row"><span>{line.concept}</span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas detalladas disponibles.</p>}</div></V3Section>

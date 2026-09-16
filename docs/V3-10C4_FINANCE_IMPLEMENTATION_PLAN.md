@@ -64,7 +64,7 @@ responsive supporting KPIs and common list empty/error states. It does not
 change settlement, conversion, payment provenance, expense persistence or
 document behavior.
 
-### C4.2 — Invoices and Invoice Workspace — IMPLEMENTED / AUTHENTICATED REPLAY PENDING
+### C4.2 — Invoices and Invoice Workspace — CLOSED / CERTIFIED
 
 Likely files:
 
@@ -109,10 +109,11 @@ Tests:
 
 Risk: high because financial action proximity is safety-sensitive.
 
-Completion status: focused tests, lint, build and diff checks pass. The initial
-authenticated read-only matrix passed before the final mobile action grouping;
-the required post-change replay is pending because the QA profiles currently
-show Login after reload. Do not label C4.2 certified until that replay passes.
+Completion status: focused and full tests, lint, build and diff checks pass.
+The final authenticated read-only replay passed after the mobile action-group
+change at `390x844`, `768x1024` and `1440x900`, including filter/Escape/focus,
+financial confirmation without submission, `Más acciones`, deep link, reload
+and Back. Production requests/mutations and QA mutations were `0`.
 
 ### C4.3 — Quotes and Quote Workspace — NOT STARTED
 

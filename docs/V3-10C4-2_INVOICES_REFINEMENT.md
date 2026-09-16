@@ -1,6 +1,6 @@
 # V3-10C4.2 — Invoices refinement
 
-Status: `IMPLEMENTED / AUTHENTICATED REPLAY PENDING`
+Status: `CLOSED / CERTIFIED`
 
 Starting HEAD: `57bb8b2`
 
@@ -53,28 +53,25 @@ Partial settlement remains represented by the existing outstanding amount.
 
 Private visual evidence is ignored and never committed.
 
-## Validation completed
+## Validation and authenticated evidence
 
 - focused Invoice, selection and settlement tests passed (`18` tests);
 - lint, build and `git diff --check` passed after the implementation;
-- read-only authenticated evidence before the final mobile action-group
-  refinement covered invoice list/filter/workspace, confirmation without
-  submission, deep-link reload and Back at `390x844`, `768x1024` and
-  `1440x900`, with no QA mutations or production requests.
+- final read-only authenticated replay passed at `390x844`, `768x1024` and
+  `1440x900` after the mobile action grouping.
 
-## Required before certification
+At every certified viewport the replay verified the list, filter sheet and
+Escape/focus restoration, workspace, financial hierarchy, one settlement CTA,
+settlement confirmation copy without confirmation submission, PDF and
+`Más acciones`/document affordances, deep link, hard reload and Back.
 
-The local QA browser sessions now render Login after reload. The session was
-not altered. A user-authenticated, read-only post-change replay remains
-required at `390x844`, `768x1024` and `1440x900` for:
+The runtime recorder found zero production requests, production mutations, QA
+mutations, console errors, page errors, horizontal overflow, undersized action
+targets, clipped financial values, visible or accessible UUIDs, Unicode icon
+content, legacy markers and broken images. A blank `Document` abort emitted by
+CDP during a target replacement on two viewport runs had no URL, was followed
+by a successful loaded workspace/reload/Back sequence, and was classified as a
+harness navigation event rather than a failed critical application request.
 
-1. list, search and filter;
-2. workspace totals/status and the settlement confirmation copy without
-   confirming it;
-3. `Más acciones`, PDF/document affordances, Escape/focus restoration;
-4. deep link, hard reload and Back;
-5. overflow, UUID, Unicode, legacy, console/page-error, production-request and
-   QA-mutation checks.
-
-Until this exact replay passes, **V3-10C4.2 is not certified**. C4 remains
-open; C4.3–C4.6 and C5 remain not started.
+**V3-10C4.2 is CLOSED / CERTIFIED.** C4 remains open; C4.3–C4.6 and C5 remain
+not started.

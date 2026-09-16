@@ -1,6 +1,6 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `C4.1 CLOSED / C4.2 IMPLEMENTED — AUTHENTICATED REPLAY PENDING`
+Status: `C4.1 CLOSED / C4.2 CLOSED / C4.3–C4.6 NOT STARTED`
 
 Audited HEAD: `a0c5b60fd0b1431c09204213868b87a2f3567543`
 
@@ -34,25 +34,26 @@ generation, selection exports, settlement RPCs or any Supabase object.
 
 | Finding | Status after C4.2 implementation | Evidence / boundary |
 | --- | --- | --- |
-| F-C4-P1-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Eligible invoices now use the accurate action label `Registrar cobro`, expose total/cobrado/pendiente before confirmation, and require the existing confirmation surface. The sole callback remains the established guarded settlement callback. A post-change authenticated replay is still required because the local QA session returned to Login after reload. |
-| F-C4-P2-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Rows use the shared financial facts helper to render `Total`, `Cobrado` and `Pendiente` in semantic scan order. No financial calculation changed. |
-| F-C4-P2-003 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | The workspace puts invoice identity first, separates status, consolidates the three financial values, gives settlement one primary lane, and moves edit/document controls behind a secondary `Más acciones` sheet. PDF remains directly available. |
-| F-C4-P2-007 | PARTIALLY FIXED | Invoice create/edit flows remain contract-preserving and unchanged; C4.2 did not find or introduce a form-persistence issue. The finance-wide form grouping review remains scoped to C4.3–C4.5. |
-| F-C4-P3-002 | IMPLEMENTED — AUTHENTICATED REPLAY PENDING | Invoice list and workspace now use total → paid → outstanding as the concise monetary reading order. Quote, Payment and Expense surfaces remain open. |
+| F-C4-P1-002 | FIXED / VERIFIED | Eligible invoices now use the accurate action label `Registrar cobro`, expose total/cobrado/pendiente before confirmation, and require the existing confirmation surface. The sole callback remains the established guarded settlement callback. Final read-only QA passed at 390, 768 and 1440. |
+| F-C4-P2-002 | FIXED / VERIFIED | Rows use the shared financial facts helper to render `Total`, `Cobrado` and `Pendiente` in semantic scan order. No financial calculation changed. |
+| F-C4-P2-003 | FIXED / VERIFIED | The workspace puts invoice identity first, separates status, consolidates the three financial values, gives settlement one primary lane, and moves edit/document controls behind a secondary `Más acciones` sheet. PDF remains directly available. |
+| F-C4-P2-007 | N/A FOR C4.2 | Invoice create/edit flows remain contract-preserving and unchanged; no C4.2 form defect was found. The finance-wide form grouping review remains scoped to C4.3–C4.5. |
+| F-C4-P3-002 | FIXED / VERIFIED FOR INVOICES | Invoice list and workspace now use total → paid → outstanding as the concise monetary reading order. Quote, Payment and Expense surfaces remain open. |
 | F-C4-P3-003 | PARTIALLY FIXED | Invoice uses explicit `Descargar PDF` and `Ver documento` labels. Other finance-module vocabulary remains open. |
 
-### C4.2 authenticated replay boundary
+### C4.2 authenticated replay evidence
 
-The first read-only authenticated replay before the final mobile action-group
-adjustment passed list, filter, workspace, confirmation (without confirmation
-submission), deep-link reload and Back at `390x844`, `768x1024` and
-`1440x900`, with zero production requests, QA mutations, overflow, visible
-UUIDs, Unicode-as-icon matches, legacy markers, console errors and page errors.
+The final read-only authenticated replay passed list, filter, workspace,
+confirmation without submission, `Más acciones`, PDF/document affordances,
+deep-link reload and Back at `390x844`, `768x1024` and `1440x900`. The target
+shell was authenticated throughout; no credentials, cookies, tokens or storage
+contents were read, copied or changed. No financial action was confirmed.
 
-The follow-up replay discovered that both local QA profiles render Login after
-reload. No credentials, cookies, tokens or storage were read, copied or
-changed, and no financial action was confirmed. C4.2 therefore remains open
-until the post-change authenticated replay can be repeated.
+Production requests/mutations and QA mutations were `0`. Console/page errors,
+horizontal overflow, undersized actions, clipped financial values, UUIDs,
+Unicode-as-icon, legacy markers and broken images were `0`. Two blank CDP
+`Document` abort events during target replacement were not critical requests:
+they had no URL and each was followed by successful app navigation.
 
 ## P0 — objective blockers
 

@@ -338,7 +338,7 @@ any product implementation in a later module.
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 `docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
-## V3-10C4 — Finance refinement — OPEN / C4.1 CLOSED / C4.2 AUTHENTICATED REPLAY PENDING / C4.3–C4.6 NOT STARTED
+## V3-10C4 — Finance refinement — OPEN / C4.1–C4.2 CLOSED / C4.3–C4.6 NOT STARTED
 
 - [x] Complete read-only finance architecture and protected-contract discovery.
 - [x] Record invoice, quote, payment and expense findings and priorities.
@@ -346,9 +346,9 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 - [x] Reconcile the authoritative scope, read-only QA preparation evidence and
   standalone findings ledger after C3 certification.
 - [x] C4.1: refine the shared finance hierarchy without changing finance contracts.
-- [~] C4.2: invoices and Invoice Workspace — implementation and static gates
-  complete; authenticated post-change replay pending because the local QA
-  profiles show Login after reload.
+- [x] C4.2: invoices and Invoice Workspace — settlement clarity, financial
+  hierarchy and action grouping certified through final authenticated read-only
+  QA at `390x844`, `768x1024` and `1440x900`.
 - [ ] C4.3: quotes and Quote Workspace.
 - [ ] C4.4: payments.
 - [ ] C4.5: expenses.

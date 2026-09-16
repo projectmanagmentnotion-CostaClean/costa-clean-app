@@ -66,7 +66,7 @@ $runner = Join-Path $repoRoot 'scripts\ops\run-project-continuation-agent.mjs'
 Push-Location $repoRoot
 try {
   # The first non-executing bootstrap invocation is a fail-closed detached reviewer smoke.
-  & node $runner --bootstrap --review-timeout-ms 180000 2>&1 | Tee-Object -FilePath $logPath -Append
+  & node $runner --bootstrap --review-timeout-ms 600000 2>&1 | Tee-Object -FilePath $logPath -Append
   if ($LASTEXITCODE -ne 0) { throw "Detached reviewer smoke failed with exit code $LASTEXITCODE." }
   $reviewArtifact = Get-ChildItem -LiteralPath $privateRoot -Filter 'iteration-1-review.json' -Recurse |
     Sort-Object LastWriteTime -Descending | Select-Object -First 1

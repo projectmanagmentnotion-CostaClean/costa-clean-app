@@ -16,7 +16,7 @@ const repoRoot = path.resolve(scriptDir, '..', '..')
 const schemaPath = path.join(scriptDir, 'project-continuation-review.schema.json')
 const privateRoot = path.join(repoRoot, '.project-agent', 'private')
 const DEFAULT_MODEL = 'gpt-5.6-sol'
-const DEFAULT_REVIEW_TIMEOUT_MS = 180_000
+const DEFAULT_REVIEW_TIMEOUT_MS = 600_000
 const DEFAULT_EXECUTION_TIMEOUT_MS = 1_800_000
 const DEFAULT_CONTINUOUS_ITERATIONS = 10
 

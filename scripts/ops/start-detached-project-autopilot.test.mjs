@@ -18,7 +18,7 @@ describe('detached project autopilot launcher', () => {
 
   it('requires a detached smoke artifact before the continuous loop', () => {
     expect(launcher).toContain('Start-Process')
-    expect(launcher).toContain('--bootstrap --review-timeout-ms 180000')
+    expect(launcher).toContain('--bootstrap --review-timeout-ms 600000')
     expect(launcher).toContain('Detached reviewer smoke produced no structured artifact.')
     expect(launcher).toContain('--continuous --bootstrap --max-iterations 10')
   })

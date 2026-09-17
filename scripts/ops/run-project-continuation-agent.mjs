@@ -33,6 +33,7 @@ const VALIDATION_TERMINATION_GRACE_MS = 5_000
 // Git's environment namespace can alter repository discovery, refs, config, and
 // transport. Controlled publication deliberately inherits none of it.
 const GIT_IDENTITY_OVERRIDE_ENV = /^GIT_/
+const GIT_CONFIG_OVERRIDE_ENV = /^GIT_CONFIG(?:_(?:COUNT|KEY_\d+|VALUE_\d+))?$/
 
 function sanitizedGitEnvironment() {
   const env = { ...process.env }
@@ -40,6 +41,17 @@ function sanitizedGitEnvironment() {
     if (GIT_IDENTITY_OVERRIDE_ENV.test(name)) delete env[name]
   }
   return env
+}
+
+function repositoryGitEnvironment(overrides = {}) {
+  const environment = { ...sanitizedGitEnvironment(), ...overrides }
+  for (const name of Object.keys(environment)) {
+    if (GIT_CONFIG_OVERRIDE_ENV.test(name)) delete environment[name]
+  }
+  environment.GIT_CONFIG_COUNT = '1'
+  environment.GIT_CONFIG_KEY_0 = 'safe.directory'
+  environment.GIT_CONFIG_VALUE_0 = repoRoot.replace(/\\/g, '/')
+  return environment
 }
 
 const PUBLICATION_VALIDATIONS = Object.freeze([
@@ -132,15 +144,19 @@ function resolveCodexInvocation() {
   return { command: 'codex', prefixArgs: [] }
 }
 
-function terminateProcessTree(child) {
-  if (!child?.pid) return Promise.resolve()
-  if (process.platform !== 'win32') {
+export function terminateProcessTree(child, dependencies = {}) {
+  if (!child?.pid) return Promise.resolve({ attempted: false, terminated: false })
+  const platform = dependencies.platform ?? process.platform
+  const spawnProcess = dependencies.spawn ?? spawn
+  const cwd = dependencies.cwd ?? repoRoot
+  const graceMs = dependencies.graceMs ?? VALIDATION_TERMINATION_GRACE_MS
+  if (platform !== 'win32') {
     try {
       process.kill(-child.pid, 'SIGKILL')
     } catch {
       child.kill('SIGKILL')
     }
-    return Promise.resolve()
+    return Promise.resolve({ attempted: true, terminated: true })
   }
 
   return new Promise((resolve) => {
@@ -150,21 +166,25 @@ function terminateProcessTree(child) {
       if (settled) return
       settled = true
       clearTimeout(killerTimer)
-      resolve()
+      resolve({ attempted: true, terminated: true })
     }
     try {
-      const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
-        cwd: repoRoot,
+      const killer = spawnProcess('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
+        cwd,
         stdio: 'ignore',
         windowsHide: true,
       })
-      killer.on('error', finish)
+      killer.on('error', () => {
+        try { child.kill?.('SIGKILL') } catch {}
+        finish()
+      })
       killer.on('close', finish)
       killerTimer = setTimeout(() => {
         killer.kill('SIGKILL')
         finish()
-      }, VALIDATION_TERMINATION_GRACE_MS)
+      }, graceMs)
     } catch {
+      try { child.kill?.('SIGKILL') } catch {}
       finish()
     }
   })
@@ -172,19 +192,19 @@ function terminateProcessTree(child) {
 
 function resolveSafePublicationRefspec() {
   const symbolicRef = spawnSync('git', ['symbolic-ref', '--quiet', '--short', 'HEAD'], {
-    cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment(),
+    cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: repositoryGitEnvironment(),
   })
   return buildSafePublicationRefspec(symbolicRef)
 }
 
 function gitOutput(args) {
-  const result = spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment() })
+  const result = spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: repositoryGitEnvironment() })
   if (result.status !== 0) throw new Error(`Controlled Git command failed: git ${args.join(' ')}`)
   return String(result.stdout ?? '')
 }
 
 function gitResult(args) {
-  return spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: sanitizedGitEnvironment() })
+  return spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8', windowsHide: true, env: repositoryGitEnvironment() })
 }
 
 function nullDelimitedPaths(output) {
@@ -245,7 +265,7 @@ function assertStagedCandidatesMatch(reviewedCandidates) {
     const result = spawnSync('git', ['show', `:${candidate.path}`], {
       cwd: repoRoot,
       windowsHide: true,
-      env: sanitizedGitEnvironment(),
+      env: repositoryGitEnvironment(),
     })
     if (result.status !== 0 || !Buffer.isBuffer(result.stdout) || hashContent(result.stdout) !== candidate.digest) {
       throw new Error('Automatic publication blocked: staged content differs from the independently reviewed candidate set.')
@@ -257,14 +277,24 @@ function assertStagedCandidatesMatch(reviewedCandidates) {
   assertCleanPublicationSecretScan(findings)
 }
 
-export async function runManagedValidation({ command, args, timeoutMs, env = sanitizedGitEnvironment() }) {
+export async function runManagedValidation({
+  command,
+  args,
+  timeoutMs,
+  env = sanitizedGitEnvironment(),
+  spawnProcess = spawn,
+  terminate = terminateProcessTree,
+}) {
+  const managedEnvironment = path.basename(command).toLowerCase() === 'git'
+    ? repositoryGitEnvironment(env)
+    : env
   return new Promise((resolve) => {
     const startedAt = Date.now()
     let child
     try {
-      child = spawn(command, args, {
+      child = spawnProcess(command, args, {
         cwd: repoRoot,
-        env,
+        env: managedEnvironment,
         windowsHide: true,
         detached: process.platform !== 'win32',
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -299,7 +329,7 @@ export async function runManagedValidation({ command, args, timeoutMs, env = san
     child.on('close', (code) => finish(code))
     timer = setTimeout(() => {
       timedOut = true
-      void terminateProcessTree(child)
+      void Promise.resolve(terminate(child)).finally(() => finish(null))
       terminationTimer = setTimeout(() => finish(null), VALIDATION_TERMINATION_GRACE_MS)
     }, timeoutMs)
   })
@@ -314,7 +344,15 @@ function writeValidationLog(runDir, iteration, name, result) {
 export async function runCandidateDiffCheck(candidates) {
   const tempDirectory = fs.mkdtempSync(path.join(privateRoot, 'candidate-diff-check-'))
   const temporaryIndex = path.join(tempDirectory, 'index')
-  const env = { ...sanitizedGitEnvironment(), GIT_INDEX_FILE: temporaryIndex }
+  const temporaryObjects = path.join(tempDirectory, 'objects')
+  const commonDirectory = gitOutput(['rev-parse', '--path-format=absolute', '--git-common-dir']).trim()
+  if (!commonDirectory) throw new Error('Automatic publication blocked: Git common directory could not be resolved.')
+  fs.mkdirSync(temporaryObjects, { recursive: true })
+  const env = repositoryGitEnvironment({
+    GIT_INDEX_FILE: temporaryIndex,
+    GIT_OBJECT_DIRECTORY: temporaryObjects,
+    GIT_ALTERNATE_OBJECT_DIRECTORIES: path.join(commonDirectory, 'objects'),
+  })
   const steps = [
     ['read-tree', 'HEAD'],
     ['add', '--all', '--', ...candidates.map(({ path: candidatePath }) => candidatePath)],
@@ -374,6 +412,8 @@ function buildPostExecutionReviewerInstruction() {
     'Act only as the independent post-execution quality gate for the actual current working-tree diff supplied on stdin.',
     'Inspect the repository read-only, changed files, validation evidence, secret-scan summary, branch/publication safety, protected contracts, and scope.',
     'Do not run or suggest publication, deployment, Supabase, production, or business writes.',
+    'The isolated workspace-write sandbox exists only for tool caches. Do not alter host Git configuration. Set HOME and USERPROFILE to an ignored review home inside .project-agent/private for non-Git tool caches. Do not weaken Git trust with a wildcard; a frozen child test which strips its environment is a capability blocker unless the sandbox can inject a single exact repository trust setting into that child process. Do not trust any other repository.',
+    'Run Supabase CLI checks only with that isolated review home so its telemetry cannot write to the host profile. Do not modify tracked or untracked repository content.',
     'Return verdict "complete" only if the reviewed diff is safe to publish and has no missing evidence or risks; include a concise stop_reason such as "independent publication review passed" to satisfy the structured schema. Otherwise return "stop" or "blocked" with exact findings.',
     'Do not accept prior summaries as evidence; verify the repository state independently.',
   ].join(' ')
@@ -412,7 +452,9 @@ async function runPostExecutionPublicationGate({ runDir, iteration, candidates, 
   await runCodex({
     prompt: buildPostExecutionReviewerInstruction(),
     stdin: fs.readFileSync(reviewInputPath, 'utf8'),
-    sandbox: 'read-only',
+    // Vitest/Vite require workspace-local temporary files while the reviewer is
+    // still instructed to remain read-only with respect to repository content.
+    sandbox: 'workspace-write',
     outputPath: reviewPath,
     model,
     timeoutMs: reviewTimeoutMs,

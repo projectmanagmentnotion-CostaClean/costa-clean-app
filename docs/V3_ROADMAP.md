@@ -378,7 +378,7 @@ Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 Next: C5 preparation is complete; C5 product implementation remains not
 started.
 
-## V3-10C5 — Operations refinement — OPEN / C5.1–C5.3 CLOSED
+## V3-10C5 — Operations refinement — OPEN / C5.1–C5.4 CLOSED
 
 - [x] Complete read-only architecture and protected-contract discovery for
   Services/Jobs, Service Workspace, Work Report, Alerts, Closings and
@@ -393,7 +393,7 @@ started.
 - [x] C5.2: Services, Service Workspace and Work Report — CLOSED / CERTIFIED.
 
 - [x] C5.3: Alerts module composition — CLOSED / CERTIFIED.
-- [ ] C5.4: Closings module composition.
+- [x] C5.4: Closings module composition — CLOSED / CERTIFIED.
 - [ ] C5.5: Recurring Plans module composition.
 - [ ] C5.6: cross-module runtime and responsive certification.
 
@@ -401,7 +401,10 @@ Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
 `docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md` and
 `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`,
 `docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md`,
-`docs/V3-10C5-3_ALERTS_REFINEMENT.md` and
-`docs/V3-10C5-3_INDEPENDENT_REVIEW.md`.
+`docs/V3-10C5-3_ALERTS_REFINEMENT.md`,
+`docs/V3-10C5-3_INDEPENDENT_REVIEW.md`,
+`docs/V3-10C5-4_CLOSINGS_REFINEMENT.md` and
+`docs/V3-10C5-4_INDEPENDENT_REVIEW.md`.
 
-Next: C5.4 Closings is not started.
+Next: C5.5 Recurring Plans is not started. C5.6 remains the later
+cross-module certification gate.

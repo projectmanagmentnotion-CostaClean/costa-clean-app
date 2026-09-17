@@ -1,10 +1,9 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4–C5.6 NOT STARTED`
+Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4 CLOSED / C5.5–C5.6 NOT STARTED`
 
-Parent gate: C3 must first become `CLOSED / CERTIFIED`. C4 remains
-`NOT STARTED / PREPARATION AUDIT COMPLETE`. No batch below is authorized by
-this document alone.
+Parent gate: C3 is `CLOSED / CERTIFIED`. C4 is `CLOSED / CERTIFIED`.
+No batch below is authorized by this document alone.
 
 ## 1. Dependency and freeze rules
 
@@ -128,6 +127,8 @@ context. No alert state, scope, handler or persistence contract changed.
 
 ### C5.4 — Closings
 
+Status: `CLOSED / CERTIFIED`
+
 Likely files: `src/v3/closing/V3ClosingPage.tsx`, shared closing presentation
 components, closing export UI and focused tests; do not rewrite
 `closingSummaryEngine.ts`.
@@ -145,6 +146,13 @@ assistive-only copy, plus 8-view runtime.
 
 Risk: very high if presentation changes obscure source-of-truth values.
 Dependency: deterministic summary and quarterly/annual API tests.
+
+Certified implementation and evidence: `docs/V3-10C5-4_CLOSINGS_REFINEMENT.md`
+and the independent review recorded in
+`docs/V3-10C5-4_INDEPENDENT_REVIEW.md`. The implementation separates the
+calculated source-of-truth summary, readiness/incidences, persisted snapshot
+state, export package and assistive interpretation without changing the
+closing engine, snapshot APIs, export contracts or AI authority boundary.
 
 ### C5.5 — Recurring Plans
 
@@ -218,7 +226,6 @@ A future C5 close requires all of the following:
 7. Documentation records exact findings, evidence, remaining debt and the
    final commit/push.
 
-Until these criteria are met, the truthful state remains:
+With C5.4 independently reviewed and certified, the truthful state remains:
 
-`V3-10C5 OPEN — C5.1–C5.3 CLOSED / C5.4–C5.6 NOT STARTED`
-`V3-10C3 OPEN — AUTHENTICATED RUNTIME CERTIFICATION PENDING`
+`V3-10C5 OPEN — C5.1–C5.4 CLOSED / C5.5–C5.6 NOT STARTED`

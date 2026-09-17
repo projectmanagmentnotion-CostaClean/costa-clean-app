@@ -1,25 +1,28 @@
 # V3-10C5P — OPERATIONS DISCOVERY AUDIT
 
-Status: `PREPARATION COMPLETE / C5 NOT STARTED`
+Status: `PREPARATION COMPLETE / C5.4 IMPLEMENTATION CERTIFIED`
 
 Repository: `C:\Users\USUARIO\costa-clean-app-v3`
 Branch: `codex/app-v3-mobile-first-redesign`
 Audited HEAD: `fc22069082ad4f4a50563bf7ac31dfeab2d87258`
 
-This is a static/read-only discovery audit. No operations product file,
-Supabase object, RPC, schema, policy, storage object or business data was
-changed. C3 remains `OPEN — AUTHENTICATED RUNTIME CERTIFICATION PENDING`.
+This document records the original static/read-only discovery boundary and
+the later bounded implementation dispositions. No Supabase object, RPC,
+schema, policy, storage object or business data was changed. C5.5 and C5.6
+remain outside the certified scope.
 
 ## 1. State and audit boundary
 
 - V3-10B: `CLOSED / CERTIFIED`.
 - V3-10C1: `CLOSED / CERTIFIED`.
 - V3-10C2: `CLOSED / CERTIFIED`.
-- V3-10C3: `OPEN — AUTHENTICATED RUNTIME CERTIFICATION PENDING`.
-- V3-10C4: `NOT STARTED — PREPARATION AUDIT COMPLETE`.
-- V3-10C5: `NOT STARTED — PREPARATION ONLY`.
-- Product files changed in this preparation slice: `0`.
-- Authenticated runtime and rendered responsive PASS claims: `PENDING`.
+- V3-10C3: see its own certification record; not changed by this audit.
+- V3-10C4: see its own certification record; not changed by this audit.
+- V3-10C5: `OPEN`; C5.1–C5.4 are certified and C5.5–C5.6 remain not started.
+- Product files changed in the original preparation slice: `0`; C5.4 is the
+  separately authorized implementation slice recorded below.
+- C5.4 authenticated runtime is recorded in
+  `docs/V3-10C5-4_CLOSINGS_REFINEMENT.md`.
 
 The audit covers the V3 Services/Jobs, Service Workspace and Work Report
 surfaces, Alerts, Closings and Recurring Plans, plus the shared search,
@@ -402,4 +405,20 @@ recorded in `docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md`.
 | O-C5-P3: Services technical identifier fallback | `FIXED`: rows, accessible labels and Work Report output use human-safe wording. |
 | O-C5-P3: Work Report action/loading/fallback polish | `FIXED`: download/share feedback is contextual and non-blocking while the output remains operational only. |
 | Alerts findings | `FIXED` in C5.3; see `docs/V3-10C5-3_ALERTS_REFINEMENT.md`. |
-| Closings and Recurring findings | `STILL OPEN`: C5.4+ product implementation was not started. |
+| Closings and Recurring findings | `STILL OPEN` in the original preparation audit; C5.4 disposition is recorded below and Recurring remains assigned to C5.5. |
+
+## 13. C5.4 disposition — Closings
+
+The authorized C5.4 batch covers the V3 Closings surface only. The source
+discovery findings are now resolved as follows:
+
+| Finding | C5.4 disposition |
+| --- | --- |
+| O-C5-P1: deterministic source values, persisted snapshot state and AI prose could be read as one authority | `FIXED / VERIFIED`: the page labels calculated values as the deterministic source, shows snapshot state separately, and explicitly states that assistive interpretation neither recalculates nor certifies the period. |
+| O-C5-P2: period selector, KPI, incidences, notes, export and AI formed one long undifferentiated surface | `FIXED / VERIFIED`: period, deterministic summary, readiness/review, incidences, snapshot and outputs are separate semantic sections with bounded mobile/tablet composition. |
+| O-C5-P3: broad “Salida del periodo” mixed export and AI | `FIXED / VERIFIED`: the export package and assistive interpretation are separate output articles with distinct copy and actions. |
+
+`buildClosingSummary`, deterministic summary calculation, snapshot persistence,
+incidence routing, export package generation and the AI endpoint contract were
+not rewritten. C5.5 Recurring Plans and C5.6 cross-module certification
+remain not started.

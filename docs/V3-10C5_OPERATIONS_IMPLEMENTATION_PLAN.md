@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4 CLOSED / C5.5–C5.6 NOT STARTED`
+Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4 CLOSED / C5.5 CLOSED / CERTIFIED / C5.6 NOT STARTED`
 
 Parent gate: C3 is `CLOSED / CERTIFIED`. C4 is `CLOSED / CERTIFIED`.
 No batch below is authorized by this document alone.
@@ -156,6 +156,8 @@ closing engine, snapshot APIs, export contracts or AI authority boundary.
 
 ### C5.5 — Recurring Plans
 
+Status: `CLOSED / CERTIFIED`
+
 Likely files: `src/v3/recurring/V3RecurringPlans.tsx`,
 `src/features/recurringInvoices/RecurringInvoicePlanFlow.tsx`,
 `RecurringInvoicePlanForm.tsx`, shared relation/status styles and tests.
@@ -173,6 +175,12 @@ dirty/cancel, relation labels and generated invoice routing.
 
 Risk: generation duplicates and status semantics. Dependency: existing
 `planPersistence`, schedule, duplicate-engine and RPC-wrapper tests.
+
+Implementation evidence: `docs/V3-10C5-5_RECURRING_PLANS_REFINEMENT.md` and
+`docs/V3-10C5-5_RUNTIME_EVIDENCE.md`. The plan workspace now uses a scoped
+full-viewport presentation, status-aware emission labels, explicit schedule
+context and a generation confirmation boundary. Protected persistence,
+schedule, duplicate and generation contracts remain unchanged.
 
 ### C5.6 — Cross-module runtime and responsive certification
 
@@ -226,6 +234,7 @@ A future C5 close requires all of the following:
 7. Documentation records exact findings, evidence, remaining debt and the
    final commit/push.
 
-With C5.4 independently reviewed and certified, the truthful state remains:
+With C5.5 implementation, read-only runtime evidence and the fresh
+independent review complete, the truthful state is:
 
-`V3-10C5 OPEN — C5.1–C5.4 CLOSED / C5.5–C5.6 NOT STARTED`
+`V3-10C5 OPEN — C5.1–C5.5 CLOSED / C5.6 NOT STARTED`

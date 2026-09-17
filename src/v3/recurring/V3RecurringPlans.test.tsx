@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { V3RecurringPlansSection } from './V3RecurringPlans'
+import { V3RecurringPlanWorkspace, V3RecurringPlansSection } from './V3RecurringPlans'
 
 const client = {
   id: 'client-1',
@@ -52,5 +52,26 @@ describe('V3RecurringPlansSection', () => {
     expect(html).toContain('Limpieza mensual')
     expect(html).toContain('Mensual')
     expect(html).not.toContain('OperationalListItem')
+  })
+
+  it('renders the full-screen workspace contract with a single generation entry point', () => {
+    const html = renderToStaticMarkup(createElement(V3RecurringPlanWorkspace, {
+      plan,
+      properties: [],
+      quotes: [],
+      onClose: () => undefined,
+      onEdit: () => undefined,
+      onRefresh: async () => undefined,
+      onOpenProperty: () => undefined,
+      onOpenQuote: () => undefined,
+      onOpenInvoice: () => undefined,
+    }))
+
+    expect(html).toContain('v3-bottom-sheet--workspace')
+    expect(html).toContain('Volver a planes')
+    expect(html).toContain('Estado al emitir')
+    expect(html).toContain('Generar factura')
+    expect(html).toContain('La próxima emisión está programada')
+    expect(html.indexOf('<h1>')).toBeLessThan(html.indexOf('<h2>'))
   })
 })

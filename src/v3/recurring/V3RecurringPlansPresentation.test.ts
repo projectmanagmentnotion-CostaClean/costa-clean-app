@@ -15,4 +15,21 @@ describe('V3RecurringPlansSection presentation', () => {
     expect(html).toContain('Emisión')
     expect(html).toContain('Programada')
   })
+
+  it('keeps paused and archived plans from looking eligible for emission', () => {
+    const html = renderToStaticMarkup(createElement(V3RecurringPlansSection, {
+      client,
+      plans: [plan, { ...plan, id: 'plan-2', title: 'Limpieza pausada', status: 'paused' }, { ...plan, id: 'plan-3', title: 'Limpieza archivada', status: 'archived' }],
+      properties: [],
+      quotes: [],
+      onRefresh: async () => undefined,
+      onOpenProperty: () => undefined,
+      onOpenQuote: () => undefined,
+      onOpenInvoice: () => undefined,
+    }))
+
+    expect(html).toContain('Emisión pausada')
+    expect(html).toContain('Emisión no programada')
+    expect(html).not.toContain('Limpieza pausada</strong><span>Mensual · Emisión pendiente')
+  })
 })

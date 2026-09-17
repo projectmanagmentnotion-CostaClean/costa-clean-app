@@ -123,7 +123,7 @@ function restoreFocus(previous: HTMLElement | null, descriptor: ReturnType<typeo
   return Boolean(fallback)
 }
 
-export function V3BottomSheet({ title, children, onClose, closeOnEscape = true }: { title: string; children: ReactNode; onClose: () => void; closeOnEscape?: boolean }) {
+export function V3BottomSheet({ title, children, onClose, closeOnEscape = true, variant = 'sheet', closeLabel = 'Cerrar' }: { title: string; children: ReactNode; onClose: () => void; closeOnEscape?: boolean; variant?: 'sheet' | 'workspace'; closeLabel?: string }) {
   const dialogRef = useRef<HTMLElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   // Capture the trigger during render, before a descendant with autoFocus can
@@ -161,7 +161,7 @@ export function V3BottomSheet({ title, children, onClose, closeOnEscape = true }
     }
   }, [closeOnEscape])
 
-  return <div className="v3-bottom-sheet__layer"><button type="button" tabIndex={-1} className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section ref={dialogRef} className="v3-bottom-sheet" role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header"><h2>{title}</h2><button ref={closeRef} type="button" className="v3-action v3-action--secondary" onClick={onClose}>Cerrar</button></div>{children}</section></div>
+  return <div className="v3-bottom-sheet__layer"><button type="button" tabIndex={-1} className="v3-bottom-sheet__backdrop" aria-label={`Cerrar ${title}`} onClick={onClose} /><section ref={dialogRef} className={`v3-bottom-sheet v3-bottom-sheet--${variant}`} role="dialog" aria-modal="true" aria-label={title}><div className="v3-bottom-sheet__handle" aria-hidden="true" /><div className="v3-bottom-sheet__header">{variant === 'workspace' ? <span className="v3-visually-hidden">{title}</span> : <h2>{title}</h2>}<button ref={closeRef} type="button" className="v3-action v3-action--secondary" onClick={onClose}>{closeLabel}</button></div>{children}</section></div>
 }
 
 export function V3ConfirmSheet({ title, description, confirmLabel, cancelLabel = 'Cancelar', busy = false, onConfirm, onCancel }: { title: string; description: string; confirmLabel: string; cancelLabel?: string; busy?: boolean; onConfirm: () => void; onCancel: () => void }) {

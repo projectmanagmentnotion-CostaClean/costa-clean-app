@@ -10,7 +10,7 @@ import type { RecurringInvoiceFrequency, RecurringInvoicePlanInvoiceStatus, Recu
 import type { ClientListItem } from '../../features/clients/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
-import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Field, V3Input, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3Summary, V3Textarea } from '../components/V3Primitives'
+import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Field, V3Input, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3Summary, V3Textarea } from '../components/V3Primitives'
 import { V3DuplicateReviewSheet } from '../components/V3DuplicateReviewSheet'
 
 interface V3RecurringPlansProps {
@@ -46,9 +46,19 @@ function getPlanTotal(plan: RecurringInvoicePlanListItem): number {
 }
 
 function getPlanDueLabel(plan: RecurringInvoicePlanListItem): string {
+  if (plan.status === 'archived') return 'Emisión no programada'
+  if (plan.status === 'paused') return 'Emisión pausada'
   return isRecurringPlanDue(plan.next_issue_date)
     ? 'Emisión pendiente'
     : `Siguiente emisión ${formatDateEs(plan.next_issue_date)}`
+}
+
+function getPlanEmissionStatus(plan: RecurringInvoicePlanListItem): { label: string; tone: 'neutral' | 'warning' } {
+  if (plan.status === 'archived') return { label: 'No programada', tone: 'neutral' }
+  if (plan.status === 'paused') return { label: 'Pausada', tone: 'warning' }
+  return isRecurringPlanDue(plan.next_issue_date)
+    ? { label: 'Pendiente', tone: 'warning' }
+    : { label: 'Programada', tone: 'neutral' }
 }
 
 export function V3RecurringPlansSection({ client, plans, properties, quotes, onRefresh, onOpenProperty, onOpenQuote, onOpenInvoice, onPendingStateChange }: V3RecurringPlansProps) {
@@ -87,7 +97,7 @@ export function V3RecurringPlansSection({ client, plans, properties, quotes, onR
               </div>
               <div className="v3-operational-row__context">
                 <strong className="v3-operational-row__value">{formatCurrency(getPlanTotal(plan))}</strong>
-                <div className="v3-operational-statuses"><V3EntityStatus context="Plan" label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} /><V3EntityStatus context="Emisión" label={isRecurringPlanDue(plan.next_issue_date) ? 'Pendiente' : 'Programada'} tone={isRecurringPlanDue(plan.next_issue_date) ? 'warning' : 'neutral'} /></div>
+                <div className="v3-operational-statuses"><V3EntityStatus context="Plan" label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} /><V3EntityStatus context="Emisión" {...getPlanEmissionStatus(plan)} /></div>
               </div>
             </V3EntityListItem>
           ))}
@@ -138,11 +148,12 @@ interface V3RecurringPlanWorkspaceProps {
   onPendingStateChange?: (pending: boolean) => void
 }
 
-function V3RecurringPlanWorkspace({ plan, properties, quotes, onClose, onEdit, onRefresh, onOpenProperty, onOpenQuote, onOpenInvoice, onPendingStateChange }: V3RecurringPlanWorkspaceProps) {
+export function V3RecurringPlanWorkspace({ plan, properties, quotes, onClose, onEdit, onRefresh, onOpenProperty, onOpenQuote, onOpenInvoice, onPendingStateChange }: V3RecurringPlanWorkspaceProps) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [pendingStatus, setPendingStatus] = useState<RecurringInvoicePlanStatus | null>(null)
+  const [generationRequested, setGenerationRequested] = useState(false)
   const property = plan.property_id ? properties.find((item) => item.id === plan.property_id) ?? null : null
   const quote = plan.quote_id ? quotes.find((item) => item.id === plan.quote_id) ?? null : null
 
@@ -195,23 +206,45 @@ function V3RecurringPlanWorkspace({ plan, properties, quotes, onClose, onEdit, o
     )
   }
 
+  const scheduleDescription = plan.status === 'active'
+    ? isRecurringPlanDue(plan.next_issue_date)
+      ? 'La fecha prevista ya ha llegado; revisa el contexto antes de solicitar una emisión.'
+      : `La próxima emisión está programada para ${formatDateEs(plan.next_issue_date)}.`
+    : plan.status === 'paused'
+      ? 'La emisión permanece pausada hasta que reanudes el plan.'
+      : 'El plan está archivado y no tiene una emisión programada.'
+
+  if (generationRequested) {
+    return (
+      <V3ConfirmSheet
+        title="Generar factura desde el plan"
+        description="Se solicitará la emisión mediante el flujo recurrente protegido. La factura solo se mostrará cuando ese flujo confirme que se ha generado correctamente."
+        confirmLabel="Generar factura"
+        busy={busy}
+        onCancel={() => setGenerationRequested(false)}
+        onConfirm={() => { setGenerationRequested(false); void generateInvoice() }}
+      />
+    )
+  }
+
   return (
-    <V3BottomSheet title="Plan recurrente" onClose={onClose}>
+    <V3BottomSheet title="Plan recurrente" variant="workspace" closeLabel="Volver a planes" onClose={onClose}>
       <div className="v3-workspace-actions">
-        <V3EntityStatus label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} />
+        <V3EntityStatus context="Estado del plan" label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} />
         {plan.status === 'active' ? <V3SecondaryAction onClick={() => setPendingStatus('paused')} disabled={busy}>Pausar</V3SecondaryAction> : null}
         {plan.status === 'paused' ? <V3SecondaryAction onClick={() => setPendingStatus('active')} disabled={busy}>Reanudar</V3SecondaryAction> : null}
         {plan.status !== 'archived' ? <V3SecondaryAction onClick={() => setPendingStatus('archived')} disabled={busy}>Archivar</V3SecondaryAction> : null}
       </div>
-      <h3>{plan.title}</h3>
+      <V3PageTitle eyebrow="Plan recurrente" title={plan.title} description={`${plan.client_display_code ? `${plan.client_display_code} · ` : ''}${plan.client_name ?? 'Cliente no disponible'}`} />
       {error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{error}</p> : null}
       {message ? <p className="v3-inline-message" role="status">{message}</p> : null}
       <V3Summary>
         <div><span>Cadencia</span><strong>{getRecurringFrequencyLabel(plan.frequency)}</strong></div>
-        <div><span>Próxima emisión</span><strong>{formatDateEs(plan.next_issue_date)}</strong></div>
+        <div><span>Próxima emisión</span><strong>{plan.status === 'active' ? formatDateEs(plan.next_issue_date) : 'No programada'}</strong></div>
         <div><span>Última emisión</span><strong>{plan.last_issued_at ? formatDateEs(plan.last_issued_at) : 'Aún no emitida'}</strong></div>
-        <div><span>Factura por defecto</span><strong>{invoiceStatusLabel(plan.default_invoice_status)}</strong></div>
+        <div><span>Estado al emitir</span><strong>{invoiceStatusLabel(plan.default_invoice_status)}</strong></div>
       </V3Summary>
+      <p className="v3-section-copy v3-recurring-plan-workspace__schedule">{scheduleDescription}</p>
       <V3DetailSection title="Relaciones">
         <div className="v3-workspace-actions">
           {property ? <V3SecondaryAction onClick={() => onOpenProperty(property.id)}>Inmueble: {formatPropertyLabel(property)}</V3SecondaryAction> : <span>Sin inmueble fijo</span>}
@@ -227,8 +260,9 @@ function V3RecurringPlanWorkspace({ plan, properties, quotes, onClose, onEdit, o
       {plan.notes ? <V3DetailSection title="Notas"><p className="v3-section-copy">{plan.notes}</p></V3DetailSection> : null}
       <div className="v3-workspace-actions">
         <V3SecondaryAction onClick={onEdit} disabled={busy}>Editar</V3SecondaryAction>
-        <V3PrimaryAction onClick={() => void generateInvoice()} disabled={busy || plan.status !== 'active'}>{busy ? 'Procesando…' : 'Generar factura'}</V3PrimaryAction>
+        <V3PrimaryAction onClick={() => setGenerationRequested(true)} disabled={busy || plan.status !== 'active'}>{busy ? 'Procesando…' : 'Generar factura'}</V3PrimaryAction>
       </div>
+      {plan.status !== 'active' ? <p className="v3-section-copy">Generar factura estará disponible al reanudar el plan.</p> : null}
     </V3BottomSheet>
   )
 }

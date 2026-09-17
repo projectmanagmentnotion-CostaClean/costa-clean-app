@@ -394,7 +394,7 @@ started.
 
 - [x] C5.3: Alerts module composition — CLOSED / CERTIFIED.
 - [x] C5.4: Closings module composition — CLOSED / CERTIFIED.
-- [ ] C5.5: Recurring Plans module composition.
+- [x] C5.5: Recurring Plans module composition — CLOSED / CERTIFIED.
 - [ ] C5.6: cross-module runtime and responsive certification.
 
 Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
@@ -404,7 +404,8 @@ Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
 `docs/V3-10C5-3_ALERTS_REFINEMENT.md`,
 `docs/V3-10C5-3_INDEPENDENT_REVIEW.md`,
 `docs/V3-10C5-4_CLOSINGS_REFINEMENT.md` and
-`docs/V3-10C5-4_INDEPENDENT_REVIEW.md`.
+`docs/V3-10C5-4_INDEPENDENT_REVIEW.md`,
+`docs/V3-10C5-5_RECURRING_PLANS_REFINEMENT.md` and
+`docs/V3-10C5-5_RUNTIME_EVIDENCE.md`.
 
-Next: C5.5 Recurring Plans is not started. C5.6 remains the later
-cross-module certification gate.
+Next: C5.6 remains the later cross-module certification gate.

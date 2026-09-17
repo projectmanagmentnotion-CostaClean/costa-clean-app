@@ -8,8 +8,8 @@ Audited HEAD: `fc22069082ad4f4a50563bf7ac31dfeab2d87258`
 
 This document records the original static/read-only discovery boundary and
 the later bounded implementation dispositions. No Supabase object, RPC,
-schema, policy, storage object or business data was changed. C5.5 and C5.6
-remain outside the certified scope.
+schema, policy, storage object or business data was changed. C5.5 is now
+closed/certified; C5.6 remains outside the certified scope.
 
 ## 1. State and audit boundary
 
@@ -18,7 +18,7 @@ remain outside the certified scope.
 - V3-10C2: `CLOSED / CERTIFIED`.
 - V3-10C3: see its own certification record; not changed by this audit.
 - V3-10C4: see its own certification record; not changed by this audit.
-- V3-10C5: `OPEN`; C5.1–C5.4 are certified and C5.5–C5.6 remain not started.
+- V3-10C5: `OPEN`; C5.1–C5.5 are certified, and C5.6 remains not started.
 - Product files changed in the original preparation slice: `0`; C5.4 is the
   separately authorized implementation slice recorded below.
 - C5.4 authenticated runtime is recorded in
@@ -390,7 +390,7 @@ Its evidence is recorded in `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 | O-C5-P3: Services raw relation fallback | `FIXED`: missing labels now render human-safe context; no technical ID is rendered or used in the accessible row name. |
 | O-C5-P2: Services list/workspace hierarchy | `PARTIALLY FIXED`: the shared row/status order and filter target are corrected. KPI/search/filter order and workspace branch clarity remain C5.2. |
 | O-C5-P2/P3 for Alerts | `FIXED` in C5.3; see `docs/V3-10C5-3_ALERTS_REFINEMENT.md`. Alert state machine and handler contracts remain unchanged. |
-| O-C5-P2/P3 for Cierres, Recurring and remaining Work Report scope | `STILL OPEN` in their assigned C5.4–C5.5 batches. |
+| O-C5-P2/P3 for Cierres, Recurring and remaining Work Report scope | Closings are `FIXED / VERIFIED` in C5.4. Recurring disposition is recorded in the C5.5 record below. |
 
 ## 12. C5.2 disposition — 2026-09-17
 
@@ -405,7 +405,7 @@ recorded in `docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md`.
 | O-C5-P3: Services technical identifier fallback | `FIXED`: rows, accessible labels and Work Report output use human-safe wording. |
 | O-C5-P3: Work Report action/loading/fallback polish | `FIXED`: download/share feedback is contextual and non-blocking while the output remains operational only. |
 | Alerts findings | `FIXED` in C5.3; see `docs/V3-10C5-3_ALERTS_REFINEMENT.md`. |
-| Closings and Recurring findings | `STILL OPEN` in the original preparation audit; C5.4 disposition is recorded below and Recurring remains assigned to C5.5. |
+| Closings and Recurring findings | `STILL OPEN` in the original preparation audit; C5.4 disposition is recorded below and the C5.5 Recurring disposition is recorded in section 14. |
 
 ## 13. C5.4 disposition — Closings
 
@@ -420,5 +420,22 @@ discovery findings are now resolved as follows:
 
 `buildClosingSummary`, deterministic summary calculation, snapshot persistence,
 incidence routing, export package generation and the AI endpoint contract were
-not rewritten. C5.5 Recurring Plans and C5.6 cross-module certification
-remain not started.
+not rewritten. C5.6 cross-module certification remains not started.
+
+## 14. C5.5 disposition — Recurring Plans
+
+The authorized C5.5 batch is limited to recurring-plan presentation and
+interaction clarity. The implementation record is
+`docs/V3-10C5-5_RECURRING_PLANS_REFINEMENT.md`; the sanitized QA evidence is
+`docs/V3-10C5-5_RUNTIME_EVIDENCE.md`.
+
+| Finding | C5.5 disposition |
+| --- | --- |
+| O-C5-P2: recurring create/review density and disabled generation explanation | `FIXED`: workspace schedule copy and status-aware disabled-generation guidance are explicit; create/edit, dirty state and duplicate review remain protected. |
+| O-C5-P3: recurring relation/status/date scan consistency | `FIXED`: plan and emission statuses are separated and paused/archived plans no longer read as scheduled. |
+| O-C5-P3: recurring workspace hierarchy and action boundary | `FIXED`: full-viewport workspace presentation, client context, schedule summary and generation confirmation are explicit. |
+
+Protected recurring persistence, schedule, duplicate and invoice-generation
+contracts were not changed. QA contained no recurring record, so populated
+workspace runtime is honestly `N/A`; empty-state runtime passed at the four
+C5.5 viewports with zero mutations.

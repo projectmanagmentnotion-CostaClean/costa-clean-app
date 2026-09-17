@@ -143,6 +143,21 @@ Status: `DONE — live QA read-only proof, QA/production unchanged`
 
 Evidence: `CP2A4_POSTGRES_SECRET_TRANSPORT_FIX.md`, `CP2B_EXACT_QA_AUTHORIZATION_V5.md`, and `scripts/client-portal/cp2b_qa_package_v5.manifest.json`.
 
+## CP-2A.5 — Versioned Windows sandbox compatibility
+
+Status: `CERTIFIED — local/independent-sandbox proof only; QA and production unchanged`
+
+- V6 preserves V1–V5 bytes and re-verifies the immutable V3/V4/V5 artifact
+  paths and SHA-256 values through a static canonical registry.
+- The managed Windows sandbox receives only a process-scoped, exact repository
+  `safe.directory` entry, disabled system Git configuration and a disposable
+  profile/cache; no global Git setting or credential is used.
+- The proof stops frozen V4 execution at `execution_not_authorized` and proves
+  V3 direct/preload CLI compatibility without any remote path.
+
+Evidence: `CP2A5_WINDOWS_SANDBOX_COMPATIBILITY.md` and
+`scripts/client-portal/cp2b_qa_package_v6.manifest.json`.
+
 ## CP-2B — QA schema, authorization and server APIs
 
 Status: `DONE — Supabase Cloud QA boundary validated`

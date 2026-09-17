@@ -1,0 +1,58 @@
+{
+  "version": 6,
+  "status": "LOCAL_SANDBOX_COMPATIBILITY_ONLY",
+  "authorizationId": "CP2B-V6-NO_REMOTE_EXECUTION",
+  "qaProjectRef": "kpvvydthlxupjjqqdpxy",
+  "prohibitedProductionRef": "wfxnwfcdjainpojhbdri",
+  "artifacts": [
+    {
+      "path": "scripts/client-portal/cp2b_sandbox_compat_v6.mjs",
+      "sha256": "da0036e70ed452acbab3510bc31a3877ef43688f3918e49cb08c58f704fa1612"
+    },
+    {
+      "path": "scripts/client-portal/run-cp2a5-sandbox-proof.mjs",
+      "sha256": "294bc8c542ffc81f057769be50f2b34a57412e59e8cf9169ca959915ed7c87a6"
+    },
+    {
+      "path": "scripts/client-portal/cp2bSandboxCompatibilityV6.test.mjs",
+      "sha256": "030af21383cf8e380be5f38c15a78df9997f6a3f42bab4ce8dee85013f8b5d56"
+    }
+  ],
+  "reusedV5Artifacts": [
+    {
+      "path": "scripts/client-portal/cp2b_qa_package_v5.manifest.json",
+      "sha256": "64afb9b397f1656a5be8d2eb0bcd6e76300b43d096a95e673a3b90fca70e57bd"
+    }
+  ],
+  "reusedV4Artifacts": [
+    {
+      "path": "scripts/client-portal/run-cp2b-qa-v4.mjs",
+      "sha256": "1846725f09f4dd18fa60a8becac60db7a613ad3d1ebcf508f32a96f363f33c66"
+    },
+    {
+      "path": "scripts/client-portal/cp2a3BootstrapV4.test.mjs",
+      "sha256": "089783b9b527e4feed30e1ff33bdfcfba97b8f76c025f6ffbaa562f13dd3091a"
+    }
+  ],
+  "reusedV3Artifacts": [
+    {
+      "path": "scripts/client-portal/cp2b_command_launcher_v3.mjs",
+      "sha256": "392bfc23a17a709a59a0e592366677be2554e81fe1d01d9553a7903b832fbb85"
+    },
+    {
+      "path": "scripts/client-portal/cp2b_v3_preload.mjs",
+      "sha256": "7fe7f172a71fc6cff4d6fdc080622c8a181f9c6430f5387ba0e8d5502fe8f256"
+    },
+    {
+      "path": "scripts/client-portal/cp2bWindowsLauncherV3.test.mjs",
+      "sha256": "e8a78d86248a6ae54ef281cdebd8f836df9a99e2a4bbdc545559c91f43668a92"
+    }
+  ],
+  "guarantees": [
+    "no_remote_execution_path",
+    "exact_repository_git_trust_only",
+    "no_global_git_configuration",
+    "private_profile_and_cache_isolation",
+    "frozen_v3_v4_v5_artifacts_verified"
+  ]
+}

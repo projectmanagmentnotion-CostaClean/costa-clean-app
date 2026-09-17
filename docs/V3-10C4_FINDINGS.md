@@ -1,6 +1,6 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `C4.1–C4.4 CLOSED / C4.5–C4.6 NOT STARTED`
+Status: `C4.1–C4.5 CLOSED / C4.6 NOT STARTED`
 
 Audited HEAD: `d783567f60ef87195fccb7dc34358a7bfd5c3f1f`
 
@@ -19,11 +19,11 @@ collecting this evidence.
 | F-C4-P2-003 | PARTIALLY FIXED | Invoice action controls now use the shared finance action group, with one mobile-primary lane. Settlement meaning and duplicated financial reading remain C4.2 work. |
 | F-C4-P2-004 | STILL OPEN — C4.3 | Quote financial/conversion explanation requires quote-specific state treatment. |
 | F-C4-P2-005 | FIXED / VERIFIED IN C4.4 | Payment header/list hierarchy uses shared controls and action grouping. Payment scan order and provenance wording are C4.4 scope. |
-| F-C4-P2-006 | PARTIALLY FIXED | Expense top actions now use the same shared group. Workspace section regrouping and document workflow remain C4.5 work. |
-| F-C4-P2-007 | STILL OPEN — C4.2–C4.5 | C4.1 intentionally does not alter create/edit flow content or persistence order. |
+| F-C4-P2-006 | FIXED / VERIFIED IN C4.5 | Expense detail now uses one primary next action, a single financial reading order and one document/review group without a duplicate sticky CTA. |
+| F-C4-P2-007 | FIXED / VERIFIED FOR EXPENSES IN C4.5 | The Expense create/edit presentation is grouped by identity, amount, support/review and notes without changing payloads or persistence order. |
 | F-C4-P3-001 | PARTIALLY FIXED | Shared header action group, controls-before-summary order and supporting KPI treatment now cover all four lists. Module-specific list rows remain later batch work. |
-| F-C4-P3-002 | STILL OPEN — C4.2–C4.5 | Monetary reading order is module-specific and will be refined with each workspace. |
-| F-C4-P3-003 | STILL OPEN — C4.2–C4.5 | Document vocabulary remains tied to the protected module-specific document paths. |
+| F-C4-P3-002 | FIXED / VERIFIED FOR EXPENSES IN C4.5 | Expense Workspace presents Base imponible → IVA → Total in a single labelled summary. |
+| F-C4-P3-003 | FIXED / VERIFIED FOR EXPENSES IN C4.5 | Private-document actions explicitly say Abrir, Sustituir, Eliminar or Añadir documento without exposing storage paths. |
 | F-C4-P3-004 | PARTIALLY FIXED | All four list pages use shared `V3EmptyState` and `V3ErrorState`. Finance-specific document, guard and permission copy remains later batch work. |
 
 ## C4.2 invoice resolution status
@@ -81,6 +81,38 @@ findings and confirmed the protected conversion, duplicate, financial,
 document, route and Supabase contracts remain unchanged. The unavailable
 workspace replay and potential extreme-value/hydration presentation refinements
 remain non-blocking follow-up scope.
+
+## C4.5 expense resolution status
+
+The C4.5 implementation is limited to the V3 Expenses Workspace, the existing
+V3 create/edit sheet and expense-specific presentation CSS. It does not change
+expense APIs, persistence payloads, duplicate detection, fiscal calculations,
+private storage, signed URL creation, size validation, permissions or Supabase.
+
+| Finding | Status after C4.5 | Evidence / boundary |
+| --- | --- | --- |
+| F-C4-P2-006 | FIXED / VERIFIED | The workspace has one primary action per existing state, no duplicate sticky CTA, a labelled Base/IVA/Total summary, a concise context group and one document/review group. |
+| F-C4-P2-007 | FIXED / VERIFIED FOR EXPENSES | The existing form fields and submit sequence are grouped as Identificación, Importe e impuestos, Soporte y revisión and Notas. The same payload, duplicate guard and persist-then-optional-upload sequence remain intact. |
+| F-C4-P3-002 | FIXED / VERIFIED FOR EXPENSES | Base imponible → IVA → Total uses labelled, tabular-numeric values in Workspace; the calculated form total uses the same hierarchy. |
+| F-C4-P3-003 | FIXED / VERIFIED FOR EXPENSES | The document controls use explicit intent labels and keep the existing signed-URL callback private. |
+
+### C4.5 authenticated read-only replay evidence
+
+The canonical `costaclean-v3` QA profile at `http://127.0.0.1:4178/?v3=1`
+passed Expense list, search match/miss/clear, non-submitting create-sheet
+open/Escape/focus return, Workspace, deep-link reload and Back at `320x568`,
+`390x844`, `768x1024` and `1440x900`. The available workspace showed one
+primary action, no sticky duplicate and a visible Base/IVA/Total summary.
+
+At every replayed size, overflow, undersized relevant controls, clipped
+financial values, visible/accessible UUIDs, Unicode-as-icon, legacy markers,
+broken images, console errors, page errors, critical failed requests,
+production requests/mutations and QA business mutations were `0`. The QA row
+had no attachment, so signed-URL open, attached-document and expired/failure
+runtime states are `N/A` without creating or modifying a business record.
+Focused local attachment/receipt workflow tests retain the private signed URL,
+type/10 MB and no-data-loss contracts. Private screenshots and the local QA
+replay script are ignored and excluded from source control.
 
 ## P0 — objective blockers
 

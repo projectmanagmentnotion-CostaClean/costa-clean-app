@@ -197,9 +197,9 @@ versioned CP-2A.5 / V6 proof suppresses system Git configuration and
 transitively verifies the hash-pinned V5 manifest. Final independent review
 passed; C4.5 remains not started.
 
-### C4.5 — Expenses — NOT STARTED
+### C4.5 — Expenses — CLOSED / CERTIFIED
 
-Likely files:
+Implemented files:
 
 - `src/v3/expenses/V3ExpensesPage.tsx`
 - `V3ExpenseRow.tsx`, `V3ExpenseWorkspace.tsx`, `V3ExpenseFormFlow.tsx`
@@ -208,24 +208,27 @@ Likely files:
 - `ExpenseSupportFieldset.tsx` and expense CSS only if presentation scope is
   explicitly approved
 
-Scope:
+Completed scope:
 
-- Make supplier/concept/amount/document-support state scannable.
-- Group attachment present/absent/upload/replace/view/failure states.
-- Preserve dirty confirmation, create/edit persistence, duplicate guard and
-  no-data-loss around upload.
-- Keep private signed URL and 10 MB validation unchanged.
+- Supplier/concept, amount, document-support and review state are now
+  scannable through a single workspace hierarchy.
+- Attachment actions are explicit by intent; available QA showed the missing
+  state, while attached/open/failure states are N/A without a fixture.
+- The create/edit sheet is grouped without changing dirty confirmation,
+  persistence, duplicate guard or no-data-loss upload ordering.
+- Private signed URLs and the 10 MB/type rule remain unchanged.
 
-Tests:
+Evidence:
 
-- create/edit dirty and duplicate behavior;
-- 10 MB/type validation;
-- signed URL callback and attachment preservation;
-- document absent/present/error render states;
-- no-data-loss runtime replay with authorized QA writes only.
+- focused Workspace and FormFlow presentation tests;
+- existing 10 MB/type and receipt no-data-loss tests;
+- authenticated read-only list/workspace replay at `320x568`, `390x844`,
+  `768x1024` and `1440x900`, with no QA write;
+- signed-URL open/failure and attached-document runtime states are `N/A` for
+  the available no-attachment QA row and remain covered by local contracts.
 
-Risk: high because attachments and persistence are destructive/data-loss
-boundaries.
+The private attachment/persistence boundary remains high risk; C4.5 changes no
+attachment or write implementation. See `docs/V3-10C4-5_EXPENSES_REFINEMENT.md`.
 
 ### C4.6 — Cross-module regression and responsive certification — NOT STARTED
 

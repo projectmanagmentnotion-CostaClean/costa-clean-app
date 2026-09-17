@@ -658,6 +658,13 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-invoice-financial-summary dt, .v3-quote-financial-summary dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
 .v3-invoice-financial-summary dd, .v3-quote-financial-summary dd { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; }
 .v3-quote-financial-summary div:last-child dd { color: var(--v3-color-accent-strong); }
+.v3-expense-financial-summary { border-bottom: var(--v3-border-width) solid var(--v3-color-border-subtle); display: grid; gap: var(--v3-space-4); }
+.v3-expense-financial-summary__context { color: var(--v3-color-text-secondary); margin: 0; padding-top: var(--v3-space-4); }
+.v3-expense-financial-summary dl { display: grid; gap: var(--v3-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding-bottom: var(--v3-space-4); }
+.v3-expense-financial-summary dl div { display: grid; gap: var(--v3-space-1); min-width: 0; }
+.v3-expense-financial-summary dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-expense-financial-summary dd { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.v3-expense-financial-summary dl div:last-child dd { color: var(--v3-color-accent-strong); }
 .v3-invoice-settlement-status, .v3-quote-conversion-status { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); margin: 0; }
 .v3-workspace-actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); }
 .v3-section { display: grid; gap: var(--v3-space-4); padding: var(--v3-space-section) 0; }
@@ -684,6 +691,13 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-form-grid, .v3-form { display: grid; gap: var(--v3-space-4); }
 .v3-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .v3-form-grid .v3-field:last-of-type, .v3-form-grid .v3-action { grid-column: 1 / -1; }
+.v3-expense-form-section { border: 0; display: grid; gap: var(--v3-space-4); margin: 0; min-inline-size: 0; padding: 0; }
+.v3-expense-form-section + .v3-expense-form-section { border-top: var(--v3-border-width) solid var(--v3-color-border-subtle); padding-top: var(--v3-space-5); }
+.v3-expense-form-section legend { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-section-title); font-weight: 700; padding: 0; }
+.v3-expense-form-section__hint { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); margin: 0; }
+.v3-expense-form-total { align-items: baseline; background: var(--v3-color-surface-subtle); border-radius: var(--v3-radius-sm); display: flex; justify-content: space-between; gap: var(--v3-space-3); margin: 0; padding: var(--v3-space-3); }
+.v3-expense-form-total span { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-expense-form-total strong { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; }
 .v3-inline-message { margin: 0; color: var(--v3-color-accent-strong); }
 .v3-inline-message--error { color: var(--v3-color-danger); }
 .v3-assistive-note { background: var(--v3-color-accent-soft); border-left: 3px solid var(--v3-color-accent); display: grid; gap: var(--v3-space-2); padding: var(--v3-space-3); }
@@ -698,6 +712,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   .v3-properties-controls > span { padding-bottom: 0; }
   .v3-module-controls, .v3-form-grid { grid-template-columns: 1fr; }
   .v3-payments-page .v3-module-controls { grid-template-columns: 1fr; }
+  .v3-expense-financial-summary dl { gap: var(--v3-space-2); }
   .v3-invoice-row__side { text-align: right; }
   .v3-home-overview { gap: var(--v3-space-3); }
   .v3-home-hero { padding-block: var(--v3-space-3) var(--v3-space-4); }

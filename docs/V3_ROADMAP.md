@@ -338,7 +338,7 @@ any product implementation in a later module.
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 `docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
-## V3-10C4 — Finance refinement — OPEN / C4.1–C4.4 CLOSED / C4.5–C4.6 NOT STARTED
+## V3-10C4 — Finance refinement — OPEN / C4.1–C4.5 CLOSED / C4.6 NOT STARTED
 
 - [x] Complete read-only finance architecture and protected-contract discovery.
 - [x] Record invoice, quote, payment and expense findings and priorities.
@@ -358,17 +358,21 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
   gate complete. The versioned CP-2A.5 / V6 package supplies exact process-
   scoped Git trust, disables system Git configuration and uses a private
   profile without changing frozen V3/V4/V5 artifacts.
-- [ ] C4.5: expenses.
+- [x] C4.5: expenses — workspace financial hierarchy, document/review grouping
+  and create/edit composition certified through authenticated read-only QA at
+  `320x568`, `390x844`, `768x1024` and `1440x900`; attachment-open states are
+  N/A because the available QA row has no document.
 - [ ] C4.6: cross-module certification.
 
 Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 `docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md` and
 `docs/V3-10C4_FINDINGS.md`, plus
 `docs/V3-10C4-1_SHARED_FINANCE_HIERARCHY.md`,
-`docs/V3-10C4-2_INVOICES_REFINEMENT.md` and
-`docs/V3-10C4-3_QUOTES_REFINEMENT.md`.
+`docs/V3-10C4-2_INVOICES_REFINEMENT.md`,
+`docs/V3-10C4-3_QUOTES_REFINEMENT.md` and
+`docs/V3-10C4-5_EXPENSES_REFINEMENT.md`.
 
-Next: C4 remains open. C4.5–C4.6 remain not started and require explicit
+Next: C4 remains open. C4.6 remains not started and requires explicit
 authorization.
 
 ## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE

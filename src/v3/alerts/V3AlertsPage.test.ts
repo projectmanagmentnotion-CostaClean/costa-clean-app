@@ -28,5 +28,49 @@ describe('V3AlertsPage', () => {
     expect(html).toContain('Crítica')
     expect(html).toContain('Estado')
     expect(html).toContain('Pendiente')
+    expect(html).toContain('aria-pressed="true"')
+    expect(html).toContain('aria-pressed="false"')
+  })
+
+  it('renders an actionable empty state when the selected lifecycle filter has no records', () => {
+    const html = renderToStaticMarkup(createElement(V3AlertsPage, {
+      alerts: [],
+      decisions: [],
+      onOpenAlert: () => undefined,
+      onMarkRead: () => undefined,
+      onAcknowledge: () => undefined,
+      onDismiss: () => undefined,
+      onReopen: () => undefined,
+    }))
+
+    expect(html).toContain('Sin alertas en este filtro')
+    expect(html).toContain('No hay decisiones operativas que mostrar ahora.')
+    expect(html).toContain('Revisadas')
+  })
+
+  it('does not render technical identifiers in the accessible alert row', () => {
+    const technicalId = '9f9a0c9d-1234-4db5-9db2-123456789abc'
+    const html = renderToStaticMarkup(createElement(V3AlertsPage, {
+      alerts: [{
+        id: technicalId,
+        ruleId: 'quarter_closing_reminder',
+        severity: 'info',
+        title: 'Cierre pendiente',
+        summary: 'Revisa el periodo anterior.',
+        detail: 'El periodo requiere preparación.',
+        count: 1,
+        contextLabel: 'Periodo pendiente: T2 2026.',
+        routing: { kind: 'quarterly_closing', fiscalYear: 2026, fiscalQuarter: 2 },
+      }],
+      decisions: [],
+      onOpenAlert: () => undefined,
+      onMarkRead: () => undefined,
+      onAcknowledge: () => undefined,
+      onDismiss: () => undefined,
+      onReopen: () => undefined,
+    }))
+
+    expect(html).toContain('Cierre pendiente')
+    expect(html).not.toContain(technicalId)
   })
 })

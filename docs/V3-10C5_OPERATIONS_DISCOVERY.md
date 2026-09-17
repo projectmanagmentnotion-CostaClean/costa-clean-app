@@ -188,18 +188,17 @@ Current strengths: rule-specific summaries carry counts, amount/age context
 and routing; critical/warning/info semantics are preserved; reviewed items can
 be reopened; primary action labels are rule-aware.
 
-Preparation findings:
+Findings addressed by C5.3:
 
-- `O-C5-P2`: the V3 page shows pending/critical/reviewed/all filters but does
-  not render the four presentation buckets from `alertPresentation.ts` as
-  sections. The later composition slice should verify whether urgency is
-  obvious without changing severity or lifecycle.
-- `O-C5-P2`: the detail sheet can expose several equal-looking actions. The
-  future hierarchy should keep the rule-specific route primary and lifecycle
-  decisions secondary.
-- `O-C5-P3`: date/time and source context are not first-class row fields in
-  `V3AlertsPage`; they are available through detail/rule payloads only where a
-  rule supplies them. Do not invent timestamps.
+- `O-C5-P2`: the V3 page now renders the existing four presentation buckets
+  as ordered sections without changing severity or lifecycle.
+- `O-C5-P2`: the detail sheet now gives the rule-specific route one primary
+  action and groups lifecycle decisions as secondary actions.
+- `O-C5-P3`: existing age/context data and human-readable routing area are
+  visible where supplied; no timestamp or technical identifier is invented.
+
+Remaining runtime-only confirmation is recorded in
+`docs/V3-10C5-3_ALERTS_REFINEMENT.md`.
 
 Static states present: empty filter, pending, acknowledged, resolved,
 dismissed, read/unread, routing action and action error through the parent
@@ -387,7 +386,8 @@ Its evidence is recorded in `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 | O-C5-P3: relation/status/date scan consistency across operational rows | `FIXED` for the C5.1 shared presentation boundary: Services distinguishes service and billing state, Alerts distinguishes priority and decision state, Recurring distinguishes plan and emission state, and Cierres labels preparation readiness. |
 | O-C5-P3: Services raw relation fallback | `FIXED`: missing labels now render human-safe context; no technical ID is rendered or used in the accessible row name. |
 | O-C5-P2: Services list/workspace hierarchy | `PARTIALLY FIXED`: the shared row/status order and filter target are corrected. KPI/search/filter order and workspace branch clarity remain C5.2. |
-| O-C5-P2/P3 for Alerts, Cierres, Recurring and Work Report | `STILL OPEN` in their assigned C5.2–C5.5 batches. C5.1 does not close their module-specific composition or business-safety findings. |
+| O-C5-P2/P3 for Alerts | `FIXED` in C5.3; see `docs/V3-10C5-3_ALERTS_REFINEMENT.md`. Alert state machine and handler contracts remain unchanged. |
+| O-C5-P2/P3 for Cierres, Recurring and remaining Work Report scope | `STILL OPEN` in their assigned C5.4–C5.5 batches. |
 
 ## 12. C5.2 disposition — 2026-09-17
 
@@ -401,4 +401,5 @@ recorded in `docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md`.
 | O-C5-P2: Service Workspace invoice branch clarity | `FIXED`: existing eligibility remains the only decision and the next-action explanation is explicit. |
 | O-C5-P3: Services technical identifier fallback | `FIXED`: rows, accessible labels and Work Report output use human-safe wording. |
 | O-C5-P3: Work Report action/loading/fallback polish | `FIXED`: download/share feedback is contextual and non-blocking while the output remains operational only. |
-| Alerts, Closings, Recurring findings | `STILL OPEN`: no C5.3+ scope was started. |
+| Alerts findings | `FIXED` in C5.3; see `docs/V3-10C5-3_ALERTS_REFINEMENT.md`. |
+| Closings and Recurring findings | `STILL OPEN`: C5.4+ product implementation was not started. |

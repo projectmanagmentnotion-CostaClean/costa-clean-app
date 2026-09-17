@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3–C5.6 NOT STARTED`
+Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4–C5.6 NOT STARTED`
 
 Parent gate: C3 must first become `CLOSED / CERTIFIED`. C4 remains
 `NOT STARTED / PREPARATION AUDIT COMPLETE`. No batch below is authorized by
@@ -97,6 +97,8 @@ shell and independently reviewed. See
 
 ### C5.3 — Alerts
 
+Status: `CLOSED / CERTIFIED`
+
 Likely files: `src/v3/alerts/V3AlertsPage.tsx`,
 `src/features/automation/alertPresentation.ts`,
 `src/features/alerts/alertActionRegistry.ts` and focused presentation tests.
@@ -116,6 +118,13 @@ explicitly authorized QA gate.
 
 Risk: changing action labels can imply unsupported transitions. Dependency:
 alert state-machine tests and AppShell handlers.
+
+Certified implementation and evidence: `docs/V3-10C5-3_ALERTS_REFINEMENT.md`
+and the independent review recorded in
+`docs/V3-10C5-3_INDEPENDENT_REVIEW.md`. The implementation groups the
+existing priority buckets, makes the rule-specific route the only primary
+action, keeps lifecycle actions secondary, and adds human-readable routing
+context. No alert state, scope, handler or persistence contract changed.
 
 ### C5.4 — Closings
 
@@ -211,5 +220,5 @@ A future C5 close requires all of the following:
 
 Until these criteria are met, the truthful state remains:
 
-`V3-10C5 NOT STARTED — PREPARATION COMPLETE`
+`V3-10C5 OPEN — C5.1–C5.3 CLOSED / C5.4–C5.6 NOT STARTED`
 `V3-10C3 OPEN — AUTHENTICATED RUNTIME CERTIFICATION PENDING`

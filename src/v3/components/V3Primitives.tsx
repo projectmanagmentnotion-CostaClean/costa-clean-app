@@ -32,6 +32,7 @@ interface V3ActionProps {
   type?: 'button' | 'submit'
   disabled?: boolean
   ariaLabel?: string
+  ariaPressed?: boolean
 }
 
 export function V3Page({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -65,12 +66,12 @@ export function V3EntityStatus({ label, tone = 'neutral', context }: { label: st
 
 export const V3Status = V3EntityStatus
 
-export function V3PrimaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel }: V3ActionProps) {
-  return <button type={type} className="v3-action v3-action--primary" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>{children}</button>
+export function V3PrimaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel, ariaPressed }: V3ActionProps) {
+  return <button type={type} className="v3-action v3-action--primary" onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-pressed={ariaPressed}>{children}</button>
 }
 
-export function V3SecondaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel }: V3ActionProps) {
-  return <button type={type} className="v3-action v3-action--secondary" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>{children}</button>
+export function V3SecondaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel, ariaPressed }: V3ActionProps) {
+  return <button type={type} className="v3-action v3-action--secondary" onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-pressed={ariaPressed}>{children}</button>
 }
 
 export function V3ActionGroup({ children, className = '' }: { children: ReactNode; className?: string }) {

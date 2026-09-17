@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `C5.1 CLOSED / CERTIFIED / C5.2–C5.6 NOT STARTED`
+Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3–C5.6 NOT STARTED`
 
 Parent gate: C3 must first become `CLOSED / CERTIFIED`. C4 remains
 `NOT STARTED / PREPARATION AUDIT COMPLETE`. No batch below is authorized by
@@ -67,6 +67,8 @@ Evidence: `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 
 ### C5.2 — Services, Service Workspace and Work Report
 
+Status: `CLOSED / CERTIFIED`
+
 Likely files: `src/v3/jobs/V3JobsPage.tsx`, `V3JobRow.tsx`,
 `V3JobWorkspace.tsx`, `V3JobCreateFlow.tsx`, `jobWorkReport.tsx` and
 `src/features/jobs/*` tests only for presentation contracts.
@@ -86,6 +88,12 @@ report filename/output contract, share/download fallback, accessibility and
 
 Risk: high business safety around duplicate invoicing. Dependency: C5.1 and
 the existing `jobInvoiceEligibility` tests must remain green.
+
+Implementation evidence and independent review: the C5.2 changes are audited,
+covered by focused presentation tests, replayed against the authenticated QA
+shell and independently reviewed. See
+`docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md` and
+`docs/V3-10C5-2_INDEPENDENT_REVIEW.md`.
 
 ### C5.3 — Alerts
 

@@ -50,5 +50,26 @@ export function V3JobsPage(props: V3JobsPageProps) {
 
   if (selectedJob) return <V3JobWorkspace job={selectedJob} clients={props.clients} properties={props.properties} quotes={props.quotes} invoices={props.invoices} payments={props.payments} onBack={closeJob} onRefresh={props.onRefresh} onOpenClient={props.onOpenClient} onOpenProperty={props.onOpenProperty} onOpenQuote={props.onOpenQuote} onOpenInvoice={props.onOpenInvoice} onCreateInvoice={() => props.onCreateInvoice(selectedJob)} />
 
-  return <V3Page className="v3-jobs-page"><V3PageTitle eyebrow="Agenda y ejecución" title="Servicios" description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}La agenda operativa, el estado y la facturación real en una sola lectura.`} action={<V3PrimaryAction onClick={props.onCreateJob}>+ Nuevo</V3PrimaryAction>} /><V3KpiGroup><V3Kpi label="Hoy" value={String(todayCount)} hint={formatDateEs(today)} /><V3Kpi label="Próximos" value={String(upcomingCount)} hint="Servicios activos" /><V3Kpi label="Completados" value={String(completedCount)} hint="Estado real" /></V3KpiGroup><div className="v3-jobs-controls"><V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Código, concepto, cliente o inmueble" /><span>{visibleJobs.length} visibles</span></div>{props.duplicateCount ? <V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction> : null}<div className="v3-filter-tabs" role="tablist" aria-label="Agenda de servicios">{([['today', 'Hoy'], ['upcoming', 'Próximos'], ['completed', 'Completados'], ['all', 'Todos'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}</div>{props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}{!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}<V3EntityList label="Servicios">{visibleJobs.map((job) => <V3JobRow key={job.id} job={job} invoice={invoiceByJob.get(job.id) ?? null} today={today} onOpen={() => openJob(job.id)} />)}</V3EntityList></V3Page>
+  return <V3Page className="v3-jobs-page">
+    <V3PageTitle
+      eyebrow="Agenda y ejecución"
+      title="Servicios"
+      description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}Encuentra el servicio, revisa su estado y continúa con la siguiente acción.`}
+      action={<V3PrimaryAction onClick={props.onCreateJob}>Nuevo servicio</V3PrimaryAction>}
+    />
+    <div className="v3-jobs-controls">
+      <V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Código, concepto, cliente o inmueble" />
+      <span aria-live="polite">{visibleJobs.length} visibles</span>
+    </div>
+    <div className="v3-filter-tabs" role="tablist" aria-label="Agenda de servicios">
+      {([['today', 'Hoy'], ['upcoming', 'Próximos'], ['completed', 'Completados'], ['all', 'Todos'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}
+    </div>
+    {props.duplicateCount ? <div className="v3-jobs-secondary-action"><V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction></div> : null}
+    {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}
+    {!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
+    <V3EntityList label="Servicios">{visibleJobs.map((job) => <V3JobRow key={job.id} job={job} invoice={invoiceByJob.get(job.id) ?? null} today={today} onOpen={() => openJob(job.id)} />)}</V3EntityList>
+    <section className="v3-jobs-overview" aria-label="Resumen de agenda">
+      <V3KpiGroup variant="supporting"><V3Kpi label="Hoy" value={String(todayCount)} hint={formatDateEs(today)} /><V3Kpi label="Próximos" value={String(upcomingCount)} hint="Servicios activos" /><V3Kpi label="Completados" value={String(completedCount)} hint="Estado real" /></V3KpiGroup>
+    </section>
+  </V3Page>
 }

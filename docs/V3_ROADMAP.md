@@ -390,7 +390,8 @@ started.
 - [x] C5.1: certify shared operational row hierarchy, contextual status
   conventions, human-safe Services fallbacks and 44px filter-tab geometry
   through authenticated read-only QA.
-- [ ] C5.2: Services, Service Workspace and Work Report.
+- [x] C5.2: Services, Service Workspace and Work Report — CLOSED / CERTIFIED.
+  C5.3 Alerts is not started.
 - [ ] C5.3: Alerts module composition.
 - [ ] C5.4: Closings module composition.
 - [ ] C5.5: Recurring Plans module composition.

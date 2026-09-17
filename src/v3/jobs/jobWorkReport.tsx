@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server'
-import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
+import { formatCurrency, formatDateEs, getDisplayStatusLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel, formatInvoiceLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { buildInvoicePaymentSummary } from '../../features/invoices/paymentState'
 import type { ClientListItem } from '../../features/clients/types'
@@ -19,7 +19,11 @@ function sanitize(value: string): string {
 }
 
 export function buildJobWorkReportPdfFileName(job: JobListItem): string {
-  return `parte-trabajo-${sanitize(job.display_code ?? job.id)}.pdf`
+  return `parte-trabajo-${sanitize(job.display_code ?? 'servicio')}.pdf`
+}
+
+export function getJobWorkReportStatusLabel(job: Pick<JobListItem, 'status'>): string {
+  return getDisplayStatusLabel(job.status)
 }
 
 export async function buildJobWorkReportPdfFile(job: JobListItem, client: ClientListItem | null, property: PropertyListItem | null, quote: QuoteListItem | null, invoice: InvoiceListItem | null, payments: PaymentListItem[]): Promise<File> {
@@ -31,9 +35,9 @@ function reportMarkup(job: JobListItem, client: ClientListItem | null, property:
   const lines = getJobBillingLines(job)
   const payment = invoice ? buildInvoicePaymentSummary(invoice, payments) : null
   const facts = [
-    ['Código', job.display_code ?? job.id],
+    ['Código', job.display_code ?? 'Sin código de servicio'],
     ['Fecha', formatDateEs(job.scheduled_date)],
-    ['Estado', job.status],
+    ['Estado', getJobWorkReportStatusLabel(job)],
     ['Servicio', getServiceTypeLabel(job.service_type)],
     ['Concepto', getJobBillingDisplayConcept(job)],
   ]

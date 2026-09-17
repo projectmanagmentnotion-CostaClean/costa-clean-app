@@ -388,3 +388,17 @@ Its evidence is recorded in `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 | O-C5-P3: Services raw relation fallback | `FIXED`: missing labels now render human-safe context; no technical ID is rendered or used in the accessible row name. |
 | O-C5-P2: Services list/workspace hierarchy | `PARTIALLY FIXED`: the shared row/status order and filter target are corrected. KPI/search/filter order and workspace branch clarity remain C5.2. |
 | O-C5-P2/P3 for Alerts, Cierres, Recurring and Work Report | `STILL OPEN` in their assigned C5.2–C5.5 batches. C5.1 does not close their module-specific composition or business-safety findings. |
+
+## 12. C5.2 disposition — 2026-09-17
+
+The authorized C5.2 batch covers Services/Jobs, Service Workspace and the
+existing Work Report only. Its implementation and runtime evidence are
+recorded in `docs/V3-10C5-2_SERVICES_WORKSPACE_WORK_REPORT.md`.
+
+| Finding | C5.2 disposition |
+| --- | --- |
+| O-C5-P2: Services list hierarchy and first actionable item | `FIXED`: search/filter and the primary create path lead; supporting KPIs move below the operational list. |
+| O-C5-P2: Service Workspace invoice branch clarity | `FIXED`: existing eligibility remains the only decision and the next-action explanation is explicit. |
+| O-C5-P3: Services technical identifier fallback | `FIXED`: rows, accessible labels and Work Report output use human-safe wording. |
+| O-C5-P3: Work Report action/loading/fallback polish | `FIXED`: download/share feedback is contextual and non-blocking while the output remains operational only. |
+| Alerts, Closings, Recurring findings | `STILL OPEN`: no C5.3+ scope was started. |

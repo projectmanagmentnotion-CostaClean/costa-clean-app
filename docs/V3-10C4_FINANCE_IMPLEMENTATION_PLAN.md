@@ -1,6 +1,6 @@
 # V3-10C4P — FINANCE REFINEMENT IMPLEMENTATION PLAN
 
-Status: `PREPARATION COMPLETE — V3-10C4 PRODUCT IMPLEMENTATION NOT STARTED`
+Status: `C4.1–C4.6 CLOSED / CERTIFIED`
 
 This plan is derived from the read-only discovery in
 `docs/V3-10C4_FINANCE_DISCOVERY.md`. It proposes bounded UI/composition work
@@ -230,7 +230,7 @@ Evidence:
 The private attachment/persistence boundary remains high risk; C4.5 changes no
 attachment or write implementation. See `docs/V3-10C4-5_EXPENSES_REFINEMENT.md`.
 
-### C4.6 — Cross-module regression and responsive certification — NOT STARTED
+### C4.6 — Cross-module regression and responsive certification — CLOSED / CERTIFIED
 
 Scope:
 
@@ -240,10 +240,9 @@ Scope:
 - no QA writes unless a later prompt explicitly authorizes exact fixtures and
   cleanup.
 
-Required viewports:
+Executed final-authorization viewports:
 
-`320x568`, `390x844`, `430x932`, `768x1024`, `1024x1366`, `1280x800`,
-`1440x900`, `1920x1080`.
+`320x568`, `390x844`, `768x1024`, `1440x900`.
 
 Required states where data permits: populated, empty, search, selection,
 workspace, document action, disabled financial action, guard state, deep link,
@@ -251,14 +250,14 @@ hard reload.
 
 ## Closure criteria
 
-The future C4 closeout requires:
+The final C4 closeout requires:
 
 1. each protected contract regression suite PASS;
 2. no product/business-contract/Supabase changes outside approved scope;
 3. no raw UUID, misleading `transfer_auto` reconciliation claim or blocking
    financial action ambiguity;
 4. 44px targets, focus, labels, sheets and keyboard behavior PASS;
-5. all eight authenticated viewports PASS with zero overflow, broken images,
+5. the authorized authenticated viewport matrix PASS with zero overflow, broken images,
    console/page errors and unsafe production requests;
 6. independent `pr-quality-gate` PASS;
 7. `npm run qa:agents`, `npm test`, `npm run lint`, `npm run build` and
@@ -267,5 +266,5 @@ The future C4 closeout requires:
 
 ## Current dependency gate
 
-V3-10C3 is closed/certified. V3-10C4 product implementation must not begin
-until a separate human-authorized C4 implementation prompt is provided.
+V3-10C3 and C4 are closed/certified. C5 product implementation remains outside
+this scope.

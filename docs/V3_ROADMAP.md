@@ -338,7 +338,7 @@ any product implementation in a later module.
 Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
 `docs/V3-10C3_AUTHENTICATED_RUNTIME_CERTIFICATION.md`.
 
-## V3-10C4 — Finance refinement — OPEN / C4.1–C4.5 CLOSED / C4.6 NOT STARTED
+## V3-10C4 — Finance refinement — CLOSED / CERTIFIED
 
 - [x] Complete read-only finance architecture and protected-contract discovery.
 - [x] Record invoice, quote, payment and expense findings and priorities.
@@ -362,18 +362,21 @@ Evidence: `docs/V3-10C3_HOME_CRM_REFINEMENT.md` and
   and create/edit composition certified through authenticated read-only QA at
   `320x568`, `390x844`, `768x1024` and `1440x900`; attachment-open states are
   N/A because the available QA row has no document.
-- [ ] C4.6: cross-module certification.
+- [x] C4.6: final cross-module certification — authenticated read-only replay,
+  protected-contract audit, documentation and detached independent review
+  completed with PASS.
 
 Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 `docs/V3-10C4_FINANCE_IMPLEMENTATION_PLAN.md` and
 `docs/V3-10C4_FINDINGS.md`, plus
 `docs/V3-10C4-1_SHARED_FINANCE_HIERARCHY.md`,
 `docs/V3-10C4-2_INVOICES_REFINEMENT.md`,
-`docs/V3-10C4-3_QUOTES_REFINEMENT.md` and
-`docs/V3-10C4-5_EXPENSES_REFINEMENT.md`.
+`docs/V3-10C4-3_QUOTES_REFINEMENT.md`,
+`docs/V3-10C4-5_EXPENSES_REFINEMENT.md` and
+`docs/V3-10C4-6_FINANCE_FINAL_CERTIFICATION.md`.
 
-Next: C4 remains open. C4.6 remains not started and requires explicit
-authorization.
+Next: C5 preparation is complete; C5 product implementation remains not
+started.
 
 ## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
 

@@ -97,7 +97,7 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
     </V3ActionGroup>
     {message ? <p className="v3-inline-message" role="status">{message}</p> : null}
     {error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{error}</p> : null}
-    <input id={`v3-expense-file-${expense.id}`} className="v3-visually-hidden" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => void upload(event)} aria-label="Añadir documento" />
+    <input id={`v3-expense-file-${expense.id}`} className="v3-visually-hidden" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={(event) => void upload(event)} tabIndex={-1} aria-hidden="true" />
     <V3DetailSection title="Contexto">
       <dl className="v3-facts">
         <div><dt>Categoría</dt><dd>{getExpenseCategoryLabel(expense.category)}</dd></div>

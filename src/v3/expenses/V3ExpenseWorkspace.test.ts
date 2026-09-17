@@ -82,4 +82,11 @@ describe('V3ExpenseWorkspace', () => {
     expect(html).toContain('Eliminar documento')
     expect(html).toContain('Documento y revisión')
   })
+
+  it('keeps the programmatic file picker out of the keyboard path', () => {
+    const html = renderWorkspace()
+    expect(html).toContain('type="file"')
+    expect(html).toContain('tabindex="-1"')
+    expect(html).toContain('aria-hidden="true"')
+  })
 })

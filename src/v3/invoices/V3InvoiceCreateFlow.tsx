@@ -12,6 +12,10 @@ import { V3BottomSheet, V3Field, V3Input, V3PrimaryAction, V3SecondaryAction, V3
 
 interface Props { clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; onRefreshData: () => Promise<void>; onCompleted: () => Promise<void> | void; onCancel: () => void; onOpenExistingInvoice?: (id: string) => void; prefillClientId?: string; prefillJobId?: string; prefillQuoteId?: string }
 function today() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` }
+function relatedDisplayCode(value: string | null | undefined, fallback: string) {
+  const normalized = value?.trim() ?? ''
+  return normalized && !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu.test(normalized) ? normalized : fallback
+}
 export function V3InvoiceCreateFlow({ clients, properties, jobs, quotes, invoices, onRefreshData, onCompleted, onCancel, onOpenExistingInvoice, prefillClientId = '', prefillJobId = '', prefillQuoteId = '' }: Props) {
   const [clientId, setClientId] = useState(prefillClientId)
   const [propertyId, setPropertyId] = useState('')
@@ -29,8 +33,8 @@ export function V3InvoiceCreateFlow({ clients, properties, jobs, quotes, invoice
   const tax = useMemo(() => roundMoney(subtotal * businessRules.defaultTaxRate), [subtotal])
   const total = roundMoney(subtotal + tax)
   const availableProperties = properties.filter((item) => item.client_id === clientId)
-  const availableJobs = jobs.filter((item) => item.client_id === clientId)
-  const availableQuotes = quotes.filter((item) => item.client_id === clientId)
+  const availableJobs = jobs.filter((item) => item.client_id === clientId).map((item) => ({ ...item, display_code: relatedDisplayCode(item.display_code, 'Servicio sin código') }))
+  const availableQuotes = quotes.filter((item) => item.client_id === clientId).map((item) => ({ ...item, display_code: relatedDisplayCode(item.display_code, 'Presupuesto sin código') }))
   function updateLine(index: number, field: keyof BillingLineFormState, value: string) { setLines((current) => current.map((line, itemIndex) => itemIndex === index ? { ...line, [field]: value } : line)) }
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setError(null)

@@ -27,8 +27,19 @@ function decimal(value: string) {
   return Number.isFinite(parsed) ? parsed : Number.NaN
 }
 
+function invoiceDisplayCode(displayCode: string | null | undefined, invoiceNumber: string | null | undefined) {
+  const visibleCode = displayCode?.trim() ?? ''
+  const visibleNumber = invoiceNumber?.trim() ?? ''
+  const isUuid = (value: string) => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu.test(value)
+  if (visibleCode && !isUuid(visibleCode)) return visibleCode
+  if (visibleNumber && !isUuid(visibleNumber)) return visibleNumber
+  return 'Factura sin referencia'
+}
+
 export function V3PaymentCreateFlow({ invoices, clients, payments, onRefreshData, onCompleted, onCancel, onOpenExistingPayment, onDirtyChange }: Props) {
-  const availableInvoices = useMemo(() => invoices.filter((invoice) => Number(invoice.outstanding_amount ?? invoice.total) > 0.009), [invoices])
+  const availableInvoices = useMemo(() => invoices
+    .filter((invoice) => Number(invoice.outstanding_amount ?? invoice.total) > 0.009)
+    .map((invoice) => ({ ...invoice, display_code: invoiceDisplayCode(invoice.display_code, invoice.invoice_number) })), [invoices])
   const [invoiceId, setInvoiceId] = useState(availableInvoices[0]?.id ?? '')
   const [paymentDate, setPaymentDate] = useState(todayLocalDate())
   const [amount, setAmount] = useState('')

@@ -1,6 +1,6 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `C4.1–C4.5 CLOSED / C4.6 NOT STARTED`
+Status: `C4.1–C4.6 CLOSED / CERTIFIED`
 
 Audited HEAD: `d783567f60ef87195fccb7dc34358a7bfd5c3f1f`
 
@@ -113,6 +113,31 @@ runtime states are `N/A` without creating or modifying a business record.
 Focused local attachment/receipt workflow tests retain the private signed URL,
 type/10 MB and no-data-loss contracts. Private screenshots and the local QA
 replay script are ignored and excluded from source control.
+
+## C4.6 final reconciliation — CLOSED / CERTIFIED
+
+The final cross-module audit reconciles the original C4 ledger without
+reopening protected write contracts. `F-C4-P2-007` is fixed for the Expense
+form and is `N/A` for the Invoice, Quote and Payment forms after source review
+found no equivalent presentation defect requiring a persistence-flow change.
+The remaining original entries are fixed by their bounded C4.1–C4.5 slices.
+
+| Final ledger result | Count | Notes |
+| --- | ---: | --- |
+| FIXED | 13 | All original C4 P1/P2/P3 findings have an implemented and reviewed resolution. |
+| N/A | 0 | `N/A` is used only for unavailable read-only runtime states, not to hide a ledger finding. |
+| STILL OPEN | 0 | No C4-closure blocker remains. |
+
+The C4.6 source audit also removed three human-interface fallbacks that could
+have rendered a raw related-record UUID when an invoice, job or quote had no
+display code. The internal option values remain unchanged for persistence;
+only visible labels now use `Servicio sin código`, `Presupuesto sin código` or
+`Factura sin referencia`.
+
+The detached independent final review returned `PASS` with P0/P1/P2/P3 all
+zero after inspecting the remediated C4.6 diff, runtime evidence and protected
+contracts. Its private artifact is
+`.project-agent/private/c4-6-independent-host-review.md`.
 
 ## P0 — objective blockers
 

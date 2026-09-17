@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS DISCOVERY AUDIT
 
-Status: `PREPARATION COMPLETE / C5.4 IMPLEMENTATION CERTIFIED`
+Status: `C5.6 CLOSED / CERTIFIED`
 
 Repository: `C:\Users\USUARIO\costa-clean-app-v3`
 Branch: `codex/app-v3-mobile-first-redesign`
@@ -8,8 +8,9 @@ Audited HEAD: `fc22069082ad4f4a50563bf7ac31dfeab2d87258`
 
 This document records the original static/read-only discovery boundary and
 the later bounded implementation dispositions. No Supabase object, RPC,
-schema, policy, storage object or business data was changed. C5.5 is now
-closed/certified; C5.6 remains outside the certified scope.
+schema, policy, storage object or business data was changed. C5.1–C5.5 and
+the final C5.6 cross-module gate are documented as CLOSED / CERTIFIED after the
+fresh independent review and publication gate.
 
 ## 1. State and audit boundary
 
@@ -18,7 +19,7 @@ closed/certified; C5.6 remains outside the certified scope.
 - V3-10C2: `CLOSED / CERTIFIED`.
 - V3-10C3: see its own certification record; not changed by this audit.
 - V3-10C4: see its own certification record; not changed by this audit.
-- V3-10C5: `OPEN`; C5.1–C5.5 are certified, and C5.6 remains not started.
+- V3-10C5: `CLOSED / CERTIFIED`; C5.1–C5.6 are certified.
 - Product files changed in the original preparation slice: `0`; C5.4 is the
   separately authorized implementation slice recorded below.
 - C5.4 authenticated runtime is recorded in
@@ -420,7 +421,7 @@ discovery findings are now resolved as follows:
 
 `buildClosingSummary`, deterministic summary calculation, snapshot persistence,
 incidence routing, export package generation and the AI endpoint contract were
-not rewritten. C5.6 cross-module certification remains not started.
+not rewritten. The final C5.6 cross-module certification is recorded below.
 
 ## 14. C5.5 disposition — Recurring Plans
 
@@ -439,3 +440,36 @@ Protected recurring persistence, schedule, duplicate and invoice-generation
 contracts were not changed. QA contained no recurring record, so populated
 workspace runtime is honestly `N/A`; empty-state runtime passed at the four
 C5.5 viewports with zero mutations.
+
+## 15. C5.6 final cross-module disposition — 2026-09-17
+
+This is the final certified cross-module disposition. The fresh detached
+independent Operations review returned `complete` / `PASS` with quality score
+`98/100` and P0/P1/P2/P3 findings `0/0/0/0`.
+
+The final Operations certification replay covered Services, Alerts and
+Closings at `320x568`, `390x844`, `768x1024` and `1440x900`. The existing
+authenticated harness also completed its wider configured matrix without a
+failed check. Services had no QA row, Work Report therefore had no populated
+record to open, and Recurring Plans had no QA plan for the verified client;
+those populated states remain truthful `N/A` rather than being manufactured
+with writes. Alerts had four visible pending records and Closings had a
+populated deterministic summary.
+
+| Original finding | Final C5.6 disposition |
+| --- | --- |
+| O-C5-P1: deterministic closing values versus snapshot and assistive AI | `FIXED / VERIFIED`: runtime showed “Resumen determinista”, calculated amounts, snapshot state and an explicit assistive-only boundary. |
+| O-C5-P2: Services list/workspace hierarchy | `FIXED / VERIFIED`: the empty Services state, search, agenda tabs and primary create path were stable at all required viewports; populated workspace is N/A because QA has no service row. |
+| O-C5-P2: Alert priority and detail action order | `FIXED / VERIFIED`: critical/action/follow-up groups, filter state, one rule-specific primary action and secondary lifecycle actions were replayed without mutation. |
+| O-C5-P2: Closing page length and decision visibility | `FIXED / VERIFIED`: period, deterministic totals, readiness, incidences, snapshot and outputs remained labelled and visible without overflow. |
+| O-C5-P2: Recurring density and disabled generation explanation | `FIXED / VERIFIED` from C5.5 evidence; populated plan workspace remains N/A in this QA dataset. |
+| O-C5-P3: operation-row relation/status/date consistency | `FIXED / VERIFIED`: human-readable labels and contextual status boundaries remained intact; no UUID was visible or present in accessible markup. |
+| O-C5-P3: Work Report actions and fallbacks | `FIXED / VERIFIED` from C5.2 evidence; populated Work Report is N/A because no service row exists. |
+| O-C5-P3: closing output copy | `FIXED / VERIFIED`: export and assistive interpretation remained separate and explicitly scoped. |
+| C5.5 reviewer P3: `.test.tsx` discovery | `FIXED`: `vitest.config.mjs` now includes `src/**/*.test.tsx`; the full suite includes the recurring and document TSX tests. |
+
+Runtime invariants were zero for production requests, production mutations,
+QA business mutations, horizontal overflow, clipped/overlapping controls,
+visible/accessible UUIDs, Unicode-as-icon, legacy markers and broken assets.
+No console errors, page errors or critical request failures were observed.
+All audited interactive elements and operational rows met the 44px contract.

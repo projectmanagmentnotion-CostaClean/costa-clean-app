@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   createSandboxEnvironmentV6,
@@ -7,6 +8,8 @@ import {
   runSandboxCompatibilityProofV6,
   verifyManifestV6,
 } from './cp2b_sandbox_compat_v6.mjs'
+
+const normalizedRepositoryRoot = path.resolve(process.cwd()).replace(/\\/gu, '/')
 
 describe('CP-2A.5 versioned Windows sandbox compatibility V6', () => {
   it('verifies the new package and every reused immutable artifact', () => {
@@ -34,7 +37,7 @@ describe('CP-2A.5 versioned Windows sandbox compatibility V6', () => {
       const environment = createSandboxEnvironmentV6({ profile })
       expect(environment.GIT_CONFIG_COUNT).toBe('1')
       expect(environment.GIT_CONFIG_KEY_0).toBe('safe.directory')
-      expect(environment.GIT_CONFIG_VALUE_0).toBe('C:/Users/USUARIO/costa-clean-app-v3')
+      expect(environment.GIT_CONFIG_VALUE_0).toBe(normalizedRepositoryRoot)
       expect(environment.GIT_CONFIG_NOSYSTEM).toBe('1')
       expect(environment.GIT_CONFIG_VALUE_0).not.toBe('*')
       expect(environment.HOME).toBe(profile.profile)

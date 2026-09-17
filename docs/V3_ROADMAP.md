@@ -378,7 +378,7 @@ Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 Next: C5 preparation is complete; C5 product implementation remains not
 started.
 
-## V3-10C5 — Operations refinement — OPEN / C5.1–C5.4 CLOSED
+## V3-10C5 — Operations refinement — CLOSED / CERTIFIED
 
 - [x] Complete read-only architecture and protected-contract discovery for
   Services/Jobs, Service Workspace, Work Report, Alerts, Closings and
@@ -395,7 +395,11 @@ started.
 - [x] C5.3: Alerts module composition — CLOSED / CERTIFIED.
 - [x] C5.4: Closings module composition — CLOSED / CERTIFIED.
 - [x] C5.5: Recurring Plans module composition — CLOSED / CERTIFIED.
-- [ ] C5.6: cross-module runtime and responsive certification.
+- [x] C5.6: final cross-module runtime and responsive certification — CLOSED /
+  CERTIFIED. Authenticated QA passed at `320x568`, `390x844`, `768x1024` and
+  `1440x900` for available Operations states; missing service/work-report and
+  recurring populated rows were recorded as N/A without writes. Fresh detached
+  independent review returned PASS with P0/P1/P2/P3 = `0/0/0/0`.
 
 Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
 `docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md` and
@@ -406,6 +410,7 @@ Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
 `docs/V3-10C5-4_CLOSINGS_REFINEMENT.md` and
 `docs/V3-10C5-4_INDEPENDENT_REVIEW.md`,
 `docs/V3-10C5-5_RECURRING_PLANS_REFINEMENT.md` and
-`docs/V3-10C5-5_RUNTIME_EVIDENCE.md`.
+`docs/V3-10C5-5_RUNTIME_EVIDENCE.md`, and
+`docs/V3-10C5-6_OPERATIONS_FINAL_CERTIFICATION.md`.
 
-Next: C5.6 remains the later cross-module certification gate.
+Next: V3-10C5 is closed. No next phase was started by this gate.

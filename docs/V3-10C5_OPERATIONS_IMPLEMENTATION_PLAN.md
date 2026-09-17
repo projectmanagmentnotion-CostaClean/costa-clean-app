@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4 CLOSED / C5.5 CLOSED / CERTIFIED / C5.6 NOT STARTED`
+Status: `C5.1 CLOSED / C5.2 CLOSED / C5.3 CLOSED / C5.4 CLOSED / C5.5 CLOSED / C5.6 CLOSED / CERTIFIED`
 
 Parent gate: C3 is `CLOSED / CERTIFIED`. C4 is `CLOSED / CERTIFIED`.
 No batch below is authorized by this document alone.
@@ -184,9 +184,14 @@ schedule, duplicate and generation contracts remain unchanged.
 
 ### C5.6 — Cross-module runtime and responsive certification
 
+Status: `CLOSED / CERTIFIED`
+
 Surfaces: Services, Service Workspace, Work Report, Alerts, Closings and
-Recurring Plans at `320x568`, `390x844`, `430x932`, `768x1024`, `1024x1366`,
-`1280x800`, `1440x900`, `1920x1080`.
+Recurring Plans at the four viewports authorized by the C5.6 gate:
+`320x568`, `390x844`, `768x1024` and `1440x900`. The eight-viewport matrix
+(`430x932`, `1024x1366`, `1280x800` and `1920x1080` in addition) remains the
+broader future Operations replay contract and is not a closure prerequisite
+for this explicitly bounded C5.6 certification.
 
 Required evidence:
 
@@ -204,8 +209,8 @@ Required evidence:
 - accessibility: heading order, labels, focus, keyboard, 44px targets,
   status announcements and sheet/dialog semantics.
 
-Independent `pr-quality-gate` must review source diff and evidence after the
-runtime run. C5 cannot close on static tests alone.
+Independent Operations review must review the source/config diff and evidence
+after the runtime run. C5 cannot close on static tests alone.
 
 ## 3. Test matrix by protected contract
 
@@ -227,14 +232,16 @@ A future C5 close requires all of the following:
    change.
 3. Component/integration tests and the full suite pass with no regression.
 4. `npm run lint`, `npm run build` and `git diff --check` pass.
-5. Authenticated runtime matrix passes at all eight viewports with the
-   invariants in C5.6.
+5. Authenticated runtime matrix passes at the four C5.6-authorized viewports
+   (`320x568`, `390x844`, `768x1024`, `1440x900`) with the invariants in C5.6.
+   The broader eight-viewport Operations matrix remains future scope.
 6. No unapproved QA/production writes, schema/RPC/policy/bucket changes or
    private evidence are committed.
 7. Documentation records exact findings, evidence, remaining debt and the
    final commit/push.
 
-With C5.5 implementation, read-only runtime evidence and the fresh
-independent review complete, the truthful state is:
+The final C5.6 replay, validation gates and TSX test-discovery correction are
+recorded in
+`docs/V3-10C5-6_OPERATIONS_FINAL_CERTIFICATION.md`. The truthful state is:
 
-`V3-10C5 OPEN — C5.1–C5.5 CLOSED / C5.6 NOT STARTED`
+`V3-10C5 CLOSED / CERTIFIED — C5.1–C5.6 CLOSED / CERTIFIED`

@@ -33,7 +33,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/bug-root-cause-investigator.agent.md",
-      "sha256": "3e8f9ac6ea8a5af0e8a28f6197613c785d78ea7c1f1f20de1e8f9705528cba24",
+      "sha256": "c4858365145d912303082ad2963488b40e31dab0a8e87e59d29cead7eb4c71c8",
       "primaryUse": "Reproduce y aislar causas raíz con cobertura exhaustiva.",
       "roadmapPhases": [
         "V3-10A"
@@ -46,7 +46,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/business-rules-test-engineer.agent.md",
-      "sha256": "dfde956c78b2810638cbdc5c1a1ab6b4c8f5f50705e928e6417de25b8475618c",
+      "sha256": "f3a6f14e66646b9b71cc243b2af345db2f4ff1d533f765b7d0c9afa2245ff784",
       "primaryUse": "Proteger invariantes de negocio y pruebas.",
       "roadmapPhases": [
         "V3-10A"
@@ -85,7 +85,7 @@
       "riskLevel": "R1",
       "version": "1.0.0",
       "path": ".github/agents/documentation-roadmap.agent.md",
-      "sha256": "92c4a75ded0877e62ddd0c8844040b60f50146d01ba58921fa2fc0ce2c3dd8f3",
+      "sha256": "b264eb8b10dc914ec103aa752370ae4f78c2e8dce1c22d704df157d2d3ad2790",
       "primaryUse": "Alinear documentación y roadmap con evidencia.",
       "roadmapPhases": [
         "V3-10A"
@@ -98,7 +98,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/enterprise-agent-architect.agent.md",
-      "sha256": "550d79caaa745303614851bba2f66ea45abf45fcf31f311a166a46b84c18889d",
+      "sha256": "5743fcaa7449d6cdc8a39a6cb8a73a5f5bc8cbdb9fd9a262e2875672ce560f08",
       "primaryUse": "Diseñar integraciones empresariales acotadas.",
       "roadmapPhases": [
         "V3-10A"
@@ -111,7 +111,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/frontend-ux-accessibility.agent.md",
-      "sha256": "80249381b798e8227eecdb9c121e842f48982a33dadaadf0b0df807b58f0778a",
+      "sha256": "8f1360ccfb42a3bf78765b6fd5e2562c65bd2d98687136cf11f6237e3f75165f",
       "primaryUse": "Auditar UX mobile-first y accesibilidad.",
       "roadmapPhases": [
         "V3-10A"
@@ -124,7 +124,7 @@
       "riskLevel": "R1",
       "version": "1.0.0",
       "path": ".github/agents/implementation-planner.agent.md",
-      "sha256": "694ea910c8d86a433b7a23fa573417ef1925d5f20b284e7a0dbde444181f5ad4",
+      "sha256": "db67be0e0b4c443011fd509d1de2aba1124692bc527c539ace626559d64959c3",
       "primaryUse": "Convertir gates aprobados en planes acotados.",
       "roadmapPhases": [
         "V3-10A"
@@ -150,7 +150,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/performance-gsap-motion.agent.md",
-      "sha256": "bcb278d555c729496023b0eeac8c6f6b57a697bef455bfcab4fae702249eda62",
+      "sha256": "b2ca4cb3fc5dcf5894b773352cc2b6e7b341868e1f78ba0da3aa123a5f9d0808",
       "primaryUse": "Auditar GSAP, lifecycle y rendimiento.",
       "roadmapPhases": [
         "V3-10A"
@@ -163,7 +163,7 @@
       "riskLevel": "R1",
       "version": "1.0.0",
       "path": ".github/agents/pr-quality-gate.agent.md",
-      "sha256": "fc1fcbc61c7b77980d1da725f2eeb4672d90edaede7ffc8b210df981fd98571e",
+      "sha256": "91d90eeda0143651150fbc5c1514c5370afdd9da4cf0f9bf22a371fc0825781d",
       "primaryUse": "Revisar de forma independiente alcance y calidad.",
       "roadmapPhases": [
         "V3-10A"
@@ -176,7 +176,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/project-continuation.agent.md",
-      "sha256": "3ad149d47cd3c195d75d23ddad2fcb74b71b44b6d4de507c4573404b52dad2db",
+      "sha256": "b0dd3cb018ad1e2aa2d844ddd516a5f0676349862eaec9c1fe19c5d6e79a8809",
       "primaryUse": "Reconstruir verdad del repo y continuidad segura.",
       "roadmapPhases": [
         "V3-10A"
@@ -202,7 +202,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/qa-e2e-specialist.agent.md",
-      "sha256": "2670041ac06e57de78d061347bef2672e88548210c377ec9924dbaf024aba4e6",
+      "sha256": "3875fdc54e068fd35ea1e1bf788c84d37831fb1f70ecc4d45ca96b0dee87a1bb",
       "primaryUse": "Ejecutar QA E2E con evidencia y cleanup.",
       "roadmapPhases": [
         "V3-10A"
@@ -215,7 +215,7 @@
       "riskLevel": "R3",
       "version": "1.0.0",
       "path": ".github/agents/release-deployment-guardian.agent.md",
-      "sha256": "3ca4edaf77de10b54fb87ac6fc849e4e600b53bd967385a740a5e7029f3dc20b",
+      "sha256": "3058654b2fc9a8c70c6a8ba758391a1d88efd0de7a4d7dce5dc6dac4ae6f7f63",
       "primaryUse": "Controlar releases autorizados y rollback.",
       "roadmapPhases": [
         "V3-10A"
@@ -241,7 +241,7 @@
       "riskLevel": "R1",
       "version": "1.0.0",
       "path": ".github/agents/security-privacy-auditor.agent.md",
-      "sha256": "47e79fdd8da1398dd05ff5735665a9e00b768f192391498fb59a64797d0bddb6",
+      "sha256": "09c60b616479619edabb2e1267c8adaa7f32151124bfbd75d6d206702b74190e",
       "primaryUse": "Auditar seguridad, privacidad y secretos.",
       "roadmapPhases": [
         "V3-10A"
@@ -254,7 +254,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/senior-fullstack-builder.agent.md",
-      "sha256": "044fd6241199da2cebe21f7e3cbd8930e05df3b1b369a6c97307f480b007accf",
+      "sha256": "1cd80f91a934488d98467dfacebd6d64f92af050c2321f74d8d48d6290f89e5b",
       "primaryUse": "Implementar slices aprobados y testeados.",
       "roadmapPhases": [
         "V3-10A"
@@ -267,7 +267,7 @@
       "riskLevel": "R2",
       "version": "1.0.0",
       "path": ".github/agents/seo-local-structured-data.agent.md",
-      "sha256": "f95cc339888421363f1c68908d69ddf30d5dc01b8d0f0f6aa1eabb28632f88c3",
+      "sha256": "e6403f60b7f8e94f05dab229b7f85fc75e17d21743d19e89524c760ba59bd9d5",
       "primaryUse": "Proteger SEO público y datos estructurados.",
       "roadmapPhases": [
         "V3-10A"
@@ -293,7 +293,7 @@
       "riskLevel": "R3",
       "version": "1.0.0",
       "path": ".github/agents/supabase-guardian.agent.md",
-      "sha256": "748809463ad943725c12fa6c71c8fa2140f0709b069cbec2e1775be3b7538cb1",
+      "sha256": "66ced8c77593e84cee35ce15e2a2d2fb32a4ffa8ce017cee60e7e57efad823c3",
       "primaryUse": "Auditar límites Supabase bajo gate separado.",
       "roadmapPhases": [
         "V3-10A"

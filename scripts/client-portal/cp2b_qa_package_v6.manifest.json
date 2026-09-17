@@ -15,7 +15,7 @@
     },
     {
       "path": "scripts/client-portal/cp2bSandboxCompatibilityV6.test.mjs",
-      "sha256": "030af21383cf8e380be5f38c15a78df9997f6a3f42bab4ce8dee85013f8b5d56"
+      "sha256": "4999d14e4934958d1ac8e5a53981daeb52459ac952d25761082a3f21399f2282"
     }
   ],
   "reusedV5Artifacts": [

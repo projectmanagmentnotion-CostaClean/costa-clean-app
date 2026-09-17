@@ -266,7 +266,11 @@ async function main() {
         continue
       }
       const expectedPath = `.github/agents/${entry.name}.agent.md`
-      const digest = createHash('sha256').update(profile.content).digest('hex')
+      // Agent profile fingerprints are defined over canonical UTF-8 text with
+      // LF line endings so the manifest is stable across Windows and POSIX
+      // checkouts. The files themselves may materialize with CRLF on Windows.
+      const canonicalContent = profile.content.replace(/\r\n/g, '\n')
+      const digest = createHash('sha256').update(canonicalContent, 'utf8').digest('hex')
       if (entry.path !== expectedPath) mismatches.push(`${entry.name}:path`)
       if (entry.version !== profile.version) mismatches.push(`${entry.name}:version`)
       if (entry.riskLevel !== profile.riskLevel) mismatches.push(`${entry.name}:risk`)

@@ -149,3 +149,10 @@ The independent PASS authorizes publication of this certification record. The
 closeout commit and push below are the publication action; no production
 deployment or Supabase change is included. No next major phase was started
 automatically.
+
+## Publication record
+
+- Commit: `ebd5d33` (`docs(v3): certify operations refinement`).
+- Push: `PASS` to `origin/codex/app-v3-mobile-first-redesign`.
+- The final documentation-only publication record is committed and pushed in
+  the follow-up docs commit after this initial certification publication.

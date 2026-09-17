@@ -44,9 +44,9 @@ export function V3AlertsPage(props: V3AlertsPageProps) {
       {([['pending', 'Pendientes'], ['critical', 'Críticas'], ['reviewed', 'Revisadas'], ['all', 'Todas']] as const).map(([value, label]) => <V3SecondaryAction key={value} onClick={() => setFilter(value)} aria-pressed={filter === value}>{label}</V3SecondaryAction>)}
     </div>
     {visible.length === 0 ? <V3EmptyState title="Sin alertas en este filtro" description="No hay decisiones operativas que mostrar ahora." /> : <V3EntityList label="Alertas">
-      {visible.map(({ alert, status, isRead }) => <V3EntityListItem key={alert.id} ariaLabel={alert.title} onClick={() => setSelected(alert)}>
-        <div className="v3-alert-row__main"><V3EntityStatus label={alert.severity === 'critical' ? 'Crítica' : alert.severity === 'warning' ? 'Prioritaria' : 'Informativa'} tone={alert.severity === 'critical' ? 'danger' : alert.severity === 'warning' ? 'warning' : 'neutral'} /><strong>{alert.title}</strong><span>{alert.summary}</span></div>
-        <div className="v3-alert-row__side"><strong>{alert.count}</strong><small>{status === 'acknowledged' ? 'Reconocida' : status === 'resolved' ? 'Resuelta' : status === 'dismissed' ? 'Descartada' : isRead ? 'Leída' : 'Pendiente'}</small></div>
+      {visible.map(({ alert, status, isRead }) => <V3EntityListItem key={alert.id} className="v3-alert-row v3-operational-row" ariaLabel={alert.title} onClick={() => setSelected(alert)}>
+        <div className="v3-alert-row__main v3-operational-row__identity"><strong>{alert.title}</strong><span>{alert.summary}</span></div>
+        <div className="v3-alert-row__side v3-operational-row__context"><div className="v3-operational-statuses"><V3EntityStatus context="Prioridad" label={alert.severity === 'critical' ? 'Crítica' : alert.severity === 'warning' ? 'Prioritaria' : 'Informativa'} tone={alert.severity === 'critical' ? 'danger' : alert.severity === 'warning' ? 'warning' : 'neutral'} /><V3EntityStatus context="Estado" label={status === 'acknowledged' ? 'Reconocida' : status === 'resolved' ? 'Resuelta' : status === 'dismissed' ? 'Descartada' : isRead ? 'Leída' : 'Pendiente'} tone={status === 'resolved' ? 'success' : status === 'dismissed' ? 'neutral' : 'warning'} /></div><strong className="v3-operational-row__value">{alert.count}</strong></div>
       </V3EntityListItem>)}
     </V3EntityList>}
     {selected ? <V3BottomSheet title={selected.title} onClose={() => setSelected(null)}>

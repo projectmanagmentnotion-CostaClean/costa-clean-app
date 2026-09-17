@@ -59,8 +59,8 @@ export function V3KpiGroup({ children, variant = 'default' }: { children: ReactN
   return <div className={`v3-kpi-group v3-kpi-group--${variant}`}>{children}</div>
 }
 
-export function V3EntityStatus({ label, tone = 'neutral' }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger' }) {
-  return <span className={`v3-status v3-status--${tone}`}>{label}</span>
+export function V3EntityStatus({ label, tone = 'neutral', context }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger'; context?: string }) {
+  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}{label}</span>
 }
 
 export const V3Status = V3EntityStatus

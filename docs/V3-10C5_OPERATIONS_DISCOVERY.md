@@ -375,3 +375,16 @@ C5 product implementation may start only after C3 authenticated runtime is
 closed and a separate implementation prompt authorizes it. This preparation
 audit does not start C5, does not certify C3, and does not claim any rendered
 runtime result.
+
+## 11. C5.1 disposition — 2026-09-17
+
+The later C3 and C4 closure gates are complete, and an explicit C5.1
+authorization permitted only the shared operational hierarchy/status batch.
+Its evidence is recorded in `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
+
+| Finding | C5.1 disposition |
+| --- | --- |
+| O-C5-P3: relation/status/date scan consistency across operational rows | `FIXED` for the C5.1 shared presentation boundary: Services distinguishes service and billing state, Alerts distinguishes priority and decision state, Recurring distinguishes plan and emission state, and Cierres labels preparation readiness. |
+| O-C5-P3: Services raw relation fallback | `FIXED`: missing labels now render human-safe context; no technical ID is rendered or used in the accessible row name. |
+| O-C5-P2: Services list/workspace hierarchy | `PARTIALLY FIXED`: the shared row/status order and filter target are corrected. KPI/search/filter order and workspace branch clarity remain C5.2. |
+| O-C5-P2/P3 for Alerts, Cierres, Recurring and Work Report | `STILL OPEN` in their assigned C5.2–C5.5 batches. C5.1 does not close their module-specific composition or business-safety findings. |

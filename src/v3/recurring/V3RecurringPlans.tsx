@@ -81,13 +81,13 @@ export function V3RecurringPlansSection({ client, plans, properties, quotes, onR
               onClick={() => { setMessage(null); setOpenPlanId(plan.id) }}
               className="v3-recurring-plan-row"
             >
-              <div>
+              <div className="v3-operational-row__identity">
                 <strong>{plan.title}</strong>
                 <span>{getRecurringFrequencyLabel(plan.frequency)} · {getPlanDueLabel(plan)}</span>
               </div>
-              <div>
-                <strong>{formatCurrency(getPlanTotal(plan))}</strong>
-                <V3EntityStatus label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} />
+              <div className="v3-operational-row__context">
+                <strong className="v3-operational-row__value">{formatCurrency(getPlanTotal(plan))}</strong>
+                <div className="v3-operational-statuses"><V3EntityStatus context="Plan" label={planStatusLabel(plan.status)} tone={planStatusTone(plan.status)} /><V3EntityStatus context="Emisión" label={isRecurringPlanDue(plan.next_issue_date) ? 'Pendiente' : 'Programada'} tone={isRecurringPlanDue(plan.next_issue_date) ? 'warning' : 'neutral'} /></div>
               </div>
             </V3EntityListItem>
           ))}

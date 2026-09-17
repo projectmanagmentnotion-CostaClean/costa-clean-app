@@ -378,7 +378,7 @@ Evidence: `docs/V3-10C4_FINANCE_DISCOVERY.md`,
 Next: C5 preparation is complete; C5 product implementation remains not
 started.
 
-## V3-10C5 — Operations refinement — NOT STARTED / PREPARATION AUDIT COMPLETE
+## V3-10C5 — Operations refinement — OPEN / C5.1 CLOSED
 
 - [x] Complete read-only architecture and protected-contract discovery for
   Services/Jobs, Service Workspace, Work Report, Alerts, Closings and
@@ -387,9 +387,17 @@ started.
   responsive-source findings with O-C5-P1/P2/P3 severity.
 - [x] Prepare bounded implementation batches and the future authenticated
   eight-viewport runtime matrix.
-- [ ] Start operations product implementation.
+- [x] C5.1: certify shared operational row hierarchy, contextual status
+  conventions, human-safe Services fallbacks and 44px filter-tab geometry
+  through authenticated read-only QA.
+- [ ] C5.2: Services, Service Workspace and Work Report.
+- [ ] C5.3: Alerts module composition.
+- [ ] C5.4: Closings module composition.
+- [ ] C5.5: Recurring Plans module composition.
+- [ ] C5.6: cross-module runtime and responsive certification.
 
-Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md` and
-`docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md`.
+Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
+`docs/V3-10C5_OPERATIONS_IMPLEMENTATION_PLAN.md` and
+`docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 
-Next: no C4 or C5 product work started.
+Next: C5.2 is not started.

@@ -22,4 +22,11 @@ describe('V3 core correction contracts', () => {
     expect(contactRule).toContain('min-height: var(--v3-touch-min)')
     expect(ghostRule).toContain('min-height: var(--v3-touch-min)')
   })
+
+  it('keeps compact operational filter tabs at the certified 44px minimum width', () => {
+    const filterTabRule = css.match(/\.v3-filter-tabs button \{[^}]+\}/u)?.[0] ?? ''
+
+    expect(filterTabRule).toContain('min-height: var(--v3-touch-preferred)')
+    expect(filterTabRule).toContain('min-width: var(--v3-touch-min)')
+  })
 })

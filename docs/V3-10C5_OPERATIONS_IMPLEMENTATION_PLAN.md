@@ -1,6 +1,6 @@
 # V3-10C5P — OPERATIONS IMPLEMENTATION PLAN
 
-Status: `PREPARATION COMPLETE / PRODUCT IMPLEMENTATION NOT STARTED`
+Status: `C5.1 CLOSED / CERTIFIED / C5.2–C5.6 NOT STARTED`
 
 Parent gate: C3 must first become `CLOSED / CERTIFIED`. C4 remains
 `NOT STARTED / PREPARATION AUDIT COMPLETE`. No batch below is authorized by
@@ -25,6 +25,8 @@ this document alone.
 
 ### C5.1 — Shared operations hierarchy and status conventions
 
+Status: `CLOSED / CERTIFIED`
+
 Likely files: `src/v3/components/V3Primitives.tsx`, operations-specific V3
 styles, `src/v3/jobs/V3JobRow.tsx`, `V3AlertsPage.tsx`,
 `V3RecurringPlans.tsx`, `V3ClosingPage.tsx` and semantic token consumers only
@@ -45,6 +47,23 @@ UUID in labels, row empty/error/loading rendering and no C2 token drift.
 
 Risk: global-looking primitive changes can regress finance/CRM; limit changes
 to an operations consumer or prove all affected consumers.
+
+Certified implementation:
+
+- Optional contextual labels in `V3EntityStatus` distinguish the type of a
+  status without adding an operational value or transition.
+- Services, Alerts, Recurring Plans and Cierres now use the compact
+  identity/context/status/date-or-value ordering where the existing surface
+  exposes those facts.
+- Services no longer falls back to `id`, `client_id` or `property_id` in its
+  rendered or accessible row label; missing human context is explicit instead.
+- Filter tabs retain their compact scrollable presentation while their hit area
+  is at least the existing `--v3-touch-min` 44px contract.
+- C5.1 did not change a workspace flow, Work Report, alert decision action,
+  closing output, recurring persistence/generation behavior or any protected
+  contract. Those remain in their assigned later batches.
+
+Evidence: `docs/V3-10C5-1_SHARED_OPERATIONS_HIERARCHY.md`.
 
 ### C5.2 — Services, Service Workspace and Work Report
 

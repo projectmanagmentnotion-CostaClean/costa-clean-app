@@ -1,9 +1,9 @@
 import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/displayFormat'
 import { formatInvoiceLabel, formatPaymentLabel, toUserFacingReference } from '../../app/relationshipLabels'
-import { getPaymentOriginLabel } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
 import { V3EntityListItem, V3Status } from '../components/V3Primitives'
+import { getPaymentProvenancePresentation } from './paymentPresentation'
 
 interface V3PaymentRowProps {
   payment: PaymentListItem
@@ -13,6 +13,7 @@ interface V3PaymentRowProps {
 }
 
 export function V3PaymentRow({ payment, invoice, clientName, onOpen }: V3PaymentRowProps) {
+  const provenance = getPaymentProvenancePresentation(payment.origin_type)
   return (
     <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir ${formatPaymentLabel(payment)}`}>
       <div className="v3-payment-row__main">
@@ -22,7 +23,7 @@ export function V3PaymentRow({ payment, invoice, clientName, onOpen }: V3Payment
       </div>
       <div className="v3-payment-row__side">
         <V3Status label={getPaymentMethodLabel(payment.payment_method)} tone="neutral" />
-        <small>{getPaymentOriginLabel(payment.origin_type)}</small>
+        <small>{provenance.label}</small>
       </div>
     </V3EntityListItem>
   )

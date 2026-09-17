@@ -163,7 +163,7 @@ fixture, acceptance or conversion was created. The independent `pr-quality-gate`
 review passed against the actual C4.3 diff; its structured private artifact is
 `qa-reports/private/v3-10c4-3-independent-review.json`.
 
-### C4.4 — Payments — NOT STARTED
+### C4.4 — Payments — CLOSED / CERTIFIED
 
 Likely files:
 
@@ -189,6 +189,13 @@ Tests:
 - search/sort/empty state and runtime matrix.
 
 Risk: medium/high due to provenance wording.
+
+Completion status: authenticated read-only list replay passed at `320x568`,
+`390x844`, `768x1024` and `1440x900`; no visible payment workspace existed in
+the QA baseline, so workspace-only states are `N/A` without a fixture. The
+versioned CP-2A.5 / V6 proof suppresses system Git configuration and
+transitively verifies the hash-pinned V5 manifest. Final independent review
+passed; C4.5 remains not started.
 
 ### C4.5 — Expenses — NOT STARTED
 

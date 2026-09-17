@@ -170,6 +170,7 @@ describe('V3 Design Guardian structural checks', () => {
       'src/v3/payments/V3PaymentsPage.tsx',
       'src/v3/payments/V3PaymentRow.tsx',
       'src/v3/payments/V3PaymentWorkspace.tsx',
+      'src/v3/payments/paymentPresentation.ts',
       'src/v3/expenses/V3ExpensesPage.tsx',
       'src/v3/expenses/V3ExpenseRow.tsx',
       'src/v3/expenses/V3ExpenseWorkspace.tsx',
@@ -181,7 +182,13 @@ describe('V3 Design Guardian structural checks', () => {
     expect(source).not.toMatch(/border-radius\s*:/i)
     expect(source).not.toMatch(/height\s*:\s*\d+px/i)
     expect(source).toContain('Estimación fiscal asistida')
-    expect(source).toContain('Origen automático')
+    expect(source).toContain('Información automática de transferencia')
+    expect(source).toContain('No determina conciliación')
+  })
+
+  it('keeps the payment controls single-column at the mobile fail-safe width', () => {
+    const styles = readFileSync(join(process.cwd(), 'src/v3/design/v3.css'), 'utf8')
+    expect(styles).toMatch(/@media \(max-width: 640px\)\s*\{[\s\S]*\.v3-payments-page \.v3-module-controls \{ grid-template-columns: 1fr; \}/)
   })
 
   it('keeps alerts and closings on real contracts without fake state or settings', () => {

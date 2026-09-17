@@ -10,5 +10,6 @@ describe('V3PaymentRow', () => {
     expect(html).toContain('FAC-001')
     expect(html).toContain('Cliente Uno')
     expect(html).toContain('Transferencia')
+    expect(html).toContain('Cobro registrado manualmente')
   })
 })

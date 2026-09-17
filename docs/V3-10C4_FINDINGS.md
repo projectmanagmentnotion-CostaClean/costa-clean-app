@@ -1,6 +1,6 @@
 # V3-10C4 — FINANCE FINDINGS LEDGER
 
-Status: `C4.1 CLOSED / C4.2 CLOSED / C4.3 CLOSED / C4.4–C4.6 NOT STARTED`
+Status: `C4.1–C4.4 CLOSED / C4.5–C4.6 NOT STARTED`
 
 Audited HEAD: `d783567f60ef87195fccb7dc34358a7bfd5c3f1f`
 
@@ -13,12 +13,12 @@ collecting this evidence.
 
 | Finding | Status after C4.1 | Evidence / boundary |
 | --- | --- | --- |
-| F-C4-P1-001 | STILL OPEN — C4.4 | Payment origin wording is business-meaning specific; C4.1 deliberately did not alter `transfer_auto` presentation or persistence. |
+| F-C4-P1-001 | FIXED / VERIFIED IN C4.4 | Payment origin wording is business-meaning specific; C4.1 deliberately did not alter `transfer_auto` presentation or persistence. |
 | F-C4-P1-002 | STILL OPEN — C4.2 | Invoice settlement copy and guard explanation remain untouched; C4.1 only establishes the shared action grouping around the existing callback. |
 | F-C4-P2-001 | FIXED | All four finance lists now render their find controls before a shared supporting KPI summary. Authenticated QA confirms the geometric order at 390x844, 768x1024 and 1440x900. |
 | F-C4-P2-003 | PARTIALLY FIXED | Invoice action controls now use the shared finance action group, with one mobile-primary lane. Settlement meaning and duplicated financial reading remain C4.2 work. |
 | F-C4-P2-004 | STILL OPEN — C4.3 | Quote financial/conversion explanation requires quote-specific state treatment. |
-| F-C4-P2-005 | PARTIALLY FIXED | Payment header/list hierarchy uses shared controls and action grouping. Payment scan order and provenance wording remain C4.4 work. |
+| F-C4-P2-005 | FIXED / VERIFIED IN C4.4 | Payment header/list hierarchy uses shared controls and action grouping. Payment scan order and provenance wording are C4.4 scope. |
 | F-C4-P2-006 | PARTIALLY FIXED | Expense top actions now use the same shared group. Workspace section regrouping and document workflow remain C4.5 work. |
 | F-C4-P2-007 | STILL OPEN — C4.2–C4.5 | C4.1 intentionally does not alter create/edit flow content or persistence order. |
 | F-C4-P3-001 | PARTIALLY FIXED | Shared header action group, controls-before-summary order and supporting KPI treatment now cover all four lists. Module-specific list rows remain later batch work. |
@@ -91,7 +91,7 @@ certification result; future implementation and runtime gates remain required.
 
 | ID | Type | Surface / state | Reproduction and root cause | Likely files | Expected correction | Acceptance criteria |
 | --- | --- | --- | --- | --- | --- | --- |
-| F-C4-P1-001 | Objective meaning ambiguity | Payments list/workspace; `origin_type=transfer_auto` | Existing labels say `Automatico por transferencia` / `Origen automático`; protected behavior explicitly defines this as provenance, not reconciliation. | `src/v3/payments/V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx`, shared payment label helper | Clarify provenance in UI copy and hierarchy only. | No text claims automatic reconciliation; generated records remain read-only; `savePaymentAndRefreshInvoice` contract is unchanged. |
+| F-C4-P1-001 | Objective meaning ambiguity | Payments list/workspace; `origin_type=transfer_auto` | Existing labels said `Automatico por transferencia` / `Origen automático`; protected behavior explicitly defines this as provenance, not reconciliation. | `src/v3/payments/V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx`, `paymentPresentation.ts` | FIXED / VERIFIED — source and focused tests use explicit provenance wording. The QA baseline has no visible payment, so workspace wording on a persisted `transfer_auto` row is honestly `N/A` without a fixture. The final V6 independent gate passed without a QA write. | No text claims automatic reconciliation; generated records remain read-only; `savePaymentAndRefreshInvoice` contract is unchanged. |
 | F-C4-P1-002 | Objective action-safety ambiguity | Invoice list/workspace, issued invoice with outstanding balance | The guarded action is rendered as `Marcar pagada` while the true operation is a transfer settlement with eligibility, outstanding amount and partial-payment semantics. | `src/v3/invoices/V3InvoicesPage.tsx`, invoice workspace/row, existing settlement tests | Explain eligibility, outstanding amount and outcome; preserve the current guarded callback. | `canSettleInvoiceByTransfer`, `settleInvoiceByTransfer` and `settle_invoice_by_transfer` are unchanged; no direct paid-state mutation; disabled/partial/terminal states are explicit. |
 
 ## P2 — meaningful operational or composition refinements
@@ -102,7 +102,7 @@ certification result; future implementation and runtime gates remain required.
 | F-C4-P2-002 | Visual/UX refinement | Invoice list row | Total and status scan quickly, but outstanding balance is not equally available despite settlement being a core task. | `V3InvoicesPage.tsx` | Give outstanding/paid context a semantic secondary line. | Invoice number/client/primary total/status/outstanding follow one readable order; no calculation changes. |
 | F-C4-P2-003 | Visual/UX refinement | Invoice workspace, 768x1024 read-only observation | Settlement, edit, download and document actions compete at the same hierarchy, while financial reading repeats across summary areas. | `V3InvoicesPage.tsx`, shared workspace/action primitives if necessary | Establish one primary next action and group document/secondary controls. | Issued/partial/paid/cancelled states communicate safe next action; all callbacks and PDF engine remain unchanged. |
 | F-C4-P2-004 | Visual/UX refinement | Quote workspace and conversion states | Base/IVA/total repeat and conversion availability is not sufficiently explanatory in static source. | `V3QuotesPage.tsx`, `V3DuplicateReviewSheet.tsx` | Consolidate financial reading and explain accepted/already-converted/unavailable states. | `canConvertQuoteToInvoice`, duplicate review and acceptance/conversion behavior are unchanged. |
-| F-C4-P2-005 | Visual/UX refinement | Payment list/workspace | Relation is available, but amount/date/method/origin compete and there is no V3 status/type filter. | `V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx` | Improve scan order; assess whether existing type information can be surfaced without a new backend filter. | No speculative filter or reconciliation state is added; relation and manual/generated protections remain intact. |
+| F-C4-P2-005 | Visual/UX refinement | Payment list/workspace | Relation was available, but amount/date/method/origin competed and there was no V3 type filter. | `V3PaymentsPage.tsx`, `V3PaymentRow.tsx`, `V3PaymentWorkspace.tsx` | FIXED / VERIFIED FOR AVAILABLE QA DATA — local filtering exposes only existing origin values and passed at three viewports; workspace grouping is honestly `N/A` because QA has no visible payment. The final V6 independent gate passed. | No speculative backend filter or reconciliation state is added; relation and manual/generated protections remain intact. |
 | F-C4-P2-006 | Visual/UX refinement | Expense workspace and form | Summary, attachment, fiscal, payment, data and notes sections coexist with both top and sticky actions. | `V3ExpenseWorkspace.tsx`, `V3ExpenseFormFlow.tsx` | Group document/review work and establish a single primary next action per state. | Private signed URL, 10 MB/type validation, dirty guard, duplicate guard and no-data-loss ordering remain unchanged. |
 | F-C4-P2-007 | Visual/UX refinement | Finance create/edit flows, mobile | Line editors, reviews, fiscal fields and document controls are dense before a controlled mobile replay. | V3 invoice/quote/payment/expense create/edit flows | Improve grouping and review order in bounded module batches. | First actionable input, labels, error order, dirty guard and touch targets meet runtime acceptance without changing persistence payloads. |
 

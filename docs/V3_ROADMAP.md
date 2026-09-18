@@ -435,6 +435,28 @@ activation remains the V3-9 source/deployment at `50bf05a8` /
 Evidence and acceptance criteria: `docs/V3_POST_C5_GLOBAL_RECONCILIATION.md` and
 `docs/V3_POST_C5_GLOBAL_RECERTIFICATION.md`.
 
-Production release is `NOT STARTED` and requires separate human
-authorization. Do not invent or start V3-10C6, do not start a new product
-slice, and do not deploy automatically.
+## Post-C5 — Production Release — CLOSED / CERTIFIED
+
+The explicitly authorized candidate SHA
+`6f1454f98f1f29b0e758a50329502ba7af903100` is active in the canonical Vercel
+production project and resolves through `https://app.costacleanbcn.com`.
+Deployment `dpl_DQDxBGQkyt92H11B3F87NNL4P4rF` is `READY` and was independently
+verified against the exact SHA. The previous active deployment was
+`dpl_BtBXiCoBwfwUFF4ghn5wtUKji4x7`; the verified rollback target remains
+`dpl_AdTgyDsaKiWSveVreqzMztsPrcEK`.
+
+- [x] Exact certified SHA, project, team, target and canonical alias verified.
+- [x] Fresh independent pre-deploy review: PASS, P0/P1/P2/P3 `0/0/0/0`.
+- [x] Authenticated read-only production smoke passed at `390x844`, `768x1024`,
+  `1280x800` and `1920x1080` across Home/CRM/Finance/Operations surfaces.
+- [x] UUID, Unicode-as-icon, legacy selectors, overflow, broken loaded images and
+  sub-44px visible controls: `0`; console/page/critical runtime errors: `0`.
+- [x] QA requests and mutations: `0`; production business mutations: `0`.
+- [x] Supabase, production data and protected business contracts unchanged.
+- [x] V2 fallback remains separately reachable; no C6 was started.
+
+Full evidence: `docs/V3_POST_C5_PRODUCTION_RELEASE.md`.
+
+Production release is now `CLOSED / CERTIFIED`. Do not invent or start V3-10C6,
+do not start a new product slice, and do not deploy another build without a new
+explicit release authorization.

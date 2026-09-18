@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createHmac } from 'node:crypto'
 import { describe, expect, it, vi } from 'vitest'
 import { createPortalHandler } from '../../supabase/functions/_shared/portalHandler.ts'
+import { decryptPortalInvitationDeliveryToken } from '../../supabase/functions/_shared/portalInvitationDeliveryPayload.ts'
 
 const QA_URL = 'https://kpvvydthlxupjjqqdpxy.supabase.co'
 const PROD_URL = 'https://wfxnwfcdjainpojhbdri.supabase.co'
@@ -11,6 +12,8 @@ const CLIENT_A = 'QA-CP2-CLIENT-A'
 const DOCUMENT_ID = '22222222-2222-4222-8222-222222222222'
 const INVOICE_ID = 'QA-CP2-INVOICE-A'
 const PEPPER = 'x'.repeat(64)
+const DELIVERY_KEY = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+const DELIVERY_KEY_VERSION = 'qa-v1'
 
 function dependencies(overrides = {}) {
   const values = {
@@ -19,6 +22,8 @@ function dependencies(overrides = {}) {
     SUPABASE_SERVICE_ROLE_KEY: 'server-placeholder',
     PORTAL_INVITATION_PEPPER: PEPPER,
     PORTAL_RATE_LIMIT_PEPPER: PEPPER,
+    PORTAL_INVITATION_DELIVERY_KEY: DELIVERY_KEY,
+    PORTAL_INVITATION_DELIVERY_KEY_VERSION: DELIVERY_KEY_VERSION,
     PORTAL_ALLOWED_ORIGIN: ORIGIN,
   }
   return {
@@ -158,29 +163,52 @@ describe('client portal Edge trust boundary', () => {
     })
   })
 
-  it('hashes invitation tokens before RPC and never returns them', async () => {
-    let deliveredToken
+  it('encrypts invitation tokens at rest and forwards only an opaque invitation id to delivery', async () => {
+    let deliveredInvitationId
     const deps = dependencies({
-      deliverInvitation: async ({ token }) => {
-        deliveredToken = token
+      deliverInvitation: async ({ invitationId }) => {
+        deliveredInvitationId = invitationId
         return true
       },
     })
     deps.fetch.mockResolvedValueOnce(authResponse())
-    deps.fetch.mockResolvedValueOnce(new Response(JSON.stringify(DOCUMENT_ID), { status: 200 }))
+    deps.fetch.mockImplementationOnce(async (_url, init) => {
+      const body = JSON.parse(init.body)
+      return new Response(JSON.stringify(body.p_invitation_id), { status: 200 })
+    })
+
     const response = await createPortalHandler('members', deps)(request({
       action: 'inviteMember',
       clientId: CLIENT_A,
       email: 'invitee@example.invalid',
       role: 'client_member',
     }))
+
     expect(response.status).toBe(202)
     const rpcBody = JSON.parse(deps.fetch.mock.calls[1][1].body)
+    const responseBody = await response.json()
+    expect(responseBody.invitationId).toBe(rpcBody.p_invitation_id)
+    expect(deliveredInvitationId).toBe(rpcBody.p_invitation_id)
     expect(rpcBody.p_token_hash).toMatch(/^[0-9a-f]{64}$/u)
-    expect(rpcBody.p_token_hash).not.toBe(deliveredToken)
-    expect(JSON.stringify(rpcBody)).not.toContain(deliveredToken)
-    expect(JSON.stringify(await response.json())).not.toContain(deliveredToken)
-    expect(rpcBody.p_token_hash).toBe(createHmac('sha256', PEPPER).update(deliveredToken, 'utf8').digest('hex'))
+    expect(rpcBody.p_payload_ciphertext).toMatch(/^[A-Za-z0-9_-]+$/u)
+    expect(rpcBody.p_payload_nonce).toMatch(/^[A-Za-z0-9_-]+$/u)
+    expect(rpcBody.p_payload_key_version).toBe(DELIVERY_KEY_VERSION)
+
+    const token = await decryptPortalInvitationDeliveryToken({
+      payload: {
+        ciphertext: rpcBody.p_payload_ciphertext,
+        nonce: rpcBody.p_payload_nonce,
+        keyVersion: rpcBody.p_payload_key_version,
+        createdAt: '',
+        expiresAt: rpcBody.p_expires_at,
+      },
+      invitationId: rpcBody.p_invitation_id,
+      encryptionKey: DELIVERY_KEY,
+      now: () => new Date(Date.UTC(2026, 6, 23)),
+    })
+    expect(rpcBody.p_token_hash).toBe(createHmac('sha256', PEPPER).update(token, 'utf8').digest('hex'))
+    expect(JSON.stringify(responseBody)).not.toContain(token)
+    expect(JSON.stringify({ invitationId: deliveredInvitationId })).not.toContain(token)
   })
 
   it('dispatches account and member reads through trusted RPCs', async () => {

@@ -5,6 +5,7 @@ import {
   type PortalSurface,
   validatePortalRequest,
 } from './portalContract.ts'
+import { encryptPortalInvitationDeliveryToken } from './portalInvitationDeliveryPayload.ts'
 
 const QA_REF = 'kpvvydthlxupjjqqdpxy'
 const PRODUCTION_REF = 'wfxnwfcdjainpojhbdri'
@@ -23,10 +24,7 @@ interface HandlerDependencies {
   randomBytes(length: number): Uint8Array
   log(event: { event: string; status: number; correlationId: string }): void
   deliverInvitation?(input: {
-    email: string
-    token: string
-    expiresAt: string
-    clientId: string
+    invitationId: string
   }): Promise<boolean>
 }
 
@@ -160,13 +158,13 @@ async function dispatch(
       return accepted()
     case 'acceptInvitation': {
       const tokenHash = await hmacHex(configuration.invitationPepper, payload.token)
-      const result = await rpc(configuration, dependencies.fetch, 'portal_accept_invitation_trusted', {
+      await rpc(configuration, dependencies.fetch, 'portal_accept_invitation_trusted', {
         p_actor_user_id: user.id,
         p_token_hash: tokenHash,
         p_rate_limit_subject_hash: subject,
         p_correlation_id: correlationUuid,
       })
-      return jsonResponse({ ok: true, result }, 200)
+      return jsonResponse({ ok: true }, 200)
     }
     case 'getMarketingPreference': {
       const result = await rpc(configuration, dependencies.fetch, 'portal_get_marketing_preference_trusted', {
@@ -244,22 +242,34 @@ async function dispatch(
       const token = base64Url(dependencies.randomBytes(32))
       const tokenHash = await hmacHex(configuration.invitationPepper, token)
       const expiresAt = new Date(dependencies.now() + 72 * 60 * 60 * 1000).toISOString()
-      const invitationId = await rpc(configuration, dependencies.fetch, 'portal_create_invitation_trusted', {
+      const invitationId = crypto.randomUUID()
+      const deliveryKey = dependencies.env('PORTAL_INVITATION_DELIVERY_KEY')?.trim()
+      const deliveryKeyVersion = dependencies.env('PORTAL_INVITATION_DELIVERY_KEY_VERSION')?.trim()
+      if (!deliveryKey || !deliveryKeyVersion) throw new Error('delivery_unavailable')
+      const payloadCiphertext = await encryptPortalInvitationDeliveryToken({
+        token,
+        invitationId,
+        keyVersion: deliveryKeyVersion,
+        expiresAt,
+        encryptionKey: deliveryKey,
+        now: () => new Date(dependencies.now()),
+      })
+      const createdInvitationId = await rpc(configuration, dependencies.fetch, 'portal_create_invitation_delivery_trusted', {
+        p_invitation_id: invitationId,
         p_actor_user_id: user.id,
         p_client_id: payload.clientId,
         p_email_normalized: payload.email,
         p_role: payload.role,
         p_token_hash: tokenHash,
         p_expires_at: expiresAt,
+        p_payload_ciphertext: payloadCiphertext.ciphertext,
+        p_payload_nonce: payloadCiphertext.nonce,
+        p_payload_key_version: payloadCiphertext.keyVersion,
         p_rate_limit_subject_hash: subject,
         p_correlation_id: correlationUuid,
       })
-      const delivered = await dependencies.deliverInvitation({
-        email: payload.email,
-        token,
-        expiresAt,
-        clientId: payload.clientId,
-      })
+      if (createdInvitationId !== invitationId) throw new Error('delivery_unavailable')
+      const delivered = await dependencies.deliverInvitation({ invitationId })
       if (!delivered) throw new Error('delivery_unavailable')
       return jsonResponse({ ok: true, invitationId }, 202)
     }
@@ -304,7 +314,7 @@ async function dispatch(
       }) as { objectKey?: unknown; expiresIn?: unknown }
       if (typeof authorization?.objectKey !== 'string'
         || authorization.expiresIn !== PORTAL_SIGNED_URL_TTL_SECONDS
-        || !/^[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf$/u.test(authorization.objectKey)) {
+        || !/^[0-9a-f-]{36}\/([0-9a-f-]{36})\.pdf$/u.test(authorization.objectKey)) {
         throw new Error('denied')
       }
       const signed = await signExactObject(configuration, authorization.objectKey, dependencies.fetch)

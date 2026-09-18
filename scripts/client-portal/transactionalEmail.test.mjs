@@ -196,7 +196,7 @@ describe('Brevo transactional email adapter', () => {
   it('classifies network failure, timeout and malformed success without transport retry', async () => {
     const networkFetch = vi.fn().mockRejectedValue(new Error('network failure'))
     await expect(brevoProvider(networkFetch).provider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
-      status: 'failed', retryable: true, providerCode: 'network_failure',
+      status: 'failed', retryable: false, providerCode: 'brevo_fetch_exception',
     })
 
     const timeoutFetch = vi.fn((_input, init) => new Promise((_resolve, reject) => {
@@ -206,7 +206,7 @@ describe('Brevo transactional email adapter', () => {
       apiKey: 'brevo-test-key-not-a-secret', senderEmail: 'portal@costaclean.example', senderName: 'Costa Clean', timeoutMs: 1,
     }, { fetch: timeoutFetch, setTimeout, clearTimeout })
     await expect(timeoutProvider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
-      status: 'failed', retryable: true, providerCode: 'timeout',
+      status: 'failed', retryable: false, providerCode: 'brevo_fetch_timeout',
     })
 
     const malformedFetch = vi.fn().mockResolvedValue(response(201, {}))
@@ -229,6 +229,73 @@ describe('Brevo transactional email adapter', () => {
     expect(observable).not.toContain(apiKey)
     expect(observable).not.toContain('qa.portal.invitation@qa.invalid')
     expect(observable).not.toContain('synthetic-one-time-token')
-    expect(readFileSync('supabase/functions/portal-member-actions/index.ts', 'utf8')).toContain('deliverInvitation: undefined')
+    const memberActions = readFileSync('supabase/functions/portal-member-actions/index.ts', 'utf8')
+    expect(memberActions).toContain('triggerInvitationDelivery')
+    expect(memberActions).toContain("JSON.stringify({ invitationId: input.invitationId })")
+    expect(memberActions).not.toContain('token: input.token')
+  })
+})
+
+
+describe('CP-4.3C certified Brevo regressions', () => {
+  it('adds the Brevo sandbox drop header only when explicitly configured', async () => {
+    const fetch = vi.fn().mockResolvedValue(response(201, { messageId: 'sandbox-message-1' }))
+    const environment = {
+      TRANSACTIONAL_EMAIL_PROVIDER: 'brevo',
+      BREVO_API_KEY: 'brevo-test-key-not-a-secret',
+      BREVO_SENDER_EMAIL: 'portal@costaclean.example',
+      BREVO_SENDER_NAME: 'Costa Clean',
+      BREVO_REPLY_TO_EMAIL: 'soporte@costaclean.example',
+      BREVO_SANDBOX_MODE: 'drop',
+    }
+    const provider = createTransactionalEmailProviderFromEnvironment(
+      (name) => environment[name],
+      { fetch, setTimeout, clearTimeout },
+    )
+
+    await expect(provider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toMatchObject({
+      status: 'accepted',
+      providerMessageId: 'sandbox-message-1',
+    })
+
+    const payload = JSON.parse(fetch.mock.calls[0][1].body)
+    expect(payload.headers).toEqual({ 'X-Sib-Sandbox': 'drop' })
+  })
+
+  it('keeps timer calls bound to globalThis in the default Edge runtime dependencies', async () => {
+    const originalFetch = globalThis.fetch
+    const originalSetTimeout = globalThis.setTimeout
+    const originalClearTimeout = globalThis.clearTimeout
+    const timerToken = { id: 'cp43-timer' }
+
+    globalThis.fetch = vi.fn().mockResolvedValue(response(201, { messageId: 'bound-timer-message' }))
+    globalThis.setTimeout = function (callback, delay) {
+      expect(this).toBe(globalThis)
+      expect(typeof callback).toBe('function')
+      expect(delay).toBeGreaterThan(0)
+      return timerToken
+    }
+    globalThis.clearTimeout = function (timer) {
+      expect(this).toBe(globalThis)
+      expect(timer).toBe(timerToken)
+    }
+
+    try {
+      const provider = createBrevoTransactionalEmailProvider({
+        apiKey: 'brevo-test-key-not-a-secret',
+        senderEmail: 'portal@costaclean.example',
+        senderName: 'Costa Clean',
+        timeoutMs: 25,
+      })
+      await expect(provider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
+        status: 'accepted',
+        providerMessageId: 'bound-timer-message',
+        retryable: false,
+      })
+    } finally {
+      globalThis.fetch = originalFetch
+      globalThis.setTimeout = originalSetTimeout
+      globalThis.clearTimeout = originalClearTimeout
+    }
   })
 })

@@ -66,6 +66,32 @@ export function V3EntityStatus({ label, tone = 'neutral', context }: { label: st
 
 export const V3Status = V3EntityStatus
 
+export interface V3TabOption {
+  value: string
+  label: string
+}
+
+export function V3TabStrip({ options, activeValue, onChange, label }: { options: readonly V3TabOption[]; activeValue: string; onChange: (value: string) => void; label: string }) {
+  const tablistRef = useRef<HTMLDivElement>(null)
+  const moveFocus = (index: number) => {
+    const nextIndex = Math.max(0, Math.min(options.length - 1, index))
+    onChange(options[nextIndex].value)
+    window.requestAnimationFrame(() => {
+      tablistRef.current?.querySelector<HTMLButtonElement>(`[role="tab"][data-tab-value="${CSS.escape(options[nextIndex].value)}"]`)?.focus()
+    })
+  }
+
+  return <div ref={tablistRef} className="v3-filter-tabs" role="tablist" aria-label={label}>{options.map((option, index) => {
+    const isActive = activeValue === option.value
+    return <button key={option.value} type="button" role="tab" data-tab-value={option.value} tabIndex={isActive ? 0 : -1} aria-selected={isActive} className={isActive ? 'is-active' : ''} onClick={() => onChange(option.value)} onKeyDown={(event) => {
+      if (event.key === 'ArrowRight') { event.preventDefault(); moveFocus(index + 1) }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); moveFocus(index - 1) }
+      if (event.key === 'Home') { event.preventDefault(); moveFocus(0) }
+      if (event.key === 'End') { event.preventDefault(); moveFocus(options.length - 1) }
+    }}>{option.label}</button>
+  })}</div>
+}
+
 export function V3PrimaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel, ariaPressed }: V3ActionProps) {
   return <button type={type} className="v3-action v3-action--primary" onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-pressed={ariaPressed}>{children}</button>
 }

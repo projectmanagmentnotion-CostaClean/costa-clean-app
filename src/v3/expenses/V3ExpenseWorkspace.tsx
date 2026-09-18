@@ -48,7 +48,21 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
 
   async function openDocument() {
     if (!expense.receipt_file_path) return
-    await run(async () => { const url = await createExpenseReceiptSignedUrl(expense.receipt_file_path!); window.open(url, '_blank', 'noopener,noreferrer') }, 'Documento abierto.')
+    const popup = window.open('about:blank', '_blank')
+    if (!popup) {
+      setError('El navegador bloqueó la ventana del documento. Permite las ventanas emergentes e inténtalo de nuevo.')
+      return
+    }
+    popup.opener = null
+    await run(async () => {
+      try {
+        const url = await createExpenseReceiptSignedUrl(expense.receipt_file_path!)
+        popup.location.href = url
+      } catch (cause) {
+        popup.close()
+        throw cause
+      }
+    }, 'Documento abierto.')
   }
 
   async function removeDocument() {

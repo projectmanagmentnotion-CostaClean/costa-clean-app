@@ -26,6 +26,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
 import { V3JobsPage } from '../v3/jobs/V3JobsPage'
 import { V3JobCreateFlow } from '../v3/jobs/V3JobCreateFlow'
+import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
 import type { JobModuleFilter } from '../app/moduleFilters'
 
 const LazyJobCreateFlow = lazy(async () => ({
@@ -167,7 +168,7 @@ export function JobsPage({
         activeFilterLabel={activeFilterLabel}
       />
       {isCreateFormVisible ? <V3JobCreateFlow clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} /> : null}
-      {showDuplicateReview ? <DuplicateReviewOverlay isOpen title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
+      {showDuplicateReview ? <V3DuplicateReviewSheet title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
     </>
   }
 

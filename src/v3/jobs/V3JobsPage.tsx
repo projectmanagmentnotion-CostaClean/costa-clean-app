@@ -7,7 +7,7 @@ import type { JobListItem } from '../../features/jobs/types'
 import type { PaymentListItem } from '../../features/payments/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
-import { V3EntityList, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction } from '../components/V3Primitives'
+import { V3EntityList, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction, V3TabStrip } from '../components/V3Primitives'
 import { readJobDeepLink, writeJobDeepLink } from './jobDeepLink'
 import { V3JobRow } from './V3JobRow'
 import { V3JobWorkspace } from './V3JobWorkspace'
@@ -61,9 +61,7 @@ export function V3JobsPage(props: V3JobsPageProps) {
       <V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Código, concepto, cliente o inmueble" />
       <span aria-live="polite">{visibleJobs.length} visibles</span>
     </div>
-    <div className="v3-filter-tabs" role="tablist" aria-label="Agenda de servicios">
-      {([['today', 'Hoy'], ['upcoming', 'Próximos'], ['completed', 'Completados'], ['all', 'Todos'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>)}
-    </div>
+    <V3TabStrip label="Agenda de servicios" activeValue={filter} onChange={(value) => setFilter(value as JobFilter)} options={[{ value: 'today', label: 'Hoy' }, { value: 'upcoming', label: 'Próximos' }, { value: 'completed', label: 'Completados' }, { value: 'all', label: 'Todos' }, { value: 'archived', label: 'Archivados' }]} />
     {props.duplicateCount ? <div className="v3-jobs-secondary-action"><V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction></div> : null}
     {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}
     {!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}

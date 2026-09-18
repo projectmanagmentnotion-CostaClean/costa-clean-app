@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { V3EntityStatus, V3Icon } from './V3Primitives'
+import { V3EntityStatus, V3Icon, V3TabStrip } from './V3Primitives'
 
 describe('V3Icon', () => {
   it('keeps the V3 vector icon set explicit and renders action icons without Unicode glyphs', () => {
@@ -20,5 +20,25 @@ describe('V3EntityStatus', () => {
     expect(html).toContain('Facturación')
     expect(html).toContain('Pendiente de cobro')
     expect(html).toContain('aria-label="Facturación: Pendiente de cobro"')
+  })
+})
+
+describe('V3TabStrip', () => {
+  it('renders one shared, horizontally navigable tab contract', () => {
+    const html = renderToStaticMarkup(createElement(V3TabStrip, {
+      label: 'Estado de factura',
+      activeValue: 'pending',
+      onChange: () => undefined,
+      options: [{ value: 'pending', label: 'Pendientes' }, { value: 'paid', label: 'Cobradas' }, { value: 'all', label: 'Todas' }],
+    }))
+
+    expect(html).toContain('role="tablist"')
+    expect(html).toContain('aria-label="Estado de factura"')
+    expect((html.match(/role="tab"/g) ?? [])).toHaveLength(3)
+    expect(html).toContain('aria-selected="true"')
+    expect(html).toContain('tabindex="0"')
+    expect(html).toContain('tabindex="-1"')
+    expect(html).toContain('Pendientes')
+    expect(html).toContain('Cobradas')
   })
 })

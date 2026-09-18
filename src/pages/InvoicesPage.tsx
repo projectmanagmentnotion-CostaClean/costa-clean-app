@@ -390,9 +390,10 @@ export function InvoicesPage({
         refreshInvoices: onInvoiceCreated,
       })
       if (result.created_payment) {
-        toast.success('Factura marcada como pagada', 'Se registró el cobro pendiente.')
+        const statusLabel = result.financial_status === 'paid' ? 'Factura totalmente cobrada' : 'Cobro parcial registrado'
+        toast.success('Cobro registrado', `${statusLabel}. Pendiente actualizado: ${formatCurrency(result.outstanding_after)}.`)
       } else {
-        toast.info('Factura ya estaba pagada', 'El estado financiero se ha vuelto a sincronizar.')
+        toast.info('Factura ya estaba cubierta', 'El estado financiero se ha vuelto a sincronizar sin crear otro cobro.')
       }
     } catch (error) {
       toast.error('No se pudo registrar el cobro', error instanceof Error ? error.message : 'Error desconocido.')

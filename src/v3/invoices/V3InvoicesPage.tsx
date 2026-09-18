@@ -7,10 +7,11 @@ import type { PaymentListItem } from '../../features/payments/types'
 import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { getInvoiceFinancialStatusLabel, type InvoiceFinancialStatus } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
-import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3EmptyState, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status } from '../components/V3Primitives'
+import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3EmptyState, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
 import { useV3Selection } from '../selection/useV3Selection'
 import { V3SelectionActionSheet, V3SelectionBar, V3SelectionConfirmSheet, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
 import { getInvoiceFinancialFacts, getInvoiceSettlementDescription } from './invoicePresentation'
+import { V3InvoiceDocumentPreview } from './V3InvoiceDocumentPreview'
 
 interface V3InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -159,11 +160,7 @@ export function V3InvoicesPage({
         <V3Kpi label="Por cobrar" value={formatCurrency(pendingAmount)} hint="Saldo pendiente" />
         <V3Kpi label="Cobradas" value={String(paidInvoices.length)} hint="Estado financiero real" />
       </V3KpiGroup>
-      <div className="v3-filter-tabs" role="tablist" aria-label="Estado de factura">
-        {([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => (
-          <button key={value} type="button" role="tab" aria-selected={filter === value} className={filter === value ? 'is-active' : ''} onClick={() => setFilter(value)}>{label}</button>
-        ))}
-      </div>
+      <V3TabStrip label="Estado de factura" activeValue={filter} onChange={(value) => setFilter(value as ListFilter)} options={[{ value: 'pending', label: 'Pendientes' }, { value: 'paid', label: 'Cobradas' }, { value: 'all', label: 'Todas' }]} />
       {isFilterSheetOpen ? (
         <V3BottomSheet title="Filtros" onClose={() => setIsFilterSheetOpen(false)}>
           <div className="v3-filter-sheet__content">
@@ -225,7 +222,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
       <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
       <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div key={line.id} className="v3-line-row"><span>{line.concept}</span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas detalladas disponibles.</p>}</div></V3Section>
       <V3Section label="Cobros" action={<V3SecondaryAction onClick={() => onViewPayments(invoice.id)}>Ver cobros</V3SecondaryAction>}><p className="v3-section-copy">{invoicePayments.length > 0 ? `${invoicePayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section>
-      <V3Section label="Documento"><p className="v3-section-copy">Puedes consultar el documento o descargar el PDF emitido desde las acciones principales.</p></V3Section>
+      <V3InvoiceDocumentPreview invoice={invoice} onOpenDocument={() => onOpenDocument(invoice)} />
       {invoice.updated_at ? <V3Section label="Historial"><p className="v3-section-copy">Última actualización: {formatDateEs(invoice.updated_at)}</p></V3Section> : null}
       {isMoreActionsOpen ? <V3BottomSheet title="Más acciones de la factura" onClose={() => setIsMoreActionsOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onEditInvoice() }}>Editar factura</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onOpenDocument(invoice) }}>Ver documento</V3SecondaryAction></div></V3BottomSheet> : null}
     </V3Page>

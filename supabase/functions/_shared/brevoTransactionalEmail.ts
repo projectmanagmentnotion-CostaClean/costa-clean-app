@@ -126,7 +126,7 @@ export function createBrevoTransactionalEmailProvider(
           ...content,
         }
       } catch {
-        if (timer !== undefined) { try { dependencies.clearTimeout(timer) } catch {} }
+        if (timer !== undefined) { try { dependencies.clearTimeout(timer) } catch { /* best-effort cleanup */ } }
         return failure('failed', false, 'brevo_payload_exception')
       }
 
@@ -155,7 +155,7 @@ export function createBrevoTransactionalEmailProvider(
       } catch {
         return failure('failed', false, timedOut ? 'brevo_fetch_timeout' : 'brevo_fetch_exception')
       } finally {
-        if (timer !== undefined) { try { dependencies.clearTimeout(timer) } catch {} }
+        if (timer !== undefined) { try { dependencies.clearTimeout(timer) } catch { /* best-effort cleanup */ } }
       }
     },
   }

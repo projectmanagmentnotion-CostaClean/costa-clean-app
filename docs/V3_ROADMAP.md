@@ -414,3 +414,25 @@ Evidence: `docs/V3-10C5_OPERATIONS_DISCOVERY.md`,
 `docs/V3-10C5-6_OPERATIONS_FINAL_CERTIFICATION.md`.
 
 Next: V3-10C5 is closed. No next phase was started by this gate.
+
+## Post-C5 — Global Recertification — NOT STARTED
+
+The C1–C5 product slices are individually `CLOSED / CERTIFIED`, and the
+current candidate is committed and pushed at `21d247b`. The last documented
+production activation remains the V3-9 source/deployment at `50bf05a8` /
+`dpl_BtBXiCoBwfwUFF4ghn5wtUKji4x7`. Because C1–C5 were certified after that
+activation and were not deployed by their gates, one combined authenticated
+release-candidate replay is required before any production promotion.
+
+- [ ] Reconcile Home, CRM, Finance and Operations as one candidate HEAD.
+- [ ] Replay the full eight-viewport authenticated read-only matrix.
+- [ ] Verify runtime, accessibility, legacy/UUID/icon and production-request
+  invariants with truthful N/A handling for unavailable QA records.
+- [ ] Reconfirm protected business-contract drift is `0`.
+- [ ] Obtain a fresh independent structured review with P0/P1/P2/P3 = `0/0/0/0`.
+- [ ] Keep production deployment and Supabase changes out of this phase.
+
+Evidence and acceptance criteria: `docs/V3_POST_C5_GLOBAL_RECONCILIATION.md`.
+
+This is a defined gate, not an implementation phase. Do not invent or start
+V3-10C6, do not start a new product slice, and do not deploy automatically.

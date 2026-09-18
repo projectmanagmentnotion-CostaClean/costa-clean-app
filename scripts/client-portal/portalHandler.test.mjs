@@ -20,6 +20,8 @@ function dependencies(overrides = {}) {
     PORTAL_INVITATION_PEPPER: PEPPER,
     PORTAL_RATE_LIMIT_PEPPER: PEPPER,
     PORTAL_ALLOWED_ORIGIN: ORIGIN,
+    PORTAL_INVITATION_DELIVERY_KEY: 'AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8',
+    PORTAL_INVITATION_DELIVERY_KEY_VERSION: 'qa-v1',
   }
   return {
     env: (name) => values[name],
@@ -159,28 +161,61 @@ describe('client portal Edge trust boundary', () => {
   })
 
   it('hashes invitation tokens before RPC and never returns them', async () => {
-    let deliveredToken
+    let deliveredInvitationId
+    const expectedToken = Buffer.from(new Uint8Array(32).fill(7)).toString('base64url')
+    const randomUuid = vi.spyOn(crypto, 'randomUUID').mockReturnValue(DOCUMENT_ID)
     const deps = dependencies({
-      deliverInvitation: async ({ token }) => {
-        deliveredToken = token
+      deliverInvitation: async ({ invitationId }) => {
+        deliveredInvitationId = invitationId
         return true
       },
     })
     deps.fetch.mockResolvedValueOnce(authResponse())
     deps.fetch.mockResolvedValueOnce(new Response(JSON.stringify(DOCUMENT_ID), { status: 200 }))
-    const response = await createPortalHandler('members', deps)(request({
-      action: 'inviteMember',
+    try {
+      const response = await createPortalHandler('members', deps)(request({
+        action: 'inviteMember',
+        clientId: CLIENT_A,
+        email: 'invitee@example.invalid',
+        role: 'client_member',
+      }))
+      expect(response.status).toBe(202)
+      const rpcBody = JSON.parse(deps.fetch.mock.calls[1][1].body)
+      expect(deliveredInvitationId).toBe(DOCUMENT_ID)
+      expect(rpcBody.p_token_hash).toMatch(/^[0-9a-f]{64}$/u)
+      expect(rpcBody.p_token_hash).not.toBe(expectedToken)
+      expect(JSON.stringify(rpcBody)).not.toContain(expectedToken)
+      expect(JSON.stringify(await response.json())).not.toContain(expectedToken)
+      expect(rpcBody.p_token_hash).toBe(createHmac('sha256', PEPPER).update(expectedToken, 'utf8').digest('hex'))
+      expect(rpcBody.p_payload_ciphertext).not.toContain(expectedToken)
+      expect(rpcBody.p_payload_nonce).toMatch(/^[A-Za-z0-9_-]{16}$/u)
+    } finally {
+      randomUuid.mockRestore()
+    }
+  })
+
+  it('accepts an invitation through the trusted RPC without returning membership identifiers', async () => {
+    const invitationToken = Buffer.from(new Uint8Array(32).fill(9)).toString('base64url')
+    const deps = dependencies()
+    deps.fetch.mockResolvedValueOnce(authResponse())
+    deps.fetch.mockResolvedValueOnce(new Response(JSON.stringify({
       clientId: CLIENT_A,
-      email: 'invitee@example.invalid',
       role: 'client_member',
+    }), { status: 200 }))
+
+    const response = await createPortalHandler('account', deps)(request({
+      action: 'acceptInvitation',
+      token: invitationToken,
     }))
-    expect(response.status).toBe(202)
+
+    expect(response.status).toBe(200)
+    expect(deps.fetch.mock.calls[1][0]).toContain('/rpc/portal_accept_invitation_trusted')
     const rpcBody = JSON.parse(deps.fetch.mock.calls[1][1].body)
-    expect(rpcBody.p_token_hash).toMatch(/^[0-9a-f]{64}$/u)
-    expect(rpcBody.p_token_hash).not.toBe(deliveredToken)
-    expect(JSON.stringify(rpcBody)).not.toContain(deliveredToken)
-    expect(JSON.stringify(await response.json())).not.toContain(deliveredToken)
-    expect(rpcBody.p_token_hash).toBe(createHmac('sha256', PEPPER).update(deliveredToken, 'utf8').digest('hex'))
+    expect(rpcBody.p_token_hash).toBe(
+      createHmac('sha256', PEPPER).update(invitationToken, 'utf8').digest('hex'),
+    )
+    expect(JSON.stringify(rpcBody)).not.toContain(invitationToken)
+    expect(await response.json()).toEqual({ ok: true })
   })
 
   it('dispatches account and member reads through trusted RPCs', async () => {

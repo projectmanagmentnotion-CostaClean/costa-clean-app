@@ -74,7 +74,11 @@ dated closeout notes are retained as historical evidence and are not reopened.
 - **CP-3C.3:** `DONE — authenticated QA matrix, responsive/accessibility
   evidence and exact QA cleanup complete; external provider debts remain`. See
   [`CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md`](./CP3C3_VISUAL_ACCESSIBILITY_PERFORMANCE_QA.md).
-- **CP-4, CP-5 and CP-6:** `NOT STARTED`.
+- **CP-4.3C:** `QA_CERTIFIED / CLOSED` by FINAL V18. The QA trusted invitation
+  delivery path completed one Brevo sandbox `drop` acceptance with zero real
+  emails and exact temporary-fixture cleanup. This does not authorize
+  production delivery.
+- **CP-5.1, CP-5.2 and CP-6:** `NOT STARTED`.
 
 Dependency semantics: an implementation gate may proceed when its source,
 contract and design prerequisites are complete. Final authenticated QA,

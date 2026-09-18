@@ -9,7 +9,7 @@ import { BREVO_TRANSACTIONAL_EMAIL_ENDPOINT, createBrevoTransactionalEmailProvid
 import { readFileSync } from 'node:fs'
 import { vi } from 'vitest'
 
-const INVITATION_URL = 'https://portal-qa.example.invalid/invitations/accept?token=synthetic-one-time-token'
+const INVITATION_URL = 'https://portal-qa.example.invalid/portal/invitacion#token=synthetic-one-time-token'
 
 function invitationInput(overrides = {}) {
   return {
@@ -153,6 +153,10 @@ describe('Brevo transactional email adapter', () => {
     await expect(invalid.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
       status: 'not_configured', retryable: false, providerCode: 'brevo_configuration_invalid',
     })
+    const missingSender = createBrevoTransactionalEmailProvider({ apiKey: 'brevo-test-key-not-a-secret', senderEmail: 'portal@costaclean.example', senderName: '' }, { fetch, setTimeout, clearTimeout })
+    await expect(missingSender.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
+      status: 'not_configured', retryable: false, providerCode: 'brevo_configuration_invalid',
+    })
     await expect(createTransactionalEmailProviderFromEnvironment(() => undefined).sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toMatchObject({
       status: 'not_configured', providerCode: 'provider_disabled',
     })
@@ -170,12 +174,14 @@ describe('Brevo transactional email adapter', () => {
       BREVO_SENDER_EMAIL: 'portal@costaclean.example',
       BREVO_SENDER_NAME: 'Costa Clean',
       BREVO_REPLY_TO_EMAIL: 'soporte@costaclean.example',
+      BREVO_SANDBOX_MODE: 'drop',
     }
     const provider = createTransactionalEmailProviderFromEnvironment((name) => environment[name], { fetch, setTimeout, clearTimeout })
 
     await expect(provider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toMatchObject({
       status: 'accepted', providerMessageId: 'brevo-message-from-environment',
     })
+    expect(JSON.parse(fetch.mock.calls[0][1].body).headers).toEqual({ 'X-Sib-Sandbox': 'drop' })
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
@@ -193,10 +199,10 @@ describe('Brevo transactional email adapter', () => {
     expect(fetch).toHaveBeenCalledTimes(1)
   })
 
-  it('classifies network failure, timeout and malformed success without transport retry', async () => {
+  it('blocks network failure and timeout because Brevo may have accepted the request', async () => {
     const networkFetch = vi.fn().mockRejectedValue(new Error('network failure'))
     await expect(brevoProvider(networkFetch).provider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
-      status: 'failed', retryable: true, providerCode: 'network_failure',
+      status: 'failed', retryable: false, providerCode: 'brevo_fetch_exception',
     })
 
     const timeoutFetch = vi.fn((_input, init) => new Promise((_resolve, reject) => {
@@ -206,7 +212,7 @@ describe('Brevo transactional email adapter', () => {
       apiKey: 'brevo-test-key-not-a-secret', senderEmail: 'portal@costaclean.example', senderName: 'Costa Clean', timeoutMs: 1,
     }, { fetch: timeoutFetch, setTimeout, clearTimeout })
     await expect(timeoutProvider.sendTransactionalEmail(buildPortalInvitationEmail(invitationInput()))).resolves.toEqual({
-      status: 'failed', retryable: true, providerCode: 'timeout',
+      status: 'failed', retryable: false, providerCode: 'brevo_fetch_timeout',
     })
 
     const malformedFetch = vi.fn().mockResolvedValue(response(201, {}))
@@ -229,6 +235,14 @@ describe('Brevo transactional email adapter', () => {
     expect(observable).not.toContain(apiKey)
     expect(observable).not.toContain('qa.portal.invitation@qa.invalid')
     expect(observable).not.toContain('synthetic-one-time-token')
-    expect(readFileSync('supabase/functions/portal-member-actions/index.ts', 'utf8')).toContain('deliverInvitation: undefined')
+    const memberActions = readFileSync('supabase/functions/portal-member-actions/index.ts', 'utf8')
+    expect(memberActions).toContain('deliverInvitation: hasCompleteDeliveryConfiguration() ? triggerInvitationDelivery : undefined')
+    expect(memberActions).toContain('JSON.stringify({ invitationId: input.invitationId })')
+    expect(memberActions).not.toMatch(/JSON\.stringify\(\{[^}]*token/iu)
+    const providerSource = readFileSync('supabase/functions/_shared/brevoTransactionalEmail.ts', 'utf8')
+    const contractSource = readFileSync('supabase/functions/_shared/transactionalEmail.ts', 'utf8')
+    expect(providerSource).not.toMatch(/console\.(log|info|warn|error)\(/u)
+    expect(contractSource).not.toContain('NEXT_PUBLIC_')
+    expect(contractSource).not.toContain('import.meta.env')
   })
 })

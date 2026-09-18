@@ -19,10 +19,13 @@ import { PortalAuthScreen } from './PortalAuthScreen'
 import { PortalShell } from './PortalShell'
 import type { PortalShellProps } from './PortalShell'
 import { PortalOnboardingFlow } from './PortalOnboardingFlow'
+import { PortalInvitationAcceptance } from './PortalInvitationAcceptance'
+import { acceptPortalInvitation } from './adapters/portalAccountActions'
 import {
   getPortalAuthPath,
   resolvePortalAuthRoute,
 } from './portalNavigation'
+import { isPortalInvitationAcceptancePath } from './invitationAcceptance'
 
 interface PortalAppProps {
   adapter: PortalRuntimeAdapter
@@ -30,18 +33,22 @@ interface PortalAppProps {
     PortalShellProps & Pick<PortalRuntimeAdapter, 'reads' | 'previewScenario'>
   >
   previewControl?: ReactNode
+  invitationToken?: string | null
 }
 
 export function PortalApp({
   adapter,
   authenticatedSurface: AuthenticatedSurface,
   previewControl = null,
+  invitationToken: initialInvitationToken = null,
 }: PortalAppProps) {
   const [accessState, dispatch] = useReducer(
     reducePortalAccessState,
     initialPortalAccessState,
   )
   const [pathname, setPathname] = useState(() => window.location.pathname)
+  const [invitationToken, setInvitationToken] = useState(initialInvitationToken)
+  const invitationRouteActive = isPortalInvitationAcceptancePath(pathname) || invitationToken !== null
 
   const navigate = useCallback(
     (nextPathname: string, replace = false) => {
@@ -114,7 +121,21 @@ export function PortalApp({
   }
 
   let content: ReactNode
-  if (accessState.status === 'active_member') {
+  if (invitationRouteActive && accessState.status !== 'unauthenticated' && accessState.status !== 'password_recovery') {
+    content = (
+      <PortalInvitationAcceptance
+        accessState={accessState}
+        token={invitationToken}
+        onAccept={acceptPortalInvitation}
+        onAccepted={() => {
+          setInvitationToken(null)
+          adapter.lifecycle.retry()
+          navigate('/portal', true)
+        }}
+        onSignOut={handleSignOut}
+      />
+    )
+  } else if (accessState.status === 'active_member') {
     content = AuthenticatedSurface && adapter.previewScenario ? (
       <AuthenticatedSurface
         access={accessState}
@@ -140,6 +161,9 @@ export function PortalApp({
               : 'login'
         }
         onNavigate={navigate}
+        notice={invitationToken
+          ? 'Inicia sesión con la cuenta invitada. Si continúas con Google, vuelve a abrir el enlace después de autenticarte.'
+          : undefined}
       />
     )
   } else if (accessState.status === 'authenticated_without_access') {

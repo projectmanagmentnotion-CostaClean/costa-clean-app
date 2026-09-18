@@ -316,6 +316,7 @@ export function createPortalPreviewAccountAdapter(scenario: PortalPreviewScenari
         invitationRef: 'preview-invitation-1',
       }]
     },
+    async inviteMember() {},
     async revokeMember(_clientId, membershipId) {
       members = members.filter((current) => current.membershipId !== membershipId)
     },

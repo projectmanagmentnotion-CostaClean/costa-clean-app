@@ -17,6 +17,7 @@ interface PortalAuthScreenProps {
   lifecycle: PortalLifecycleAdapter
   route: PortalAuthRoute
   onNavigate: (path: string, replace?: boolean) => void
+  notice?: string
 }
 
 type FormStatus =
@@ -33,6 +34,7 @@ export function PortalAuthScreen({
   lifecycle,
   route,
   onNavigate,
+  notice,
 }: PortalAuthScreenProps) {
   const screenRef = useRef<HTMLElement>(null)
 
@@ -49,7 +51,7 @@ export function PortalAuthScreen({
         <section className="portal-auth__panel" aria-labelledby="portal-auth-title">
           <PortalBrand />
           {route === 'login' ? (
-            <LoginForm lifecycle={lifecycle} onNavigate={onNavigate} />
+            <LoginForm lifecycle={lifecycle} onNavigate={onNavigate} notice={notice} />
           ) : route === 'recover' ? (
             <RecoveryForm lifecycle={lifecycle} onNavigate={onNavigate} />
           ) : (
@@ -70,7 +72,7 @@ interface AuthFormProps {
   onNavigate: (path: string, replace?: boolean) => void
 }
 
-function LoginForm({ lifecycle, onNavigate }: AuthFormProps) {
+function LoginForm({ lifecycle, onNavigate, notice }: AuthFormProps & { notice?: string }) {
   const [status, setStatus] = useState<FormStatus>({ status: 'idle' })
   const [showPassword, setShowPassword] = useState(false)
   const [fieldError, setFieldError] = useState<'email' | 'password' | null>(null)
@@ -111,6 +113,7 @@ function LoginForm({ lifecycle, onNavigate }: AuthFormProps) {
       <p className="portal-auth__intro">
         Consulta el estado de tu acceso de forma segura.
       </p>
+      {notice ? <p className="portal-auth__intro">{notice}</p> : null}
 
       <button
         type="button"

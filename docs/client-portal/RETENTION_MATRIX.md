@@ -8,6 +8,7 @@ Retention begins from the stated trigger, is shortened when the purpose ends, an
 | Record | Active retention | Post-trigger retention | End action | Notes |
 | --- | --- | --- | --- | --- |
 | Raw invitation token | never persisted | none | discard after message generation | secret must not enter logs |
+| Encrypted invitation delivery payload | only until provider acceptance, terminal block, revoke or expiry; never beyond invitation expiry | none | delete ciphertext/nonce record | AES-256-GCM ciphertext only; recipient and URL excluded; key remains server-only |
 | Invitation hash | until accept/revoke/expiry; default 72h, max 7d | 90 days for abuse/dispute evidence | delete hash; retain minimal event | no client lookup by email |
 | Pending portal application | while under review, target 30 days | max 90 days after no response/rejection | delete or anonymise; retain decision event | applicant can withdraw |
 | Active membership | account lifetime | 24 months after revocation/closure | pseudonymise/delete optional fields; retain minimal audit | subject to disputes/legal hold |

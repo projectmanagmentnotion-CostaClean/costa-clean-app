@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   getPortalAuthPath,
+  getPortalInvitationAcceptancePath,
   getPortalPagePath,
   getPortalProfileRequestPath,
   getPortalProfileRequestsPath,
@@ -50,6 +51,7 @@ describe('portal page routing', () => {
     expect(resolvePortalAuthRoute('/portal/reset-password')).toBe('reset-password')
     expect(resolvePortalAuthRoute('/portal/invoices')).toBeNull()
     expect(getPortalAuthPath('reset-password')).toBe('/portal/reset-password')
+    expect(getPortalInvitationAcceptancePath()).toBe('/portal/invitacion')
   })
 
   it('maps legacy and nested portal routes to the correct workspace page', () => {

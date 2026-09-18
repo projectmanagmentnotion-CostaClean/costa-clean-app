@@ -47,7 +47,7 @@ export function PortalAccountExperience({ role, pathname, clientId, accountLabel
 }
 
 function MembersSurface({ adapter, role, pathname, clientId, getHref }: Pick<PortalAccountExperienceProps, 'role' | 'pathname' | 'clientId' | 'getHref'> & { adapter: PortalAccountAdapter }) {
-  if (pathname.endsWith('/invite')) return <InviteSurface />
+  if (pathname.endsWith('/invite')) return <InviteSurface adapter={adapter} role={role} clientId={clientId} />
   if (pathname.endsWith('/revoke')) return <RevokeSurface />
   return <MembersListSurface adapter={adapter} role={role} clientId={clientId} getHref={getHref} />
 }
@@ -108,11 +108,42 @@ function MembersListSurface({ adapter, role, clientId, getHref }: Pick<PortalAcc
   )
 }
 
-function InviteSurface() {
-  const [submitted, setSubmitted] = useState(false)
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setSubmitted(true) }
-  if (submitted) return <ActionUnavailable title="Invitación preparada" description="La invitación no se ha enviado: el canal seguro de entrega todavía no está configurado en este entorno." />
-  return <PortalAccountFrame eyebrow="Equipo y accesos" title="Invitar miembro" description="Elige un correo y un rol compatible con la cuenta."><form className="portal-form" onSubmit={submit}><label className="portal-field"><span>Correo electrónico</span><input name="email" type="email" autoComplete="email" required /></label><label className="portal-field"><span>Rol de acceso</span><select name="role" defaultValue="client_member"><option value="client_member">Miembro</option><option value="client_admin">Administrador</option></select></label><p className="portal-account-note">La persona deberá aceptar una invitación segura antes de tener acceso. No se muestran tokens ni identificadores internos.</p><button className="portal-button portal-button--primary" type="submit">Enviar invitación</button></form></PortalAccountFrame>
+function InviteSurface({ adapter, role, clientId }: Pick<PortalAccountExperienceProps, 'role' | 'clientId'> & { adapter: PortalAccountAdapter }) {
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (status === 'submitting' || role !== 'client_admin') return
+
+    const form = new FormData(event.currentTarget)
+    const emailValue = form.get('email')
+    const email = typeof emailValue === 'string' ? emailValue.trim() : ''
+    const selectedRole = form.get('role')
+    const invitationRole = selectedRole === 'client_admin' ? 'client_admin' : 'client_member'
+
+    if (!email) return
+    setStatus('submitting')
+    try {
+      await adapter.inviteMember({ clientId, email, role: invitationRole })
+      setStatus('success')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  if (role !== 'client_admin') {
+    return <ActionUnavailable title="Sección restringida" description="Tu rol actual no permite crear invitaciones." />
+  }
+
+  return <PortalAccountFrame eyebrow="Equipo y accesos" title="Invitar miembro" description="Elige un correo y un rol compatible con la cuenta.">
+    {status === 'success' ? <section className="portal-empty-state"><span className="portal-status portal-status--info">Invitación preparada</span><h2>Acceso pendiente de aceptación</h2><p>La persona recibirá el enlace seguro mediante el canal autorizado.</p><a className="portal-text-button" href="/portal/members">Volver al equipo</a></section> : <form className="portal-form" onSubmit={(event) => void submit(event)}>
+      <label className="portal-field"><span>Correo electrónico</span><input name="email" type="email" autoComplete="email" required disabled={status === 'submitting'} /></label>
+      <label className="portal-field"><span>Rol de acceso</span><select name="role" defaultValue="client_member" disabled={status === 'submitting'}><option value="client_member">Miembro</option><option value="client_admin">Administrador</option></select></label>
+      <p className="portal-account-note">La persona deberá aceptar una invitación segura antes de tener acceso. No se muestran tokens ni identificadores internos.</p>
+      {status === 'error' ? <p className="portal-status portal-status--danger" role="alert">No pudimos preparar la invitación. No se ha confirmado ningún acceso.</p> : null}
+      <button className="portal-button portal-button--primary" type="submit" disabled={status === 'submitting'}>{status === 'submitting' ? 'Preparando invitación…' : 'Enviar invitación'}</button>
+    </form>}
+  </PortalAccountFrame>
 }
 
 function RevokeSurface() { return <ActionUnavailable title="Revocar acceso" description="La confirmación queda preparada para el contrato seguro de administración. Esta vista no elimina la identidad de acceso ni modifica datos del cliente." /> }

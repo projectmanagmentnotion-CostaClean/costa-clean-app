@@ -12,6 +12,9 @@ import portalShellSource from './PortalShell.tsx?raw'
 import foundationAdapterSource from './adapters/portalFoundationAdapter.ts?raw'
 import previewAdapterSource from './adapters/portalPreviewAdapter.ts?raw'
 import portalClientSource from './adapters/portalSupabaseClient.ts?raw'
+import portalAccountActionsSource from './adapters/portalAccountActions.ts?raw'
+import invitationAcceptanceSource from './invitationAcceptance.ts?raw'
+import invitationScreenSource from './PortalInvitationAcceptance.tsx?raw'
 import lifecycleSource from './auth/portalAuthLifecycle.ts?raw'
 import parserSource from './auth/selfAccessContext.ts?raw'
 
@@ -27,6 +30,9 @@ const portalSources = [
   foundationAdapterSource,
   previewAdapterSource,
   portalClientSource,
+  portalAccountActionsSource,
+  invitationAcceptanceSource,
+  invitationScreenSource,
   lifecycleSource,
   parserSource,
 ]
@@ -83,5 +89,13 @@ describe('portal source boundary', () => {
     expect(portalSources.some((source) =>
       /console\.(log|debug|info|warn|error)\s*\(/u.test(source),
     )).toBe(false)
+  })
+
+  it('keeps invitation tokens in the fragment only until startup sanitization', () => {
+    expect(invitationAcceptanceSource).toContain("portalInvitationAcceptancePath = '/portal/invitacion'")
+    expect(invitationAcceptanceSource).toContain('history.replaceState')
+    expect(invitationAcceptanceSource).not.toMatch(/localStorage|sessionStorage|console\./u)
+    expect(invitationScreenSource).not.toMatch(/localStorage|sessionStorage|console\./u)
+    expect(portalAccountActionsSource).toContain("action: 'acceptInvitation'")
   })
 })

@@ -1,4 +1,5 @@
 import { normalizeApplicationPathname } from './applicationSurface'
+import { portalInvitationAcceptancePath } from './invitationAcceptance'
 
 export const portalPages = [
   'home',
@@ -109,6 +110,10 @@ export function getPortalPagePath(page: PortalPage): string {
 
 export function getPortalAuthPath(route: PortalAuthRoute): string {
   return portalPathByAuthRoute[route]
+}
+
+export function getPortalInvitationAcceptancePath(): string {
+  return portalInvitationAcceptancePath
 }
 
 export function getPortalPropertyPath(publicRef: string): string {

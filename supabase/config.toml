@@ -394,6 +394,9 @@ verify_jwt = false
 [functions.portal-member-actions]
 verify_jwt = false
 
+[functions.portal-invitation-delivery-worker]
+verify_jwt = false
+
 [functions.portal-invoice-download]
 verify_jwt = false
 

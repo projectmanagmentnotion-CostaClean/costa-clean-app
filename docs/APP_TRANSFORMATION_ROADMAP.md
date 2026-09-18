@@ -54,6 +54,28 @@ Evidence: [CP4_1_PUBLIC_WEBSITE_DEPLOYMENT_PREREQUISITE.md](public-web/CP4_1_PUB
   invalidate the local/QA certification.
 - Evidence: [CP42B7_FULL_FUNNEL_CERTIFICATION.md](public-quote/CP42B7_FULL_FUNNEL_CERTIFICATION.md).
 
+## CP-4.3C Trusted Invitation Delivery - 2026-09-18
+
+- Status: `QA_CERTIFIED / CLOSED` by accepted FINAL V18 evidence.
+- The QA trusted-delivery outbox, encrypted AES-256-GCM payload lifecycle,
+  RLS/FORCE RLS, service-role-only RPC boundary and expiry cleanup are active
+  in `kpvvydthlxupjjqqdpxy`.
+- The final QA run completed one prechecked invitation delivery through the
+  trusted worker. Brevo received one sandbox `drop` request; the worker returned
+  HTTP `200`; a provider message ID was recorded; the final state was
+  `provider_accepted` at attempt `1`; the payload was destroyed; the lease was
+  cleared; and the completed acceptance audit was present.
+- No real email was sent. Temporary fixtures, outbox rows, payloads, audit
+  rows, membership and temporary Auth user were cleaned to zero. Production,
+  DNS, secrets and Git were unchanged by the certification runtime.
+- This certification is QA-only. The canonical local reconciliation restores
+  Worker V18 from its QA deployment artifact and adds the forward-only
+  20260918155431_cp43_canonical_state_reconciliation migration. CP-5.1 is
+  ready only as the next production-readiness planning gate and still requires
+  separate authorization for every production-affecting action. It does not
+  authorize production deployment or real-email delivery.
+- Evidence: [CP43_TRUSTED_DELIVERY_OUTBOX.md](portal/CP43_TRUSTED_DELIVERY_OUTBOX.md).
+
 ## Cross-Cutting UI Scaling Rule
 
 - Reduce encapsulation before adding new cards.

@@ -1,117 +1,14 @@
 import { createBrevoTransactionalEmailProvider, type BrevoTransactionalEmailDependencies } from './brevoTransactionalEmail.ts'
-
-/**
- * Server-only transactional email port. Provider selection and delivery wiring
- * remain an explicit later approval; this module must never be imported by UI code.
- */
-export const TRANSACTIONAL_EMAIL_TEMPLATES = ['PORTAL_INVITATION'] as const
-
-export type TransactionalEmailTemplate = typeof TRANSACTIONAL_EMAIL_TEMPLATES[number]
-export type TransactionalEmailStatus = 'accepted' | 'rejected' | 'not_configured' | 'failed'
-
-export interface TransactionalEmailRequest {
-  template: TransactionalEmailTemplate
-  recipient: string
-  locale: string
-  variables: Readonly<Record<string, string>>
-  idempotencyKey: string
-  correlationId: string
-}
-
-export interface TransactionalEmailResult {
-  status: TransactionalEmailStatus
-  providerMessageId?: string
-  retryable: boolean
-  providerCode?: string
-}
-
-export interface TransactionalEmailProvider {
-  sendTransactionalEmail(input: TransactionalEmailRequest): Promise<TransactionalEmailResult>
-}
-
-export type TransactionalEmailEnvironment = (name: string) => string | undefined
-
-export interface PortalInvitationEmailInput {
-  recipient: string
-  locale: string
-  invitationUrl: string
-  expiresAt: string
-  idempotencyKey: string
-  correlationId: string
-}
-
-function requireNonEmpty(value: string, field: string): string {
-  const normalized = value.trim()
-  if (!normalized) {
-    throw new Error(`transactional_email_${field}_required`)
-  }
-  return normalized
-}
-
-export function buildPortalInvitationEmail(input: PortalInvitationEmailInput): TransactionalEmailRequest {
-  return {
-    template: 'PORTAL_INVITATION',
-    recipient: requireNonEmpty(input.recipient, 'recipient'),
-    locale: requireNonEmpty(input.locale, 'locale'),
-    // The URL contains the one-time token. It is passed only to a future provider adapter.
-    variables: {
-      invitationUrl: requireNonEmpty(input.invitationUrl, 'invitation_url'),
-      expiresAt: requireNonEmpty(input.expiresAt, 'expires_at'),
-    },
-    idempotencyKey: requireNonEmpty(input.idempotencyKey, 'idempotency_key'),
-    correlationId: requireNonEmpty(input.correlationId, 'correlation_id'),
-  }
-}
-
-/**
- * Safe default until an owner approves a provider, domain, credentials and delivery policy.
- */
-export function createDisabledTransactionalEmailProvider(
-  providerCode = 'provider_not_approved',
-): TransactionalEmailProvider {
-  return {
-    async sendTransactionalEmail(): Promise<TransactionalEmailResult> {
-      return {
-        status: 'not_configured',
-        retryable: false,
-        providerCode,
-      }
-    },
-  }
-}
-
-/**
- * Environment resolution is server-only and defaults to disabled. It never falls back to another provider.
- */
-export function createTransactionalEmailProviderFromEnvironment(
-  env: TransactionalEmailEnvironment,
-  dependencies?: BrevoTransactionalEmailDependencies,
-): TransactionalEmailProvider {
-  const provider = env('TRANSACTIONAL_EMAIL_PROVIDER')?.trim().toLowerCase() || 'disabled'
-  if (provider === 'disabled') return createDisabledTransactionalEmailProvider('provider_disabled')
-  if (provider !== 'brevo') return createDisabledTransactionalEmailProvider('provider_unsupported')
-
-  return createBrevoTransactionalEmailProvider({
-    apiKey: env('BREVO_API_KEY') ?? '',
-    senderEmail: env('BREVO_SENDER_EMAIL') ?? '',
-    senderName: env('BREVO_SENDER_NAME') ?? '',
-    replyToEmail: env('BREVO_REPLY_TO_EMAIL'),
-  }, dependencies)
-}
-
-/**
- * Audit payload deliberately excludes recipient and variables, which may contain PII or invite tokens.
- */
-export function toTransactionalEmailAuditEvent(
-  input: TransactionalEmailRequest,
-  result: TransactionalEmailResult,
-) {
-  return {
-    template: input.template,
-    correlationId: input.correlationId,
-    status: result.status,
-    retryable: result.retryable,
-    providerCode: result.providerCode,
-    hasProviderMessageId: Boolean(result.providerMessageId),
-  }
-}
+export const TRANSACTIONAL_EMAIL_TEMPLATES=['PORTAL_INVITATION'] as const
+export type TransactionalEmailTemplate=typeof TRANSACTIONAL_EMAIL_TEMPLATES[number]
+export type TransactionalEmailStatus='accepted'|'rejected'|'not_configured'|'failed'
+export interface TransactionalEmailRequest{template:TransactionalEmailTemplate;recipient:string;locale:string;variables:Readonly<Record<string,string>>;idempotencyKey:string;correlationId:string}
+export interface TransactionalEmailResult{status:TransactionalEmailStatus;providerMessageId?:string;retryable:boolean;providerCode?:string}
+export interface TransactionalEmailProvider{sendTransactionalEmail(input:TransactionalEmailRequest):Promise<TransactionalEmailResult>}
+export type TransactionalEmailEnvironment=(name:string)=>string|undefined
+export interface PortalInvitationEmailInput{recipient:string;locale:string;invitationUrl:string;expiresAt:string;idempotencyKey:string;correlationId:string}
+function requireNonEmpty(value:string,field:string):string{const normalized=value.trim();if(!normalized)throw new Error(`transactional_email_${field}_required`);return normalized}
+export function buildPortalInvitationEmail(input:PortalInvitationEmailInput):TransactionalEmailRequest{return{template:'PORTAL_INVITATION',recipient:requireNonEmpty(input.recipient,'recipient'),locale:requireNonEmpty(input.locale,'locale'),variables:{invitationUrl:requireNonEmpty(input.invitationUrl,'invitation_url'),expiresAt:requireNonEmpty(input.expiresAt,'expires_at')},idempotencyKey:requireNonEmpty(input.idempotencyKey,'idempotency_key'),correlationId:requireNonEmpty(input.correlationId,'correlation_id')}}
+export function createDisabledTransactionalEmailProvider(providerCode='provider_not_approved'):TransactionalEmailProvider{return{async sendTransactionalEmail():Promise<TransactionalEmailResult>{return{status:'not_configured',retryable:false,providerCode}}}}
+export function createTransactionalEmailProviderFromEnvironment(env:TransactionalEmailEnvironment,dependencies?:BrevoTransactionalEmailDependencies):TransactionalEmailProvider{const provider=env('TRANSACTIONAL_EMAIL_PROVIDER')?.trim().toLowerCase()||'disabled';if(provider==='disabled')return createDisabledTransactionalEmailProvider('provider_disabled');if(provider!=='brevo')return createDisabledTransactionalEmailProvider('provider_unsupported');return createBrevoTransactionalEmailProvider({apiKey:env('BREVO_API_KEY')??'',senderEmail:env('BREVO_SENDER_EMAIL')??'',senderName:env('BREVO_SENDER_NAME')??'',replyToEmail:env('BREVO_REPLY_TO_EMAIL'),sandboxMode:env('BREVO_SANDBOX_MODE')?.trim().toLowerCase()==='drop'},dependencies)}
+export function toTransactionalEmailAuditEvent(input:TransactionalEmailRequest,result:TransactionalEmailResult){return{template:input.template,correlationId:input.correlationId,status:result.status,retryable:result.retryable,providerCode:result.providerCode,hasProviderMessageId:Boolean(result.providerMessageId)}}

@@ -484,7 +484,7 @@ automatically.
 
 | Field | Specification |
 |---|---|
-| Status | `CP-4.3B_IMPLEMENTED_LOCAL_PROVIDER_ADAPTER` |
+| Status | `QA_CERTIFIED / CLOSED` |
 | Objective | Connect invitations to a bounded, observable email provider adapter. |
 | User outcome | Invited clients receive clear, secure, deliverable messages without token leakage. |
 | Dependencies | CP-4.2 closed; provider/DPA/region approved; sending domain and templates owned; remote deployment separately authorized. |
@@ -502,15 +502,23 @@ automatically.
 | Stop conditions | Token in log, unauthenticated domain, unknown processor/region, missing rate limit, secret in frontend or unapproved production send. |
 | Closeout documentation | Provider/subprocessor record, DNS evidence, template version, runbook, deployment/rollback and next gate. |
 | Expected commit | `feat: add secure portal invitation email adapter` |
-| Next gate | CP-4.3C — delivery state/outbox and QA provider configuration gate |
+| Next gate | CP-5.1 — production readiness gate, with separate production authorization |
 
 CP-4.3A added a provider-neutral, server-only transactional-email port and
-redacted audit contract for `PORTAL_INVITATION`. CP-4.3B adds the owner-approved
-Brevo adapter to that port, still deliberately disconnected from
-`portal-member-actions`. Invitation delivery remains disabled until CP-4.3C
-approves a trusted delivery state/outbox, private QA credentials, sender-domain
-authentication and an exact QA deployment. No DNS, SiteGround, Supabase remote
-configuration or email send was performed.
+redacted audit contract for `PORTAL_INVITATION`. CP-4.3B added the Brevo adapter
+behind that port. CP-4.3C then certified the complete QA trusted-delivery path:
+the outbox and encrypted payload lifecycle, trusted worker, allowlist, Brevo
+sandbox `drop` request, acceptance audit and exact fixture cleanup. FINAL V18
+made one worker invocation and one provider request, received HTTP `200` from
+the worker with a provider message ID, sent zero real emails, and restored all
+temporary fixture records to zero. Production, DNS, SiteGround, secrets and
+Git were unchanged by that runtime certification.
+
+CP-4.3C is QA-certified only. Its immutable local candidate reconciles the
+accepted Worker V18 artifact and final persistent database contract through a
+forward-only migration, without rewriting QA history. CP-5.1 requires a
+separate production-readiness approval; it does not authorize a production
+deployment or real-email rollout.
 
 ## CP-5.1 — Production readiness gate
 

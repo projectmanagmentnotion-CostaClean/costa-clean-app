@@ -1,14 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import accountExperienceSource from './PortalAccountExperience.tsx?raw'
+import accountActionsSource from './adapters/portalAccountActions.ts?raw'
 import contractsSource from './contracts.ts?raw'
 import onboardingSource from './PortalOnboardingFlow.tsx?raw'
 
 describe('portal account experience boundaries', () => {
-  it('keeps membership roles and unavailable actions inside the approved contract', () => {
+  it('keeps membership roles and portal actions inside the approved contract', () => {
     expect(contractsSource).toContain("'client_member'")
     expect(contractsSource).toContain("'client_admin'")
     expect(accountExperienceSource).not.toContain('Colaborador operativo')
-    expect(accountExperienceSource).toContain('No disponible en este entorno')
+    expect(accountExperienceSource).toContain('adapter.inviteMember')
+    expect(accountActionsSource).toContain("action: 'inviteMember'")
+    expect(accountExperienceSource).toContain("status === 'submitting'")
+    expect(accountExperienceSource).not.toContain('canal seguro de entrega todavía no está configurado')
     expect(accountExperienceSource).not.toMatch(/supabase\.from\(/)
     expect(accountExperienceSource).not.toContain('/functions/v1/')
   })

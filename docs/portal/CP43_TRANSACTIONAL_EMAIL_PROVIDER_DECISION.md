@@ -2,26 +2,29 @@
 
 ## Status
 
-`OWNER_APPROVED_PROVIDER_BREVO / ADAPTER_IMPLEMENTED_LOCAL`
+`OWNER_APPROVED_PROVIDER_BREVO / QA_DELIVERY_CERTIFIED`
 
-The owner approved Brevo for transactional email only. This local adapter does
-not configure credentials, create a Brevo account, authenticate a domain or
-send email. Invitation delivery remains disconnected pending the next exact QA
-integration gate.
+The owner approved Brevo for transactional email only. The adapter remains
+server-only and does not embed credentials in source. CP-4.3C subsequently
+certified the QA trusted-delivery path, including one Brevo sandbox `drop`
+request with zero real emails. Its outbox and worker evidence is documented in
+[CP43_TRUSTED_DELIVERY_OUTBOX.md](CP43_TRUSTED_DELIVERY_OUTBOX.md). This does
+not authorize production sending, marketing, credentials in source, or a
+production deployment.
 
-## Current audit
+## Foundation audit
 
-The existing invitation path is intentionally secure but delivery-disabled:
+The original CP-4.3A/B foundation established these durable boundaries:
 
 - `client_portal_invitations` stores a normalized recipient address and a hash
   of a one-time token; it never stores the raw token.
 - `portal_create_invitation_trusted` creates bounded, expiring, pending
   invitations through the existing trusted boundary.
-- `portal-member-actions` explicitly passes `deliverInvitation: undefined`.
-  An invitation request therefore fails closed with `delivery_unavailable` and
-  has no configured external provider.
-- The active portal code has no connected transactional provider adapter.
-  Private local environment files were not read or changed by this foundation.
+- `portal-member-actions` is wired only through the trusted outbox/worker
+  boundary; it has no frontend provider credential or direct browser delivery
+  path.
+- Private local environment files are not part of this repository contract and
+  were not read for this documentation reconciliation.
 
 The current handler persists an invitation before a future delivery callback is
 called. An approved delivery phase must define retry/outbox state and a safe
@@ -107,14 +110,26 @@ Before a real credential, sandbox delivery, DNS change, wiring or deployment:
 5. Authorize the exact QA deployment separately. Production delivery requires
    another exact production authorization.
 
-Suggested future QA-only environment names are `TRANSACTIONAL_EMAIL_PROVIDER`,
-`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME` and
-`BREVO_REPLY_TO_EMAIL`. They remain unset by this change. The provider resolver
-defaults to `disabled`, and `brevo` fails closed if its configuration is
-missing or invalid.
+Required private QA-only environment names are `TRANSACTIONAL_EMAIL_PROVIDER`,
+`BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, `BREVO_SENDER_NAME`,
+`BREVO_REPLY_TO_EMAIL`, `BREVO_SANDBOX_MODE`,
+`PORTAL_INVITATION_DELIVERY_ENV`, `PORTAL_INVITATION_DELIVERY_QA_RECIPIENT`
+and `PORTAL_INVITATION_ACCEPT_URL`. They remain unset by this change. The
+provider resolver defaults to `disabled`, and Brevo fails closed if sender/API
+configuration is missing or invalid. The worker additionally requires `qa`,
+the exact QA Supabase project, one exact allowlisted recipient, sandbox mode
+`drop`, and the canonical HTTPS acceptance base URL
+`/portal/invitacion` without query or fragment.
 
-No DNS, SiteGround, Supabase remote configuration, provider account, real
-send, or production change was performed in CP-4.3B.
+The adapter uses the documented Brevo sandbox request field
+`X-Sib-Sandbox: drop`; it validates the send request but does not send email.
+A received HTTP `429` or `5xx` is normalized as a bounded retryable provider
+response. Timeout, connection reset and malformed response remain
+`delivery_outcome_unknown`, are blocked and never retried automatically.
+
+CP-4.3B performed no DNS, SiteGround, provider-account, real-send or production
+change. CP-4.3C later completed a separately authorized QA-only sandbox
+certification. The QA result does not alter the production restrictions above.
 
 ## Security and privacy constraints
 

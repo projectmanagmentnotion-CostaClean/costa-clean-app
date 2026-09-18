@@ -9,6 +9,7 @@ import type { PortalPreviewShellProps } from './PortalPreviewShell'
 import { createPortalFoundationAdapter } from './adapters/portalFoundationAdapter'
 import type { PortalRuntimeAdapter } from './contracts'
 import { portalTokens } from './portalTokens'
+import { takePortalInvitationToken } from './invitationAcceptance'
 import './portal.css'
 
 interface PortalBootstrapRuntime {
@@ -50,6 +51,7 @@ async function createRuntime(): Promise<PortalBootstrapRuntime> {
 
 export async function bootstrapPortal(rootElement: HTMLElement) {
   const { adapter, authenticatedSurface, previewControl } = await createRuntime()
+  const invitationToken = takePortalInvitationToken(window.location, window.history)
 
   document.title = 'Área de clientes | Costa Clean'
   document
@@ -62,6 +64,7 @@ export async function bootstrapPortal(rootElement: HTMLElement) {
         adapter={adapter}
         authenticatedSurface={authenticatedSurface}
         previewControl={previewControl}
+        invitationToken={invitationToken}
       />
     </StrictMode>,
   )

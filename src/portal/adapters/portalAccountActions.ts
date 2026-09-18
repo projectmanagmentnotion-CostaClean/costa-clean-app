@@ -37,6 +37,12 @@ export interface PortalPendingInvitation {
   invitationRef: string
 }
 
+export interface PortalMemberInvitationInput {
+  clientId: string
+  email: string
+  role: 'client_admin' | 'client_member'
+}
+
 export interface PortalMarketingPreference {
   enabled: boolean
   status: 'granted' | 'withdrawn'
@@ -52,6 +58,13 @@ export async function submitPortalApplication(input: PortalOnboardingInput) {
   }).then((result) => ({
     status: result.status === 'pending_review' ? 'pending_review' as const : 'pending_review' as const,
   }))
+}
+
+export async function acceptPortalInvitation(token: string): Promise<void> {
+  await invokePortalAction('portal-account-actions', {
+    action: 'acceptInvitation',
+    token,
+  })
 }
 
 export async function listPortalMembers(clientId: string): Promise<PortalMember[]> {
@@ -70,6 +83,15 @@ export async function listPortalPendingInvitations(clientId: string): Promise<Po
   })
   if (!Array.isArray(result)) throw new Error('portal_invitations_invalid')
   return result.map(readPendingInvitation)
+}
+
+export async function invitePortalMember(input: PortalMemberInvitationInput): Promise<void> {
+  await invokePortalAction('portal-member-actions', {
+    action: 'inviteMember',
+    clientId: input.clientId,
+    email: input.email,
+    role: input.role,
+  })
 }
 
 export async function revokePortalMember(clientId: string, membershipId: string): Promise<void> {

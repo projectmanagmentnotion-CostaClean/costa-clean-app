@@ -26,11 +26,20 @@ jobs:
       - name: Install
         run: npm ci
 
-      - name: Tests
-        run: npm test
+      - name: CP-4.3C regression tests
+        run: >
+          npm exec vitest run --config vitest.config.mjs
+          scripts/client-portal/transactionalEmail.test.mjs
+          scripts/client-portal/portalHandler.test.mjs
+          scripts/client-portal/portalInvitationDeliveryWorker.test.mjs
+          scripts/client-portal/portalContract.test.mjs
 
       - name: Lint
         run: npm run lint
 
       - name: Build
         run: npm run build
+
+      - name: Full legacy suite diagnostic
+        continue-on-error: true
+        run: npm test

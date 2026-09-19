@@ -74,3 +74,69 @@ Stop immediately if:
 by the owner outside this document.
 
 **Disposition:** `CP51D_TEMPLATE_READY / PRODUCTION_NOT_AUTHORIZED`
+
+## Executed read-only preflight record — 2026-09-19
+
+The owner authorized one bounded read-only preflight using the fixed identities
+above. The authorization was honored. No production writes, DDL, migration
+application, `db push`, deployment, secret-value access, email, Auth,
+invitation, DNS, SiteGround, financial/fiscal or CP-5.2 operation was
+performed.
+
+### Verified identity
+
+- Supabase project ref: `wfxnwfcdjainpojhbdri`
+- Project: `CostaClean`
+- Status: `ACTIVE_HEALTHY`
+- Region: `eu-west-1`
+- Candidate commit: `7870ae4408ab7af0c944b149d2c75a70b8421e65`
+- Canonical migration blob: `c7c686769160d987c3721721a589dae1eae0dced`
+
+The candidate commit and migration blob were verified locally from Git. The
+production project identity matched exactly.
+
+### Read-only evidence
+
+The production migration history does not contain the CP-4.3C migration. The
+active Edge Function inventory contains only `submit-public-gym-manual-quiz`
+and does not contain the CP-4.3C delivery worker or member-actions function.
+The required CP-4.3C relations, trusted functions, trigger, constraint and
+cleanup job were absent:
+
+- `public.portal_invitation_delivery_outbox`
+- `public.portal_invitation_delivery_payloads`
+- `public.client_portal_invitations`
+- `public.client_portal_audit_events`
+- CP-4.3C trusted functions, trigger, constraint and `pg_cron` cleanup job
+
+`pg_cron` is installed, but the required CP-4.3C job is not present. The
+presence of `pg_net` was observed as environment metadata only and is not
+treated as proof that the candidate contract is installed.
+
+### Verdict
+
+**`BLOCKED / STOP_PRESTATE_DRIFT / PRODUCTION_NOT_COMPATIBLE_WITH_CP43_CANDIDATE`**
+
+The production prestate is materially incompatible with the QA-certified
+CP-4.3C candidate. This preflight therefore stops here. The missing contract
+cannot be repaired under the current authorization because migration,
+DDL, deployment and production mutation are explicitly prohibited.
+
+### Observed external production debt — not executed
+
+The read-only security/performance advisory inspection also reported existing
+production findings, including mutable function `search_path` warnings,
+security-definer functions executable by `anon`/`authenticated`, disabled
+leaked-password protection, unindexed foreign keys, RLS init-plan warnings,
+unused indexes and duplicate invoice indexes. These findings are recorded as
+external production debt only; no remediation was attempted because it would
+expand beyond the authorized preflight.
+
+### Continuation state
+
+- CP-5.1: `BLOCKED / STOP_PRESTATE_DRIFT`
+- CP-5.2: `NOT STARTED`
+- Next action: obtain a separate, explicit owner-approved migration/deployment
+  plan after the contract, backup/restore ownership, rollback timing and
+  independent go/no-go evidence are prepared. This is a future authorization
+  requirement, not an action authorized by this record.

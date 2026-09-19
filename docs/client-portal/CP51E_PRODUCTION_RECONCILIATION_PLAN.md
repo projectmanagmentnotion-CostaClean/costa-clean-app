@@ -339,6 +339,11 @@ must not be reclassified as resolved or silently fixed by the reconciliation.
 | `BACKUP_OWNER` | `HUMAN_INPUT_REQUIRED` |
 | `RESTORE_OWNER` | `HUMAN_INPUT_REQUIRED` |
 
+For the separately authorized CP-5.1F gate only, the owner supplied
+`BACKUP_OWNER = Anderson` and `RESTORE_OWNER = Anderson`. This does not assign
+release, rollback, incident or observability ownership and does not authorize
+any CP-4.3C mutation.
+
 No person is inferred or assigned.
 
 ## 11. Separate future authorizations

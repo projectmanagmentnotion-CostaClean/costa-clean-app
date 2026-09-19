@@ -1249,7 +1249,7 @@ export function AppShell({
               {currentView === 'alerts' ? (
                 v3Enabled ? <V3AlertsPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} /> : <AlertsCenterPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} />
               ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
-                v3Enabled ? <V3ClosingPage
+                v3Enabled ? <V3ClosingPage key={currentView}
                   availableYears={fiscalClosingAvailableYears}
                   initialSelection={fiscalClosingInitialSelection}
                   quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}

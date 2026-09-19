@@ -209,6 +209,7 @@ export function PortalServiceRequestsPage({
         description="Detalle público, seguro y con cancelación solo cuando el contrato lo permite."
       >
         <PortalServiceRequestDetail
+          key={request.reference}
           request={request}
           clientId={data.account.clientContextId}
           getHref={getHref}
@@ -600,10 +601,6 @@ function PortalServiceRequestDetail({
   const [state, setState] = useState<'idle' | 'submitting' | 'error'>('idle')
   const [message, setMessage] = useState<string | null>(null)
   const [requestState, setRequestState] = useState(request)
-
-  useEffect(() => {
-    setRequestState(request)
-  }, [request])
 
   async function handleCancel() {
     setState('submitting')

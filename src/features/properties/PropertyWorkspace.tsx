@@ -602,6 +602,7 @@ export function PropertyWorkspace({
           </section>
 
           <PropertyDetailCard
+            key={property?.id ?? 'no-property'}
             property={property}
             clients={clients}
             jobs={jobs}

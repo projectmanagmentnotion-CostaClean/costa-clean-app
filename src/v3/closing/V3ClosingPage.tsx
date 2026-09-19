@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatCurrency } from '../../app/displayFormat'
 import { buildClosingSummary, type ClosingIncidenceScope, type ClosingIncidenceView } from '../../features/closing/closingSummaryEngine'
 import type { FiscalPeriodSelection } from '../../features/closing/fiscalPeriods'
@@ -28,7 +28,6 @@ export function V3ClosingPage(props: V3ClosingPageProps) {
   const [exportMessage, setExportMessage] = useState<string | null>(null)
   const [aiBusy, setAiBusy] = useState(false)
   const [aiMessage, setAiMessage] = useState<string | null>(null)
-  useEffect(() => setSelection(props.initialSelection), [props.initialSelection])
   const summary = useMemo(() => buildClosingSummary({ selection, invoices: props.invoices, payments: props.payments, expenses: props.expenses, quotes: props.quotes, jobs: props.jobs, quarterlySummaryByPeriod: props.quarterlySummaryByPeriod, annualSummaryByYear: props.annualSummaryByYear }), [props, selection])
   const persistedClosing = useMemo(() => {
     if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {

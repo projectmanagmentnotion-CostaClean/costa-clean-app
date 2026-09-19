@@ -65,7 +65,7 @@ export function V3LeadsPage(props: V3LeadsPageProps) {
     window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
   }
 
-  if (selectedLead) return <V3LeadWorkspace lead={selectedLead} draft={matchingDraft(selectedLead, props.leadDrafts)} quotes={selectedQuotes} client={selectedClient} onBack={closeLead} onRefresh={props.onRefresh} onOpenQuote={props.onOpenQuote} onOpenClient={props.onOpenClient} />
+  if (selectedLead) return <V3LeadWorkspace key={selectedLead.id} lead={selectedLead} draft={matchingDraft(selectedLead, props.leadDrafts)} quotes={selectedQuotes} client={selectedClient} onBack={closeLead} onRefresh={props.onRefresh} onOpenQuote={props.onOpenQuote} onOpenClient={props.onOpenClient} />
 
   return <V3Page className="v3-leads-page">
     <V3PageTitle eyebrow="Pipeline comercial" title="Leads" description="Oportunidades, intake y siguiente acción comercial." action={<V3PrimaryAction onClick={props.onCreateLead}>+ Nuevo lead</V3PrimaryAction>} />

@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
@@ -148,10 +148,6 @@ export function AnnualClosingPage({
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setSelectedYear(defaultFiscalYear)
-  }, [defaultFiscalYear])
-
   const summary = summaryByYear.get(selectedYear)
   const closing = useMemo(
     () => closings.find((item) => item.fiscal_year === selectedYear) ?? null,
@@ -169,21 +165,6 @@ export function AnnualClosingPage({
     () => expenses.filter((expense) => matchesExpenseYear(expense, selectedYear)),
     [expenses, selectedYear],
   )
-
-  useEffect(() => {
-    setNotes(closing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setDocumentActionError(null)
-    setExportResult(null)
-    setExportError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-
-    if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
-      setWorkspace('operations')
-    }
-  }, [closing, selectedYear, workspace])
 
   const yearPaymentsTotal = useMemo(
     () => yearPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
@@ -1676,8 +1657,6 @@ export function AnnualClosingPage({
     </section>
   )
 }
-
-
 
 
 

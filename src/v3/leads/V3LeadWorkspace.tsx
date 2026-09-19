@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { formatCurrency, formatDateEs, getPropertyTypeLabel, getServiceTypeLabel } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { isForbiddenServiceRequested } from '../../config/leadQuoteMessagingEngineAccess'
@@ -45,10 +45,6 @@ export function V3LeadWorkspace({ lead, draft, quotes, client, onBack, onRefresh
   const canConvertDraft = Boolean(draft && reviewed && pricing && !isForbiddenServiceRequested(draft.normalized_input) && ['matched_existing_lead', 'ready_for_review', 'converted'].includes(draft.status))
   const draftWhatsApp = draft ? buildWhatsAppUrl(draft.phone, { text: draftMessage(draft) }) : null
   const draftEmail = draft ? buildMailtoUrl(draft.email, { subject: `Costa Clean · ${draft.suggested_full_name}`, body: draft.ai_email_draft ?? draftMessage(draft) }) : null
-
-  useEffect(() => {
-    setForm({ full_name: lead.full_name, phone: lead.phone, city: lead.city ?? '', status: lead.status })
-  }, [lead])
 
   const primaryLabel = client ? 'Ver cliente' : quotes.length > 0 && reviewed ? 'Crear o vincular cliente' : draft && !reviewed ? 'Revisar borrador' : canConvertDraft ? 'Crear presupuesto' : 'Convertir a cliente'
 

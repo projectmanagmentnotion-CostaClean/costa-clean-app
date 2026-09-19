@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { CollapsibleDetailSection } from '../components/CollapsibleDetailSection'
@@ -158,10 +158,6 @@ export function FiscalClosingPage({
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setSelection(initialSelection)
-  }, [initialSelection])
-
   const summary = useMemo(() => buildClosingSummary({
     selection,
     invoices,
@@ -190,14 +186,6 @@ export function FiscalClosingPage({
     [annualClosings, summary.fiscalYear, summary.snapshotMode],
   )
   const persistedClosing = quarterlyClosing ?? annualClosing
-
-  useEffect(() => {
-    setNotes(persistedClosing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-  }, [persistedClosing, selection])
 
   const statusCard = useMemo(() => {
     if (!summary.snapshotMode) {
@@ -1182,7 +1170,6 @@ export function FiscalClosingPage({
     </section>
   )
 }
-
 
 
 

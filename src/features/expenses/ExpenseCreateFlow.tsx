@@ -136,40 +136,12 @@ export function ExpenseCreateFlow({
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
   const [createdExpenseId, setCreatedExpenseId] = useState<string | null>(null)
   const [pendingReceiptFile, setPendingReceiptFile] = useState<File | null>(null)
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const formRef = useRef<HTMLFormElement | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
-
-    setForm({
-      ...defaultFormState,
-      expense_date: todayLocalDate(),
-      supplier_name: prefill.supplier_name,
-      category: prefill.category,
-      description: prefill.description,
-      document_type: prefill.document_type,
-      payment_status: prefill.payment_status,
-      subtotal: prefill.subtotal,
-      tax_rate: prefill.tax_rate,
-      tax_amount: prefill.tax_amount,
-      total: prefill.total,
-      document_support_status: 'missing',
-      fiscal_review_status: 'pending',
-      fiscal_risk_level: 'medium',
-      notes: prefill.notes,
-    })
-    setCurrentStep(0)
-    setPendingReceiptFile(null)
-    setError(null)
-    setIsDirty(false)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [lastAppliedPrefillId, prefill])
 
   useEffect(() => {
     if (currentStep !== 0) return
@@ -513,6 +485,7 @@ export function ExpenseCreateFlow({
 
             <div className="form-field form-field-full">
               <ExpenseSupportFieldset
+                key={pendingReceiptFile ? `${pendingReceiptFile.name}:${pendingReceiptFile.lastModified}` : 'new-receipt'}
                 pendingFile={pendingReceiptFile}
                 documentType={form.document_type}
                 documentSupportStatus={form.document_support_status}

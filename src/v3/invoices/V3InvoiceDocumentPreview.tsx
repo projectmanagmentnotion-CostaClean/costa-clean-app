@@ -30,7 +30,7 @@ export function V3InvoiceDocumentPreview({ invoice, onOpenDocument }: V3InvoiceD
         <V3Status label={getStatusLabel(hydratedInvoice.status)} tone={statusTone(hydratedInvoice.status)} />
       </div>
       <div className="v3-invoice-preview__actions">
-        <V3SecondaryAction onClick={onOpenDocument}>Abrir documento</V3SecondaryAction>
+        <V3SecondaryAction onClick={onOpenDocument}>Abrir Documento</V3SecondaryAction>
       </div>
       <div className="v3-invoice-preview__viewport">
         {isLoadingLines ? <V3LoadingState label="Cargando líneas de factura" /> : linesError ? <V3ErrorState title="No se pudo cargar la vista previa" description={linesError} /> : <InvoiceDocumentA4 invoice={hydratedInvoice} variant="embedded" />}

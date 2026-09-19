@@ -49,7 +49,6 @@ export function V3JobCreateFlow({ clients, properties, quotes, jobs = [], prefil
   const [duplicateJobId, setDuplicateJobId] = useState<string | null>(null)
 
   useEffect(() => { onDirtyChange?.(dirty); return () => onDirtyChange?.(false) }, [dirty, onDirtyChange])
-  useEffect(() => { setForm(initialForm(prefill)); setDirty(false) }, [prefill])
 
   const availableProperties = useMemo(() => form.client_id ? properties.filter((property) => property.client_id === form.client_id) : [], [form.client_id, properties])
   const availableQuotes = useMemo(() => quotes.filter((quote) => quote.client_id === form.client_id && quote.status === 'accepted' && (!form.property_id || quote.property_id === form.property_id || quote.property_id === null)), [form.client_id, form.property_id, quotes])

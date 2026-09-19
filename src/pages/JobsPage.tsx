@@ -167,7 +167,7 @@ export function JobsPage({
         activeFilter={activeFilter}
         activeFilterLabel={activeFilterLabel}
       />
-      {isCreateFormVisible ? <V3JobCreateFlow clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} /> : null}
+      {isCreateFormVisible ? <V3JobCreateFlow key={effectiveCreatePrefill?.request_id ?? 'new-job'} clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} /> : null}
       {showDuplicateReview ? <V3DuplicateReviewSheet title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
     </>
   }

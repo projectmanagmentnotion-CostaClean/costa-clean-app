@@ -156,15 +156,6 @@ export function PaymentCreateFlow({
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
 
-  useEffect(() => {
-    setForm(buildInitialState({
-      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
-      prefillAmount,
-      prefillPaymentMethod,
-      prefillNotes,
-    }))
-    setIsDirty(false)
-  }, [availableInvoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
@@ -189,19 +180,6 @@ export function PaymentCreateFlow({
   const outstandingAmount = Number(selectedInvoice?.outstanding_amount ?? selectedInvoice?.total ?? 0)
   const enteredAmount = parseDecimalInput(form.amount)
   const amountIntentLabel = getAmountIntentLabel(enteredAmount, outstandingAmount)
-
-  useEffect(() => {
-    if (!selectedInvoice || prefillAmount) return
-
-    setForm((current) => {
-      if (current.amount.trim()) return current
-
-      return {
-        ...current,
-        amount: formatMoneyInput(outstandingAmount),
-      }
-    })
-  }, [outstandingAmount, prefillAmount, selectedInvoice])
 
   function markDirty() {
     setIsDirty(true)

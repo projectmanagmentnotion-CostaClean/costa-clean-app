@@ -196,11 +196,6 @@ function QuoteDetailCardContent({
     return () => onUnsavedChange?.(false)
   }, [isDirty, onUnsavedChange])
 
-  useEffect(() => {
-    if (!majorEditMode) return
-    setIsEditing(true)
-  }, [hydratedQuote.id, majorEditMode])
-
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
       return []

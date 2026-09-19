@@ -375,50 +375,9 @@ export function InvoiceDetailCard({
   )
 
   useEffect(() => {
-    if (isDirtyRef.current || hasPaymentFormDirtyRef.current) return
-    if (!invoice) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setPaymentActionMode(null)
-      setIsDirty(false)
-      setHasPaymentFormDirty(false)
-      setForm({
-        job_id: '',
-        client_id: '',
-        issue_date: '',
-        status: 'draft',
-        notes: '',
-      })
-      setLines([createBlankLine()])
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setPaymentActionMode(null)
-    setIsDirty(false)
-    setHasPaymentFormDirty(false)
-    setForm({
-      job_id: invoice.job_id ?? '',
-      client_id: invoice.client_id,
-      issue_date: invoice.issue_date,
-      status: invoice.status,
-      notes: invoice.notes ?? '',
-    })
-    setLines(getFormLinesFromInvoice(invoice))
-  }, [invoice])
-
-  useEffect(() => {
     onUnsavedChange?.(isDirty || hasPaymentFormDirty)
     return () => onUnsavedChange?.(false)
   }, [hasPaymentFormDirty, isDirty, onUnsavedChange])
-
-  useEffect(() => {
-    if (!invoice || !majorEditMode) return
-    setIsEditing(true)
-  }, [invoice, majorEditMode])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)

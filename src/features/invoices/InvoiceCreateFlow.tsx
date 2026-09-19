@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
-import { getServiceTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -31,7 +30,7 @@ import { buildClientPropertyOptions, mergePropertyOptions, pruneSyncedPropertyOp
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
 import { QuoteCreateFlow } from '../quotes/QuoteCreateFlow'
-import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
+import { normalizeLineConcept } from '../quotes/lineConcepts'
 import type { QuoteListItem } from '../quotes/types'
 import {
   completeContextualActionFlow,
@@ -46,11 +45,9 @@ import {
   createLocalId,
   formatBillingLineSubtotalInput,
   formatMoneyInput,
-  formatQuantityInput,
   roundMoney,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
-import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
@@ -130,34 +127,6 @@ function createDefaultFormState(): FormState {
     status: 'draft',
     notes: '',
   }
-}
-
-function buildVisibleInvoiceNotes(): string {
-  return [
-    'Servicio realizado segun presupuesto aprobado.',
-    'Condiciones economicas aplicadas segun presupuesto aceptado.',
-    'Precios sin IVA.',
-  ].join('\n')
-}
-
-function getJobBillingLines(job: JobListItem | null): LineFormState[] | null {
-  if (!job) return null
-
-  if (job.billing_lines?.length) {
-    const normalized = job.billing_lines
-      .filter((line) => Number.isFinite(line.quantity) && line.quantity > 0 && Number.isFinite(line.unit_price) && line.unit_price >= 0)
-      .map((line) => ({
-        local_id: createLocalId('LINE-DRAFT'),
-        concept: normalizeLineConcept(line.concept, simplifyLineConcept(getServiceTypeLabel(job.service_type))),
-        quantity: formatQuantityInput(line.quantity),
-        unit: line.unit?.trim() || 'servicio',
-        unit_price: formatMoneyInput(line.unit_price),
-      }))
-
-    if (normalized.length > 0) return normalized
-  }
-
-  return null
 }
 
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): LineFormState[] {
@@ -240,7 +209,6 @@ export function InvoiceCreateFlow({
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showJobCreate, setShowJobCreate] = useState(false)
@@ -251,12 +219,8 @@ export function InvoiceCreateFlow({
   const [syncedProperties, setSyncedProperties] = useState<PropertyListItem[]>([])
   const [propertyCreateFeedback, setPropertyCreateFeedback] = useState<{ tone: 'success' | 'warning'; message: string } | null>(null)
 
-  useEffect(() => {
-    setSyncedProperties((current) => pruneSyncedPropertyOptions(properties, current))
-  }, [properties])
-
   const propertyOptions = useMemo(
-    () => mergePropertyOptions(properties, syncedProperties),
+    () => mergePropertyOptions(properties, pruneSyncedPropertyOptions(properties, syncedProperties)),
     [properties, syncedProperties],
   )
 
@@ -336,60 +300,9 @@ export function InvoiceCreateFlow({
   )
 
   useEffect(() => {
-    if (currentStep !== 1 || clientFiscalIssue) return
-
-    setSubmitError((current) => {
-      if (!current) return null
-      return current.includes('NIF/CIF') || current.includes('direccion de facturacion')
-        ? null
-        : current
-    })
-  }, [clientFiscalIssue, currentStep])
-
-  useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-      if (!selectedJob || form.origin_mode !== 'job') return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedJob.client_id,
-      property_id: selectedJob.property_id,
-      quote_id: selectedJob.quote_id ?? '',
-      notes: current.notes.trim() ? current.notes : selectedJob.quote_id ? buildVisibleInvoiceNotes() : '',
-    }))
-
-    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
-    setLines(getJobBillingLines(selectedJob) ?? (quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()]))
-  }, [form.origin_mode, selectedJob, selectedQuote])
-
-  useEffect(() => {
-    if (!selectedQuote || form.origin_mode !== 'quote') return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedQuote.client_id ?? current.client_id,
-      property_id: selectedQuote.property_id ?? current.property_id,
-      notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
-    }))
-
-    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
-    setLines(quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
-  }, [form.origin_mode, selectedQuote])
-
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
-
-    setForm(applyPrefillToForm(prefill))
-    setLines(buildLinesFromPrefill(prefill))
-    setSubmitError(null)
-    setIsDirty(false)
-    setCurrentStep(0)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [lastAppliedPrefillId, prefill])
 
   function markDirty() {
     setIsDirty(true)
@@ -1254,6 +1167,7 @@ export function InvoiceCreateFlow({
                   <strong>Completar datos fiscales aqui mismo</strong>
                   <small>Este subflujo actualiza la ficha del cliente y te devuelve al mismo paso sin perder nada.</small>
                   <ClientBillingDetailsInlineForm
+                    key={selectedClient.id}
                     client={selectedClient}
                     onSaved={async (updatedClient) => {
                       await onRefreshData()

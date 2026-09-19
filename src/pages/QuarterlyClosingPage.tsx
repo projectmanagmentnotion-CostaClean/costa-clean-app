@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
@@ -170,11 +170,6 @@ export function QuarterlyClosingPage({
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setSelectedYear(defaultFiscalYear)
-    setSelectedQuarter(defaultFiscalQuarter)
-  }, [defaultFiscalYear, defaultFiscalQuarter])
-
   const selectedKey = getPeriodKey(selectedYear, selectedQuarter)
   const summary = summaryByPeriod.get(selectedKey)
   const closing = useMemo(
@@ -198,19 +193,6 @@ export function QuarterlyClosingPage({
     () => expenses.filter((expense) => matchesExpenseQuarter(expense, selectedYear, selectedQuarter)),
     [expenses, selectedQuarter, selectedYear],
   )
-
-  useEffect(() => {
-    setNotes(closing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setDocumentActionError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-
-    if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
-      setWorkspace('operations')
-    }
-  }, [closing, selectedYear, selectedQuarter, workspace])
 
   const quarterPaymentsTotal = useMemo(
     () => quarterPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
@@ -1672,7 +1654,6 @@ export function QuarterlyClosingPage({
     </section>
   )
 }
-
 
 
 

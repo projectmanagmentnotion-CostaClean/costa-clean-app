@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useReducer, useState, type FormEvent } from 'react'
 import { buildPropertyRelationshipSummary } from '../../app/entityIntegrity'
 import {
   formatCurrency,
@@ -83,11 +83,10 @@ export function PropertyDetailCard({
   invoices,
   onPropertyUpdated,
   hideHeaderActions = false,
-  editRequestToken,
   onEditingStateChange,
 }: PropertyDetailCardProps) {
   const useOverlayEdit = useActionFlowOverlayMode()
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -95,70 +94,19 @@ export function PropertyDetailCard({
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
-    client_id: '',
-    name: '',
-    property_type: 'apartment',
-    address: '',
-    city: '',
-    postal_code: '',
-    notes: '',
+    client_id: property?.client_id ?? '',
+    name: property?.name ?? '',
+    property_type: property?.property_type ?? 'apartment',
+    address: property?.address ?? '',
+    city: property?.city ?? '',
+    postal_code: property?.postal_code ?? '',
+    notes: property?.notes ?? '',
   })
 
   useEffect(() => {
     onEditingStateChange?.(isDirty)
     return () => onEditingStateChange?.(false)
   }, [isDirty, onEditingStateChange])
-
-  useEffect(() => {
-    if (!property || editRequestToken === undefined) return
-
-    setIsEditing(true)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      client_id: property.client_id,
-      name: property.name,
-      property_type: property.property_type,
-      address: property.address,
-      city: property.city ?? '',
-      postal_code: property.postal_code ?? '',
-      notes: property.notes ?? '',
-    })
-  }, [editRequestToken, property])
-
-  useEffect(() => {
-    if (!property) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setIsDirty(false)
-      setForm({
-        client_id: '',
-        name: '',
-        property_type: 'apartment',
-        address: '',
-        city: '',
-        postal_code: '',
-        notes: '',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      client_id: property.client_id,
-      name: property.name,
-      property_type: property.property_type,
-      address: property.address,
-      city: property.city ?? '',
-      postal_code: property.postal_code ?? '',
-      notes: property.notes ?? '',
-    })
-  }, [property])
 
   const relationshipSummary = useMemo(() => {
     if (!property) return null
@@ -260,7 +208,7 @@ export function PropertyDetailCard({
           ? 'Propiedad reasignada y actualizada correctamente.'
           : 'Propiedad actualizada correctamente.',
       )
-      setIsEditing(false)
+      dispatchEditing('close')
       setIsDirty(false)
     } catch (err) {
       const message =
@@ -367,7 +315,7 @@ export function PropertyDetailCard({
               return
             }
 
-            setIsEditing(false)
+            dispatchEditing('close')
             setIsDirty(false)
           }}
         >
@@ -428,7 +376,7 @@ export function PropertyDetailCard({
                 return
               }
 
-              setIsEditing((current) => !current)
+              dispatchEditing(isEditing ? 'close' : 'open')
               setSaveError(null)
               setSuccessMessage(null)
               setIsDirty(false)
@@ -563,7 +511,7 @@ export function PropertyDetailCard({
                     return
                   }
 
-                  setIsEditing(false)
+                  dispatchEditing('close')
                   setIsDirty(false)
                 }}
               >
@@ -681,7 +629,7 @@ export function PropertyDetailCard({
             return
           }
 
-          setIsEditing(false)
+          dispatchEditing('close')
           setIsDirty(false)
         }}
       >
@@ -698,7 +646,7 @@ export function PropertyDetailCard({
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
-          setIsEditing(false)
+          dispatchEditing('close')
           setIsDirty(false)
         }}
       />

@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
@@ -30,51 +30,16 @@ export function LeadDetailCard({
   onLeadUpdated,
   onLeadConverted,
 }: LeadDetailCardProps) {
-  const previousLeadIdRef = useRef<string | null>(null)
-
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [form, setForm] = useState<EditFormState>({
-    full_name: '',
-    phone: '',
-    city: '',
-    status: 'new',
+    full_name: lead?.full_name ?? '',
+    phone: lead?.phone ?? '',
+    city: lead?.city ?? '',
+    status: lead?.status ?? 'new',
   })
-
-  useEffect(() => {
-    const currentLeadId = lead?.id ?? null
-    const leadChanged = previousLeadIdRef.current !== currentLeadId
-    previousLeadIdRef.current = currentLeadId
-
-    if (!lead) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setForm({
-        full_name: '',
-        phone: '',
-        city: '',
-        status: 'new',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-
-    if (leadChanged) {
-      setSuccessMessage(null)
-    }
-
-    setForm({
-      full_name: lead.full_name,
-      phone: lead.phone,
-      city: lead.city ?? '',
-      status: lead.status,
-    })
-  }, [lead])
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -368,6 +333,7 @@ export function LeadDetailCard({
 
           {!isEditing ? (
             <LeadDraftCards
+              key={leadDraft?.id ?? 'no-draft'}
               lead={lead}
               leadDraft={leadDraft}
               onWorkflowUpdated={onLeadConverted}

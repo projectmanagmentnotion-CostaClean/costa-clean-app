@@ -72,41 +72,12 @@ export function PaymentDetailCard({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPaymentDuplicateGroups>>([])
   const [form, setForm] = useState<EditFormState>({
-    invoice_id: '',
-    payment_date: '',
-    amount: '0.00',
-    payment_method: 'transfer',
-    notes: '',
+    invoice_id: payment?.invoice_id ?? '',
+    payment_date: payment?.payment_date ?? '',
+    amount: payment ? String(payment.amount) : '0.00',
+    payment_method: payment?.payment_method ?? 'transfer',
+    notes: payment?.notes ?? '',
   })
-
-  useEffect(() => {
-    if (!payment) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setIsDirty(false)
-      setForm({
-        invoice_id: '',
-        payment_date: '',
-        amount: '0.00',
-        payment_method: 'transfer',
-        notes: '',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      invoice_id: payment.invoice_id,
-      payment_date: payment.payment_date,
-      amount: String(payment.amount),
-      payment_method: payment.payment_method ?? 'transfer',
-      notes: payment.notes ?? '',
-    })
-  }, [payment])
 
   useEffect(() => {
     onUnsavedChange?.(isDirty)

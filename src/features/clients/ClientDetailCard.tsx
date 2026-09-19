@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useReducer, useState, type FormEvent } from 'react'
 import { buildClientRelationshipSummary } from '../../app/entityIntegrity'
 import {
   formatCurrency,
@@ -76,25 +76,24 @@ export function ClientDetailCard({
   payments,
   onClientUpdated,
   hideHeaderActions = false,
-  editRequestToken = 0,
   archiveRequestToken = 0,
   onEditingStateChange,
 }: ClientDetailCardProps) {
   const useOverlayEdit = useActionFlowOverlayMode()
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [pendingInactiveConfirmation, setPendingInactiveConfirmation] = useState(false)
+  const [pendingInactiveConfirmation, dispatchInactiveConfirmation] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
-    full_name: '',
-    phone: '',
-    email: '',
-    tax_id: '',
-    billing_address: '',
-    status: 'active',
+    full_name: client?.full_name ?? '',
+    phone: client?.phone ?? '',
+    email: client?.email ?? '',
+    tax_id: client?.tax_id ?? '',
+    billing_address: client?.billing_address ?? '',
+    status: client?.status ?? 'active',
   })
 
   function syncFormFromClient(nextClient: ClientListItem) {
@@ -112,7 +111,7 @@ export function ClientDetailCard({
   }
 
   function closeEditing() {
-    setIsEditing(false)
+    dispatchEditing('close')
     setIsDirty(false)
   }
 
@@ -126,41 +125,13 @@ export function ClientDetailCard({
   }
 
   useEffect(() => {
-    if (!client) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setIsDirty(false)
-      setForm({
-        full_name: '',
-        phone: '',
-        email: '',
-        tax_id: '',
-        billing_address: '',
-        status: 'active',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    syncFormFromClient(client)
-  }, [client])
-
-  useEffect(() => {
     onEditingStateChange?.(isDirty)
     return () => onEditingStateChange?.(false)
   }, [isDirty, onEditingStateChange])
 
   useEffect(() => {
-    if (!client || editRequestToken === 0) return
-
-    setIsEditing(true)
-    syncFormFromClient(client)
-  }, [client, editRequestToken])
-
-  useEffect(() => {
     if (!client || archiveRequestToken === 0 || client.status === 'inactive') return
-    setPendingInactiveConfirmation(true)
+    dispatchInactiveConfirmation('open')
   }, [archiveRequestToken, client])
 
   const relationshipSummary = useMemo(() => {
@@ -243,7 +214,7 @@ export function ClientDetailCard({
     event.preventDefault()
 
     if (form.status === 'inactive' && client?.status !== 'inactive') {
-      setPendingInactiveConfirmation(true)
+      dispatchInactiveConfirmation('open')
       return
     }
 
@@ -370,7 +341,7 @@ export function ClientDetailCard({
               <button
                 type="button"
                 className="secondary-button"
-                onClick={() => setPendingInactiveConfirmation(true)}
+                onClick={() => dispatchInactiveConfirmation('open')}
               >
                 Archivar cliente
               </button>
@@ -393,7 +364,7 @@ export function ClientDetailCard({
                   return
                 }
 
-                setIsEditing(true)
+                dispatchEditing('open')
                 syncFormFromClient(client)
               }}
             >
@@ -576,9 +547,9 @@ export function ClientDetailCard({
         confirmLabel="Si, archivar cliente"
         tone="warning"
         isBusy={isSaving}
-        onCancel={() => setPendingInactiveConfirmation(false)}
+        onCancel={() => dispatchInactiveConfirmation('close')}
         onConfirm={() => {
-          setPendingInactiveConfirmation(false)
+          dispatchInactiveConfirmation('close')
           void persistClient('inactive')
         }}
       />

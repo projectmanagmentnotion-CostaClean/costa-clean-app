@@ -267,6 +267,7 @@ export function ExpensesPage({
           }}
         >
           <ExpenseCreateFlow
+            key={createPrefill?.request_id ?? 'new-expense'}
             expenses={allExpenses}
             quotes={quotes}
             invoices={invoices}

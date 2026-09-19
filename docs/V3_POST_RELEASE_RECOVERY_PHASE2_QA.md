@@ -5,7 +5,8 @@ Status: sanitized aggregate evidence for the recovery candidate.
 ## Candidate and environment
 
 - Candidate starting SHA: `4842f3da825a7bd542fa02abb8f8c0cba5d50558`.
-- Candidate validated SHA: `57cb12a85282ba0d787411b4cd3feb42ee6621ba`.
+- Runtime QA validated SHA: `57cb12a85282ba0d787411b4cd3feb42ee6621ba`.
+- Final candidate SHA: `687ed2d8d7b0f2fe0b3380dd19e8a43e195ad80a` (documentation-only provenance update after the runtime audit).
 - Verified local app URL: `http://127.0.0.1:4178/?v3=1`.
 - Sanitized evidence provenance timestamp: `2026-09-19T23:18:58+02:00`.
 - QA Supabase project ref: `kpvvydthlxupjjqqdpxy`.

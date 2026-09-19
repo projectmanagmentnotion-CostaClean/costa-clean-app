@@ -78,7 +78,20 @@ dated closeout notes are retained as historical evidence and are not reopened.
   delivery path completed one Brevo sandbox `drop` acceptance with zero real
   emails and exact temporary-fixture cleanup. This does not authorize
   production delivery.
-- **CP-5.1, CP-5.2 and CP-6:** `NOT STARTED`.
+- **CP-5.1:** `BLOCKED / STOP_PRESTATE_DRIFT / PRODUCTION NOT AUTHORIZED`.
+  Candidate identities and a zero-mutation production-preflight package are
+  versioned in [CP51_PRODUCTION_READINESS_PREFLIGHT.md](./CP51_PRODUCTION_READINESS_PREFLIGHT.md),
+  [CP51A_RELEASE_CANDIDATE_MANIFEST.md](./CP51A_RELEASE_CANDIDATE_MANIFEST.md),
+  [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](./CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md),
+  [CP51C_OPERATIONAL_READINESS.md](./CP51C_OPERATIONAL_READINESS.md),
+  [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](./CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md),
+  [CP51E_PRODUCTION_RECONCILIATION_PLAN.md](./CP51E_PRODUCTION_RECONCILIATION_PLAN.md),
+  [CP51F_BACKUP_RESTORE_READINESS.md](./CP51F_BACKUP_RESTORE_READINESS.md),
+  [CP51F2_BACKUP_CAPABILITY_RESOLUTION.md](./CP51F2_BACKUP_CAPABILITY_RESOLUTION.md),
+  [CP51F3_LOGICAL_PRODUCTION_BACKUP.md](./CP51F3_LOGICAL_PRODUCTION_BACKUP.md)
+  and [CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md](./CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md).
+  No remote production/QA action is authorized by this status.
+- **CP-5.2 and CP-6:** `NOT STARTED`.
 
 Dependency semantics: an implementation gate may proceed when its source,
 contract and design prerequisites are complete. Final authenticated QA,

@@ -80,6 +80,14 @@
   --v3-icon-size-sm: 16px;
   --v3-icon-size-md: 20px;
   --v3-icon-size-lg: 24px;
+  --v3-control-height-primary: var(--v3-touch-preferred);
+  --v3-control-height-compact: var(--v3-touch-min);
+  --v3-control-padding-inline: var(--v3-space-4);
+  --v3-control-padding-inline-compact: var(--v3-space-2);
+  --v3-control-icon-gap: var(--v3-space-2);
+  --v3-status-height: 28px;
+  --v3-status-padding-block: 4px;
+  --v3-status-padding-inline: 10px;
   --v3-brand-logo-top-height: var(--v3-icon-size-lg);
   --v3-brand-logo-top-width: 28px;
   --v3-brand-logo-rail-height: 40px;

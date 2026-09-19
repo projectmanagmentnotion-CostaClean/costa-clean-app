@@ -1,6 +1,6 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-19T21:14:20.6008661Z`
+**Reviewed at:** `2026-09-19T21:23:28.3249259Z`
 **Verdict:** `STOP_JIT_PERMISSION_REQUIRED`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
@@ -36,6 +36,27 @@ changed, and no production or QA mutation was performed.
 | CP-5.1 | `BLOCKED` |
 | CP-5.2 | `NOT_STARTED` |
 | Authorization B | `NOT_EXECUTED` |
+
+## Permission diagnosis
+
+| Capability | Evidence-based result |
+|---|---|
+| Supabase account role | `OWNER` |
+| MCP read-only mode | `NOT_PROVEN / EFFECTIVE TOOL SURFACE IS NOT READ-ONLY` — the connected surface exposes `execute_sql`, `apply_migration` and deployment tools; no private MCP URL/config was available to inspect |
+| OAuth scope sufficient for project metadata | `YES` — target and QA projects are listed and target metadata is readable |
+| OAuth scope sufficient for Project Settings/JIT write | `NO / NOT_EXPOSED` |
+| Project Settings write | `NO` — authenticated dashboard shows controls disabled with “additional permissions” required |
+| Database JIT read | `NOT_AVAILABLE` — no JIT MCP operation and no JIT section in the authenticated project settings UI |
+| Database JIT write | `NOT_AVAILABLE` — no JIT MCP operation or permitted dashboard control |
+| Database read via MCP | `YES` — read-only `execute_sql` returned `current_user=postgres` and PostgreSQL `17.6` |
+| Migration state read | `CAPTURED_READ_ONLY` — 12 existing migration rows; CP-4.3C migration is absent |
+
+The account role is not the blocker: the authenticated organization team page
+classifies the user as `Owner`. The concrete blocker is the missing
+Project-Settings/Database-JIT capability in the current MCP/browser tool
+surface, not an insufficient human account role. No scope or MCP configuration
+could be changed safely from this session because the private MCP server URL
+and client configuration are not exposed as editable inputs.
 
 The working tree contains only previously existing untracked browser/QA
 artifacts; none were staged, read as credentials, deleted or altered.
@@ -73,7 +94,7 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 | Secret source classification | `NOT_AVAILABLE` |
 | Secret exposed | `NO` |
 | JIT used | `NO` |
-| JIT prestate | `UNKNOWN / INSUFFICIENT_PROJECT_PERMISSION` |
+| JIT prestate | `UNKNOWN / JIT_READ_PERMISSION_NOT_EXPOSED` |
 | JIT poststate | `NOT_APPLICABLE / NO_MUTATION` |
 | Temporary role | `NOT_ASSIGNED` |
 | Expiry | `NOT_SET` |
@@ -84,7 +105,7 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 | Data | `NOT_EXECUTED` |
 | Auth coverage | `NOT_ESTABLISHED` |
 | `portal_private` coverage | `NOT_ESTABLISHED` |
-| Migration metadata coverage | `NOT_ESTABLISHED` |
+| Migration metadata coverage | `READ_ONLY_CAPTURED — 12 rows; CP-4.3C absent` |
 | Sizes | `N/A` |
 | SHA-256 | `N/A` |
 | Storage bytes included | `NO` |
@@ -136,4 +157,4 @@ The authenticated browser session still lacks the project permission required
 to read or administer Temporary Access/JIT. No human password, PAT, database
 password or connection string was requested or exposed.
 
-**Next exact gate:** `PROJECT_PERMISSION_BOOTSTRAP → CP-5.1F backup and restore verification`.
+**Next exact gate:** `MCP_PROJECT_SETTINGS_AND_DATABASE_JIT_READ_WRITE_SCOPE → CP-5.1F backup and restore verification`.

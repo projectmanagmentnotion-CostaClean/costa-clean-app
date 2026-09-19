@@ -524,7 +524,7 @@ deployment or real-email rollout.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `IN PROGRESS — PREFLIGHT ONLY / PRODUCTION NOT AUTHORIZED` |
 | Objective | Prove that exact QA-validated artifacts can enter a restricted production pilot safely. |
 | User outcome | No rollout yet; operational, security and support controls are ready before any customer is invited. |
 | Dependencies | CP-4.3 closed; QA P0/P1 zero; exact production authorization available only after review. |
@@ -543,6 +543,15 @@ deployment or real-email rollout.
 | Closeout documentation | Signed readiness checklist, immutable manifest, risk acceptance/debt and exact pilot authorization request. |
 | Expected commit | `docs: close client portal production readiness gate` |
 | Next gate | CP-5.2 |
+
+Current CP-5.1 preparation evidence:
+
+- [CP51_PRODUCTION_READINESS_PREFLIGHT.md](CP51_PRODUCTION_READINESS_PREFLIGHT.md) — readiness matrix, stop conditions and authorization boundary;
+- [CP51A_RELEASE_CANDIDATE_MANIFEST.md](CP51A_RELEASE_CANDIDATE_MANIFEST.md) — frozen runtime/migration/test identities and source-only migration review;
+- [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md) — zero-mutation production preflight design.
+
+No production/QA remote access, deployment, migration apply, provider send, secret mutation or customer pilot is authorized by this status. CP-5.2 remains `NOT STARTED`.
+
 
 ## CP-5.2 — Restricted production pilot
 

@@ -81,8 +81,9 @@ dated closeout notes are retained as historical evidence and are not reopened.
 - **CP-5.1:** `IN PROGRESS — PREFLIGHT ONLY / PRODUCTION NOT AUTHORIZED`.
   Candidate identities and a zero-mutation production-preflight package are
   versioned in [CP51_PRODUCTION_READINESS_PREFLIGHT.md](./CP51_PRODUCTION_READINESS_PREFLIGHT.md),
-  [CP51A_RELEASE_CANDIDATE_MANIFEST.md](./CP51A_RELEASE_CANDIDATE_MANIFEST.md)
-  and [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](./CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md).
+  [CP51A_RELEASE_CANDIDATE_MANIFEST.md](./CP51A_RELEASE_CANDIDATE_MANIFEST.md),
+  [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](./CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md)
+  and [CP51C_OPERATIONAL_READINESS.md](./CP51C_OPERATIONAL_READINESS.md).
   No remote production/QA action is authorized by this status.
 - **CP-5.2 and CP-6:** `NOT STARTED`.
 

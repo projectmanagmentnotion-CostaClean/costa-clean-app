@@ -78,13 +78,14 @@ dated closeout notes are retained as historical evidence and are not reopened.
   delivery path completed one Brevo sandbox `drop` acceptance with zero real
   emails and exact temporary-fixture cleanup. This does not authorize
   production delivery.
-- **CP-5.1:** `IN PROGRESS — PREFLIGHT ONLY / PRODUCTION NOT AUTHORIZED`.
+- **CP-5.1:** `BLOCKED / STOP_PRESTATE_DRIFT / PRODUCTION NOT AUTHORIZED`.
   Candidate identities and a zero-mutation production-preflight package are
   versioned in [CP51_PRODUCTION_READINESS_PREFLIGHT.md](./CP51_PRODUCTION_READINESS_PREFLIGHT.md),
   [CP51A_RELEASE_CANDIDATE_MANIFEST.md](./CP51A_RELEASE_CANDIDATE_MANIFEST.md),
   [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](./CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md),
   [CP51C_OPERATIONAL_READINESS.md](./CP51C_OPERATIONAL_READINESS.md)
-  and [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](./CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md).
+  [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](./CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md)
+  and [CP51E_PRODUCTION_RECONCILIATION_PLAN.md](./CP51E_PRODUCTION_RECONCILIATION_PLAN.md).
   No remote production/QA action is authorized by this status.
 - **CP-5.2 and CP-6:** `NOT STARTED`.
 

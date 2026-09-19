@@ -524,7 +524,7 @@ deployment or real-email rollout.
 
 | Field | Specification |
 |---|---|
-| Status | `IN PROGRESS — PREFLIGHT ONLY / PRODUCTION NOT AUTHORIZED` |
+| Status | `BLOCKED / STOP_PRESTATE_DRIFT / PRODUCTION NOT AUTHORIZED` |
 | Objective | Prove that exact QA-validated artifacts can enter a restricted production pilot safely. |
 | User outcome | No rollout yet; operational, security and support controls are ready before any customer is invited. |
 | Dependencies | CP-4.3 closed; QA P0/P1 zero; exact production authorization available only after review. |
@@ -551,6 +551,7 @@ Current CP-5.1 preparation evidence:
 - [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md) — zero-mutation production preflight design.
 - [CP51C_OPERATIONAL_READINESS.md](CP51C_OPERATIONAL_READINESS.md) — operational, compliance, monitoring and ownership readiness; unresolved owners remain `HUMAN_INPUT_REQUIRED`.
 - [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md) — exact future read-only authorization boundary; not authorized.
+- [CP51E_PRODUCTION_RECONCILIATION_PLAN.md](CP51E_PRODUCTION_RECONCILIATION_PLAN.md) — source-only reconciliation/deployment plan; production mutation not authorized.
 
 No production/QA remote access, deployment, migration apply, provider send, secret mutation or customer pilot is authorized by this status. CP-5.2 remains `NOT STARTED`.
 

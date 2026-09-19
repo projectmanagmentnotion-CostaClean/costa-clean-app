@@ -550,6 +550,7 @@ Current CP-5.1 preparation evidence:
 - [CP51A_RELEASE_CANDIDATE_MANIFEST.md](CP51A_RELEASE_CANDIDATE_MANIFEST.md) — frozen runtime/migration/test identities and source-only migration review;
 - [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md) — zero-mutation production preflight design.
 - [CP51C_OPERATIONAL_READINESS.md](CP51C_OPERATIONAL_READINESS.md) — operational, compliance, monitoring and ownership readiness; unresolved owners remain `HUMAN_INPUT_REQUIRED`.
+- [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md) — exact future read-only authorization boundary; not authorized.
 
 No production/QA remote access, deployment, migration apply, provider send, secret mutation or customer pilot is authorized by this status. CP-5.2 remains `NOT STARTED`.
 

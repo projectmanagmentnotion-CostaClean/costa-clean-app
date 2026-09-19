@@ -30,6 +30,38 @@ Brevo, SiteGround or customer data.
 
 No human names are inferred. Missing ownership remains an explicit blocker.
 
+## Owner matrix
+
+| Role | Required value |
+|---|---|
+| `RELEASE_OWNER` | `HUMAN_INPUT_REQUIRED` |
+| `ROLLBACK_OWNER` | `HUMAN_INPUT_REQUIRED` |
+| `INCIDENT_OWNER` | `HUMAN_INPUT_REQUIRED` |
+| `OBSERVABILITY_OWNER` | `HUMAN_INPUT_REQUIRED` |
+| `BACKUP_OWNER` | `HUMAN_INPUT_REQUIRED` |
+| `RESTORE_OWNER` | `HUMAN_INPUT_REQUIRED` |
+
+One human may hold multiple roles, but no role is assigned by this document.
+
+## Backup and restore requirements
+
+The future backup must be fresh for the exact production target and release
+window, timestamped, integrity-checked and sufficient for every database object
+affected by the candidate. Its private location and non-sensitive digest may be
+recorded in the readiness evidence; backup contents, credentials and private
+connection details must remain outside Git. A valid restore test proves that a
+named `RESTORE_OWNER` can restore the backup into an approved isolated target,
+verify schema/data/security invariants and record the elapsed time and result.
+No backup or restore is executed by CP-5.1C.
+
+## Provider and legal reconciliation
+
+Before any later authorization, reconcile Brevo provider purpose, sender and
+domain identity, suppression/bounce handling, retention, redaction, minimum
+payload, privacy and DPA/processor/region facts. Undemonstrated facts remain
+`NEEDS_FRESH_EVIDENCE` or `HUMAN_INPUT_REQUIRED`; no compliance approval is
+inferred from QA sandbox evidence.
+
 ## Required read-only evidence package
 
 Before CP-5.1 can be proposed for closure, an authorized package must record:

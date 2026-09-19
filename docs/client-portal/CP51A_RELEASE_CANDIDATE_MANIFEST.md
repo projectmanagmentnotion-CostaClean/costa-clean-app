@@ -138,7 +138,18 @@ freeze only and does not prove production applicability.
 
 Disposition: `PASS_FOR_CP51A_SOURCE_FREEZE / NOT_PASS_FOR_PRODUCTION_EXECUTION`.
 
-## 9. Next unlocked work
+## 9. Agent manifest reconciliation
+
+The initial agent-pack gate reported 15 SHA-256 mismatches, not one isolated
+profile. Git history proves that the profiles and validation pack were changed
+legitimately by `565a5f8` (`feat(v3): install exhaustive quality and brand
+foundations`) and `ebd5d33` (`docs(v3): certify operations refinement`). The
+current profiles still pass all structural, policy, naming, tool and secret
+checks. Only the 15 manifest `sha256` fields were updated to the bytes now
+present in their declared paths; no profile content or validator rule was
+changed. The resulting `qa:agents` result is `160/160 PASS`.
+
+## 10. Next unlocked work
 
 CP-5.1B may now be prepared as a **zero-mutation production preflight package**.
 

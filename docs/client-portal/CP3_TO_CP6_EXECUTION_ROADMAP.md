@@ -555,6 +555,7 @@ Current CP-5.1 preparation evidence:
 - [CP51F_BACKUP_RESTORE_READINESS.md](CP51F_BACKUP_RESTORE_READINESS.md) — backup/restore gate blocked because managed backup inventory access is unavailable; no backup or restore was executed.
 - [CP51F2_BACKUP_CAPABILITY_RESOLUTION.md](CP51F2_BACKUP_CAPABILITY_RESOLUTION.md) — official capability review: free-plan managed backups/PITR unavailable; logical backup requires separate Authorization C.
 - [CP51F3_LOGICAL_PRODUCTION_BACKUP.md](CP51F3_LOGICAL_PRODUCTION_BACKUP.md) — logical backup stopped because no private database credential/connection path was available; no dump was created.
+- [CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md](CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md) — Temporary Access is technically compatible but its prestate/configuration cannot be safely queried or changed in the current tool context; no JIT mutation occurred.
 
 No production/QA remote access, deployment, migration apply, provider send, secret mutation or customer pilot is authorized by this status. CP-5.2 remains `NOT STARTED`.
 

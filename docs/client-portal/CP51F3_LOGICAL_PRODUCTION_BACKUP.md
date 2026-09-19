@@ -1,6 +1,6 @@
 # CP-5.1F3 — Logical Production Backup
 
-**Status:** `STOP_DATABASE_CREDENTIAL_REQUIRED`
+**Status:** `STOP_JIT_PERMISSION_REQUIRED`
 
 Authorization C was reviewed and honored within its exact scope. The target was
 revalidated, CLI syntax was inspected, but no logical backup was created
@@ -117,7 +117,8 @@ but it is not a complete platform backup.
 - Secrets exposed: `NO`
 - Credential value exposed: `NO`
 
-**Verdict:** `STOP_DATABASE_CREDENTIAL_REQUIRED`
+**Verdict:** `STOP_JIT_PERMISSION_REQUIRED`
 
-CP-5.1 remains `BLOCKED`. Authorization B was not executed. CP-5.2 remains
+CP-5.1 remains `BLOCKED`. Temporary Access/JIT capability is the unresolved
+credential path, and Authorization B was not executed. CP-5.2 remains
 `NOT_STARTED`.

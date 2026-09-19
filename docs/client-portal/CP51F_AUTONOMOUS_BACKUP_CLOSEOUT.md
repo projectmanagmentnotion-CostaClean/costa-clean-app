@@ -1,16 +1,18 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-19T20:59:22.5446633Z`
-**Verdict:** `STOP_HUMAN_AUTH_BOOTSTRAP_REQUIRED`
+**Reviewed at:** `2026-09-19T21:14:20.6008661Z`
+**Verdict:** `STOP_JIT_PERMISSION_REQUIRED`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
 ## Final result
 
-The repository and production target were revalidated, and all safe existing
-authentication channels were exhausted. No private credential or Management
-API/dashboard session capable of administering Temporary Access for the target
-was available to this execution. Consequently, no production backup could be
-created without a genuine human authentication bootstrap.
+The repository, target and authenticated Supabase browser session were
+revalidated. OAuth authentication is available and the exact target project is
+visible, but the authenticated session does not expose the Temporary Access/JIT
+controls: Database Settings reports that additional permissions are required,
+the JIT section is not visible, and the available MCP surface has no JIT or
+Management API operation. Consequently, the backup remains blocked by project
+permission rather than by missing login.
 
 This is a blocker, not a PASS. No production data was copied, no JIT state was
 changed, and no production or QA mutation was performed.
@@ -21,12 +23,13 @@ changed, and no production or QA mutation was performed.
 |---|---|
 | Repository | `projectmanagmentnotion-CostaClean/costa-clean-app` |
 | Branch | `codex/cp51-production-readiness-preflight` |
-| HEAD | `c53b072c331479de59fab01158ac74260c67f65d` |
+| HEAD | `853c17c5c0ebc0d53c8942283c849e179627a999` |
 | Remote branch | Matches HEAD |
 | PR | `#18`, open, draft |
 | Production ref | `wfxnwfcdjainpojhbdri` |
 | Production status | `ACTIVE_HEALTHY` |
 | PostgreSQL | `17.6.1.084` |
+| Supabase OAuth/MCP | `AUTHENTICATED = YES` |
 | Candidate | `7870ae4408ab7af0c944b149d2c75a70b8421e65` |
 | Migration blob | `c7c686769160d987c3721721a589dae1eae0dced` |
 | CP-4.3C | `QA_CERTIFIED / CLOSED` |
@@ -45,13 +48,13 @@ printed, persisted or exposed.
 | Route | Classification | Evidence |
 |---|---|---|
 | Supabase CLI session | `AVAILABLE_AND_USED_PRIVATELY` for metadata only | CLI `2.109.1` lists only project `Coachai` (`zlblnezbbiimapruazvc`); target is not linked and no target DB auth was available |
-| Supabase MCP | `AVAILABLE_AND_USED_PRIVATELY` for metadata only | Target identity, URL, health, version and organization plan verified; no JIT/Management API tool exists |
+| Supabase MCP/OAuth | `AVAILABLE_AND_USED_PRIVATELY` for metadata only | Target identity, URL, health, version and organization plan verified; no JIT/Management API tool exists |
 | Environment variables | `NOT_AVAILABLE` | No `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, `SUPABASE_DB_URL`, `SUPABASE_DB_PASSWORD`, `PGPASSWORD`, PAT or Management API token name was present |
 | Local credential files | `NOT_AVAILABLE` | No relevant Supabase CLI credential store was present in the inspected user locations |
 | Windows Credential Manager | `NOT_AVAILABLE` | No relevant target credential entry appeared in safe target-name listing |
 | Vercel | `NOT_AVAILABLE` for secret access | Team/project metadata exists, but no Vercel CLI, local project link or environment-value read capability is available; no environment value was requested |
 | Existing DB/pooler URL | `NOT_AVAILABLE` | No private connection URL/password was available for the exact production ref |
-| Temporary Access/JIT | `NOT_AVAILABLE` | CLI has no JIT command and MCP has no JIT operation; Management API requires a PAT/session not available privately |
+| Temporary Access/JIT | `STOP_JIT_PERMISSION_REQUIRED` | Authenticated dashboard session reaches the exact project, but Database Settings controls require additional permissions; no JIT control or Management API operation is available |
 
 The local `.env.local` contains only client-side URL/key names; its values were
 not read and it is not a database-auth channel. The repository's local
@@ -66,11 +69,11 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 
 | Required result | Status |
 |---|---|
-| Authentication route used | `NONE_FOR_TARGET` |
+| Authentication route used | `SUPABASE_OAUTH_BROWSER_SESSION — metadata only` |
 | Secret source classification | `NOT_AVAILABLE` |
 | Secret exposed | `NO` |
 | JIT used | `NO` |
-| JIT prestate | `UNKNOWN / NOT_QUERYABLE_WITHOUT_AUTH` |
+| JIT prestate | `UNKNOWN / INSUFFICIENT_PROJECT_PERMISSION` |
 | JIT poststate | `NOT_APPLICABLE / NO_MUTATION` |
 | Temporary role | `NOT_ASSIGNED` |
 | Expiry | `NOT_SET` |
@@ -92,7 +95,8 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 
 The installed CLI help was inspected before any dump attempt. It supports
 `--role-only`, `--data-only`, `--schema`, `--file`, `--db-url`, `--password` and
-`--linked`; none was invoked because no safe target credential existed.
+`--linked`; none was invoked because the authenticated session did not grant a
+safe PostgreSQL/JIT route.
 
 ## Mutation and safety accounting
 
@@ -111,9 +115,8 @@ The installed CLI help was inspected before any dump attempt. It supports
 
 ## Validation and delivery
 
-The previous documentation commit remains the verified HEAD. This closeout is
-the only new repository change in this continuation. Required validations for
-this documentation-only update are run before commit:
+This closeout update is the only repository change in this continuation.
+Required validations for this documentation-only update are run before commit:
 
 - CP-4.3C focused tests;
 - `qa:agents`;
@@ -127,12 +130,10 @@ this documentation-only update are run before commit:
 The PR remains draft. No merge, force push, Authorization B, CP-4.3C
 production reconciliation or CP-5.2 action is permitted.
 
-## One unavoidable human step
+## Permission blocker
 
-Authenticate the current Codex/Supabase MCP session for the CostaClean project
-(`wfxnwfcdjainpojhbdri`) through the official Supabase OAuth/dashboard flow;
-after that single bootstrap, Codex can continue automatically with JIT
-prestate, least-privilege temporary access, private dump, integrity checks,
-offline restore attempt, cleanup and poststate verification.
+The authenticated browser session still lacks the project permission required
+to read or administer Temporary Access/JIT. No human password, PAT, database
+password or connection string was requested or exposed.
 
-**Next exact gate:** `HUMAN_AUTH_BOOTSTRAP → CP-5.1F backup and restore verification`.
+**Next exact gate:** `PROJECT_PERMISSION_BOOTSTRAP → CP-5.1F backup and restore verification`.

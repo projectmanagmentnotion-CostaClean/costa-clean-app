@@ -5,6 +5,9 @@ Status: sanitized aggregate evidence for the recovery candidate.
 ## Candidate and environment
 
 - Candidate starting SHA: `4842f3da825a7bd542fa02abb8f8c0cba5d50558`.
+- Candidate validated SHA: `89f960bb7bb6dc1d4d4929031619768f30aa2319`.
+- Verified local app URL: `http://127.0.0.1:4178/?v3=1`.
+- Sanitized evidence provenance timestamp: `2026-09-19T22:49:14+02:00`.
 - QA Supabase project ref: `kpvvydthlxupjjqqdpxy`.
 - Authenticated browser methodology: persistent user-authenticated Google Chrome QA profile, reused across the audit; no credentials, cookies, JWTs, or profile files are committed.
 - Audit mode: authenticated, read-only, no business writes.

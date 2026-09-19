@@ -54,7 +54,7 @@ function V3TopBar({ currentView, onBack, backTargetView }: Pick<V3ShellChromePro
           </button>
         ) : null}
         <div className="v3-top-bar__context">
-          <div className="v3-top-bar__brand" aria-label="Costa Clean" data-brand-name="CostaClean">
+          <div className="v3-top-bar__brand" data-brand-name="CostaClean">
             <img className="v3-top-bar__brand-logo" src={brandAssets.logoPrimary.src} alt="" aria-hidden="true" />
             <span>Costa Clean</span>
           </div>
@@ -130,7 +130,7 @@ function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick
 function V3NavigationRail({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick<V3ShellChromeProps, 'currentView' | 'onChangeView'> & { onOpenMore: () => void; isMoreOpen: boolean }) {
   const isSecondaryContext = secondaryItems.some((item) => isActive(item.view, currentView))
   return <nav className="v3-navigation-rail" aria-label="Navegación principal para iPad">
-    <div className="v3-navigation-rail__brand" aria-label="Costa Clean">
+    <div className="v3-navigation-rail__brand">
       <img className="v3-navigation-rail__mark" src={brandAssets.logoPrimary.src} alt="" aria-hidden="true" />
       <span>Costa Clean</span>
     </div>

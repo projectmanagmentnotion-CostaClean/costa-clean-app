@@ -1,7 +1,7 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-19T21:34:00Z`
-**Verdict:** `STOP_ONE_HUMAN_ACTION_REQUIRED`
+**Reviewed at:** `2026-09-19T23:45:00Z`
+**Verdict:** `STOP_SECRET_EXPOSURE_RISK`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
 ## Final result
@@ -11,8 +11,11 @@ revalidated. OAuth authentication is available and the exact target project is
 visible, but the authenticated session does not expose the Temporary Access/JIT
 controls: Database Settings reports that additional permissions are required,
 the JIT section is not visible, and the available MCP surface has no JIT or
-Management API operation. Consequently, the backup remains blocked by project
-permission rather than by missing login.
+Management API operation. A temporary Classic PAT was created in the
+authenticated browser flow, but no safe private handoff from the browser to a
+runtime credential store was available. It was revoked immediately and the
+token row was verified absent. Consequently, the backup remains blocked by
+secret-handoff safety rather than by missing login.
 
 This is a blocker, not a PASS. No production data was copied, no JIT state was
 changed, and no production or QA mutation was performed.
@@ -122,6 +125,13 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 | Scoped PAT created by Codex | `NO` |
 | Scoped PAT expiry | `NOT_SET` |
 | Management API credential | `NOT_AVAILABLE` |
+| Classic PAT created | `YES — temporary browser flow` |
+| Classic PAT created by Codex | `YES` |
+| Classic PAT storage | `PRIVATE_BROWSER_SESSION_ONLY; no runtime persistence` |
+| Classic PAT exposed | `NO` |
+| Classic PAT revoked | `YES — token row absent after deletion confirmation` |
+| Classic PAT post-revoke validity | `NOT_TESTED — secret was never safely transferred to a request runtime` |
+| Token persisted after gate | `NO` |
 | Restore result | `NOT_ATTEMPTED — no private backup exists` |
 
 `NOT_EXECUTED`, `UNKNOWN` and `NOT_ESTABLISHED` are not PASS conditions.
@@ -166,13 +176,13 @@ production reconciliation or CP-5.2 action is permitted.
 ## Permission blocker
 
 The authenticated browser session still lacks the project permission required
-to read or administer Temporary Access/JIT, and the available token UI does not
-provide a safe project-scoped credential with the required minimum permissions.
-No human password, PAT, database password or connection string was requested or
-exposed.
+to read or administer Temporary Access/JIT. Codex created the authorized
+temporary Classic PAT, but the browser flow did not provide a safe private
+handoff into a request runtime; the PAT was therefore revoked before any
+Management API request. No human password, database password or connection
+string was requested or exposed.
 
-**Next exact gate:** One owner action: create a Supabase **Scoped PAT** for
-`wfxnwfcdjainpojhbdri` with only Project Settings RW, Database JIT RW and
-Database Read if required, with the shortest practical expiry, and save it
-directly as a private Codex environment secret. Do not paste it in chat. After
-that, resume `CP-5.1F backup and restore verification`.
+**Next exact gate:** `STOP_SECRET_EXPOSURE_RISK`. A future continuation requires
+a secure runtime handoff for an owner-created temporary Classic PAT, without
+pasting or exposing the secret; no further CP-5.1F action is authorized in
+this turn.

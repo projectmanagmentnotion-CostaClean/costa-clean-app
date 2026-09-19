@@ -1,7 +1,7 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-19T21:23:28.3249259Z`
-**Verdict:** `STOP_JIT_PERMISSION_REQUIRED`
+**Reviewed at:** `2026-09-19T21:34:00Z`
+**Verdict:** `STOP_ONE_HUMAN_ACTION_REQUIRED`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
 ## Final result
@@ -23,7 +23,7 @@ changed, and no production or QA mutation was performed.
 |---|---|
 | Repository | `projectmanagmentnotion-CostaClean/costa-clean-app` |
 | Branch | `codex/cp51-production-readiness-preflight` |
-| HEAD | `853c17c5c0ebc0d53c8942283c849e179627a999` |
+| HEAD | `7f23d620f47c907f0ab87fa9e7bdc64dc6a3c521` |
 | Remote branch | Matches HEAD |
 | PR | `#18`, open, draft |
 | Production ref | `wfxnwfcdjainpojhbdri` |
@@ -77,6 +77,14 @@ printed, persisted or exposed.
 | Existing DB/pooler URL | `NOT_AVAILABLE` | No private connection URL/password was available for the exact production ref |
 | Temporary Access/JIT | `STOP_JIT_PERMISSION_REQUIRED` | Authenticated dashboard session reaches the exact project, but Database Settings controls require additional permissions; no JIT control or Management API operation is available |
 
+The authenticated Supabase Access Tokens page was also checked for a
+least-privilege Management API route. Its available flow was only **Generate
+token for experimental API**. The dialog exposed a name and expiry, but no
+project selector or fine-grained permission controls; its warning explicitly
+covered organization/project management, including irreversible deletion.
+That broad token was not generated. No Classic PAT or experimental API token
+was created, displayed, copied, persisted or exposed.
+
 The local `.env.local` contains only client-side URL/key names; its values were
 not read and it is not a database-auth channel. The repository's local
 `supabase/config.toml` has project id `costa-clean-app`, not the production ref.
@@ -110,6 +118,10 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 | SHA-256 | `N/A` |
 | Storage bytes included | `NO` |
 | Restore actually tested | `NO` |
+| Scoped PAT available | `NO / NOT_EXPOSED_BY_AUTHENTICATED_UI` |
+| Scoped PAT created by Codex | `NO` |
+| Scoped PAT expiry | `NOT_SET` |
+| Management API credential | `NOT_AVAILABLE` |
 | Restore result | `NOT_ATTEMPTED — no private backup exists` |
 
 `NOT_EXECUTED`, `UNKNOWN` and `NOT_ESTABLISHED` are not PASS conditions.
@@ -154,7 +166,13 @@ production reconciliation or CP-5.2 action is permitted.
 ## Permission blocker
 
 The authenticated browser session still lacks the project permission required
-to read or administer Temporary Access/JIT. No human password, PAT, database
-password or connection string was requested or exposed.
+to read or administer Temporary Access/JIT, and the available token UI does not
+provide a safe project-scoped credential with the required minimum permissions.
+No human password, PAT, database password or connection string was requested or
+exposed.
 
-**Next exact gate:** `MCP_PROJECT_SETTINGS_AND_DATABASE_JIT_READ_WRITE_SCOPE → CP-5.1F backup and restore verification`.
+**Next exact gate:** One owner action: create a Supabase **Scoped PAT** for
+`wfxnwfcdjainpojhbdri` with only Project Settings RW, Database JIT RW and
+Database Read if required, with the shortest practical expiry, and save it
+directly as a private Codex environment secret. Do not paste it in chat. After
+that, resume `CP-5.1F backup and restore verification`.

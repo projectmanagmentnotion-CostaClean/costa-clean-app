@@ -236,7 +236,7 @@ async function runViewport(metadata, viewport, sharedContext = null) {
     reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference',
   })
   const page = await context.newPage()
-  await context.emulateMedia({ reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference' })
+  await page.emulateMedia({ reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference' })
   if (sharedContext) await page.setViewportSize({ width: viewport.width, height: viewport.height })
   page.on('request', (request) => {
     const url = request.url(); const method = request.method()

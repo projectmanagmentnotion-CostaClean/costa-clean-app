@@ -42,7 +42,10 @@ async function main() {
   }
 
   const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
-  const browser = await detectBrowserExecutable()
+  const browser = await detectBrowserExecutable({
+    browserId: storedState.browserId,
+    executablePath: storedState.executablePath,
+  })
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
   const headless = process.argv.includes('--headless')
 

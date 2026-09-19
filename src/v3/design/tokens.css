@@ -80,6 +80,13 @@
   --v3-icon-size-sm: 16px;
   --v3-icon-size-md: 20px;
   --v3-icon-size-lg: 24px;
+  --v3-brand-logo-top-height: var(--v3-icon-size-lg);
+  --v3-brand-logo-top-width: 28px;
+  --v3-brand-logo-rail-height: 40px;
+  --v3-brand-logo-rail-width: 46px;
+  --v3-brand-logo-desktop-height: 42px;
+  --v3-brand-logo-desktop-width: 48px;
+  --v3-letter-spacing-brand: 0.04em;
   --v3-sheet-handle-width: 40px;
   --v3-sheet-handle-height: 4px;
   --v3-touch-min: 44px;

@@ -451,7 +451,10 @@ export async function withAuthenticatedQaSession(execute) {
     throw new Error('Missing sandbox auth metadata. Run npm run qa:auth:sandbox first.')
   })
   const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
-  const browser = await detectBrowserExecutable()
+  const browser = await detectBrowserExecutable({
+    browserId: storedState.browserId,
+    executablePath: storedState.executablePath,
+  })
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
   const browserLaunch = process.env.QA_REMOTE_DEBUGGING_PORT
     ? { remoteDebuggingPort, reusedExistingBrowser: true }

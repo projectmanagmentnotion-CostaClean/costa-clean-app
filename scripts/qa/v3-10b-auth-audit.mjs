@@ -23,6 +23,7 @@ const viewports = [
   { id: '390x844', width: 390, height: 844 }, { id: '768x1024', width: 768, height: 1024 },
   { id: '1440x900', width: 1440, height: 900 }, { id: '320x568', width: 320, height: 568 },
   { id: '430x932', width: 430, height: 932 }, { id: '1024x1366', width: 1024, height: 1366 },
+  { id: '820x1180', width: 820, height: 1180 }, { id: '834x1194', width: 834, height: 1194 },
   { id: '1280x800', width: 1280, height: 800 }, { id: '1920x1080', width: 1920, height: 1080 },
 ]
 const fullViewportCount = viewports.length
@@ -33,6 +34,8 @@ const searchRowSelectors = {
   payments: '[aria-label^="Abrir "]', expenses: '[aria-label^="Abrir "]',
 }
 const searchMissToken = '__V3_10B2_NO_MATCH_7F4C2A__'
+const auditSettleMs = Number(process.env.V3_10B_SETTLE_MS ?? 1500)
+const auditRowTimeoutMs = Number(process.env.V3_10B_ROW_TIMEOUT_MS ?? 5000)
 
 function buildUrl(view) {
   const url = new URL(qaAppUrl)
@@ -56,7 +59,7 @@ async function visibleCount(page, selector) {
   }).length)
 }
 
-async function waitForVisibleRows(page, selector, timeout = 5000) {
+async function waitForVisibleRows(page, selector, timeout = auditRowTimeoutMs) {
   const deadline = Date.now() + timeout
   while (Date.now() < deadline) {
     if (await visibleCount(page, selector) > 0) return true
@@ -180,7 +183,7 @@ async function inspectSurface(page, view, expectedHeading, statusRef) {
   try {
     const targetView = view === 'recurring' ? 'clients' : view
     result.navigationEvidence = await navigateWithEvidence(page, buildUrl(targetView), statusRef)
-    await page.waitForTimeout(1500)
+    await page.waitForTimeout(auditSettleMs)
     result.navigation = 'PASS'
     const headingLocator = page.getByRole('heading', { name: expectedHeading, exact: true }).first()
     try { await headingLocator.waitFor({ state: 'visible', timeout: 5000 }) } catch {}
@@ -195,6 +198,7 @@ async function inspectSurface(page, view, expectedHeading, statusRef) {
         const section = page.locator('.v3-client-workspace .v3-section').filter({ hasText: 'Planes recurrentes' }).first()
         result.workspace = await section.count() > 0 ? 'PASS_VIA_CLIENT_WORKSPACE' : 'NOT_FOUND'
         result.heading = await section.count() > 0
+        result.viewReady = result.heading
       } else result.workspace = 'EMPTY_OR_NOT_AVAILABLE'
       result.search = 'N/A'
       return result
@@ -209,7 +213,7 @@ async function inspectSurface(page, view, expectedHeading, statusRef) {
         result.workspace = await page.locator(workspaceSelectors[view]).count() > 0 ? 'PASS' : 'NOT_FOUND'
         const workspaceUrl = page.url()
         await page.reload({ waitUntil: 'domcontentloaded' })
-        await page.waitForTimeout(1500)
+        await page.waitForTimeout(auditSettleMs)
         const back = page.locator('.v3-workspace-back').first().or(page.getByRole('button', { name: 'Volver', exact: true }).first())
         if (await back.count() > 0) { await back.click(); await page.waitForTimeout(750) }
         result.deepLinkBack = { deepLinkPresent: /(?:client|lead|property|quote|job|invoice|payment|expense)=/u.test(workspaceUrl), backVisible: await page.getByRole('heading', { name: expectedHeading, exact: true }).first().count() > 0 }
@@ -222,10 +226,18 @@ async function inspectSurface(page, view, expectedHeading, statusRef) {
   return result
 }
 
-async function runViewport(metadata, viewport) {
+async function runViewport(metadata, viewport, sharedContext = null) {
   const state = { productionRequests: [], nonQaSupabaseRequests: [], qaMutations: [], failedRequests: [], consoleErrors: [], pageErrors: [] }
-  const context = await chromium.launchPersistentContext(metadata.profileDir, { headless: true, viewport: { width: viewport.width, height: viewport.height }, serviceWorkers: 'allow', reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference' })
+  const context = sharedContext ?? await chromium.launchPersistentContext(metadata.profileDir, {
+    ...(metadata.executablePath ? { executablePath: metadata.executablePath } : {}),
+    headless: true,
+    viewport: { width: viewport.width, height: viewport.height },
+    serviceWorkers: 'allow',
+    reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference',
+  })
   const page = await context.newPage()
+  await context.emulateMedia({ reducedMotion: viewport.id === '390x844' ? 'reduce' : 'no-preference' })
+  if (sharedContext) await page.setViewportSize({ width: viewport.width, height: viewport.height })
   page.on('request', (request) => {
     const url = request.url(); const method = request.method()
     if (url.includes(productionProjectRef)) state.productionRequests.push({ method })
@@ -239,12 +251,12 @@ async function runViewport(metadata, viewport) {
   const statusRef = { originalDocumentStatus: null }
   const result = { viewport, state, surfaces: [], more: 'NOT_EXECUTED', keyboard: 'NOT_EXECUTED', escapeOpenAssertion: 'NOT_EXECUTED', escapeCloseAssertion: 'NOT_EXECUTED', focusRestoration: 'NOT_EXECUTED', searchRoundtrip: 'NOT_EXECUTED', finalGeometry: null }
   try {
-    result.initialNavigationEvidence = await navigateWithEvidence(page, buildUrl('dashboard'), statusRef); await page.waitForTimeout(1500)
+    result.initialNavigationEvidence = await navigateWithEvidence(page, buildUrl('dashboard'), statusRef); await page.waitForTimeout(auditSettleMs)
     result.authenticated = (await geometry(page)).authenticatedShell
     for (const [view, heading] of surfaces) result.surfaces.push(await inspectSurface(page, view, heading, statusRef))
-    result.searchRoundtripNavigationEvidence = await navigateWithEvidence(page, buildUrl('clients'), statusRef); await page.waitForTimeout(1500)
+    result.searchRoundtripNavigationEvidence = await navigateWithEvidence(page, buildUrl('clients'), statusRef); await page.waitForTimeout(auditSettleMs)
     result.searchRoundtrip = await inspectSearchRoundtrip(page)
-    result.finalNavigationEvidence = await navigateWithEvidence(page, buildUrl('dashboard'), statusRef); await page.waitForTimeout(1500)
+    result.finalNavigationEvidence = await navigateWithEvidence(page, buildUrl('dashboard'), statusRef); await page.waitForTimeout(auditSettleMs)
     const more = page.getByRole('button', { name: 'Más', exact: true }).last()
     if (await more.count() > 0) {
       await more.focus(); await more.click(); await page.waitForTimeout(250)
@@ -272,7 +284,8 @@ async function runViewport(metadata, viewport) {
     }
     result.finalGeometry = await geometry(page)
   } catch (error) { result.error = error instanceof Error ? error.message : String(error) }
-  await context.close()
+  await page.close()
+  if (!sharedContext) await context.close()
   return result
 }
 
@@ -283,7 +296,18 @@ async function main() {
   const selectedSurfaceIds = new Set(process.env.V3_10B_SURFACES ? process.env.V3_10B_SURFACES.split(',').map((value) => value.trim()).filter(Boolean) : surfaces.map(([view]) => view))
   const originalSurfaces = surfaces.slice()
   surfaces.splice(0, surfaces.length, ...originalSurfaces.filter(([view]) => selectedSurfaceIds.has(view)))
-  for (const viewport of viewports.filter((candidate) => selectedViewportIds.has(candidate.id))) report.results.push(await runViewport(metadata, viewport))
+  const selectedViewports = viewports.filter((candidate) => selectedViewportIds.has(candidate.id))
+  const sharedContext = await chromium.launchPersistentContext(metadata.profileDir, {
+    ...(metadata.executablePath ? { executablePath: metadata.executablePath } : {}),
+    headless: true,
+    viewport: null,
+    serviceWorkers: 'allow',
+  })
+  try {
+    for (const viewport of selectedViewports) report.results.push(await runViewport(metadata, viewport, sharedContext))
+  } finally {
+    await sharedContext.close()
+  }
   report.auth = report.results.every((result) => result.authenticated) ? 'PASS' : 'FAIL'
   const navigationEvidence = report.results.flatMap((result) => [result.initialNavigationEvidence, ...result.surfaces.map((surface) => surface.navigationEvidence), result.searchRoundtripNavigationEvidence, result.finalNavigationEvidence].filter(Boolean))
   report.summary = {

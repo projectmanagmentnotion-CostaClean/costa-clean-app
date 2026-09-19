@@ -120,11 +120,23 @@ export function getQaPaths(rootDir = process.cwd()) {
   }
 }
 
-export async function detectBrowserExecutable() {
+export async function detectBrowserExecutable(preferences = {}) {
   if (process.env.QA_BROWSER_PATH) {
     return {
       id: 'custom',
       executablePath: process.env.QA_BROWSER_PATH,
+    }
+  }
+
+  if (preferences.executablePath) {
+    try {
+      await fs.access(preferences.executablePath)
+      return {
+        id: preferences.browserId ?? 'custom',
+        executablePath: preferences.executablePath,
+      }
+    } catch {
+      // Fall through to the local browser discovery list.
     }
   }
 

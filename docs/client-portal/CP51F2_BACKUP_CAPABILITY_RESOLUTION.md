@@ -163,6 +163,11 @@ production backup, or a separately approved paid-plan/capability change and
 backup inventory access. The smallest path is Authorization C; it still must
 not be executed automatically.
 
+Authorization C was subsequently supplied, but execution stopped at
+`STOP_DATABASE_CREDENTIAL_REQUIRED`: no private database password or connection
+path was available without creating or exposing credentials. See
+[CP51F3_LOGICAL_PRODUCTION_BACKUP.md](CP51F3_LOGICAL_PRODUCTION_BACKUP.md).
+
 CP-5.1 remains blocked until backup integrity and restore readiness are proven.
 Authorization B remains unapproved. CP-5.2 remains `NOT STARTED`.
 

@@ -1,6 +1,6 @@
 # CP-5.1F — Backup / Restore Readiness
 
-**Status:** `BLOCKED / NO_MANAGED_BACKUP / LOGICAL_BACKUP_REQUIRED`
+**Status:** `BLOCKED / STOP_DATABASE_CREDENTIAL_REQUIRED`
 
 This record covers only the explicitly authorized CP-5.1F backup and
 restore-readiness gate. No migration, DDL, application SQL write, deployment,
@@ -106,4 +106,4 @@ This document contains only non-sensitive target and release metadata. It does
 not contain backup contents, dumps, credentials, connection strings, secret
 values, tokens, encryption keys, worker secrets or personal data.
 
-**Disposition:** `CP51F_BLOCKED / NO_MANAGED_BACKUP / LOGICAL_BACKUP_REQUIRED`
+**Disposition:** `CP51F_BLOCKED / STOP_DATABASE_CREDENTIAL_REQUIRED`

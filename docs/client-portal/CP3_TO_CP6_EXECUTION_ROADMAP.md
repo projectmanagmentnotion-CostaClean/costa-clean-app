@@ -549,6 +549,7 @@ Current CP-5.1 preparation evidence:
 - [CP51_PRODUCTION_READINESS_PREFLIGHT.md](CP51_PRODUCTION_READINESS_PREFLIGHT.md) — readiness matrix, stop conditions and authorization boundary;
 - [CP51A_RELEASE_CANDIDATE_MANIFEST.md](CP51A_RELEASE_CANDIDATE_MANIFEST.md) — frozen runtime/migration/test identities and source-only migration review;
 - [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md) — zero-mutation production preflight design.
+- [CP51F5_AUTONOMOUS_BACKUP_RESOLUTION.md](CP51F5_AUTONOMOUS_BACKUP_RESOLUTION.md) — autonomous private-channel exhaustion; no backup or production mutation.
 - [CP51C_OPERATIONAL_READINESS.md](CP51C_OPERATIONAL_READINESS.md) — operational, compliance, monitoring and ownership readiness; unresolved owners remain `HUMAN_INPUT_REQUIRED`.
 - [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md) — exact future read-only authorization boundary; not authorized.
 - [CP51E_PRODUCTION_RECONCILIATION_PLAN.md](CP51E_PRODUCTION_RECONCILIATION_PLAN.md) — source-only reconciliation/deployment plan; production mutation not authorized.

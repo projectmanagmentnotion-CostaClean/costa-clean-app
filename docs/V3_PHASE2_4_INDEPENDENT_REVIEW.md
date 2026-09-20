@@ -134,3 +134,28 @@ Exact-HEAD evidence for `7b80795`:
 The payment P2 is therefore fixed in source and independently reviewed through
 the remediation path, but Phase 2.4 remains uncertified. Interaction coverage
 and exact-HEAD independent authenticated replay remain the certification gate.
+
+## Detached authenticated final review
+
+The final detached review was rerun from exact HEAD
+`782d7c532413bb00eebfd76156b26efec821cf26` using a disposable copy of the
+authenticated QA Chrome profile. The persistent operator profile was not
+opened or modified, no auth bypass was used, and no product, Supabase or
+production mutation was performed.
+
+The authenticated replay passed `11/11` across the exact 10 viewport matrix.
+The sanitized evidence recorded 26,398 requests, 3,158 QA Supabase requests,
+zero production or unknown Supabase requests, zero QA business writes, zero
+production writes, zero unknown mutations, zero failed requests, zero page
+errors and zero console errors. The detached reviewer also passed 32/32
+focused tests, `qa:agents` 294/294, lint and `git diff --check`.
+
+The previous auth-profile capability blocker is cleared. The detached review
+still returns `BLOCKED` because its isolated dependency bootstrap produces an
+incomplete `core-js@3.50.0` tree and Vite cannot complete the production build
+(84 unresolved dependency imports). This is an environment/toolchain failure,
+not an application assertion. Two non-blocking P2 coverage gaps remain for a
+separate interaction/write-path certification block; no P0 or P1 was found.
+
+Phase 2.4 therefore remains `BLOCKED` pending a clean detached dependency
+environment and closure of the remaining P2 interaction coverage gate.

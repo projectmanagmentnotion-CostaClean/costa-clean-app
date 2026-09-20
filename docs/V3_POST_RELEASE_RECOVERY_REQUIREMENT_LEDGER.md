@@ -75,8 +75,16 @@ regressions found by independent reviewer`. Phase 2.5 remediation is
 implemented at exact HEAD `7b80795fa2cdad6dde4fb50cd86e523457dca3d0`. The
 independent review path found and closed the payment duplicate-override P2, with
 P0/P1 remaining at zero. Final certification still returns
-`BLOCKED_BY_REVIEW_CAPABILITY` because the detached reviewer cannot replay the
-authenticated Chrome profile without mutation and its full suite has unrelated
-sandbox child-process/Git-ownership failures. The main worktree verified the
-exact-HEAD gates separately; no QA or production business write and no Supabase
-schema mutation was performed.
+`BLOCKED` because the final detached authenticated replay now passes, but the
+isolated dependency installation has an incomplete `core-js@3.50.0` tree and
+Vite reports 84 unresolved imports during build. Two non-blocking P2
+interaction-coverage gaps also remain. The persistent QA profile was not
+mutated, auth was not bypassed, and no QA or production business write or
+Supabase schema mutation was performed.
+
+Final detached evidence at exact HEAD `782d7c5` is 11/11 replay tests across
+all 10 viewports, 26,398 requests, 3,158 QA Supabase requests, zero
+production/unknown Supabase requests, zero QA business writes, zero production
+writes, zero unknown mutations, zero failed requests, zero page errors and zero
+console errors. Focused tests pass 32/32, agents pass 294/294, lint passes and
+the diff check is clean.

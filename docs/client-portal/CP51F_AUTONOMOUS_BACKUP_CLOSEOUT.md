@@ -214,3 +214,30 @@ connection string or secret variable was read or exposed.
 official CLI/link privileges (and a supported network path) before CP-5.1F
 backup and restore can continue. No Authorization B, CP-4.3C, or CP-5.2 action
 was performed.
+
+## CP-5.1F review-blocker remediation — 2026-09-21
+
+This section records the remediation of the independent-review findings. It
+does not certify a backup or restore and does not supersede the historical
+evidence above.
+
+- Management API authentication is supplied to `curl` through a private
+  stdin config stream; the PAT is not a curl command-line argument.
+- PostgreSQL dumps use host, port, database and user arguments only. The
+  temporary password file is outside the worktree, mode `0600`, exposed via
+  `PGPASSFILE`, and removed by the exit trap. SSL is required and JIT is
+  requested through `PGOPTIONS` rather than a credential-bearing URL.
+- A successful setup ends in `AWAITING_PAT_REVOCATION`; the runner cannot
+  certify while the Classic PAT remains active. Certification requires the
+  exact temporary-token name, inactive token evidence, and absence of the
+  token value from the evidence surface.
+- JIT prestate and mapping are validated before mutation. An absent mapping
+  fails closed before mutation. Cleanup verifies exact state and mapping
+  restoration; cleanup API or state-restore failure is a hard stop.
+- Executable Node behavior tests cover disabled/enabled success, enable and
+  post-enable failure, mapping and dump failures, absent mapping, cleanup
+  failure, revocation gating and sentinel non-disclosure. The local runtime
+  lacks `jq`, `pg_dump` and ShellCheck, so the real backup runner, dump and
+  ShellCheck validation remain `NOT_EXECUTED`, not PASS.
+- This remediation performed no production API write, JIT mutation, backup,
+  restore, PAT creation or PAT use.

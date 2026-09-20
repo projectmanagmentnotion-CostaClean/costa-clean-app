@@ -13,6 +13,14 @@ grep -Fq -- '{user_id:$user_id, roles:$roles}' <<<"$source_text"
 grep -Fq -- '(.user_roles | type) == "array"' <<<"$source_text"
 grep -Fq -- 'JIT_PRE_MAPPING_KIND" == "absent"' <<<"$source_text"
 grep -Fq -- 'error("invalid JIT state response")' <<<"$source_text"
+grep -Fq -- 'curl --config -' <<<"$source_text"
+grep -Fq -- 'PGPASSFILE=' <<<"$source_text"
+grep -Fq -- 'chmod 600 "$TEMP_CREDENTIAL_FILE"' <<<"$source_text"
+grep -Fq -- 'PG_DUMP_BIN' <<<"$source_text"
+! grep -Fq -- 'Authorization: Bearer $PAT"' <<<"$source_text"
+! grep -Fq -- '--db-url "$PRIVATE_DB_URL"' <<<"$source_text"
+! grep -Fq -- 'PRIVATE_DB_URL=' <<<"$source_text"
+grep -Fq -- 'AWAITING_PAT_REVOCATION' <<<"$source_text"
 
 state_enabled='{"state":"enabled","appliedSuccessfully":true}'
 state_disabled='{"state":"disabled","appliedSuccessfully":true}'

@@ -13,10 +13,28 @@ EXPECTED_POSTGRES_VERSION="17.6.1.084"
 MANAGEMENT_API_BASE="https://api.supabase.com/v1"
 PAT_ENV_NAME="SUPABASE_CP51F_TEMP_PAT"
 PRIVATE_SECURE_PATH="${CP51F_PRIVATE_SECURE_PATH:-}"
-SUPABASE_BIN="${SUPABASE_BIN:-supabase}"
+PG_DUMP_BIN="${PG_DUMP_BIN:-pg_dump}"
 JIT_CHANGED=0
 JIT_CLEAN=0
 SETUP_RESULT="BACKUP_INCOMPLETE"
+TARGET_ID=""
+TARGET_STATUS="UNKNOWN"
+POSTGRES_VERSION=""
+JIT_PRE_CONFIG=""
+JIT_PRESTATE="UNKNOWN"
+JIT_PRE_MAPPING=""
+JIT_PRE_MAPPING_KIND="UNKNOWN"
+JIT_USER_ID=""
+JIT_PRE_ROLES='[]'
+POOLER_JSON=""
+POOLER_HOST=""
+POOLER_PORT=""
+POOLER_USER=""
+POOLER_DB=""
+TEMP_CREDENTIAL_FILE=""
+PGPASSFILE=""
+PGSSLMODE=""
+PGOPTIONS=""
 
 die() {
   printf '%s\n' "CP51F_SETUP_ERROR: $1" >&2
@@ -35,7 +53,7 @@ require_command jq
 require_command sha256sum
 require_command stat
 require_command git
-require_command "$SUPABASE_BIN"
+require_command "$PG_DUMP_BIN"
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not running inside the repository"
 PRIVATE_SECURE_PATH="$(mkdir -p "$PRIVATE_SECURE_PATH" && cd "$PRIVATE_SECURE_PATH" && pwd -P)"
@@ -48,15 +66,28 @@ unset SUPABASE_CP51F_TEMP_PAT
 API_ERROR_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.api-error.XXXXXX")"
 cleanup_files() {
   rm -f "$API_ERROR_FILE" "$PRIVATE_SECURE_PATH/.dump-error" "$PRIVATE_SECURE_PATH/.manifest.tmp"
+  if [[ -n "$TEMP_CREDENTIAL_FILE" ]]; then
+    rm -f -- "$TEMP_CREDENTIAL_FILE"
+  fi
+}
+
+management_curl() {
+  printf '%s\n' \
+    'silent' \
+    'show-error' \
+    'fail' \
+    'retry = 2' \
+    'connect-timeout = 15' \
+    'max-time = 60' \
+    "header = \"Authorization: Bearer $PAT\"" \
+    'header = "Accept: application/json"' |
+    curl --config - "$@"
 }
 
 api_get() {
   local path="$1"
   local result
-  result="$(curl --silent --show-error --fail --retry 2 --connect-timeout 15 --max-time 60 \
-    -H "Authorization: Bearer $PAT" \
-    -H 'Accept: application/json' \
-    "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
+  result="$(management_curl "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
       printf '%s\n' "CP51F_SETUP_ERROR: Management API GET failed" >&2
       return 1
     }
@@ -67,10 +98,7 @@ api_put() {
   local path="$1"
   local body="$2"
   local result
-  result="$(curl --silent --show-error --fail --retry 2 --connect-timeout 15 --max-time 60 \
-    -X PUT \
-    -H "Authorization: Bearer $PAT" \
-    -H 'Accept: application/json' \
+  result="$(management_curl -X PUT \
     -H 'Content-Type: application/json' \
     --data-binary "$body" \
     "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
@@ -83,10 +111,7 @@ api_put() {
 api_delete() {
   local path="$1"
   local result
-  result="$(curl --silent --show-error --fail --retry 2 --connect-timeout 15 --max-time 60 \
-    -X DELETE \
-    -H "Authorization: Bearer $PAT" \
-    -H 'Accept: application/json' \
+  result="$(management_curl -X DELETE \
     "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
       printf '%s\n' "CP51F_SETUP_ERROR: Management API DELETE failed" >&2
       return 1
@@ -131,7 +156,7 @@ write_failure_manifest() {
 cleanup_jit() {
   [[ "$JIT_CLEAN" -eq 1 ]] && return 0
 
-  local restore_body post_config post_mapping pre_mapping_normalized post_mapping_normalized
+  local restore_body post_config post_mapping post_mapping_kind pre_mapping_normalized post_mapping_normalized
   if [[ "$JIT_PRE_MAPPING_KIND" == "absent" ]]; then
     [[ -n "$JIT_USER_ID" ]] || return 1
     api_delete "/projects/$PROJECT_REF/database/jit/$JIT_USER_ID" >/dev/null || return 1
@@ -171,16 +196,10 @@ on_exit() {
     fi
   fi
   cleanup_files
-  unset PAT PRIVATE_DB_URL API_ERROR_FILE
+  unset PAT API_ERROR_FILE PGPASSFILE PGSSLMODE PGOPTIONS
   exit "$rc"
 }
 trap on_exit EXIT
-
-CLI_HELP_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.cli-help.XXXXXX")"
-"$SUPABASE_BIN" db dump --help >"$CLI_HELP_FILE" 2>/dev/null || die "supabase db dump help failed"
-grep -q -- '--db-url' "$CLI_HELP_FILE" || die "installed CLI lacks --db-url"
-grep -q -- '--file' "$CLI_HELP_FILE" || die "installed CLI lacks --file"
-rm -f "$CLI_HELP_FILE"
 
 PROJECT_JSON="$(api_get "/projects/$PROJECT_REF")"
 TARGET_ID="$(jq -r '.id // empty' <<<"$PROJECT_JSON")"
@@ -224,13 +243,25 @@ JIT_UPDATE_BODY="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_ROL
 api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null
 JIT_CHANGED=1
 
-PAT_URI="$(printf '%s' "$PAT" | jq -sRr @uri)"
-PRIVATE_DB_URL="postgresql://${POOLER_USER}:${PAT_URI}@${POOLER_HOST}:${POOLER_PORT}/${POOLER_DB}?options=-c%20jit%3dtrue&sslmode=require"
+TEMP_CREDENTIAL_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.pgpass.XXXXXX")"
+chmod 600 "$TEMP_CREDENTIAL_FILE"
+escaped_pat="$(printf '%s' "$PAT" | sed 's/[\\:]/\\\\&/g')"
+printf '%s:%s:%s:%s:%s\n' \
+  "$POOLER_HOST" "$POOLER_PORT" "$POOLER_DB" "$POOLER_USER" "$escaped_pat" >"$TEMP_CREDENTIAL_FILE"
+PGPASSFILE="$TEMP_CREDENTIAL_FILE"
+PGSSLMODE="require"
+PGOPTIONS="-c jit=true"
+export PGPASSFILE PGSSLMODE PGOPTIONS
 
 run_dump() {
   local name="$1"
   shift
-  "$SUPABASE_BIN" db dump --db-url "$PRIVATE_DB_URL" --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
+  "$PG_DUMP_BIN" \
+    --host "$POOLER_HOST" \
+    --port "$POOLER_PORT" \
+    --username "$POOLER_USER" \
+    --dbname "$POOLER_DB" \
+    --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
     2>"$PRIVATE_SECURE_PATH/.dump-error" || die "dump failed: $name"
   rm -f "$PRIVATE_SECURE_PATH/.dump-error"
   [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]] || die "empty dump: $name"
@@ -265,16 +296,16 @@ jq -n \
   --arg jit_poststate "$JIT_PRESTATE" \
   --arg setup_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --argjson artifacts "$artifact_manifest" \
-  '{manifest_version:1,setup_result:"BACKUP_READY_RESTORE_PENDING",setup_utc:$setup_utc,
+  '{manifest_version:1,setup_result:"AWAITING_PAT_REVOCATION",setup_utc:$setup_utc,
     project_ref:$project_ref,target_status:$target_status,postgres_version:$postgres_version,
     direct_ipv6_used:false,session_pooler_used:true,session_pooler_port:5432,
     jit_used:true,jit_prestate:$jit_prestate,jit_poststate:$jit_poststate,
     jit_poststate_matches_prestate:true,storage_object_bytes_included:false,
     auth_coverage:"ATTEMPTED_IN_AUTH_SCHEMA_AND_DATA_DUMPS",
     migration_state_coverage:"CAPTURED_IN_HISTORY_ARTIFACTS",
-    classic_pat_revocation:"REQUIRED_AFTER_SETUP",
+    classic_pat_revocation:"AWAITING_PAT_REVOCATION",
     artifacts:$artifacts}' > "$PRIVATE_SECURE_PATH/.manifest.tmp"
 mv "$PRIVATE_SECURE_PATH/.manifest.tmp" "$PRIVATE_SECURE_PATH/manifest.json"
-SETUP_RESULT="BACKUP_READY_RESTORE_PENDING"
+SETUP_RESULT="AWAITING_PAT_REVOCATION"
 printf '%s\n' "CP51F_SETUP_RESULT=$SETUP_RESULT"
 printf '%s\n' "CP51F_PRIVATE_SECURE_PATH_READY=YES"

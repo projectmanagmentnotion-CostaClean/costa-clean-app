@@ -80,6 +80,36 @@ api_put() {
   printf '%s' "$result"
 }
 
+api_delete() {
+  local path="$1"
+  local result
+  result="$(curl --silent --show-error --fail --retry 2 --connect-timeout 15 --max-time 60 \
+    -X DELETE \
+    -H "Authorization: Bearer $PAT" \
+    -H 'Accept: application/json' \
+    "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
+      printf '%s\n' "CP51F_SETUP_ERROR: Management API DELETE failed" >&2
+      return 1
+    }
+  printf '%s' "$result"
+}
+
+parse_jit_state() {
+  jq -er 'if type == "object" and (.state | type) == "string" and (.state == "enabled" or .state == "disabled") then .state else error("invalid JIT state response") end'
+}
+
+classify_jit_mapping() {
+  jq -er '
+    if . == null or . == {} then
+      "absent"
+    elif type == "object" and (.user_id | type) == "string" and (.user_id | length) > 0 and (.user_roles | type) == "array" then
+      "present"
+    else
+      error("invalid JIT mapping response")
+    end
+  '
+}
+
 write_failure_manifest() {
   local result="$1"
   jq -n \
@@ -102,9 +132,14 @@ cleanup_jit() {
   [[ "$JIT_CLEAN" -eq 1 ]] && return 0
 
   local restore_body post_config post_mapping pre_mapping_normalized post_mapping_normalized
-  restore_body="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_PRE_ROLES" \
-    '{user_id:$user_id, roles:$roles}')"
-  api_put "/projects/$PROJECT_REF/database/jit" "$restore_body" >/dev/null || return 1
+  if [[ "$JIT_PRE_MAPPING_KIND" == "absent" ]]; then
+    [[ -n "$JIT_USER_ID" ]] || return 1
+    api_delete "/projects/$PROJECT_REF/database/jit/$JIT_USER_ID" >/dev/null || return 1
+  else
+    restore_body="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_PRE_ROLES" \
+      '{user_id:$user_id, roles:$roles}')"
+    api_put "/projects/$PROJECT_REF/database/jit" "$restore_body" >/dev/null || return 1
+  fi
 
   if [[ "$JIT_PRESTATE" == "disabled" ]]; then
     api_put "/projects/$PROJECT_REF/jit-access" '{"state":"disabled"}' >/dev/null || return 1
@@ -112,10 +147,16 @@ cleanup_jit() {
 
   post_config="$(api_get "/projects/$PROJECT_REF/jit-access")" || return 1
   post_mapping="$(api_get "/projects/$PROJECT_REF/database/jit")" || return 1
-  [[ "$(jq -r '.state // empty' <<<"$post_config")" == "$JIT_PRESTATE" ]] || return 1
-  pre_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$JIT_PRE_MAPPING")"
-  post_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$post_mapping")"
-  [[ "$pre_mapping_normalized" == "$post_mapping_normalized" ]] || return 1
+  [[ "$(parse_jit_state <<<"$post_config")" == "$JIT_PRESTATE" ]] || return 1
+  post_mapping_kind="$(classify_jit_mapping <<<"$post_mapping")" || return 1
+  if [[ "$JIT_PRE_MAPPING_KIND" == "absent" ]]; then
+    [[ "$post_mapping_kind" == "absent" ]] || return 1
+  else
+    [[ "$post_mapping_kind" == "present" ]] || return 1
+    pre_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$JIT_PRE_MAPPING")"
+    post_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$post_mapping")"
+    [[ "$pre_mapping_normalized" == "$post_mapping_normalized" ]] || return 1
+  fi
 
   JIT_CLEAN=1
 }
@@ -150,12 +191,15 @@ POSTGRES_VERSION="$(jq -r '.database.version // empty' <<<"$PROJECT_JSON")"
 [[ "$POSTGRES_VERSION" == "$EXPECTED_POSTGRES_VERSION" ]] || die "PostgreSQL version mismatch"
 
 JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")"
-JIT_PRESTATE="$(jq -r '.state // empty' <<<"$JIT_PRE_CONFIG")"
-[[ "$JIT_PRESTATE" == "enabled" || "$JIT_PRESTATE" == "disabled" ]] || die "unknown JIT prestate"
+JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die "unknown JIT prestate"
 JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")"
-JIT_USER_ID="$(jq -r '.user_id // empty' <<<"$JIT_PRE_MAPPING")"
-JIT_PRE_ROLES="$(jq -c '.user_roles // []' <<<"$JIT_PRE_MAPPING")"
-[[ -n "$JIT_USER_ID" ]] || die "JIT user identity unavailable"
+JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die "invalid JIT mapping response"
+if [[ "$JIT_PRE_MAPPING_KIND" == "present" ]]; then
+  JIT_USER_ID="$(jq -r '.user_id' <<<"$JIT_PRE_MAPPING")"
+  JIT_PRE_ROLES="$(jq -c '.user_roles' <<<"$JIT_PRE_MAPPING")"
+else
+  die "JIT user mapping absent; refusing to invent user ID"
+fi
 
 POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")"
 POOLER_HOST="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // empty' <<<"$POOLER_JSON")"

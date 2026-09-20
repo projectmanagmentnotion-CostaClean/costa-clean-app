@@ -1,6 +1,6 @@
 # Costa Clean V3 — Phase 2.2B visual integrity certification
 
-Status: `BLOCKED — authenticated matrix and network isolation evidence incomplete`.
+Status: `BLOCKED — network isolation evidence and reliable full viewport matrix incomplete`.
 
 ## Candidate
 
@@ -27,10 +27,13 @@ Status: `BLOCKED — authenticated matrix and network isolation evidence incompl
 - The complete 12-surface × 10-viewport matrix was not rerun in this session. The dashboard shell smoke must not be represented as full product certification.
 - Properties tabs, Leads tabs, StepFlows, long-list stress, invoice preview interaction, expense signed-document opening, Closing AI reachability and duplicate-resolution interaction remain `PENDING_REAUDIT`.
 - Independent detached reviewer: `NOT RUN`.
-- Latest continuation attempt: the required existing QA Chrome session was not
-  available to the browser control surface, and no Chrome process was open on
-  the host. The authenticated visual matrix cannot be truthfully rerun or
-  certified without that exact session.
+- Latest continuation attempt: the existing authenticated QA Chrome session was
+  restored successfully. Read-only smoke reached Home, Clients and client
+  workspace, Properties and property tabs, Leads and lead tabs, and invoice
+  detail/preview. No business write was executed.
+- The Chrome channel still exposes no verifiable request ledger, and its
+  viewport override did not reliably produce the required desktop CSS widths;
+  the full 10-viewport certification therefore remains open.
 
 ## Visual findings
 
@@ -42,5 +45,5 @@ Status: `BLOCKED — authenticated matrix and network isolation evidence incompl
 
 `BLOCKED` until the complete authenticated matrix, environment-isolation evidence and independent reviewer are available against the final committed SHA.
 
-The exact active blocker is: `QA Chrome session unavailable — authenticated
-visual certification cannot continue in the current host session`.
+The exact active blocker is: `Network provenance unavailable and full viewport
+matrix not reliably observable through the current Chrome control channel`.

@@ -42,6 +42,8 @@ Production and Production Supabase remain untouched. QA business writes and sche
 | QA/Production network isolation proof | NOT_VERIFIED | Browser channel did not expose a verifiable request ledger. |
 | Independent reviewer | NOT_RUN | Must inspect the final committed SHA before certification. |
 
-Current continuation blocker: `QA Chrome session unavailable`. The authenticated
-10-viewport/surface matrix and network provenance cannot be certified until the
-existing QA Chrome profile is available again.
+Current continuation blocker: `Network provenance unavailable and full viewport
+matrix not reliably observable through the current Chrome control channel`.
+The authenticated QA profile is restored and read-only smoke is complete for
+Home, Clients, Properties, Leads and invoice detail/preview; this does not close
+the full certification gate.

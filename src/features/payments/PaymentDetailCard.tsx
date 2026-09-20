@@ -375,12 +375,25 @@ export function PaymentDetailCard({
           onOpenExistingPayment?.(paymentId)
         }}
         onContinueAnyway={() => {
+          const amount = parseDecimalInput(form.amount)
+          const currentPaymentAllowance = selectedInvoice?.id === payment?.invoice_id ? Number(payment?.amount ?? 0) : 0
+          const amountError = getPaymentAmountError(
+            amount,
+            Number(selectedInvoice?.outstanding_amount ?? selectedInvoice?.total ?? 0) + currentPaymentAllowance,
+          )
+          if (amountError) {
+            setPendingDuplicateGroups([])
+            setSaveError(amountError)
+            return
+          }
+
           setPendingDuplicateGroups([])
+          setIsSaving(true)
           void savePaymentAndRefreshInvoice({
             id: payment?.id ?? '',
             invoice_id: form.invoice_id,
             payment_date: form.payment_date,
-            amount: Number(formatMoneyInput(parseDecimalInput(form.amount))),
+            amount: Number(formatMoneyInput(amount)),
             payment_method: form.payment_method || null,
             origin_type: payment?.origin_type ?? 'manual',
             notes: form.notes.trim() || null,

@@ -13,6 +13,7 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { getPaymentAmountError } from './paymentAmount'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -104,7 +105,7 @@ export function PaymentDetailCard({
     setIsDirty(true)
     setForm((current) => ({
       ...current,
-      amount: formatMoneyInput(Number(selectedInvoice.total)),
+      amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
     }))
   }
 
@@ -137,13 +138,13 @@ export function PaymentDetailCard({
 
       const amount = parseDecimalInput(form.amount)
 
-      if (Number.isNaN(amount)) {
-        setSaveError('El importe debe ser un número válido.')
-        return
-      }
-
-      if (amount <= 0) {
-        setSaveError('El importe del pago debe ser mayor que cero.')
+      const currentPaymentAllowance = selectedInvoice.id === payment.invoice_id ? Number(payment.amount ?? 0) : 0
+      const amountError = getPaymentAmountError(
+        amount,
+        Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total) + currentPaymentAllowance,
+      )
+      if (amountError) {
+        setSaveError(amountError)
         return
       }
 

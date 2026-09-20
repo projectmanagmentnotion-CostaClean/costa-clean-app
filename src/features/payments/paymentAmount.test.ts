@@ -5,6 +5,7 @@ describe('payment amount contract', () => {
   it('allows a partial or exact payment up to the outstanding balance', () => {
     expect(getPaymentAmountError(40, 81)).toBeNull()
     expect(getPaymentAmountError(81, 81)).toBeNull()
+    expect(getPaymentAmountError(121, 121)).toBeNull()
   })
 
   it('rejects over-collection instead of delegating the invariant to the RPC', () => {

@@ -88,3 +88,19 @@ production/unknown Supabase requests, zero QA business writes, zero production
 writes, zero unknown mutations, zero failed requests, zero page errors and zero
 console errors. Focused tests pass 32/32, agents pass 294/294, lint passes and
 the diff check is clean.
+
+Phase 2.4 P2 closure follow-up at exact HEAD `193bdd0`:
+
+- Clean detached install: Node `v24.19.0`, npm `10.9.2`, `package-lock.json`,
+  `npm ci --ignore-scripts --no-audit --no-fund`; detached build passes.
+- P2 payment prefill was manually replayed in the authenticated QA session:
+  the selected invoice showed `121.00 €` pending and `Usar pendiente` filled
+  `121.00`; the dialog was cancelled without a write.
+- P2 period interaction was manually replayed: a quarter note cleared for a
+  month selection and restored when returning to the quarter; no save occurred.
+- Deterministic coverage for both paths is now committed in the E2E harness.
+
+Both P2 findings are functionally closed. The exact detached Playwright run
+still cannot authenticate the copied profile, so its new P2 tests are skipped
+by the auth gate and strict independent certification remains blocked by
+capability, not by product behavior.

@@ -159,3 +159,38 @@ separate interaction/write-path certification block; no P0 or P1 was found.
 
 Phase 2.4 therefore remains `BLOCKED` pending a clean detached dependency
 environment and closure of the remaining P2 interaction coverage gate.
+
+## Phase 2.4 final P2 closure attempt
+
+The clean detached environment was recreated from exact HEAD `193bdd0` with
+Node `v24.19.0`, npm `10.9.2`, the canonical `package-lock.json`, and
+`npm ci --ignore-scripts --no-audit --no-fund`. The detached build passed;
+the earlier `core-js` resolution failure was environment-only and is cleared.
+The detached full test suite passed `168` files / `888` tests with `4`
+skipped, `qa:agents` passed `294/294`, lint passed, and `git diff --check`
+was clean.
+
+The two P2s are now explicit and closed at the functional-evidence level:
+
+1. `Payment outstanding prefill`: in the authenticated QA session, Cobros →
+   `+ Registrar cobro` → invoice `INV-0001` with `Pendiente actual: 121.00 €` →
+   `Usar pendiente` populated `Importe` with `121.00`; the dialog was
+   cancelled and no write was sent.
+2. `Period-scoped interaction state`: in Cierres, a quarter note was entered,
+   switching to month cleared the note for that period, and switching back to
+   the quarter restored the original note. The payment dialog open/cancel
+   path was also exercised; no save action was taken. No write or console
+   error occurred.
+
+Deterministic P2 replay coverage was added to
+`tests/e2e/v3-release.spec.mjs`. The exact detached Playwright runner could
+not authenticate the copied profile during this attempt, so those two tests
+were skipped by the auth gate and are not counted as independent Playwright
+PASS evidence. The visible Chrome session remained authenticated, but its
+session state could not be transferred to the disposable detached profile
+without handling credentials/tokens. The persistent profile was not mutated.
+
+Therefore the two P2 findings are `CLOSED`, but strict Phase 2.4
+certification remains `BLOCKED` solely by detached authenticated replay
+capability. No product defect, production mutation, Supabase production
+mutation, payment write or email send was observed.

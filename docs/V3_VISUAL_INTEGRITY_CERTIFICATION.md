@@ -1,6 +1,6 @@
 # Costa Clean V3 — Phase 2.2B visual integrity certification
 
-Status: `BLOCKED — network isolation evidence and reliable full viewport matrix incomplete`.
+Status: `BLOCKED — independent detached review timed out`.
 
 ## Candidate
 
@@ -89,3 +89,5 @@ deterministic runner below.
   vendor matching/history and related screens remain `STITCH UI DESIGN PENDING`;
   settlement/expense business writes and provider-backed AI behavior were not
   executed.
+- Independent detached reviewer: `NOT CERTIFIED — codex exec timed out after
+  120000ms in read-only mode` against final SHA `e46af73bd2a5459e710835f2a4bfc6d41cddd813`.

@@ -61,6 +61,11 @@ production and unknown Supabase traffic were zero, unknown mutations were zero,
 and runtime/request errors were zero. The evidence remains read-only and is
 stored privately under the ignored QA report path.
 
+The independent detached review was attempted against final SHA `e46af73` but
+timed out after 120 seconds in read-only mode. The product/harness evidence is
+green; global certification remains blocked until that review returns P0/P1
+findings.
+
 ## Branding and responsive conclusions
 
 - The existing V3 shell now presents the canonical Costa Clean logo and visible `Costa Clean` identity in the topbar and iPad/desktop navigation rail.

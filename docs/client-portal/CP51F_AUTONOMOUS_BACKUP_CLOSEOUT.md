@@ -1,7 +1,7 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-19T23:45:00Z`
-**Verdict:** `STOP_SECRET_EXPOSURE_RISK`
+**Reviewed at:** `2026-09-20T00:10:00Z`
+**Verdict:** `BACKUP_INCOMPLETE`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
 ## Final result
@@ -11,11 +11,13 @@ revalidated. OAuth authentication is available and the exact target project is
 visible, but the authenticated session does not expose the Temporary Access/JIT
 controls: Database Settings reports that additional permissions are required,
 the JIT section is not visible, and the available MCP surface has no JIT or
-Management API operation. A temporary Classic PAT was created in the
-authenticated browser flow, but no safe private handoff from the browser to a
-runtime credential store was available. It was revoked immediately and the
-token row was verified absent. Consequently, the backup remains blocked by
-secret-handoff safety rather than by missing login.
+Management API operation. The Supabase CLI is authenticated, but the target
+cannot be linked: the CLI reports that the account lacks the privileges needed
+to retrieve the target project status. A read-only dump dry-run also could not
+start because the target was not linked and the current network lacks IPv6.
+No temporary CLI login role was created. Consequently, the backup remains
+incomplete because the official CLI cannot establish the authorized target
+connection.
 
 This is a blocker, not a PASS. No production data was copied, no JIT state was
 changed, and no production or QA mutation was performed.
@@ -26,13 +28,14 @@ changed, and no production or QA mutation was performed.
 |---|---|
 | Repository | `projectmanagmentnotion-CostaClean/costa-clean-app` |
 | Branch | `codex/cp51-production-readiness-preflight` |
-| HEAD | `7f23d620f47c907f0ab87fa9e7bdc64dc6a3c521` |
+| HEAD | `aca26dc6d2364be55c9ffd1b1b2ce7b82db2b5a9` |
 | Remote branch | Matches HEAD |
 | PR | `#18`, open, draft |
 | Production ref | `wfxnwfcdjainpojhbdri` |
 | Production status | `ACTIVE_HEALTHY` |
 | PostgreSQL | `17.6.1.084` |
 | Supabase OAuth/MCP | `AUTHENTICATED = YES` |
+| Supabase CLI | `AUTHENTICATED = YES — CLI 2.115.0; read-only projects list succeeded` |
 | Candidate | `7870ae4408ab7af0c944b149d2c75a70b8421e65` |
 | Migration blob | `c7c686769160d987c3721721a589dae1eae0dced` |
 | CP-4.3C | `QA_CERTIFIED / CLOSED` |
@@ -71,7 +74,7 @@ printed, persisted or exposed.
 
 | Route | Classification | Evidence |
 |---|---|---|
-| Supabase CLI session | `AVAILABLE_AND_USED_PRIVATELY` for metadata only | CLI `2.109.1` lists only project `Coachai` (`zlblnezbbiimapruazvc`); target is not linked and no target DB auth was available |
+| Supabase CLI session | `AUTHENTICATED; TARGET ACCESS INSUFFICIENT` | CLI `2.115.0` projects list succeeded, but target link failed with insufficient privileges; only `Coachai` (`zlblnezbbiimapruazvc`) was listed |
 | Supabase MCP/OAuth | `AVAILABLE_AND_USED_PRIVATELY` for metadata only | Target identity, URL, health, version and organization plan verified; no JIT/Management API tool exists |
 | Environment variables | `NOT_AVAILABLE` | No `DATABASE_URL`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, `SUPABASE_DB_URL`, `SUPABASE_DB_PASSWORD`, `PGPASSWORD`, PAT or Management API token name was present |
 | Local credential files | `NOT_AVAILABLE` | No relevant Supabase CLI credential store was present in the inspected user locations |
@@ -79,6 +82,15 @@ printed, persisted or exposed.
 | Vercel | `NOT_AVAILABLE` for secret access | Team/project metadata exists, but no Vercel CLI, local project link or environment-value read capability is available; no environment value was requested |
 | Existing DB/pooler URL | `NOT_AVAILABLE` | No private connection URL/password was available for the exact production ref |
 | Temporary Access/JIT | `STOP_JIT_PERMISSION_REQUIRED` | Authenticated dashboard session reaches the exact project, but Database Settings controls require additional permissions; no JIT control or Management API operation is available |
+
+The official CLI help was inspected before any operation. `supabase link`
+supports `--project-ref` and `--skip-pooler`; `supabase db dump` supports
+`--role-only`, `--data-only`, `--schema`, `--file`, `--project-ref`, `--linked`
+and `--dry-run`. A link attempt was made only in a temporary workdir outside
+the repository and failed before creating a link because the account lacked
+the required target privileges. A dump dry-run then reported that the target
+must be linked and that IPv6 is unsupported on the current network. No dump
+command executed a connection or wrote an artifact.
 
 The authenticated Supabase Access Tokens page was also checked for a
 least-privilege Management API route. Its available flow was only **Generate
@@ -101,7 +113,7 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 
 | Required result | Status |
 |---|---|
-| Authentication route used | `SUPABASE_OAUTH_BROWSER_SESSION — metadata only` |
+| Authentication route used | `SUPABASE_CLI_SESSION — metadata/list only; target link denied` |
 | Secret source classification | `NOT_AVAILABLE` |
 | Secret exposed | `NO` |
 | JIT used | `NO` |
@@ -125,6 +137,9 @@ token becomes the temporary Postgres password. See [Temporary Access](https://su
 | Scoped PAT created by Codex | `NO` |
 | Scoped PAT expiry | `NOT_SET` |
 | Management API credential | `NOT_AVAILABLE` |
+| CLI temporary login role used | `NO` |
+| CLI temporary login role clean | `YES — not created` |
+| Local Supabase temporary auth clean | `YES — no temporary auth created by this run` |
 | Classic PAT created | `YES — temporary browser flow` |
 | Classic PAT created by Codex | `YES` |
 | Classic PAT storage | `PRIVATE_BROWSER_SESSION_ONLY; no runtime persistence` |
@@ -176,13 +191,11 @@ production reconciliation or CP-5.2 action is permitted.
 ## Permission blocker
 
 The authenticated browser session still lacks the project permission required
-to read or administer Temporary Access/JIT. Codex created the authorized
-temporary Classic PAT, but the browser flow did not provide a safe private
-handoff into a request runtime; the PAT was therefore revoked before any
-Management API request. No human password, database password or connection
-string was requested or exposed.
+to read or administer Temporary Access/JIT. The CLI session is authenticated,
+but target linking is denied by the account's target privileges; no password,
+connection string or secret variable was read or exposed.
 
-**Next exact gate:** `STOP_SECRET_EXPOSURE_RISK`. A future continuation requires
-a secure runtime handoff for an owner-created temporary Classic PAT, without
-pasting or exposing the secret; no further CP-5.1F action is authorized in
-this turn.
+**Next exact gate:** `BACKUP_INCOMPLETE`. The target must expose sufficient
+official CLI/link privileges (and a supported network path) before CP-5.1F
+backup and restore can continue. No Authorization B, CP-4.3C, or CP-5.2 action
+was performed.

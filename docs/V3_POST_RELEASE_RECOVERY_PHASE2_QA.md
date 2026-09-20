@@ -61,10 +61,14 @@ production and unknown Supabase traffic were zero, unknown mutations were zero,
 and runtime/request errors were zero. The evidence remains read-only and is
 stored privately under the ignored QA report path.
 
-The independent detached review was attempted against final SHA `e46af73` but
-timed out after 120 seconds in read-only mode. The product/harness evidence is
-green; global certification remains blocked until that review returns P0/P1
-findings.
+Phase 2.4 completed the independent detached review against exact SHA
+`48044d2c`. The reviewer completed after the timeout was raised to 600 seconds
+and returned `stop` with P0 `0`, P1 `3`, P2 `2`, P3 `0`. The blocking findings
+are protected invoice-origin propagation, client/property workspace edit-token
+handling, and fiscal-closing period/notes synchronization. The deterministic
+product/harness evidence remains green, but global certification is blocked by
+these functional regressions. See
+`docs/V3_PHASE2_4_INDEPENDENT_REVIEW.md`.
 
 ## Branding and responsive conclusions
 

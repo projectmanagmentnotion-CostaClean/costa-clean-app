@@ -57,4 +57,10 @@ the full certification gate.
 | QA-only Supabase routing | CERTIFIED | 3,160 QA requests; 0 production and 0 unknown Supabase requests. |
 | QA business writes | CERTIFIED | 0 business writes; auth/session POSTs classified separately; 0 unknown mutations. |
 | Runtime error ledger | CERTIFIED | 0 failed requests, 0 page errors and 0 console errors. |
-| Full authenticated read-only matrix | CERTIFIED_PENDING_REVIEW | 11/11 runner tests PASS across the 10 viewports and existing surface scope; independent detached review timed out against final SHA and remains required. |
+| Full authenticated read-only matrix | BLOCKED_BY_INDEPENDENT_REVIEW | 11/11 runner tests PASS across the 10 viewports and existing surface scope; Phase 2.4 independent review found 3 P1 protected-contract regressions and 2 P2 follow-ups. |
+
+Phase 2.4 review result: `PHASE 2.3 BLOCKED — P1 protected-contract
+regressions found by independent reviewer`. The exact reviewed SHA is
+`48044d2c551929e06f753c5d1d20f5273c0bc764`; details are recorded in
+`docs/V3_PHASE2_4_INDEPENDENT_REVIEW.md`. No code or production/Supabase state
+was changed by the review closeout.

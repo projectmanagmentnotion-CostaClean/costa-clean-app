@@ -1,0 +1,61 @@
+# Costa Clean V3 — Phase 2.4 independent review
+
+Status: `PHASE 2.3 BLOCKED — P1 protected-contract regressions found by independent reviewer`.
+
+## Review boundary
+
+- Reviewed commit: `48044d2c551929e06f753c5d1d20f5273c0bc764`.
+- Reviewed tree: `6b8fcd517d872159762da09c27722b1238925a82`.
+- Review mode: detached, exact-SHA checkout; read-only product review.
+- The recovery branch and original checkout were not rewritten. No production or
+  Supabase mutation was performed.
+- The previous orchestration timeout was `--review-timeout-ms 120000`. A retry
+  with `--review-timeout-ms 600000` completed. The detached checkout initially
+  lacked dependencies; review capability was restored with a local junction to
+  the already-installed `node_modules`, without installation or product changes.
+
+## Independent result
+
+The reviewer returned `stop`: P0 `0`, P1 `3`, P2 `2`, P3 `0`.
+
+### Blocking P1 findings
+
+1. Invoice creation no longer propagates job/quote-origin client, property,
+   notes and billing-line data after the React effect removal.
+2. Client and property workspace `Editar` actions still increment and pass an
+   edit token, but the detail cards no longer consume that token to open edit
+   mode.
+3. Fiscal, annual and quarterly closing selection/notes are not synchronized
+   with the selected persisted closing; notes can remain stale and be saved
+   against another period.
+
+### Non-blocking but required follow-up
+
+- Payment prefill/outstanding-balance synchronization is also missing (P2).
+- Focused regression tests are absent for the affected invoice, edit-token,
+  payment-prefill and closing-period contracts (P2).
+
+## Evidence that remains valid
+
+- Deterministic authenticated runner: `11 passed` across the exact 10
+  viewports; requested and actual dimensions matched and overflow was false.
+- Sanitized ledger: 26,050 requests; 3,160 QA Supabase; 0 production Supabase;
+  0 unknown Supabase; 0 unknown mutations; 0 failed requests; 0 page errors;
+  0 console errors.
+- The review found no committed credentials, cookies, JWTs, tokens, QA
+  profiles, private reports or screenshots. The QA evidence remains ignored
+  and private.
+
+The deterministic visual/network evidence cannot override protected-contract
+P1 findings that require functional interaction and write-path review.
+
+## Remaining gates
+
+Settlement and expense QA writes, expense signed-document behavior, AI/provider
+behavior, duplicate prevention, recurring/long-list stress and any production
+behavior remain uncertified. New Expenses/Vendors visual work remains
+`STITCH UI DESIGN PENDING`; no generic replacement UI is authorized.
+
+No product fix is included in this review-close documentation. The next safe
+implementation block must correct the three P1 findings, add focused tests,
+rerun the required quality gates, and obtain a fresh independent review.

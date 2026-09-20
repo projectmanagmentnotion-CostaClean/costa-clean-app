@@ -116,15 +116,14 @@ async function launchQaContext(metadata, viewport, reducedMotion = false, state 
 }
 
 async function waitForAuthenticatedShell(page) {
-  await page.waitForTimeout(1500)
-  const state = await page.evaluate(() => {
-    const text = document.body?.innerText ?? ''
-    return {
-      hasLogin: Boolean(document.querySelector('input[type="password"]')) || /Entrar al CRM|Acceso seguro/u.test(text),
-      hasShell: ['Inicio', 'Clientes', 'Facturas', 'Servicios'].filter((label) => text.includes(label)).length >= 2,
-    }
-  })
-  if (!state.hasShell || state.hasLogin) {
+  try {
+    await page.waitForFunction(() => {
+      const text = document.body?.innerText ?? ''
+      const hasLogin = Boolean(document.querySelector('input[type="password"]')) || /Entrar al CRM|Acceso seguro/u.test(text)
+      const hasShell = ['Inicio', 'Clientes', 'Facturas', 'Servicios'].filter((label) => text.includes(label)).length >= 2
+      return hasShell && !hasLogin
+    }, undefined, { timeout: 30000 })
+  } catch {
     throw new Error('V3-8_AUTH_REQUIRED: manual authenticated QA login is required in the ignored QA profile')
   }
 }

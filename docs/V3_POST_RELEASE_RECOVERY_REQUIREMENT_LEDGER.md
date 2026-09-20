@@ -63,18 +63,20 @@ the full certification gate.
 
 | Requirement | State | Evidence / next gate |
 |---|---|---|
-| Job/quote to invoice prefill | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Explicit job/quote selection handlers restore client, property, notes and editable lines; focused prefill tests pass. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
-| Client workspace editing | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Request-token keyed canonical detail card opens the persisted client edit flow. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
-| Property workspace editing | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Request-token keyed canonical detail card opens the persisted property edit flow. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
-| Fiscal-period note synchronization | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Period-keyed draft lookup isolates persisted notes across period switches; focused note tests pass. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
-| Payment prefill/outstanding balance | OPEN_P2 | Separate follow-up unless the fresh review proves it shares a touched P1 root cause. |
-| Focused regression coverage breadth | OPEN_P2 | Invoice and fiscal-note focused tests added; payment/workspace interaction coverage remains follow-up. |
+| Job/quote to invoice prefill | FIXED_PENDING_INDEPENDENT_CERTIFICATION | Explicit job/quote selection handlers restore client, property, notes and editable lines; focused prefill tests pass. Source review found no P0/P1. |
+| Client workspace editing | FIXED_PENDING_INDEPENDENT_CERTIFICATION | Request-token keyed canonical detail card opens the persisted client edit flow. Source review found no P0/P1. |
+| Property workspace editing | FIXED_PENDING_INDEPENDENT_CERTIFICATION | Request-token keyed canonical detail card opens the persisted property edit flow. Source review found no P0/P1. |
+| Fiscal-period note synchronization | FIXED_PENDING_INDEPENDENT_CERTIFICATION | Period-keyed draft lookup isolates persisted notes across period switches; focused note tests pass. Source review found no P0/P1. |
+| Payment over-collection and outstanding synchronization | FIXED_PENDING_INDEPENDENT_CERTIFICATION | Shared guard covers create/edit/duplicate-override paths; legacy sync uses outstanding amount; focused tests and exact-HEAD QA pass. Independent authenticated replay remains blocked by profile isolation. |
+| Focused regression coverage breadth | OPEN_P2 | Source/focused coverage is present, but live interaction coverage and independent exact-HEAD replay remain incomplete. |
 
 Phase 2.4 review result was `PHASE 2.3 BLOCKED — P1 protected-contract
 regressions found by independent reviewer`. Phase 2.5 remediation is
-implemented at exact HEAD `b8ea82b83d97dc3eb8f0a7f0d552fe6408307c29`. The final
-detached review found P0 `0`, P1 `0`, P2 `2`, P3 `0`, but returned
-`BLOCKED_BY_REVIEW_CAPABILITY` because its read-only environment could not run
-tests/build or replay the exact-HEAD authenticated matrix. The main worktree
-verified those gates separately; independent certification remains open. No QA
-or production business write and no Supabase schema mutation was performed.
+implemented at exact HEAD `7b80795fa2cdad6dde4fb50cd86e523457dca3d0`. The
+independent review path found and closed the payment duplicate-override P2, with
+P0/P1 remaining at zero. Final certification still returns
+`BLOCKED_BY_REVIEW_CAPABILITY` because the detached reviewer cannot replay the
+authenticated Chrome profile without mutation and its full suite has unrelated
+sandbox child-process/Git-ownership failures. The main worktree verified the
+exact-HEAD gates separately; no QA or production business write and no Supabase
+schema mutation was performed.

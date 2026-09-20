@@ -106,3 +106,31 @@ does not waive the independent-review capability boundary.
 The remaining P2 items are payment prefill/outstanding-balance synchronization
 and focused payment/workspace/closing interaction coverage. No certification
 claim is made for Phase 2 until independent exact-HEAD validation is runnable.
+
+## Phase 2.4 final remediation attempt
+
+The independent review of exact HEAD `9e92f89f69606def13d9ad4819c46fa5b2c8cf70`
+found a real P2 bypass in the legacy duplicate-review `continue anyway` path:
+it saved directly without re-running the payment amount invariant. The executor
+closed that bypass in `7b80795fa2cdad6dde4fb50cd86e523457dca3d0` and pushed it to
+the recovery branch. The shared payment amount guard now covers legacy create,
+V3 create, legacy form, V3 manual edit, legacy detail edit, and the duplicate
+override path; legacy sync also uses the invoice outstanding amount.
+
+Exact-HEAD evidence for `7b80795`:
+
+- Full local Vitest: `168` files, `888` passed, `4` skipped.
+- Agents: `294/294 PASS`; lint, build, typecheck and `git diff --check` pass.
+- Authenticated read-only matrix: `11/11 PASS` across 10 viewports; 26,400
+  requests, 3,160 QA Supabase requests, zero production/unknown Supabase
+  requests, zero QA business writes, zero unknown mutations, zero failed
+  requests, zero page errors and zero console errors.
+- Independent detached review: source-level P0 `0`, P1 `0`; the final exact-
+  HEAD replay is still blocked because the reviewer sandbox cannot open the
+  persistent authenticated Chrome profile without mutating it. Its full suite
+  also retains three unrelated child-process/Git-ownership infrastructure
+  failures; no product payment assertion failed.
+
+The payment P2 is therefore fixed in source and independently reviewed through
+the remediation path, but Phase 2.4 remains uncertified. Interaction coverage
+and exact-HEAD independent authenticated replay remain the certification gate.

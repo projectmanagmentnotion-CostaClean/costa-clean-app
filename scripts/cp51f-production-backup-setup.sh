@@ -297,9 +297,9 @@ run_pg_dumpall_roles() {
 }
 
 run_pg_dumpall_roles roles
-run_pg_dump schema --schema=public --schema=portal_private --schema=auth
+run_pg_dump schema --schema-only --schema=public --schema=portal_private --schema=auth
 run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth
-run_pg_dump history_schema --schema=supabase_migrations
+run_pg_dump history_schema --schema-only --schema=supabase_migrations
 run_pg_dump history_data --data-only --schema=supabase_migrations
 
 cleanup_jit || die "JIT cleanup did not restore the exact prestate"

@@ -16,17 +16,26 @@ test('database dumps use independent schema arguments and no legacy flags', () =
   const schema = buildPgDumpCommand({ kind: 'schema', schemas: ['public', 'portal_private', 'auth'] })
   const data = buildPgDumpCommand({ kind: 'data', schemas: ['public', 'portal_private', 'auth'] })
   assert.equal(schema[0], 'pg_dump')
+  assert.ok(schema.includes('--schema-only'))
+  assert.equal(schema.includes('--data-only'), false)
   assert.deepEqual(schema.slice(-3), ['--schema=public', '--schema=portal_private', '--schema=auth'])
   assert.deepEqual(data.slice(-3), ['--schema=public', '--schema=portal_private', '--schema=auth'])
   assert.ok(data.includes('--data-only'))
+  assert.equal(data.includes('--schema-only'), false)
   assert.equal(schema.includes('--use-copy'), false)
   assert.equal(data.includes('--use-copy'), false)
   assert.equal(schema.includes('--role-only'), false)
 })
 
-test('migration history uses one schema argument', () => {
-  assert.deepEqual(buildPgDumpCommand({ kind: 'schema', schemas: ['supabase_migrations'] }).slice(-1), ['--schema=supabase_migrations'])
-  assert.deepEqual(buildPgDumpCommand({ kind: 'data', schemas: ['supabase_migrations'] }).slice(-1), ['--schema=supabase_migrations'])
+test('migration history separates structure and data', () => {
+  const schema = buildPgDumpCommand({ kind: 'schema', schemas: ['supabase_migrations'] })
+  const data = buildPgDumpCommand({ kind: 'data', schemas: ['supabase_migrations'] })
+  assert.ok(schema.includes('--schema-only'))
+  assert.equal(schema.includes('--data-only'), false)
+  assert.deepEqual(schema.slice(-1), ['--schema=supabase_migrations'])
+  assert.ok(data.includes('--data-only'))
+  assert.equal(data.includes('--schema-only'), false)
+  assert.deepEqual(data.slice(-1), ['--schema=supabase_migrations'])
 })
 
 test('empty artifacts fail closed', () => {

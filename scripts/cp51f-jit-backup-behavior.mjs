@@ -8,6 +8,7 @@ const CONNECTION_ARGS = ({ host, port, user, database, file }) => [
 
 export function buildPgDumpCommand({ bin = 'pg_dump', host = 'pooler.example', port = '5432', user = 'postgres.ref', database = 'postgres', file = 'data.sql', kind, schemas = [] }) {
   const args = [bin, ...CONNECTION_ARGS({ host, port, user, database, file })]
+  if (kind === 'schema') args.push('--schema-only')
   if (kind === 'data') args.push('--data-only')
   for (const schema of schemas) args.push(`--schema=${schema}`)
   return args

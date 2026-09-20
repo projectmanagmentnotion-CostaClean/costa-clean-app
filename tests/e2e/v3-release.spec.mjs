@@ -2,18 +2,33 @@ import fs from 'node:fs'
 import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { chromium, expect, test } from '@playwright/test'
+import {
+  createNetworkLedger,
+  getExactViewportMetrics,
+  recordConsoleError,
+  recordPageError,
+  recordRequest,
+  recordRequestFailed,
+  recordResponse,
+  summarizeNetworkLedger,
+} from '../../scripts/qa/auth/networkLedger.mjs'
+import { getQaPaths } from '../../scripts/qa/auth/cdpHarness.mjs'
 
 const rootDir = process.cwd()
-const qaProjectRef = 'kpvvydthlxupjjqqdpxy'
-const productionProjectRef = 'wfxnwfcdjainpojhbdri'
 const releaseReportDir = path.join(rootDir, 'qa-reports', 'private', 'v3-8-release')
-const authMetadataPath = path.resolve(process.env.QA_AUTH_METADATA ?? '.auth/costa-clean-storage-state.json')
-const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:4176/?v3=1'
+const authMetadataPath = path.resolve(process.env.QA_AUTH_METADATA ?? getQaPaths(rootDir).stateFile)
+const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:4178/?v3=1'
 
 const viewports = [
+  { id: '320x568', width: 320, height: 568 },
   { id: '390x844', width: 390, height: 844 },
+  { id: '430x932', width: 430, height: 932 },
   { id: '768x1024', width: 768, height: 1024 },
+  { id: '820x1180', width: 820, height: 1180 },
+  { id: '834x1194', width: 834, height: 1194 },
+  { id: '1024x1366', width: 1024, height: 1366 },
   { id: '1280x800', width: 1280, height: 800 },
+  { id: '1440x900', width: 1440, height: 900 },
   { id: '1920x1080', width: 1920, height: 1080 },
 ]
 
@@ -65,30 +80,22 @@ function buildViewUrl(viewId) {
 
 function registerGuards(page, state) {
   page.on('request', (request) => {
-    const url = request.url()
-    const method = request.method()
-    if (url.includes(productionProjectRef)) {
-      state.productionRequests += 1
-      state.violations.push('production_request')
-    }
-    if (url.includes('.supabase.co') && !url.includes(qaProjectRef)) {
-      state.nonQaSupabaseRequests += 1
-      state.violations.push('non_qa_supabase_request')
-    }
-    if (url.includes('.supabase.co') && !['GET', 'HEAD', 'OPTIONS'].includes(method)) state.qaMutationRequests += 1
+    const entry = recordRequest(state.ledger, request)
+    if (entry.environment === 'PRODUCTION_SUPABASE') state.violations.push('production_request')
+    if (entry.environment === 'UNKNOWN_SUPABASE') state.violations.push('unknown_supabase_request')
   })
+  page.on('response', (response) => recordResponse(state.ledger, response))
   page.on('requestfailed', (request) => {
-    const url = request.url()
-    if (url.includes('.supabase.co') || url.includes('/assets/')) state.failedRequests += 1
+    recordRequestFailed(state.ledger, request)
   })
-  page.on('pageerror', () => { state.pageErrors += 1 })
-  page.on('console', (message) => { if (message.type() === 'error') state.consoleErrors += 1 })
+  page.on('pageerror', (error) => recordPageError(state.ledger, error))
+  page.on('console', (message) => { if (message.type() === 'error') recordConsoleError(state.ledger, message.text()) })
 }
 
-async function launchQaContext(metadata, viewport, reducedMotion = false) {
-  const state = { violations: [], productionRequests: 0, nonQaSupabaseRequests: 0, qaMutationRequests: 0, failedRequests: 0, pageErrors: 0, consoleErrors: 0 }
+async function launchQaContext(metadata, viewport, reducedMotion = false, state = { violations: [], ledger: createNetworkLedger() }) {
   const context = await chromium.launchPersistentContext(metadata.profileDir, {
-    headless: true,
+    executablePath: metadata.executablePath,
+    headless: process.env.QA_HEADED !== '1',
     viewport: { width: viewport.width, height: viewport.height },
     reducedMotion: reducedMotion ? 'reduce' : 'no-preference',
     serviceWorkers: 'allow',
@@ -278,11 +285,19 @@ function assertGeometry(geometry, viewport) {
 }
 
 async function runViewport(metadata, viewport) {
-  const { context, page, state } = await launchQaContext(metadata, viewport, viewport.id === '390x844')
+  const state = { violations: [], ledger: createNetworkLedger() }
+  const { context, page } = await launchQaContext(metadata, viewport, viewport.id === '390x844', state)
   const result = { viewport, surfaces: [], workspaces: {}, deepLinks: {}, screenshots: [], more: false, accessibilityKeyboard: false, reducedMotion: false, serviceWorker: false, manifest: false, geometry: [] }
   try {
     await page.goto(appUrl, { waitUntil: 'domcontentloaded' })
     await waitForAuthenticatedShell(page)
+    const actualViewport = await getExactViewportMetrics(page)
+    expect(actualViewport).toMatchObject({
+      innerWidth: viewport.width,
+      innerHeight: viewport.height,
+      clientWidth: viewport.width,
+      clientHeight: viewport.height,
+    })
     const serviceWorkerResponse = await page.request.get(new URL('/notification-sw.js', page.url()).toString())
     result.serviceWorker = serviceWorkerResponse.ok()
     expect(result.serviceWorker).toBe(true)
@@ -355,13 +370,17 @@ async function runViewport(metadata, viewport) {
     expect(result.reducedMotion).toBe(viewport.id === '390x844')
     for (const definition of deepLinkSurfaces) result.deepLinks[definition.view] = await inspectReadOnlyDeepLink(page, definition)
     result.finalGeometry = await collectGeometry(page, viewport, 'release-final')
-    if (state.violations.length > 0) throw new Error(`V3-8_PRODUCTION_GUARD: ${state.violations.join(',')}`)
-    expect(state.productionRequests).toBe(0)
-    expect(state.nonQaSupabaseRequests).toBe(0)
-    expect(state.qaMutationRequests).toBe(0)
-    if (state.pageErrors > 0 || state.consoleErrors > 0) throw new Error(`V3-8_RUNTIME_ERRORS: pageerror=${state.pageErrors}, console_error=${state.consoleErrors}`)
-    expect(state.failedRequests).toBe(0)
-    return { ...result, state }
+    const network = summarizeNetworkLedger(state.ledger)
+    if (state.violations.length > 0) throw new Error(`V3-8_NETWORK_GUARD: ${state.violations.join(',')}`)
+    expect(network.productionSupabaseRequests).toBe(0)
+    expect(network.unknownSupabaseRequests).toBe(0)
+    expect(network.qaBusinessWrites).toBe(0)
+    expect(network.productionBusinessWrites).toBe(0)
+    expect(network.unknownMutations).toBe(0)
+    expect(network.pageErrors).toBe(0)
+    expect(network.consoleErrors).toBe(0)
+    expect(network.failedRequests).toBe(0)
+    return { ...result, state: { network, entries: state.ledger.entries, failedRequests: state.ledger.failedRequests } }
   } finally {
     await context.close()
   }

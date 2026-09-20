@@ -45,5 +45,47 @@ Status: `BLOCKED — network isolation evidence and reliable full viewport matri
 
 `BLOCKED` until the complete authenticated matrix, environment-isolation evidence and independent reviewer are available against the final committed SHA.
 
-The exact active blocker is: `Network provenance unavailable and full viewport
-matrix not reliably observable through the current Chrome control channel`.
+The exact active blocker from the prior phase is closed by the Phase 2.3
+deterministic runner below.
+
+## Phase 2.3 deterministic certification
+
+- Candidate under test: `d797a4de3efe91ff60dcb3685050cce4bce6f53a`.
+- Browser: stored Google Chrome executable and persistent QA profile selected
+  from the ignored QA metadata; no cookies, tokens or storage contents were
+  logged.
+- Control method: Playwright persistent context with `executablePath` and
+  profile path explicit.
+- Result: `11 passed` (authentication gate plus the exact 10 viewport runs).
+- Surface coverage: 13 primary surfaces per viewport, read-only workspaces,
+  deep-link reload/back checks, More-sheet keyboard/focus checks and safe
+  action-flow openings.
+- Requested/actual viewport proof: all 10 equal exactly, including
+  `window.innerWidth`, `window.innerHeight`, `documentElement.clientWidth` and
+  `documentElement.clientHeight`.
+
+| Requested | Actual | DPR | Overflow |
+|---|---|---:|---|
+| 320x568 | 320x568 | 1 | PASS |
+| 390x844 | 390x844 | 1 | PASS |
+| 430x932 | 430x932 | 1 | PASS |
+| 768x1024 | 768x1024 | 1 | PASS |
+| 820x1180 | 820x1180 | 1 | PASS |
+| 834x1194 | 834x1194 | 1 | PASS |
+| 1024x1366 | 1024x1366 | 1 | PASS |
+| 1280x800 | 1280x800 | 1 | PASS |
+| 1440x900 | 1440x900 | 1 | PASS |
+| 1920x1080 | 1920x1080 | 1 | PASS |
+
+- Network requests: `26,050` total across the 10 isolated runs; `3,160` QA
+  Supabase requests; `0` production Supabase; `0` unknown Supabase.
+- Writes: `0` QA business writes; `0` production business writes; `0`
+  unknown mutations. Auth/session requests were classified separately.
+- Runtime: `0` failed requests, `0` page errors, `0` console errors.
+- Visual contract: full-width, spacing, buttons, status, typography,
+  alignment, section contrast, grid, branding and responsive checks PASS in
+  the runner; overflow and legacy runtime markers are zero.
+- Pending scope remains truthful: Expenses/Vendors and genuinely new receipt,
+  vendor matching/history and related screens remain `STITCH UI DESIGN PENDING`;
+  settlement/expense business writes and provider-backed AI behavior were not
+  executed.

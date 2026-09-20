@@ -15,6 +15,7 @@ The harness is designed to stay safe:
 - `scripts/qa/setup-auth-state.mjs`
 - `scripts/qa/run-authenticated-visual-qa.mjs`
 - `scripts/qa/auth/cdpHarness.mjs` (legacy)
+- `scripts/qa/auth/networkLedger.mjs` (sanitized request classification and exact viewport metric helpers)
 - `scripts/qa/playwright-financial-cert.mjs`
 
 ## Local ignored artifacts
@@ -40,6 +41,16 @@ Important:
 1. Run `npm run qa:playwright:financial` for the stable headless certification harness.
 2. It audits the supported `?view=` surfaces across mobile, tablet, and desktop.
 3. It saves local screenshots only on failure and JSON reports under ignored paths.
+
+## Phase 2.3 deterministic certification
+
+Run `QA_AUTH_NAMESPACE=costaclean-v3-chrome QA_APP_URL=http://127.0.0.1:4178/?v3=1 pnpm exec playwright test tests/e2e/v3-release.spec.mjs --workers=1`
+with the stored QA metadata. The runner uses the stored
+Chrome executable/profile, validates `window.innerWidth`/`innerHeight` for the
+exact 10-viewport matrix, and records only sanitized request metadata in the
+ignored `qa-reports/private/v3-8-release` reports. It fails closed on production
+Supabase traffic, unknown Supabase hosts, unknown mutations, failed requests,
+runtime errors or viewport mismatch.
 
 ## Limitations
 

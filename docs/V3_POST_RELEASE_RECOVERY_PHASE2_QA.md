@@ -54,6 +54,13 @@ channel still provides no verifiable network ledger and did not reliably expose
 the required desktop CSS widths through its viewport override, so complete
 certification remains open. No business write was executed.
 
+Phase 2.3 closes the harness blocker with the deterministic Playwright runner:
+11/11 tests passed, all 10 requested/actual viewport pairs matched exactly,
+26,050 sanitized requests were recorded, QA Supabase traffic was 3,160,
+production and unknown Supabase traffic were zero, unknown mutations were zero,
+and runtime/request errors were zero. The evidence remains read-only and is
+stored privately under the ignored QA report path.
+
 ## Branding and responsive conclusions
 
 - The existing V3 shell now presents the canonical Costa Clean logo and visible `Costa Clean` identity in the topbar and iPad/desktop navigation rail.

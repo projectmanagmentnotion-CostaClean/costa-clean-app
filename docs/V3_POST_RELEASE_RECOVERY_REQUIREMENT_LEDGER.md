@@ -47,3 +47,14 @@ matrix not reliably observable through the current Chrome control channel`.
 The authenticated QA profile is restored and read-only smoke is complete for
 Home, Clients, Properties, Leads and invoice detail/preview; this does not close
 the full certification gate.
+
+## Phase 2.3 deterministic harness update
+
+| Requirement | State | Evidence / next gate |
+|---|---|---|
+| Exact 10 viewport proof | FIXED | Playwright page metrics matched requested width/height and client width/height for all 10 viewports. |
+| Sanitized network ledger | FIXED | 26,050 request entries captured privately; query strings and sensitive headers/bodies are excluded. |
+| QA-only Supabase routing | CERTIFIED | 3,160 QA requests; 0 production and 0 unknown Supabase requests. |
+| QA business writes | CERTIFIED | 0 business writes; auth/session POSTs classified separately; 0 unknown mutations. |
+| Runtime error ledger | CERTIFIED | 0 failed requests, 0 page errors and 0 console errors. |
+| Full authenticated read-only matrix | CERTIFIED_PENDING_REVIEW | 11/11 runner tests PASS across the 10 viewports and existing surface scope; independent detached review remains required. |

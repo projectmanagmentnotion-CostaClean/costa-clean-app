@@ -84,3 +84,9 @@ certified until a fresh detached reviewer completes:
 P2 findings remain open for a separate bounded follow-up: payment
 prefill/outstanding-balance synchronization and additional focused coverage
 for payment/workspace/closing interactions.
+
+The fresh review of remediation commit `f8c1fa4bd8b126def359d6e54cae60630154b043`
+found one residual P1 in V3 closing: prop/default selection synchronization and
+period-scoped feedback could remain stale. This follow-up restores the
+period-keyed note/message isolation and keys the V3 closing shell to the
+authoritative selection, without reintroducing state-setting effects.

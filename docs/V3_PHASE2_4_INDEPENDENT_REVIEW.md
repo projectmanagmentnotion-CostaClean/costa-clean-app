@@ -194,3 +194,13 @@ Therefore the two P2 findings are `CLOSED`, but strict Phase 2.4
 certification remains `BLOCKED` solely by detached authenticated replay
 capability. No product defect, production mutation, Supabase production
 mutation, payment write or email send was observed.
+
+## Phase 2.4 final authenticated detached replay
+
+The canonical final replay was completed from exact `START_HEAD` `8afe82a2f43fea2c5726ed445f94988beea975b0` in a clean detached worktree. Authentication used the repository-native `scripts/qa/setup-auth-state.mjs` workflow with a fresh disposable QA profile and manual login. No live operator Chrome profile was copied or opened, no auth bypass was used, and no credentials, cookies or token contents were printed or committed.
+
+The detached reviewer authenticated successfully and ran the exact release harness: `13/13 PASS`, including the auth gate, the complete viewport matrix, payment outstanding-balance prefill, and period-scoped interaction replay. Sanitized network evidence recorded `26,380` requests: only `QA_SUPABASE` and `LOCAL_PREVIEW` environments, zero production or unknown requests, zero non-READ mutations, zero failed requests and zero console errors. No QA business write, production mutation, real payment write or email send occurred.
+
+The detached worktree also passed the previously established gates: `888` tests passed with `4` skipped, `qa:agents` `294/294 PASS`, lint PASS, build PASS and `git diff --check` PASS. The authenticated detached gate is now closed.
+
+Phase 2.4 final certification is `PASS` at exact `8afe82a`. The next roadmap gate is Phase 3 planning/implementation under the existing Stitch, mobile-first and release-governance constraints.

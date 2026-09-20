@@ -104,3 +104,19 @@ Both P2 findings are functionally closed. The exact detached Playwright run
 still cannot authenticate the copied profile, so its new P2 tests are skipped
 by the auth gate and strict independent certification remains blocked by
 capability, not by product behavior.
+
+## Phase 2.4 final certification closure
+
+The canonical exact-head detached replay is now complete at `8afe82a2f43fea2c5726ed445f94988beea975b0`. The repository-native
+`scripts/qa/setup-auth-state.mjs` workflow created a fresh disposable QA
+profile, manual QA login completed, and the detached authentication gate
+passed. No live operator profile was copied, no auth bypass was used, and no
+credentials, cookies or tokens were exposed.
+
+The exact release harness passed `13/13`. Sanitized network evidence recorded
+26,380 requests, limited to `QA_SUPABASE` and `LOCAL_PREVIEW`; production and
+unknown requests were zero, non-READ mutations were zero, failed requests were
+zero, and console errors were zero. The established gates remain green: 888
+tests passed with 4 skipped, agents 294/294, lint, build and diff check all
+pass. Phase 2.4 is therefore `PASS`; the next gate is Phase 3 planning and
+implementation.

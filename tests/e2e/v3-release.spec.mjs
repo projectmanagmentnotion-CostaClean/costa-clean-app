@@ -18,6 +18,8 @@ const rootDir = process.cwd()
 const releaseReportDir = path.join(rootDir, 'qa-reports', 'private', 'v3-8-release')
 const authMetadataPath = path.resolve(process.env.QA_AUTH_METADATA ?? getQaPaths(rootDir).stateFile)
 const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:4178/?v3=1'
+const qaProjectRef = 'qa-configured'
+const productionProjectRef = 'guarded'
 
 const viewports = [
   { id: '320x568', width: 320, height: 568 },

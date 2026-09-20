@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { findPaymentDuplicateGroups } from '../../features/duplicates/duplicateEngine'
 import { savePaymentAndRefreshInvoice } from '../../features/financial/financialWriteApi'
+import { getPaymentAmountError } from '../../features/payments/paymentAmount'
 import type { ClientListItem } from '../../features/clients/types'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
@@ -61,7 +62,8 @@ export function V3PaymentCreateFlow({ invoices, clients, payments, onRefreshData
     const parsedAmount = decimal(amount)
     if (!invoice) return setError('Selecciona una factura pendiente.')
     if (!paymentDate) return setError('Indica la fecha de cobro.')
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) return setError('El importe debe ser mayor que cero.')
+    const amountError = getPaymentAmountError(parsedAmount, outstanding)
+    if (amountError) return setError(amountError)
     const id = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? `PAYMENT-${crypto.randomUUID()}` : `PAYMENT-${Date.now()}`
     const candidate = { id, display_code: null, invoice_id: invoice.id, invoice_display_code: invoice.display_code ?? null, invoice_number: invoice.invoice_number ?? null, payment_date: paymentDate, created_at: null, amount: Number(parsedAmount.toFixed(2)), payment_method: method || null, origin_type: 'manual' as const, notes: notes.trim() || null }
     const duplicates = findPaymentDuplicateGroups(candidate, payments)

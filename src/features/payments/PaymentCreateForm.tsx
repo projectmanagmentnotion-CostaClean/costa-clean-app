@@ -3,6 +3,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { getPaymentAmountError } from './paymentAmount'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -186,14 +187,9 @@ export function PaymentCreateForm({
       }
 
       const amount = parseDecimalInput(form.amount)
-
-      if (Number.isNaN(amount)) {
-        setSubmitError('El importe debe ser un numero valido.')
-        return
-      }
-
-      if (amount <= 0) {
-        setSubmitError('El importe del cobro debe ser mayor que cero.')
+      const amountError = getPaymentAmountError(amount, Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total))
+      if (amountError) {
+        setSubmitError(amountError)
         return
       }
 

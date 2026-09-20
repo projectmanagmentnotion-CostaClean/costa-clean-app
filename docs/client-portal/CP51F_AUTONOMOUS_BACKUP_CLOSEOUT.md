@@ -1,6 +1,6 @@
 # CP-5.1F — Autonomous Production Backup Closeout
 
-**Reviewed at:** `2026-09-20T00:10:00Z`
+**Reviewed at:** `2026-09-20T10:15:00Z`
 **Verdict:** `BACKUP_INCOMPLETE`
 **Scope:** authorized Temporary Access/JIT discovery, private logical-backup attempt and local/offline restore attempt only.
 
@@ -28,7 +28,7 @@ changed, and no production or QA mutation was performed.
 |---|---|
 | Repository | `projectmanagmentnotion-CostaClean/costa-clean-app` |
 | Branch | `codex/cp51-production-readiness-preflight` |
-| HEAD | `aca26dc6d2364be55c9ffd1b1b2ce7b82db2b5a9` |
+| HEAD | `13e6a4b416752e958cd7911d10b29cdec11b0928` |
 | Remote branch | Matches HEAD |
 | PR | `#18`, open, draft |
 | Production ref | `wfxnwfcdjainpojhbdri` |
@@ -91,6 +91,18 @@ the repository and failed before creating a link because the account lacked
 the required target privileges. A dump dry-run then reported that the target
 must be linked and that IPv6 is unsupported on the current network. No dump
 command executed a connection or wrote an artifact.
+
+The setup-only runner is now prepared at
+`scripts/cp51f-production-backup-setup.sh`. It requires the setup-only
+`SUPABASE_CP51F_TEMP_PAT` environment secret and an explicit
+`CP51F_PRIVATE_SECURE_PATH` outside the worktree. It validates the exact target
+and PostgreSQL version, reads JIT prestate and official pooler metadata, uses
+only the Session Pooler on port 5432 with SSL and `jit=true`, creates roles,
+schema, data and migration-history dumps outside Git, hashes them into a
+non-sensitive manifest, and restores the exact JIT prestate before exiting.
+It contains no secret, does not use `link`, and does not print a connection
+string. The runner was not executed in the normal agent phase because the PAT
+must exist only during setup.
 
 The authenticated Supabase Access Tokens page was also checked for a
 least-privilege Management API route. Its available flow was only **Generate
@@ -173,7 +185,7 @@ safe PostgreSQL/JIT route.
 
 ## Validation and delivery
 
-This closeout update is the only repository change in this continuation.
+This closeout and the setup-only runner are the only repository changes in this continuation.
 Required validations for this documentation-only update are run before commit:
 
 - CP-4.3C focused tests;
@@ -184,6 +196,9 @@ Required validations for this documentation-only update are run before commit:
 - `git diff --check`;
 - staged-diff secret scan;
 - repository dump/credential presence scan.
+- setup runner static review; Bash syntax check passed with Git Bash, while
+  ShellCheck is unavailable. The setup runner was not executed because the PAT
+  must exist only during setup.
 
 The PR remains draft. No merge, force push, Authorization B, CP-4.3C
 production reconciliation or CP-5.2 action is permitted.

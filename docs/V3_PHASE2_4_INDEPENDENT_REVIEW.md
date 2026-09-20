@@ -1,6 +1,6 @@
 # Costa Clean V3 — Phase 2.4 independent review
 
-Status: `PHASE 2.3 BLOCKED — P1 protected-contract regressions found by independent reviewer`.
+Status: `REMEDIATED_PENDING_INDEPENDENT_REVIEW`.
 
 ## Review boundary
 
@@ -59,3 +59,28 @@ behavior remain uncertified. New Expenses/Vendors visual work remains
 No product fix is included in this review-close documentation. The next safe
 implementation block must correct the three P1 findings, add focused tests,
 rerun the required quality gates, and obtain a fresh independent review.
+
+## Phase 2.5 remediation status
+
+The three P1 contracts have now been remediated locally and are not yet
+certified until a fresh detached reviewer completes:
+
+- Job and quote source selection now applies client, property, notes and
+  editable billing lines through explicit selection handlers. The canonical
+  `acceptQuoteWorkflow` / `accept_quote_workflow` path remains unchanged.
+- Client and property workspace edit requests now remount the canonical detail
+  card with the request token and open the persisted entity in edit mode; no
+  duplicate-create or V2 route was introduced.
+- Fiscal notes now resolve from a period-keyed draft over the selected
+  persisted closing, so switching periods cannot display or save another
+  period's note.
+- Focused contract tests pass: invoice source prefill and fiscal-period note
+  isolation. Remote QA writes were not performed.
+- The deterministic authenticated rerun passed `11/11` again across the exact
+  10 viewports: 26,380 requests, 3,160 QA Supabase requests, 0 production or
+  unknown Supabase requests, 0 QA business writes, 0 unknown mutations, 0
+  failed requests, 0 page errors and 0 console errors.
+
+P2 findings remain open for a separate bounded follow-up: payment
+prefill/outstanding-balance synchronization and additional focused coverage
+for payment/workspace/closing interactions.

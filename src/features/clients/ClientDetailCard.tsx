@@ -76,11 +76,12 @@ export function ClientDetailCard({
   payments,
   onClientUpdated,
   hideHeaderActions = false,
+  editRequestToken = 0,
   archiveRequestToken = 0,
   onEditingStateChange,
 }: ClientDetailCardProps) {
   const useOverlayEdit = useActionFlowOverlayMode()
-  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, false)
+  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, editRequestToken > 0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)

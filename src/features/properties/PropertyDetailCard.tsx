@@ -83,10 +83,11 @@ export function PropertyDetailCard({
   invoices,
   onPropertyUpdated,
   hideHeaderActions = false,
+  editRequestToken = 0,
   onEditingStateChange,
 }: PropertyDetailCardProps) {
   const useOverlayEdit = useActionFlowOverlayMode()
-  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, false)
+  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, editRequestToken > 0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)

@@ -602,7 +602,7 @@ export function PropertyWorkspace({
           </section>
 
           <PropertyDetailCard
-            key={property?.id ?? 'no-property'}
+            key={`${property?.id ?? 'no-property'}-${editRequestToken}`}
             property={property}
             clients={clients}
             jobs={jobs}

@@ -48,8 +48,9 @@ import {
   roundMoney,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
-import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
+import { buildInvoiceCreatePrefillFromJob, buildInvoiceCreatePrefillFromQuote, type InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import { useToast } from '../../shared/toasts/useToast'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, describeInvoiceNumberingGap, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
@@ -313,6 +314,47 @@ export function InvoiceCreateFlow({
     if ((field === 'origin_mode' && value !== 'job') || (field === 'job_id' && contextualJob?.id !== value)) {
       setContextualJob(null)
     }
+    if (field === 'job_id' && typeof value === 'string' && form.origin_mode === 'job') {
+      const selected = jobs.find((job) => job.id === value)
+      const nextPrefill = selected ? buildInvoiceCreatePrefillFromJob(selected) : null
+      const linkedQuote = selected?.quote_id ? quotes.find((quote) => quote.id === selected.quote_id) ?? null : null
+
+      if (selected && nextPrefill) {
+        setContextualJob(selected)
+        setForm((current) => ({
+          ...current,
+          job_id: selected.id,
+          client_id: nextPrefill.client_id,
+          property_id: nextPrefill.property_id,
+          quote_id: nextPrefill.quote_id,
+          notes: current.notes.trim() ? current.notes : nextPrefill.notes,
+        }))
+        setLines(nextPrefill.lines.length > 0
+          ? buildLinesFromPrefill(nextPrefill)
+          : linkedQuote
+            ? getBillingDraftLinesFromQuote(linkedQuote).map((line) => ({ ...line, local_id: createLocalId('LINE-DRAFT') }))
+            : [createBlankBillingLine()])
+        return
+      }
+    }
+
+    if (field === 'quote_id' && typeof value === 'string' && form.origin_mode === 'quote') {
+      const selected = quotes.find((quote) => quote.id === value)
+      const nextPrefill = selected ? buildInvoiceCreatePrefillFromQuote(selected) : null
+
+      if (selected && nextPrefill) {
+        setForm((current) => ({
+          ...current,
+          quote_id: selected.id,
+          client_id: nextPrefill.client_id,
+          property_id: nextPrefill.property_id,
+          notes: current.notes.trim() ? current.notes : nextPrefill.notes,
+        }))
+        setLines(buildLinesFromPrefill(nextPrefill))
+        return
+      }
+    }
+
     setForm((current) => {
       const next = {
         ...current,

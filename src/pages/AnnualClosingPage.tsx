@@ -28,6 +28,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { AnnualClosingIncidence, AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../features/closing/fiscalPeriodNotes'
 
 type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
 
@@ -132,7 +133,7 @@ export function AnnualClosingPage({
   onSaveClosing,
 }: AnnualClosingPageProps) {
   const [selectedYear, setSelectedYear] = useState(defaultFiscalYear)
-  const [notes, setNotes] = useState('')
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -153,6 +154,8 @@ export function AnnualClosingPage({
     () => closings.find((item) => item.fiscal_year === selectedYear) ?? null,
     [closings, selectedYear],
   )
+  const notePeriodKey = String(selectedYear)
+  const notes = readFiscalPeriodNote(noteDraft, notePeriodKey, closing?.notes)
   const yearInvoices = useMemo(
     () => invoices.filter((invoice) => matchesDateYear(invoice.issue_date, selectedYear)),
     [invoices, selectedYear],
@@ -773,7 +776,7 @@ export function AnnualClosingPage({
               <span>Notas de cierre anual</span>
               <textarea
                 value={notes}
-                onChange={(event) => setNotes(event.target.value)}
+                onChange={(event) => setNoteDraft(writeFiscalPeriodNote(notePeriodKey, event.target.value))}
                 placeholder="Observaciones breves del cierre anual, incidencias o contexto operativo."
               />
             </label>
@@ -1657,7 +1660,6 @@ export function AnnualClosingPage({
     </section>
   )
 }
-
 
 
 

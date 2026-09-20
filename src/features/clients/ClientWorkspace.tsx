@@ -935,7 +935,7 @@ export function ClientWorkspace({
             </article>
           </section>
           <ClientDetailCard
-            key={client?.id ?? 'no-client'}
+            key={`${client?.id ?? 'no-client'}-${editRequestToken}`}
             client={client}
             properties={properties}
             jobs={jobs}

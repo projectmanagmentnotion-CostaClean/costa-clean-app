@@ -28,6 +28,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord, QuarterlyClosingSummary } from '../features/quarterlyClosing/types'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../features/closing/fiscalPeriodNotes'
 
 type QuarterlyClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
 
@@ -154,7 +155,7 @@ export function QuarterlyClosingPage({
 }: QuarterlyClosingPageProps) {
   const [selectedYear, setSelectedYear] = useState(defaultFiscalYear)
   const [selectedQuarter, setSelectedQuarter] = useState(defaultFiscalQuarter)
-  const [notes, setNotes] = useState('')
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -180,6 +181,8 @@ export function QuarterlyClosingPage({
       ) ?? null,
     [closings, selectedYear, selectedQuarter],
   )
+  const notePeriodKey = `${selectedYear}-Q${selectedQuarter}`
+  const notes = readFiscalPeriodNote(noteDraft, notePeriodKey, closing?.notes)
 
   const quarterInvoices = useMemo(
     () => invoices.filter((invoice) => matchesDateQuarter(invoice.issue_date, selectedYear, selectedQuarter)),
@@ -788,7 +791,7 @@ export function QuarterlyClosingPage({
                   <span>Notas de cierre</span>
                   <textarea
                     value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
+                    onChange={(event) => setNoteDraft(writeFiscalPeriodNote(notePeriodKey, event.target.value))}
                     placeholder="Observaciones breves del cierre, incidencias o contexto operativo."
                   />
                 </label>
@@ -1654,8 +1657,6 @@ export function QuarterlyClosingPage({
     </section>
   )
 }
-
-
 
 
 

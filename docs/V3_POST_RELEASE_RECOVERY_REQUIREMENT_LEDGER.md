@@ -57,10 +57,20 @@ the full certification gate.
 | QA-only Supabase routing | CERTIFIED | 3,160 QA requests; 0 production and 0 unknown Supabase requests. |
 | QA business writes | CERTIFIED | 0 business writes; auth/session POSTs classified separately; 0 unknown mutations. |
 | Runtime error ledger | CERTIFIED | 0 failed requests, 0 page errors and 0 console errors. |
-| Full authenticated read-only matrix | BLOCKED_BY_INDEPENDENT_REVIEW | 11/11 runner tests PASS across the 10 viewports and existing surface scope; Phase 2.4 independent review found 3 P1 protected-contract regressions and 2 P2 follow-ups. |
+| Full authenticated read-only matrix | CERTIFIED_PENDING_REVIEW | 11/11 runner tests PASS across the 10 viewports and existing surface scope; Phase 2.5 remediation now requires a fresh independent review. |
 
-Phase 2.4 review result: `PHASE 2.3 BLOCKED — P1 protected-contract
-regressions found by independent reviewer`. The exact reviewed SHA is
-`48044d2c551929e06f753c5d1d20f5273c0bc764`; details are recorded in
-`docs/V3_PHASE2_4_INDEPENDENT_REVIEW.md`. No code or production/Supabase state
-was changed by the review closeout.
+## Phase 2.5 P1 remediation update
+
+| Requirement | State | Evidence / next gate |
+|---|---|---|
+| Job/quote to invoice prefill | FIXED_PENDING_REVIEW | Explicit job/quote selection handlers restore client, property, notes and editable lines; focused prefill tests pass. Fresh detached review required. |
+| Client workspace editing | FIXED_PENDING_REVIEW | Request-token keyed canonical detail card opens the persisted client edit flow; fresh detached review required. |
+| Property workspace editing | FIXED_PENDING_REVIEW | Request-token keyed canonical detail card opens the persisted property edit flow; fresh detached review required. |
+| Fiscal-period note synchronization | FIXED_PENDING_REVIEW | Period-keyed draft lookup isolates persisted notes across period switches; focused note tests pass. Fresh detached review required. |
+| Payment prefill/outstanding balance | OPEN_P2 | Separate follow-up unless the fresh review proves it shares a touched P1 root cause. |
+| Focused regression coverage breadth | OPEN_P2 | Invoice and fiscal-note focused tests added; payment/workspace interaction coverage remains follow-up. |
+
+Phase 2.4 review result was `PHASE 2.3 BLOCKED — P1 protected-contract
+regressions found by independent reviewer`. Phase 2.5 remediation is now
+implemented locally, pending fresh independent review. No QA or production
+business write and no Supabase schema mutation was performed.

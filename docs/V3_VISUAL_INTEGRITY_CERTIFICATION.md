@@ -5,7 +5,7 @@ Status: `BLOCKED — authenticated matrix and network isolation evidence incompl
 ## Candidate
 
 - Starting SHA: `21ddc51f31308f5b217c70d9703ffe7c8dd0337f`.
-- Current candidate: uncommitted Phase 2.2B shell-width correction.
+- Current candidate: `5fd15f87db94b4a6156bd7a7475b862bc9715b83`.
 - QA URL: `http://127.0.0.1:4178/?v3=1&view=dashboard`.
 - Browser: existing persistent authenticated QA Chrome profile.
 - No credentials, cookies, JWTs, tokens or screenshots with customer data were stored.
@@ -27,6 +27,10 @@ Status: `BLOCKED — authenticated matrix and network isolation evidence incompl
 - The complete 12-surface × 10-viewport matrix was not rerun in this session. The dashboard shell smoke must not be represented as full product certification.
 - Properties tabs, Leads tabs, StepFlows, long-list stress, invoice preview interaction, expense signed-document opening, Closing AI reachability and duplicate-resolution interaction remain `PENDING_REAUDIT`.
 - Independent detached reviewer: `NOT RUN`.
+- Latest continuation attempt: the required existing QA Chrome session was not
+  available to the browser control surface, and no Chrome process was open on
+  the host. The authenticated visual matrix cannot be truthfully rerun or
+  certified without that exact session.
 
 ## Visual findings
 
@@ -37,3 +41,6 @@ Status: `BLOCKED — authenticated matrix and network isolation evidence incompl
 ## Verdict
 
 `BLOCKED` until the complete authenticated matrix, environment-isolation evidence and independent reviewer are available against the final committed SHA.
+
+The exact active blocker is: `QA Chrome session unavailable — authenticated
+visual certification cannot continue in the current host session`.

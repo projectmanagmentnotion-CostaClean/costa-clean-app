@@ -41,3 +41,7 @@ Production and Production Supabase remain untouched. QA business writes and sche
 | Complete authenticated 10-viewport matrix | PENDING_REAUDIT | This session did not rerun all major surfaces at every viewport. |
 | QA/Production network isolation proof | NOT_VERIFIED | Browser channel did not expose a verifiable request ledger. |
 | Independent reviewer | NOT_RUN | Must inspect the final committed SHA before certification. |
+
+Current continuation blocker: `QA Chrome session unavailable`. The authenticated
+10-viewport/surface matrix and network provenance cannot be certified until the
+existing QA Chrome profile is available again.

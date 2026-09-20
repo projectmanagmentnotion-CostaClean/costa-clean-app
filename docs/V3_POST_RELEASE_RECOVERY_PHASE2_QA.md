@@ -47,6 +47,11 @@ Known N/A states are limited to search assertions on surfaces without search con
 
 The Phase 2.2B browser rerun found and corrected a real tablet full-width defect in the V3 shell. The correction is documented in `docs/V3_VISUAL_INTEGRITY_CERTIFICATION.md`. This session is not a final certification: network isolation counts, the complete 12-surface matrix and independent detached review remain unverified.
 
+Continuation blocker: the required existing authenticated QA Chrome session is
+currently unavailable to the browser control surface and no Chrome process is
+open on the host. The session was not replaced with the in-app browser, and no
+authenticated or production action was attempted.
+
 ## Branding and responsive conclusions
 
 - The existing V3 shell now presents the canonical Costa Clean logo and visible `Costa Clean` identity in the topbar and iPad/desktop navigation rail.

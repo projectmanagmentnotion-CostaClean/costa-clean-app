@@ -241,3 +241,22 @@ evidence above.
   ShellCheck validation remain `NOT_EXECUTED`, not PASS.
 - This remediation performed no production API write, JIT mutation, backup,
   restore, PAT creation or PAT use.
+
+## PostgreSQL dump compatibility remediation — 2026-09-21
+
+- Role/global definitions now use a separate `pg_dumpall --roles-only
+  --no-role-passwords` invocation. Role passwords are intentionally excluded
+  because they are not required for the CP-5.1F restore evidence.
+- Database artifacts use `pg_dump` with independent `--schema=public`,
+  `--schema=portal_private` and `--schema=auth` arguments. Migration history
+  uses `--schema=supabase_migrations`; data artifacts use `--data-only`.
+  The legacy `--role-only`, comma-delimited schema and `--use-copy` flags are
+  absent.
+- `pg_dump` and `pg_dumpall` are required and their reported major versions
+  must be PostgreSQL 17 before the first JIT mutation. Missing or incompatible
+  dependencies therefore fail closed before JIT changes.
+- The intended restore evidence order is roles, schema, data, then migration
+  history schema/data. No restore was executed in this local/test-only fix.
+- Behavioral coverage now includes command construction, independent schema
+  arguments, role-password exclusion, empty-artifact failure, pg_dumpall
+  failure cleanup, pg_dump failure cleanup, and the existing secret/JIT gates.

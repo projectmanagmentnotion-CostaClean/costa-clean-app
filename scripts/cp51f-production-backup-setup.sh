@@ -14,6 +14,7 @@ MANAGEMENT_API_BASE="https://api.supabase.com/v1"
 PAT_ENV_NAME="SUPABASE_CP51F_TEMP_PAT"
 PRIVATE_SECURE_PATH="${CP51F_PRIVATE_SECURE_PATH:-}"
 PG_DUMP_BIN="${PG_DUMP_BIN:-pg_dump}"
+PG_DUMPALL_BIN="${PG_DUMPALL_BIN:-pg_dumpall}"
 JIT_CHANGED=0
 JIT_CLEAN=0
 SETUP_RESULT="BACKUP_INCOMPLETE"
@@ -54,6 +55,18 @@ require_command sha256sum
 require_command stat
 require_command git
 require_command "$PG_DUMP_BIN"
+require_command "$PG_DUMPALL_BIN"
+
+check_postgres_tool_version() {
+  local tool="$1"
+  local version_output version_major
+  version_output="$($tool --version 2>/dev/null)" || die "version check failed: $tool"
+  version_major="$(printf '%s\n' "$version_output" | sed -nE 's/.* ([0-9]+)(\.[0-9]+)?.*/\1/p')"
+  [[ "$version_major" == "17" ]] || die "$tool is not PostgreSQL 17-compatible"
+}
+
+check_postgres_tool_version "$PG_DUMP_BIN"
+check_postgres_tool_version "$PG_DUMPALL_BIN"
 
 GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not running inside the repository"
 PRIVATE_SECURE_PATH="$(mkdir -p "$PRIVATE_SECURE_PATH" && cd "$PRIVATE_SECURE_PATH" && pwd -P)"
@@ -253,7 +266,7 @@ PGSSLMODE="require"
 PGOPTIONS="-c jit=true"
 export PGPASSFILE PGSSLMODE PGOPTIONS
 
-run_dump() {
+run_pg_dump() {
   local name="$1"
   shift
   "$PG_DUMP_BIN" \
@@ -267,11 +280,27 @@ run_dump() {
   [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]] || die "empty dump: $name"
 }
 
-run_dump roles --role-only
-run_dump schema --schema 'public,portal_private,auth'
-run_dump data --data-only --use-copy --schema 'public,portal_private,auth'
-run_dump history_schema --schema 'supabase_migrations'
-run_dump history_data --data-only --use-copy --schema 'supabase_migrations'
+run_pg_dumpall_roles() {
+  local name="$1"
+  shift
+  "$PG_DUMPALL_BIN" \
+    --host "$POOLER_HOST" \
+    --port "$POOLER_PORT" \
+    --username "$POOLER_USER" \
+    --database "$POOLER_DB" \
+    --roles-only \
+    --no-role-passwords \
+    --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
+    2>"$PRIVATE_SECURE_PATH/.dump-error" || die "roles dump failed"
+  rm -f "$PRIVATE_SECURE_PATH/.dump-error"
+  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]] || die "empty dump: $name"
+}
+
+run_pg_dumpall_roles roles
+run_pg_dump schema --schema=public --schema=portal_private --schema=auth
+run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth
+run_pg_dump history_schema --schema=supabase_migrations
+run_pg_dump history_data --data-only --schema=supabase_migrations
 
 cleanup_jit || die "JIT cleanup did not restore the exact prestate"
 
@@ -302,6 +331,7 @@ jq -n \
     jit_used:true,jit_prestate:$jit_prestate,jit_poststate:$jit_poststate,
     jit_poststate_matches_prestate:true,storage_object_bytes_included:false,
     auth_coverage:"ATTEMPTED_IN_AUTH_SCHEMA_AND_DATA_DUMPS",
+    roles_passwords_included:false,
     migration_state_coverage:"CAPTURED_IN_HISTORY_ARTIFACTS",
     classic_pat_revocation:"AWAITING_PAT_REVOCATION",
     artifacts:$artifacts}' > "$PRIVATE_SECURE_PATH/.manifest.tmp"

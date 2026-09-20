@@ -2,6 +2,25 @@ const EXPECTED_PAT_NAME = 'CostaClean CP-5.1F Backup Temporary'
 
 export const JIT_STOP = 'STOP_JIT_CLEANUP_FAILURE'
 
+const CONNECTION_ARGS = ({ host, port, user, database, file }) => [
+  '--host', host, '--port', port, '--username', user, '--dbname', database, '--file', file,
+]
+
+export function buildPgDumpCommand({ bin = 'pg_dump', host = 'pooler.example', port = '5432', user = 'postgres.ref', database = 'postgres', file = 'data.sql', kind, schemas = [] }) {
+  const args = [bin, ...CONNECTION_ARGS({ host, port, user, database, file })]
+  if (kind === 'data') args.push('--data-only')
+  for (const schema of schemas) args.push(`--schema=${schema}`)
+  return args
+}
+
+export function buildPgDumpallRolesCommand({ bin = 'pg_dumpall', host = 'pooler.example', port = '5432', user = 'postgres.ref', database = 'postgres', file = 'roles.sql' } = {}) {
+  return [bin, '--host', host, '--port', port, '--username', user, '--database', database, '--roles-only', '--no-role-passwords', '--file', file]
+}
+
+export function artifactIsUsable(sizeBytes) {
+  return Number.isInteger(sizeBytes) && sizeBytes > 0
+}
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value))
 }

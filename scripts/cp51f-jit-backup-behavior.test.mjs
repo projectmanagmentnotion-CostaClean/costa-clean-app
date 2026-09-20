@@ -1,8 +1,38 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createMockJitApi, evaluateRevocationGate, EXPECTED_PAT_NAME, runMockBackup } from './cp51f-jit-backup-behavior.mjs'
+import { artifactIsUsable, buildPgDumpallRolesCommand, buildPgDumpCommand, createMockJitApi, evaluateRevocationGate, EXPECTED_PAT_NAME, runMockBackup } from './cp51f-jit-backup-behavior.mjs'
 
 const mapping = { user_id: '11111111-1111-1111-1111-111111111111', user_roles: [{ role: 'reader', expires_at: 1 }] }
+
+test('roles use pg_dumpall roles-only without role passwords', () => {
+  const command = buildPgDumpallRolesCommand()
+  assert.equal(command[0], 'pg_dumpall')
+  assert.ok(command.includes('--roles-only'))
+  assert.ok(command.includes('--no-role-passwords'))
+  assert.equal(command.includes('--role-only'), false)
+})
+
+test('database dumps use independent schema arguments and no legacy flags', () => {
+  const schema = buildPgDumpCommand({ kind: 'schema', schemas: ['public', 'portal_private', 'auth'] })
+  const data = buildPgDumpCommand({ kind: 'data', schemas: ['public', 'portal_private', 'auth'] })
+  assert.equal(schema[0], 'pg_dump')
+  assert.deepEqual(schema.slice(-3), ['--schema=public', '--schema=portal_private', '--schema=auth'])
+  assert.deepEqual(data.slice(-3), ['--schema=public', '--schema=portal_private', '--schema=auth'])
+  assert.ok(data.includes('--data-only'))
+  assert.equal(schema.includes('--use-copy'), false)
+  assert.equal(data.includes('--use-copy'), false)
+  assert.equal(schema.includes('--role-only'), false)
+})
+
+test('migration history uses one schema argument', () => {
+  assert.deepEqual(buildPgDumpCommand({ kind: 'schema', schemas: ['supabase_migrations'] }).slice(-1), ['--schema=supabase_migrations'])
+  assert.deepEqual(buildPgDumpCommand({ kind: 'data', schemas: ['supabase_migrations'] }).slice(-1), ['--schema=supabase_migrations'])
+})
+
+test('empty artifacts fail closed', () => {
+  assert.equal(artifactIsUsable(0), false)
+  assert.equal(artifactIsUsable(12), true)
+})
 
 for (const state of ['disabled', 'enabled']) {
   test(`restores exact ${state} prestate after successful dumps`, async () => {
@@ -53,6 +83,17 @@ test('cleanup API failure is a hard stop', async () => {
   const api = createMockJitApi({ state: 'disabled', mapping, failAt: 'cleanup-mapping-put' })
   const result = await runMockBackup({ api })
   assert.equal(result.status, 'STOP_JIT_CLEANUP_FAILURE')
+})
+
+test('pg_dumpall failure activates JIT cleanup', async () => {
+  const api = createMockJitApi({ state: 'disabled', mapping })
+  const result = await runMockBackup({ api, dump: async name => {
+    api.maybeFail(`dump-${name}`)
+    if (name === 'roles') throw new Error('pg_dumpall failed')
+  } })
+  assert.equal(result.status, 'FAIL_CLOSED')
+  assert.equal(api.state, 'disabled')
+  assert.deepEqual(api.mapping, mapping)
 })
 
 test('cleanup state failure is a hard stop', async () => {

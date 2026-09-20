@@ -21,6 +21,21 @@ grep -Fq -- 'PG_DUMP_BIN' <<<"$source_text"
 ! grep -Fq -- '--db-url "$PRIVATE_DB_URL"' <<<"$source_text"
 ! grep -Fq -- 'PRIVATE_DB_URL=' <<<"$source_text"
 grep -Fq -- 'AWAITING_PAT_REVOCATION' <<<"$source_text"
+grep -Fq -- 'PG_DUMPALL_BIN' <<<"$source_text"
+grep -Fq -- 'require_command "$PG_DUMPALL_BIN"' <<<"$source_text"
+grep -Fq -- 'run_pg_dumpall_roles' <<<"$source_text"
+grep -Fq -- '--roles-only' <<<"$source_text"
+grep -Fq -- '--no-role-passwords' <<<"$source_text"
+! grep -Fq -- '--role-only' <<<"$source_text"
+! grep -Fq -- '--use-copy' <<<"$source_text"
+grep -Fq -- 'run_pg_dump schema --schema=public --schema=portal_private --schema=auth' <<<"$source_text"
+grep -Fq -- 'run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth' <<<"$source_text"
+grep -Fq -- 'run_pg_dump history_schema --schema=supabase_migrations' <<<"$source_text"
+grep -Fq -- 'run_pg_dump history_data --data-only --schema=supabase_migrations' <<<"$source_text"
+grep -Fq -- 'roles_passwords_included:false' <<<"$source_text"
+version_check_line="$(grep -n 'check_postgres_tool_version' <<<"$source_text" | head -1 | cut -d: -f1)"
+jit_mutation_line="$(grep -n 'api_put "/projects/$PROJECT_REF/jit-access" '\''{"state":"enabled"}'\''' <<<"$source_text" | head -1 | cut -d: -f1)"
+[[ -n "$version_check_line" && -n "$jit_mutation_line" && "$version_check_line" -lt "$jit_mutation_line" ]]
 
 state_enabled='{"state":"enabled","appliedSuccessfully":true}'
 state_disabled='{"state":"disabled","appliedSuccessfully":true}'

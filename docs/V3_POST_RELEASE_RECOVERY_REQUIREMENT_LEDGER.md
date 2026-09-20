@@ -32,3 +32,12 @@ Status: Phase 2.1 candidate ledger. Items remain explicit; no unimplemented work
 | Stitch requirement | BLOCKED_BY_STITCH | Current status: `STITCH UI DESIGN PENDING`. |
 
 Production and Production Supabase remain untouched. QA business writes and schema changes remain unexecuted.
+
+## Phase 2.2B update
+
+| Requirement | State | Evidence / next gate |
+|---|---|---|
+| Tablet full-width shell correction | FIXED_PENDING_CERT | Corrected `.app-shell--v3` stretch behavior; dashboard smoke rechecked at 768, 820, 834 and 1024 widths. |
+| Complete authenticated 10-viewport matrix | PENDING_REAUDIT | This session did not rerun all major surfaces at every viewport. |
+| QA/Production network isolation proof | NOT_VERIFIED | Browser channel did not expose a verifiable request ledger. |
+| Independent reviewer | NOT_RUN | Must inspect the final committed SHA before certification. |

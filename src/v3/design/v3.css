@@ -499,6 +499,9 @@ html[data-app-surface="v3"] .cc-scroll-top {
 }
 
 .app-shell--v3 {
+  width: 100%;
+  padding: 0;
+  place-items: stretch;
   --cc-color-background: var(--v3-color-background);
   --cc-color-surface: var(--v3-color-surface);
   --cc-color-surface-raised: var(--v3-color-surface);
@@ -523,6 +526,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   color: var(--v3-color-text-primary);
   min-height: 100dvh;
   position: relative;
+  width: 100%;
 }
 
 .app-shell--v3 .v3-content {

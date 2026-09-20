@@ -1,6 +1,6 @@
 # Costa Clean V3 — Phase 2.4 independent review
 
-Status: `REMEDIATED_PENDING_INDEPENDENT_REVIEW`.
+Status: `REMEDIATED_BLOCKED_BY_REVIEW_CAPABILITY`.
 
 ## Review boundary
 
@@ -90,3 +90,19 @@ found one residual P1 in V3 closing: prop/default selection synchronization and
 period-scoped feedback could remain stale. This follow-up restores the
 period-keyed note/message isolation and keys the V3 closing shell to the
 authoritative selection, without reintroducing state-setting effects.
+
+## Final exact-HEAD review boundary
+
+The final remediation commit is `b8ea82b83d97dc3eb8f0a7f0d552fe6408307c29`.
+The detached independent reviewer reconstructed this exact tree and found no
+source-level P0 or P1 defect: P0 `0`, P1 `0`, P2 `2`, P3 `0`. Its verdict was
+`BLOCKED`, not `PASS`, because its read-only child capability denied the
+temporary writes required to run tests and build, and it could not replay the
+authenticated runtime matrix against the exact HEAD from that detached
+environment. The main worktree independently verified the full test suite,
+lint, build, diff check and authenticated 11/11 matrix at this HEAD, but that
+does not waive the independent-review capability boundary.
+
+The remaining P2 items are payment prefill/outstanding-balance synchronization
+and focused payment/workspace/closing interaction coverage. No certification
+claim is made for Phase 2 until independent exact-HEAD validation is runnable.

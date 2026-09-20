@@ -63,14 +63,18 @@ the full certification gate.
 
 | Requirement | State | Evidence / next gate |
 |---|---|---|
-| Job/quote to invoice prefill | FIXED_PENDING_REVIEW | Explicit job/quote selection handlers restore client, property, notes and editable lines; focused prefill tests pass. Fresh detached review required. |
-| Client workspace editing | FIXED_PENDING_REVIEW | Request-token keyed canonical detail card opens the persisted client edit flow; fresh detached review required. |
-| Property workspace editing | FIXED_PENDING_REVIEW | Request-token keyed canonical detail card opens the persisted property edit flow; fresh detached review required. |
-| Fiscal-period note synchronization | FIXED_PENDING_REVIEW | Period-keyed draft lookup isolates persisted notes across period switches; focused note tests pass. Fresh detached review required. |
+| Job/quote to invoice prefill | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Explicit job/quote selection handlers restore client, property, notes and editable lines; focused prefill tests pass. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
+| Client workspace editing | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Request-token keyed canonical detail card opens the persisted client edit flow. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
+| Property workspace editing | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Request-token keyed canonical detail card opens the persisted property edit flow. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
+| Fiscal-period note synchronization | FIXED_BLOCKED_BY_REVIEW_CAPABILITY | Period-keyed draft lookup isolates persisted notes across period switches; focused note tests pass. Exact-HEAD detached review found P0/P1 = 0 but could not execute its own tests/build. |
 | Payment prefill/outstanding balance | OPEN_P2 | Separate follow-up unless the fresh review proves it shares a touched P1 root cause. |
 | Focused regression coverage breadth | OPEN_P2 | Invoice and fiscal-note focused tests added; payment/workspace interaction coverage remains follow-up. |
 
 Phase 2.4 review result was `PHASE 2.3 BLOCKED — P1 protected-contract
-regressions found by independent reviewer`. Phase 2.5 remediation is now
-implemented locally, pending fresh independent review. No QA or production
-business write and no Supabase schema mutation was performed.
+regressions found by independent reviewer`. Phase 2.5 remediation is
+implemented at exact HEAD `b8ea82b83d97dc3eb8f0a7f0d552fe6408307c29`. The final
+detached review found P0 `0`, P1 `0`, P2 `2`, P3 `0`, but returned
+`BLOCKED_BY_REVIEW_CAPABILITY` because its read-only environment could not run
+tests/build or replay the exact-HEAD authenticated matrix. The main worktree
+verified those gates separately; independent certification remains open. No QA
+or production business write and no Supabase schema mutation was performed.

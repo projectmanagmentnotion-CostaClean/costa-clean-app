@@ -423,3 +423,82 @@ for (const viewport of viewports) {
     await fsp.writeFile(path.join(releaseReportDir, `v3-8-${viewport.id}.json`), `${JSON.stringify(result, null, 2)}\n`, 'utf8')
   })
 }
+
+async function assertReadOnlyInteractionLedger(state) {
+  const network = summarizeNetworkLedger(state.ledger)
+  expect(state.violations).toEqual([])
+  expect(network.productionSupabaseRequests).toBe(0)
+  expect(network.unknownSupabaseRequests).toBe(0)
+  expect(network.qaBusinessWrites).toBe(0)
+  expect(network.productionBusinessWrites).toBe(0)
+  expect(network.unknownMutations).toBe(0)
+  expect(network.failedRequests).toBe(0)
+  expect(network.pageErrors).toBe(0)
+  expect(network.consoleErrors).toBe(0)
+  return network
+}
+
+test('V3-8 P2-1 payment flow syncs the selected invoice outstanding balance', async () => {
+  test.skip(Boolean(authBlocker), authBlocker?.message ?? 'authentication gate required')
+  const state = { violations: [], ledger: createNetworkLedger() }
+  const { context, page } = await launchQaContext(authMetadata, { id: '390x844', width: 390, height: 844 }, true, state)
+  try {
+    await navigateToSurface(page, { id: 'payments', heading: 'Cobros' })
+    await page.getByRole('button', { name: '+ Registrar cobro', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Nuevo cobro', exact: true })).toBeVisible()
+
+    const invoiceSelect = page.getByLabel('Factura *').first()
+    await expect(invoiceSelect).toBeVisible()
+    const invoiceOptions = invoiceSelect.locator('option')
+    expect(await invoiceOptions.count()).toBeGreaterThan(1)
+    await invoiceSelect.selectOption({ index: 1 })
+    await page.getByRole('button', { name: 'Confirmar importe', exact: true }).click()
+    await expect(page.getByText('Lectura rapida', { exact: true })).toBeVisible()
+
+    const selectedInvoiceText = await invoiceSelect.locator('option:checked').textContent()
+    const expectedOutstanding = selectedInvoiceText?.match(/Pendiente\s+([0-9.,]+)/u)?.[1]
+    expect(expectedOutstanding).toBeTruthy()
+    await page.getByRole('button', { name: 'Traer pendiente real', exact: true }).click()
+    const amountInput = page.getByLabel('Importe *').first()
+    await expect(amountInput).toHaveValue(expectedOutstanding.replace(',', '.'))
+    await page.getByRole('button', { name: 'Cancelar', exact: true }).first().click()
+    await expect(page.getByRole('heading', { name: 'Cobros', exact: true })).toBeVisible()
+    await assertReadOnlyInteractionLedger(state)
+  } finally {
+    await context.close()
+  }
+})
+
+test('V3-8 P2-2 preserves payment edit and fiscal-period note interaction state', async () => {
+  test.skip(Boolean(authBlocker), authBlocker?.message ?? 'authentication gate required')
+  const state = { violations: [], ledger: createNetworkLedger() }
+  const { context, page } = await launchQaContext(authMetadata, { id: '390x844', width: 390, height: 844 }, true, state)
+  try {
+    await navigateToSurface(page, { id: 'payments', heading: 'Cobros' })
+    const paymentRow = page.locator('[aria-label^="Abrir "]').first()
+    await expect(paymentRow).toHaveCount(1)
+    await paymentRow.click()
+    await expect(page.locator('.v3-payment-workspace')).toBeVisible()
+    await page.getByRole('button', { name: 'Editar cobro', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Guardar cambios', exact: true })).toBeVisible()
+    const paymentAmount = page.getByLabel('Importe').first()
+    const originalAmount = await paymentAmount.inputValue()
+    await paymentAmount.fill(originalAmount)
+    await page.getByRole('button', { name: 'Cancelar edición', exact: true }).click()
+    await expect(page.getByRole('button', { name: 'Editar cobro', exact: true })).toBeVisible()
+
+    await navigateToSurface(page, { id: 'fiscal_closing', heading: 'Cierres' })
+    const periodType = page.getByLabel('Tipo de periodo').first()
+    const notes = page.getByLabel('Notas internas').first()
+    await expect(periodType).toHaveValue('quarter')
+    const marker = `QA P2 period ${Date.now()}`
+    await notes.fill(marker)
+    await periodType.selectOption('month')
+    await expect(notes).toHaveValue('')
+    await periodType.selectOption('quarter')
+    await expect(notes).toHaveValue(marker)
+    await assertReadOnlyInteractionLedger(state)
+  } finally {
+    await context.close()
+  }
+})

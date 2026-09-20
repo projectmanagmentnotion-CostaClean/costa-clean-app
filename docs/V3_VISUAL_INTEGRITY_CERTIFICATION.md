@@ -50,7 +50,7 @@ deterministic runner below.
 
 ## Phase 2.3 deterministic certification
 
-- Candidate under test: `d797a4de3efe91ff60dcb3685050cce4bce6f53a`.
+- Candidate under test: `fc2875079af8c96e8d65b9196dad1d4188750467`.
 - Browser: stored Google Chrome executable and persistent QA profile selected
   from the ignored QA metadata; no cookies, tokens or storage contents were
   logged.

@@ -67,6 +67,10 @@ The R5.5 visual polish certification closes UX-01A stronger global contrast/colo
 
 ## R6 — Real mobile StepFlow architecture for long forms
 
-Status: READY — NOT IMPLEMENTED.
+Status: CLOSED / CERTIFIED.
 
-R6 remains intentionally out of scope for the visual polish sprint. Its strict no-scroll monostep StepFlow architecture is the next exact sprint.
+R6 strict monostep StepFlow architecture passed the full test suite, agents,
+lint, build, diff-check, authenticated visual QA, and independent review.
+Production deployment and Supabase mutation count remain zero.
+
+GLOBAL_FINAL_CERTIFICATION: READY.

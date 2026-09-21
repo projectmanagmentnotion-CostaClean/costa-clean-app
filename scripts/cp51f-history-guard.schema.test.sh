@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# The jq program intentionally remains single-quoted so jq variables are not expanded by Bash.
+# shellcheck disable=SC2016
 FILTER='
   def valid_page:
     if type != "object" then false

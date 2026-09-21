@@ -68,9 +68,8 @@ done
 if ! "$INITDB" -D "$PGDATA" -U "$RESTORE_SUPERUSER" --auth=trust --no-locale >"$LOG_ROOT/initdb.log" 2>&1; then
   fail "CP51F_RESTORE_ERROR: initdb failed"
 fi
-printf '\nlisten_addresses = '\''\''\nunix_socket_directories = '\''%s'\''\n' "$PGSOCKET" >>"$PGDATA/postgresql.conf"
 
-if ! "$PG_CTL" -D "$PGDATA" -l "$PGLOG" -w start >"$LOG_ROOT/pg_ctl_start.log" 2>&1; then
+if ! "$PG_CTL" -D "$PGDATA" -o "-h '' -k $PGSOCKET" -l "$PGLOG" -w start >"$LOG_ROOT/pg_ctl_start.log" 2>&1; then
   fail "CP51F_RESTORE_ERROR: PostgreSQL start failed"
 fi
 

@@ -1,0 +1,109 @@
+name: CP51F Executor Smoke
+
+on:
+  push:
+    branches:
+      - codex/cp51-production-readiness-preflight
+    paths:
+      - .github/workflows/cp51f-executor-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-17-smoke:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@v4
+        with:
+          ref: codex/cp51-production-readiness-preflight
+          fetch-depth: 1
+
+      - name: Install PostgreSQL 17 and smoke dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ca-certificates \
+            curl \
+            gnupg \
+            jq \
+            coreutils \
+            postgresql-common
+          sudo install -d -m 0755 /usr/share/postgresql-common/pgdg
+          curl --fail --silent --show-error --location \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+            | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc >/dev/null
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17
+
+      - name: Verify runner and PostgreSQL 17
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          uname -a
+          cat /etc/os-release
+          id
+          whoami
+          test "$(id -u)" -ne 0
+          command -v jq
+          command -v sha256sum
+          command -v stat
+          command -v pg_dump
+          command -v pg_dumpall
+          command -v psql
+          test -x /usr/lib/postgresql/17/bin/initdb
+          test -x /usr/lib/postgresql/17/bin/pg_ctl
+          pg_dump --version
+          pg_dumpall --version
+          psql --version
+          /usr/lib/postgresql/17/bin/initdb --version
+          /usr/lib/postgresql/17/bin/pg_ctl --version
+
+      - name: Run isolated PostgreSQL 17 smoke
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          PGDATA="$RUNNER_TEMP/cp51f-pg17"
+          PGLOG="$RUNNER_TEMP/cp51f-pg17.log"
+          PGPORT=55432
+          export PGDATA PGPORT
+
+          cleanup() {
+            set +e
+            /usr/lib/postgresql/17/bin/pg_ctl -D "$PGDATA" -m fast -w stop >/dev/null 2>&1 || true
+            rm -rf -- "$PGDATA" "$PGLOG"
+          }
+          trap cleanup EXIT
+
+          rm -rf -- "$PGDATA" "$PGLOG"
+          /usr/lib/postgresql/17/bin/initdb --auth=trust --no-locale -D "$PGDATA"
+          /usr/lib/postgresql/17/bin/pg_ctl \
+            -D "$PGDATA" \
+            -o "-h 127.0.0.1 -p $PGPORT" \
+            -l "$PGLOG" \
+            -w start
+          echo 'PG_CTL_START=PASS'
+
+          psql -h 127.0.0.1 -p "$PGPORT" -d postgres -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE cp51f_restore_smoke;'
+          echo 'SMOKE_DATABASE_CREATED=YES'
+          psql -h 127.0.0.1 -p "$PGPORT" -d cp51f_restore_smoke -v ON_ERROR_STOP=1 \
+            -c 'SELECT version();' \
+            -c 'CREATE TABLE smoke_test (id integer PRIMARY KEY, value text NOT NULL);' \
+            -c "INSERT INTO smoke_test (id, value) VALUES (1, 'synthetic-smoke');" \
+            -c "SELECT count(*) AS smoke_row_count FROM smoke_test;" \
+            | tee "$RUNNER_TEMP/cp51f-psql-output.txt"
+          grep -Eq '^[[:space:]]*1[[:space:]]*$' "$RUNNER_TEMP/cp51f-psql-output.txt"
+          echo 'PSQL_CONNECTION=PASS'
+          echo 'SMOKE_TABLE_CREATED=YES'
+          echo 'SMOKE_ROW_COUNT=1'
+
+          /usr/lib/postgresql/17/bin/pg_ctl -D "$PGDATA" -m fast -w stop
+          echo 'PG_CTL_STOP=PASS'

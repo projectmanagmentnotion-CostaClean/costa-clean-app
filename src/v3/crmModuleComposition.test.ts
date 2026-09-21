@@ -25,10 +25,10 @@ describe('V3-10C3 module composition contracts', () => {
     expect(home.indexOf('<V3KpiGroup')).toBeLessThan(home.indexOf('<V3HomePriorityQueue'))
   })
 
-  it('keeps CRM search before KPI summaries and one primary client create action', () => {
+  it('keeps CRM search before KPI summaries and Leads KPI summary before its search', () => {
     expect(clients.indexOf('className="v3-crm-search"')).toBeLessThan(clients.indexOf('<V3KpiGroup>'))
     expect(clients).not.toContain('<V3SecondaryAction onClick={() => setIsFilterOpen(true)}>Filtros</V3SecondaryAction>')
-    expect(leads.indexOf('className="v3-leads-controls"')).toBeLessThan(leads.indexOf('<V3KpiGroup>'))
+    expect(leads.indexOf('<V3KpiGroup className="v3-leads-kpi-summary"')).toBeLessThan(leads.indexOf('className="v3-leads-controls"'))
   })
 
   it('keeps relationship rows human-readable and gives CRM rows semantic styling hooks', () => {

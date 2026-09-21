@@ -84,11 +84,14 @@ jobs:
 
           rm -rf -- "$PGDATA" "$PGLOG"
           /usr/lib/postgresql/17/bin/initdb --auth=trust --no-locale -D "$PGDATA"
-          /usr/lib/postgresql/17/bin/pg_ctl \
+          if ! /usr/lib/postgresql/17/bin/pg_ctl \
             -D "$PGDATA" \
             -o "-h 127.0.0.1 -p $PGPORT" \
             -l "$PGLOG" \
-            -w start
+            -w start; then
+            cat "$PGLOG"
+            exit 1
+          fi
           echo 'PG_CTL_START=PASS'
 
           psql -h 127.0.0.1 -p "$PGPORT" -d postgres -v ON_ERROR_STOP=1 \

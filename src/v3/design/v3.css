@@ -412,6 +412,11 @@ html[data-app-surface="v3"] .cc-scroll-top {
   width: 100%;
 }
 
+.v3-kpi--tone-primary { background: color-mix(in srgb, var(--v3-color-financial) 16%, var(--v3-color-primary-surface)); border-top: 3px solid var(--v3-color-financial); }
+.v3-kpi--tone-accent { background: var(--v3-color-accent-soft); border-top: 3px solid var(--v3-color-accent); }
+.v3-kpi--tone-information { background: color-mix(in srgb, var(--v3-color-information) 6%, var(--v3-color-primary-surface)); border-top: 3px solid var(--v3-color-information); }
+.v3-kpi--tone-financial { background: var(--v3-color-financial-soft); border-top: 3px solid var(--v3-color-financial); }
+
 .v3-kpi strong {
   color: var(--v3-color-text-primary);
   font-size: var(--v3-font-size-section-title);
@@ -700,6 +705,9 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-leads-page, .v3-lead-workspace { gap: var(--v3-space-section); }
 .v3-leads-controls { align-items: center; display: grid; gap: var(--v3-space-3); grid-template-columns: minmax(0, 1fr) auto; }
 .v3-leads-count { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
+.v3-leads-kpi-summary { gap: var(--v3-space-4); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v3-leads-kpi-summary .v3-kpi { min-height: 132px; }
+.v3-leads-kpi-summary .v3-kpi strong { font-size: var(--v3-font-size-kpi); }
 .v3-lead-row { align-items: center; }
 .v3-lead-row__main, .v3-lead-row__side { display: grid; gap: var(--v3-space-1); min-width: 0; }
 .v3-lead-row__main strong { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); }
@@ -837,6 +845,8 @@ html[data-app-surface="v3"] .cc-scroll-top {
   .app-shell--v3 .v3-content { padding-inline: var(--v3-space-4); padding-top: var(--v3-space-5); }
   .v3-invoice-controls { grid-template-columns: 1fr; }
   .v3-leads-controls { grid-template-columns: 1fr; }
+  .v3-leads-kpi-summary { gap: var(--v3-space-3); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v3-leads-kpi-summary .v3-kpi { min-height: 112px; padding: var(--v3-space-3); }
   .v3-operational-row__context, .v3-operational-statuses { justify-items: start; text-align: left; }
   .v3-alert-group__header { flex-direction: column; gap: var(--v3-space-1); }
   .v3-alert-group__count { white-space: normal; }

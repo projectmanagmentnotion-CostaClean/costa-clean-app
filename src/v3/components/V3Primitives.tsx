@@ -52,13 +52,14 @@ export function V3PageTitle({ eyebrow, title, description, action }: { eyebrow?:
   )
 }
 
-export function V3Kpi({ label, value, hint, onClick }: { label: string; value: string; hint?: string; onClick?: () => void }) {
+export function V3Kpi({ label, value, hint, onClick, tone = 'financial' }: { label: string; value: string; hint?: string; onClick?: () => void; tone?: 'financial' | 'primary' | 'accent' | 'information' }) {
   const content = <><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</>
-  return onClick ? <button type="button" className="v3-kpi v3-card v3-card--financial v3-kpi--interactive" onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button> : <article className="v3-kpi v3-card v3-card--financial">{content}</article>
+  const className = `v3-kpi v3-card v3-card--financial v3-kpi--tone-${tone}${onClick ? ' v3-kpi--interactive' : ''}`
+  return onClick ? <button type="button" className={className} onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button> : <article className={className}>{content}</article>
 }
 
-export function V3KpiGroup({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'supporting' }) {
-  return <div className={`v3-kpi-group v3-kpi-group--${variant}`}>{children}</div>
+export function V3KpiGroup({ children, variant = 'default', className = '' }: { children: ReactNode; variant?: 'default' | 'supporting'; className?: string }) {
+  return <div className={`v3-kpi-group v3-kpi-group--${variant} ${className}`.trim()}>{children}</div>
 }
 
 export function V3EntityStatus({ label, tone = 'neutral', context }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger'; context?: string }) {

@@ -8,6 +8,7 @@ import { V3EntityList, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, 
 import { readLeadDeepLink } from '../navigation/leadDeepLink'
 import { V3LeadRow } from './V3LeadRow'
 import { V3LeadWorkspace } from './V3LeadWorkspace'
+import { buildLeadKpiCounts } from './leadKpiModel'
 
 type LeadFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost' | 'archived'
 
@@ -48,9 +49,7 @@ export function V3LeadsPage(props: V3LeadsPageProps) {
   const selectedLead = props.leads.find((lead) => lead.id === selectedLeadId) ?? null
   const selectedClient = selectedLead ? props.clients.find((client) => client.source_lead_id === selectedLead.id || client.id === selectedLead.converted_client_id) ?? null : null
   const selectedQuotes = selectedLead ? props.quotes.filter((quote) => quote.lead_id === selectedLead.id) : []
-  const open = props.leads.filter((lead) => !lead.archived_at && !['won', 'lost'].includes(lead.status)).length
-  const newCount = props.leads.filter((lead) => !lead.archived_at && lead.status === 'new').length
-  const quotedCount = props.leads.filter((lead) => !lead.archived_at && lead.status === 'quoted').length
+  const kpis = useMemo(() => buildLeadKpiCounts(props.leads), [props.leads])
 
   function openLead(leadId: string) {
     listScrollYRef.current = window.scrollY
@@ -69,8 +68,8 @@ export function V3LeadsPage(props: V3LeadsPageProps) {
 
   return <V3Page className="v3-leads-page">
     <V3PageTitle eyebrow="Pipeline comercial" title="Leads" description="Oportunidades, intake y siguiente acción comercial." action={<V3PrimaryAction onClick={props.onCreateLead}>+ Nuevo lead</V3PrimaryAction>} />
+    <V3KpiGroup className="v3-leads-kpi-summary"><V3Kpi label="Activos" value={String(kpis.active)} hint="Oportunidades abiertas" tone="primary" /><V3Kpi label="Nuevos" value={String(kpis.new)} hint="Estado nuevo" tone="accent" /><V3Kpi label="Contactados" value={String(kpis.contacted)} hint="Seguimiento iniciado" tone="information" /><V3Kpi label="Presupuestados" value={String(kpis.quoted)} hint="Estado presupuestado" tone="financial" /></V3KpiGroup>
     <div className="v3-leads-controls"><V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, teléfono, email, ciudad o código" /><span className="v3-leads-count">{visibleLeads.length} visibles</span></div>
-    <V3KpiGroup><V3Kpi label="Activos" value={String(open)} hint="Oportunidades abiertas" /><V3Kpi label="Nuevos" value={String(newCount)} hint="Estado new" /><V3Kpi label="Presupuestados" value={String(quotedCount)} hint="Estado quoted" /></V3KpiGroup>
     <V3TabStrip label="Estado de lead" activeValue={filter} onChange={(value) => setFilter(value as LeadFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'new', label: 'Nuevos' }, { value: 'contacted', label: 'Contactados' }, { value: 'quoted', label: 'Presupuestados' }, { value: 'won', label: 'Ganados' }, { value: 'lost', label: 'Perdidos' }, { value: 'archived', label: 'Archivados' }]} />
     {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando leads</strong><p>{props.error}</p></div> : null}
     {!props.error && visibleLeads.length === 0 ? <div className="v3-state"><strong>Sin leads visibles</strong><p>Ajusta la búsqueda o el estado para continuar.</p></div> : null}

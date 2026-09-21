@@ -1289,12 +1289,17 @@ export function AppShell({
               ) : currentView === 'dashboard' ? (
                 v3Enabled ? (
                   <V3HomePage
-                    metrics={dashboardMetrics}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    expenses={expenses}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
                     alerts={visibleAutomationAlerts}
                     operationalIncidents={operationalIncidents}
                     onRunKpiAction={handleDashboardKpiAction}
                     onOpenAlert={handleOpenAutomationAlert}
                     onRunOperationalAction={handleRunOperationalAction}
+                    onOpenAllAlerts={() => navigateToView('alerts')}
                   />
                 ) : (
                   <HomePage

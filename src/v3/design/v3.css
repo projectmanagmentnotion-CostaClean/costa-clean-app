@@ -267,6 +267,17 @@ html[data-app-surface="v3"] .cc-scroll-top {
 }
 
 .v3-home-page { gap: var(--v3-space-section); }
+.v3-dashboard-trend { min-width: 0; }
+.v3-dashboard-trend__chart { color: var(--v3-color-text-secondary); height: 240px; width: 100%; }
+.v3-dashboard-trend__legend { display: flex; flex-wrap: wrap; gap: var(--v3-space-3); color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); }
+.v3-dashboard-trend__legend span { align-items: center; display: inline-flex; gap: var(--v3-space-1); }
+.v3-dashboard-trend__swatch { border-radius: 50%; display: inline-block; height: 8px; width: 8px; }
+.v3-dashboard-trend__swatch--invoiced { background: var(--v3-color-accent); }
+.v3-dashboard-trend__swatch--collected { background: var(--v3-color-financial); }
+.v3-dashboard-trend__swatch--expenses { background: var(--v3-color-warning); }
+.v3-dashboard-operational { display: grid; gap: var(--v3-space-2); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v3-dashboard-operational .v3-kpi { min-height: 0; padding: var(--v3-space-3); }
+.v3-dashboard-operational .v3-kpi strong { font-size: var(--v3-font-size-lg); }
 .v3-home-overview { display: grid; gap: var(--v3-space-4); }
 .v3-home-overview > h2 { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-section-title); letter-spacing: -0.01em; margin: 0; }
 .v3-home-hero { align-items: end; border-bottom: 1px solid var(--v3-color-border); display: flex; justify-content: space-between; gap: var(--v3-space-4); padding: var(--v3-space-4) 0 var(--v3-space-6); }
@@ -290,6 +301,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   .v3-home-hero { align-items: stretch; flex-direction: column; }
   .v3-home-hero .v3-action { align-self: start; }
   .v3-home-metrics { grid-template-columns: 1fr; }
+  .v3-dashboard-operational { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v3-home-priority { align-items: start; flex-direction: column; }
   .v3-home-priority .v3-action { align-self: start; }
 }
@@ -820,6 +832,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   .v3-home-hero strong { font-size: var(--v3-font-size-kpi); }
   .v3-home-priority { gap: var(--v3-space-3); padding-block: var(--v3-space-3); }
   .v3-home-priority .v3-action { align-self: stretch; width: 100%; }
+  .v3-dashboard-trend__chart { height: 210px; }
   .v3-kpi-group { gap: var(--v3-space-3); }
   .v3-kpi { padding-block: var(--v3-space-2); }
   .v3-kpi strong { font-size: var(--v3-font-size-body); }

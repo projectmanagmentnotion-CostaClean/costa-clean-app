@@ -14,11 +14,12 @@ Status: PASS — locally certified; no Production deployment performed.
 
 ## R2 — Executive Home / Dashboard
 
-Status: NOT_STARTED.
+Status: IMPLEMENTED — local quality gates passed; authenticated visual certification pending on this branch; no Production deployment performed.
 
 - KPI hierarchy.
 - Real charts and growth context.
 - VAT, expenses, receivables, and financial history.
+- UX-03A one-brand-mark rule: GOVERNED and satisfied by the R1 shell foundation.
 
 ## R3 — Invoice and Quote document preview parity
 

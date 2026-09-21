@@ -74,3 +74,8 @@ lint, build, diff-check, authenticated visual QA, and independent review.
 Production deployment and Supabase mutation count remain zero.
 
 GLOBAL_FINAL_CERTIFICATION: READY.
+
+Clean RC global certification: PASS. Clean release lineage verified, internal V3
+product parity verified, fresh authenticated QA 1320/1320 PASS, and no
+Production deployment or Supabase mutation performed. Production deploy remains
+AWAITING EXPLICIT AUTHORIZATION.

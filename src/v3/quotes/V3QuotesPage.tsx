@@ -9,7 +9,8 @@ import type { JobListItem } from '../../features/jobs/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteLineItem, QuoteListItem } from '../../features/quotes/types'
 import { fetchSupabaseRestList } from '../../lib/supabaseRest'
-import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3EmptyState, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
+import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3EmptyState, V3EntityList, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 import { V3DuplicateReviewSheet } from '../components/V3DuplicateReviewSheet'
 import type { DuplicateGroup } from '../../features/duplicates/types'
 import { readQuoteDeepLink } from '../navigation/quoteDeepLink'
@@ -121,6 +122,7 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
     })
   }, [filter, quotesWithLines, searchQuery, sort])
   const selection = useV3Selection({ visibleIds: visibleQuotes.map((quote) => quote.id), resetKey: `${filter}|${searchQuery}` })
+  const listWindow = useV3ListWindow(visibleQuotes, { resetKey: `${filter}|${searchQuery}|${sort}` })
   const [selectionSheet, setSelectionSheet] = useState(false)
   const [selectionResult, setSelectionResult] = useState<string | null>(null)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
@@ -161,9 +163,11 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
     <V3TabStrip label="Estado del presupuesto" activeValue={filter} onChange={(value) => setFilter(value as QuoteFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'open', label: 'En curso' }, { value: 'accepted', label: 'Aceptados' }, { value: 'rejected', label: 'Rechazados' }, { value: 'archived', label: 'Archivados' }]} />
     <V3KpiGroup variant="supporting"><V3Kpi label="En curso" value={String(openQuotes.length)} hint="Borradores y enviados" /><V3Kpi label="Importe en curso" value={formatCurrency(openAmount)} hint="Total real" /><V3Kpi label="Aceptados" value={String(acceptedQuotes.length)} hint="Estado comercial" /></V3KpiGroup>
     {isFilterOpen ? <V3BottomSheet title="Filtros de presupuestos" onClose={() => setIsFilterOpen(false)}><div className="v3-filter-sheet__content"><fieldset className="v3-filter-sheet__group"><legend>Estado real</legend><div className="v3-filter-sheet__options">{([['all', 'Todos'], ['open', 'En curso'], ['accepted', 'Aceptados'], ['rejected', 'Rechazados'], ['archived', 'Archivados']] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? 'is-selected' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div></fieldset><label className="v3-field"><span>Ordenar por</span><select className="v3-input" value={sort} onChange={(event) => setSort(event.target.value as QuoteSort)}><option value="recent">Más recientes</option><option value="oldest">Más antiguos</option><option value="amount">Mayor importe</option></select></label><V3PrimaryAction onClick={() => setIsFilterOpen(false)}>Aplicar filtros</V3PrimaryAction></div></V3BottomSheet> : null}
-    {props.error ? <V3ErrorState title="Error cargando presupuestos" description={props.error} /> : null}
-    {!props.error && visibleQuotes.length === 0 ? <V3EmptyState title="Sin presupuestos visibles" description="Ajusta la búsqueda o el estado para continuar." /> : null}
-    <div className="v3-entity-list" role="list" aria-label="Presupuestos">{visibleQuotes.map((quote) => <V3QuoteRow key={quote.id} quote={quote} clients={props.clients} invoices={props.invoices} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(quote.id)} onToggleSelect={() => selection.toggle(quote.id)} onOpen={() => selection.isSelectionMode ? selection.toggle(quote.id) : openQuote(quote.id)} onDownload={() => props.onDownloadQuote(quote)} onRequestConversion={() => setConversionTarget(quote)} isBusy={busyQuoteId === quote.id} />)}</div>
+    <V3ListWorkspace label="Presupuestos" {...listWindow} onPageChange={listWindow.setPage}>
+      {props.error ? <V3ErrorState title="Error cargando presupuestos" description={props.error} /> : null}
+      {!props.error && visibleQuotes.length === 0 ? <V3EmptyState title="Sin presupuestos visibles" description="Ajusta la búsqueda o el estado para continuar." /> : null}
+      <V3EntityList label="Presupuestos">{listWindow.pageItems.map((quote) => <V3QuoteRow key={quote.id} quote={quote} clients={props.clients} invoices={props.invoices} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(quote.id)} onToggleSelect={() => selection.toggle(quote.id)} onOpen={() => selection.isSelectionMode ? selection.toggle(quote.id) : openQuote(quote.id)} onDownload={() => props.onDownloadQuote(quote)} onRequestConversion={() => setConversionTarget(quote)} isBusy={busyQuoteId === quote.id} />)}</V3EntityList>
+    </V3ListWorkspace>
     {selection.isSelectionMode ? <V3SelectionBar selectedCount={selection.selectedCount} visibleSelectedCount={selection.visibleSelectedCount} visibleCount={visibleQuotes.length} allVisibleSelected={selection.allVisibleSelected} onSelectVisible={selection.selectVisible} onActions={() => setSelectionSheet(true)} onCancel={selection.exit} /> : null}
     {selectionSheet ? <V3SelectionActionSheet onClose={() => setSelectionSheet(false)}><V3SecondaryAction onClick={() => { setSelectionSheet(false); void props.onBulkDownload?.(selectedQuotes).then(() => setSelectionResult(`${selectedQuotes.length} presupuesto(s) preparados en ZIP.`)) }} disabled={selectedQuotes.length === 0}>Descargar PDFs</V3SecondaryAction><V3PrimaryAction onClick={() => { setSelectionSheet(false); props.onBulkExportCsv?.(selectedQuotes); setSelectionResult(`${selectedQuotes.length} presupuesto(s) exportados.`) }} disabled={selectedQuotes.length === 0}>Exportar CSV</V3PrimaryAction></V3SelectionActionSheet> : null}
     {selectionResult ? <V3SelectionResultSheet message={selectionResult} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}

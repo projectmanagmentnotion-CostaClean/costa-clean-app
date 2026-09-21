@@ -8,7 +8,8 @@ import type { PaymentListItem } from '../../features/payments/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
 import type { PropertyWorkspaceTab } from '../../features/properties/usePropertyWorkspaceNavigation'
-import { V3BottomSheet, V3EntityList, V3Field, V3Icon, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3TabStrip, V3Textarea } from '../components/V3Primitives'
+import { V3BottomSheet, V3EntityList, V3Field, V3Icon, V3Input, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3TabStrip, V3Textarea } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 import { usePropertyWorkspaceNavigation } from '../../features/properties/usePropertyWorkspaceNavigation'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
@@ -30,6 +31,7 @@ export function V3PropertiesPage(props: Props) {
     const value = query.trim().toLocaleLowerCase()
     return props.properties.filter((property) => !value || [property.name, property.id, property.display_code, property.client_id, property.client_name, property.client_display_code, property.property_type, property.address, property.city, property.postal_code, property.notes].filter(Boolean).join(' ').toLocaleLowerCase().includes(value))
   }, [props.properties, query])
+  const listWindow = useV3ListWindow(visible, { resetKey: query })
   function open(id: string, tab: PropertyWorkspaceTab = 'summary') { listScrollY.current = window.scrollY; navigation.openPropertyWorkspace(id, tab); window.requestAnimationFrame(() => window.scrollTo({ top: 0 })) }
   function close() { navigation.closePropertyWorkspace(); window.requestAnimationFrame(() => window.scrollTo({ top: listScrollY.current })) }
   async function saveEdit(value: { client_id: string; name: string; property_type: string; address: string; city: string; postal_code: string; notes: string }) {
@@ -47,9 +49,11 @@ export function V3PropertiesPage(props: Props) {
   return <V3Page className="v3-properties-page">
     <V3PageTitle eyebrow="Operativa" title="Inmuebles" description="Ubicaciones reales, relaciones y siguiente acción en una lista compacta." action={<V3PrimaryAction onClick={() => setShowCreate(true)}>+ Nuevo inmueble</V3PrimaryAction>} />
     <div className="v3-properties-controls"><V3Field label="Buscar"><V3Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Nombre, código, cliente, dirección o ciudad" /></V3Field><span>{visible.length} visibles</span></div>
-    {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando inmuebles</strong><p>{props.error}</p></div> : null}
-    {!props.error && visible.length === 0 ? <div className="v3-state"><strong>Sin inmuebles visibles</strong><p>Ajusta la búsqueda o crea el primero.</p></div> : null}
-    <V3EntityList label="Inmuebles">{visible.map((property) => <V3PropertyRow key={property.id} property={property} onOpen={() => open(property.id)} />)}</V3EntityList>
+    <V3ListWorkspace label="Inmuebles" {...listWindow} onPageChange={listWindow.setPage}>
+      {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando inmuebles</strong><p>{props.error}</p></div> : null}
+      {!props.error && visible.length === 0 ? <div className="v3-state"><strong>Sin inmuebles visibles</strong><p>Ajusta la búsqueda o crea el primero.</p></div> : null}
+      <V3EntityList label="Inmuebles">{listWindow.pageItems.map((property) => <V3PropertyRow key={property.id} property={property} onOpen={() => open(property.id)} />)}</V3EntityList>
+    </V3ListWorkspace>
     {showCreate ? <V3BottomSheet title="Nuevo inmueble" onClose={() => setShowCreate(false)}><V3PropertyCreateForm clients={props.clients} properties={props.properties} onRefresh={props.onRefresh} onCreated={async (property) => { setShowCreate(false); open(property.id) }} onCancel={() => setShowCreate(false)} onOpenClients={props.onOpenClients} /></V3BottomSheet> : null}
     {edit ? <V3BottomSheet title="Editar inmueble" onClose={() => setEdit(null)}><V3PropertyEdit property={edit} clients={props.clients} isSaving={isSaving} onClose={() => setEdit(null)} onSave={saveEdit} /></V3BottomSheet> : null}
   </V3Page>

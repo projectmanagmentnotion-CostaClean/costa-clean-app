@@ -118,6 +118,20 @@ export function V3EntityList({ children, label }: { children: ReactNode; label: 
   return <div className="v3-entity-list" role="list" aria-label={label}>{children}</div>
 }
 
+export function V3ListWorkspace({ label, totalCount, page, pageCount, rangeStart, rangeEnd, onPageChange, children }: { label: string; totalCount: number; page: number; pageCount: number; rangeStart: number; rangeEnd: number; onPageChange: (page: number) => void; children: ReactNode }) {
+  return <section className="v3-list-workspace" aria-label={label}>
+    <div className="v3-list-workspace__viewport" role="region" aria-label={`${label}: resultados`} tabIndex={0}>{children}</div>
+    <footer className="v3-list-workspace__footer">
+      <span aria-live="polite">Mostrando {rangeStart === 0 ? '0' : `${rangeStart}–${rangeEnd}`} de {totalCount}</span>
+      <div className="v3-list-workspace__pagination" aria-label={`Paginación de ${label}`}>
+        <button type="button" className="v3-action v3-action--secondary" onClick={() => onPageChange(page - 1)} disabled={page <= 1} aria-label="Página anterior">Anterior</button>
+        <span aria-label={`Página ${page} de ${pageCount}`}>{page} / {pageCount}</span>
+        <button type="button" className="v3-action v3-action--secondary" onClick={() => onPageChange(page + 1)} disabled={page >= pageCount} aria-label="Página siguiente">Siguiente</button>
+      </div>
+    </footer>
+  </section>
+}
+
 export function V3EntityListItem({ children, onClick, ariaLabel, className = '' }: { children: ReactNode; onClick: () => void; ariaLabel: string; className?: string }) {
   return <article className={`v3-entity-list-item ${className}`.trim()} role="listitem" tabIndex={0} aria-label={ariaLabel} onClick={onClick} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onClick() } }}>{children}</article>
 }

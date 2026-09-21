@@ -7,7 +7,8 @@ import type { JobListItem } from '../../features/jobs/types'
 import type { PaymentListItem } from '../../features/payments/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
-import { V3EntityList, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction, V3TabStrip } from '../components/V3Primitives'
+import { V3EntityList, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction, V3TabStrip } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 import { readJobDeepLink, writeJobDeepLink } from './jobDeepLink'
 import { V3JobRow } from './V3JobRow'
 import { V3JobWorkspace } from './V3JobWorkspace'
@@ -41,6 +42,7 @@ export function V3JobsPage(props: V3JobsPageProps) {
       return [job.display_code, job.billing_concept, job.service_type, job.client_name, job.client_display_code, job.property_name, job.property_display_code, job.scheduled_date].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)
     }).sort((left, right) => left.scheduled_date.localeCompare(right.scheduled_date))
   }, [filter, props.jobs, search, today])
+  const listWindow = useV3ListWindow(visibleJobs, { resetKey: `${filter}|${search}` })
   const selectedJob = props.jobs.find((job) => job.id === selectedJobId) ?? null
   const todayCount = props.jobs.filter((job) => job.scheduled_date === today && job.status !== 'cancelled' && !job.archived_at).length
   const upcomingCount = props.jobs.filter((job) => job.scheduled_date > today && job.status !== 'completed' && job.status !== 'cancelled' && !job.archived_at).length
@@ -63,9 +65,11 @@ export function V3JobsPage(props: V3JobsPageProps) {
     </div>
     <V3TabStrip label="Agenda de servicios" activeValue={filter} onChange={(value) => setFilter(value as JobFilter)} options={[{ value: 'today', label: 'Hoy' }, { value: 'upcoming', label: 'Próximos' }, { value: 'completed', label: 'Completados' }, { value: 'all', label: 'Todos' }, { value: 'archived', label: 'Archivados' }]} />
     {props.duplicateCount ? <div className="v3-jobs-secondary-action"><V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction></div> : null}
-    {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}
-    {!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
-    <V3EntityList label="Servicios">{visibleJobs.map((job) => <V3JobRow key={job.id} job={job} invoice={invoiceByJob.get(job.id) ?? null} today={today} onOpen={() => openJob(job.id)} />)}</V3EntityList>
+    <V3ListWorkspace label="Servicios" {...listWindow} onPageChange={listWindow.setPage}>
+      {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}
+      {!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
+      <V3EntityList label="Servicios">{listWindow.pageItems.map((job) => <V3JobRow key={job.id} job={job} invoice={invoiceByJob.get(job.id) ?? null} today={today} onOpen={() => openJob(job.id)} />)}</V3EntityList>
+    </V3ListWorkspace>
     <section className="v3-jobs-overview" aria-label="Resumen de agenda">
       <V3KpiGroup variant="supporting"><V3Kpi label="Hoy" value={String(todayCount)} hint={formatDateEs(today)} /><V3Kpi label="Próximos" value={String(upcomingCount)} hint="Servicios activos" /><V3Kpi label="Completados" value={String(completedCount)} hint="Estado real" /></V3KpiGroup>
     </section>

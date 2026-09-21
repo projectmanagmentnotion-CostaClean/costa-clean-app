@@ -10,7 +10,8 @@ import type { RecurringInvoiceFrequency, RecurringInvoicePlanInvoiceStatus, Recu
 import type { ClientListItem } from '../../features/clients/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
-import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Field, V3Input, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3Summary, V3Textarea } from '../components/V3Primitives'
+import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Field, V3Input, V3ListWorkspace, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Select, V3Summary, V3Textarea } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 import { V3DuplicateReviewSheet } from '../components/V3DuplicateReviewSheet'
 
 interface V3RecurringPlansProps {
@@ -68,6 +69,7 @@ export function V3RecurringPlansSection({ client, plans, properties, quotes, onR
 
   const selectedPlan = plans.find((plan) => plan.id === openPlanId) ?? null
   const relatedPlans = useMemo(() => plans.filter((plan) => plan.client_id === client.id), [client.id, plans])
+  const listWindow = useV3ListWindow(relatedPlans, { resetKey: client.id })
 
   async function refreshAndNotify(nextMessage?: string) {
     await onRefresh()
@@ -83,8 +85,9 @@ export function V3RecurringPlansSection({ client, plans, properties, quotes, onR
       {relatedPlans.length === 0 ? (
         <V3EmptyState title="Sin planes recurrentes" description="Crea un plan para gestionar emisiones periódicas desde este cliente." />
       ) : (
-        <V3EntityList label="Planes recurrentes del cliente">
-          {relatedPlans.map((plan) => (
+        <V3ListWorkspace label="Planes recurrentes del cliente" {...listWindow} onPageChange={listWindow.setPage}>
+          <V3EntityList label="Planes recurrentes del cliente">
+          {listWindow.pageItems.map((plan) => (
             <V3EntityListItem
               key={plan.id}
               ariaLabel={`Abrir plan recurrente ${plan.title}`}
@@ -101,7 +104,8 @@ export function V3RecurringPlansSection({ client, plans, properties, quotes, onR
               </div>
             </V3EntityListItem>
           ))}
-        </V3EntityList>
+          </V3EntityList>
+        </V3ListWorkspace>
       )}
 
       {selectedPlan ? (

@@ -1,7 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { V3EntityStatus, V3Icon, V3TabStrip } from './V3Primitives'
+import { V3EntityStatus, V3Icon, V3ListWorkspace, V3TabStrip } from './V3Primitives'
 
 describe('V3Icon', () => {
   it('keeps the V3 vector icon set explicit and renders action icons without Unicode glyphs', () => {
@@ -40,5 +40,18 @@ describe('V3TabStrip', () => {
     expect(html).toContain('tabindex="-1"')
     expect(html).toContain('Pendientes')
     expect(html).toContain('Cobradas')
+  })
+})
+
+describe('V3ListWorkspace', () => {
+  it('exposes a bounded, accessible paginated region with touch-safe controls', () => {
+    const html = renderToStaticMarkup(createElement(V3ListWorkspace, {
+      label: 'Clientes', totalCount: 1000, page: 1, pageCount: 40, rangeStart: 1, rangeEnd: 25, onPageChange: () => undefined, children: createElement('div', { role: 'list' }, 'rows'),
+    }))
+    expect(html).toContain('role="region"')
+    expect(html).toContain('aria-label="Clientes: resultados"')
+    expect(html).toContain('Mostrando 1–25 de 1000')
+    expect(html).toContain('Página anterior')
+    expect(html).toContain('Página siguiente')
   })
 })

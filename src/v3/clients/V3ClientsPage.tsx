@@ -7,7 +7,8 @@ import type { PaymentListItem } from '../../features/payments/types'
 import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
 import type { RecurringInvoicePlanListItem } from '../../features/recurringInvoices/types'
-import { V3BottomSheet, V3EntityListItem, V3Icon, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
+import { V3BottomSheet, V3EntityList, V3EntityListItem, V3Icon, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 import { readClientDeepLink, writeClientDeepLink } from '../navigation/clientDeepLink'
 import { V3ContactActions } from './V3ContactActions'
 import { V3ClientAvatar, V3ClientProfileMedia } from './V3ClientProfileMedia'
@@ -72,6 +73,7 @@ export function V3ClientsPage(props: V3ClientsPageProps) {
       return [client.full_name, client.display_code, client.phone, client.email].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)
     })
   }, [balanceByClient, filter, props.clients, searchQuery])
+  const listWindow = useV3ListWindow(visibleClients, { resetKey: `${filter}|${searchQuery}` })
 
   function openClient(clientId: string) {
     listScrollYRef.current = window.scrollY
@@ -96,9 +98,11 @@ export function V3ClientsPage(props: V3ClientsPageProps) {
     <V3KpiGroup><V3Kpi label="Clientes" value={String(props.clients.length)} hint="Fichas disponibles" /><V3Kpi label="Facturado" value={formatCurrency(billedTotal)} hint="Histórico real" /><V3Kpi label="Saldo abierto" value={formatCurrency(openBalance)} hint="Pendiente de cobro" /></V3KpiGroup>
     <V3TabStrip label="Estado de cliente" activeValue={filter} onChange={(value) => setFilter(value as ClientFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'active', label: 'Activos' }, { value: 'inactive', label: 'Inactivos' }, { value: 'archived', label: 'Archivados' }, { value: 'balance', label: 'Con saldo' }]} />
     {isFilterOpen ? <V3BottomSheet title="Filtros de clientes" onClose={() => setIsFilterOpen(false)}><div className="v3-filter-sheet__content"><fieldset className="v3-filter-sheet__group"><legend>Estado y saldo</legend><div className="v3-filter-sheet__options">{([['all', 'Todos'], ['active', 'Activos'], ['inactive', 'Inactivos'], ['archived', 'Archivados'], ['balance', 'Con saldo']] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? 'is-selected' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div></fieldset><V3PrimaryAction onClick={() => setIsFilterOpen(false)}>Aplicar filtros</V3PrimaryAction></div></V3BottomSheet> : null}
-    {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando clientes</strong><p>{props.error}</p></div> : null}
-    {!props.error && visibleClients.length === 0 ? <div className="v3-state"><strong>Sin clientes visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
-    <div className="v3-entity-list" role="list" aria-label="Clientes">{visibleClients.map((client) => <V3ClientRow key={client.id} client={client} balance={balanceByClient.get(client.id) ?? 0} onOpen={() => openClient(client.id)} />)}</div>
+    <V3ListWorkspace label="Clientes" {...listWindow} onPageChange={listWindow.setPage}>
+      {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando clientes</strong><p>{props.error}</p></div> : null}
+      {!props.error && visibleClients.length === 0 ? <div className="v3-state"><strong>Sin clientes visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
+      <V3EntityList label="Clientes">{listWindow.pageItems.map((client) => <V3ClientRow key={client.id} client={client} balance={balanceByClient.get(client.id) ?? 0} onOpen={() => openClient(client.id)} />)}</V3EntityList>
+    </V3ListWorkspace>
     {showCreate ? <V3ClientWriteFlow existingClients={props.clients} onSaved={props.onClientSaved ?? (async () => undefined)} onCancel={() => setShowCreate(false)} onOpenExisting={openClient} /> : null}
   </V3Page>
 }

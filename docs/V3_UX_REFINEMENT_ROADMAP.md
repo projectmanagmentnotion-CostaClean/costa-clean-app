@@ -46,13 +46,24 @@ Status: CLOSED / CERTIFIED.
 - Full quality gates: 907 passed, 4 skipped; agents 294/294 PASS.
 - No Production deployment or Supabase mutation performed.
 
-R5: READY — not implemented.
+R5: CLOSED / CERTIFIED — contained and scalable large-list architecture passed focused/full gates and authenticated visual QA; no Production deployment performed.
 
 Global backlog remains explicit: UX-01A stronger global contrast/color, UX-02A premium dashboard charts, UX-03B single global brand lockup, UX-03C header/navbar differentiation and UX-07A strict no-scroll monostep StepFlows remain pending.
 
 ## R5 — Contained and large-list architecture
 
-Status: READY — NOT_IMPLEMENTED.
+Status: CLOSED / CERTIFIED.
+
+- Shared `V3ListWorkspace` with bounded internal scroll and accessible result pagination.
+- Client pagination defaults to 25 rows; no server pagination or virtualization was introduced.
+- Clients, Properties, Leads, Invoices, Quotes, Services, Payments, Expenses, Alerts and Recurring Plans are migrated; Closings is documented as a fiscal output surface with no large collection list.
+- Full tests: 914 passed, 4 skipped; agents 294/294 PASS; lint/build/diff-check PASS.
+- Authenticated visual QA: 1847/1848 checks PASS. One unrelated `ipad-820/home` header-visibility baseline finding remains explicit as P2 and outside R5 scope.
+- No Production deployment or Supabase mutation performed.
+
+Visual Polish Sprint: READY.
+
+R5 does not close the global backlog. UX-01A stronger global contrast/color, UX-02A premium dashboard charts, UX-03B single global brand lockup, UX-03C header/navbar differentiation, UX-03E branded preloader, UX-07A strict no-scroll monostep StepFlows and the existing `ipad-820/home` baseline finding remain pending.
 
 ## R6 — Real mobile StepFlow architecture for long forms
 

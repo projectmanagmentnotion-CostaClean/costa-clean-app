@@ -13,12 +13,12 @@ describe('V3ExpenseFormFlow', () => {
       onCancel: () => undefined,
     }))
 
-    expect(html).toContain('Identificación')
+    expect(html).toContain('Datos básicos')
     expect(html).toContain('Importe e impuestos')
-    expect(html).toContain('Soporte y revisión')
-    expect(html).toContain('Documento (opcional, máximo 10 MB)')
-    expect(html).toContain('flujo privado existente')
-    expect(html.indexOf('Identificación')).toBeLessThan(html.indexOf('Importe e impuestos'))
-    expect(html.indexOf('Importe e impuestos')).toBeLessThan(html.indexOf('Soporte y revisión'))
+    expect(html).toContain('Revisión fiscal')
+    expect(html).toContain('Paso 1 de 5')
+    expect(html).toContain('data-step-body-scroll="0"')
+    expect(html).not.toContain('Documento (opcional, máximo 10 MB)')
+    expect(html).toContain('Continuar')
   })
 })

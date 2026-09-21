@@ -260,3 +260,33 @@ evidence above.
 - Behavioral coverage now includes command construction, independent schema
   arguments, role-password exclusion, empty-artifact failure, pg_dumpall
   failure cleanup, pg_dump failure cleanup, and the existing secret/JIT gates.
+
+## Current canonical state — independent review passed
+
+The historical `BACKUP_INCOMPLETE` result above remains valid evidence of the
+earlier execution attempt and is intentionally preserved. It does not describe
+the current readiness of the CP-5.1F runner after the remediation commits.
+
+| Item | Current canonical state |
+|---|---|
+| Canonical runner commit | `8ad86ccee0cfb6b3bde049f4713f64078321311f` |
+| Independent review | `INDEPENDENT_REVIEW_PASS` |
+| P0 | `0` |
+| P1 | `0` |
+| P2 | Local PostgreSQL tools and ShellCheck unavailable; non-blocking for the controlled Cloud gate because the runner fails closed during precheck. |
+| Runner certification | `INDEPENDENTLY_CERTIFIED` |
+| Backup executed | `NO` |
+| Restore executed | `NO` |
+| Production mutations | `0` |
+| PAT active | `NO` |
+| Authorization B | `NOT_EXECUTED` |
+| CP-4.3C | `QA_CERTIFIED / CLOSED` |
+| CP-5.1 | `READY_FOR_SEPARATELY_AUTHORIZED_CLOUD_EXECUTION` |
+| CP-5.1F | `RUNNER_INDEPENDENTLY_CERTIFIED / REAL_BACKUP_NOT_YET_EXECUTED` |
+| CP-5.2 | `NOT_STARTED` |
+| Next exact gate | `SEPARATELY_AUTHORIZED_CLOUD_CP51F_EXECUTION` |
+
+Accordingly, the old `BACKUP_INCOMPLETE` and `CP-5.1 BLOCKED` values are
+historical execution outcomes, not the current runner-certification state. No
+backup or restore has been executed, and this reconciliation does not authorize
+any production action.

@@ -7,6 +7,12 @@
 set -Eeuo pipefail
 umask 077
 
+MODE="${1:-}"
+STATUS_FILE="${CP51F_STATUS_FILE:-}"
+CURRENT_STAGE="LOCAL_PREFLIGHT"
+CURRENT_CODE="UNCLASSIFIED_FAILURE"
+STATUS_WRITTEN=0
+
 PROJECT_REF="wfxnwfcdjainpojhbdri"
 EXPECTED_STATUS="ACTIVE_HEALTHY"
 EXPECTED_POSTGRES_VERSION="17.6.1.084"
@@ -37,41 +43,138 @@ PGPASSFILE=""
 PGSSLMODE=""
 PGOPTIONS=""
 
+STAGES=(
+  LOCAL_PREFLIGHT PROJECT_METADATA JIT_CONFIG_READ JIT_MAPPING_READ POOLER_METADATA
+  JIT_ENABLE JIT_MAPPING_UPDATE DUMP_ROLES DUMP_SCHEMA DUMP_DATA
+  DUMP_HISTORY_SCHEMA DUMP_HISTORY_DATA JIT_CLEANUP MANIFEST_FINALIZE COMPLETE UNKNOWN
+)
+CODES=(
+  SECRET_UNAVAILABLE LOCAL_DEPENDENCY_MISSING POSTGRES_VERSION_INVALID
+  REPOSITORY_CONTEXT_INVALID PRIVATE_PATH_INVALID MANAGEMENT_API_GET_FAILED
+  MANAGEMENT_API_PUT_FAILED MANAGEMENT_API_DELETE_FAILED TARGET_IDENTITY_MISMATCH
+  TARGET_STATUS_MISMATCH TARGET_POSTGRES_VERSION_MISMATCH JIT_PRESTATE_INVALID
+  JIT_MAPPING_INVALID JIT_MAPPING_ABSENT POOLER_METADATA_INVALID JIT_ENABLE_FAILED
+  JIT_MAPPING_UPDATE_FAILED DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
+  DUMP_HISTORY_SCHEMA_FAILED DUMP_HISTORY_DATA_FAILED JIT_CLEANUP_FAILED
+  MANIFEST_FAILED UNCLASSIFIED_FAILURE LOCAL_PREFLIGHT_PASS AWAITING_PAT_REVOCATION
+)
+
+is_allowed() {
+  local value="$1"
+  shift
+  local candidate
+  for candidate in "$@"; do
+    [[ "$candidate" == "$value" ]] && return 0
+  done
+  return 1
+}
+
+set_stage() {
+  CURRENT_STAGE="$1"
+  CURRENT_CODE="UNCLASSIFIED_FAILURE"
+}
+
+set_failure() {
+  CURRENT_STAGE="$1"
+  CURRENT_CODE="$2"
+}
+
+write_status() {
+  local result="$1" stage="$2" code="$3"
+  [[ -n "$STATUS_FILE" ]] || return 0
+  is_allowed "$stage" "${STAGES[@]}" || { stage=UNKNOWN; code=UNCLASSIFIED_FAILURE; }
+  is_allowed "$code" "${CODES[@]}" || code=UNCLASSIFIED_FAILURE
+  printf '{"result":"%s","stage":"%s","code":"%s"}\n' "$result" "$stage" "$code" >"$STATUS_FILE"
+  chmod 600 "$STATUS_FILE"
+  STATUS_WRITTEN=1
+}
+
 die() {
   printf '%s\n' "CP51F_SETUP_ERROR: $1" >&2
   exit 1
 }
 
-require_command() {
-  command -v "$1" >/dev/null 2>&1 || die "required command unavailable: $1"
+die_code() {
+  set_failure "$1" "$2"
+  die "$3"
 }
 
-[[ -n "${SUPABASE_CP51F_TEMP_PAT:-}" ]] || die "setup secret is unavailable"
-[[ -n "$PRIVATE_SECURE_PATH" ]] || die "CP51F_PRIVATE_SECURE_PATH is required"
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die_code LOCAL_PREFLIGHT LOCAL_DEPENDENCY_MISSING "required command unavailable"
+}
 
-require_command curl
-require_command jq
-require_command sha256sum
-require_command stat
-require_command git
-require_command "$PG_DUMP_BIN"
-require_command "$PG_DUMPALL_BIN"
+validate_private_path() {
+  [[ -n "$PRIVATE_SECURE_PATH" ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path is required"
+  [[ "$PRIVATE_SECURE_PATH" = /* ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path must be absolute"
+  [[ ! -L "$PRIVATE_SECURE_PATH" ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path must not be a symlink"
+  mkdir -p -- "$PRIVATE_SECURE_PATH" || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path unavailable"
+  PRIVATE_SECURE_PATH="$(cd "$PRIVATE_SECURE_PATH" && pwd -P)" || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path unavailable"
+  [[ "$PRIVATE_SECURE_PATH" != "$GIT_ROOT" && "$PRIVATE_SECURE_PATH" != "$GIT_ROOT"/* ]] || \
+    die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path must be outside the Git worktree"
+  [[ ! -L "$PRIVATE_SECURE_PATH" ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "private path must not be a symlink"
+}
+
+validate_status_path() {
+  [[ -n "$STATUS_FILE" ]] || return 0
+  [[ "$STATUS_FILE" = /* && -n "${RUNNER_TEMP:-}" ]] || \
+    die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "status path is invalid"
+  local status_root status_parent
+  status_root="$(cd "$RUNNER_TEMP" && pwd -P)" || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "runner temp unavailable"
+  status_parent="$(dirname "$STATUS_FILE")"
+  [[ -d "$status_parent" ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "status parent unavailable"
+  status_parent="$(cd "$status_parent" && pwd -P)" || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "status parent unavailable"
+  [[ "$status_parent" == "$status_root" || "$status_parent" == "$status_root"/* ]] || \
+    die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "status path must be under runner temp"
+  [[ ! -L "$STATUS_FILE" ]] || die_code LOCAL_PREFLIGHT PRIVATE_PATH_INVALID "status path must not be a symlink"
+}
+
+early_exit() {
+  local rc=$?
+  set +e
+  if [[ "$STATUS_WRITTEN" -eq 0 ]]; then
+    write_status FAIL "$CURRENT_STAGE" "$CURRENT_CODE"
+  fi
+  exit "$rc"
+}
+
+trap early_exit EXIT
+
+GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die_code LOCAL_PREFLIGHT REPOSITORY_CONTEXT_INVALID "not running inside the repository"
+validate_status_path
 
 check_postgres_tool_version() {
   local tool="$1"
   local version_output version_major
-  version_output="$($tool --version 2>/dev/null)" || die "version check failed: $tool"
+  version_output="$($tool --version 2>/dev/null)" || die_code LOCAL_PREFLIGHT POSTGRES_VERSION_INVALID "version check failed"
   version_major="$(printf '%s\n' "$version_output" | sed -nE 's/.* ([0-9]+)(\.[0-9]+)?.*/\1/p')"
-  [[ "$version_major" == "17" ]] || die "$tool is not PostgreSQL 17-compatible"
+  [[ "$version_major" == "17" ]] || die_code LOCAL_PREFLIGHT POSTGRES_VERSION_INVALID "PostgreSQL 17 required"
 }
 
-check_postgres_tool_version "$PG_DUMP_BIN"
-check_postgres_tool_version "$PG_DUMPALL_BIN"
+run_local_preflight() {
+  set_stage LOCAL_PREFLIGHT
+  require_command curl
+  require_command jq
+  require_command sha256sum
+  require_command stat
+  require_command git
+  require_command "$PG_DUMP_BIN"
+  require_command "$PG_DUMPALL_BIN"
+  validate_private_path
+  check_postgres_tool_version "$PG_DUMP_BIN"
+  check_postgres_tool_version "$PG_DUMPALL_BIN"
+  CURRENT_CODE="LOCAL_PREFLIGHT_PASS"
+}
 
-GIT_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || die "not running inside the repository"
-PRIVATE_SECURE_PATH="$(mkdir -p "$PRIVATE_SECURE_PATH" && cd "$PRIVATE_SECURE_PATH" && pwd -P)"
-[[ "$PRIVATE_SECURE_PATH" != "$GIT_ROOT" && "$PRIVATE_SECURE_PATH" != "$GIT_ROOT"/* ]] || die "private path must be outside the Git worktree"
-[[ ! -L "$PRIVATE_SECURE_PATH" ]] || die "private path must not be a symlink"
+run_local_preflight
+
+if [[ "$MODE" == "--local-preflight" ]]; then
+  printf '%s\n' 'CP51F_LOCAL_PREFLIGHT=PASS'
+  write_status PASS LOCAL_PREFLIGHT LOCAL_PREFLIGHT_PASS
+  exit 0
+fi
+
+[[ -z "$MODE" ]] || die_code LOCAL_PREFLIGHT UNCLASSIFIED_FAILURE "unsupported mode"
+[[ -n "${SUPABASE_CP51F_TEMP_PAT:-}" ]] || die_code LOCAL_PREFLIGHT SECRET_UNAVAILABLE "setup secret is unavailable"
 
 PAT="$SUPABASE_CP51F_TEMP_PAT"
 unset SUPABASE_CP51F_TEMP_PAT
@@ -204,8 +307,16 @@ on_exit() {
   set +e
   if [[ "$JIT_CHANGED" -eq 1 && "$JIT_CLEAN" -ne 1 ]]; then
     if ! cleanup_jit; then
+      set_failure JIT_CLEANUP JIT_CLEANUP_FAILED
       write_failure_manifest "STOP_JIT_CLEANUP_FAILURE"
       rc=70
+    fi
+  fi
+  if [[ "$STATUS_WRITTEN" -eq 0 ]]; then
+    if [[ "$rc" -eq 0 ]]; then
+      write_status PASS COMPLETE AWAITING_PAT_REVOCATION
+    else
+      write_status FAIL "$CURRENT_STAGE" "$CURRENT_CODE"
     fi
   fi
   cleanup_files
@@ -214,34 +325,40 @@ on_exit() {
 }
 trap on_exit EXIT
 
-PROJECT_JSON="$(api_get "/projects/$PROJECT_REF")"
+set_stage PROJECT_METADATA
+PROJECT_JSON="$(api_get "/projects/$PROJECT_REF")" || { set_failure PROJECT_METADATA MANAGEMENT_API_GET_FAILED; exit 1; }
 TARGET_ID="$(jq -r '.id // empty' <<<"$PROJECT_JSON")"
 TARGET_STATUS="$(jq -r '.status // empty' <<<"$PROJECT_JSON")"
 POSTGRES_VERSION="$(jq -r '.database.version // empty' <<<"$PROJECT_JSON")"
-[[ "$TARGET_ID" == "$PROJECT_REF" ]] || die "target identity mismatch"
-[[ "$TARGET_STATUS" == "$EXPECTED_STATUS" ]] || die "target status mismatch"
-[[ "$POSTGRES_VERSION" == "$EXPECTED_POSTGRES_VERSION" ]] || die "PostgreSQL version mismatch"
+[[ "$TARGET_ID" == "$PROJECT_REF" ]] || die_code PROJECT_METADATA TARGET_IDENTITY_MISMATCH "target identity mismatch"
+[[ "$TARGET_STATUS" == "$EXPECTED_STATUS" ]] || die_code PROJECT_METADATA TARGET_STATUS_MISMATCH "target status mismatch"
+[[ "$POSTGRES_VERSION" == "$EXPECTED_POSTGRES_VERSION" ]] || die_code PROJECT_METADATA TARGET_POSTGRES_VERSION_MISMATCH "PostgreSQL version mismatch"
 
-JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")"
-JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die "unknown JIT prestate"
-JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")"
-JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die "invalid JIT mapping response"
+set_stage JIT_CONFIG_READ
+JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")" || { set_failure JIT_CONFIG_READ MANAGEMENT_API_GET_FAILED; exit 1; }
+JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die_code JIT_CONFIG_READ JIT_PRESTATE_INVALID "unknown JIT prestate"
+set_stage JIT_MAPPING_READ
+JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")" || { set_failure JIT_MAPPING_READ MANAGEMENT_API_GET_FAILED; exit 1; }
+JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die_code JIT_MAPPING_READ JIT_MAPPING_INVALID "invalid JIT mapping response"
 if [[ "$JIT_PRE_MAPPING_KIND" == "present" ]]; then
   JIT_USER_ID="$(jq -r '.user_id' <<<"$JIT_PRE_MAPPING")"
   JIT_PRE_ROLES="$(jq -c '.user_roles' <<<"$JIT_PRE_MAPPING")"
 else
-  die "JIT user mapping absent; refusing to invent user ID"
+  die_code JIT_MAPPING_READ JIT_MAPPING_ABSENT "JIT user mapping absent"
 fi
 
-POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")"
+set_stage POOLER_METADATA
+POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")" || { set_failure POOLER_METADATA MANAGEMENT_API_GET_FAILED; exit 1; }
 POOLER_HOST="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // empty' <<<"$POOLER_JSON")"
 POOLER_PORT="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_port // empty' <<<"$POOLER_JSON")"
 POOLER_USER="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_user // empty' <<<"$POOLER_JSON")"
 POOLER_DB="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // empty' <<<"$POOLER_JSON")"
-[[ -n "$POOLER_HOST" && "$POOLER_PORT" == "5432" && "$POOLER_USER" == "postgres.$PROJECT_REF" && "$POOLER_DB" == "postgres" ]] || die "official Session Pooler metadata did not match the required target"
+[[ -n "$POOLER_HOST" && "$POOLER_PORT" == "5432" && "$POOLER_USER" == "postgres.$PROJECT_REF" && "$POOLER_DB" == "postgres" ]] || \
+  die_code POOLER_METADATA POOLER_METADATA_INVALID "official Session Pooler metadata did not match the required target"
 
 if [[ "$JIT_PRESTATE" == "disabled" ]]; then
-  api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null
+  set_stage JIT_ENABLE
+  api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null || { set_failure JIT_ENABLE JIT_ENABLE_FAILED; exit 1; }
   JIT_CHANGED=1
 fi
 
@@ -253,7 +370,8 @@ if [[ -n "${CP51F_ALLOWED_CIDR:-}" ]]; then
 fi
 JIT_UPDATE_BODY="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_ROLES" \
   '{user_id:$user_id, roles:$roles}')"
-api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null
+set_stage JIT_MAPPING_UPDATE
+api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null || { set_failure JIT_MAPPING_UPDATE JIT_MAPPING_UPDATE_FAILED; exit 1; }
 JIT_CHANGED=1
 
 TEMP_CREDENTIAL_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.pgpass.XXXXXX")"
@@ -275,9 +393,9 @@ run_pg_dump() {
     --username "$POOLER_USER" \
     --dbname "$POOLER_DB" \
     --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
-    2>"$PRIVATE_SECURE_PATH/.dump-error" || die "dump failed: $name"
+    2>"$PRIVATE_SECURE_PATH/.dump-error" || return 1
   rm -f "$PRIVATE_SECURE_PATH/.dump-error"
-  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]] || die "empty dump: $name"
+  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]]
 }
 
 run_pg_dumpall_roles() {
@@ -291,19 +409,26 @@ run_pg_dumpall_roles() {
     --roles-only \
     --no-role-passwords \
     --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
-    2>"$PRIVATE_SECURE_PATH/.dump-error" || die "roles dump failed"
+    2>"$PRIVATE_SECURE_PATH/.dump-error" || return 1
   rm -f "$PRIVATE_SECURE_PATH/.dump-error"
-  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]] || die "empty dump: $name"
+  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]]
 }
 
-run_pg_dumpall_roles roles
-run_pg_dump schema --schema-only --schema=public --schema=portal_private --schema=auth
-run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth
-run_pg_dump history_schema --schema-only --schema=supabase_migrations
-run_pg_dump history_data --data-only --schema=supabase_migrations
+set_stage DUMP_ROLES
+run_pg_dumpall_roles roles || { set_failure DUMP_ROLES DUMP_ROLES_FAILED; exit 1; }
+set_stage DUMP_SCHEMA
+run_pg_dump schema --schema-only --schema=public --schema=portal_private --schema=auth || { set_failure DUMP_SCHEMA DUMP_SCHEMA_FAILED; exit 1; }
+set_stage DUMP_DATA
+run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth || { set_failure DUMP_DATA DUMP_DATA_FAILED; exit 1; }
+set_stage DUMP_HISTORY_SCHEMA
+run_pg_dump history_schema --schema-only --schema=supabase_migrations || { set_failure DUMP_HISTORY_SCHEMA DUMP_HISTORY_SCHEMA_FAILED; exit 1; }
+set_stage DUMP_HISTORY_DATA
+run_pg_dump history_data --data-only --schema=supabase_migrations || { set_failure DUMP_HISTORY_DATA DUMP_HISTORY_DATA_FAILED; exit 1; }
 
-cleanup_jit || die "JIT cleanup did not restore the exact prestate"
+set_stage JIT_CLEANUP
+cleanup_jit || die_code JIT_CLEANUP JIT_CLEANUP_FAILED "JIT cleanup did not restore the exact prestate"
 
+set_stage MANIFEST_FINALIZE
 artifact_manifest='[]'
 for name in roles schema data history_schema history_data; do
   file="$PRIVATE_SECURE_PATH/$name.sql"
@@ -325,7 +450,7 @@ jq -n \
   --arg jit_poststate "$JIT_PRESTATE" \
   --arg setup_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   --argjson artifacts "$artifact_manifest" \
-  '{manifest_version:1,setup_result:"AWAITING_PAT_REVOCATION",setup_utc:$setup_utc,
+    '{manifest_version:1,setup_result:"AWAITING_PAT_REVOCATION",setup_utc:$setup_utc,
     project_ref:$project_ref,target_status:$target_status,postgres_version:$postgres_version,
     direct_ipv6_used:false,session_pooler_used:true,session_pooler_port:5432,
     jit_used:true,jit_prestate:$jit_prestate,jit_poststate:$jit_poststate,
@@ -334,8 +459,8 @@ jq -n \
     roles_passwords_included:false,
     migration_state_coverage:"CAPTURED_IN_HISTORY_ARTIFACTS",
     classic_pat_revocation:"AWAITING_PAT_REVOCATION",
-    artifacts:$artifacts}' > "$PRIVATE_SECURE_PATH/.manifest.tmp"
-mv "$PRIVATE_SECURE_PATH/.manifest.tmp" "$PRIVATE_SECURE_PATH/manifest.json"
+    artifacts:$artifacts}' > "$PRIVATE_SECURE_PATH/.manifest.tmp" || die_code MANIFEST_FINALIZE MANIFEST_FAILED "manifest write failed"
+mv "$PRIVATE_SECURE_PATH/.manifest.tmp" "$PRIVATE_SECURE_PATH/manifest.json" || die_code MANIFEST_FINALIZE MANIFEST_FAILED "manifest finalize failed"
 SETUP_RESULT="AWAITING_PAT_REVOCATION"
 printf '%s\n' "CP51F_SETUP_RESULT=$SETUP_RESULT"
 printf '%s\n' "CP51F_PRIVATE_SECURE_PATH_READY=YES"

@@ -48,25 +48,7 @@ jobs:
           marker_name="cp51f-auth-consumed-$CP51F_EXPECTED_EXECUTION_TAG"
           existing_marker_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$marker_name&per_page=100" --jq '.total_count // 0')"
           [[ "$existing_marker_count" == 0 ]] || { echo 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_CONSUMED'; exit 1; }
-          marker_dir="$RUNNER_TEMP/cp51f-auth-consumed"
-          mkdir -p -- "$marker_dir"
-          jq -n \
-            --arg expected_tag "$CP51F_EXPECTED_EXECUTION_TAG" \
-            --arg expected_sha "$CP51F_EXPECTED_EXECUTION_SHA" \
-            --arg run_id "$GITHUB_RUN_ID" \
-            --arg consumed_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{expected_tag:$expected_tag, expected_sha:$expected_sha, run_id:$run_id, consumed_utc:$consumed_utc}' \
-            >"$marker_dir/authorization.json"
-          chmod 600 "$marker_dir/authorization.json"
           echo 'CP51F_ONE_SHOT_GATE=PASS'
-
-      - name: Upload consumed authorization marker
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: cp51f-auth-consumed-${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
-          path: ${{ runner.temp }}/cp51f-auth-consumed/authorization.json
-          if-no-files-found: error
-          retention-days: 90
 
       - name: Install PostgreSQL 17 bootstrap
         run: |
@@ -83,19 +65,68 @@ jobs:
           done
           echo 'CP51F_POSTGRES_17=PASS'
 
+      - name: Run local backup preflight
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-local-preflight
+          CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-local-preflight-status.json
+          PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
+          PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-production-backup-setup.sh --local-preflight
+
+      - name: Verify temporary PAT presence
+        env:
+          CP51F_TEMP_PAT_PRESENT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT != '' }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$CP51F_TEMP_PAT_PRESENT" == true ]] || { echo 'TEMP_PAT_SECRET_PRESENCE=FAIL'; exit 1; }
+          echo 'TEMP_PAT_SECRET_PRESENCE=PASS'
+
+      - name: Prepare consumed authorization marker
+        run: |
+          set -Eeuo pipefail
+          marker_dir="$RUNNER_TEMP/cp51f-auth-consumed"
+          mkdir -p -- "$marker_dir"
+          jq -n \
+            --arg expected_tag "${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}" \
+            --arg expected_sha "${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg consumed_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{expected_tag:$expected_tag, expected_sha:$expected_sha, run_id:$run_id, consumed_utc:$consumed_utc}' \
+            >"$marker_dir/authorization.json"
+          chmod 600 "$marker_dir/authorization.json"
+
+      - name: Upload consumed authorization marker
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-auth-consumed-${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          path: ${{ runner.temp }}/cp51f-auth-consumed/authorization.json
+          if-no-files-found: error
+          retention-days: 90
+
       - name: Run certified production backup runner
         env:
           SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
           CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-runner-status.json
           PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
           PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
         run: |
           set -Eeuo pipefail
           if ! bash scripts/cp51f-production-backup-setup.sh >"$RUNNER_TEMP/cp51f-runner.log" 2>&1; then
-            echo 'CP51F_RUNNER_ERROR: certified backup runner failed'
+            if [[ -s "$CP51F_STATUS_FILE" ]] && jq -e '(.result == "FAIL") and (.stage | type == "string") and (.code | type == "string") and (.stage | test("^[A-Z_]+$")) and (.code | test("^[A-Z_]+$"))' "$CP51F_STATUS_FILE" >/dev/null 2>&1; then
+              echo "CP51F_RUNNER_RESULT=$(jq -r '.result' "$CP51F_STATUS_FILE")"
+              echo "CP51F_RUNNER_STAGE=$(jq -r '.stage' "$CP51F_STATUS_FILE")"
+              echo "CP51F_RUNNER_CODE=$(jq -r '.code' "$CP51F_STATUS_FILE")"
+            else
+              echo 'CP51F_RUNNER_RESULT=FAIL'
+              echo 'CP51F_RUNNER_STAGE=UNKNOWN'
+              echo 'CP51F_RUNNER_CODE=UNCLASSIFIED_FAILURE'
+            fi
             exit 1
           fi
-          grep -Fxq 'CP51F_SETUP_RESULT=AWAITING_PAT_REVOCATION' "$RUNNER_TEMP/cp51f-runner.log"
+          jq -e '.result == "PASS" and .stage == "COMPLETE" and .code == "AWAITING_PAT_REVOCATION"' "$CP51F_STATUS_FILE" >/dev/null
           jq -e '.setup_result == "AWAITING_PAT_REVOCATION" and .jit_poststate_matches_prestate == true' "$CP51F_PRIVATE_SECURE_PATH/manifest.json" >/dev/null
           echo 'CP51F_CERTIFIED_RUNNER=PASS'
 
@@ -131,5 +162,6 @@ jobs:
         if: always()
         run: |
           set -Eeuo pipefail
-          rm -rf -- "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
+          rm -rf -- "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-local-preflight" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
+          rm -f -- "$RUNNER_TEMP/cp51f-runner-status.json" "$RUNNER_TEMP/cp51f-local-preflight-status.json"
           rm -f -- "$RUNNER_TEMP/.pgpass" "$RUNNER_TEMP/cp51f-private/.pgpass"

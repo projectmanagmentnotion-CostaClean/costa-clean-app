@@ -4,8 +4,10 @@ set -Eeuo pipefail
 WORKFLOW=".github/workflows/cp51f-production-backup-restore.yml"
 RESTORE="scripts/cp51f-restore-verify.sh"
 BOOTSTRAP="scripts/cp51f-bootstrap-postgres17.sh"
+SETUP="scripts/cp51f-production-backup-setup.sh"
+DIAGNOSTIC="scripts/cp51f-production-backup-setup.diagnostic.test.sh"
 SMOKE=".github/workflows/cp51f-executor-smoke.yml"
-[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
+[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$DIAGNOSTIC" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
 
 contains() { grep -Fq -- "$1" "$2"; }
 not_contains() { ! grep -Fq -- "$1" "$2"; }
@@ -51,11 +53,25 @@ not_contains 'apt-get install -y --no-install-recommends age jq postgresql-clien
 contains 'SUPABASE_CP51F_TEMP_PAT' "$WORKFLOW"
 not_contains 'inputs:' "$WORKFLOW"
 contains 'scripts/cp51f-production-backup-setup.sh' "$WORKFLOW"
+contains 'scripts/cp51f-production-backup-setup.sh --local-preflight' "$WORKFLOW"
+contains 'CP51F_STATUS_FILE' "$WORKFLOW"
+contains 'CP51F_RUNNER_RESULT' "$WORKFLOW"
+contains 'CP51F_RUNNER_STAGE' "$WORKFLOW"
+contains 'CP51F_RUNNER_CODE' "$WORKFLOW"
+contains 'CP51F_TEMP_PAT_PRESENT' "$WORKFLOW"
+contains 'TEMP_PAT_SECRET_PRESENCE=PASS' "$WORKFLOW"
+contains 'scripts/cp51f-production-backup-setup.diagnostic.test.sh' "$SMOKE"
+contains 'CP51F_DIAGNOSTIC_TESTS=PASS' "$DIAGNOSTIC"
+if grep -Eq 'cat .*cp51f-runner\.log|path: .*cp51f-runner\.log' "$WORKFLOW"; then
+  printf 'CONTRACT_TEST=FAIL: raw runner log publication\n' >&2
+  exit 1
+fi
 contains 'actions/artifacts?name=' "$WORKFLOW"
 contains 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_CONSUMED' "$WORKFLOW"
 contains 'cp51f-auth-consumed-' "$WORKFLOW"
 contains 'retention-days: 90' "$WORKFLOW"
-contains 'CP51F_SETUP_RESULT=AWAITING_PAT_REVOCATION' "$WORKFLOW"
+contains 'CP51F_SETUP_RESULT=' "$SETUP"
+contains 'SETUP_RESULT="AWAITING_PAT_REVOCATION"' "$SETUP"
 contains 'scripts/cp51f-restore-verify.sh' "$WORKFLOW"
 contains 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' "$WORKFLOW"
 contains 'retention-days: 7' "$WORKFLOW"
@@ -82,10 +98,12 @@ contains 'cp43_migration_ledger_state' "$RESTORE"
 
 arming_line="$(line_of 'CP51F_ONE_SHOT_GATE=PASS')"
 one_shot_line="$arming_line"
-marker_upload_line="$(line_of 'name: cp51f-auth-consumed-')"
+local_preflight_line="$(line_of '- name: Run local backup preflight')"
+pat_presence_line="$(line_of '- name: Verify temporary PAT presence')"
+marker_upload_line="$(line_of '- name: Upload consumed authorization marker')"
 bootstrap_line="$(line_of 'scripts/cp51f-bootstrap-postgres17.sh')"
 pat_line="$(line_of 'SUPABASE_CP51F_TEMP_PAT:')"
-[[ -n "$arming_line" && -n "$one_shot_line" && -n "$marker_upload_line" && -n "$bootstrap_line" && -n "$pat_line" && "$arming_line" -lt "$marker_upload_line" && "$marker_upload_line" -lt "$bootstrap_line" && "$bootstrap_line" -lt "$pat_line" ]] || { printf 'CONTRACT_TEST=FAIL: one-shot/bootstrap ordering\n' >&2; exit 1; }
+[[ -n "$arming_line" && -n "$one_shot_line" && -n "$local_preflight_line" && -n "$pat_presence_line" && -n "$marker_upload_line" && -n "$bootstrap_line" && -n "$pat_line" && "$arming_line" -lt "$bootstrap_line" && "$bootstrap_line" -lt "$local_preflight_line" && "$local_preflight_line" -lt "$pat_presence_line" && "$pat_presence_line" -lt "$marker_upload_line" && "$marker_upload_line" -lt "$pat_line" ]] || { printf 'CONTRACT_TEST=FAIL: fail-closed ordering\n' >&2; exit 1; }
 
 if awk '/name: Arming and recipient gate/{active=1} /name: Install PostgreSQL 17 bootstrap/{active=0} active && /SUPABASE_CP51F_TEMP_PAT/{bad=1} END{exit bad+0}' "$WORKFLOW"; then
   :

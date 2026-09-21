@@ -51,6 +51,9 @@ CODES=(
   SECRET_UNAVAILABLE LOCAL_DEPENDENCY_MISSING POSTGRES_VERSION_INVALID
   REPOSITORY_CONTEXT_INVALID PRIVATE_PATH_INVALID MANAGEMENT_API_GET_FAILED
   MANAGEMENT_API_PUT_FAILED MANAGEMENT_API_DELETE_FAILED TARGET_IDENTITY_MISMATCH
+  MANAGEMENT_API_HTTP_401 MANAGEMENT_API_HTTP_403 MANAGEMENT_API_HTTP_404
+  MANAGEMENT_API_HTTP_429 MANAGEMENT_API_HTTP_5XX MANAGEMENT_API_NETWORK_ERROR
+  MANAGEMENT_API_UNEXPECTED_HTTP
   TARGET_STATUS_MISMATCH TARGET_POSTGRES_VERSION_MISMATCH JIT_PRESTATE_INVALID
   JIT_MAPPING_INVALID JIT_MAPPING_ABSENT POOLER_METADATA_INVALID JIT_ENABLE_FAILED
   JIT_MAPPING_UPDATE_FAILED DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
@@ -179,15 +182,27 @@ PAT="$SUPABASE_CP51F_TEMP_PAT"
 unset SUPABASE_CP51F_TEMP_PAT
 
 API_ERROR_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.api-error.XXXXXX")"
+MANAGEMENT_API_ERROR_CODE_FILE="$PRIVATE_SECURE_PATH/.api-code"
 cleanup_files() {
-  rm -f "$API_ERROR_FILE" "$PRIVATE_SECURE_PATH/.dump-error" "$PRIVATE_SECURE_PATH/.manifest.tmp"
+  rm -f "$API_ERROR_FILE" "$MANAGEMENT_API_ERROR_CODE_FILE" "$PRIVATE_SECURE_PATH/.api-response."* "$PRIVATE_SECURE_PATH/.dump-error" "$PRIVATE_SECURE_PATH/.manifest.tmp"
   if [[ -n "$TEMP_CREDENTIAL_FILE" ]]; then
     rm -f -- "$TEMP_CREDENTIAL_FILE"
   fi
 }
 
+read_management_api_failure_code() {
+  if [[ -s "$MANAGEMENT_API_ERROR_CODE_FILE" ]]; then
+    MANAGEMENT_API_LAST_ERROR_CODE="$(<"$MANAGEMENT_API_ERROR_CODE_FILE")"
+  else
+    MANAGEMENT_API_LAST_ERROR_CODE=MANAGEMENT_API_UNEXPECTED_HTTP
+  fi
+}
+
 management_curl() {
-  printf '%s\n' \
+  local response_file http_code curl_rc=0
+  response_file="$(mktemp "$PRIVATE_SECURE_PATH/.api-response.XXXXXX")"
+  rm -f "$MANAGEMENT_API_ERROR_CODE_FILE"
+  http_code="$(printf '%s\n' \
     'silent' \
     'show-error' \
     'fail' \
@@ -196,13 +211,37 @@ management_curl() {
     'max-time = 60' \
     "header = \"Authorization: Bearer $PAT\"" \
     'header = "Accept: application/json"' |
-    curl --config - "$@"
+    curl --config - --output "$response_file" --write-out '%{http_code}' "$@" 2>/dev/null)" || curl_rc=$?
+
+  if [[ "$http_code" == 000 || -z "$http_code" ]]; then
+    printf '%s' MANAGEMENT_API_NETWORK_ERROR >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" == 401 ]]; then
+    printf '%s' MANAGEMENT_API_HTTP_401 >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" == 403 ]]; then
+    printf '%s' MANAGEMENT_API_HTTP_403 >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" == 404 ]]; then
+    printf '%s' MANAGEMENT_API_HTTP_404 >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" == 429 ]]; then
+    printf '%s' MANAGEMENT_API_HTTP_429 >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" == 5?? ]]; then
+    printf '%s' MANAGEMENT_API_HTTP_5XX >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  elif [[ "$http_code" != 2?? || "$curl_rc" -ne 0 ]]; then
+    printf '%s' MANAGEMENT_API_UNEXPECTED_HTTP >"$MANAGEMENT_API_ERROR_CODE_FILE"
+  else
+    cat "$response_file"
+    rm -f "$response_file"
+    return 0
+  fi
+
+  rm -f "$response_file"
+  return 1
 }
 
 api_get() {
   local path="$1"
   local result
   result="$(management_curl "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
+      read_management_api_failure_code
       printf '%s\n' "CP51F_SETUP_ERROR: Management API GET failed" >&2
       return 1
     }
@@ -217,6 +256,7 @@ api_put() {
     -H 'Content-Type: application/json' \
     --data-binary "$body" \
     "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
+      read_management_api_failure_code
       printf '%s\n' "CP51F_SETUP_ERROR: Management API PUT failed" >&2
       return 1
     }
@@ -228,10 +268,22 @@ api_delete() {
   local result
   result="$(management_curl -X DELETE \
     "$MANAGEMENT_API_BASE$path" 2>"$API_ERROR_FILE")" || {
+      read_management_api_failure_code
       printf '%s\n' "CP51F_SETUP_ERROR: Management API DELETE failed" >&2
       return 1
     }
   printf '%s' "$result"
+}
+
+management_api_failure_code() {
+  if is_allowed "${MANAGEMENT_API_LAST_ERROR_CODE:-}" \
+    MANAGEMENT_API_HTTP_401 MANAGEMENT_API_HTTP_403 MANAGEMENT_API_HTTP_404 \
+    MANAGEMENT_API_HTTP_429 MANAGEMENT_API_HTTP_5XX MANAGEMENT_API_NETWORK_ERROR \
+    MANAGEMENT_API_UNEXPECTED_HTTP; then
+    printf '%s' "$MANAGEMENT_API_LAST_ERROR_CODE"
+  else
+    printf '%s' MANAGEMENT_API_UNEXPECTED_HTTP
+  fi
 }
 
 parse_jit_state() {
@@ -306,7 +358,7 @@ on_exit() {
   set +e
   if [[ "$JIT_CHANGED" -eq 1 && "$JIT_CLEAN" -ne 1 ]]; then
     if ! cleanup_jit; then
-      set_failure JIT_CLEANUP JIT_CLEANUP_FAILED
+      set_failure JIT_CLEANUP "${MANAGEMENT_API_LAST_ERROR_CODE:-JIT_CLEANUP_FAILED}"
       write_failure_manifest "STOP_JIT_CLEANUP_FAILURE"
       rc=70
     fi
@@ -325,7 +377,7 @@ on_exit() {
 trap on_exit EXIT
 
 set_stage PROJECT_METADATA
-PROJECT_JSON="$(api_get "/projects/$PROJECT_REF")" || { set_failure PROJECT_METADATA MANAGEMENT_API_GET_FAILED; exit 1; }
+PROJECT_JSON="$(api_get "/projects/$PROJECT_REF")" || { set_failure PROJECT_METADATA "$(management_api_failure_code)"; exit 1; }
 TARGET_ID="$(jq -r '.id // empty' <<<"$PROJECT_JSON")"
 TARGET_STATUS="$(jq -r '.status // empty' <<<"$PROJECT_JSON")"
 POSTGRES_VERSION="$(jq -r '.database.version // empty' <<<"$PROJECT_JSON")"
@@ -334,10 +386,10 @@ POSTGRES_VERSION="$(jq -r '.database.version // empty' <<<"$PROJECT_JSON")"
 [[ "$POSTGRES_VERSION" == "$EXPECTED_POSTGRES_VERSION" ]] || die_code PROJECT_METADATA TARGET_POSTGRES_VERSION_MISMATCH "PostgreSQL version mismatch"
 
 set_stage JIT_CONFIG_READ
-JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")" || { set_failure JIT_CONFIG_READ MANAGEMENT_API_GET_FAILED; exit 1; }
+JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")" || { set_failure JIT_CONFIG_READ "$(management_api_failure_code)"; exit 1; }
 JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die_code JIT_CONFIG_READ JIT_PRESTATE_INVALID "unknown JIT prestate"
 set_stage JIT_MAPPING_READ
-JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")" || { set_failure JIT_MAPPING_READ MANAGEMENT_API_GET_FAILED; exit 1; }
+JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")" || { set_failure JIT_MAPPING_READ "$(management_api_failure_code)"; exit 1; }
 JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die_code JIT_MAPPING_READ JIT_MAPPING_INVALID "invalid JIT mapping response"
 if [[ "$JIT_PRE_MAPPING_KIND" == "present" ]]; then
   JIT_USER_ID="$(jq -r '.user_id' <<<"$JIT_PRE_MAPPING")"
@@ -347,7 +399,7 @@ else
 fi
 
 set_stage POOLER_METADATA
-POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")" || { set_failure POOLER_METADATA MANAGEMENT_API_GET_FAILED; exit 1; }
+POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")" || { set_failure POOLER_METADATA "$(management_api_failure_code)"; exit 1; }
 POOLER_HOST="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // empty' <<<"$POOLER_JSON")"
 POOLER_PORT="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_port // empty' <<<"$POOLER_JSON")"
 POOLER_USER="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_user // empty' <<<"$POOLER_JSON")"
@@ -357,7 +409,7 @@ POOLER_DB="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // empty
 
 if [[ "$JIT_PRESTATE" == "disabled" ]]; then
   set_stage JIT_ENABLE
-  api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null || { set_failure JIT_ENABLE JIT_ENABLE_FAILED; exit 1; }
+  api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null || { set_failure JIT_ENABLE "$(management_api_failure_code)"; exit 1; }
   JIT_CHANGED=1
 fi
 
@@ -370,7 +422,7 @@ fi
 JIT_UPDATE_BODY="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_ROLES" \
   '{user_id:$user_id, roles:$roles}')"
 set_stage JIT_MAPPING_UPDATE
-api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null || { set_failure JIT_MAPPING_UPDATE JIT_MAPPING_UPDATE_FAILED; exit 1; }
+api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null || { set_failure JIT_MAPPING_UPDATE "$(management_api_failure_code)"; exit 1; }
 JIT_CHANGED=1
 
 TEMP_CREDENTIAL_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.pgpass.XXXXXX")"

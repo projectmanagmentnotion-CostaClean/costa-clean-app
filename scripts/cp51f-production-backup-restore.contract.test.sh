@@ -6,9 +6,10 @@ RESTORE="scripts/cp51f-restore-verify.sh"
 BOOTSTRAP="scripts/cp51f-bootstrap-postgres17.sh"
 SETUP="scripts/cp51f-production-backup-setup.sh"
 DIAGNOSTIC="scripts/cp51f-production-backup-setup.diagnostic.test.sh"
+HTTP_DIAGNOSTIC="scripts/cp51f-management-api-http-diagnostic.test.sh"
 HISTORY_SCHEMA="scripts/cp51f-history-guard.schema.test.sh"
 SMOKE=".github/workflows/cp51f-executor-smoke.yml"
-[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
+[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
 
 contains() { grep -Fq -- "$1" "$2"; }
 not_contains() { ! grep -Fq -- "$1" "$2"; }
@@ -64,6 +65,8 @@ contains 'TEMP_PAT_SECRET_PRESENCE=PASS' "$WORKFLOW"
 contains 'scripts/cp51f-production-backup-setup.diagnostic.test.sh' "$SMOKE"
 contains 'scripts/cp51f-history-guard.schema.test.sh' "$SMOKE"
 contains 'CP51F_HISTORY_SCHEMA_TESTS=PASS' "$HISTORY_SCHEMA"
+contains 'scripts/cp51f-management-api-http-diagnostic.test.sh' "$SMOKE"
+contains 'CP51F_MANAGEMENT_API_HTTP_DIAGNOSTIC_TESTS=PASS' "$HTTP_DIAGNOSTIC"
 contains 'CP51F_DIAGNOSTIC_TESTS=PASS' "$DIAGNOSTIC"
 if grep -Eq 'cat .*cp51f-runner\.log|path: .*cp51f-runner\.log' "$WORKFLOW"; then
   printf 'CONTRACT_TEST=FAIL: raw runner log publication\n' >&2
@@ -101,6 +104,20 @@ contains 'cp51f-auth-consumed-' "$WORKFLOW"
 contains 'retention-days: 90' "$WORKFLOW"
 contains 'CP51F_SETUP_RESULT=' "$SETUP"
 contains 'SETUP_RESULT="AWAITING_PAT_REVOCATION"' "$SETUP"
+contains 'MANAGEMENT_API_HTTP_401' "$SETUP"
+contains 'MANAGEMENT_API_HTTP_403' "$SETUP"
+contains 'MANAGEMENT_API_HTTP_404' "$SETUP"
+contains 'MANAGEMENT_API_HTTP_429' "$SETUP"
+contains 'MANAGEMENT_API_HTTP_5XX' "$SETUP"
+contains 'MANAGEMENT_API_NETWORK_ERROR' "$SETUP"
+contains 'MANAGEMENT_API_UNEXPECTED_HTTP' "$SETUP"
+contains "--write-out '%{http_code}'" "$SETUP"
+contains 'MANAGEMENT_API_ERROR_CODE_FILE' "$SETUP"
+not_contains 'cat "$API_ERROR_FILE"' "$SETUP"
+if grep -Eq 'printf.*PAT' "$HTTP_DIAGNOSTIC"; then
+  printf 'CONTRACT_TEST=FAIL: diagnostic PAT output\n' >&2
+  exit 1
+fi
 contains 'scripts/cp51f-restore-verify.sh' "$WORKFLOW"
 contains 'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02' "$WORKFLOW"
 contains 'retention-days: 7' "$WORKFLOW"

@@ -395,6 +395,13 @@ html[data-app-surface="v3"] .cc-scroll-top {
   padding: var(--v3-space-4);
 }
 
+.v3-kpi--interactive {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  width: 100%;
+}
+
 .v3-kpi strong {
   color: var(--v3-color-text-primary);
   font-size: var(--v3-font-size-section-title);
@@ -509,6 +516,8 @@ html[data-app-surface="v3"] .cc-scroll-top {
 @media (max-width: 640px) {
   .v3-page-title { align-items: stretch; flex-direction: column; }
   .v3-kpi-group { grid-template-columns: 1fr; }
+  .v3-home-page .v3-kpi-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v3-home-page .v3-kpi-group > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .v3-finance-page .v3-kpi-group--supporting { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .v3-finance-page .v3-kpi-group--supporting > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .v3-alerts-page .v3-kpi-group,

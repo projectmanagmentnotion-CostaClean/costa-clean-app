@@ -69,8 +69,10 @@ function sum(items: number[]): number { return Number(items.reduce((total, value
 function inPeriod(value: string | null | undefined, selection: DashboardPeriodSelection): boolean { return keyOf(value, selection.kind) === selection.key }
 function metricFor(input: Input, selection: DashboardPeriodSelection) {
   const invoices = visible(input.invoices).filter((invoice) => inPeriod(invoice.issue_date, selection) && !isCancelledEntity(invoice))
-  const invoiceIds = new Set(invoices.map((invoice) => invoice.id))
-  const payments = input.payments.filter((payment) => inPeriod(payment.payment_date, selection) && invoiceIds.has(payment.invoice_id))
+  // Collections are cash-basis: the payment date controls the period. The
+  // invoice only validates that the payment belongs to a visible invoice.
+  const validInvoiceIds = new Set(visible(input.invoices).filter((invoice) => !isCancelledEntity(invoice)).map((invoice) => invoice.id))
+  const payments = input.payments.filter((payment) => inPeriod(payment.payment_date, selection) && validInvoiceIds.has(payment.invoice_id))
   const expenses = visible(input.expenses).filter((expense) => inPeriod(expense.expense_date, selection) && !isCancelledEntity(expense))
   const jobs = visible(input.jobs).filter((job) => inPeriod(job.scheduled_date, selection) && !isCancelledEntity(job))
   const quotes = visible(input.quotes).filter((quote) => inPeriod(quote.created_at, selection) && !isCancelledEntity(quote))

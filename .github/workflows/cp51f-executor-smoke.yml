@@ -47,6 +47,7 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           uname -a
           cat /etc/os-release
           id
@@ -65,11 +66,17 @@ jobs:
           psql --version
           /usr/lib/postgresql/17/bin/initdb --version
           /usr/lib/postgresql/17/bin/pg_ctl --version
+          test "$(pg_dump --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(pg_dumpall --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(psql --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(/usr/lib/postgresql/17/bin/initdb --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(/usr/lib/postgresql/17/bin/pg_ctl --version | awk '{print $3}' | cut -d. -f1)" = 17
 
       - name: Run isolated PostgreSQL 17 smoke
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           PGDATA="$RUNNER_TEMP/cp51f-pg17"
           PGLOG="$RUNNER_TEMP/cp51f-pg17.log"
           PGPORT=55432

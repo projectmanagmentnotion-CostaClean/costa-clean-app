@@ -19,9 +19,10 @@ const property = { id: 'property-1', display_code: 'PROP-0001', client_id: 'clie
 const propertyPageProps = { properties: [property], clients: [client], jobs: [], quotes: [], invoices: [], payments: [], error: null, onRefresh: async () => undefined, onOpenClient: () => undefined, onOpenClients: () => undefined, onOpenJob: () => undefined, onOpenQuote: () => undefined, onOpenInvoice: () => undefined, onOpenPayment: () => undefined, onCreateJob: () => undefined, onCreateQuote: () => undefined, onCreateInvoice: () => undefined }
 
 describe('V3-10C3 module composition contracts', () => {
-  it('puts real Home attention work before the overview block', () => {
+  it('keeps real Home attention work inside the executive dashboard composition', () => {
     expect(home.indexOf('<V3HomePriorityQueue')).toBeGreaterThan(-1)
-    expect(home.indexOf('<V3HomePriorityQueue')).toBeLessThan(home.indexOf('className="v3-home-overview"'))
+    expect(home.indexOf('<V3KpiGroup')).toBeGreaterThan(-1)
+    expect(home.indexOf('<V3KpiGroup')).toBeLessThan(home.indexOf('<V3HomePriorityQueue'))
   })
 
   it('keeps CRM search before KPI summaries and one primary client create action', () => {

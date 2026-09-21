@@ -21,6 +21,8 @@ describe('V3 dedicated shell', () => {
     expect(html).toContain('Clientes')
     expect(html).toContain('Servicios')
     expect(html).toContain('Más')
+    expect(html).toContain('v3-top-bar__brand-logo')
+    expect(html).not.toContain('v3-top-bar__mark')
     expect(html).not.toContain('hero-card')
     expect(html).not.toContain('cc-shell-nav')
   })

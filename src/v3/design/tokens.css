@@ -4,10 +4,15 @@
   --v3-brand-black: #000000;
   --v3-brand-white: #FFFFFF;
   --v3-brand-accessible: #006B8F;
-  --v3-color-background: #f8fafb;
-  --v3-color-surface: #ffffff;
-  --v3-color-surface-subtle: #f4f7f8;
-  --v3-color-surface-elevated: #ffffff;
+  /* Semantic surface roles: components consume these aliases, never private colors. */
+  --v3-color-canvas: #eef4f6;
+  --v3-color-primary-surface: #ffffff;
+  --v3-color-secondary-surface: #f4f7f8;
+  --v3-color-elevated-surface: #ffffff;
+  --v3-color-background: var(--v3-color-canvas);
+  --v3-color-surface: var(--v3-color-primary-surface);
+  --v3-color-surface-subtle: var(--v3-color-secondary-surface);
+  --v3-color-surface-elevated: var(--v3-color-elevated-surface);
   --v3-color-text-primary: #10202b;
   --v3-color-text-secondary: #52636d;
   --v3-color-text-muted: #6b7b84;
@@ -17,6 +22,12 @@
   --v3-color-accent-strong: var(--v3-brand-accessible);
   --v3-color-accent-soft: color-mix(in srgb, var(--v3-brand-primary) 12%, var(--v3-color-surface));
   --v3-color-on-accent: var(--v3-brand-black);
+  --v3-color-information: var(--v3-color-info);
+  --v3-color-information-soft: var(--v3-color-info-soft);
+  --v3-color-financial: var(--v3-color-accent-strong);
+  --v3-color-financial-soft: color-mix(in srgb, var(--v3-color-financial) 10%, var(--v3-color-primary-surface));
+  --v3-color-attention: var(--v3-color-warning);
+  --v3-color-interactive-accent: var(--v3-color-accent);
   --v3-color-neutral-soft: #eef2f4;
   --v3-color-success: #18794e;
   --v3-color-success-soft: #e5f5ec;

@@ -13,6 +13,17 @@ describe('V3 global visual system contracts', () => {
     expect(tokens).toContain('--v3-color-success:')
     expect(tokens).toContain('--v3-color-warning:')
     expect(tokens).toContain('--v3-color-danger:')
+    for (const role of [
+      '--v3-color-canvas:',
+      '--v3-color-primary-surface:',
+      '--v3-color-secondary-surface:',
+      '--v3-color-elevated-surface:',
+      '--v3-color-information:',
+      '--v3-color-financial:',
+      '--v3-color-financial-soft:',
+      '--v3-color-attention:',
+      '--v3-color-interactive-accent:',
+    ]) expect(tokens).toContain(role)
   })
 
   it('defines semantic typography, rhythm, elevation and geometry roles', () => {

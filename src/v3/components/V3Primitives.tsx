@@ -53,7 +53,7 @@ export function V3PageTitle({ eyebrow, title, description, action }: { eyebrow?:
 }
 
 export function V3Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return <article className="v3-kpi"><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</article>
+  return <article className="v3-kpi v3-card v3-card--financial"><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</article>
 }
 
 export function V3KpiGroup({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'supporting' }) {
@@ -105,11 +105,11 @@ export function V3ActionGroup({ children, className = '' }: { children: ReactNod
 }
 
 export function V3DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="v3-detail-section"><h2>{title}</h2>{children}</section>
+  return <section className="v3-detail-section v3-card"><h2>{title}</h2>{children}</section>
 }
 
 export function V3Section({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
-  return <section className="v3-section"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
+  return <section className="v3-section v3-card"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
 }
 
 export function V3EntityList({ children, label }: { children: ReactNode; label: string }) {
@@ -215,7 +215,7 @@ export function V3Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function V3Summary({ children }: { children: ReactNode }) {
-  return <div className="v3-summary">{children}</div>
+  return <div className="v3-summary v3-card v3-card--subtle">{children}</div>
 }
 
 export function V3StickyActionBar({ children }: { children: ReactNode }) {

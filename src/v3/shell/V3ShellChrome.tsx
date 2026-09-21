@@ -61,7 +61,6 @@ function V3TopBar({ currentView, onBack, backTargetView }: Pick<V3ShellChromePro
           <strong>{title}</strong>
         </div>
       </div>
-      <img className="v3-top-bar__mark" src={brandAssets.brandSymbol.src} alt="Costa Clean" />
     </header>
   )
 }

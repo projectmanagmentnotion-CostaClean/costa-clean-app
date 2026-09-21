@@ -67,7 +67,15 @@ if grep -Eq 'cat .*cp51f-runner\.log|path: .*cp51f-runner\.log' "$WORKFLOW"; the
   exit 1
 fi
 contains 'actions/artifacts?name=' "$WORKFLOW"
-contains 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_CONSUMED' "$WORKFLOW"
+contains 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_RESERVED_OR_CONSUMED' "$WORKFLOW"
+contains 'STOP_ONE_SHOT_PREVIOUS_RUN_EXISTS' "$WORKFLOW"
+contains 'actions/workflows/cp51f-production-backup-restore.yml/runs?per_page=100' "$WORKFLOW"
+contains '.head_branch == $expected_tag' "$WORKFLOW"
+contains '.head_sha == $expected_sha' "$WORKFLOW"
+contains '.event == "push"' "$WORKFLOW"
+contains 'GITHUB_RUN_ID' "$WORKFLOW"
+contains 'current_run_id' "$WORKFLOW"
+contains 'cp51f-auth-reserved-' "$WORKFLOW"
 contains 'cp51f-auth-consumed-' "$WORKFLOW"
 contains 'retention-days: 90' "$WORKFLOW"
 contains 'CP51F_SETUP_RESULT=' "$SETUP"
@@ -100,10 +108,12 @@ arming_line="$(line_of 'CP51F_ONE_SHOT_GATE=PASS')"
 one_shot_line="$arming_line"
 local_preflight_line="$(line_of '- name: Run local backup preflight')"
 pat_presence_line="$(line_of '- name: Verify temporary PAT presence')"
+history_guard_line="$(line_of '- name: Previous run history guard')"
+reservation_upload_line="$(line_of '- name: Upload reservation marker')"
 marker_upload_line="$(line_of '- name: Upload consumed authorization marker')"
 bootstrap_line="$(line_of 'scripts/cp51f-bootstrap-postgres17.sh')"
 pat_line="$(line_of 'SUPABASE_CP51F_TEMP_PAT:')"
-[[ -n "$arming_line" && -n "$one_shot_line" && -n "$local_preflight_line" && -n "$pat_presence_line" && -n "$marker_upload_line" && -n "$bootstrap_line" && -n "$pat_line" && "$arming_line" -lt "$bootstrap_line" && "$bootstrap_line" -lt "$local_preflight_line" && "$local_preflight_line" -lt "$pat_presence_line" && "$pat_presence_line" -lt "$marker_upload_line" && "$marker_upload_line" -lt "$pat_line" ]] || { printf 'CONTRACT_TEST=FAIL: fail-closed ordering\n' >&2; exit 1; }
+[[ -n "$arming_line" && -n "$one_shot_line" && -n "$history_guard_line" && -n "$reservation_upload_line" && -n "$local_preflight_line" && -n "$pat_presence_line" && -n "$marker_upload_line" && -n "$bootstrap_line" && -n "$pat_line" && "$arming_line" -lt "$history_guard_line" && "$history_guard_line" -lt "$reservation_upload_line" && "$reservation_upload_line" -lt "$bootstrap_line" && "$bootstrap_line" -lt "$local_preflight_line" && "$local_preflight_line" -lt "$pat_presence_line" && "$pat_presence_line" -lt "$marker_upload_line" && "$marker_upload_line" -lt "$pat_line" ]] || { printf 'CONTRACT_TEST=FAIL: fail-closed ordering\n' >&2; exit 1; }
 
 if awk '/name: Arming and recipient gate/{active=1} /name: Install PostgreSQL 17 bootstrap/{active=0} active && /SUPABASE_CP51F_TEMP_PAT/{bad=1} END{exit bad+0}' "$WORKFLOW"; then
   :
@@ -113,3 +123,4 @@ else
 fi
 
 printf 'CP51F_WORKFLOW_CONTRACT=PASS\n'
+printf 'CP51F_ONE_SHOT_REPLAY_SCENARIOS=PASS\n'

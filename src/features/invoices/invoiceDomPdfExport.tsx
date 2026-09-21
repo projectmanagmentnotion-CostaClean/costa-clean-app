@@ -1,10 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
+import { A4_WIDTH_MM, CAPTURE_SCALE, addCanvasToA4Pdf } from '../documents/documentPdfPagination'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
 import type { InvoiceListItem } from './types'
-
-const A4_WIDTH_MM = 210
-const A4_HEIGHT_MM = 297
-const CAPTURE_SCALE = 3
 
 function waitForImages(root: HTMLElement): Promise<void> {
   const images = Array.from(root.querySelectorAll('img'))
@@ -46,7 +43,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
 
   documentElement.classList.add('cc-invoice-a4--export')
   host.style.width = `${A4_WIDTH_MM}mm`
-  host.style.height = `${A4_HEIGHT_MM}mm`
+  host.style.height = 'auto'
   document.body.appendChild(host)
 
   try {
@@ -74,7 +71,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
       orientation: 'portrait',
       unit: 'mm',
     })
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, undefined, 'FAST')
+    addCanvasToA4Pdf(canvas, pdf)
 
     return new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' })
   } finally {

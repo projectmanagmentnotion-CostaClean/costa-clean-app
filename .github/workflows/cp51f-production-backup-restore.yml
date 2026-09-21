@@ -1,0 +1,103 @@
+name: CP51F production backup restore
+
+on:
+  push:
+    tags:
+      - 'cp51f-run-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cp51f-production-backup-restore
+  cancel-in-progress: false
+
+jobs:
+  backup-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact tagged commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Arming and recipient gate
+        env:
+          CP51F_EXECUTION_ARMED: ${{ vars.CP51F_EXECUTION_ARMED }}
+          CP51F_EXPECTED_EXECUTION_SHA: ${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$GITHUB_REPOSITORY" == 'projectmanagmentnotion-CostaClean/costa-clean-app' ]] || { echo 'CP51F_ARMING_GATE=FAIL repository'; exit 1; }
+          [[ "$GITHUB_REF" == refs/tags/cp51f-run-* ]] || { echo 'CP51F_ARMING_GATE=FAIL tag'; exit 1; }
+          [[ "$CP51F_EXECUTION_ARMED" == YES ]] || { echo 'CP51F_ARMING_GATE=FAIL armed'; exit 1; }
+          [[ -n "$CP51F_EXPECTED_EXECUTION_SHA" && "$GITHUB_SHA" == "$CP51F_EXPECTED_EXECUTION_SHA" ]] || { echo 'CP51F_ARMING_GATE=FAIL expected sha'; exit 1; }
+          [[ "$CP51F_BACKUP_AGE_RECIPIENT" =~ ^age1[0-9a-z]+$ ]] || { echo 'CP51F_ARMING_GATE=FAIL age recipient'; exit 1; }
+          echo 'CP51F_ARMING_GATE=PASS'
+
+      - name: Install isolated executor dependencies
+        run: |
+          set -Eeuo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends age jq postgresql-client-17 postgresql-17
+
+      - name: Verify PostgreSQL 17 executor
+        run: |
+          set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          for tool in pg_dump pg_dumpall psql initdb pg_ctl; do
+            command -v "$tool" >/dev/null
+            "$tool" --version | grep -Eq 'PostgreSQL 17([.]|$)'
+          done
+          echo 'CP51F_POSTGRES_17=PASS'
+
+      - name: Run certified production backup runner
+        env:
+          SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
+          PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+        run: |
+          set -Eeuo pipefail
+          if ! bash scripts/cp51f-production-backup-setup.sh >"$RUNNER_TEMP/cp51f-runner.log" 2>&1; then
+            echo 'CP51F_RUNNER_ERROR: certified backup runner failed'
+            exit 1
+          fi
+          grep -Fxq 'CP51F_SETUP_RESULT=AWAITING_PAT_REVOCATION' "$RUNNER_TEMP/cp51f-runner.log"
+          jq -e '.setup_result == "AWAITING_PAT_REVOCATION" and .jit_poststate_matches_prestate == true' "$CP51F_PRIVATE_SECURE_PATH/manifest.json" >/dev/null
+          echo 'CP51F_CERTIFIED_RUNNER=PASS'
+
+      - name: Restore verify and encrypt backup
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_RESTORE_ROOT: ${{ runner.temp }}/cp51f-restore
+          PG_BIN_DIR: /usr/lib/postgresql/17/bin
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-restore-verify.sh
+          jq -e '.restore_result == "PASS"' "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json" >/dev/null
+          plaintext="$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz"
+          encrypted="$plaintext.age"
+          tar -czf "$plaintext" -C "$CP51F_PRIVATE_SECURE_PATH" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json restore-verification.json
+          age -r "$CP51F_BACKUP_AGE_RECIPIENT" -o "$encrypted" "$plaintext"
+          [[ -s "$encrypted" ]]
+          rm -f -- "$plaintext"
+          rm -f -- "$CP51F_PRIVATE_SECURE_PATH"/*.sql "$CP51F_PRIVATE_SECURE_PATH/manifest.json" "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json"
+          echo 'CP51F_BACKUP_RESTORE_VERIFIED_AWAITING_PAT_REVOCATION'
+
+      - name: Upload encrypted artifact only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-encrypted-production-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/cp51f-backup-${{ github.run_id }}.tar.gz.age
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Cleanup ephemeral executor
+        if: always()
+        run: |
+          set -Eeuo pipefail
+          rm -rf -- "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"

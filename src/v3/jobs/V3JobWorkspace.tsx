@@ -21,6 +21,7 @@ import { deliverPdfFile } from '../../features/documents/documentFileDelivery'
 import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EntityStatus, V3Field, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Select, V3StickyActionBar, V3Textarea } from '../components/V3Primitives'
 import { canCreateInvoiceFromJob } from '../../features/jobs/jobInvoiceEligibility'
 import { buildJobWorkReportPdfFile, buildJobWorkReportPdfFileName } from './jobWorkReport'
+import { V3StepFlow } from '../stepflow/V3StepFlow'
 
 const STATUS_OPTIONS = [['pending', 'Pendiente'], ['scheduled', 'Programado'], ['in_progress', 'En curso'], ['completed', 'Realizado'], ['cancelled', 'Cancelado']] as const
 type JobEditState = { scheduled_date: string; status: string; notes: string; line: BillingLineFormState }
@@ -30,16 +31,7 @@ function toDraftLine(job: JobListItem, line: ReturnType<typeof getJobBillingLine
 }
 
 function JobEditSheet({ edit, setEdit, busy, onSubmit, onClose }: { edit: JobEditState; setEdit: Dispatch<SetStateAction<JobEditState>>; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
-  return <V3BottomSheet title="Editar servicio" onClose={onClose}><form className="v3-form" onSubmit={onSubmit}>
-    <V3Field label="Fecha"><V3Input type="date" value={edit.scheduled_date} onChange={(event) => setEdit((current) => ({ ...current, scheduled_date: event.target.value }))} required /></V3Field>
-    <V3Field label="Estado"><V3Select value={edit.status} onChange={(event) => setEdit((current) => ({ ...current, status: event.target.value }))}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</V3Select></V3Field>
-    <V3Field label="Concepto"><V3Input value={edit.line.concept} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, concept: event.target.value } }))} required /></V3Field>
-    <V3Field label="Cantidad"><V3Input inputMode="decimal" value={edit.line.quantity} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, quantity: event.target.value } }))} required /></V3Field>
-    <V3Field label="Unidad"><V3Input value={edit.line.unit} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit: event.target.value } }))} required /></V3Field>
-    <V3Field label="Precio unitario"><V3Input inputMode="decimal" value={edit.line.unit_price} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit_price: event.target.value } }))} required /></V3Field>
-    <V3Field label="Notas"><V3Textarea value={edit.notes} onChange={(event) => setEdit((current) => ({ ...current, notes: event.target.value }))} /></V3Field>
-    <V3PrimaryAction type="submit" disabled={busy}>Guardar cambios</V3PrimaryAction>
-  </form></V3BottomSheet>
+  return <V3StepFlow title="Editar servicio" onCancel={onClose} onComplete={() => onSubmit(new Event('submit') as unknown as FormEvent<HTMLFormElement>)} busy={busy} completeLabel="Guardar cambios" steps={[{ id: 'schedule', title: 'Agenda', content: <><V3Field label="Fecha"><V3Input type="date" value={edit.scheduled_date} onChange={(event) => setEdit((current) => ({ ...current, scheduled_date: event.target.value }))} required autoFocus /></V3Field><V3Field label="Estado"><V3Select value={edit.status} onChange={(event) => setEdit((current) => ({ ...current, status: event.target.value }))}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</V3Select></V3Field></> }, { id: 'billing', title: 'Precio', content: <><V3Field label="Concepto"><V3Input value={edit.line.concept} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, concept: event.target.value } }))} required /></V3Field><V3Field label="Cantidad"><V3Input inputMode="decimal" value={edit.line.quantity} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, quantity: event.target.value } }))} required /></V3Field><V3Field label="Unidad"><V3Input value={edit.line.unit} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit: event.target.value } }))} required /></V3Field><V3Field label="Precio unitario"><V3Input inputMode="decimal" value={edit.line.unit_price} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit_price: event.target.value } }))} required /></V3Field></> }, { id: 'review', title: 'Notas y revisión', content: <V3Field label="Notas"><V3Textarea value={edit.notes} onChange={(event) => setEdit((current) => ({ ...current, notes: event.target.value }))} /></V3Field> }]} />
 }
 
 interface V3JobWorkspaceProps { job: JobListItem; clients: ClientListItem[]; properties: PropertyListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; onBack: () => void; onRefresh: () => Promise<void>; onOpenClient: (id: string) => void; onOpenProperty: (id: string) => void; onOpenQuote: (id: string) => void; onOpenInvoice: (id: string) => void; onCreateInvoice: () => void }

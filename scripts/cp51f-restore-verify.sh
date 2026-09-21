@@ -85,7 +85,8 @@ run_query() {
 }
 
 run_file() {
-  local phase="$1" database="$2" file="$3" log="$LOG_ROOT/$phase.log"
+  local phase="$1" database="$2" file="$3"
+  local log="$LOG_ROOT/$phase.log"
   if ! "$PSQL" -h "$PGSOCKET" -U "$RESTORE_SUPERUSER" -d "$database" -v ON_ERROR_STOP=1 -X -q -f "$file" >"$log" 2>&1; then
     fail "CP51F_RESTORE_ERROR: $phase failed"
   fi

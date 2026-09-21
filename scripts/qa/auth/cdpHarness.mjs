@@ -38,10 +38,12 @@ const DEFAULT_VIEWPORTS = [
   { id: 'desktop-1920', width: 1920, height: 1080 },
   { id: 'desktop-2560', width: 2560, height: 1440 },
   { id: 'ipad-1024', width: 1024, height: 1366 },
+  { id: 'ipad-820', width: 820, height: 1180 },
   { id: 'ipad-834', width: 834, height: 1194 },
   { id: 'ipad-768', width: 768, height: 1024 },
   { id: 'mobile-430', width: 430, height: 932 },
   { id: 'mobile-390', width: 390, height: 844 },
+  { id: 'mobile-320', width: 320, height: 568 },
 ]
 
 const LOGIN_MARKERS = [

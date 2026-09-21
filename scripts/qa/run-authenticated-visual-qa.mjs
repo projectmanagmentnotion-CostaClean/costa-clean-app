@@ -78,7 +78,19 @@ async function main() {
   const runScreenshotsDir = path.join(qaPaths.screenshotsDir, timestamp)
   const results = []
 
-  for (const viewport of defaultViewports()) {
+  const requestedViewportIds = (process.env.QA_VIEWPORT_IDS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+  const viewports = requestedViewportIds.length > 0
+    ? defaultViewports().filter((viewport) => requestedViewportIds.includes(viewport.id))
+    : defaultViewports()
+
+  if (requestedViewportIds.length > 0 && viewports.length !== requestedViewportIds.length) {
+    throw new Error(`Unknown QA viewport id. Requested: ${requestedViewportIds.join(', ')}`)
+  }
+
+  for (const viewport of viewports) {
     await configureViewport(connection, session.sessionId, viewport)
     for (const viewId of defaultViews()) {
       const url = buildViewUrl(appUrl, viewId)

@@ -41,7 +41,7 @@ command -v sha256sum >/dev/null 2>&1 || fail "CP51F_RESTORE_ERROR: sha256sum una
 [[ -x "$PSQL" && -x "$INITDB" && -x "$PG_CTL" ]] || fail "CP51F_RESTORE_ERROR: PostgreSQL 17 tools unavailable"
 
 for tool in "$PSQL" "$INITDB" "$PG_CTL"; do
-  "$tool" --version | grep -Eq 'PostgreSQL 17([.]|$)' || fail "CP51F_RESTORE_ERROR: PostgreSQL 17 required"
+  "$tool" --version | grep -Eq ' 17([.]|$)' || fail "CP51F_RESTORE_ERROR: PostgreSQL 17 required"
 done
 
 mkdir -p -- "$RESTORE_ROOT" "$PGSOCKET" "$LOG_ROOT"

@@ -49,7 +49,7 @@ jobs:
           export PATH="/usr/lib/postgresql/17/bin:$PATH"
           for tool in pg_dump pg_dumpall psql initdb pg_ctl; do
             command -v "$tool" >/dev/null
-            "$tool" --version | grep -Eq 'PostgreSQL 17([.]|$)'
+            "$tool" --version | grep -Eq ' 17([.]|$)'
           done
           echo 'CP51F_POSTGRES_17=PASS'
 

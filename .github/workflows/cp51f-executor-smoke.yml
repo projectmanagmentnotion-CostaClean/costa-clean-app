@@ -7,6 +7,7 @@ on:
     paths:
       - .github/workflows/cp51f-executor-smoke.yml
       - .github/workflows/cp51f-production-backup-restore.yml
+      - scripts/cp51f-bootstrap-postgres17.sh
       - scripts/cp51f-restore-verify.sh
       - scripts/cp51f-restore-verify.synthetic.test.sh
       - scripts/cp51f-production-backup-restore.contract.test.sh
@@ -26,28 +27,12 @@ jobs:
           ref: codex/cp51-production-readiness-preflight
           fetch-depth: 1
 
-      - name: Install PostgreSQL 17 and smoke dependencies
+      - name: Install PostgreSQL 17 bootstrap
         shell: bash
         run: |
           set -Eeuo pipefail
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            ca-certificates \
-            curl \
-            gnupg \
-            jq \
-            coreutils \
-            age \
-            shellcheck \
-            postgresql-common
-          sudo install -d -m 0755 /usr/share/postgresql-common/pgdg
-          curl --fail --silent --show-error --location \
-            https://www.postgresql.org/media/keys/ACCC4CF8.asc \
-            | sudo tee /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc >/dev/null
-          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] http://apt.postgresql.org/pub/repos/apt noble-pgdg main" \
-            | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends postgresql-17 postgresql-client-17
+          bash scripts/cp51f-bootstrap-postgres17.sh
+          sudo apt-get install -y --no-install-recommends shellcheck
 
       - name: Verify runner and PostgreSQL 17
         shell: bash

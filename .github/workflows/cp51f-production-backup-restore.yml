@@ -101,3 +101,4 @@ jobs:
         run: |
           set -Eeuo pipefail
           rm -rf -- "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
+          rm -f -- "$RUNNER_TEMP/.pgpass" "$RUNNER_TEMP/cp51f-private/.pgpass"

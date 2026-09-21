@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 umask 077
 
-readonly REQUIRED_ARTIFACTS=(roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json)
+readonly REQUIRED_ARTIFACTS=(roles.sql schema.sql data.sql history_schema.sql history_data.sql)
 readonly RESTORE_SUPERUSER=cp51f_admin
 
 PRIVATE_PATH="${CP51F_PRIVATE_SECURE_PATH:?CP51F_PRIVATE_SECURE_PATH is required}"
@@ -35,7 +35,7 @@ cleanup() {
 trap cleanup EXIT
 
 [[ -d "$PRIVATE_PATH" && ! -L "$PRIVATE_PATH" ]] || fail "CP51F_RESTORE_ERROR: private backup path invalid"
-[[ -f "$MANIFEST" ]] || fail "CP51F_RESTORE_ERROR: manifest missing"
+[[ -s "$MANIFEST" ]] || fail "CP51F_RESTORE_ERROR: manifest missing or empty"
 command -v jq >/dev/null 2>&1 || fail "CP51F_RESTORE_ERROR: jq unavailable"
 command -v sha256sum >/dev/null 2>&1 || fail "CP51F_RESTORE_ERROR: sha256sum unavailable"
 [[ -x "$PSQL" && -x "$INITDB" && -x "$PG_CTL" ]] || fail "CP51F_RESTORE_ERROR: PostgreSQL 17 tools unavailable"

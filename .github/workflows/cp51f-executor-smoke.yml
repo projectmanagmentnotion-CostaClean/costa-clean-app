@@ -86,7 +86,7 @@ jobs:
           /usr/lib/postgresql/17/bin/initdb --auth=trust --no-locale -D "$PGDATA"
           if ! /usr/lib/postgresql/17/bin/pg_ctl \
             -D "$PGDATA" \
-            -o "-h 127.0.0.1 -p $PGPORT" \
+            -o "-h 127.0.0.1 -p $PGPORT -k $RUNNER_TEMP" \
             -l "$PGLOG" \
             -w start; then
             cat "$PGLOG"

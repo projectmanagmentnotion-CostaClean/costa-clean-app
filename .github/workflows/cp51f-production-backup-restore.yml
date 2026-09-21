@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: cp51f-production-backup-restore
@@ -27,15 +28,45 @@ jobs:
         env:
           CP51F_EXECUTION_ARMED: ${{ vars.CP51F_EXECUTION_ARMED }}
           CP51F_EXPECTED_EXECUTION_SHA: ${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}
+          CP51F_EXPECTED_EXECUTION_TAG: ${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
           CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -Eeuo pipefail
           [[ "$GITHUB_REPOSITORY" == 'projectmanagmentnotion-CostaClean/costa-clean-app' ]] || { echo 'CP51F_ARMING_GATE=FAIL repository'; exit 1; }
-          [[ "$GITHUB_REF" == refs/tags/cp51f-run-* ]] || { echo 'CP51F_ARMING_GATE=FAIL tag'; exit 1; }
+          [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF_TYPE" == tag ]] || { echo 'CP51F_ARMING_GATE=FAIL event'; exit 1; }
+          [[ "$GITHUB_REF" == "refs/tags/$CP51F_EXPECTED_EXECUTION_TAG" ]] || { echo 'CP51F_ARMING_GATE=FAIL exact tag'; exit 1; }
+          [[ "$GITHUB_REF_NAME" == "$CP51F_EXPECTED_EXECUTION_TAG" ]] || { echo 'CP51F_ARMING_GATE=FAIL tag name'; exit 1; }
+          [[ "$CP51F_EXPECTED_EXECUTION_TAG" =~ ^cp51f-run-[0-9a-f]{32}$ ]] || { echo 'CP51F_ARMING_GATE=FAIL tag nonce'; exit 1; }
+          [[ "$GITHUB_RUN_ATTEMPT" == 1 ]] || { echo 'CP51F_ARMING_GATE=FAIL run attempt'; exit 1; }
+          [[ "$(jq -r '.created // false' "$GITHUB_EVENT_PATH")" == true ]] || { echo 'CP51F_ARMING_GATE=FAIL tag creation'; exit 1; }
+          [[ "$(jq -r '.deleted // false' "$GITHUB_EVENT_PATH")" == false ]] || { echo 'CP51F_ARMING_GATE=FAIL deleted tag'; exit 1; }
+          [[ "$(jq -r '.forced // false' "$GITHUB_EVENT_PATH")" == false ]] || { echo 'CP51F_ARMING_GATE=FAIL forced update'; exit 1; }
           [[ "$CP51F_EXECUTION_ARMED" == YES ]] || { echo 'CP51F_ARMING_GATE=FAIL armed'; exit 1; }
           [[ -n "$CP51F_EXPECTED_EXECUTION_SHA" && "$GITHUB_SHA" == "$CP51F_EXPECTED_EXECUTION_SHA" ]] || { echo 'CP51F_ARMING_GATE=FAIL expected sha'; exit 1; }
           [[ "$CP51F_BACKUP_AGE_RECIPIENT" =~ ^age1[0-9a-z]+$ ]] || { echo 'CP51F_ARMING_GATE=FAIL age recipient'; exit 1; }
-          echo 'CP51F_ARMING_GATE=PASS'
+          marker_name="cp51f-auth-consumed-$CP51F_EXPECTED_EXECUTION_TAG"
+          existing_marker_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$marker_name&per_page=100" --jq '.total_count // 0')"
+          [[ "$existing_marker_count" == 0 ]] || { echo 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_CONSUMED'; exit 1; }
+          marker_dir="$RUNNER_TEMP/cp51f-auth-consumed"
+          mkdir -p -- "$marker_dir"
+          jq -n \
+            --arg expected_tag "$CP51F_EXPECTED_EXECUTION_TAG" \
+            --arg expected_sha "$CP51F_EXPECTED_EXECUTION_SHA" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg consumed_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{expected_tag:$expected_tag, expected_sha:$expected_sha, run_id:$run_id, consumed_utc:$consumed_utc}' \
+            >"$marker_dir/authorization.json"
+          chmod 600 "$marker_dir/authorization.json"
+          echo 'CP51F_ONE_SHOT_GATE=PASS'
+
+      - name: Upload consumed authorization marker
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-auth-consumed-${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          path: ${{ runner.temp }}/cp51f-auth-consumed/authorization.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Install isolated executor dependencies
         run: |
@@ -79,6 +110,7 @@ jobs:
           set -Eeuo pipefail
           bash scripts/cp51f-restore-verify.sh
           jq -e '.restore_result == "PASS"' "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json" >/dev/null
+          [[ "$(jq -r '.cp43_migration_ledger_state // empty' "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json")" == ABSENT ]] || { echo 'STOP_PRE_RELEASE_MIGRATION_STATE_CHANGED'; exit 1; }
           plaintext="$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz"
           encrypted="$plaintext.age"
           tar -czf "$plaintext" -C "$CP51F_PRIVATE_SECURE_PATH" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json restore-verification.json

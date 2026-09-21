@@ -4,6 +4,8 @@ umask 077
 
 readonly REQUIRED_ARTIFACTS=(roles.sql schema.sql data.sql history_schema.sql history_data.sql)
 readonly RESTORE_SUPERUSER=cp51f_admin
+readonly CP43_CANONICAL_MIGRATION_VERSION=20260918155431
+readonly CP43_CANONICAL_MIGRATION_NAME=cp43_canonical_state_reconciliation
 
 PRIVATE_PATH="${CP51F_PRIVATE_SECURE_PATH:?CP51F_PRIVATE_SECURE_PATH is required}"
 RUNNER_ROOT="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
@@ -106,7 +108,10 @@ FUNCTION_COUNT="$(run_query function_count "$PGDATABASE" "SELECT count(*) FROM p
 TRIGGER_COUNT="$(run_query trigger_count "$PGDATABASE" "SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE NOT t.tgisinternal AND n.nspname IN ('public','portal_private','auth','supabase_migrations');")"
 POLICY_COUNT="$(run_query policy_count "$PGDATABASE" "SELECT count(*) FROM pg_policies WHERE schemaname IN ('public','portal_private','auth','supabase_migrations');")"
 MIGRATION_HISTORY_ROW_COUNT="$(run_query migration_history_count "$PGDATABASE" "SELECT CASE WHEN to_regclass('supabase_migrations.schema_migrations') IS NULL THEN 'MISSING' ELSE (SELECT count(*)::text FROM supabase_migrations.schema_migrations) END;")"
-CP43_CANONICAL_MIGRATION_PRESENT="$(run_query cp43_presence "$PGDATABASE" "SELECT CASE WHEN EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '20260918155431_cp43_canonical_state_reconciliation') THEN 'YES' ELSE 'NO' END;")"
+CP43_MIGRATION_LEDGER_STATE="$(run_query cp43_presence "$PGDATABASE" "SELECT CASE WHEN NOT EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$CP43_CANONICAL_MIGRATION_VERSION') THEN 'ABSENT' WHEN EXISTS (SELECT 1 FROM supabase_migrations.schema_migrations WHERE version = '$CP43_CANONICAL_MIGRATION_VERSION' AND name = '$CP43_CANONICAL_MIGRATION_NAME') THEN 'PRESENT_CANONICAL' ELSE 'VERSION_NAME_MISMATCH' END;")"
+[[ "$CP43_MIGRATION_LEDGER_STATE" != VERSION_NAME_MISMATCH ]] || fail "STOP_CP43_VERSION_NAME_MISMATCH"
+CP43_CANONICAL_MIGRATION_PRESENT=NO
+[[ "$CP43_MIGRATION_LEDGER_STATE" == PRESENT_CANONICAL ]] && CP43_CANONICAL_MIGRATION_PRESENT=YES
 
 [[ "$SCHEMA_COUNT" == 4 ]] || fail "CP51F_RESTORE_ERROR: required schemas validation failed"
 [[ "$MIGRATION_HISTORY_ROW_COUNT" != MISSING ]] || fail "CP51F_RESTORE_ERROR: migration history validation failed"
@@ -124,10 +129,12 @@ jq -n \
   --arg policy_count "$POLICY_COUNT" \
   --arg migration_history_row_count "$MIGRATION_HISTORY_ROW_COUNT" \
   --arg cp43_present "$CP43_CANONICAL_MIGRATION_PRESENT" \
+  --arg cp43_ledger_state "$CP43_MIGRATION_LEDGER_STATE" \
   --argjson artifact_hashes "$ARTIFACT_HASHES" \
-  '{restore_result:"PASS", generated_at:$generated_at, restore_superuser:$restore_superuser, restore_network_exposure:$restore_network_exposure, schema_count:($schema_count|tonumber), table_count:($table_count|tonumber), function_count:($function_count|tonumber), trigger_count:($trigger_count|tonumber), policy_count:($policy_count|tonumber), migration_history_row_count:($migration_history_row_count|tonumber), cp43_canonical_migration_present:$cp43_present, artifact_hashes:$artifact_hashes}' \
+  '{restore_result:"PASS", generated_at:$generated_at, restore_superuser:$restore_superuser, restore_network_exposure:$restore_network_exposure, schema_count:($schema_count|tonumber), table_count:($table_count|tonumber), function_count:($function_count|tonumber), trigger_count:($trigger_count|tonumber), policy_count:($policy_count|tonumber), migration_history_row_count:($migration_history_row_count|tonumber), cp43_canonical_migration_present:$cp43_present, cp43_migration_ledger_state:$cp43_ledger_state, artifact_hashes:$artifact_hashes}' \
   >"$RESTORE_VERIFICATION"
 chmod 600 "$RESTORE_VERIFICATION"
 
 printf 'CP43_CANONICAL_MIGRATION_PRESENT_PRE_RELEASE=%s\n' "$CP43_CANONICAL_MIGRATION_PRESENT"
+printf 'CP43_MIGRATION_LEDGER_STATE=%s\n' "$CP43_MIGRATION_LEDGER_STATE"
 printf 'CP51F_RESTORE_RESULT=PASS\n'

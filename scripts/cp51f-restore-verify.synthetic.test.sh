@@ -42,20 +42,24 @@ SQL
 
 cat >"$PRIVATE/history_data.sql" <<'SQL'
 INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
-  ('20260918155431_cp43_canonical_state_reconciliation', 'synthetic cp43 marker'),
+  ('20260918155431', 'cp43_canonical_state_reconciliation'),
   ('synthetic_fixture_migration', 'synthetic fixture migration');
 SQL
 
-artifact_json='[]'
-for artifact in roles.sql schema.sql data.sql history_schema.sql history_data.sql; do
-  hash="$(sha256sum "$PRIVATE/$artifact" | awk '{print $1}')"
-  size="$(stat -c '%s' "$PRIVATE/$artifact")"
-  artifact_json="$(jq -c --arg name "$artifact" --arg hash "$hash" --argjson size "$size" '. + [{logical_name:$name,type:"synthetic",utc:"2026-01-01T00:00:00Z",size_bytes:$size,sha256:$hash,exit_status:0,coverage:"synthetic fixture only"}]' <<<"$artifact_json")"
-done
+write_manifest() {
+  local artifact artifact_json='[]' hash size
+  for artifact in roles.sql schema.sql data.sql history_schema.sql history_data.sql; do
+    hash="$(sha256sum "$PRIVATE/$artifact" | awk '{print $1}')"
+    size="$(stat -c '%s' "$PRIVATE/$artifact")"
+    artifact_json="$(jq -c --arg name "$artifact" --arg hash "$hash" --argjson size "$size" '. + [{logical_name:$name,type:"synthetic",utc:"2026-01-01T00:00:00Z",size_bytes:$size,sha256:$hash,exit_status:0,coverage:"synthetic fixture only"}]' <<<"$artifact_json")"
+  done
 
-jq -n --argjson artifacts "$artifact_json" \
-  '{manifest_version:1, setup_result:"AWAITING_PAT_REVOCATION", setup_utc:"2026-01-01T00:00:00Z", project_ref:"synthetic-fixture", jit_poststate_matches_prestate:true, artifacts:$artifacts}' \
-  >"$PRIVATE/manifest.json"
+  jq -n --argjson artifacts "$artifact_json" \
+    '{manifest_version:1, setup_result:"AWAITING_PAT_REVOCATION", setup_utc:"2026-01-01T00:00:00Z", project_ref:"synthetic-fixture", jit_poststate_matches_prestate:true, artifacts:$artifacts}' \
+    >"$PRIVATE/manifest.json"
+}
+
+write_manifest
 
 CP51F_PRIVATE_SECURE_PATH="$PRIVATE" \
 CP51F_RESTORE_ROOT="$RESTORE" \
@@ -70,8 +74,26 @@ jq -e '
   .trigger_count >= 1 and
   .policy_count >= 1 and
   .migration_history_row_count == 2 and
-  .cp43_canonical_migration_present == "YES"
+  .cp43_canonical_migration_present == "YES" and
+  .cp43_migration_ledger_state == "PRESENT_CANONICAL"
 ' "$PRIVATE/restore-verification.json" >/dev/null
+printf 'VERSION_TIMESTAMP_SEMANTICS=PASS\n'
+printf 'NAME_SEPARATION=PASS\n'
+printf 'CP43_DETECTION=PASS\n'
+
+cat >"$PRIVATE/history_data.sql" <<'SQL'
+INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
+  ('20260918155431', 'wrong_cp43_name'),
+  ('synthetic_fixture_migration', 'synthetic fixture migration');
+SQL
+write_manifest
+rm -f -- "$PRIVATE/restore-verification.json"
+set +e
+mismatch_output="$(CP51F_PRIVATE_SECURE_PATH="$PRIVATE" CP51F_RESTORE_ROOT="$RESTORE" PG_BIN_DIR="${PG_BIN_DIR:-/usr/lib/postgresql/17/bin}" bash scripts/cp51f-restore-verify.sh 2>&1)"
+mismatch_status=$?
+set -e
+[[ "$mismatch_status" -ne 0 && "$mismatch_output" == *STOP_CP43_VERSION_NAME_MISMATCH* ]]
+printf 'SYNTHETIC_LEDGER_MISMATCH=VERSION_NAME_MISMATCH\n'
 
 if command -v age-keygen >/dev/null 2>&1 && command -v age >/dev/null 2>&1; then
   age-keygen -o "$AGE_HOME/key.txt" >/dev/null 2>&1

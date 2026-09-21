@@ -33,15 +33,26 @@ Status: CLOSED / CERTIFIED.
 - Fresh authenticated visual QA: 1320/1320 PASS across mobile, tablet and desktop.
 - No Production deployment or Supabase mutation performed.
 
-R4: READY — not implemented.
+R4: CLOSED / CERTIFIED — Leads KPI layout and responsive commercial summary passed independent review, focused/full gates, and authenticated Leads visual QA; no Production deployment performed.
 
 ## R4 — Leads KPI layout and responsive information cards
 
-Status: READY — NOT_IMPLEMENTED.
+Status: CLOSED / CERTIFIED.
+
+- Shared V3 KPI primitive extended with governed semantic brand tones.
+- Leads commercial summary uses deterministic counts from loaded lead data only.
+- Responsive four-card composition: four columns on tablet/desktop, two columns on mobile.
+- Authenticated Leads visual QA: 10/10 PASS across mobile, tablet and desktop.
+- Full quality gates: 907 passed, 4 skipped; agents 294/294 PASS.
+- No Production deployment or Supabase mutation performed.
+
+R5: READY — not implemented.
+
+Global backlog remains explicit: UX-01A stronger global contrast/color, UX-02A premium dashboard charts, UX-03B single global brand lockup, UX-03C header/navbar differentiation and UX-07A strict no-scroll monostep StepFlows remain pending.
 
 ## R5 — Contained and large-list architecture
 
-Status: NOT_STARTED.
+Status: READY — NOT_IMPLEMENTED.
 
 ## R6 — Real mobile StepFlow architecture for long forms
 

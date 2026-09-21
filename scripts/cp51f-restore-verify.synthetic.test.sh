@@ -80,6 +80,7 @@ jq -e '
 printf 'VERSION_TIMESTAMP_SEMANTICS=PASS\n'
 printf 'NAME_SEPARATION=PASS\n'
 printf 'CP43_DETECTION=PASS\n'
+cp -- "$PRIVATE/restore-verification.json" "$ROOT/canonical-restore-verification.json"
 
 cat >"$PRIVATE/history_data.sql" <<'SQL'
 INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
@@ -96,6 +97,7 @@ set -e
 printf 'SYNTHETIC_LEDGER_MISMATCH=VERSION_NAME_MISMATCH\n'
 
 if command -v age-keygen >/dev/null 2>&1 && command -v age >/dev/null 2>&1; then
+  cp -- "$ROOT/canonical-restore-verification.json" "$PRIVATE/restore-verification.json"
   age-keygen -o "$AGE_HOME/key.txt" >/dev/null 2>&1
   recipient="$(age-keygen -y "$AGE_HOME/key.txt")"
   age -r "$recipient" -o "$ROOT/verification.json.age" "$PRIVATE/restore-verification.json"

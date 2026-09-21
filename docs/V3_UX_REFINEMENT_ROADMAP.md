@@ -61,10 +61,12 @@ Status: CLOSED / CERTIFIED.
 - Authenticated visual QA: 1847/1848 checks PASS. One unrelated `ipad-820/home` header-visibility baseline finding remains explicit as P2 and outside R5 scope.
 - No Production deployment or Supabase mutation performed.
 
-Visual Polish Sprint: READY.
+Visual Polish Sprint: CLOSED / CERTIFIED.
 
-R5 does not close the global backlog. UX-01A stronger global contrast/color, UX-02A premium dashboard charts, UX-03B single global brand lockup, UX-03C header/navbar differentiation, UX-03E branded preloader, UX-07A strict no-scroll monostep StepFlows and the existing `ipad-820/home` baseline finding remain pending.
+The R5.5 visual polish certification closes UX-01A stronger global contrast/color, UX-02A premium dashboard charts, UX-03B single global brand lockup, UX-03C header/navbar differentiation, UX-03E branded preloader, invisible-but-functional scrollbar governance, full viewport adaptation, and the shared-shell root cause behind the `ipad-820/home` header finding. Evidence and the severity matrix are recorded in `docs/V3_UX_REFINEMENT_VISUAL_POLISH.md`.
 
 ## R6 — Real mobile StepFlow architecture for long forms
 
-Status: NOT_STARTED.
+Status: READY — NOT IMPLEMENTED.
+
+R6 remains intentionally out of scope for the visual polish sprint. Its strict no-scroll monostep StepFlow architecture is the next exact sprint.

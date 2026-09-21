@@ -70,6 +70,7 @@ run_case() {
 
 PRIVATE_SECURE_PATH="$PRIVATE"
 PAT='synthetic-secret'
+export PRIVATE_SECURE_PATH PAT
 MANAGEMENT_API_ERROR_CODE_FILE="$PRIVATE/.api-code"
 run_case http_200 200 0 ''
 run_case http_401 401 1 MANAGEMENT_API_HTTP_401

@@ -113,7 +113,7 @@ contains 'MANAGEMENT_API_NETWORK_ERROR' "$SETUP"
 contains 'MANAGEMENT_API_UNEXPECTED_HTTP' "$SETUP"
 contains "--write-out '%{http_code}'" "$SETUP"
 contains 'MANAGEMENT_API_ERROR_CODE_FILE' "$SETUP"
-not_contains 'cat "$API_ERROR_FILE"' "$SETUP"
+not_contains "cat \"\$API_ERROR_FILE\"" "$SETUP"
 if grep -Eq 'printf.*PAT' "$HTTP_DIAGNOSTIC"; then
   printf 'CONTRACT_TEST=FAIL: diagnostic PAT output\n' >&2
   exit 1

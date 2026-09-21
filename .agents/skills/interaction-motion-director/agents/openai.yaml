@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interaction Motion Director"
+  short_description: "Audita feedback y motion accesible"
+  default_prompt: "Usa $interaction-motion-director para auditar lifecycle y reduced motion."

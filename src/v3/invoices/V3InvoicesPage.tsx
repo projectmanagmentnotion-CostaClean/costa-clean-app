@@ -1,0 +1,238 @@
+import { useMemo, useRef, useState } from 'react'
+import type { InvoiceModuleFilter } from '../../app/moduleFilters'
+import { formatCurrency, formatDateEs } from '../../app/displayFormat'
+import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
+import type { ClientListItem } from '../../features/clients/types'
+import type { PaymentListItem } from '../../features/payments/types'
+import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
+import { getInvoiceFinancialStatusLabel, type InvoiceFinancialStatus } from '../../features/invoices/paymentState'
+import type { InvoiceListItem } from '../../features/invoices/types'
+import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3EmptyState, V3EntityList, V3EntityListItem, V3ErrorState, V3Icon, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Section, V3Status, V3TabStrip } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
+import { useV3Selection } from '../selection/useV3Selection'
+import { V3SelectionActionSheet, V3SelectionBar, V3SelectionConfirmSheet, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
+import { getInvoiceFinancialFacts, getInvoiceSettlementDescription } from './invoicePresentation'
+import { V3InvoiceDocumentPreview } from './V3InvoiceDocumentPreview'
+
+interface V3InvoicesPageProps {
+  invoices: InvoiceListItem[]
+  allInvoices: InvoiceListItem[]
+  clients: ClientListItem[]
+  payments: PaymentListItem[]
+  error: string | null
+  initialInvoiceId?: string | null
+  onCreateInvoice: () => void
+  onDownloadInvoice: (invoice: InvoiceListItem) => void
+  onSettleInvoice: (invoice: InvoiceListItem) => void
+  isInvoiceSettling: (invoiceId: string) => boolean
+  onOpenDocument: (invoice: InvoiceListItem) => void
+  onViewPayments: (invoiceId: string) => void
+  onEditInvoice?: () => void
+  onOpenInvoiceDeepLink: (invoiceId: string) => void
+  onBackToInvoiceList: () => void
+  activeFilter?: InvoiceModuleFilter | null
+  activeFilterLabel?: string | null
+  onBulkDownload?: (invoices: InvoiceListItem[]) => Promise<unknown>
+  onBulkExportCsv?: (invoices: InvoiceListItem[]) => void
+  onBulkSettle?: (invoices: InvoiceListItem[]) => Promise<{ completedIds: string[]; failedIds: string[] }>
+}
+
+type ListFilter = 'pending' | 'paid' | 'all'
+
+function getInitialInvoiceFilter(activeFilter: InvoiceModuleFilter | null | undefined): ListFilter {
+  return activeFilter === 'pending' || activeFilter === 'unpaid_older_7d' ? 'pending' : 'all'
+}
+
+function invoiceLabel(invoice: InvoiceListItem): string {
+  return formatInvoiceLabel(invoice)
+}
+
+function invoiceSummary(invoice: InvoiceListItem): string {
+  return invoice.service_description?.trim() || invoice.billing_concept?.trim() || invoice.service_reference?.trim() || 'Factura de servicios'
+}
+
+function getStatusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
+  if (status === 'paid') return 'success'
+  if (status === 'cancelled') return 'danger'
+  if (status === 'partially_paid') return 'warning'
+  return 'neutral'
+}
+
+function getInvoiceDisplayStatusLabel(invoice: InvoiceListItem, financialStatus: InvoiceFinancialStatus): string {
+  if (invoice.status === 'draft' && !invoice.payment_status) return 'Borrador'
+  return getInvoiceFinancialStatusLabel(financialStatus)
+}
+
+export function V3InvoicesPage({
+  invoices,
+  allInvoices,
+  clients,
+  payments,
+  error,
+  initialInvoiceId = null,
+  onCreateInvoice,
+  onDownloadInvoice,
+  onSettleInvoice,
+  isInvoiceSettling,
+  onOpenDocument,
+  onViewPayments,
+  onEditInvoice = () => undefined,
+  onOpenInvoiceDeepLink,
+  onBackToInvoiceList,
+  activeFilter = null,
+  activeFilterLabel = null,
+  onBulkDownload,
+  onBulkExportCsv,
+  onBulkSettle,
+}: V3InvoicesPageProps) {
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoiceId)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filter, setFilter] = useState<ListFilter>(() => getInitialInvoiceFilter(activeFilter))
+  const [sort, setSort] = useState<'recent' | 'oldest' | 'amount'>('recent')
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
+  const listScrollYRef = useRef(0)
+  const selectedInvoice = invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null
+
+  const pendingInvoices = allInvoices.filter((invoice) => canSettleInvoiceByTransfer(invoice))
+  const paidInvoices = allInvoices.filter((invoice) => invoice.payment_status === 'paid' || invoice.status === 'paid')
+  const pendingAmount = pendingInvoices.reduce((sum, invoice) => sum + Number(invoice.outstanding_amount ?? invoice.total ?? 0), 0)
+  const currentMonthKey = new Date().toISOString().slice(0, 7)
+  const billedAmount = allInvoices
+    .filter((invoice) => invoice.issue_date.startsWith(currentMonthKey))
+    .reduce((sum, invoice) => sum + Number(invoice.total ?? 0), 0)
+
+  const visibleInvoices = useMemo(() => {
+    const query = searchQuery.trim().toLocaleLowerCase()
+    return invoices
+      .filter((invoice) => {
+        if (filter === 'pending' && !canSettleInvoiceByTransfer(invoice)) return false
+        if (filter === 'paid' && invoice.payment_status !== 'paid' && invoice.status !== 'paid') return false
+        if (!query) return true
+        return [invoiceLabel(invoice), formatClientLabel(invoice), invoiceSummary(invoice), invoice.issue_date]
+          .join(' ').toLocaleLowerCase().includes(query)
+      })
+      .sort((left, right) => {
+        if (sort === 'amount') return Number(right.total ?? 0) - Number(left.total ?? 0)
+        const result = left.issue_date.localeCompare(right.issue_date)
+        return sort === 'oldest' ? result : -result
+      })
+  }, [filter, invoices, searchQuery, sort])
+  const selection = useV3Selection({ visibleIds: visibleInvoices.map((invoice) => invoice.id), resetKey: `${filter}|${searchQuery}` })
+  const listWindow = useV3ListWindow(visibleInvoices, { resetKey: `${filter}|${searchQuery}|${sort}` })
+  const [selectionSheet, setSelectionSheet] = useState(false)
+  const [settleConfirm, setSettleConfirm] = useState(false)
+  const [settlementTarget, setSettlementTarget] = useState<InvoiceListItem | null>(null)
+  const [selectionResult, setSelectionResult] = useState<{ message: string; completedIds: string[]; failedIds: string[] } | null>(null)
+  const selectedInvoices = invoices.filter((invoice) => selection.selectedIds.includes(invoice.id))
+  const eligibleSelectedInvoices = selectedInvoices.filter(canSettleInvoiceByTransfer)
+
+  if (selectedInvoice) {
+    return (
+      <>
+        <V3InvoiceWorkspace
+          invoice={selectedInvoice}
+          payments={payments}
+          clients={clients}
+          onBack={() => {
+            setSelectedInvoiceId(null)
+            onBackToInvoiceList()
+            window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
+          }}
+          onDownloadInvoice={onDownloadInvoice}
+          onRequestSettlement={setSettlementTarget}
+          isInvoiceSettling={isInvoiceSettling(selectedInvoice.id)}
+          onOpenDocument={onOpenDocument}
+          onViewPayments={onViewPayments}
+          onEditInvoice={onEditInvoice}
+        />
+        {settlementTarget ? <V3InvoiceSettlementConfirm invoice={settlementTarget} busy={isInvoiceSettling(settlementTarget.id)} onCancel={() => setSettlementTarget(null)} onConfirm={() => { const target = settlementTarget; setSettlementTarget(null); onSettleInvoice(target) }} /> : null}
+      </>
+    )
+  }
+
+  return (
+    <V3Page className="v3-invoices-page v3-finance-page">
+      <V3PageTitle eyebrow="Facturación" title="Facturas" description={`${activeFilterLabel ? `${activeFilterLabel} · ` : ''}Emisión, cobro y saldo pendiente en una sola lectura.`} action={<V3ActionGroup><V3SelectionTrigger onClick={selection.enter} /><V3PrimaryAction onClick={onCreateInvoice}>+ Nueva factura</V3PrimaryAction></V3ActionGroup>} />
+      <section className="v3-invoice-controls" aria-label="Buscar y filtrar facturas">
+        <label className="v3-field"><span>Buscar</span><input className="v3-input" type="search" value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Número o cliente" /></label>
+        <button type="button" className="v3-filter-trigger" onClick={() => setIsFilterSheetOpen(true)} aria-haspopup="dialog" aria-expanded={isFilterSheetOpen}>Filtros <V3Icon name="chevronDown" /></button>
+      </section>
+      <V3KpiGroup variant="supporting">
+        <V3Kpi label="Este mes" value={formatCurrency(billedAmount)} hint="Importe facturado" />
+        <V3Kpi label="Por cobrar" value={formatCurrency(pendingAmount)} hint="Saldo pendiente" />
+        <V3Kpi label="Cobradas" value={String(paidInvoices.length)} hint="Estado financiero real" />
+      </V3KpiGroup>
+      <V3TabStrip label="Estado de factura" activeValue={filter} onChange={(value) => setFilter(value as ListFilter)} options={[{ value: 'pending', label: 'Pendientes' }, { value: 'paid', label: 'Cobradas' }, { value: 'all', label: 'Todas' }]} />
+      {isFilterSheetOpen ? (
+        <V3BottomSheet title="Filtros" onClose={() => setIsFilterSheetOpen(false)}>
+          <div className="v3-filter-sheet__content">
+            <fieldset className="v3-filter-sheet__group"><legend>Estado de la factura</legend><div className="v3-filter-sheet__options">{([['pending', 'Pendientes'], ['paid', 'Cobradas'], ['all', 'Todas']] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? 'is-selected' : ''} aria-pressed={filter === value} onClick={() => setFilter(value)}>{label}</button>)}</div></fieldset>
+            <label className="v3-field"><span>Ordenar por</span><select className="v3-input" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="recent">Más recientes</option><option value="oldest">Más antiguas</option><option value="amount">Mayor importe</option></select></label>
+            <V3PrimaryAction onClick={() => setIsFilterSheetOpen(false)}>Aplicar filtros</V3PrimaryAction>
+          </div>
+        </V3BottomSheet>
+      ) : null}
+      <V3ListWorkspace label="Facturas" {...listWindow} onPageChange={listWindow.setPage}>
+        {error ? <V3ErrorState title="Error cargando facturas" description={error} /> : null}
+        {!error && visibleInvoices.length === 0 ? <V3EmptyState title="Sin facturas visibles" description="Ajusta la búsqueda o el estado para continuar." /> : null}
+        <V3EntityList label="Facturas">
+        {listWindow.pageItems.map((invoice) => (
+          <V3InvoiceRow key={invoice.id} invoice={invoice} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(invoice.id)} onToggleSelect={() => selection.toggle(invoice.id)} isSettling={isInvoiceSettling(invoice.id)} onOpen={() => {
+            if (selection.isSelectionMode) { selection.toggle(invoice.id); return }
+            listScrollYRef.current = window.scrollY
+            setSelectedInvoiceId(invoice.id)
+            onOpenInvoiceDeepLink(invoice.id)
+            window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }))
+          }} onDownload={() => onDownloadInvoice(invoice)} onRequestSettlement={() => setSettlementTarget(invoice)} />
+        ))}
+        </V3EntityList>
+      </V3ListWorkspace>
+      {selection.isSelectionMode ? <V3SelectionBar selectedCount={selection.selectedCount} visibleSelectedCount={selection.visibleSelectedCount} visibleCount={visibleInvoices.length} allVisibleSelected={selection.allVisibleSelected} onSelectVisible={selection.selectVisible} onActions={() => setSelectionSheet(true)} onCancel={selection.exit} /> : null}
+      {settlementTarget ? <V3InvoiceSettlementConfirm invoice={settlementTarget} busy={isInvoiceSettling(settlementTarget.id)} onCancel={() => setSettlementTarget(null)} onConfirm={() => { const target = settlementTarget; setSettlementTarget(null); onSettleInvoice(target) }} /> : null}
+      {selectionSheet ? <V3SelectionActionSheet onClose={() => setSelectionSheet(false)}><V3SecondaryAction onClick={() => { setSelectionSheet(false); void onBulkDownload?.(selectedInvoices) }} disabled={selectedInvoices.length === 0}>Descargar PDFs</V3SecondaryAction><V3SecondaryAction onClick={() => { setSelectionSheet(false); onBulkExportCsv?.(selectedInvoices) }} disabled={selectedInvoices.length === 0}>Exportar CSV</V3SecondaryAction>{eligibleSelectedInvoices.length > 0 && onBulkSettle ? <V3PrimaryAction onClick={() => { setSelectionSheet(false); setSettleConfirm(true) }}>Registrar cobros ({eligibleSelectedInvoices.length})</V3PrimaryAction> : null}</V3SelectionActionSheet> : null}
+       {settleConfirm ? <V3SelectionConfirmSheet title="Confirmar cobros por transferencia" confirmLabel="Registrar cobros" description={`Se registrará un cobro por transferencia por el saldo pendiente de ${eligibleSelectedInvoices.length} factura(s) elegible(s): ${formatCurrency(eligibleSelectedInvoices.reduce((sum, invoice) => sum + getInvoiceFinancialFacts(invoice).outstanding, 0))}. Las no elegibles no se tocarán.`} onClose={() => setSettleConfirm(false)} onConfirm={async () => { setSettleConfirm(false); const result = await onBulkSettle?.(eligibleSelectedInvoices); if (result) setSelectionResult({ message: `${result.completedIds.length} cobro(s) registrado(s). ${result.failedIds.length} fallido(s).`, completedIds: result.completedIds, failedIds: result.failedIds }) }} /> : null}
+       {selectionResult ? <V3SelectionResultSheet message={selectionResult.message} completedIds={selectionResult.completedIds} failedIds={selectionResult.failedIds} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}
+    </V3Page>
+  )
+}
+
+function V3InvoiceRow({ invoice, selectionMode, selected, onToggleSelect, isSettling, onOpen, onDownload, onRequestSettlement }: { invoice: InvoiceListItem; selectionMode: boolean; selected: boolean; onToggleSelect: () => void; isSettling: boolean; onOpen: () => void; onDownload: () => void; onRequestSettlement: () => void }) {
+  const facts = getInvoiceFinancialFacts(invoice)
+  return (
+      <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir ${invoiceLabel(invoice)}`}>
+      {selectionMode ? <V3SelectionControl checked={selected} label={`Seleccionar ${invoiceLabel(invoice)}`} onChange={onToggleSelect} /> : null}
+      <div className="v3-invoice-row__main"><strong>{invoiceLabel(invoice)}</strong><span>{formatClientLabel(invoice)}</span><small>{formatDateEs(invoice.issue_date)} · {invoiceSummary(invoice)}</small></div>
+      <div className="v3-invoice-row__side"><strong>{formatCurrency(facts.total)}</strong><small>Cobrado {formatCurrency(facts.paid)} · Pendiente {formatCurrency(facts.outstanding)}</small><V3Status label={getInvoiceDisplayStatusLabel(invoice, facts.status)} tone={getStatusTone(facts.status)} /></div>
+      {!selectionMode ? <div className="v3-invoice-row__actions"><V3SecondaryAction onClick={(event) => { event.stopPropagation(); onDownload() }}>Descargar PDF</V3SecondaryAction>{facts.settlementAllowed ? <V3PrimaryAction onClick={(event) => { event.stopPropagation(); onRequestSettlement() }} disabled={isSettling}>{isSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}</div> : null}
+    </V3EntityListItem>
+  )
+}
+
+function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onRequestSettlement, isInvoiceSettling, onOpenDocument, onViewPayments, onEditInvoice }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onRequestSettlement: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onEditInvoice: () => void }) {
+  const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false)
+  const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
+  const client = clients.find((item) => item.id === invoice.client_id)
+  const facts = getInvoiceFinancialFacts(invoice)
+  const lines = invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []
+  return (
+    <V3Page className="v3-invoice-workspace">
+      <button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Facturas</button>
+      <V3PageTitle eyebrow="Factura" title={invoiceLabel(invoice)} description={`${client?.full_name ?? formatClientLabel(invoice)} · ${formatDateEs(invoice.issue_date)}`} />
+      <div className="v3-invoice-workspace__status"><V3Status label={getInvoiceDisplayStatusLabel(invoice, facts.status)} tone={getStatusTone(facts.status)} /></div>
+      <dl className="v3-invoice-financial-summary" aria-label="Resumen financiero"><div><dt>Total</dt><dd>{formatCurrency(facts.total)}</dd></div><div><dt>Cobrado</dt><dd>{formatCurrency(facts.paid)}</dd></div><div><dt>Pendiente</dt><dd>{formatCurrency(facts.outstanding)}</dd></div></dl>
+      <p className="v3-invoice-settlement-status">{facts.settlementAllowed ? `Cobro por transferencia disponible por ${formatCurrency(facts.outstanding)}.` : 'El cobro por transferencia no está disponible para esta factura.'}</p>
+      <V3ActionGroup className="v3-finance-action-group">{facts.settlementAllowed ? <V3PrimaryAction onClick={() => onRequestSettlement(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
+      <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client?.full_name ?? formatClientLabel(invoice)}</dd></div><div><dt>Fecha</dt><dd>{formatDateEs(invoice.issue_date)}</dd></div></dl></V3Section>
+      <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
+      <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div key={line.id} className="v3-line-row"><span>{line.concept}</span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas detalladas disponibles.</p>}</div></V3Section>
+      <V3Section label="Cobros" action={<V3SecondaryAction onClick={() => onViewPayments(invoice.id)}>Ver cobros</V3SecondaryAction>}><p className="v3-section-copy">{invoicePayments.length > 0 ? `${invoicePayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section>
+      <V3InvoiceDocumentPreview invoice={invoice} onOpenDocument={() => onOpenDocument(invoice)} />
+      {invoice.updated_at ? <V3Section label="Historial"><p className="v3-section-copy">Última actualización: {formatDateEs(invoice.updated_at)}</p></V3Section> : null}
+      {isMoreActionsOpen ? <V3BottomSheet title="Más acciones de la factura" onClose={() => setIsMoreActionsOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onEditInvoice() }}>Editar factura</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onOpenDocument(invoice) }}>Ver documento</V3SecondaryAction></div></V3BottomSheet> : null}
+    </V3Page>
+  )
+}
+
+function V3InvoiceSettlementConfirm({ invoice, busy, onCancel, onConfirm }: { invoice: InvoiceListItem; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
+  return <V3ConfirmSheet title="Confirmar cobro por transferencia" description={getInvoiceSettlementDescription(invoice)} confirmLabel="Registrar cobro" busy={busy} onCancel={onCancel} onConfirm={onConfirm} />
+}

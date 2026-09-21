@@ -19,8 +19,8 @@ export interface AlertBucketMeta {
 const alertBucketMeta: Record<AlertBucket, AlertBucketMeta> = {
   critical: {
     id: 'critical',
-    label: 'Critico',
-    title: 'Critico',
+    label: 'Crítico',
+    title: 'Crítico',
     description: 'Bloqueos que afectan cobro, facturacion o control operativo hoy.',
     emptyTitle: 'Sin bloqueos criticos',
     emptyDescription: 'No hay alertas de maxima prioridad activas.',
@@ -98,6 +98,23 @@ function getRoutingActionLabel(routing: AutomationAlertRouting): string {
 
 export function getAlertActionLabel(alert: AutomationAlertItem): string {
   return getAlertActionMeta(alert).primaryLabel ?? getRoutingActionLabel(alert.routing)
+}
+
+export function getAlertRoutingLabel(alert: AutomationAlertItem): string {
+  if (alert.routing.kind === 'quarterly_closing') return 'Cierre trimestral'
+  if (alert.routing.kind === 'view') {
+    if (alert.routing.view === 'alerts') return 'Centro de alertas'
+    if (alert.routing.view === 'clients') return 'Clientes'
+    if (alert.routing.view === 'leads') return 'Solicitudes'
+    return 'Operaciones'
+  }
+
+  if (alert.routing.view === 'invoices') return 'Facturación'
+  if (alert.routing.view === 'quotes') return 'Presupuestos'
+  if (alert.routing.view === 'jobs') return 'Servicios'
+  if (alert.routing.view === 'expenses') return 'Gastos'
+  if (alert.routing.view === 'payments') return 'Cobros'
+  return 'Operaciones'
 }
 
 export function getAlertImpactCopy(alert: AutomationAlertItem): string {

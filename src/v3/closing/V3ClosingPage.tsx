@@ -1,0 +1,74 @@
+import { useMemo, useState } from 'react'
+import { formatCurrency } from '../../app/displayFormat'
+import { buildClosingSummary, type ClosingIncidenceScope, type ClosingIncidenceView } from '../../features/closing/closingSummaryEngine'
+import type { FiscalPeriodSelection } from '../../features/closing/fiscalPeriods'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../../features/closing/fiscalPeriodNotes'
+import { generateClosingIntelligenceSummary } from '../../features/closingIntelligence/closingIntelligenceApi'
+import { buildFiscalPeriodExportData, buildFiscalPeriodIncidences } from '../../features/closingExports/fiscalPeriodExport'
+import { downloadManagerExportPackageOnDemand } from '../../features/closingExports/exportPackageRuntime'
+import { buildExternalAccountingPackageStem } from '../../features/closingExports/externalExportPolicy'
+import { V3DetailSection, V3EmptyState, V3EntityStatus, V3ErrorState, V3Field, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Select, V3Textarea } from '../components/V3Primitives'
+import type { InvoiceListItem } from '../../features/invoices/types'
+import type { PaymentListItem } from '../../features/payments/types'
+import type { ExpenseListItem } from '../../features/expenses/types'
+import type { QuoteListItem } from '../../features/quotes/types'
+import type { JobListItem } from '../../features/jobs/types'
+import type { ClientListItem } from '../../features/clients/types'
+import type { PropertyListItem } from '../../features/properties/types'
+import type { QuarterlyClosingRecord, QuarterlyClosingSummary } from '../../features/quarterlyClosing/types'
+import type { AnnualClosingRecord, AnnualClosingSummary } from '../../features/annualClosing/types'
+
+interface V3ClosingPageProps { availableYears: number[]; initialSelection: FiscalPeriodSelection; quarterlySummaryByPeriod: Map<string, QuarterlyClosingSummary>; annualSummaryByYear: Map<number, AnnualClosingSummary>; quarterlyClosings: QuarterlyClosingRecord[]; annualClosings: AnnualClosingRecord[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; expenses: ExpenseListItem[]; quotes: QuoteListItem[]; jobs: JobListItem[]; clients: ClientListItem[]; properties: PropertyListItem[]; error: string | null; onNavigateToIncidence: (view: ClosingIncidenceView, scope: ClosingIncidenceScope, selection: FiscalPeriodSelection) => void; onSaveQuarterlyClosing: (input: { fiscalYear: number; fiscalQuarter: number; notes: string | null }) => Promise<void>; onSaveAnnualClosing: (input: { fiscalYear: number; notes: string | null }) => Promise<void> }
+
+export function V3ClosingPage(props: V3ClosingPageProps) {
+  const [selection, setSelection] = useState(props.initialSelection)
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState<{ periodKey: string; value: string } | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState<{ periodKey: string; value: string } | null>(null)
+  const [aiBusy, setAiBusy] = useState(false)
+  const [aiMessage, setAiMessage] = useState<{ periodKey: string; value: string } | null>(null)
+  const summary = useMemo(() => buildClosingSummary({ selection, invoices: props.invoices, payments: props.payments, expenses: props.expenses, quotes: props.quotes, jobs: props.jobs, quarterlySummaryByPeriod: props.quarterlySummaryByPeriod, annualSummaryByYear: props.annualSummaryByYear }), [props, selection])
+  const persistedClosing = useMemo(() => {
+    if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) {
+      return props.quarterlyClosings.find((closing) => closing.fiscal_year === summary.fiscalYear && closing.fiscal_quarter === summary.fiscalQuarter) ?? null
+    }
+    if (summary.snapshotMode === 'annual') {
+      return props.annualClosings.find((closing) => closing.fiscal_year === summary.fiscalYear) ?? null
+    }
+    return null
+  }, [props.annualClosings, props.quarterlyClosings, summary.fiscalQuarter, summary.fiscalYear, summary.snapshotMode])
+  const periodKey = summary.snapshotMode === 'quarterly' && summary.fiscalQuarter
+    ? `${summary.fiscalYear}-Q${summary.fiscalQuarter}`
+    : summary.snapshotMode === 'annual'
+      ? String(summary.fiscalYear)
+      : `${selection.mode}-${selection.year}-${selection.month ?? ''}-${selection.quarter ?? ''}-${selection.startDate ?? ''}`
+  const notes = readFiscalPeriodNote(noteDraft, periodKey, persistedClosing?.notes)
+  const exportData = useMemo(() => buildFiscalPeriodExportData({ selection, invoices: props.invoices, payments: props.payments, expenses: props.expenses, quotes: props.quotes }), [props.expenses, props.invoices, props.payments, props.quotes, selection])
+  const save = async () => { setSaving(true); setMessage(null); try { if (summary.snapshotMode === 'quarterly' && summary.fiscalQuarter) await props.onSaveQuarterlyClosing({ fiscalYear: summary.fiscalYear, fiscalQuarter: summary.fiscalQuarter, notes: notes.trim() || null }); else if (summary.snapshotMode === 'annual') await props.onSaveAnnualClosing({ fiscalYear: summary.fiscalYear, notes: notes.trim() || null }); else { setMessage({ periodKey, value: 'Selecciona trimestre o año para guardar un snapshot.' }); return }; setMessage({ periodKey, value: 'Snapshot interno preparado guardado.' }) } catch (cause) { setMessage({ periodKey, value: cause instanceof Error ? cause.message : 'No se pudo guardar la preparación.' }) } finally { setSaving(false) } }
+  const exportPeriod = async () => { setExporting(true); setExportMessage(null); try { await downloadManagerExportPackageOnDemand({ audience: 'accounting_external', scope: exportData.period.mode === 'quarter' ? 'quarterly' : exportData.period.mode === 'year' ? 'annual' : exportData.period.mode, label: `Paquete fiscal ${exportData.period.label}`, folderName: buildExternalAccountingPackageStem(exportData.period.folderLabel), periodStartDate: exportData.period.startDate, periodEndDate: exportData.period.endDate, closingSavedAt: null, closingNotes: notes.trim() || null, summaryMetrics: exportData.metrics, invoices: exportData.invoices, payments: exportData.payments, expenses: exportData.expenses, quotes: exportData.quotes, clients: props.clients, properties: props.properties, incidences: buildFiscalPeriodIncidences(exportData) }); setExportMessage({ periodKey, value: 'Paquete del periodo generado y descargado.' }) } catch (cause) { setExportMessage({ periodKey, value: cause instanceof Error ? cause.message : 'No se pudo generar el paquete del periodo.' }) } finally { setExporting(false) } }
+  const generateAi = async () => { if (!summary.snapshotMode) { setAiMessage({ periodKey, value: 'El resumen asistido está disponible para trimestre o año.' }); return }; setAiBusy(true); setAiMessage(null); try { const result = await generateClosingIntelligenceSummary({ scope: summary.snapshotMode, payload: { period: summary.period, deterministicSummary: summary.deterministicSummary, incidences: summary.incidences } }); setAiMessage({ periodKey, value: `Resumen asistido (${result.summary.confidenceLevel}) generado. ${result.summary.executiveSummary}` }) } catch (cause) { setAiMessage({ periodKey, value: cause instanceof Error ? `Fallback seguro: no se pudo generar el resumen asistido. ${cause.message}` : 'Fallback seguro: no se pudo generar el resumen asistido.' }) } finally { setAiBusy(false) } }
+  const periodLabel = summary.period.label
+  const readinessLabel = summary.readinessLevel === 'ready' ? 'Listo' : summary.readinessLevel === 'review' ? 'Requiere revisión' : 'Bloqueado'
+  const readinessTone = summary.readinessLevel === 'ready' ? 'success' : summary.readinessLevel === 'review' ? 'warning' : 'danger'
+  const snapshotLabel = !summary.snapshotMode
+    ? 'Vista exploratoria'
+    : persistedClosing
+      ? persistedClosing.status === 'prepared' ? 'Snapshot preparado' : 'Snapshot con incidencias'
+      : 'Sin snapshot guardado'
+  const snapshotDescription = !summary.snapshotMode
+    ? 'Mes y rango personalizado permiten revisar datos, pero no guardan snapshot persistido.'
+    : persistedClosing
+      ? 'El estado guardado se muestra aparte de las cifras calculadas del periodo.'
+      : 'Las cifras están calculadas, pero todavía no existe un snapshot persistido para este periodo.'
+  return <V3Page className="v3-closing-page"><V3PageTitle eyebrow="Control fiscal interno" title="Cierres" description="Una lectura operativa del periodo, con cifras calculadas, revisión y salidas separadas." />
+    <V3DetailSection title="Periodo activo"><div className="v3-closing-selector"><V3Field label="Tipo de periodo"><V3Select value={selection.mode} onChange={(e) => setSelection({ ...selection, mode: e.target.value as FiscalPeriodSelection['mode'] })}><option value="quarter">Trimestre</option><option value="year">Año</option><option value="month">Mes</option><option value="custom">Personalizado</option></V3Select></V3Field><V3Field label="Año"><V3Select value={selection.year} onChange={(e) => setSelection({ ...selection, year: Number(e.target.value) })}>{[...new Set([...props.availableYears, selection.year])].sort((a, b) => b - a).map((year) => <option key={year} value={year}>{year}</option>)}</V3Select></V3Field>{selection.mode === 'quarter' ? <V3Field label="Trimestre"><V3Select value={selection.quarter} onChange={(e) => setSelection({ ...selection, quarter: Number(e.target.value) })}>{[1, 2, 3, 4].map((quarter) => <option key={quarter} value={quarter}>T{quarter}</option>)}</V3Select></V3Field> : null}</div><p className="v3-section-copy">{periodLabel} · {summary.period.startDate} a {summary.period.endDate}</p></V3DetailSection>
+    {props.error ? <V3ErrorState title="No se pudo cargar el cierre" description={props.error} /> : null}
+    <section className="v3-closing-deterministic" data-qa="closing-deterministic-summary" aria-labelledby="v3-closing-deterministic-title"><div className="v3-closing-section-heading"><div><span className="v3-page-title__eyebrow">Fuente de datos</span><h2 id="v3-closing-deterministic-title">Resumen determinista</h2><p>Datos calculados del periodo activo. Estos importes son la referencia operativa del cierre.</p></div><V3EntityStatus context="Cifras" label="Calculadas" tone="neutral" /></div><V3KpiGroup><V3Kpi label="Facturado" value={formatCurrency(summary.deterministicSummary.totalInvoiced)} hint={periodLabel} /><V3Kpi label="Cobrado" value={formatCurrency(summary.deterministicSummary.totalCollected)} hint="Cobros registrados" /><V3Kpi label="Pendiente" value={formatCurrency(summary.deterministicSummary.totalOutstanding)} hint={`${summary.pendingInvoiceCount} factura(s)`} /></V3KpiGroup></section>
+    <V3DetailSection title="Estado del periodo y revisión"><div className="v3-closing-status-grid"><div><V3EntityStatus context="Preparación" label={readinessLabel} tone={readinessTone} /><p className="v3-section-copy">{summary.unresolvedIncidenceCount > 0 ? `${summary.unresolvedIncidenceCount} punto(s) requieren revisión antes de compartir el paquete.` : 'No hay incidencias abiertas en la lectura actual.'}</p></div><div><V3EntityStatus context="Snapshot" label={snapshotLabel} tone={!persistedClosing ? 'neutral' : persistedClosing.status === 'prepared' ? 'success' : 'warning'} /><p className="v3-section-copy">{snapshotDescription}</p></div></div><p className="v3-section-copy">Las cifras son una preparación interna y no constituyen una certificación oficial.</p></V3DetailSection>
+    <V3DetailSection title="Incidencias"><div className="v3-closing-incidences">{summary.incidences.filter((incidence) => incidence.count > 0).map((incidence) => <button type="button" className="v3-relation-row" key={incidence.id} onClick={() => props.onNavigateToIncidence(incidence.view, incidence.scope, selection)} aria-label={`${incidence.label}: ${incidence.count}. Abrir módulo`}><span><strong>{incidence.label}</strong><small>{incidence.detail}</small></span><strong>{incidence.count}</strong></button>)}</div>{summary.incidences.every((incidence) => incidence.count === 0) ? <V3EmptyState title="Sin incidencias" description="No hay incidencias abiertas en este periodo." /> : null}</V3DetailSection>
+    <V3DetailSection title="Snapshot interno"><p className="v3-section-copy">Guarda el contexto de revisión para el trimestre o año seleccionado. Este snapshot no sustituye los datos calculados.</p><V3Field label="Notas internas"><V3Textarea value={notes} onChange={(e) => setNoteDraft(writeFiscalPeriodNote(periodKey, e.target.value))} placeholder="Contexto interno opcional" /></V3Field><div className="v3-workspace-actions"><V3PrimaryAction onClick={() => void save()} disabled={saving || !summary.snapshotMode || Boolean(props.error)}>{saving ? 'Guardando…' : 'Guardar preparación'}</V3PrimaryAction><V3SecondaryAction onClick={() => props.onNavigateToIncidence('expenses', 'closure', selection)}>Revisar gastos de cierre</V3SecondaryAction></div>{!summary.snapshotMode ? <p className="v3-section-copy">Selecciona trimestre o año para guardar un snapshot.</p> : null}{message?.periodKey === periodKey ? <p className="v3-inline-message" role="status">{message.value}</p> : null}</V3DetailSection>
+    <V3DetailSection title="Salidas del periodo"><div className="v3-closing-output-grid"><article className="v3-closing-output"><h3>Paquete del periodo</h3><p className="v3-section-copy">Exportación del paquete existente para revisión interna o gestoría. No es una presentación oficial.</p><V3SecondaryAction onClick={() => void exportPeriod()} disabled={exporting || Boolean(props.error)}>{exporting ? 'Generando…' : 'Descargar paquete'}</V3SecondaryAction>{exportMessage?.periodKey === periodKey ? <p className="v3-inline-message" role="status">{exportMessage.value}</p> : null}</article><article className="v3-closing-output v3-closing-output--assistive"><h3>Interpretación asistiva</h3><p className="v3-section-copy">La IA interpreta el resumen determinista y sus incidencias; no recalcula importes ni sustituye la revisión profesional.</p><V3SecondaryAction onClick={() => void generateAi()} disabled={aiBusy || !summary.snapshotMode || Boolean(props.error)}>{aiBusy ? 'Generando…' : 'Generar resumen asistido'}</V3SecondaryAction>{!summary.snapshotMode ? <small>Disponible para trimestre o año.</small> : null}{aiMessage?.periodKey === periodKey ? <p className="v3-inline-message" role="status">{aiMessage.value}</p> : null}</article></div></V3DetailSection>
+  </V3Page>
+}

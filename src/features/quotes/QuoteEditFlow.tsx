@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, quoteStatusOptions } from '../../app/statusOptions'
@@ -130,10 +130,16 @@ export function QuoteEditFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showRejectedConfirm, setShowRejectedConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
   const [successState, setSuccessState] = useState<QuoteEditSuccessState | null>(null)
 
   useEffect(() => {
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    if (isDirtyRef.current) return
     setForm({
       client_id: quote.client_id ?? null,
       property_id: quote.property_id ?? '',
@@ -655,7 +661,7 @@ export function QuoteEditFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 4</span>
               <strong>Condiciones y seguimiento</strong>
-              <small>Estado y notas se editan juntos, separados de lineas y conversiones.</small>
+              <small>Estado y alcance se editan juntos, separados de lineas y conversiones.</small>
             </article>
 
             <div className="cc-create-flow__grid">
@@ -677,12 +683,12 @@ export function QuoteEditFlow({
               </article>
 
               <label className="form-field form-field-full">
-                <span>Notas</span>
+                <span>Alcance presupuesto</span>
                 <textarea
                   value={form.notes}
                   onChange={(event) => updateField('notes', event.target.value)}
                   rows={5}
-                  placeholder="Notas comerciales o de alcance"
+                  placeholder="Servicio de camareros, condiciones o exclusiones"
                 />
               </label>
             </div>
@@ -776,7 +782,7 @@ export function QuoteEditFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+                <small>{form.notes.trim() ? 'Con alcance comercial' : 'Sin alcance adicional'}</small>
               </article>
               <article className="cc-create-flow__review-card">
                 <span>{commercialSummary.totalLabel}</span>
@@ -792,7 +798,7 @@ export function QuoteEditFlow({
 
             {form.notes.trim() ? (
               <article className="cc-create-flow__panel">
-                <strong>Notas comerciales</strong>
+                <strong>Alcance comercial</strong>
                 <small>{form.notes.trim()}</small>
               </article>
             ) : null}

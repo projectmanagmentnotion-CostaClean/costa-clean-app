@@ -89,8 +89,7 @@ export function openQuotePrintWindow(
   const printWindow = window.open('', '_blank', 'width=1100,height=1400')
 
   if (!printWindow) {
-    window.alert('El navegador bloqueó la ventana emergente. Permite pop-ups para imprimir o guardar PDF.')
-    return
+    return false
   }
 
   const html = buildQuotePrintDocumentHtml(quote, clients, properties, intent)
@@ -98,4 +97,5 @@ export function openQuotePrintWindow(
   printWindow.document.open()
   printWindow.document.write(html)
   printWindow.document.close()
+  return true
 }

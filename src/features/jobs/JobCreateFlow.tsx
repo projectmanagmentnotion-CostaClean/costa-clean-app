@@ -30,7 +30,7 @@ import {
   formatMoneyInput,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
-import type { JobCreatePrefill } from './jobCreatePrefill'
+import { getJobCreateInitialStep, type JobCreatePrefill } from './jobCreatePrefill'
 import type { JobBillingLineItem, JobListItem } from './types'
 import '../shared/fullscreen-create-flow.css'
 
@@ -167,10 +167,9 @@ export function JobCreateFlow({
     prefill ? applyPrefillToForm(prefill) : createDefaultFormState()
   ))
   const [billingLines, setBillingLines] = useState<BillingLineFormState[]>(() => buildInitialBillingLines(prefill))
-  const [currentStep, setCurrentStep] = useState(0)
+  const [currentStep, setCurrentStep] = useState<number>(() => getJobCreateInitialStep(prefill))
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
@@ -225,37 +224,16 @@ export function JobCreateFlow({
     : 'Despues de guardar, podras volver al contexto o pasar a facturacion cuando toque.'
   const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
 
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) {
-      return
-    }
-
-    setForm(applyPrefillToForm(prefill))
-    setBillingLines(buildInitialBillingLines(prefill))
-    setSubmitError(null)
-    setIsDirty(false)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [lastAppliedPrefillId, prefill])
-
-  useEffect(() => {
-    if (!selectedQuote) return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedQuote.client_id ?? current.client_id,
-      property_id: selectedQuote.property_id ?? current.property_id,
-      notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
-    }))
-
-    setBillingLines(getBillingDraftLinesFromQuote(selectedQuote))
-  }, [selectedQuote])
-
   function markDirty() {
     setIsDirty(true)
   }
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     markDirty()
+    if (field === 'quote_id') {
+      const nextQuote = quotes.find((quote) => quote.id === value) ?? null
+      if (nextQuote) setBillingLines(getBillingDraftLinesFromQuote(nextQuote))
+    }
     setForm((current) => {
       const next = {
         ...current,
@@ -269,6 +247,15 @@ export function JobCreateFlow({
 
       if (field === 'property_id') {
         next.quote_id = ''
+      }
+
+      if (field === 'quote_id') {
+        const selected = quotes.find((quote) => quote.id === value)
+        if (selected) {
+          next.client_id = selected.client_id ?? next.client_id
+          next.property_id = selected.property_id ?? next.property_id
+          next.notes = current.notes.trim() ? current.notes : selected.notes?.trim() ?? ''
+        }
       }
 
       return next

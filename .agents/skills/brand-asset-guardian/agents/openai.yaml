@@ -1,0 +1,4 @@
+interface:
+  display_name: "Brand Asset Guardian"
+  short_description: "Protege marca y procedencia de assets"
+  default_prompt: "Usa $brand-asset-guardian para auditar activos oficiales y su uso."

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { ListToolbar, type ListPreferences, type ListToolbarAction } from '../../components/ListToolbar'
 import { DSEmptyState } from '../../design-system/components/DSEmptyState'
@@ -12,6 +12,7 @@ import { applySortDirection, compareDate, compareNumber, compareText, createDefa
 import { getInvoiceFinancialStatusLabel } from './paymentState'
 import { OperationalListItem } from '../../components/OperationalListItem'
 import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../../shared/lifecycle/entityLifecycle'
+import { canSettleInvoiceByTransfer } from './invoiceSettlement'
 
 interface InvoicesListProps {
   invoices: InvoiceListItem[]
@@ -23,6 +24,9 @@ interface InvoicesListProps {
   onSelectInvoice: (invoice: InvoiceListItem) => void
   onToggleInvoiceSelection?: (invoiceId: string) => void
   onOpenDocument: (invoice: InvoiceListItem) => void
+  onDownloadDocument: (invoice: InvoiceListItem) => void
+  onSettleInvoice: (invoice: InvoiceListItem) => void
+  isInvoiceSettling?: (invoiceId: string) => boolean
   onStateChange?: (state: {
     visibleCount: number
     totalCount: number
@@ -42,10 +46,14 @@ export function InvoicesList({
   onSelectInvoice,
   onToggleInvoiceSelection,
   onOpenDocument,
+  onDownloadDocument,
+  onSettleInvoice,
+  isInvoiceSettling = () => false,
   onStateChange,
 }: InvoicesListProps) {
   const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
+  const onStateChangeRef = useRef(onStateChange)
 
   const filteredInvoices = useMemo(() => {
     const lifecycleFilter = preferences.filters.status ?? 'pending'
@@ -100,17 +108,21 @@ export function InvoicesList({
   }, [invoices, preferences])
 
   useEffect(() => {
-    onStateChange?.({
+    onStateChangeRef.current?.({
       visibleCount: filteredInvoices.length,
       totalCount: invoices.length,
       hasError: Boolean(error),
       searchQuery: preferences.searchQuery,
       visibleInvoices: filteredInvoices,
     })
-  }, [error, filteredInvoices, filteredInvoices.length, invoices.length, onStateChange, preferences.searchQuery])
+  }, [error, filteredInvoices, filteredInvoices.length, invoices.length, preferences.searchQuery])
+
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange
+  }, [onStateChange])
 
   return (
-    <section className="data-section cc-module-list-section">
+      <section className="data-section cc-module-list-section">
       <DSSectionHeader
         title="Facturas"
         description="Emision, cobro y trazabilidad documental con una sola bandeja de lectura operativa."
@@ -182,6 +194,8 @@ export function InvoicesList({
           {filteredInvoices.map((invoice) => {
             const isSelected = invoice.id === selectedInvoiceId
             const isChecked = selectedInvoiceIds.includes(invoice.id)
+            const isSettlementEligible = canSettleInvoiceByTransfer(invoice)
+            const isSettling = isInvoiceSettling(invoice.id)
 
             return (
               <OperationalListItem
@@ -217,17 +231,32 @@ export function InvoicesList({
                 ) : undefined}
                 actions={[
                   {
-                    key: 'open',
-                    label: 'Abrir',
-                    tone: 'primary',
-                    onClick: () => onSelectInvoice(invoice),
-                  },
-                  {
                     key: 'document',
-                    label: 'Abrir documento',
+                    label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
+                    tone: 'primary',
                     onClick: () => onOpenDocument(invoice),
                   },
+                  ...(isSettlementEligible ? [{
+                    key: 'settle',
+                    label: isSettling ? 'Marcando...' : 'Marcar pagada',
+                    dataQa: 'invoice-quick-settle',
+                    disabled: isSettling,
+                    onClick: () => onSettleInvoice(invoice),
+                  }] : []),
+                  {
+                    key: 'download',
+                    label: 'Descargar',
+                    dataQa: 'invoice-quick-download',
+                    onClick: () => onDownloadDocument(invoice),
+                  },
+                  {
+                    key: 'open',
+                    label: 'Abrir detalle',
+                    onClick: () => onSelectInvoice(invoice),
+                  },
                 ]}
+                visibleSecondaryActionCount={2}
+                compactVisibleSecondaryActionCount={2}
                 microhint={invoice.payment_status !== 'paid'
                   ? `Pendiente ${formatCurrency(invoice.outstanding_amount ?? invoice.total)}`
                   : 'Cobro cerrado'}

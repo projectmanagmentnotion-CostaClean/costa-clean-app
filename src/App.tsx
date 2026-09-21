@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import './App.css'
 import { AppShell } from './app/AppShell'
@@ -6,21 +6,17 @@ import { BuildInfoBadge } from './app/BuildInfoBadge'
 import { shouldShowBuildInfo } from './app/buildInfo'
 import { applyTheme, getInitialTheme, getThemeFeedback, setStoredTheme, type AppTheme } from './app/theme'
 import { AuthPage } from './features/auth/AuthPage'
+import { createLogoutFlow } from './features/auth/logoutFlow'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
+import { isRecoverableAuthBootstrapError } from './lib/authBootstrap'
 import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
 import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
 import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
-
-function isRecoverableAuthBootstrapError(message: string) {
-  const normalizedMessage = message.trim().toLowerCase()
-
-  return normalizedMessage.includes('failed to fetch')
-    || normalizedMessage.includes('networkerror')
-    || normalizedMessage.includes('load failed')
-    || normalizedMessage.includes('lock broken by another request')
-}
+import { useV3FeatureFlag } from './v3/navigation/useV3FeatureFlag'
+import { V3GlobalErrorState, V3GlobalLoadingState } from './v3/shell/V3GlobalPresentation'
+import { brandAssets } from './v3/brand/brandAssets'
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
@@ -28,12 +24,31 @@ function App() {
   const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
   const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
   const isDevStepFlowPreview = import.meta.env.DEV && pathname === '/dev/step-flow-preview'
+  const isV3Surface = useV3FeatureFlag()
   const showBuildInfo = shouldShowBuildInfo()
   const [theme, setTheme] = useState<AppTheme>(() => getInitialTheme())
   const [themeFeedback, setThemeFeedback] = useState<string | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [isBooting, setIsBooting] = useState(true)
   const [bootError, setBootError] = useState<string | null>(null)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
+  const runLogout = useMemo(() => createLogoutFlow({
+    signOut: async () => {
+      const { client } = getSupabaseClient()
+
+      if (!client) {
+        return { error: true }
+      }
+
+      return client.auth.signOut()
+    },
+    onPendingChange: setIsSigningOut,
+    onSignedOut: () => {
+      clearStoredSupabaseSession()
+      setSession(null)
+    },
+  }), [])
 
   useEffect(() => {
     applyTheme(theme)
@@ -92,10 +107,8 @@ function App() {
 
         if (sessionError) {
           if (isRecoverableAuthBootstrapError(sessionError.message)) {
-            clearStoredSupabaseSession()
-
             if (isMounted) {
-              setSession(null)
+              setSession(currentSession)
               setIsBooting(false)
             }
             return
@@ -110,7 +123,11 @@ function App() {
 
         const {
           data: { subscription },
-        } = client.auth.onAuthStateChange((_event, nextSession) => {
+        } = client.auth.onAuthStateChange((event, nextSession) => {
+          if (event === 'SIGNED_OUT') {
+            clearStoredSupabaseSession()
+          }
+
           if (isMounted) {
             setSession(nextSession)
           }
@@ -172,7 +189,7 @@ function App() {
 
   if (isBooting) {
     return renderWithBuildInfo(
-      <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
+      isV3Surface ? <V3GlobalLoadingState /> : <main className="cc-boot-screen" aria-label="Iniciando CostaClean CRM">
         <div className="cc-boot-screen__wave" aria-hidden="true" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--one" />
         <div className="cc-boot-screen__glow cc-boot-screen__glow--two" />
@@ -180,7 +197,7 @@ function App() {
         <section className="cc-boot-card">
           <div className="cc-boot-card__brand" aria-hidden="true">
             <img
-              src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+              src={brandAssets.logoPrimary.src}
               alt=""
               className="cc-boot-card__logo"
             />
@@ -200,13 +217,13 @@ function App() {
             <span />
           </div>
         </section>
-      </main>
+      </main>,
     )
   }
 
   if (bootError) {
     return renderWithBuildInfo(
-      <main className="auth-page">
+      isV3Surface ? <V3GlobalErrorState /> : <main className="auth-page">
         <section className="auth-card">
           <div className="auth-header">
             <p className="auth-kicker">CostaClean CRM</p>
@@ -214,17 +231,23 @@ function App() {
             <p>{bootError}</p>
           </div>
         </section>
-      </main>
+      </main>,
     )
   }
 
   if (!session) {
-    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} />)
+    return renderWithBuildInfo(<AuthPage onSignedIn={() => undefined} surface={isV3Surface ? 'v3' : 'legacy'} />)
   }
 
   return renderWithBuildInfo(
     <div className="cc-app-shell-enter">
-      <AppShell theme={theme} onToggleTheme={toggleTheme} />
+      <AppShell
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        accountLabel={session.user.email ?? 'Mi cuenta'}
+        isSigningOut={isSigningOut}
+        onSignOut={runLogout}
+      />
       {themeFeedback ? (
         <div className="cc-theme-toast" role="status" aria-live="polite" aria-atomic="true">
           {themeFeedback}

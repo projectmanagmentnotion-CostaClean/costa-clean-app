@@ -1,0 +1,4 @@
+interface:
+  display_name: "QA E2E Specialist"
+  short_description: "Ejecuta E2E cross-module seguro"
+  default_prompt: "Usa $qa-e2e-specialist para diseñar y verificar un E2E V3 con cleanup exacto."

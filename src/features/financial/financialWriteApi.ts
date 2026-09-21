@@ -12,6 +12,38 @@ interface SavedInvoiceReadback {
   issue_date: string
 }
 
+interface SavedQuoteReadback {
+  id: string
+  display_code: string | null
+  status: string
+  subtotal: number
+  tax_amount: number | null
+  total: number
+  notes: string | null
+}
+
+interface SavedQuoteLineReadback {
+  id: string
+  quote_id: string
+  sort_order: number
+  concept: string
+  quantity: number
+  unit: string | null
+  unit_price: number
+  line_subtotal: number
+}
+
+interface QuoteLineWritePayload {
+  id: string
+  quote_id: string
+  sort_order: number
+  concept: string
+  quantity: number
+  unit: string
+  unit_price: number
+  line_subtotal: number
+}
+
 interface InvoiceNumberingMismatchDetails {
   expectedDisplayCode: string | null
   expectedInvoiceNumber: string | null
@@ -22,6 +54,7 @@ interface InvoiceNumberingMismatchDetails {
 
 const SAVE_INVOICE_WITH_RESULT_RPC = 'save_invoice_with_lines_v2'
 const SAVE_INVOICE_READBACK_RETRY_DELAYS_MS = [0, 150, 400]
+const SAVE_QUOTE_READBACK_RETRY_DELAYS_MS = [0, 150, 400]
 
 function isPlainRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -104,6 +137,62 @@ function sanitizeInvoicePayloadForWrite(invoice: JsonPayload): JsonRecord {
   return invoiceRecord
 }
 
+function normalizeNumericValue(value: unknown): number {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : Number.NaN
+}
+
+function normalizeSavedQuoteRows(rows: SavedQuoteReadback[] | SavedQuoteReadback | null): SavedQuoteReadback {
+  if (!rows) {
+    throw new Error('No se pudo leer el presupuesto guardado.')
+  }
+
+  if (Array.isArray(rows)) {
+    if (rows.length !== 1) {
+      throw new Error('El presupuesto se guardo, pero Supabase no devolvio una unica fila confirmada.')
+    }
+
+    return rows[0]
+  }
+
+  return rows
+}
+
+function assertSavedQuoteMatchesExpectation(
+  quoteRecord: JsonRecord,
+  savedQuote: SavedQuoteReadback,
+  expectedLinePayloads: QuoteLineWritePayload[],
+): void {
+  const expectedSubtotal = normalizeNumericValue(quoteRecord.subtotal ?? 0)
+  const expectedTaxAmount = normalizeNumericValue(quoteRecord.tax_amount ?? 0)
+  const expectedTotal = normalizeNumericValue(quoteRecord.total ?? 0)
+  const expectedNotes = typeof quoteRecord.notes === 'string' ? quoteRecord.notes : null
+
+  const savedSubtotal = normalizeNumericValue(savedQuote.subtotal)
+  const savedTaxAmount = normalizeNumericValue(savedQuote.tax_amount ?? 0)
+  const savedTotal = normalizeNumericValue(savedQuote.total)
+
+  if (savedSubtotal !== expectedSubtotal) {
+    throw new Error(`El presupuesto se guardo con una base distinta a la esperada. Esperado ${expectedSubtotal} y Supabase devolvio ${savedSubtotal}.`)
+  }
+
+  if (savedTaxAmount !== expectedTaxAmount) {
+    throw new Error(`El presupuesto se guardo con un IVA distinto al esperado. Esperado ${expectedTaxAmount} y Supabase devolvio ${savedTaxAmount}.`)
+  }
+
+  if (savedTotal !== expectedTotal) {
+    throw new Error(`El presupuesto se guardo con un total distinto al esperado. Esperado ${expectedTotal} y Supabase devolvio ${savedTotal}.`)
+  }
+
+  if ((savedQuote.notes ?? null) !== expectedNotes) {
+    throw new Error('El presupuesto se guardo con un alcance distinto al esperado.')
+  }
+
+  if (expectedLinePayloads.length === 0) {
+    throw new Error('El presupuesto necesita al menos una linea confirmada.')
+  }
+}
+
 function assertSavedInvoiceNumberingMatchesExpectation(
   invoiceRecord: JsonRecord,
   savedInvoice: SavedInvoiceReadback,
@@ -175,17 +264,117 @@ async function readSavedInvoiceWithRetries(
   throw lastError ?? new Error('No se pudo leer la factura guardada.')
 }
 
+async function readSavedQuoteWithRetries(
+  client: ReturnType<typeof getClientOrThrow>,
+  quoteId: string,
+  expectedLineCount: number,
+): Promise<{ quote: SavedQuoteReadback; lines: SavedQuoteLineReadback[] }> {
+  let lastError: Error | null = null
+
+  for (const delayMs of SAVE_QUOTE_READBACK_RETRY_DELAYS_MS) {
+    if (delayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs))
+    }
+
+    const [
+      { data: savedQuoteRow, error: savedQuoteError },
+      { data: savedQuoteLineRows, error: savedQuoteLinesError },
+    ] = await Promise.all([
+      client
+        .from('quotes')
+        .select('id,display_code,status,subtotal,tax_amount,total,notes')
+        .eq('id', quoteId)
+        .maybeSingle(),
+      client
+        .from('quote_lines')
+        .select('id,quote_id,sort_order,concept,quantity,unit,unit_price,line_subtotal')
+        .eq('quote_id', quoteId)
+        .order('sort_order', { ascending: true }),
+    ])
+
+    if (savedQuoteError) {
+      lastError = new Error(savedQuoteError.message || 'No se pudo leer el presupuesto guardado.')
+      continue
+    }
+
+    if (savedQuoteLinesError) {
+      lastError = new Error(savedQuoteLinesError.message || 'No se pudieron leer las lineas del presupuesto guardado.')
+      continue
+    }
+
+    if (!savedQuoteRow) {
+      lastError = new Error('No se pudo leer el presupuesto guardado.')
+      continue
+    }
+
+    const savedQuote = normalizeSavedQuoteRows(savedQuoteRow as SavedQuoteReadback | SavedQuoteReadback[] | null)
+    const savedQuoteLines = Array.isArray(savedQuoteLineRows) ? savedQuoteLineRows as SavedQuoteLineReadback[] : []
+
+    if (savedQuoteLines.length !== expectedLineCount) {
+      lastError = new Error(
+        `El presupuesto se guardo, pero Supabase devolvio ${savedQuoteLines.length} linea(s) en lugar de ${expectedLineCount}.`,
+      )
+      continue
+    }
+
+    return {
+      quote: savedQuote,
+      lines: savedQuoteLines,
+    }
+  }
+
+  throw lastError ?? new Error('No se pudo leer el presupuesto guardado.')
+}
+
 export async function saveQuoteWithLines(
   quote: JsonPayload,
   lines: JsonPayload[],
 ): Promise<void> {
   const quoteRecord = quote as JsonRecord
+  const client = getClientOrThrow()
 
   await callFinancialRpc(
     'save_quote_with_lines',
     { p_quote: quote, p_lines: lines },
     'No se pudo guardar el presupuesto y sus lineas.',
   )
+  const savedQuoteReadback = await readSavedQuoteWithRetries(client, String(quoteRecord.id ?? ''), lines.length)
+
+  assertSavedQuoteMatchesExpectation(quoteRecord, savedQuoteReadback.quote, lines as QuoteLineWritePayload[])
+  const expectedLines = lines as QuoteLineWritePayload[]
+  expectedLines.forEach((line, index) => {
+    const savedLine = savedQuoteReadback.lines[index]
+    const expectedUnit = line.unit.trim() || 'servicio'
+
+    if (savedLine.id !== line.id) {
+      throw new Error(`La linea ${index + 1} se guardo con un identificador distinto al esperado.`)
+    }
+
+    if (normalizeNumericValue(savedLine.sort_order) !== normalizeNumericValue(line.sort_order)) {
+      throw new Error(`La linea ${index + 1} se guardo con un orden distinto al esperado.`)
+    }
+
+    if (savedLine.concept !== line.concept.trim()) {
+      throw new Error(`La linea ${index + 1} se guardo con un concepto distinto al esperado.`)
+    }
+
+    if (normalizeNumericValue(savedLine.quantity) !== normalizeNumericValue(line.quantity)) {
+      throw new Error(`La linea ${index + 1} se guardo con una cantidad distinta a la esperada.`)
+    }
+
+    if ((savedLine.unit ?? 'servicio') !== expectedUnit) {
+      throw new Error(`La linea ${index + 1} se guardo con una unidad distinta a la esperada.`)
+    }
+
+    if (normalizeNumericValue(savedLine.unit_price) !== normalizeNumericValue(line.unit_price)) {
+      throw new Error(`La linea ${index + 1} se guardo con un precio unitario distinto al esperado.`)
+    }
+
+    if (normalizeNumericValue(savedLine.line_subtotal) !== normalizeNumericValue(line.line_subtotal)) {
+      throw new Error(`La linea ${index + 1} se guardo con un subtotal distinto al esperado.`)
+    }
+  })
+
   await recordAuditEvent({
     entityType: 'quote',
     entityId: String(quoteRecord.id ?? ''),
@@ -305,6 +494,9 @@ export const __financialWriteApiTestUtils = {
   assertSavedInvoiceNumberingMatchesExpectation,
   isMissingSaveInvoiceResultRpcError,
   normalizeSavedInvoiceRows,
+  normalizeSavedQuoteRows,
+  assertSavedQuoteMatchesExpectation,
+  readSavedQuoteWithRetries,
   readSavedInvoiceWithRetries,
   sanitizeInvoicePayloadForWrite,
 }

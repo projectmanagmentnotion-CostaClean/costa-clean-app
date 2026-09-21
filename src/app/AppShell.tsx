@@ -36,7 +36,7 @@ import type { PropertyListItem } from '../features/properties/types'
 import { buildJobCreatePrefillFromQuote } from '../features/jobs/jobCreatePrefill'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { JobListItem } from '../features/jobs/types'
-import { buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
+import { buildInvoiceCreatePrefillFromClient, buildInvoiceCreatePrefillFromJob } from '../features/invoices/invoiceCreatePrefill'
 import type { InvoiceListItem } from '../features/invoices/types'
 import { buildInvoicePaymentSummary } from '../features/invoices/paymentState'
 import { settleInvoiceByTransfer } from '../features/financial/financialWriteApi'
@@ -60,16 +60,38 @@ import { resolveFiscalPeriod } from '../features/closing/fiscalPeriods'
 import { buildRecurringPlanPersistenceInput } from '../features/recurringInvoices/planPersistence'
 import { generateInvoiceFromRecurringPlan, saveRecurringInvoicePlan } from '../features/recurringInvoices/recurringInvoiceApi'
 import { isRecurringPlanDue } from '../features/recurringInvoices/recurringInvoiceSchedule'
-import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel } from './relationshipLabels'
+import { formatClientLabel, formatInvoiceLabel, formatQuoteLabel, toUserFacingReference } from './relationshipLabels'
+import { buildQuoteCreatePrefillFromClient } from '../features/quotes/quoteCreatePrefill'
 import { setClientWorkspaceLocation, type ClientWorkspaceTab } from '../features/clients/useClientWorkspaceNavigation'
 import { setPropertyWorkspaceLocation, type PropertyWorkspaceTab } from '../features/properties/usePropertyWorkspaceNavigation'
 import { setJobWorkspaceLocation, type JobWorkspaceTab } from '../features/jobs/useJobWorkspaceNavigation'
-
-const reviewedAlertsStorageKey = 'costaclean-reviewed-alerts'
+import type { LogoutOutcome } from '../features/auth/logoutFlow'
+import { useToast } from '../shared/toasts/useToast'
+import { listAlertDecisions, saveAlertDecision, type AlertDecision } from '../features/alerts/alertDecisionApi'
+import { disableCostaCleanNotifications, enableCostaCleanNotifications, hydrateCostaCleanNotificationState } from '../features/notifications/notificationSystem'
+import { useV3FeatureFlag } from '../v3/navigation/useV3FeatureFlag'
+import { readInvoiceDeepLink, readInvoiceFilterDeepLink, writeInvoiceDeepLink } from '../v3/navigation/invoiceDeepLink'
+import { readClientDeepLink } from '../v3/navigation/clientDeepLink'
+import { readQuoteDeepLink, writeQuoteDeepLink } from '../v3/navigation/quoteDeepLink'
+import { readLeadDeepLink, writeLeadDeepLink } from '../v3/navigation/leadDeepLink'
+import { readJobDeepLink, writeJobDeepLink } from '../v3/jobs/jobDeepLink'
+import { readPaymentDeepLink, writePaymentDeepLink } from '../v3/navigation/paymentDeepLink'
+import { readExpenseDeepLink, writeExpenseDeepLink } from '../v3/navigation/expenseDeepLink'
+import { V3ShellChrome } from '../v3/shell/V3ShellChrome'
+import { V3ConfirmSheet } from '../v3/components/V3Primitives'
+import { V3HomePage } from '../v3/home/V3HomePage'
+import { V3AlertsPage } from '../v3/alerts/V3AlertsPage'
+import { V3ClosingPage } from '../v3/closing/V3ClosingPage'
+import { V3PropertiesPage } from '../v3/properties/V3PropertiesPage'
+import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
+import type { QuoteCreatePrefill } from '../features/quotes/quoteCreatePrefill'
 
 interface AppShellProps {
   theme: AppTheme
   onToggleTheme: () => void
+  accountLabel: string
+  isSigningOut: boolean
+  onSignOut: () => Promise<LogoutOutcome>
 }
 
 function normalizeInvoiceLines(invoice: InvoiceListItem): InvoiceListItem['lines'] {
@@ -144,7 +166,15 @@ function createDayKey(offsetDays = 0): string {
 }
 
 
-export function AppShell({ theme, onToggleTheme }: AppShellProps) {
+export function AppShell({
+  theme,
+  onToggleTheme,
+  accountLabel,
+  isSigningOut,
+  onSignOut,
+}: AppShellProps) {
+  const toast = useToast()
+  const v3Enabled = useV3FeatureFlag()
   const {
     AlertsCenterPage,
     ClientsPage,
@@ -173,10 +203,22 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
   } = useShellNavigation()
   const { showScrollTop, compactMobileNav, isMobileViewport } = useShellViewportState()
   const [operationalToast, setOperationalToast] = useState<{ title: string; summary: string } | null>(null)
-  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(emptyModuleFilterState)
+  const [notificationStatus, setNotificationStatus] = useState<'unknown' | 'active' | 'unavailable'>('unknown')
+  const [moduleFilters, setModuleFilters] = useState<ModuleFilterState>(() => ({
+    ...emptyModuleFilterState,
+    invoices: typeof window !== 'undefined'
+      ? (() => {
+        const invoiceId = readInvoiceDeepLink(window.location.search)
+        const filter = readInvoiceFilterDeepLink(window.location.search)
+        if (invoiceId) return null
+        return filter
+      })()
+      : null,
+  }))
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
+  const [quoteCreatePrefill, setQuoteCreatePrefill] = useState<ReturnType<typeof buildQuoteCreatePrefillFromClient> | null>(null)
   const {
     isCurrentViewDataLoading,
     syncStatus,
@@ -208,30 +250,25 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     refreshOperations,
     refreshClosings,
     reloadInvoicesAndPayments,
-    reloadLeadsAndClients,
     intakeRealtimeNotifications,
     dismissIntakeRealtimeNotification,
   } = useAppData(currentView)
-  const [reviewedAlertIds, setReviewedAlertIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-
-    try {
-      const storedValue = window.localStorage.getItem(reviewedAlertsStorageKey)
-      if (!storedValue) return []
-      const parsedValue = JSON.parse(storedValue)
-      return Array.isArray(parsedValue) ? parsedValue.filter((value): value is string => typeof value === 'string') : []
-    } catch {
-      return []
-    }
-  })
+  const [alertDecisions, setAlertDecisions] = useState<AlertDecision[]>([])
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(reviewedAlertsStorageKey, JSON.stringify(reviewedAlertIds))
-    } catch {
-      // Keep alert review state best-effort and local-only.
+    let mounted = true
+    void listAlertDecisions()
+      .then((decisions) => {
+        if (mounted) setAlertDecisions(decisions)
+      })
+      .catch(() => {
+        if (mounted) setAlertDecisions([])
+      })
+
+    return () => {
+      mounted = false
     }
-  }, [reviewedAlertIds])
+  }, [])
 
   useEffect(() => {
     if (!unsavedChangesContext) return
@@ -431,7 +468,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
       const linkedInvoice = invoiceById.get(payment.invoice_id)
       return {
         ...payment,
-        invoice_display_code: linkedInvoice?.display_code ?? payment.invoice_id,
+        invoice_display_code: toUserFacingReference(linkedInvoice?.display_code),
         invoice_number: linkedInvoice?.invoice_number ?? null,
       }
     }),
@@ -556,10 +593,16 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     [expenses, invoicesWithCodes, jobsWithCodes, leadDrafts, paymentsWithCodes, quarterlyClosings, quotesWithCodes, recurringInvoicePlansWithCodes],
   )
 
-  const activeReviewedAlertIds = useMemo(() => {
-    const activeIds = new Set(automationAlerts.map((alert) => alert.id))
-    return reviewedAlertIds.filter((id) => activeIds.has(id))
-  }, [automationAlerts, reviewedAlertIds])
+  const visibleAutomationAlerts = useMemo(() => {
+    return automationAlerts
+      .map((alert) => {
+        const fingerprint = alert.fingerprint ?? alert.id
+        const decision = alertDecisions.find((item) => item.scope === 'global' && item.alert_key === alert.id && item.fingerprint === fingerprint)
+        const userRead = alertDecisions.find((item) => item.scope === 'user' && item.alert_key === alert.id && item.fingerprint === fingerprint)
+        return { ...alert, lifecycle: decision?.status ?? 'open' as const, readAt: userRead?.read_at ?? null }
+      })
+      .filter((alert) => alert.lifecycle !== 'dismissed' && alert.lifecycle !== 'resolved')
+  }, [alertDecisions, automationAlerts])
 
   const quoteFilter = moduleFilters.quotes
   const jobFilter = moduleFilters.jobs
@@ -642,13 +685,38 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
-  const handleToggleReviewedAlert = useCallback((alertId: string) => {
-    setReviewedAlertIds((current) =>
-      current.includes(alertId)
-        ? current.filter((value) => value !== alertId)
-        : [...current, alertId],
-    )
+  const persistAlertDecision = useCallback(async (alert: AutomationAlertItem, status: 'acknowledged' | 'dismissed' | 'resolved' | 'open', scope: 'global' | 'user') => {
+    const decision = await saveAlertDecision({
+      alertKey: alert.id,
+      fingerprint: alert.fingerprint ?? alert.id,
+      scope,
+      status,
+      readAt: scope === 'user' ? new Date().toISOString() : undefined,
+      metadata: { ruleId: alert.ruleId, title: alert.title },
+    })
+    setAlertDecisions((current) => [decision, ...current.filter((item) => !(
+      item.alert_key === decision.alert_key
+      && item.fingerprint === decision.fingerprint
+      && item.scope === decision.scope
+      && item.user_id === decision.user_id
+    ))])
   }, [])
+
+  const handleMarkAlertRead = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'open', 'user').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleAcknowledgeAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'acknowledged', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleDismissAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'dismissed', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
+
+  const handleReopenAlert = useCallback((alert: AutomationAlertItem) => {
+    void persistAlertDecision(alert, 'open', 'global').catch(() => undefined)
+  }, [persistAlertDecision])
 
   const handleFiscalClosingNavigation = useCallback((
     view: 'invoices' | 'payments' | 'expenses',
@@ -800,6 +868,26 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     })
   }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
 
+  const handleCreateInvoiceForClient = useCallback((client: Parameters<typeof buildInvoiceCreatePrefillFromClient>[0]) => {
+    runWithNavigationGuard(() => {
+      setInvoiceCreatePrefill(buildInvoiceCreatePrefillFromClient(client))
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear factura',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleCreateQuoteForClient = useCallback((client: Parameters<typeof buildQuoteCreatePrefillFromClient>[0]) => {
+    runWithNavigationGuard(() => {
+      setQuoteCreatePrefill(buildQuoteCreatePrefillFromClient(client))
+      commitViewChange('quotes')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas el presupuesto ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear presupuesto',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
   const handleOpenPropertyWorkspace = useCallback((propertyId: string, tab: PropertyWorkspaceTab = 'summary') => {
     runWithNavigationGuard(() => {
       setPropertyWorkspaceLocation({ propertyId, tab })
@@ -816,13 +904,17 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         ...current,
         jobs: null,
       }))
-      setJobWorkspaceLocation({ jobId, tab })
+      if (v3Enabled) {
+        writeJobDeepLink(jobId)
+      } else {
+        setJobWorkspaceLocation({ jobId, tab })
+      }
       commitViewChange('jobs')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este servicio ahora, perderas esos cambios.`,
       confirmLabel: 'Abrir servicio',
     })
-  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext, v3Enabled])
 
   const handleOpenInvoiceDetail = useCallback((invoiceId: string) => {
     const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
@@ -839,6 +931,8 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           invoiceLabel,
         },
       }))
+      writeQuoteDeepLink(null, true)
+      writeInvoiceDeepLink(invoiceId)
       commitViewChange('invoices')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres esta factura ahora, perderas esos cambios.`,
@@ -861,12 +955,40 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           quoteLabel,
         },
       }))
+      writeQuoteDeepLink(quoteId)
       commitViewChange('quotes')
     }, {
       description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este presupuesto ahora, perderas esos cambios.`,
       confirmLabel: 'Abrir presupuesto',
     })
   }, [commitViewChange, quotesWithCodes, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleOpenLeadWorkspace = useCallback((leadId: string) => {
+    runWithNavigationGuard(() => {
+      writeLeadDeepLink(leadId)
+      commitViewChange('leads')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si abres este lead ahora, perderas esos cambios.`,
+      confirmLabel: 'Abrir lead',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleCreateInvoiceFromJob = useCallback((job: JobListItem) => {
+    runWithNavigationGuard(() => {
+      const prefill = buildInvoiceCreatePrefillFromJob(job)
+      if (!prefill) return
+      setInvoiceCreatePrefill(prefill)
+      writeJobDeepLink(null, true)
+      commitViewChange('invoices')
+    }, {
+      description: `Hay ${unsavedChangesContext ?? 'cambios sin guardar'}. Si creas la factura ahora, perderas esos cambios.`,
+      confirmLabel: 'Crear factura',
+    })
+  }, [commitViewChange, runWithNavigationGuard, unsavedChangesContext])
+
+  const handleBackToLeadList = useCallback(() => {
+    writeLeadDeepLink(null, true)
+  }, [])
 
   const handleViewPaymentsForInvoice = useCallback((invoiceId: string) => {
     const invoice = invoicesWithCodes.find((entry) => entry.id === invoiceId)
@@ -1025,26 +1147,89 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
 
+  const handleSignOut = useCallback(async () => {
+    const outcome = await onSignOut()
+
+    if (outcome === 'failed') {
+      toast.error('No se pudo cerrar la sesión.', 'Inténtalo de nuevo.')
+    }
+
+    return outcome
+  }, [onSignOut, toast])
+
+  const handleEnableNotifications = useCallback(async () => {
+    try {
+      const result = await enableCostaCleanNotifications()
+      if (result.subscription) {
+        setNotificationStatus('active')
+        toast.success('Notificaciones activas', 'Este dispositivo recibirá avisos operativos.')
+      } else {
+        setNotificationStatus('unavailable')
+        toast.error('Notificaciones no activadas', 'El permiso del navegador no fue concedido.')
+      }
+    } catch (error) {
+      setNotificationStatus('unavailable')
+      toast.error('No se pudieron activar', error instanceof Error ? error.message : 'Inténtalo de nuevo.')
+    }
+  }, [toast])
+
+  useEffect(() => {
+    let mounted = true
+    void hydrateCostaCleanNotificationState().then((state) => {
+      if (mounted) setNotificationStatus(state.subscription === 'active' ? 'active' : 'unavailable')
+    })
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  const handleDisableNotifications = useCallback(async () => {
+    try {
+      await disableCostaCleanNotifications()
+      setNotificationStatus('unavailable')
+      toast.success('Notificaciones desactivadas', 'La alerta in-app seguirá disponible.')
+    } catch (error) {
+      toast.error('No se pudieron desactivar', error instanceof Error ? error.message : 'Inténtalo de nuevo.')
+    }
+  }, [toast])
+
   return (
-    <main className={compactMobileNav ? 'app-shell app-shell--mobile-scrolled' : 'app-shell'}>
-      <section className="hero-card cc-shell cc-shell-frame">
-        <AppNav
+    <main className={`app-shell${compactMobileNav ? ' app-shell--mobile-scrolled' : ''}${v3Enabled ? ' app-shell--v3' : ''}`}>
+      <section className={v3Enabled ? 'v3-shell-frame' : 'hero-card cc-shell cc-shell-frame'}>
+        {v3Enabled ? (
+          <V3ShellChrome
+            currentView={currentView}
+            onChangeView={navigateToView}
+            onBack={navigateBack}
+            backTargetView={navigationBackTarget}
+            accountLabel={accountLabel}
+            isSigningOut={isSigningOut}
+            onSignOut={handleSignOut}
+          />
+        ) : <AppNav
           currentView={currentView}
           onChangeView={navigateToView}
           mobileViewport={isMobileViewport}
           compactMobile={compactMobileNav}
           syncStatus={syncStatus}
-          alerts={automationAlerts}
-          reviewedAlertIds={activeReviewedAlertIds}
+          alerts={visibleAutomationAlerts}
+          alertDecisions={alertDecisions}
           onOpenAlert={handleOpenAutomationAlert}
           onOpenAlertsCenter={() => navigateToView('alerts')}
+          onMarkAlertRead={handleMarkAlertRead}
           theme={theme}
           onToggleTheme={onToggleTheme}
           backTargetView={navigationBackTarget}
           onBack={navigateBack}
-        />
-        <div className="cc-shell-content">
-          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading}>
+          accountLabel={accountLabel}
+          isSigningOut={isSigningOut}
+          onSignOut={handleSignOut}
+          notificationStatus={notificationStatus}
+          onEnableNotifications={handleEnableNotifications}
+          onDisableNotifications={handleDisableNotifications}
+        />}
+        <div className={v3Enabled ? 'v3-content' : 'cc-shell-content'}>
+          <AppShellViewRenderer currentView={currentView} isInitialDataLoading={isCurrentViewDataLoading} isV3Surface={v3Enabled}>
               <DataHealthDebugPanel
                 domainErrors={{
                   leads: leadError,
@@ -1062,14 +1247,27 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                 }}
               />
               {currentView === 'alerts' ? (
-                <AlertsCenterPage
-                  alerts={automationAlerts}
-                  reviewedAlertIds={activeReviewedAlertIds}
-                  onToggleReviewed={handleToggleReviewedAlert}
-                  onOpenAlert={handleOpenAutomationAlert}
-                />
+                v3Enabled ? <V3AlertsPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} /> : <AlertsCenterPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} />
               ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
-                <FiscalClosingPage
+                v3Enabled ? <V3ClosingPage key={`${currentView}-${fiscalClosingInitialSelection.mode}-${fiscalClosingInitialSelection.year}-${fiscalClosingInitialSelection.month ?? ''}-${fiscalClosingInitialSelection.quarter ?? ''}-${fiscalClosingInitialSelection.startDate ?? ''}`}
+                  availableYears={fiscalClosingAvailableYears}
+                  initialSelection={fiscalClosingInitialSelection}
+                  quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}
+                  annualSummaryByYear={annualClosingSummaryByYear}
+                  quarterlyClosings={quarterlyClosings}
+                  annualClosings={annualClosings}
+                  invoices={invoicesWithCodes}
+                  payments={paymentsWithCodes}
+                  expenses={expenses}
+                  quotes={quotesWithCodes}
+                  jobs={jobsWithCodes}
+                  clients={clientsWithContext}
+                  properties={propertiesWithCodes}
+                  error={quarterlyClosingError ?? annualClosingError}
+                  onNavigateToIncidence={handleFiscalClosingNavigation}
+                  onSaveQuarterlyClosing={handleSaveQuarterlyClosing}
+                  onSaveAnnualClosing={handleSaveAnnualClosing}
+                /> : <FiscalClosingPage
                   availableYears={fiscalClosingAvailableYears}
                   initialSelection={fiscalClosingInitialSelection}
                   quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}
@@ -1089,23 +1287,42 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onSaveAnnualClosing={handleSaveAnnualClosing}
                 />
               ) : currentView === 'dashboard' ? (
-                <HomePage
-                  metrics={dashboardMetrics}
-                  agenda={dashboardAgenda}
-                  clientBalanceLeaders={clientBalanceLeaders}
-                  dueRecurringPlans={dueRecurringPlansPreview}
-                  onOpenJobWorkspace={handleOpenJobWorkspace}
-                  onOpenClientWorkspace={handleOpenClientWorkspace}
-                  onOpenView={navigateToView}
-                  onRunKpiAction={handleDashboardKpiAction}
-                  alerts={automationAlerts}
-                  onOpenAlert={handleOpenAutomationAlert}
-                  operationalIncidents={operationalIncidents}
-                  operationalQuickViews={operationalQuickViews}
-                  onRunOperationalAction={handleRunOperationalAction}
-                />
+                v3Enabled ? (
+                  <V3HomePage
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    expenses={expenses}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
+                    alerts={visibleAutomationAlerts}
+                    operationalIncidents={operationalIncidents}
+                    onRunKpiAction={handleDashboardKpiAction}
+                    onOpenAlert={handleOpenAutomationAlert}
+                    onRunOperationalAction={handleRunOperationalAction}
+                    onOpenAllAlerts={() => navigateToView('alerts')}
+                  />
+                ) : (
+                  <HomePage
+                    metrics={dashboardMetrics}
+                    agenda={dashboardAgenda}
+                    clientBalanceLeaders={clientBalanceLeaders}
+                    dueRecurringPlans={dueRecurringPlansPreview}
+                    onOpenJobWorkspace={handleOpenJobWorkspace}
+                    onOpenClientWorkspace={handleOpenClientWorkspace}
+                    onOpenView={navigateToView}
+                    onRunKpiAction={handleDashboardKpiAction}
+                    alerts={visibleAutomationAlerts}
+                    alertDecisions={alertDecisions}
+                    onOpenAlert={handleOpenAutomationAlert}
+                    onMarkAlertRead={handleMarkAlertRead}
+                    onDismissAlert={handleDismissAlert}
+                    operationalIncidents={operationalIncidents}
+                    operationalQuickViews={operationalQuickViews}
+                    onRunOperationalAction={handleRunOperationalAction}
+                  />
+                )
               ) : currentView === 'leads' ? (
-                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={reloadLeadsAndClients} />
+                <LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} quotes={quotesWithCodes} error={leadError ?? leadDraftError} onLeadCreated={refreshOperations} onLeadConverted={async () => { await Promise.all([refreshOperations(), refreshBilling()]) }} v3Mode={v3Enabled} initialLeadId={readLeadDeepLink(typeof window !== 'undefined' ? window.location.search : '')} onOpenLeadDeepLink={handleOpenLeadWorkspace} onBackToLeadList={handleBackToLeadList} onOpenQuote={handleOpenQuoteDetail} onOpenClient={handleOpenClientWorkspace} />
               ) : currentView === 'clients' ? (
                 <ClientsPage
                   clients={clientsWithContext}
@@ -1122,15 +1339,49 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                       reloadInvoicesAndPayments(),
                     ])
                   }}
+                  onRecurringPlanChanged={refreshBilling}
                   onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
                   onOpenJobWorkspace={handleOpenJobWorkspace}
                   onOpenQuoteDetail={handleOpenQuoteDetail}
                   onOpenInvoiceDetail={handleOpenInvoiceDetail}
+                  v3Mode={v3Enabled}
+                  initialClientId={readClientDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onCreateInvoiceForClient={handleCreateInvoiceForClient}
+                  onCreateQuoteForClient={handleCreateQuoteForClient}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
                 />
-                ) : currentView === 'properties' ? (
-                  <PropertiesPage
+              ) : currentView === 'properties' ? (
+                  v3Enabled ? <V3PropertiesPage
+                    properties={propertiesWithCodes}
+                    clients={clientsWithContext}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    error={propertyError}
+                    onRefresh={refreshOperations}
+                    onOpenClient={handleOpenClientWorkspace}
+                    onOpenClients={() => commitViewChange('clients')}
+                    onOpenJob={handleOpenJobWorkspace}
+                    onOpenQuote={handleOpenQuoteDetail}
+                    onOpenInvoice={handleOpenInvoiceDetail}
+                    onOpenPayment={(paymentId) => { writePaymentDeepLink(paymentId); commitViewChange('payments') }}
+                    onCreateJob={(property) => {
+                      setJobCreatePrefill({ request_id: `property-${property.id}-${Date.now()}`, origin_kind: 'property', client_id: property.client_id, property_id: property.id, quote_id: '', notes: property.notes?.trim() ?? '', billing_concept: '' })
+                      commitViewChange('jobs')
+                    }}
+                    onCreateQuote={(property) => {
+                      const prefill: QuoteCreatePrefill = { request_id: `property-${property.id}-${Date.now()}`, client_id: property.client_id, property_id: property.id, notes: property.notes?.trim() ?? '', lines: [] }
+                      setQuoteCreatePrefill(prefill)
+                      commitViewChange('quotes')
+                    }}
+                    onCreateInvoice={(property) => {
+                      const prefill: InvoiceCreatePrefill = { request_id: `property-${property.id}-${Date.now()}`, origin_kind: 'manual', job_id: '', quote_id: '', client_id: property.client_id, property_id: property.id, notes: property.notes?.trim() ?? '', lines: [], title: property.display_code ?? property.name }
+                      setInvoiceCreatePrefill(prefill)
+                      commitViewChange('invoices')
+                    }}
+                  /> : <PropertiesPage
                     properties={propertiesWithCodes}
                     clients={clientsWithContext}
                     jobs={jobsWithCodes}
@@ -1151,13 +1402,29 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   quotes={filteredQuotes}
                   allQuotes={quotesWithCodes}
                   invoices={invoicesWithCodes}
+                  jobs={jobsWithCodes}
                   expenses={expenses}
                   clients={clientsWithContext}
                   properties={properties}
                   error={quoteError}
-                  onQuoteCreated={refreshOperations}
+                  onQuoteCreated={refreshBilling}
+                  onInvoicesChanged={reloadInvoicesAndPayments}
                   onCreateJobFromQuote={handleCreateJobFromQuote}
+                  onOpenClientWorkspace={handleOpenClientWorkspace}
+                  onOpenPropertyWorkspace={handleOpenPropertyWorkspace}
+                  onOpenJobWorkspace={handleOpenJobWorkspace}
+                  onOpenInvoiceDetail={handleOpenInvoiceDetail}
+                  initialCreatePrefill={quoteCreatePrefill}
+                  onInitialCreatePrefillConsumed={() => setQuoteCreatePrefill(null)}
+                  v3Mode={v3Enabled}
+                  initialQuoteId={readQuoteDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenQuoteDeepLink={(quoteId) => writeQuoteDeepLink(quoteId)}
+                  onBackToQuoteList={() => {
+                    writeQuoteDeepLink(null, true)
+                    clearModuleFilter('quotes')
+                  }}
                   activeFilterLabel={getQuoteFilterLabel(moduleFilters.quotes)}
+                  activeFilter={quoteFilter}
                   onClearFilter={() => clearModuleFilter('quotes')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
@@ -1179,9 +1446,13 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   createPrefill={jobCreatePrefill}
                   onPrefillConsumed={() => setJobCreatePrefill(null)}
                   activeFilterLabel={getJobFilterLabel(moduleFilters.jobs)}
+                  activeFilter={jobFilter}
                   onClearFilter={() => clearModuleFilter('jobs')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
+                  v3Mode={v3Enabled}
+                  initialJobId={readJobDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onCreateInvoiceFromJob={handleCreateInvoiceFromJob}
                 />
               ) : currentView === 'invoices' ? (
                 <InvoicesPage
@@ -1202,7 +1473,12 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   onOpenQuoteDetail={handleOpenQuoteDetail}
                   createPrefill={invoiceCreatePrefill}
                   onPrefillConsumed={() => setInvoiceCreatePrefill(null)}
+                  v3Mode={v3Enabled}
+                  initialInvoiceId={readInvoiceDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenInvoiceDeepLink={(invoiceId) => writeInvoiceDeepLink(invoiceId)}
+                  onBackToInvoiceList={() => writeInvoiceDeepLink(null, true)}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
+                  activeFilter={invoiceFilter}
                   onClearFilter={() => clearModuleFilter('invoices')}
                   onUnsavedChange={updateUnsavedChanges}
                   confirmNavigation={runWithNavigationGuard}
@@ -1215,6 +1491,11 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   invoices={invoicesWithCodes}
                   error={expenseError}
                   onExpenseCreated={refreshBilling}
+                  v3Mode={v3Enabled}
+                  initialExpenseId={readExpenseDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenExpenseDeepLink={(expenseId) => writeExpenseDeepLink(expenseId)}
+                  onBackToExpenseList={() => writeExpenseDeepLink(null, true)}
+                  activeFilter={expenseFilter}
                   activeFilterLabel={getExpenseFilterLabel(moduleFilters.expenses)}
                   onClearFilter={() => clearModuleFilter('expenses')}
                   onUnsavedChange={updateUnsavedChanges}
@@ -1230,6 +1511,12 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
                   quotes={quotesWithCodes}
                   error={paymentError}
                   onPaymentCreated={reloadInvoicesAndPayments}
+                  allPayments={paymentsWithCodes}
+                  v3Mode={v3Enabled}
+                  initialPaymentId={readPaymentDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
+                  onOpenPaymentDeepLink={(paymentId) => writePaymentDeepLink(paymentId)}
+                  onBackToPaymentList={() => writePaymentDeepLink(null, true)}
+                  activeFilter={paymentFilter}
                   onOpenInvoiceDetail={handleOpenInvoiceDetail}
                   onOpenClientWorkspace={handleOpenClientWorkspace}
                   activeFilterLabel={getPaymentFilterLabel(moduleFilters.payments)}
@@ -1247,7 +1534,7 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
         onClick={handleScrollToTop}
         aria-label="Volver arriba"
       >
-        <span aria-hidden="true">↑</span>
+        <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"><path d="M12 19V5M6 11l6-6 6 6" /></svg>
       </button>
       {operationalToast ? (
         <div className="cc-realtime-toast" role="status" aria-live="polite" aria-atomic="true">
@@ -1263,15 +1550,25 @@ export function AppShell({ theme, onToggleTheme }: AppShellProps) {
           <p>{latestIntakeNotification.summary}</p>
         </div>
       ) : null}
-      <ConfirmDialog
-        isOpen={Boolean(pendingGuardedAction)}
-        title={pendingGuardedAction?.title ?? 'Salir sin guardar'}
-        description={pendingGuardedAction?.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
-        confirmLabel={pendingGuardedAction?.confirmLabel ?? 'Salir sin guardar'}
-        tone="warning"
-        onCancel={() => setPendingGuardedAction(null)}
-        onConfirm={handleConfirmGuardedAction}
-      />
+      {v3Enabled ? (
+        pendingGuardedAction ? <V3ConfirmSheet
+          title={pendingGuardedAction.title ?? 'Salir sin guardar'}
+          description={pendingGuardedAction.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
+          confirmLabel={pendingGuardedAction.confirmLabel ?? 'Salir sin guardar'}
+          onCancel={() => setPendingGuardedAction(null)}
+          onConfirm={handleConfirmGuardedAction}
+        /> : null
+      ) : (
+        <ConfirmDialog
+          isOpen={Boolean(pendingGuardedAction)}
+          title={pendingGuardedAction?.title ?? 'Salir sin guardar'}
+          description={pendingGuardedAction?.description ?? 'Hay cambios sin guardar. Si continúas, perderás esos cambios.'}
+          confirmLabel={pendingGuardedAction?.confirmLabel ?? 'Salir sin guardar'}
+          tone="warning"
+          onCancel={() => setPendingGuardedAction(null)}
+          onConfirm={handleConfirmGuardedAction}
+        />
+      )}
     </main>
   )
 }

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Property Media Curator"
+  short_description: "Audita media local de inmuebles"
+  default_prompt: "Usa $property-media-curator para revisar mapping y fallback de media inmobiliaria."

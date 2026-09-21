@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {
   CdpConnection,
+  assertExpectedAppIdentity,
   buildViewUrl,
   captureScreenshot,
   checkNoHorizontalOverflow,
@@ -163,7 +164,10 @@ async function main() {
   const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
   const qaEnvironment = resolveQaEnvironment({ qaEnv: process.env.QA_ENV, appUrl })
   assertQaAgentEnvironmentAllowed({ mode: qaAgentMode, appUrl })
-  const browser = await detectBrowserExecutable()
+  const browser = await detectBrowserExecutable({
+    browserId: storedState.browserId,
+    executablePath: storedState.executablePath,
+  })
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
 
   const headless = process.argv.includes('--headless')
@@ -180,6 +184,7 @@ async function main() {
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
   const session = await openBrowserSession(connection, appUrl)
+  await assertExpectedAppIdentity(connection, session.sessionId)
   const shellState = await waitForShellStable(connection, session.sessionId)
 
   if (shellState?.startupError) {

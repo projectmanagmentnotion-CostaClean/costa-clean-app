@@ -236,7 +236,7 @@ export function PropertiesPage({
 
           {duplicateGroups.length > 0 ? (
             <DuplicateNotice
-              title={`${duplicateGroups.length} grupo(s) de posibles propiedades duplicadas`}
+              title={`${duplicateGroups.length} posibles propiedades duplicadas`}
               description="Se han detectado coincidencias por dirección o por inmueble repetido dentro del mismo cliente. Revísalas desde una surface específica."
               actionLabel="Revisar duplicados"
               onAction={() => setShowDuplicateReview(true)}

@@ -9,6 +9,8 @@ import type {
 
 export type AutomationAlertSeverity = 'critical' | 'warning' | 'info'
 
+export type AutomationAlertLifecycle = 'open' | 'acknowledged' | 'resolved' | 'dismissed'
+
 export type AutomationAlertRuleId =
   | 'public_intake_lead_drafts_pending'
   | 'unpaid_invoices_older_threshold'
@@ -54,4 +56,7 @@ export interface AutomationAlertItem {
   contextLabel?: string
   examples?: string[]
   routing: AutomationAlertRouting
+  fingerprint?: string
+  lifecycle?: AutomationAlertLifecycle
+  readAt?: string | null
 }

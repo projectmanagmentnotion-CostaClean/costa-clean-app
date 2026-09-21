@@ -13,6 +13,7 @@ import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import type { PaymentListItem } from './types'
 import type { InvoiceListItem } from '../invoices/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { getPaymentAmountError } from './paymentAmount'
 
 interface PaymentDetailCardProps {
   payment: PaymentListItem | null
@@ -72,41 +73,12 @@ export function PaymentDetailCard({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findPaymentDuplicateGroups>>([])
   const [form, setForm] = useState<EditFormState>({
-    invoice_id: '',
-    payment_date: '',
-    amount: '0.00',
-    payment_method: 'transfer',
-    notes: '',
+    invoice_id: payment?.invoice_id ?? '',
+    payment_date: payment?.payment_date ?? '',
+    amount: payment ? String(payment.amount) : '0.00',
+    payment_method: payment?.payment_method ?? 'transfer',
+    notes: payment?.notes ?? '',
   })
-
-  useEffect(() => {
-    if (!payment) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setIsDirty(false)
-      setForm({
-        invoice_id: '',
-        payment_date: '',
-        amount: '0.00',
-        payment_method: 'transfer',
-        notes: '',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      invoice_id: payment.invoice_id,
-      payment_date: payment.payment_date,
-      amount: String(payment.amount),
-      payment_method: payment.payment_method ?? 'transfer',
-      notes: payment.notes ?? '',
-    })
-  }, [payment])
 
   useEffect(() => {
     onUnsavedChange?.(isDirty)
@@ -133,7 +105,7 @@ export function PaymentDetailCard({
     setIsDirty(true)
     setForm((current) => ({
       ...current,
-      amount: formatMoneyInput(Number(selectedInvoice.total)),
+      amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
     }))
   }
 
@@ -166,13 +138,13 @@ export function PaymentDetailCard({
 
       const amount = parseDecimalInput(form.amount)
 
-      if (Number.isNaN(amount)) {
-        setSaveError('El importe debe ser un número válido.')
-        return
-      }
-
-      if (amount <= 0) {
-        setSaveError('El importe del pago debe ser mayor que cero.')
+      const currentPaymentAllowance = selectedInvoice.id === payment.invoice_id ? Number(payment.amount ?? 0) : 0
+      const amountError = getPaymentAmountError(
+        amount,
+        Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total) + currentPaymentAllowance,
+      )
+      if (amountError) {
+        setSaveError(amountError)
         return
       }
 
@@ -403,12 +375,25 @@ export function PaymentDetailCard({
           onOpenExistingPayment?.(paymentId)
         }}
         onContinueAnyway={() => {
+          const amount = parseDecimalInput(form.amount)
+          const currentPaymentAllowance = selectedInvoice?.id === payment?.invoice_id ? Number(payment?.amount ?? 0) : 0
+          const amountError = getPaymentAmountError(
+            amount,
+            Number(selectedInvoice?.outstanding_amount ?? selectedInvoice?.total ?? 0) + currentPaymentAllowance,
+          )
+          if (amountError) {
+            setPendingDuplicateGroups([])
+            setSaveError(amountError)
+            return
+          }
+
           setPendingDuplicateGroups([])
+          setIsSaving(true)
           void savePaymentAndRefreshInvoice({
             id: payment?.id ?? '',
             invoice_id: form.invoice_id,
             payment_date: form.payment_date,
-            amount: Number(formatMoneyInput(parseDecimalInput(form.amount))),
+            amount: Number(formatMoneyInput(amount)),
             payment_method: form.payment_method || null,
             origin_type: payment?.origin_type ?? 'manual',
             notes: form.notes.trim() || null,

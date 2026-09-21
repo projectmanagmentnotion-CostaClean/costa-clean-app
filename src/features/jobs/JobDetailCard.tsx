@@ -4,6 +4,8 @@ import { getStatusLabel } from '../../app/displayText'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, jobStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import {
   buildBillingLinePayloads,
   calculateBillingLineSubtotal,
@@ -485,46 +487,18 @@ export function JobDetailCard({
     const toastId = toast.loading('Actualizando estado del servicio...', 'Guardando el nuevo estado operativo.')
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveState('error')
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        toast.update(toastId, {
-          type: 'error',
-          title: 'No se pudo actualizar el estado',
-          description: 'Faltan las variables de entorno de Supabase.',
-          persistent: true,
-        })
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/jobs?id=eq.${encodeURIComponent(job.id)}`,
+      const statusResponse = await fetchAuthenticatedSupabaseWrite(
+        operationalWriteRpcPaths.updateJobStatus,
         {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: nextStatus }),
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_job_id: job.id, p_status: nextStatus }),
         },
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveState('error')
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        toast.update(toastId, {
-          type: 'error',
-          title: 'No se pudo actualizar el estado',
-          description: `REST ${response.status}: ${errorText || response.statusText}`,
-          persistent: true,
-        })
-        return
-      }
+      await readSingleAuthenticatedWriteRow(
+        statusResponse,
+        'No se actualizo el estado del servicio. Tu sesion puede no tener permisos para este cambio.',
+      )
 
       setSaveState('refreshing')
       setSuccessMessage('Actualizando estado y refrescando vista...')

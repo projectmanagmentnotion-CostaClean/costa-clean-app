@@ -1,0 +1,60 @@
+import { useMemo, useRef, useState } from 'react'
+import type { PaymentModuleFilter } from '../../app/moduleFilters'
+import { formatCurrency } from '../../app/displayFormat'
+import type { ClientListItem } from '../../features/clients/types'
+import type { InvoiceListItem } from '../../features/invoices/types'
+import type { PaymentListItem } from '../../features/payments/types'
+import { V3ActionGroup, V3EntityList, V3EmptyState, V3ErrorState, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction, V3Select } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
+import { V3PaymentRow } from './V3PaymentRow'
+import { V3PaymentWorkspace } from './V3PaymentWorkspace'
+import { filterPaymentsByOrigin, getPaymentProvenancePresentation, type PaymentOriginFilter } from './paymentPresentation'
+
+interface V3PaymentsPageProps {
+  payments: PaymentListItem[]
+  allPayments: PaymentListItem[]
+  invoices: InvoiceListItem[]
+  clients: ClientListItem[]
+  error: string | null
+  initialPaymentId?: string | null
+  activeFilter?: PaymentModuleFilter | null
+  activeFilterLabel?: string | null
+  onCreatePayment: () => void
+  onRefresh: () => Promise<void>
+  onOpenInvoice: (invoiceId: string) => void
+  onOpenClient: (clientId: string) => void
+  onOpenPaymentDeepLink: (paymentId: string) => void
+  onBackToPaymentList: () => void
+  duplicateCount?: number
+  onReviewDuplicates?: () => void
+}
+
+export function V3PaymentsPage(props: V3PaymentsPageProps) {
+  const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(props.initialPaymentId ?? null)
+  const [search, setSearch] = useState('')
+  const [sort, setSort] = useState<'recent' | 'oldest' | 'amount'>('recent')
+  const [originFilter, setOriginFilter] = useState<PaymentOriginFilter>('all')
+  const listScrollYRef = useRef(0)
+  const invoiceById = useMemo(() => new Map(props.invoices.map((invoice) => [invoice.id, invoice])), [props.invoices])
+  const clientById = useMemo(() => new Map(props.clients.map((client) => [client.id, client])), [props.clients])
+  const selectedPayment = props.payments.find((payment) => payment.id === selectedPaymentId) ?? null
+  const collectedThisMonth = props.allPayments.filter((payment) => payment.payment_date.startsWith(new Date().toISOString().slice(0, 7))).reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0)
+  const visiblePayments = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
+    return filterPaymentsByOrigin(props.payments, originFilter).filter((payment) => {
+      const invoice = invoiceById.get(payment.invoice_id)
+      const client = invoice ? clientById.get(invoice.client_id) : null
+      const matchesQuery = !query || [payment.display_code, payment.invoice_display_code, payment.payment_method, getPaymentProvenancePresentation(payment.origin_type).label, invoice?.display_code, client?.full_name].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)
+      return matchesQuery
+    }).sort((left, right) => sort === 'amount' ? Number(right.amount) - Number(left.amount) : (sort === 'oldest' ? left.payment_date.localeCompare(right.payment_date) : right.payment_date.localeCompare(left.payment_date)))
+  }, [clientById, invoiceById, originFilter, props.payments, search, sort])
+  const listWindow = useV3ListWindow(visiblePayments, { resetKey: `${originFilter}|${search}|${sort}` })
+
+  if (selectedPayment) {
+    const invoice = invoiceById.get(selectedPayment.invoice_id) ?? null
+    const client = invoice ? clientById.get(invoice.client_id) ?? null : null
+    return <V3PaymentWorkspace key={selectedPayment.id} payment={selectedPayment} payments={props.allPayments} invoice={invoice} client={client} invoices={props.invoices} onBack={() => { setSelectedPaymentId(null); props.onBackToPaymentList(); window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' })) }} onRefresh={props.onRefresh} onOpenInvoice={props.onOpenInvoice} onOpenClient={props.onOpenClient} />
+  }
+
+  return <V3Page className="v3-payments-page v3-finance-page"><V3PageTitle eyebrow="Facturación auxiliar" title="Cobros" description={`${props.activeFilterLabel ? `${props.activeFilterLabel} · ` : ''}Registros vinculados a facturas: origen y método no modifican su saldo financiero.`} action={<V3ActionGroup>{props.duplicateCount ? <V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction> : null}<V3PrimaryAction onClick={props.onCreatePayment}>+ Registrar cobro</V3PrimaryAction></V3ActionGroup>} /><div className="v3-module-controls"><V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Factura, cliente, código o método" /><V3Select aria-label="Filtrar cobros por origen" value={originFilter} onChange={(event) => setOriginFilter(event.target.value as typeof originFilter)}><option value="all">Todos los orígenes</option><option value="manual">Registro manual</option><option value="transfer_auto">Información automática</option><option value="transfer_regularization">Regularización histórica</option></V3Select><V3Select aria-label="Ordenar cobros" value={sort} onChange={(event) => setSort(event.target.value as typeof sort)}><option value="recent">Más recientes</option><option value="oldest">Más antiguos</option><option value="amount">Mayor importe</option></V3Select></div><V3KpiGroup variant="supporting"><V3Kpi label="Cobrado este mes" value={formatCurrency(collectedThisMonth)} hint="Suma real por fecha de cobro" /></V3KpiGroup><V3ListWorkspace label="Cobros" {...listWindow} onPageChange={listWindow.setPage}>{props.error ? <V3ErrorState title="Error cargando cobros" description={props.error} /> : null}{!props.error && visiblePayments.length === 0 ? <V3EmptyState title="Sin cobros visibles" description="Ajusta la búsqueda o el filtro de origen para continuar." /> : null}<V3EntityList label="Cobros">{listWindow.pageItems.map((payment) => { const invoice = invoiceById.get(payment.invoice_id) ?? null; const client = invoice ? clientById.get(invoice.client_id) : null; return <V3PaymentRow key={payment.id} payment={payment} invoice={invoice} clientName={client?.full_name ?? 'Cliente no disponible'} onOpen={() => { listScrollYRef.current = window.scrollY; setSelectedPaymentId(payment.id); props.onOpenPaymentDeepLink(payment.id); window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' })) }} /> })}</V3EntityList></V3ListWorkspace></V3Page>
+}

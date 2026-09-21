@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
@@ -28,6 +28,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { QuarterlyClosingIncidence, QuarterlyClosingRecord, QuarterlyClosingSummary } from '../features/quarterlyClosing/types'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../features/closing/fiscalPeriodNotes'
 
 type QuarterlyClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
 
@@ -154,7 +155,7 @@ export function QuarterlyClosingPage({
 }: QuarterlyClosingPageProps) {
   const [selectedYear, setSelectedYear] = useState(defaultFiscalYear)
   const [selectedQuarter, setSelectedQuarter] = useState(defaultFiscalQuarter)
-  const [notes, setNotes] = useState('')
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -170,11 +171,6 @@ export function QuarterlyClosingPage({
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setSelectedYear(defaultFiscalYear)
-    setSelectedQuarter(defaultFiscalQuarter)
-  }, [defaultFiscalYear, defaultFiscalQuarter])
-
   const selectedKey = getPeriodKey(selectedYear, selectedQuarter)
   const summary = summaryByPeriod.get(selectedKey)
   const closing = useMemo(
@@ -185,6 +181,8 @@ export function QuarterlyClosingPage({
       ) ?? null,
     [closings, selectedYear, selectedQuarter],
   )
+  const notePeriodKey = `${selectedYear}-Q${selectedQuarter}`
+  const notes = readFiscalPeriodNote(noteDraft, notePeriodKey, closing?.notes)
 
   const quarterInvoices = useMemo(
     () => invoices.filter((invoice) => matchesDateQuarter(invoice.issue_date, selectedYear, selectedQuarter)),
@@ -198,19 +196,6 @@ export function QuarterlyClosingPage({
     () => expenses.filter((expense) => matchesExpenseQuarter(expense, selectedYear, selectedQuarter)),
     [expenses, selectedQuarter, selectedYear],
   )
-
-  useEffect(() => {
-    setNotes(closing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setDocumentActionError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-
-    if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
-      setWorkspace('operations')
-    }
-  }, [closing, selectedYear, selectedQuarter, workspace])
 
   const quarterPaymentsTotal = useMemo(
     () => quarterPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
@@ -806,7 +791,7 @@ export function QuarterlyClosingPage({
                   <span>Notas de cierre</span>
                   <textarea
                     value={notes}
-                    onChange={(event) => setNotes(event.target.value)}
+                    onChange={(event) => setNoteDraft(writeFiscalPeriodNote(notePeriodKey, event.target.value))}
                     placeholder="Observaciones breves del cierre, incidencias o contexto operativo."
                   />
                 </label>
@@ -1672,9 +1657,6 @@ export function QuarterlyClosingPage({
     </section>
   )
 }
-
-
-
 
 
 

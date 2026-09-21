@@ -9,6 +9,8 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
+import { brandAssets } from '../../v3/brand/brandAssets'
 
 interface QuoteDocumentA4Props {
   quote: QuoteListItem
@@ -68,8 +70,10 @@ function buildClientMeta(
   const client = clients.find((item) => item.id === quote.client_id)
 
   return [
-    client?.phone,
-    client?.email,
+    client?.tax_id ? `NIF/CIF: ${client.tax_id}` : null,
+    client?.billing_address?.trim() || null,
+    client?.phone?.trim() || null,
+    client?.email?.trim() || null,
   ].filter(Boolean) as string[]
 }
 
@@ -187,7 +191,7 @@ export function QuoteDocumentA4({
   const propertyName = buildPropertyName(quote, properties)
   const propertyAddress = buildPropertyAddress(quote, properties)
   const documentLines = getDocumentLines(quote, properties)
-  const primaryConcept = documentLines[0]?.concept || 'Servicio de limpieza'
+  const quoteScope = buildQuoteScopeLabel(quote)
   const commercialSummary = getQuoteCommercialSummary({
     subtotal: Number(quote.subtotal || 0),
     taxAmount: Number(quote.tax_amount || 0),
@@ -199,7 +203,7 @@ export function QuoteDocumentA4({
       <header className="cc-invoice-a4__header">
         <div className="cc-invoice-a4__brand">
           <img
-            src="/branding/logo-costa-clean-web.png"
+            src={brandAssets.logoPrimary.src}
             alt="CostaClean"
             className="cc-invoice-a4__logo"
           />
@@ -252,8 +256,8 @@ export function QuoteDocumentA4({
 
       <section className="cc-invoice-a4__references">
         <div className="cc-invoice-a4__reference-card">
-          <span className="cc-invoice-a4__label">Alcance propuesto</span>
-          <strong>{primaryConcept}</strong>
+          <span className="cc-invoice-a4__label">Alcance presupuesto</span>
+          <strong>{quoteScope}</strong>
           <p>{buildProposalReference(quote)}</p>
         </div>
 
@@ -297,7 +301,7 @@ export function QuoteDocumentA4({
 
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
             <span className="cc-invoice-a4__label">Observaciones</span>
-            <p>{quote.notes?.trim() ? quote.notes : 'Sin observaciones adicionales.'}</p>
+            <p>{quote.internal_notes?.trim() ? quote.internal_notes : 'Sin observaciones adicionales.'}</p>
           </div>
 
           <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">

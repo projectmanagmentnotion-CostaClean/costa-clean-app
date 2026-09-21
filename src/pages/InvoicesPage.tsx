@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import '../features/documents/documentSurfaceStyles'
 import '../features/invoices/invoiceWorkspace.css'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
@@ -40,10 +40,19 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import type { PropertyListItem } from '../features/properties/types'
 import { LazyInvoiceDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { buildCsv } from '../features/documents/csvExport'
+import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildInvoicePdfBlob, buildInvoicePdfFileName, downloadInvoicePdf } from '../features/invoices/invoicePdfOutput'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import { canSettleInvoiceByTransfer, createInvoiceSettlementGuard, settleInvoiceAndRefresh } from '../features/invoices/invoiceSettlement'
+import { V3Kpi, V3KpiGroup, V3PageTitle, V3PrimaryAction } from '../v3/components/V3Primitives'
+import { V3InvoicesPage } from '../v3/invoices/V3InvoicesPage'
+import { V3InvoiceCreateFlow } from '../v3/invoices/V3InvoiceCreateFlow'
+import { V3InvoiceEditFlow } from '../v3/invoices/V3InvoiceEditFlow'
+import type { InvoiceModuleFilter } from '../app/moduleFilters'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
-  default: (await import('../features/invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+  default: (await import('../features/invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
 }))
 
 interface InvoicesPageProps {
@@ -65,9 +74,14 @@ interface InvoicesPageProps {
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
+  activeFilter?: InvoiceModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialInvoiceId?: string | null
+  onOpenInvoiceDeepLink?: (invoiceId: string) => void
+  onBackToInvoiceList?: () => void
 }
 
 export function InvoicesPage({
@@ -89,9 +103,14 @@ export function InvoicesPage({
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialInvoiceId = null,
+  onOpenInvoiceDeepLink,
+  onBackToInvoiceList,
 }: InvoicesPageProps) {
   const toast = useToast()
   function getInvoiceOutstandingAmount(invoice: InvoiceListItem) {
@@ -107,7 +126,7 @@ export function InvoicesPage({
     return Math.round((values.reduce((sum, value) => sum + value, 0) + Number.EPSILON) * 100) / 100
   }
 
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(null)
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState<string | null>(initialInvoiceId)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
@@ -124,6 +143,8 @@ export function InvoicesPage({
     description: string
   } | null>(null)
   const [bulkBusy, setBulkBusy] = useState(false)
+  const [settlingInvoiceIds, setSettlingInvoiceIds] = useState<string[]>([])
+  const settlementGuardRef = useRef(createInvoiceSettlementGuard())
   const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
   const [listState, setListState] = useState({
@@ -132,9 +153,10 @@ export function InvoicesPage({
     hasError: Boolean(error),
     searchQuery: '',
   })
+  const listScrollYRef = useRef(0)
 
   const selectedInvoice =
-    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? invoices[0] ?? null
+    invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? (v3Mode ? null : invoices[0] ?? null)
   const selectedInvoiceKey = selectedInvoice?.id ?? null
   const effectiveCreatePrefill = localCreatePrefill ?? createPrefill
   const isCreateFormVisible = showCreateForm || Boolean(effectiveCreatePrefill)
@@ -149,7 +171,7 @@ export function InvoicesPage({
   }, [detailInvoice])
   const selectedInvoices = invoices.filter((invoice) => selectedInvoiceIds.includes(invoice.id))
   const allVisibleSelected = visibleInvoices.length > 0 && visibleInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
-  const transferEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status !== 'cancelled' && (invoice.outstanding_amount ?? invoice.total) > 0.009)
+  const transferEligibleInvoices = selectedInvoices.filter(canSettleInvoiceByTransfer)
   const cancelEligibleInvoices = selectedInvoices.filter((invoice) => invoice.status === 'draft' || invoice.status === 'issued')
   const rawDuplicateGroups = buildInvoiceDuplicateGroups(invoices)
   const {
@@ -346,6 +368,41 @@ export function InvoicesPage({
     })
   }
 
+  async function downloadInvoiceDocument(targetInvoice: InvoiceListItem) {
+    try {
+      const result = await downloadInvoicePdf(targetInvoice)
+      if (result === 'downloaded' || result === 'shared') {
+        toast.success('PDF de factura preparado', 'La factura se ha descargado o compartido desde esta lista.')
+      }
+    } catch (error) {
+      toast.error('No se pudo descargar la factura', error instanceof Error ? error.message : 'Error desconocido.')
+    }
+  }
+
+  async function settleInvoiceFromList(targetInvoice: InvoiceListItem) {
+    if (!canSettleInvoiceByTransfer(targetInvoice) || !settlementGuardRef.current.begin(targetInvoice.id)) return
+
+    setSettlingInvoiceIds((current) => [...current, targetInvoice.id])
+
+    try {
+      const result = await settleInvoiceAndRefresh(targetInvoice.id, {
+        settleInvoice: settleInvoiceByTransfer,
+        refreshInvoices: onInvoiceCreated,
+      })
+      if (result.created_payment) {
+        const statusLabel = result.financial_status === 'paid' ? 'Factura totalmente cobrada' : 'Cobro parcial registrado'
+        toast.success('Cobro registrado', `${statusLabel}. Pendiente actualizado: ${formatCurrency(result.outstanding_after)}.`)
+      } else {
+        toast.info('Factura ya estaba cubierta', 'El estado financiero se ha vuelto a sincronizar sin crear otro cobro.')
+      }
+    } catch (error) {
+      toast.error('No se pudo registrar el cobro', error instanceof Error ? error.message : 'Error desconocido.')
+    } finally {
+      settlementGuardRef.current.end(targetInvoice.id)
+      setSettlingInvoiceIds((current) => current.filter((invoiceId) => invoiceId !== targetInvoice.id))
+    }
+  }
+
   function toggleInvoiceSelection(invoiceId: string) {
     setSelectedInvoiceIds((current) => (
       current.includes(invoiceId)
@@ -379,35 +436,88 @@ export function InvoicesPage({
     setBulkFeedback(null)
 
     try {
-      if (bulkDialog.mode === 'transfer') {
-        for (const invoice of transferEligibleInvoices) {
-          await settleInvoiceByTransfer(invoice.id)
+      const targets = bulkDialog.mode === 'transfer'
+        ? transferEligibleInvoices
+        : bulkDialog.mode === 'cancel'
+          ? cancelEligibleInvoices
+          : selectedInvoices
+      const failures: string[] = []
+      let completed = 0
+
+      for (const invoice of targets) {
+        try {
+          if (bulkDialog.mode === 'transfer') await settleInvoiceByTransfer(invoice.id)
+          if (bulkDialog.mode === 'sync') await refreshInvoicePaymentStatus(invoice.id)
+          if (bulkDialog.mode === 'cancel') await updateInvoiceStatus(invoice.id, 'cancelled')
+          completed += 1
+        } catch (error) {
+          failures.push(`${invoice.display_code ?? invoice.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
         }
-        await onInvoiceCreated()
-        setBulkFeedback(`Regularizacion completada en ${transferEligibleInvoices.length} factura(s).`)
       }
 
-      if (bulkDialog.mode === 'sync') {
-        for (const invoice of selectedInvoices) {
-          await refreshInvoicePaymentStatus(invoice.id)
-        }
-        await onInvoiceCreated()
-        setBulkFeedback(`Sincronizacion completada en ${selectedInvoices.length} factura(s).`)
-      }
-
-      if (bulkDialog.mode === 'cancel') {
-        for (const invoice of cancelEligibleInvoices) {
-          await updateInvoiceStatus(invoice.id, 'cancelled')
-        }
-        await onInvoiceCreated()
-        setBulkFeedback(`Cancelacion administrativa aplicada en ${cancelEligibleInvoices.length} factura(s).`)
-      }
-
+      if (completed > 0) await onInvoiceCreated()
+      const actionLabel = bulkDialog.mode === 'transfer'
+        ? 'cobradas por transferencia'
+        : bulkDialog.mode === 'sync' ? 'sincronizadas' : 'canceladas'
+      setBulkFeedback(
+        failures.length > 0
+          ? `${completed} facturas ${actionLabel}. ${failures.length} no pudieron actualizarse: ${failures.join(' | ')}`
+          : `${completed} facturas ${actionLabel}.`,
+      )
       setSelectedInvoiceIds([])
       setBulkDialog(null)
     } finally {
       setBulkBusy(false)
     }
+  }
+
+  async function downloadSelectedInvoices() {
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    const entries = []
+    const usedPaths = new Set<string>()
+    const failures: string[] = []
+    for (const invoice of selectedInvoices) {
+      try {
+        entries.push(await makeZipBlobEntry(
+          makeUniqueArchivePath(buildInvoicePdfFileName(invoice), usedPaths),
+          await buildInvoicePdfBlob(invoice),
+        ))
+      } catch (error) {
+        failures.push(`${invoice.display_code ?? invoice.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'facturas-seleccionadas.zip')
+    setBulkFeedback(
+      failures.length > 0
+        ? `${entries.length} PDFs descargados. ${failures.length} facturas no pudieron generarse: ${failures.join(' | ')}`
+        : `${entries.length} PDFs descargados en facturas-seleccionadas.zip.`,
+    )
+    setSelectedInvoiceIds([])
+    setBulkBusy(false)
+  }
+
+  function exportSelectedInvoices() {
+    const rows = selectedInvoices.map((invoice) => {
+      const client = clients.find((item) => item.id === invoice.client_id)
+      return [
+        invoice.invoice_number ?? invoice.display_code ?? invoice.id,
+        invoice.issue_date,
+        client?.full_name ?? invoice.client_name ?? invoice.client_display_code,
+        client?.tax_id ?? '',
+        invoice.subtotal,
+        invoice.tax_amount,
+        invoice.total,
+        getInvoicePaidAmount(invoice),
+        getInvoiceOutstandingAmount(invoice),
+        invoice.status,
+      ]
+    })
+    downloadBlob(new Blob([buildCsv(
+      ['Numero', 'Fecha', 'Cliente', 'CIF/NIF', 'Base', 'IVA', 'Total', 'Cobrado', 'Pendiente', 'Estado'],
+      rows,
+    )], { type: 'text/csv;charset=utf-8' }), 'facturas-seleccionadas.csv')
+    setBulkFeedback(`${selectedInvoices.length} facturas exportadas.`)
   }
 
   async function handleReviewSequence() {
@@ -438,9 +548,88 @@ export function InvoicesPage({
     )
   }
 
+  async function bulkDownloadInvoicesV3(targets: InvoiceListItem[]) {
+    const entries = []; const usedPaths = new Set<string>()
+    for (const invoice of targets) entries.push(await makeZipBlobEntry(makeUniqueArchivePath(buildInvoicePdfFileName(invoice), usedPaths), await buildInvoicePdfBlob(invoice)))
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'facturas-seleccionadas.zip')
+  }
+  function bulkExportInvoicesV3(targets: InvoiceListItem[]) {
+    const rows = targets.map((invoice) => { const client = clients.find((item) => item.id === invoice.client_id); return [invoice.invoice_number ?? invoice.display_code ?? invoice.id, invoice.issue_date, client?.full_name ?? invoice.client_name ?? invoice.client_display_code, client?.tax_id ?? '', invoice.subtotal, invoice.tax_amount, invoice.total, getInvoicePaidAmount(invoice), getInvoiceOutstandingAmount(invoice), invoice.status] })
+    downloadBlob(new Blob([buildCsv(['Numero', 'Fecha', 'Cliente', 'CIF/NIF', 'Base', 'IVA', 'Total', 'Cobrado', 'Pendiente', 'Estado'], rows)], { type: 'text/csv;charset=utf-8' }), 'facturas-seleccionadas.csv')
+  }
+  async function bulkSettleInvoicesV3(targets: InvoiceListItem[]) {
+    const completedIds: string[] = []; const failedIds: string[] = []
+    for (const invoice of targets) { if (!canSettleInvoiceByTransfer(invoice) || !settlementGuardRef.current.begin(invoice.id)) continue; try { await settleInvoiceAndRefresh(invoice.id, { settleInvoice: settleInvoiceByTransfer, refreshInvoices: onInvoiceCreated }); completedIds.push(invoice.id) } catch { failedIds.push(invoice.id) } finally { settlementGuardRef.current.end(invoice.id) } }
+    return { completedIds, failedIds }
+  }
+
+  if (v3Mode) {
+    return (
+      <>
+        <V3InvoicesPage
+          invoices={invoices}
+          allInvoices={allInvoices}
+          clients={clients}
+          payments={payments}
+          error={error}
+          initialInvoiceId={selectedInvoiceId}
+          onCreateInvoice={() => setShowCreateForm(true)}
+          onDownloadInvoice={downloadInvoiceDocument}
+          onSettleInvoice={settleInvoiceFromList}
+          isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
+          onOpenDocument={openInvoiceDocument}
+          onViewPayments={onViewPayments}
+          onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
+          onBackToInvoiceList={() => onBackToInvoiceList?.()}
+          onEditInvoice={() => setShowMajorEdit(true)}
+          activeFilter={activeFilter}
+          activeFilterLabel={activeFilterLabel}
+          onBulkDownload={bulkDownloadInvoicesV3}
+          onBulkExportCsv={bulkExportInvoicesV3}
+          onBulkSettle={bulkSettleInvoicesV3}
+        />
+        {isCreateFormVisible ? <V3InvoiceCreateFlow clients={clients} properties={properties} jobs={jobs} quotes={quotes} invoices={allInvoices} prefillClientId={effectiveCreatePrefill?.client_id} prefillJobId={effectiveCreatePrefill?.job_id} prefillQuoteId={effectiveCreatePrefill?.quote_id} onRefreshData={onInvoiceCreated} onCompleted={handleInvoiceCreated} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} /> : null}
+        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
+      </>
+    )
+  }
+
   return (
     <>
-      <section className="page-section cc-master-page cc-doc-page">
+      <section className={`page-section cc-master-page cc-doc-page${v3Mode ? ` cc-invoice-workspace--v3${detailInvoice ? ' cc-invoice-workspace--v3-detail' : ''}` : ''}`}>
+        {v3Mode && detailInvoice ? (
+          <button
+            type="button"
+            className="v3-invoice-back"
+            onClick={() => {
+              setSelectedInvoiceId(null)
+              window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
+            }}
+          >
+            ← Facturas
+          </button>
+        ) : null}
+        {v3Mode ? (
+          <div className="v3-invoice-header">
+            <V3PageTitle
+              eyebrow="Facturación"
+              title={detailInvoice ? `Factura ${detailInvoice.invoice_number ?? detailInvoice.display_code ?? detailInvoice.id}` : 'Facturas'}
+              description={detailInvoice ? 'Workspace financiero con el estado y las acciones reales de esta factura.' : 'Revisa emisión, cobro y saldo pendiente en una sola bandeja.'}
+              action={(
+                <V3PrimaryAction onClick={() => setShowCreateForm(true)}>
+                  + Nueva factura
+                </V3PrimaryAction>
+              )}
+            />
+            {!detailInvoice ? (
+              <V3KpiGroup>
+                <V3Kpi label="Cobrado" value={formatCurrency(collectedAmount)} hint="Cobro registrado" />
+                <V3Kpi label="Por cobrar" value={formatCurrency(pendingCollectionAmount)} hint="Saldo pendiente real" />
+                <V3Kpi label="Abiertas" value={String(openCollectionInvoices.length)} hint="Facturas con saldo" />
+              </V3KpiGroup>
+            ) : null}
+          </div>
+        ) : (
         <ExecutiveHeader
           eyebrow="Facturacion y cobro"
           title="Facturas"
@@ -474,11 +663,15 @@ export function InvoicesPage({
         >
           {collectionChecklistItems.length > 0 ? <ActionChecklist items={collectionChecklistItems} compact /> : null}
         </ExecutiveHeader>
+        )}
 
         {summaryKpis.length > 0 ? (
-          <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
-            {summaryKpis}
-          </div>
+          <details className="cc-secondary-summary">
+            <summary>Ver resumen</summary>
+            <div className="cc-kpi-grid cc-kpi-grid--compact cc-invoice-workspace__kpis">
+              {summaryKpis}
+            </div>
+          </details>
         ) : null}
 
         <div className="cc-invoice-workspace__control-grid">
@@ -575,7 +768,7 @@ export function InvoicesPage({
 
         {unresolvedDuplicateGroups.length > 0 ? (
           <DuplicateNotice
-            title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles facturas duplicadas`}
+            title={`${unresolvedDuplicateGroups.length} posibles facturas duplicadas`}
             description="Se han detectado coincidencias por referencia, servicio origen o contexto de emisión. Revísalas desde una surface corta antes de seguir emitiendo."
             actionLabel="Revisar duplicados"
             onAction={() => setShowDuplicateReview(true)}
@@ -603,6 +796,7 @@ export function InvoicesPage({
               quotes={quotes}
               allInvoices={allInvoices}
               expenses={expenses}
+              payments={payments}
               onRefreshData={onInvoiceCreated}
               onOpenExistingInvoice={(invoiceId) => {
                 setShowMajorEdit(false)
@@ -628,6 +822,7 @@ export function InvoicesPage({
 
         {isSelectionMode ? (
           <BulkSelectionToolbar
+            entityLabel="facturas"
             selectedCount={selectedInvoiceIds.length}
             totalVisibleCount={visibleInvoices.length}
             allVisibleSelected={allVisibleSelected}
@@ -635,14 +830,25 @@ export function InvoicesPage({
             onClearSelection={() => setSelectedInvoiceIds([])}
             actions={[
               {
+                id: 'download',
+                label: 'Descargar',
+                disabled: bulkBusy,
+                onClick: () => void downloadSelectedInvoices(),
+              },
+              {
                 id: 'transfer',
-                label: 'Marcar cobradas',
+                label: 'Marcar cobradas por transferencia',
                 disabled: transferEligibleInvoices.length === 0,
                 onClick: () => setBulkDialog({
                   mode: 'transfer',
                   title: 'Marcar facturas como cobradas',
                   description: `${transferEligibleInvoices.length} factura(s) se pueden cubrir por transferencia. Las ya cobradas o canceladas quedaran fuera.`,
                 }),
+              },
+              {
+                id: 'export',
+                label: 'Exportar CSV',
+                onClick: exportSelectedInvoices,
               },
               {
                 id: 'sync',
@@ -685,15 +891,21 @@ export function InvoicesPage({
               isSelectionMode={isSelectionMode}
               onToggleInvoiceSelection={toggleInvoiceSelection}
               onOpenDocument={openInvoiceDocument}
+              onDownloadDocument={downloadInvoiceDocument}
+              onSettleInvoice={settleInvoiceFromList}
+              isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
               onStateChange={(state) => {
                 setListState(state)
                 setVisibleInvoices(state.visibleInvoices)
+                const visibleIds = new Set(state.visibleInvoices.map((invoice) => invoice.id))
+                setSelectedInvoiceIds((current) => current.filter((id) => visibleIds.has(id)))
               }}
               onToggleSelectionMode={toggleSelectionMode}
               onSelectInvoice={(invoice) => {
                 if (invoice.id === selectedInvoiceKey) return
 
                 runGuarded(() => {
+                  listScrollYRef.current = window.scrollY
                   setSelectedInvoiceId(invoice.id)
                   setShowDocumentScreen(false)
                 })

@@ -1,0 +1,30 @@
+import { useState } from 'react'
+import { formatCurrency } from '../../app/displayFormat'
+import type { DashboardKpiActionId } from '../../features/dashboard/kpiActions'
+import type { OperationalIncident, OperationalAction } from '../../features/dashboard/operationalControl'
+import type { AutomationAlertItem } from '../../features/automation/types'
+import { V3ActionGroup, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3SecondaryAction, V3Section, V3Select } from '../components/V3Primitives'
+import type { ExpenseListItem } from '../../features/expenses/types'
+import type { InvoiceListItem } from '../../features/invoices/types'
+import type { JobListItem } from '../../features/jobs/types'
+import type { PaymentListItem } from '../../features/payments/types'
+import type { QuoteListItem } from '../../features/quotes/types'
+import { buildExecutiveDashboardModel, type DashboardPeriodKind } from './executiveDashboardModel'
+import { V3RevenueTrend } from './V3RevenueTrend'
+import { buildV3HomePeriodPriorities, buildV3HomePriorities } from './homePriorities'
+import { V3HomePriorityQueue } from './V3HomePriorityQueue'
+
+interface V3HomePageProps { invoices: InvoiceListItem[]; payments: PaymentListItem[]; expenses: ExpenseListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; alerts: AutomationAlertItem[]; operationalIncidents: OperationalIncident[]; onRunKpiAction: (actionId: DashboardKpiActionId) => void; onOpenAlert: (alert: AutomationAlertItem) => void; onRunOperationalAction: (action: OperationalAction) => void; onOpenAllAlerts: () => void }
+
+export function V3HomePage({ invoices, payments, expenses, jobs, quotes, alerts, operationalIncidents, onRunKpiAction, onOpenAlert, onRunOperationalAction, onOpenAllAlerts }: V3HomePageProps) {
+  const [periodKind, setPeriodKind] = useState<DashboardPeriodKind>('month')
+  const now = new Date()
+  const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const [periodKey, setPeriodKey] = useState(currentKey)
+  const model = buildExecutiveDashboardModel({ invoices, payments, expenses, jobs, quotes }, { kind: periodKind, key: periodKey }, alerts.filter((alert) => alert.count > 0).length)
+  const priorities = buildV3HomePriorities({ alerts, incidents: operationalIncidents })
+  const periodPriorities = buildV3HomePeriodPriorities({ periodLabel: model.period.label, outstanding: model.outstanding, completedUnbilledJobs: model.operational.completedUnbilledJobs, expensesWithoutSupport: model.operational.expensesWithoutSupport })
+  const format = (value: number) => formatCurrency(value)
+  const growthText = (value: number | null) => value === null ? 'N/A · sin periodo comparable' : `${value >= 0 ? '+' : ''}${value.toFixed(1)}% vs periodo anterior`
+  return <V3Page className="v3-home-page"><V3PageTitle eyebrow="Resumen ejecutivo" title="Negocio hoy" description="Una lectura real de facturación, cobros, gastos y próximos asuntos." action={<V3ActionGroup><V3Select aria-label="Periodo del dashboard" value={`${periodKind}:${periodKey}`} onChange={({ currentTarget }) => { const [kind, key] = currentTarget.value.split(':') as [DashboardPeriodKind, string]; setPeriodKind(kind); setPeriodKey(key) }}><option value={`month:${currentKey}`}>Este mes</option><option value={`quarter:${now.getFullYear()}-Q${Math.floor(now.getMonth() / 3) + 1}`}>Este trimestre</option><option value={`year:${now.getFullYear()}`}>Este año</option></V3Select></V3ActionGroup>} /><V3KpiGroup><V3Kpi label="Facturado" value={format(model.invoiced)} hint={growthText(model.growth.invoiced)} onClick={() => onRunKpiAction('invoiced_this_month')} /><V3Kpi label="Cobrado" value={format(model.collected)} hint={growthText(model.growth.collected)} onClick={() => onRunKpiAction('collected_this_month')} /><V3Kpi label="Pendiente de cobro" value={format(model.outstanding)} hint="Facturas emitidas en el periodo" onClick={() => onRunKpiAction('outstanding_invoices')} /><V3Kpi label="Gastos" value={format(model.expenses)} hint={growthText(model.growth.expenses)} onClick={() => onRunKpiAction('expenses_this_month')} /><V3Kpi label="Resultado estimado" value={format(model.estimatedResult)} hint="Facturado − gastos" /><V3Kpi label="IVA estimado" value={format(model.estimatedVat)} hint="Repercutido − soportado elegible" /></V3KpiGroup><V3Section label="Evolución del negocio"><V3RevenueTrend points={model.trend} /><p className="v3-section-copy">Periodo: {model.period.label}. El IVA es una estimación operativa y no sustituye la liquidación oficial.</p></V3Section><V3Section label="Operativa del periodo"><div className="v3-dashboard-operational"><V3Kpi label="Servicios programados" value={String(model.operational.scheduledJobs)} /><V3Kpi label="Servicios completados" value={String(model.operational.completedJobs)} /><V3Kpi label="Completados sin factura" value={String(model.operational.completedUnbilledJobs)} onClick={() => onRunKpiAction('completed_jobs_without_invoice')} /><V3Kpi label="Presupuestos abiertos" value={String(model.operational.openQuotes)} onClick={() => onRunKpiAction('open_quotes')} /><V3Kpi label="Presupuestos aceptados" value={String(model.operational.acceptedQuotes)} /><V3Kpi label="Facturas vencidas" value={String(model.operational.overdueInvoices)} /><V3Kpi label="Gastos sin soporte" value={String(model.operational.expensesWithoutSupport)} onClick={() => onRunKpiAction('expenses_without_receipt')} /><V3Kpi label="Alertas activas" value={String(model.operational.alerts)} /></div></V3Section><V3HomePriorityQueue label="Atención del periodo" priorities={periodPriorities} onOpenAlert={onOpenAlert} onRunIncident={(incident) => onRunOperationalAction(incident.primaryAction)} onRunKpiAction={onRunKpiAction} /><V3HomePriorityQueue label="Estado actual" priorities={priorities} onOpenAlert={onOpenAlert} onRunIncident={(incident) => onRunOperationalAction(incident.primaryAction)} onRunKpiAction={onRunKpiAction} onOpenAll={onOpenAllAlerts} /><V3SecondaryAction onClick={() => onRunKpiAction('invoiced_this_month')}>Ver detalle financiero</V3SecondaryAction></V3Page>
+}

@@ -1,13 +1,22 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import { applyTheme, getInitialTheme } from './app/theme'
+import { clearVitePreloadRecovery, installVitePreloadRecovery } from './runtime/vitePreloadRecovery'
 
-applyTheme(getInitialTheme())
+installVitePreloadRecovery()
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+// The clean release candidate is intentionally scoped to the authenticated
+// internal CRM surface; no portal bootstrap belongs in this entrypoint.
+document.documentElement.dataset.appSurface = 'v3'
+
+async function bootstrapApplication() {
+  const rootElement = document.getElementById('root')
+
+  if (!rootElement) {
+    throw new Error('No se encontró el punto de montaje de la aplicación.')
+  }
+
+  const { bootstrapCrm } = await import('./bootstrapCrm')
+  bootstrapCrm(rootElement)
+}
+
+void bootstrapApplication().then(() => {
+  clearVitePreloadRecovery()
+})

@@ -20,6 +20,10 @@ import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import type { PaymentModuleFilter } from '../app/moduleFilters'
+import { V3PaymentsPage } from '../v3/payments/V3PaymentsPage'
+import { V3PaymentCreateFlow } from '../v3/payments/V3PaymentCreateFlow'
+import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../features/payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -27,6 +31,7 @@ const LazyPaymentCreateFlow = lazy(async () => ({
 
 interface PaymentsPageProps {
   payments: PaymentListItem[]
+  allPayments?: PaymentListItem[]
   invoices: InvoiceListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
@@ -40,10 +45,16 @@ interface PaymentsPageProps {
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialPaymentId?: string | null
+  onOpenPaymentDeepLink?: (paymentId: string) => void
+  onBackToPaymentList?: () => void
+  activeFilter?: PaymentModuleFilter | null
 }
 
 export function PaymentsPage({
   payments,
+  allPayments = payments,
   invoices,
   clients,
   properties,
@@ -57,6 +68,11 @@ export function PaymentsPage({
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialPaymentId = null,
+  onOpenPaymentDeepLink,
+  onBackToPaymentList,
+  activeFilter = null,
 }: PaymentsPageProps) {
   function sumMoney(values: number[]) {
     return Math.round((values.reduce((sum, value) => sum + value, 0) + Number.EPSILON) * 100) / 100
@@ -147,6 +163,14 @@ export function PaymentsPage({
       description: 'Hay cambios sin guardar en pagos. Si continúas, perderás esos cambios.',
       confirmLabel: 'Continuar',
     })
+  }
+
+  if (v3Mode) {
+    return <>
+      <V3PaymentsPage key={initialPaymentId ?? 'payment-list'} payments={payments} allPayments={allPayments} invoices={invoices} clients={clients} error={error} initialPaymentId={initialPaymentId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreatePayment={() => setShowCreateForm(true)} onRefresh={onPaymentCreated} onOpenInvoice={onOpenInvoiceDetail} onOpenClient={onOpenClientWorkspace} onOpenPaymentDeepLink={(paymentId) => onOpenPaymentDeepLink?.(paymentId)} onBackToPaymentList={() => onBackToPaymentList?.()} duplicateCount={unresolvedDuplicateGroups.length} onReviewDuplicates={() => setShowDuplicateReview(true)} />
+      {showCreateForm ? <V3PaymentCreateFlow invoices={invoices} clients={clients} payments={allPayments} onRefreshData={onPaymentCreated} onCompleted={handlePaymentFlowCompleted} onCancel={() => { setShowCreateForm(false); setHasCreateFormDirty(false) }} onOpenExistingPayment={(paymentId) => { setShowCreateForm(false); setHasCreateFormDirty(false); onOpenPaymentDeepLink?.(paymentId) }} onDirtyChange={setHasCreateFormDirty} /> : null}
+      {unresolvedDuplicateGroups.length > 0 && showDuplicateReview ? <V3DuplicateReviewSheet title="Revisión de cobros duplicados" description="Coincidencias por factura, fecha, importe o método. Revisa antes de registrar otro cobro." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(paymentId) => { setShowDuplicateReview(false); onOpenPaymentDeepLink?.(paymentId) }} /> : null}
+    </>
   }
 
   async function handlePaymentFlowCompleted() {
@@ -259,7 +283,7 @@ export function PaymentsPage({
 
       {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles cobros duplicados`}
+          title={`${unresolvedDuplicateGroups.length} posibles cobros duplicados`}
           description="Se han detectado coincidencias por factura, fecha, importe o método. Revísalas sin ensuciar el control principal de cobros."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}
@@ -286,6 +310,7 @@ export function PaymentsPage({
 
         <div className="cc-master-layout__detail">
           <PaymentDetailCard
+            key={selectedPayment?.id ?? 'no-payment'}
             payment={selectedPayment}
             payments={payments}
             invoices={invoices}

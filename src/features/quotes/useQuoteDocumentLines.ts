@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchSupabaseRestList } from '../../lib/supabaseRest'
 import type { QuoteLineItem, QuoteListItem } from './types'
 
@@ -17,25 +17,21 @@ function sortQuoteLines(lines: QuoteLineItem[]): QuoteLineItem[] {
 }
 
 export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesState {
-  const [loadedLines, setLoadedLines] = useState<QuoteLineItem[] | null>(null)
-  const [isLoadingLines, setIsLoadingLines] = useState(false)
-  const [linesError, setLinesError] = useState<string | null>(null)
+  const [loadedLines, setLoadedLines] = useState<{ quoteId: string; lines: QuoteLineItem[] } | null>(null)
+  const [linesErrorState, setLinesErrorState] = useState<{ quoteId: string; message: string } | null>(null)
+  const setLinesError = useCallback((message: string) => setLinesErrorState({ quoteId: quote.id, message }), [quote.id])
+  const quoteHasLines = hasQuoteLines(quote)
 
   useEffect(() => {
     let isActive = true
 
-    setLoadedLines(null)
-    setLinesError(null)
-
-    if (hasQuoteLines(quote)) {
-      setIsLoadingLines(false)
+    if (quoteHasLines) {
       return () => {
         isActive = false
       }
     }
 
     async function loadLines() {
-      setIsLoadingLines(true)
 
       try {
         const lines = await fetchSupabaseRestList<QuoteLineItem>(
@@ -43,15 +39,11 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
         )
 
         if (isActive) {
-          setLoadedLines(sortQuoteLines(lines))
+          setLoadedLines({ quoteId: quote.id, lines: sortQuoteLines(lines) })
         }
       } catch (err) {
         if (isActive) {
           setLinesError(err instanceof Error ? err.message : 'Error desconocido cargando líneas.')
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingLines(false)
         }
       }
     }
@@ -61,7 +53,10 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
     return () => {
       isActive = false
     }
-  }, [quote])
+  }, [quote.id, quoteHasLines, setLinesError])
+
+  const currentLoadedLines = loadedLines?.quoteId === quote.id ? loadedLines.lines : null
+  const currentLinesError = currentLoadedLines || linesErrorState?.quoteId !== quote.id ? null : linesErrorState.message
 
   const quoteWithLines = useMemo(() => {
     if (quote.lines?.length) {
@@ -78,19 +73,19 @@ export function useQuoteDocumentLines(quote: QuoteListItem): QuoteDocumentLinesS
       }
     }
 
-    if (loadedLines) {
+    if (currentLoadedLines) {
       return {
         ...quote,
-        lines: loadedLines,
+        lines: currentLoadedLines,
       }
     }
 
     return quote
-  }, [quote, loadedLines])
+  }, [currentLoadedLines, quote])
 
   return {
     quote: quoteWithLines,
-    isLoadingLines,
-    linesError,
+    isLoadingLines: !quoteHasLines && !currentLoadedLines && !currentLinesError,
+    linesError: currentLinesError,
   }
 }

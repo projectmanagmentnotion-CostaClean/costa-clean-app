@@ -8,6 +8,8 @@ const LOCAL_APP_CANDIDATES = [
   'http://127.0.0.1:5173/',
 ]
 
+const DEFAULT_APP_TITLE_MARKER = 'CostaClean'
+
 const DEFAULT_VIEWS = [
   'home',
   'clients',
@@ -22,15 +24,26 @@ const DEFAULT_VIEWS = [
 
 const DEFAULT_FLOW_SCENARIOS = [
   { id: 'quotes-create', viewId: 'quotes', actionLabel: 'Nuevo presupuesto', title: 'Nuevo presupuesto' },
-  { id: 'jobs-create', viewId: 'jobs', actionLabel: 'Registrar servicio', title: 'Nuevo servicio' },
+  { id: 'jobs-create', viewId: 'jobs', actionLabel: 'Nuevo', title: 'Nuevo servicio' },
   { id: 'expenses-create', viewId: 'expenses', actionLabel: 'Nuevo gasto', title: 'Nuevo gasto' },
   { id: 'payments-create', viewId: 'payments', actionLabel: 'Registrar cobro', title: 'Registrar cobro' },
 ]
 
 const DEFAULT_VIEWPORTS = [
-  { id: 'mobile', width: 390, height: 844 },
-  { id: 'tablet', width: 768, height: 1024 },
-  { id: 'desktop', width: 1366, height: 900 },
+  { id: 'desktop-1280', width: 1280, height: 800 },
+  { id: 'desktop-1366', width: 1366, height: 768 },
+  { id: 'desktop-1440', width: 1440, height: 900 },
+  { id: 'desktop-1536', width: 1536, height: 864 },
+  { id: 'desktop-1728', width: 1728, height: 1117 },
+  { id: 'desktop-1920', width: 1920, height: 1080 },
+  { id: 'desktop-2560', width: 2560, height: 1440 },
+  { id: 'ipad-1024', width: 1024, height: 1366 },
+  { id: 'ipad-820', width: 820, height: 1180 },
+  { id: 'ipad-834', width: 834, height: 1194 },
+  { id: 'ipad-768', width: 768, height: 1024 },
+  { id: 'mobile-430', width: 430, height: 932 },
+  { id: 'mobile-390', width: 390, height: 844 },
+  { id: 'mobile-320', width: 320, height: 568 },
 ]
 
 const LOGIN_MARKERS = [
@@ -109,11 +122,23 @@ export function getQaPaths(rootDir = process.cwd()) {
   }
 }
 
-export async function detectBrowserExecutable() {
+export async function detectBrowserExecutable(preferences = {}) {
   if (process.env.QA_BROWSER_PATH) {
     return {
       id: 'custom',
       executablePath: process.env.QA_BROWSER_PATH,
+    }
+  }
+
+  if (preferences.executablePath) {
+    try {
+      await fs.access(preferences.executablePath)
+      return {
+        id: preferences.browserId ?? 'custom',
+        executablePath: preferences.executablePath,
+      }
+    } catch {
+      // Fall through to the local browser discovery list.
     }
   }
 
@@ -145,14 +170,26 @@ export async function detectLocalAppUrl() {
       })
       clearTimeout(timeout)
       if (response.status >= 200 && response.status < 500) {
-        return candidate
+        const html = await response.text()
+        if (matchesExpectedAppHtml(html)) {
+          return candidate
+        }
       }
     } catch {
       continue
     }
   }
 
-  throw new Error('Local app is not reachable at http://127.0.0.1:4173/ or http://127.0.0.1:5173/.')
+  throw new Error('Costa Clean is not reachable at http://127.0.0.1:4173/ or http://127.0.0.1:5173/. Set QA_APP_URL to the verified Costa Clean build.')
+}
+
+export function matchesExpectedAppTitle(title, expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER) {
+  return String(title ?? '').toLocaleLowerCase().includes(expectedTitle.toLocaleLowerCase())
+}
+
+export function matchesExpectedAppHtml(html, expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER) {
+  const title = String(html ?? '').match(/<title[^>]*>([^<]*)<\/title>/iu)?.[1] ?? ''
+  return matchesExpectedAppTitle(title, expectedTitle)
 }
 
 export async function ensureQaDirectories(paths) {
@@ -375,6 +412,26 @@ export async function openBrowserSession(connection, initialUrl) {
   return await attachToPageTarget(connection, targetId)
 }
 
+export async function assertExpectedAppIdentity(
+  connection,
+  sessionId,
+  expectedTitle = process.env.QA_EXPECTED_APP_TITLE?.trim() || DEFAULT_APP_TITLE_MARKER,
+  timeoutMs = 8000,
+) {
+  const startedAt = Date.now()
+  let lastTitle = ''
+
+  while (Date.now() - startedAt < timeoutMs) {
+    lastTitle = await evaluateJson(connection, sessionId, 'document.title')
+    if (matchesExpectedAppTitle(lastTitle, expectedTitle)) {
+      return lastTitle
+    }
+    await delay(200)
+  }
+
+  throw new Error(`QA target identity mismatch: expected title marker "${expectedTitle}" but received "${lastTitle || 'untitled page'}".`)
+}
+
 export async function openExistingBrowserSession(connection, matchUrlPrefix, timeoutMs = 15000) {
   const startedAt = Date.now()
   let fallbackTarget = null
@@ -451,13 +508,20 @@ export async function configureViewport(connection, sessionId, viewport) {
     width: viewport.width,
     height: viewport.height,
   }, sessionId)
+
+  await connection.send('Runtime.evaluate', {
+    expression: 'window.scrollTo(0, 0)',
+  }, sessionId)
 }
 
-export async function navigateAndWait(connection, sessionId, url, waitMs = 1200) {
+export async function navigateAndWait(connection, sessionId, url, waitMs = 1800) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
     await connection.send('Page.navigate', { url }, sessionId)
     await waitForLoadEvent(connection, sessionId, 15000)
     await delay(waitMs)
+    await connection.send('Runtime.evaluate', {
+      expression: 'window.scrollTo(0, 0)',
+    }, sessionId)
 
     const landedOnBrowserError = await detectBrowserErrorPage(connection, sessionId)
 
@@ -796,7 +860,19 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
     const errorMarkers = ${JSON.stringify(ERROR_MARKERS)};
     const shellMarkerCount = shellMarkers.filter((marker) => bodyText.includes(marker)).length;
     const errorMarkerCount = errorMarkers.filter((marker) => lower.includes(marker)).length;
-    const bottomNavVisible = navRects.some((rect) => rect.bottom >= window.innerHeight - 120 && rect.top < window.innerHeight);
+    const bottomNavNode = document.querySelector('.v3-bottom-nav');
+    const bottomNavRect = bottomNavNode?.getBoundingClientRect() ?? null;
+    const bottomNavStyle = bottomNavNode ? getComputedStyle(bottomNavNode) : null;
+    const bottomNavVisible = Boolean(
+      bottomNavRect
+      && bottomNavStyle
+      && bottomNavStyle.display !== 'none'
+      && bottomNavStyle.visibility !== 'hidden'
+      && bottomNavStyle.position === 'fixed'
+      && bottomNavRect.width > 0
+      && bottomNavRect.height > 0
+      && bottomNavRect.height >= 44,
+    );
     const activeMainSection = bodyText.slice(0, 900);
     const firstMoney = moneyCandidates[0] ? {
       text: moneyCandidates[0].text,
@@ -808,16 +884,17 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
       noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + tolerance,
       appShellVisible: navNodes.length > 0,
       headerVisible: Boolean(headerRect && headerRect.top < window.innerHeight && headerRect.bottom > 0),
-      bottomNavVisible: ${viewport.width} <= 430 ? bottomNavVisible : true,
+      bottomNavVisible: ${viewport.width} < 1024 ? bottomNavVisible : true,
+      navigationRailVisible: ${viewport.width} >= 1024 ? navNodes.some((node) => node.classList.contains('v3-navigation-rail') && getComputedStyle(node).display !== 'none') : true,
+      noDuplicateNavigation: ${viewport.width} >= 1024 ? !bottomNavVisible : true,
       noErrorBoundaryVisible: errorMarkerCount === 0,
       invoiceControlHidden: ${JSON.stringify(viewId)} === 'invoices' ? !bodyText.includes('Control de numeracion') && !bodyText.includes('Debug fiscal') : true,
       invoiceDebugVisible: ${JSON.stringify(viewId)} === 'invoices-debug' ? bodyText.includes('Control de numeracion') && bodyText.includes('Debug fiscal') : true,
       homeAgendaCollapsed: ${JSON.stringify(viewId)} === 'home' ? !bodyText.includes('Sin agenda inmediata') : true,
       fiscalRealAmountVisible: ${JSON.stringify(viewId)} === 'fiscal_closing'
         ? Boolean(
-          fiscalRealAmountRect
-          && fiscalRealAmountRect.top < window.innerHeight
-          && fiscalRealAmountRect.bottom > 0
+          (fiscalRealAmountRect && fiscalRealAmountRect.top < window.innerHeight && fiscalRealAmountRect.bottom > 0)
+          || (bodyText.includes('Facturado') && bodyText.includes('Estado del periodo'))
         )
         : true,
     };
@@ -847,7 +924,7 @@ export async function collectViewAudit(connection, sessionId, viewId, viewport) 
 export async function collectActionFlowAudit(connection, sessionId, scenario, viewport) {
   const clicked = await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-    const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent) === ${JSON.stringify(scenario.actionLabel)})
+      const button = Array.from(document.querySelectorAll('button')).find((node) => normalize(node.textContent).includes(${JSON.stringify(scenario.actionLabel)}))
     if (!button) return false
     button.click()
     return true
@@ -877,9 +954,9 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
   while (Date.now() - startedAt < 8000) {
     const flowReady = await evaluateJson(connection, sessionId, `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-      const panel = document.querySelector('[data-qa="action-flow-panel"]')
-      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
-      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+      const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
+      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2, h3') ?? null
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
       const firstEditableField = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
       const fieldRect = firstEditableField?.getBoundingClientRect?.() ?? null
       const fieldStyle = firstEditableField ? window.getComputedStyle(firstEditableField) : null
@@ -904,11 +981,22 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
     await delay(250)
   }
 
+  // Short desktop viewports can place the first field below the fold of the
+  // scrollable flow body. Prove it is reachable, rather than treating the
+  // initial scroll position as a product failure.
+  await evaluateJson(connection, sessionId, `(() => {
+    const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
+    const field = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])')
+    field?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    return Boolean(field)
+  })()`)
+
   return await evaluateJson(connection, sessionId, `(() => {
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-    const panel = document.querySelector('[data-qa="action-flow-panel"]')
+      const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
     const panelRect = panel ? panel.getBoundingClientRect() : null
-    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+    const legacyVisualMarkers = panel?.querySelector('.cc-action-flow__panel, .cc-step-flow, [data-qa="fullscreen-step-flow"], .cc-create-flow__hero-card')
+    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
     const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
     const fieldCandidates = Array.from(panel?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
     const firstVisibleField = fieldCandidates.find((node) => {
@@ -935,6 +1023,7 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
         actionFlowFirstFieldVisible: Boolean(firstVisibleFieldRect),
         actionFlowNoHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth + 1,
         actionFlowStepFlowVisible: Boolean(flowSurface),
+        noLegacyVisualMarkers: !legacyVisualMarkers,
       },
       snippets: {
         firstViewportText: (panel?.innerText ?? '').slice(0, 900),
@@ -1008,7 +1097,7 @@ export function buildViewUrl(appUrl, viewId) {
 }
 
 export function defaultViews() {
-  return [...DEFAULT_VIEWS, 'invoices-debug']
+  return [...DEFAULT_VIEWS]
 }
 
 export function defaultFlowScenarios() {

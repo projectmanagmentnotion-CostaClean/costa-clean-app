@@ -1,4 +1,5 @@
-import { getSupabasePublicEnv } from '../../lib/supabaseEnv.ts'
+import { fetchAuthenticatedSupabaseWrite } from '../../lib/authenticatedSupabaseWrite.ts'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc.ts'
 import {
   createClientId,
   normalizeClientInput,
@@ -8,22 +9,11 @@ import {
 import { normalizeClientFiscalData } from './clientFiscalData.ts'
 import type { ClientListItem } from './types.ts'
 
-const clientSelectFields = 'id,display_code,created_at,full_name,phone,email,tax_id,billing_address,status,source_lead_id'
-
 interface SupabaseRestError {
   code?: string
   details?: string | null
   hint?: string | null
   message?: string
-}
-
-function getRestConfigOrThrow() {
-  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Faltan las variables de entorno de Supabase.')
-  }
-
-  return { supabaseUrl, supabaseAnonKey }
 }
 
 function normalizeClientId(clientId: string): string {
@@ -72,15 +62,6 @@ function maskTaxId(value: string | null | undefined): string | null {
   if (!value) return null
   if (value.length <= 4) return '****'
   return `${value.slice(0, 4)}***${value.slice(-2)}`
-}
-
-function buildClientWriteHeaders(supabaseAnonKey: string) {
-  return {
-    apikey: supabaseAnonKey,
-    Authorization: `Bearer ${supabaseAnonKey}`,
-    'Content-Type': 'application/json',
-    Prefer: 'return=representation',
-  }
 }
 
 function logClientWriteDebug(payload: {
@@ -177,11 +158,12 @@ function buildClientPayload(input: ClientRecordInput): ClientRecordInput {
   if ('status' in input) payload.status = normalizeClientStatus(input.status)
   if ('archived_at' in input) payload.archived_at = input.archived_at ?? null
   if ('source_lead_id' in input) payload.source_lead_id = trimNullable(input.source_lead_id)
+  if ('profile_image_path' in input) payload.profile_image_path = trimNullable(input.profile_image_path)
 
   return payload
 }
 
-async function executeClientRestWrite({
+async function executeClientRpcWrite({
   operation,
   clientId,
   method,
@@ -192,17 +174,19 @@ async function executeClientRestWrite({
   method: 'POST' | 'PATCH'
   payload: ClientRecordInput
 }): Promise<ClientListItem> {
-  const { supabaseUrl, supabaseAnonKey } = getRestConfigOrThrow()
-  const targetUrl = method === 'POST'
-    ? `${supabaseUrl}/rest/v1/clients?select=${encodeURIComponent(clientSelectFields)}`
-    : `${supabaseUrl}/rest/v1/clients?id=eq.${encodeURIComponent(normalizeClientId(clientId ?? ''))}&select=${encodeURIComponent(clientSelectFields)}`
+  const rpcPath = method === 'POST'
+    ? operationalWriteRpcPaths.createClient
+    : operationalWriteRpcPaths.updateClient
+  const rpcPayload = method === 'POST'
+    ? payload
+    : { ...payload, id: normalizeClientId(clientId ?? '') }
 
   logClientWriteDebug({ operation, clientId, payload })
 
-  const response = await fetch(targetUrl, {
-    method,
-    headers: buildClientWriteHeaders(supabaseAnonKey),
-    body: JSON.stringify(payload),
+  const response = await fetchAuthenticatedSupabaseWrite(rpcPath, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_client: rpcPayload }),
   })
 
   if (!response.ok) {
@@ -221,7 +205,8 @@ async function executeClientRestWrite({
     ))
   }
 
-  const rows = ((await response.json()) as ClientListItem[]) ?? []
+  const body = (await response.json()) as ClientListItem | ClientListItem[] | null
+  const rows = Array.isArray(body) ? body : body ? [body] : []
   logClientWriteDebug({
     operation,
     clientId,
@@ -249,6 +234,7 @@ interface ClientRecordInput {
   status?: string
   archived_at?: string | null
   source_lead_id?: string | null
+  profile_image_path?: string | null
 }
 
 export async function createClientRecord(input: ClientRecordInput): Promise<ClientListItem> {
@@ -265,7 +251,7 @@ export async function createClientRecord(input: ClientRecordInput): Promise<Clie
     })
     const payload = buildClientPayload(normalizedInput)
 
-    return await executeClientRestWrite({
+    return await executeClientRpcWrite({
       operation: 'create',
       clientId: normalizedInput.id,
       method: 'POST',
@@ -284,7 +270,7 @@ export async function updateClientRecord(
     const normalizedClientId = normalizeClientId(clientId)
     const payload = buildClientPayload(input)
 
-    return await executeClientRestWrite({
+    return await executeClientRpcWrite({
       operation: 'update',
       clientId: normalizedClientId,
       method: 'PATCH',
@@ -331,6 +317,16 @@ export async function applyClientFiscalBackfillRecord(
 }
 
 export const __clientWriteApiTestUtils = {
+  buildClientRpcWrite: (operation: 'create' | 'update', clientId: string | null, payload: ClientRecordInput) => ({
+    path: operation === 'create'
+      ? operationalWriteRpcPaths.createClient
+      : operationalWriteRpcPaths.updateClient,
+    body: {
+      p_client: operation === 'create'
+        ? payload
+        : { ...payload, id: normalizeClientId(clientId ?? '') },
+    },
+  }),
   buildClientPayload,
   createClientId,
   maskTaxId,

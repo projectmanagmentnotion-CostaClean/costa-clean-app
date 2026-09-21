@@ -43,11 +43,11 @@ const LazyJobCreateFlow = lazy(async () => ({
 }))
 
 const LazyQuoteCreateFlow = lazy(async () => ({
-  default: (await import('../quotes/QuoteCreateFlow')).QuoteCreateFlow,
+  default: (await import('../quotes/QuoteCreateEntry')).QuoteCreateEntry,
 }))
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
-  default: (await import('../invoices/InvoiceCreateFlow')).InvoiceCreateFlow,
+  default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
 }))
 
 const LazyPaymentCreateFlow = lazy(async () => ({
@@ -935,6 +935,7 @@ export function ClientWorkspace({
             </article>
           </section>
           <ClientDetailCard
+            key={`${client?.id ?? 'no-client'}-${editRequestToken}`}
             client={client}
             properties={properties}
             jobs={jobs}

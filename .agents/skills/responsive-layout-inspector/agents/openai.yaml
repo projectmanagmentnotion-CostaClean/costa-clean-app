@@ -1,0 +1,4 @@
+interface:
+  display_name: "Responsive Layout Inspector"
+  short_description: "Mide layout V3 en viewports reales"
+  default_prompt: "Usa $responsive-layout-inspector para certificar geometría y solapamientos."

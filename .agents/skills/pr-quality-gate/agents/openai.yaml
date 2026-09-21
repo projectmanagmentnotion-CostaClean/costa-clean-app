@@ -1,0 +1,4 @@
+interface:
+  display_name: "PR Quality Gate"
+  short_description: "Revisa cambios de forma independiente"
+  default_prompt: "Usa $pr-quality-gate para revisar un diff V3 con evidencia independiente."

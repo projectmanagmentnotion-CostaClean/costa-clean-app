@@ -117,13 +117,9 @@ export function DSListControlBar({
     <div className="cc-list-toolbar">
       <div className="cc-list-toolbar__overview">
         <div className="cc-list-toolbar__intro">
-          <span className="cc-list-toolbar__eyebrow">Lista</span>
           <strong className="cc-list-toolbar__headline">
-            {resultCount} visibles de {totalCount}
+            {resultCount} resultados
           </strong>
-          <span className="cc-list-toolbar__caption">
-            {hasActiveControls ? 'Filtros activos' : 'Controles compactos'}
-          </span>
         </div>
 
         <div className="cc-list-toolbar__actions">
@@ -140,7 +136,7 @@ export function DSListControlBar({
         />
       </div>
 
-      <div className="cc-list-toolbar__one-line" aria-label="Controles compactos de lista">
+      <div className="cc-list-toolbar__one-line" aria-label="Controles de lista">
         <div className="cc-list-toolbar__quick-filters">
           {quickFilterOptions.map((option) => (
             <DSFilterChip
@@ -165,7 +161,7 @@ export function DSListControlBar({
         <div className="cc-list-toolbar__summary-actions">
           <DSFilterSummaryButton
             icon={<SortIcon />}
-            label="Orden"
+            label="Ordenar"
             detail={sortDirectionLabel}
             onClick={() => setShowAdvancedControls((current) => !current)}
             active={state.sortField !== defaultState.sortField || state.sortDirection !== defaultState.sortDirection}

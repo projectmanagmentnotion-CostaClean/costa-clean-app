@@ -47,7 +47,9 @@ function ToastItem({
           onClick={() => onDismiss(toast.id)}
           aria-label="Cerrar aviso"
         >
-          ×
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8">
+            <path d="m7 7 10 10M17 7 7 17" />
+          </svg>
         </button>
       </div>
     </article>

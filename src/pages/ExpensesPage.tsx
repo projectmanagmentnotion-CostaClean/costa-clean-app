@@ -20,6 +20,9 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import type { ExpenseModuleFilter } from '../app/moduleFilters'
+import { V3ExpensesPage } from '../v3/expenses/V3ExpensesPage'
+import { V3ExpenseFormFlow } from '../v3/expenses/V3ExpenseFormFlow'
 
 interface ExpensesPageProps {
   expenses: ExpenseListItem[]
@@ -32,6 +35,11 @@ interface ExpensesPageProps {
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialExpenseId?: string | null
+  onOpenExpenseDeepLink?: (expenseId: string) => void
+  onBackToExpenseList?: () => void
+  activeFilter?: ExpenseModuleFilter | null
 }
 
 export function ExpensesPage({
@@ -45,9 +53,15 @@ export function ExpensesPage({
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialExpenseId = null,
+  onOpenExpenseDeepLink,
+  onBackToExpenseList,
+  activeFilter = null,
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditFlow, setShowEditFlow] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
@@ -176,6 +190,14 @@ export function ExpensesPage({
     setCreatePrefill(null)
   }
 
+  if (v3Mode) {
+    return <>
+      <V3ExpensesPage expenses={expenses} allExpenses={allExpenses} error={error} initialExpenseId={initialExpenseId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreateExpense={() => setShowCreateForm(true)} onRefresh={onExpenseCreated} onEditExpense={(expense) => { setSelectedExpenseId(expense.id); setShowEditFlow(true) }} onCreateSimilarExpense={(expense) => { setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense)); setShowCreateForm(true) }} onOpenExpenseDeepLink={(expenseId) => onOpenExpenseDeepLink?.(expenseId)} onBackToExpenseList={() => onBackToExpenseList?.()} />
+      {showCreateForm ? <V3ExpenseFormFlow mode="create" expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={handleExpenseCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false) })} /> : null}
+      {showEditFlow && selectedExpense ? <V3ExpenseFormFlow mode="edit" expense={selectedExpense} expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={async () => { setHasCreateFormDirty(false); setShowEditFlow(false) }} onCancel={() => runGuarded(() => { setHasCreateFormDirty(false); setShowEditFlow(false) })} /> : null}
+    </>
+  }
+
   return (
     <section className="page-section cc-master-page cc-expenses-page">
       <ExecutiveHeader
@@ -245,6 +267,7 @@ export function ExpensesPage({
           }}
         >
           <ExpenseCreateFlow
+            key={createPrefill?.request_id ?? 'new-expense'}
             expenses={allExpenses}
             quotes={quotes}
             invoices={invoices}
@@ -284,7 +307,7 @@ export function ExpensesPage({
 
       {unresolvedDuplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${unresolvedDuplicateGroups.length} grupo(s) de posibles gastos duplicados`}
+          title={`${unresolvedDuplicateGroups.length} posibles gastos duplicados`}
           description="Se han detectado coincidencias por proveedor, referencia, fecha o importe. Revísalas desde una surface específica antes de seguir cargando gastos parecidos."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}

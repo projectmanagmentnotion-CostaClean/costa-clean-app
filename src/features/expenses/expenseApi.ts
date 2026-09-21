@@ -53,7 +53,7 @@ const EXPENSES_SELECT = [
   'updated_at',
 ].join(',')
 
-function normalizeExpensePayload(input: ExpenseUpsertInput) {
+export function normalizeExpenseCreatePayload(input: ExpenseUpsertInput) {
   return {
     expense_date: input.expense_date,
     accounting_date: input.accounting_date ?? null,
@@ -98,6 +98,40 @@ function normalizeExpensePayload(input: ExpenseUpsertInput) {
   }
 }
 
+export function normalizeExpenseUpdatePayload(input: ExpenseUpsertInput): Record<string, unknown> {
+  const payload: Record<string, unknown> = {}
+  if (input.expense_date !== undefined) payload.expense_date = input.expense_date
+  if (input.accounting_date !== undefined) payload.accounting_date = input.accounting_date
+  if (input.due_date !== undefined) payload.due_date = input.due_date
+  if (input.supplier_name !== undefined) payload.supplier_name = input.supplier_name.trim()
+  if (input.supplier_tax_id !== undefined) payload.supplier_tax_id = input.supplier_tax_id?.trim() || null
+  if (input.category !== undefined) payload.category = input.category
+  if (input.subcategory !== undefined) payload.subcategory = input.subcategory?.trim() || null
+  if (input.description !== undefined) payload.description = input.description.trim()
+  if (input.document_type !== undefined) payload.document_type = input.document_type
+  if (input.reference_number !== undefined) payload.reference_number = input.reference_number?.trim() || null
+  if (input.payment_method !== undefined) payload.payment_method = input.payment_method
+  if (input.payment_status !== undefined) payload.payment_status = input.payment_status
+  if (input.currency !== undefined) payload.currency = input.currency
+  if (input.subtotal !== undefined) payload.subtotal = input.subtotal
+  if (input.tax_rate !== undefined) payload.tax_rate = input.tax_rate
+  if (input.tax_amount !== undefined) payload.tax_amount = input.tax_amount
+  if (input.total !== undefined) payload.total = input.total
+  if (input.is_deductible !== undefined) payload.is_deductible = input.is_deductible
+  if (input.deductible_percentage !== undefined) payload.deductible_percentage = input.deductible_percentage
+  if (input.affects_quarterly_closure !== undefined) payload.affects_quarterly_closure = input.affects_quarterly_closure
+  if (input.affects_annual_closure !== undefined) payload.affects_annual_closure = input.affects_annual_closure
+  if (input.receipt_file_url !== undefined) payload.receipt_file_url = input.receipt_file_url
+  if (input.receipt_file_path !== undefined) payload.receipt_file_path = input.receipt_file_path
+  if (input.attachment_count !== undefined) payload.attachment_count = input.attachment_count
+  if (input.document_support_status !== undefined) payload.document_support_status = input.document_support_status
+  if (input.fiscal_review_status !== undefined) payload.fiscal_review_status = input.fiscal_review_status
+  if (input.fiscal_risk_level !== undefined) payload.fiscal_risk_level = input.fiscal_risk_level
+  if (input.manager_note !== undefined) payload.manager_note = input.manager_note?.trim() || null
+  if (input.notes !== undefined) payload.notes = input.notes?.trim() || null
+  return payload
+}
+
 export async function listExpenses(): Promise<ExpenseListItem[]> {
   const { client, error } = getSupabaseClient()
 
@@ -125,7 +159,7 @@ export async function createExpense(input: ExpenseUpsertInput): Promise<string> 
     throw new Error(error ?? 'No se pudo crear el cliente Supabase.')
   }
 
-  const payload = normalizeExpensePayload(input)
+  const payload = normalizeExpenseCreatePayload(input)
 
   const { data, error: insertError } = await client
     .from('expenses')
@@ -159,7 +193,7 @@ export async function updateExpense(
     throw new Error(error ?? 'No se pudo crear el cliente Supabase.')
   }
 
-  const payload = normalizeExpensePayload(input)
+  const payload = normalizeExpenseUpdatePayload(input)
 
   const { error: updateError } = await client
     .from('expenses')

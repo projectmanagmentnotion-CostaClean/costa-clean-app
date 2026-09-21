@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { formatClientLabel } from '../../app/relationshipLabels'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import { ClientCreateForm } from '../clients/ClientCreateForm'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { findPropertyDuplicateGroups } from '../duplicates/duplicateEngine'
@@ -98,14 +100,6 @@ export function PropertyCreateForm({
     setIsSubmitting(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSubmitError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSubmitError('Debes seleccionar un cliente.')
         return
@@ -137,34 +131,29 @@ export function PropertyCreateForm({
           ? `PROPERTY-${crypto.randomUUID()}`
           : `PROPERTY-${Date.now()}`
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/properties`, {
+      const response = await fetchAuthenticatedSupabaseWrite(operationalWriteRpcPaths.createProperty, {
         method: 'POST',
         headers: {
-          apikey: supabaseAnonKey,
-          Authorization: `Bearer ${supabaseAnonKey}`,
           'Content-Type': 'application/json',
-          Prefer: 'return=representation',
         },
         body: JSON.stringify({
-          id: propertyId,
-          client_id: form.client_id,
-          name: form.name.trim(),
-          property_type: form.property_type,
-          address: form.address.trim(),
-          city: form.city.trim() || null,
-          postal_code: form.postal_code.trim() || null,
-          notes: form.notes.trim() || null,
+          p_property: {
+            id: propertyId,
+            client_id: form.client_id,
+            name: form.name.trim(),
+            property_type: form.property_type,
+            address: form.address.trim(),
+            city: form.city.trim() || null,
+            postal_code: form.postal_code.trim() || null,
+            notes: form.notes.trim() || null,
+          },
         }),
       })
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSubmitError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
-
-      const createdRows = await response.json().catch(() => [])
-      const createdRow = Array.isArray(createdRows) ? createdRows[0] : createdRows
+      const createdRow = await readSingleAuthenticatedWriteRow<Partial<PropertyListItem>>(
+        response,
+        'La propiedad no se creo. Revisa tu sesion o permisos y vuelve a intentarlo.',
+      )
       const createdProperty: PropertyListItem = {
         id: createdRow?.id ?? propertyId,
         display_code: createdRow?.display_code ?? null,

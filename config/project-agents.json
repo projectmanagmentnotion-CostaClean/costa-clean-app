@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 2,
+  "project": "Costa Clean Client Portal",
+  "sourceRepository": "projectmanagmentnotion-CostaClean/production-agents",
+  "sourceCommit": "e08e4fdd77a3d1672dad51cebabf03e5e67196d0",
+  "installedAt": "2026-09-15",
+  "totalAgents": 25,
+  "manualInvocation": true,
+  "extensions": {
+    "qualitySystemVersion": "1.0.0",
+    "skillSystem": ".agents/skills",
+    "qualityMatrix": "config/v3-quality-audit-matrix.json",
+    "brandRegistry": "src/v3/brand/brandAssets.ts",
+    "propertyMediaRegistry": "src/v3/properties/propertyMedia.ts"
+  },
+  "agents": [
+    {
+      "name": "brand-asset-guardian",
+      "category": "brand-and-assets",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/brand-asset-guardian.agent.md",
+      "sha256": "31535c6f6968d1624686ef457f215c32c2c8a1c7cdddb9d842bbffb5b0427d88",
+      "primaryUse": "Custodiar marca, procedencia y contraste.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "bug-root-cause-investigator",
+      "category": "diagnostics",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/bug-root-cause-investigator.agent.md",
+      "sha256": "c4858365145d912303082ad2963488b40e31dab0a8e87e59d29cead7eb4c71c8",
+      "primaryUse": "Reproduce y aislar causas raíz con cobertura exhaustiva.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "business-rules-test-engineer",
+      "category": "domain-rules",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/business-rules-test-engineer.agent.md",
+      "sha256": "f3a6f14e66646b9b71cc243b2af345db2f4ff1d533f765b7d0c9afa2245ff784",
+      "primaryUse": "Proteger invariantes de negocio y pruebas.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "design-quality-orchestrator",
+      "category": "quality-orchestration",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/design-quality-orchestrator.agent.md",
+      "sha256": "d2e4f5c6b1805a4503b1312cf2f95ef7bda8d29ae9b46a33ddefa6da6924e0b8",
+      "primaryUse": "Coordinar auditorías visuales y sistémicas.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "design-system-guardian",
+      "category": "design-system",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/design-system-guardian.agent.md",
+      "sha256": "41de975834c158858cd759b9442bfec0ec87c356eaf4fec036e02fe7c4d73b02",
+      "primaryUse": "Proteger tokens y constitución visual.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "documentation-roadmap",
+      "category": "documentation-and-roadmap",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/documentation-roadmap.agent.md",
+      "sha256": "b264eb8b10dc914ec103aa752370ae4f78c2e8dce1c22d704df157d2d3ad2790",
+      "primaryUse": "Alinear documentación y roadmap con evidencia.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "enterprise-agent-architect",
+      "category": "enterprise-architecture",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/enterprise-agent-architect.agent.md",
+      "sha256": "5743fcaa7449d6cdc8a39a6cb8a73a5f5bc8cbdb9fd9a262e2875672ce560f08",
+      "primaryUse": "Diseñar integraciones empresariales acotadas.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "frontend-ux-accessibility",
+      "category": "ux-and-accessibility",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/frontend-ux-accessibility.agent.md",
+      "sha256": "8f1360ccfb42a3bf78765b6fd5e2562c65bd2d98687136cf11f6237e3f75165f",
+      "primaryUse": "Auditar UX mobile-first y accesibilidad.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "implementation-planner",
+      "category": "planning-and-governance",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/implementation-planner.agent.md",
+      "sha256": "db67be0e0b4c443011fd509d1de2aba1124692bc527c539ace626559d64959c3",
+      "primaryUse": "Convertir gates aprobados en planes acotados.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "interaction-motion-director",
+      "category": "interaction-and-motion",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/interaction-motion-director.agent.md",
+      "sha256": "a7a54b323a71bb269376c84f611b2af31ffcf922adac63e7a2ae32b3bebf98ac",
+      "primaryUse": "Auditar feedback, foco y motion.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "performance-gsap-motion",
+      "category": "performance-and-motion",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/performance-gsap-motion.agent.md",
+      "sha256": "b2ca4cb3fc5dcf5894b773352cc2b6e7b341868e1f78ba0da3aa123a5f9d0808",
+      "primaryUse": "Auditar GSAP, lifecycle y rendimiento.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "pr-quality-gate",
+      "category": "independent-review",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/pr-quality-gate.agent.md",
+      "sha256": "91d90eeda0143651150fbc5c1514c5370afdd9da4cf0f9bf22a371fc0825781d",
+      "primaryUse": "Revisar de forma independiente alcance y calidad.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "project-continuation",
+      "category": "project-orchestration",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/project-continuation.agent.md",
+      "sha256": "b0dd3cb018ad1e2aa2d844ddd516a5f0676349862eaec9c1fe19c5d6e79a8809",
+      "primaryUse": "Reconstruir verdad del repo y continuidad segura.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "property-media-curator",
+      "category": "property-media",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/property-media-curator.agent.md",
+      "sha256": "f445baaf33b66827842ed67ee9fdf4276b4c2fa9fde7127672d991bbe49db496",
+      "primaryUse": "Custodiar media genérica de propiedades.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "qa-e2e-specialist",
+      "category": "quality-assurance",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/qa-e2e-specialist.agent.md",
+      "sha256": "3875fdc54e068fd35ea1e1bf788c84d37831fb1f70ecc4d45ca96b0dee87a1bb",
+      "primaryUse": "Ejecutar QA E2E con evidencia y cleanup.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "release-deployment-guardian",
+      "category": "release-and-deployment",
+      "riskLevel": "R3",
+      "version": "1.0.0",
+      "path": ".github/agents/release-deployment-guardian.agent.md",
+      "sha256": "3058654b2fc9a8c70c6a8ba758391a1d88efd0de7a4d7dce5dc6dac4ae6f7f63",
+      "primaryUse": "Controlar releases autorizados y rollback.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "responsive-layout-inspector",
+      "category": "responsive-quality",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/responsive-layout-inspector.agent.md",
+      "sha256": "f27ff71cc76fe9fa2f26c91fae0a464fbe0d5d33584698b9a7a6b50d3a6b7115",
+      "primaryUse": "Medir geometría y responsive real.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "security-privacy-auditor",
+      "category": "security-and-privacy-audit",
+      "riskLevel": "R1",
+      "version": "1.0.0",
+      "path": ".github/agents/security-privacy-auditor.agent.md",
+      "sha256": "09c60b616479619edabb2e1267c8adaa7f32151124bfbd75d6d206702b74190e",
+      "primaryUse": "Auditar seguridad, privacidad y secretos.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "senior-fullstack-builder",
+      "category": "implementation",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/senior-fullstack-builder.agent.md",
+      "sha256": "1cd80f91a934488d98467dfacebd6d64f92af050c2321f74d8d48d6290f89e5b",
+      "primaryUse": "Implementar slices aprobados y testeados.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "seo-local-structured-data",
+      "category": "public-seo",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/seo-local-structured-data.agent.md",
+      "sha256": "e6403f60b7f8e94f05dab229b7f85fc75e17d21743d19e89524c760ba59bd9d5",
+      "primaryUse": "Proteger SEO público y datos estructurados.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "state-edge-case-auditor",
+      "category": "state-quality",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/state-edge-case-auditor.agent.md",
+      "sha256": "92c5c690981e6206f93ee695f5e3743bc8bf7f9265bfecb2a756327a63188830",
+      "primaryUse": "Auditar estados límite y recuperación.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "supabase-guardian",
+      "category": "supabase-security",
+      "riskLevel": "R3",
+      "version": "1.0.0",
+      "path": ".github/agents/supabase-guardian.agent.md",
+      "sha256": "66ced8c77593e84cee35ce15e2a2d2fb32a4ffa8ce017cee60e7e57efad823c3",
+      "primaryUse": "Auditar límites Supabase bajo gate separado.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "ux-flow-architect",
+      "category": "ux-architecture",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/ux-flow-architect.agent.md",
+      "sha256": "e9a384653f2d569cae7b0cf2dea7b47f334def3f8243a5ffd36a3755fcaa9f61",
+      "primaryUse": "Auditar journeys y decisiones operativas.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "visual-design-director",
+      "category": "visual-design",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/visual-design-director.agent.md",
+      "sha256": "d7eaf484a4972a42952cae5b49601e329b5f87db0d4bcd1ba73c23676b7b2cf6",
+      "primaryUse": "Auditar jerarquía y fidelidad visual.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    },
+    {
+      "name": "visual-regression-auditor",
+      "category": "visual-regression",
+      "riskLevel": "R2",
+      "version": "1.0.0",
+      "path": ".github/agents/visual-regression-auditor.agent.md",
+      "sha256": "716d80256b5277ff5dc95cb04113ec69570c964d563e348c89d721b27870bceb",
+      "primaryUse": "Comparar estados visuales y baselines.",
+      "roadmapPhases": [
+        "V3-10A"
+      ],
+      "independentReviewer": "pr-quality-gate"
+    }
+  ]
+}

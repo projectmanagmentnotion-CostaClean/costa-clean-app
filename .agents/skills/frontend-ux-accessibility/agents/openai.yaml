@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend UX Accessibility"
+  short_description: "Audita UX mobile y accesibilidad"
+  default_prompt: "Usa $frontend-ux-accessibility para auditar UX, responsive y accesibilidad."

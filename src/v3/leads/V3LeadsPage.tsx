@@ -1,0 +1,82 @@
+import { useMemo, useRef, useState } from 'react'
+import { getStatusLabel } from '../../app/displayText'
+import type { ClientListItem } from '../../features/clients/types'
+import type { LeadDraftRecord } from '../../features/leadDrafts/types'
+import type { LeadListItem } from '../../features/leads/types'
+import type { QuoteListItem } from '../../features/quotes/types'
+import { V3EntityList, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3TabStrip } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
+import { readLeadDeepLink } from '../navigation/leadDeepLink'
+import { V3LeadRow } from './V3LeadRow'
+import { V3LeadWorkspace } from './V3LeadWorkspace'
+import { buildLeadKpiCounts } from './leadKpiModel'
+
+type LeadFilter = 'all' | 'new' | 'contacted' | 'quoted' | 'won' | 'lost' | 'archived'
+
+interface V3LeadsPageProps {
+  leads: LeadListItem[]
+  leadDrafts: LeadDraftRecord[]
+  clients: ClientListItem[]
+  quotes: QuoteListItem[]
+  error: string | null
+  initialLeadId?: string | null
+  onCreateLead: () => void
+  onRefresh: () => Promise<void>
+  onOpenQuote: (quoteId: string) => void
+  onOpenClient: (clientId: string) => void
+  onOpenLeadDeepLink: (leadId: string) => void
+  onBackToLeadList: () => void
+}
+
+function matchingDraft(lead: LeadListItem, drafts: LeadDraftRecord[]): LeadDraftRecord | null {
+  return drafts.find((draft) => draft.matched_lead_id === lead.id || draft.intake_submission_id === lead.public_intake_last_submission_id) ?? null
+}
+
+export function V3LeadsPage(props: V3LeadsPageProps) {
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(props.initialLeadId ?? (typeof window !== 'undefined' ? readLeadDeepLink(window.location.search) : null))
+  const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<LeadFilter>('all')
+  const listScrollYRef = useRef(0)
+  const visibleLeads = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase()
+    return props.leads.filter((lead) => {
+      const archived = Boolean(lead.archived_at)
+      if (filter === 'archived' ? !archived : archived) return false
+      if (filter !== 'all' && filter !== 'archived' && lead.status !== filter) return false
+      if (!query) return true
+      return [lead.full_name, lead.phone, lead.email, lead.city, lead.display_code, lead.id, lead.status, getStatusLabel(lead.status)].filter(Boolean).join(' ').toLocaleLowerCase().includes(query)
+    })
+  }, [filter, props.leads, search])
+  const listWindow = useV3ListWindow(visibleLeads, { resetKey: `${filter}|${search}` })
+  const selectedLead = props.leads.find((lead) => lead.id === selectedLeadId) ?? null
+  const selectedClient = selectedLead ? props.clients.find((client) => client.source_lead_id === selectedLead.id || client.id === selectedLead.converted_client_id) ?? null : null
+  const selectedQuotes = selectedLead ? props.quotes.filter((quote) => quote.lead_id === selectedLead.id) : []
+  const kpis = useMemo(() => buildLeadKpiCounts(props.leads), [props.leads])
+
+  function openLead(leadId: string) {
+    listScrollYRef.current = window.scrollY
+    setSelectedLeadId(leadId)
+    props.onOpenLeadDeepLink(leadId)
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'auto' }))
+  }
+
+  function closeLead() {
+    setSelectedLeadId(null)
+    props.onBackToLeadList()
+    window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
+  }
+
+  if (selectedLead) return <V3LeadWorkspace key={selectedLead.id} lead={selectedLead} draft={matchingDraft(selectedLead, props.leadDrafts)} quotes={selectedQuotes} client={selectedClient} onBack={closeLead} onRefresh={props.onRefresh} onOpenQuote={props.onOpenQuote} onOpenClient={props.onOpenClient} />
+
+  return <V3Page className="v3-leads-page">
+    <V3PageTitle eyebrow="Pipeline comercial" title="Leads" description="Oportunidades, intake y siguiente acción comercial." action={<V3PrimaryAction onClick={props.onCreateLead}>+ Nuevo lead</V3PrimaryAction>} />
+    <V3KpiGroup className="v3-leads-kpi-summary"><V3Kpi label="Activos" value={String(kpis.active)} hint="Oportunidades abiertas" tone="primary" /><V3Kpi label="Nuevos" value={String(kpis.new)} hint="Estado nuevo" tone="accent" /><V3Kpi label="Contactados" value={String(kpis.contacted)} hint="Seguimiento iniciado" tone="information" /><V3Kpi label="Presupuestados" value={String(kpis.quoted)} hint="Estado presupuestado" tone="financial" /></V3KpiGroup>
+    <div className="v3-leads-controls"><V3Search value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Nombre, teléfono, email, ciudad o código" /><span className="v3-leads-count">{visibleLeads.length} visibles</span></div>
+    <V3TabStrip label="Estado de lead" activeValue={filter} onChange={(value) => setFilter(value as LeadFilter)} options={[{ value: 'all', label: 'Todos' }, { value: 'new', label: 'Nuevos' }, { value: 'contacted', label: 'Contactados' }, { value: 'quoted', label: 'Presupuestados' }, { value: 'won', label: 'Ganados' }, { value: 'lost', label: 'Perdidos' }, { value: 'archived', label: 'Archivados' }]} />
+    <V3ListWorkspace label="Leads" {...listWindow} onPageChange={listWindow.setPage}>
+      {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando leads</strong><p>{props.error}</p></div> : null}
+      {!props.error && visibleLeads.length === 0 ? <div className="v3-state"><strong>Sin leads visibles</strong><p>Ajusta la búsqueda o el estado para continuar.</p></div> : null}
+      <V3EntityList label="Leads">{listWindow.pageItems.map((lead) => <V3LeadRow key={lead.id} lead={lead} onOpen={() => openLead(lead.id)} />)}</V3EntityList>
+    </V3ListWorkspace>
+  </V3Page>
+}

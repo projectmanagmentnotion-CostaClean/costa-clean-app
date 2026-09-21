@@ -10,7 +10,7 @@ import { ClientCreateForm } from '../clients/ClientCreateForm'
 import type { ClientListItem } from '../clients/types'
 import { saveInvoiceWithLines } from '../financial/financialWriteApi'
 import { JobCreateForm } from '../jobs/JobCreateForm'
-import { getJobBillingDisplayConcept, getJobBillingDraftLines } from '../jobs/jobBilling'
+import { getJobBillingDisplayConcept } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import { PropertyCreateForm } from '../properties/PropertyCreateForm'
 import type { PropertyListItem } from '../properties/types'
@@ -24,12 +24,12 @@ import {
   formatBillingLineSubtotalInput,
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
-import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import type { InvoiceListItem } from './types'
 import { useToast } from '../../shared/toasts/useToast'
 import { buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { resolveInvoiceJobId } from './invoiceJobContract'
 
 interface InvoiceCreateFormProps {
   clients: ClientListItem[]
@@ -95,14 +95,6 @@ function createDefaultFormState(): FormState {
     status: 'draft',
     notes: '',
   }
-}
-
-function buildVisibleInvoiceNotes(): string {
-  return [
-    'Servicio realizado segun presupuesto aprobado.',
-    'Condiciones economicas aplicadas segun presupuesto aceptado.',
-    'Precios sin IVA.',
-  ].join('\n')
 }
 
 function buildLinesFromPrefill(prefill: InvoiceCreatePrefill): BillingLineFormState[] {
@@ -178,7 +170,6 @@ export function InvoiceCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showJobCreate, setShowJobCreate] = useState(false)
@@ -263,49 +254,6 @@ export function InvoiceCreateForm({
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-    if (!selectedJob || form.origin_mode !== 'job') return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedJob.client_id,
-      property_id: selectedJob.property_id,
-      quote_id: selectedJob.quote_id ?? '',
-      notes: current.notes.trim() ? current.notes : selectedJob.quote_id ? buildVisibleInvoiceNotes() : '',
-    }))
-
-    const jobLines = getJobBillingDraftLines(selectedJob)
-    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
-    setLines(jobLines.length > 0 ? jobLines : quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
-  }, [form.origin_mode, selectedJob, selectedQuote])
-
-  useEffect(() => {
-    if (!selectedQuote || form.origin_mode !== 'quote') return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedQuote.client_id ?? current.client_id,
-      property_id: selectedQuote.property_id ?? current.property_id,
-      notes: current.notes.trim() ? current.notes : buildVisibleInvoiceNotes(),
-    }))
-
-    const quoteLines = getBillingDraftLinesFromQuote(selectedQuote)
-    setLines(quoteLines.length > 0 ? quoteLines : [createBlankBillingLine()])
-  }, [form.origin_mode, selectedQuote])
-
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) {
-      return
-    }
-
-    setForm(applyPrefillToForm(prefill))
-    setLines(buildLinesFromPrefill(prefill))
-    setSubmitError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [lastAppliedPrefillId, prefill])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setIsDirty(true)
@@ -446,7 +394,7 @@ export function InvoiceCreateForm({
       const savedInvoice = await saveInvoiceWithLines(
         {
           id: invoiceId,
-          job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
           quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
           client_id: form.client_id,
           property_id: form.property_id || null,
@@ -467,7 +415,7 @@ export function InvoiceCreateForm({
         id: invoiceId,
         display_code: savedInvoice.display_code,
         invoice_number: savedInvoice.invoice_number,
-        job_id: form.origin_mode === 'job' ? form.job_id : null,
+          job_id: resolveInvoiceJobId(form.origin_mode, form.job_id),
         quote_id: selectedQuote?.id ?? (form.origin_mode === 'quote' ? form.quote_id : null),
         client_id: form.client_id,
         client_display_code: selectedClient?.display_code ?? null,
@@ -984,6 +932,7 @@ export function InvoiceCreateForm({
                       </button>
                       {showClientFiscalInline ? (
                         <ClientBillingDetailsInlineForm
+                          key={selectedClient.id}
                           client={selectedClient}
                           onSaved={async (updatedClient) => {
                             await onCreated()

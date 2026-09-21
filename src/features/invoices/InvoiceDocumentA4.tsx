@@ -4,10 +4,12 @@ import { getStatusLabel } from '../../app/displayText'
 import { getInvoiceFiscalDisplayData } from '../clients/clientFiscalData'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
+import { brandAssets } from '../../v3/brand/brandAssets'
 
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
   variant?: 'document' | 'embedded' | 'print'
+  renderMode?: 'screen' | 'pdf'
   logoSrc?: string
 }
 
@@ -145,17 +147,20 @@ function formatQuantity(line: DocumentLine): string {
 export function InvoiceDocumentA4({
   invoice,
   variant = 'document',
-  logoSrc = '/branding/logo-costa-clean-web.png',
+  renderMode = 'screen',
+  logoSrc = brandAssets.logoPrimary.src,
 }: InvoiceDocumentA4Props) {
   const clientMeta = buildClientMeta(invoice)
   const documentLines = getDocumentLines(invoice)
 
-  const articleClassName =
+  const articleClassName = [
     variant === 'embedded'
       ? 'cc-invoice-a4 cc-invoice-a4--embedded'
       : variant === 'print'
         ? 'cc-invoice-a4 cc-invoice-a4--print'
-        : 'cc-invoice-a4'
+        : 'cc-invoice-a4',
+    renderMode === 'pdf' ? 'cc-invoice-a4--pdf' : '',
+  ].filter(Boolean).join(' ')
 
   return (
     <article className={articleClassName}>
@@ -169,7 +174,7 @@ export function InvoiceDocumentA4({
 
           <div className="cc-invoice-a4__brand-copy">
             <span className="cc-invoice-a4__eyebrow">CostaClean BCN</span>
-            <h1>FACTURA</h1>
+            <h1>FACTURA {invoice.invoice_number ?? 'Sin numero'}</h1>
             <p>Documento fiscal emitido conforme a las condiciones acordadas.</p>
           </div>
         </div>

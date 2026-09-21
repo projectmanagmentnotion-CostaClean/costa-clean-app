@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import {
   CdpConnection,
+  assertExpectedAppIdentity,
   buildViewUrl,
   captureScreenshot,
   closeBrowserSession,
@@ -41,7 +42,10 @@ async function main() {
   }
 
   const appUrl = process.env.QA_APP_URL?.trim() || storedState.appUrl
-  const browser = await detectBrowserExecutable()
+  const browser = await detectBrowserExecutable({
+    browserId: storedState.browserId,
+    executablePath: storedState.executablePath,
+  })
   const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
   const headless = process.argv.includes('--headless')
 
@@ -59,6 +63,7 @@ async function main() {
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
   await connection.connect()
   const session = await openBrowserSession(connection, appUrl)
+  await assertExpectedAppIdentity(connection, session.sessionId)
   const shellState = await waitForShellStable(connection, session.sessionId)
 
   if (shellState?.startupError) {
@@ -73,7 +78,19 @@ async function main() {
   const runScreenshotsDir = path.join(qaPaths.screenshotsDir, timestamp)
   const results = []
 
-  for (const viewport of defaultViewports()) {
+  const requestedViewportIds = (process.env.QA_VIEWPORT_IDS ?? '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean)
+  const viewports = requestedViewportIds.length > 0
+    ? defaultViewports().filter((viewport) => requestedViewportIds.includes(viewport.id))
+    : defaultViewports()
+
+  if (requestedViewportIds.length > 0 && viewports.length !== requestedViewportIds.length) {
+    throw new Error(`Unknown QA viewport id. Requested: ${requestedViewportIds.join(', ')}`)
+  }
+
+  for (const viewport of viewports) {
     await configureViewport(connection, session.sessionId, viewport)
     for (const viewId of defaultViews()) {
       const url = buildViewUrl(appUrl, viewId)

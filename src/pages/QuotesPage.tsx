@@ -21,59 +21,114 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { ClientListItem } from '../features/clients/types'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { NavigationGuard } from '../app/navigationGuard'
 import { LazyQuoteDocumentScreen } from '../features/documents/lazyDocumentScreens'
+import { buildCsv } from '../features/documents/csvExport'
+import { buildStoredZip, downloadBlob, makeUniqueArchivePath, makeZipBlobEntry } from '../features/documents/zipArchive'
+import { buildQuotePdfBlob, buildQuotePdfFileName, downloadQuotePdf } from '../features/quotes/quotePdfOutput'
+import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
+import { ConfirmDialog } from '../components/ConfirmDialog'
+import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
+import { updateQuoteStatus } from '../features/financial/financialWriteApi'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
+import { useToast } from '../shared/toasts/useToast'
+import { canConvertQuoteToInvoice, convertQuoteToInvoice } from '../features/quotes/quoteConversion'
+import { shareDocument } from '../v3/documents/shareDocument'
+import { V3QuotesPage } from '../v3/quotes/V3QuotesPage'
+import { V3QuoteCreateFlow } from '../v3/quotes/V3QuoteCreateFlow'
+import { V3QuoteEditFlow } from '../v3/quotes/V3QuoteEditFlow'
+import type { QuoteModuleFilter } from '../app/moduleFilters'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
-  default: (await import('../features/quotes/QuoteCreateFlow')).QuoteCreateFlow,
+  default: (await import('../features/quotes/QuoteCreateEntry')).QuoteCreateEntry,
 }))
 
 interface QuotesPageProps {
   quotes: QuoteListItem[]
   allQuotes: QuoteListItem[]
   invoices: InvoiceListItem[]
+  jobs: JobListItem[]
   expenses: ExpenseListItem[]
   clients: ClientListItem[]
   properties: PropertyListItem[]
   error: string | null
   onQuoteCreated: () => Promise<void>
+  onInvoicesChanged?: () => Promise<void>
   onCreateJobFromQuote: (quote: QuoteListItem) => void
+  onOpenClientWorkspace: (clientId: string) => void
+  onOpenPropertyWorkspace: (propertyId: string) => void
+  onOpenJobWorkspace: (jobId: string) => void
+  initialCreatePrefill?: QuoteCreatePrefill | null
+  onInitialCreatePrefillConsumed?: () => void
+  onOpenInvoiceDetail: (invoiceId: string) => void
   activeFilterLabel: string | null
+  activeFilter?: QuoteModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialQuoteId?: string | null
+  onOpenQuoteDeepLink?: (quoteId: string) => void
+  onBackToQuoteList?: () => void
 }
 
 export function QuotesPage({
   quotes,
   allQuotes,
   invoices,
+  jobs,
   expenses,
   clients,
   properties,
   error,
   onQuoteCreated,
+  onInvoicesChanged,
   onCreateJobFromQuote,
+  onOpenClientWorkspace,
+  onOpenPropertyWorkspace,
+  onOpenJobWorkspace,
+  initialCreatePrefill = null,
+  onInitialCreatePrefillConsumed,
+  onOpenInvoiceDetail,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialQuoteId = null,
+  onOpenQuoteDeepLink,
+  onBackToQuoteList,
 }: QuotesPageProps) {
+  const toast = useToast()
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null)
-  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showCreateForm, setShowCreateForm] = useState(Boolean(initialCreatePrefill))
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
+  const [majorEditQuote, setMajorEditQuote] = useState<QuoteListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
   const [showDuplicateReview, setShowDuplicateReview] = useState(false)
-  const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(null)
+  const [createPrefill, setCreatePrefill] = useState<QuoteCreatePrefill | null>(initialCreatePrefill)
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([])
+  const [visibleQuotes, setVisibleQuotes] = useState<QuoteListItem[]>(quotes)
+  const [bulkDialog, setBulkDialog] = useState<{ mode: 'sent' | 'rejected' | 'expired' | 'archive'; title: string; description: string } | null>(null)
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkFeedback, setBulkFeedback] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (initialCreatePrefill) onInitialCreatePrefillConsumed?.()
+  }, [initialCreatePrefill, onInitialCreatePrefillConsumed])
 
   const selectedQuote =
     quotes.find((quote) => quote.id === selectedQuoteId) ?? quotes[0] ?? null
   const selectedQuoteKey = selectedQuote?.id ?? null
+  const selectedQuotes = quotes.filter((quote) => selectedQuoteIds.includes(quote.id))
+  const allVisibleSelected = visibleQuotes.length > 0 && visibleQuotes.every((quote) => selectedQuoteIds.includes(quote.id))
 
   const hasPendingWork = hasCreateFormDirty || hasUnsavedDetailChanges || hasMajorEditDirty
   const sentQuotes = quotes.filter((quote) => quote.status === 'sent')
@@ -239,6 +294,187 @@ export function QuotesPage({
     })
   }
 
+  async function downloadQuoteDocument(targetQuote: QuoteListItem) {
+    try {
+      const result = await downloadQuotePdf(targetQuote, clients, properties)
+      if (result === 'downloaded' || result === 'shared') {
+        toast.success('PDF de presupuesto preparado', 'El presupuesto se ha descargado o compartido desde esta lista.')
+      }
+    } catch (error) {
+      toast.error('No se pudo descargar el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+    }
+  }
+
+  async function shareQuoteDocument(targetQuote: QuoteListItem) {
+    try {
+      const blob = await buildQuotePdfBlob(targetQuote, clients, properties)
+      const result = await shareDocument({
+        blob,
+        filename: buildQuotePdfFileName(targetQuote, clients),
+        title: `Presupuesto ${targetQuote.display_code ?? targetQuote.id}`,
+      })
+      if (result === 'shared') toast.success('Compartir abierto', 'El diálogo de compartir del dispositivo está disponible.')
+      if (result === 'downloaded') toast.info('PDF descargado', 'Este navegador no permite compartir archivos directamente.')
+    } catch (error) {
+      toast.error('No se pudo compartir el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+    }
+  }
+
+  async function convertQuoteDocument(targetQuote: QuoteListItem): Promise<string | null> {
+    if (!canConvertQuoteToInvoice(targetQuote, invoices)) return null
+    try {
+      const invoiceId = await convertQuoteToInvoice(targetQuote)
+      await onQuoteCreated()
+      await onInvoicesChanged?.()
+      toast.success('Factura creada', 'La factura real vinculada al presupuesto está lista.')
+      return invoiceId
+    } catch (error) {
+      toast.error('No se pudo convertir el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
+      return null
+    }
+  }
+
+  function toggleSelectionMode() {
+    setIsSelectionMode((current) => {
+      if (current) setSelectedQuoteIds([])
+      return !current
+    })
+  }
+
+  function toggleSelectAllVisible() {
+    const visibleIds = visibleQuotes.map((quote) => quote.id)
+    setSelectedQuoteIds((current) => allVisibleSelected
+      ? current.filter((id) => !visibleIds.includes(id))
+      : [...new Set([...current, ...visibleIds])])
+  }
+
+  async function runBulkAction() {
+    if (!bulkDialog) return
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    let completed = 0
+    const failures: string[] = []
+    for (const quote of selectedQuotes) {
+      try {
+        if (bulkDialog.mode === 'archive') {
+          await patchLifecycleEntity('quotes', quote.id, { archived_at: new Date().toISOString() })
+        } else {
+          await updateQuoteStatus(quote.id, bulkDialog.mode)
+        }
+        completed += 1
+      } catch (error) {
+        failures.push(`${quote.display_code ?? quote.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    await onQuoteCreated()
+    setBulkFeedback(failures.length > 0
+      ? `${completed} completados. ${failures.length} fallidos: ${failures.join(' | ')}`
+      : `${completed} presupuesto(s) actualizados.`)
+    setSelectedQuoteIds([])
+    setBulkDialog(null)
+    setBulkBusy(false)
+  }
+
+  function exportSelectedQuotes() {
+    const rows = selectedQuotes.map((quote) => {
+      const client = clients.find((item) => item.id === quote.client_id)
+      const property = properties.find((item) => item.id === quote.property_id)
+      return [
+        quote.display_code ?? quote.id,
+        quote.created_at ?? '',
+        client?.full_name ?? quote.client_name ?? quote.client_display_code ?? quote.lead_name ?? quote.lead_display_code,
+        property?.name ?? quote.property_display_code ?? '',
+        quote.subtotal,
+        quote.tax_amount,
+        quote.total,
+        quote.status,
+      ]
+    })
+    downloadBlob(new Blob([buildCsv(
+      ['Referencia', 'Fecha', 'Cliente/lead', 'Inmueble', 'Base', 'IVA', 'Total', 'Estado'],
+      rows,
+    )], { type: 'text/csv;charset=utf-8' }), 'presupuestos-seleccionados.csv')
+    setBulkFeedback(`${selectedQuotes.length} presupuestos exportados.`)
+  }
+
+  async function downloadSelectedQuotes() {
+    setBulkBusy(true)
+    setBulkFeedback(null)
+    const entries = []
+    const usedPaths = new Set<string>()
+    const failures: string[] = []
+    for (const quote of selectedQuotes) {
+      try {
+        entries.push(await makeZipBlobEntry(
+          makeUniqueArchivePath(buildQuotePdfFileName(quote, clients), usedPaths),
+          await buildQuotePdfBlob(quote, clients, properties),
+        ))
+      } catch (error) {
+        failures.push(`${quote.display_code ?? quote.id}: ${error instanceof Error ? error.message : 'error desconocido'}`)
+      }
+    }
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'presupuestos-seleccionados.zip')
+    setBulkFeedback(
+      failures.length > 0
+        ? `${entries.length} PDFs descargados. ${failures.length} presupuestos no pudieron generarse: ${failures.join(' | ')}`
+        : `${entries.length} PDFs descargados en presupuestos-seleccionados.zip.`,
+    )
+    setSelectedQuoteIds([])
+    setBulkBusy(false)
+  }
+
+  async function bulkDownloadQuotesV3(targets: QuoteListItem[]) {
+    const entries = []; const usedPaths = new Set<string>()
+    for (const quote of targets) entries.push(await makeZipBlobEntry(makeUniqueArchivePath(buildQuotePdfFileName(quote, clients), usedPaths), await buildQuotePdfBlob(quote, clients, properties)))
+    if (entries.length > 0) downloadBlob(buildStoredZip(entries), 'presupuestos-seleccionados.zip')
+  }
+  function bulkExportQuotesV3(targets: QuoteListItem[]) {
+    const rows = targets.map((quote) => { const client = clients.find((item) => item.id === quote.client_id); const property = properties.find((item) => item.id === quote.property_id); return [quote.display_code ?? quote.id, quote.created_at ?? '', client?.full_name ?? quote.client_name ?? quote.client_display_code ?? quote.lead_name ?? quote.lead_display_code, property?.name ?? quote.property_display_code ?? '', quote.subtotal, quote.tax_amount, quote.total, quote.status] })
+    downloadBlob(new Blob([buildCsv(['Referencia', 'Fecha', 'Cliente/lead', 'Inmueble', 'Base', 'IVA', 'Total', 'Estado'], rows)], { type: 'text/csv;charset=utf-8' }), 'presupuestos-seleccionados.csv')
+  }
+
+  if (v3Mode) {
+    const createVisible = showCreateForm || Boolean(createPrefill)
+    return (
+      <>
+        <V3QuotesPage
+          quotes={allQuotes}
+          allQuotes={allQuotes}
+          clients={clients}
+          properties={properties}
+          jobs={jobs}
+          invoices={invoices}
+          error={error}
+          initialQuoteId={initialQuoteId}
+          onCreateQuote={() => setShowCreateForm(true)}
+          onDownloadQuote={downloadQuoteDocument}
+          onOpenDocument={openQuoteDocument}
+          onShareQuote={shareQuoteDocument}
+          onConvertQuote={convertQuoteDocument}
+          onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setMajorEditQuote(quote); setShowMajorEdit(true) }}
+          onBulkDownload={bulkDownloadQuotesV3}
+          onBulkExportCsv={bulkExportQuotesV3}
+          onOpenClientWorkspace={onOpenClientWorkspace}
+          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenInvoiceDetail={onOpenInvoiceDetail}
+          onOpenQuoteDeepLink={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
+          onBackToQuoteList={() => onBackToQuoteList?.()}
+          duplicateGroups={duplicateGroups}
+          reviewStateByGroupId={reviewStateByGroupId}
+          onMarkDuplicateReviewed={markReviewed}
+          onIgnoreDuplicateGroup={ignoreGroup}
+          onReopenDuplicateGroup={reopenGroup}
+          onOpenDuplicateRecord={(quoteId) => onOpenQuoteDeepLink?.(quoteId)}
+          activeFilter={activeFilter}
+          activeFilterLabel={activeFilterLabel}
+        />
+        {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onDirtyChange={setHasCreateFormDirty} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false); onInitialCreatePrefillConsumed?.() })} /> : null}
+        {showMajorEdit && (majorEditQuote ?? selectedQuote) ? <V3QuoteEditFlow quote={majorEditQuote ?? selectedQuote!} onDirtyChange={setHasMajorEditDirty} onRefreshData={onQuoteCreated} onCompleted={() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) }} onCancel={() => runGuarded(() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) })} /> : null}
+      </>
+    )
+  }
+
   return (
     <>
       <section className="page-section cc-master-page cc-doc-page">
@@ -302,9 +538,12 @@ export function QuotesPage({
         </ExecutiveHeader>
 
         {summaryKpis.length > 0 ? (
-          <div className="cc-kpi-grid cc-kpi-grid--compact">
-            {summaryKpis}
-          </div>
+          <details className="cc-secondary-summary">
+            <summary>Ver resumen</summary>
+            <div className="cc-kpi-grid cc-kpi-grid--compact">
+              {summaryKpis}
+            </div>
+          </details>
         ) : null}
 
         {showCreateForm ? (
@@ -338,6 +577,9 @@ export function QuotesPage({
                 prefill={createPrefill}
                 onRefreshData={onQuoteCreated}
                 onCompleted={handleQuoteCreated}
+                onCreatedQuote={(quote) => {
+                  setSelectedQuoteId(quote.id)
+                }}
                 onOpenExistingQuote={(quoteId) => {
                   setHasCreateFormDirty(false)
                   setShowCreateForm(false)
@@ -364,7 +606,7 @@ export function QuotesPage({
 
         {duplicateGroups.length > 0 ? (
           <DuplicateNotice
-            title={`${duplicateGroups.length} grupo(s) de posibles presupuestos duplicados`}
+            title={`${duplicateGroups.length} posibles presupuestos duplicados`}
             description="Se han detectado coincidencias por cliente, propiedad y contexto económico. Revísalas desde una surface dedicada."
             actionLabel="Revisar duplicados"
             onAction={() => setShowDuplicateReview(true)}
@@ -419,6 +661,27 @@ export function QuotesPage({
           <ModuleFilterBar label={activeFilterLabel} onClear={onClearFilter} />
         ) : null}
 
+        {isSelectionMode ? (
+          <BulkSelectionToolbar
+            entityLabel="presupuestos"
+            selectedCount={selectedQuoteIds.length}
+            totalVisibleCount={visibleQuotes.length}
+            allVisibleSelected={allVisibleSelected}
+            onToggleSelectAllVisible={toggleSelectAllVisible}
+            onClearSelection={() => setSelectedQuoteIds([])}
+            actions={[
+              { id: 'download', label: 'Descargar', disabled: bulkBusy, onClick: () => void downloadSelectedQuotes() },
+              { id: 'export', label: 'Exportar CSV', onClick: exportSelectedQuotes },
+              { id: 'sent', label: 'Marcar enviados', onClick: () => setBulkDialog({ mode: 'sent', title: 'Marcar presupuestos como enviados', description: `Se actualizarán ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'rejected', label: 'Rechazar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'rejected', title: 'Rechazar presupuestos', description: `Se marcarán como rechazados ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'expired', label: 'Caducar', onClick: () => setBulkDialog({ mode: 'expired', title: 'Caducar presupuestos', description: `Se marcarán como vencidos ${selectedQuotes.length} presupuesto(s).` }) },
+              { id: 'archive', label: 'Archivar', tone: 'warning', onClick: () => setBulkDialog({ mode: 'archive', title: 'Archivar presupuestos', description: `Se archivarán ${selectedQuotes.length} presupuesto(s).` }) },
+            ]}
+          />
+        ) : null}
+
+        {bulkFeedback ? <div className="cc-alert cc-alert--success"><strong>Operación masiva completada</strong><p>{bulkFeedback}</p></div> : null}
+
         <div className="cc-master-layout cc-master-layout--list-first cc-doc-workspace">
           <div className="cc-master-layout__list">
             <QuotesList
@@ -428,6 +691,16 @@ export function QuotesPage({
               error={error}
               selectedQuoteId={selectedQuoteKey}
               onOpenDocument={openQuoteDocument}
+              onDownloadDocument={downloadQuoteDocument}
+              selectedQuoteIds={selectedQuoteIds}
+              isSelectionMode={isSelectionMode}
+              onToggleSelectionMode={toggleSelectionMode}
+              onToggleQuoteSelection={(quoteId) => setSelectedQuoteIds((current) => current.includes(quoteId) ? current.filter((id) => id !== quoteId) : [...current, quoteId])}
+              onStateChange={(state) => {
+                setVisibleQuotes(state.visibleQuotes)
+                const visibleIds = new Set(state.visibleQuotes.map((quote) => quote.id))
+                setSelectedQuoteIds((current) => current.filter((id) => visibleIds.has(id)))
+              }}
               onSelectQuote={(quote) => {
                 if (quote.id === selectedQuoteKey) return
 
@@ -498,6 +771,17 @@ export function QuotesPage({
           />
         </Suspense>
       ) : null}
+
+      <ConfirmDialog
+        isOpen={Boolean(bulkDialog)}
+        title={bulkDialog?.title ?? 'Confirmar acción masiva'}
+        description={bulkDialog?.description ?? ''}
+        confirmLabel="Aplicar acción"
+        tone="warning"
+        isBusy={bulkBusy}
+        onCancel={() => setBulkDialog(null)}
+        onConfirm={() => void runBulkAction()}
+      />
     </>
   )
 }

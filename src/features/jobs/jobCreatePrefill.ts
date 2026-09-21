@@ -17,6 +17,10 @@ export interface JobCreatePrefill {
   }>
 }
 
+export function getJobCreateInitialStep(prefill: JobCreatePrefill | null): 0 | 1 {
+  return prefill?.client_id && prefill.property_id ? 1 : 0
+}
+
 function createPrefillId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()

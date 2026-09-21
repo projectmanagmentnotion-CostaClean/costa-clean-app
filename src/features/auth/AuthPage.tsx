@@ -1,16 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import { getSupabaseClient } from '../../lib/supabase'
+import { brandAssets } from '../../v3/brand/brandAssets'
 import './auth.css'
 
 interface AuthPageProps {
   onSignedIn: () => Promise<void> | void
+  surface?: 'legacy' | 'v3'
 }
 
-export function AuthPage({ onSignedIn }: AuthPageProps) {
+export function AuthPage({ onSignedIn, surface = 'legacy' }: AuthPageProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const isV3Surface = surface === 'v3'
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -44,18 +47,20 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
   }
 
   return (
-    <main className="auth-page">
-      <div className="auth-page__ambient auth-page__ambient--one" aria-hidden="true" />
-      <div className="auth-page__ambient auth-page__ambient--two" aria-hidden="true" />
+    <main className={isV3Surface ? 'v3-auth-page' : 'auth-page'}>
+      {!isV3Surface ? <>
+        <div className="auth-page__ambient auth-page__ambient--one" aria-hidden="true" />
+        <div className="auth-page__ambient auth-page__ambient--two" aria-hidden="true" />
+      </> : null}
 
-      <section className="auth-card">
-        <div className="auth-page__wave" aria-hidden="true" />
+      <section className={isV3Surface ? 'v3-auth-card' : 'auth-card'}>
+        {!isV3Surface ? <div className="auth-page__wave" aria-hidden="true" /> : null}
         <div className="auth-card__topbar">
           <div className="auth-brand">
             <div className="auth-brand__copy">
               <p className="auth-kicker">CostaClean CRM</p>
               <img
-                src="/branding/Costa_Clean-LOGO-HORIZONTAL.png"
+                src={brandAssets.logoPrimary.src}
                 alt="CostaClean"
                 className="auth-brand__logo"
               />
@@ -106,7 +111,7 @@ export function AuthPage({ onSignedIn }: AuthPageProps) {
           {error ? (
             <div className="auth-error">
               <strong>No se pudo iniciar sesión</strong>
-              <p>{error}</p>
+              <p>{isV3Surface ? 'Revisa tus datos e inténtalo de nuevo.' : error}</p>
             </div>
           ) : null}
         </form>

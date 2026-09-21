@@ -5,6 +5,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import { FullscreenStepFlow, type FullscreenStepFlowContextItem } from '../../components/FullscreenStepFlow'
 import { findPaymentDuplicateGroups } from '../duplicates/duplicateEngine'
+import { getPaymentAmountError } from './paymentAmount'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import { getInvoiceFinancialStatusLabel, getPaymentOriginLabel } from '../invoices/paymentState'
@@ -156,15 +157,6 @@ export function PaymentCreateFlow({
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
 
-  useEffect(() => {
-    setForm(buildInitialState({
-      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
-      prefillAmount,
-      prefillPaymentMethod,
-      prefillNotes,
-    }))
-    setIsDirty(false)
-  }, [availableInvoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
@@ -189,19 +181,6 @@ export function PaymentCreateFlow({
   const outstandingAmount = Number(selectedInvoice?.outstanding_amount ?? selectedInvoice?.total ?? 0)
   const enteredAmount = parseDecimalInput(form.amount)
   const amountIntentLabel = getAmountIntentLabel(enteredAmount, outstandingAmount)
-
-  useEffect(() => {
-    if (!selectedInvoice || prefillAmount) return
-
-    setForm((current) => {
-      if (current.amount.trim()) return current
-
-      return {
-        ...current,
-        amount: formatMoneyInput(outstandingAmount),
-      }
-    })
-  }, [outstandingAmount, prefillAmount, selectedInvoice])
 
   function markDirty() {
     setIsDirty(true)
@@ -291,15 +270,10 @@ export function PaymentCreateFlow({
       }
 
       const amount = parseDecimalInput(form.amount)
-      if (Number.isNaN(amount)) {
+      const amountError = getPaymentAmountError(amount, outstandingAmount)
+      if (amountError) {
         setCurrentStep(1)
-        setSubmitError('El importe debe ser un numero valido.')
-        return
-      }
-
-      if (amount <= 0) {
-        setCurrentStep(1)
-        setSubmitError('El importe del cobro debe ser mayor que cero.')
+        setSubmitError(amountError)
         return
       }
 

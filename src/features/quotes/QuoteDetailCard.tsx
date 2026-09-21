@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import type { QuoteListItem } from './types'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
@@ -27,6 +27,7 @@ import {
   getQuoteCommercialSummary,
   getQuoteCustomerFacingTotalLabel,
 } from './quoteCommercialPresentation'
+import { buildQuoteScopeLabel } from './quoteScope'
 import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
 import { isArchivedEntity } from '../../shared/lifecycle/entityLifecycle'
 
@@ -159,6 +160,7 @@ function QuoteDetailCardContent({
   const [pendingRejectedFormSave, setPendingRejectedFormSave] = useState(false)
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false)
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showTrashConfirm, setShowTrashConfirm] = useState(false)
@@ -171,6 +173,11 @@ function QuoteDetailCardContent({
   const [lines, setLines] = useState<QuoteLineFormState[]>([createBlankQuoteLine()])
 
   useEffect(() => {
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    if (isDirtyRef.current) return
     setIsEditing(false)
     setSaveError(null)
     setSuccessMessage(null)
@@ -188,11 +195,6 @@ function QuoteDetailCardContent({
     onUnsavedChange?.(isDirty)
     return () => onUnsavedChange?.(false)
   }, [isDirty, onUnsavedChange])
-
-  useEffect(() => {
-    if (!majorEditMode) return
-    setIsEditing(true)
-  }, [hydratedQuote.id, majorEditMode])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) {
@@ -791,7 +793,7 @@ function QuoteDetailCardContent({
             </label>
 
             <label className="form-field form-field-full">
-              <span>Notas</span>
+              <span>Alcance presupuesto</span>
               <textarea
                 value={form.notes}
                 onChange={(event) => updateField('notes', event.target.value)}
@@ -872,8 +874,8 @@ function QuoteDetailCardContent({
             </div>
 
             <div className="detail-row">
-              <span className="detail-label">Notas</span>
-              <strong>{hydratedQuote.notes ?? 'Sin notas'}</strong>
+              <span className="detail-label">Alcance presupuesto</span>
+              <strong>{buildQuoteScopeLabel(hydratedQuote)}</strong>
             </div>
           </div>
           </>

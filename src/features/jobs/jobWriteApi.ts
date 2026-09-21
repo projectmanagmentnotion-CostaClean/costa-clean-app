@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '../../lib/supabase'
 import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import type { JobBillingLineItem } from './types'
 
 type JsonPayload = object
@@ -88,7 +89,7 @@ export function buildSaveJobWithLinesRpcRequest({
   lines: JsonPayload[]
 }) {
   return {
-    url: `${supabaseUrl}/rest/v1/rpc/save_job_with_lines`,
+    url: `${supabaseUrl}/rest/v1/${operationalWriteRpcPaths.saveJobWithLines}`,
     init: {
       method: 'POST',
       headers: {

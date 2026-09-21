@@ -14,14 +14,24 @@ import { LeadsList } from '../features/leads/LeadsList'
 import { compareText, createDefaultPreferences } from '../features/lists/listPreferences'
 import { applyTextSearch, recentFirstSort } from '../features/lists/utils'
 import type { LeadListItem } from '../features/leads/types'
+import type { QuoteListItem } from '../features/quotes/types'
+import { V3LeadsPage } from '../v3/leads/V3LeadsPage'
+import { V3LeadCreateFlow } from '../v3/leads/V3LeadCreateFlow'
 
 interface LeadsPageProps {
   leads: LeadListItem[]
   leadDrafts: LeadDraftRecord[]
   clients: ClientListItem[]
+  quotes?: QuoteListItem[]
   error: string | null
   onLeadCreated: () => Promise<void>
   onLeadConverted: () => Promise<void>
+  v3Mode?: boolean
+  initialLeadId?: string | null
+  onOpenLeadDeepLink?: (leadId: string) => void
+  onBackToLeadList?: () => void
+  onOpenQuote?: (quoteId: string) => void
+  onOpenClient?: (clientId: string) => void
 }
 
 const visibleLeadDraftStatuses = new Set<LeadDraftRecord['status']>([
@@ -48,9 +58,16 @@ export function LeadsPage({
   leads,
   leadDrafts,
   clients,
+  quotes = [],
   error,
   onLeadCreated,
   onLeadConverted,
+  v3Mode = false,
+  initialLeadId = null,
+  onOpenLeadDeepLink = () => undefined,
+  onBackToLeadList = () => undefined,
+  onOpenQuote = () => undefined,
+  onOpenClient = () => undefined,
 }: LeadsPageProps) {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
@@ -129,6 +146,13 @@ export function LeadsPage({
     reopenGroup,
   } = useDuplicateResolution(rawDuplicateGroups)
 
+  if (v3Mode) {
+    return <>
+      <V3LeadsPage leads={leads} leadDrafts={leadDrafts} clients={clients} quotes={quotes} error={error} initialLeadId={initialLeadId} onCreateLead={() => setShowCreateForm(true)} onRefresh={onLeadConverted} onOpenQuote={onOpenQuote} onOpenClient={onOpenClient} onOpenLeadDeepLink={onOpenLeadDeepLink} onBackToLeadList={onBackToLeadList} />
+      {showCreateForm ? <V3LeadCreateFlow existingLeads={leads} onCreated={onLeadCreated} onCancel={() => setShowCreateForm(false)} onOpenExistingLead={(leadId) => { setShowCreateForm(false); setSelectedLeadId(leadId); onOpenLeadDeepLink(leadId) }} onDirtyChange={() => undefined} /> : null}
+    </>
+  }
+
   return (
     <section className="page-section cc-master-page">
       <div className="section-header page-header-actions cc-master-page__hero">
@@ -170,7 +194,7 @@ export function LeadsPage({
 
       {duplicateGroups.length > 0 ? (
         <DuplicateNotice
-          title={`${duplicateGroups.length} grupo(s) de posibles leads duplicados`}
+        title={`${duplicateGroups.length} posibles leads duplicados`}
           description="Se han detectado coincidencias por teléfono, email o contexto comercial. Revísalas desde una surface corta antes de seguir ampliando el pipeline."
           actionLabel="Revisar duplicados"
           onAction={() => setShowDuplicateReview(true)}
@@ -247,6 +271,7 @@ export function LeadsPage({
 
         <div className="cc-master-layout__detail">
           <LeadDetailCard
+            key={selectedLead?.id ?? 'no-lead'}
             lead={selectedLead}
             leadDraft={selectedLeadDraft}
             alreadyConverted={selectedLeadAlreadyConverted}

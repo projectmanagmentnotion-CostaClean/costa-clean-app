@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getAlertActionLabel,
   getAlertBucket,
+  getAlertRoutingLabel,
   groupAlertsByBucket,
 } from './alertPresentation'
 import type { AutomationAlertItem } from './types'
@@ -30,7 +31,7 @@ describe('alertPresentation', () => {
     })
 
     expect(getAlertBucket(alert)).toBe('critical')
-    expect(getAlertActionLabel(alert)).toBe('Abrir cobros urgentes')
+    expect(getAlertActionLabel(alert)).toBe('Revisar cobros')
   })
 
   it('maps follow-up rules into the follow_up bucket', () => {
@@ -65,5 +66,15 @@ describe('alertPresentation', () => {
     expect(grouped.follow_up).toHaveLength(1)
     expect(grouped.action[0]?.id).toBe('warning-alert')
     expect(grouped.follow_up[0]?.id).toBe('follow-up-alert')
+  })
+
+  it('keeps routing context human-readable for every supported destination', () => {
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'module', view: 'invoices', filterKey: 'invoices', filterValue: 'pending' } }))).toBe('Facturación')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'module', view: 'quotes', filterKey: 'quotes', filterValue: 'pending' } }))).toBe('Presupuestos')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'module', view: 'jobs', filterKey: 'jobs', filterValue: 'completed_without_invoice_2d' } }))).toBe('Servicios')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'module', view: 'expenses', filterKey: 'expenses', filterValue: 'pending_review' } }))).toBe('Gastos')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'module', view: 'payments', filterKey: 'payments', filterValue: 'current_month' } }))).toBe('Cobros')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'view', view: 'leads' } }))).toBe('Solicitudes')
+    expect(getAlertRoutingLabel(buildAlert({ routing: { kind: 'quarterly_closing', fiscalYear: 2026, fiscalQuarter: 2 } }))).toBe('Cierre trimestral')
   })
 })

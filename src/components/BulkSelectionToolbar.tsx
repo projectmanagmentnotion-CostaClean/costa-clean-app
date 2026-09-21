@@ -7,6 +7,7 @@ interface BulkSelectionAction {
 }
 
 interface BulkSelectionToolbarProps {
+  entityLabel?: string
   selectedCount: number
   totalVisibleCount: number
   allVisibleSelected: boolean
@@ -16,6 +17,7 @@ interface BulkSelectionToolbarProps {
 }
 
 export function BulkSelectionToolbar({
+  entityLabel = 'registros',
   selectedCount,
   totalVisibleCount,
   allVisibleSelected,
@@ -23,13 +25,15 @@ export function BulkSelectionToolbar({
   onClearSelection,
   actions,
 }: BulkSelectionToolbarProps) {
-  const hasSelection = selectedCount > 0
+  if (selectedCount === 0) return null
+
+  const [primaryAction, ...secondaryActions] = actions
 
   return (
-    <section className="data-section cc-bulk-toolbar" aria-label="Acciones masivas">
+    <section className="data-section cc-bulk-toolbar cc-bulk-toolbar--active" aria-label={`Acciones masivas para ${selectedCount} ${entityLabel}`}>
       <div className="cc-bulk-toolbar__summary">
-        <strong>{hasSelection ? `${selectedCount} seleccionado(s)` : 'Modo seleccion activo'}</strong>
-        <span>{hasSelection ? `${totalVisibleCount} visibles en la lista actual` : 'Marca facturas concretas o selecciona todos los visibles para operar en lote.'}</span>
+        <strong>{selectedCount} seleccionadas</strong>
+        <span>{totalVisibleCount} visibles</span>
       </div>
 
       <div className="cc-bulk-toolbar__actions">
@@ -49,17 +53,36 @@ export function BulkSelectionToolbar({
           Limpiar seleccion
         </button>
 
-        {actions.map((action) => (
+        {primaryAction ? (
           <button
-            key={action.id}
+            key={primaryAction.id}
             type="button"
-            className={action.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
-            onClick={action.onClick}
-            disabled={action.disabled || !hasSelection}
+            className={primaryAction.tone === 'warning' ? 'primary-button cc-confirm-dialog__confirm--warning' : 'primary-button'}
+            onClick={primaryAction.onClick}
+            disabled={primaryAction.disabled}
           >
-            {action.label}
+            {primaryAction.label}
           </button>
-        ))}
+        ) : null}
+
+        {secondaryActions.length > 0 ? (
+          <details className="cc-bulk-toolbar__more">
+            <summary>Más</summary>
+            <div className="cc-bulk-toolbar__more-actions">
+              {secondaryActions.map((action) => (
+                <button
+                  key={action.id}
+                  type="button"
+                  className={action.tone === 'warning' ? 'secondary-button cc-confirm-dialog__confirm--warning' : 'secondary-button'}
+                  onClick={action.onClick}
+                  disabled={action.disabled}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          </details>
+        ) : null}
       </div>
     </section>
   )

@@ -24,6 +24,10 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
+import { V3JobsPage } from '../v3/jobs/V3JobsPage'
+import { V3JobCreateFlow } from '../v3/jobs/V3JobCreateFlow'
+import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
+import type { JobModuleFilter } from '../app/moduleFilters'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -45,9 +49,13 @@ interface JobsPageProps {
   createPrefill: JobCreatePrefill | null
   onPrefillConsumed: () => void
   activeFilterLabel: string | null
+  activeFilter?: JobModuleFilter | null
   onClearFilter: () => void
   onUnsavedChange?: (hasUnsavedChanges: boolean, contextLabel?: string) => void
   confirmNavigation?: NavigationGuard
+  v3Mode?: boolean
+  initialJobId?: string | null
+  onCreateInvoiceFromJob?: (job: JobListItem) => void
 }
 
 export function JobsPage({
@@ -66,9 +74,13 @@ export function JobsPage({
   createPrefill,
   onPrefillConsumed,
   activeFilterLabel,
+  activeFilter = null,
   onClearFilter,
   onUnsavedChange,
   confirmNavigation,
+  v3Mode = false,
+  initialJobId = null,
+  onCreateInvoiceFromJob,
 }: JobsPageProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -131,6 +143,34 @@ export function JobsPage({
     onUnsavedChange?.(hasPendingWork, 'cambios sin guardar en servicios')
     return () => onUnsavedChange?.(false)
   }, [hasPendingWork, onUnsavedChange])
+
+  if (v3Mode) {
+    return <>
+      <V3JobsPage
+        jobs={jobs}
+        clients={clients}
+        properties={properties}
+        quotes={quotes}
+        invoices={invoices}
+        payments={payments}
+        error={error}
+        initialJobId={initialJobId}
+        duplicateCount={duplicateGroups.length}
+        onReviewDuplicates={() => setShowDuplicateReview(true)}
+        onCreateJob={() => setShowCreateForm(true)}
+        onRefresh={onJobCreated}
+        onOpenClient={(id) => onOpenClientWorkspace(id)}
+        onOpenProperty={(id) => onOpenPropertyWorkspace(id)}
+        onOpenQuote={onOpenQuoteDetail}
+        onOpenInvoice={onOpenInvoiceDetail}
+        onCreateInvoice={(job) => onCreateInvoiceFromJob?.(job)}
+        activeFilter={activeFilter}
+        activeFilterLabel={activeFilterLabel}
+      />
+      {isCreateFormVisible ? <V3JobCreateFlow key={effectiveCreatePrefill?.request_id ?? 'new-job'} clients={clients} properties={properties} quotes={quotes} jobs={jobs} onRefreshData={onJobCreated} onCompleted={handleJobFlowCompleted} prefill={effectiveCreatePrefill} onCreatedJob={setRecentCreatedJob} onOpenExistingJob={handleOpenWorkspace} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} onDirtyChange={setHasCreateFormDirty} /> : null}
+      {showDuplicateReview ? <V3DuplicateReviewSheet title="Revisión de servicios duplicados" description="Estas coincidencias ya existen en la agenda operativa." groups={duplicateGroups} reviewStateByGroupId={reviewStateByGroupId} onMarkReviewed={markReviewed} onIgnoreGroup={ignoreGroup} onReopenGroup={reopenGroup} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(jobId) => { setShowDuplicateReview(false); handleOpenWorkspace(jobId) }} /> : null}
+    </>
+  }
 
   function runGuarded(action: () => void) {
     if (!hasPendingWork || !confirmNavigation) {

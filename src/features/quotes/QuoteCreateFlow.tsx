@@ -39,7 +39,7 @@ import type { QuoteListItem } from './types'
 import './QuoteCreateFlow.css'
 import '../shared/fullscreen-create-flow.css'
 
-interface QuoteCreateFlowProps extends FullViewActionFlowProps {
+export interface QuoteCreateFlowProps extends FullViewActionFlowProps {
   clients: ClientListItem[]
   properties: PropertyListItem[]
   quotes?: QuoteListItem[]
@@ -136,30 +136,12 @@ export function QuoteCreateFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [successState, setSuccessState] = useState<QuoteCreateSuccessState | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
-
-    setForm({
-      client_id: prefill.client_id || contextClientId || '',
-      property_id: prefill.property_id || contextPropertyId || '',
-      status: 'draft',
-      notes: prefill.notes,
-    })
-    setLines(createInitialLines(prefill))
-    setCurrentStep(stepIndexById.client)
-    setSubmitError(null)
-    setIsDirty(false)
-    setSuccessState(null)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [contextClientId, contextPropertyId, lastAppliedPrefillId, prefill])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []
@@ -832,7 +814,7 @@ export function QuoteCreateFlow({
             <article className="cc-create-flow__hero-card">
               <span className="cc-step-flow__eyebrow">Paso 4</span>
               <strong>Define condiciones y seguimiento</strong>
-              <small>El estado comercial y las notas quedan juntos para no mezclarlos con lineas ni relaciones.</small>
+              <small>El alcance comercial y el estado quedan juntos para no mezclarlos con lineas ni relaciones.</small>
             </article>
 
             <div className="cc-create-flow__grid">
@@ -851,12 +833,12 @@ export function QuoteCreateFlow({
               </article>
 
               <label className="form-field form-field-full">
-                <span>Notas</span>
+                <span>Alcance presupuesto</span>
                 <textarea
                   value={form.notes}
                   onChange={(event) => updateField('notes', event.target.value)}
                   rows={5}
-                  placeholder="Condiciones, alcance, exclusiones o notas comerciales"
+                  placeholder="Servicio de camareros, condiciones o exclusiones"
                 />
               </label>
             </div>
@@ -950,7 +932,7 @@ export function QuoteCreateFlow({
               <article className="cc-create-flow__review-card">
                 <span>Estado</span>
                 <strong>{getStatusOptionLabel(form.status)}</strong>
-                <small>{form.notes.trim() ? 'Con notas comerciales' : 'Sin notas adicionales'}</small>
+                <small>{form.notes.trim() ? 'Con alcance comercial' : 'Sin alcance adicional'}</small>
               </article>
               <article className="cc-create-flow__review-card">
                 <span>{commercialSummary.totalLabel}</span>
@@ -966,7 +948,7 @@ export function QuoteCreateFlow({
 
             {form.notes.trim() ? (
               <article className="cc-create-flow__panel">
-                <strong>Notas comerciales</strong>
+                <strong>Alcance comercial</strong>
                 <small>{form.notes.trim()}</small>
               </article>
             ) : null}

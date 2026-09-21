@@ -340,6 +340,7 @@ export function ExpenseDetailCard({
           }}
         >
           <ExpenseEditFlow
+            key={expense?.id ?? 'edit-expense'}
             expense={expense}
             allExpenses={expenses}
             quotes={quotes}

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
@@ -292,6 +292,8 @@ export function InvoiceDetailCard({
   const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [showTrashConfirm, setShowTrashConfirm] = useState(false)
+  const isDirtyRef = useRef(false)
+  const hasPaymentFormDirtyRef = useRef(false)
   const [form, setForm] = useState<EditFormState>({
     job_id: '',
     client_id: '',
@@ -300,6 +302,14 @@ export function InvoiceDetailCard({
     notes: '',
   })
   const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
+
+  useEffect(() => {
+    isDirtyRef.current = isDirty
+  }, [isDirty])
+
+  useEffect(() => {
+    hasPaymentFormDirtyRef.current = hasPaymentFormDirty
+  }, [hasPaymentFormDirty])
 
   const selectedJob = useMemo(
     () => jobs.find((job) => job.id === form.job_id) ?? null,
@@ -365,49 +375,9 @@ export function InvoiceDetailCard({
   )
 
   useEffect(() => {
-    if (!invoice) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setPaymentActionMode(null)
-      setIsDirty(false)
-      setHasPaymentFormDirty(false)
-      setForm({
-        job_id: '',
-        client_id: '',
-        issue_date: '',
-        status: 'draft',
-        notes: '',
-      })
-      setLines([createBlankLine()])
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setPaymentActionMode(null)
-    setIsDirty(false)
-    setHasPaymentFormDirty(false)
-    setForm({
-      job_id: invoice.job_id ?? '',
-      client_id: invoice.client_id,
-      issue_date: invoice.issue_date,
-      status: invoice.status,
-      notes: invoice.notes ?? '',
-    })
-    setLines(getFormLinesFromInvoice(invoice))
-  }, [invoice])
-
-  useEffect(() => {
     onUnsavedChange?.(isDirty || hasPaymentFormDirty)
     return () => onUnsavedChange?.(false)
   }, [hasPaymentFormDirty, isDirty, onUnsavedChange])
-
-  useEffect(() => {
-    if (!invoice || !majorEditMode) return
-    setIsEditing(true)
-  }, [invoice, majorEditMode])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
@@ -833,24 +803,28 @@ export function InvoiceDetailCard({
     && invoice.status !== 'cancelled'
     && (paymentSummary?.outstandingAmount ?? invoice.total) > 0.009,
   )
-  const shouldShowDocumentPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status !== 'draft')
-  const shouldShowEditPrimary = Boolean(invoice && !shouldShowPaymentPrimary && invoice.status === 'draft')
+  const shouldShowDocumentPrimary = Boolean(invoice)
+  const shouldShowEditPrimary = Boolean(invoice && invoice.status === 'draft')
   const headerActions: ActionGroupItem[] = []
 
   if (invoice) {
     if (shouldShowPaymentPrimary) {
       headerActions.push({
+        key: 'open-document-primary',
+        label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
+        tone: 'primary',
+        onClick: onOpenDocument,
+      })
+
+      headerActions.push({
         key: 'register-payment-primary',
         label: 'Registrar cobro',
-        tone: 'primary',
         onClick: () => setPaymentActionMode('manual'),
       })
-    }
-
-    if (shouldShowDocumentPrimary) {
+    } else if (shouldShowDocumentPrimary) {
       headerActions.push({
         key: 'open-document-primary',
-        label: 'Abrir documento',
+        label: invoice.status === 'draft' ? 'Previsualizar documento' : 'Abrir documento',
         tone: 'primary',
         onClick: onOpenDocument,
       })
@@ -1014,7 +988,11 @@ export function InvoiceDetailCard({
 
         {invoice && !hideHeaderActions ? (
           <div className="cc-detail-panel__actions">
-            <ActionGroup actions={dedupedHeaderActions} moreLabel="Mas acciones" />
+            <ActionGroup
+              actions={dedupedHeaderActions}
+              moreLabel="Mas acciones"
+              compactVisibleSecondaryCount={shouldShowPaymentPrimary ? 1 : 0}
+            />
           </div>
         ) : null}
       </div>

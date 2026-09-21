@@ -1,0 +1,4 @@
+interface:
+  display_name: "Performance GSAP Motion"
+  short_description: "Audita lifecycle y rendimiento visual"
+  default_prompt: "Usa $performance-gsap-motion para revisar GSAP y reduced motion."

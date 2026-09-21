@@ -140,14 +140,18 @@ export function useDashboardMetrics({
     const collectedThisMonthTotal = payments
       .filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
       .reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-    const outstandingReceivablesTotal = invoices.reduce((sum, invoice) => {
-      if ((invoice.outstanding_amount ?? 0) <= 0.009) {
+    const outstandingReceivablesTotal = visibleInvoices.reduce((sum, invoice) => {
+      if (isCancelledEntity(invoice)) {
         return sum
       }
 
       const invoiceTotal = Number(invoice.total || 0)
       const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
       const remainingAmount = invoice.outstanding_amount ?? Math.max(invoiceTotal - paidAmount, 0)
+      if (remainingAmount <= 0.009) {
+        return sum
+      }
+
       return sum + remainingAmount
     }, 0)
 

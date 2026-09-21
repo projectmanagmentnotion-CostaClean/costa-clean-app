@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchSupabaseRestList } from '../../lib/supabaseRest'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 
@@ -9,7 +9,7 @@ interface InvoiceDocumentLinesState {
 }
 
 function hasInvoiceLines(invoice: InvoiceListItem): boolean {
-  return Boolean(invoice.invoice_lines?.length)
+  return Boolean(invoice.lines?.length || invoice.invoice_lines?.length)
 }
 
 function sortInvoiceLines(lines: InvoiceLineItem[]): InvoiceLineItem[] {
@@ -17,25 +17,20 @@ function sortInvoiceLines(lines: InvoiceLineItem[]): InvoiceLineItem[] {
 }
 
 export function useInvoiceDocumentLines(invoice: InvoiceListItem): InvoiceDocumentLinesState {
-  const [loadedLines, setLoadedLines] = useState<InvoiceLineItem[] | null>(null)
-  const [isLoadingLines, setIsLoadingLines] = useState(false)
-  const [linesError, setLinesError] = useState<string | null>(null)
+  const [loadedLines, setLoadedLines] = useState<{ invoiceId: string; lines: InvoiceLineItem[] } | null>(null)
+  const [linesErrorState, setLinesErrorState] = useState<{ invoiceId: string; message: string } | null>(null)
+  const setLinesError = useCallback((message: string) => setLinesErrorState({ invoiceId: invoice.id, message }), [invoice.id])
 
   useEffect(() => {
     let isActive = true
 
-    setLoadedLines(null)
-    setLinesError(null)
-
     if (hasInvoiceLines(invoice)) {
-      setIsLoadingLines(false)
       return () => {
         isActive = false
       }
     }
 
     async function loadLines() {
-      setIsLoadingLines(true)
 
       try {
         const lines = await fetchSupabaseRestList<InvoiceLineItem>(
@@ -43,15 +38,11 @@ export function useInvoiceDocumentLines(invoice: InvoiceListItem): InvoiceDocume
         )
 
         if (isActive) {
-          setLoadedLines(sortInvoiceLines(lines))
+          setLoadedLines({ invoiceId: invoice.id, lines: sortInvoiceLines(lines) })
         }
       } catch (err) {
         if (isActive) {
           setLinesError(err instanceof Error ? err.message : 'Error desconocido cargando líneas.')
-        }
-      } finally {
-        if (isActive) {
-          setIsLoadingLines(false)
         }
       }
     }
@@ -61,29 +52,32 @@ export function useInvoiceDocumentLines(invoice: InvoiceListItem): InvoiceDocume
     return () => {
       isActive = false
     }
-  }, [invoice])
+  }, [invoice, setLinesError])
+
+  const currentLoadedLines = loadedLines?.invoiceId === invoice.id ? loadedLines.lines : null
+  const currentLinesError = currentLoadedLines || linesErrorState?.invoiceId !== invoice.id ? null : linesErrorState.message
 
   const invoiceWithLines = useMemo(() => {
     if (hasInvoiceLines(invoice)) {
       return {
         ...invoice,
-        lines: sortInvoiceLines(invoice.invoice_lines ?? []),
+        lines: sortInvoiceLines(invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []),
       }
     }
 
-    if (loadedLines) {
+    if (currentLoadedLines) {
       return {
         ...invoice,
-        lines: loadedLines,
+        lines: currentLoadedLines,
       }
     }
 
     return invoice
-  }, [invoice, loadedLines])
+  }, [currentLoadedLines, invoice])
 
   return {
     invoice: invoiceWithLines,
-    isLoadingLines,
-    linesError,
+    isLoadingLines: !hasInvoiceLines(invoice) && !currentLoadedLines && !currentLinesError,
+    linesError: currentLinesError,
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useReducer, useState, type FormEvent } from 'react'
 import { buildPropertyRelationshipSummary } from '../../app/entityIntegrity'
 import {
   formatCurrency,
@@ -11,6 +11,8 @@ import { formatClientLabel, formatPropertyLabel } from '../../app/relationshipLa
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ResponsiveActionFlow } from '../../components/ResponsiveActionFlow'
 import { useActionFlowOverlayMode } from '../../components/useActionFlowOverlayMode'
+import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
+import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
 import type { ClientListItem } from '../clients/types'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -81,11 +83,11 @@ export function PropertyDetailCard({
   invoices,
   onPropertyUpdated,
   hideHeaderActions = false,
-  editRequestToken,
+  editRequestToken = 0,
   onEditingStateChange,
 }: PropertyDetailCardProps) {
   const useOverlayEdit = useActionFlowOverlayMode()
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditing, dispatchEditing] = useReducer((state: boolean, action: 'open' | 'close') => action === 'open' ? true : action === 'close' ? false : state, editRequestToken > 0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -93,70 +95,19 @@ export function PropertyDetailCard({
   const [isDirty, setIsDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const [form, setForm] = useState<EditFormState>({
-    client_id: '',
-    name: '',
-    property_type: 'apartment',
-    address: '',
-    city: '',
-    postal_code: '',
-    notes: '',
+    client_id: property?.client_id ?? '',
+    name: property?.name ?? '',
+    property_type: property?.property_type ?? 'apartment',
+    address: property?.address ?? '',
+    city: property?.city ?? '',
+    postal_code: property?.postal_code ?? '',
+    notes: property?.notes ?? '',
   })
 
   useEffect(() => {
     onEditingStateChange?.(isDirty)
     return () => onEditingStateChange?.(false)
   }, [isDirty, onEditingStateChange])
-
-  useEffect(() => {
-    if (!property || editRequestToken === undefined) return
-
-    setIsEditing(true)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      client_id: property.client_id,
-      name: property.name,
-      property_type: property.property_type,
-      address: property.address,
-      city: property.city ?? '',
-      postal_code: property.postal_code ?? '',
-      notes: property.notes ?? '',
-    })
-  }, [editRequestToken, property])
-
-  useEffect(() => {
-    if (!property) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setIsDirty(false)
-      setForm({
-        client_id: '',
-        name: '',
-        property_type: 'apartment',
-        address: '',
-        city: '',
-        postal_code: '',
-        notes: '',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsDirty(false)
-    setForm({
-      client_id: property.client_id,
-      name: property.name,
-      property_type: property.property_type,
-      address: property.address,
-      city: property.city ?? '',
-      postal_code: property.postal_code ?? '',
-      notes: property.notes ?? '',
-    })
-  }, [property])
 
   const relationshipSummary = useMemo(() => {
     if (!property) return null
@@ -210,25 +161,15 @@ export function PropertyDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
       if (!form.client_id) {
         setSaveError('Debes seleccionar un cliente.')
         return
       }
 
       if (form.client_id !== property.client_id) {
-        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/reassign_property_client`, {
+        await fetchAuthenticatedSupabaseWrite(operationalWriteRpcPaths.reassignProperty, {
           method: 'POST',
           headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -237,39 +178,30 @@ export function PropertyDetailCard({
           }),
         })
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-          return
-        }
       }
 
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/properties?id=eq.${encodeURIComponent(property.id)}`,
+      const updateResponse = await fetchAuthenticatedSupabaseWrite(
+        operationalWriteRpcPaths.updateProperty,
         {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            client_id: form.client_id,
-            name: form.name.trim(),
-            property_type: form.property_type,
-            address: form.address.trim(),
-            city: form.city.trim() || null,
-            postal_code: form.postal_code.trim() || null,
-            notes: form.notes.trim() || null,
+            p_property: {
+              id: property.id,
+              name: form.name.trim(),
+              property_type: form.property_type,
+              address: form.address.trim(),
+              city: form.city.trim() || null,
+              postal_code: form.postal_code.trim() || null,
+              notes: form.notes.trim() || null,
+            },
           }),
         },
       )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+      await readSingleAuthenticatedWriteRow(
+        updateResponse,
+        'No se actualizo ninguna propiedad. Tu sesion puede no tener permisos para este cambio.',
+      )
 
       await onPropertyUpdated()
       setSuccessMessage(
@@ -277,7 +209,7 @@ export function PropertyDetailCard({
           ? 'Propiedad reasignada y actualizada correctamente.'
           : 'Propiedad actualizada correctamente.',
       )
-      setIsEditing(false)
+      dispatchEditing('close')
       setIsDirty(false)
     } catch (err) {
       const message =
@@ -384,7 +316,7 @@ export function PropertyDetailCard({
               return
             }
 
-            setIsEditing(false)
+            dispatchEditing('close')
             setIsDirty(false)
           }}
         >
@@ -445,7 +377,7 @@ export function PropertyDetailCard({
                 return
               }
 
-              setIsEditing((current) => !current)
+              dispatchEditing(isEditing ? 'close' : 'open')
               setSaveError(null)
               setSuccessMessage(null)
               setIsDirty(false)
@@ -580,7 +512,7 @@ export function PropertyDetailCard({
                     return
                   }
 
-                  setIsEditing(false)
+                  dispatchEditing('close')
                   setIsDirty(false)
                 }}
               >
@@ -698,7 +630,7 @@ export function PropertyDetailCard({
             return
           }
 
-          setIsEditing(false)
+          dispatchEditing('close')
           setIsDirty(false)
         }}
       >
@@ -715,7 +647,7 @@ export function PropertyDetailCard({
         onCancel={() => setShowDiscardConfirm(false)}
         onConfirm={() => {
           setShowDiscardConfirm(false)
-          setIsEditing(false)
+          dispatchEditing('close')
           setIsDirty(false)
         }}
       />

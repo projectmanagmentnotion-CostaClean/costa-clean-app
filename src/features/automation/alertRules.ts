@@ -85,6 +85,10 @@ function buildExampleLabel(label: string | null | undefined, fallback: string): 
   return trimmed ? trimmed : fallback
 }
 
+function buildAlertFingerprint(ruleId: string, recordIds: string[]) {
+  return `${ruleId}:${[...recordIds].sort().join(',')}`
+}
+
 function getPreviousQuarterReference() {
   const today = new Date()
   const currentQuarter = Math.floor(today.getMonth() / 3) + 1
@@ -137,6 +141,7 @@ export function buildAutomationAlerts({
         kind: 'view',
         view: 'leads',
       },
+      fingerprint: buildAlertFingerprint('public_intake_lead_drafts_pending', pendingIntakeDrafts.map((draft) => draft.id)),
     })
   }
 
@@ -166,6 +171,7 @@ export function buildAutomationAlerts({
         kind: 'view',
         view: 'clients',
       },
+      fingerprint: buildAlertFingerprint('recurring_invoice_plan_due', dueRecurringPlans.map((plan) => plan.id)),
     })
   }
 
@@ -207,6 +213,7 @@ export function buildAutomationAlerts({
         filterKey: 'invoices',
         filterValue: 'unpaid_older_7d',
       },
+      fingerprint: buildAlertFingerprint('unpaid_invoices_older_threshold', overdueInvoices.map((invoice) => invoice.id)),
     })
   }
 
@@ -240,6 +247,7 @@ export function buildAutomationAlerts({
         filterKey: 'jobs',
         filterValue: 'completed_without_invoice_2d',
       },
+      fingerprint: buildAlertFingerprint('completed_jobs_without_invoice_older_threshold', completedJobsWithoutInvoice.map((job) => job.id)),
     })
   }
 
@@ -275,6 +283,7 @@ export function buildAutomationAlerts({
         filterKey: 'quotes',
         filterValue: 'accepted_without_job_3d',
       },
+      fingerprint: buildAlertFingerprint('accepted_quotes_without_job_older_threshold', acceptedQuotesWithoutJob.map((quote) => quote.id)),
     })
   }
 
@@ -303,6 +312,7 @@ export function buildAutomationAlerts({
         filterKey: 'expenses',
         filterValue: 'missing_receipt',
       },
+      fingerprint: buildAlertFingerprint('expenses_missing_support', expensesMissingSupport.map((expense) => expense.id)),
     })
   }
 
@@ -327,6 +337,7 @@ export function buildAutomationAlerts({
         filterKey: 'expenses',
         filterValue: 'pending_review',
       },
+      fingerprint: buildAlertFingerprint('expenses_pending_fiscal_review', expensesPendingReview.map((expense) => expense.id)),
     })
   }
 
@@ -355,6 +366,7 @@ export function buildAutomationAlerts({
         fiscalYear: previousQuarter.fiscalYear,
         fiscalQuarter: previousQuarter.fiscalQuarter,
       },
+      fingerprint: `quarter_closing_reminder:${previousQuarter.fiscalYear}-Q${previousQuarter.fiscalQuarter}`,
     })
   }
 

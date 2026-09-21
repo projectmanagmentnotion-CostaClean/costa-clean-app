@@ -34,6 +34,7 @@ export async function shareDocumentSummary(
   lines: string[],
   copiedMessage: string,
   unavailableMessage: string,
+  feedback?: DocumentFeedback,
 ): Promise<void> {
   const text = [title, ...lines].join('\n')
 
@@ -51,8 +52,11 @@ export async function shareDocumentSummary(
 
   try {
     await navigator.clipboard.writeText(text)
-    window.alert(copiedMessage)
+    feedback?.success('Resumen copiado', copiedMessage)
   } catch {
-    window.alert(unavailableMessage)
+    feedback?.error('No se pudo compartir el resumen', unavailableMessage, { persistent: true })
   }
 }
+import type { ToastApi } from '../../shared/toasts/toastTypes'
+
+type DocumentFeedback = Pick<ToastApi, 'success' | 'error'>

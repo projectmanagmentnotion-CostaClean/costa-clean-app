@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, type FormEvent } from 'react'
+﻿import { useState, type FormEvent } from 'react'
 import { getDisplayStatusLabel, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
 import { FeedbackDialog } from '../../components/FeedbackDialog'
@@ -6,6 +6,7 @@ import { convertLeadToClient } from '../financial/financialWriteApi'
 import { LeadDraftCards } from '../leadDrafts/LeadDraftCards'
 import type { LeadDraftRecord } from '../leadDrafts/types'
 import type { LeadListItem } from './types'
+import { updateLeadAuthenticated } from './leadWriteApi'
 
 interface LeadDetailCardProps {
   lead: LeadListItem | null
@@ -29,51 +30,16 @@ export function LeadDetailCard({
   onLeadUpdated,
   onLeadConverted,
 }: LeadDetailCardProps) {
-  const previousLeadIdRef = useRef<string | null>(null)
-
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [form, setForm] = useState<EditFormState>({
-    full_name: '',
-    phone: '',
-    city: '',
-    status: 'new',
+    full_name: lead?.full_name ?? '',
+    phone: lead?.phone ?? '',
+    city: lead?.city ?? '',
+    status: lead?.status ?? 'new',
   })
-
-  useEffect(() => {
-    const currentLeadId = lead?.id ?? null
-    const leadChanged = previousLeadIdRef.current !== currentLeadId
-    previousLeadIdRef.current = currentLeadId
-
-    if (!lead) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setForm({
-        full_name: '',
-        phone: '',
-        city: '',
-        status: 'new',
-      })
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-
-    if (leadChanged) {
-      setSuccessMessage(null)
-    }
-
-    setForm({
-      full_name: lead.full_name,
-      phone: lead.phone,
-      city: lead.city ?? '',
-      status: lead.status,
-    })
-  }, [lead])
 
   function updateField<K extends keyof EditFormState>(
     field: K,
@@ -93,32 +59,7 @@ export function LeadDetailCard({
     setIsSaving(true)
 
     try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      if (!supabaseUrl || !supabaseAnonKey) {
-        setSaveError('Faltan las variables de entorno de Supabase.')
-        return
-      }
-
-      const response = await fetch(
-        `${supabaseUrl}/rest/v1/leads?id=eq.${encodeURIComponent(lead.id)}`,
-        {
-          method: 'PATCH',
-          headers: {
-            apikey: supabaseAnonKey,
-            Authorization: `Bearer ${supabaseAnonKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        },
-      )
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        setSaveError(`REST ${response.status}: ${errorText || response.statusText}`)
-        return
-      }
+      await updateLeadAuthenticated(lead.id, payload)
 
       await onLeadUpdated()
       setSuccessMessage(successText)
@@ -392,6 +333,7 @@ export function LeadDetailCard({
 
           {!isEditing ? (
             <LeadDraftCards
+              key={leadDraft?.id ?? 'no-draft'}
               lead={lead}
               leadDraft={leadDraft}
               onWorkflowUpdated={onLeadConverted}

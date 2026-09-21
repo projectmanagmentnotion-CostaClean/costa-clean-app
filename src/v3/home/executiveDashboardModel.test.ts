@@ -1,0 +1,78 @@
+import { describe, expect, it } from 'vitest'
+import { buildExecutiveDashboardModel } from './executiveDashboardModel'
+
+const input = {
+  invoices: [{ id: 'i1', issue_date: '2026-09-10', status: 'issued', archived_at: null, deleted_at: null, cancelled_at: null, subtotal: 100, tax_amount: 21, total: 121, client_id: 'c1', job_id: 'j1', outstanding_amount: 21 }],
+  payments: [{ id: 'p1', invoice_id: 'i1', payment_date: '2026-09-12', amount: 100 }],
+  expenses: [{ id: 'e1', expense_date: '2026-09-04', archived_at: null, deleted_at: null, cancelled_at: null, subtotal: 20, tax_amount: 4.2, total: 24.2, receipt_file_path: 'receipt.pdf', document_support_status: 'invoice_valid', document_type: 'factura', is_deductible: true }],
+  jobs: [{ id: 'j1', scheduled_date: '2026-09-11', status: 'completed', archived_at: null, deleted_at: null, cancelled_at: null }],
+  quotes: [{ id: 'q1', created_at: '2026-09-02', status: 'sent', archived_at: null, deleted_at: null, cancelled_at: null }],
+} as Parameters<typeof buildExecutiveDashboardModel>[0]
+
+describe('executive dashboard model', () => {
+  it('keeps invoice, payment, expense and VAT calculations period-scoped', () => {
+    const model = buildExecutiveDashboardModel(input, { kind: 'month', key: '2026-09' })
+    expect(model.invoiced).toBe(121)
+    expect(model.collected).toBe(100)
+    expect(model.outstanding).toBe(21)
+    expect(model.expenses).toBe(24.2)
+    expect(model.outputVat).toBe(21)
+    expect(model.inputVat).toBe(4.2)
+    expect(model.estimatedVat).toBe(16.8)
+    expect(model.operational.completedUnbilledJobs).toBe(0)
+  })
+
+  it('does not invent growth when the comparable period has no data', () => {
+    const model = buildExecutiveDashboardModel(input, { kind: 'month', key: '2026-09' })
+    expect(model.hasComparableData).toBe(false)
+    expect(model.growth.invoiced).toBeNull()
+  })
+
+  it('counts a payment in its payment period even when the invoice was issued earlier', () => {
+    const model = buildExecutiveDashboardModel(Object.assign({}, input, { payments: [{ id: 'p2', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 }] }), { kind: 'month', key: '2026-10' })
+    expect(model.collected).toBe(21)
+  })
+
+  it('keeps selected-period invoice issuance separate from cross-period cash collection', () => {
+    const model = buildExecutiveDashboardModel(Object.assign({}, input, {
+      invoices: [...input.invoices, { ...input.invoices[0], id: 'i2', issue_date: '2026-10-02', total: 242, tax_amount: 42, outstanding_amount: 242 }],
+      payments: [{ id: 'p2', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 }],
+    }), { kind: 'month', key: '2026-10' })
+    expect(model.invoiced).toBe(242)
+    expect(model.collected).toBe(21)
+  })
+
+  it('supports multiple partial payments across month, quarter and year selections', () => {
+    const payments = [
+      { id: 'p1', invoice_id: 'i1', payment_date: '2026-09-12', amount: 40 },
+      { id: 'p2', invoice_id: 'i1', payment_date: '2026-09-20', amount: 60 },
+      { id: 'p3', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 },
+    ]
+    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'month', key: '2026-09' }).collected).toBe(100)
+    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'quarter', key: '2026-Q3' }).collected).toBe(100)
+    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'year', key: '2026' }).collected).toBe(121)
+  })
+
+  it('does not collect payments linked to cancelled or unknown invoices', () => {
+    const model = buildExecutiveDashboardModel(Object.assign({}, input, {
+      invoices: [...input.invoices, { ...input.invoices[0], id: 'cancelled', status: 'cancelled' }],
+      payments: [{ id: 'p1', invoice_id: 'cancelled', payment_date: '2026-09-12', amount: 50 }, { id: 'p2', invoice_id: 'unknown', payment_date: '2026-09-12', amount: 50 }],
+    }), { kind: 'month', key: '2026-09' })
+    expect(model.collected).toBe(0)
+  })
+
+  it('keeps outstanding based on invoice balances and does not double-count payments', () => {
+    const model = buildExecutiveDashboardModel(Object.assign({}, input, {
+      invoices: [{ ...input.invoices[0], outstanding_amount: undefined, paid_amount: 80 }],
+      payments: [{ id: 'p1', invoice_id: 'i1', payment_date: '2026-09-12', amount: 80 }],
+    }), { kind: 'month', key: '2026-09' })
+    expect(model.outstanding).toBe(41)
+  })
+
+  it('keeps empty periods honest and does not fabricate growth', () => {
+    const model = buildExecutiveDashboardModel(input, { kind: 'month', key: '2027-01' })
+    expect(model.hasData).toBe(false)
+    expect(model.growth.invoiced).toBeNull()
+    expect(model.collected).toBe(0)
+  })
+})

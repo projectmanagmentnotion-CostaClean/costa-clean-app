@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactElement } from 'react'
 import type { AppView } from '../../app/navigation'
 import { V3Icon, type V3IconName } from '../components/V3Primitives'
-import { brandAssets } from '../brand/brandAssets'
+import { V3BrandLockup } from '../brand/V3BrandLockup'
 
 interface V3ShellChromeProps {
   currentView: AppView
@@ -53,13 +53,7 @@ function V3TopBar({ currentView, onBack, backTargetView }: Pick<V3ShellChromePro
             <V3Icon name="back" size={18} />
           </button>
         ) : null}
-        <div className="v3-top-bar__context">
-          <div className="v3-top-bar__brand" data-brand-name="CostaClean">
-            <img className="v3-top-bar__brand-logo" src={brandAssets.logoPrimary.src} alt="" aria-hidden="true" />
-            <span>Costa Clean</span>
-          </div>
-          <strong>{title}</strong>
-        </div>
+        <div className="v3-top-bar__context"><V3BrandLockup compact /><strong>{title}</strong></div>
       </div>
     </header>
   )
@@ -129,10 +123,7 @@ function V3BottomNav({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick
 function V3NavigationRail({ currentView, onChangeView, onOpenMore, isMoreOpen }: Pick<V3ShellChromeProps, 'currentView' | 'onChangeView'> & { onOpenMore: () => void; isMoreOpen: boolean }) {
   const isSecondaryContext = secondaryItems.some((item) => isActive(item.view, currentView))
   return <nav className="v3-navigation-rail" aria-label="Navegación principal para iPad">
-    <div className="v3-navigation-rail__brand">
-      <img className="v3-navigation-rail__mark" src={brandAssets.logoPrimary.src} alt="" aria-hidden="true" />
-      <span>Costa Clean</span>
-    </div>
+    <V3BrandLockup />
     {primaryItems.map((item) => <button key={item.view} type="button" className={isActive(item.view, currentView) ? 'is-active' : ''} onClick={() => onChangeView(item.view)} aria-current={isActive(item.view, currentView) ? 'page' : undefined}><V3NavIcon name={item.icon} /><small>{item.label}</small></button>)}
     <button type="button" className={isMoreOpen || isSecondaryContext ? 'is-active' : ''} onClick={onOpenMore} aria-expanded={isMoreOpen} aria-controls="v3-more-sheet"><V3NavIcon name="more" /><small>Más</small></button>
   </nav>
@@ -149,6 +140,10 @@ export function V3ShellChrome(props: V3ShellChromeProps) {
       moreTriggerRef.current?.focus()
     }
   }, [isMoreOpen])
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [props.currentView])
 
   function openMore() {
     moreTriggerRef.current = document.activeElement instanceof HTMLElement

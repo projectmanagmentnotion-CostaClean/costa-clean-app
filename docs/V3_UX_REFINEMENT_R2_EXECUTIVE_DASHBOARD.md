@@ -1,6 +1,6 @@
 # Costa Clean — UX Refinement R2 executive dashboard
 
-Status: R2.1 remediation implemented locally; final independent certification BLOCKED by unavailable authenticated visual QA. Production deployment intentionally not performed.
+Status: R2.1 remediated and independently certified locally; Production deployment intentionally not performed.
 
 ## Readiness decision
 
@@ -46,8 +46,9 @@ Growth compares the selected period with the immediately preceding period of the
 - `npm run qa:agents`: PASS — 294/294.
 - `git diff --check`: PASS.
 - The trend renderer adds no dependency or separate chart bundle to the initial build.
-- Authenticated visual QA: BLOCKED — the reused Edge/CDP profile was not authenticated; profile regeneration timed out waiting for the CDP endpoint. No fresh 10-viewport result is claimed for this remediation branch.
-- The prior R2 visual baseline remains 1320/1320 PASS, but it is not substituted for the required fresh remediation run.
+- Authenticated visual QA: PASS — fresh isolated Edge profile on `http://127.0.0.1:4178/?v3=1`, 10 required viewports, 1320 checks, 0 failures.
+- Viewports: 320x568, 390x844, 430x932, 768x1024, 820x1180, 834x1194, 1024x1366, 1280x800, 1440x900 and 1920x1080; Home and representative modules all loaded without audit failures.
+- Sanitized runtime evidence: HOME/CLIENTS loaded, no auth redirect, no loading stall, no failed requests, console errors or page errors reported by the QA harness; no business-write scenario was submitted. Production requests and mutations: 0.
 - No Production deployment or Supabase mutation performed.
 
 ## Independent review result
@@ -65,16 +66,16 @@ Growth compares the selected period with the immediately preceding period of the
 `P2 = 0 known reproducible product defects; fresh visual evidence unavailable`  
 `P3 = 0`
 
-The independent review cannot be promoted to PASS because the required authenticated visual certification did not execute. This is a QA environment blocker, not evidence of a product defect.
+Fresh independent review: PASS. Screenshots at mobile, tablet and desktop confirm one logo, separated shell/page context, compact mobile KPI grid, readable trend chart, semantic colors, card hierarchy, section separation, safe-area navigation, no text overlap or horizontal overflow, and usable touch targets. Direct Home actions were exercised as open-only routes; no save or business mutation was performed.
 
 ## Final certification verdict
 
-`R2.1_STATUS = BLOCKED`  
-`R2 = NOT CLOSED / NOT CERTIFIED`  
-`R3 = NOT READY`  
+`R2.1_STATUS = PASS`
+`R2 = CLOSED / CERTIFIED`
+`R3 = READY`
 `PRODUCTION_DEPLOY = NO`  
 `SUPABASE_PRODUCTION_MUTATIONS = 0`
 
 ## Next sprint
 
-R2.1 remains pending only for a fresh authenticated visual run at the required 10 viewports. R3 remains pending: invoice and quote document preview parity.
+R3 is ready for the next sprint: invoice and quote document preview parity. R3 is not implemented by this certification.

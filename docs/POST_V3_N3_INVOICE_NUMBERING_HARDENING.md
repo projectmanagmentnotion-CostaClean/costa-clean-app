@@ -79,6 +79,17 @@ to the exact QA issuer and authorized QA identity, use exact synthetic
 provenance markers, and are not shipped from the product migration directory.
 No remote history was manually edited.
 
+The live QA service ledger was read after application and matched the mapping
+above. The pre-N3 QA/Production definitions matched exactly by function hash:
+`set_invoices_codes=5148812cff490ef12d8782ba64df14b5`,
+`sync_invoice_numbering=d32323da5f7442917869488aea9add36`, and
+`assert_invoice_numbering_regular=3d17fdb1140180f9ba015d078fe00688`.
+Post-N3 QA readback confirmed the legacy function hash remains unchanged and
+the canonical trigger functions/builders/parser/audit/delete guard now have
+live definitions; the authenticated QA scenarios exercised those definitions
+end to end. Product source contracts additionally assert the trigger split,
+gap rule, QA issuer/provenance boundaries, and forbidden sequence mutation.
+
 The QA migration service originally applied the first N3 product sources
 before the independent review identified the missing gap check. Those local
 product migration definitions were then amended to keep the invariant in
@@ -122,8 +133,15 @@ Production was checked read-only after QA. It still has 69 invoices, zero
 duplicate fiscal-number groups, zero duplicate display-code groups, zero
 numbering-pair mismatches, both pre-existing numbering triggers active, and
 zero September N2/N3 migration-history entries. The legacy trigger/function
-definitions have not been changed in Production. This confirms N3 has not
-been applied there.
+definitions have not been changed in Production. Pre-N3 Production hashes
+remain `set_invoices_codes=5148812cff490ef12d8782ba64df14b5`,
+`sync_invoice_numbering=d32323da5f7442917869488aea9add36`, and
+`assert_invoice_numbering_regular=3d17fdb1140180f9ba015d078fe00688`, matching
+QA before the sprint. The retired function and legacy sequence remain
+referenced by historical/manual import tooling (`scripts/import-historical-invoices.mjs`)
+and QA baseline snapshots; `set_invoices_codes()` is dormant after its trigger
+is removed. No active canonical numbering path calls `nextval` or `setval`.
+This confirms N3 has not been applied there.
 
 ## Review and release status
 

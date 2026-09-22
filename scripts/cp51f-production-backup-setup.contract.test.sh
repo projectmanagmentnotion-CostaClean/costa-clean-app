@@ -9,7 +9,7 @@ grep -Fq -- '"/projects/$PROJECT_REF/jit-access"' <<<"$source_text"
 grep -Fq -- '"/projects/$PROJECT_REF/database/jit"' <<<"$source_text"
 grep -Fq -- '"/projects/$PROJECT_REF/database/jit/$JIT_USER_ID"' <<<"$source_text"
 grep -Fq -- '{user_id:$user_id, roles:$roles}' <<<"$source_text"
-! grep -Fq -- '{user_id:$user_id, user_roles:$roles}' <<<"$source_text"
+if grep -Fq -- '{user_id:$user_id, user_roles:$roles}' <<<"$source_text"; then exit 1; fi
 grep -Fq -- '(.user_roles | type) == "array"' <<<"$source_text"
 grep -Fq -- 'JIT_PRE_MAPPING_KIND" == "absent"' <<<"$source_text"
 grep -Fq -- 'JIT_PRESTATE_UNAVAILABLE' <<<"$source_text"
@@ -17,23 +17,24 @@ grep -Fq -- 'curl --config -' <<<"$source_text"
 grep -Fq -- 'PGPASSFILE=' <<<"$source_text"
 grep -Fq -- 'chmod 600 "$TEMP_CREDENTIAL_FILE"' <<<"$source_text"
 grep -Fq -- 'PG_DUMP_BIN' <<<"$source_text"
-! grep -Fq -- 'Authorization: Bearer $PAT"' <<<"$source_text"
-! grep -Fq -- '--db-url "$PRIVATE_DB_URL"' <<<"$source_text"
-! grep -Fq -- 'PRIVATE_DB_URL=' <<<"$source_text"
+if grep -Fq -- 'Authorization: Bearer $PAT"' <<<"$source_text"; then exit 1; fi
+if grep -Fq -- '--db-url "$PRIVATE_DB_URL"' <<<"$source_text"; then exit 1; fi
+if grep -Fq -- 'PRIVATE_DB_URL=' <<<"$source_text"; then exit 1; fi
 grep -Fq -- 'AWAITING_PAT_REVOCATION' <<<"$source_text"
 grep -Fq -- 'PG_DUMPALL_BIN' <<<"$source_text"
 grep -Fq -- 'require_command "$PG_DUMPALL_BIN"' <<<"$source_text"
 grep -Fq -- 'run_pg_dumpall_roles' <<<"$source_text"
 grep -Fq -- '--roles-only' <<<"$source_text"
 grep -Fq -- '--no-role-passwords' <<<"$source_text"
-! grep -Fq -- '--role-only' <<<"$source_text"
-! grep -Fq -- '--use-copy' <<<"$source_text"
+if grep -Fq -- '--role-only' <<<"$source_text"; then exit 1; fi
+if grep -Fq -- '--use-copy' <<<"$source_text"; then exit 1; fi
 grep -Fq -- 'run_pg_dump schema --schema-only --schema=public --schema=portal_private --schema=auth' <<<"$source_text"
 grep -Fq -- 'run_pg_dump data --data-only --schema=public --schema=portal_private --schema=auth' <<<"$source_text"
 grep -Fq -- 'run_pg_dump history_schema --schema-only --schema=supabase_migrations' <<<"$source_text"
 grep -Fq -- 'run_pg_dump history_data --data-only --schema=supabase_migrations' <<<"$source_text"
 grep -Fq -- 'roles_passwords_included:false' <<<"$source_text"
 version_check_line="$(grep -n 'check_postgres_tool_version' <<<"$source_text" | head -1 | cut -d: -f1)"
+# shellcheck disable=SC2016 # The grep pattern intentionally matches literal runner source.
 jit_mutation_line="$(grep -n 'api_put "/projects/$PROJECT_REF/jit-access" '\''{"state":"enabled"}'\''' <<<"$source_text" | head -1 | cut -d: -f1)"
 [[ -n "$version_check_line" && -n "$jit_mutation_line" && "$version_check_line" -lt "$jit_mutation_line" ]]
 
@@ -55,6 +56,7 @@ try { mapping(invalid); process.exit(1); } catch {}
 NODE
 
 # Exercise the production jq parser itself against the official GET 200 schema.
+# shellcheck disable=SC1090 # Source only the parser function extracted from this checked-in runner.
 source <(sed -n '/^parse_jit_state() {/,/^}/p' "$runner")
 expect_jit_state() {
   local input="$1" expected="$2" actual

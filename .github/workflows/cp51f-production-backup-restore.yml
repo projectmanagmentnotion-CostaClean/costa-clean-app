@@ -158,6 +158,46 @@ jobs:
           [[ "$CP51F_TEMP_PAT_PRESENT" == true ]] || { echo 'TEMP_PAT_SECRET_PRESENCE=FAIL'; exit 1; }
           echo 'TEMP_PAT_SECRET_PRESENCE=PASS'
 
+      - name: Resolve authoritative Session Pooler
+        env:
+          SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          response_file="$(mktemp "$RUNNER_TEMP/cp51f-pooler-response.XXXXXX")"
+          curl_error_file="$(mktemp "$RUNNER_TEMP/cp51f-pooler-curl-error.XXXXXX")"
+          cleanup_pooler_resolution() {
+            rm -f -- "$response_file" "$curl_error_file"
+          }
+          trap cleanup_pooler_resolution EXIT
+          chmod 600 "$response_file" "$curl_error_file"
+
+          [[ -n "$SUPABASE_CP51F_TEMP_PAT" && "$SUPABASE_CP51F_TEMP_PAT" != *$'\n'* && "$SUPABASE_CP51F_TEMP_PAT" != *$'\r'* && "$SUPABASE_CP51F_TEMP_PAT" != *'"'* && "$SUPABASE_CP51F_TEMP_PAT" != *'\'* ]] || {
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          }
+          curl_rc=0
+          http_code="$(printf 'header = "Authorization: Bearer %s"\n' "$SUPABASE_CP51F_TEMP_PAT" |
+            curl --config - --request GET --silent --show-error --max-time 30 --retry 0 \
+              --output "$response_file" --write-out '%{http_code}' \
+              'https://api.supabase.com/v1/projects/wfxnwfcdjainpojhbdri/config/database/pooler' \
+              2>"$curl_error_file")" || curl_rc=$?
+          if [[ "$curl_rc" -ne 0 || "$http_code" != 200 ]]; then
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          fi
+
+          if ! resolved_host="$(bash scripts/cp51f-resolve-pooler-host.sh "$response_file" 2>/dev/null)"; then
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          fi
+          rm -f -- "$response_file" "$curl_error_file"
+          trap - EXIT
+          echo 'CP51F_POOLER_RESOLUTION=PASS'
+          echo 'CP51F_POOLER_SOURCE=MANAGEMENT_API_PRIMARY_CONNECTION_STRING'
+          echo 'CP51F_POOLER_MODE=SESSION'
+          echo "CP51F_POOLER_HOST=$resolved_host"
+
       - name: Prepare consumed authorization marker
         run: |
           set -Eeuo pipefail
@@ -183,10 +223,6 @@ jobs:
       - name: Run certified production backup runner
         env:
           SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
-          CP51F_POOLER_HOST: ${{ vars.CP51F_POOLER_HOST }}
-          CP51F_POOLER_PORT: ${{ vars.CP51F_POOLER_PORT }}
-          CP51F_POOLER_USER: ${{ vars.CP51F_POOLER_USER }}
-          CP51F_POOLER_DB: ${{ vars.CP51F_POOLER_DB }}
           CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
           CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-runner-status.json
           PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump

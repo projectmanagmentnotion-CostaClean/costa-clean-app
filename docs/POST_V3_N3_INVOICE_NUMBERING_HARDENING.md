@@ -26,6 +26,11 @@ authorized Production migration procedure is still required.
   sequence as deprecated compatibility objects. The existing canonical
   `trg_sync_invoice_numbering` remains the sole allocator and retains the
   year-scoped advisory transaction lock and first-missing-number allocation.
+  The allocator selects the first missing positive sequence only after the
+  regularity assertion confirms there is no historical gap between consumed
+  numbers; gaps block issuance for review rather than being silently reused.
+  An empty fiscal year therefore starts at `001`, and the transaction-scoped
+  year lock serializes concurrent allocation.
 - Display numbers now include their fiscal year (`INV-2027-001`) to prevent
   the global display-code uniqueness rule from colliding at annual reset.
   The fiscal number remains year-qualified (`2027-001`). Parsers continue to
@@ -145,3 +150,44 @@ review; the commit and push are recorded by Git after this report update.
 Production migration/deployment: **not performed**. QA migration application
 and authenticated tests were limited to project `kpvvydthlxupjjqqdpxy`.
 Production migration remains a separate explicit authorization gate.
+
+## Future Production migration plan — not authorized or executed
+
+1. **Preconditions:** obtain separate exact Production authorization; confirm
+   the target is `wfxnwfcdjainpojhbdri`; verify a clean reviewed commit and no
+   migration-history collision; rerun the read-only invoice counts, trigger
+   definitions, unique-index/dependency audit, and the no-gap assertion for
+   every fiscal year. Require duplicate fiscal/display groups, malformed or
+   year-mismatched codes, numbered drafts, and issued/paid invoices missing
+   either number to remain zero. Confirm the QA final migration versions and
+   the migration sources to be applied are the approved ones.
+2. **Apply:** apply the three transactional product migrations in order using
+   the approved migration runner. Each audit definition already contains the
+   gap guard, so the safety invariant holds after every individual commit.
+   The first migration retires only `trg_set_invoices_codes`, installs the
+   year-qualified display builder/parser compatibility, and retains the
+   legacy function/sequence. The canonical trigger remains the only active
+   allocator. Later migrations harden transition/audit semantics and restore
+   the complete assertion. Do not apply anything from `supabase/qa-migrations/`.
+3. **Post-migration assertions:** read-only verify the legacy trigger is
+   absent, exactly one canonical numbering trigger is active, the old sequence
+   is unchanged, fiscal/display unique indexes remain valid, all numbering
+   invariants still return zero anomalies, and function definitions match
+   the approved final migration. Then run a read-only UI smoke; do not create
+   a real Production invoice as a migration test.
+4. **Failure/rollback:** each SQL migration is transaction-wrapped, so a
+   statement failure rolls back that migration and stops the sequence. Before
+   any new fiscal issuance, resolve the migration failure and reapply only
+   after review. After issuance under the new format, do not blindly restore
+   the retired trigger, reset the sequence, renumber, or hard-delete invoices.
+   Freeze invoice issuance if needed and use a separately reviewed forward
+   corrective migration that preserves all assigned fiscal numbers. Database
+   restore is an exceptional separately authorized recovery, not the routine
+   rollback mechanism. Vercel/application deployment is a separate gate.
+
+The repository's normal product migration location is `supabase/migrations/`.
+This checkout lacks `supabase/config.toml` and the `assert-db-push-locked.mjs`
+script referenced by package push aliases, so those aliases are not a usable
+Production safety mechanism here. The Production plan therefore requires a
+verified approved migration runner and explicit preflight; this is a recorded
+tooling limitation, not permission to bypass it.

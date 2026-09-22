@@ -55,7 +55,11 @@ The authenticated runner created one uniquely tagged synthetic client → proper
 
 The existing exact run-id cleanup removed six synthetic QA fixture rows (client, property, job, job line, invoice, payment); no real business row matched teardown. Repeating cleanup performed zero actions. Final readiness passed. The complete invoice fiscal mapping hash, invoice/payment counts, sequence value and `is_called` state, and real QA business-row digest matched the baseline; all QA_N2 client/property/job/invoice/payment counts were zero. Thus `FISCAL_NUMBERING_POLLUTION=0`, `FINANCIAL_TEST_RESIDUE=0`, `REAL_QA_BUSINESS_ROWS_CHANGED=0`, `BUSINESS_HARD_DELETES=0`, and `PRODUCTION_MUTATIONS=0` for this run. The six deletions are synthetic fixture teardown only.
 
-The legacy `trg_set_invoices_codes` INSERT-time `nextval('public.invoices_invoice_number_seq')` behavior when both codes are blank remains unchanged and is `LEGACY_SEQUENCE_TRIGGER_DEBT=RECORDED_FOR_N3`. This sprint did not change canonical settlement, invoice-numbering, or fiscal business logic.
+At N2 close, the legacy `trg_set_invoices_codes` INSERT-time
+`nextval('public.invoices_invoice_number_seq')` behavior was recorded as
+`LEGACY_SEQUENCE_TRIGGER_DEBT=RECORDED_FOR_N3`. N3 subsequently retired that
+trigger from the product numbering path while retaining the legacy function
+and sequence for compatibility. See [N3 fiscal-numbering hardening](POST_V3_N3_INVOICE_NUMBERING_HARDENING.md).
 
 N2.0D verification: focused suites passed 29/29 after the failure-path fix; full suite passed 546 tests across 140 files; project agents passed 294/294; lint passed; TypeScript/build passed; `git diff --check` passed; and the changed-file secret scan found zero indicators across 14 files. The local helper migration filename is `20260922143036_n2_concurrent_settlement_qa_support.sql`; the QA migration service recorded the applied migration as `20260922144144 / n2_concurrent_settlement_qa_support` (service-assigned timestamp). The existing readiness helper migration filename and earlier service-assigned migration-history entries likewise use distinct timestamps; do not repair remote history manually.
 

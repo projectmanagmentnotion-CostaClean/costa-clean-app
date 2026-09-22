@@ -7,6 +7,9 @@
 set -Eeuo pipefail
 umask 077
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/cp51f-pooler-config.sh"
+
 MODE="${1:-}"
 STATUS_FILE="${CP51F_STATUS_FILE:-}"
 CURRENT_STAGE="LOCAL_PREFLIGHT"
@@ -33,7 +36,6 @@ JIT_PRE_MAPPING=""
 JIT_PRE_MAPPING_KIND="UNKNOWN"
 JIT_USER_ID=""
 JIT_PRE_ROLES='[]'
-POOLER_JSON=""
 POOLER_HOST=""
 POOLER_PORT=""
 POOLER_USER=""
@@ -485,12 +487,11 @@ JIT_PRE_MAPPING_KIND="$(jq -er '.kind' <<<"$JIT_PRE_MAPPING_STATE")"
 JIT_PRE_ROLES="$(jq -c '.roles' <<<"$JIT_PRE_MAPPING_STATE")"
 
 set_stage POOLER_METADATA
-POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")" || { set_failure POOLER_METADATA "$(management_api_failure_code)"; exit 1; }
-POOLER_HOST="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_host // empty' <<<"$POOLER_JSON")"
-POOLER_PORT="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_port // empty' <<<"$POOLER_JSON")"
-POOLER_USER="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_user // empty' <<<"$POOLER_JSON")"
-POOLER_DB="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // empty' <<<"$POOLER_JSON")"
-[[ -n "$POOLER_HOST" && "$POOLER_PORT" == "5432" && "$POOLER_USER" == "postgres.$PROJECT_REF" && "$POOLER_DB" == "postgres" ]] || \
+POOLER_HOST="${CP51F_POOLER_HOST:-}"
+POOLER_PORT="${CP51F_POOLER_PORT:-}"
+POOLER_USER="${CP51F_POOLER_USER:-}"
+POOLER_DB="${CP51F_POOLER_DB:-}"
+cp51f_validate_pooler_config "$POOLER_HOST" "$POOLER_PORT" "$POOLER_USER" "$POOLER_DB" "$PROJECT_REF" || \
   die_code POOLER_METADATA POOLER_METADATA_INVALID "official Session Pooler metadata did not match the required target"
 
 JIT_EXPIRES_AT="$(( $(date +%s) + 900 ))000"

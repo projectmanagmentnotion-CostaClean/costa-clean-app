@@ -183,6 +183,10 @@ jobs:
       - name: Run certified production backup runner
         env:
           SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
+          CP51F_POOLER_HOST: ${{ vars.CP51F_POOLER_HOST }}
+          CP51F_POOLER_PORT: ${{ vars.CP51F_POOLER_PORT }}
+          CP51F_POOLER_USER: ${{ vars.CP51F_POOLER_USER }}
+          CP51F_POOLER_DB: ${{ vars.CP51F_POOLER_DB }}
           CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
           CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-runner-status.json
           PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump

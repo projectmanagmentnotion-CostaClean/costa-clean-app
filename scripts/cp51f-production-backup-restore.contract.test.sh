@@ -22,7 +22,7 @@ SMOKE=".github/workflows/cp51f-executor-smoke.yml"
 
 contains() { grep -Fq -- "$1" "$2"; }
 not_contains() { ! grep -Fq -- "$1" "$2"; }
-line_of() { grep -nF -- "$1" "$WORKFLOW" | head -n1 | cut -d: -f1; }
+line_of() { grep -m1 -nF -- "$1" "$WORKFLOW" | cut -d: -f1; }
 
 contains "tags:" "$WORKFLOW"
 contains "cp51f-run-*" "$WORKFLOW"

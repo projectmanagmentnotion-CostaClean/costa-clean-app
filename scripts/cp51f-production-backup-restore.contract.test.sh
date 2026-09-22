@@ -32,7 +32,12 @@ not_contains() {
     return 1
   }
 }
-line_of() { grep -m1 -nF -- "$1" "$WORKFLOW" | cut -d: -f1; }
+line_of() {
+  awk -v needle="$1" 'index($0, needle) { print NR; found=1; exit } END { if (!found) exit 1 }' "$WORKFLOW" || {
+    printf 'CONTRACT_TEST=FAIL: workflow ordering marker missing: %s\n' "$1" >&2
+    return 1
+  }
+}
 
 contains "tags:" "$WORKFLOW"
 contains "cp51f-run-*" "$WORKFLOW"

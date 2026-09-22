@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# These exact-source assertions intentionally search for literal shell syntax.
+# shellcheck disable=SC2016
+
 set -Eeuo pipefail
 
 runner="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/cp51f-production-backup-setup.sh"

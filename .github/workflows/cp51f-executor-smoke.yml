@@ -9,6 +9,7 @@ on:
       - .github/workflows/cp51f-production-backup-restore.yml
       - scripts/cp51f-bootstrap-postgres17.sh
       - scripts/cp51f-production-backup-setup.sh
+      - scripts/cp51f-production-backup-setup.contract.test.sh
       - scripts/cp51f-production-backup-setup.diagnostic.test.sh
       - scripts/cp51f-management-api-http-diagnostic.test.sh
       - scripts/cp51f-history-guard.schema.test.sh

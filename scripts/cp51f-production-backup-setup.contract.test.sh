@@ -12,7 +12,7 @@ grep -Fq -- '{user_id:$user_id, roles:$roles}' <<<"$source_text"
 ! grep -Fq -- '{user_id:$user_id, user_roles:$roles}' <<<"$source_text"
 grep -Fq -- '(.user_roles | type) == "array"' <<<"$source_text"
 grep -Fq -- 'JIT_PRE_MAPPING_KIND" == "absent"' <<<"$source_text"
-grep -Fq -- 'error("invalid JIT state response")' <<<"$source_text"
+grep -Fq -- 'JIT_PRESTATE_UNAVAILABLE' <<<"$source_text"
 grep -Fq -- 'curl --config -' <<<"$source_text"
 grep -Fq -- 'PGPASSFILE=' <<<"$source_text"
 grep -Fq -- 'chmod 600 "$TEMP_CREDENTIAL_FILE"' <<<"$source_text"
@@ -45,17 +45,43 @@ mapping_invalid='{"user_id":"not-empty","roles":[]}'
 
 node - "$state_enabled" "$state_disabled" "$mapping_present" "$mapping_absent" "$mapping_invalid" <<'NODE'
 const [enabled, disabled, present, absent, invalid] = process.argv.slice(2).map(JSON.parse);
-const state = value => {
-  if (value && typeof value.state === 'string' && ['enabled', 'disabled'].includes(value.state)) return value.state;
-  throw new Error('invalid JIT state response');
-};
 const mapping = value => {
   if (value === null || (value && Object.keys(value).length === 0)) return 'absent';
   if (value && typeof value.user_id === 'string' && value.user_id.length > 0 && Array.isArray(value.user_roles)) return 'present';
   throw new Error('invalid JIT mapping response');
 };
-if (state(enabled) !== 'enabled' || state(disabled) !== 'disabled' || mapping(present) !== 'present' || mapping(absent) !== 'absent') process.exit(1);
+if (mapping(present) !== 'present' || mapping(absent) !== 'absent') process.exit(1);
 try { mapping(invalid); process.exit(1); } catch {}
 NODE
+
+# Exercise the production jq parser itself against the official GET 200 schema.
+source <(sed -n '/^parse_jit_state() {/,/^}/p' "$runner")
+expect_jit_state() {
+  local input="$1" expected="$2" actual
+  actual="$(parse_jit_state <<<"$input")" || {
+    printf '%s\n' 'CP51F_JIT_CONTRACT_TEST=FAIL: valid JIT schema rejected' >&2
+    exit 1
+  }
+  [[ "$actual" == "$expected" ]] || exit 1
+}
+reject_jit_state() {
+  local input="$1"
+  if parse_jit_state <<<"$input" >/dev/null 2>&1; then
+    printf '%s\n' 'CP51F_JIT_CONTRACT_TEST=FAIL: invalid JIT schema accepted' >&2
+    exit 1
+  fi
+}
+
+expect_jit_state '{"state":"enabled"}' enabled
+expect_jit_state '{"state":"disabled","appliedSuccessfully":false}' disabled
+expect_jit_state '{"state":"enabled","appliedSuccessfully":true}' enabled
+expect_jit_state '{"state":"unavailable","unavailableReason":"postgres_upgrade_required"}' unavailable
+reject_jit_state '{"state":"enabled","appliedSuccessfully":"true"}'
+reject_jit_state '{"state":"unavailable"}'
+reject_jit_state '{"state":"unavailable","unavailableReason":"secret-reason"}'
+reject_jit_state '{"state":"other"}'
+reject_jit_state '{"enabled":true}'
+reject_jit_state '[]'
+reject_jit_state 'null'
 
 printf '%s\n' 'CP51F_JIT_CONTRACT_TEST=PASS'

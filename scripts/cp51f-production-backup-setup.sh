@@ -55,6 +55,7 @@ CODES=(
   MANAGEMENT_API_HTTP_429 MANAGEMENT_API_HTTP_5XX MANAGEMENT_API_NETWORK_ERROR
   MANAGEMENT_API_UNEXPECTED_HTTP
   TARGET_STATUS_MISMATCH TARGET_POSTGRES_VERSION_MISMATCH JIT_PRESTATE_INVALID
+  JIT_PRESTATE_UNAVAILABLE
   JIT_MAPPING_INVALID JIT_MAPPING_ABSENT POOLER_METADATA_INVALID JIT_ENABLE_FAILED
   JIT_MAPPING_UPDATE_FAILED DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
   DUMP_HISTORY_SCHEMA_FAILED DUMP_HISTORY_DATA_FAILED JIT_CLEANUP_FAILED
@@ -287,7 +288,22 @@ management_api_failure_code() {
 }
 
 parse_jit_state() {
-  jq -er 'if type == "object" and (.state | type) == "string" and (.state == "enabled" or .state == "disabled") then .state else error("invalid JIT state response") end'
+  jq -er '
+    if type != "object" or (.state | type) != "string" then
+      error("invalid JIT state response")
+    elif .state == "enabled" or .state == "disabled" then
+      if has("appliedSuccessfully") and (.appliedSuccessfully | type) != "boolean" then
+        error("invalid JIT state response")
+      else .state end
+    elif .state == "unavailable" and
+      (.unavailableReason | type) == "string" and
+      (.unavailableReason as $reason |
+        (["platform_unsupported", "postgres_upgrade_required", "ssl_enforcement_required", "temporarily_unavailable"] | index($reason)) != null) then
+      "unavailable"
+    else
+      error("invalid JIT state response")
+    end
+  '
 }
 
 classify_jit_mapping() {
@@ -388,6 +404,7 @@ POSTGRES_VERSION="$(jq -r '.database.version // empty' <<<"$PROJECT_JSON")"
 set_stage JIT_CONFIG_READ
 JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")" || { set_failure JIT_CONFIG_READ "$(management_api_failure_code)"; exit 1; }
 JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die_code JIT_CONFIG_READ JIT_PRESTATE_INVALID "unknown JIT prestate"
+[[ "$JIT_PRESTATE" != "unavailable" ]] || die_code JIT_CONFIG_READ JIT_PRESTATE_UNAVAILABLE "temporary access is officially unavailable"
 set_stage JIT_MAPPING_READ
 JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")" || { set_failure JIT_MAPPING_READ "$(management_api_failure_code)"; exit 1; }
 JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die_code JIT_MAPPING_READ JIT_MAPPING_INVALID "invalid JIT mapping response"

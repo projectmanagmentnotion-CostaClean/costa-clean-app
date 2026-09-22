@@ -3,37 +3,49 @@
 set -Eeuo pipefail
 umask 077
 
-readonly PROJECT_REF='wfxnwfcdjainpojhbdri'
 readonly EXPECTED_USER='postgres.wfxnwfcdjainpojhbdri'
 readonly EXPECTED_DATABASE='postgres'
 response_file="${1:-}"
 
 [[ -n "$response_file" && -f "$response_file" && -n "${GITHUB_ENV:-}" ]] || exit 1
 
-# Keep the URI and any embedded credential entirely inside jq. Only the
-# validated host is ever returned to the caller.
-if ! resolved_host="$(jq -er --arg project_ref "$PROJECT_REF" '
-  def connection_string:
-    if has("connection_string") then
-      if (.connection_string | type) == "string" and (.connection_string | length) > 0
-      then .connection_string else error("invalid primary connection string") end
-    elif has("connectionString") then
-      if (.connectionString | type) == "string" and (.connectionString | length) > 0
-      then .connectionString else error("invalid primary connection string") end
-    else error("missing primary connection string") end;
+if ! resolved_host="$(node - "$response_file" <<'NODE'
+'use strict';
+const fs = require('node:fs');
 
-  if type != "array" then error("invalid response root") else . end
-  | map(select(type == "object" and .database_type == "PRIMARY"))
-  | if length != 1 then error("invalid primary count") else .[0] end
-  | connection_string as $uri
-  | if ($uri | test("^postgres(ql)?://")) then $uri else error("invalid URI scheme") end
-  | split("@") as $parts
-  | if ($parts | length) != 2 or ($parts[0] | length) == 0
-    then error("invalid URI authority") else $parts[1] end
-  | capture("^(?<host>[^:/@]+):(?<port>[0-9]+)/[^/?#]+([?].*)?$")
-  | if (.host | test("^aws-[0-9]+-eu-west-1[.]pooler[.]supabase[.]com$"))
-    then .host else error("invalid pooler host") end
-' "$response_file" 2>/dev/null)"; then
+function fail(stage) {
+  process.stderr.write(`CP51F_POOLER_RESOLVER_INVALID=${stage}\n`);
+  process.exit(1);
+}
+try {
+  const payload = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+  if (!Array.isArray(payload)) fail('RESPONSE_SCHEMA');
+  const primary = payload.filter((entry) =>
+    entry !== null && typeof entry === 'object' && !Array.isArray(entry) && entry.database_type === 'PRIMARY'
+  );
+  if (primary.length !== 1) fail('PRIMARY_COUNT');
+  const item = primary[0];
+  const uri = typeof item.connection_string === 'string' && item.connection_string.length > 0
+    ? item.connection_string
+    : typeof item.connectionString === 'string' && item.connectionString.length > 0
+      ? item.connectionString
+      : null;
+  if (uri === null || /\s/.test(uri)) fail('CONNECTION_STRING');
+  const match = uri.match(/^postgres(?:ql)?:\/\/([^/?#]+)(\/[^?#]*)(?:\?[^#]*)?$/);
+  if (!match || match[2] !== '/postgres') fail('URI_FORMAT');
+  const authority = match[1].split('@');
+  if (authority.length !== 2 || authority[0].length === 0) fail('URI_AUTHORITY');
+  const hostAndPort = authority[1].match(/^([^:/@]+):([0-9]+)$/);
+  if (!hostAndPort) fail('URI_HOST_PORT');
+  const host = hostAndPort[1];
+  if (!/^aws-[0-9]+-eu-west-1[.]pooler[.]supabase[.]com$/.test(host)) fail('HOST_VALIDATION');
+  process.stdout.write(host);
+} catch {
+  process.stderr.write('CP51F_POOLER_RESOLVER_INVALID=JSON_OR_INPUT\n');
+  process.exit(1);
+}
+NODE
+)"; then
   exit 1
 fi
 

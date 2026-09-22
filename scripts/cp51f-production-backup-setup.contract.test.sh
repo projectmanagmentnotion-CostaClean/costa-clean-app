@@ -9,12 +9,16 @@ runner="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/cp51f-production-backup-se
 source_text="$(<"$runner")"
 
 grep -Fq -- '"/projects/$PROJECT_REF/jit-access"' <<<"$source_text"
-grep -Fq -- '"/projects/$PROJECT_REF/database/jit"' <<<"$source_text"
+grep -Fq -- '"/profile"' <<<"$source_text"
+grep -Fq -- '"/projects/$PROJECT_REF/database/jit/list"' <<<"$source_text"
+if grep -Fq -- 'api_get "/projects/$PROJECT_REF/database/jit"' <<<"$source_text"; then exit 1; fi
 grep -Fq -- '"/projects/$PROJECT_REF/database/jit/$JIT_USER_ID"' <<<"$source_text"
 grep -Fq -- '{user_id:$user_id, roles:$roles}' <<<"$source_text"
 if grep -Fq -- '{user_id:$user_id, user_roles:$roles}' <<<"$source_text"; then exit 1; fi
-grep -Fq -- '(.user_roles | type) == "array"' <<<"$source_text"
 grep -Fq -- 'JIT_PRE_MAPPING_KIND" == "absent"' <<<"$source_text"
+grep -Fq -- 'JIT_UPDATE_ATTEMPTED' <<<"$source_text"
+grep -Fq -- 'database/jit/list' <<<"$source_text"
+if grep -Fq -- 'JIT_MAPPING_ABSENT' <<<"$source_text"; then exit 1; fi
 grep -Fq -- 'JIT_PRESTATE_UNAVAILABLE' <<<"$source_text"
 grep -Fq -- 'curl --config -' <<<"$source_text"
 grep -Fq -- 'PGPASSFILE=' <<<"$source_text"
@@ -40,23 +44,6 @@ version_check_line="$(grep -n 'check_postgres_tool_version' <<<"$source_text" | 
 # shellcheck disable=SC2016 # The grep pattern intentionally matches literal runner source.
 jit_mutation_line="$(grep -n 'api_put "/projects/$PROJECT_REF/jit-access" '\''{"state":"enabled"}'\''' <<<"$source_text" | head -1 | cut -d: -f1)"
 [[ -n "$version_check_line" && -n "$jit_mutation_line" && "$version_check_line" -lt "$jit_mutation_line" ]]
-
-state_enabled='{"state":"enabled","appliedSuccessfully":true}'
-state_disabled='{"state":"disabled","appliedSuccessfully":true}'
-mapping_present='{"user_id":"11111111-1111-1111-1111-111111111111","user_roles":[{"role":"postgres","expires_at":1}]}'
-mapping_absent='null'
-mapping_invalid='{"user_id":"not-empty","roles":[]}'
-
-node - "$state_enabled" "$state_disabled" "$mapping_present" "$mapping_absent" "$mapping_invalid" <<'NODE'
-const [enabled, disabled, present, absent, invalid] = process.argv.slice(2).map(JSON.parse);
-const mapping = value => {
-  if (value === null || (value && Object.keys(value).length === 0)) return 'absent';
-  if (value && typeof value.user_id === 'string' && value.user_id.length > 0 && Array.isArray(value.user_roles)) return 'present';
-  throw new Error('invalid JIT mapping response');
-};
-if (mapping(present) !== 'present' || mapping(absent) !== 'absent') process.exit(1);
-try { mapping(invalid); process.exit(1); } catch {}
-NODE
 
 # Exercise the production jq parser itself against the official GET 200 schema.
 # shellcheck disable=SC1090 # Source only the parser function extracted from this checked-in runner.

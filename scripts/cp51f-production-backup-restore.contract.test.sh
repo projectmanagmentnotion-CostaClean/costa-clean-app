@@ -6,6 +6,7 @@ RESTORE="scripts/cp51f-restore-verify.sh"
 BOOTSTRAP="scripts/cp51f-bootstrap-postgres17.sh"
 SETUP="scripts/cp51f-production-backup-setup.sh"
 JIT_CONTRACT="scripts/cp51f-production-backup-setup.contract.test.sh"
+JIT_MAPPING_CONTRACT="scripts/cp51f-jit-mapping.contract.test.sh"
 JIT_PROBE="scripts/cp51f-jit-prestate-readonly-probe.sh"
 JIT_PROBE_TEST="scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh"
 JIT_PROBE_MOCK="scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh"
@@ -13,7 +14,7 @@ DIAGNOSTIC="scripts/cp51f-production-backup-setup.diagnostic.test.sh"
 HTTP_DIAGNOSTIC="scripts/cp51f-management-api-http-diagnostic.test.sh"
 HISTORY_SCHEMA="scripts/cp51f-history-guard.schema.test.sh"
 SMOKE=".github/workflows/cp51f-executor-smoke.yml"
-[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$JIT_CONTRACT" && -f "$JIT_PROBE" && -f "$JIT_PROBE_TEST" && -f "$JIT_PROBE_MOCK" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
+[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$JIT_CONTRACT" && -f "$JIT_MAPPING_CONTRACT" && -f "$JIT_PROBE" && -f "$JIT_PROBE_TEST" && -f "$JIT_PROBE_MOCK" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
 
 contains() { grep -Fq -- "$1" "$2"; }
 not_contains() { ! grep -Fq -- "$1" "$2"; }
@@ -68,6 +69,7 @@ contains 'CP51F_TEMP_PAT_PRESENT' "$WORKFLOW"
 contains 'TEMP_PAT_SECRET_PRESENCE=PASS' "$WORKFLOW"
 contains 'scripts/cp51f-production-backup-setup.diagnostic.test.sh' "$SMOKE"
 contains 'bash scripts/cp51f-production-backup-setup.contract.test.sh' "$SMOKE"
+contains 'bash scripts/cp51f-jit-mapping.contract.test.sh' "$SMOKE"
 contains 'bash scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh' "$SMOKE"
 contains 'shellcheck scripts/cp51f-bootstrap-postgres17.sh' "$SMOKE"
 contains 'scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh' "$SMOKE"

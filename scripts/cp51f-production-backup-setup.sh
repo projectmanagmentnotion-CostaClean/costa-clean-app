@@ -22,6 +22,7 @@ PG_DUMP_BIN="${PG_DUMP_BIN:-pg_dump}"
 PG_DUMPALL_BIN="${PG_DUMPALL_BIN:-pg_dumpall}"
 JIT_CHANGED=0
 JIT_CLEAN=0
+JIT_UPDATE_ATTEMPTED=0
 SETUP_RESULT="BACKUP_INCOMPLETE"
 TARGET_ID=""
 TARGET_STATUS="UNKNOWN"
@@ -43,7 +44,7 @@ PGSSLMODE=""
 PGOPTIONS=""
 
 STAGES=(
-  LOCAL_PREFLIGHT PROJECT_METADATA JIT_CONFIG_READ JIT_MAPPING_READ POOLER_METADATA
+  LOCAL_PREFLIGHT PROJECT_METADATA JIT_CONFIG_READ JIT_PROFILE_READ JIT_MAPPING_LIST_READ POOLER_METADATA
   JIT_ENABLE JIT_MAPPING_UPDATE DUMP_ROLES DUMP_SCHEMA DUMP_DATA
   DUMP_HISTORY_SCHEMA DUMP_HISTORY_DATA JIT_CLEANUP MANIFEST_FINALIZE COMPLETE UNKNOWN
 )
@@ -56,7 +57,7 @@ CODES=(
   MANAGEMENT_API_UNEXPECTED_HTTP
   TARGET_STATUS_MISMATCH TARGET_POSTGRES_VERSION_MISMATCH JIT_PRESTATE_INVALID
   JIT_PRESTATE_UNAVAILABLE
-  JIT_MAPPING_INVALID JIT_MAPPING_ABSENT POOLER_METADATA_INVALID JIT_ENABLE_FAILED
+  JIT_PROFILE_INVALID JIT_MAPPING_INVALID POOLER_METADATA_INVALID JIT_ENABLE_FAILED
   JIT_MAPPING_UPDATE_FAILED DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
   DUMP_HISTORY_SCHEMA_FAILED DUMP_HISTORY_DATA_FAILED JIT_CLEANUP_FAILED
   MANIFEST_FAILED UNCLASSIFIED_FAILURE LOCAL_PREFLIGHT_PASS AWAITING_PAT_REVOCATION
@@ -311,16 +312,50 @@ parse_jit_state() {
   '
 }
 
-classify_jit_mapping() {
-  jq -er '
-    if . == null or . == {} then
-      "absent"
-    elif type == "object" and (.user_id | type) == "string" and (.user_id | length) > 0 and (.user_roles | type) == "array" then
-      "present"
+parse_profile_user_id() {
+  jq -ser '
+    if length != 1 then
+      error("invalid profile response")
     else
-      error("invalid JIT mapping response")
+      .[0] as $document |
+      if ($document | type) == "object" and
+        ($document.gotrue_id | type) == "string" and
+        ($document.gotrue_id | gsub("[[:space:]]"; "") | length) > 0 then
+        $document.gotrue_id
+      else
+        error("invalid profile response")
+      end
     end
-  '
+  ' 2>/dev/null
+}
+
+parse_jit_mapping_list() {
+  local expected_user_id="$1"
+  jq -ser --arg user_id "$expected_user_id" '
+    if length != 1 then
+      error("invalid JIT mapping list response")
+    else
+      .[0] as $document |
+      if ($document | type) != "object" or ($document.items | type) != "array" then
+        error("invalid JIT mapping list response")
+      elif any($document.items[];
+        type != "object" or
+        (.user_id | type) != "string" or
+        (.user_id | length) == 0 or
+        (.user_roles | type) != "array") then
+        error("invalid JIT mapping list response")
+      else
+        [$document.items[] | select(.user_id == $user_id)] as $matches |
+        if ($matches | length) > 1 then
+          error("duplicate JIT mapping")
+        elif ($matches | length) == 0 then
+          {kind:"absent", roles:[]}
+        else
+          {kind:"present", roles:$matches[0].user_roles}
+        end
+      end
+    end
+  ' 2>/dev/null
 }
 
 write_failure_manifest() {
@@ -344,10 +379,17 @@ write_failure_manifest() {
 cleanup_jit() {
   [[ "$JIT_CLEAN" -eq 1 ]] && return 0
 
-  local restore_body post_config post_mapping post_mapping_kind pre_mapping_normalized post_mapping_normalized
+  local restore_body post_config post_list post_mapping_kind post_roles
   if [[ "$JIT_PRE_MAPPING_KIND" == "absent" ]]; then
     [[ -n "$JIT_USER_ID" ]] || return 1
-    api_delete "/projects/$PROJECT_REF/database/jit/$JIT_USER_ID" >/dev/null || return 1
+    post_list="$(api_get "/projects/$PROJECT_REF/database/jit/list")" || return 1
+    post_mapping_kind="$(parse_jit_mapping_list "$JIT_USER_ID" <<<"$post_list" | jq -er '.kind')" || return 1
+    if [[ "$post_mapping_kind" == "present" ]]; then
+      [[ "$JIT_UPDATE_ATTEMPTED" -eq 1 ]] || return 1
+      post_roles="$(parse_jit_mapping_list "$JIT_USER_ID" <<<"$post_list" | jq -S -c '.roles')" || return 1
+      [[ "$post_roles" == "$JIT_UPDATE_ROLES" ]] || return 1
+      api_delete "/projects/$PROJECT_REF/database/jit/$JIT_USER_ID" >/dev/null || return 1
+    fi
   else
     restore_body="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_PRE_ROLES" \
       '{user_id:$user_id, roles:$roles}')"
@@ -359,19 +401,41 @@ cleanup_jit() {
   fi
 
   post_config="$(api_get "/projects/$PROJECT_REF/jit-access")" || return 1
-  post_mapping="$(api_get "/projects/$PROJECT_REF/database/jit")" || return 1
   [[ "$(parse_jit_state <<<"$post_config")" == "$JIT_PRESTATE" ]] || return 1
-  post_mapping_kind="$(classify_jit_mapping <<<"$post_mapping")" || return 1
+  post_list="$(api_get "/projects/$PROJECT_REF/database/jit/list")" || return 1
+  post_mapping_kind="$(parse_jit_mapping_list "$JIT_USER_ID" <<<"$post_list" | jq -er '.kind')" || return 1
   if [[ "$JIT_PRE_MAPPING_KIND" == "absent" ]]; then
     [[ "$post_mapping_kind" == "absent" ]] || return 1
   else
     [[ "$post_mapping_kind" == "present" ]] || return 1
-    pre_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$JIT_PRE_MAPPING")"
-    post_mapping_normalized="$(jq -S -c '{user_id, user_roles}' <<<"$post_mapping")"
-    [[ "$pre_mapping_normalized" == "$post_mapping_normalized" ]] || return 1
+    post_roles="$(parse_jit_mapping_list "$JIT_USER_ID" <<<"$post_list" | jq -S -c '.roles')" || return 1
+    [[ "$post_roles" == "$(jq -S -c '.' <<<"$JIT_PRE_ROLES")" ]] || return 1
   fi
 
   JIT_CLEAN=1
+}
+
+apply_temporary_jit_access() {
+  local roles="$1"
+  if [[ "$JIT_PRESTATE" == "disabled" ]]; then
+    set_stage JIT_ENABLE
+    JIT_CHANGED=1
+    api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null || {
+      set_failure JIT_ENABLE "$(management_api_failure_code)"
+      return 1
+    }
+  fi
+
+  JIT_UPDATE_BODY="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$roles" \
+    '{user_id:$user_id, roles:$roles}')" || return 1
+  JIT_UPDATE_ROLES="$(jq -S -c '.' <<<"$roles")" || return 1
+  set_stage JIT_MAPPING_UPDATE
+  JIT_CHANGED=1
+  JIT_UPDATE_ATTEMPTED=1
+  api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null || {
+    set_failure JIT_MAPPING_UPDATE "$(management_api_failure_code)"
+    return 1
+  }
 }
 
 on_exit() {
@@ -410,15 +474,15 @@ set_stage JIT_CONFIG_READ
 JIT_PRE_CONFIG="$(api_get "/projects/$PROJECT_REF/jit-access")" || { set_failure JIT_CONFIG_READ "$(management_api_failure_code)"; exit 1; }
 JIT_PRESTATE="$(parse_jit_state <<<"$JIT_PRE_CONFIG")" || die_code JIT_CONFIG_READ JIT_PRESTATE_INVALID "unknown JIT prestate"
 [[ "$JIT_PRESTATE" != "unavailable" ]] || die_code JIT_CONFIG_READ JIT_PRESTATE_UNAVAILABLE "temporary access is officially unavailable"
-set_stage JIT_MAPPING_READ
-JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit")" || { set_failure JIT_MAPPING_READ "$(management_api_failure_code)"; exit 1; }
-JIT_PRE_MAPPING_KIND="$(classify_jit_mapping <<<"$JIT_PRE_MAPPING")" || die_code JIT_MAPPING_READ JIT_MAPPING_INVALID "invalid JIT mapping response"
-if [[ "$JIT_PRE_MAPPING_KIND" == "present" ]]; then
-  JIT_USER_ID="$(jq -r '.user_id' <<<"$JIT_PRE_MAPPING")"
-  JIT_PRE_ROLES="$(jq -c '.user_roles' <<<"$JIT_PRE_MAPPING")"
-else
-  die_code JIT_MAPPING_READ JIT_MAPPING_ABSENT "JIT user mapping absent"
-fi
+set_stage JIT_PROFILE_READ
+PROFILE_JSON="$(api_get "/profile")" || { set_failure JIT_PROFILE_READ "$(management_api_failure_code)"; exit 1; }
+JIT_USER_ID="$(parse_profile_user_id <<<"$PROFILE_JSON")" || die_code JIT_PROFILE_READ JIT_PROFILE_INVALID "invalid authenticated profile response"
+
+set_stage JIT_MAPPING_LIST_READ
+JIT_PRE_MAPPING="$(api_get "/projects/$PROJECT_REF/database/jit/list")" || { set_failure JIT_MAPPING_LIST_READ "$(management_api_failure_code)"; exit 1; }
+JIT_PRE_MAPPING_STATE="$(parse_jit_mapping_list "$JIT_USER_ID" <<<"$JIT_PRE_MAPPING")" || die_code JIT_MAPPING_LIST_READ JIT_MAPPING_INVALID "invalid JIT mapping list response"
+JIT_PRE_MAPPING_KIND="$(jq -er '.kind' <<<"$JIT_PRE_MAPPING_STATE")"
+JIT_PRE_ROLES="$(jq -c '.roles' <<<"$JIT_PRE_MAPPING_STATE")"
 
 set_stage POOLER_METADATA
 POOLER_JSON="$(api_get "/projects/$PROJECT_REF/config/database/pooler")" || { set_failure POOLER_METADATA "$(management_api_failure_code)"; exit 1; }
@@ -429,23 +493,13 @@ POOLER_DB="$(jq -r 'map(select(.database_type == "PRIMARY"))[0].db_name // empty
 [[ -n "$POOLER_HOST" && "$POOLER_PORT" == "5432" && "$POOLER_USER" == "postgres.$PROJECT_REF" && "$POOLER_DB" == "postgres" ]] || \
   die_code POOLER_METADATA POOLER_METADATA_INVALID "official Session Pooler metadata did not match the required target"
 
-if [[ "$JIT_PRESTATE" == "disabled" ]]; then
-  set_stage JIT_ENABLE
-  api_put "/projects/$PROJECT_REF/jit-access" '{"state":"enabled"}' >/dev/null || { set_failure JIT_ENABLE "$(management_api_failure_code)"; exit 1; }
-  JIT_CHANGED=1
-fi
-
 JIT_EXPIRES_AT="$(( $(date +%s) + 900 ))000"
 JIT_ROLES='[{"role":"postgres","expires_at":'"$JIT_EXPIRES_AT"'}]'
 if [[ -n "${CP51F_ALLOWED_CIDR:-}" ]]; then
   JIT_ROLES="$(jq -cn --arg cidr "$CP51F_ALLOWED_CIDR" --argjson expires "$JIT_EXPIRES_AT" \
     '[{role:"postgres", expires_at:$expires, allowed_networks:{allowed_cidrs:[{cidr:$cidr}]}}]')"
 fi
-JIT_UPDATE_BODY="$(jq -cn --arg user_id "$JIT_USER_ID" --argjson roles "$JIT_ROLES" \
-  '{user_id:$user_id, roles:$roles}')"
-set_stage JIT_MAPPING_UPDATE
-api_put "/projects/$PROJECT_REF/database/jit" "$JIT_UPDATE_BODY" >/dev/null || { set_failure JIT_MAPPING_UPDATE "$(management_api_failure_code)"; exit 1; }
-JIT_CHANGED=1
+apply_temporary_jit_access "$JIT_ROLES" || exit 1
 
 TEMP_CREDENTIAL_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.pgpass.XXXXXX")"
 chmod 600 "$TEMP_CREDENTIAL_FILE"

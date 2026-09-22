@@ -79,3 +79,12 @@ The test-only QA business data was intentionally created and mutated under the `
 Production (`wfxnwfcdjainpojhbdri`) was queried read-only after QA cleanup. Aggregate results: logical orphans `0`, relation mismatches `0`, and qualified archive candidates `0`. Five active draft quotes had no downstream job/invoice/recurring-plan reference, but absence of references alone does not prove that a quote is clearly stale; they were not classified as cleanup candidates and were not modified. Production mutations, migrations, and deployment remained `0`.
 
 The committed database contract suite is `supabase/tests/n11b_role_scoped_authorization_and_literal_prefixes_test.sql` (pgTAP, 27 assertions). Its final assertion queries `pg_constraint` for the exact APP-private audit relation and named fixture-prefix constraint. This machine had no Docker/psql or linked local database, and the QA project does not have pgTAP enabled, so that exact pgTAP file was not run and pgTAP was not enabled remotely. Instead, all 27 equivalent live QA assertions were executed in a rollback-only SQL block against the installed functions, privileges, constraints, and catalog definitions; the block passed. Focused Vitest migration-contract tests also pass. This is executable QA evidence, but not a claim that the pgTAP runner itself was run.
+
+### Final N1 handoff to N2
+
+- `N1_STATUS=PASS`
+- `PRODUCTION_CLEANUP_REQUIRED=NO`
+- `PRODUCTION_CLEANUP_STATUS=NOT_REQUIRED`
+- `N2_READY=YES`
+
+The five unattached draft quotes were reviewed read-only and retained because each still has a valid lead or client/property relationship; none is an archive candidate. The QA-only cleanup planner is not to be installed in Production merely to produce an empty plan. N2.0B's separate zero-cost QA readiness is tracked in `docs/POST_V3_N2_ZERO_COST_QA_READINESS.md` and remains blocked until authenticated cleanup/rollback proof completes.

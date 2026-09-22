@@ -41,6 +41,7 @@
     "qa:n2:certify": "node scripts/qa/n2FinancialQaReadiness.mjs --certify",
     "qa:n2:concurrency": "node scripts/qa/n2ConcurrentSettlement.mjs",
     "qa:n2:concurrency:preflight": "node scripts/qa/n2ConcurrentSettlement.mjs --preflight",
+    "qa:n3:numbering": "node scripts/qa/n3InvoiceNumberingQa.mjs",
     "qa:playwright:financial": "node scripts/qa/playwright-financial-cert.mjs",
     "test:e2e:financial": "playwright test --config playwright.financial.config.mjs",
     "qa:preview:local": "vite preview --host 127.0.0.1 --port 4173",

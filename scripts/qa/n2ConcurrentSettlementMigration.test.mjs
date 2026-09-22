@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 
-const migration = await fs.readFile(new URL('../../supabase/migrations/20260922143036_n2_concurrent_settlement_qa_support.sql', import.meta.url), 'utf8')
+const migration = await fs.readFile(new URL('../../supabase/qa-migrations/20260922143036_n2_concurrent_settlement_qa_support.sql', import.meta.url), 'utf8')
 
 describe('N2 QA concurrent settlement support migration', () => {
   it('restricts both helpers to QA issuer and active internal owner/admin sessions', () => {

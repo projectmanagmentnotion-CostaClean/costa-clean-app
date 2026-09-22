@@ -30,6 +30,8 @@ describe('invoiceNumbering', () => {
     expect(parseInvoiceFiscalSequence('2026-048', 2026)).toBe(48)
     expect(parseInvoiceFiscalSequence('2025-048', 2026)).toBeNull()
     expect(parseInvoiceDisplaySequence('INV-0048')).toBe(48)
+    expect(parseInvoiceDisplaySequence('INV-2027-001', 2027)).toBe(1)
+    expect(parseInvoiceDisplaySequence('INV-2027-001', 2026)).toBeNull()
   })
 
   it('detects gaps and suggests the next sequence after real issued invoices', () => {
@@ -44,7 +46,7 @@ describe('invoiceNumbering', () => {
     expect(audit.firstMissingSequence).toBe(43)
     expect(audit.nextSuggestedSequence).toBe(43)
     expect(audit.nextSuggestedInvoiceNumber).toBe('2026-043')
-    expect(audit.nextSuggestedDisplayCode).toBe('INV-0043')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-2026-043')
     expect(describeInvoiceNumberingGap(audit)).toBe('Hay huecos en la numeracion fiscal entre 2026-042 y 2026-048.')
   })
 
@@ -70,10 +72,19 @@ describe('invoiceNumbering', () => {
 
   it('detects out-of-sync internal and fiscal sequences', () => {
     const audit = buildInvoiceNumberingAudit([
-      createInvoice({ display_code: buildInvoiceDisplayCode(60), invoice_number: buildInvoiceNumber(2026, 42), status: 'issued' }),
+      createInvoice({ display_code: buildInvoiceDisplayCode(2026, 60), invoice_number: buildInvoiceNumber(2026, 42), status: 'issued' }),
     ], 2026)
 
     expect(audit.outOfSyncEntries).toHaveLength(1)
+  })
+
+  it('flags a year-qualified display code that belongs to a different fiscal year', () => {
+    const audit = buildInvoiceNumberingAudit([
+      createInvoice({ display_code: 'INV-2025-001', invoice_number: '2026-001', status: 'issued' }),
+    ], 2026)
+
+    expect(audit.outOfSyncEntries).toHaveLength(1)
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-2026-002')
   })
 
   it('suggests 45 after regularizing 48 and 49 down to 43 and 44', () => {
@@ -87,7 +98,7 @@ describe('invoiceNumbering', () => {
     expect(audit.hasBlockingGaps).toBe(false)
     expect(audit.nextSuggestedSequence).toBe(45)
     expect(audit.nextSuggestedInvoiceNumber).toBe('2026-045')
-    expect(audit.nextSuggestedDisplayCode).toBe('INV-0045')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-2026-045')
   })
 
   it('blocks the sequence at 45 when 43, 44 and 50 already exist', () => {
@@ -100,7 +111,7 @@ describe('invoiceNumbering', () => {
     expect(JSON.stringify(audit.gaps)).toBe(JSON.stringify([{ from: 45, to: 49 }]))
     expect(audit.firstMissingSequence).toBe(45)
     expect(audit.nextSuggestedInvoiceNumber).toBe('2026-045')
-    expect(audit.nextSuggestedDisplayCode).toBe('INV-0045')
+    expect(audit.nextSuggestedDisplayCode).toBe('INV-2026-045')
     expect(describeInvoiceNumberingGap(audit)).toBe('Hay huecos en la numeracion fiscal entre 2026-044 y 2026-050.')
   })
 })

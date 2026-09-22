@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import { describe, expect, it } from 'vitest'
 
-const migrationUrl = new URL('../../supabase/migrations/20260922131455_n2_zero_cost_qa_readiness.sql', import.meta.url)
+const migrationUrl = new URL('../../supabase/qa-migrations/20260922131455_n2_zero_cost_qa_readiness.sql', import.meta.url)
 const sql = await fs.readFile(migrationUrl, 'utf8')
 
 describe('N2 zero-cost QA migration contract', () => {

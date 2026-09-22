@@ -1,0 +1,221 @@
+begin;
+
+create or replace function public.prevent_fiscal_invoice_hard_delete()
+returns trigger
+language plpgsql
+as $function$
+begin
+  if public.invoice_status_consumes_fiscal_number(old.status)
+    or old.invoice_number is not null
+    or old.display_code is not null then
+    if current_user = 'postgres'
+      and current_setting('app.qa_n3_fixture_teardown', true) = 'true'
+      and coalesce(auth.jwt() ->> 'iss', '') = 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+      and old.id like 'QA_N3_INVOICE_%'
+      and coalesce(old.notes, '') ~ '^QA_N3_[0-9a-f]{32}\|source=n3_numbering_certification$' then
+      return old;
+    end if;
+    if current_user = 'postgres'
+      and coalesce(auth.jwt() ->> 'iss', '') = 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+      and old.id like 'QA_N2_INVOICE_%'
+      and coalesce(old.notes, '') ~ '^QA_N2_CONC_[0-9a-f]{32}\|source=n2_concurrency_certification$' then
+      return old;
+    end if;
+    raise exception 'Las facturas con numeracion fiscal no se pueden eliminar; deben conservar su trazabilidad.' using errcode = '55000';
+  end if;
+  return old;
+end;
+$function$;
+
+create or replace function public.qa_n3_numbering_snapshot()
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid;
+  v_mapping_hash text;
+  v_sequence_last_value bigint;
+  v_sequence_is_called boolean;
+begin
+  v_user_id := app_private.require_active_internal_staff();
+  if coalesce(auth.jwt() ->> 'iss', '') <> 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+    or not exists (
+      select 1 from public.internal_staff_memberships m
+      where m.user_id = v_user_id and m.role in ('owner', 'admin')
+        and m.status = 'active' and m.revoked_at is null
+    ) then
+    raise exception 'N3 snapshot requires an active QA internal administrator.' using errcode = '42501';
+  end if;
+
+  select pg_catalog.md5(coalesce(pg_catalog.string_agg(
+    pg_catalog.jsonb_build_array(i.id, i.invoice_number, i.display_code, i.issue_date::text, i.status)::text,
+    pg_catalog.chr(10) order by i.id
+  ), '')) into v_mapping_hash
+  from public.invoices i;
+
+  select last_value, is_called into v_sequence_last_value, v_sequence_is_called
+  from public.invoices_invoice_number_seq;
+
+  return pg_catalog.jsonb_build_object(
+    'fiscal_mapping_hash', v_mapping_hash,
+    'invoice_count', (select count(*) from public.invoices),
+    'qa_n3_invoice_count', (select count(*) from public.invoices where id like 'QA_N3_INVOICE_%'),
+    'sequence_last_value', v_sequence_last_value,
+    'sequence_is_called', v_sequence_is_called
+  );
+end;
+$function$;
+
+create or replace function public.qa_n3_create_drafts(p_run_id text, p_year integer, p_count integer)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid;
+  v_client_id text;
+  v_ids text[];
+  v_marker text;
+begin
+  v_user_id := app_private.require_active_internal_staff();
+  if coalesce(auth.jwt() ->> 'iss', '') <> 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+    or not exists (
+      select 1 from public.internal_staff_memberships m
+      where m.user_id = v_user_id and m.role in ('owner', 'admin')
+        and m.status = 'active' and m.revoked_at is null
+    ) then
+    raise exception 'N3 fixtures require an active QA internal administrator.' using errcode = '42501';
+  end if;
+  if p_run_id is null or p_run_id !~ '^[0-9a-f]{32}$'
+    or p_year < 2020 or p_year > 2100 or p_count < 1 or p_count > 10 then
+    raise exception 'Invalid N3 fixture plan.' using errcode = '22023';
+  end if;
+
+  select c.id into v_client_id from public.clients c order by c.id limit 1;
+  if v_client_id is null then
+    raise exception 'N3 fixtures need an existing QA client relation.' using errcode = '55000';
+  end if;
+  v_marker := 'QA_N3_' || p_run_id || '|source=n3_numbering_certification';
+  if exists (select 1 from public.invoices i where i.id like 'QA_N3_INVOICE_' || p_run_id || '_%') then
+    raise exception 'N3 run id already exists.' using errcode = '23505';
+  end if;
+
+  with ids as (
+    select ('QA_N3_INVOICE_' || p_run_id || '_' || lpad(n::text, 2, '0'))::text as id
+    from pg_catalog.generate_series(1, p_count) n
+  ), inserted as (
+    insert into public.invoices(id, client_id, issue_date, status, subtotal, tax_amount, total, notes, pricing_metadata)
+    select ids.id, v_client_id, pg_catalog.make_date(p_year, 1, 15), 'draft', 100, 21, 121,
+      v_marker, pg_catalog.jsonb_build_object('source', 'n3_numbering_certification', 'run_id', p_run_id)
+    from ids
+    returning id
+  )
+  select pg_catalog.array_agg(id order by id) into v_ids from inserted;
+
+  return pg_catalog.jsonb_build_object('run_id', p_run_id, 'invoice_ids', v_ids, 'count', pg_catalog.cardinality(v_ids));
+end;
+$function$;
+
+create or replace function public.qa_n3_cancel_invoice(p_run_id text, p_invoice_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid;
+  v_invoice public.invoices%rowtype;
+begin
+  v_user_id := app_private.require_active_internal_staff();
+  if coalesce(auth.jwt() ->> 'iss', '') <> 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+    or not exists (
+      select 1 from public.internal_staff_memberships m
+      where m.user_id = v_user_id and m.role in ('owner', 'admin')
+        and m.status = 'active' and m.revoked_at is null
+    ) then
+    raise exception 'N3 transitions require an active QA internal administrator.' using errcode = '42501';
+  end if;
+  if p_run_id is null or p_run_id !~ '^[0-9a-f]{32}$'
+    or p_invoice_id not like 'QA_N3_INVOICE_' || p_run_id || '_%' then
+    raise exception 'Invalid N3 fixture identity.' using errcode = '22023';
+  end if;
+
+  update public.invoices i set status = 'cancelled', cancelled_at = pg_catalog.now()
+  where i.id = p_invoice_id
+    and i.notes = 'QA_N3_' || p_run_id || '|source=n3_numbering_certification'
+  returning i.* into v_invoice;
+  if not found then raise exception 'N3 fixture not found.' using errcode = 'P0002'; end if;
+  return pg_catalog.jsonb_build_object('id', v_invoice.id, 'status', v_invoice.status,
+    'invoice_number', v_invoice.invoice_number, 'display_code', v_invoice.display_code);
+end;
+$function$;
+
+create or replace function public.qa_n3_cleanup(p_run_id text)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $function$
+declare
+  v_user_id uuid;
+  v_marker text;
+  v_ids text[];
+  v_lines integer;
+  v_invoices integer;
+begin
+  v_user_id := app_private.require_active_internal_staff();
+  if coalesce(auth.jwt() ->> 'iss', '') <> 'https://kpvvydthlxupjjqqdpxy.supabase.co/auth/v1'
+    or not exists (
+      select 1 from public.internal_staff_memberships m
+      where m.user_id = v_user_id and m.role in ('owner', 'admin')
+        and m.status = 'active' and m.revoked_at is null
+    ) then
+    raise exception 'N3 cleanup requires an active QA internal administrator.' using errcode = '42501';
+  end if;
+  if p_run_id is null or p_run_id !~ '^[0-9a-f]{32}$' then
+    raise exception 'Invalid N3 cleanup run id.' using errcode = '22023';
+  end if;
+
+  v_marker := 'QA_N3_' || p_run_id || '|source=n3_numbering_certification';
+  if exists (select 1 from public.invoices i where i.id like 'QA_N3_INVOICE_' || p_run_id || '_%' and i.notes is distinct from v_marker) then
+    raise exception 'N3 cleanup rejected a fixture with mismatched provenance.' using errcode = '42501';
+  end if;
+  select coalesce(pg_catalog.array_agg(i.id), array[]::text[]) into v_ids
+  from public.invoices i where i.id like 'QA_N3_INVOICE_' || p_run_id || '_%' and i.notes = v_marker;
+  if exists (select 1 from public.payments p where p.invoice_id = any(v_ids)) then
+    raise exception 'N3 cleanup refuses fixtures with payment rows.' using errcode = '55000';
+  end if;
+
+  perform pg_catalog.set_config('app.qa_n3_fixture_teardown', 'true', true);
+  delete from public.invoice_lines l where l.invoice_id = any(v_ids);
+  get diagnostics v_lines = row_count;
+  delete from public.invoices i where i.id = any(v_ids);
+  get diagnostics v_invoices = row_count;
+
+  return pg_catalog.jsonb_build_object('run_id', p_run_id, 'invoice_lines', v_lines, 'invoices', v_invoices,
+    'qa_n3_residue', (select count(*) from public.invoices i where i.id like 'QA_N3_INVOICE_' || p_run_id || '_%'));
+end;
+$function$;
+
+alter function public.qa_n3_numbering_snapshot() owner to postgres;
+alter function public.qa_n3_create_drafts(text, integer, integer) owner to postgres;
+alter function public.qa_n3_cancel_invoice(text, text) owner to postgres;
+alter function public.qa_n3_cleanup(text) owner to postgres;
+revoke all on function public.qa_n3_numbering_snapshot() from public, anon, authenticated;
+revoke all on function public.qa_n3_create_drafts(text, integer, integer) from public, anon, authenticated;
+revoke all on function public.qa_n3_cancel_invoice(text, text) from public, anon, authenticated;
+revoke all on function public.qa_n3_cleanup(text) from public, anon, authenticated;
+grant execute on function public.qa_n3_numbering_snapshot() to authenticated;
+grant execute on function public.qa_n3_create_drafts(text, integer, integer) to authenticated;
+grant execute on function public.qa_n3_cancel_invoice(text, text) to authenticated;
+grant execute on function public.qa_n3_cleanup(text) to authenticated;
+
+comment on function public.qa_n3_create_drafts(text, integer, integer) is
+  'QA-only N3 draft fixtures; exact QA Auth issuer, active admin, bounded year/count, QA_N3 id and provenance.';
+comment on function public.qa_n3_cleanup(text) is
+  'QA-only exact N3 teardown; refuses mismatched provenance or payment-linked invoices.';
+
+commit;

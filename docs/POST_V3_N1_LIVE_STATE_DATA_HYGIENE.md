@@ -46,4 +46,36 @@ The audited relationship checks returned zero property/client, quote/property/cl
 
 ## Follow-up
 
-Before Production can receive the Realtime publication migrations, review the exact SQL through the standard database release gate. Data cleanup remains disabled for Production pending separate explicit authorization. Non-empty QA cleanup remains deliberately blocked pending a concrete QA-bound transactional mutation-and-audit endpoint; do not claim cleanup execution/idempotency for a non-empty plan. Production cleanup and deployment remain outside authorization.
+Before Production can receive the Realtime publication migrations, review the exact SQL through the standard database release gate. Data cleanup remains disabled for Production pending separate explicit authorization. The N1.1B section below supersedes the original empty-apply limitation for QA only; Production cleanup and deployment remain outside authorization.
+
+## N1.1B — authenticated QA transactional hygiene adapter
+
+N1.1B ran on `codex/post-v3-n11-hygiene-transactional-adapter`, source HEAD `9d9bfad87fcef6fa837076ea80a0e10ad5e5660e`. The only database target changed was CostaClean QA (`kpvvydthlxupjjqqdpxy`). The four repository migration files are aligned by migration name with exactly one QA history row each: `n11a_app_internal_staff_authorization` (QA version `20260922104759`), `n11_transactional_data_hygiene_adapter` (`20260922111338`), `n11b_role_scoped_authorization_and_literal_hygiene_prefixes` (`20260922113953`), and `n11c_testable_internal_staff_role_predicates` (`20260922115842`). No Production migration or deployment was performed.
+
+### APP-owned authorization
+
+- `public.internal_staff_memberships` remains the only membership source; N1.1B did not insert, update, or delete membership rows as an authorization change.
+- General write guards allow active, non-revoked `owner`, `admin`, `operator`, and `finance` roles. Financial write guards allow only `owner`, `admin`, and `finance`; `readonly` is denied by both.
+- Authenticated QA was recovered in the isolated Edge profile without bypass. `/auth/v1/user` returned success. Real-token calls to the existing `create_client` and `save_quote_with_lines` RPCs used deliberately invalid null payloads and both reached payload validation (HTTP 400); no business write was accepted.
+- The live SQL contract matrix passed for allowed/disallowed role sets, suspended/revoked membership, no membership, null UID, Production issuer context, anonymous apply (HTTP 401), and readonly adapter apply. All simulated role/status mutations were transaction-local and rolled back; the membership row fingerprint was unchanged.
+- General, financial, legacy app-write, and Portal independence checks remain separate: the two public app write guards route to `app_private`; no Portal-private dependency was found in those guards. The hygiene adapter is callable only through its authenticated public wrapper, and the legacy implementation is not executable by API roles.
+
+### QA-only hygiene adapter evidence
+
+The adapter is limited to synthetic draft quotes and two mutating actions: deterministic relation relink and stale-draft soft archive. Ambiguous cases produce manual review. The QA issuer is taken from the signed JWT issuer claim and compared to the fixed QA issuer; no caller-supplied environment or project reference is accepted.
+
+- Non-empty dry run: 3 actions (1 relink, 1 archive, 1 manual review), plan ID `ec448c2a-34e7-425c-989c-aaf1136e2c63`, SHA-256 `e7133ff011b9d2a20a2a9fa78dae181436854ad41674177ea9cbdf09a76fd505`.
+- First apply: relinks `1`, archives `1`, manual reviews `1`; private audit contains one run and three action rows. Replaying the same plan/hash returned `already_applied` with `0/0/0` additional actions.
+- Hash tampering failed with `22023`. A stale plan failed with `40001` and left no run/action rows or unexpected target change.
+- A controlled QA-only trigger raised `ZX001` after the quote mutation and before audit completion. The transaction rolled back both business and audit changes (`partial_state_after_failure = 0`); the temporary trigger/function were removed.
+- The ambiguity fixture was recorded as manual review, never auto-relinked. A lookalike ID with hyphens in place of underscores was rejected by the corrected literal-prefix guard.
+- Teardown soft-archived only the 2 synthetic clients, 1 synthetic property, and 4 synthetic quotes after confirming no non-synthetic dependents. No hard deletes occurred. All prefixed QA fixtures are archived; the final plan is empty. The private audit evidence remains (1 run, 3 actions).
+- QA final aggregate audit: logical orphans `0`, relation mismatches `0`, active synthetic fixture rows `0`.
+
+The test-only QA business data was intentionally created and mutated under the `QA_HYGIENE_N11_` namespace. The adapter’s successful changes were exactly one relink and one soft archive; stale/rollback probes were restored, and all fixtures were then soft-archived. This is not a zero-QA-write result.
+
+### Production read-only audit and test status
+
+Production (`wfxnwfcdjainpojhbdri`) was queried read-only after QA cleanup. Aggregate results: logical orphans `0`, relation mismatches `0`, and qualified archive candidates `0`. Five active draft quotes had no downstream job/invoice/recurring-plan reference, but absence of references alone does not prove that a quote is clearly stale; they were not classified as cleanup candidates and were not modified. Production mutations, migrations, and deployment remained `0`.
+
+The committed database contract suite is `supabase/tests/n11b_role_scoped_authorization_and_literal_prefixes_test.sql` (pgTAP, 27 assertions). Its final assertion queries `pg_constraint` for the exact APP-private audit relation and named fixture-prefix constraint. This machine had no Docker/psql or linked local database, and the QA project does not have pgTAP enabled, so that exact pgTAP file was not run and pgTAP was not enabled remotely. Instead, all 27 equivalent live QA assertions were executed in a rollback-only SQL block against the installed functions, privileges, constraints, and catalog definitions; the block passed. Focused Vitest migration-contract tests also pass. This is executable QA evidence, but not a claim that the pgTAP runner itself was run.

@@ -2,6 +2,7 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/cp51f-pooler-config.sh
 source "$SCRIPT_DIR/cp51f-pooler-config.sh"
 
 valid_host='aws-0-eu-central-1.pooler.supabase.com'

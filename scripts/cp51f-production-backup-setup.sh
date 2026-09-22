@@ -8,7 +8,7 @@ set -Eeuo pipefail
 umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=cp51f-pooler-config.sh
+# shellcheck source=scripts/cp51f-pooler-config.sh
 source "$SCRIPT_DIR/cp51f-pooler-config.sh"
 
 MODE="${1:-}"

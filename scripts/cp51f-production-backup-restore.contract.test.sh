@@ -45,13 +45,12 @@ contains '.created // false' "$WORKFLOW"
 contains '.forced // false' "$WORKFLOW"
 contains '^cp51f-run-[0-9a-f]{32}$' "$WORKFLOW"
 contains 'CP51F_BACKUP_AGE_RECIPIENT' "$WORKFLOW"
-# These single-quoted patterns intentionally assert literal source strings.
-contains 'CP51F_POOLER_HOST: ${{ vars.CP51F_POOLER_HOST }}' "$WORKFLOW" # shellcheck disable=SC2016
-contains 'CP51F_POOLER_PORT: ${{ vars.CP51F_POOLER_PORT }}' "$WORKFLOW" # shellcheck disable=SC2016
-contains 'CP51F_POOLER_USER: ${{ vars.CP51F_POOLER_USER }}' "$WORKFLOW" # shellcheck disable=SC2016
-contains 'CP51F_POOLER_DB: ${{ vars.CP51F_POOLER_DB }}' "$WORKFLOW" # shellcheck disable=SC2016
+contains "CP51F_POOLER_HOST: \${{ vars.CP51F_POOLER_HOST }}" "$WORKFLOW"
+contains "CP51F_POOLER_PORT: \${{ vars.CP51F_POOLER_PORT }}" "$WORKFLOW"
+contains "CP51F_POOLER_USER: \${{ vars.CP51F_POOLER_USER }}" "$WORKFLOW"
+contains "CP51F_POOLER_DB: \${{ vars.CP51F_POOLER_DB }}" "$WORKFLOW"
 not_contains 'config/database/pooler' "$SETUP"
-contains 'POOLER_HOST="${CP51F_POOLER_HOST:-}"' "$SETUP" # shellcheck disable=SC2016
+contains "POOLER_HOST=\"\${CP51F_POOLER_HOST:-}\"" "$SETUP"
 contains 'cp51f_validate_pooler_config' "$SETUP"
 contains 'CP51F_POOLER_METADATA_API_REQUIRED=NO' "$POOLER_CONFIG_TEST"
 contains 'CP51F_POOLER_CONFIGURATION_FAILS_CLOSED=YES' "$POOLER_CONFIG_TEST"

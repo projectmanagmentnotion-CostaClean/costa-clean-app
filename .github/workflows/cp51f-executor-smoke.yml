@@ -138,6 +138,13 @@ jobs:
           npm --version
           npm ci
 
+      - name: Align agent manifest line endings
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config core.autocrlf true
+          git checkout-index --force -- .github/agents/*.agent.md
+
       - name: Validate project agents
         shell: bash
         run: |

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+trap 'status=$?; printf "CONTRACT_TEST=FAIL: assertion at line %s (exit %s)\n" "$LINENO" "$status" >&2' ERR
 
 WORKFLOW=".github/workflows/cp51f-production-backup-restore.yml"
 RESTORE="scripts/cp51f-restore-verify.sh"

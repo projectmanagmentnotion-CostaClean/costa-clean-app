@@ -65,23 +65,30 @@ expect_jit_state() {
   [[ "$actual" == "$expected" ]] || exit 1
 }
 reject_jit_state() {
-  local input="$1"
+  local case_name="$1" input="$2"
   if parse_jit_state <<<"$input" >/dev/null 2>&1; then
-    printf '%s\n' 'CP51F_JIT_CONTRACT_TEST=FAIL: invalid JIT schema accepted' >&2
+    printf 'CP51F_JIT_CONTRACT_TEST=FAIL: invalid JIT case rejected incorrectly (%s)\n' "$case_name" >&2
     exit 1
   fi
 }
 
 expect_jit_state '{"state":"enabled"}' enabled
-expect_jit_state '{"state":"disabled","appliedSuccessfully":false}' disabled
+expect_jit_state '{"state":"disabled"}' disabled
 expect_jit_state '{"state":"enabled","appliedSuccessfully":true}' enabled
+expect_jit_state '{"state":"disabled","appliedSuccessfully":false}' disabled
 expect_jit_state '{"state":"unavailable","unavailableReason":"postgres_upgrade_required"}' unavailable
-reject_jit_state '{"state":"enabled","appliedSuccessfully":"true"}'
-reject_jit_state '{"state":"unavailable"}'
-reject_jit_state '{"state":"unavailable","unavailableReason":"secret-reason"}'
-reject_jit_state '{"state":"other"}'
-reject_jit_state '{"enabled":true}'
-reject_jit_state '[]'
-reject_jit_state 'null'
+reject_jit_state multi_json $'{"state":"enabled"}\n{"state":"disabled"}'
+reject_jit_state valid_plus_null $'{"state":"enabled"}\nnull'
+reject_jit_state valid_plus_array $'{"state":"enabled"}\n[]'
+reject_jit_state valid_plus_invalid_object $'{"state":"enabled"}\n{"state":"other"}'
+reject_jit_state null_plus_valid $'null\n{"state":"enabled"}'
+reject_jit_state trailing_garbage '{"state":"enabled"} garbage'
+reject_jit_state truncated_json '{"state":"enabled"'
+reject_jit_state array '[]'
+reject_jit_state null 'null'
+reject_jit_state unknown_state '{"state":"other"}'
+reject_jit_state absent_unavailable_reason '{"state":"unavailable"}'
+reject_jit_state unknown_unavailable_reason '{"state":"unavailable","unavailableReason":"secret-reason"}'
+reject_jit_state invalid_applied_successfully '{"state":"enabled","appliedSuccessfully":"true"}'
 
 printf '%s\n' 'CP51F_JIT_CONTRACT_TEST=PASS'

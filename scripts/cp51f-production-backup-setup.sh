@@ -288,20 +288,25 @@ management_api_failure_code() {
 }
 
 parse_jit_state() {
-  jq -er '
-    if type != "object" or (.state | type) != "string" then
+  jq -ser '
+    if length != 1 then
       error("invalid JIT state response")
-    elif .state == "enabled" or .state == "disabled" then
-      if has("appliedSuccessfully") and (.appliedSuccessfully | type) != "boolean" then
+    else
+      .[0] as $document |
+      if ($document | type) != "object" or ($document.state | type) != "string" then
+      error("invalid JIT state response")
+      elif $document.state == "enabled" or $document.state == "disabled" then
+      if ($document | has("appliedSuccessfully")) and ($document.appliedSuccessfully | type) != "boolean" then
         error("invalid JIT state response")
-      else .state end
-    elif .state == "unavailable" and
-      (.unavailableReason | type) == "string" and
-      (.unavailableReason as $reason |
+      else $document.state end
+      elif $document.state == "unavailable" and
+      ($document.unavailableReason | type) == "string" and
+      ($document.unavailableReason as $reason |
         (["platform_unsupported", "postgres_upgrade_required", "ssl_enforcement_required", "temporarily_unavailable"] | index($reason)) != null) then
       "unavailable"
-    else
+      else
       error("invalid JIT state response")
+      end
     end
   '
 }

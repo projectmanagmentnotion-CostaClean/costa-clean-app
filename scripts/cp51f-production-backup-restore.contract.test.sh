@@ -5,11 +5,12 @@ WORKFLOW=".github/workflows/cp51f-production-backup-restore.yml"
 RESTORE="scripts/cp51f-restore-verify.sh"
 BOOTSTRAP="scripts/cp51f-bootstrap-postgres17.sh"
 SETUP="scripts/cp51f-production-backup-setup.sh"
+JIT_CONTRACT="scripts/cp51f-production-backup-setup.contract.test.sh"
 DIAGNOSTIC="scripts/cp51f-production-backup-setup.diagnostic.test.sh"
 HTTP_DIAGNOSTIC="scripts/cp51f-management-api-http-diagnostic.test.sh"
 HISTORY_SCHEMA="scripts/cp51f-history-guard.schema.test.sh"
 SMOKE=".github/workflows/cp51f-executor-smoke.yml"
-[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
+[[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$JIT_CONTRACT" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
 
 contains() { grep -Fq -- "$1" "$2"; }
 not_contains() { ! grep -Fq -- "$1" "$2"; }
@@ -63,6 +64,8 @@ contains 'CP51F_RUNNER_CODE' "$WORKFLOW"
 contains 'CP51F_TEMP_PAT_PRESENT' "$WORKFLOW"
 contains 'TEMP_PAT_SECRET_PRESENCE=PASS' "$WORKFLOW"
 contains 'scripts/cp51f-production-backup-setup.diagnostic.test.sh' "$SMOKE"
+contains 'bash scripts/cp51f-production-backup-setup.contract.test.sh' "$SMOKE"
+contains 'reject_jit_state multi_json' "$JIT_CONTRACT"
 contains 'scripts/cp51f-history-guard.schema.test.sh' "$SMOKE"
 contains 'CP51F_HISTORY_SCHEMA_TESTS=PASS' "$HISTORY_SCHEMA"
 contains 'scripts/cp51f-management-api-http-diagnostic.test.sh' "$SMOKE"

@@ -11,9 +11,11 @@ describe('R5.5 global visual governance', () => {
   it('uses one canonical lockup and separates responsive brand zones', () => {
     expect(shell).toContain("import { V3BrandLockup } from '../brand/V3BrandLockup'")
     expect(shell).not.toContain('brandAssets.logoPrimary')
-    expect(css).toContain('.app-shell--v3 .v3-top-bar__context .v3-brand-lockup { display: none; }')
-    expect(css).toContain('.v3-navigation-rail .v3-brand-lockup')
+    expect(css).toContain('.v3-top-bar__screen-label')
+    expect(shell.match(/<V3BrandLockup\s*\/>/g)).toHaveLength(1)
     expect(presentation).toContain('<V3BrandLockup />')
+    expect(css).toContain('@media (max-width: 360px)')
+    expect(css).toContain('.v3-top-bar__screen-label { max-width: 30vw;')
   })
 
   it('governs semantic nav/header/canvas surfaces and hidden scrollbars', () => {

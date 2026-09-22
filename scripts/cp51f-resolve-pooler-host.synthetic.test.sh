@@ -15,17 +15,23 @@ pass_case() {
     "$property" "$host" "$uri_port" >"$response"
   : >"$github_env"
   actual="$(GITHUB_ENV="$github_env" bash "$RESOLVER" "$response")" || {
-    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL case=%s\n' "$name" >&2
+    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL case=%s stage=resolver\n' "$name" >&2
     exit 1
   }
-  [[ "$actual" == "$host" ]] || exit 1
+  [[ "$actual" == "$host" ]] || {
+    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL case=%s stage=host_output\n' "$name" >&2
+    exit 1
+  }
   expected_env="CP51F_POOLER_HOST=$host
 CP51F_POOLER_PORT=5432
 CP51F_POOLER_USER=$EXPECTED_USER
 CP51F_POOLER_DB=postgres"
-  [[ "$(<"$github_env")" == "$expected_env" ]] || exit 1
+  [[ "$(<"$github_env")" == "$expected_env" ]] || {
+    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL case=%s stage=github_env\n' "$name" >&2
+    exit 1
+  }
   if grep -Eq 'synthetic-user|synthetic-password|postgresql://' <<<"$actual $(<"$github_env")"; then
-    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL raw_uri_public case=%s\n' "$name" >&2
+    printf 'CP51F_POOLER_RESOLUTION_TEST=FAIL case=%s stage=raw_uri_public\n' "$name" >&2
     exit 1
   fi
 }

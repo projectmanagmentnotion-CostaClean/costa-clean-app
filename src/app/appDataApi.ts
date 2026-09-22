@@ -14,8 +14,7 @@ import type { QuarterlyClosingRecord } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import { getSupabaseClient } from '../lib/supabase'
-import { getSupabasePublicEnv } from '../lib/supabaseEnv'
-import { fetchSupabaseRestList, fetchSupabaseRestListDetailed, SupabaseRestError } from '../lib/supabaseRest'
+import { fetchSupabaseRestList, SupabaseRestError } from '../lib/supabaseRest'
 
 type JobLineRecord = {
   id?: string
@@ -77,12 +76,6 @@ export async function listLeads(): Promise<LeadListItem[]> {
 }
 
 async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord[]> {
-  const { supabaseUrl, supabaseAnonKey } = getSupabasePublicEnv()
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Faltan las variables de entorno de Supabase.')
-  }
-
   const { client, error } = getSupabaseClient()
   if (error || !client) {
     throw new Error(error ?? 'No se pudo crear el cliente de Supabase.')
@@ -101,19 +94,7 @@ async function fetchLeadDraftsWithSession(path: string): Promise<LeadDraftRecord
     throw new Error('No hay una sesión activa para cargar borradores de intake.')
   }
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
-    method: 'GET',
-    headers: {
-      apikey: supabaseAnonKey,
-      Authorization: `Bearer ${session.access_token}`,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(`REST ${response.status}: ${response.statusText}`)
-  }
-
-  return ((await response.json()) as LeadDraftRecord[]) ?? []
+  return fetchSupabaseRestList<LeadDraftRecord>(path, { accessToken: session.access_token })
 }
 
 export async function listLeadDrafts(): Promise<LeadDraftRecord[]> {
@@ -273,11 +254,7 @@ export async function listJobs(): Promise<JobListItem[]> {
   }
 
   try {
-    const jobLinesResponse = await fetchSupabaseRestListDetailed<JobLineRecord>(
-      jobLinesRestPath,
-      { accessToken },
-    )
-    const jobLines = jobLinesResponse.rows
+    const jobLines = await fetchSupabaseRestList<JobLineRecord>(jobLinesRestPath, { accessToken })
     const linesByJobId = groupJobLines(jobLines)
     writeJobLinesDebug(buildJobLinesDebugPayload({
       accessToken,
@@ -285,7 +262,7 @@ export async function listJobs(): Promise<JobListItem[]> {
       sampleJobId: sampleJob?.id ?? null,
       sessionError,
       jobLines,
-      jobLinesFetchStatus: jobLinesResponse.status,
+      jobLinesFetchStatus: 200,
       jobLinesError: null,
       linesByJobId,
     }))

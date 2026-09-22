@@ -143,7 +143,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           git config core.autocrlf true
-          git checkout-index --force -- .github/agents/*.agent.md
+          perl -pi -e 's/\r?\n/\r\n/g' .github/agents/*.agent.md
 
       - name: Validate project agents
         shell: bash

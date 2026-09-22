@@ -10,6 +10,12 @@ mkdir -p "$PRIVATE" "$AGE_HOME"
 cleanup() { rm -rf -- "$ROOT"; }
 trap cleanup EXIT
 
+SETUP="scripts/cp51f-production-backup-setup.sh"
+# shellcheck disable=SC1090
+source <(sed -n '/^build_artifact_manifest() {/,/^}/p' "$SETUP")
+PRIVATE_SECURE_PATH="$PRIVATE"
+readonly PRIVATE_SECURE_PATH
+
 cat >"$PRIVATE/roles.sql" <<'SQL'
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'cp51f_fixture_role') THEN
@@ -47,17 +53,39 @@ INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
 SQL
 
 write_manifest() {
-  local artifact artifact_json='[]' hash size
-  for artifact in roles.sql schema.sql data.sql history_schema.sql history_data.sql; do
-    hash="$(sha256sum "$PRIVATE/$artifact" | awk '{print $1}')"
-    size="$(stat -c '%s' "$PRIVATE/$artifact")"
-    artifact_json="$(jq -c --arg name "$artifact" --arg hash "$hash" --argjson size "$size" '. + [{logical_name:$name,type:"synthetic",utc:"2026-01-01T00:00:00Z",size_bytes:$size,sha256:$hash,exit_status:0,coverage:"synthetic fixture only"}]' <<<"$artifact_json")"
-  done
+  local artifact_json
+  artifact_json="$(build_artifact_manifest)"
 
   jq -n --argjson artifacts "$artifact_json" \
     '{manifest_version:1, setup_result:"AWAITING_PAT_REVOCATION", setup_utc:"2026-01-01T00:00:00Z", project_ref:"synthetic-fixture", jit_poststate_matches_prestate:true, artifacts:$artifacts}' \
     >"$PRIVATE/manifest.json"
 }
+
+write_manifest
+
+jq -e '
+  [.artifacts[].logical_name] == ["roles.sql", "schema.sql", "data.sql", "history_schema.sql", "history_data.sql"] and
+  ([.artifacts[].logical_name] | length == 5) and
+  ([.artifacts[].logical_name] | unique | length == 5) and
+  all(.artifacts[]; .exit_status == 0)
+' "$PRIVATE/manifest.json" >/dev/null
+while IFS= read -r artifact; do
+  [[ -s "$PRIVATE/$artifact" ]]
+  manifest_hash="$(jq -er --arg name "$artifact" '.artifacts[] | select(.logical_name == $name) | .sha256' "$PRIVATE/manifest.json")"
+  manifest_size="$(jq -er --arg name "$artifact" '.artifacts[] | select(.logical_name == $name) | .size_bytes' "$PRIVATE/manifest.json")"
+  [[ "$manifest_hash" == "$(sha256sum "$PRIVATE/$artifact" | awk '{print $1}')" ]]
+  [[ "$manifest_size" == "$(stat -c '%s' "$PRIVATE/$artifact")" ]]
+done < <(jq -r '.artifacts[].logical_name' "$PRIVATE/manifest.json")
+printf 'CP51F_MANIFEST_PRODUCER_CONSUMER_CONTRACT=PASS\n'
+
+jq '(.artifacts[].logical_name) |= sub("\\.sql$"; "")' "$PRIVATE/manifest.json" >"$ROOT/legacy-manifest.json"
+cp -- "$ROOT/legacy-manifest.json" "$PRIVATE/manifest.json"
+set +e
+legacy_output="$(CP51F_PRIVATE_SECURE_PATH="$PRIVATE" CP51F_RESTORE_ROOT="$RESTORE" PG_BIN_DIR="${PG_BIN_DIR:-/usr/lib/postgresql/17/bin}" bash scripts/cp51f-restore-verify.sh 2>&1)"
+legacy_status=$?
+set -e
+[[ "$legacy_status" -ne 0 && "$legacy_output" == *'roles.sql hash missing'* ]]
+printf 'CP51F_MANIFEST_OLD_NAMES_FAIL_CLOSED=PASS\n'
 
 write_manifest
 

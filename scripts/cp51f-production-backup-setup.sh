@@ -557,19 +557,26 @@ run_pg_dump history_data --data-only --schema=supabase_migrations || { set_failu
 set_stage JIT_CLEANUP
 cleanup_jit || die_code JIT_CLEANUP JIT_CLEANUP_FAILED "JIT cleanup did not restore the exact prestate"
 
+build_artifact_manifest() {
+  local artifact_manifest='[]' name file_name file size sha256 coverage
+  for name in roles schema data history_schema history_data; do
+    file_name="$name.sql"
+    file="$PRIVATE_SECURE_PATH/$file_name"
+    [[ -s "$file" ]] || return 1
+    size="$(stat -c '%s' "$file")" || return 1
+    sha256="$(sha256sum "$file" | awk '{print $1}')" || return 1
+    coverage="public,portal_private,auth,functions,triggers,policies,grants,audit,application"
+    [[ "$name" == history_* ]] && coverage="supabase_migrations"
+    artifact_manifest="$(jq -cn --argjson prior "$artifact_manifest" --arg logical_name "$file_name" \
+      --arg type 'postgresql-logical-dump' --arg utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --arg size "$size" --arg sha256 "$sha256" --arg coverage "$coverage" \
+      '$prior + [{logical_name:$logical_name,type:$type,utc:$utc,size_bytes:($size|tonumber),sha256:$sha256,exit_status:0,coverage:$coverage}]')" || return 1
+  done
+  printf '%s\n' "$artifact_manifest"
+}
+
 set_stage MANIFEST_FINALIZE
-artifact_manifest='[]'
-for name in roles schema data history_schema history_data; do
-  file="$PRIVATE_SECURE_PATH/$name.sql"
-  size="$(stat -c '%s' "$file")"
-  sha256="$(sha256sum "$file" | awk '{print $1}')"
-  coverage="public,portal_private,auth,functions,triggers,policies,grants,audit,application"
-  [[ "$name" == history_* ]] && coverage="supabase_migrations"
-  artifact_manifest="$(jq -cn --argjson prior "$artifact_manifest" --arg logical_name "$name" \
-    --arg type 'postgresql-logical-dump' --arg utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    --arg size "$size" --arg sha256 "$sha256" --arg coverage "$coverage" \
-    '$prior + [{logical_name:$logical_name,type:$type,utc:$utc,size_bytes:($size|tonumber),sha256:$sha256,exit_status:0,coverage:$coverage}]')"
-done
+artifact_manifest="$(build_artifact_manifest)" || die_code MANIFEST_FINALIZE MANIFEST_FAILED "manifest artifact construction failed"
 
 jq -n \
   --arg project_ref "$PROJECT_REF" \

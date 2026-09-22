@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+# shellcheck disable=SC1090,SC2034 # Production functions are extracted at runtime and consume these test globals.
 
 RUNNER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/cp51f-production-backup-setup.sh"
 source <(sed -n \

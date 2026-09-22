@@ -11,7 +11,7 @@ pass_case() {
   local response github_env actual expected_env
   response="$ROOT/$name.json"
   github_env="$ROOT/$name.env"
-  printf '{"database_type":"PRIMARY","%s":"postgresql://synthetic-user:synthetic-password@%s:%s/postgres"}\n' \
+  printf '[{"database_type":"PRIMARY","%s":"postgresql://synthetic-user:synthetic-password@%s:%s/postgres"}]\n' \
     "$property" "$host" "$uri_port" >"$response"
   : >"$github_env"
   actual="$(GITHUB_ENV="$github_env" bash "$RESOLVER" "$response")" || {

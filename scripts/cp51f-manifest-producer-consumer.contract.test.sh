@@ -16,7 +16,9 @@ mkdir -p "$PRIVATE" "$FAKE_PG"
 # Exercise the exact manifest builder called by the production runner.
 # shellcheck disable=SC1090
 source <(sed -n '/^build_artifact_manifest() {/,/^}/p' "$SETUP")
+# shellcheck disable=SC2034 # consumed by the dynamically sourced production builder
 PRIVATE_SECURE_PATH="$PRIVATE"
+# shellcheck disable=SC2034 # consumed by the dynamically sourced production builder
 readonly PRIVATE_SECURE_PATH
 
 for name in "${EXPECTED_NAMES[@]}"; do

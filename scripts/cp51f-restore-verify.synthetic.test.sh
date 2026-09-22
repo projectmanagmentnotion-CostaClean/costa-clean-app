@@ -13,7 +13,9 @@ trap cleanup EXIT
 SETUP="scripts/cp51f-production-backup-setup.sh"
 # shellcheck disable=SC1090
 source <(sed -n '/^build_artifact_manifest() {/,/^}/p' "$SETUP")
+# shellcheck disable=SC2034 # consumed by the dynamically sourced production builder
 PRIVATE_SECURE_PATH="$PRIVATE"
+# shellcheck disable=SC2034 # consumed by the dynamically sourced production builder
 readonly PRIVATE_SECURE_PATH
 
 cat >"$PRIVATE/roles.sql" <<'SQL'

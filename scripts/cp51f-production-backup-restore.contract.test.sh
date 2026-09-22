@@ -20,8 +20,18 @@ POOLER_RESOLVER_TEST="scripts/cp51f-resolve-pooler-host.synthetic.test.sh"
 SMOKE=".github/workflows/cp51f-executor-smoke.yml"
 [[ -f "$WORKFLOW" && -f "$RESTORE" && -f "$BOOTSTRAP" && -f "$SETUP" && -f "$JIT_CONTRACT" && -f "$JIT_MAPPING_CONTRACT" && -f "$JIT_PROBE" && -f "$JIT_PROBE_TEST" && -f "$JIT_PROBE_MOCK" && -f "$DIAGNOSTIC" && -f "$HTTP_DIAGNOSTIC" && -f "$HISTORY_SCHEMA" && -f "$POOLER_CONFIG" && -f "$POOLER_CONFIG_TEST" && -f "$POOLER_RESOLVER" && -f "$POOLER_RESOLVER_TEST" && -f "$SMOKE" ]] || { printf 'CONTRACT_TEST=FAIL\n' >&2; exit 1; }
 
-contains() { grep -Fq -- "$1" "$2"; }
-not_contains() { ! grep -Fq -- "$1" "$2"; }
+contains() {
+  grep -Fq -- "$1" "$2" || {
+    printf 'CONTRACT_TEST=FAIL: expected text missing in %s: %s\n' "$2" "$1" >&2
+    return 1
+  }
+}
+not_contains() {
+  ! grep -Fq -- "$1" "$2" || {
+    printf 'CONTRACT_TEST=FAIL: unexpected text in %s: %s\n' "$2" "$1" >&2
+    return 1
+  }
+}
 line_of() { grep -m1 -nF -- "$1" "$WORKFLOW" | cut -d: -f1; }
 
 contains "tags:" "$WORKFLOW"

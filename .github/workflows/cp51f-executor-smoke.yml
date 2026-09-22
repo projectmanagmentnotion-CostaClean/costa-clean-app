@@ -129,3 +129,49 @@ jobs:
           bash scripts/cp51f-history-guard.schema.test.sh
           bash scripts/cp51f-restore-verify.synthetic.test.sh
           bash scripts/cp51f-production-backup-restore.contract.test.sh
+
+      - name: Install app dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --version
+          npm --version
+          npm ci
+
+      - name: Validate project agents
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run qa:agents
+          echo 'CP51F_QA_AGENTS=PASS'
+
+      - name: Lint application
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run lint
+          echo 'CP51F_LINT=PASS'
+
+      - name: TypeScript check
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npx tsc -b --pretty false
+          echo 'CP51F_TYPESCRIPT=PASS'
+
+      - name: Build application
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run build
+          echo 'CP51F_BUILD=PASS'
+
+      - name: Check diff and worktree
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git diff --check
+          status="$(git status --porcelain)"
+          printf '%s\n' "$status"
+          test -z "$status"
+          echo 'CP51F_DIFF_CHECK=PASS'

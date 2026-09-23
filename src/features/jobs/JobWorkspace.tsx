@@ -32,6 +32,7 @@ import type { JobListItem } from './types'
 import type { JobWorkspaceTab } from './useJobWorkspaceNavigation'
 import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
+import { JobWorkforcePanel } from './JobWorkforcePanel'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -626,6 +627,7 @@ export function JobWorkspace({
             onUnsavedChange={setHasPendingDetailState}
             onRequestMajorEdit={() => setShowMajorEdit(true)}
           />
+          <JobWorkforcePanel jobId={liveJob.id} onRefresh={onRefresh} />
         </section>
       ) : null}
 

@@ -742,6 +742,7 @@ Translate the service agenda and workspace while preserving current operational 
 - completed without invoice exposes “Crear factura”;
 - no employees, attendance, hours, payroll or inventory;
 - recurring service planning is now available locally through bounded plan, preview and explicit generation flows; remote deployment remains NOT_STARTED.
+- N5 team and operational hours are available locally through an internal roster, job assignments, normalized manual time entries, and snapshot labor-cost helpers; payroll and production deployment remain NOT_IMPLEMENTED.
 
 ### Exit gate
 

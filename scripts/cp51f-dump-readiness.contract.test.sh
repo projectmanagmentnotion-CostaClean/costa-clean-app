@@ -10,9 +10,13 @@ trap 'rm -rf -- "$ROOT"' EXIT
 PRIVATE_SECURE_PATH="$ROOT/private"
 mkdir -p -- "$PRIVATE_SECURE_PATH"
 
+# shellcheck disable=SC1090
 source <(sed -n '/^classify_db_session_error() {/,/^}/p' "$SCRIPT")
+# shellcheck disable=SC1090
 source <(sed -n '/^run_db_session_readiness() {/,/^}/p' "$SCRIPT")
+# shellcheck disable=SC1090
 source <(sed -n '/^classify_dump_error() {/,/^}/p' "$SCRIPT")
+# shellcheck disable=SC1090
 source <(sed -n '/^dump_roles_retry_allowed() {/,/^}/p' "$SCRIPT")
 
 expect_dump_code() {
@@ -72,6 +76,7 @@ sleep() { :; }
 PSQL_BIN="$ROOT/mock-psql"
 DB_SESSION_MAX_ATTEMPTS=4
 DB_SESSION_TIMEOUT_SECONDS=8
+export DB_SESSION_MAX_ATTEMPTS DB_SESSION_TIMEOUT_SECONDS
 POOLER_HOST=pooler.example.invalid
 POOLER_PORT=5432
 POOLER_USER=postgres.example

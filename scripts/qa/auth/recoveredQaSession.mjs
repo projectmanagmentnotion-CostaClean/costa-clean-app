@@ -28,15 +28,19 @@ export async function recoverAuthenticatedQaSession(rootDir = process.cwd()) {
     throw new Error('N2_QA_AUTH_APP_ORIGIN_REJECTED')
   }
 
-  const port = await findFreePort()
-  const browser = await launchQaBrowser({
-    executablePath: metadata.executablePath,
-    profileDir: metadata.profileDir,
-    remoteDebuggingPort: port,
-    startUrl: metadata.appUrl,
-    headless: false,
-  })
-  const endpoint = await waitForCdpEndpoint(browser.remoteDebuggingPort, 20_000)
+  const attachedPort = Number.parseInt(String(process.env.QA_CDP_PORT ?? ''), 10)
+  const browser = attachedPort > 0
+    ? null
+    : await launchQaBrowser({
+      executablePath: metadata.executablePath,
+      profileDir: metadata.profileDir,
+      remoteDebuggingPort: await findFreePort(),
+      startUrl: metadata.appUrl,
+      headless: false,
+    })
+  const endpoint = attachedPort > 0
+    ? await waitForCdpEndpoint(attachedPort, 5_000)
+    : await waitForCdpEndpoint(browser.remoteDebuggingPort, 20_000)
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
 
   try {

@@ -3,6 +3,7 @@
 .v3-page {
   display: grid;
   gap: var(--v3-space-section);
+  min-width: 0;
   width: min(100%, var(--v3-content-max));
   margin-inline: auto;
 }
@@ -348,7 +349,9 @@ html[data-app-surface="v3"] .cc-scroll-top {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--v3-space-4);
+  min-width: 0;
 }
+.v3-page-title > div { min-width: 0; }
 
 .v3-page-title h1,
 .v3-page-title p,
@@ -366,6 +369,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   font-size: var(--v3-font-size-page-title);
   letter-spacing: -0.04em;
   line-height: var(--v3-line-height-tight);
+  overflow-wrap: anywhere;
 }
 
 .v3-page-title p,
@@ -572,6 +576,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
 
 .app-shell--v3 {
   width: 100%;
+  min-width: 0;
   padding: 0;
   place-items: stretch;
   --cc-color-background: var(--v3-color-background);
@@ -598,6 +603,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   color: var(--v3-color-text-primary);
   min-height: 100dvh;
   position: relative;
+  min-width: 0;
   width: 100%;
 }
 
@@ -605,6 +611,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
   margin: 0 auto;
   max-width: var(--v3-content-max);
   min-height: 100dvh;
+  min-width: 0;
   padding: calc(var(--v3-space-7) + var(--v3-safe-top)) var(--v3-space-6) var(--v3-bottom-nav-clearance);
 }
 

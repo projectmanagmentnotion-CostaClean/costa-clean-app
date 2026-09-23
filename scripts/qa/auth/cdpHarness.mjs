@@ -367,7 +367,7 @@ export class CdpConnection {
       const listeners = this.eventListeners.get(payload.method)
       if (!listeners) return
       for (const listener of listeners) {
-        listener(payload.params ?? {})
+        listener(payload.params ?? {}, payload.sessionId ?? null)
       }
     })
   }
@@ -594,9 +594,9 @@ export async function waitForStepFlowVisible(connection, sessionId, title, timeo
   while (Date.now() - startedAt < timeoutMs) {
     const visible = await evaluateJson(connection, sessionId, `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-      const panel = document.querySelector('[data-qa="action-flow-panel"]')
-      const titleNodes = Array.from(panel?.querySelectorAll('#cc-action-flow-title, h1, h2') ?? [])
-      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"]') ?? null
+      const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow, [role="dialog"]')
+      const titleNodes = Array.from(panel?.querySelectorAll('#cc-action-flow-title, #v3-step-flow-title, h1, h2') ?? [])
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], .v3-step-flow, form, input, select, textarea') ?? null
       const panelRect = panel?.getBoundingClientRect?.() ?? null
       const hasVisiblePanel = Boolean(panel && panelRect && panelRect.width > 0 && panelRect.height > 0)
       const hasInteractiveContent = Boolean(flowSurface || panel?.querySelector('form, input, select, textarea, button'))
@@ -954,9 +954,9 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
   while (Date.now() - startedAt < 8000) {
     const flowReady = await evaluateJson(connection, sessionId, `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
-      const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
-      const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2, h3') ?? null
-      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
+      const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow, [role="dialog"]')
+      const titleNode = panel?.querySelector('#cc-action-flow-title, #v3-step-flow-title, h1, h2, h3') ?? null
+      const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], .v3-step-flow, input, select, textarea') ?? null
       const firstEditableField = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? null
       const fieldRect = firstEditableField?.getBoundingClientRect?.() ?? null
       const fieldStyle = firstEditableField ? window.getComputedStyle(firstEditableField) : null
@@ -985,7 +985,7 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
   // scrollable flow body. Prove it is reachable, rather than treating the
   // initial scroll position as a product failure.
   await evaluateJson(connection, sessionId, `(() => {
-    const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
+    const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow, [role="dialog"]')
     const field = panel?.querySelector('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])')
     field?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
     return Boolean(field)
@@ -995,9 +995,9 @@ export async function collectActionFlowAudit(connection, sessionId, scenario, vi
     const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
       const panel = document.querySelector('[data-qa="action-flow-panel"], [role="dialog"]')
     const panelRect = panel ? panel.getBoundingClientRect() : null
-    const legacyVisualMarkers = panel?.querySelector('.cc-action-flow__panel, .cc-step-flow, [data-qa="fullscreen-step-flow"], .cc-create-flow__hero-card')
-    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], input, select, textarea') ?? null
-    const titleNode = panel?.querySelector('#cc-action-flow-title, h1, h2') ?? null
+    const legacyVisualMarkers = panel?.querySelector('.cc-action-flow__panel, .cc-step-flow, [data-qa="fullscreen-step-flow"], .v3-step-flow, .cc-create-flow__hero-card')
+    const flowSurface = panel?.querySelector('[data-qa="fullscreen-step-flow"], .v3-step-flow, input, select, textarea') ?? null
+    const titleNode = panel?.querySelector('#cc-action-flow-title, #v3-step-flow-title, h1, h2') ?? null
     const fieldCandidates = Array.from(panel?.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])') ?? [])
     const firstVisibleField = fieldCandidates.find((node) => {
       const rect = node.getBoundingClientRect()

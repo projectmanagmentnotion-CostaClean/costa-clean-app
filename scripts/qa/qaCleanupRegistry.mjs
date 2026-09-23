@@ -55,6 +55,17 @@ function isoOrNull(value) {
 }
 
 const CLEANUP_REGISTRY = {
+  'invoice-create': {
+    table: 'invoices',
+    select: 'id,created_at,notes,job_id,client_id,property_id,pricing_metadata',
+    buildMatch({ qaRunId }) {
+      return [`notes=eq.${encodeURIComponent(`QA_N2_FUNC_${qaRunId}`)}`]
+    },
+    cleanupPayload() {
+      const now = new Date().toISOString()
+      return { archived_at: now, deleted_at: now, cancelled_at: now }
+    },
+  },
   'client-create': {
     table: 'clients',
     select: 'id,created_at,full_name,email,status,archived_at',

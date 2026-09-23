@@ -1,9 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import type { InvoiceModuleFilter } from '../../app/moduleFilters'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
-import { formatClientLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatInvoiceLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import type { ClientListItem } from '../../features/clients/types'
 import type { PaymentListItem } from '../../features/payments/types'
+import type { JobListItem } from '../../features/jobs/types'
+import type { PropertyListItem } from '../../features/properties/types'
+import type { QuoteListItem } from '../../features/quotes/types'
 import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { getInvoiceFinancialStatusLabel, type InvoiceFinancialStatus } from '../../features/invoices/paymentState'
 import type { InvoiceListItem } from '../../features/invoices/types'
@@ -18,6 +21,9 @@ interface V3InvoicesPageProps {
   invoices: InvoiceListItem[]
   allInvoices: InvoiceListItem[]
   clients: ClientListItem[]
+  properties?: PropertyListItem[]
+  jobs?: JobListItem[]
+  quotes?: QuoteListItem[]
   payments: PaymentListItem[]
   error: string | null
   initialInvoiceId?: string | null
@@ -27,7 +33,12 @@ interface V3InvoicesPageProps {
   isInvoiceSettling: (invoiceId: string) => boolean
   onOpenDocument: (invoice: InvoiceListItem) => void
   onViewPayments: (invoiceId: string) => void
+  onOpenClientWorkspace?: (clientId: string) => void
+  onOpenPropertyWorkspace?: (propertyId: string) => void
+  onOpenJobWorkspace?: (jobId: string) => void
+  onOpenQuoteDetail?: (quoteId: string) => void
   onEditInvoice?: () => void
+  onIssueInvoice?: (invoice: InvoiceListItem) => void
   onOpenInvoiceDeepLink: (invoiceId: string) => void
   onBackToInvoiceList: () => void
   activeFilter?: InvoiceModuleFilter | null
@@ -67,6 +78,9 @@ export function V3InvoicesPage({
   invoices,
   allInvoices,
   clients,
+  properties = [],
+  jobs = [],
+  quotes = [],
   payments,
   error,
   initialInvoiceId = null,
@@ -76,7 +90,12 @@ export function V3InvoicesPage({
   isInvoiceSettling,
   onOpenDocument,
   onViewPayments,
+  onOpenClientWorkspace = () => undefined,
+  onOpenPropertyWorkspace = () => undefined,
+  onOpenJobWorkspace = () => undefined,
+  onOpenQuoteDetail = () => undefined,
   onEditInvoice = () => undefined,
+  onIssueInvoice = () => undefined,
   onOpenInvoiceDeepLink,
   onBackToInvoiceList,
   activeFilter = null,
@@ -133,6 +152,9 @@ export function V3InvoicesPage({
           invoice={selectedInvoice}
           payments={payments}
           clients={clients}
+          properties={properties}
+          jobs={jobs}
+          quotes={quotes}
           onBack={() => {
             setSelectedInvoiceId(null)
             onBackToInvoiceList()
@@ -143,7 +165,12 @@ export function V3InvoicesPage({
           isInvoiceSettling={isInvoiceSettling(selectedInvoice.id)}
           onOpenDocument={onOpenDocument}
           onViewPayments={onViewPayments}
+          onOpenClientWorkspace={onOpenClientWorkspace}
+          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenQuoteDetail={onOpenQuoteDetail}
           onEditInvoice={onEditInvoice}
+          onIssueInvoice={onIssueInvoice}
         />
         {settlementTarget ? <V3InvoiceSettlementConfirm invoice={settlementTarget} busy={isInvoiceSettling(settlementTarget.id)} onCancel={() => setSettlementTarget(null)} onConfirm={() => { const target = settlementTarget; setSettlementTarget(null); onSettleInvoice(target) }} /> : null}
       </>
@@ -208,10 +235,13 @@ function V3InvoiceRow({ invoice, selectionMode, selected, onToggleSelect, isSett
   )
 }
 
-function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onRequestSettlement, isInvoiceSettling, onOpenDocument, onViewPayments, onEditInvoice }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onRequestSettlement: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onEditInvoice: () => void }) {
+function V3InvoiceWorkspace({ invoice, payments, clients, properties, jobs, quotes, onBack, onDownloadInvoice, onRequestSettlement, isInvoiceSettling, onOpenDocument, onViewPayments, onOpenClientWorkspace, onOpenPropertyWorkspace, onOpenJobWorkspace, onOpenQuoteDetail, onEditInvoice, onIssueInvoice }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onRequestSettlement: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onOpenClientWorkspace: (clientId: string) => void; onOpenPropertyWorkspace: (propertyId: string) => void; onOpenJobWorkspace: (jobId: string) => void; onOpenQuoteDetail: (quoteId: string) => void; onEditInvoice: () => void; onIssueInvoice: (invoice: InvoiceListItem) => void }) {
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false)
   const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
   const client = clients.find((item) => item.id === invoice.client_id)
+  const property = invoice.property_id ? properties.find((item) => item.id === invoice.property_id) : undefined
+  const job = invoice.job_id ? jobs.find((item) => item.id === invoice.job_id) : undefined
+  const quote = invoice.quote_id ? quotes.find((item) => item.id === invoice.quote_id) : undefined
   const facts = getInvoiceFinancialFacts(invoice)
   const lines = invoice.lines?.length ? invoice.lines : invoice.invoice_lines ?? []
   return (
@@ -221,11 +251,18 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
       <div className="v3-invoice-workspace__status"><V3Status label={getInvoiceDisplayStatusLabel(invoice, facts.status)} tone={getStatusTone(facts.status)} /></div>
       <dl className="v3-invoice-financial-summary" aria-label="Resumen financiero"><div><dt>Total</dt><dd>{formatCurrency(facts.total)}</dd></div><div><dt>Cobrado</dt><dd>{formatCurrency(facts.paid)}</dd></div><div><dt>Pendiente</dt><dd>{formatCurrency(facts.outstanding)}</dd></div></dl>
       <p className="v3-invoice-settlement-status">{facts.settlementAllowed ? `Cobro por transferencia disponible por ${formatCurrency(facts.outstanding)}.` : 'El cobro por transferencia no está disponible para esta factura.'}</p>
-      <V3ActionGroup className="v3-finance-action-group">{facts.settlementAllowed ? <V3PrimaryAction onClick={() => onRequestSettlement(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
+      <V3ActionGroup className="v3-finance-action-group">{invoice.status === 'draft' ? <V3PrimaryAction onClick={() => onIssueInvoice(invoice)}>Emitir factura</V3PrimaryAction> : null}{facts.settlementAllowed ? <V3PrimaryAction onClick={() => onRequestSettlement(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
       <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client?.full_name ?? formatClientLabel(invoice)}</dd></div><div><dt>Fecha</dt><dd>{formatDateEs(invoice.issue_date)}</dd></div></dl></V3Section>
       <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
+      <V3Section label="Relaciones"><dl className="v3-facts">
+        <div><dt>Cliente</dt><dd>{client ? <button type="button" className="v3-inline-link" onClick={() => onOpenClientWorkspace(client.id)}>{formatClientLabel(client)}</button> : formatClientLabel(invoice)}</dd></div>
+        {invoice.property_id ? <div><dt>Inmueble</dt><dd>{property ? <button type="button" className="v3-inline-link" onClick={() => onOpenPropertyWorkspace(property.id)}>{formatPropertyLabel(property)}</button> : formatPropertyLabel({ id: invoice.property_id, display_code: invoice.property_display_code, name: invoice.property_name })}</dd></div> : null}
+        {invoice.quote_id ? <div><dt>Presupuesto</dt><dd>{quote ? <button type="button" className="v3-inline-link" onClick={() => onOpenQuoteDetail(quote.id)}>{formatQuoteLabel(quote)}</button> : invoice.quote_display_code ?? 'Presupuesto vinculado'}</dd></div> : null}
+        {invoice.job_id ? <div><dt>Servicio</dt><dd>{job ? <button type="button" className="v3-inline-link" onClick={() => onOpenJobWorkspace(job.id)}>{formatJobLabel(job)}</button> : invoice.job_display_code ?? 'Servicio vinculado'}</dd></div> : null}
+        <div><dt>Cobros</dt><dd>{invoicePayments.length > 0 ? `${invoicePayments.length} · ${formatCurrency(invoicePayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0))}` : 'Sin cobros'}</dd></div>
+      </dl></V3Section>
       <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div key={line.id} className="v3-line-row"><span>{line.concept}</span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas detalladas disponibles.</p>}</div></V3Section>
-      <V3Section label="Cobros" action={<V3SecondaryAction onClick={() => onViewPayments(invoice.id)}>Ver cobros</V3SecondaryAction>}><p className="v3-section-copy">{invoicePayments.length > 0 ? `${invoicePayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section>
+      <V3Section label="Cobros" action={<V3SecondaryAction onClick={() => onViewPayments(invoice.id)}>Ver cobros</V3SecondaryAction>}><p className="v3-section-copy">{invoicePayments.length > 0 ? `${invoicePayments.length} cobro(s) registrado(s) · ${formatCurrency(invoicePayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0))} cobrado.` : 'Sin cobros registrados.'}</p></V3Section>
       <V3InvoiceDocumentPreview invoice={invoice} onOpenDocument={() => onOpenDocument(invoice)} />
       {invoice.updated_at ? <V3Section label="Historial"><p className="v3-section-copy">Última actualización: {formatDateEs(invoice.updated_at)}</p></V3Section> : null}
       {isMoreActionsOpen ? <V3BottomSheet title="Más acciones de la factura" onClose={() => setIsMoreActionsOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onEditInvoice() }}>Editar factura</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onOpenDocument(invoice) }}>Ver documento</V3SecondaryAction></div></V3BottomSheet> : null}

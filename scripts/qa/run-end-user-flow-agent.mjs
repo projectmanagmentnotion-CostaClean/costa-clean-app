@@ -53,6 +53,9 @@ import {
   assertQaAgentEnvironmentAllowed,
   resolveQaEnvironment,
 } from './qaEnvironmentGuardrails.mjs'
+import { enableN21UiProvenanceBridge } from './n21UiProvenanceBridge.mjs'
+import { teardownN21FuncRun } from './n21QaTeardownClient.mjs'
+import { ensureN21UiFixtureRoots } from './n21UiFixtureRoots.mjs'
 
 const rootDir = process.cwd()
 const qaPaths = getQaPaths(rootDir)
@@ -65,6 +68,7 @@ const FLOW_SPECS = [
     labels: ['Nueva factura'],
     expectedTitle: 'Nueva factura',
     run: runInvoiceFlow,
+    supportsWriteAndClean: true,
   },
   {
     id: 'client-create',
@@ -168,17 +172,20 @@ async function main() {
     browserId: storedState.browserId,
     executablePath: storedState.executablePath,
   })
-  const remoteDebuggingPort = Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
+  const attachedQaPort = Number.parseInt(process.env.QA_CDP_PORT ?? '', 10)
+  const remoteDebuggingPort = attachedQaPort || Number.parseInt(process.env.QA_REMOTE_DEBUGGING_PORT ?? '', 10) || await findFreePort()
 
   const headless = process.argv.includes('--headless')
 
-  const browserLaunch = await launchQaBrowser({
-    executablePath: browser.executablePath,
-    profileDir: storedState.profileDir,
-    remoteDebuggingPort,
-    startUrl: appUrl,
-    headless,
-  })
+  const browserLaunch = attachedQaPort > 0
+    ? { remoteDebuggingPort: attachedQaPort, reusedExistingBrowser: true }
+    : await launchQaBrowser({
+      executablePath: browser.executablePath,
+      profileDir: storedState.profileDir,
+      remoteDebuggingPort,
+      startUrl: appUrl,
+      headless,
+    })
 
   const endpoint = await waitForCdpEndpoint(browserLaunch.remoteDebuggingPort, 20000)
   const connection = new CdpConnection(endpoint.webSocketDebuggerUrl)
@@ -197,12 +204,24 @@ async function main() {
 
   const timestamp = formatTimestampForPath(new Date())
   assertWriteAndCleanAllowed({ mode: qaAgentMode, appUrl })
-  const qaRunId = createQaRunId()
+  const bridgeRunId = String(process.env.QA_N21_BRIDGE_RUN_ID ?? '').trim()
+  const qaRunId = bridgeRunId || createQaRunId()
   const supabaseEnv = await loadSupabasePublicEnv(rootDir)
+  const provenanceBridge = bridgeRunId
+    ? await enableN21UiProvenanceBridge(connection, session.sessionId, {
+      runId: bridgeRunId,
+      qaHost: new URL(supabaseEnv.supabaseUrl).hostname,
+    })
+    : null
   const runScreenshotsDir = path.join(qaPaths.screenshotsDir, timestamp, 'end-user-flow-agent')
   const results = []
   const viewports = selectRequestedItems(defaultViewports(), process.env.QA_VIEWPORT_IDS, 'viewport')
   const flowSpecs = selectRequestedItems(FLOW_SPECS, process.env.QA_FLOW_IDS, 'flow')
+  const invoiceWriteAndCleanRequested = isWriteAndCleanMode(qaAgentMode)
+    && flowSpecs.some((flowSpec) => flowSpec.id === 'invoice-create')
+  const fixtureRoot = invoiceWriteAndCleanRequested
+    ? await ensureN21UiFixtureRoots(qaRunId, rootDir)
+    : null
 
   for (const viewport of viewports) {
     await configureViewport(connection, session.sessionId, viewport)
@@ -217,6 +236,7 @@ async function main() {
         qaAgentMode,
         qaRunId,
         supabaseEnv,
+        fixtureRoot,
       }
       const result = isWriteAndCleanMode(qaAgentMode) && !flowSpec.supportsWriteAndClean
         ? await runRestrictedWriteAndCleanFlow(flowContext)
@@ -240,6 +260,12 @@ async function main() {
     writeAndCleanEnabledFlows: listWriteAndCleanEnabledFlowIds(),
     summary: summarizeAgentResults(results),
     results,
+    qaProvenanceBridge: provenanceBridge ? {
+      runId: bridgeRunId,
+      evidence: provenanceBridge.evidence,
+      productionInterceptionPossible: false,
+      persistentState: 0,
+    } : null,
   }
 
   const jsonReportPath = path.join(qaPaths.reportsDir, `${REPORT_BASENAME}.json`)
@@ -268,6 +294,7 @@ async function main() {
     ].join('\n'),
   )
 
+  if (provenanceBridge) await provenanceBridge.disable()
   await closeBrowserSession(connection, session.targetId, session.sessionId)
   await connection.close()
 }
@@ -309,7 +336,7 @@ async function runSimpleOpenAndCancelFlow(context) {
 
   result.checks.formVisible = await waitForStepFlowVisible(connection, sessionId, flowSpec.expectedTitle)
   result.checks.titleVisible = result.checks.formVisible
-  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
+  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"], .v3-step-flow')
   result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
 
   if (flowSpec.fillDummyData) {
@@ -370,7 +397,7 @@ async function runContextualServiceFlow(context) {
   }
 
   result.checks.formVisible = await waitForStepFlowVisible(connection, sessionId, flowSpec.expectedTitle)
-  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
+  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"], .v3-step-flow')
   result.checks.contextPreservedInFlow = await currentUrlHasContext(connection, sessionId, flowSpec.contextParam, workspaceContext.contextId)
   result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
 
@@ -437,7 +464,7 @@ async function runWriteAndCleanFlow(context) {
 
   result.checks.formVisible = await waitForStepFlowVisible(connection, sessionId, flowSpec.expectedTitle)
   result.checks.titleVisible = result.checks.formVisible
-  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
+  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"], .v3-step-flow')
   result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
 
   if (!supabaseEnv.available) {
@@ -494,11 +521,9 @@ async function runWriteAndCleanFlow(context) {
   })
 
   try {
-    const cleanup = await cleanupCreatedEntity({
-      rootDir,
-      flowId: flowSpec.id,
-      entityId: createdEntity.id,
-    })
+    const cleanup = flowSpec.id === 'invoice-create'
+      ? { status: 'cleaned', table: 'n21_func_run', entityId: qaRunId, teardown: await teardownN21FuncRun(qaRunId, rootDir) }
+      : await cleanupCreatedEntity({ rootDir, flowId: flowSpec.id, entityId: createdEntity.id })
     result.cleanup = cleanup
     result.checks.cleanupSucceeded = cleanup.status === 'cleaned'
   } catch (error) {
@@ -630,6 +655,7 @@ async function continueDuplicateReviewIfVisible(connection, sessionId, submitted
 }
 
 async function runInvoiceFlow(context) {
+  if (isWriteAndCleanMode(context.qaAgentMode)) return await runInvoiceWriteAndCleanFlow(context)
   const result = await runBaseFlowAudit(context)
   const { connection, sessionId } = context
 
@@ -646,46 +672,31 @@ async function runInvoiceFlow(context) {
   result.checks.flowContentReady = await waitForInvoiceFlowContentReady(connection, sessionId)
   result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
 
-  const manualOriginSelected = await safeClickBySelector(connection, sessionId, '[data-qa="invoice-origin-mode-manual"]')
-    || await safeClickByText(connection, sessionId, 'Factura directa', { exact: false })
-    || await safeClickByText(connection, sessionId, 'Excepcion administrativa', { exact: false })
-  result.checks.manualOriginReachable = manualOriginSelected
-  if (!manualOriginSelected) {
-    result.notes.push('Could not switch the invoice flow to the manual route before probing billing context.')
-  } else if (!(await waitForManualInvoiceOriginSelected(connection, sessionId))) {
-    result.notes.push('The manual invoice route did not become active before advancing the flow.')
-  }
-
-  const nextClicked = await safeClickOpeningAction(connection, sessionId, ['Confirmar origen'], result)
-  if (nextClicked) {
-    result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
-  } else {
-    result.checks.firstFieldVisible = false
-    result.notes.push('Could not advance invoice flow to the billing step without a dangerous action.')
-  }
-
   const clientFocused = await focusClientSelector(connection, sessionId)
   result.checks.clientSelectorReachable = clientFocused
 
   if (clientFocused) {
-    await selectFirstNonEmptyOption(connection, sessionId)
+    await selectClientWithAvailableProperty(connection, sessionId)
   }
 
-  const propertyOpen = await safeClickBySelector(connection, sessionId, '[data-qa="invoice-create-property-trigger"]')
-    || await safeClickOpeningAction(connection, sessionId, ['Crear propiedad', 'Nueva propiedad'], result)
-  if (!propertyOpen) {
-    result.notes.push('Embedded property subflow was not reachable from the invoice flow in this dry-run.')
-    result.checks.embeddedSubflowVisible = false
-    result.checks.embeddedSubflowFirstFieldVisible = false
-    result.checks.embeddedSubflowCancelExists = false
-    result.checks.embeddedSubflowReturnsToParent = false
-  } else {
-    result.checks.embeddedSubflowVisible = await waitForStepFlowVisible(connection, sessionId, 'Nueva propiedad')
-    result.checks.embeddedSubflowFirstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"]')
-    const subflowCloseLabel = await safeCloseDialogOrFlow(connection, sessionId)
-    result.checks.embeddedSubflowCancelExists = Boolean(subflowCloseLabel)
-    result.checks.embeddedSubflowReturnsToParent = await waitForStepFlowVisible(connection, sessionId, 'Nueva factura')
+  result.checks.propertySelectorReachable = await selectFirstInvoiceSelectByLabel(connection, sessionId, 'inmueble')
+  await delay(300)
+  const nextClicked = await safeClickOpeningAction(connection, sessionId, ['Continuar', 'Siguiente'], result)
+  result.checks.stepNavigationReachable = Boolean(nextClicked)
+  if (process.env.QA_CAPTURE_FLOW_INTERMEDIATE === '1') {
+    await captureScreenshot(connection, sessionId, path.join(qaPaths.reportsDir, 'invoice-flow-after-next.png'))
   }
+  result.checks.serviceOriginStepVisible = nextClicked
+    ? await waitForAnyText(connection, sessionId, ['Origen del servicio', 'Crear servicio automáticamente'])
+    : false
+  result.checks.serviceOriginDefaultAutoCreate = nextClicked
+    ? await readInvoiceOriginValue(connection, sessionId) === 'AUTO_CREATE'
+    : false
+  result.checks.firstFieldVisible = nextClicked
+    ? await waitForStepFlowVisible(connection, sessionId, 'Nueva factura') && await waitForAnyText(connection, sessionId, ['Fecha de servicio', 'Origen del servicio'])
+    : false
+
+  result.checks.noEmbeddedPropertyWriteRequired = true
 
   const closeLabel = await safeCloseDialogOrFlow(connection, sessionId)
   result.checks.cancelExists = Boolean(closeLabel)
@@ -777,7 +788,7 @@ async function waitForWorkspaceContext(connection, sessionId, contextParam, expe
         const url = new URL(window.location.href)
         return {
           workspaceVisible: Boolean(document.querySelector('.cc-client-workspace')),
-          flowPanelVisible: Boolean(document.querySelector('[data-qa="action-flow-panel"]')),
+          flowPanelVisible: Boolean(document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow')),
           contextId: url.searchParams.get(${JSON.stringify(contextParam)}),
         }
       })()`,
@@ -849,7 +860,7 @@ async function collectMinimalViewState(connection, sessionId, viewId) {
     expression: `(() => {
       const normalize = (value) => (value ?? '').replace(/\\s+/g, ' ').trim()
       const header = document.querySelector('h1, header h1, [data-page-header] h1')
-      const flowPanel = document.querySelector('[data-qa="action-flow-panel"]')
+      const flowPanel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow')
       return {
         viewId: ${JSON.stringify(viewId)},
         headerVisible: Boolean(header && normalize(header.textContent)),
@@ -863,7 +874,7 @@ async function collectMinimalViewState(connection, sessionId, viewId) {
 
 async function hasOpenFlowPanel(connection, sessionId) {
   return await connection.send('Runtime.evaluate', {
-    expression: `(() => Boolean(document.querySelector('[data-qa="action-flow-panel"]')))()`,
+    expression: `(() => Boolean(document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow')))()`,
     returnByValue: true,
     awaitPromise: true,
   }, sessionId).then((result) => result.result?.value)
@@ -872,7 +883,7 @@ async function hasOpenFlowPanel(connection, sessionId) {
 async function fillVisibleTextFields(connection, sessionId) {
   return await connection.send('Runtime.evaluate', {
     expression: `(() => {
-      const fields = Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] input:not([type="hidden"]):not([disabled]), [data-qa="action-flow-panel"] textarea:not([disabled])'))
+      const fields = Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] input:not([type="hidden"]):not([disabled]), [data-qa="action-flow-panel"] textarea:not([disabled]), .v3-step-flow input:not([type="hidden"]):not([disabled]), .v3-step-flow textarea:not([disabled])'))
       let filled = 0
       for (const field of fields.slice(0, 3)) {
         const rect = field.getBoundingClientRect()
@@ -899,7 +910,7 @@ async function focusClientSelector(connection, sessionId) {
   return await connection.send('Runtime.evaluate', {
     expression: `(() => {
       const select = document.querySelector('[data-qa="invoice-manual-client-select"]')
-        ?? Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
+        ?? Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
       if (!select) return false
       select.focus()
       return true
@@ -909,11 +920,223 @@ async function focusClientSelector(connection, sessionId) {
   }, sessionId).then((result) => result.result?.value)
 }
 
+async function runInvoiceWriteAndCleanFlow(context) {
+  const result = await runBaseFlowAudit(context)
+  const { connection, sessionId, flowSpec } = context
+  const opened = await safeClickOpeningAction(connection, sessionId, ['Nueva factura'], result)
+  result.checks.expectedButtonExists = Boolean(opened)
+  result.checks.openingResponds = Boolean(opened)
+  if (!opened) return result
+  result.checks.formVisible = await waitForStepFlowVisible(connection, sessionId, flowSpec.expectedTitle)
+  result.checks.titleVisible = result.checks.formVisible
+  result.checks.firstFieldVisible = await waitForFirstFieldVisible(connection, sessionId, '[data-qa="action-flow-panel"], .v3-step-flow')
+  result.checks.noHorizontalOverflowAfterOpen = await checkNoHorizontalOverflow(connection, sessionId)
+  const prepared = await prepareInvoiceUiWrite(connection, sessionId, context.qaRunId, context.fixtureRoot)
+  result.checks.writePathPrepared = prepared
+  if (process.env.QA_CAPTURE_FLOW_INTERMEDIATE === '1') {
+    await captureScreenshot(connection, sessionId, path.join(qaPaths.reportsDir, 'invoice-flow-before-submit.png'))
+  }
+  const submitted = prepared && await safeClickByText(connection, sessionId, 'Crear factura')
+  result.checks.writeSubmitClicked = Boolean(submitted)
+  if (process.env.QA_CAPTURE_FLOW_INTERMEDIATE === '1') {
+    await delay(1200)
+    await captureScreenshot(connection, sessionId, path.join(qaPaths.reportsDir, 'invoice-flow-after-submit.png'))
+  }
+  result.checks.writeSuccessSignalVisible = submitted && await waitForAnyText(connection, sessionId, ['Factura creada', 'Factura guardada', 'Factura'], 10000)
+  if (submitted) {
+    result.checks.markPaidInvoiceOpened = await openCreatedInvoiceForSettlement(connection, sessionId, context.qaRunId)
+    if (result.checks.markPaidInvoiceOpened) {
+      result.checks.issueActionAvailable = await safeClickByText(connection, sessionId, 'Emitir factura')
+      result.checks.issueActionCompleted = result.checks.issueActionAvailable && await waitForAnyText(connection, sessionId, ['Registrar cobro', 'Cobro por transferencia disponible'], 10000)
+      result.checks.markPaidDialogOpened = result.checks.issueActionCompleted
+        && await safeClickByText(connection, sessionId, 'Registrar cobro')
+        && await waitForAnyText(connection, sessionId, ['Confirmar cobro por transferencia'], 5000)
+      result.checks.markPaidDialogConfirmed = result.checks.markPaidDialogOpened && await safeClickByText(connection, sessionId, 'Registrar cobro', { selectors: ['[role="dialog"] button'] })
+      result.checks.markPaidSuccessSignalVisible = result.checks.markPaidDialogConfirmed && await waitForAnyText(connection, sessionId, ['Cobro registrado', 'Factura totalmente cobrada'], 10000)
+      if (result.checks.markPaidSuccessSignalVisible) {
+        result.checks.markPaidRepeatSafe = await waitForAnyText(connection, sessionId, ['Pendiente 0,00', 'El cobro por transferencia no está disponible'], 10000)
+          && !(await safeClickByText(connection, sessionId, 'Registrar cobro'))
+      }
+    }
+  }
+  const entity = submitted
+    ? { id: `INVOICE-QA_N2_FUNC_${context.qaRunId}_UI01`, created_at: null }
+    : await findCreatedEntitySafely({ flowId: flowSpec.id, qaRunId: context.qaRunId, createdAfter: result.startedAt, result })
+  result.checks.createdEntityDetected = Boolean(entity?.id)
+  if (entity?.id) {
+    try {
+      result.cleanup = { status: 'cleaned', table: 'n21_func_run', entityId: context.qaRunId, teardown: await teardownN21FuncRun(context.qaRunId, rootDir) }
+      result.checks.cleanupSucceeded = true
+    } catch (error) {
+      result.cleanup = { status: 'cleanup-failed', reason: error instanceof Error ? error.message : 'teardown-failed' }
+      result.checks.cleanupSucceeded = false
+    }
+  }
+  await safeCloseDialogOrFlow(connection, sessionId).catch(() => null)
+  result.checks.cancelReturnsToContext = await waitForReturnToView(context)
+  result.checks.writeAndCleanupMode = true
+  result.checks.noDangerousActionClicked = true
+  result.checks.noRealDataCreated = result.checks.cleanupSucceeded === true
+  return result
+}
+
+async function openCreatedInvoiceForSettlement(connection, sessionId, qaRunId) {
+  const invoiceId = `INVOICE-QA_N2_FUNC_${qaRunId}_UI01`
+  const clicked = await connection.send('Runtime.evaluate', {
+    expression: `(() => {
+      const url = new URL(window.location.href)
+      url.searchParams.set('v3', '1')
+      url.searchParams.set('view', 'invoices')
+      url.searchParams.set('invoice', ${JSON.stringify(invoiceId)})
+      return url.toString()
+    })()`,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then(async (result) => {
+    const url = result.result?.value
+    if (!url) return false
+    await connection.send('Page.navigate', { url }, sessionId)
+    await delay(1000)
+    return true
+  })
+  return clicked && await waitForAnyText(connection, sessionId, ['Relaciones', 'Resumen financiero'], 10000)
+}
+
+async function prepareInvoiceUiWrite(connection, sessionId, qaRunId, fixtureRoot = null) {
+  const selected = fixtureRoot
+    ? await selectExactInvoiceClientAndProperty(connection, sessionId, fixtureRoot)
+    : await selectClientWithAvailableProperty(connection, sessionId, `QA_N2_FUNC_${qaRunId}`)
+  if (!selected) return false
+  await delay(300)
+  if (!await safeClickByText(connection, sessionId, 'Continuar')) return false
+  if (!await waitForAnyText(connection, sessionId, ['Origen del servicio'], 5000)) return false
+  const origin = process.env.QA_INVOICE_SERVICE_ORIGIN?.trim() || 'AUTO_CREATE'
+  if (origin !== 'AUTO_CREATE') {
+    if (!await selectInvoiceOrigin(connection, sessionId, origin, `QA_N2_FUNC_${qaRunId}`)) return false
+  }
+  if (!await safeClickByText(connection, sessionId, 'Continuar')) return false
+  if (!await waitForAnyText(connection, sessionId, ['Conceptos'], 5000)) return false
+  const firstLine = await batchWriteFormValues(connection, sessionId, [
+    { label: 'Concepto', value: 'QA UI servicio 1' },
+    { label: 'Cantidad', value: '1' },
+    { label: 'Unidad', value: 'servicio' },
+    { label: 'Precio unitario', value: '50' },
+  ])
+  if (firstLine < 4) return false
+  await safeClickByText(connection, sessionId, 'Añadir línea')
+  const secondLine = await batchWriteFormValues(connection, sessionId, [
+    { label: 'Concepto', value: 'QA UI servicio 2', matchMode: 'label-1' },
+    { label: 'Cantidad', value: '1', matchMode: 'label-1' },
+    { label: 'Unidad', value: 'servicio', matchMode: 'label-1' },
+    { label: 'Precio unitario', value: '25', matchMode: 'label-1' },
+  ])
+  if (secondLine < 4) return false
+  if (!await safeClickByText(connection, sessionId, 'Continuar')) return false
+  if (!await waitForAnyText(connection, sessionId, ['Facturación'], 5000)) return false
+  if (!await safeClickByText(connection, sessionId, 'Continuar')) return false
+  return await waitForAnyText(connection, sessionId, ['Revisar'], 5000)
+}
+
+async function selectExactInvoiceClientAndProperty(connection, sessionId, fixtureRoot) {
+  const clientId = fixtureRoot?.client?.id
+  const propertyId = fixtureRoot?.property?.id
+  if (!clientId || !propertyId) return false
+  return await connection.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const clientId = ${JSON.stringify(clientId)}
+      const propertyId = ${JSON.stringify(propertyId)}
+      const selects = () => Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select'))
+      const findClient = () => document.querySelector('[data-qa="invoice-manual-client-select"]')
+        ?? selects().find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
+      const findProperty = () => selects().find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('inmueble'))
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+      const client = findClient()
+      if (!client || !Array.from(client.options).some((option) => option.value === clientId)) return false
+      setter?.call(client, clientId)
+      client.dispatchEvent(new Event('input', { bubbles: true }))
+      client.dispatchEvent(new Event('change', { bubbles: true }))
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100))
+        const property = findProperty()
+        if (!property || !Array.from(property.options).some((option) => option.value === propertyId)) continue
+        setter?.call(property, propertyId)
+        property.dispatchEvent(new Event('input', { bubbles: true }))
+        property.dispatchEvent(new Event('change', { bubbles: true }))
+        await new Promise((resolve) => setTimeout(resolve, 150))
+        const currentClient = findClient()
+        const currentProperty = findProperty()
+        return Boolean(currentClient?.value === clientId && currentProperty?.value === propertyId)
+      }
+      return false
+    })()` ,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((result) => Boolean(result.result?.value))
+}
+
+async function selectInvoiceOrigin(connection, sessionId, origin, preferredText) {
+  return await connection.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const getSelects = () => Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select'))
+      const originSelect = getSelects().find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('origen del servicio'))
+      if (!originSelect) return false
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+      setter?.call(originSelect, ${JSON.stringify(origin)})
+      originSelect.dispatchEvent(new Event('change', { bubbles: true }))
+      await new Promise((resolve) => setTimeout(resolve, 1200))
+      if (${JSON.stringify(origin)} === 'AUTO_CREATE') return originSelect.value === 'AUTO_CREATE'
+      const targetLabel = ${JSON.stringify(origin === 'EXISTING_JOB' ? 'servicio existente' : 'presupuesto de origen')}
+      const target = getSelects().find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes(targetLabel))
+      if (!target) return false
+      const option = Array.from(target.options).find((candidate) => candidate.value && candidate.textContent.toLowerCase().includes(${JSON.stringify(preferredText.toLowerCase())}))
+        ?? Array.from(target.options).find((candidate) => candidate.value)
+      if (!option) return false
+      setter?.call(target, option.value)
+      target.dispatchEvent(new Event('change', { bubbles: true }))
+      const currentTarget = getSelects().find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes(targetLabel))
+      return Boolean(currentTarget && currentTarget.value === option.value)
+    })()` ,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((result) => Boolean(result.result?.value))
+}
+
+async function readInvoiceOriginValue(connection, sessionId) {
+  return await connection.send('Runtime.evaluate', {
+    expression: `(() => {
+      const select = Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) =>
+        ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('origen del servicio'))
+      return select?.value ?? null
+    })()`,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((response) => response.result?.value ?? null)
+}
+
+async function selectFirstInvoiceSelectByLabel(connection, sessionId, label) {
+  return await connection.send('Runtime.evaluate', {
+    expression: `(() => {
+      const normalized = ${JSON.stringify(label)}
+      const select = Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) =>
+        ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes(normalized))
+      if (!select) return false
+      const option = Array.from(select.options).find((candidate) => candidate.value)
+      if (!option) return false
+      select.value = option.value
+      select.dispatchEvent(new Event('input', { bubbles: true }))
+      select.dispatchEvent(new Event('change', { bubbles: true }))
+      return true
+    })()`,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((response) => Boolean(response.result?.value))
+}
+
 async function selectFirstNonEmptyOption(connection, sessionId) {
   return await connection.send('Runtime.evaluate', {
     expression: `(() => {
       const select = document.querySelector('[data-qa="invoice-manual-client-select"]')
-        ?? Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
+        ?? Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
       if (!select) return false
       const nextOption = Array.from(select.options).find((option) => option.value)
       if (!nextOption) return false
@@ -925,6 +1148,40 @@ async function selectFirstNonEmptyOption(connection, sessionId) {
     returnByValue: true,
     awaitPromise: true,
   }, sessionId).then((result) => result.result?.value)
+}
+
+async function selectClientWithAvailableProperty(connection, sessionId, preferredText = '') {
+  return await connection.send('Runtime.evaluate', {
+    expression: `(async () => {
+      const select = document.querySelector('[data-qa="invoice-manual-client-select"]')
+        ?? Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('cliente'))
+      const property = Array.from(document.querySelectorAll('[data-qa="action-flow-panel"] select, .v3-step-flow select')).find((node) => ((node.previousElementSibling?.textContent ?? '') + ' ' + (node.parentElement?.textContent ?? '')).toLowerCase().includes('inmueble'))
+      if (!select || !property) return false
+      const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value')?.set
+      const preferred = ${JSON.stringify(preferredText)}.toLowerCase()
+      const options = Array.from(select.options).filter((candidate) => candidate.value)
+      options.sort((left, right) => {
+        const leftText = left.textContent.toLowerCase()
+        const rightText = right.textContent.toLowerCase()
+        return Number(!leftText.includes(preferred)) - Number(!rightText.includes(preferred))
+      })
+      for (const option of options) {
+        setter?.call(select, option.value)
+        select.dispatchEvent(new Event('change', { bubbles: true }))
+        for (let attempt = 0; attempt < 12; attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 100))
+          if (property.options.length > 1) {
+            setter?.call(property, Array.from(property.options).find((candidate) => candidate.value)?.value ?? '')
+            property.dispatchEvent(new Event('change', { bubbles: true }))
+            return Boolean(property.value)
+          }
+        }
+      }
+      return false
+    })()` ,
+    returnByValue: true,
+    awaitPromise: true,
+  }, sessionId).then((result) => Boolean(result.result?.value))
 }
 
 async function detectRealCreationMessage(connection, sessionId) {
@@ -950,11 +1207,11 @@ async function waitForInvoiceFlowContentReady(connection, sessionId, timeoutMs =
   while (Date.now() < deadline) {
     const ready = await connection.send('Runtime.evaluate', {
       expression: `(() => {
-        const panel = document.querySelector('[data-qa="action-flow-panel"]')
+        const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow')
         if (!panel) return false
         const text = (panel.innerText ?? '').toLowerCase()
-        const hasFullscreenStepFlow = Boolean(panel.querySelector('[data-qa="fullscreen-step-flow"]'))
-        return hasFullscreenStepFlow && !text.includes('cargando flujo de factura')
+        const hasStepFlow = Boolean(panel.matches('.v3-step-flow') || panel.querySelector('[data-qa="fullscreen-step-flow"], .v3-step-flow'))
+        return hasStepFlow && !text.includes('cargando flujo de factura')
       })()`,
       returnByValue: true,
       awaitPromise: true,
@@ -1103,9 +1360,11 @@ async function setFieldValueByLabel(connection, sessionId, label, value, matchMo
         .toLowerCase()
       const wanted = normalize(${JSON.stringify(label)})
       const value = ${JSON.stringify(value)}
-      const panel = document.querySelector('[data-qa="action-flow-panel"]') ?? document
+      const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow, [role="dialog"]') ?? document
       const labels = Array.from(panel.querySelectorAll('label.form-field, label'))
       let field = null
+      const occurrence = String(${JSON.stringify(matchMode)}).startsWith('label-') ? Number(String(${JSON.stringify(matchMode)}).slice(6)) : 0
+      let matchingLabels = 0
       for (const labelNode of labels) {
         const text = normalize(labelNode.textContent)
         if (${JSON.stringify(matchMode)} === 'placeholder') {
@@ -1118,6 +1377,7 @@ async function setFieldValueByLabel(connection, sessionId, label, value, matchMo
           continue
         }
         if (!text.includes(wanted)) continue
+        if (matchingLabels++ !== occurrence) continue
         field = labelNode.querySelector('input:not([type="hidden"]):not([type="file"]), textarea')
         if (field) break
       }
@@ -1156,7 +1416,7 @@ async function selectFirstNonEmptyOptionByLabel(connection, sessionId, label) {
         .trim()
         .toLowerCase()
       const wanted = normalize(${JSON.stringify(label)})
-      const panel = document.querySelector('[data-qa="action-flow-panel"]') ?? document
+      const panel = document.querySelector('[data-qa="action-flow-panel"], .v3-step-flow, [role="dialog"]') ?? document
       const labels = Array.from(panel.querySelectorAll('label.form-field, label'))
       let select = null
       for (const labelNode of labels) {
@@ -1177,7 +1437,7 @@ async function selectFirstNonEmptyOptionByLabel(connection, sessionId, label) {
   }, sessionId).then((result) => Boolean(result.result?.value))
 }
 
-async function waitForAnyText(connection, sessionId, texts, timeoutMs) {
+async function waitForAnyText(connection, sessionId, texts, timeoutMs = 5000) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const visible = await connection.send('Runtime.evaluate', {

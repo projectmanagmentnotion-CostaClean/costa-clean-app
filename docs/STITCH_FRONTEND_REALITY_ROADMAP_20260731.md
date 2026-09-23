@@ -741,7 +741,7 @@ Translate the service agenda and workspace while preserving current operational 
 - quote origin, property, client and invoice relationships remain visible;
 - completed without invoice exposes “Crear factura”;
 - no employees, attendance, hours, payroll or inventory;
-- recurring services remain unavailable.
+- recurring service planning is now available locally through bounded plan, preview and explicit generation flows; remote deployment remains NOT_STARTED.
 
 ### Exit gate
 

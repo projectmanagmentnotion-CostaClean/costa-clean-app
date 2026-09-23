@@ -21,6 +21,8 @@ MANIFEST="$PRIVATE_PATH/manifest.json"
 PSQL="$PG_BIN_DIR/psql"
 INITDB="$PG_BIN_DIR/initdb"
 PG_CTL="$PG_BIN_DIR/pg_ctl"
+readonly RESERVED_ROLE_RE='^(anon|authenticated|authenticator|dashboard_user|pgbouncer|postgres|service_role|supabase_[A-Za-z0-9_]+|cli_login_[A-Za-z0-9_]+|pgsodium_keyholder|pgsodium_keyiduser|pgsodium_keymaker|pgtle_admin)$'
+readonly BUILTIN_ROLE_RE='^pg_[A-Za-z0-9_]+$'
 
 fail() {
   printf '%s\n' "$1" >&2
@@ -63,6 +65,89 @@ verify_artifact() {
   [[ "$actual" == "$expected" ]] || fail "STOP_BACKUP_INTEGRITY_FAILURE"
 }
 
+normalize_roles_for_restore() {
+  local source="$1"
+  local destination="$2"
+  local reserved_file="$RESTORE_ROOT/reserved-roles.txt"
+  local body_file="$RESTORE_ROOT/roles.restore.body.sql"
+
+  : >"$reserved_file"
+  : >"$body_file"
+  if ! awk -v reserved_file="$reserved_file" -v reserved_re="$RESERVED_ROLE_RE" -v builtin_re="$BUILTIN_ROLE_RE" '
+    function fail(message) {
+      print message > "/dev/stderr"
+      exit 42
+    }
+    function valid_role(role) {
+      if (role !~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
+        fail("ROLE_CONFIG_UNSUPPORTED")
+      }
+      return role
+    }
+    function reserved(role) {
+      return role ~ reserved_re
+    }
+    function builtin(role) {
+      return role ~ builtin_re
+    }
+    /^[[:space:]]*CREATE ROLE[[:space:]]/ {
+      if (NF != 3 || $1 != "CREATE" || $2 != "ROLE") {
+        fail("ROLE_CONFIG_UNSUPPORTED")
+      }
+      role = $3
+      sub(/;$/, "", role)
+      valid_role(role)
+      if (reserved(role)) {
+        print role >> reserved_file
+      }
+      if (reserved(role) || builtin(role)) {
+        next
+      }
+      print
+      next
+    }
+    /^[[:space:]]*ALTER ROLE[[:space:]]/ {
+      if (NF < 4 || $1 != "ALTER" || $2 != "ROLE") {
+        fail("ROLE_CONFIG_UNSUPPORTED")
+      }
+      role = valid_role($3)
+      if (toupper($0) ~ /PASSWORD/) {
+        fail("ROLE_CONFIG_UNSUPPORTED")
+      }
+      if (reserved(role) || builtin(role)) {
+        next
+      }
+      print
+      next
+    }
+    /^[[:space:]]*(GRANT|REVOKE)[[:space:]]/ {
+      if (NF != 4 || ($1 != "GRANT" && $1 != "REVOKE") || ($3 != "TO" && $3 != "FROM")) {
+        fail("ROLE_CONFIG_UNSUPPORTED")
+      }
+      granted = valid_role($2)
+      grantee = $4
+      sub(/;$/, "", grantee)
+      valid_role(grantee)
+      if (reserved(granted) || reserved(grantee) || builtin(granted) || builtin(grantee)) {
+        next
+      }
+      print
+      next
+    }
+    { print }
+  ' "$source" >"$body_file"; then
+    fail "CP51F_RESTORE_ERROR: ROLE_CONFIG_UNSUPPORTED"
+  fi
+
+  : >"$destination"
+  while IFS= read -r role; do
+    [[ -n "$role" ]] || continue
+    printf 'DO $cp51f$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '\''%s'\'') THEN CREATE ROLE "%s"; END IF; END $cp51f$;\n' "$role" "$role" >>"$destination"
+  done < <(sort -u "$reserved_file")
+  cat "$body_file" >>"$destination"
+  rm -f -- "$reserved_file" "$body_file"
+}
+
 for artifact in "${REQUIRED_ARTIFACTS[@]}"; do
   verify_artifact "$artifact"
 done
@@ -90,13 +175,23 @@ run_file() {
   local phase="$1" database="$2" file="$3"
   local log="$LOG_ROOT/$phase.log"
   if ! "$PSQL" -h "$PGSOCKET" -U "$RESTORE_SUPERUSER" -d "$database" -v ON_ERROR_STOP=1 -X -q -f "$file" >"$log" 2>&1; then
-    fail "CP51F_RESTORE_ERROR: $phase failed"
+    local error_class="${phase^^}_RESTORE_UNKNOWN"
+    if [[ "$phase" == roles ]]; then
+      if grep -Eiq 'permission denied|must be owner|membership' "$log"; then
+        error_class="ROLE_MEMBERSHIP_PERMISSION"
+      elif grep -Eiq 'already exists|cannot alter role|unsupported' "$log"; then
+        error_class="ROLE_CONFIG_UNSUPPORTED"
+      fi
+    fi
+    fail "CP51F_RESTORE_ERROR: $phase failed [$error_class]"
   fi
   rm -f -- "$log"
 }
 
 run_query create_database postgres "CREATE DATABASE $PGDATABASE OWNER $RESTORE_SUPERUSER;" >/dev/null
-run_file roles postgres "$PRIVATE_PATH/roles.sql"
+roles_restore_sql="$RESTORE_ROOT/roles.restore.sql"
+normalize_roles_for_restore "$PRIVATE_PATH/roles.sql" "$roles_restore_sql"
+run_file roles postgres "$roles_restore_sql"
 run_file schema "$PGDATABASE" "$PRIVATE_PATH/schema.sql"
 run_file history_schema "$PGDATABASE" "$PRIVATE_PATH/history_schema.sql"
 run_file data "$PGDATABASE" "$PRIVATE_PATH/data.sql"

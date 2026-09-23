@@ -55,6 +55,27 @@ create policy n9_job_material_requirements_internal_read on public.job_material_
 revoke all on table public.recurring_service_team_templates, public.recurring_service_material_templates, public.job_material_requirements from public, anon, authenticated;
 grant select on table public.recurring_service_team_templates, public.recurring_service_material_templates, public.job_material_requirements to authenticated;
 
+-- N9 extends the N8 profitability contract only after its planned-material table exists.
+create or replace function public.get_job_final_profitability(p_job_id text)
+returns jsonb language plpgsql security definer set search_path = pg_catalog, public, portal_private, pg_temp as $$
+declare v_base jsonb; v_planned_material numeric := 0; v_planned_cost numeric := 0; v_planned_revenue numeric := 0;
+begin
+  perform portal_private.require_active_internal_staff();
+  v_base := public.get_job_final_profitability_base(p_job_id);
+  select coalesce(sum(r.planned_quantity * coalesce(r.unit_cost_snapshot, 0)), 0)
+    into v_planned_material
+    from public.job_material_requirements r where r.job_id = p_job_id;
+  v_planned_material := round(v_planned_material, 2);
+  v_planned_cost := round(coalesce((v_base ->> 'planned_labor_cost')::numeric, 0) + v_planned_material, 2);
+  v_planned_revenue := coalesce((v_base ->> 'planned_revenue_base')::numeric, 0);
+  return v_base || jsonb_build_object(
+    'planned_material_cost', v_planned_material,
+    'planned_direct_cost', v_planned_cost,
+    'planned_direct_contribution_after_materials', round(v_planned_revenue - v_planned_cost, 2),
+    'planned_direct_margin_after_materials_percent', case when v_planned_revenue > 0 then round((v_planned_revenue - v_planned_cost) / v_planned_revenue * 100, 2) else null end
+  );
+end; $$;
+
 create or replace function public.save_recurring_service_operational_template(p_plan_id text, p_team jsonb, p_materials jsonb)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, portal_private, pg_temp as $$
 declare v_item jsonb; v_id text; v_result jsonb; v_count integer;

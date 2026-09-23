@@ -113,9 +113,9 @@ begin
 end; $$;
 
 -- Final profitability preserves the N6/N7 fields and adds other direct costs.
-create or replace function public.get_job_final_profitability(p_job_id text)
+create or replace function public.get_job_final_profitability_base(p_job_id text)
 returns jsonb language plpgsql security definer set search_path = pg_catalog, public, portal_private, pg_temp as $$
-declare v_base jsonb; v_other numeric := 0; v_total numeric := 0; v_revenue numeric := 0; v_allocations integer := 0; v_planned_material numeric := 0; v_planned_cost numeric := 0; v_planned_revenue numeric := 0;
+declare v_base jsonb; v_other numeric := 0; v_total numeric := 0; v_revenue numeric := 0; v_allocations integer := 0;
 begin
   perform portal_private.require_active_internal_staff();
   v_base := public.get_job_profitability(p_job_id);
@@ -125,15 +125,7 @@ begin
   v_other := round(v_other, 2);
   v_total := round(coalesce((v_base ->> 'actual_direct_cost')::numeric, 0) + v_other, 2);
   v_revenue := coalesce((v_base ->> 'actual_invoiced_base')::numeric, 0);
-  select coalesce(sum(r.planned_quantity * coalesce(r.unit_cost_snapshot, 0)), 0) into v_planned_material from public.job_material_requirements r where r.job_id = p_job_id;
-  v_planned_material := round(v_planned_material, 2);
-  v_planned_cost := round(coalesce((v_base ->> 'planned_labor_cost')::numeric, 0) + v_planned_material, 2);
-  v_planned_revenue := coalesce((v_base ->> 'planned_revenue_base')::numeric, 0);
   return v_base || jsonb_build_object(
-    'planned_material_cost', v_planned_material,
-    'planned_direct_cost', v_planned_cost,
-    'planned_direct_contribution_after_materials', round(v_planned_revenue - v_planned_cost, 2),
-    'planned_direct_margin_after_materials_percent', case when v_planned_revenue > 0 then round((v_planned_revenue - v_planned_cost) / v_planned_revenue * 100, 2) else null end,
     'actual_other_direct_cost', v_other,
     'actual_total_direct_cost', v_total,
     'actual_direct_contribution_final', round(v_revenue - v_total, 2),
@@ -141,6 +133,11 @@ begin
     'expense_allocation_count', v_allocations
   );
 end; $$;
+
+create or replace function public.get_job_final_profitability(p_job_id text)
+returns jsonb language sql security definer set search_path = pg_catalog, public, portal_private, pg_temp as $$
+  select public.get_job_final_profitability_base(p_job_id);
+$$;
 
 create or replace function public.list_job_final_profitability(p_from_date date, p_through_date date, p_client_id text default null, p_property_id text default null)
 returns jsonb language sql security definer set search_path = pg_catalog, public, portal_private, pg_temp as $$
@@ -152,5 +149,5 @@ returns jsonb language sql security definer set search_path = pg_catalog, public
     and portal_private.is_active_internal_staff(auth.uid());
 $$;
 
-revoke all on function public.save_job_expense_allocation(jsonb), public.remove_job_expense_allocation(text), public.list_job_expense_allocations(text), public.get_expense_allocation_summary(uuid), public.get_job_final_profitability(text), public.list_job_final_profitability(date, date, text, text) from public, anon;
-grant execute on function public.save_job_expense_allocation(jsonb), public.remove_job_expense_allocation(text), public.list_job_expense_allocations(text), public.get_expense_allocation_summary(uuid), public.get_job_final_profitability(text), public.list_job_final_profitability(date, date, text, text) to authenticated;
+revoke all on function public.save_job_expense_allocation(jsonb), public.remove_job_expense_allocation(text), public.list_job_expense_allocations(text), public.get_expense_allocation_summary(uuid), public.get_job_final_profitability_base(text), public.get_job_final_profitability(text), public.list_job_final_profitability(date, date, text, text) from public, anon;
+grant execute on function public.save_job_expense_allocation(jsonb), public.remove_job_expense_allocation(text), public.list_job_expense_allocations(text), public.get_expense_allocation_summary(uuid), public.get_job_final_profitability_base(text), public.get_job_final_profitability(text), public.list_job_final_profitability(date, date, text, text) to authenticated;

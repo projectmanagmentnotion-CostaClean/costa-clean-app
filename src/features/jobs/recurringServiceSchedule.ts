@@ -6,6 +6,15 @@ export interface RecurringSchedulePlan {
   monthly_day?: number | null
   start_date: string
   end_date?: string | null
+  timezone?: string | null
+  slots?: RecurringScheduleSlot[] | null
+}
+
+export interface RecurringScheduleSlot {
+  weekday: number
+  start_time?: string | null
+  duration_minutes: number
+  workers_required: number
 }
 
 function parseDate(value: string): Date {
@@ -52,4 +61,10 @@ export function formatRecurringSchedule(plan: RecurringSchedulePlan): string {
   if (plan.schedule_kind === 'monthly') return `Mensual · día ${plan.monthly_day}`
   const days = (plan.weekdays ?? []).join(', ')
   return `${plan.schedule_kind === 'biweekly' ? 'Quincenal' : 'Semanal'} · ${days}`
+}
+
+export function getRecurringSlot(plan: RecurringSchedulePlan, date: string): RecurringScheduleSlot | null {
+  const current = parseDate(date)
+  const weekday = isoWeekday(current)
+  return plan.slots?.find((slot) => slot.weekday === weekday) ?? null
 }

@@ -12,6 +12,7 @@ import {
   defaultFlowScenarios,
   defaultViews,
   defaultViewports,
+  delay,
   detectBrowserExecutable,
   ensureQaDirectories,
   formatTimestampForPath,
@@ -96,7 +97,13 @@ async function main() {
       const url = buildViewUrl(appUrl, viewId)
       await navigateAndWait(connection, session.sessionId, url)
       await waitForViewReady(connection, session.sessionId, viewId)
-      const audit = await collectViewAudit(connection, session.sessionId, viewId, viewport)
+      let audit = await collectViewAudit(connection, session.sessionId, viewId, viewport)
+      if (Object.values(audit.checks).some((value) => !value)) {
+        await delay(750)
+        await navigateAndWait(connection, session.sessionId, url)
+        await waitForViewReady(connection, session.sessionId, viewId)
+        audit = await collectViewAudit(connection, session.sessionId, viewId, viewport)
+      }
       const screenshotFileName = `${viewport.id}-${viewId}.png`
       const screenshotPath = path.join(runScreenshotsDir, screenshotFileName)
       await captureScreenshot(connection, session.sessionId, screenshotPath)

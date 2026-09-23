@@ -547,6 +547,16 @@ export async function waitForShellStable(connection, sessionId, timeoutMs = 1200
 
 export async function waitForViewReady(connection, sessionId, viewId, timeoutMs = 8000) {
   const startedAt = Date.now()
+  const expectedHeaders = {
+    clients: 'Clientes',
+    properties: 'Inmuebles',
+    quotes: 'Presupuestos',
+    jobs: 'Servicios',
+    invoices: 'Facturas',
+    expenses: 'Gastos',
+    payments: 'Cobros',
+    fiscal_closing: 'Cierres',
+  }
 
   while (Date.now() - startedAt < timeoutMs) {
     const ready = await evaluateJson(connection, sessionId, `(() => {
@@ -575,7 +585,8 @@ export async function waitForViewReady(connection, sessionId, viewId, timeoutMs 
         return headerText === 'Inicio'
       }
 
-      return Boolean(headerText)
+       const expectedHeader = ${JSON.stringify(expectedHeaders)}[${JSON.stringify(viewId)}]
+       return Boolean(headerText && (!expectedHeader || headerText === expectedHeader))
     })()`)
 
     if (ready) {

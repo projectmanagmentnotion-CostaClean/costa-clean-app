@@ -12,6 +12,7 @@ import { useV3ListWindow } from '../components/useV3ListWindow'
 import { readJobDeepLink, writeJobDeepLink } from './jobDeepLink'
 import { V3JobRow } from './V3JobRow'
 import { V3JobWorkspace } from './V3JobWorkspace'
+import { RecurringServicePlans } from '../../features/jobs/RecurringServicePlans'
 
 type JobFilter = 'today' | 'upcoming' | 'completed' | 'all' | 'archived'
 
@@ -73,5 +74,6 @@ export function V3JobsPage(props: V3JobsPageProps) {
     <section className="v3-jobs-overview" aria-label="Resumen de agenda">
       <V3KpiGroup variant="supporting"><V3Kpi label="Hoy" value={String(todayCount)} hint={formatDateEs(today)} /><V3Kpi label="Próximos" value={String(upcomingCount)} hint="Servicios activos" /><V3Kpi label="Completados" value={String(completedCount)} hint="Estado real" /></V3KpiGroup>
     </section>
+    <RecurringServicePlans clients={props.clients} properties={props.properties} onJobsChanged={props.onRefresh} />
   </V3Page>
 }

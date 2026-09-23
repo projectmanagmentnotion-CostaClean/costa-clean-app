@@ -28,7 +28,6 @@ import { V3JobsPage } from '../v3/jobs/V3JobsPage'
 import { V3JobCreateFlow } from '../v3/jobs/V3JobCreateFlow'
 import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
 import type { JobModuleFilter } from '../app/moduleFilters'
-import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
 import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
 
 const LazyJobCreateFlow = lazy(async () => ({

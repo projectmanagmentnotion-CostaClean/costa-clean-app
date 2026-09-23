@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState, type FormEvent } 
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
-import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
@@ -1040,6 +1040,53 @@ export function InvoiceDetailCard({
                 <small>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</small>
               </div>
             </div>
+          ) : null}
+
+          {!isEditing ? (
+            <section className="cc-detail-panel__relations" aria-label="Relaciones de la factura">
+              <div className="cc-detail-panel__relations-header">
+                <span className="cc-detail-panel__eyebrow">Relaciones</span>
+                <span className="cc-detail-panel__relations-caption">Contexto operativo vinculado</span>
+              </div>
+              <div className="cc-detail-panel__relations-list">
+                <div className="cc-detail-panel__relation-row">
+                  <span>Cliente</span>
+                  <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenClientWorkspace(invoice.client_id)}>
+                    {formatClientLabel(invoice)}
+                  </button>
+                </div>
+                {invoice.property_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Inmueble</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenPropertyWorkspace(invoice.property_id!)}>
+                      {formatPropertyLabel({ id: invoice.property_id, display_code: invoice.property_display_code, name: invoice.property_name, city: invoice.property_address_line })}
+                    </button>
+                  </div>
+                ) : null}
+                {invoice.quote_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Presupuesto</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenQuoteDetail(invoice.quote_id!)}>
+                      {formatQuoteLabel(quotes.find((quote) => quote.id === invoice.quote_id) ?? { id: invoice.quote_id, display_code: invoice.quote_display_code })}
+                    </button>
+                  </div>
+                ) : null}
+                {invoice.job_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Servicio</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenJobWorkspace(invoice.job_id!)}>
+                      {formatJobLabel({ id: invoice.job_id, display_code: invoice.job_display_code, billing_concept: invoice.billing_concept, property_name: invoice.property_name, property_display_code: invoice.property_display_code })}
+                    </button>
+                  </div>
+                ) : null}
+                <div className="cc-detail-panel__relation-row">
+                  <span>Cobros</span>
+                  <button type="button" className="cc-detail-panel__relation-link" onClick={() => onViewPayments(invoice.id)}>
+                    {paymentSummary ? `${paymentSummary.paymentCount} · ${formatCurrency(paymentSummary.paidAmount)}` : '0 · 0,00 €'}
+                  </button>
+                </div>
+              </div>
+            </section>
           ) : null}
 
           {!isEditing ? (

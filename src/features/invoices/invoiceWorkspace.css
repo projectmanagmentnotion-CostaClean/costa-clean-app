@@ -119,6 +119,70 @@
   background: transparent;
 }
 
+.cc-detail-panel__relations {
+  padding: 0.8rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cc-detail-panel__relations-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.cc-detail-panel__relations-caption {
+  color: rgba(148, 163, 184, 0.72);
+  font-size: 0.68rem;
+}
+
+.cc-detail-panel__relations-list {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.cc-detail-panel__relation-row {
+  display: grid;
+  grid-template-columns: minmax(84px, 0.32fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cc-detail-panel__relation-row:last-child {
+  border-bottom: 0;
+}
+
+.cc-detail-panel__relation-row > span {
+  color: rgba(148, 163, 184, 0.78);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.cc-detail-panel__relation-link {
+  justify-self: start;
+  min-height: 2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(103, 232, 249, 0.35);
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+}
+
+.cc-detail-panel__relation-link:hover,
+.cc-detail-panel__relation-link:focus-visible {
+  color: #67e8f9;
+  text-decoration-color: currentColor;
+}
+
 .cc-invoice-detail-card .cc-collapsible-detail {
   border: 0;
   border-radius: 0;

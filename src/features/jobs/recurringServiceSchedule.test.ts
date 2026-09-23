@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getRecurringOccurrenceDates } from './recurringServiceSchedule'
+import { getRecurringOccurrenceDates, getRecurringSlot } from './recurringServiceSchedule'
 
 describe('recurring service schedule', () => {
   it('supports weekly Monday and multiple weekdays', () => {
@@ -18,5 +18,15 @@ describe('recurring service schedule', () => {
 
   it('returns no dates outside the bounded interval', () => {
     expect(getRecurringOccurrenceDates({ schedule_kind: 'weekly', weekdays: [1], start_date: '2026-09-28' }, '2026-09-29', '2026-09-30')).toEqual([])
+  })
+
+  it('keeps civil dates stable across month and year boundaries', () => {
+    expect(getRecurringOccurrenceDates({ schedule_kind: 'weekly', weekdays: [5], start_date: '2026-12-31' }, '2026-12-31', '2027-01-08')).toEqual(['2027-01-01', '2027-01-08'])
+  })
+
+  it('resolves a per-weekday operational slot without applying timezone shifts', () => {
+    const plan = { schedule_kind: 'weekly' as const, weekdays: [1, 6], start_date: '2026-09-28', timezone: 'Europe/Madrid', slots: [{ weekday: 1, start_time: '09:30', duration_minutes: 180, workers_required: 2 }, { weekday: 6, start_time: null, duration_minutes: 120, workers_required: 2 }] }
+    expect(getRecurringSlot(plan, '2026-09-28')).toMatchObject({ start_time: '09:30', duration_minutes: 180 })
+    expect(getRecurringSlot(plan, '2026-10-03')).toMatchObject({ start_time: null, duration_minutes: 120 })
   })
 })

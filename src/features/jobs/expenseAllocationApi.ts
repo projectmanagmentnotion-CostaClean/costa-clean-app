@@ -1,0 +1,7 @@
+import { getSupabaseClient } from '../../lib/supabase'
+import type { JobExpenseAllocation } from './expenseAllocation'
+function clientOrThrow() { const { client, error } = getSupabaseClient(); if (!client) throw new Error(error ?? 'No se pudo inicializar Supabase.'); return client }
+export async function listJobExpenseAllocations(jobId: string) { const { data, error } = await clientOrThrow().rpc('list_job_expense_allocations', { p_job_id: jobId }); if (error) throw error; return (data ?? []) as JobExpenseAllocation[] }
+export async function saveJobExpenseAllocation(allocation: { id?: string; expense_id: string; job_id: string; allocated_base_amount: number; notes?: string | null; idempotency_key: string }) { const { data, error } = await clientOrThrow().rpc('save_job_expense_allocation', { p_allocation: allocation }); if (error) throw error; return data as JobExpenseAllocation }
+export async function removeJobExpenseAllocation(allocationId: string) { const { data, error } = await clientOrThrow().rpc('remove_job_expense_allocation', { p_allocation_id: allocationId }); if (error) throw error; return data }
+export async function getExpenseAllocationSummary(expenseId: string) { const { data, error } = await clientOrThrow().rpc('get_expense_allocation_summary', { p_expense_id: expenseId }); if (error) throw error; return data as { expense_subtotal: number; allocated_base: number; remaining_base: number; allocations: JobExpenseAllocation[] } }

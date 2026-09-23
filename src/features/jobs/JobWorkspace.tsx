@@ -25,6 +25,7 @@ import { MajorEditFlowOverlay } from '../../components/MajorEditFlowOverlay'
 import type { ClientListItem } from '../clients/types'
 import type { PropertyListItem } from '../properties/types'
 import type { QuoteListItem } from '../quotes/types'
+import type { ExpenseListItem } from '../expenses/types'
 import { JobDetailCard } from './JobDetailCard'
 import { resolveJobAfterRefresh, type JobEditorRefreshResult } from './jobEditorLiveState'
 import { getJobBillingDisplayConcept } from './jobBilling'
@@ -35,6 +36,7 @@ import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { JobWorkforcePanel } from './JobWorkforcePanel'
 import { JobProfitabilityPanel } from './JobProfitabilityPanel'
 import { JobMaterialsPanel } from './JobMaterialsPanel'
+import { JobExpenseAllocationPanel } from './JobExpenseAllocationPanel'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -54,6 +56,7 @@ interface JobWorkspaceProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
+  expenses: ExpenseListItem[]
   activeTab: JobWorkspaceTab
   onTabChange: (tab: JobWorkspaceTab) => void
   onClose: () => void
@@ -160,6 +163,7 @@ export function JobWorkspace({
   quotes,
   invoices,
   payments,
+  expenses,
   activeTab,
   onTabChange,
   onClose,
@@ -632,6 +636,7 @@ export function JobWorkspace({
           />
           <JobWorkforcePanel jobId={liveJob.id} onRefresh={onRefresh} />
           <JobMaterialsPanel jobId={liveJob.id} onChanged={() => setProfitabilityVersion((version) => version + 1)} />
+          <JobExpenseAllocationPanel jobId={liveJob.id} expenses={expenses} onChanged={() => setProfitabilityVersion((version) => version + 1)} />
           <JobProfitabilityPanel key={profitabilityVersion} jobId={liveJob.id} />
         </section>
       ) : null}

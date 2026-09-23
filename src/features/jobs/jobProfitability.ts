@@ -25,6 +25,11 @@ export interface JobProfitability {
   actual_direct_cost: number
   actual_direct_contribution: number
   actual_direct_contribution_after_materials: number
+  actual_other_direct_cost: number
+  actual_total_direct_cost: number
+  actual_direct_contribution_final: number
+  direct_margin_final_percent: number | null
+  expense_allocation_count: number
   direct_margin_percent: number | null
   direct_margin_after_materials_percent: number | null
   material_movement_count: number
@@ -50,7 +55,7 @@ export function isRealizedInvoice(invoice: Pick<InvoiceListItem, 'status' | 'del
   return (invoice.status === 'issued' || invoice.status === 'paid') && !invoice.deleted_at && !invoice.archived_at && !invoice.cancelled_at
 }
 
-export function buildJobProfitability({ jobId, lines, billingQuantity, billingUnitPrice, invoices, payments, assignments, entries, materialMovements = [], clientName, propertyName }: { jobId: string; lines: JobBillingLineItem[]; billingQuantity?: number | null; billingUnitPrice?: number | null; invoices: InvoiceListItem[]; payments: PaymentListItem[]; assignments: JobTeamAssignment[]; entries: JobTimeEntry[]; materialMovements?: MaterialMovement[]; clientName?: string | null; propertyName?: string | null }): JobProfitability {
+export function buildJobProfitability({ jobId, lines, billingQuantity, billingUnitPrice, invoices, payments, assignments, entries, materialMovements = [], otherDirectCost = 0, expenseAllocationCount = 0, clientName, propertyName }: { jobId: string; lines: JobBillingLineItem[]; billingQuantity?: number | null; billingUnitPrice?: number | null; invoices: InvoiceListItem[]; payments: PaymentListItem[]; assignments: JobTeamAssignment[]; entries: JobTimeEntry[]; materialMovements?: MaterialMovement[]; otherDirectCost?: number; expenseAllocationCount?: number; clientName?: string | null; propertyName?: string | null }): JobProfitability {
   const plannedRevenue = plannedRevenueBase(lines, billingQuantity ?? 0, billingUnitPrice ?? 0)
   const plannedMinutes = assignments.filter((item) => item.status !== 'cancelled').reduce((sum, item) => sum + (item.planned_minutes ?? 0), 0)
   const plannedLabor = roundMoney(assignments.filter((item) => item.status !== 'cancelled').reduce((sum, item) => sum + ((item.planned_minutes ?? 0) / 60 * Number(item.hourly_cost_snapshot ?? 0)), 0))
@@ -67,6 +72,8 @@ export function buildJobProfitability({ jobId, lines, billingQuantity, billingUn
   const actualLabor = roundMoney(entries.reduce((sum, entry) => sum + (entry.minutes / 60 * Number(entry.hourly_cost_snapshot ?? 0)), 0))
   const actualMaterial = totalDirectMaterialCost(materialMovements)
   const actualDirectCost = roundMoney(actualLabor + actualMaterial)
+  const actualOtherDirectCost = roundMoney(Math.max(Number(otherDirectCost || 0), 0))
+  const actualTotalDirectCost = roundMoney(actualDirectCost + actualOtherDirectCost)
   const plannedContribution = roundMoney(plannedRevenue - plannedLabor)
   const actualContribution = roundMoney(actualRevenue - actualLabor)
   const completenessStatus: ProfitabilityCompleteness = actualRevenue > 0 && actualMinutes > 0
@@ -80,7 +87,7 @@ export function buildJobProfitability({ jobId, lines, billingQuantity, billingUn
     job_id: jobId, client_name: clientName, property_name: propertyName,
     planned_revenue_base: plannedRevenue, planned_minutes: plannedMinutes, planned_labor_cost: plannedLabor, planned_direct_contribution: plannedContribution,
     actual_invoiced_base: actualRevenue, draft_invoice_base: draftRevenue, invoice_total_with_vat: invoiceTotal, collected_amount: collected, outstanding_amount: roundMoney(Math.max(invoiceTotal - collected, 0)),
-    actual_minutes: actualMinutes, actual_labor_cost: actualLabor, actual_material_cost: actualMaterial, actual_direct_cost: actualDirectCost, actual_direct_contribution: actualContribution, actual_direct_contribution_after_materials: roundMoney(actualRevenue - actualDirectCost), direct_margin_percent: actualRevenue > 0 ? roundMoney(actualContribution / actualRevenue * 100) : null, direct_margin_after_materials_percent: actualRevenue > 0 ? roundMoney((actualRevenue - actualDirectCost) / actualRevenue * 100) : null, material_movement_count: materialMovements.filter((movement) => movement.movement_type === 'consumption').length,
+    actual_minutes: actualMinutes, actual_labor_cost: actualLabor, actual_material_cost: actualMaterial, actual_direct_cost: actualDirectCost, actual_direct_contribution: actualContribution, actual_direct_contribution_after_materials: roundMoney(actualRevenue - actualDirectCost), actual_other_direct_cost: actualOtherDirectCost, actual_total_direct_cost: actualTotalDirectCost, actual_direct_contribution_final: roundMoney(actualRevenue - actualTotalDirectCost), direct_margin_percent: actualRevenue > 0 ? roundMoney(actualContribution / actualRevenue * 100) : null, direct_margin_after_materials_percent: actualRevenue > 0 ? roundMoney((actualRevenue - actualDirectCost) / actualRevenue * 100) : null, direct_margin_final_percent: actualRevenue > 0 ? roundMoney((actualRevenue - actualTotalDirectCost) / actualRevenue * 100) : null, expense_allocation_count: expenseAllocationCount, material_movement_count: materialMovements.filter((movement) => movement.movement_type === 'consumption').length,
     revenue_variance: roundMoney(actualRevenue - plannedRevenue), labor_variance: roundMoney(actualLabor - plannedLabor), margin_variance: roundMoney(actualContribution - plannedContribution),
     assigned_worker_count: assignments.filter((item) => item.status !== 'cancelled').length, time_entry_count: entries.length, invoice_count: realizedInvoices.length, completeness_status: completenessStatus,
   }

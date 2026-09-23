@@ -745,6 +745,7 @@ Translate the service agenda and workspace while preserving current operational 
 - N5 team and operational hours are available locally through an internal roster, job assignments, normalized manual time entries, and snapshot labor-cost helpers; payroll and production deployment remain NOT_IMPLEMENTED.
 - N6 direct operational profitability is available locally from job lines, invoice subtotal and N5 labor snapshots; VAT, collection state, general expenses, payroll and production deployment remain excluded.
 - N7 material control is available locally through an internal catalog, signed stock ledger, job consumption and historical unit-cost snapshots; expense allocation and production deployment remain NOT_IMPLEMENTED.
+- N8 direct expense allocation is available locally as an internal, idempotent operational relation over expense subtotal snapshots. It excludes general overhead and material-linked expenses, preserves the fiscal expense record, and extends N6 final direct profitability without claiming net profit or production deployment.
 
 ### Exit gate
 

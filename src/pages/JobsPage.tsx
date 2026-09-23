@@ -23,6 +23,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { ExpenseListItem } from '../features/expenses/types'
 import '../features/jobs/jobsOperations.css'
 import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
 import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
@@ -41,6 +42,7 @@ interface JobsPageProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
+  expenses: ExpenseListItem[]
   error: string | null
   onJobCreated: () => Promise<void>
   onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
@@ -62,6 +64,7 @@ export function JobsPage({
   quotes,
   invoices,
   payments,
+  expenses,
   error,
   onJobCreated,
   onOpenClientWorkspace,
@@ -355,6 +358,7 @@ export function JobsPage({
             quotes={quotes}
             invoices={invoices}
             payments={payments}
+            expenses={expenses}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             onClose={() => {

@@ -30,6 +30,7 @@ import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
 import { TeamManagement } from '../features/jobs/TeamManagement'
 import { ServicesProfitabilitySummary } from '../features/jobs/ServicesProfitabilitySummary'
 import { MaterialManagement } from '../features/jobs/MaterialManagement'
+import { PlanningForecastPanels } from '../features/jobs/PlanningForecastPanels'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -322,6 +323,7 @@ export function JobsPage({
           <TeamManagement />
           <ServicesProfitabilitySummary />
           <MaterialManagement />
+          <PlanningForecastPanels />
 
           <DuplicateReviewOverlay
             isOpen={showDuplicateReview}

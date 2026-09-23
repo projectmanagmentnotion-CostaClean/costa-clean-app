@@ -37,6 +37,7 @@ import { JobWorkforcePanel } from './JobWorkforcePanel'
 import { JobProfitabilityPanel } from './JobProfitabilityPanel'
 import { JobMaterialsPanel } from './JobMaterialsPanel'
 import { JobExpenseAllocationPanel } from './JobExpenseAllocationPanel'
+import { JobPlannedMaterialsPanel } from './JobPlannedMaterialsPanel'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -636,6 +637,7 @@ export function JobWorkspace({
           />
           <JobWorkforcePanel jobId={liveJob.id} onRefresh={onRefresh} />
           <JobMaterialsPanel jobId={liveJob.id} onChanged={() => setProfitabilityVersion((version) => version + 1)} />
+          <JobPlannedMaterialsPanel jobId={liveJob.id} />
           <JobExpenseAllocationPanel jobId={liveJob.id} expenses={expenses} onChanged={() => setProfitabilityVersion((version) => version + 1)} />
           <JobProfitabilityPanel key={profitabilityVersion} jobId={liveJob.id} />
         </section>

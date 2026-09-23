@@ -746,6 +746,7 @@ Translate the service agenda and workspace while preserving current operational 
 - N6 direct operational profitability is available locally from job lines, invoice subtotal and N5 labor snapshots; VAT, collection state, general expenses, payroll and production deployment remain excluded.
 - N7 material control is available locally through an internal catalog, signed stock ledger, job consumption and historical unit-cost snapshots; expense allocation and production deployment remain NOT_IMPLEMENTED.
 - N8 direct expense allocation is available locally as an internal, idempotent operational relation over expense subtotal snapshots. It excludes general overhead and material-linked expenses, preserves the fiscal expense record, and extends N6 final direct profitability without claiming net profit or production deployment.
+- N9 recurring operational templates are available locally: generated jobs copy planned team and material requirements with generation-time cost snapshots. Planned time is not actual time, planned material is not consumption, material forecast does not reserve stock, and workload hours do not imply employee capacity.
 
 ### Exit gate
 

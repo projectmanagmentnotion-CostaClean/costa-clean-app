@@ -20,6 +20,10 @@ ORIGINAL_HASH=""
 readonly RESERVED_ROLE_RE="^(anon|authenticated|authenticator|dashboard_user|pgbouncer|postgres|service_role|supabase_[A-Za-z0-9_]+|cli_login_[A-Za-z0-9_]+|pgsodium_keyholder|pgsodium_keyiduser|pgsodium_keymaker|pgtle_admin)\$"
 # shellcheck disable=SC2034 # consumed by the dynamically sourced normalizer
 readonly BUILTIN_ROLE_RE="^pg_[A-Za-z0-9_]+\$"
+fail() {
+  printf '%s\n' "$1" >&2
+  exit 1
+}
 trap 'set +e; "$PG_CTL" -D "$PGDATA" -m fast -w stop >/dev/null 2>&1; rm -rf -- "$ROOT"' EXIT
 
 mkdir -p "$PRIVATE" "$PGSOCKET"

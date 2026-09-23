@@ -16,8 +16,10 @@ PG_CTL="$PG_BIN_DIR/pg_ctl"
 EXPECTED_CUSTOM_ROLE=cp51f_custom_role
 EXPECTED_CUSTOM_GRANTEE=cp51f_custom_grantee
 ORIGINAL_HASH=""
-readonly RESERVED_ROLE_RE='^(anon|authenticated|authenticator|dashboard_user|pgbouncer|postgres|service_role|supabase_[A-Za-z0-9_]+|cli_login_[A-Za-z0-9_]+|pgsodium_keyholder|pgsodium_keyiduser|pgsodium_keymaker|pgtle_admin)$'
-readonly BUILTIN_ROLE_RE='^pg_[A-Za-z0-9_]+$'
+# shellcheck disable=SC2034 # consumed by the dynamically sourced normalizer
+readonly RESERVED_ROLE_RE="^(anon|authenticated|authenticator|dashboard_user|pgbouncer|postgres|service_role|supabase_[A-Za-z0-9_]+|cli_login_[A-Za-z0-9_]+|pgsodium_keyholder|pgsodium_keyiduser|pgsodium_keymaker|pgtle_admin)\$"
+# shellcheck disable=SC2034 # consumed by the dynamically sourced normalizer
+readonly BUILTIN_ROLE_RE="^pg_[A-Za-z0-9_]+\$"
 trap 'set +e; "$PG_CTL" -D "$PGDATA" -m fast -w stop >/dev/null 2>&1; rm -rf -- "$ROOT"' EXIT
 
 mkdir -p "$PRIVATE" "$PGSOCKET"
@@ -59,7 +61,9 @@ normalize_roles_for_restore "$PRIVATE/roles.sql" "$RESTORE_ROOT/roles.restore.sq
 grep -Fq 'CREATE ROLE "anon"' "$RESTORE_ROOT/roles.restore.sql"
 grep -Fq 'CREATE ROLE cp51f_custom_role;' "$RESTORE_ROOT/roles.restore.sql"
 grep -Fq 'GRANT cp51f_custom_role TO cp51f_custom_grantee;' "$RESTORE_ROOT/roles.restore.sql"
-! grep -Eq 'GRANT (anon|authenticated|authenticator|service_role) TO|ALTER ROLE (anon|authenticated|authenticator|service_role)' "$RESTORE_ROOT/roles.restore.sql"
+if grep -Eq 'GRANT (anon|authenticated|authenticator|service_role) TO|ALTER ROLE (anon|authenticated|authenticator|service_role)' "$RESTORE_ROOT/roles.restore.sql"; then
+  exit 1
+fi
 printf 'CP51F_MANAGED_ROLE_NORMALIZATION=PASS\n'
 
 "$INITDB" -D "$PGDATA" -U cp51f_admin --auth=trust --no-locale >/dev/null

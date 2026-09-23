@@ -142,9 +142,13 @@ failure_case() {
   plain="$ROOT/failure-$stage.tar.gz"
   rm -f -- "$plain" "$status_file"
   printf '{"result":"FAIL","stage":"%s","code":"%s"}\n' "$stage" "$code" >"$status_file"
-  ! jq -e '.result == "PASS"' "$status_file" >/dev/null
+  if jq -e '.result == "PASS"' "$status_file" >/dev/null; then
+    return 1
+  fi
   [[ ! -e "$plain" ]]
-  ! grep -Eiq 'PAT|Bearer|postgresql://|CREATE TABLE|INSERT INTO' "$status_file"
+  if grep -Eiq 'PAT|Bearer|postgresql://|CREATE TABLE|INSERT INTO' "$status_file"; then
+    return 1
+  fi
 }
 
 failure_matrix=(

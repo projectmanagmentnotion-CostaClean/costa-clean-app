@@ -70,6 +70,7 @@ normalize_roles_for_restore() {
   local destination="$2"
   local reserved_file="$RESTORE_ROOT/reserved-roles.txt"
   local body_file="$RESTORE_ROOT/roles.restore.body.sql"
+  local error_file="$RESTORE_ROOT/roles-normalizer.error"
 
   : >"$reserved_file"
   : >"$body_file"
@@ -80,7 +81,7 @@ normalize_roles_for_restore() {
     }
     function valid_role(role) {
       if (role !~ /^[A-Za-z_][A-Za-z0-9_]*$/) {
-        fail("ROLE_CONFIG_UNSUPPORTED")
+        fail("ROLE_IDENTIFIER_UNSUPPORTED")
       }
       return role
     }
@@ -89,6 +90,34 @@ normalize_roles_for_restore() {
     }
     function builtin(role) {
       return role ~ builtin_re
+    }
+    function trim(value) {
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
+      return value
+    }
+    function parse_options(start, end,    i, text, count, parts, part, key, normalized, seen) {
+      text = ""
+      for (i = start; i <= end; i++) {
+        text = text (i == start ? "" : " ") $i
+      }
+      count = split(text, parts, ",")
+      for (i = 1; i <= count; i++) {
+        part = trim(parts[i])
+        if (part == "ADMIN OPTION") {
+          key = "ADMIN"
+        } else if (part == "INHERIT TRUE" || part == "INHERIT FALSE") {
+          key = "INHERIT"
+        } else if (part == "SET TRUE" || part == "SET FALSE") {
+          key = "SET"
+        } else {
+          fail("ROLE_MEMBERSHIP_OPTION_UNSUPPORTED")
+        }
+        if (seen[key]++) {
+          fail("ROLE_MEMBERSHIP_OPTION_UNSUPPORTED")
+        }
+        normalized = normalized (normalized == "" ? "" : ", ") part
+      }
+      return normalized
     }
     /^[[:space:]]*CREATE ROLE[[:space:]]/ {
       if (NF != 3 || $1 != "CREATE" || $2 != "ROLE") {
@@ -121,23 +150,81 @@ normalize_roles_for_restore() {
       next
     }
     /^[[:space:]]*(GRANT|REVOKE)[[:space:]]/ {
-      if (NF != 4 || ($1 != "GRANT" && $1 != "REVOKE") || ($3 != "TO" && $3 != "FROM")) {
-        fail("ROLE_CONFIG_UNSUPPORTED")
+      if ($1 == "REVOKE") {
+        if (NF != 4 || $3 != "FROM" || $NF !~ /;$/) {
+          fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+        }
+        granted = valid_role($2)
+        grantee = $4
+        sub(/;$/, "", grantee)
+        valid_role(grantee)
+        if (reserved(granted) || reserved(grantee) || builtin(granted) || builtin(grantee)) {
+          next
+        }
+        print "REVOKE " granted " FROM " grantee ";"
+        next
+      }
+      if (NF < 4 || $3 != "TO") {
+        fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+      }
+      if ($NF !~ /;$/) {
+        fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
       }
       granted = valid_role($2)
       grantee = $4
       sub(/;$/, "", grantee)
       valid_role(grantee)
-      if (reserved(granted) || reserved(grantee) || builtin(granted) || builtin(grantee)) {
+      if ($4 !~ /;$/ && NF == 4) {
+        fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+      }
+      end = NF
+      grantor = ""
+      grantor_index = 0
+      for (i = 5; i <= NF; i++) {
+        if ($i == "GRANTED") {
+          if (grantor_index) {
+            fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+          }
+          grantor_index = i
+        }
+      }
+      if (grantor_index) {
+        if (grantor_index != NF - 2 || $(grantor_index + 1) != "BY") {
+          fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+        }
+        grantor = $(grantor_index + 2)
+        sub(/;$/, "", grantor)
+        valid_role(grantor)
+        end = grantor_index - 1
+      }
+      options = ""
+      if (end >= 5) {
+        if ($5 != "WITH") {
+          fail("ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED")
+        }
+        options = parse_options(6, end)
+      }
+      if (reserved(granted) || reserved(grantee) || reserved(grantor) || builtin(granted) || builtin(grantee) || builtin(grantor)) {
         next
       }
-      print
+      output = "GRANT " granted " TO " grantee
+      if (options != "") {
+        output = output " WITH " options
+      }
+      print output ";"
       next
     }
     { print }
-  ' "$source" >"$body_file"; then
-    fail "CP51F_RESTORE_ERROR: ROLE_CONFIG_UNSUPPORTED"
+  ' "$source" >"$body_file" 2>"$error_file"; then
+    error_class="$(<"$error_file")"
+    rm -f -- "$error_file"
+    case "$error_class" in
+      ROLE_MEMBERSHIP_SYNTAX_UNSUPPORTED|ROLE_MEMBERSHIP_OPTION_UNSUPPORTED|ROLE_IDENTIFIER_UNSUPPORTED|ROLE_CONFIG_UNSUPPORTED) ;;
+      *) error_class="ROLE_CONFIG_UNSUPPORTED" ;;
+    esac
+    fail "CP51F_RESTORE_ERROR: $error_class"
   fi
+  rm -f -- "$error_file"
 
   : >"$destination"
   while IFS= read -r role; do

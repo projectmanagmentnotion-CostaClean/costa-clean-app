@@ -28,6 +28,8 @@ import { V3JobsPage } from '../v3/jobs/V3JobsPage'
 import { V3JobCreateFlow } from '../v3/jobs/V3JobCreateFlow'
 import { V3DuplicateReviewSheet } from '../v3/components/V3DuplicateReviewSheet'
 import type { JobModuleFilter } from '../app/moduleFilters'
+import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
+import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -325,16 +327,7 @@ export function JobsPage({
             onCreateJob={() => setShowCreateForm(true)}
           />
 
-          <section className="cc-recurring-service-readiness" data-qa="recurring-service-section">
-            <div className="cc-recurring-service-readiness__copy">
-              <span>Servicios recurrentes</span>
-              <strong>Planificacion recurrente pendiente de contrato</strong>
-              <p>La app permite programar cada servicio, pero todavia no existe un modelo seguro para generar visitas recurrentes. La automatizacion de facturas es independiente.</p>
-            </div>
-            <button type="button" className="secondary-button" data-qa="recurring-service-disabled-action" disabled>
-              Crear recurrencia no disponible
-            </button>
-          </section>
+          <RecurringServicePlans clients={clients} properties={properties} onJobsChanged={onJobCreated} />
 
           <DuplicateReviewOverlay
             isOpen={showDuplicateReview}

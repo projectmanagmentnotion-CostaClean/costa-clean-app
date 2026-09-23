@@ -29,7 +29,7 @@ test('N2 atomic write path exposes rollback and idempotency contracts', () => {
 });
 
 test('N4-N9 planned data cannot masquerade as actual financial data', () => {
-  const source = read('supabase/migrations/20260923210000_n9_recurring_operational_templates.sql');
+  const source = read('supabase/migrations/20260923230000_n9_recurring_operational_templates_v2.sql');
   expect(source).toMatch(/planned_quantity/);
   expect(source).toMatch(/job_material_requirements/);
   expect(source).toMatch(/-- Planned rows never represent actual time, stock consumption or fiscal activity/);
@@ -39,7 +39,7 @@ test('N4-N9 planned data cannot masquerade as actual financial data', () => {
 
 test('N8/N9 dependency boundary is ordered and non-recursive', () => {
   const n8 = read('supabase/migrations/20260923200000_n8_direct_expense_allocations.sql');
-  const n9 = read('supabase/migrations/20260923210000_n9_recurring_operational_templates.sql');
+  const n9 = read('supabase/migrations/20260923230000_n9_recurring_operational_templates_v2.sql');
   expect(n8).not.toMatch(/job_material_requirements/);
   expect(n8).toMatch(/get_job_final_profitability_base/);
   expect(n9).toMatch(/get_job_final_profitability_base/);

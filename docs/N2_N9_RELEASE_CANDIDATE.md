@@ -1,10 +1,12 @@
-# Costa Clean N2–N9 Release Candidate 1
+# Costa Clean N2–N9 Release Candidates
 
 ## Status
 
 `N2_N9_RC1_CONSOLIDATED` is a source/repository release-candidate status, not a deployment claim. The certified source chain starts at `6c323dfec6cffbb647b76f924554c6e3c06b39ac` and the pre-consolidation head is `cd0f78196c0b8ef14fad22fcc8039ab4dfa1c205`. The release manifest is anchored to that head as an ancestor so its own commit does not create a circular hash.
 
 N2–N9 are frozen to the seven migrations listed in [`release/n2-n9-rc1.manifest.json`](../release/n2-n9-rc1.manifest.json). N3 is frontend-only and has no migration. Every listed migration is additive; rollback is by forward corrective migration, never by editing an applied migration.
+
+RC3 defines a new fresh-install path in [`release/n2-n9-rc3.manifest.json`](../release/n2-n9-rc3.manifest.json): N2, N4, N5, N6, N7, N8, followed by `20260923230000_n9_recurring_operational_templates_v2.sql`. It intentionally excludes the historical original N9 and the RC2 forward correction from the RC3 runtime chain. A manifest-driven installer must select the exact RC3 list; this is source packaging, not migration-history rewriting.
 
 ## Capability chain
 
@@ -36,6 +38,12 @@ The full-suite baseline retains four unrelated historical failures/timeouts from
 RC1 QA application was attempted against the authorized QA project only. The transaction rolled back completely at N9 because PostgreSQL rejected `get_team_workload_forecast(date)` for nested aggregate calls. The old partial N4 QA surface remained intact, with zero rows and zero RC1 migration-history writes.
 
 RC2 preserves the seven RC1 migrations byte-for-byte and adds only `20260923220000_n9_fix_team_workload_forecast_aggregate.sql`. The correction uses a grouped `workload` CTE followed by `jsonb_agg`, preserving the function signature, security-definer search path, internal-staff filter, and grants. RC2 requires a new, separate QA runtime authorization; no remote retry is implied by this source change.
+
+## RC3 fresh-install correction
+
+The original N9 migration is retained unchanged as immutable provenance. Its `get_team_workload_forecast(date)` definition is rejected by PostgreSQL because it nests `sum(...)` inside `jsonb_agg(...)` at the same query level. RC2's forward correction was therefore unreachable on a fresh install: PostgreSQL aborts while compiling original N9 before RC2 can run.
+
+RC3 replaces the install artifact rather than pretending the old migration was valid. `20260923230000_n9_recurring_operational_templates_v2.sql` reproduces the original N9 tables, policies, grants, profitability extension and RPC behavior, with the two-stage workload aggregation built in. The RC2 correction remains unchanged and is excluded from RC3. RC1 and RC2 manifests and migration files remain independently verifiable historical evidence.
 
 `DEVELOPMENT COMPLETE != DEPLOYED`. No remote Supabase migration, production backup, restore, JIT mutation, tag, or CP51F execution is implied. CP51F remains `DEFERRED_NON_BLOCKING`; the manual backup system remains ready.
 

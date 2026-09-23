@@ -42,7 +42,17 @@ for name in "${EXPECTED_NAMES[@]}"; do
     <<<"$artifact_json" >/dev/null
 done
 
-jq -n --argjson artifacts "$artifact_json" '{manifest_version:1,artifacts:$artifacts}' >"$PRIVATE/manifest.json"
+jq -n \
+  --argjson artifacts "$artifact_json" \
+  '{
+    manifest_version:1,
+    setup_result:"AWAITING_PAT_REVOCATION",
+    setup_utc:"2026-01-01T00:00:00Z",
+    project_ref:"synthetic-manifest-contract",
+    jit_poststate_matches_prestate:true,
+    artifacts:$artifacts
+  }' \
+  >"$PRIVATE/manifest.json"
 
 for tool in psql initdb pg_ctl; do
   cat >"$FAKE_PG/$tool" <<'SH'

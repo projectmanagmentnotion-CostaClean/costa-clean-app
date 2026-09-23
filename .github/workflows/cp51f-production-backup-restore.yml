@@ -146,6 +146,7 @@ jobs:
           CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-local-preflight-status.json
           PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
           PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+          PSQL_BIN: /usr/lib/postgresql/17/bin/psql
         run: |
           set -Eeuo pipefail
           bash scripts/cp51f-production-backup-setup.sh --local-preflight
@@ -227,6 +228,7 @@ jobs:
           CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-runner-status.json
           PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
           PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+          PSQL_BIN: /usr/lib/postgresql/17/bin/psql
         run: |
           set -Eeuo pipefail
           if ! bash scripts/cp51f-production-backup-setup.sh >"$RUNNER_TEMP/cp51f-runner.log" 2>&1; then

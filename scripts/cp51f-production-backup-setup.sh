@@ -24,6 +24,9 @@ MANAGEMENT_API_BASE="https://api.supabase.com/v1"
 PRIVATE_SECURE_PATH="${CP51F_PRIVATE_SECURE_PATH:-}"
 PG_DUMP_BIN="${PG_DUMP_BIN:-pg_dump}"
 PG_DUMPALL_BIN="${PG_DUMPALL_BIN:-pg_dumpall}"
+PSQL_BIN="${PSQL_BIN:-psql}"
+DB_SESSION_MAX_ATTEMPTS=4
+DB_SESSION_TIMEOUT_SECONDS=8
 JIT_CHANGED=0
 JIT_CLEAN=0
 JIT_UPDATE_ATTEMPTED=0
@@ -48,7 +51,7 @@ PGOPTIONS=""
 
 STAGES=(
   LOCAL_PREFLIGHT PROJECT_METADATA JIT_CONFIG_READ JIT_PROFILE_READ JIT_MAPPING_LIST_READ POOLER_METADATA
-  JIT_ENABLE JIT_MAPPING_UPDATE DUMP_ROLES DUMP_SCHEMA DUMP_DATA
+  JIT_ENABLE JIT_MAPPING_UPDATE DB_SESSION_READINESS DUMP_ROLES DUMP_SCHEMA DUMP_DATA
   DUMP_HISTORY_SCHEMA DUMP_HISTORY_DATA JIT_CLEANUP MANIFEST_FINALIZE COMPLETE UNKNOWN
 )
 CODES=(
@@ -61,7 +64,12 @@ CODES=(
   TARGET_STATUS_MISMATCH TARGET_POSTGRES_VERSION_MISMATCH JIT_PRESTATE_INVALID
   JIT_PRESTATE_UNAVAILABLE
   JIT_PROFILE_INVALID JIT_MAPPING_INVALID POOLER_METADATA_INVALID JIT_ENABLE_FAILED
-  JIT_MAPPING_UPDATE_FAILED DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
+  JIT_MAPPING_UPDATE_FAILED DB_SESSION_AUTH_FAILED DB_SESSION_NETWORK_ERROR
+  DB_SESSION_TIMEOUT DB_SESSION_SSL_ERROR DB_SESSION_SERVER_CLOSED DB_SESSION_UNKNOWN
+  DUMP_ROLES_AUTH_FAILED DUMP_ROLES_NETWORK_ERROR DUMP_ROLES_TIMEOUT
+  DUMP_ROLES_SSL_ERROR DUMP_ROLES_SERVER_CLOSED DUMP_ROLES_PERMISSION_DENIED
+  DUMP_ROLES_STATEMENT_TIMEOUT DUMP_ROLES_QUERY_FAILED DUMP_ROLES_OUTPUT_EMPTY
+  DUMP_ROLES_UNKNOWN DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
   DUMP_HISTORY_SCHEMA_FAILED DUMP_HISTORY_DATA_FAILED JIT_CLEANUP_FAILED
   MANIFEST_FAILED UNCLASSIFIED_FAILURE LOCAL_PREFLIGHT_PASS AWAITING_PAT_REVOCATION
 )
@@ -166,9 +174,12 @@ run_local_preflight() {
   require_command git
   require_command "$PG_DUMP_BIN"
   require_command "$PG_DUMPALL_BIN"
+  require_command "$PSQL_BIN"
+  require_command timeout
   validate_private_path
   check_postgres_tool_version "$PG_DUMP_BIN"
   check_postgres_tool_version "$PG_DUMPALL_BIN"
+  check_postgres_tool_version "$PSQL_BIN"
   CURRENT_CODE="LOCAL_PREFLIGHT_PASS"
 }
 
@@ -189,7 +200,7 @@ unset SUPABASE_CP51F_TEMP_PAT
 API_ERROR_FILE="$(mktemp "$PRIVATE_SECURE_PATH/.api-error.XXXXXX")"
 MANAGEMENT_API_ERROR_CODE_FILE="$PRIVATE_SECURE_PATH/.api-code"
 cleanup_files() {
-  rm -f "$API_ERROR_FILE" "$MANAGEMENT_API_ERROR_CODE_FILE" "$PRIVATE_SECURE_PATH/.api-response."* "$PRIVATE_SECURE_PATH/.dump-error" "$PRIVATE_SECURE_PATH/.manifest.tmp"
+  rm -f "$API_ERROR_FILE" "$MANAGEMENT_API_ERROR_CODE_FILE" "$PRIVATE_SECURE_PATH/.api-response."* "$PRIVATE_SECURE_PATH/.dump-error" "$PRIVATE_SECURE_PATH/.readiness-output."* "$PRIVATE_SECURE_PATH/.readiness-error."* "$PRIVATE_SECURE_PATH/.manifest.tmp"
   if [[ -n "$TEMP_CREDENTIAL_FILE" ]]; then
     rm -f -- "$TEMP_CREDENTIAL_FILE"
   fi
@@ -513,6 +524,89 @@ PGSSLMODE="require"
 PGOPTIONS="-c jit=true"
 export PGPASSFILE PGSSLMODE PGOPTIONS
 
+classify_db_session_error() {
+  local error_file="$1"
+  if grep -Eiq 'password authentication failed|no password supplied|authentication failed|authentication method' "$error_file"; then
+    printf '%s\n' DB_SESSION_AUTH_FAILED
+  elif grep -Eiq 'ssl error|ssl syscall error|could not establish ssl connection|ssl connection has been closed unexpectedly|certificate verify failed' "$error_file"; then
+    printf '%s\n' DB_SESSION_SSL_ERROR
+  elif grep -Eiq 'server closed the connection unexpectedly|connection closed unexpectedly' "$error_file"; then
+    printf '%s\n' DB_SESSION_SERVER_CLOSED
+  elif grep -Eiq 'connection timed out|timeout expired|timed out' "$error_file"; then
+    printf '%s\n' DB_SESSION_TIMEOUT
+  elif grep -Eiq 'could not connect|connection refused|network is unreachable|no route to host|could not translate host name|connection reset' "$error_file"; then
+    printf '%s\n' DB_SESSION_NETWORK_ERROR
+  else
+    printf '%s\n' DB_SESSION_UNKNOWN
+  fi
+}
+
+run_db_session_readiness() {
+  local attempt output_file error_file rc
+  DB_SESSION_LAST_ERROR_CODE=DB_SESSION_UNKNOWN
+  for ((attempt = 1; attempt <= DB_SESSION_MAX_ATTEMPTS; attempt++)); do
+    output_file="$(mktemp "$PRIVATE_SECURE_PATH/.readiness-output.XXXXXX")"
+    error_file="$(mktemp "$PRIVATE_SECURE_PATH/.readiness-error.XXXXXX")"
+    rc=0
+    timeout --signal=TERM "${DB_SESSION_TIMEOUT_SECONDS}s" \
+      "$PSQL_BIN" \
+      --host "$POOLER_HOST" \
+      --port "$POOLER_PORT" \
+      --username "$POOLER_USER" \
+      --dbname "$POOLER_DB" \
+      --no-psqlrc \
+      --no-align \
+      --tuples-only \
+      --command 'SELECT 1;' \
+      >"$output_file" 2>"$error_file" || rc=$?
+    if [[ "$rc" -eq 0 ]]; then
+      rm -f -- "$output_file" "$error_file"
+      printf '%s\n' 'CP51F_DB_SESSION_READINESS=PASS'
+      return 0
+    fi
+    if [[ "$rc" -eq 124 || "$rc" -eq 137 ]]; then
+      DB_SESSION_LAST_ERROR_CODE=DB_SESSION_TIMEOUT
+    else
+      DB_SESSION_LAST_ERROR_CODE="$(classify_db_session_error "$error_file")"
+    fi
+    rm -f -- "$output_file" "$error_file"
+    if [[ "$attempt" -lt "$DB_SESSION_MAX_ATTEMPTS" ]]; then
+      sleep "$attempt"
+    fi
+  done
+  return 1
+}
+
+classify_dump_error() {
+  local error_file="$1"
+  if grep -Eiq 'password authentication failed|no password supplied|authentication failed|authentication method' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_AUTH_FAILED
+  elif grep -Eiq 'permission denied|must be superuser|insufficient privilege|not owner' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_PERMISSION_DENIED
+  elif grep -Eiq 'canceling statement due to statement timeout|statement timeout' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_STATEMENT_TIMEOUT
+  elif grep -Eiq 'ssl error|ssl syscall error|ssl.*eof|could not establish ssl connection|certificate verify failed' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_SSL_ERROR
+  elif grep -Eiq 'server closed the connection unexpectedly|connection closed unexpectedly' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_SERVER_CLOSED
+  elif grep -Eiq 'connection timed out|timeout expired|timed out' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_TIMEOUT
+  elif grep -Eiq 'could not connect|connection refused|network is unreachable|no route to host|could not translate host name|connection reset' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_NETWORK_ERROR
+  elif grep -Eiq 'query failed|pg_dumpall: error|pg_dump: error' "$error_file"; then
+    printf '%s\n' DUMP_ROLES_QUERY_FAILED
+  else
+    printf '%s\n' DUMP_ROLES_UNKNOWN
+  fi
+}
+
+dump_roles_retry_allowed() {
+  case "$1" in
+    DUMP_ROLES_NETWORK_ERROR|DUMP_ROLES_TIMEOUT|DUMP_ROLES_SSL_ERROR|DUMP_ROLES_SERVER_CLOSED) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 run_pg_dump() {
   local name="$1"
   shift
@@ -530,6 +624,7 @@ run_pg_dump() {
 run_pg_dumpall_roles() {
   local name="$1"
   shift
+  rm -f -- "$PRIVATE_SECURE_PATH/$name.sql"
   "$PG_DUMPALL_BIN" \
     --host "$POOLER_HOST" \
     --port "$POOLER_PORT" \
@@ -538,13 +633,32 @@ run_pg_dumpall_roles() {
     --roles-only \
     --no-role-passwords \
     --file "$PRIVATE_SECURE_PATH/$name.sql" "$@" \
-    2>"$PRIVATE_SECURE_PATH/.dump-error" || return 1
+    2>"$PRIVATE_SECURE_PATH/.dump-error" || {
+      DUMP_ROLES_LAST_ERROR_CODE="$(classify_dump_error "$PRIVATE_SECURE_PATH/.dump-error")"
+      rm -f -- "$PRIVATE_SECURE_PATH/.dump-error"
+      return 1
+    }
   rm -f "$PRIVATE_SECURE_PATH/.dump-error"
-  [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]]
+  if [[ ! -s "$PRIVATE_SECURE_PATH/$name.sql" ]]; then
+    DUMP_ROLES_LAST_ERROR_CODE=DUMP_ROLES_OUTPUT_EMPTY
+    return 1
+  fi
 }
 
+set_stage DB_SESSION_READINESS
+run_db_session_readiness || { set_failure DB_SESSION_READINESS "$DB_SESSION_LAST_ERROR_CODE"; exit 1; }
 set_stage DUMP_ROLES
-run_pg_dumpall_roles roles || { set_failure DUMP_ROLES DUMP_ROLES_FAILED; exit 1; }
+if ! run_pg_dumpall_roles roles; then
+  if dump_roles_retry_allowed "$DUMP_ROLES_LAST_ERROR_CODE"; then
+    set_stage DB_SESSION_READINESS
+    run_db_session_readiness || { set_failure DB_SESSION_READINESS "$DB_SESSION_LAST_ERROR_CODE"; exit 1; }
+    set_stage DUMP_ROLES
+    run_pg_dumpall_roles roles || { set_failure DUMP_ROLES "$DUMP_ROLES_LAST_ERROR_CODE"; exit 1; }
+  else
+    set_failure DUMP_ROLES "$DUMP_ROLES_LAST_ERROR_CODE"
+    exit 1
+  fi
+fi
 set_stage DUMP_SCHEMA
 run_pg_dump schema --schema-only --schema=public --schema=portal_private --schema=auth || { set_failure DUMP_SCHEMA DUMP_SCHEMA_FAILED; exit 1; }
 set_stage DUMP_DATA

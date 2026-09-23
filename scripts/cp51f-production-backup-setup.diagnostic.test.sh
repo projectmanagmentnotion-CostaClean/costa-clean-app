@@ -45,17 +45,18 @@ run_case() {
 
 write_tool "$BIN/pg_dump17" 'pg_dump (PostgreSQL) 17.11'
 write_tool "$BIN/pg_dumpall17" 'pg_dumpall (PostgreSQL) 17.11'
+write_tool "$BIN/psql17" 'psql (PostgreSQL) 17.11'
 write_tool "$BIN/pg_dump16" 'pg_dump (PostgreSQL) 16.9'
 write_tool "$BIN/jq" 'jq (synthetic preflight stub)'
 
 run_case missing_dependency FAIL LOCAL_PREFLIGHT LOCAL_DEPENDENCY_MISSING \
-  PG_DUMP_BIN=cp51f-missing PG_DUMPALL_BIN="$BIN/pg_dumpall17"
+  PG_DUMP_BIN=cp51f-missing PG_DUMPALL_BIN="$BIN/pg_dumpall17" PSQL_BIN="$BIN/psql17"
 run_case wrong_major FAIL LOCAL_PREFLIGHT POSTGRES_VERSION_INVALID \
-  PG_DUMP_BIN="$BIN/pg_dump16" PG_DUMPALL_BIN="$BIN/pg_dumpall17"
+  PG_DUMP_BIN="$BIN/pg_dump16" PG_DUMPALL_BIN="$BIN/pg_dumpall17" PSQL_BIN="$BIN/psql17"
 run_case invalid_private_path FAIL LOCAL_PREFLIGHT PRIVATE_PATH_INVALID \
-  CP51F_PRIVATE_SECURE_PATH="$REPO_ROOT/.git" PG_DUMP_BIN="$BIN/pg_dump17" PG_DUMPALL_BIN="$BIN/pg_dumpall17"
+  CP51F_PRIVATE_SECURE_PATH="$REPO_ROOT/.git" PG_DUMP_BIN="$BIN/pg_dump17" PG_DUMPALL_BIN="$BIN/pg_dumpall17" PSQL_BIN="$BIN/psql17"
 run_case success PASS LOCAL_PREFLIGHT LOCAL_PREFLIGHT_PASS \
-  PG_DUMP_BIN="$BIN/pg_dump17" PG_DUMPALL_BIN="$BIN/pg_dumpall17"
+  PG_DUMP_BIN="$BIN/pg_dump17" PG_DUMPALL_BIN="$BIN/pg_dumpall17" PSQL_BIN="$BIN/psql17"
 
 if grep -nE 'cat .*cp51f-runner\.log|upload-artifact.*cp51f-runner\.log' \
   .github/workflows/cp51f-production-backup-restore.yml >/dev/null; then

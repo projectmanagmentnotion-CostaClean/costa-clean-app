@@ -19,6 +19,7 @@ on:
       - scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh
       - scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh
       - scripts/cp51f-production-backup-setup.diagnostic.test.sh
+      - scripts/cp51f-dump-readiness.contract.test.sh
       - scripts/cp51f-management-api-http-diagnostic.test.sh
       - scripts/cp51f-history-guard.schema.test.sh
       - scripts/cp51f-restore-verify.sh
@@ -128,14 +129,15 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
-          bash -n scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
-          shellcheck -x scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
+          bash -n scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-dump-readiness.contract.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
+          shellcheck -x scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-dump-readiness.contract.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
           bash scripts/cp51f-resolve-pooler-host.synthetic.test.sh
           bash scripts/cp51f-pooler-config.synthetic.test.sh
           bash scripts/cp51f-jit-mapping.contract.test.sh
           bash scripts/cp51f-production-backup-setup.contract.test.sh
           bash scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh
           bash scripts/cp51f-production-backup-setup.diagnostic.test.sh
+          bash scripts/cp51f-dump-readiness.contract.test.sh
           bash scripts/cp51f-management-api-http-diagnostic.test.sh
           bash scripts/cp51f-history-guard.schema.test.sh
           bash scripts/cp51f-restore-verify.synthetic.test.sh

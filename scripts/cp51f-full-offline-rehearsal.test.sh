@@ -51,6 +51,8 @@ BEFORE INSERT ON public.cp51f_fixture
 FOR EACH ROW EXECUTE FUNCTION public.cp51f_fixture_trigger_fn();
 ALTER TABLE public.cp51f_fixture ENABLE ROW LEVEL SECURITY;
 CREATE POLICY cp51f_fixture_policy ON public.cp51f_fixture USING (true);
+ALTER SCHEMA auth OWNER TO supabase_admin;
+GRANT USAGE ON SCHEMA auth TO anon;
 SQL
 
 cat >"$PRIVATE/data.sql" <<'SQL'
@@ -60,6 +62,26 @@ INSERT INTO auth.cp51f_auth_fixture (id, marker) VALUES (1, 'offline-auth');
 SQL
 
 cat >"$PRIVATE/history_schema.sql" <<'SQL'
+CREATE TABLE supabase_migrations.schema_migrations (version text PRIMARY KEY, name text NOT NULL);
+SQL
+
+cat >"$PRIVATE/schema.restore.sql" <<'SQL'
+CREATE SCHEMA IF NOT EXISTS portal_private;
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE SCHEMA IF NOT EXISTS supabase_migrations;
+CREATE TABLE public.cp51f_fixture (id integer PRIMARY KEY, marker text NOT NULL);
+CREATE TABLE portal_private.cp51f_private_fixture (id integer PRIMARY KEY, marker text NOT NULL);
+CREATE TABLE auth.cp51f_auth_fixture (id integer PRIMARY KEY, marker text NOT NULL);
+CREATE OR REPLACE FUNCTION public.cp51f_fixture_trigger_fn() RETURNS trigger
+LANGUAGE plpgsql AS $$ BEGIN RETURN NEW; END $$;
+CREATE TRIGGER cp51f_fixture_trigger
+BEFORE INSERT ON public.cp51f_fixture
+FOR EACH ROW EXECUTE FUNCTION public.cp51f_fixture_trigger_fn();
+ALTER TABLE public.cp51f_fixture ENABLE ROW LEVEL SECURITY;
+CREATE POLICY cp51f_fixture_policy ON public.cp51f_fixture USING (true);
+SQL
+
+cat >"$PRIVATE/history_schema.restore.sql" <<'SQL'
 CREATE TABLE supabase_migrations.schema_migrations (version text PRIMARY KEY, name text NOT NULL);
 SQL
 
@@ -77,6 +99,8 @@ write_manifest() {
 }
 
 write_manifest
+raw_schema_sha256="$(sha256sum "$PRIVATE/schema.sql" | awk '{print $1}')"
+raw_history_schema_sha256="$(sha256sum "$PRIVATE/history_schema.sql" | awk '{print $1}')"
 jq -e '
   [.artifacts[].logical_name] == ["roles.sql","schema.sql","data.sql","history_schema.sql","history_data.sql"] and
   ([.artifacts[].logical_name] | length == 5) and
@@ -90,6 +114,10 @@ while IFS= read -r artifact; do
   [[ "$expected_size" == "$(stat -c '%s' "$PRIVATE/$artifact")" ]]
 done < <(jq -r '.artifacts[].logical_name' "$PRIVATE/manifest.json")
 printf '%s\n' 'CP51F_MANIFEST_PRODUCER_CONSUMER_CONTRACT=PASS'
+if jq -e 'any(.artifacts[]; .logical_name == "schema.restore.sql" or .logical_name == "history_schema.restore.sql")' "$PRIVATE/manifest.json" >/dev/null; then
+  exit 1
+fi
+printf '%s\n' 'CP51F_PORTABLE_SCHEMA_ISOLATED=PASS'
 
 PG_BIN_DIR="${PG_BIN_DIR:-/usr/lib/postgresql/17/bin}"
 CP51F_PRIVATE_SECURE_PATH="$PRIVATE" \
@@ -109,32 +137,14 @@ jq -e '
   ([.artifact_hashes[].logical_name] | length == 5)
 ' "$PRIVATE/restore-verification.json" >/dev/null
 [[ "$(grep -Ec 'offline-rehearsal|offline-private|offline-auth' "$PRIVATE/data.sql")" == 3 ]]
+[[ "$raw_schema_sha256" == "$(sha256sum "$PRIVATE/schema.sql" | awk '{print $1}')" ]]
+[[ "$raw_history_schema_sha256" == "$(sha256sum "$PRIVATE/history_schema.sql" | awk '{print $1}')" ]]
 printf '%s\n' 'CP51F_SYNTHETIC_RESTORE=PASS'
 printf '%s\n' 'CP51F_PG17_ROLE_MEMBERSHIP_SYNTAX=PASS'
 printf '%s\n' 'CP51F_MANAGED_ROLE_NORMALIZATION=PASS'
 printf '%s\n' 'CP51F_RESERVED_ROLE_PLACEHOLDERS=PASS'
 printf '%s\n' 'CP51F_CUSTOM_ROLE_RESTORE=PASS'
 printf '%s\n' 'CP51F_CP43_LEDGER_STATE=ABSENT'
-
-tar -czf "$PLAINTEXT" -C "$PRIVATE" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json restore-verification.json
-command -v age-keygen >/dev/null 2>&1
-command -v age >/dev/null 2>&1
-age-keygen -o "$AGE_HOME/key.txt" >/dev/null 2>&1
-recipient="$(age-keygen -y "$AGE_HOME/key.txt")"
-age -r "$recipient" -o "$ENCRYPTED" "$PLAINTEXT"
-[[ -s "$ENCRYPTED" ]]
-rm -f -- "$PLAINTEXT"
-[[ ! -e "$PLAINTEXT" ]]
-age -d -i "$AGE_HOME/key.txt" -o "$DECRYPTED/rehearsal.tar.gz" "$ENCRYPTED"
-tar -xzf "$DECRYPTED/rehearsal.tar.gz" -C "$DECRYPTED"
-mapfile -t decrypted_files < <(tar -tzf "$DECRYPTED/rehearsal.tar.gz" | sed 's#/$##' | sort)
-expected_files=(data.sql history_data.sql history_schema.sql manifest.json restore-verification.json roles.sql schema.sql)
-[[ "${decrypted_files[*]}" == "${expected_files[*]}" ]]
-while IFS= read -r artifact; do
-  expected_hash="$(jq -er --arg name "$artifact" '.artifacts[] | select(.logical_name == $name) | .sha256' "$DECRYPTED/manifest.json")"
-  [[ "$expected_hash" == "$(sha256sum "$DECRYPTED/$artifact" | awk '{print $1}')" ]]
-done < <(jq -r '.artifacts[].logical_name' "$DECRYPTED/manifest.json")
-printf '%s\n' 'CP51F_FULL_AGE_ROUNDTRIP=PASS'
 
 failure_case() {
   local stage="$1" code="$2" status_file plain
@@ -150,6 +160,49 @@ failure_case() {
     return 1
   fi
 }
+
+tar -czf "$PLAINTEXT" -C "$PRIVATE" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json
+command -v age-keygen >/dev/null 2>&1
+command -v age >/dev/null 2>&1
+age-keygen -o "$AGE_HOME/key.txt" >/dev/null 2>&1
+recipient="$(age-keygen -y "$AGE_HOME/key.txt")"
+age -r "$recipient" -o "$ENCRYPTED" "$PLAINTEXT"
+[[ -s "$ENCRYPTED" ]]
+rm -f -- "$PLAINTEXT"
+[[ ! -e "$PLAINTEXT" ]]
+age -d -i "$AGE_HOME/key.txt" -o "$DECRYPTED/rehearsal.tar.gz" "$ENCRYPTED"
+tar -xzf "$DECRYPTED/rehearsal.tar.gz" -C "$DECRYPTED"
+mapfile -t decrypted_files < <(tar -tzf "$DECRYPTED/rehearsal.tar.gz" | sed 's#/$##' | sort)
+expected_files=(data.sql history_data.sql history_schema.sql manifest.json roles.sql schema.sql)
+[[ "${decrypted_files[*]}" == "${expected_files[*]}" ]]
+if tar -tzf "$DECRYPTED/rehearsal.tar.gz" | grep -Eq 'schema\.restore\.sql|history_schema\.restore\.sql|restore-verification\.json'; then
+  exit 1
+fi
+while IFS= read -r artifact; do
+  expected_hash="$(jq -er --arg name "$artifact" '.artifacts[] | select(.logical_name == $name) | .sha256' "$DECRYPTED/manifest.json")"
+  [[ "$expected_hash" == "$(sha256sum "$DECRYPTED/$artifact" | awk '{print $1}')" ]]
+done < <(jq -r '.artifacts[].logical_name' "$DECRYPTED/manifest.json")
+printf '%s\n' 'CP51F_RAW_BACKUP_FIDELITY=PASS'
+printf '%s\n' 'CP51F_DURABLE_ENCRYPTION_REHEARSAL=PASS'
+printf '%s\n' 'CP51F_PORTABLE_SCHEMA_RESTORE=PASS'
+schema_failure_raw="$ROOT/schema-failure-raw.tar.gz.age"
+cp -- "$ENCRYPTED" "$schema_failure_raw"
+failure_case SCHEMA_RESTORE SCHEMA_OWNER_OR_ACL_CONFLICT
+[[ -s "$schema_failure_raw" && ! -e "$ROOT/failure-SCHEMA_RESTORE.tar.gz" ]]
+printf '%s\n' 'CP51F_BACKUP_SURVIVES_RESTORE_FAILURE=PASS'
+rm -f -- "$PRIVATE/schema.restore.sql" "$PRIVATE/history_schema.restore.sql"
+[[ ! -e "$PRIVATE/schema.restore.sql" && ! -e "$PRIVATE/history_schema.restore.sql" ]]
+printf '%s\n' 'CP51F_PORTABLE_SCHEMA_CLEANUP=PASS'
+
+full_plaintext="$ROOT/cp51f-full-verification.tar.gz"
+full_encrypted="$full_plaintext.age"
+tar -czf "$full_plaintext" -C "$PRIVATE" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json restore-verification.json
+age -r "$recipient" -o "$full_encrypted" "$full_plaintext"
+rm -f -- "$full_plaintext"
+age -d -i "$AGE_HOME/key.txt" -o "$DECRYPTED/full-verification.tar.gz" "$full_encrypted"
+tar -tzf "$DECRYPTED/full-verification.tar.gz" | grep -Fx 'restore-verification.json' >/dev/null
+[[ ! -e "$full_plaintext" ]]
+printf '%s\n' 'CP51F_FULL_AGE_ROUNDTRIP=PASS'
 
 failure_matrix=(
   'DB_SESSION_READINESS DB_SESSION_NETWORK_ERROR'
@@ -184,3 +237,4 @@ printf '%s\n' 'CP51F_DUMP_TRANSIENT_RETRY=PASS'
 printf '%s\n' 'CP51F_DUMP_NONTRANSIENT_NO_RETRY=PASS'
 printf '%s\n' 'CP51F_DUMP_ERROR_REDACTION=PASS'
 printf '%s\n' 'CP51F_FULL_OFFLINE_REHEARSAL=PASS'
+printf '%s\n' 'CP51F_FULL_OFFLINE_REHEARSAL_V2=PASS'

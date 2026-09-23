@@ -54,6 +54,11 @@ INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
   ('synthetic_fixture_migration', 'synthetic fixture migration');
 SQL
 
+# Portable restore helpers are derived paths; canonical raw schema artifacts
+# remain the immutable manifest inputs and are never rewritten.
+cp -- "$PRIVATE/schema.sql" "$PRIVATE/schema.restore.sql"
+cp -- "$PRIVATE/history_schema.sql" "$PRIVATE/history_schema.restore.sql"
+
 write_manifest() {
   local artifact_json
   artifact_json="$(build_artifact_manifest)"

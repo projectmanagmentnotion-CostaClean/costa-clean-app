@@ -17,6 +17,8 @@ LOG_ROOT="$RESTORE_ROOT/logs"
 PGLOG="$LOG_ROOT/postgres.log"
 PGDATABASE=cp51f_restore_db
 MANIFEST="$PRIVATE_PATH/manifest.json"
+PORTABLE_SCHEMA="$PRIVATE_PATH/schema.restore.sql"
+PORTABLE_HISTORY_SCHEMA="$PRIVATE_PATH/history_schema.restore.sql"
 
 PSQL="$PG_BIN_DIR/psql"
 INITDB="$PG_BIN_DIR/initdb"
@@ -238,6 +240,8 @@ normalize_roles_for_restore() {
 for artifact in "${REQUIRED_ARTIFACTS[@]}"; do
   verify_artifact "$artifact"
 done
+[[ -s "$PORTABLE_SCHEMA" && -s "$PORTABLE_HISTORY_SCHEMA" ]] || \
+  fail "CP51F_RESTORE_ERROR: portable schema artifacts missing"
 
 if ! "$INITDB" -D "$PGDATA" -U "$RESTORE_SUPERUSER" --auth=trust --no-locale >"$LOG_ROOT/initdb.log" 2>&1; then
   fail "CP51F_RESTORE_ERROR: initdb failed"
@@ -258,6 +262,33 @@ run_query() {
   printf '%s' "$result"
 }
 
+classify_schema_restore_error() {
+  local phase="$1" log="$2" prefix
+  prefix=SCHEMA
+  [[ "$phase" == history_schema ]] && prefix=HISTORY_SCHEMA
+  if grep -Eiq 'role .* does not exist|user .* does not exist|role .* missing' "$log"; then
+    printf '%s\n' "${prefix}_ROLE_MISSING"
+  elif grep -Eiq 'must be owner|owner|acl|privilege' "$log"; then
+    printf '%s\n' "${prefix}_OWNER_OR_ACL_CONFLICT"
+  elif grep -Eiq 'extension .* does not exist|could not open extension control file' "$log"; then
+    printf '%s\n' "${prefix}_EXTENSION_MISSING"
+  elif grep -Eiq 'function .* does not exist' "$log"; then
+    printf '%s\n' "${prefix}_FUNCTION_MISSING"
+  elif grep -Eiq 'type .* does not exist|operator class .* does not exist|collation .* does not exist' "$log"; then
+    printf '%s\n' "${prefix}_TYPE_MISSING"
+  elif grep -Eiq 'schema .* does not exist|namespace .* does not exist' "$log"; then
+    printf '%s\n' "${prefix}_NAMESPACE_MISSING"
+  elif grep -Eiq 'already exists|duplicate_object' "$log"; then
+    printf '%s\n' "${prefix}_OBJECT_EXISTS"
+  elif grep -Eiq 'permission denied|insufficient privilege' "$log"; then
+    printf '%s\n' "${prefix}_PERMISSION_DENIED"
+  elif grep -Eiq 'syntax error|unterminated' "$log"; then
+    printf '%s\n' "${prefix}_SYNTAX_ERROR"
+  else
+    printf '%s\n' "${prefix}_RESTORE_UNKNOWN"
+  fi
+}
+
 run_file() {
   local phase="$1" database="$2" file="$3"
   local log="$LOG_ROOT/$phase.log"
@@ -269,6 +300,8 @@ run_file() {
       elif grep -Eiq 'already exists|cannot alter role|unsupported' "$log"; then
         error_class="ROLE_CONFIG_UNSUPPORTED"
       fi
+    elif [[ "$phase" == schema || "$phase" == history_schema ]]; then
+      error_class="$(classify_schema_restore_error "$phase" "$log")"
     fi
     fail "CP51F_RESTORE_ERROR: $phase failed [$error_class]"
   fi
@@ -279,8 +312,8 @@ run_query create_database postgres "CREATE DATABASE $PGDATABASE OWNER $RESTORE_S
 roles_restore_sql="$RESTORE_ROOT/roles.restore.sql"
 normalize_roles_for_restore "$PRIVATE_PATH/roles.sql" "$roles_restore_sql"
 run_file roles postgres "$roles_restore_sql"
-run_file schema "$PGDATABASE" "$PRIVATE_PATH/schema.sql"
-run_file history_schema "$PGDATABASE" "$PRIVATE_PATH/history_schema.sql"
+run_file schema "$PGDATABASE" "$PORTABLE_SCHEMA"
+run_file history_schema "$PGDATABASE" "$PORTABLE_HISTORY_SCHEMA"
 run_file data "$PGDATABASE" "$PRIVATE_PATH/data.sql"
 run_file history_data "$PGDATABASE" "$PRIVATE_PATH/history_data.sql"
 

@@ -52,6 +52,7 @@ PGOPTIONS=""
 STAGES=(
   LOCAL_PREFLIGHT PROJECT_METADATA JIT_CONFIG_READ JIT_PROFILE_READ JIT_MAPPING_LIST_READ POOLER_METADATA
   JIT_ENABLE JIT_MAPPING_UPDATE DB_SESSION_READINESS DUMP_ROLES DUMP_SCHEMA DUMP_DATA
+  PORTABLE_SCHEMA_PREPARE
   DUMP_HISTORY_SCHEMA DUMP_HISTORY_DATA JIT_CLEANUP MANIFEST_FINALIZE COMPLETE UNKNOWN
 )
 CODES=(
@@ -70,6 +71,7 @@ CODES=(
   DUMP_ROLES_SSL_ERROR DUMP_ROLES_SERVER_CLOSED DUMP_ROLES_PERMISSION_DENIED
   DUMP_ROLES_STATEMENT_TIMEOUT DUMP_ROLES_QUERY_FAILED DUMP_ROLES_OUTPUT_EMPTY
   DUMP_ROLES_UNKNOWN DUMP_ROLES_FAILED DUMP_SCHEMA_FAILED DUMP_DATA_FAILED
+  PORTABLE_SCHEMA_FAILED
   DUMP_HISTORY_SCHEMA_FAILED DUMP_HISTORY_DATA_FAILED JIT_CLEANUP_FAILED
   MANIFEST_FAILED UNCLASSIFIED_FAILURE LOCAL_PREFLIGHT_PASS AWAITING_PAT_REVOCATION
 )
@@ -621,6 +623,27 @@ run_pg_dump() {
   [[ -s "$PRIVATE_SECURE_PATH/$name.sql" ]]
 }
 
+run_pg_dump_portable() {
+  local name="$1"
+  shift
+  rm -f -- "$PRIVATE_SECURE_PATH/$name.restore.sql"
+  "$PG_DUMP_BIN" \
+    --host "$POOLER_HOST" \
+    --port "$POOLER_PORT" \
+    --username "$POOLER_USER" \
+    --dbname "$POOLER_DB" \
+    --file "$PRIVATE_SECURE_PATH/$name.restore.sql" \
+    --schema-only \
+    --no-owner \
+    --no-privileges \
+    --no-publications \
+    --no-subscriptions \
+    "$@" \
+    2>"$PRIVATE_SECURE_PATH/.dump-error" || return 1
+  rm -f -- "$PRIVATE_SECURE_PATH/.dump-error"
+  [[ -s "$PRIVATE_SECURE_PATH/$name.restore.sql" ]]
+}
+
 run_pg_dumpall_roles() {
   local name="$1"
   shift
@@ -711,6 +734,11 @@ jq -n \
     classic_pat_revocation:"AWAITING_PAT_REVOCATION",
     artifacts:$artifacts}' > "$PRIVATE_SECURE_PATH/.manifest.tmp" || die_code MANIFEST_FINALIZE MANIFEST_FAILED "manifest write failed"
 mv "$PRIVATE_SECURE_PATH/.manifest.tmp" "$PRIVATE_SECURE_PATH/manifest.json" || die_code MANIFEST_FINALIZE MANIFEST_FAILED "manifest finalize failed"
+set_stage PORTABLE_SCHEMA_PREPARE
+run_pg_dump_portable schema --schema=public --schema=portal_private --schema=auth || \
+  die_code PORTABLE_SCHEMA_PREPARE PORTABLE_SCHEMA_FAILED "portable schema artifact construction failed"
+run_pg_dump_portable history_schema --schema=supabase_migrations || \
+  die_code PORTABLE_SCHEMA_PREPARE PORTABLE_SCHEMA_FAILED "portable history schema artifact construction failed"
 SETUP_RESULT="AWAITING_PAT_REVOCATION"
 printf '%s\n' "CP51F_SETUP_RESULT=$SETUP_RESULT"
 printf '%s\n' "CP51F_PRIVATE_SECURE_PATH_READY=YES"

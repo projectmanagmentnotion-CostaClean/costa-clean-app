@@ -247,6 +247,45 @@ jobs:
           jq -e '.setup_result == "AWAITING_PAT_REVOCATION" and .jit_poststate_matches_prestate == true' "$CP51F_PRIVATE_SECURE_PATH/manifest.json" >/dev/null
           echo 'CP51F_CERTIFIED_RUNNER=PASS'
 
+      - name: Create durable encrypted raw backup
+        id: raw_backup
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -Eeuo pipefail
+          raw_plaintext="$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz"
+          raw_encrypted="$raw_plaintext.age"
+          tar -czf "$raw_plaintext" -C "$CP51F_PRIVATE_SECURE_PATH" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json
+          age -r "$CP51F_BACKUP_AGE_RECIPIENT" -o "$raw_encrypted" "$raw_plaintext"
+          [[ -s "$raw_encrypted" ]]
+          raw_sha256="$(sha256sum "$raw_encrypted" | awk '{print $1}')"
+          rm -f -- "$raw_plaintext"
+          echo "raw_artifact_sha256=$raw_sha256" >>"$GITHUB_OUTPUT"
+          echo 'CP51F_DURABLE_ENCRYPTED_BACKUP=PASS'
+
+      - name: Upload durable encrypted raw backup
+        id: raw_upload
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-production-backup-raw-${{ github.run_id }}
+          path: ${{ runner.temp }}/cp51f-production-backup-raw-${{ github.run_id }}.tar.gz.age
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Confirm durable raw backup evidence
+        env:
+          RAW_ARTIFACT_ID: ${{ steps.raw_upload.outputs.artifact-id }}
+          RAW_ARTIFACT_DIGEST: ${{ steps.raw_upload.outputs.artifact-digest }}
+          RAW_ARTIFACT_SHA256: ${{ steps.raw_backup.outputs.raw_artifact_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$RAW_ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          [[ "$RAW_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$RAW_ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          echo 'CP51F_RAW_BACKUP_ARTIFACT_ID_PRESENT=YES'
+          echo 'CP51F_RAW_BACKUP_ARTIFACT_SHA256_PRESENT=YES'
+
       - name: Restore verify and encrypt backup
         env:
           CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
@@ -279,6 +318,6 @@ jobs:
         if: always()
         run: |
           set -Eeuo pipefail
-          rm -rf -- "$RUNNER_TEMP/cp51f-auth-reserved" "$RUNNER_TEMP/cp51f-auth-consumed" "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-local-preflight" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
+          rm -rf -- "$RUNNER_TEMP/cp51f-auth-reserved" "$RUNNER_TEMP/cp51f-auth-consumed" "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-local-preflight" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
           rm -f -- "$RUNNER_TEMP/cp51f-runner-status.json" "$RUNNER_TEMP/cp51f-local-preflight-status.json"
           rm -f -- "$RUNNER_TEMP/.pgpass" "$RUNNER_TEMP/cp51f-private/.pgpass"

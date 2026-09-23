@@ -29,7 +29,7 @@ describe('N6 profitability boundary', () => {
     expect(panel).toContain('Cobros (separados del margen)')
     expect(panel).toContain('Faltan horas registradas.')
     expect(panel).toContain('Servicio aún sin factura emitida.')
-    expect(panel).toContain("data.direct_margin_percent == null ? '—'")
+    expect(panel).toContain("data.direct_margin_after_materials_percent == null ? '—'")
     expect(summary).toContain('Mes actual')
     expect(summary).toContain('Mes anterior')
     expect(summary).toContain('Últimos 90 días')

@@ -34,6 +34,7 @@ import { jobWorkspaceTabs } from './useJobWorkspaceNavigation'
 import { ActionGroup, type ActionGroupItem } from '../../components/ActionGroup'
 import { JobWorkforcePanel } from './JobWorkforcePanel'
 import { JobProfitabilityPanel } from './JobProfitabilityPanel'
+import { JobMaterialsPanel } from './JobMaterialsPanel'
 
 const LazyInvoiceCreateFlow = lazy(async () => ({
   default: (await import('../invoices/InvoiceCreateEntry')).InvoiceCreateEntry,
@@ -176,6 +177,7 @@ export function JobWorkspace({
   const [hasActionDirty, setHasActionDirty] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
+  const [profitabilityVersion, setProfitabilityVersion] = useState(0)
   const [showCloseActionConfirm, setShowCloseActionConfirm] = useState(false)
   const remoteJobRef = useRef(job)
   const liveJob = jobOverride?.id === job.id ? jobOverride : job
@@ -629,7 +631,8 @@ export function JobWorkspace({
             onRequestMajorEdit={() => setShowMajorEdit(true)}
           />
           <JobWorkforcePanel jobId={liveJob.id} onRefresh={onRefresh} />
-          <JobProfitabilityPanel jobId={liveJob.id} />
+          <JobMaterialsPanel jobId={liveJob.id} onChanged={() => setProfitabilityVersion((version) => version + 1)} />
+          <JobProfitabilityPanel key={profitabilityVersion} jobId={liveJob.id} />
         </section>
       ) : null}
 

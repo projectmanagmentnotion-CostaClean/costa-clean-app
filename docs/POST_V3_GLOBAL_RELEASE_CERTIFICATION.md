@@ -104,3 +104,18 @@ App rollback means promoting the previously captured Vercel deployment for `727e
 ## Authorization boundary
 
 Production release authorization is still required. Any later authorization must identify the exact product SHA `d96e1426d85dee4bb93537a9d4e6bdf6318b5509`, the exact ordered 11-migration list, the existing Vercel project/deployment target, and the controlled smoke scope. No Production migration, deployment, data cleanup, Auth mutation, or secret mutation was performed here.
+
+## Executed Production Release — 2026-09-23
+
+- Authorized and deployed product SHA: `d96e1426d85dee4bb93537a9d4e6bdf6318b5509`.
+- Production project: `wfxnwfcdjainpojhbdri`; Vercel project: `costa-clean-app`.
+- Deployment: `dpl_68rYMpdFacEpYw3R3RMqLLjx51YZ` / `https://costa-clean-mz226lpn7.vercel.app`; target `production`; state `READY`.
+- Canonical alias: `https://app.costacleanbcn.com` (HTTP 200; current Vite HTML and JS asset HTTP 200).
+- The 11 authorized product migrations were applied serially and returned `success:true`; no QA migration was applied.
+- Post-migration verification: all 11 migration names present; N2.1 RPCs present with safe `SECURITY DEFINER` search paths and no `public`/`anon` execute; idempotency tables present; N2.1 compatibility trigger present; seven expected Realtime tables published.
+- Authenticated read-only smoke: Home/dashboard and period selector, Clients, Properties, Leads, Invoices, Quotes, Payments, Expenses, and Services. Existing invoice and quote A4 previews opened successfully. No business form was submitted.
+- Production business writes: `0`; production Supabase mutations outside the authorized migration DDL: `0`; Auth, secrets, and DNS settings were not changed.
+- Vercel runtime logs reviewed for the deployment window: no error records returned.
+- Pre-existing legacy data note: 47 historical invoice/job property relation gaps remain because `invoice.property_id` is null while the linked historical job has a property. The release does not backfill historical invoices; no such rows were created or changed by this release. New N2.1 writes enforce the relation in the canonical RPC.
+- `DEPLOYED_PRODUCT_SHA` remains `d96e1426d85dee4bb93537a9d4e6bdf6318b5509`.
+- Any commit containing this execution record is documentation-only and is not the deployed product.

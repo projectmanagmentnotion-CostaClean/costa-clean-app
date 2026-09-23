@@ -31,6 +31,12 @@ The RC1 checks include focused N2–N9 contracts, cross-contract synthetic lifec
 
 The full-suite baseline retains four unrelated historical failures/timeouts from CP-3B.2A and portal invitation coverage. They are outside this diff and must remain unchanged; RC1 does not weaken or hide them.
 
+## RC1 runtime result and RC2 correction
+
+RC1 QA application was attempted against the authorized QA project only. The transaction rolled back completely at N9 because PostgreSQL rejected `get_team_workload_forecast(date)` for nested aggregate calls. The old partial N4 QA surface remained intact, with zero rows and zero RC1 migration-history writes.
+
+RC2 preserves the seven RC1 migrations byte-for-byte and adds only `20260923220000_n9_fix_team_workload_forecast_aggregate.sql`. The correction uses a grouped `workload` CTE followed by `jsonb_agg`, preserving the function signature, security-definer search path, internal-staff filter, and grants. RC2 requires a new, separate QA runtime authorization; no remote retry is implied by this source change.
+
 `DEVELOPMENT COMPLETE != DEPLOYED`. No remote Supabase migration, production backup, restore, JIT mutation, tag, or CP51F execution is implied. CP51F remains `DEFERRED_NON_BLOCKING`; the manual backup system remains ready.
 
 ## Release gate and rollback

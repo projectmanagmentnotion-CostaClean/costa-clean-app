@@ -27,6 +27,7 @@ import '../features/jobs/jobsOperations.css'
 import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
 import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
 import { TeamManagement } from '../features/jobs/TeamManagement'
+import { ServicesProfitabilitySummary } from '../features/jobs/ServicesProfitabilitySummary'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -315,6 +316,7 @@ export function JobsPage({
 
           <RecurringServicePlans clients={clients} properties={properties} onJobsChanged={onJobCreated} />
           <TeamManagement />
+          <ServicesProfitabilitySummary />
 
           <DuplicateReviewOverlay
             isOpen={showDuplicateReview}

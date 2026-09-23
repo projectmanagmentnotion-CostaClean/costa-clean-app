@@ -24,6 +24,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import '../features/jobs/jobsOperations.css'
+import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -72,6 +73,7 @@ export function JobsPage({
 }: JobsPageProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showAtomicOperation, setShowAtomicOperation] = useState(false)
   const [localCreatePrefill, setLocalCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [recentCreatedJob, setRecentCreatedJob] = useState<JobListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
@@ -192,7 +194,31 @@ export function JobsPage({
                 setShowCreateForm(true)
               },
             }}
+            secondaryAction={{
+              label: 'Nueva operación',
+              onClick: () => setShowAtomicOperation(true),
+            }}
           />
+
+          {showAtomicOperation ? (
+            <ActionFlowOverlay
+              isOpen
+              title="Nueva operación"
+              description="Crea servicio, factura y cobro opcional con una única confirmación."
+              onClose={() => setShowAtomicOperation(false)}
+            >
+              <AtomicFinancialOperationFlow
+                clients={clients}
+                properties={properties}
+                quotes={quotes}
+                onCompleted={async () => {
+                  await onJobCreated()
+                  setShowAtomicOperation(false)
+                }}
+                onCancel={() => setShowAtomicOperation(false)}
+              />
+            </ActionFlowOverlay>
+          ) : null}
 
           {recentCreatedJob ? (
             <section className="data-section cc-list-section__header">

@@ -142,7 +142,7 @@ normalize_roles_for_restore() {
   : >"$destination"
   while IFS= read -r role; do
     [[ -n "$role" ]] || continue
-    printf 'DO $cp51f$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '\''%s'\'') THEN CREATE ROLE "%s"; END IF; END $cp51f$;\n' "$role" "$role" >>"$destination"
+    printf "DO \$cp51f\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '%s') THEN CREATE ROLE \"%s\"; END IF; END \$cp51f\$;\n" "$role" "$role" >>"$destination"
   done < <(sort -u "$reserved_file")
   cat "$body_file" >>"$destination"
   rm -f -- "$reserved_file" "$body_file"

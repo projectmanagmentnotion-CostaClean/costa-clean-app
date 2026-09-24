@@ -48,3 +48,13 @@ test('RC3 security matrix keeps forced internal tables and behavioral gates inta
   expect(sources).not.toMatch(/grant .* to anon/iu);
   expect(sources).not.toMatch(/relrowsecurity\s+and\s+relforcerowsecurity/iu);
 });
+
+test('RC3 fresh install excludes obsolete N4 slot/occurrence RPCs', () => {
+  const n4 = read('supabase/migrations/20260923150000_n4_recurring_service_plans.sql');
+  const n9 = read('supabase/migrations/20260923230000_n9_recurring_operational_templates_v2.sql');
+  const combined = `${n4}\n${n9}`;
+  expect(combined).not.toMatch(/create or replace function public\.(?:save_recurring_service_plan_schedule|set_recurring_service_occurrence)\b/iu);
+  expect(n4).toMatch(/create or replace function public\.save_recurring_service_plan\(/iu);
+  expect(n4).toMatch(/create or replace function public\.preview_recurring_service_occurrences\(/iu);
+  expect(n9).toMatch(/create or replace function public\.generate_recurring_service_occurrences\(/iu);
+});

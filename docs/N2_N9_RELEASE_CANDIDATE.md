@@ -47,6 +47,8 @@ RC3 replaces the install artifact rather than pretending the old migration was v
 
 The first RC3 QA transaction reached successful PostgreSQL creation of the RC3 objects, including N9 V2, but rolled back at the certifier because it incorrectly required `FORCE ROW LEVEL SECURITY` on every table. The N2 idempotency ledger intentionally declares `ENABLE ROW LEVEL SECURITY` only; the corrected certifier now derives `relforcerowsecurity` expectations table by table. QA runtime tests were not executed, and QA returned to its empty prestate with zero residue and zero migration-history writes.
 
+The subsequent authorized retry also rolled back before commit because its ephemeral postcondition list incorrectly required two obsolete N4 RPCs that RC3 intentionally excludes. Those RPCs are now covered by the tracked contract as absent; the QA schema remains at the original empty N4 prestate and still has zero migration-history writes.
+
 `DEVELOPMENT COMPLETE != DEPLOYED`. No remote Supabase migration, production backup, restore, JIT mutation, tag, or CP51F execution is implied. CP51F remains `DEFERRED_NON_BLOCKING`; the manual backup system remains ready.
 
 ## Release gate and rollback

@@ -221,7 +221,7 @@ try {
   evidence.domBodySnippet = await evaluate(observer.sessionId, `document.body?.innerText?.slice(0, 2500) || ''`)
   evidence.n4GeneratedJobLiveRefresh = exactJobVisible && evidence.canonicalRefetch && evidence.canonicalRefetchContainsJob
   evidence.realtimeEventObserved = evidence.canonicalRefetch
-  evidence.latencyMs = evidence.latencyMs ?? (markerVisible ? Date.now() - generatedAt : null)
+  evidence.latencyMs = evidence.latencyMs ?? (exactJobVisible ? Date.now() - generatedAt : null)
 
   await connection.send('Target.activateTarget', { targetId: writer.targetId })
   await delay(500)

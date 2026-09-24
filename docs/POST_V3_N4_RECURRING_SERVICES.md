@@ -71,7 +71,7 @@ La sesión Edge aislada fue recuperada por el harness oficial, sin bypass ni ext
 - Teardown funcional: `12` jobs, `12` líneas, `12` occurrences, `3` slots y `1` plan; segunda limpieza `0`.
 - Residuo `QA_N4_FUNC`: `0`; cambios de filas reales: `0`.
 
-## Cierre diferencial N1 y cierre desatendido
+## Cierre diferencial N1 y prueba cross-contexto dedicada
 
 La revisión diferencial se ejecutó contra el delta completo N4, incluyendo el
 working tree y los harnesses QA. Los propietarios N1 verificados son:
@@ -89,14 +89,33 @@ reproducidos en esta ejecución desatendida.
 
 La cobertura automatizada de contrato N1 pasó para handlers de focus,
 visibility, reconnect, polling y cleanup de Realtime (`TEST_LEVEL_EVENT_SIMULATION`
-no se presenta como evidencia de navegador físico). La evidencia live nueva de
-N4 sí fue observada en dos contextos autenticados QA: Realtime
-`postgres_changes` sobre `recurring_service_occurrences/jobs`, refetch canónico
-en 173 ms, polling visible a 60.000 ms y cero suscripciones duplicadas o
-stale. El job exacto `JOB-a7502983-69c7-49d2-8e71-7b0f347a7dd5`, plan
-`PLAN-QA_N4_FUNC_0d6faf5dcc94c1284e102ae5be2a8e44-ROOT`, fecha `2026-09-28`,
-apareció en el filtro `Próximos` sin recarga manual; la vista inicial `Hoy` lo
-excluía legítimamente por fecha futura.
+no se presenta como evidencia de navegador físico). Para la evidencia live se
+usó el harness dedicado `scripts/qa/n4N1CrossContextEvidence.mjs`, conectado al
+Edge QA ya autenticado en dos páginas: observer y writer.
+
+La ejecución PASS fue:
+
+- Job exacto: `JOB-8586b170-bc96-4186-bf49-27d46871cab5`.
+- Display code exacto renderizado por accesibilidad: `JOB-0157`.
+- Plan: `PLAN-QA_N4_FUNC_7032c0b0eb9203a91f23284e98b4820f-ROOT`.
+- Fecha de ocurrencia: `2026-09-28`.
+- `OBSERVER_REALTIME_EVENT = PASS`.
+- `OBSERVER_CANONICAL_REFETCH = PASS`.
+- La respuesta `/rest/v1/jobs` del observer contenía el ID exacto.
+- La fila del observer expuso el display code exacto en su `aria-label`.
+- `APP_STATE_DIRECT_INTROSPECTION = NOT_AVAILABLE`.
+- `APP_STATE_PROPAGATION = PASS_BY_CERTIFIED_RENDER_CHAIN`.
+- `N4_N1_LIVE_MECHANISM = REALTIME_INVALIDATION`.
+- Latencia desde generación hasta DOM: `2358 ms`.
+- `MANUAL_RELOAD_USED = NO`; navegaciones del observer tras readiness: `0`.
+- Filas duplicadas: `0`.
+- Teardown y segunda limpieza: `0`.
+
+El harness tiene watchdog global de 45 segundos, escribe el informe
+sanitizado en `qa-reports/private/n4-n1-cross-context-latest.json`, cierra
+solo sus páginas y sale de forma determinista. Se corrigió además el defecto
+QA previo que referenciaba la variable inexistente `markerVisible`; no hubo
+cambio de producto.
 
 El harness visual autenticado mantuvo los anchors `390x844`, `820-class` y
 `1440` sin regresión de producto; los fallos intermitentes observados en
@@ -112,6 +131,10 @@ deterministas permanecen verdes.
 - `VISIBILITY_REFRESH_EVIDENCE = UNCHANGED_FROM_CERTIFIED_N1`
 - `RECONNECT_REFRESH_EVIDENCE = UNCHANGED_FROM_CERTIFIED_N1`
 - `N4_GENERATED_JOB_LIVE_REFRESH = PASS`
+- `N4_N1_LIVE_REFRESH = PASS`
+- `N1_REGRESSION = PASS` para la integración cross-contexto; focus, visibility
+  y reconnect se mantienen como evidencia de contrato automatizado, no como
+  replay físico adicional.
 - `QA_N4_FUNC_RESIDUE = 0`
 - `SECOND_CLEANUP_ACTIONS = 0`
 - `P0/P1/P2/P3 = 0/0/0/0`

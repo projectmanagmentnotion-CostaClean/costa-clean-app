@@ -93,7 +93,7 @@ no se presenta como evidencia de navegador físico). La evidencia live nueva de
 N4 sí fue observada en dos contextos autenticados QA: Realtime
 `postgres_changes` sobre `recurring_service_occurrences/jobs`, refetch canónico
 en 173 ms, polling visible a 60.000 ms y cero suscripciones duplicadas o
-stale. El job exacto `JOB-0138`, plan
+stale. El job exacto `JOB-a7502983-69c7-49d2-8e71-7b0f347a7dd5`, plan
 `PLAN-QA_N4_FUNC_0d6faf5dcc94c1284e102ae5be2a8e44-ROOT`, fecha `2026-09-28`,
 apareció en el filtro `Próximos` sin recarga manual; la vista inicial `Hoy` lo
 excluía legítimamente por fecha futura.

@@ -53,6 +53,10 @@ the first capture screen.
 ## Verification boundary
 
 The product migration is present and statically reviewed on this branch. It
-was not applied to a remote QA project in this work block: no authenticated QA
-migration gate was provided, so remote schema changes and capture fixtures
-remain pending the dedicated QA certification gate.
+was applied only to the verified QA project `kpvvydthlxupjjqqdpxy` after the
+upsert-policy correction. The remote migration ledger records the supplied
+N5.1 name as `n51_smart_expense_capture` at the QA-generated version
+`20260924161238`; the source of truth remains
+`supabase/migrations/20260924140000_n51_smart_expense_capture.sql`.
+Authenticated fixtures and end-to-end certification remain pending a
+legitimate QA staff session.

@@ -787,6 +787,23 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-expense-financial-summary dl div { display: grid; gap: var(--v3-space-1); min-width: 0; }
 .v3-expense-financial-summary dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); }
 .v3-expense-financial-summary dd { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-md); font-variant-numeric: tabular-nums; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+
+.v3-expense-capture-page { max-width: 760px; margin-inline: auto; }
+.v3-expense-capture-choices { display: grid; gap: 12px; margin-top: 20px; }
+.v3-expense-capture-choice { align-items: flex-start; background: var(--v3-color-surface-raised); border: 1px solid var(--v3-color-border); border-radius: 16px; color: var(--v3-color-text-primary); display: flex; flex-direction: column; gap: 5px; min-height: 72px; padding: 16px; text-align: left; width: 100%; }
+.v3-expense-capture-choice:hover, .v3-expense-capture-choice:focus-visible { border-color: var(--v3-color-accent); }
+.v3-expense-capture-choice--primary { background: var(--v3-color-accent); border-color: var(--v3-color-accent); color: white; }
+.v3-expense-capture-choice span { color: inherit; opacity: .82; }
+.v3-expense-capture-preview { align-items: start; display: grid; gap: 20px; grid-template-columns: minmax(140px, 220px) 1fr; margin: 20px 0; }
+.v3-expense-capture-preview__media { align-items: center; aspect-ratio: 1 / 1.25; background: var(--v3-color-surface-muted); border: 1px solid var(--v3-color-border); border-radius: 14px; display: flex; justify-content: center; overflow: hidden; }
+.v3-expense-capture-preview__media img { height: 100%; object-fit: contain; width: 100%; }
+.v3-expense-capture-preview__media span { color: var(--v3-color-text-muted); font-size: 28px; font-weight: 800; }
+.v3-expense-capture-preview dl { display: grid; gap: 12px; margin: 0; }
+.v3-expense-capture-preview dl div { border-bottom: 1px solid var(--v3-color-border); padding-bottom: 8px; }
+.v3-expense-capture-preview dt { color: var(--v3-color-text-muted); font-size: 12px; }
+.v3-expense-capture-preview dd { margin: 3px 0 0; overflow-wrap: anywhere; }
+.v3-expense-capture-preview__hash { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
+@media (max-width: 620px) { .v3-expense-capture-preview { grid-template-columns: 1fr; } .v3-expense-capture-preview__media { max-width: 220px; } }
 .v3-expense-financial-summary dl div:last-child dd { color: var(--v3-color-accent-strong); }
 .v3-invoice-settlement-status, .v3-quote-conversion-status { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); margin: 0; }
 .v3-workspace-actions { display: flex; flex-wrap: wrap; gap: var(--v3-space-2); }

@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
+import { verifyInternalStaffAuthorization } from './qaInternalStaffAuth.mjs'
 import { parseQaPrivateEnv, requireQaAuthCredentials } from './qaPrivateEnv.mjs'
 
 const rootDir = process.cwd()
@@ -35,14 +36,8 @@ async function authenticateQa() {
   })
   const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password })
   if (authError || !authData.session || !authData.user) throw new Error(`QA_AUTH_FAILED ${authError?.message || 'missing_session'}`)
-  const { data: membership, error: membershipError } = await client
-    .from('internal_staff_memberships')
-    .select('role,status')
-    .eq('user_id', authData.user.id)
-    .eq('role', 'admin')
-    .eq('status', 'active')
-    .maybeSingle()
-  if (membershipError || !membership) throw new Error(`QA_MEMBERSHIP_FAILED ${membershipError?.message || 'missing_admin_active'}`)
+  const authorization = await verifyInternalStaffAuthorization(client)
+  if (!authorization.authorized) throw new Error('QA_MEMBERSHIP_FAILED')
   return { session: authData.session, userId: authData.user.id }
 }
 

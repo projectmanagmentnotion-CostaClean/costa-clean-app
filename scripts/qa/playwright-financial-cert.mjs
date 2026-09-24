@@ -3,16 +3,16 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
+import { parseQaPrivateEnv, requireQaAuthCredentials } from './qaPrivateEnv.mjs'
 
 const rootDir = process.cwd()
 const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:5173/'
-const qaEnv = Object.fromEntries(fs.readFileSync('.env.qa.local', 'utf8').split(/\r?\n/u).flatMap((line) => {
-  const match = line.match(/^([A-Z0-9_]+)=(.*)$/u)
-  return match ? [[match[1], match[2]]] : []
-}))
-const email = process.env.COSTACLEAN_QA_AUTH_EMAIL
-const password = process.env.COSTACLEAN_QA_AUTH_PASSWORD
-if (!email || !password) throw new Error('QA_AUTH_INPUT_MISSING')
+const qaEnv = parseQaPrivateEnv(fs.readFileSync('.env.qa.local', 'utf8'))
+const { email, password } = requireQaAuthCredentials({
+  processEnv: process.env,
+  qaEnv,
+  preferPrivateFile: process.env.QA_AUTH_PREFER_PRIVATE_FILE === '1',
+})
 if (!qaEnv.VITE_SUPABASE_URL || !qaEnv.VITE_SUPABASE_ANON_KEY) throw new Error('QA_PUBLIC_CONFIG_MISSING')
 
 const viewports = [

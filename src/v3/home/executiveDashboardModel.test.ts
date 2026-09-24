@@ -28,18 +28,18 @@ describe('executive dashboard model', () => {
     expect(model.growth.invoiced).toBeNull()
   })
 
-  it('counts a payment in its payment period even when the invoice was issued earlier', () => {
+  it('does not count a payment in a period without its invoice issue cohort', () => {
     const model = buildExecutiveDashboardModel(Object.assign({}, input, { payments: [{ id: 'p2', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 }] }), { kind: 'month', key: '2026-10' })
-    expect(model.collected).toBe(21)
+    expect(model.collected).toBe(0)
   })
 
-  it('keeps selected-period invoice issuance separate from cross-period cash collection', () => {
+  it('includes all payments linked to invoices issued in the selected period', () => {
     const model = buildExecutiveDashboardModel(Object.assign({}, input, {
       invoices: [...input.invoices, { ...input.invoices[0], id: 'i2', issue_date: '2026-10-02', total: 242, tax_amount: 42, outstanding_amount: 242 }],
       payments: [{ id: 'p2', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 }],
     }), { kind: 'month', key: '2026-10' })
     expect(model.invoiced).toBe(242)
-    expect(model.collected).toBe(21)
+    expect(model.collected).toBe(0)
   })
 
   it('supports multiple partial payments across month, quarter and year selections', () => {
@@ -48,8 +48,8 @@ describe('executive dashboard model', () => {
       { id: 'p2', invoice_id: 'i1', payment_date: '2026-09-20', amount: 60 },
       { id: 'p3', invoice_id: 'i1', payment_date: '2026-10-01', amount: 21 },
     ]
-    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'month', key: '2026-09' }).collected).toBe(100)
-    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'quarter', key: '2026-Q3' }).collected).toBe(100)
+    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'month', key: '2026-09' }).collected).toBe(121)
+    expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'quarter', key: '2026-Q3' }).collected).toBe(121)
     expect(buildExecutiveDashboardModel(Object.assign({}, input, { payments }), { kind: 'year', key: '2026' }).collected).toBe(121)
   })
 

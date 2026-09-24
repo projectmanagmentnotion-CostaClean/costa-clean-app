@@ -8,6 +8,7 @@ import { buildFiscalVatSummary } from '../closing/fiscalVatSummary'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
+import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
 
 function parseDate(dateValue: string): Date | null {
   if (!dateValue) return null
@@ -40,9 +41,8 @@ export function buildQuarterlyClosingSummary(
   const quarterInvoices = invoices.filter((invoice) =>
     matchesDateQuarter(invoice.issue_date, fiscalYear, fiscalQuarter),
   )
-  const quarterPayments = payments.filter((payment) =>
-    matchesDateQuarter(payment.payment_date, fiscalYear, fiscalQuarter),
-  )
+  const invoicePaymentCohort = buildInvoicePaymentCohort(payments, quarterInvoices)
+  const quarterPayments = invoicePaymentCohort.payments
   const quarterExpenses = expenses.filter((expense) =>
     matchesExpenseQuarter(expense, fiscalYear, fiscalQuarter),
   )
@@ -69,7 +69,7 @@ export function buildQuarterlyClosingSummary(
 
   const pendingQuarterInvoices = quarterInvoices.filter((invoice) => {
     const invoiceTotal = Number(invoice.total || 0)
-    const paidAmount = paidAmountByInvoiceId.get(invoice.id) ?? 0
+    const paidAmount = invoice.paid_amount ?? paidAmountByInvoiceId.get(invoice.id) ?? 0
     return Math.max(invoiceTotal - paidAmount, 0) > 0.009
   })
 
@@ -129,7 +129,7 @@ export function buildQuarterlyClosingSummary(
       {
         id: 'payment_quarter_all',
         label: 'Cobros registrados',
-        detail: 'Movimientos cobrados dentro del trimestre.',
+        detail: 'Cobros vinculados a facturas emitidas en el trimestre.',
         count: quarterPayments.length,
         tone: 'neutral',
         view: 'payments',

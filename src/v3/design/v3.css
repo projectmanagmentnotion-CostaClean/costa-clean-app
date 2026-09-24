@@ -561,6 +561,8 @@ html[data-app-surface="v3"] .cc-scroll-top {
   .v3-closing-selector .v3-field:last-child { grid-column: 1 / -1; }
   .v3-closing-section-heading { align-items: stretch; flex-direction: column; }
   .v3-closing-status-grid, .v3-closing-output-grid { grid-template-columns: 1fr; }
+  .v3-closing-financial-breakdown { gap: var(--v3-space-2); }
+  .v3-closing-financial-breakdown div { padding: var(--v3-space-2); }
   .v3-closing-page .v3-kpi-group > :last-child:nth-child(odd) { grid-column: 1 / -1; }
   .v3-page-title__action .v3-action-group { display: grid; grid-template-columns: minmax(0, 1fr); }
   .v3-page-title__action .v3-action { width: 100%; }
@@ -879,8 +881,12 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-closing-section-heading h2, .v3-closing-output h3 { color: var(--v3-color-text-primary); font-size: var(--v3-font-size-section-title); margin: 0; }
 .v3-closing-section-heading p { color: var(--v3-color-text-secondary); margin: var(--v3-space-2) 0 0; max-width: 62ch; }
 .v3-closing-deterministic { display: grid; gap: var(--v3-space-3); padding: var(--v3-space-4) 0; }
+.v3-closing-financial-breakdown { display: grid; gap: var(--v3-space-3); grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.v3-closing-financial-breakdown div { background: var(--v3-color-surface-subtle); border-radius: var(--v3-radius-sm); display: grid; gap: var(--v3-space-1); min-width: 0; padding: var(--v3-space-3); }
+.v3-closing-financial-breakdown span { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-label); }
+.v3-closing-financial-breakdown strong { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .v3-closing-status-grid { display: grid; gap: var(--v3-space-5); grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.v3-closing-output-grid { display: grid; gap: var(--v3-space-5); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v3-closing-output-grid { display: grid; gap: var(--v3-space-4); grid-template-columns: 1fr; }
 .v3-closing-output { border-top: var(--v3-border-width) solid var(--v3-color-border-subtle); display: grid; gap: var(--v3-space-3); padding-top: var(--v3-space-4); }
 .v3-closing-output--assistive { background: var(--v3-color-accent-soft); border-left: var(--v3-border-width) solid var(--v3-color-accent); border-top: 0; padding: var(--v3-space-4); }
 .v3-closing-output small { color: var(--v3-color-text-secondary); }

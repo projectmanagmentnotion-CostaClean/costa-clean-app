@@ -1,0 +1,208 @@
+name: CP51F Executor Smoke
+
+on:
+  push:
+    branches:
+      - codex/cp51-production-readiness-preflight
+    paths:
+      - .github/workflows/cp51f-executor-smoke.yml
+      - .github/workflows/cp51f-production-backup-restore.yml
+      - scripts/cp51f-bootstrap-postgres17.sh
+      - scripts/cp51f-production-backup-setup.sh
+      - scripts/cp51f-pooler-config.sh
+      - scripts/cp51f-pooler-config.synthetic.test.sh
+      - scripts/cp51f-resolve-pooler-host.sh
+      - scripts/cp51f-resolve-pooler-host.synthetic.test.sh
+      - scripts/cp51f-jit-mapping.contract.test.sh
+      - scripts/cp51f-production-backup-setup.contract.test.sh
+      - scripts/cp51f-jit-prestate-readonly-probe.sh
+      - scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh
+      - scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh
+      - scripts/cp51f-production-backup-setup.diagnostic.test.sh
+      - scripts/cp51f-dump-readiness.contract.test.sh
+      - scripts/cp51f-full-offline-rehearsal.test.sh
+      - scripts/cp51f-management-api-http-diagnostic.test.sh
+      - scripts/cp51f-history-guard.schema.test.sh
+      - scripts/cp51f-restore-verify.sh
+      - scripts/cp51f-restore-verify.synthetic.test.sh
+      - scripts/cp51f-manifest-producer-consumer.contract.test.sh
+      - scripts/cp51f-managed-role-portability.contract.test.sh
+      - scripts/cp51f-production-backup-restore.contract.test.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-17-smoke:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout canonical branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: codex/cp51-production-readiness-preflight
+          fetch-depth: 1
+
+      - name: Install PostgreSQL 17 bootstrap
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-bootstrap-postgres17.sh
+          sudo apt-get install -y --no-install-recommends shellcheck
+
+      - name: Verify runner and PostgreSQL 17
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          uname -a
+          cat /etc/os-release
+          id
+          whoami
+          test "$(id -u)" -ne 0
+          command -v jq
+          command -v sha256sum
+          command -v stat
+          command -v pg_dump
+          command -v pg_dumpall
+          command -v psql
+          test -x /usr/lib/postgresql/17/bin/initdb
+          test -x /usr/lib/postgresql/17/bin/pg_ctl
+          pg_dump --version
+          pg_dumpall --version
+          psql --version
+          /usr/lib/postgresql/17/bin/initdb --version
+          /usr/lib/postgresql/17/bin/pg_ctl --version
+          test "$(pg_dump --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(pg_dumpall --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(psql --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(/usr/lib/postgresql/17/bin/initdb --version | awk '{print $3}' | cut -d. -f1)" = 17
+          test "$(/usr/lib/postgresql/17/bin/pg_ctl --version | awk '{print $3}' | cut -d. -f1)" = 17
+
+      - name: Run isolated PostgreSQL 17 smoke
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          PGDATA="$RUNNER_TEMP/cp51f-pg17"
+          PGLOG="$RUNNER_TEMP/cp51f-pg17.log"
+          PGPORT=55432
+          export PGDATA PGPORT
+
+          cleanup() {
+            set +e
+            /usr/lib/postgresql/17/bin/pg_ctl -D "$PGDATA" -m fast -w stop >/dev/null 2>&1 || true
+            rm -rf -- "$PGDATA" "$PGLOG"
+          }
+          trap cleanup EXIT
+
+          rm -rf -- "$PGDATA" "$PGLOG"
+          /usr/lib/postgresql/17/bin/initdb --auth=trust --no-locale -D "$PGDATA"
+          if ! /usr/lib/postgresql/17/bin/pg_ctl \
+            -D "$PGDATA" \
+            -o "-h 127.0.0.1 -p $PGPORT -k $RUNNER_TEMP" \
+            -l "$PGLOG" \
+            -w start; then
+            cat "$PGLOG"
+            exit 1
+          fi
+          echo 'PG_CTL_START=PASS'
+
+          psql -h 127.0.0.1 -p "$PGPORT" -d postgres -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE cp51f_restore_smoke;'
+          echo 'SMOKE_DATABASE_CREATED=YES'
+          psql -h 127.0.0.1 -p "$PGPORT" -d cp51f_restore_smoke -v ON_ERROR_STOP=1 \
+            -c 'SELECT version();' \
+            -c 'CREATE TABLE smoke_test (id integer PRIMARY KEY, value text NOT NULL);' \
+            -c "INSERT INTO smoke_test (id, value) VALUES (1, 'synthetic-smoke');" \
+            -c "SELECT count(*) AS smoke_row_count FROM smoke_test;" \
+            | tee "$RUNNER_TEMP/cp51f-psql-output.txt"
+          grep -Eq '^[[:space:]]*1[[:space:]]*$' "$RUNNER_TEMP/cp51f-psql-output.txt"
+          echo 'PSQL_CONNECTION=PASS'
+          echo 'SMOKE_TABLE_CREATED=YES'
+          echo 'SMOKE_ROW_COUNT=1'
+
+          /usr/lib/postgresql/17/bin/pg_ctl -D "$PGDATA" -m fast -w stop
+          echo 'PG_CTL_STOP=PASS'
+
+      - name: Run synthetic CP51F restore and workflow contract smoke
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-dump-readiness.contract.test.sh scripts/cp51f-full-offline-rehearsal.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
+          shellcheck -x scripts/cp51f-bootstrap-postgres17.sh scripts/cp51f-production-backup-setup.sh scripts/cp51f-pooler-config.sh scripts/cp51f-pooler-config.synthetic.test.sh scripts/cp51f-resolve-pooler-host.sh scripts/cp51f-resolve-pooler-host.synthetic.test.sh scripts/cp51f-jit-mapping.contract.test.sh scripts/cp51f-production-backup-setup.contract.test.sh scripts/cp51f-jit-prestate-readonly-probe.sh scripts/cp51f-jit-prestate-readonly-probe.mock-curl.sh scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh scripts/cp51f-production-backup-setup.diagnostic.test.sh scripts/cp51f-dump-readiness.contract.test.sh scripts/cp51f-full-offline-rehearsal.test.sh scripts/cp51f-management-api-http-diagnostic.test.sh scripts/cp51f-history-guard.schema.test.sh scripts/cp51f-restore-verify.sh scripts/cp51f-restore-verify.synthetic.test.sh scripts/cp51f-manifest-producer-consumer.contract.test.sh scripts/cp51f-managed-role-portability.contract.test.sh scripts/cp51f-production-backup-restore.contract.test.sh
+          bash scripts/cp51f-resolve-pooler-host.synthetic.test.sh
+          bash scripts/cp51f-pooler-config.synthetic.test.sh
+          bash scripts/cp51f-jit-mapping.contract.test.sh
+          bash scripts/cp51f-production-backup-setup.contract.test.sh
+          bash scripts/cp51f-jit-prestate-readonly-probe.synthetic.test.sh
+          bash scripts/cp51f-production-backup-setup.diagnostic.test.sh
+          bash scripts/cp51f-dump-readiness.contract.test.sh
+          bash scripts/cp51f-full-offline-rehearsal.test.sh
+          bash scripts/cp51f-management-api-http-diagnostic.test.sh
+          bash scripts/cp51f-history-guard.schema.test.sh
+          bash scripts/cp51f-restore-verify.synthetic.test.sh
+          bash scripts/cp51f-manifest-producer-consumer.contract.test.sh
+          bash scripts/cp51f-managed-role-portability.contract.test.sh
+          bash scripts/cp51f-production-backup-restore.contract.test.sh
+
+      - name: Install app dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node --version
+          npm --version
+          npm ci
+
+      - name: Align agent manifest line endings
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config core.autocrlf true
+          perl -pi -e 's/\r?\n/\r\n/g' .github/agents/*.agent.md
+
+      - name: Validate project agents
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run qa:agents
+          echo 'CP51F_QA_AGENTS=PASS'
+
+      - name: Restore clean agent checkout
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config core.autocrlf false
+          git checkout-index --force -- .github/agents/*.agent.md
+
+      - name: Lint application
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run lint
+          echo 'CP51F_LINT=PASS'
+
+      - name: TypeScript check
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npx tsc -b --pretty false
+          echo 'CP51F_TYPESCRIPT=PASS'
+
+      - name: Build application
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          npm run build
+          echo 'CP51F_BUILD=PASS'
+
+      - name: Check diff and worktree
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git diff --check
+          status="$(git status --porcelain)"
+          printf '%s\n' "$status"
+          test -z "$status"
+          echo 'CP51F_DIFF_CHECK=PASS'

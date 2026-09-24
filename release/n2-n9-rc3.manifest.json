@@ -1,0 +1,24 @@
+{
+  "release": "N2-N9-RC3",
+  "source_head": "5a7e38a6882499081726ab4bd910832d269d5eda",
+  "head_policy": "source_head_is_ancestor_of_current_head",
+  "scope": ["N2", "N3", "N4", "N5", "N6", "N7", "N8", "N9"],
+  "n3": {"migration": "none", "source_of_truth": "frontend"},
+  "history": "RC1 failed at original N9 compile; RC2 forward correction was unreachable on fresh install; RC3 replaces the N9 install artifact without rewriting migration history",
+  "migration_count": 7,
+  "migrations": [
+    {"order": 1, "filename": "20260923120000_n2_atomic_financial_operation.sql", "sha256": "a7c65b0e9640572a6bd53b71693442b29be1914cc7c0996c6e5c4d3aa23defb6"},
+    {"order": 2, "filename": "20260923150000_n4_recurring_service_plans.sql", "sha256": "1313aae2128e502c7f9470d2f205c4a51df5f62825e964f792b4167593525011"},
+    {"order": 3, "filename": "20260923170000_n5_team_operational_hours.sql", "sha256": "6d658db4824b15e8e6f4ffc045a16a4a6005ff21e10d4e71bc0ad0b81bd4421e"},
+    {"order": 4, "filename": "20260923180000_n6_direct_operational_profitability.sql", "sha256": "42cc3f1822e6c9767aa04d6c2cc9d0d5f9c19a19f2a8020c6099acf24c3cf5a7"},
+    {"order": 5, "filename": "20260923190000_n7_material_control.sql", "sha256": "94607c81c1009b367fc671ecf1f9c05f532c4de5cf730b1865040bb849a8f6ad"},
+    {"order": 6, "filename": "20260923200000_n8_direct_expense_allocations.sql", "sha256": "f5f7c693fb2863f7dd093e4a245c42614133e36b112ec85d7efad58bfbc2c881"},
+    {"order": 7, "filename": "20260923230000_n9_recurring_operational_templates_v2.sql", "sha256": "87279513545a4e345a18beb9e9223acb2c629a823f38ee4c3b5f9a2ce928374f"}
+  ],
+  "superseded_runtime_artifacts": [
+    {"filename": "20260923210000_n9_recurring_operational_templates.sql", "reason": "DO_NOT_EXECUTE_IN_RC3_FRESH_INSTALL"},
+    {"filename": "20260923220000_n9_fix_team_workload_forecast_aggregate.sql", "reason": "DO_NOT_EXECUTE_IN_RC3_FRESH_INSTALL"}
+  ],
+  "runtime_policy": "source-only; requires separate QA runtime authorization; execute exactly this manifest",
+  "production_authorization": "NO"
+}

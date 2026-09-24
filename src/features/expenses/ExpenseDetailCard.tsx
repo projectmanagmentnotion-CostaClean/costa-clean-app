@@ -20,6 +20,7 @@ import {
   type ExpenseListItem,
 } from './types'
 import './expense-surfaces.css'
+import { ExpenseAllocationSummaryPanel } from './ExpenseAllocationSummaryPanel'
 
 interface ExpenseDetailCardProps {
   expense: ExpenseListItem | null
@@ -358,6 +359,8 @@ export function ExpenseDetailCard({
           />
         </MajorEditFlowOverlay>
       ) : null}
+
+      {expense ? <ExpenseAllocationSummaryPanel expenseId={expense.id} /> : null}
 
       {expense ? (
         <ActionFlowOverlay

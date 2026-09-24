@@ -164,4 +164,14 @@ describe('financialWriteApi test utils', () => {
     expect('invoice_number' in sanitized).toBe(false)
     expect('display_code' in sanitized).toBe(false)
   })
+
+  it('requires an idempotency key before starting the atomic operation', async () => {
+    await expect(import('./financialWriteApi').then(({ createAtomicFinancialOperation }) => createAtomicFinancialOperation({
+      job: {},
+      jobLines: [],
+      invoice: {},
+      invoiceLines: [],
+      idempotencyKey: '   ',
+    }))).rejects.toThrow('La operación financiera necesita una clave de idempotencia.')
+  })
 })

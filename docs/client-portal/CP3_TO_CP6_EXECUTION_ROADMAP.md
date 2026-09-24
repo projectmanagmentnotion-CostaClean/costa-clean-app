@@ -524,7 +524,7 @@ deployment or real-email rollout.
 
 | Field | Specification |
 |---|---|
-| Status | `NOT STARTED` |
+| Status | `BLOCKED / STOP_PRESTATE_DRIFT / PRODUCTION NOT AUTHORIZED` |
 | Objective | Prove that exact QA-validated artifacts can enter a restricted production pilot safely. |
 | User outcome | No rollout yet; operational, security and support controls are ready before any customer is invited. |
 | Dependencies | CP-4.3 closed; QA P0/P1 zero; exact production authorization available only after review. |
@@ -543,6 +543,23 @@ deployment or real-email rollout.
 | Closeout documentation | Signed readiness checklist, immutable manifest, risk acceptance/debt and exact pilot authorization request. |
 | Expected commit | `docs: close client portal production readiness gate` |
 | Next gate | CP-5.2 |
+
+Current CP-5.1 preparation evidence:
+
+- [CP51_PRODUCTION_READINESS_PREFLIGHT.md](CP51_PRODUCTION_READINESS_PREFLIGHT.md) — readiness matrix, stop conditions and authorization boundary;
+- [CP51A_RELEASE_CANDIDATE_MANIFEST.md](CP51A_RELEASE_CANDIDATE_MANIFEST.md) — frozen runtime/migration/test identities and source-only migration review;
+- [CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md](CP51B_PRODUCTION_PREFLIGHT_PACKAGE.md) — zero-mutation production preflight design.
+- [CP51F5_AUTONOMOUS_BACKUP_RESOLUTION.md](CP51F5_AUTONOMOUS_BACKUP_RESOLUTION.md) — autonomous private-channel exhaustion; no backup or production mutation.
+- [CP51C_OPERATIONAL_READINESS.md](CP51C_OPERATIONAL_READINESS.md) — operational, compliance, monitoring and ownership readiness; unresolved owners remain `HUMAN_INPUT_REQUIRED`.
+- [CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md](CP51D_PRODUCTION_READ_ONLY_AUTHORIZATION.md) — exact future read-only authorization boundary; not authorized.
+- [CP51E_PRODUCTION_RECONCILIATION_PLAN.md](CP51E_PRODUCTION_RECONCILIATION_PLAN.md) — source-only reconciliation/deployment plan; production mutation not authorized.
+- [CP51F_BACKUP_RESTORE_READINESS.md](CP51F_BACKUP_RESTORE_READINESS.md) — backup/restore gate blocked because managed backup inventory access is unavailable; no backup or restore was executed.
+- [CP51F2_BACKUP_CAPABILITY_RESOLUTION.md](CP51F2_BACKUP_CAPABILITY_RESOLUTION.md) — official capability review: free-plan managed backups/PITR unavailable; logical backup requires separate Authorization C.
+- [CP51F3_LOGICAL_PRODUCTION_BACKUP.md](CP51F3_LOGICAL_PRODUCTION_BACKUP.md) — logical backup stopped because no private database credential/connection path was available; no dump was created.
+- [CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md](CP51F4_TEMPORARY_ACCESS_LOGICAL_BACKUP.md) — Temporary Access is technically compatible but its prestate/configuration cannot be safely queried or changed in the current tool context; no JIT mutation occurred.
+
+No production/QA remote access, deployment, migration apply, provider send, secret mutation or customer pilot is authorized by this status. CP-5.2 remains `NOT STARTED`.
+
 
 ## CP-5.2 — Restricted production pilot
 

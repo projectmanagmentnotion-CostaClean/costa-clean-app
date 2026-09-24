@@ -23,7 +23,14 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import type { ExpenseListItem } from '../features/expenses/types'
 import '../features/jobs/jobsOperations.css'
+import { AtomicFinancialOperationFlow } from '../features/financial/AtomicFinancialOperationFlow'
+import { RecurringServicePlans } from '../features/jobs/RecurringServicePlans'
+import { TeamManagement } from '../features/jobs/TeamManagement'
+import { ServicesProfitabilitySummary } from '../features/jobs/ServicesProfitabilitySummary'
+import { MaterialManagement } from '../features/jobs/MaterialManagement'
+import { PlanningForecastPanels } from '../features/jobs/PlanningForecastPanels'
 
 const LazyJobCreateFlow = lazy(async () => ({
   default: (await import('../features/jobs/JobCreateFlow')).JobCreateFlow,
@@ -36,6 +43,7 @@ interface JobsPageProps {
   quotes: QuoteListItem[]
   invoices: InvoiceListItem[]
   payments: PaymentListItem[]
+  expenses: ExpenseListItem[]
   error: string | null
   onJobCreated: () => Promise<void>
   onOpenClientWorkspace: (clientId: string, tab?: ClientWorkspaceTab) => void
@@ -57,6 +65,7 @@ export function JobsPage({
   quotes,
   invoices,
   payments,
+  expenses,
   error,
   onJobCreated,
   onOpenClientWorkspace,
@@ -72,6 +81,7 @@ export function JobsPage({
 }: JobsPageProps) {
   const today = new Date().toISOString().slice(0, 10)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showAtomicOperation, setShowAtomicOperation] = useState(false)
   const [localCreatePrefill, setLocalCreatePrefill] = useState<JobCreatePrefill | null>(null)
   const [recentCreatedJob, setRecentCreatedJob] = useState<JobListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
@@ -192,7 +202,31 @@ export function JobsPage({
                 setShowCreateForm(true)
               },
             }}
+            secondaryAction={{
+              label: 'Nueva operación',
+              onClick: () => setShowAtomicOperation(true),
+            }}
           />
+
+          {showAtomicOperation ? (
+            <ActionFlowOverlay
+              isOpen
+              title="Nueva operación"
+              description="Crea servicio, factura y cobro opcional con una única confirmación."
+              onClose={() => setShowAtomicOperation(false)}
+            >
+              <AtomicFinancialOperationFlow
+                clients={clients}
+                properties={properties}
+                quotes={quotes}
+                onCompleted={async () => {
+                  await onJobCreated()
+                  setShowAtomicOperation(false)
+                }}
+                onCancel={() => setShowAtomicOperation(false)}
+              />
+            </ActionFlowOverlay>
+          ) : null}
 
           {recentCreatedJob ? (
             <section className="data-section cc-list-section__header">
@@ -285,16 +319,11 @@ export function JobsPage({
             onCreateJob={() => setShowCreateForm(true)}
           />
 
-          <section className="cc-recurring-service-readiness" data-qa="recurring-service-section">
-            <div className="cc-recurring-service-readiness__copy">
-              <span>Servicios recurrentes</span>
-              <strong>Planificacion recurrente pendiente de contrato</strong>
-              <p>La app permite programar cada servicio, pero todavia no existe un modelo seguro para generar visitas recurrentes. La automatizacion de facturas es independiente.</p>
-            </div>
-            <button type="button" className="secondary-button" data-qa="recurring-service-disabled-action" disabled>
-              Crear recurrencia no disponible
-            </button>
-          </section>
+          <RecurringServicePlans clients={clients} properties={properties} onJobsChanged={onJobCreated} />
+          <TeamManagement />
+          <ServicesProfitabilitySummary />
+          <MaterialManagement />
+          <PlanningForecastPanels />
 
           <DuplicateReviewOverlay
             isOpen={showDuplicateReview}
@@ -331,6 +360,7 @@ export function JobsPage({
             quotes={quotes}
             invoices={invoices}
             payments={payments}
+            expenses={expenses}
             activeTab={activeTab}
             onTabChange={setActiveTab}
             onClose={() => {

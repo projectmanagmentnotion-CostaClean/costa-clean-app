@@ -44,6 +44,8 @@ alter table public.expense_capture_documents enable row level security;
 alter table public.expense_capture_documents force row level security;
 revoke all on public.expense_capture_sessions from public, anon, authenticated, service_role;
 revoke all on public.expense_capture_documents from public, anon, authenticated, service_role;
+grant select, insert, update, delete on public.expense_capture_sessions to service_role;
+grant select, insert, update, delete on public.expense_capture_documents to service_role;
 
 drop policy if exists expense_capture_sessions_internal_read on public.expense_capture_sessions;
 create policy expense_capture_sessions_internal_read on public.expense_capture_sessions
@@ -237,6 +239,32 @@ create policy n51_capture_select on storage.objects
       select 1 from public.expense_capture_sessions s
       where s.id::text = (storage.foldername(name))[2]
         and s.created_by = (select auth.uid())
+        and app_private.is_active_internal_staff((select auth.uid()))
+    )
+  );
+
+drop policy if exists n51_capture_update on storage.objects;
+create policy n51_capture_update on storage.objects
+  for update to authenticated
+  using (
+    bucket_id = 'expense-receipts'
+    and (storage.foldername(name))[1] = 'captures'
+    and exists (
+      select 1 from public.expense_capture_sessions s
+      where s.id::text = (storage.foldername(name))[2]
+        and s.created_by = (select auth.uid())
+        and s.status <> 'CANCELLED'
+        and app_private.is_active_internal_staff((select auth.uid()))
+    )
+  )
+  with check (
+    bucket_id = 'expense-receipts'
+    and (storage.foldername(name))[1] = 'captures'
+    and exists (
+      select 1 from public.expense_capture_sessions s
+      where s.id::text = (storage.foldername(name))[2]
+        and s.created_by = (select auth.uid())
+        and s.status <> 'CANCELLED'
         and app_private.is_active_internal_staff((select auth.uid()))
     )
   );

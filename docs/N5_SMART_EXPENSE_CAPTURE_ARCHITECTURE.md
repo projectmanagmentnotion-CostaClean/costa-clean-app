@@ -35,6 +35,11 @@ the first capture screen.
 - Manual creation calls the existing expense creation contract unchanged.
 - Capture ownership is derived server-side from `auth.uid()` and active
   internal-staff membership.
+- Storage upsert is scoped by a dedicated owner/session UPDATE policy; it is
+  not a bucket-wide authenticated write permission.
+- `service_role` receives only the table privileges required for controlled
+  backend administration/QA teardown; authenticated users receive no direct
+  table writes.
 - Capture idempotency is enforced by a database uniqueness constraint, not by
   a disabled button alone.
 - File type, size, empty-file, filename and path checks are shared/hardened;

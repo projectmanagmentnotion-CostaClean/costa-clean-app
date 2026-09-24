@@ -87,18 +87,34 @@ because the occurrence date was future-dated. `DOCUMENTATION_EVIDENCE_CONSISTENT
 
 ## Production prestate gate
 
-This certification is fail-closed. No authorized read-only Production
-credential/channel was available in the execution environment; the available
-Supabase configuration was QA-only. Production was not queried, and QA
-credentials were not used against Production.
+An authorized read-only inspection was completed against Supabase project
+`wfxnwfcdjainpojhbdri` and Vercel project `costa-clean-app`. No credentials
+were exposed and no Production mutation occurred.
 
-- `PRODUCTION_READ_ONLY = NOT_EXECUTED`
-- `PRODUCTION_PRESTATE = BLOCKED_CREDENTIALS_NOT_AVAILABLE`
-- `UNEXPECTED_N4_PRODUCTION_OBJECTS = NOT_VERIFIED`
+The Production migration ledger contains the certified post-V3 entries through
+N2.1 and contains no N4 entry. Catalog inspection found no N4 tables, job
+columns, functions, or indexes. The exact checks returned:
+
+- `PRODUCTION_N4_LEDGER_ENTRIES = 0`
+- `PRODUCTION_N4_TABLES = []`
+- `PRODUCTION_N4_JOB_COLUMNS = []`
+- `PRODUCTION_N4_FUNCTIONS = []`
+- `PRODUCTION_N4_INDEXES = []`
+- `UNEXPECTED_N4_PRODUCTION_OBJECTS = 0`
+
+The pre-N4 helper state is also intact: authenticated, anon, and public
+`EXECUTE` are absent, and authenticated `USAGE` on `app_private` is absent.
+The current Vercel Production deployment is `dpl_68rYMpdFacEpYw3R3RMqLLjx51YZ`,
+state `READY`, with alias `app.costacleanbcn.com`.
+
+- `PRODUCTION_READ_ONLY = YES`
+- `PRODUCTION_PRESTATE = PASS`
 - `PRODUCTION_MUTATIONS = 0`
-- `GLOBAL_CERT_STATUS = BLOCKED`
-- `POST_V3_N4_RELEASE_CERTIFIED = NO`
+- `PRODUCTION_N4_MIGRATION = NO`
+- `PRODUCTION_DEPLOYMENT = NO`
+- `GLOBAL_CERT_STATUS = PASS`
+- `POST_V3_N4_RELEASE_CERTIFIED = YES`
 
-The product remains release-candidate material, but global release
-certification cannot be declared until the authorized read-only Production
-prestate reconciliation is completed.
+This is certification only. It does not authorize applying N4 migrations or
+deploying the N4 product SHA. The next gate is explicit N4 Production release
+authorization.

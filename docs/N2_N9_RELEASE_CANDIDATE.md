@@ -45,6 +45,8 @@ The original N9 migration is retained unchanged as immutable provenance. Its `ge
 
 RC3 replaces the install artifact rather than pretending the old migration was valid. `20260923230000_n9_recurring_operational_templates_v2.sql` reproduces the original N9 tables, policies, grants, profitability extension and RPC behavior, with the two-stage workload aggregation built in. The RC2 correction remains unchanged and is excluded from RC3. RC1 and RC2 manifests and migration files remain independently verifiable historical evidence.
 
+The first RC3 QA transaction reached successful PostgreSQL creation of the RC3 objects, including N9 V2, but rolled back at the certifier because it incorrectly required `FORCE ROW LEVEL SECURITY` on every table. The N2 idempotency ledger intentionally declares `ENABLE ROW LEVEL SECURITY` only; the corrected certifier now derives `relforcerowsecurity` expectations table by table. QA runtime tests were not executed, and QA returned to its empty prestate with zero residue and zero migration-history writes.
+
 `DEVELOPMENT COMPLETE != DEPLOYED`. No remote Supabase migration, production backup, restore, JIT mutation, tag, or CP51F execution is implied. CP51F remains `DEFERRED_NON_BLOCKING`; the manual backup system remains ready.
 
 ## Release gate and rollback

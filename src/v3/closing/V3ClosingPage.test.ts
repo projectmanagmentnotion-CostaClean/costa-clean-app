@@ -71,8 +71,8 @@ describe('V3ClosingPage', () => {
     })
 
     expect(html).toContain('Snapshot con incidencias')
-    expect(html).toContain('<span class="v3-status v3-status--warning" aria-label="Snapshot: Snapshot con incidencias"')
-    expect(html).not.toContain('<span class="v3-status v3-status--success" aria-label="Snapshot: Snapshot con incidencias"')
+    expect(html).toContain('<span class="v3-closing-status-item__label">Snapshot</span><span class="v3-status v3-status--warning">Snapshot con incidencias</span>')
+    expect(html).not.toContain('<span class="v3-closing-status-item__label">Snapshot</span><span class="v3-status v3-status--success">Snapshot con incidencias</span>')
   })
 
   it('keeps period-specific actions disabled when the period cannot persist a snapshot', () => {

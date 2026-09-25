@@ -189,8 +189,8 @@ export function QuarterlyClosingPage({
     [invoices, selectedQuarter, selectedYear],
   )
   const quarterPayments = useMemo(
-    () => payments.filter((payment) => matchesDateQuarter(payment.payment_date, selectedYear, selectedQuarter)),
-    [payments, selectedQuarter, selectedYear],
+    () => payments.filter((payment) => quarterInvoices.some((invoice) => invoice.id === payment.invoice_id)),
+    [payments, quarterInvoices],
   )
   const quarterExpenses = useMemo(
     () => expenses.filter((expense) => matchesExpenseQuarter(expense, selectedYear, selectedQuarter)),
@@ -891,7 +891,7 @@ export function QuarterlyClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de cobros</span>
               <strong className="cc-dashboard-panel__value">{quarterPayments.length}</strong>
               <p className="cc-dashboard-panel__text">Importe cobrado del trimestre: {formatCurrency(quarterPaymentsTotal)}</p>
-              <p className="cc-dashboard-panel__text">Cobros registrados con fecha del trimestre.</p>
+              <p className="cc-dashboard-panel__text">Cobros vinculados a facturas emitidas en el trimestre, aunque se registren después.</p>
             </article>
 
             <article className="cc-quarterly-persistence__card">

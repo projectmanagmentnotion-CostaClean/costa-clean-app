@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "brainVersion": 1,
+  "objectiveVersion": 1,
+  "currentPhase": "M2",
+  "currentGate": "M2-HUMAN-REVIEW",
+  "status": "HUMAN_REQUIRED",
+  "baselineHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "lastVerifiedHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "completedGates": [],
+  "currentTaskIds": [],
+  "pendingTasks": [],
+  "blockers": [
+    { "id": "M2-HUMAN-OBJECTIVE-REVIEW", "type": "STRATEGIC_REVIEW", "status": "ACTIVE" },
+    { "id": "M2-ORIGINAL-REBASE-ACTIVE", "type": "WORKTREE_STATE", "status": "ACTIVE" },
+    { "id": "M2-HISTORICAL-CLAIMS", "type": "EVIDENCE_GAP", "status": "ACTIVE" }
+  ],
+  "pendingApprovals": ["M2-HUMAN-REVIEW"],
+  "lastRunId": null,
+  "lastExecutionReportId": null,
+  "lastDecisionId": null,
+  "tests": "UNKNOWN",
+  "lint": "UNKNOWN",
+  "typecheck": "UNKNOWN",
+  "build": "UNKNOWN",
+  "updatedAt": "2026-09-25T00:00:00.000Z",
+  "updatedBy": "orchestrator:m2-migration"
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "gateId": "M2-HUMAN-REVIEW",
+  "phaseId": "M2",
+  "title": "Review initial canonical Project Brain",
+  "objective": "Review and accept the initial Costa Clean Project Brain before any tactical execution.",
+  "status": "BLOCKED",
+  "dependsOn": [],
+  "acceptanceCriteria": [
+    "Project identity and canonical base are accepted.",
+    "Product and architecture interpretation are accepted or corrected.",
+    "Uncertainties and historical claims are explicitly handled.",
+    "A later bounded objective is defined separately from this migration."
+  ],
+  "allowedActions": ["read-only inspection", "Brain validation", "local audit reporting"],
+  "forbiddenActions": ["Costa Clean execution", "application code changes", "remote writes", "production access", "push", "pull request", "merge", "deployment", "secret use"],
+  "verification": ["JSON Schema validation", "orchestrator Brain loader", "manifest hash validation", "original worktree unchanged check"],
+  "riskClass": "HIGH",
+  "requiresApproval": true,
+  "completionEvidence": []
+}

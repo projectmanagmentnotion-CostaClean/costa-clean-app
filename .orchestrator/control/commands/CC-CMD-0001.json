@@ -36,7 +36,9 @@
     "A factual current baseline and blocker list are published to the result outbox/control plane.",
     "The next product action is not executed; if a new strategic choice is needed, create a proposal or HUMAN_REQUIRED state instead."
   ],
-  "allowedAutonomy": "LOCAL_ONLY",
+  "allowedAutonomy": [
+    "LOCAL_ONLY"
+  ],
   "allowedActions": [
     "read_repository",
     "create_isolated_worktree",

@@ -55,11 +55,11 @@ Existing fields/helpers support the core V1. Optimize queries before proposing s
 
 ## Open human decisions
 
-### O01 — Cancelled invoice treatment
+### O01 — Invoice cohort and cancelled-record treatment
 
-Current period engines sum period invoices without explicitly filtering cancelled invoices.
+Current Home and Closing invoice aggregates differ before cancellation is considered: Home excludes archived/deleted invoices, while Closing period selection uses the raw loaded invoice array. Neither current invoiced sum explicitly excludes cancelled invoices.
 
-Choose and document one:
+Choose and document one canonical Analytics cohort policy, then decide cancelled treatment:
 
 - preserve current engine semantics in analytics;
 - exclude cancelled invoices from the business KPI and deliberately reconcile closing semantics separately;
@@ -130,13 +130,13 @@ A visually attractive result KPI may imply accounting truth not supported by the
 
 Mitigation: keep M12 blocked.
 
-### RISK-03 — Cancelled-record ambiguity
+### RISK-03 — Lifecycle/cancelled-record ambiguity
 
 Severity: HIGH.
 
-Existing sums can include records a business user might expect excluded.
+Invoice aggregates diverge between Home-visible and Closing-raw cohorts. Expense reads omit optional lifecycle fields and current sums can include payment-state-cancelled records. A business user may therefore expect exclusions that current code does not apply consistently.
 
-Mitigation: H0 decision before certifying financial KPIs.
+Mitigation: H0 cohort/lifecycle decision plus reconciliation tests before certifying financial KPIs.
 
 ### RISK-04 — Home becomes a report wall
 

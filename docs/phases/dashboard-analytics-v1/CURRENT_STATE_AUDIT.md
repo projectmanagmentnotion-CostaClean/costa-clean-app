@@ -123,9 +123,12 @@ The requested 30d/3m/6m/12m presets are not currently part of the fiscal-period 
 
 ### Facturado
 
-Current engines select invoices whose `issue_date` falls inside the period and sum `invoice.total`.
+Two current implementations are demonstrably different:
 
-Important: those period engines do not explicitly exclude cancelled invoices. This is current code behavior. Analytics must not change that silently.
+- `useDashboardMetrics` builds `visibleInvoices` by excluding archived/deleted invoices, then calculates its current-month/all-time invoiced sums. It does not explicitly exclude cancelled invoices from those invoiced sums.
+- the Closing engines select period invoices from the raw loaded invoice array by `issue_date` and sum `invoice.total` without applying the same archived/deleted filter or an explicit cancelled filter.
+
+Therefore “Facturado del periodo” is **not yet a single canonical cross-module metric**. Analytics V1 needs a deliberate lifecycle/cancellation reconciliation before certification.
 
 ### Cobrado
 
@@ -133,7 +136,7 @@ Payments are filtered by `payment_date` and `payment.amount` is summed. This is 
 
 ### Pendiente de cobro
 
-Existing deterministic logic:
+The balance arithmetic is well supported:
 
 - builds paid amount per invoice from payments;
 - uses `invoice.paid_amount` when available, otherwise payment aggregation;
@@ -141,7 +144,12 @@ Existing deterministic logic:
 - tolerance: 0.009;
 - `invoiceSettlement.ts` uses the same tolerance boundary.
 
-The fiscal period engine defines pending as invoices issued in the selected period that still have balance today. The dashboard also has an all-current outstanding metric across all visible invoices. Both are valid but answer different questions and must be labeled separately.
+But the invoice cohort differs:
+
+- Home global outstanding starts from visible invoices and explicitly excludes cancelled invoices;
+- Closing period outstanding starts from raw period invoices and does not apply the same archived/deleted/cancelled filter.
+
+Therefore global current outstanding is demonstrable, while period outstanding needs cohort-semantics reconciliation before it becomes canonical.
 
 ### Invoice financial status
 
@@ -158,7 +166,7 @@ It separates documentary invoice status from financial state.
 
 Current closing logic selects expenses by fiscal year/quarter fields when applicable, otherwise by `expense_date`, then sums `expense.total`.
 
-The current period engine does not explicitly filter a cancelled expense payment status before summing. This is a semantic review item, not something to “fix” during planning.
+The current period engine does not explicitly filter a cancelled expense payment status before summing. In addition, current `EXPENSES_SELECT` does not load the optional archived/deleted/cancelled lifecycle fields declared on `ExpenseListItem`, so downstream visibility filtering cannot currently prove lifecycle exclusion. This is a semantic/data-contract review item, not something to “fix” during planning.
 
 ### Resultado / beneficio
 

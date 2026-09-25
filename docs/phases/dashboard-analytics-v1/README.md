@@ -55,9 +55,11 @@ Secondary analytics may include invoice financial state, expense categories, top
 ## Important semantic constraints
 
 - Facturado and cobrado are different concepts and use different date sources.
+- **Facturado is not yet one canonical cross-module metric:** current Home excludes archived/deleted invoices before its sums, while Closing selects period invoices from the raw loaded array. Neither current invoiced sum explicitly excludes cancelled invoices.
+- **Period outstanding also has cohort drift:** Home global outstanding excludes archived/deleted/cancelled invoices, while Closing period outstanding does not apply that same cohort filter before balance calculation.
 - “Vencida” must not be displayed: invoice models currently expose `issue_date` but no canonical invoice due date.
 - “Resultado/Beneficio” must not be inferred as `facturado - gastos` or `cobrado - gastos`.
-- Current invoiced/expense period engines do not filter cancelled records before summing. This is verified current behavior, but whether Analytics V1 should preserve or refine that treatment is an explicit human decision.
+- Current expense reads omit optional archived/deleted/cancelled lifecycle fields from `EXPENSES_SELECT`; lifecycle/cancellation treatment must be made explicit before certification.
 - Current “active client” semantics mean a visible client whose status is not `inactive`; this does not prove business activity inside an arbitrary historical period.
 
 ## Proposed technical shape

@@ -10,18 +10,18 @@ All money is EUR under current `businessRules`. Business timezone is `Europe/Mad
 
 ## M01 — FACTURADO_PERIODO
 
-**Status:** VERIFIED current behavior / semantic decision still open  
+**Status:** CONFLICTING CURRENT IMPLEMENTATIONS / HUMAN DECISION REQUIRED  
 **Business question:** ¿Qué total de factura pertenece al periodo por fecha de emisión?  
 **Existing source:** `buildClosingDeterministicSummary`, `buildClosingSummary`, `useDashboardMetrics` for current month.  
 **Data:** `invoices.issue_date`, `invoices.total`.  
-**Formula:** sum `invoice.total` for invoices whose `issue_date` is inside the selected period.  
+**Observed formulas:** Closing sums raw loaded invoices whose `issue_date` is inside the period; Home first excludes archived/deleted invoices, then sums its visible cohort. Neither current invoiced sum explicitly removes cancelled invoices.  
 **Range:** selected analytical period.  
 **Comparison:** previous equivalent period.  
 **Format:** EUR.  
 **Empty:** 0 € with “Sin facturas emitidas en este periodo.”  
 **Edge cases:** invalid/missing dates excluded by date helper; decimals rounded at summary boundary.  
 **Critical caveat:** current closing/dashboard period sums do not explicitly exclude cancelled invoices. Analytics V1 must not silently redefine this.  
-**Confidence:** HIGH for current behavior; MEDIUM for desired business interpretation until cancellation treatment is approved.
+**Confidence:** HIGH that the two current behaviors are identified correctly; no single canonical Analytics definition until lifecycle/cancellation treatment is approved.
 
 ## M02 — COBRADO_PERIODO
 
@@ -39,9 +39,9 @@ All money is EUR under current `businessRules`. Business timezone is `Europe/Mad
 
 ## M03 — PENDIENTE_FACTURAS_PERIODO
 
-**Status:** VERIFIED  
+**Status:** CONFLICTING CURRENT IMPLEMENTATIONS / HUMAN DECISION REQUIRED  
 **Business question:** ¿Qué saldo sigue abierto hoy en facturas emitidas dentro del periodo?  
-**Existing source:** deterministic closing summary.  
+**Existing source:** deterministic closing summary for period cohort plus current Home global-outstanding logic for lifecycle/cancellation evidence.  
 **Data:** `invoice.total`, optional `invoice.paid_amount`, payment rows grouped by `invoice_id`.  
 **Formula per invoice:** `max(total - paidAmount, 0)`; include balance when > 0.009.  
 **Range:** invoices selected by `issue_date` in period; payments used to determine current balance are not restricted to payment period.  
@@ -49,7 +49,7 @@ All money is EUR under current `businessRules`. Business timezone is `Europe/Mad
 **Format:** EUR.  
 **Empty:** 0 € / “No hay saldo pendiente en facturas de este periodo.”  
 **Edge cases:** overpayment clamps to zero; partial payments supported; tolerance 0.009.  
-**Confidence:** HIGH.
+**Confidence:** HIGH for balance arithmetic; no canonical period cohort until lifecycle/cancellation filtering is reconciled.
 
 ## M04 — PENDIENTE_GLOBAL_ACTUAL
 
@@ -74,7 +74,7 @@ All money is EUR under current `businessRules`. Business timezone is `Europe/Mad
 **Comparison:** previous equivalent period.  
 **Format:** EUR.  
 **Empty:** 0 € / “Sin gastos registrados en este periodo.”  
-**Critical caveat:** current period engine does not explicitly remove expenses whose payment/lifecycle state may be cancelled.  
+**Critical caveat:** current period engine does not explicitly remove expenses whose payment state may be cancelled; current expense reads also omit optional lifecycle fields (`archived_at`, `deleted_at`, `cancelled_at`) from `EXPENSES_SELECT`.  
 **Confidence:** HIGH for current behavior; MEDIUM for desired cancellation treatment.
 
 ## M06 — ESTADO_FINANCIERO_FACTURA
@@ -177,14 +177,14 @@ All money is EUR under current `businessRules`. Business timezone is `Europe/Mad
 
 ## Proposed V1 metric gate
 
-### Ready to implement after two semantics are confirmed
+### Core target metrics after semantic reconciliation
 
-- M01 Facturado.
-- M02 Cobrado.
-- M03 Pendiente del periodo.
-- M05 Gastos.
-- M06 Invoice financial state.
-- M09 Expenses by category.
+- M01 Facturado — BLOCKED on cross-module lifecycle/cancellation reconciliation.
+- M02 Cobrado — VERIFIED.
+- M03 Pendiente del periodo — BLOCKED on cohort reconciliation; balance arithmetic is verified.
+- M05 Gastos — current behavior is demonstrable, but lifecycle/cancellation treatment requires product confirmation.
+- M06 Invoice financial state — VERIFIED.
+- M09 Expenses by category — taxonomy/aggregation is demonstrable and inherits M05's cohort decision.
 
 ### Safe current snapshot/support
 

@@ -7,8 +7,10 @@ Status: FUTURE PLAN ONLY. None of these sprints is authorized by this document.
 Before product implementation:
 
 - review this strategic package;
-- decide invoice-cancellation treatment for Facturado;
-- decide cancelled-expense treatment for Gastos;
+- reconcile Home-visible vs Closing-raw invoice lifecycle semantics for Facturado;
+- reconcile the invoice cohort used by period outstanding;
+- decide explicit cancelled-invoice treatment;
+- decide cancelled-expense/lifecycle treatment for Gastos;
 - decide Home balance between daily cockpit and business analytics;
 - decide whether “cliente nuevo” means client row creation or conversion event;
 - approve the top-client metric dependency on the Facturado definition;
@@ -29,7 +31,7 @@ Create a pure, tested analytics layer without changing visible Home composition.
 - period normalization;
 - previous-period comparison;
 - shared lifecycle filters;
-- verified M01–M09 selectors only as authorized by H0;
+- only H0-approved selectors from M01–M09;
 - temporal bucket engine;
 - typed analytics model;
 - adapter over current `useAppData` arrays;

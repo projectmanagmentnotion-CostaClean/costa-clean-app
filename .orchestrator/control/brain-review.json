@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "reviewId": "CC-BRAIN-REVIEW-0001",
+  "projectId": "costa-clean-app",
+  "source": "CHATGPT_PROJECT",
+  "decision": "ACCEPT",
+  "status": "FINAL",
+  "reviewedBranch": "orchestrator/brain-review",
+  "reviewedBrainVersion": 1,
+  "reviewedObjectiveVersion": 1,
+  "reviewedCanonicalContextHash": "7be0a9180d35c3444cfe485c20bd30dbcb97637a1d2330b7e6ac28b395967b48",
+  "reviewedCanonicalMainHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "reviewedAt": "2026-09-25T11:00:45Z",
+  "acceptanceMeaning": "Accepted as the initial durable execution snapshot for Costa Clean. This acceptance does not authorize functional execution by itself.",
+  "conditions": [
+    "Historical PASS/completion claims remain unverified until recertified from current evidence.",
+    "The original active rebase must remain untouched unless explicitly handled under a later approved command.",
+    "No Planner, Executor, AutonomousRun, production, Supabase remote, Vercel remote, or main-branch mutation is authorized by this review alone.",
+    "Every future execution still requires an accepted StrategicCommand bound to this Brain or a later accepted Brain version."
+  ],
+  "nextRecommendedAction": "Promote this reviewed Brain into the orchestrator's accepted project context, then wait for the first ChatGPT-authored StrategicCommand."
+}

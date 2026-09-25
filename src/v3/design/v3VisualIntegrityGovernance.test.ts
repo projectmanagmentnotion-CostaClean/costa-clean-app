@@ -60,6 +60,13 @@ describe('V3 visual integrity governance', () => {
     for (const variant of ['v3-action--primary', 'v3-action--secondary', 'v3-action--ghost']) expect(v3Css).toContain(variant)
   })
 
+  it('stacks the Cierres heading at tablet widths and prevents status word fragmentation', () => {
+    expect(v3Css).toContain('overflow-wrap: normal')
+    expect(v3Css).toContain('word-break: normal')
+    expect(v3Css).toContain('@media (max-width: 820px)')
+    expect(v3Css).toContain('.v3-closing-section-heading { align-items: stretch; flex-direction: column; }')
+  })
+
   it('keeps reduced motion governance present', () => {
     expect(v3Css).toContain('@media (prefers-reduced-motion: reduce)')
     expect(contract).toContain('prefers-reduced-motion: reduce')

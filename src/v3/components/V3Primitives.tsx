@@ -63,7 +63,7 @@ export function V3KpiGroup({ children, variant = 'default', className = '' }: { 
 }
 
 export function V3EntityStatus({ label, tone = 'neutral', context }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger'; context?: string }) {
-  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}{label}</span>
+  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}<span className="v3-status__label">{label}</span></span>
 }
 
 export const V3Status = V3EntityStatus

@@ -10,5 +10,6 @@ describe('V3ExpenseRow', () => {
     expect(html).toContain('121,00')
     expect(html).toContain('Sin documento')
     expect(html).toContain('Pendiente')
+    expect(html.match(/class="v3-status/g)?.length).toBe(2)
   })
 })

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "canonicalRepository": "projectmanagmentnotion-CostaClean/costa-clean-app",
+  "canonicalBranch": "main",
+  "brainReviewBranch": "orchestrator/brain-review",
+  "controlBranch": "orchestrator/control",
+  "commandProtocolVersion": 1,
+  "resultProtocolVersion": 1,
+  "status": "WAITING_FOR_STRATEGIC_COMMAND"
+}

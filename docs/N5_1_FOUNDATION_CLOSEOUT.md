@@ -50,3 +50,32 @@ N5_1_RUNTIME_SECURITY = PASS
 INDEPENDENT_REVIEW = BLOCKED (automated read-only reviewer timed out; manual diff/gate review PASS)
 N5_1_STATUS = BLOCKED_PENDING_INDEPENDENT_REVIEW
 ```
+
+## Authoritative final status
+
+The prior timeout entry above is retained as historical evidence. The subsequent independent read-only review of the exact product SHA completed with no findings. This section is authoritative for the final N5.1 status.
+
+```text
+INDEPENDENT_REVIEW = PASS
+P0 = 0
+P1 = 0
+P2 = 0
+P3 = 0
+
+N5_1_STATUS = PASS
+
+QA_FINAL_SESSIONS = 0
+QA_FINAL_DOCUMENTS = 0
+QA_FINAL_CAPTURE_OBJECTS = 0
+
+PUBLIC_ACCESS = DENIED
+ANON_ACCESS = DENIED
+CROSS_USER_ACCESS = DENIED
+
+AUTO_FINANCIAL_CREATION = 0
+PRODUCTION_MUTATIONS = 0
+N5_2 = NOT_STARTED
+PRODUCTION_RELEASE = NOT_STARTED
+
+QA_AUTH_ADMIN_LIST_USERS_DEBT = EXISTING_OUT_OF_SCOPE
+```

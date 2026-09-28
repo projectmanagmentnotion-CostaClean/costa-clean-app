@@ -57,6 +57,7 @@ Attempt identity combines document, SHA-256, schema version, provider and attemp
 
 - Fixture output is not OCR and must never be presented as Production extraction.
 - No real provider is integrated and no provider recommendation is selected for runtime use.
+- QA runtime R2 hardening requires JSON input within a bounded size, valid UUIDs, an explicit bounded attempt number, a non-expired non-terminal owned session, an allowed document MIME/size, and a private Storage read before persistence. Duplicate `(document, schema, provider, attempt)` requests are rejected by the durable unique key.
 - N5.3 must own deep validation, reconciliation and normalization policy.
 - N5.4 must own supplier master, matching, aliases, analytics and merge decisions.
 - QA migration `20260928173312_n52_document_extraction_foundation` is applied to Supabase project `kpvvydthlxupjjqqdpxy` with RLS and FORCE RLS enabled. Edge Function `expense-document-extraction` is ACTIVE there with `verify_jwt=true`. Production remains untouched, and the browser product boundary remains fail-closed until a separate client wiring decision.

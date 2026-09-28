@@ -6,6 +6,9 @@ const PROVIDER_VERSION = 'n5.2-fixture-v1'
 const BUCKET = 'expense-receipts'
 
 type JsonRecord = Record<string, unknown>
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const MAX_REQUEST_BYTES = 16 * 1024
+const MAX_ATTEMPT = 100
 
 const json = (body: JsonRecord, status = 200) => new Response(JSON.stringify(body), {
   status,
@@ -68,11 +71,19 @@ const fixtureProposal = () => ({
 
 const readBody = async (req: Request) => {
   try {
-    const body = await req.json() as JsonRecord
+    const contentType = req.headers.get('Content-Type')?.toLowerCase() ?? ''
+    if (!contentType.startsWith('application/json')) return null
+    const contentLength = Number(req.headers.get('Content-Length') ?? 0)
+    if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) return null
+    const rawBody = await req.text()
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_REQUEST_BYTES) return null
+    const body = JSON.parse(rawBody) as JsonRecord
     const captureSessionId = typeof body.captureSessionId === 'string' ? body.captureSessionId : ''
     const captureDocumentId = typeof body.captureDocumentId === 'string' ? body.captureDocumentId : ''
-    if (!captureSessionId || !captureDocumentId) return null
-    return { captureSessionId, captureDocumentId }
+    const requestedAttempt = body.attempt === undefined ? 1 : body.attempt
+    if (!UUID_PATTERN.test(captureSessionId) || !UUID_PATTERN.test(captureDocumentId)) return null
+    if (typeof requestedAttempt !== 'number' || !Number.isInteger(requestedAttempt) || requestedAttempt < 1 || requestedAttempt > MAX_ATTEMPT) return null
+    return { captureSessionId, captureDocumentId, attempt: requestedAttempt }
   } catch {
     return null
   }
@@ -103,17 +114,27 @@ Deno.serve(async (req: Request) => {
 
   const { data: session, error: sessionError } = await userClient
     .from('expense_capture_sessions')
-    .select('id, created_by, status')
+    .select('id, created_by, status, expires_at')
     .eq('id', body.captureSessionId)
     .maybeSingle()
   const { data: document, error: documentError } = await userClient
     .from('expense_capture_documents')
-    .select('id, capture_session_id, storage_path, original_filename, mime_type, sha256')
+    .select('id, capture_session_id, storage_path, original_filename, mime_type, file_size_bytes, sha256')
     .eq('id', body.captureDocumentId)
     .maybeSingle()
 
-  if (sessionError || documentError || !session || !document || session.created_by !== authData.user.id || document.capture_session_id !== session.id) {
+  const sessionExpired = !session?.expires_at || new Date(session.expires_at).getTime() <= Date.now()
+  const terminalSession = session?.status === 'CANCELLED' || session?.status === 'COMPLETED' || session?.status === 'FINALIZING'
+  if (sessionError || documentError || !session || !document || session.created_by !== authData.user.id || document.capture_session_id !== session.id || sessionExpired || terminalSession) {
     return json({ error: 'CAPTURE_DOCUMENT_NOT_FOUND' }, 404)
+  }
+
+  if (!document.original_filename.toLowerCase().startsWith('fixture-')) {
+    return json({ ...safeError('EXTRACTION_RUNTIME_NOT_CONFIGURED', 'La extracción real no está configurada en QA.', { provider: PROVIDER, providerVersion: PROVIDER_VERSION }) }, 422)
+  }
+
+  if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(document.mime_type) || document.file_size_bytes > 10485760) {
+    return json({ ...safeError('DOCUMENT_INVALID', 'El documento no cumple los límites admitidos.', null) }, 422)
   }
 
   const { data: privateFile, error: fileError } = await adminClient.storage.from(BUCKET).download(document.storage_path)
@@ -121,21 +142,7 @@ Deno.serve(async (req: Request) => {
     return json({ ...safeError('DOCUMENT_UNAVAILABLE', 'No se pudo leer el documento privado.', null) }, 422)
   }
 
-  if (!document.original_filename.toLowerCase().startsWith('fixture-')) {
-    return json({ ...safeError('EXTRACTION_RUNTIME_NOT_CONFIGURED', 'La extracción real no está configurada en QA.', { provider: PROVIDER, providerVersion: PROVIDER_VERSION }) }, 422)
-  }
-
-  const { data: previousAttempts, error: attemptsError } = await adminClient
-    .from('expense_capture_extractions')
-    .select('attempt')
-    .eq('capture_document_id', document.id)
-    .eq('schema_version', SCHEMA_VERSION)
-    .eq('provider', PROVIDER)
-    .order('attempt', { ascending: false })
-    .limit(1)
-  if (attemptsError) return json({ error: 'EXTRACTION_STATE_UNAVAILABLE' }, 500)
-
-  const attempt = (previousAttempts?.[0]?.attempt ?? 0) + 1
+  const attempt = body.attempt
   const idempotencyKey = `${document.sha256}:${SCHEMA_VERSION}:${PROVIDER}:${attempt}`
   const now = new Date().toISOString()
   const { data: extraction, error: insertError } = await adminClient
@@ -162,7 +169,7 @@ Deno.serve(async (req: Request) => {
     })
     .select('id, attempt, idempotency_key')
     .single()
-  if (insertError || !extraction) return json({ error: 'EXTRACTION_ALREADY_RUNNING' }, 409)
+  if (insertError || !extraction) return json({ error: 'EXTRACTION_ATTEMPT_ALREADY_EXISTS' }, 409)
 
   const proposal = fixtureProposal()
   const { error: updateError } = await adminClient

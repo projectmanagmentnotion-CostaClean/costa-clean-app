@@ -23,12 +23,24 @@ const fixtureProposal = () => ({
   vatLines: [{ rate: field('10', 'IVA 10%', 0.82), base: field('50.00', 'Base 10%: 50,00 €', 0.8), tax: field('5.00', 'IVA 10%: 5,00 €', 0.8) }, { rate: field('21', 'IVA 21%', 0.96), base: field('100.00', 'Base 21%: 100,00 €', 0.95), tax: field('21.00', 'IVA 21%: 21,00 €', 0.95) }],
   payment: { method: missing() }, confidence: { overall: 0.94 },
 })
+const isRecord = (value: unknown): value is JsonRecord => Boolean(value && typeof value === 'object' && !Array.isArray(value))
+const validField = (value: unknown) => {
+  if (!isRecord(value) || !('value' in value) || !('rawValue' in value) || !('confidence' in value) || !('source' in value) || !('evidence' in value)) return false
+  if (value.value === null) return value.rawValue === null && value.confidence === null && value.source === 'missing' && value.evidence === null
+  if (typeof value.rawValue !== 'string' || typeof value.confidence !== 'number' || !Number.isFinite(value.confidence) || value.confidence < 0 || value.confidence > 1 || value.source !== 'document' || !isRecord(value.evidence)) return false
+  return Number.isInteger(value.evidence.page) && Number(value.evidence.page) >= 1 && typeof value.evidence.text === 'string'
+}
 const validProposal = (proposal: unknown) => {
-  if (!proposal || typeof proposal !== 'object') return false
-  const candidate = proposal as JsonRecord
-  const amounts = candidate.amounts as JsonRecord | undefined
-  if (candidate.schemaVersion !== SCHEMA_VERSION || !Array.isArray(candidate.vatLines) || !amounts) return false
-  return ['net', 'tax', 'gross'].every((key) => /^\d+(\.\d{1,2})?$/.test(String((amounts[key] as JsonRecord | undefined)?.value ?? '')))
+  if (!isRecord(proposal) || proposal.schemaVersion !== SCHEMA_VERSION || !isRecord(proposal.documentType) || !isRecord(proposal.supplier) || !isRecord(proposal.invoice) || !isRecord(proposal.amounts) || !isRecord(proposal.payment) || !isRecord(proposal.confidence) || !Array.isArray(proposal.vatLines)) return false
+  const amounts = proposal.amounts
+  const supplier = proposal.supplier
+  const invoice = proposal.invoice
+  const payment = proposal.payment
+  const confidence = proposal.confidence
+  const requiredFields = [proposal.documentType, supplier.rawName, supplier.legalNameCandidate, supplier.commercialNameCandidate, supplier.taxId, supplier.normalizedTaxIdCandidate, supplier.vatId, supplier.address, supplier.postalCode, supplier.city, supplier.country, supplier.phone, supplier.email, supplier.website, invoice.number, invoice.issueDate, invoice.dueDate, invoice.currency, amounts.net, amounts.tax, amounts.gross, amounts.discount, amounts.withholding, payment.method]
+  if (!requiredFields.every(validField) || typeof confidence.overall !== 'number' || !Number.isFinite(confidence.overall) || confidence.overall < 0 || confidence.overall > 1) return false
+  if (!proposal.vatLines.every((line) => isRecord(line) && validField(line.rate) && validField(line.base) && validField(line.tax))) return false
+  return ['net', 'tax', 'gross'].every((key) => /^\d+(\.\d{1,2})?$/.test(String((amounts[key] as JsonRecord).value ?? '')))
 }
 const parseRequest = async (req: Request) => {
   const contentType = req.headers.get('Content-Type')?.toLowerCase() ?? ''
@@ -77,7 +89,7 @@ Deno.serve(async (req: Request) => {
   if (row.action === 'RETRY_NOT_ELIGIBLE') return json({ ...safeError('RETRY_NOT_ELIGIBLE', 'Solo se puede reintentar una extracción fallida.', null) }, 409)
   if (row.action === 'EXISTING') {
     const { data: existing } = await adminClient.from('expense_capture_extractions').select('proposal, error_code, error_message_safe').eq('id', row.extraction_id).maybeSingle()
-    if (row.status === 'SUCCEEDED' && existing?.proposal) return json({ ok: true, extractionId: row.extraction_id, attempt: row.attempt, proposal: existing.proposal, metadata: functionMetadata(), reused: true })
+    if (row.status === 'SUCCEEDED' && existing?.proposal) return json({ ok: true, extractionId: row.extraction_id, attempt: row.attempt, proposal: existing.proposal, metadata: null, reused: true })
     if (row.status === 'FAILED') return json({ ...safeError(existing?.error_code ?? 'EXTRACTION_FAILED', existing?.error_message_safe ?? 'La extracción ha fallado.', null), extractionId: row.extraction_id, attempt: row.attempt }, 422)
     return json({ ok: false, status: row.status, extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
   }

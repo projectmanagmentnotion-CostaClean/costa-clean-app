@@ -352,6 +352,23 @@ error-level console entries, schema-cache errors, and horizontal overflow.
 `PRODUCTION_ACCEPTANCE = PENDING`
 `N5_STATUS = PAUSED`
 
+## FINAL PRODUCTION RELEASE STATE — 2026-09-28
+
+The pending Production gate was completed from exact product RC
+`2d81aff8893fbc89ab041c38e9e657e632aec38a`. The promoted deployment is
+`dpl_sEgCM6rhbRfsYEbJnb8A7WatZT7u` and the canonical alias is
+`https://app.costacleanbcn.com`.
+
+Canonical routing, authenticated read-only module smoke, Cierres responsive
+checks at 390x844 / 768x1024 / 1440x900, and the T3 2026 cohort calculation
+passed. Production writes, migrations, DNS changes, and N5 mutations were
+zero. The complete evidence is recorded in
+`docs/SCREENSHOT_CORRECTIONS_PRODUCTION_CLOSEOUT_2026-09-24.md`.
+
+`SCREENSHOT_CORRECTIONS = CLOSED/PASS`
+`PRODUCTION_ACCEPTANCE = PASS`
+`N5_STATUS = PAUSED`
+
 ## HISTORICAL INTERMEDIATE GATE RECORD — 2026-09-25
 
 This is the final and only current closeout state. Every preceding

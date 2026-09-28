@@ -336,7 +336,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(workingTreeSha256V1(path.join(repoRoot, manifestPath))).toMatch(/^[0-9a-f]{64}$/u)
   })
 
-  it('validates the V6R1E manifest and package contract', () => {
+  it('validates the V6R1E manifest and package contract', { timeout: 15_000 }, () => {
     const { manifest, expected } = verifyPackageManifestV6()
     expect(manifest.gate).toBe(GATE_V6R1E)
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)

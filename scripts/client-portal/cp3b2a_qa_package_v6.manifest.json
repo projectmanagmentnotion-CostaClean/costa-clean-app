@@ -64,7 +64,7 @@
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "8979feda7bfb7faede06dace877b47565799eedd",
+      "gitBlobId": "5ca0b8d460fa4477b24fe191e370cf83e8983c53",
       "blobSha256": "d3eeb5d14d9461a6ae1ee3decdd70aa32417fa6d0afd6acf29839e9fc0499268"
     },
     {
@@ -106,7 +106,7 @@
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "04144bd1d687430b099b888e306c7869fa321006",
+      "gitBlobId": "bcf97511637f1cd4139b205f71ea07911e238ce3",
       "blobSha256": "0de72e135ae44f845c990c195bfbbb77b11ea845f1795fff3e8f2f627d106959"
     },
     {

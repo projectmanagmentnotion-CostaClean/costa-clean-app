@@ -20,6 +20,6 @@ export function startExtractionAttempt(record: ExtractionAttemptRecord, now = ne
 }
 
 export function finishExtractionAttempt(record: ExtractionAttemptRecord, result: { status: Extract<'SUCCEEDED' | 'FAILED', ExtractionStatus>; proposal?: ExtractionProposal | null; errorCode?: string | null; errorMessageSafe?: string | null }, now = new Date().toISOString()): ExtractionAttemptRecord {
-  if (record.status !== 'PENDING' && record.status !== 'PROCESSING') throw new Error('Solo se puede finalizar un intento pendiente o en proceso.')
+  if (record.status !== 'PROCESSING') throw new Error('Solo se puede finalizar un intento en proceso.')
   return { ...record, status: result.status, proposal: result.proposal ?? null, completedAt: result.status === 'SUCCEEDED' ? now : null, failedAt: result.status === 'FAILED' ? now : null, errorCode: result.errorCode ?? null, errorMessageSafe: result.errorMessageSafe ?? null, updatedAt: now }
 }

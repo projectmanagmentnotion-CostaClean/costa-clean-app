@@ -14,6 +14,11 @@ describe('N5.1 capture entry contract', () => {
     expect(source).toContain('Extraer datos')
     expect(source).toContain('nunca crea el gasto automáticamente')
     expect(source).toContain('Continuar manualmente')
+    expect(source).not.toContain('createFixtureExtractionProvider')
+    expect(source).not.toContain('€')
+    expect(source).toContain('Confianza no disponible')
+    expect(source).toContain('Campos no detectados:')
+    expect(source).toContain('Confianza baja:')
   })
 
   it('uses real file inputs with the supported contract', () => {

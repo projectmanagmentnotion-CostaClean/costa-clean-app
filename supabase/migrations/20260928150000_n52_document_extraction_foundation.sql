@@ -1,8 +1,21 @@
 -- N5.2 local foundation. Do not apply to QA until explicit authorization.
 -- Proposals are evidence, never authoritative financial records.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'expense_capture_documents_id_session_key'
+      and conrelid = 'public.expense_capture_documents'::regclass
+  ) then
+    alter table public.expense_capture_documents
+      add constraint expense_capture_documents_id_session_key unique (id, capture_session_id);
+  end if;
+end;
+$$;
+
 create table if not exists public.expense_capture_extractions (
   id uuid primary key default gen_random_uuid(),
-  capture_document_id uuid not null references public.expense_capture_documents(id) on delete restrict,
+  capture_document_id uuid not null,
   capture_session_id uuid not null references public.expense_capture_sessions(id) on delete restrict,
   schema_version integer not null check (schema_version > 0),
   attempt integer not null check (attempt > 0),
@@ -25,6 +38,22 @@ create table if not exists public.expense_capture_extractions (
   unique (idempotency_key)
 );
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'expense_capture_extractions_document_session_fk'
+      and conrelid = 'public.expense_capture_extractions'::regclass
+  ) then
+    alter table public.expense_capture_extractions
+      add constraint expense_capture_extractions_document_session_fk
+      foreign key (capture_document_id, capture_session_id)
+      references public.expense_capture_documents(id, capture_session_id)
+      on delete restrict;
+  end if;
+end;
+$$;
+
 create index if not exists expense_capture_extractions_owner_idx on public.expense_capture_extractions (created_by, updated_at desc);
 create index if not exists expense_capture_extractions_document_idx on public.expense_capture_extractions (capture_document_id, attempt desc);
 
@@ -37,5 +66,6 @@ grant select, insert, update, delete on public.expense_capture_extractions to se
 drop policy if exists n52_extractions_owner_read on public.expense_capture_extractions;
 create policy n52_extractions_owner_read on public.expense_capture_extractions for select to authenticated using (
   created_by = (select auth.uid())
+  and app_private.is_active_internal_staff((select auth.uid()))
   and exists (select 1 from public.expense_capture_sessions s where s.id = capture_session_id and s.created_by = (select auth.uid()))
 );

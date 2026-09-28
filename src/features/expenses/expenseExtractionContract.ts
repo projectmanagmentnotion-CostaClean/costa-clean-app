@@ -100,6 +100,7 @@ export interface ExtractionAttemptRecord extends ExtractionAttemptIdentity, Extr
 
 export const EXTRACTION_ERROR_CODES = [
   'UNSUPPORTED_DOCUMENT',
+  'EXTRACTION_RUNTIME_NOT_CONFIGURED',
   'EXTRACTION_PROVIDER_UNAVAILABLE',
   'EXTRACTION_TIMEOUT',
   'INVALID_PROVIDER_RESPONSE',
@@ -131,7 +132,10 @@ function isEvidence(value: unknown): value is ExtractionEvidence {
   if (evidence.text !== undefined && typeof evidence.text !== 'string') return false
   if (evidence.boundingBox !== undefined) {
     const box = evidence.boundingBox
-    if (!box || typeof box !== 'object' || !['x', 'y', 'width', 'height'].every((key) => typeof (box as Record<string, unknown>)[key] === 'number')) return false
+    if (!box || typeof box !== 'object' || !['x', 'y', 'width', 'height'].every((key) => {
+      const coordinate = (box as Record<string, unknown>)[key]
+      return typeof coordinate === 'number' && Number.isFinite(coordinate) && coordinate >= 0
+    })) return false
   }
   return true
 }
@@ -139,7 +143,11 @@ function isEvidence(value: unknown): value is ExtractionEvidence {
 export function isExtractedField(value: unknown): value is ExtractedField<unknown> {
   if (!value || typeof value !== 'object') return false
   const field = value as Record<string, unknown>
-  return (field.value === null || field.value === undefined || typeof field.value === 'string')
+  return Object.prototype.hasOwnProperty.call(field, 'value')
+    && Object.prototype.hasOwnProperty.call(field, 'rawValue')
+    && Object.prototype.hasOwnProperty.call(field, 'confidence')
+    && Object.prototype.hasOwnProperty.call(field, 'source')
+    && (field.value === null || typeof field.value === 'string')
     && (field.rawValue === null || typeof field.rawValue === 'string')
     && (field.confidence === null || isConfidence(field.confidence))
     && ['document', 'provider', 'missing'].includes(String(field.source))

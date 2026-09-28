@@ -25,4 +25,10 @@ describe('N5.2 extraction contract', () => {
   it('keeps missing values explicit instead of inventing currency or fields', () => {
     expect(createMissingField()).toEqual({ value: null, rawValue: null, confidence: null, source: 'missing' })
   })
+
+  it('rejects incomplete fields and non-finite evidence geometry', () => {
+    expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { value: 'Supplier' } } })).toMatchObject({ ok: false })
+    expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { ...validProposal.supplier.rawName, evidence: { page: 1, boundingBox: { x: 0, y: 0, width: Number.NaN, height: 10 } } } } })).toMatchObject({ ok: false })
+    expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { ...validProposal.supplier.rawName, evidence: { page: 1, boundingBox: { x: 0, y: 0, width: -1, height: 10 } } } } })).toMatchObject({ ok: false })
+  })
 })

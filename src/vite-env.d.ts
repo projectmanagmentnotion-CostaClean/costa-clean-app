@@ -6,6 +6,7 @@ declare const __APP_BUILD_DATE__: string
 
 interface ImportMetaEnv {
   readonly VITE_COSTA_CLEAN_VAPID_PUBLIC_KEY?: string
+  readonly VITE_N52_LOCAL_FIXTURE?: string
 }
 
 interface Window {

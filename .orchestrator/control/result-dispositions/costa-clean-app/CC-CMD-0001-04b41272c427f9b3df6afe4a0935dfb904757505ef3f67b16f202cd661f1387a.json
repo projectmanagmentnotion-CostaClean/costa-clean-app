@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CMD-0001",
+  "runId": "ar_3c5298ae-eee5-40d5-b7f2-0f29f641c7be",
+  "resultHash": "04b41272c427f9b3df6afe4a0935dfb904757505ef3f67b16f202cd661f1387a",
+  "disposition": "INVALIDATED",
+  "reason": "EXECUTION_BASELINE_MISMATCH;FACT_BINDING_CONTAMINATION;FACT_PUBLICATION_MISMATCH",
+  "supersedingResultId": null,
+  "createdAt": "2026-09-25T16:31:59.360Z"
+}

@@ -46,6 +46,8 @@ revoke all on public.expense_capture_sessions from public, anon, authenticated, 
 revoke all on public.expense_capture_documents from public, anon, authenticated, service_role;
 grant select, insert, update, delete on public.expense_capture_sessions to service_role;
 grant select, insert, update, delete on public.expense_capture_documents to service_role;
+grant select on public.expense_capture_sessions to authenticated;
+grant select on public.expense_capture_documents to authenticated;
 
 drop policy if exists expense_capture_sessions_internal_read on public.expense_capture_sessions;
 create policy expense_capture_sessions_internal_read on public.expense_capture_sessions

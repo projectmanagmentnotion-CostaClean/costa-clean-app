@@ -4,7 +4,7 @@
 
 N5.2 prepares a local-first, supplier-aware extraction proposal for documents captured by N5.1. The proposal is evidence, not accounting data. A human must review and confirm it before any future expense creation.
 
-Included: versioned proposal types, field provenance, safe structural validation, decimal money strings, multi-VAT lines, auditable attempt identity, a deterministic fixture provider, the review-first UI state, and a local migration draft. The product runtime reaches extraction through `expenseExtractionClient`; it has no provider or fixture injection surface and fails closed with `EXTRACTION_RUNTIME_NOT_CONFIGURED` until a trusted server endpoint is configured. Deterministic fixture wiring lives in `expenseExtractionFixtureClient` and is reserved for local tests/certification. Excluded: QA migration apply, Edge Function deploy, external provider calls, provider secrets, OCR, AI, expense creation, supplier creation or matching, deep accounting validation, and Production.
+Included: versioned proposal types, field provenance, safe structural validation, decimal money strings, multi-VAT lines, auditable attempt identity, a deterministic fixture provider, the review-first UI state, the QA foundation migration, and a QA-only trusted Edge Function runtime. The product runtime reaches extraction through `expenseExtractionClient`; it has no provider or fixture injection surface and fails closed with `EXTRACTION_RUNTIME_NOT_CONFIGURED` until browser-to-server wiring is explicitly approved. Deterministic fixture wiring lives in `expenseExtractionFixtureClient` and is reserved for local tests/certification. Excluded: external provider calls, provider secrets, OCR, AI, expense creation, supplier creation or matching, deep accounting validation, and Production.
 
 ## Invariant
 
@@ -31,7 +31,7 @@ Persisted accounting calculations must use exact decimal or minor-unit represent
 
 `ExpenseExtractionClient` is the product boundary. The local-only implementation is `fixture`, version `n5.2-fixture-v1`, and it is exposed only through the explicit fixture client. It is deterministic, clearly labelled as not OCR, and only accepts filenames explicitly prefixed `fixture-`. The ordinary product runtime fails closed with a safe unavailable result. Provider errors, timeouts and invalid responses never expose stack traces.
 
-No provider account, paid API, Edge Function or secret is configured. A future real adapter must run behind a trusted server boundary, verify the authenticated owner/session, read the private Storage object server-side, validate the response, and persist only safe structured output.
+No external provider account, paid API or provider secret is configured. The QA runtime is a JWT-protected Edge Function using only the deterministic `fixture` provider for filenames prefixed `fixture-`; it verifies the authenticated owner/session, reads the private Storage object server-side, persists only safe structured output, and never creates financial records. A future real adapter must remain behind the same trusted server boundary.
 
 ## Supplier-forward compatibility
 
@@ -43,7 +43,7 @@ The N5.1 review shell now exposes `Extraer datos`, an explicit analysing state, 
 
 ## Security and privacy
 
-The local migration draft creates `expense_capture_extractions` with composite document/session and session/owner foreign keys, coherent state checks, RLS and FORCE RLS. Authenticated users receive read access only through an owner-scoped and active-internal-staff policy; direct authenticated writes are not granted. Service-role grants exist only for server-side infrastructure in the unapplied draft and are never referenced by frontend code. No public or anonymous access is introduced.
+The QA migration creates `expense_capture_extractions` with composite document/session and session/owner foreign keys, coherent state checks, RLS and FORCE RLS. Authenticated users receive read access only through an owner-scoped and active-internal-staff policy; direct authenticated writes are not granted. Service-role grants exist only for server-side infrastructure and are never referenced by frontend code. No public or anonymous access is introduced.
 
 Amounts are rendered with the detected currency code. Null or unknown currency never assumes EUR or invents a symbol. Confidence and missing-field messages are derived from the proposal; null confidence is shown as unavailable and low-confidence fields remain visually identifiable.
 
@@ -59,7 +59,7 @@ Attempt identity combines document, SHA-256, schema version, provider and attemp
 - No real provider is integrated and no provider recommendation is selected for runtime use.
 - N5.3 must own deep validation, reconciliation and normalization policy.
 - N5.4 must own supplier master, matching, aliases, analytics and merge decisions.
-- No migration has been applied to QA and no Edge Function has been deployed.
+- QA migration `20260928173312_n52_document_extraction_foundation` is applied to Supabase project `kpvvydthlxupjjqqdpxy` with RLS and FORCE RLS enabled. Edge Function `expense-document-extraction` is ACTIVE there with `verify_jwt=true`. Production remains untouched, and the browser product boundary remains fail-closed until a separate client wiring decision.
 
 Before any remote action, require the exact authorization gate:
 

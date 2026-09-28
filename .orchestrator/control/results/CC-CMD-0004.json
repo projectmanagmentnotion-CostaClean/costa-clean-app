@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CMD-0004",
+  "commandHash": "4d0cc6e2e5c2d848a0e28ad6bda58e8fac7a6f5ac446fe1650f2e28e4513a4af",
+  "runId": "ar_85422586-74e4-4999-9009-efefe1466b37",
+  "status": "COMPLETED",
+  "baselineHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "finalHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "tasksExecuted": [
+    "scoped-repair-ar_85422586-74e4-4999-9009-efefe1466b37-0d04b66cd989"
+  ],
+  "filesChanged": [
+    "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
+    "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
+    "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json",
+    "scripts/ops/projectContinuationAgentCore.test.mjs",
+    "scripts/ops/run-project-continuation-agent.mjs"
+  ],
+  "tests": [
+    {
+      "name": "full test suite",
+      "command": "npm.cmd test",
+      "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_85422586-74e4-4999-9009-efefe1466b37",
+      "status": "PASS",
+      "passed": true,
+      "output": "161 test files passed; 867 tests passed; 4 skipped.",
+      "exitCode": 0,
+      "startedAt": "2026-09-28T15:14:54.937Z",
+      "finishedAt": "2026-09-28T15:27:16.638Z",
+      "durationMs": 13980
+    }
+  ],
+  "lint": {
+    "name": "lint",
+    "command": "npm.cmd run lint",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_85422586-74e4-4999-9009-efefe1466b37",
+    "status": "PASS",
+    "passed": true,
+    "output": "PASS",
+    "exitCode": 0,
+    "startedAt": "2026-09-28T15:14:54.937Z",
+    "finishedAt": "2026-09-28T15:27:16.638Z",
+    "durationMs": 15236
+  },
+  "typecheck": {
+    "name": "typecheck",
+    "command": "npx.cmd tsc -b --pretty false",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_85422586-74e4-4999-9009-efefe1466b37",
+    "status": "PASS",
+    "passed": true,
+    "output": "PASS",
+    "exitCode": 0,
+    "startedAt": "2026-09-28T15:14:54.937Z",
+    "finishedAt": "2026-09-28T15:27:16.638Z",
+    "durationMs": 11917
+  },
+  "build": {
+    "name": "build",
+    "command": "npm.cmd run build",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_85422586-74e4-4999-9009-efefe1466b37",
+    "status": "PASS",
+    "passed": true,
+    "output": "PASS",
+    "exitCode": 0,
+    "startedAt": "2026-09-28T15:14:54.937Z",
+    "finishedAt": "2026-09-28T15:27:16.638Z",
+    "durationMs": 12504
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "reconciled-report-CC-CMD-0004-1"
+  ],
+  "factMatrixHashes": [
+    "d55290a929a62e2e2adfc35d7e88a9d6fcc20f4bba8bc0e60f9ce68c0d5ddc09"
+  ],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "a9af08ea3cc09631a12084f1748c610a44eeba453b1dd79f58edc1196caa4720"
+}

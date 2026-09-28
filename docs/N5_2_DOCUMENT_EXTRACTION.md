@@ -31,7 +31,7 @@ Persisted accounting calculations must use exact decimal or minor-unit represent
 
 `ExpenseExtractionClient` is the product boundary. The local-only implementation is `fixture`, version `n5.2-fixture-v1`, and it is exposed only through the explicit fixture client. It is deterministic, clearly labelled as not OCR, and only accepts filenames explicitly prefixed `fixture-`. The ordinary product runtime fails closed with a safe unavailable result. Provider errors, timeouts and invalid responses never expose stack traces.
 
-No external provider account, paid API or provider secret is configured. The QA runtime is a JWT-protected Edge Function using only the deterministic `fixture` provider for filenames prefixed `fixture-`; it verifies the authenticated owner/session, reads the private Storage object server-side, persists only safe structured output, and never creates financial records. A future real adapter must remain behind the same trusted server boundary.
+No external provider account, paid API or provider secret is configured. The QA runtime is a JWT-protected Edge Function pinned to QA project `kpvvydthlxupjjqqdpxy` and an explicit server-side `qa-fixture` mode. It accepts only `captureDocumentId` plus `mode`, derives the document/session/owner, requires active internal staff, reads the private Storage object server-side, persists only safe structured output, and never creates financial records. The deterministic `fixture` provider is limited to filenames prefixed `fixture-`; a future real adapter must remain behind the same trusted server boundary.
 
 ## Supplier-forward compatibility
 
@@ -61,6 +61,7 @@ Attempt identity combines document, SHA-256, schema version, provider and attemp
 - N5.3 must own deep validation, reconciliation and normalization policy.
 - N5.4 must own supplier master, matching, aliases, analytics and merge decisions.
 - QA migration `20260928173312_n52_document_extraction_foundation` is applied to Supabase project `kpvvydthlxupjjqqdpxy` with RLS and FORCE RLS enabled. Edge Function `expense-document-extraction` is ACTIVE there with `verify_jwt=true`. Production remains untouched, and the browser product boundary remains fail-closed until a separate client wiring decision.
+- R2 adds service-side preparation and atomic claim RPCs so normal `extract` reuses PENDING/PROCESSING/SUCCEEDED attempts, only explicit `retry` creates N+1 from FAILED, and concurrent callers cannot dispatch twice.
 
 Before any remote action, require the exact authorization gate:
 

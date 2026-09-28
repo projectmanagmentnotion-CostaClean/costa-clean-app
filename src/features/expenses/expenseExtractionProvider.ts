@@ -2,23 +2,13 @@ import {
   EXPENSE_EXTRACTION_SCHEMA_VERSION,
   createMissingField,
   validateExtractionProposal,
-  type ExtractionErrorCode,
   type ExtractionProposal,
+  type ExtractionProviderInput,
+  type ExtractionProviderResult,
   type ExtractionProviderMetadata,
 } from './expenseExtractionContract'
 
-export interface ExtractionProviderInput {
-  captureDocumentId: string
-  captureSessionId: string
-  originalFilename: string
-  mimeType: string
-  sizeBytes: number
-  sha256: string
-}
-
-export type ExtractionProviderResult =
-  | { ok: true; proposal: ExtractionProposal; metadata: ExtractionProviderMetadata }
-  | { ok: false; errorCode: ExtractionErrorCode; errorMessageSafe: string; metadata: ExtractionProviderMetadata }
+export type { ExtractionProviderInput, ExtractionProviderResult } from './expenseExtractionContract'
 
 export interface DocumentExtractionProvider {
   readonly metadata: ExtractionProviderMetadata
@@ -52,7 +42,7 @@ export function createFixtureExtractionProvider(): DocumentExtractionProvider {
   return {
     metadata,
     async extractDocument(input) {
-      if (!input.originalFilename.toLowerCase().startsWith('fixture-')) return { ok: false, errorCode: 'UNSUPPORTED_DOCUMENT', errorMessageSafe: 'El proveedor fixture solo procesa documentos de prueba identificados como fixture.', metadata }
+      if (!input.originalFilename.toLowerCase().startsWith('fixture-')) return { ok: false, errorCode: 'UNSUPPORTED_DOCUMENT', errorMessageSafe: 'El documento no es compatible con este proveedor.', metadata }
       const checked = validateExtractionProposal(fixtureProposal())
       if (!checked.ok) return { ok: false, errorCode: 'INVALID_PROVIDER_RESPONSE', errorMessageSafe: 'La propuesta fixture no supera la validación estructural.', metadata }
       return { ok: true, proposal: checked.proposal, metadata }

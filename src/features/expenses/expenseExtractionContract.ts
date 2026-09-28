@@ -1,7 +1,8 @@
 export const EXPENSE_EXTRACTION_SCHEMA_VERSION = 1 as const
 
 export type ExtractionStatus = 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED'
-export type ExtractionProviderId = 'fixture'
+export type KnownExtractionProviderId = 'fixture' | 'google-document-ai' | 'azure-document-intelligence' | 'openai'
+export type ExtractionProviderId = KnownExtractionProviderId | (string & {})
 export type ExtractionDocumentType = 'INVOICE' | 'RECEIPT' | 'CREDIT_NOTE' | 'OTHER' | 'UNKNOWN'
 export type ExtractionSource = 'document' | 'provider' | 'missing'
 export type DecimalString = `${number}`
@@ -73,6 +74,19 @@ export interface ExtractionProviderMetadata {
   providerVersion: string
   model: string | null
 }
+
+export interface ExtractionProviderInput {
+  captureDocumentId: string
+  captureSessionId: string
+  originalFilename: string
+  mimeType: string
+  sizeBytes: number
+  sha256: string
+}
+
+export type ExtractionProviderResult =
+  | { ok: true; proposal: ExtractionProposal; metadata: ExtractionProviderMetadata }
+  | { ok: false; errorCode: ExtractionErrorCode; errorMessageSafe: string; metadata: ExtractionProviderMetadata | null }
 
 export interface ExtractionAttemptIdentity {
   captureDocumentId: string
@@ -151,6 +165,7 @@ export function isExtractedField(value: unknown): value is ExtractedField<unknow
     && (field.rawValue === null || typeof field.rawValue === 'string')
     && (field.confidence === null || isConfidence(field.confidence))
     && ['document', 'provider', 'missing'].includes(String(field.source))
+    && (field.source !== 'missing' || (field.value === null && field.rawValue === null && field.confidence === null))
     && (field.evidence === undefined || isEvidence(field.evidence))
 }
 

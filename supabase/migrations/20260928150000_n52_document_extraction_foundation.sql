@@ -4,6 +4,19 @@ do $$
 begin
   if not exists (
     select 1 from pg_constraint
+    where conname = 'expense_capture_sessions_id_owner_key'
+      and conrelid = 'public.expense_capture_sessions'::regclass
+  ) then
+    alter table public.expense_capture_sessions
+      add constraint expense_capture_sessions_id_owner_key unique (id, created_by);
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
     where conname = 'expense_capture_documents_id_session_key'
       and conrelid = 'public.expense_capture_documents'::regclass
   ) then
@@ -42,6 +55,22 @@ do $$
 begin
   if not exists (
     select 1 from pg_constraint
+    where conname = 'expense_capture_extractions_session_owner_fk'
+      and conrelid = 'public.expense_capture_extractions'::regclass
+  ) then
+    alter table public.expense_capture_extractions
+      add constraint expense_capture_extractions_session_owner_fk
+      foreign key (capture_session_id, created_by)
+      references public.expense_capture_sessions(id, created_by)
+      on delete restrict;
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
     where conname = 'expense_capture_extractions_document_session_fk'
       and conrelid = 'public.expense_capture_extractions'::regclass
   ) then
@@ -59,6 +88,30 @@ create index if not exists expense_capture_extractions_document_idx on public.ex
 
 alter table public.expense_capture_extractions enable row level security;
 alter table public.expense_capture_extractions force row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'expense_capture_extractions_state_coherence'
+      and conrelid = 'public.expense_capture_extractions'::regclass
+  ) then
+    alter table public.expense_capture_extractions
+      add constraint expense_capture_extractions_state_coherence check (
+        (status = 'PENDING'
+          and proposal is null and started_at is null and completed_at is null and failed_at is null)
+        or (status = 'PROCESSING'
+          and started_at is not null and completed_at is null and failed_at is null)
+        or (status = 'SUCCEEDED'
+          and started_at is not null and completed_at is not null and failed_at is null
+          and proposal is not null and error_code is null)
+        or (status = 'FAILED'
+          and started_at is not null and completed_at is null and failed_at is not null
+          and proposal is null and error_code is not null)
+      );
+  end if;
+end;
+$$;
 revoke all on public.expense_capture_extractions from public, anon, authenticated, service_role;
 grant select on public.expense_capture_extractions to authenticated;
 grant select, insert, update, delete on public.expense_capture_extractions to service_role;

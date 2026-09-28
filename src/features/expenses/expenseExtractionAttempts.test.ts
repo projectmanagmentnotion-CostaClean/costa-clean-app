@@ -25,5 +25,8 @@ describe('N5.2 extraction attempts', () => {
     expect(() => startExtractionAttempt(done)).toThrow('Solo se puede iniciar')
     const pending = createPendingExtractionAttempt({ captureDocumentId: 'doc-2', captureSessionId: 'session-1', documentSha256: 'b'.repeat(64), schemaVersion: 1, provider: 'fixture', attempt: 1 }, provider.metadata)
     expect(() => finishExtractionAttempt(pending, { status: 'FAILED', errorCode: 'EXTRACTION_TIMEOUT' })).toThrow('Solo se puede finalizar un intento en proceso')
+    const processing = startExtractionAttempt(pending)
+    expect(() => finishExtractionAttempt(processing, { status: 'SUCCEEDED' })).toThrow('debe conservar una propuesta')
+    expect(() => finishExtractionAttempt(processing, { status: 'FAILED' })).toThrow('debe conservar un código de error')
   })
 })

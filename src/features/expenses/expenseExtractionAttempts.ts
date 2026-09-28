@@ -21,5 +21,7 @@ export function startExtractionAttempt(record: ExtractionAttemptRecord, now = ne
 
 export function finishExtractionAttempt(record: ExtractionAttemptRecord, result: { status: Extract<'SUCCEEDED' | 'FAILED', ExtractionStatus>; proposal?: ExtractionProposal | null; errorCode?: string | null; errorMessageSafe?: string | null }, now = new Date().toISOString()): ExtractionAttemptRecord {
   if (record.status !== 'PROCESSING') throw new Error('Solo se puede finalizar un intento en proceso.')
+  if (result.status === 'SUCCEEDED' && !result.proposal) throw new Error('Un intento correcto debe conservar una propuesta.')
+  if (result.status === 'FAILED' && !result.errorCode) throw new Error('Un intento fallido debe conservar un código de error.')
   return { ...record, status: result.status, proposal: result.proposal ?? null, completedAt: result.status === 'SUCCEEDED' ? now : null, failedAt: result.status === 'FAILED' ? now : null, errorCode: result.errorCode ?? null, errorMessageSafe: result.errorMessageSafe ?? null, updatedAt: now }
 }

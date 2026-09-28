@@ -19,6 +19,8 @@ describe('N5.1 capture entry contract', () => {
     expect(source).toContain('Confianza no disponible')
     expect(source).toContain('Campos no detectados:')
     expect(source).toContain('Confianza baja:')
+    expect(source).toContain('Datos detectados · pendientes de confirmar')
+    expect(source).not.toContain('Detectado por proveedor local')
   })
 
   it('uses real file inputs with the supported contract', () => {

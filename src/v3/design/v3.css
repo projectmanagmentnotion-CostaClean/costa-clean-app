@@ -943,6 +943,18 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-expense-capture-preview dt { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-xs); font-weight: 700; }
 .v3-expense-capture-preview dd { margin: 0; overflow-wrap: anywhere; }
 .v3-expense-capture-preview__hash { font-family: var(--v3-font-family-mono); font-size: var(--v3-font-size-xs); }
+.v3-expense-extraction-proposal { background: var(--v3-color-surface-elevated); border: 1px solid var(--v3-color-border-subtle); border-radius: var(--v3-radius-lg); display: grid; gap: var(--v3-space-4); max-width: 720px; padding: var(--v3-space-4); }
+.v3-expense-extraction-proposal h2, .v3-expense-extraction-proposal h3 { margin: 0; }
+.v3-expense-extraction-proposal h2 { font-size: var(--v3-font-size-lg); }
+.v3-expense-extraction-proposal h3 { color: var(--v3-color-text-secondary); font-size: var(--v3-font-size-sm); letter-spacing: .04em; text-transform: uppercase; }
+.v3-expense-extraction-group { border-top: 1px solid var(--v3-color-border-subtle); display: grid; gap: var(--v3-space-2); padding-top: var(--v3-space-3); }
+.v3-expense-extraction-group dl { display: grid; gap: var(--v3-space-2); margin: 0; }
+.v3-expense-extraction-group dl div { align-items: baseline; display: flex; gap: var(--v3-space-3); justify-content: space-between; min-width: 0; }
+.v3-expense-extraction-group dt { color: var(--v3-color-text-secondary); }
+.v3-expense-extraction-group dd { margin: 0; overflow-wrap: anywhere; text-align: right; }
+.v3-expense-extraction-vat-lines { display: grid; gap: var(--v3-space-2); list-style: none; margin: 0; padding: 0; }
+.v3-expense-extraction-vat-lines li { border: 1px solid var(--v3-color-border-subtle); border-radius: var(--v3-radius-sm); color: var(--v3-color-text-secondary); display: grid; font-size: var(--v3-font-size-sm); gap: var(--v3-space-2); grid-template-columns: 1fr; padding: var(--v3-space-2); }
+@media (min-width: 600px) { .v3-expense-extraction-vat-lines li { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .v3-assistive-note { background: var(--v3-color-accent-soft); border-left: 3px solid var(--v3-color-accent); display: grid; gap: var(--v3-space-2); padding: var(--v3-space-3); }
 .v3-assistive-note p, .v3-assistive-note small { color: var(--v3-color-text-secondary); margin: 0; }
 .v3-visually-hidden { height: 1px; margin: -1px; opacity: 0; overflow: hidden; position: absolute; width: 1px; }

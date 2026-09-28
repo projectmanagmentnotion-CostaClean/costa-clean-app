@@ -10,7 +10,10 @@ describe('N5.1 capture entry contract', () => {
     expect(source).toContain('Continuar manualmente')
     expect(source).not.toContain('createExpense(')
     expect(source).toContain('createExpenseCaptureSession')
-    expect(source).toContain('pendientes de revisión manual')
+    expect(source).toContain('pendiente de revisión')
+    expect(source).toContain('Extraer datos')
+    expect(source).toContain('nunca crea el gasto automáticamente')
+    expect(source).toContain('Continuar manualmente')
   })
 
   it('uses real file inputs with the supported contract', () => {

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "commandId": "CC-CMD-0005",
+  "projectId": "costa-clean-app",
+  "source": "CHATGPT_PROJECT",
+  "sourceContext": "Costa Clean App ChatGPT Project - bounded correction of the deterministic V6 artifact identity derivation inconsistency discovered during read-only review of certified CC-CMD-0004 branch",
+  "issuedAt": "2026-09-28T00:00:00Z",
+  "brainVersion": 1,
+  "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
+  "objectiveVersion": 1,
+  "objective": "Correct the V6 artifact identity computation so each manifest artifact identity is derived consistently from one byte source, then deterministically refresh the V6 manifest identities and recertify the repository.",
+  "why": "Read-only review of certified CC-CMD-0004 found that gitBlobId was derived from working-tree bytes while blobSha256 was derived from HEAD bytes, producing a mixed identity record after commit.",
+  "scope": [
+    "Start from the exact canonical baseline 368ed1f75ecda0c0f383c6df4ccffee216db76ce in a fresh isolated execution worktree for CC-CMD-0005.",
+    "Reproduce the V6 manifest/runtime identity mismatch before repair.",
+    "Correct the artifact identity contract so all identity fields describe the same current working-tree bytes.",
+    "Refresh only the derived V6 manifest identity fields.",
+    "Run targeted V6 tests, the full test suite, lint, typecheck, and build.",
+    "Publish only the factual canonical CommandExecutionResult to orchestrator/control."
+  ],
+  "outOfScope": [
+    "Business logic, UI, database logic, auth, billing, Supabase migrations, Vercel configuration, production code unrelated to V6 artifact identity.",
+    "GitHub application branches, pull requests, merges, releases, or tags.",
+    "Supabase remote or production operations.",
+    "Vercel deployment or remote mutations.",
+    "Secrets, billing, DNS, external email, payments, or destructive operations."
+  ],
+  "acceptanceCriteria": [
+    "A fresh run dedicated to CC-CMD-0005 is bound immutably to baseline 368ed1f75ecda0c0f383c6df4ccffee216db76ce.",
+    "The mixed-source identity bug is reproduced and corrected with deterministic evidence.",
+    "The V6 manifest identity validation passes after repair.",
+    "Manifest top-level contract, artifact paths, and artifact kinds remain unchanged.",
+    "Targeted tests, full tests, lint, typecheck, and build pass.",
+    "No product behavior or unauthorized remote state is changed.",
+    "A factual CC-CMD-0005 result is published to orchestrator/control."
+  ],
+  "allowedAutonomy": ["LOCAL_ONLY"],
+  "allowedActions": ["read_repository", "create_isolated_worktree", "run_local_commands", "run_targeted_tests", "run_tests", "run_lint", "run_typecheck", "run_build", "modify_scoped_verification_code", "write_local_orchestrator_state", "write_control_plane_result"],
+  "forbiddenActions": ["modify_business_logic", "modify_product_ui", "modify_database_schema", "modify_unrelated_files", "weaken_test_assertions", "skip_target_tests", "touch_original_checkout", "github_main_write", "github_pull_request", "github_merge", "github_release", "github_tag", "supabase_remote_write", "supabase_production", "vercel_deploy", "production_write", "secret_change", "dns_change", "billing_action", "external_email", "payment_action", "destructive_delete"],
+  "requiredApprovals": ["github_remote_write_outside_control_results", "publish_application_code", "supabase_remote", "vercel_remote", "production", "secrets", "destructive_actions", "external_communications", "financial_actions"],
+  "stopConditions": ["Project identity, Brain hash, command hash, baseline, or worktree binding mismatch.", "The run is not fresh or the baseline is not exact.", "An unexpected file outside the allowed scope must be modified.", "The repair changes product behavior or weakens verification.", "Any unauthorized remote or production mutation is required.", "The human Costa Clean checkout changes unexpectedly.", "The real Codex turn fails or execution state becomes ambiguous."],
+  "verificationRequirements": ["Verify project identity, accepted Brain binding, and canonical baseline before execution.", "Capture exact pre-repair and post-repair V6 identity evidence.", "Verify all changed files are within the exact allowed scope.", "Verify manifest top-level fields, artifact paths, and artifact kinds remain unchanged.", "Run targeted tests, full tests, lint, typecheck, and build with exact exit codes and evidence.", "Verify FactMatrix, ExecutionReport, and CommandExecutionResult authoritative bindings.", "Verify no unauthorized remote or production mutation occurred."],
+  "supersedesCommandId": "CC-CMD-0004",
+  "status": "READY",
+  "contentHash": "5703d2b0d389f106a67e15432e76a9d836c2b271b536bba5952540b3b22f5c4e"
+}

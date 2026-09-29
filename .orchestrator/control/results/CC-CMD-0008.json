@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CMD-0008",
+  "commandHash": "b2abb2d84a5807d1e8f445b9f97166cff7c3c1b8791b21e0304b8e0a59ca2dc0",
+  "runId": "ar_394f3cf5-a2ca-4d49-9044-7e8dc3767f8d",
+  "status": "BLOCKED",
+  "baselineHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "finalHead": "1ef2da882ba1ff43df67fad2230507c7005ba085",
+  "tasksExecuted": [
+    "scoped-repair-ar_394f3cf5-a2ca-4d49-9044-7e8dc3767f8d-de7bc542ac7f"
+  ],
+  "filesChanged": [],
+  "tests": [],
+  "lint": {
+    "command": "not-run-by-orchestrator",
+    "passed": false,
+    "output": "Lint verification belongs to the task acceptance contract."
+  },
+  "typecheck": {
+    "command": "NOT_RUN",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_394f3cf5-a2ca-4d49-9044-7e8dc3767f8d",
+    "status": "NOT_RUN",
+    "passed": false,
+    "output": "",
+    "reason": "Executor status BLOCKED; verification skipped.",
+    "startedAt": "2026-09-29T16:33:15.297Z",
+    "finishedAt": "2026-09-29T16:33:15.297Z"
+  },
+  "build": {
+    "command": "not-run-by-orchestrator",
+    "passed": false,
+    "output": "Build verification belongs to the task acceptance contract."
+  },
+  "approvals": [],
+  "blockers": [
+    "COMMAND_SCOPE_VIOLATION"
+  ],
+  "executionReportIds": [
+    "report_c83a9f61-d477-4634-8a5a-389cefc40bef"
+  ],
+  "factMatrixHashes": [
+    "7fde7f7a6ed970cbad06c8af8bd3899fed2b4aba94325d99024b3a537a96e030"
+  ],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "bb9c8bcec43da609e93b36866d29f2a8e94a89c84d0e9fe08470a53fb2fa686f"
+}

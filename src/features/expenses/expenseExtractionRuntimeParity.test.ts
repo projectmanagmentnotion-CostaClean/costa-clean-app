@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { validateExtractionProposal } from './expenseExtractionContract'
 import { createServerFixtureProposal, missing } from '../../../supabase/functions/expense-document-extraction/fixtureProposal'
 import { validateServerProposal } from '../../../supabase/functions/expense-document-extraction/proposalValidation'
+import { buildFreshSuccessResponse, buildReusedSuccessResponse } from '../../../supabase/functions/expense-document-extraction/responseContract'
 import { isQaFixtureRuntimeConfigured, QA_PROJECT_REF, SERVER_FIXTURE_ENV_NAME } from '../../../supabase/functions/expense-document-extraction/runtimeGuards'
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
@@ -53,5 +54,33 @@ describe('N5.2 QA Edge runtime R2.1 contract parity', () => {
     expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co`, 'qa-fixture')).toBe(true)
     expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co`, '')).toBe(false)
     expect(isQaFixtureRuntimeConfigured('https://wfxnwfcdjainpojhbdri.supabase.co', 'qa-fixture')).toBe(false)
+  })
+
+  it('keeps fresh and reused successful responses in the canonical shape', () => {
+    const fresh = buildFreshSuccessResponse('fresh-extraction', 1, fixture, { provider: 'fixture', providerVersion: 'n5.2-fixture-v1', model: null })
+    const reused = buildReusedSuccessResponse({
+      proposal: fixture,
+      provider: 'fixture',
+      provider_version: 'n5.2-fixture-v1',
+      model: null,
+    }, 'reused-extraction', 1)
+
+    expect(fresh.metadata).not.toBeNull()
+    expect(fresh.reused).toBe(false)
+    expect(reused).toMatchObject({
+      ok: true,
+      extractionId: 'reused-extraction',
+      attempt: 1,
+      proposal: fixture,
+      metadata: { provider: 'fixture', providerVersion: 'n5.2-fixture-v1', model: null },
+      reused: true,
+    })
+  })
+
+  it('fails closed when a reused successful extraction lacks proposal metadata', () => {
+    expect(buildReusedSuccessResponse(null, 'extraction', 1)).toBeNull()
+    expect(buildReusedSuccessResponse({ proposal: fixture, provider: null, provider_version: 'n5.2-fixture-v1', model: null }, 'extraction', 1)).toBeNull()
+    expect(buildReusedSuccessResponse({ proposal: fixture, provider: 'fixture', provider_version: null, model: null }, 'extraction', 1)).toBeNull()
+    expect(buildReusedSuccessResponse({ proposal: null, provider: 'fixture', provider_version: 'n5.2-fixture-v1', model: null }, 'extraction', 1)).toBeNull()
   })
 })

@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { createServerFixtureProposal } from './fixtureProposal.ts'
 import { validateServerProposal } from './proposalValidation.ts'
+import { buildFreshSuccessResponse, buildReusedSuccessResponse } from './responseContract.ts'
 import { isQaFixtureRuntimeConfigured, SERVER_FIXTURE_ENV_NAME } from './runtimeGuards.ts'
 
 const SCHEMA_VERSION = 1
@@ -58,8 +59,12 @@ Deno.serve(async (req: Request) => {
   const row = prepared[0] as RuntimeRow
   if (row.action === 'RETRY_NOT_ELIGIBLE') return json({ ...safeError('RETRY_NOT_ELIGIBLE', 'Solo se puede reintentar una extracción fallida.', null) }, 409)
   if (row.action === 'EXISTING') {
-    const { data: existing } = await adminClient.from('expense_capture_extractions').select('proposal, error_code, error_message_safe').eq('id', row.extraction_id).maybeSingle()
-    if (row.status === 'SUCCEEDED' && existing?.proposal) return json({ ok: true, extractionId: row.extraction_id, attempt: row.attempt, proposal: existing.proposal, metadata: null, reused: true })
+    const { data: existing } = await adminClient.from('expense_capture_extractions').select('proposal, provider, provider_version, model, error_code, error_message_safe').eq('id', row.extraction_id).maybeSingle()
+    if (row.status === 'SUCCEEDED') {
+      const reusedResponse = buildReusedSuccessResponse(existing, row.extraction_id, row.attempt)
+      if (!reusedResponse) return json({ error: 'EXTRACTION_STATE_UNAVAILABLE' }, 500)
+      return json(reusedResponse)
+    }
     if (row.status === 'FAILED') return json({ ...safeError(existing?.error_code ?? 'EXTRACTION_FAILED', existing?.error_message_safe ?? 'La extracción ha fallado.', null), extractionId: row.extraction_id, attempt: row.attempt }, 422)
     return json({ ok: false, status: row.status, extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
   }
@@ -80,5 +85,5 @@ Deno.serve(async (req: Request) => {
     await adminClient.from('expense_capture_extractions').update({ status: 'FAILED', failed_at: new Date().toISOString(), error_code: 'EXTRACTION_FAILED', error_message_safe: 'No se pudo guardar la propuesta de extracción.', updated_at: new Date().toISOString() }).eq('id', row.extraction_id)
     return json({ ...safeError('EXTRACTION_FAILED', 'No se pudo guardar la propuesta de extracción.', null) }, 500)
   }
-  return json({ ok: true, extractionId: row.extraction_id, attempt: row.attempt, proposal, metadata: functionMetadata(), reused: false })
+  return json(buildFreshSuccessResponse(row.extraction_id, row.attempt, proposal, functionMetadata()))
 })

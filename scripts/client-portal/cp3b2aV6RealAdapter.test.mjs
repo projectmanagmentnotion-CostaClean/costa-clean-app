@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   AUTHORIZATION_ID_V6R1E,
   GATE_V6R1E,
+  MIGRATION_SHA256,
   PACKAGE_STATUS_V6R1E,
   QA_REF,
   SOURCE_BASE_HEAD_V6R1E,
@@ -26,14 +27,13 @@ function integrityProbe({ flagPath = null, flag = 'H', divergencePath = null } =
   const git = (args) => {
     const relativePath = args.at(-1)
     if (args[0] === 'ls-files') return `${relativePath === flagPath ? flag : 'H'} ${relativePath}`
-    if (args[0] === 'rev-parse' && args[1].startsWith(':')) return 'a'.repeat(40)
-    if (args[0] === 'rev-parse' && args[1].startsWith('HEAD:')) return 'b'.repeat(40)
+    if (args[0] === 'rev-parse' && args[1].startsWith('HEAD:')) return 'a'.repeat(40)
     throw new Error(`unexpected git probe: ${args.join(' ')}`)
   }
   const worktreeBlobId = (filePath) => (
     filePath.replaceAll('\\', '/').endsWith(`/${divergencePath}`) ? 'b'.repeat(40) : 'a'.repeat(40)
   )
-  return { git, worktreeBlobId }
+  return { git, worktreeBlobId, worktreeSha256: () => MIGRATION_SHA256 }
 }
 
 describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {

@@ -95,6 +95,7 @@ const EXPECTED_PACKAGE_ARTIFACT_PATHS_V6 = Object.freeze([
 const PROTECTED_PACKAGE_PATHS_V6 = Object.freeze([
   'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json',
   ...EXPECTED_PACKAGE_ARTIFACT_PATHS_V6,
+  MIGRATION_PATH,
 ])
 
 const APPLY_STATE_V6 = Object.freeze({
@@ -366,6 +367,7 @@ function runGitAllowFailure(args) {
 export function assertPackageWorkingTreeIntegrityV6({
   git = runGit,
   worktreeBlobId = (filePath) => workingTreeBlobIdV1(filePath),
+  worktreeSha256 = (filePath) => workingTreeSha256V1(filePath),
 } = {}) {
   const checked = []
   for (const relativePath of PROTECTED_PACKAGE_PATHS_V6) {
@@ -374,15 +376,17 @@ export function assertPackageWorkingTreeIntegrityV6({
     if (flag === 'h' || flag === 's' || flag === 'S') {
       fail('V6_PACKAGE_WORKTREE_METADATA_REJECTED', { path: relativePath, flag })
     }
-    const authorizedGitBlobId = git(['rev-parse', `:${relativePath}`])
+    const authorizedGitBlobId = git(['rev-parse', `HEAD:${relativePath}`])
     const workingTreeGitBlobId = worktreeBlobId(path.join(repoRoot, relativePath))
     if (workingTreeGitBlobId !== authorizedGitBlobId) {
       fail('V6_PACKAGE_WORKTREE_DIVERGENCE', {
         path: relativePath,
         authorizedGitBlobId,
         workingTreeGitBlobId,
-        headGitBlobId: git(['rev-parse', `HEAD:${relativePath}`]),
       })
+    }
+    if (relativePath === MIGRATION_PATH && worktreeSha256(path.join(repoRoot, relativePath)) !== MIGRATION_SHA256) {
+      fail('V6_MIGRATION_SHA256_REJECTED', { path: relativePath })
     }
     checked.push({ path: relativePath, authorizedGitBlobId, workingTreeGitBlobId })
   }

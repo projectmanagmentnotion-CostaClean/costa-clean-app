@@ -536,7 +536,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     const result = await executeV6Core({ operations, runId: 'CC-CMD-0006-INTEGRITY-REJECT' })
     expect(result.verdict).toBe('MANUAL_VERIFICATION_REQUIRED')
     expect(result.code).toBe('V6_PACKAGE_WORKTREE_DIVERGENCE')
-    expect(calls).toEqual(['markApplyStarted'])
+    expect(calls).toEqual([])
   })
 
   it('keeps ambiguous apply from committing or rolling back', async () => {

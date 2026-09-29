@@ -1692,10 +1692,10 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     await advance('live_drift_sentinel_recheck')
     const sentinel = await operations.readDriftSentinel(state.gitState, state.backup)
     await operations.compareDriftSentinel(state.live, sentinel)
+    await (operations.verifyExecutionIntegrity ?? (() => true))()
     await advance('apply_started')
     state.applyStarted = true
     await operations.markApplyStarted(state)
-    await (operations.verifyExecutionIntegrity ?? (() => true))()
     const applyEvidence = await operations.apply(state)
     state.applyEvidence = applyEvidence
     if (applyEvidence?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED) {

@@ -13,8 +13,6 @@ import {
   CANONICAL_JSON_STANDARD_V6,
   canonicalJsonSha256V1,
   readJsonFromWorkingTree,
-  workingTreeBlobIdV1,
-  workingTreeJsonContractIdentityV1,
   workingTreeSha256V1,
 } from './cp3b2aCanonicalJsonV6.mjs'
 import { runCommandV3 } from './cp2b_command_launcher_v3.mjs'
@@ -278,6 +276,27 @@ function sha256Text(text) {
   return createHash('sha256').update(text, 'utf8').digest('hex')
 }
 
+// Git's default clean-filter processing is not an authorization boundary: a
+// changed worktree file can hash like the committed file when a filter
+// normalizes it. Hash the bytes that the executable stages will actually read.
+export function rawWorkingTreeBlobIdV6(filePath) {
+  const bytes = readFileSync(filePath)
+  return createHash('sha1')
+    .update(`blob ${bytes.length}\0`, 'utf8')
+    .update(bytes)
+    .digest('hex')
+}
+
+function rawWorkingTreeJsonContractIdentityV6(filePath) {
+  const bytes = readFileSync(filePath)
+  const value = JSON.parse(bytes.toString('utf8').replace(/^\uFEFF/u, ''))
+  return {
+    gitBlobId: rawWorkingTreeBlobIdV6(filePath),
+    blobSha256: createHash('sha256').update(bytes).digest('hex'),
+    canonicalJsonSha256: canonicalJsonSha256V1(value),
+  }
+}
+
 function runGit(args, options = {}) {
   const result = spawnSync('git', args, {
     cwd: repoRoot,
@@ -343,11 +362,11 @@ function artifactRecord(relativePath, kind) {
   const record = {
     path: normalized,
     kind,
-    gitBlobId: workingTreeBlobIdV1(filePath),
+    gitBlobId: rawWorkingTreeBlobIdV6(filePath),
     blobSha256: workingTreeSha256V1(filePath),
   }
   if (kind === 'json') {
-    const identity = workingTreeJsonContractIdentityV1(filePath)
+    const identity = rawWorkingTreeJsonContractIdentityV6(filePath)
     record.canonicalJsonSha256 = identity.canonicalJsonSha256
   }
   return record
@@ -401,7 +420,7 @@ export function authorizedCommitV6(environment = process.env, { allowDerived = f
 
 export function assertAuthorizedFileIntegrityV6(authorizedCommit, relativePath, {
   git = runGit,
-  worktreeBlobId = (filePath) => workingTreeBlobIdV1(filePath),
+  worktreeBlobId = (filePath) => rawWorkingTreeBlobIdV6(filePath),
   worktreeSha256 = (filePath) => workingTreeSha256V1(filePath),
   checkCommit = true,
 } = {}) {
@@ -866,7 +885,7 @@ export function verifyPackageManifestV6(authorizedCommit) {
       fail('V6_MANIFEST_CANONICAL_JSON_REJECTED', { path: artifact.path })
     }
   }
-  const manifestIdentity = workingTreeJsonContractIdentityV1(manifestPath)
+  const manifestIdentity = rawWorkingTreeJsonContractIdentityV6(manifestPath)
   return { manifest, manifestIdentity, expected }
 }
 
@@ -930,8 +949,8 @@ function verifyApprovedPrivateBackupV6(manifestPathInput, expectedHead, dependen
   }
   assertIgnoredPrivateFile(resolved)
   const manifest = readJsonFromWorkingTree(resolved)
-  const expectedManifestIdentity = workingTreeJsonContractIdentityV1(manifestPath)
-  const expectedCapabilityIdentity = workingTreeJsonContractIdentityV1(capabilityMapPath)
+  const expectedManifestIdentity = rawWorkingTreeJsonContractIdentityV6(manifestPath)
+  const expectedCapabilityIdentity = rawWorkingTreeJsonContractIdentityV6(capabilityMapPath)
   if (
     manifest.version !== 6
     || manifest.revision !== 'V6R1E'
@@ -1305,7 +1324,7 @@ export function preflightV6(environment, dependencies = {}) {
   const verifyFileBackedStage = dependencies.verifyFileBackedStage
     ?? ((filePath) => assertAuthorizedFileIntegrityV6(authorizedCommit, toRepoRelativePath(filePath)))
   verifyFileBackedStage(capabilityMapPath)
-  const capabilityIdentity = workingTreeJsonContractIdentityV1(capabilityMapPath)
+  const capabilityIdentity = rawWorkingTreeJsonContractIdentityV6(capabilityMapPath)
   const backup = (dependencies.createPrivateBackup ?? createPrivateBackupV6)({
     environment,
     gitHead: gitStateValue.head,

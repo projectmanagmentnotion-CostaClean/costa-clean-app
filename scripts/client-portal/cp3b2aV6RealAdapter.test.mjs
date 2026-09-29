@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process'
+import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
   AUTHORIZATION_ID_V6R1E,
@@ -13,6 +14,7 @@ import {
   planV6,
   preflightV6,
   preflightReadOnlyV6,
+  rawWorkingTreeBlobIdV6,
   verifyPackageManifestV6,
 } from './run-cp3b2a-qa-v6.mjs'
 
@@ -58,6 +60,15 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
       divergencePath: expectedCode === 'V6_PACKAGE_WORKTREE_DIVERGENCE' ? targetPath : null,
     })
     expect(() => assertPackageWorkingTreeIntegrityV6(AUTHORIZED_COMMIT, probe)).toThrow(expectedCode)
+  })
+
+  it('derives the worktree blob identity from raw bytes, independent of clean filters', () => {
+    const filePath = path.join(process.cwd(), 'scripts/client-portal/cp3b2a_qa_matrix_v6.sql')
+    const noFilter = spawnSync('git', ['hash-object', '--no-filters', '--', filePath], {
+      encoding: 'utf8',
+    })
+    expect(noFilter.status).toBe(0)
+    expect(rawWorkingTreeBlobIdV6(filePath)).toBe(noFilter.stdout.trim())
   })
 
   it('exposes the V6R1E package contract', { timeout: 15_000 }, () => {

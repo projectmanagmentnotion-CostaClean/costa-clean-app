@@ -52,8 +52,8 @@
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "f253e93a287951708c730f2a1ca8190b037aa4f9",
-      "blobSha256": "541f503f6a82419516105f6f500d6a6a11da5a3369c263402833dc67f715686f"
+      "gitBlobId": "e6319473186387e4a7876b926c89a69b513f825e",
+      "blobSha256": "e7cf0037b06e538ef672d07fb4006b5cfd19558391c3973a6c486cb8edaaa02c"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
@@ -106,8 +106,8 @@
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "17b150925a9ffbe36eff5f8cd25099851fc18eff",
-      "blobSha256": "f58304f5a049c74d973ef3175d952e712cdd28149a3560640715d32b72871faa"
+      "gitBlobId": "fa41ee6033fea177464a8e3ccc89d1eddafd1029",
+      "blobSha256": "c5d447e7c05abfdd9b29b6843ef0a1fe146464d425b9dba8c405b5bcbc696582"
     },
     {
       "path": "docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md",

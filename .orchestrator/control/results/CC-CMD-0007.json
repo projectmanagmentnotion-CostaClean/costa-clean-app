@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CMD-0007",
+  "commandHash": "d939eab0eb699d829573173e054cdb1f1abd53b7256444426967573ed8e5a0dd",
+  "runId": "ar_256779a8-ff61-414e-90d8-8a3137ab6dda",
+  "status": "COMPLETED",
+  "baselineHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "finalHead": "9f57d8ada36e3f90db15217c12bb6beeaf5024f3",
+  "tasksExecuted": [
+    "scoped-repair-ar_256779a8-ff61-414e-90d8-8a3137ab6dda-0c55f42caeff"
+  ],
+  "filesChanged": [],
+  "tests": [],
+  "lint": {
+    "command": "not-run-by-orchestrator",
+    "passed": false,
+    "output": "Lint verification belongs to the task acceptance contract."
+  },
+  "typecheck": {
+    "command": "npm.cmd exec tsc -- --noEmit",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_256779a8-ff61-414e-90d8-8a3137ab6dda",
+    "status": "PASS",
+    "passed": true,
+    "output": "",
+    "exitCode": 0,
+    "startedAt": "2026-09-29T15:24:08.148Z",
+    "finishedAt": "2026-09-29T15:24:08.696Z"
+  },
+  "build": {
+    "command": "not-run-by-orchestrator",
+    "passed": false,
+    "output": "Build verification belongs to the task acceptance contract."
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "report_c5851d83-f9a9-4055-bd23-bdfe628718a8"
+  ],
+  "factMatrixHashes": [
+    "75b4e479ee16b71fa13662d38fa9ac49f132fdcc1b5d812ec07229ba188616ab"
+  ],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "ffadf7140104ac5bc8cdc41845d9b1b8a5a497f15b61090c18d70d4225ba1d63"
+}

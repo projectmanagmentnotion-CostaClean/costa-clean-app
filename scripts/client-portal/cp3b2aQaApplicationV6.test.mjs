@@ -506,6 +506,34 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(observed).toEqual(EXECUTABLE_ORDER_V6)
   })
 
+  it('rejects integrity drift immediately before the first QA write', async () => {
+    const calls = []
+    const operations = {
+      verifyManifest: () => true,
+      authorize: () => ({ head: SOURCE_BASE_HEAD_V6R1E, clean: true }),
+      assertClean: () => true,
+      assertQaTarget: () => true,
+      assertProductionRejected: () => true,
+      verifyBackup: () => ({ value: { liveSnapshot: { contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 }, prestate: {}, collisions: { combinedDuplicatePairs: 0 } } } }),
+      assertContractAbsent: () => ({}),
+      assertPartialStateAbsent: () => true,
+      assertSyntheticCollisionAbsent: () => true,
+      readLivePrestate: () => ({}),
+      compareBackupLive: () => true,
+      createLedger: () => '/tmp/cc-cmd-0006-integrity-ledger.json',
+      readDriftSentinel: () => ({}),
+      compareDriftSentinel: () => true,
+      markApplyStarted: () => calls.push('markApplyStarted'),
+      verifyExecutionIntegrity: () => { throw Object.assign(new Error('V6_PACKAGE_WORKTREE_DIVERGENCE'), { code: 'V6_PACKAGE_WORKTREE_DIVERGENCE' }) },
+      apply: () => calls.push('apply'),
+      handleFailure: (error, _state, stages) => ({ verdict: 'MANUAL_VERIFICATION_REQUIRED', code: error.code, stages }),
+    }
+    const result = await executeV6Core({ operations, runId: 'CC-CMD-0006-INTEGRITY-REJECT' })
+    expect(result.verdict).toBe('MANUAL_VERIFICATION_REQUIRED')
+    expect(result.code).toBe('V6_PACKAGE_WORKTREE_DIVERGENCE')
+    expect(calls).toEqual(['markApplyStarted'])
+  })
+
   it('keeps ambiguous apply from committing or rolling back', async () => {
     const calls = []
     const operations = {

@@ -73,6 +73,29 @@ const docsPaths = [
   path.join(repoRoot, 'docs', 'client-portal', 'CP3B2A6_REPRODUCIBLE_REBASELINE.md'),
   path.join(repoRoot, 'docs', 'client-portal', 'CP3B2A_EXACT_QA_AUTHORIZATION_V6.md'),
 ]
+const EXPECTED_PACKAGE_ARTIFACT_PATHS_V6 = Object.freeze([
+  'scripts/client-portal/cp3b2aCanonicalJsonV6.mjs',
+  'scripts/client-portal/cp3b2a_qa_matrix_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_concurrency_v6.mjs',
+  'scripts/client-portal/cp3b2a_qa_capability_map_v6.json',
+  'scripts/client-portal/run-cp3b2a-qa-v6.mjs',
+  'scripts/client-portal/run-cp3b2a6-local-proof.mjs',
+  'scripts/client-portal/cp3b2aQaApplicationV6.test.mjs',
+  'scripts/client-portal/cp3b2a_qa_precheck_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_postcheck_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_rollback_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_fixture_cleanup_v6.sql',
+  'scripts/client-portal/cp3b2a_qa_digest_v6.sql',
+  'scripts/client-portal/cp3b2aV6RealAdapter.test.mjs',
+  'docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md',
+  'docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V6.md',
+  'docs/client-portal/CP3B2A6R1_FINAL_REAL_ADAPTER.md',
+])
+const PROTECTED_PACKAGE_PATHS_V6 = Object.freeze([
+  'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json',
+  ...EXPECTED_PACKAGE_ARTIFACT_PATHS_V6,
+])
 
 const APPLY_STATE_V6 = Object.freeze({
   APPLIED_CONFIRMED: 'APPLIED_CONFIRMED',
@@ -323,25 +346,8 @@ function artifactRecord(relativePath, kind) {
 }
 
 export function expectedArtifacts() {
-  return [
-    artifactRecord('scripts/client-portal/cp3b2aCanonicalJsonV6.mjs', 'mjs'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_matrix_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_concurrency_v6.mjs', 'mjs'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_capability_map_v6.json', 'json'),
-    artifactRecord('scripts/client-portal/run-cp3b2a-qa-v6.mjs', 'mjs'),
-    artifactRecord('scripts/client-portal/run-cp3b2a6-local-proof.mjs', 'mjs'),
-    artifactRecord('scripts/client-portal/cp3b2aQaApplicationV6.test.mjs', 'mjs'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_precheck_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_postcheck_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_rollback_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_fixture_cleanup_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2a_qa_digest_v6.sql', 'sql'),
-    artifactRecord('scripts/client-portal/cp3b2aV6RealAdapter.test.mjs', 'mjs'),
-    artifactRecord('docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md', 'md'),
-    artifactRecord('docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V6.md', 'md'),
-    artifactRecord('docs/client-portal/CP3B2A6R1_FINAL_REAL_ADAPTER.md', 'md'),
-  ]
+  const kinds = ['mjs', 'sql', 'mjs', 'json', 'mjs', 'mjs', 'mjs', 'sql', 'sql', 'sql', 'sql', 'sql', 'sql', 'mjs', 'md', 'md', 'md']
+  return EXPECTED_PACKAGE_ARTIFACT_PATHS_V6.map((relativePath, index) => artifactRecord(relativePath, kinds[index]))
 }
 
 function toRepoRelativePath(filePath) {
@@ -355,6 +361,32 @@ function runGitAllowFailure(args) {
     windowsHide: true,
     maxBuffer: 8 * 1024 * 1024,
   })
+}
+
+export function assertPackageWorkingTreeIntegrityV6({
+  git = runGit,
+  worktreeBlobId = (filePath) => workingTreeBlobIdV1(filePath),
+} = {}) {
+  const checked = []
+  for (const relativePath of PROTECTED_PACKAGE_PATHS_V6) {
+    const listing = git(['ls-files', '-v', '--', relativePath])
+    const flag = listing.slice(0, 1)
+    if (flag === 'h' || flag === 's' || flag === 'S') {
+      fail('V6_PACKAGE_WORKTREE_METADATA_REJECTED', { path: relativePath, flag })
+    }
+    const authorizedGitBlobId = git(['rev-parse', `:${relativePath}`])
+    const workingTreeGitBlobId = worktreeBlobId(path.join(repoRoot, relativePath))
+    if (workingTreeGitBlobId !== authorizedGitBlobId) {
+      fail('V6_PACKAGE_WORKTREE_DIVERGENCE', {
+        path: relativePath,
+        authorizedGitBlobId,
+        workingTreeGitBlobId,
+        headGitBlobId: git(['rev-parse', `HEAD:${relativePath}`]),
+      })
+    }
+    checked.push({ path: relativePath, authorizedGitBlobId, workingTreeGitBlobId })
+  }
+  return { checked }
 }
 
 function assertIgnoredPrivateFile(filePath) {
@@ -726,6 +758,7 @@ function buildFixtureVariablesV6(runId) {
 }
 
 export function verifyPackageManifestV6() {
+  assertPackageWorkingTreeIntegrityV6()
   const manifest = readJsonFromWorkingTree(manifestPath)
   const packageContract = packageContractV6()
   if (
@@ -1307,6 +1340,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
   return {
     environment,
     verifyManifest: () => verifyPackageManifestV6(),
+    verifyExecutionIntegrity: () => assertPackageWorkingTreeIntegrityV6(),
     authorize: () => {
       const gitStateValue = gitState()
       assertAuthorizationV6(environment, gitStateValue)
@@ -1527,6 +1561,7 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     await advance('apply_started')
     state.applyStarted = true
     await operations.markApplyStarted(state)
+    await (operations.verifyExecutionIntegrity ?? (() => true))()
     const applyEvidence = await operations.apply(state)
     state.applyEvidence = applyEvidence
     if (applyEvidence?.applyState === APPLY_STATE_V6.APPLIED_CONFIRMED) {

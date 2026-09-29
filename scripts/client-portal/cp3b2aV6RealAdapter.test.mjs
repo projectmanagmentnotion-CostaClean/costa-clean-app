@@ -5,6 +5,7 @@ import {
   PACKAGE_STATUS_V6R1E,
   QA_REF,
   SOURCE_BASE_HEAD_V6R1E,
+  assertPackageWorkingTreeIntegrityV6,
   assertExecutionAuthorizationV6,
   buildExecutionOperationsV6,
   planV6,
@@ -21,7 +22,35 @@ function environment() {
   }
 }
 
+function integrityProbe({ flagPath = null, flag = 'H', divergencePath = null } = {}) {
+  const git = (args) => {
+    const relativePath = args.at(-1)
+    if (args[0] === 'ls-files') return `${relativePath === flagPath ? flag : 'H'} ${relativePath}`
+    if (args[0] === 'rev-parse' && args[1].startsWith(':')) return 'a'.repeat(40)
+    if (args[0] === 'rev-parse' && args[1].startsWith('HEAD:')) return 'b'.repeat(40)
+    throw new Error(`unexpected git probe: ${args.join(' ')}`)
+  }
+  const worktreeBlobId = (filePath) => (
+    filePath.replaceAll('\\', '/').endsWith(`/${divergencePath}`) ? 'b'.repeat(40) : 'a'.repeat(40)
+  )
+  return { git, worktreeBlobId }
+}
+
 describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
+  it.each([
+    ['assume-unchanged metadata', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'h', 'V6_PACKAGE_WORKTREE_METADATA_REJECTED'],
+    ['skip-worktree metadata', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'S', 'V6_PACKAGE_WORKTREE_METADATA_REJECTED'],
+    ['artifact byte divergence', 'scripts/client-portal/cp3b2a_qa_matrix_v6.sql', 'H', 'V6_PACKAGE_WORKTREE_DIVERGENCE'],
+    ['manifest byte divergence', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'H', 'V6_PACKAGE_WORKTREE_DIVERGENCE'],
+  ])('rejects %s before package trust', (_label, targetPath, flag, expectedCode) => {
+    const probe = integrityProbe({
+      flagPath: flag === 'H' && expectedCode === 'V6_PACKAGE_WORKTREE_DIVERGENCE' ? null : targetPath,
+      flag,
+      divergencePath: expectedCode === 'V6_PACKAGE_WORKTREE_DIVERGENCE' ? targetPath : null,
+    })
+    expect(() => assertPackageWorkingTreeIntegrityV6(probe)).toThrow(expectedCode)
+  })
+
   it('exposes the V6R1E package contract', { timeout: 15_000 }, () => {
     const { manifest } = verifyPackageManifestV6()
     expect(manifest.gate).toBe(GATE_V6R1E)

@@ -382,8 +382,17 @@ function assertAuthorizedCommitV6(authorizedCommit, git) {
   return authorizedCommit
 }
 
-export function authorizedCommitV6(environment = process.env) {
+function currentCommitV6(git = runGit) {
+  const currentCommit = git(['rev-parse', 'HEAD'])
+  if (!/^[0-9a-f]{40}$/u.test(currentCommit)) {
+    fail('V6_AUTHORIZED_COMMIT_REQUIRED')
+  }
+  return currentCommit
+}
+
+export function authorizedCommitV6(environment = process.env, { allowDerived = false } = {}) {
   const authorizedCommit = String(environment.CP3B2A_V6R1E_AUTHORIZED_COMMIT ?? '').trim()
+  if (!authorizedCommit && allowDerived) return currentCommitV6()
   if (!/^[0-9a-f]{40}$/u.test(authorizedCommit)) {
     fail('V6_AUTHORIZED_COMMIT_REQUIRED')
   }
@@ -1211,6 +1220,10 @@ function transactionalMatrixCompleteV6(environment = process.env, dependencies =
       dependencies.authorizedCommit,
       toRepoRelativePath(filePath),
     )))(matrixPath)
+    ;(dependencies.verifyFileBackedStage ?? ((filePath) => assertAuthorizedFileIntegrityV6(
+      dependencies.authorizedCommit,
+      toRepoRelativePath(filePath),
+    )))(capabilityMapPath)
   }
   const manifest = readJsonFromWorkingTree(capabilityMapPath)
   if (manifest.contractCanonicalJsonSha256 && manifest.contract
@@ -1261,7 +1274,7 @@ function validateCapabilities(transactional, concurrent) {
 }
 
 export function planV6(environment = process.env) {
-  const authorizedCommit = authorizedCommitV6(environment)
+  const authorizedCommit = authorizedCommitV6(environment, { allowDerived: true })
   verifyPackageManifestV6(authorizedCommit)
   return {
     gate: GATE_V6R1E,
@@ -1279,7 +1292,7 @@ export function planV6(environment = process.env) {
 }
 
 export function preflightV6(environment, dependencies = {}) {
-  const authorizedCommit = authorizedCommitV6(environment)
+  const authorizedCommit = authorizedCommitV6(environment, { allowDerived: true })
   const { manifestIdentity } = verifyPackageManifestV6(authorizedCommit)
   const gitStateValue = (dependencies.gitState ?? gitState)(authorizedCommit)
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
@@ -1289,6 +1302,9 @@ export function preflightV6(environment, dependencies = {}) {
   const target = (dependencies.assertQaTarget ?? assertQaTargetV6)(environment)
   const production = (dependencies.assertProductionRejected ?? assertProductionRejected)(environment)
   assertCleanWorktreeV6(gitStateValue)
+  const verifyFileBackedStage = dependencies.verifyFileBackedStage
+    ?? ((filePath) => assertAuthorizedFileIntegrityV6(authorizedCommit, toRepoRelativePath(filePath)))
+  verifyFileBackedStage(capabilityMapPath)
   const capabilityIdentity = workingTreeJsonContractIdentityV1(capabilityMapPath)
   const backup = (dependencies.createPrivateBackup ?? createPrivateBackupV6)({
     environment,
@@ -1886,11 +1902,11 @@ export function executeV6(environment) {
   return executeV6Core({ operations, runId })
 }
 
-export function preflightReadOnlyV6(environment = process.env) {
-  const authorizedCommit = authorizedCommitV6(environment)
+export function preflightReadOnlyV6(environment = process.env, dependencies = {}) {
+  const authorizedCommit = authorizedCommitV6(environment, { allowDerived: true })
   return {
     manifest: verifyPackageManifestV6(authorizedCommit),
-    gitState: gitState(authorizedCommit),
+    gitState: (dependencies.gitState ?? gitState)(authorizedCommit),
   }
 }
 

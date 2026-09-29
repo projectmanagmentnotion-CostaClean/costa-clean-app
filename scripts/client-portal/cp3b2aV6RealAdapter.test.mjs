@@ -12,6 +12,7 @@ import {
   buildExecutionOperationsV6,
   planV6,
   preflightV6,
+  preflightReadOnlyV6,
   verifyPackageManifestV6,
 } from './run-cp3b2a-qa-v6.mjs'
 
@@ -65,6 +66,45 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)
     expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R1E)
     expect(manifest.sourceBaseHead).toBe(SOURCE_BASE_HEAD_V6R1E)
+  })
+
+  it('keeps read-only plan and preflight usable without execution authorization', { timeout: 15_000 }, () => {
+    const plan = planV6({})
+    expect(plan.mode).toBe('plan')
+    expect(plan.authorizedCommit).toBe(AUTHORIZED_COMMIT)
+    const readOnly = preflightReadOnlyV6({}, {
+      gitState: (authorizedCommit) => ({
+        branch: 'main',
+        head: authorizedCommit,
+        remoteHead: authorizedCommit,
+        clean: true,
+        divergence: [0, 0],
+      }),
+    })
+    expect(readOnly.gitState.authorizedCommit).toBeUndefined()
+    expect(readOnly.gitState.head).toBe(AUTHORIZED_COMMIT)
+  })
+
+  it('revalidates the capability map immediately before consuming it', () => {
+    const seen = []
+    const expectedError = new Error('V6_CAPABILITY_MAP_TOCTOU')
+    expect(() => preflightV6(environment(), {
+      gitState: () => ({
+        branch: 'main',
+        head: AUTHORIZED_COMMIT,
+        remoteHead: AUTHORIZED_COMMIT,
+        clean: true,
+        divergence: [0, 0],
+      }),
+      assertQaTarget: () => ({ target: 'QA_MATCH', tls: 'REQUIRED', adapter: 'POSTGRESQL_17' }),
+      assertProductionRejected: () => true,
+      verifyFileBackedStage: (filePath) => {
+        const normalized = filePath.replaceAll('\\', '/')
+        seen.push(normalized)
+        if (normalized.endsWith('cp3b2a_qa_capability_map_v6.json')) throw expectedError
+      },
+    })).toThrow(expectedError)
+    expect(seen.some((filePath) => filePath.endsWith('cp3b2a_qa_capability_map_v6.json'))).toBe(true)
   })
 
   it('keeps plan/preflight read-only', { timeout: 30_000 }, () => {

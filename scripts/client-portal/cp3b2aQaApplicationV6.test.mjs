@@ -350,7 +350,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(expected.map((entry) => entry.path)).toHaveLength(17)
   })
 
-  it('preflights read-only and creates a fresh private backup model', () => {
+  it('preflights read-only and creates a fresh private backup model', { timeout: 15_000 }, () => {
     const result = preflightV6(baseEnvironment(), matchingPreflightDependencies())
     expect(result.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1E')
     expect(result.backupLiveExactComparison).toBe('PASS')

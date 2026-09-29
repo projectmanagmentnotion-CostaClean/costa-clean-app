@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CMD-0005",
+  "commandHash": "5703d2b0d389f106a67e15432e76a9d836c2b271b536bba5952540b3b22f5c4e",
+  "runId": "ar_0524cf62-2e57-492a-bfdc-7e68cc12e359",
+  "status": "COMPLETED",
+  "baselineHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "finalHead": "368ed1f75ecda0c0f383c6df4ccffee216db76ce",
+  "tasksExecuted": [
+    "scoped-repair-ar_0524cf62-2e57-492a-bfdc-7e68cc12e359-88feb67afaf8"
+  ],
+  "filesChanged": [
+    "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json",
+    "scripts/client-portal/run-cp3b2a-qa-v6.mjs"
+  ],
+  "tests": [
+    {
+      "command": "npm.cmd test",
+      "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_0524cf62-2e57-492a-bfdc-7e68cc12e359",
+      "status": "PASS",
+      "passed": true,
+      "output": "161 test files passed; 867 tests passed; 4 skipped",
+      "exitCode": 0,
+      "startedAt": "2026-09-29T11:14:48.000Z",
+      "finishedAt": "2026-09-29T11:15:20.000Z"
+    }
+  ],
+  "lint": {
+    "command": "npm.cmd run lint",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_0524cf62-2e57-492a-bfdc-7e68cc12e359",
+    "status": "PASS",
+    "passed": true,
+    "output": "eslint . exit 0",
+    "exitCode": 0,
+    "startedAt": "2026-09-29T11:14:48.000Z",
+    "finishedAt": "2026-09-29T11:15:20.000Z"
+  },
+  "typecheck": {
+    "command": "npx.cmd tsc -b --pretty false",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_0524cf62-2e57-492a-bfdc-7e68cc12e359",
+    "status": "PASS",
+    "passed": true,
+    "output": "tsc exit 0",
+    "exitCode": 0,
+    "startedAt": "2026-09-29T11:14:48.000Z",
+    "finishedAt": "2026-09-29T11:15:20.000Z"
+  },
+  "build": {
+    "command": "npm.cmd run build",
+    "cwd": "C:\\Users\\USUARIO\\orchestor\\.orchestrator-worktrees\\costa-clean-app-run-ar_0524cf62-2e57-492a-bfdc-7e68cc12e359",
+    "status": "PASS",
+    "passed": true,
+    "output": "tsc -b and vite build exit 0",
+    "exitCode": 0,
+    "startedAt": "2026-09-29T11:14:48.000Z",
+    "finishedAt": "2026-09-29T11:15:20.000Z"
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "report_fb9baec5-2021-467c-ac44-cf1d923feba7"
+  ],
+  "factMatrixHashes": [
+    "2e3500e7cf2859666a3e7e1c800243cb131b8d797d58d99c2b0bd1fd64ce9a89"
+  ],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "0434c9197fd40bc93de949a36f2c5cf818aa2d27931b4aab9b428d307318aad1"
+}

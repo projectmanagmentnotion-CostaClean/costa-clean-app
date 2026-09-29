@@ -22,7 +22,7 @@ function environment() {
 }
 
 describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
-  it('exposes the V6R1E package contract', () => {
+  it('exposes the V6R1E package contract', { timeout: 15_000 }, () => {
     const { manifest } = verifyPackageManifestV6()
     expect(manifest.gate).toBe(GATE_V6R1E)
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)

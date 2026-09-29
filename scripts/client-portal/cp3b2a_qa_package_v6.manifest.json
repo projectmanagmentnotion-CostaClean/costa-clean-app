@@ -52,8 +52,8 @@
     {
       "path": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
       "kind": "mjs",
-      "gitBlobId": "efd98cd46b34de2acae984187b2094e9efa1b84d",
-      "blobSha256": "5a30cdee0738412b172b684beb07de379a59acd8af6d7f06559a648d0064f9f7"
+      "gitBlobId": "b76b4e8411fcefddcdb94fa986f7a8bd52fcfce2",
+      "blobSha256": "bbc9763e616707e9bc783176b99436f8255ffb90a47fadfa087394f4395755d1"
     },
     {
       "path": "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
@@ -64,8 +64,8 @@
     {
       "path": "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "8979feda7bfb7faede06dace877b47565799eedd",
-      "blobSha256": "d3eeb5d14d9461a6ae1ee3decdd70aa32417fa6d0afd6acf29839e9fc0499268"
+      "gitBlobId": "5ca0b8d460fa4477b24fe191e370cf83e8983c53",
+      "blobSha256": "f6d457a25ff5c11d872b1d3069532ea0b5b904720f450f76f1aacf37b51dbdd6"
     },
     {
       "path": "scripts/client-portal/cp3b2a_qa_precheck_v6.sql",
@@ -106,8 +106,8 @@
     {
       "path": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
       "kind": "mjs",
-      "gitBlobId": "04144bd1d687430b099b888e306c7869fa321006",
-      "blobSha256": "0de72e135ae44f845c990c195bfbbb77b11ea845f1795fff3e8f2f627d106959"
+      "gitBlobId": "bcf97511637f1cd4139b205f71ea07911e238ce3",
+      "blobSha256": "d3c245aa1ab5092be6ee6d085b246f59010f5f8d6942ebd7efe4b9b5a6894f8c"
     },
     {
       "path": "docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md",

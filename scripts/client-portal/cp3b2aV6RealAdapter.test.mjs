@@ -71,6 +71,15 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
     expect(rawWorkingTreeBlobIdV6(filePath)).toBe(noFilter.stdout.trim())
   })
 
+  it('protects the runner command, transport, and QA-target fixture dependencies', { timeout: 15_000 }, () => {
+    const protectedPaths = new Set(
+      assertPackageWorkingTreeIntegrityV6(AUTHORIZED_COMMIT).checked.map((entry) => entry.path),
+    )
+    expect(protectedPaths.has('scripts/client-portal/cp2b_command_launcher_v3.mjs')).toBe(true)
+    expect(protectedPaths.has('scripts/client-portal/cp2b_postgres_transport_v5.mjs')).toBe(true)
+    expect(protectedPaths.has('scripts/client-portal/cp2b_qa_auth_fixtures_v2.mjs')).toBe(true)
+  })
+
   it('exposes the V6R1E package contract', { timeout: 15_000 }, () => {
     const { manifest } = verifyPackageManifestV6(AUTHORIZED_COMMIT)
     expect(manifest.gate).toBe(GATE_V6R1E)

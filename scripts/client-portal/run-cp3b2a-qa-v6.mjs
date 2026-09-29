@@ -94,6 +94,9 @@ const PROTECTED_PACKAGE_PATHS_V6 = Object.freeze([
   'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json',
   ...EXPECTED_PACKAGE_ARTIFACT_PATHS_V6,
   MIGRATION_PATH,
+  'scripts/client-portal/cp2b_command_launcher_v3.mjs',
+  'scripts/client-portal/cp2b_postgres_transport_v5.mjs',
+  'scripts/client-portal/cp2b_qa_auth_fixtures_v2.mjs',
 ])
 
 const APPLY_STATE_V6 = Object.freeze({
@@ -304,6 +307,11 @@ function runGit(args, options = {}) {
     windowsHide: true,
     maxBuffer: 8 * 1024 * 1024,
     ...options,
+    env: {
+      ...process.env,
+      ...(options.env ?? {}),
+      GIT_NO_REPLACE_OBJECTS: '1',
+    },
   })
   if (result.error || result.status !== 0) {
     fail('V6_GIT_COMMAND_FAILED', {
@@ -387,6 +395,10 @@ function runGitAllowFailure(args) {
     encoding: 'utf8',
     windowsHide: true,
     maxBuffer: 8 * 1024 * 1024,
+    env: {
+      ...process.env,
+      GIT_NO_REPLACE_OBJECTS: '1',
+    },
   })
 }
 

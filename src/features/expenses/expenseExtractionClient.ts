@@ -1,7 +1,8 @@
-import type { ExtractionProviderInput, ExtractionProviderResult } from './expenseExtractionContract'
+import { getSupabaseClient } from '../../lib/supabase'
+import { validateExtractionProposal, type ExtractionErrorCode, type ExtractionProviderInput, type ExtractionProviderResult } from './expenseExtractionContract'
 
 export interface ExpenseExtractionClient {
-  requestExtraction(input: ExtractionProviderInput): Promise<ExtractionProviderResult>
+  requestExtraction(input: ExtractionProviderInput, mode?: 'extract' | 'retry'): Promise<ExtractionProviderResult>
 }
 
 const runtimeNotConfigured = (): ExtractionProviderResult => ({
@@ -11,11 +12,68 @@ const runtimeNotConfigured = (): ExtractionProviderResult => ({
   metadata: null,
 })
 
-/** Browser-safe product boundary. Trusted server wiring is intentionally external to this module. */
+const invalidProviderResponse = (): ExtractionProviderResult => ({
+  ok: false,
+  errorCode: 'INVALID_PROVIDER_RESPONSE',
+  errorMessageSafe: 'La respuesta de extracción no es válida.',
+  metadata: null,
+})
+
+const safeRuntimeFailure = (): ExtractionProviderResult => ({
+  ok: false,
+  errorCode: 'EXTRACTION_FAILED',
+  errorMessageSafe: 'No se pudo completar la extracción documental.',
+  metadata: null,
+})
+
+function readSafeError(value: unknown): ExtractionProviderResult | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  const errorCode = record.errorCode
+  const errorMessageSafe = record.errorMessageSafe
+  if (typeof errorCode !== 'string' || typeof errorMessageSafe !== 'string') return null
+  const allowedCodes: ExtractionErrorCode[] = [
+    'UNSUPPORTED_DOCUMENT',
+    'EXTRACTION_RUNTIME_NOT_CONFIGURED',
+    'EXTRACTION_PROVIDER_UNAVAILABLE',
+    'EXTRACTION_TIMEOUT',
+    'INVALID_PROVIDER_RESPONSE',
+    'DOCUMENT_NOT_FOUND',
+    'DOCUMENT_ACCESS_DENIED',
+    'EXTRACTION_FAILED',
+  ]
+  if (!allowedCodes.includes(errorCode as ExtractionErrorCode)) return null
+  return { ok: false, errorCode: errorCode as ExtractionErrorCode, errorMessageSafe, metadata: null }
+}
+
+function parseSuccess(value: unknown): ExtractionProviderResult | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  if (record.ok !== true || typeof record.extractionId !== 'string' || typeof record.attempt !== 'number' || !Number.isInteger(record.attempt) || typeof record.metadata !== 'object' || record.metadata === null) return null
+  const metadata = record.metadata as Record<string, unknown>
+  if (typeof metadata.provider !== 'string' || typeof metadata.providerVersion !== 'string' || (metadata.model !== null && typeof metadata.model !== 'string')) return null
+  const checked = validateExtractionProposal(record.proposal)
+  if (!checked.ok) return invalidProviderResponse()
+  return { ok: true, proposal: checked.proposal, metadata: { provider: metadata.provider, providerVersion: metadata.providerVersion, model: metadata.model as string | null } }
+}
+
+/** Browser-safe authenticated boundary to the deployed Edge Function. */
 export function createExpenseExtractionClient(): ExpenseExtractionClient {
   return {
-    async requestExtraction() {
-      return runtimeNotConfigured()
+    async requestExtraction(input, mode = 'extract') {
+      const { client, error } = getSupabaseClient()
+      if (error || !client) return runtimeNotConfigured()
+      try {
+        const { data, error: invokeError } = await client.functions.invoke('expense-document-extraction', {
+          body: { captureDocumentId: input.captureDocumentId, mode },
+        })
+        const safeError = readSafeError(data)
+        if (safeError) return safeError
+        if (invokeError) return safeRuntimeFailure()
+        return parseSuccess(data) ?? invalidProviderResponse()
+      } catch {
+        return safeRuntimeFailure()
+      }
     },
   }
 }

@@ -57,11 +57,11 @@ Attempt identity combines document, SHA-256, schema version, provider and attemp
 
 - Fixture output is not OCR and must never be presented as Production extraction.
 - No real provider is integrated and no provider recommendation is selected for runtime use.
-- QA runtime R2.1 hardening accepts only `{ captureDocumentId, mode }`, derives owner/session/path/hash/provider inputs server-side, requires active internal staff, reads the private Storage object before persistence, and uses an atomic lifecycle claim. Normal `extract` is idempotent; only `retry` from `FAILED` creates attempt N+1. Reused successful attempts return no fresh provider metadata because no provider was dispatched for that request.
+- QA runtime R2.1 hardening accepts only `{ captureDocumentId, mode }`, derives owner/session/path/hash/provider inputs server-side, requires active internal staff, reads the private Storage object before persistence, and uses an atomic lifecycle claim. Normal `extract` is idempotent; only `retry` from `FAILED` creates attempt N+1. Reused successful attempts return no fresh provider metadata because no provider was dispatched for that request. Fixture execution requires both the exact QA project pin and the server-only Edge secret `N52_SERVER_FIXTURE_MODE=qa-fixture`; missing or incorrect configuration fails closed.
 - N5.3 must own deep validation, reconciliation and normalization policy.
 - N5.4 must own supplier master, matching, aliases, analytics and merge decisions.
 - QA migration `20260928173312_n52_document_extraction_foundation` is applied to Supabase project `kpvvydthlxupjjqqdpxy` with RLS and FORCE RLS enabled. Edge Function `expense-document-extraction` is ACTIVE there with `verify_jwt=true`. Production remains untouched, and the browser product boundary remains fail-closed until a separate client wiring decision.
-- R2.1 adds service-side owner/staff parity and atomic claim RPCs so normal `extract` reuses PENDING/PROCESSING/SUCCEEDED attempts, only explicit `retry` creates N+1 from FAILED, and concurrent callers cannot dispatch twice.
+- R2.1 adds service-side owner/staff parity and atomic claim RPCs so normal `extract` reuses PENDING/PROCESSING/SUCCEEDED attempts, only explicit `retry` creates N+1 from FAILED, and concurrent callers cannot dispatch twice. The R2.1 contract-parity correction adds no database migration; the server fixture now omits `evidence` for missing fields and validates the complete schemaVersion 1 shape before persistence.
 
 Before any remote action, require the exact authorization gate:
 

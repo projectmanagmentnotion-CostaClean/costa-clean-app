@@ -1,47 +1,18 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createServerFixtureProposal } from './fixtureProposal.ts'
+import { validateServerProposal } from './proposalValidation.ts'
+import { isQaFixtureRuntimeConfigured, SERVER_FIXTURE_ENV_NAME } from './runtimeGuards.ts'
 
-const QA_PROJECT_REF = 'kpvvydthlxupjjqqdpxy'
-const SERVER_FIXTURE_MODE = 'qa-fixture'
 const SCHEMA_VERSION = 1
 const PROVIDER = 'fixture'
 const PROVIDER_VERSION = 'n5.2-fixture-v1'
 const BUCKET = 'expense-receipts'
 const MAX_REQUEST_BYTES = 16 * 1024
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-type JsonRecord = Record<string, unknown>
 type RuntimeRow = { action: string; extraction_id: string; capture_session_id: string; created_by: string; attempt: number; status: string; idempotency_key: string; storage_path: string; original_filename: string; mime_type: string; file_size_bytes: number; sha256: string }
 
 const json = (body: JsonRecord, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 const safeError = (errorCode: string, errorMessageSafe: string, metadata: JsonRecord | null = null) => ({ ok: false, errorCode, errorMessageSafe, metadata })
-const field = (value: unknown, rawValue: string, confidence: number, page = 1) => ({ value, rawValue, confidence, source: 'document', evidence: { page, text: rawValue } })
-const missing = () => ({ value: null, rawValue: null, confidence: null, source: 'missing', evidence: null })
-const fixtureProposal = () => ({
-  schemaVersion: SCHEMA_VERSION, documentType: field('INVOICE', 'FACTURA', 0.98),
-  supplier: { rawName: field('SUMINISTROS COSTA TEST S.L.', 'SUMINISTROS COSTA TEST S.L.', 0.97), legalNameCandidate: field('SUMINISTROS COSTA TEST S.L.', 'SUMINISTROS COSTA TEST S.L.', 0.94), commercialNameCandidate: field('Costa Test', 'COSTA TEST', 0.92), taxId: field('B12345678', 'CIF: B-12345678', 0.99), normalizedTaxIdCandidate: field('B12345678', 'B-12345678', 0.96), vatId: missing(), address: missing(), postalCode: missing(), city: missing(), country: field('ES', 'España', 0.88), phone: missing(), email: missing(), website: missing() },
-  invoice: { number: field('TEST-2026-001', 'TEST-2026-001', 0.96), issueDate: field('2026-09-28', '28/09/2026', 0.95), dueDate: missing(), currency: field('EUR', 'EUR', 0.99) },
-  amounts: { net: field('150.00', '150,00 €', 0.98), tax: field('26.00', '26,00 €', 0.98), gross: field('176.00', '176,00 €', 0.98), discount: missing(), withholding: missing() },
-  vatLines: [{ rate: field('10', 'IVA 10%', 0.82), base: field('50.00', 'Base 10%: 50,00 €', 0.8), tax: field('5.00', 'IVA 10%: 5,00 €', 0.8) }, { rate: field('21', 'IVA 21%', 0.96), base: field('100.00', 'Base 21%: 100,00 €', 0.95), tax: field('21.00', 'IVA 21%: 21,00 €', 0.95) }],
-  payment: { method: missing() }, confidence: { overall: 0.94 },
-})
-const isRecord = (value: unknown): value is JsonRecord => Boolean(value && typeof value === 'object' && !Array.isArray(value))
-const validField = (value: unknown) => {
-  if (!isRecord(value) || !('value' in value) || !('rawValue' in value) || !('confidence' in value) || !('source' in value) || !('evidence' in value)) return false
-  if (value.value === null) return value.rawValue === null && value.confidence === null && value.source === 'missing' && value.evidence === null
-  if (typeof value.rawValue !== 'string' || typeof value.confidence !== 'number' || !Number.isFinite(value.confidence) || value.confidence < 0 || value.confidence > 1 || value.source !== 'document' || !isRecord(value.evidence)) return false
-  return Number.isInteger(value.evidence.page) && Number(value.evidence.page) >= 1 && typeof value.evidence.text === 'string'
-}
-const validProposal = (proposal: unknown) => {
-  if (!isRecord(proposal) || proposal.schemaVersion !== SCHEMA_VERSION || !isRecord(proposal.documentType) || !isRecord(proposal.supplier) || !isRecord(proposal.invoice) || !isRecord(proposal.amounts) || !isRecord(proposal.payment) || !isRecord(proposal.confidence) || !Array.isArray(proposal.vatLines)) return false
-  const amounts = proposal.amounts
-  const supplier = proposal.supplier
-  const invoice = proposal.invoice
-  const payment = proposal.payment
-  const confidence = proposal.confidence
-  const requiredFields = [proposal.documentType, supplier.rawName, supplier.legalNameCandidate, supplier.commercialNameCandidate, supplier.taxId, supplier.normalizedTaxIdCandidate, supplier.vatId, supplier.address, supplier.postalCode, supplier.city, supplier.country, supplier.phone, supplier.email, supplier.website, invoice.number, invoice.issueDate, invoice.dueDate, invoice.currency, amounts.net, amounts.tax, amounts.gross, amounts.discount, amounts.withholding, payment.method]
-  if (!requiredFields.every(validField) || typeof confidence.overall !== 'number' || !Number.isFinite(confidence.overall) || confidence.overall < 0 || confidence.overall > 1) return false
-  if (!proposal.vatLines.every((line) => isRecord(line) && validField(line.rate) && validField(line.base) && validField(line.tax))) return false
-  return ['net', 'tax', 'gross'].every((key) => /^\d+(\.\d{1,2})?$/.test(String((amounts[key] as JsonRecord).value ?? '')))
-}
 const parseRequest = async (req: Request) => {
   const contentType = req.headers.get('Content-Type')?.toLowerCase() ?? ''
   const contentLength = Number(req.headers.get('Content-Length') ?? 0)
@@ -65,9 +36,8 @@ Deno.serve(async (req: Request) => {
   const body = await parseRequest(req)
   if (!body) return json({ error: 'REQUEST_CONTRACT_INVALID' }, 400)
   const url = Deno.env.get('SUPABASE_URL') ?? ''
-  let projectRef = ''
-  try { projectRef = new URL(url).hostname.split('.')[0] } catch { return json({ error: 'RUNTIME_NOT_CONFIGURED' }, 503) }
-  if (projectRef !== QA_PROJECT_REF || SERVER_FIXTURE_MODE !== 'qa-fixture') return json({ error: 'RUNTIME_NOT_CONFIGURED' }, 503)
+  try { new URL(url) } catch { return json({ error: 'RUNTIME_NOT_CONFIGURED' }, 503) }
+  if (!isQaFixtureRuntimeConfigured(url, Deno.env.get(SERVER_FIXTURE_ENV_NAME) ?? '')) return json({ error: 'RUNTIME_NOT_CONFIGURED' }, 503)
   const publishableKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
   if (!publishableKey || !serviceRoleKey) return json({ error: 'RUNTIME_NOT_CONFIGURED' }, 503)
@@ -95,13 +65,13 @@ Deno.serve(async (req: Request) => {
   }
   const { data: claimed } = await adminClient.rpc('n52_claim_extraction', { p_extraction_id: row.extraction_id })
   if (!claimed?.[0]?.claimed) return json({ ok: false, status: 'PROCESSING', extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
-  let proposal: unknown = fixtureProposal()
+  let proposal: unknown = createServerFixtureProposal()
   if (document.original_filename.toLowerCase().startsWith('fixture-fail-')) {
     await adminClient.from('expense_capture_extractions').update({ status: 'FAILED', failed_at: new Date().toISOString(), error_code: 'EXTRACTION_PROVIDER_UNAVAILABLE', error_message_safe: 'El proveedor QA no está disponible.', updated_at: new Date().toISOString() }).eq('id', row.extraction_id)
     return json({ ...safeError('EXTRACTION_PROVIDER_UNAVAILABLE', 'El proveedor QA no está disponible.', null), extractionId: row.extraction_id, attempt: row.attempt }, 422)
   }
   if (document.original_filename.toLowerCase().startsWith('fixture-invalid-')) proposal = { malformed: true }
-  if (!validProposal(proposal)) {
+  if (!validateServerProposal(proposal)) {
     await adminClient.from('expense_capture_extractions').update({ status: 'FAILED', failed_at: new Date().toISOString(), error_code: 'INVALID_PROVIDER_RESPONSE', error_message_safe: 'La respuesta del proveedor no supera la validación estructural.', updated_at: new Date().toISOString() }).eq('id', row.extraction_id)
     return json({ ...safeError('INVALID_PROVIDER_RESPONSE', 'La respuesta del proveedor no supera la validación estructural.', null), extractionId: row.extraction_id }, 422)
   }

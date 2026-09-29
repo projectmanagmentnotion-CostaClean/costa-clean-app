@@ -3,6 +3,7 @@ import { getFixtureFailure } from './fixtureBehavior.ts'
 import { createServerFixtureProposal } from './fixtureProposal.ts'
 import { validateServerProposal } from './proposalValidation.ts'
 import { buildFreshSuccessResponse, buildReusedSuccessResponse } from './responseContract.ts'
+import { resolveExistingExtractionDecision } from './runtimeDecision.ts'
 import { isQaFixtureRuntimeConfigured, SERVER_FIXTURE_ENV_NAME } from './runtimeGuards.ts'
 
 const SCHEMA_VERSION = 1
@@ -62,15 +63,19 @@ Deno.serve(async (req: Request) => {
   if (row.action === 'EXISTING') {
     const { data: existing } = await adminClient.from('expense_capture_extractions').select('proposal, provider, provider_version, model, error_code, error_message_safe').eq('id', row.extraction_id).maybeSingle()
     if (row.status === 'SUCCEEDED') {
+      if (!validateServerProposal(existing?.proposal)) return json({ error: 'EXTRACTION_STATE_UNAVAILABLE' }, 500)
       const reusedResponse = buildReusedSuccessResponse(existing, row.extraction_id, row.attempt)
       if (!reusedResponse) return json({ error: 'EXTRACTION_STATE_UNAVAILABLE' }, 500)
       return json(reusedResponse)
     }
     if (row.status === 'FAILED') return json({ ...safeError(existing?.error_code ?? 'EXTRACTION_FAILED', existing?.error_message_safe ?? 'La extracción ha fallado.', null), extractionId: row.extraction_id, attempt: row.attempt }, 422)
-    return json({ ok: false, status: row.status, extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
+    if (row.status !== 'PENDING') return json({ ok: false, status: row.status, extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
+    const { data: recovered } = await adminClient.rpc('n52_claim_extraction', { p_extraction_id: row.extraction_id })
+    if (resolveExistingExtractionDecision(row.status, Boolean(recovered?.[0]?.claimed)) !== 'DISPATCH') return json({ ok: false, status: 'PROCESSING', extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
+  } else {
+    const { data: claimed } = await adminClient.rpc('n52_claim_extraction', { p_extraction_id: row.extraction_id })
+    if (!claimed?.[0]?.claimed) return json({ ok: false, status: 'PROCESSING', extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
   }
-  const { data: claimed } = await adminClient.rpc('n52_claim_extraction', { p_extraction_id: row.extraction_id })
-  if (!claimed?.[0]?.claimed) return json({ ok: false, status: 'PROCESSING', extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
   let proposal: unknown = createServerFixtureProposal()
   if (getFixtureFailure(document.original_filename, row.attempt) === 'EXTRACTION_PROVIDER_UNAVAILABLE') {
     await adminClient.from('expense_capture_extractions').update({ status: 'FAILED', failed_at: new Date().toISOString(), error_code: 'EXTRACTION_PROVIDER_UNAVAILABLE', error_message_safe: 'El proveedor QA no está disponible.', updated_at: new Date().toISOString() }).eq('id', row.extraction_id)

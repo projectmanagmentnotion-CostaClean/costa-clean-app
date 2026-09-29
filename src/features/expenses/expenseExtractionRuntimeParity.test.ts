@@ -4,6 +4,7 @@ import { createServerFixtureProposal, missing } from '../../../supabase/function
 import { validateServerProposal } from '../../../supabase/functions/expense-document-extraction/proposalValidation'
 import { buildFreshSuccessResponse, buildReusedSuccessResponse } from '../../../supabase/functions/expense-document-extraction/responseContract'
 import { getFixtureFailure } from '../../../supabase/functions/expense-document-extraction/fixtureBehavior'
+import { resolveExistingExtractionDecision } from '../../../supabase/functions/expense-document-extraction/runtimeDecision'
 import { isQaFixtureRuntimeConfigured, QA_PROJECT_REF, SERVER_FIXTURE_ENV_NAME } from '../../../supabase/functions/expense-document-extraction/runtimeGuards'
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
@@ -98,5 +99,17 @@ describe('N5.2 QA Edge runtime R2.1 contract parity', () => {
     expect(getFixtureFailure('fixture-fail-once-invoice.png', 1)).toBe('EXTRACTION_PROVIDER_UNAVAILABLE')
     expect(getFixtureFailure('fixture-fail-once-invoice.png', 2)).toBeNull()
     expect(getFixtureFailure('fixture-fail-once-invoice.png', Number.NaN)).toBeNull()
+  })
+
+  it('recovers an orphan PENDING row only after winning the atomic claim', () => {
+    expect(resolveExistingExtractionDecision('PENDING', true)).toBe('DISPATCH')
+    expect(resolveExistingExtractionDecision('PENDING', false)).toBe('PROCESSING')
+    expect(resolveExistingExtractionDecision('PENDING', true)).toBe('DISPATCH')
+  })
+
+  it('never redispatches PROCESSING and keeps terminal states explicit', () => {
+    expect(resolveExistingExtractionDecision('PROCESSING', true)).toBe('PROCESSING')
+    expect(resolveExistingExtractionDecision('SUCCEEDED', true)).toBe('REUSE')
+    expect(resolveExistingExtractionDecision('FAILED', true)).toBe('FAILED')
   })
 })

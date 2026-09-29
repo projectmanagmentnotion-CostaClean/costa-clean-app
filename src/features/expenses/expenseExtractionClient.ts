@@ -1,4 +1,5 @@
 import { getSupabaseClient } from '../../lib/supabase'
+import { FunctionsHttpError } from '@supabase/supabase-js'
 import { validateExtractionProposal, type ExtractionErrorCode, type ExtractionProviderInput, type ExtractionProviderResult } from './expenseExtractionContract'
 
 export interface ExpenseExtractionClient {
@@ -57,6 +58,16 @@ function parseSuccess(value: unknown): ExtractionProviderResult | null {
   return { ok: true, proposal: checked.proposal, metadata: { provider: metadata.provider, providerVersion: metadata.providerVersion, model: metadata.model as string | null } }
 }
 
+async function parseInvocationError(error: unknown): Promise<ExtractionProviderResult> {
+  if (!(error instanceof FunctionsHttpError)) return safeRuntimeFailure()
+  try {
+    const payload = await error.context.json()
+    return readSafeError(payload) ?? safeRuntimeFailure()
+  } catch {
+    return safeRuntimeFailure()
+  }
+}
+
 /** Browser-safe authenticated boundary to the deployed Edge Function. */
 export function createExpenseExtractionClient(): ExpenseExtractionClient {
   return {
@@ -69,7 +80,7 @@ export function createExpenseExtractionClient(): ExpenseExtractionClient {
         })
         const safeError = readSafeError(data)
         if (safeError) return safeError
-        if (invokeError) return safeRuntimeFailure()
+        if (invokeError) return parseInvocationError(invokeError)
         return parseSuccess(data) ?? invalidProviderResponse()
       } catch {
         return safeRuntimeFailure()

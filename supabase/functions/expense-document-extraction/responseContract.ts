@@ -1,4 +1,12 @@
+import { CORS_HEADERS } from './cors.ts'
+
 type JsonRecord = Record<string, unknown>
+
+export const jsonResponse = (body: JsonRecord, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+  })
 
 type ExistingSuccessfulExtraction = {
   proposal: unknown

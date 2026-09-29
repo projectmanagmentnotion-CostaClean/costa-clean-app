@@ -2,9 +2,10 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { getFixtureFailure } from './fixtureBehavior.ts'
 import { createServerFixtureProposal } from './fixtureProposal.ts'
 import { validateServerProposal } from './proposalValidation.ts'
-import { buildFreshSuccessResponse, buildReusedSuccessResponse } from './responseContract.ts'
+import { buildFreshSuccessResponse, buildReusedSuccessResponse, jsonResponse } from './responseContract.ts'
 import { resolveExistingExtractionDecision } from './runtimeDecision.ts'
 import { isQaFixtureRuntimeConfigured, SERVER_FIXTURE_ENV_NAME } from './runtimeGuards.ts'
+import { createCorsPreflightResponse } from './cors.ts'
 
 const SCHEMA_VERSION = 1
 const PROVIDER = 'fixture'
@@ -14,7 +15,7 @@ const MAX_REQUEST_BYTES = 16 * 1024
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 type RuntimeRow = { action: string; extraction_id: string; capture_session_id: string; created_by: string; attempt: number; status: string; idempotency_key: string; storage_path: string; original_filename: string; mime_type: string; file_size_bytes: number; sha256: string }
 
-const json = (body: JsonRecord, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+const json = jsonResponse
 const safeError = (errorCode: string, errorMessageSafe: string, metadata: JsonRecord | null = null) => ({ ok: false, errorCode, errorMessageSafe, metadata })
 const parseRequest = async (req: Request) => {
   const contentType = req.headers.get('Content-Type')?.toLowerCase() ?? ''
@@ -33,6 +34,8 @@ const parseRequest = async (req: Request) => {
 const functionMetadata = () => ({ provider: PROVIDER, providerVersion: PROVIDER_VERSION, model: null })
 
 Deno.serve(async (req: Request) => {
+  const preflight = createCorsPreflightResponse(req)
+  if (preflight) return preflight
   if (req.method !== 'POST') return json({ error: 'METHOD_NOT_ALLOWED' }, 405)
   const token = req.headers.get('Authorization')?.replace(/^Bearer\s+/i, '')
   if (!token) return json({ error: 'AUTH_REQUIRED' }, 401)

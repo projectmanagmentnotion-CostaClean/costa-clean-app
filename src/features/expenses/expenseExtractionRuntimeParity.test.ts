@@ -3,6 +3,7 @@ import { validateExtractionProposal } from './expenseExtractionContract'
 import { createServerFixtureProposal, missing } from '../../../supabase/functions/expense-document-extraction/fixtureProposal'
 import { validateServerProposal } from '../../../supabase/functions/expense-document-extraction/proposalValidation'
 import { buildFreshSuccessResponse, buildReusedSuccessResponse } from '../../../supabase/functions/expense-document-extraction/responseContract'
+import { getFixtureFailure } from '../../../supabase/functions/expense-document-extraction/fixtureBehavior'
 import { isQaFixtureRuntimeConfigured, QA_PROJECT_REF, SERVER_FIXTURE_ENV_NAME } from '../../../supabase/functions/expense-document-extraction/runtimeGuards'
 
 const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T
@@ -82,5 +83,20 @@ describe('N5.2 QA Edge runtime R2.1 contract parity', () => {
     expect(buildReusedSuccessResponse({ proposal: fixture, provider: null, provider_version: 'n5.2-fixture-v1', model: null }, 'extraction', 1)).toBeNull()
     expect(buildReusedSuccessResponse({ proposal: fixture, provider: 'fixture', provider_version: null, model: null }, 'extraction', 1)).toBeNull()
     expect(buildReusedSuccessResponse({ proposal: null, provider: 'fixture', provider_version: 'n5.2-fixture-v1', model: null }, 'extraction', 1)).toBeNull()
+  })
+
+  it('keeps normal, fail-once, permanent-failure and invalid fixture policies separate', () => {
+    expect(getFixtureFailure('fixture-invoice.png', 1)).toBeNull()
+    expect(getFixtureFailure('fixture-fail-once-invoice.png', 1)).toBe('EXTRACTION_PROVIDER_UNAVAILABLE')
+    expect(getFixtureFailure('fixture-fail-once-invoice.png', 2)).toBeNull()
+    expect(getFixtureFailure('fixture-fail-always-invoice.png', 1)).toBe('EXTRACTION_PROVIDER_UNAVAILABLE')
+    expect(getFixtureFailure('fixture-fail-always-invoice.png', 2)).toBe('EXTRACTION_PROVIDER_UNAVAILABLE')
+    expect(validateServerProposal({ malformed: true })).toBe(false)
+  })
+
+  it('uses the server attempt only and exposes no browser attempt selector', () => {
+    expect(getFixtureFailure('fixture-fail-once-invoice.png', 1)).toBe('EXTRACTION_PROVIDER_UNAVAILABLE')
+    expect(getFixtureFailure('fixture-fail-once-invoice.png', 2)).toBeNull()
+    expect(getFixtureFailure('fixture-fail-once-invoice.png', Number.NaN)).toBeNull()
   })
 })

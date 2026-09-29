@@ -1,4 +1,5 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { getFixtureFailure } from './fixtureBehavior.ts'
 import { createServerFixtureProposal } from './fixtureProposal.ts'
 import { validateServerProposal } from './proposalValidation.ts'
 import { buildFreshSuccessResponse, buildReusedSuccessResponse } from './responseContract.ts'
@@ -71,7 +72,7 @@ Deno.serve(async (req: Request) => {
   const { data: claimed } = await adminClient.rpc('n52_claim_extraction', { p_extraction_id: row.extraction_id })
   if (!claimed?.[0]?.claimed) return json({ ok: false, status: 'PROCESSING', extractionId: row.extraction_id, attempt: row.attempt, metadata: null }, 202)
   let proposal: unknown = createServerFixtureProposal()
-  if (document.original_filename.toLowerCase().startsWith('fixture-fail-')) {
+  if (getFixtureFailure(document.original_filename, row.attempt) === 'EXTRACTION_PROVIDER_UNAVAILABLE') {
     await adminClient.from('expense_capture_extractions').update({ status: 'FAILED', failed_at: new Date().toISOString(), error_code: 'EXTRACTION_PROVIDER_UNAVAILABLE', error_message_safe: 'El proveedor QA no está disponible.', updated_at: new Date().toISOString() }).eq('id', row.extraction_id)
     return json({ ...safeError('EXTRACTION_PROVIDER_UNAVAILABLE', 'El proveedor QA no está disponible.', null), extractionId: row.extraction_id, attempt: row.attempt }, 422)
   }

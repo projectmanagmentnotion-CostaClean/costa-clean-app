@@ -312,7 +312,14 @@ function gitState(expectedHead = null) {
     || !clean
     || (expectedHead && head !== expectedHead)
   ) fail('V6_GIT_STATE_REJECTED', { branch, head, remoteHead, ahead, behind, clean })
-  return { branch, head, remoteHead, clean, divergence: [ahead, behind] }
+  return {
+    branch,
+    head,
+    remoteHead,
+    clean,
+    divergence: [ahead, behind],
+    authorizedCommit: expectedHead,
+  }
 }
 
 function assertLocalQaLink() {
@@ -364,31 +371,68 @@ function runGitAllowFailure(args) {
   })
 }
 
-export function assertPackageWorkingTreeIntegrityV6({
+function assertAuthorizedCommitV6(authorizedCommit, git) {
+  if (!/^[0-9a-f]{40}$/u.test(String(authorizedCommit ?? ''))) {
+    fail('V6_AUTHORIZED_COMMIT_REQUIRED')
+  }
+  const currentHead = git(['rev-parse', 'HEAD'])
+  if (currentHead !== authorizedCommit) {
+    fail('V6_AUTHORIZED_COMMIT_MOVED', { authorizedCommit, currentHead })
+  }
+  return authorizedCommit
+}
+
+export function authorizedCommitV6(environment = process.env) {
+  const authorizedCommit = String(environment.CP3B2A_V6R1E_AUTHORIZED_COMMIT ?? '').trim()
+  if (!/^[0-9a-f]{40}$/u.test(authorizedCommit)) {
+    fail('V6_AUTHORIZED_COMMIT_REQUIRED')
+  }
+  return authorizedCommit
+}
+
+export function assertAuthorizedFileIntegrityV6(authorizedCommit, relativePath, {
   git = runGit,
   worktreeBlobId = (filePath) => workingTreeBlobIdV1(filePath),
   worktreeSha256 = (filePath) => workingTreeSha256V1(filePath),
+  checkCommit = true,
 } = {}) {
+  if (checkCommit) assertAuthorizedCommitV6(authorizedCommit, git)
+  const listing = git(['ls-files', '-v', '--', relativePath])
+  const flag = listing.slice(0, 1)
+  if (flag === 'h' || flag === 's' || flag === 'S') {
+    fail('V6_PACKAGE_WORKTREE_METADATA_REJECTED', { path: relativePath, flag })
+  }
+  const stagedPath = git(['diff', '--cached', '--name-only', '--', relativePath]).trim()
+  if (stagedPath) {
+    fail('V6_PACKAGE_INDEX_DIVERGENCE', { path: relativePath })
+  }
+  const authorizedGitBlobId = git(['rev-parse', `${authorizedCommit}:${relativePath}`])
+  const filePath = path.join(repoRoot, relativePath)
+  const workingTreeGitBlobId = worktreeBlobId(filePath)
+  if (workingTreeGitBlobId !== authorizedGitBlobId) {
+    fail('V6_PACKAGE_WORKTREE_DIVERGENCE', {
+      path: relativePath,
+      authorizedCommit,
+      authorizedGitBlobId,
+      workingTreeGitBlobId,
+    })
+  }
+  if (relativePath === MIGRATION_PATH && worktreeSha256(filePath) !== MIGRATION_SHA256) {
+    fail('V6_MIGRATION_SHA256_REJECTED', { path: relativePath, authorizedCommit })
+  }
+  return { path: relativePath, authorizedCommit, authorizedGitBlobId, workingTreeGitBlobId }
+}
+
+export function assertPackageWorkingTreeIntegrityV6(authorizedCommit, options = {}) {
+  const git = options.git ?? runGit
+  assertAuthorizedCommitV6(authorizedCommit, git)
   const checked = []
   for (const relativePath of PROTECTED_PACKAGE_PATHS_V6) {
-    const listing = git(['ls-files', '-v', '--', relativePath])
-    const flag = listing.slice(0, 1)
-    if (flag === 'h' || flag === 's' || flag === 'S') {
-      fail('V6_PACKAGE_WORKTREE_METADATA_REJECTED', { path: relativePath, flag })
-    }
-    const authorizedGitBlobId = git(['rev-parse', `HEAD:${relativePath}`])
-    const workingTreeGitBlobId = worktreeBlobId(path.join(repoRoot, relativePath))
-    if (workingTreeGitBlobId !== authorizedGitBlobId) {
-      fail('V6_PACKAGE_WORKTREE_DIVERGENCE', {
-        path: relativePath,
-        authorizedGitBlobId,
-        workingTreeGitBlobId,
-      })
-    }
-    if (relativePath === MIGRATION_PATH && worktreeSha256(path.join(repoRoot, relativePath)) !== MIGRATION_SHA256) {
-      fail('V6_MIGRATION_SHA256_REJECTED', { path: relativePath })
-    }
-    checked.push({ path: relativePath, authorizedGitBlobId, workingTreeGitBlobId })
+    checked.push(assertAuthorizedFileIntegrityV6(authorizedCommit, relativePath, {
+      ...options,
+      git,
+      checkCommit: false,
+    }))
   }
   return { checked }
 }
@@ -761,8 +805,8 @@ function buildFixtureVariablesV6(runId) {
   }
 }
 
-export function verifyPackageManifestV6() {
-  assertPackageWorkingTreeIntegrityV6()
+export function verifyPackageManifestV6(authorizedCommit) {
+  assertPackageWorkingTreeIntegrityV6(authorizedCommit)
   const manifest = readJsonFromWorkingTree(manifestPath)
   const packageContract = packageContractV6()
   if (
@@ -936,7 +980,7 @@ function updateLedger(ledgerPath, state, detail = {}) {
   writeFileSync(ledgerPath, `${JSON.stringify(next, null, 2)}\n`, 'utf8')
 }
 
-function assertAuthorizationV6(environment, gitStateValue) {
+function assertAuthorizationV6(environment, gitStateValue, authorizedCommit) {
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
   for (const key of LEGACY_AUTHORIZATION_KEYS_V6) {
     if (typeof environment[key] === 'string' && environment[key].length > 0) {
@@ -950,6 +994,10 @@ function assertAuthorizationV6(environment, gitStateValue) {
   }
   if (environment.CP3B2A_V6R1E_AUTHORIZED_HEAD !== gitStateValue.head) {
     fail('V6_AUTHORIZED_HEAD_MISMATCH')
+  }
+  if (environment.CP3B2A_V6R1E_AUTHORIZED_COMMIT !== authorizedCommit
+    || gitStateValue.head !== authorizedCommit) {
+    fail('V6_AUTHORIZED_COMMIT_MISMATCH', { authorizedCommit, head: gitStateValue.head })
   }
   return true
 }
@@ -1158,6 +1206,12 @@ function detailedPostcheckV6(prestate, current) {
 }
 
 function transactionalMatrixCompleteV6(environment = process.env, dependencies = {}) {
+  if (dependencies.authorizedCommit) {
+    (dependencies.verifyFileBackedStage ?? ((filePath) => assertAuthorizedFileIntegrityV6(
+      dependencies.authorizedCommit,
+      toRepoRelativePath(filePath),
+    )))(matrixPath)
+  }
   const manifest = readJsonFromWorkingTree(capabilityMapPath)
   if (manifest.contractCanonicalJsonSha256 && manifest.contract
     && manifest.contractCanonicalJsonSha256 !== canonicalJsonSha256V1(manifest.contract)) {
@@ -1206,8 +1260,9 @@ function validateCapabilities(transactional, concurrent) {
   return true
 }
 
-export function planV6() {
-  verifyPackageManifestV6()
+export function planV6(environment = process.env) {
+  const authorizedCommit = authorizedCommitV6(environment)
+  verifyPackageManifestV6(authorizedCommit)
   return {
     gate: GATE_V6R1E,
     mode: 'plan',
@@ -1217,14 +1272,16 @@ export function planV6() {
     target: 'QA_ONLY',
     production: 'REJECTED',
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
+    authorizedCommit,
     migrationSha256: MIGRATION_SHA256,
     remoteWrites: 0,
   }
 }
 
 export function preflightV6(environment, dependencies = {}) {
-  const { manifestIdentity } = verifyPackageManifestV6()
-  const gitStateValue = (dependencies.gitState ?? gitState)()
+  const authorizedCommit = authorizedCommitV6(environment)
+  const { manifestIdentity } = verifyPackageManifestV6(authorizedCommit)
+  const gitStateValue = (dependencies.gitState ?? gitState)(authorizedCommit)
   if (environment.CP3B2A_PROJECT_REF === PRODUCTION_REF) fail('V6_PRODUCTION_TARGET_REJECTED')
   if (environment.CP3B2A_PROJECT_REF && environment.CP3B2A_PROJECT_REF !== QA_REF) {
     fail('V6_QA_TARGET_REQUIRED')
@@ -1270,6 +1327,7 @@ export function preflightV6(environment, dependencies = {}) {
     target: target.target,
     production: production ? 'REJECTED' : 'UNKNOWN',
     canonicalJsonStandard: CANONICAL_JSON_STANDARD_V6,
+    authorizedCommit,
     manifestIdentity: {
       gitBlobId: manifestIdentity.gitBlobId,
       canonicalJsonSha256: manifestIdentity.canonicalJsonSha256,
@@ -1310,12 +1368,27 @@ function assertCleanupObserverV6(snapshot) {
 }
 
 export function buildExecutionOperationsV6(environment, dependencies = {}) {
+  const authorizedCommit = authorizedCommitV6(environment)
   const runPsql = dependencies.runPsql ?? runPsqlV6R
   const readLiveSnapshot = dependencies.readLiveSnapshot ?? readLiveSnapshotV6R
   const approvedBackupPath = resolveApprovedBackupManifestPathV6(environment)
   const runIdProvider = () => dependencies.runId ?? `CP3B2A-V6R1E-${randomBytes(6).toString('hex').toUpperCase()}`
-  const runJson = (filePath, variables) => runJsonSqlFileV6R(filePath, environment, variables, { ...dependencies, runPsql })
-  const runText = (sql, variables) => runSqlTextV6R(sql, environment, variables, { ...dependencies, runPsql })
+  const verifyFileBackedStage = dependencies.verifyFileBackedStage
+    ?? ((filePath) => assertAuthorizedFileIntegrityV6(authorizedCommit, toRepoRelativePath(filePath)))
+  const verifiedRunPsql = (sqlOrFilePath, options = {}) => {
+    if (options.filePath) {
+      const relativePath = toRepoRelativePath(options.filePath)
+      if (PROTECTED_PACKAGE_PATHS_V6.includes(relativePath)) {
+        verifyFileBackedStage(options.filePath)
+      }
+    }
+    return runPsql(sqlOrFilePath, options)
+  }
+  const runJson = (filePath, variables) => {
+    verifyFileBackedStage(filePath)
+    return runJsonSqlFileV6R(filePath, environment, variables, { ...dependencies, runPsql: verifiedRunPsql })
+  }
+  const runText = (sql, variables) => runSqlTextV6R(sql, environment, variables, { ...dependencies, runPsql: verifiedRunPsql })
   const fixtureVariables = (state) => buildFixtureVariablesV6(state.runId ?? runIdProvider())
   const observeApplyState = (state, applyResult) => {
     const observedSnapshot = readLivePrestateV6(
@@ -1323,7 +1396,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       state.backup?.value?.manifestIdentity ?? null,
       state.backup?.value?.capabilityIdentity ?? null,
       environment,
-      { ...dependencies, readLiveSnapshot, runPsql },
+      { ...dependencies, readLiveSnapshot, runPsql: verifiedRunPsql },
     )
     return classifyApplyStateV6(applyResult, observedSnapshot, state.backup?.value?.liveSnapshot ?? null)
   }
@@ -1332,22 +1405,25 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
     state.backup?.value?.manifestIdentity ?? null,
     state.backup?.value?.capabilityIdentity ?? null,
     environment,
-    { ...dependencies, readLiveSnapshot, runPsql },
+    { ...dependencies, readLiveSnapshot, runPsql: verifiedRunPsql },
   )
   const readRecoveryObservedSnapshot = (state) => readLivePrestateV6(
     state.gitState.head,
     state.backup?.value?.manifestIdentity ?? null,
     state.backup?.value?.capabilityIdentity ?? null,
     environment,
-    { ...dependencies, readLiveSnapshot, runPsql },
+    { ...dependencies, readLiveSnapshot, runPsql: verifiedRunPsql },
   )
   return {
     environment,
-    verifyManifest: () => verifyPackageManifestV6(),
-    verifyExecutionIntegrity: () => assertPackageWorkingTreeIntegrityV6(),
+    authorizedCommit,
+    runPsql: verifiedRunPsql,
+    verifyManifest: () => verifyPackageManifestV6(authorizedCommit),
+    verifyExecutionIntegrity: () => assertPackageWorkingTreeIntegrityV6(authorizedCommit),
+    verifyFileBackedStage,
     authorize: () => {
-      const gitStateValue = gitState()
-      assertAuthorizationV6(environment, gitStateValue)
+      const gitStateValue = gitState(authorizedCommit)
+      assertAuthorizationV6(environment, gitStateValue, authorizedCommit)
       return gitStateValue
     },
     assertClean: (gitStateValue) => assertCleanWorktreeV6(gitStateValue),
@@ -1356,7 +1432,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
     verifyBackup: (gitStateValue) => verifyApprovedPrivateBackupV6(
       approvedBackupPath,
       gitStateValue.head,
-      { ...dependencies, runPsql },
+      { ...dependencies, runPsql: verifiedRunPsql },
     ),
     assertContractAbsent: (snapshot) => assertContractAbsent(snapshot),
     assertPartialStateAbsent: (result) => assertPartialStateAbsent(result),
@@ -1366,7 +1442,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       backup?.value?.manifestIdentity ?? null,
       backup?.value?.capabilityIdentity ?? null,
       environment,
-      { ...dependencies, readLiveSnapshot, runPsql },
+      { ...dependencies, readLiveSnapshot, runPsql: verifiedRunPsql },
     ),
     compareBackupLive: (backup, live) => compareBackupLivePrestateV6(backup.value.liveSnapshot, live),
     createLedger: (state) => createAttemptLedger(state.gitState.head),
@@ -1375,7 +1451,7 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       backup?.value?.manifestIdentity ?? null,
       backup?.value?.capabilityIdentity ?? null,
       environment,
-      { ...dependencies, readLiveSnapshot, runPsql },
+      { ...dependencies, readLiveSnapshot, runPsql: verifiedRunPsql },
     ),
     compareDriftSentinel: compareDriftSentinelV6,
     readFailureSnapshot: (state) => readFailureSnapshot(state),
@@ -1390,9 +1466,10 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       recoveryAttempts: state.recoveryAttempts ?? 0,
     }),
     apply: (state) => {
+      verifyFileBackedStage(path.join(repoRoot, MIGRATION_PATH))
       let result
       try {
-        result = runPsql('', {
+        result = verifiedRunPsql('', {
           environment,
           filePath: path.join(repoRoot, MIGRATION_PATH),
           executable: dependencies.executable,
@@ -1439,25 +1516,35 @@ export function buildExecutionOperationsV6(environment, dependencies = {}) {
       project_ref: QA_REF,
       run_id: state.runId,
     }),
-    transactionalMatrix: (state) => transactionalMatrixCompleteV6(environment, { ...dependencies, runPsql }),
+    transactionalMatrix: (state) => transactionalMatrixCompleteV6(environment, {
+      ...dependencies,
+      authorizedCommit,
+      runPsql: verifiedRunPsql,
+      verifyFileBackedStage,
+    }),
     fixtureSetup: (state) => {
       const variables = fixtureVariables(state)
       return runJson(fixtureSetupPath, variables)
     },
-    concurrentMatrix: (state) => runConcurrencyV6({
+    concurrentMatrix: (state) => {
+      verifyFileBackedStage(concurrencyPath)
+      verifyFileBackedStage(fixtureSetupPath)
+      verifyFileBackedStage(fixtureCleanupPath)
+      return runConcurrencyV6({
       runId: state.runId,
       environment,
-      runPsql,
+        runPsql: verifiedRunPsql,
       readLiveSnapshot: (nextEnvironment, nextDependencies = {}) => readLiveSnapshot(
         nextEnvironment,
-        { ...dependencies, ...nextDependencies, runPsql },
+        { ...dependencies, ...nextDependencies, runPsql: verifiedRunPsql },
       ),
       fixtureSetupFilePath: fixtureSetupPath,
       fixtureCleanupFilePath: fixtureCleanupPath,
       fixtureVariables: fixtureVariables(state),
       onStage: dependencies.onConcurrentStage ?? (() => {}),
       onInventory: dependencies.onInventory ?? (() => {}),
-    }),
+      })
+    },
     validateCapabilities,
     fixtureCleanup: (state) => runJson(fixtureCleanupPath, fixtureVariables(state)),
     fixtureCleanupConfirmed: (state) => {
@@ -1508,6 +1595,7 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     runId,
     ledgerPath: null,
     gitState: null,
+    authorizedCommit: null,
     manifest: null,
     manifestIdentity: null,
     capabilityIdentity: null,
@@ -1538,6 +1626,13 @@ export async function executeV6Core({ operations, runId, onStage = () => {} }) {
     state.manifest = await operations.verifyManifest()
     await advance('authorization_and_exact_head')
     state.gitState = await operations.authorize(state.manifest)
+    state.authorizedCommit = state.gitState.authorizedCommit ?? operations.authorizedCommit ?? null
+    if (operations.authorizedCommit && state.authorizedCommit !== operations.authorizedCommit) {
+      fail('V6_AUTHORIZED_COMMIT_REBOUND', {
+        authorizedCommit: operations.authorizedCommit,
+        observedAuthorizedCommit: state.authorizedCommit,
+      })
+    }
     await advance('clean_main_worktree')
     await operations.assertClean(state.gitState)
     await advance('qa_target_and_tls')
@@ -1718,15 +1813,18 @@ function handleFailure(error, state, stages) {
 
   try {
     state.recoveryAttempts = 1
-    const rollbackResult = (operations.executeRollback ?? ((rollbackState) => runJsonSqlFileV6R(
-      rollbackPath,
-      operations.environment ?? process.env,
-      {
-        project_ref: QA_REF,
-        run_id: rollbackState.runId,
-      },
-      { runPsql: runPsqlV6R },
-    )))(state)
+    const rollbackResult = (operations.executeRollback ?? ((rollbackState) => {
+      ;(operations.verifyFileBackedStage ?? (() => true))(rollbackPath)
+      return runJsonSqlFileV6R(
+        rollbackPath,
+        operations.environment ?? process.env,
+        {
+          project_ref: QA_REF,
+          run_id: rollbackState.runId,
+        },
+        { runPsql: runPsqlV6R },
+      )
+    }))(state)
     const recoveryObservedSnapshot = operations.readRecoveryObservedSnapshot(state)
     state.recoveryObservedSnapshot = recoveryObservedSnapshot
     ;(operations.verifyExactPrestateRestored ?? verifyExactPrestateRestoredV6)(
@@ -1779,6 +1877,7 @@ export function executeV6(environment) {
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: environment.CP3B2A_V6R1E_EXECUTION_AUTHORIZED,
     CP3B2A_V6R1E_AUTHORIZATION_ID: environment.CP3B2A_V6R1E_AUTHORIZATION_ID,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: environment.CP3B2A_V6R1E_AUTHORIZED_HEAD,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: environment.CP3B2A_V6R1E_AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: environment.CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST,
   }, {
     runId,
@@ -1787,14 +1886,15 @@ export function executeV6(environment) {
   return executeV6Core({ operations, runId })
 }
 
-export function preflightReadOnlyV6() {
+export function preflightReadOnlyV6(environment = process.env) {
+  const authorizedCommit = authorizedCommitV6(environment)
   return {
-    manifest: verifyPackageManifestV6(),
-    gitState: gitState(),
+    manifest: verifyPackageManifestV6(authorizedCommit),
+    gitState: gitState(authorizedCommit),
   }
 }
 
-export function assertExecutionAuthorizationV6(environment, expectedHead) {
+export function assertExecutionAuthorizationV6(environment, expectedHead, expectedCommit = null) {
   if (environment.CP3B2A_V6R1E_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTION_NOT_AUTHORIZED')
   }
@@ -1803,6 +1903,10 @@ export function assertExecutionAuthorizationV6(environment, expectedHead) {
   }
   if (environment.CP3B2A_V6R1E_AUTHORIZED_HEAD !== expectedHead) {
     fail('V6R_AUTHORIZED_HEAD_MISMATCH')
+  }
+  expectedCommit ??= authorizedCommitV6(environment)
+  if (environment.CP3B2A_V6R1E_AUTHORIZED_COMMIT !== expectedCommit) {
+    fail('V6R_AUTHORIZED_COMMIT_MISMATCH')
   }
   if (environment.CP3B2A_PROJECT_REF !== QA_REF) fail('V6_QA_TARGET_REQUIRED')
   if (String(environment.CP2B_QA_DATABASE_URL ?? '').includes(PRODUCTION_REF)) {
@@ -1817,7 +1921,7 @@ async function main() {
     fail('V6R_MODE_REJECTED')
   }
   if (mode[0] === '--plan') {
-    process.stdout.write(`${JSON.stringify(planV6(), null, 2)}\n`)
+    process.stdout.write(`${JSON.stringify(planV6(process.env), null, 2)}\n`)
     return
   }
   if (mode[0] === '--preflight') {
@@ -1828,7 +1932,11 @@ async function main() {
   if (process.env.CP3B2A_V6R1E_EXECUTION_AUTHORIZED !== 'true') {
     fail('V6R_EXECUTE_BLOCKED')
   }
-  assertExecutionAuthorizationV6(process.env, process.env.CP3B2A_V6R1E_AUTHORIZED_HEAD ?? '')
+  assertExecutionAuthorizationV6(
+    process.env,
+    process.env.CP3B2A_V6R1E_AUTHORIZED_HEAD ?? '',
+    process.env.CP3B2A_V6R1E_AUTHORIZED_COMMIT ?? '',
+  )
   process.stdout.write(`${JSON.stringify(await executeV6(process.env), null, 2)}\n`)
 }
 

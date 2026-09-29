@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process'
 import { describe, expect, it } from 'vitest'
 import {
   AUTHORIZATION_ID_V6R1E,
@@ -14,20 +15,25 @@ import {
   verifyPackageManifestV6,
 } from './run-cp3b2a-qa-v6.mjs'
 
+const AUTHORIZED_COMMIT = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
+
 function environment() {
   return {
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
   }
 }
 
-function integrityProbe({ flagPath = null, flag = 'H', divergencePath = null } = {}) {
+function integrityProbe({ flagPath = null, flag = 'H', divergencePath = null, stagedPath = null } = {}) {
   const git = (args) => {
     const relativePath = args.at(-1)
     if (args[0] === 'ls-files') return `${relativePath === flagPath ? flag : 'H'} ${relativePath}`
-    if (args[0] === 'rev-parse' && args[1].startsWith('HEAD:')) return 'a'.repeat(40)
+    if (args[0] === 'diff' && args[1] === '--cached') return relativePath === stagedPath ? relativePath : ''
+    if (args[0] === 'rev-parse' && args[1] === 'HEAD') return AUTHORIZED_COMMIT
+    if (args[0] === 'rev-parse' && args[1].startsWith(`${AUTHORIZED_COMMIT}:`)) return 'a'.repeat(40)
     throw new Error(`unexpected git probe: ${args.join(' ')}`)
   }
   const worktreeBlobId = (filePath) => (
@@ -40,19 +46,21 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
   it.each([
     ['assume-unchanged metadata', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'h', 'V6_PACKAGE_WORKTREE_METADATA_REJECTED'],
     ['skip-worktree metadata', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'S', 'V6_PACKAGE_WORKTREE_METADATA_REJECTED'],
+    ['staged byte divergence', 'scripts/client-portal/cp3b2a_qa_matrix_v6.sql', 'H', 'V6_PACKAGE_INDEX_DIVERGENCE'],
     ['artifact byte divergence', 'scripts/client-portal/cp3b2a_qa_matrix_v6.sql', 'H', 'V6_PACKAGE_WORKTREE_DIVERGENCE'],
     ['manifest byte divergence', 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json', 'H', 'V6_PACKAGE_WORKTREE_DIVERGENCE'],
   ])('rejects %s before package trust', (_label, targetPath, flag, expectedCode) => {
     const probe = integrityProbe({
       flagPath: flag === 'H' && expectedCode === 'V6_PACKAGE_WORKTREE_DIVERGENCE' ? null : targetPath,
       flag,
+      stagedPath: expectedCode === 'V6_PACKAGE_INDEX_DIVERGENCE' ? targetPath : null,
       divergencePath: expectedCode === 'V6_PACKAGE_WORKTREE_DIVERGENCE' ? targetPath : null,
     })
-    expect(() => assertPackageWorkingTreeIntegrityV6(probe)).toThrow(expectedCode)
+    expect(() => assertPackageWorkingTreeIntegrityV6(AUTHORIZED_COMMIT, probe)).toThrow(expectedCode)
   })
 
   it('exposes the V6R1E package contract', { timeout: 15_000 }, () => {
-    const { manifest } = verifyPackageManifestV6()
+    const { manifest } = verifyPackageManifestV6(AUTHORIZED_COMMIT)
     expect(manifest.gate).toBe(GATE_V6R1E)
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)
     expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R1E)
@@ -60,7 +68,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
   })
 
   it('keeps plan/preflight read-only', { timeout: 30_000 }, () => {
-    const plan = planV6()
+    const plan = planV6(environment())
     expect(plan.gate).toBe(GATE_V6R1E)
     expect(plan.qaApplication).toBe('READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION')
     const preflight = preflightV6(environment(), {
@@ -94,6 +102,51 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
       .toThrow('V6R_EXECUTION_NOT_AUTHORIZED')
   })
 
+  it('rejects HEAD movement after authorization', () => {
+    const authorizedCommit = 'a'.repeat(40)
+    const git = (args) => {
+      if (args[0] === 'rev-parse' && args[1] === 'HEAD') return 'b'.repeat(40)
+      throw new Error(`unexpected git probe: ${args.join(' ')}`)
+    }
+    expect(() => assertPackageWorkingTreeIntegrityV6(authorizedCommit, { git }))
+      .toThrow('V6_AUTHORIZED_COMMIT_MOVED')
+  })
+
+  it('revalidates every file-backed stage immediately before use', () => {
+    const seen = []
+    const operations = buildExecutionOperationsV6({
+      ...environment(),
+      CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\tmp\\cp3b2a-v6r1e-backup.json',
+    }, {
+      runPsql: () => { throw new Error('runPsql must not be reached') },
+      verifyFileBackedStage: (filePath) => {
+        seen.push(filePath.replaceAll('\\', '/'))
+        throw new Error('V6_FILE_BACKED_STAGE_TOCTOU')
+      },
+    })
+    const state = { runId: 'CP3B2A-V6R1E-TOCTOU123456' }
+    const stages = [
+      operations.apply,
+      operations.postcheck,
+      operations.transactionalMatrix,
+      operations.fixtureSetup,
+      operations.concurrentMatrix,
+      operations.fixtureCleanup,
+      operations.executeRollback,
+      operations.finalPostcheck,
+      operations.finalDigestComparison,
+    ]
+    for (const stage of stages) expect(() => stage(state)).toThrow('V6_FILE_BACKED_STAGE_TOCTOU')
+    expect(seen.join('\n')).toMatch(/20260728160000_portal_reviewed_change_contract\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_postcheck_v6\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_matrix_v6\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_fixture_setup_v6\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_concurrency_v6\.mjs/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_fixture_cleanup_v6\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_rollback_v6\.sql/u)
+    expect(seen.join('\n')).toMatch(/cp3b2a_qa_digest_v6\.sql/u)
+  })
+
   it('builds file-backed execution operations for the reviewed contract', () => {
     const calls = []
     const liveSnapshot = {
@@ -124,6 +177,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
       CP3B2A_PROJECT_REF: QA_REF,
       CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
       CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+      CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
       CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
       CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: 'C:\\Users\\USUARIO\\costa-clean-app\\.project-agent\\private\\cp3b2a-v6r1e\\test-backup.json',
       CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',

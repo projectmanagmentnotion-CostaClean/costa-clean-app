@@ -36,6 +36,7 @@ import {
 } from './cp3b2a_qa_concurrency_v6.mjs'
 
 const repoRoot = process.cwd()
+const AUTHORIZED_COMMIT = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
 const manifestPath = 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json'
 const capabilityMapPath = 'scripts/client-portal/cp3b2a_qa_capability_map_v6.json'
 const runnerPath = 'scripts/client-portal/run-cp3b2a-qa-v6.mjs'
@@ -45,6 +46,7 @@ function baseEnvironment() {
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'true',
   }
 }
@@ -167,6 +169,7 @@ function buildRecoveryHarness({
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
     CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: backupManifestPath,
     CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
@@ -193,6 +196,7 @@ function buildRecoveryHarness({
     head: SOURCE_BASE_HEAD_V6R1E,
     clean: true,
   })
+  operations.verifyExecutionIntegrity = () => true
   operations.assertClean = () => true
   operations.assertQaTarget = () => true
   operations.assertProductionRejected = () => true
@@ -337,7 +341,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
   })
 
   it('validates the V6R1E manifest and package contract', { timeout: 15_000 }, () => {
-    const { manifest, expected } = verifyPackageManifestV6()
+    const { manifest, expected } = verifyPackageManifestV6(AUTHORIZED_COMMIT)
     expect(manifest.gate).toBe(GATE_V6R1E)
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)
     expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R1E)
@@ -395,6 +399,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
         CP3B2A_PROJECT_REF: QA_REF,
         CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
         CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+        CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
         CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
         CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: path.join(
           tmpdir(),
@@ -706,6 +711,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     const result = spawnSync(process.execPath, [runnerPath, '--plan'], {
       cwd: repoRoot,
       encoding: 'utf8',
+      env: { ...process.env, ...baseEnvironment() },
     })
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION')

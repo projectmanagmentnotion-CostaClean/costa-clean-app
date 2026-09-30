@@ -6,15 +6,16 @@ export function reconcileAmounts(amounts: Record<'net' | 'tax' | 'gross' | 'disc
   const issues: ValidationIssue[] = []
   const hasAdjustment = present(amounts.discount) || present(amounts.withholding)
   if (hasAdjustment) return { status: 'COMPLEX_ADJUSTMENT', issues }
-  const bases = vatLines.filter((line) => present(line.base)).map((line) => line.base.normalizedValue as string)
-  const taxes = vatLines.filter((line) => present(line.tax)).map((line) => line.tax.normalizedValue as string)
+  const bases = vatLines.map((line) => line.base.normalizedValue as string)
+  const taxes = vatLines.map((line) => line.tax.normalizedValue as string)
   const checks: Array<[string, string | null, string[], string]> = [
     ['VAT_BASE_SUM_MISMATCH', amounts.net.normalizedValue, bases, 'amounts.net'],
     ['VAT_TAX_SUM_MISMATCH', amounts.tax.normalizedValue, taxes, 'amounts.tax'],
   ]
   let insufficient = false
   for (const [code, expected, values, field] of checks) {
-    if (expected === null || values.length === 0) { insufficient = true; continue }
+    const complete = vatLines.length > 0 && (field === 'amounts.net' ? vatLines.every((line) => present(line.base)) : vatLines.every((line) => present(line.tax)))
+    if (expected === null || values.length === 0 || !complete) { insufficient = true; continue }
     const sum = values.reduce((total, value) => decimalAdd(total, value), '0.00')
     if (decimalCompare(decimalAbsDifference(sum, expected), '0.01') > 0) issues.push(issue(code, field, 'ERROR', true, `${code} requires manual review`))
   }

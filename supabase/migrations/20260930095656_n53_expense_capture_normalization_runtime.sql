@@ -46,7 +46,7 @@ alter table public.expense_capture_normalizations force row level security;
 
 revoke all on public.expense_capture_normalizations from public, anon, authenticated, service_role;
 grant select on public.expense_capture_normalizations to authenticated;
-grant select, insert, update on public.expense_capture_normalizations to service_role;
+grant select on public.expense_capture_normalizations to service_role;
 
 drop policy if exists n53_normalizations_owner_read on public.expense_capture_normalizations;
 create policy n53_normalizations_owner_read
@@ -72,7 +72,7 @@ create or replace function public.n53_claim_normalization(
   p_normalization_key text
 ) returns table (
   action text,
-  id uuid,
+  normalization_id uuid,
   extraction_id uuid,
   attempt_number integer,
   status text,
@@ -165,7 +165,7 @@ create or replace function public.n53_finalize_normalization_success(
   p_normalized_proposal jsonb,
   p_review_status text,
   p_reconciliation_status text
-) returns table (id uuid, extraction_id uuid, attempt_number integer, status text, schema_version integer, normalizer_version text, normalization_key text, normalized_proposal jsonb, output_hash text, review_status text, reconciliation_status text)
+) returns table (normalization_id uuid, extraction_id uuid, attempt_number integer, status text, schema_version integer, normalizer_version text, normalization_key text, normalized_proposal jsonb, output_hash text, review_status text, reconciliation_status text)
 language plpgsql security definer
 set search_path = pg_catalog, public, app_private, pg_temp
 as $$
@@ -188,7 +188,7 @@ create or replace function public.n53_finalize_normalization_failure(
   p_normalization_key text,
   p_error_code text,
   p_error_message_safe text
-) returns table (id uuid, extraction_id uuid, attempt_number integer, status text, error_code text)
+) returns table (normalization_id uuid, extraction_id uuid, attempt_number integer, status text, error_code text)
 language plpgsql security definer
 set search_path = pg_catalog, public, app_private, pg_temp
 as $$

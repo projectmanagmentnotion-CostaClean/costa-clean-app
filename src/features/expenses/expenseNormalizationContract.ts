@@ -1,4 +1,4 @@
-import type { ExtractionEvidence, ExtractionProposal, ExtractedField } from './expenseExtractionContract'
+import type { ExtractionEvidence, ExtractionProposal, ExtractedField } from './expenseExtractionContract.ts'
 
 export const NORMALIZATION_SCHEMA_VERSION = 1 as const
 export type NormalizationStatus = 'VALID' | 'MISSING' | 'AMBIGUOUS' | 'INVALID' | 'CONFLICT'

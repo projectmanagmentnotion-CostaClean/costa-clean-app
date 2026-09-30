@@ -1,10 +1,10 @@
-import { normalizeDecimal } from './expenseNormalizationDecimals'
-import { decimalCompare } from './expenseNormalizationDecimals'
-import { normalizeDate } from './expenseNormalizationDates'
-import { deriveReviewStatus, issue, reconcileAmounts } from './expenseNormalizationValidation'
-import { normalizeTaxId } from './expenseNormalizationTaxId'
-import type { ExtractionProposal, ExtractedField } from './expenseExtractionContract'
-import type { NormalizedExpenseProposal, NormalizedField, NormalizationStatus, ValidationIssue } from './expenseNormalizationContract'
+import { normalizeDecimal } from './expenseNormalizationDecimals.ts'
+import { decimalCompare } from './expenseNormalizationDecimals.ts'
+import { normalizeDate } from './expenseNormalizationDates.ts'
+import { deriveReviewStatus, issue, reconcileAmounts } from './expenseNormalizationValidation.ts'
+import { normalizeTaxId } from './expenseNormalizationTaxId.ts'
+import type { ExtractionProposal, ExtractedField } from './expenseExtractionContract.ts'
+import type { NormalizedExpenseProposal, NormalizedField, NormalizationStatus, ValidationIssue } from './expenseNormalizationContract.ts'
 
 function field<T>(source: ExtractedField<T>, normalizedValue: T | null, status: NormalizationStatus, issues: ValidationIssue[] = []): NormalizedField<T> { return { rawValue: source.rawValue, extractedValue: source.value, normalizedValue, confidence: source.confidence, source: source.source, evidence: source.evidence, status, issues } }
 function confidenceIssue(name: string, source: ExtractedField<unknown>): ValidationIssue[] { return source.confidence !== null && source.confidence < 0.7 ? [issue('LOW_CONFIDENCE', name, 'WARNING', false, 'provider confidence is below review threshold')] : [] }

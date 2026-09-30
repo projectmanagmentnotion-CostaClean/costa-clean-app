@@ -1,5 +1,5 @@
-import { decimalAbsDifference, decimalAdd, decimalCompare } from './expenseNormalizationDecimals'
-import type { NormalizedField, ReconciliationStatus, ValidationIssue } from './expenseNormalizationContract'
+import { decimalAbsDifference, decimalAdd, decimalCompare } from './expenseNormalizationDecimals.ts'
+import type { NormalizedField, ReconciliationStatus, ValidationIssue } from './expenseNormalizationContract.ts'
 function issue(code: string, field: string, severity: ValidationIssue['severity'], blocking: boolean, messageSafe: string): ValidationIssue { return { code, field, severity, blocking, messageSafe } }
 const present = (field: NormalizedField<string>) => field.normalizedValue !== null && field.status === 'VALID'
 export function reconcileAmounts(amounts: Record<'net' | 'tax' | 'gross' | 'discount' | 'withholding', NormalizedField<string>>, vatLines: Array<{ rate: NormalizedField<string>; base: NormalizedField<string>; tax: NormalizedField<string> }>): { status: ReconciliationStatus; issues: ValidationIssue[] } {

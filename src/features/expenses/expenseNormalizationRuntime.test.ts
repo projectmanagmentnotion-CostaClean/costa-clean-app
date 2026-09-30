@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { canonicalSerialize, buildNormalizationIdentity, NORMALIZER_IMPLEMENTATION_VERSION } from '../../../supabase/functions/_shared/n53Normalization.ts'
+import { isNormalizationRuntimeReady } from '../../../supabase/functions/expense-document-normalization/runtimeGuards.ts'
 
 const migration = readFileSync(new URL('../../../supabase/migrations/20260930095656_n53_expense_capture_normalization_runtime.sql', import.meta.url), 'utf8').toLowerCase()
 
@@ -45,5 +46,12 @@ describe('N5.3 server runtime local contract', () => {
     expect(runtime).toContain('requireActiveStaff')
     expect(runtime).toContain('normalizeExpenseProposal')
     expect(runtime).not.toMatch(/create_expense|createExpense|insert.*expenses|insert.*invoices|insert.*payments/iu)
+  })
+
+  it('fails closed before client creation when the runtime URL or mode is invalid', () => {
+    expect(isNormalizationRuntimeReady('', 'qa-runtime', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://wfxnwfcdjainpojhbdri.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'wrong-mode', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(true)
   })
 })

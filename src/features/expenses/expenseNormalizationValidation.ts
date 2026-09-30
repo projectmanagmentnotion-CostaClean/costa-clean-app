@@ -1,4 +1,4 @@
-import { decimalAbsDifference, decimalAdd, decimalCompare } from './expenseNormalizationDecimals.ts'
+import { decimalAbsDifference, decimalAdd, decimalCompare, decimalPercent } from './expenseNormalizationDecimals.ts'
 import type { NormalizedField, ReconciliationStatus, ValidationIssue } from './expenseNormalizationContract.ts'
 function issue(code: string, field: string, severity: ValidationIssue['severity'], blocking: boolean, messageSafe: string): ValidationIssue { return { code, field, severity, blocking, messageSafe } }
 const present = (field: NormalizedField<string>) => field.normalizedValue !== null && field.status === 'VALID'
@@ -18,6 +18,11 @@ export function reconcileAmounts(amounts: Record<'net' | 'tax' | 'gross' | 'disc
     if (expected === null || values.length === 0 || !complete) { insufficient = true; continue }
     const sum = values.reduce((total, value) => decimalAdd(total, value), '0.00')
     if (decimalCompare(decimalAbsDifference(sum, expected), '0.01') > 0) issues.push(issue(code, field, 'ERROR', true, `${code} requires manual review`))
+  }
+  for (const [index, line] of vatLines.entries()) {
+    if (!present(line.rate) || !present(line.base) || !present(line.tax)) continue
+    const expectedTax = decimalPercent(line.base.normalizedValue as string, line.rate.normalizedValue as string)
+    if (decimalCompare(decimalAbsDifference(expectedTax, line.tax.normalizedValue as string), '0.01') > 0) issues.push(issue('VAT_LINE_TAX_MISMATCH', `vatLines[${index}].tax`, 'ERROR', true, 'VAT line tax does not reconcile with base and rate'))
   }
   if (amounts.net.normalizedValue === null || amounts.tax.normalizedValue === null || amounts.gross.normalizedValue === null) insufficient = true
   else if (decimalCompare(decimalAbsDifference(decimalAdd(amounts.net.normalizedValue, amounts.tax.normalizedValue), amounts.gross.normalizedValue), '0.01') > 0) issues.push(issue('TOTAL_MISMATCH', 'amounts.gross', 'ERROR', true, 'gross does not reconcile with net and tax'))

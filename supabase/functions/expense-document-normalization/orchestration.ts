@@ -12,6 +12,7 @@ export interface N53Services {
   requireActiveStaff(): Promise<N53RpcError | null>
   getExtraction(extractionId: string): Promise<{ data: N53ExtractionRow | null; error: N53RpcError | null }>
   claim(args: Record<string, unknown>): Promise<{ data: N53ClaimRow | null; error: N53RpcError | null }>
+  getNormalizationByKey(normalizationKey: string): Promise<{ data: N53ClaimRow | null; error: N53RpcError | null }>
   getNormalization(normalizationId: string): Promise<{ data: N53NormalizationRow | null; error: N53RpcError | null }>
   finalizeSuccess(args: Record<string, unknown>): Promise<{ data: N53FinalizeSuccessRow | null; error: N53RpcError | null }>
   finalizeFailure(args: Record<string, unknown>): Promise<{ data: N53FinalizeFailureRow | null; error: N53RpcError | null }>
@@ -51,10 +52,15 @@ export async function handleNormalizationRequest(request: Request, services: N53
   if (extractionResult.error || !extractionResult.data) return safeError('EXTRACTION_NOT_FOUND', 'Extracción no encontrada.', 404, headers)
   const extraction = extractionResult.data
   if (extraction.status !== 'SUCCEEDED' || !extraction.proposal) return safeError('EXTRACTION_NOT_SUCCEEDED', 'La extracción aún no está lista.', 409, headers)
+  if (extraction.schema_version !== SCHEMA_VERSION) return safeError('UNSUPPORTED_EXTRACTION_SCHEMA_VERSION', 'La versión de extracción no está soportada.', 422, headers)
   const checked = validateExtractionProposal(extraction.proposal)
   if (!checked.ok) return safeError('INVALID_EXTRACTION_PROPOSAL', 'La propuesta de extracción no es válida.', 422, headers)
   const identity = await buildNormalizationIdentity(extraction.id, checked.proposal, SCHEMA_VERSION)
-  const claimResult = await services.claim({ p_extraction_id: extraction.id, p_authenticated_user_id: user.id, p_schema_version: SCHEMA_VERSION, p_normalizer_version: NORMALIZER_IMPLEMENTATION_VERSION, p_input_hash: identity.inputHash, p_normalization_key: identity.normalizationKey })
+  let claimResult = await services.claim({ p_extraction_id: extraction.id, p_authenticated_user_id: user.id, p_schema_version: SCHEMA_VERSION, p_normalizer_version: NORMALIZER_IMPLEMENTATION_VERSION, p_input_hash: identity.inputHash, p_normalization_key: identity.normalizationKey })
+  if (claimResult.error?.code === '23505') {
+    const recovered = await services.getNormalizationByKey(identity.normalizationKey)
+    claimResult = recovered.data ? { data: recovered.data, error: null } : { data: null, error: recovered.error ?? { code: 'NORMALIZATION_CLAIM_RACE_UNRESOLVED' } }
+  }
   if (claimResult.error) return safeError(claimResult.error.code === 'P0002' ? 'EXTRACTION_NOT_FOUND' : 'NORMALIZATION_FAILED', claimResult.error.code === 'P0002' ? 'Extracción no encontrada.' : 'No se pudo preparar la normalización.', claimResult.error.code === 'P0002' ? 404 : 500, headers)
   const row = claimResult.data
   if (!row) return safeError('NORMALIZATION_FAILED', 'No se pudo preparar la normalización.', 500, headers)

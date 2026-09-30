@@ -77,3 +77,8 @@ export function decimalAdd(a: string, b: string): string { return arithmetic(a, 
 export function decimalSubtract(a: string, b: string): string { return arithmetic(a, b, (x, y) => x - y) }
 export function decimalCompare(a: string, b: string): -1 | 0 | 1 { const [left, right] = align(parts(a), parts(b)); return left < right ? -1 : left > right ? 1 : 0 }
 export function decimalAbsDifference(a: string, b: string): string { return arithmetic(a, b, (x, y) => x >= y ? x - y : y - x) }
+export function decimalPercent(base: string, rate: string): string {
+  const left = parts(base)
+  const right = parts(rate)
+  return format({ sign: left.sign * right.sign, digits: (BigInt(left.digits) * BigInt(right.digits)).toString(), scale: left.scale + right.scale + 2 })
+}

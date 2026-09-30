@@ -19,6 +19,7 @@ function baseServices(overrides: Partial<N53Services> = {}): N53Services {
     requireActiveStaff: async () => null,
     getExtraction: async () => ({ data: { id: extractionId, capture_document_id: normalizationId, schema_version: 1, status: 'SUCCEEDED', proposal, created_by: userId }, error: null }),
     claim: async () => ({ data: claim, error: null }),
+    getNormalizationByKey: async () => ({ data: null, error: null }),
     getNormalization: async () => ({ data: null, error: null }),
     finalizeSuccess: async () => ({ data: { normalization_id: normalizationId, extraction_id: extractionId, attempt_number: 1, status: 'SUCCEEDED' as const, schema_version: 1, normalizer_version: 'n5.3-normalizer-v1', normalization_key: hash, normalized_proposal: { reviewStatus: 'READY_FOR_REVIEW' }, output_hash: hash, review_status: 'READY_FOR_REVIEW', reconciliation_status: 'MATCH' }, error: null }),
     finalizeFailure: async () => ({ data: { normalization_id: normalizationId, extraction_id: extractionId, attempt_number: 1, status: 'FAILED' as const, error_code: 'NORMALIZATION_FAILED' }, error: null }),
@@ -51,6 +52,24 @@ describe('N5.3 exact RPC/Edge contract parity', () => {
     expect(response.status).toBe(202)
     expect(await response.json()).toMatchObject({ normalizationId, status: 'PROCESSING' })
     expect(calls).toBe(0)
+  })
+
+  it('recovers a concurrent unique-claim conflict as existing processing', async () => {
+    let recovered = false
+    const recoveredClaim = { action: 'EXISTING_PROCESSING' as const, normalization_id: normalizationId, extraction_id: extractionId, attempt_number: 1, status: 'PROCESSING' as const, schema_version: 1, normalizer_version: 'n5.3-normalizer-v1', normalization_key: hash, input_hash: hash, normalized_proposal: null, output_hash: null, review_status: null, reconciliation_status: null }
+    const response = await handleNormalizationRequest(request(), baseServices({
+      claim: async () => ({ data: null, error: { code: '23505' } }),
+      getNormalizationByKey: async () => { recovered = true; return { data: recoveredClaim, error: null } },
+    }), 'https://kpvvydthlxupjjqqdpxy.supabase.co', 'qa-runtime')
+    expect(recovered).toBe(true)
+    expect(response.status).toBe(202)
+    expect(await response.json()).toMatchObject({ normalizationId, status: 'PROCESSING' })
+  })
+
+  it('rejects an extraction schema version unsupported by the runtime', async () => {
+    const response = await handleNormalizationRequest(request(), baseServices({ getExtraction: async () => ({ data: { id: extractionId, capture_document_id: normalizationId, schema_version: 2, status: 'SUCCEEDED', proposal, created_by: userId }, error: null }) }), 'https://kpvvydthlxupjjqqdpxy.supabase.co', 'qa-runtime')
+    expect(response.status).toBe(422)
+    expect(await response.json()).toMatchObject({ errorCode: 'UNSUPPORTED_EXTRACTION_SCHEMA_VERSION' })
   })
 
   it('reuses existing succeeded output with exact id and does not create a new attempt', async () => {

@@ -36,6 +36,7 @@ import {
 } from './cp3b2a_qa_concurrency_v6.mjs'
 
 const repoRoot = process.cwd()
+const AUTHORIZED_COMMIT = spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
 const manifestPath = 'scripts/client-portal/cp3b2a_qa_package_v6.manifest.json'
 const capabilityMapPath = 'scripts/client-portal/cp3b2a_qa_capability_map_v6.json'
 const runnerPath = 'scripts/client-portal/run-cp3b2a-qa-v6.mjs'
@@ -45,6 +46,7 @@ function baseEnvironment() {
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'true',
   }
 }
@@ -167,6 +169,7 @@ function buildRecoveryHarness({
     CP3B2A_PROJECT_REF: QA_REF,
     CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
     CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+    CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
     CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
     CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: backupManifestPath,
     CP2B_QA_DATABASE_URL: 'postgres://qa.example.invalid/postgres',
@@ -193,6 +196,7 @@ function buildRecoveryHarness({
     head: SOURCE_BASE_HEAD_V6R1E,
     clean: true,
   })
+  operations.verifyExecutionIntegrity = () => true
   operations.assertClean = () => true
   operations.assertQaTarget = () => true
   operations.assertProductionRejected = () => true
@@ -336,8 +340,8 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(workingTreeSha256V1(path.join(repoRoot, manifestPath))).toMatch(/^[0-9a-f]{64}$/u)
   })
 
-  it('validates the V6R1E manifest and package contract', () => {
-    const { manifest, expected } = verifyPackageManifestV6()
+  it('validates the V6R1E manifest and package contract', { timeout: 15_000 }, () => {
+    const { manifest, expected } = verifyPackageManifestV6(AUTHORIZED_COMMIT)
     expect(manifest.gate).toBe(GATE_V6R1E)
     expect(manifest.status).toBe(PACKAGE_STATUS_V6R1E)
     expect(manifest.authorizationId).toBe(AUTHORIZATION_ID_V6R1E)
@@ -346,7 +350,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     expect(expected.map((entry) => entry.path)).toHaveLength(17)
   })
 
-  it('preflights read-only and creates a fresh private backup model', () => {
+  it('preflights read-only and creates a fresh private backup model', { timeout: 15_000 }, () => {
     const result = preflightV6(baseEnvironment(), matchingPreflightDependencies())
     expect(result.verdict).toBe('READY_FOR_CP3B2A_QA_V6R1E')
     expect(result.backupLiveExactComparison).toBe('PASS')
@@ -395,6 +399,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
         CP3B2A_PROJECT_REF: QA_REF,
         CP3B2A_V6R1E_AUTHORIZATION_ID: AUTHORIZATION_ID_V6R1E,
         CP3B2A_V6R1E_AUTHORIZED_HEAD: SOURCE_BASE_HEAD_V6R1E,
+        CP3B2A_V6R1E_AUTHORIZED_COMMIT: AUTHORIZED_COMMIT,
         CP3B2A_V6R1E_EXECUTION_AUTHORIZED: 'false',
         CP3B2A_V6R1E_PRIVATE_BACKUP_MANIFEST: path.join(
           tmpdir(),
@@ -504,6 +509,34 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     })
     expect(result.verdict).toBe('PASS')
     expect(observed).toEqual(EXECUTABLE_ORDER_V6)
+  })
+
+  it('rejects integrity drift immediately before the first QA write', async () => {
+    const calls = []
+    const operations = {
+      verifyManifest: () => true,
+      authorize: () => ({ head: SOURCE_BASE_HEAD_V6R1E, clean: true }),
+      assertClean: () => true,
+      assertQaTarget: () => true,
+      assertProductionRejected: () => true,
+      verifyBackup: () => ({ value: { liveSnapshot: { contract: { presentFunctions: 0, presentConstraints: 0, presentIndexes: 0 }, prestate: {}, collisions: { combinedDuplicatePairs: 0 } } } }),
+      assertContractAbsent: () => ({}),
+      assertPartialStateAbsent: () => true,
+      assertSyntheticCollisionAbsent: () => true,
+      readLivePrestate: () => ({}),
+      compareBackupLive: () => true,
+      createLedger: () => '/tmp/cc-cmd-0006-integrity-ledger.json',
+      readDriftSentinel: () => ({}),
+      compareDriftSentinel: () => true,
+      markApplyStarted: () => calls.push('markApplyStarted'),
+      verifyExecutionIntegrity: () => { throw Object.assign(new Error('V6_PACKAGE_WORKTREE_DIVERGENCE'), { code: 'V6_PACKAGE_WORKTREE_DIVERGENCE' }) },
+      apply: () => calls.push('apply'),
+      handleFailure: (error, _state, stages) => ({ verdict: 'MANUAL_VERIFICATION_REQUIRED', code: error.code, stages }),
+    }
+    const result = await executeV6Core({ operations, runId: 'CC-CMD-0006-INTEGRITY-REJECT' })
+    expect(result.verdict).toBe('MANUAL_VERIFICATION_REQUIRED')
+    expect(result.code).toBe('V6_PACKAGE_WORKTREE_DIVERGENCE')
+    expect(calls).toEqual([])
   })
 
   it('keeps ambiguous apply from committing or rolling back', async () => {
@@ -678,6 +711,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter V6R1E', () => {
     const result = spawnSync(process.execPath, [runnerPath, '--plan'], {
       cwd: repoRoot,
       encoding: 'utf8',
+      env: { ...process.env, ...baseEnvironment() },
     })
     expect(result.status).toBe(0)
     expect(result.stdout).toContain('READY_PENDING_EXPLICIT_V6R1E_AUTHORIZATION')

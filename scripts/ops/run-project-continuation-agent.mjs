@@ -342,6 +342,7 @@ function writeValidationLog(runDir, iteration, name, result) {
 }
 
 export async function runCandidateDiffCheck(candidates) {
+  fs.mkdirSync(privateRoot, { recursive: true })
   const tempDirectory = fs.mkdtempSync(path.join(privateRoot, 'candidate-diff-check-'))
   const temporaryIndex = path.join(tempDirectory, 'index')
   const temporaryObjects = path.join(tempDirectory, 'objects')

@@ -1,4 +1,4 @@
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, it } from 'vitest'
 import {
@@ -278,6 +278,7 @@ describe('projectContinuationAgentCore', () => {
   })
 
   it('scans dynamically created tracked and untracked candidate content without staging private fixtures', () => {
+    mkdirSync(path.join('.project-agent', 'private'), { recursive: true })
     const fixtureRoot = mkdtempSync(path.join('.project-agent', 'private', 'publication-secret-'))
     try {
       const trackedPath = path.join(fixtureRoot, 'tracked.txt')

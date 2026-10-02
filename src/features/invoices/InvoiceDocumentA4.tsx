@@ -69,7 +69,10 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Servicio realizado'
+  const metadataReference = invoice.pricing_metadata?.service_reference
+  const explicitReference = typeof metadataReference === 'string' ? metadataReference.trim() : ''
+
+  return explicitReference || invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Servicio realizado'
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {

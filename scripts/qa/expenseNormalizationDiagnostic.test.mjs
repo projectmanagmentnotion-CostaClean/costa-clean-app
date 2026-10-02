@@ -22,10 +22,11 @@ describe('expense normalization diagnostic retention', () => {
   })
 
   it('allowlists safe response fields and rejects secret-shaped report material', () => {
-    expect(safeResponseBody({ ok: false, errorCode: 'NORMALIZATION_FAILED', errorMessageSafe: 'safe', token: 'secret' })).toEqual({
+    expect(safeResponseBody({ ok: false, errorCode: 'NORMALIZATION_FAILED', errorMessageSafe: 'safe', rejectedPath: 'supplier.taxId', token: 'secret' })).toEqual({
       ok: false,
       errorCode: 'NORMALIZATION_FAILED',
       errorMessageSafe: 'safe',
+      rejectedPath: 'supplier.taxId',
       normalizedProposalPresent: false,
     })
     expect(() => assertNoDiagnosticSecrets({ safe: true, value: 'Bearer eyJnot-for-report' })).toThrow('suspected secret')

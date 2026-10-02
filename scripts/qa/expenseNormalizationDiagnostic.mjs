@@ -11,6 +11,7 @@ const NORMALIZATION_FUNCTION = 'expense-document-normalization'
 const SAFE_RESPONSE_KEYS = new Set([
   'ok', 'errorCode', 'errorMessageSafe', 'normalizationId', 'extractionId',
   'attempt', 'status', 'reviewStatus', 'reconciliationStatus', 'reused',
+  'rejectedField', 'rejectedPath', 'field', 'path', 'expectedType', 'actualType',
 ])
 
 function parseDotEnv(raw) {
@@ -97,8 +98,8 @@ export function safeResponseBody(body) {
   for (const key of SAFE_RESPONSE_KEYS) {
     if (Object.prototype.hasOwnProperty.call(body, key)) {
       const value = body[key]
-      safe[key] = ['errorMessageSafe', 'errorCode', 'status', 'reviewStatus', 'reconciliationStatus'].includes(key)
-        ? (typeof value === 'string' ? value : null)
+      safe[key] = ['errorMessageSafe', 'errorCode', 'status', 'reviewStatus', 'reconciliationStatus', 'rejectedField', 'rejectedPath', 'field', 'path', 'expectedType', 'actualType'].includes(key)
+        ? (typeof value === 'string' ? value.slice(0, 240) : null)
         : ['ok', 'reused'].includes(key)
           ? value === true
           : ['attempt'].includes(key)
@@ -153,7 +154,10 @@ function sanitizeNormalizations(rows) {
     attempt: row.attempt_number,
     status: row.status,
     errorCode: row.error_code,
+    errorMessageSafe: typeof row.error_message_safe === 'string' ? row.error_message_safe.slice(0, 240) : null,
     errorMessageSafePresent: typeof row.error_message_safe === 'string' && row.error_message_safe.length > 0,
+    inputHash: typeof row.input_hash === 'string' && /^[0-9a-f]{64}$/iu.test(row.input_hash) ? row.input_hash : null,
+    outputHash: typeof row.output_hash === 'string' && /^[0-9a-f]{64}$/iu.test(row.output_hash) ? row.output_hash : null,
     inputHashPresent: typeof row.input_hash === 'string' && row.input_hash.length === 64,
     outputHashPresent: typeof row.output_hash === 'string' && row.output_hash.length === 64,
     reviewStatus: row.review_status,

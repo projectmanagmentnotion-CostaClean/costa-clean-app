@@ -295,7 +295,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
 
   try {
     loadedInvoices = await fetchSupabaseRestList<InvoiceListItem>(
-      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,issue_date,status,created_at,archived_at,deleted_at,cancelled_at,cancel_reason,updated_at,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc',
+      'invoices?select=id,display_code,invoice_number,job_id,quote_id,client_id,property_id,service_reference_override,issue_date,status,created_at,archived_at,deleted_at,cancelled_at,cancel_reason,updated_at,subtotal,tax_amount,total,notes,internal_notes,pricing_metadata&order=created_at.desc',
     )
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
@@ -303,6 +303,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
       message.includes('REST 400')
       && (
         message.includes('property_id')
+        || message.includes('service_reference_override')
         || message.includes('internal_notes')
         || message.includes('pricing_metadata')
       )
@@ -322,6 +323,7 @@ export async function listInvoices(): Promise<InvoiceListItem[]> {
       ...invoice,
       quote_id: invoice.quote_id ?? null,
       property_id: null,
+      service_reference_override: null,
       internal_notes: null,
       pricing_metadata: {},
     }))

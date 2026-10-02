@@ -5,6 +5,7 @@ import { getInvoiceFiscalDisplayData } from '../clients/clientFiscalData'
 import { normalizeLineConcept, simplifyLineConcept } from '../quotes/lineConcepts'
 import type { InvoiceLineItem, InvoiceListItem } from './types'
 import { brandAssets } from '../../v3/brand/brandAssets'
+import { resolveInvoiceServiceReference } from './invoiceServiceReference'
 
 interface InvoiceDocumentA4Props {
   invoice: InvoiceListItem
@@ -69,7 +70,7 @@ function buildClientMeta(invoice: InvoiceListItem): string[] {
 }
 
 function buildReferenceTitle(invoice: InvoiceListItem): string {
-  return invoice.service_reference || invoice.quote_display_code || invoice.job_display_code || invoice.job_id || 'Servicio realizado'
+  return resolveInvoiceServiceReference(invoice)
 }
 
 function normalizeUnit(value: string | null | undefined): string | null {

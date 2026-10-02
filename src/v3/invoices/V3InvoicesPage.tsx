@@ -16,6 +16,7 @@ import { useV3Selection } from '../selection/useV3Selection'
 import { V3SelectionActionSheet, V3SelectionBar, V3SelectionConfirmSheet, V3SelectionControl, V3SelectionResultSheet, V3SelectionTrigger } from '../selection/V3SelectionPrimitives'
 import { getInvoiceFinancialFacts, getInvoiceSettlementDescription } from './invoicePresentation'
 import { V3InvoiceDocumentPreview } from './V3InvoiceDocumentPreview'
+import { resolveInvoiceServiceReference } from '../../features/invoices/invoiceServiceReference'
 
 interface V3InvoicesPageProps {
   invoices: InvoiceListItem[]
@@ -59,7 +60,7 @@ function invoiceLabel(invoice: InvoiceListItem): string {
 }
 
 function invoiceSummary(invoice: InvoiceListItem): string {
-  return invoice.service_description?.trim() || invoice.billing_concept?.trim() || invoice.service_reference?.trim() || 'Factura de servicios'
+  return resolveInvoiceServiceReference(invoice, 'Factura de servicios')
 }
 
 function getStatusTone(status: string): 'neutral' | 'success' | 'warning' | 'danger' {
@@ -253,7 +254,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, properties, jobs, quot
       <p className="v3-invoice-settlement-status">{facts.settlementAllowed ? `Cobro por transferencia disponible por ${formatCurrency(facts.outstanding)}.` : 'El cobro por transferencia no está disponible para esta factura.'}</p>
       <V3ActionGroup className="v3-finance-action-group">{invoice.status === 'draft' ? <V3PrimaryAction onClick={() => onIssueInvoice(invoice)}>Emitir factura</V3PrimaryAction> : null}{facts.settlementAllowed ? <V3PrimaryAction onClick={() => onRequestSettlement(invoice)} disabled={isInvoiceSettling}>{isInvoiceSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}<V3SecondaryAction onClick={() => onDownloadInvoice(invoice)}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
       <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client?.full_name ?? formatClientLabel(invoice)}</dd></div><div><dt>Fecha</dt><dd>{formatDateEs(invoice.issue_date)}</dd></div></dl></V3Section>
-      <V3Section label="Origen"><p className="v3-section-copy">{invoice.service_reference ?? invoice.job_display_code ?? invoice.quote_display_code ?? 'Origen no disponible en la factura.'}</p></V3Section>
+      <V3Section label="Origen"><p className="v3-section-copy">{resolveInvoiceServiceReference(invoice, 'Origen no disponible en la factura.')}</p></V3Section>
       <V3Section label="Relaciones"><dl className="v3-facts">
         <div><dt>Cliente</dt><dd>{client ? <button type="button" className="v3-inline-link" onClick={() => onOpenClientWorkspace(client.id)}>{formatClientLabel(client)}</button> : formatClientLabel(invoice)}</dd></div>
         {invoice.property_id ? <div><dt>Inmueble</dt><dd>{property ? <button type="button" className="v3-inline-link" onClick={() => onOpenPropertyWorkspace(property.id)}>{formatPropertyLabel(property)}</button> : formatPropertyLabel({ id: invoice.property_id, display_code: invoice.property_display_code, name: invoice.property_name })}</dd></div> : null}

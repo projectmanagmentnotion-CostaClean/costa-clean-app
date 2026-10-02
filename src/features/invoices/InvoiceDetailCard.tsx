@@ -40,6 +40,7 @@ import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } fr
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { resolveInvoiceServiceReference } from './invoiceServiceReference'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -205,11 +206,7 @@ function getInvoiceInternalReference(invoice: InvoiceListItem): string {
 }
 
 function getInvoiceServiceReference(invoice: InvoiceListItem): string {
-  return invoice.service_reference
-    ?? invoice.service_description
-    ?? invoice.job_display_code
-    ?? invoice.job_id
-    ?? 'Factura creada desde presupuesto aceptado'
+  return resolveInvoiceServiceReference(invoice, 'Factura creada desde presupuesto aceptado')
 }
 
 function buildVisibleInvoiceNotes(): string {
@@ -736,6 +733,7 @@ export function InvoiceDetailCard({
           quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
           client_id: form.client_id,
           property_id: invoice.property_id ?? null,
+          service_reference_override: invoice.service_reference_override ?? null,
           issue_date: form.issue_date,
           status: form.status,
           subtotal: subtotalValue,

@@ -92,4 +92,26 @@ describe('InvoiceDocumentA4', () => {
 
     expect(html).toContain('cc-invoice-a4--embedded cc-invoice-a4--pdf')
   })
+
+  it('keeps the dedicated service/reference override identical in screen and PDF markup', () => {
+    const invoice = createInvoice({
+      service_reference_override: '  Ayudante de buffet  ',
+      service_reference: 'JOB-077 · Limpieza · Piso Eixample',
+      property_name: 'Piso Eixample',
+      subtotal: 100,
+      tax_amount: 21,
+      total: 121,
+    })
+    const screenHtml = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} renderMode="screen" />)
+    const pdfHtml = renderToStaticMarkup(<InvoiceDocumentA4 invoice={invoice} renderMode="pdf" />)
+
+    expect(screenHtml).toContain('Ayudante de buffet')
+    expect(pdfHtml).toContain('Ayudante de buffet')
+    expect(screenHtml).not.toContain('JOB-077 · Limpieza · Piso Eixample')
+    expect(pdfHtml).not.toContain('JOB-077 · Limpieza · Piso Eixample')
+    expect(screenHtml).toContain('Piso Eixample')
+    expect(pdfHtml).toContain('Piso Eixample')
+    expect(screenHtml).toContain('121,00')
+    expect(pdfHtml).toContain('121,00')
+  })
 })

@@ -1,10 +1,65 @@
 import { renderToStaticMarkup } from 'react-dom/server'
+import type { jsPDF } from 'jspdf'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
+import {
+  collectInvoicePdfSemanticBlocks,
+  createInvoicePdfPageRanges,
+  getInvoicePdfPageHeightMm,
+} from './invoicePdfPagination'
 import type { InvoiceListItem } from './types'
 
 const A4_WIDTH_MM = 210
 const A4_HEIGHT_MM = 297
 const CAPTURE_SCALE = 3
+
+function addCanvasRangeToPdf(
+  pdf: jsPDF,
+  canvas: HTMLCanvasElement,
+  start: number,
+  end: number,
+  pageHeightCss: number,
+  captureScale: number,
+  isFirstPage: boolean,
+): void {
+  if (!isFirstPage) {
+    pdf.addPage('a4', 'portrait')
+  }
+
+  const sourceY = Math.max(0, Math.round(start * captureScale))
+  const sourceHeight = Math.max(1, Math.round((end - start) * captureScale))
+  const slice = document.createElement('canvas')
+  slice.width = canvas.width
+  slice.height = Math.min(sourceHeight, Math.max(1, canvas.height - sourceY))
+
+  const context = slice.getContext('2d')
+  if (!context) {
+    throw new Error('No se pudo preparar una pagina semantica del PDF.')
+  }
+
+  context.drawImage(
+    canvas,
+    0,
+    sourceY,
+    canvas.width,
+    slice.height,
+    0,
+    0,
+    slice.width,
+    slice.height,
+  )
+
+  const pageHeightMm = getInvoicePdfPageHeightMm({ start, end }, pageHeightCss)
+  pdf.addImage(
+    slice.toDataURL('image/jpeg', 0.95),
+    'JPEG',
+    0,
+    0,
+    A4_WIDTH_MM,
+    pageHeightMm,
+    undefined,
+    'FAST',
+  )
+}
 
 function waitForImages(root: HTMLElement): Promise<void> {
   const images = Array.from(root.querySelectorAll('img'))
@@ -46,7 +101,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
 
   documentElement.classList.add('cc-invoice-a4--export')
   host.style.width = `${A4_WIDTH_MM}mm`
-  host.style.height = `${A4_HEIGHT_MM}mm`
+  host.style.height = 'auto'
   document.body.appendChild(host)
 
   try {
@@ -54,7 +109,14 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
     await waitForImages(documentElement)
 
     const captureWidth = host.offsetWidth
-    const captureHeight = host.offsetHeight
+    const captureHeight = Math.ceil(Math.max(
+      host.scrollHeight,
+      documentElement.scrollHeight,
+      documentElement.offsetHeight,
+    ))
+    const pageHeightCss = captureWidth * (A4_HEIGHT_MM / A4_WIDTH_MM)
+    const semanticBlocks = collectInvoicePdfSemanticBlocks(documentElement)
+    const pageRanges = createInvoicePdfPageRanges(semanticBlocks, pageHeightCss, captureHeight)
 
     const canvas = await html2canvas(host, {
       backgroundColor: '#ffffff',
@@ -68,13 +130,27 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
       windowWidth: captureWidth,
     })
 
+    if (canvas.height < captureHeight * CAPTURE_SCALE - 1) {
+      throw new Error('El canvas del PDF no contiene toda la altura semantica capturada.')
+    }
+
     const pdf = new jsPDF({
       compress: true,
       format: 'a4',
       orientation: 'portrait',
       unit: 'mm',
     })
-    pdf.addImage(canvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM, undefined, 'FAST')
+    pageRanges.forEach((range, index) => {
+      addCanvasRangeToPdf(
+        pdf,
+        canvas,
+        range.start,
+        range.end,
+        pageHeightCss,
+        CAPTURE_SCALE,
+        index === 0,
+      )
+    })
 
     return new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' })
   } finally {

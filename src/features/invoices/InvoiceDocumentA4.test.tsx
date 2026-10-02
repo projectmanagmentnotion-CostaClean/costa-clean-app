@@ -92,4 +92,49 @@ describe('InvoiceDocumentA4', () => {
 
     expect(html).toContain('cc-invoice-a4--embedded cc-invoice-a4--pdf')
   })
+
+  it('exposes semantic PDF boundaries for the invoice exporter', () => {
+    const html = renderToStaticMarkup(
+      <InvoiceDocumentA4
+        invoice={createInvoice({
+          lines: [
+            {
+              id: 'line-1',
+              invoice_id: 'invoice-1',
+              sort_order: 1,
+              concept: 'Primera linea',
+              quantity: 1,
+              unit: 'servicio',
+              unit_price: 50,
+              line_subtotal: 50,
+            },
+            {
+              id: 'line-2',
+              invoice_id: 'invoice-1',
+              sort_order: 2,
+              concept: 'Segunda linea',
+              quantity: 1,
+              unit: 'servicio',
+              unit_price: 50,
+              line_subtotal: 50,
+            },
+          ],
+        })}
+        variant="print"
+        renderMode="pdf"
+      />,
+    )
+
+    expect(html).toContain('data-pdf-document="true"')
+    expect(html).toContain('data-pdf-block="header"')
+    expect(html).toContain('data-pdf-block="parties"')
+    expect(html).toContain('data-pdf-block="references"')
+    expect(html).toContain('data-pdf-block="payment"')
+    expect(html).toContain('data-pdf-block="observations"')
+    expect(html).toContain('data-pdf-block="legal-note"')
+    expect(html).toContain('data-pdf-block="totals"')
+    expect(html).toContain('data-pdf-table-header="true"')
+    expect(html.match(/data-pdf-table-row="true"/g)).toHaveLength(2)
+    expect(html).toContain('data-pdf-block="footer"')
+  })
 })

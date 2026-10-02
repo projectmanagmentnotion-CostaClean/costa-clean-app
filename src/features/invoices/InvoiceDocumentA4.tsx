@@ -166,8 +166,8 @@ export function InvoiceDocumentA4({
   ].filter(Boolean).join(' ')
 
   return (
-    <article className={articleClassName}>
-      <header className="cc-invoice-a4__header">
+    <article className={articleClassName} data-pdf-document>
+      <header className="cc-invoice-a4__header" data-pdf-block="header">
         <div className="cc-invoice-a4__brand">
           <img
             src={logoSrc}
@@ -198,7 +198,7 @@ export function InvoiceDocumentA4({
         </div>
       </header>
 
-      <section className="cc-invoice-a4__parties">
+      <section className="cc-invoice-a4__parties" data-pdf-block="parties">
         <div className="cc-invoice-a4__panel">
           <span className="cc-invoice-a4__label">Emisor</span>
           <strong>VILMA TIBISAY GARCIA JIMENEZ</strong>
@@ -217,7 +217,7 @@ export function InvoiceDocumentA4({
         </div>
       </section>
 
-      <section className="cc-invoice-a4__references">
+      <section className="cc-invoice-a4__references" data-pdf-block="references">
         <div className="cc-invoice-a4__reference-card">
           <span className="cc-invoice-a4__label">Servicio / referencia</span>
           <strong>{buildReferenceTitle(invoice)}</strong>
@@ -233,7 +233,7 @@ export function InvoiceDocumentA4({
 
       <section className="cc-invoice-a4__table-wrap">
         <table className="cc-invoice-a4__table">
-          <thead>
+          <thead data-pdf-table-header>
             <tr>
               <th>Concepto</th>
               <th>Cantidad</th>
@@ -243,7 +243,7 @@ export function InvoiceDocumentA4({
           </thead>
           <tbody>
             {documentLines.map((line) => (
-              <tr key={line.id}>
+              <tr key={line.id} data-pdf-table-row>
                 <td>{line.concept}</td>
                 <td>{formatQuantity(line)}</td>
                 <td>{formatCurrency(line.unit_price)}</td>
@@ -254,26 +254,26 @@ export function InvoiceDocumentA4({
         </table>
       </section>
 
-      <section className="cc-invoice-a4__footer-grid">
+      <section className="cc-invoice-a4__footer-grid" data-pdf-block="footer">
         <div className="cc-invoice-a4__notes">
-          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft" data-pdf-block="payment">
             <span className="cc-invoice-a4__label">Forma de pago</span>
             <p>Transferencia bancaria</p>
             <p>IBAN ES32 0049 0183 6124 1084 6130</p>
           </div>
 
-          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft" data-pdf-block="observations">
             <span className="cc-invoice-a4__label">Observaciones</span>
             <p>{invoice.notes?.trim() ? invoice.notes : 'Sin observaciones adicionales.'}</p>
           </div>
 
-          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft">
+          <div className="cc-invoice-a4__panel cc-invoice-a4__panel--soft" data-pdf-block="legal-note">
             <span className="cc-invoice-a4__label">Nota legal</span>
             <p>{businessRules.defaultInvoiceLegalNote}</p>
           </div>
         </div>
 
-        <aside className="cc-invoice-a4__totals">
+        <aside className="cc-invoice-a4__totals" data-pdf-block="totals">
           <div className="cc-invoice-a4__total-row">
             <span>Base imponible</span>
             <strong>{formatCurrency(invoice.subtotal)}</strong>

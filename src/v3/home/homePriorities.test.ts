@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildV3HomePriorities } from './homePriorities'
+import { buildV3HomePeriodPriorities, buildV3HomePriorities } from './homePriorities'
 
 const routing = { kind: 'module' as const, view: 'invoices' as const, filterKey: 'invoices' as const, filterValue: 'pending' as const }
 
@@ -27,5 +27,12 @@ describe('V3 home priorities', () => {
 
   it('returns no priorities for clean state', () => {
     expect(buildV3HomePriorities({ alerts: [], incidents: [] })).toEqual([])
+  })
+
+  it('rebuilds period-scoped attention deterministically when the selector changes', () => {
+    const priorities = buildV3HomePeriodPriorities({ periodLabel: 'sep. 26', outstanding: 121, completedUnbilledJobs: 1, expensesWithoutSupport: 2 })
+    expect(priorities.map((item) => item.id)).toEqual(['period-outstanding', 'period-unbilled-jobs', 'period-expenses-support'])
+    expect(priorities[0].kpiAction).toBe('outstanding_invoices')
+    expect(buildV3HomePeriodPriorities({ periodLabel: 'oct. 26', outstanding: 0, completedUnbilledJobs: 0, expensesWithoutSupport: 0 })).toEqual([])
   })
 })

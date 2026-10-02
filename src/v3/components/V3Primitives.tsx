@@ -52,19 +52,47 @@ export function V3PageTitle({ eyebrow, title, description, action }: { eyebrow?:
   )
 }
 
-export function V3Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return <article className="v3-kpi"><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</article>
+export function V3Kpi({ label, value, hint, onClick, tone = 'financial' }: { label: string; value: string; hint?: string; onClick?: () => void; tone?: 'financial' | 'primary' | 'accent' | 'information' }) {
+  const content = <><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</>
+  const className = `v3-kpi v3-card v3-card--financial v3-kpi--tone-${tone}${onClick ? ' v3-kpi--interactive' : ''}`
+  return onClick ? <button type="button" className={className} onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button> : <article className={className}>{content}</article>
 }
 
-export function V3KpiGroup({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'supporting' }) {
-  return <div className={`v3-kpi-group v3-kpi-group--${variant}`}>{children}</div>
+export function V3KpiGroup({ children, variant = 'default', className = '' }: { children: ReactNode; variant?: 'default' | 'supporting'; className?: string }) {
+  return <div className={`v3-kpi-group v3-kpi-group--${variant} ${className}`.trim()}>{children}</div>
 }
 
 export function V3EntityStatus({ label, tone = 'neutral', context }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger'; context?: string }) {
-  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}{label}</span>
+  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}<span className="v3-status__label">{label}</span></span>
 }
 
 export const V3Status = V3EntityStatus
+
+export interface V3TabOption {
+  value: string
+  label: string
+}
+
+export function V3TabStrip({ options, activeValue, onChange, label }: { options: readonly V3TabOption[]; activeValue: string; onChange: (value: string) => void; label: string }) {
+  const tablistRef = useRef<HTMLDivElement>(null)
+  const moveFocus = (index: number) => {
+    const nextIndex = Math.max(0, Math.min(options.length - 1, index))
+    onChange(options[nextIndex].value)
+    window.requestAnimationFrame(() => {
+      tablistRef.current?.querySelector<HTMLButtonElement>(`[role="tab"][data-tab-value="${CSS.escape(options[nextIndex].value)}"]`)?.focus()
+    })
+  }
+
+  return <div ref={tablistRef} className="v3-filter-tabs" role="tablist" aria-label={label}>{options.map((option, index) => {
+    const isActive = activeValue === option.value
+    return <button key={option.value} type="button" role="tab" data-tab-value={option.value} tabIndex={isActive ? 0 : -1} aria-selected={isActive} className={isActive ? 'is-active' : ''} onClick={() => onChange(option.value)} onKeyDown={(event) => {
+      if (event.key === 'ArrowRight') { event.preventDefault(); moveFocus(index + 1) }
+      if (event.key === 'ArrowLeft') { event.preventDefault(); moveFocus(index - 1) }
+      if (event.key === 'Home') { event.preventDefault(); moveFocus(0) }
+      if (event.key === 'End') { event.preventDefault(); moveFocus(options.length - 1) }
+    }}>{option.label}</button>
+  })}</div>
+}
 
 export function V3PrimaryAction({ children, onClick, type = 'button', disabled = false, ariaLabel, ariaPressed }: V3ActionProps) {
   return <button type={type} className="v3-action v3-action--primary" onClick={onClick} disabled={disabled} aria-label={ariaLabel} aria-pressed={ariaPressed}>{children}</button>
@@ -79,15 +107,29 @@ export function V3ActionGroup({ children, className = '' }: { children: ReactNod
 }
 
 export function V3DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="v3-detail-section"><h2>{title}</h2>{children}</section>
+  return <section className="v3-detail-section v3-card"><h2>{title}</h2>{children}</section>
 }
 
 export function V3Section({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
-  return <section className="v3-section"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
+  return <section className="v3-section v3-card"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
 }
 
 export function V3EntityList({ children, label }: { children: ReactNode; label: string }) {
   return <div className="v3-entity-list" role="list" aria-label={label}>{children}</div>
+}
+
+export function V3ListWorkspace({ label, totalCount, page, pageCount, rangeStart, rangeEnd, onPageChange, children }: { label: string; totalCount: number; page: number; pageCount: number; rangeStart: number; rangeEnd: number; onPageChange: (page: number) => void; children: ReactNode }) {
+  return <section className="v3-list-workspace" aria-label={label}>
+    <div className="v3-list-workspace__viewport" role="region" aria-label={`${label}: resultados`} tabIndex={0}>{children}</div>
+    <footer className="v3-list-workspace__footer">
+      <span aria-live="polite">Mostrando {rangeStart === 0 ? '0' : `${rangeStart}–${rangeEnd}`} de {totalCount}</span>
+      <div className="v3-list-workspace__pagination" aria-label={`Paginación de ${label}`}>
+        <button type="button" className="v3-action v3-action--secondary" onClick={() => onPageChange(page - 1)} disabled={page <= 1} aria-label="Página anterior">Anterior</button>
+        <span aria-label={`Página ${page} de ${pageCount}`}>{page} / {pageCount}</span>
+        <button type="button" className="v3-action v3-action--secondary" onClick={() => onPageChange(page + 1)} disabled={page >= pageCount} aria-label="Página siguiente">Siguiente</button>
+      </div>
+    </footer>
+  </section>
 }
 
 export function V3EntityListItem({ children, onClick, ariaLabel, className = '' }: { children: ReactNode; onClick: () => void; ariaLabel: string; className?: string }) {
@@ -189,7 +231,7 @@ export function V3Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function V3Summary({ children }: { children: ReactNode }) {
-  return <div className="v3-summary">{children}</div>
+  return <div className="v3-summary v3-card v3-card--subtle">{children}</div>
 }
 
 export function V3StickyActionBar({ children }: { children: ReactNode }) {

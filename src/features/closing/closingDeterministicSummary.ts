@@ -9,6 +9,7 @@ import {
   isDateWithinFiscalPeriod,
   type ResolvedFiscalPeriod,
 } from './fiscalPeriods'
+import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
@@ -163,7 +164,8 @@ export function buildClosingDeterministicSummary({
   hasPersistedSnapshot,
 }: BuildClosingDeterministicSummaryInput): ClosingDeterministicResult {
   const periodInvoices = invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
-  const periodPayments = payments.filter((payment) => isDateWithinFiscalPeriod(payment.payment_date, period))
+  const invoicePaymentCohort = buildInvoicePaymentCohort(payments, periodInvoices)
+  const periodPayments = invoicePaymentCohort.payments
   const periodExpenses = expenses.filter((expense) => isExpenseWithinPeriod(expense, period))
   const periodQuotes = quotes.filter((quote) => isDateWithinFiscalPeriod(quote.created_at ?? null, period))
   const periodJobs = jobs.filter((job) => isDateWithinFiscalPeriod(job.scheduled_date, period))
@@ -183,13 +185,8 @@ export function buildClosingDeterministicSummary({
     (job) => job.status === 'completed' && !job.invoice_id && !invoicedJobIds.has(job.id),
   )
 
-  const invoicePaidById = new Map<string, number>()
-  for (const payment of payments) {
-    invoicePaidById.set(payment.invoice_id, (invoicePaidById.get(payment.invoice_id) ?? 0) + Number(payment.amount || 0))
-  }
-
   const pendingInvoices = periodInvoices.filter((invoice) => {
-    const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
+    const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
     return Math.max(Number(invoice.total || 0) - paidAmount, 0) > 0.009
   })
 
@@ -372,7 +369,7 @@ export function buildClosingDeterministicSummary({
       totalInvoiced: roundMoney(periodInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)),
       totalCollected: roundMoney(periodPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)),
       totalOutstanding: roundMoney(pendingInvoices.reduce((sum, invoice) => {
-        const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
+        const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
         return sum + Math.max(Number(invoice.total || 0) - paidAmount, 0)
       }, 0)),
       totalExpenses: roundMoney(periodExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)),

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react'
+import { useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { updateExpenseAttachment } from './expenseApi'
 import {
@@ -104,11 +104,6 @@ export function ExpenseSupportFieldset({
         : 'Podras subir ticket o factura y se asociara al guardar.',
     }
   }, [expense, isPersistedMode, pendingFile])
-
-  useEffect(() => {
-    setSaveError(null)
-    setSuccessMessage(null)
-  }, [expense?.id, pendingFile])
 
   async function handlePersistedUpload(file: File) {
     if (!expense || !onExpenseUpdated) return

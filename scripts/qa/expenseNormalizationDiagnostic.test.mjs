@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizeProposal, sha256Json } from './expenseNormalizationDiagnostic.mjs'
+import { assertNoDiagnosticSecrets, QA_SUPABASE_ORIGIN, isExactQaSupabaseUrl, loadAuthoritativeQaEnv, sanitizeProposal, safeResponseBody, sha256Json } from './expenseNormalizationDiagnostic.mjs'
 
 describe('expense normalization diagnostic retention', () => {
   it('keeps only structural proposal evidence and a stable hash', () => {
@@ -19,5 +19,25 @@ describe('expense normalization diagnostic retention', () => {
     const source = await import('./expenseNormalizationDiagnostic.mjs')
     expect(typeof source.buildDiagnosticReport).toBe('function')
     expect(typeof source.writeDiagnosticReport).toBe('function')
+  })
+
+  it('allowlists safe response fields and rejects secret-shaped report material', () => {
+    expect(safeResponseBody({ ok: false, errorCode: 'NORMALIZATION_FAILED', errorMessageSafe: 'safe', token: 'secret' })).toEqual({
+      ok: false,
+      errorCode: 'NORMALIZATION_FAILED',
+      errorMessageSafe: 'safe',
+      normalizedProposalPresent: false,
+    })
+    expect(() => assertNoDiagnosticSecrets({ safe: true, value: 'Bearer eyJnot-for-report' })).toThrow('suspected secret')
+    expect(assertNoDiagnosticSecrets({ safe: true, requestId: '01a0fd78-e629-7992-af26-e14eea7a07b0' })).toBe(true)
+  })
+
+  it('requires the exact HTTPS QA Supabase origin', async () => {
+    expect(QA_SUPABASE_ORIGIN).toBe('https://kpvvydthlxupjjqqdpxy.supabase.co')
+    expect(isExactQaSupabaseUrl(QA_SUPABASE_ORIGIN)).toBe(true)
+    expect(isExactQaSupabaseUrl('https://kpvvydthlxupjjqqdpxy.supabase.co.evil.example')).toBe(false)
+    expect(isExactQaSupabaseUrl('http://kpvvydthlxupjjqqdpxy.supabase.co')).toBe(false)
+    expect(isExactQaSupabaseUrl('https://wfxnwfcdjainpojhbdri.supabase.co')).toBe(false)
+    await expect(loadAuthoritativeQaEnv('C:/path/that/does/not/exist')).rejects.toThrow()
   })
 })

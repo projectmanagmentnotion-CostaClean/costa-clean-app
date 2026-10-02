@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js'
 
 export const QA_PROJECT_REF = 'kpvvydthlxupjjqqdpxy'
 export const PRODUCTION_PROJECT_REF = 'wfxnwfcdjainpojhbdri'
+export const QA_SUPABASE_ORIGIN = `https://${QA_PROJECT_REF}.supabase.co`
 const NORMALIZATION_FUNCTION = 'expense-document-normalization'
 const SAFE_RESPONSE_KEYS = new Set([
   'ok', 'errorCode', 'errorMessageSafe', 'normalizationId', 'extractionId',
@@ -21,9 +22,18 @@ function parseDotEnv(raw) {
   return env
 }
 
+export function isExactQaSupabaseUrl(value) {
+  try {
+    const parsedUrl = new URL(value)
+    return parsedUrl.protocol === 'https:' && parsedUrl.origin === QA_SUPABASE_ORIGIN
+  } catch {
+    return false
+  }
+}
+
 export async function loadAuthoritativeQaEnv(rootDir = process.cwd()) {
   const env = parseDotEnv(await fs.readFile(path.join(rootDir, '.env.qa.local'), 'utf8'))
-  if (!env.VITE_SUPABASE_URL?.includes(QA_PROJECT_REF) || env.VITE_SUPABASE_URL.includes(PRODUCTION_PROJECT_REF)) {
+  if (!isExactQaSupabaseUrl(env.VITE_SUPABASE_URL) || env.VITE_SUPABASE_URL.includes(PRODUCTION_PROJECT_REF)) {
     throw new Error('Diagnostic requires the authoritative QA project.')
   }
   if (!env.VITE_SUPABASE_ANON_KEY || !env.COSTACLEAN_QA_AUTH_EMAIL || !env.COSTACLEAN_QA_AUTH_PASSWORD) {
@@ -81,7 +91,7 @@ export function sanitizeProposal(proposal) {
   }
 }
 
-function safeResponseBody(body) {
+export function safeResponseBody(body) {
   if (!isRecord(body)) return { bodyType: typeOf(body) }
   const safe = {}
   for (const key of SAFE_RESPONSE_KEYS) {
@@ -106,6 +116,14 @@ function safeHeaders(response) {
     edgeRegion: response.headers.get('x-sb-edge-region'),
     servedBy: response.headers.get('x-served-by'),
   }
+}
+
+export function assertNoDiagnosticSecrets(value) {
+  const serialized = JSON.stringify(value)
+  if (/(?:Bearer\s+eyJ|sk-[A-Za-z0-9]|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,})/u.test(serialized)) {
+    throw new Error('Diagnostic refused to persist suspected secret material.')
+  }
+  return true
 }
 
 function sanitizeExtraction(row) {
@@ -166,8 +184,7 @@ export async function buildDiagnosticReport({ rootDir = process.cwd(), extractio
     normalizationRowsBefore: sanitizeNormalizations(beforeResult.data ?? []),
     normalization: null,
     normalizationRowsAfter: null,
-    cleanupOrderEvidenceBeforeDelete: false,
-    secretLeak: 0,
+    evidenceCaptureCompletedBeforeCallerCleanup: false,
   }
 
   if (invokeNormalization) {
@@ -183,13 +200,13 @@ export async function buildDiagnosticReport({ rootDir = process.cwd(), extractio
     report.normalizationRowsAfter = sanitizeNormalizations(afterResult.data ?? [])
   }
 
-  const serialized = JSON.stringify(report)
-  report.secretLeak = /(?:Bearer\s+eyJ|sk-[A-Za-z0-9]|SUPABASE_SERVICE_ROLE_KEY|OPENAI_API_KEY)/u.test(serialized) ? 1 : 0
-  report.cleanupOrderEvidenceBeforeDelete = true
+  assertNoDiagnosticSecrets(report)
+  report.evidenceCaptureCompletedBeforeCallerCleanup = true
   return report
 }
 
 export async function writeDiagnosticReport(report, rootDir = process.cwd()) {
+  assertNoDiagnosticSecrets(report)
   const directory = path.join(rootDir, 'qa-reports', 'private', 'expense-normalization-diagnostics')
   await fs.mkdir(directory, { recursive: true })
   const filename = `diagnostic-${report.generatedAt.replace(/[^0-9]/gu, '')}.json`
@@ -207,7 +224,7 @@ async function main() {
   }
   const report = await buildDiagnosticReport({ extractionId })
   const reportPath = await writeDiagnosticReport(report)
-  console.log(JSON.stringify({ reportPath, projectRef: report.projectRef, openAiCalls: report.openAiCalls, secretLeak: report.secretLeak, cleanupOrderEvidenceBeforeDelete: report.cleanupOrderEvidenceBeforeDelete }, null, 2))
+  console.log(JSON.stringify({ reportPath, projectRef: report.projectRef, openAiCalls: report.openAiCalls, secretLeak: 0, evidenceCaptureCompletedBeforeCallerCleanup: report.evidenceCaptureCompletedBeforeCallerCleanup }, null, 2))
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) await main()

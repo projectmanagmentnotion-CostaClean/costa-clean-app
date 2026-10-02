@@ -78,6 +78,22 @@ function waitForImages(root: HTMLElement): Promise<void> {
   })).then(() => undefined)
 }
 
+function measureRenderedDocumentHeight(root: HTMLElement, host: HTMLElement): number {
+  const rootTop = root.getBoundingClientRect().top
+  const descendantBottom = Array.from(root.querySelectorAll<HTMLElement>('*')).reduce(
+    (maximum, element) => Math.max(maximum, element.getBoundingClientRect().bottom - rootTop),
+    0,
+  )
+
+  return Math.ceil(Math.max(
+    host.scrollHeight,
+    host.offsetHeight,
+    root.scrollHeight,
+    root.offsetHeight,
+    descendantBottom,
+  ))
+}
+
 export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promise<Blob> {
   if (typeof document === 'undefined') {
     throw new Error('La exportacion visual del PDF requiere un navegador.')
@@ -94,7 +110,7 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
     <InvoiceDocumentA4 invoice={invoice} variant="print" renderMode="pdf" />,
   )
 
-  const documentElement = host.firstElementChild
+  const documentElement = host.querySelector<HTMLElement>('[data-pdf-document]')
   if (!(documentElement instanceof HTMLElement)) {
     throw new Error('No se pudo montar la factura A4 para exportarla.')
   }
@@ -109,14 +125,18 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
     await waitForImages(documentElement)
 
     const captureWidth = host.offsetWidth
-    const captureHeight = Math.ceil(Math.max(
-      host.scrollHeight,
-      documentElement.scrollHeight,
-      documentElement.offsetHeight,
-    ))
+    const captureHeight = measureRenderedDocumentHeight(documentElement, host)
     const pageHeightCss = captureWidth * (A4_HEIGHT_MM / A4_WIDTH_MM)
     const semanticBlocks = collectInvoicePdfSemanticBlocks(documentElement)
-    const pageRanges = createInvoicePdfPageRanges(semanticBlocks, pageHeightCss, captureHeight)
+    const semanticContentHeight = semanticBlocks.reduce(
+      (maximum, block) => Math.max(maximum, block.end),
+      0,
+    )
+    const pageRanges = createInvoicePdfPageRanges(
+      semanticBlocks,
+      pageHeightCss,
+      semanticContentHeight > 0 ? semanticContentHeight : captureHeight,
+    )
 
     const canvas = await html2canvas(host, {
       backgroundColor: '#ffffff',

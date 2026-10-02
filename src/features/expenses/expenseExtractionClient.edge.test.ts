@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js'
 import { createServerFixtureProposal } from '../../../supabase/functions/expense-document-extraction/fixtureProposal'
 import { getSupabaseClient } from '../../lib/supabase'
-import { createExpenseExtractionClient } from './expenseExtractionClient'
+import { createExpenseExtractionClient, createOpenAiExpenseExtractionClient } from './expenseExtractionClient'
 
 vi.mock('../../lib/supabase', () => ({ getSupabaseClient: vi.fn() }))
 
@@ -46,6 +46,28 @@ describe('N5.2 frontend to Edge connection', () => {
       body: { captureDocumentId: 'doc-1', mode: 'extract' },
     })
     expect(result).toMatchObject({ ok: true, metadata: { provider: 'fixture', providerVersion: 'n5.2-fixture-v1', model: null } })
+  })
+
+  it('routes the Product extraction boundary to the dedicated OpenAI Edge Function', async () => {
+    invoke.mockResolvedValue({
+      data: {
+        ok: true,
+        extractionId: 'extraction-openai-1',
+        attempt: 1,
+        proposal: createServerFixtureProposal(),
+        metadata: { provider: 'openai', providerVersion: 'n55-openai-responses-v1', model: 'gpt-4.1-mini' },
+        reused: false,
+      },
+      error: null,
+    })
+
+    await expect(createOpenAiExpenseExtractionClient().requestExtraction(input)).resolves.toMatchObject({
+      ok: true,
+      metadata: { provider: 'openai', providerVersion: 'n55-openai-responses-v1' },
+    })
+    expect(invoke).toHaveBeenCalledWith('expense-document-openai-extraction', {
+      body: { captureDocumentId: 'doc-1', mode: 'extract' },
+    })
   })
 
   it('supports retry without exposing unrelated capture metadata to the Edge request', async () => {

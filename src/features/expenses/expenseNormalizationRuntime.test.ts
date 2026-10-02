@@ -48,10 +48,12 @@ describe('N5.3 server runtime local contract', () => {
     expect(runtime).not.toMatch(/create_expense|createExpense|insert.*expenses|insert.*invoices|insert.*payments/iu)
   })
 
-  it('fails closed before client creation when the runtime URL or mode is invalid', () => {
+  it('accepts only the certified QA or exact Production runtime boundary', () => {
     expect(isNormalizationRuntimeReady('', 'qa-runtime', 'publishable', 'service')).toBe(false)
     expect(isNormalizationRuntimeReady('https://wfxnwfcdjainpojhbdri.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(false)
     expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'wrong-mode', 'publishable', 'service')).toBe(false)
     expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(true)
+    expect(isNormalizationRuntimeReady('https://wfxnwfcdjainpojhbdri.supabase.co', 'production', 'publishable', 'service')).toBe(true)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'production', 'publishable', 'service')).toBe(false)
   })
 })

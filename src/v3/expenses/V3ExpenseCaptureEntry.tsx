@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { attachExpenseCaptureDocument, cancelExpenseCaptureSession, confirmExpenseCapture, createExpenseCaptureSession } from '../../features/expenses/expenseCaptureApi'
 import { buildConfirmedExpensePayload, type DuplicateDecision } from '../../features/expenses/expenseConfirmation'
-import { createExpenseExtractionClient } from '../../features/expenses/expenseExtractionClient'
+import { createOpenAiExpenseExtractionClient } from '../../features/expenses/expenseExtractionClient'
 import type { ExtractionProposal } from '../../features/expenses/expenseExtractionContract'
 import { createExpenseNormalizationClient } from '../../features/expenses/expenseNormalizationClient'
 import type { NormalizedExpenseProposal } from '../../features/expenses/expenseNormalizationContract'
@@ -95,7 +95,7 @@ export function V3ExpenseCaptureEntry({ expenses, onRefresh, onComplete, onManua
   async function extractDocument() {
     if (!session || !document || !file) return
     setError(null); setExtractionState('PROCESSING'); setNormalizationState('IDLE'); setNormalizationId(null); setNormalizedProposal(null); setSupplierIntelligence(null); setConfirmationResult(null); setConfirmed(false); setDuplicateDecision('CREATE_NEW')
-    const result = await createExpenseExtractionClient().requestExtraction({ captureDocumentId: document.id, captureSessionId: session.id, originalFilename: file.name, mimeType: file.type, sizeBytes: file.size, sha256: document.sha256 })
+    const result = await createOpenAiExpenseExtractionClient().requestExtraction({ captureDocumentId: document.id, captureSessionId: session.id, originalFilename: file.name, mimeType: file.type, sizeBytes: file.size, sha256: document.sha256 })
     if (!result.ok) { setProposal(null); setExtractionState('FAILED'); setError(result.errorMessageSafe); return }
     setProposal(result.proposal); setExtractionState('SUCCEEDED'); setNormalizationState('PROCESSING'); setConfirmationError(null)
     const normalized = await createExpenseNormalizationClient().requestNormalization(result.extractionId)

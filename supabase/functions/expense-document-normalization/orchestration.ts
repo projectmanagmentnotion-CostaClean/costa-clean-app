@@ -1,5 +1,5 @@
 import { buildNormalizationIdentity, canonicalSerialize, normalizeExpenseProposal, sha256Hex, validateExtractionProposal, NORMALIZER_IMPLEMENTATION_VERSION } from '../_shared/n53Normalization.ts'
-import { isQaRuntimeConfigured } from './runtimeGuards.ts'
+import { isServerRuntimeConfigured } from './runtimeGuards.ts'
 import { json, safeError } from './responseContract.ts'
 import type { N53ClaimRow, N53ExtractionRow, N53FinalizeFailureRow, N53FinalizeSuccessRow, N53NormalizationRow, N53RpcError } from './contract.ts'
 
@@ -44,7 +44,7 @@ export async function handleNormalizationRequest(request: Request, services: N53
   if (!token) return safeError('AUTH_REQUIRED', 'Autenticación requerida.', 401, headers)
   const body = await readBody(request)
   if (!body) return safeError('REQUEST_CONTRACT_INVALID', 'Solicitud no válida.', 400, headers)
-  if (!isQaRuntimeConfigured(supabaseUrl, runtimeMode)) return safeError('NORMALIZATION_RUNTIME_NOT_CONFIGURED', 'La normalización no está configurada.', 503, headers)
+  if (!isServerRuntimeConfigured(supabaseUrl, runtimeMode)) return safeError('NORMALIZATION_RUNTIME_NOT_CONFIGURED', 'La normalización no está configurada.', 503, headers)
   const user = await services.getUser(token)
   if (!user) return safeError('AUTH_INVALID', 'Autenticación no válida.', 401, headers)
   if (await services.requireActiveStaff()) return safeError('ACTIVE_INTERNAL_STAFF_REQUIRED', 'Usuario interno no autorizado.', 403, headers)

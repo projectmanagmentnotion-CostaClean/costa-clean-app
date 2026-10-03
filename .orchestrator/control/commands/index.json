@@ -1,17 +1,17 @@
 [
   {
     "schemaVersion": 1,
-    "commandId": "CC-E2E-POSITIVE-R4-20261003-01",
+    "commandId": "CC-E2E-POSITIVE-R5-20261003-01",
     "projectId": "costa-clean-app",
-    "workstreamId": "e2e-positive-r4-20261003",
+    "workstreamId": "e2e-positive-r5-20261003",
     "taskDisplayName": "ORCHESTOR positive read-only fixture with report",
     "source": "CHATGPT_PROJECT",
     "sourceContext": "Home portable installation safe E2E",
-    "issuedAt": "2026-10-03T20:30:00.000Z",
+    "issuedAt": "2026-10-03T21:30:00.000Z",
     "brainVersion": 1,
     "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
     "objectiveVersion": 1,
-    "objective": "Inspect the ORCHESTOR-owned positive E2E fixture using read-only metadata checks and publish a structured ExecutionReport under the ignored ORCHESTOR runtime path.",
+    "objective": "Run bounded read-only verification of the ORCHESTOR-owned positive E2E fixture and publish a structured ExecutionReport under the ignored ORCHESTOR runtime path.",
     "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
     "scope": [
       "isolated fixture worktree",
@@ -29,7 +29,7 @@
     ],
     "acceptanceCriteria": [
       "Planner produces one bounded task",
-      "Executor performs read-only inspection in isolated fixture",
+      "Executor performs read-only verification in isolated fixture",
       "reviewers validate evidence",
       "result is published on orchestrator/control",
       "daemon returns stable",
@@ -70,6 +70,6 @@
     ],
     "supersedesCommandId": null,
     "status": "READY",
-    "contentHash": "d2c231ab241dbc3a4f834bc1800f8291332d256ef50033c97db394b3ef09c9e1"
+    "contentHash": "45be81fcb91754278382425e7f34e2cf2aa43a3586cb643a455458110c234d2f"
   }
 ]

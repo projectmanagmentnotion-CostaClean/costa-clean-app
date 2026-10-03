@@ -1,13 +1,13 @@
 [
   {
     "schemaVersion": 1,
-    "commandId": "CC-E2E-POSITIVE-R7-20261003-01",
+    "commandId": "CC-E2E-POSITIVE-R8-20261003-01",
     "projectId": "costa-clean-app",
-    "workstreamId": "e2e-positive-r7-20261003",
-    "taskDisplayName": "ORCHESTOR clean positive read-only E2E R7",
+    "workstreamId": "e2e-positive-r8-20261003",
+    "taskDisplayName": "ORCHESTOR clean positive read-only E2E R8",
     "source": "CHATGPT_PROJECT",
     "sourceContext": "Home portable installation safe E2E",
-    "issuedAt": "2026-10-03T22:30:00.000Z",
+    "issuedAt": "2026-10-03T23:00:00.000Z",
     "brainVersion": 1,
     "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
     "objectiveVersion": 1,
@@ -70,6 +70,6 @@
     ],
     "supersedesCommandId": null,
     "status": "READY",
-    "contentHash": "1460bb8463a01c480c41633532e0a935be234fe0a9d5c23f075557b63af0cb7c"
+    "contentHash": "d364fa6effe31cd2b99dbf2b358bab336c8e382f200b92a79f9a08abe6a4234c"
   }
 ]

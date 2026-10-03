@@ -12,7 +12,7 @@
     "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
     "objectiveVersion": 1,
     "objective": "Execute a bounded read-only verification of the ORCHESTOR-owned clean positive fixture and publish the structured ExecutionReport under the ignored ORCHESTOR runtime path.",
-    "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
+    "why": "Certify the real Planner, Executor, reviewers, publication, and stable-daemon path without product or production mutation.",
     "scope": [
       "isolated fixture worktree",
       "repository metadata inspection",
@@ -28,12 +28,12 @@
       "deploy"
     ],
     "acceptanceCriteria": [
-      "Planner produces one bounded task",
+      "Planner produces one bounded executable task",
       "Executor runs the fixture read-only verification",
-      "reviewers validate evidence",
+      "reviewers validate terminal evidence",
       "result is published on orchestrator/control",
       "daemon returns stable",
-      "structured ExecutionReport is published under .orchestrator runtime without functional file changes"
+      "no functional files change"
     ],
     "allowedAutonomy": [
       "LOCAL_ONLY",
@@ -65,11 +65,11 @@
     "verificationRequirements": [
       "git status",
       "git diff --exit-code",
-      "read-only repository inspection",
+      "read-only repository verification",
       "structured ExecutionReport published under .orchestrator runtime"
     ],
     "supersedesCommandId": null,
     "status": "READY",
-    "contentHash": "9ee40a3c737acdfbb81cb0a7445dd71baf433371d7bb5790c726fedf0a25c45a"
+    "contentHash": "1460bb8463a01c480c41633532e0a935be234fe0a9d5c23f075557b63af0cb7c"
   }
 ]

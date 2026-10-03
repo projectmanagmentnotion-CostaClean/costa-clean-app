@@ -23,5 +23,5 @@
   "verificationRequirements": ["git status", "git diff --exit-code", "read-only repository verification", "structured ExecutionReport published under .orchestrator runtime"],
   "supersedesCommandId": null,
   "status": "READY",
-  "contentHash": "9ee40a3c737acdfbb81cb0a7445dd71baf433371d7bb5790c726fedf0a25c45a"
+  "contentHash": "1460bb8463a01c480c41633532e0a935be234fe0a9d5c23f075557b63af0cb7c"
 }

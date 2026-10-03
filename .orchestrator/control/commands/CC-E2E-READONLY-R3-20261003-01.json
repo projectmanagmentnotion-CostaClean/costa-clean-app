@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
-  "commandId": "CC-E2E-READONLY-R2-20261003-01",
+  "commandId": "CC-E2E-READONLY-R3-20261003-01",
   "projectId": "costa-clean-app",
-  "workstreamId": "e2e-readonly-r2-20261003",
-  "taskDisplayName": "ORCHESTOR E2E read-only fixture R2",
+  "workstreamId": "e2e-readonly-r3-20261003",
+  "taskDisplayName": "ORCHESTOR E2E read-only fixture R3",
   "source": "CHATGPT_PROJECT",
   "sourceContext": "Home portable installation safe E2E",
   "issuedAt": "2026-10-03T20:30:00.000Z",
   "brainVersion": 1,
   "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
   "objectiveVersion": 1,
-  "objective": "Run bounded read-only ORCHESTOR E2E fixture R2 against an isolated worktree and publish evidence.",
+  "objective": "Run bounded read-only ORCHESTOR E2E fixture R3 against an isolated worktree with dependencies already present and publish evidence.",
   "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
   "scope": ["isolated fixture worktree", "repository metadata inspection", "read-only verification"],
   "outOfScope": ["main", "Supabase Production", "Vercel Production", "secrets", "functional application changes", "merge", "deploy"],
@@ -23,5 +23,5 @@
   "verificationRequirements": ["git status", "git diff --exit-code", "read-only repository inspection"],
   "supersedesCommandId": null,
   "status": "READY",
-  "contentHash": "9f30602fe6be964c56cae043db61731f152192945dcee4eb22bbceaf3c392526"
+  "contentHash": "de3c510eb875171cb437bb2e29b9598f05412f12a184e87c3e7cdb77eca9b81b"
 }

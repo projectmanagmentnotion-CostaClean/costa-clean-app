@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-01",
+  "commandHash": "bd04d2da50c139a1d47818574a474a056623738260d5c357eaeef6fd1a808934",
+  "runId": "ar_35641921-bb54-49db-843b-27329faf886b",
+  "status": "HUMAN_REQUIRED",
+  "baselineHead": "5882825483e60eeb76019d06cff90db94bffd93b",
+  "finalHead": "5882825483e60eeb76019d06cff90db94bffd93b",
+  "tasksExecuted": [
+    "task-assess-canonical-e2e-report-integrity-20261004"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "npm run test",
+      "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-e2e-positive-r6",
+      "status": "PASS",
+      "passed": true,
+      "output": "\n> orchestor-e2e-positive-fixture@1.0.0 test\n> node dist/tests/lockdown.test.js\n\nfixture read-only verification PASS\n",
+      "exitCode": 0,
+      "startedAt": "2026-10-03T22:26:56.848Z",
+      "finishedAt": "2026-10-03T22:26:57.242Z"
+    }
+  ],
+  "lint": {
+    "command": "npm run lint",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-e2e-positive-r6",
+    "status": "PASS",
+    "passed": true,
+    "output": "\n> orchestor-e2e-positive-fixture@1.0.0 lint\n> node -e \"console.log('fixture lint PASS')\"\n\nfixture lint PASS\n",
+    "exitCode": 0,
+    "startedAt": "2026-10-03T22:26:57.242Z",
+    "finishedAt": "2026-10-03T22:26:57.642Z"
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-e2e-positive-r6",
+    "status": "PASS",
+    "passed": true,
+    "output": "\n> orchestor-e2e-positive-fixture@1.0.0 typecheck\n> node -e \"console.log('fixture typecheck PASS')\"\n\nfixture typecheck PASS\n",
+    "exitCode": 0,
+    "startedAt": "2026-10-03T22:26:57.642Z",
+    "finishedAt": "2026-10-03T22:26:58.053Z"
+  },
+  "build": {
+    "command": "npm run build",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-e2e-positive-r6",
+    "status": "PASS",
+    "passed": true,
+    "output": "\n> orchestor-e2e-positive-fixture@1.0.0 build\n> node -e \"console.log('fixture build PASS')\"\n\nfixture build PASS\n",
+    "exitCode": 0,
+    "startedAt": "2026-10-03T22:26:58.053Z",
+    "finishedAt": "2026-10-03T22:26:58.420Z"
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "report_7d2dfeef-7148-4e49-8a25-f34bb937f0aa"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "b37594796640cf999165a409c453fae72810ee832b1ee180e313e07101783e9c"
+}

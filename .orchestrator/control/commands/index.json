@@ -1,17 +1,17 @@
 [
   {
     "schemaVersion": 1,
-    "commandId": "CC-E2E-READONLY-R6-20261003-01",
+    "commandId": "CC-E2E-POSITIVE-R3-20261003-01",
     "projectId": "costa-clean-app",
-    "workstreamId": "e2e-readonly-r6-20261003",
-    "taskDisplayName": "ORCHESTOR E2E read-only fixture R6",
+    "workstreamId": "e2e-positive-r3-20261003",
+    "taskDisplayName": "ORCHESTOR positive read-only fixture",
     "source": "CHATGPT_PROJECT",
     "sourceContext": "Home portable installation safe E2E",
     "issuedAt": "2026-10-03T20:30:00.000Z",
     "brainVersion": 1,
     "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
     "objectiveVersion": 1,
-    "objective": "Run bounded read-only ORCHESTOR E2E fixture R6 against an isolated worktree with dependencies already present and publish evidence.",
+    "objective": "Inspect the ORCHESTOR-owned positive E2E fixture at the authorized worktree root using read-only metadata checks and publish direct evidence.",
     "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
     "scope": [
       "isolated fixture worktree",
@@ -67,6 +67,6 @@
     ],
     "supersedesCommandId": null,
     "status": "READY",
-    "contentHash": "a5ced6f62e2b4bac45f4c130da1256c137eca40c64d104f8b11172baee6007a4"
+    "contentHash": "5e0eb63890c903c877383c3b30f40b06433b801201b86075fbcda5e5752e6204"
   }
 ]

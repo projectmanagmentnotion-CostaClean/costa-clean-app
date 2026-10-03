@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-02",
+  "commandHash": "b6306d8f117866b55a3b0b620986ead23542e1e60f9819002bbea6873d9a2bb2",
+  "runId": "ar_4bfcbe9b-cc35-473b-be4b-4009316470c2",
+  "status": "HUMAN_REQUIRED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "task-reconcile-release-698c-evidence-baseline-20261004"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "npm run test",
+      "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-cp51-698c",
+      "status": "FAIL",
+      "passed": false,
+      "output": "\n> costa-clean-app@0.0.0 test\n> vitest run --config vitest.config.mjs\n\n\"vitest\" no se reconoce como un comando interno o externo,\r\nprograma o archivo por lotes ejecutable.\r\n",
+      "exitCode": 1,
+      "startedAt": "2026-10-03T22:41:56.225Z",
+      "finishedAt": "2026-10-03T22:42:01.568Z"
+    }
+  ],
+  "lint": {
+    "command": "npm run lint",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-cp51-698c",
+    "status": "FAIL",
+    "passed": false,
+    "output": "\n> costa-clean-app@0.0.0 lint\n> eslint .\n\n\"eslint\" no se reconoce como un comando interno o externo,\r\nprograma o archivo por lotes ejecutable.\r\n",
+    "exitCode": 1,
+    "startedAt": "2026-10-03T22:42:01.568Z",
+    "finishedAt": "2026-10-03T22:42:01.865Z"
+  },
+  "typecheck": {
+    "command": "npm exec tsc -- --noEmit",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-cp51-698c",
+    "status": "FAIL",
+    "passed": false,
+    "output": "\n\u001b[41m                                                                               \u001b[0m\n\u001b[41m\u001b[37m                This is not the tsc command you are looking for                \u001b[0m\n\u001b[41m                                                                               \u001b[0m\n\nTo get access to the TypeScript compiler, \u001b[34mtsc\u001b[0m, from the command line either:\n\n- Use \u001b[1mnpm install typescript\u001b[0m to first add TypeScript to your project \u001b[1mbefore\u001b[0m using npx\n- Use \u001b[1myarn\u001b[0m to avoid accidentally running code from un-installed packages\n",
+    "exitCode": 1,
+    "startedAt": "2026-10-03T22:42:01.865Z",
+    "finishedAt": "2026-10-03T22:42:27.282Z"
+  },
+  "build": {
+    "command": "npm run build",
+    "cwd": "C:\\Users\\Anderson S\\Documents\\ChatGPT\\ORCHESTOR-cp51-698c",
+    "status": "FAIL",
+    "passed": false,
+    "output": "\n> costa-clean-app@0.0.0 build\n> tsc -b && vite build\n\n\"tsc\" no se reconoce como un comando interno o externo,\r\nprograma o archivo por lotes ejecutable.\r\n",
+    "exitCode": 1,
+    "startedAt": "2026-10-03T22:42:27.282Z",
+    "finishedAt": "2026-10-03T22:42:27.585Z"
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "report_83b5d246-9d10-4912-9bda-6181679582ce"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "283c47234f6522df6509694fb064df1d45514cfa1b60c7458a75fae5ecd64c22"
+}

@@ -66,7 +66,7 @@
       "read-only repository inspection"
     ],
     "supersedesCommandId": null,
-    "status": "READY",
-    "contentHash": "f69759e5856aaa5108af3599c74416f9626161b21a4d1049b2136114f98ce014"
+    "status": "REJECTED",
+    "contentHash": "7649efa6a40d90e509a6d578c0bf0cada007376e8299c78b15ca0315381b2775"
   }
 ]

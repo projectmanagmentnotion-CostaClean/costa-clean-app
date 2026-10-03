@@ -1,1 +1,72 @@
-[]
+[
+  {
+    "schemaVersion": 1,
+    "commandId": "CC-E2E-READONLY-20261003-01",
+    "projectId": "costa-clean-app",
+    "workstreamId": "e2e-readonly-20261003",
+    "taskDisplayName": "ORCHESTOR E2E read-only fixture",
+    "source": "CHATGPT_PROJECT",
+    "sourceContext": "Home portable installation safe E2E",
+    "issuedAt": "2026-10-03T20:08:18.260Z",
+    "brainVersion": 1,
+    "brainHash": "ebb8bf99bb9faf665ef02095e4e01cb0c8048ef38f2d12ef40c9d1e920a973de",
+    "objectiveVersion": 1,
+    "objective": "Run a bounded read-only ORCHESTOR end-to-end fixture against an isolated worktree and publish evidence.",
+    "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
+    "scope": [
+      "isolated fixture worktree",
+      "repository metadata inspection",
+      "read-only verification"
+    ],
+    "outOfScope": [
+      "main",
+      "Supabase Production",
+      "Vercel Production",
+      "secrets",
+      "functional application changes",
+      "merge",
+      "deploy"
+    ],
+    "acceptanceCriteria": [
+      "Planner produces one bounded task",
+      "Executor performs read-only inspection in isolated fixture",
+      "reviewers validate evidence",
+      "result is published on orchestrator/control",
+      "daemon returns stable"
+    ],
+    "allowedAutonomy": [
+      "LOCAL_ONLY",
+      "READ_ONLY",
+      "FIXTURE_ONLY"
+    ],
+    "allowedActions": [
+      "read_repository_metadata",
+      "run_git_status",
+      "run_readonly_verification"
+    ],
+    "forbiddenActions": [
+      "write application code",
+      "write real data",
+      "modify Supabase Production",
+      "modify Vercel Production",
+      "change secrets",
+      "git push",
+      "merge",
+      "deploy"
+    ],
+    "requiredApprovals": [],
+    "stopConditions": [
+      "any mutation outside isolated fixture",
+      "any production or secret access",
+      "any request to merge or deploy"
+    ],
+    "verificationRequirements": [
+      "git status",
+      "git diff --exit-code",
+      "read-only repository inspection"
+    ],
+    "supersedesCommandId": null,
+    "status": "READY",
+    "contentHash": "2d15d7e14024669c7efe71db7651780e525b704780d0e6d6d66af1a08389f984"
+  }
+]\n

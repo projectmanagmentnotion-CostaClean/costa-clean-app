@@ -1,17 +1,17 @@
 [
   {
     "schemaVersion": 1,
-    "commandId": "CC-E2E-POSITIVE-R3-20261003-01",
+    "commandId": "CC-E2E-POSITIVE-R4-20261003-01",
     "projectId": "costa-clean-app",
-    "workstreamId": "e2e-positive-r3-20261003",
-    "taskDisplayName": "ORCHESTOR positive read-only fixture",
+    "workstreamId": "e2e-positive-r4-20261003",
+    "taskDisplayName": "ORCHESTOR positive read-only fixture with report",
     "source": "CHATGPT_PROJECT",
     "sourceContext": "Home portable installation safe E2E",
     "issuedAt": "2026-10-03T20:30:00.000Z",
     "brainVersion": 1,
     "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
     "objectiveVersion": 1,
-    "objective": "Inspect the ORCHESTOR-owned positive E2E fixture at the authorized worktree root using read-only metadata checks and publish direct evidence.",
+    "objective": "Inspect the ORCHESTOR-owned positive E2E fixture using read-only metadata checks and publish a structured ExecutionReport under the ignored ORCHESTOR runtime path.",
     "why": "Verify control-plane detection and the real Planner/Executor/reviewer/publication path without product or production mutation.",
     "scope": [
       "isolated fixture worktree",
@@ -32,7 +32,8 @@
       "Executor performs read-only inspection in isolated fixture",
       "reviewers validate evidence",
       "result is published on orchestrator/control",
-      "daemon returns stable"
+      "daemon returns stable",
+      "structured ExecutionReport is published under .orchestrator runtime without functional file changes"
     ],
     "allowedAutonomy": [
       "LOCAL_ONLY",
@@ -42,7 +43,8 @@
     "allowedActions": [
       "read_repository_metadata",
       "run_git_status",
-      "run_readonly_verification"
+      "run_readonly_verification",
+      "publish_structured_report"
     ],
     "forbiddenActions": [
       "write application code",
@@ -63,10 +65,11 @@
     "verificationRequirements": [
       "git status",
       "git diff --exit-code",
-      "read-only repository inspection"
+      "read-only repository inspection",
+      "structured ExecutionReport published under .orchestrator runtime"
     ],
     "supersedesCommandId": null,
     "status": "READY",
-    "contentHash": "5e0eb63890c903c877383c3b30f40b06433b801201b86075fbcda5e5752e6204"
+    "contentHash": "d2c231ab241dbc3a4f834bc1800f8291332d256ef50033c97db394b3ef09c9e1"
   }
 ]

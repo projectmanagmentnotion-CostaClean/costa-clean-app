@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-15",
+  "commandHash": "17386b828461da24089163dad2ed53c7baf5072d539efa3251c15782e450ae89",
+  "runId": "ar_127abfb2-7589-4eb5-b4eb-9e7c1bf0b414",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_127abfb2-7589-4eb5-b4eb-9e7c1bf0b414"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:function public.copy_latest_invoice_template_by_tax_id(text, date, text, text) does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function public.copy_latest_invoice_template_by_tax_id(text, date, text, text) does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function public.copy_latest_invoice_template_by_tax_id(text, date, text, text) does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function public.copy_latest_invoice_template_by_tax_id(text, date, text, text) does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:function public.copy_latest_invoice_template_by_tax_id(text, date, text, text) does not exist"
+  ],
+  "executionReportIds": [
+    "report_409b95f3-8a3f-4cee-a6f6-bd6bd61bf310"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "41286c332fcadb87cf46c6203911b7acdc1ff6aa2d2525bfec17586543b41349"
+}

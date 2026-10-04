@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-13",
+  "commandHash": "5d1d8cd450318ca70d79b1dc0d6f4a406454f1b608bed626d7763cca11a1478a",
+  "runId": "ar_5c9963f3-4ed4-4345-9f7b-d12cd2a78f76",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_5c9963f3-4ed4-4345-9f7b-d12cd2a78f76"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "target reference build",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:relation public.clients does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": "UNKNOWN",
+  "typecheck": "UNKNOWN",
+  "build": "UNKNOWN",
+  "approvals": [],
+  "blockers": [
+    "TARGET_REFERENCE_BUILD:LOCAL_DB_QUERY_FAILED:relation public.clients does not exist"
+  ],
+  "executionReportIds": [
+    "report_911e9bdf-d31a-4c64-af31-54bf28ea3e85"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "91e4a842096cbbafe093bcdd24e5a387e64a472f8be6fd6e5a429db8d8fc4606"
+}

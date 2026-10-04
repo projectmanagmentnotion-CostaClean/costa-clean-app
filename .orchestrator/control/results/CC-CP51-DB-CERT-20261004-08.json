@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-08",
+  "commandHash": "986f125bdc6c0378bbb9c83501ddaaf13c8428bfcca8fb32353a09085755e2e2",
+  "runId": "ar_b193159a-b701-4c29-b589-3db0b39a6b49",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_b193159a-b701-4c29-b589-3db0b39a6b49"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RESTORE_MIGRATION_LEDGER_UNAVAILABLE_USE_SCHEMA_RECONCILIATION",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RESTORE_MIGRATION_LEDGER_UNAVAILABLE_USE_SCHEMA_RECONCILIATION",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RESTORE_MIGRATION_LEDGER_UNAVAILABLE_USE_SCHEMA_RECONCILIATION",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RESTORE_MIGRATION_LEDGER_UNAVAILABLE_USE_SCHEMA_RECONCILIATION",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RESTORE_MIGRATION_LEDGER_UNAVAILABLE_USE_SCHEMA_RECONCILIATION"
+  ],
+  "executionReportIds": [
+    "report_0730a495-41d7-45f7-95dd-2638a22e5dae"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "f442c1046c2758899afd9983c4189fdd49b4f8a041da9d625640f4524bbefb97"
+}

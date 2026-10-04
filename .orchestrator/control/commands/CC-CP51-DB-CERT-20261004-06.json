@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "commandId": "CC-CP51-DB-CERT-20261004-06",
+  "projectId": "costa-clean-app",
+  "source": "CHATGPT_PROJECT",
+  "sourceContext": "R10 local DB certification capabilities; supersedes terminal CP51-05 HUMAN_REQUIRED.",
+  "issuedAt": "2026-10-04T08:08:19.816Z",
+  "brainVersion": 1,
+  "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
+  "objectiveVersion": 1,
+  "objective": "Certify the exact minimal database, RLS, RPC, grants and storage delta required for release 698c using the verified local Production backup and isolated restore, without mutating Production.",
+  "why": "Planner must only emit a structured local capability; ORCHESTOR authorizes and executes the DB certification against an opaque isolated restore handle.",
+  "scope": [
+    "Inspect release 698c database dependencies and transitive helpers.",
+    "Compare versioned migrations, schema, RLS, grants, RPCs and storage against the verified Production backup or isolated local restore.",
+    "Build the exact minimal ordered migration manifest and rollback/recovery strategy.",
+    "Apply and verify the manifest only in an isolated local restore.",
+    "Run independent DB migration, RLS/security, RPC, storage and release-dependency reviews.",
+    "Publish the structured terminal gate result to orchestrator/control.",
+    "Compare tables, columns, indexes, constraints, triggers and extensions against the verified isolated restore."
+  ],
+  "outOfScope": [
+    "Supabase Production mutation",
+    "Production migration",
+    "Edge deploy",
+    "Vercel deploy",
+    "secret mutation",
+    "OpenAI Production call",
+    "main merge",
+    "application push"
+  ],
+  "acceptanceCriteria": [
+    "Release payload identity equals 698c069f28bc07258744e4a9710f4d96af1bd804.",
+    "Local DB certification artifact is complete and sanitized.",
+    "All local tests and reviewers pass with P0=0, P1=0, P2=0.",
+    "Production mutations remain zero."
+  ],
+  "allowedAutonomy": [
+    "READ_ONLY_REPOSITORY_INSPECTION",
+    "LOCAL_ISOLATED_DB",
+    "CONTROL_PLANE_RESULT_PUBLICATION"
+  ],
+  "allowedActions": [
+    "INSPECT_LOCAL_DB_RESTORE",
+    "QUERY_LOCAL_DB_METADATA",
+    "COMPARE_LOCAL_DB_CONTRACT",
+    "APPLY_MIGRATIONS_TO_ISOLATED_RESTORE",
+    "RUN_LOCAL_DB_CONTRACT_TESTS",
+    "GENERATE_DB_CERTIFICATION_ARTIFACT"
+  ],
+  "forbiddenActions": [
+    "mutate Supabase Production",
+    "execute Production migrations",
+    "write Production data",
+    "create or alter Production storage buckets or policies",
+    "change Production RLS, grants, RPCs or schema",
+    "deploy any Edge Function",
+    "deploy Vercel Production",
+    "change Production secrets",
+    "invoke OpenAI in Production",
+    "merge to main",
+    "push application/release code branches"
+  ],
+  "requiredApprovals": [],
+  "stopConditions": [
+    "Any step would require a Production mutation.",
+    "Required backup/isolated restore cannot be located or safely identified.",
+    "Observed evidence conflicts with release 698c.",
+    "Rollback/recovery cannot be demonstrated.",
+    "Any reviewer reports P0, P1 or P2.",
+    "A required credential or secret would need to be exposed."
+  ],
+  "verificationRequirements": [
+    "Release payload HEAD equals 698c069f28bc07258744e4a9710f4d96af1bd804.",
+    "Produce required tables, columns, RPCs, RLS policies, grants and storage matrix.",
+    "Produce exact minimal ordered Production migration manifest with rollback strategy.",
+    "Verify isolated restore migration when feasible.",
+    "Verify final local schema compatibility with 698c when feasible.",
+    "Prove Production mutations remain zero.",
+    "Produce object matrix for tables, columns, indexes, constraints, triggers, RPCs, RLS policies, grants, storage and extensions.",
+    "Apply and test any proposed manifest only against the isolated local restore."
+  ],
+  "supersedesCommandId": "CC-CP51-DB-CERT-20261004-05",
+  "status": "READY",
+  "contentHash": "56aff1813f03be86f45d152a3ee91db5c20a2c4e6f41608c7fa4276b20da9532"
+}

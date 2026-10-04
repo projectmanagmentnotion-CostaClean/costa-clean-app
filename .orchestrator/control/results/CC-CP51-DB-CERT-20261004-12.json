@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-12",
+  "commandHash": "a2c90f76dd4aa78b755301cbf98f0647e4879ed381dd12dabeda8d96cab8f036",
+  "runId": "ar_2c544949-bb29-4547-a10a-10dbde0c223f",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_2c544949-bb29-4547-a10a-10dbde0c223f"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_BACKUP_RESTORE_FAILED:spawn psql ENOENT",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_BACKUP_RESTORE_FAILED:spawn psql ENOENT",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_BACKUP_RESTORE_FAILED:spawn psql ENOENT",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_BACKUP_RESTORE_FAILED:spawn psql ENOENT",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_BACKUP_RESTORE_FAILED:spawn psql ENOENT"
+  ],
+  "executionReportIds": [
+    "report_92991d78-d6cb-48a0-99e4-1500bae4fb81"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "a934ec16e49270e1b648a14d0868b30789d02e0f8a09f440cee18cba04bc5696"
+}

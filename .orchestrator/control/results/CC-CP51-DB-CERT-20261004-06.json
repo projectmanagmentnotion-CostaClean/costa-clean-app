@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-06",
+  "commandHash": "56aff1813f03be86f45d152a3ee91db5c20a2c4e6f41608c7fa4276b20da9532",
+  "runId": "ar_6ff1c269-4493-4b33-9c7f-fc384d56aeea",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_6ff1c269-4493-4b33-9c7f-fc384d56aeea"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "verification.tests",
+      "status": "FAIL",
+      "passed": false,
+      "output": "",
+      "exitCode": null,
+      "reason": "Canonical verification evidence was not supplied."
+    }
+  ],
+  "lint": {
+    "command": "verification.lint",
+    "status": "FAIL",
+    "passed": false,
+    "output": "",
+    "exitCode": null,
+    "reason": "Canonical verification evidence was not supplied."
+  },
+  "typecheck": {
+    "command": "verification.typecheck",
+    "status": "FAIL",
+    "passed": false,
+    "output": "",
+    "exitCode": null,
+    "reason": "Canonical verification evidence was not supplied."
+  },
+  "build": {
+    "command": "verification.build",
+    "status": "FAIL",
+    "passed": false,
+    "output": "",
+    "exitCode": null,
+    "reason": "Canonical verification evidence was not supplied."
+  },
+  "approvals": [],
+  "blockers": [],
+  "executionReportIds": [
+    "report_31d7c406-8911-450d-ab23-81c853844bcd"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "86499bb84d5094e9108d447779efdcf5575ebc726ff3f8a61a4f09f8c08c0a47"
+}

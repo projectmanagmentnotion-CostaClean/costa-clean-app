@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "commandId": "CC-CP51-DB-CERT-20261004-05",
+  "projectId": "costa-clean-app",
+  "workstreamId": "cp51-production-698c",
+  "source": "CHATGPT_PROJECT",
+  "sourceContext": "Reissued CP-5.1 certification against the exact release payload after correcting the prior fixture workstream routing.",
+  "issuedAt": "2026-10-04T07:37:57.316Z",
+  "brainVersion": 1,
+  "brainHash": "66ad0d24aa726331873eb9678a95d5a4b3321a2777818ffc5906b4021be92c85",
+  "objectiveVersion": 1,
+  "objective": "Certify the exact minimal database, RLS, RPC, grants and storage delta required for release 698c using repository evidence and the verified local Production backup or isolated restore, without mutating Production, then publish a structured gate result.",
+  "why": "The prior CP-5.1 command ran on an E2E fixture. This command is bound to a clean release worktree at 698c and is the only allowed path for the certification.",
+  "scope": [
+    "Inspect release 698c database dependencies and transitive helpers.",
+    "Compare versioned migrations, schema, RLS, grants, RPCs and storage against the verified Production backup or isolated local restore.",
+    "Build the exact minimal ordered migration manifest and rollback/recovery strategy.",
+    "Apply and verify the manifest only in an isolated local restore.",
+    "Run independent DB migration, RLS/security, RPC, storage and release-dependency reviews.",
+    "Publish the structured terminal gate result to orchestrator/control.",
+    "Compare tables, columns, indexes, constraints, triggers and extensions against the verified isolated restore."
+  ],
+  "outOfScope": [
+    "Supabase Production mutation",
+    "Production migration",
+    "Edge deploy",
+    "Vercel deploy",
+    "secret mutation",
+    "OpenAI Production call",
+    "main merge",
+    "application push"
+  ],
+  "acceptanceCriteria": [
+    "Release payload identity equals 698c069f28bc07258744e4a9710f4d96af1bd804.",
+    "Required DB/storage objects and drift are mapped exactly.",
+    "Local restore verification passes when safely available.",
+    "Rollback/recovery is defined for every proposed change.",
+    "Reviewers report P0=0, P1=0 and P2=0 before READY_FOR_PRODUCTION_DB_CHANGE_GATE=YES.",
+    "Production mutations remain zero."
+  ],
+  "allowedAutonomy": [
+    "READ_ONLY_REPOSITORY_INSPECTION",
+    "LOCAL_ISOLATED_DB_TESTING",
+    "LOCAL_TESTS_AND_BUILD",
+    "STRUCTURED_REVIEW",
+    "CONTROL_PLANE_RESULT_PUBLICATION"
+  ],
+  "allowedActions": [
+    "read release 698c repository files and Git history",
+    "inspect versioned migration SQL and database dependencies",
+    "inspect the verified local Production backup and isolated restore",
+    "apply proposed migrations only to an isolated local restore",
+    "run local schema, RLS, RPC, storage-contract and relevant release tests",
+    "generate migration and rollback evidence",
+    "run independent reviewers",
+    "publish the structured result to orchestrator/control"
+  ],
+  "forbiddenActions": [
+    "mutate Supabase Production",
+    "execute Production migrations",
+    "write Production data",
+    "create or alter Production storage buckets or policies",
+    "change Production RLS, grants, RPCs or schema",
+    "deploy any Edge Function",
+    "deploy Vercel Production",
+    "change Production secrets",
+    "invoke OpenAI in Production",
+    "merge to main",
+    "push application/release code branches"
+  ],
+  "requiredApprovals": [],
+  "stopConditions": [
+    "Any step would require a Production mutation.",
+    "Required backup/isolated restore cannot be located or safely identified.",
+    "Observed evidence conflicts with release 698c.",
+    "Rollback/recovery cannot be demonstrated.",
+    "Any reviewer reports P0, P1 or P2.",
+    "A required credential or secret would need to be exposed."
+  ],
+  "verificationRequirements": [
+    "Release payload HEAD equals 698c069f28bc07258744e4a9710f4d96af1bd804.",
+    "Produce required tables, columns, RPCs, RLS policies, grants and storage matrix.",
+    "Produce exact minimal ordered Production migration manifest with rollback strategy.",
+    "Verify isolated restore migration when feasible.",
+    "Verify final local schema compatibility with 698c when feasible.",
+    "Prove Production mutations remain zero.",
+    "Produce object matrix for tables, columns, indexes, constraints, triggers, RPCs, RLS policies, grants, storage and extensions.",
+    "Apply and test any proposed manifest only against the isolated local restore."
+  ],
+  "supersedesCommandId": "CC-CP51-DB-CERT-20261004-04",
+  "status": "READY",
+  "contentHash": "2e418e67a61563b01f6fd1c69dc4ee37721f7913b4cea330e058225171d3a809"
+}

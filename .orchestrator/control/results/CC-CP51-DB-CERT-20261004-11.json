@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261004-11",
+  "commandHash": "e987772b1cec1ad25327f7c7f17c1bab0a6d9a2f3df337d7e4c3e9c089c74782",
+  "runId": "ar_81e9a6c8-762a-4abc-af74-47121789a97b",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_81e9a6c8-762a-4abc-af74-47121789a97b"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:relation \"public_quiz_submission_guards\" already exists",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public_quiz_submission_guards\" already exists",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public_quiz_submission_guards\" already exists",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public_quiz_submission_guards\" already exists",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:relation \"public_quiz_submission_guards\" already exists"
+  ],
+  "executionReportIds": [
+    "report_9b948c6c-ccf5-4486-a812-78f1fd2fca3f"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "acb0cfe946533cf39c3a27ac0b70b74f86e2bac30a213024295364f3365a5166"
+}

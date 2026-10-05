@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-41",
+  "commandHash": "4f586582e12e50f8cc1e8805a20e1927ef536174c22c74d150353d423055b2a1",
+  "runId": "ar_9c48da6f-70ea-48c1-afe6-a9ac549fa9ab",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_9c48da6f-70ea-48c1-afe6-a9ac549fa9ab"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:function portal_private.generate_service_request_public_reference_v2() does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function portal_private.generate_service_request_public_reference_v2() does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function portal_private.generate_service_request_public_reference_v2() does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function portal_private.generate_service_request_public_reference_v2() does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:function portal_private.generate_service_request_public_reference_v2() does not exist"
+  ],
+  "executionReportIds": [
+    "report_72c12e7d-e115-4e3e-9458-a0786e3cfe73"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "7825e195ef4f19c02d79da41f1c324535ed8b00d18fba4041090a1aac225cbf9"
+}

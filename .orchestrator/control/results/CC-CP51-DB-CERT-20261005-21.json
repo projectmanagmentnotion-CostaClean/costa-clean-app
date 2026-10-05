@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-21",
+  "commandHash": "27f61234c1deba1b78b5c393e9465a6aaef443f25e0942ff322289714c597662",
+  "runId": "ar_a1a47f1a-7ad0-478e-8e74-219787754af3",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_a1a47f1a-7ad0-478e-8e74-219787754af3"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:role \"PUBLIC\" does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:role \"PUBLIC\" does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:role \"PUBLIC\" does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:role \"PUBLIC\" does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:role \"PUBLIC\" does not exist"
+  ],
+  "executionReportIds": [
+    "report_f71dddbf-b322-4f9f-bcdc-acdeb67be273"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "6174ba2adde6de51d5233a5df6e29bb6029099ac8be8b179fef74e263e12135a"
+}

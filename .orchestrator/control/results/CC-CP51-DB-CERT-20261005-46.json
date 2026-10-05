@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-46",
+  "commandHash": "5016560d4bd542308e0441995867d943351b6b2d2c1d2c2081d7e08f00750dd2",
+  "runId": "ar_650083e5-b7ef-45ec-b149-8df0eb5110b8",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_650083e5-b7ef-45ec-b149-8df0eb5110b8"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:column:public.client_service_requests.approved_job_id:LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:column:public.client_service_requests.approved_job_id:LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:column:public.client_service_requests.approved_job_id:LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:column:public.client_service_requests.approved_job_id:LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:column:public.client_service_requests.approved_job_id:LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist"
+  ],
+  "executionReportIds": [
+    "report_23b57770-ce3b-46ac-ba0f-dee0bd00187a"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "5c85df67fde03ebbd57ee642722272caf7449085a45d27a190d3d78526b640e9"
+}

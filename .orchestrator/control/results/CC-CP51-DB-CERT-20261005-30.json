@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-30",
+  "commandHash": "b3d0d2026379cfeaa8c4174c3cd564aa34b5aa610a618d432ae586803216af25",
+  "runId": "ar_a39b3fc0-9a7f-4f58-8654-12fe12405aff",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_a39b3fc0-9a7f-4f58-8654-12fe12405aff"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:app_private.data_hygiene_actions",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:app_private.data_hygiene_actions",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:app_private.data_hygiene_actions",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:app_private.data_hygiene_actions",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:table:app_private.data_hygiene_actions"
+  ],
+  "executionReportIds": [
+    "report_0ee98825-7c03-404b-b29f-b8ed44408376"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "01ca39c45ef4bc683ffba0e9e821e6a3ee1e96a21417fa703636d65c953eb903"
+}

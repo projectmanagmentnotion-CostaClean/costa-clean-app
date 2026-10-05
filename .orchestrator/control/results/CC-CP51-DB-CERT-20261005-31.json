@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-31",
+  "commandHash": "0af9019f8a82355259da59f010b8dab82cf2cc76eaadd07ef04055b1bb0d0739",
+  "runId": "ar_fab9c38f-25a2-44e4-8ac7-041df341f73d",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_fab9c38f-25a2-44e4-8ac7-041df341f73d"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:public.recurring_service_occurrences",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:public.recurring_service_occurrences",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:public.recurring_service_occurrences",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table:public.recurring_service_occurrences",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:table:public.recurring_service_occurrences"
+  ],
+  "executionReportIds": [
+    "report_db1c4c08-bad1-4303-a2f9-42148a9583dc"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "5c0517ca8d3031f7dd2cf76fc0f51842b798a95d0b21419123c588d715f223c4"
+}

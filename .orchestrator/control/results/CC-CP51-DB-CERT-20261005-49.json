@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-49",
+  "commandHash": "b77a50e649813d47b4a32e9b4c3d9bc1cb051e1d4d100f9614b2b102ce120289",
+  "runId": "ar_7a34b534-7c6c-4204-b0a0-8bfff8f1c449",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_7a34b534-7c6c-4204-b0a0-8bfff8f1c449"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:index:public.client_portal_applications_pkey:LOCAL_DB_QUERY_FAILED:relation \"client_portal_applications_pkey\" already exists",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.client_portal_applications_pkey:LOCAL_DB_QUERY_FAILED:relation \"client_portal_applications_pkey\" already exists",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.client_portal_applications_pkey:LOCAL_DB_QUERY_FAILED:relation \"client_portal_applications_pkey\" already exists",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.client_portal_applications_pkey:LOCAL_DB_QUERY_FAILED:relation \"client_portal_applications_pkey\" already exists",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:index:public.client_portal_applications_pkey:LOCAL_DB_QUERY_FAILED:relation \"client_portal_applications_pkey\" already exists"
+  ],
+  "executionReportIds": [
+    "report_31490e02-d35e-4a1a-88de-544ab9c83b3b"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "5d60e0d556badf9c60678f706a871e3281c11ef3fe3d007d8d62cce587061640"
+}

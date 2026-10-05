@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-50",
+  "commandHash": "79935af0e7a2b8d4b6c7a6e1603a5cfca94c72af26b2430e117148a0ccb906d2",
+  "runId": "ar_5debf8a2-c42e-49ee-8949-d4ee59d48d50",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_5debf8a2-c42e-49ee-8949-d4ee59d48d50"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.has_active_portal_membership(p_user_id uuid, p_client_id text):LOCAL_DB_QUERY_FAILED:function portal_private.is_verified_portal_user(uuid) does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.has_active_portal_membership(p_user_id uuid, p_client_id text):LOCAL_DB_QUERY_FAILED:function portal_private.is_verified_portal_user(uuid) does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.has_active_portal_membership(p_user_id uuid, p_client_id text):LOCAL_DB_QUERY_FAILED:function portal_private.is_verified_portal_user(uuid) does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.has_active_portal_membership(p_user_id uuid, p_client_id text):LOCAL_DB_QUERY_FAILED:function portal_private.is_verified_portal_user(uuid) does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:function:portal_private.has_active_portal_membership(p_user_id uuid, p_client_id text):LOCAL_DB_QUERY_FAILED:function portal_private.is_verified_portal_user(uuid) does not exist"
+  ],
+  "executionReportIds": [
+    "report_a437168c-e87a-40a3-ae25-9902710cebc2"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "2efabe1bf2a3a6ee05f58b409f17579fe6718ec61467b2d3c781be7f55d3e20e"
+}

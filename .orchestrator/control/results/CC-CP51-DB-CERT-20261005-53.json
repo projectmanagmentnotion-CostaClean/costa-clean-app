@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-53",
+  "commandHash": "d346349f21fe709b60920a124b005f167585f023e3914a74d2d0131486f315b7",
+  "runId": "ar_23355706-30a1-4c99-ae62-dbff6fbbe0b0",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_23355706-30a1-4c99-ae62-dbff6fbbe0b0"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "CANDIDATE_TARGET_CONTRACT_MISMATCH:e1dd413307a71b204a04371a4bcbdc9e9cb9a908653d9a775284a8c6a6e9ef59:723392b4f2f33358f164db03c1157c8b2c7d7900f9f1af05372d4232ea235831",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_TARGET_CONTRACT_MISMATCH:e1dd413307a71b204a04371a4bcbdc9e9cb9a908653d9a775284a8c6a6e9ef59:723392b4f2f33358f164db03c1157c8b2c7d7900f9f1af05372d4232ea235831",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_TARGET_CONTRACT_MISMATCH:e1dd413307a71b204a04371a4bcbdc9e9cb9a908653d9a775284a8c6a6e9ef59:723392b4f2f33358f164db03c1157c8b2c7d7900f9f1af05372d4232ea235831",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_TARGET_CONTRACT_MISMATCH:e1dd413307a71b204a04371a4bcbdc9e9cb9a908653d9a775284a8c6a6e9ef59:723392b4f2f33358f164db03c1157c8b2c7d7900f9f1af05372d4232ea235831",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "CANDIDATE_TARGET_CONTRACT_MISMATCH:e1dd413307a71b204a04371a4bcbdc9e9cb9a908653d9a775284a8c6a6e9ef59:723392b4f2f33358f164db03c1157c8b2c7d7900f9f1af05372d4232ea235831"
+  ],
+  "executionReportIds": [
+    "report_5be44a03-2636-4ef8-9b77-2add7302df7f"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "311f0b85de2a4c88e7c6c439e6be4cef49a577b76919ff3d69e0971a23dbc6f4"
+}

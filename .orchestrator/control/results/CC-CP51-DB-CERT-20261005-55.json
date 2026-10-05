@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-55",
+  "commandHash": "e9ec0ee26770e50fe6647bc3912a4db12a81c98c4fa2cb877af0f3246ce7ad40",
+  "runId": "ar_d7448feb-0393-46a4-a877-f08e471a64ba",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_d7448feb-0393-46a4-a877-f08e471a64ba"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:constraint:public.jobs.jobs_public_reference_format:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.jobs.jobs_public_reference_format:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.jobs.jobs_public_reference_format:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.jobs.jobs_public_reference_format:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:constraint:public.jobs.jobs_public_reference_format:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist"
+  ],
+  "executionReportIds": [
+    "report_3ed41985-8baa-4710-901e-217cf208f3f9"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "3003a4ab435778b6fe371403c9a9f833e7b0674b53ed26abbbdabdf305678f83"
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-52",
+  "commandHash": "a03cb50e4dee016828288fcdb841e1ec8fc9adb921cd4d92ca03beff4fa3f1f9",
+  "runId": "ar_8486ecc0-0df1-4786-b9b1-99982011c695",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_8486ecc0-0df1-4786-b9b1-99982011c695"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:storage_policy:storage.Internal staff delete client profile media:LOCAL_DB_QUERY_FAILED:policy \"Internal staff delete client profile media\" for table \"objects\" already exists",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:storage_policy:storage.Internal staff delete client profile media:LOCAL_DB_QUERY_FAILED:policy \"Internal staff delete client profile media\" for table \"objects\" already exists",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:storage_policy:storage.Internal staff delete client profile media:LOCAL_DB_QUERY_FAILED:policy \"Internal staff delete client profile media\" for table \"objects\" already exists",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:storage_policy:storage.Internal staff delete client profile media:LOCAL_DB_QUERY_FAILED:policy \"Internal staff delete client profile media\" for table \"objects\" already exists",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:storage_policy:storage.Internal staff delete client profile media:LOCAL_DB_QUERY_FAILED:policy \"Internal staff delete client profile media\" for table \"objects\" already exists"
+  ],
+  "executionReportIds": [
+    "report_64767280-91c2-4180-acff-b03297456284"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "042824c953842e87f4acc93593634d88cf58bb157fbf313f5ade376cc588bc3b"
+}

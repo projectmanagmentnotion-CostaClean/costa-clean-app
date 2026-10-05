@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-47",
+  "commandHash": "bfb630376dbea4a2139bbe6332c7c0c598c121f64a1f4b9c14dfd8565754485b",
+  "runId": "ar_a9e5d51b-79fc-436e-bd5c-22792cd5c22e",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_a9e5d51b-79fc-436e-bd5c-22792cd5c22e"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:constraint:public.audit_events.audit_events_action_check:LOCAL_DB_QUERY_FAILED:constraint \"audit_events_action_check\" for relation \"audit_events\" already exists",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.audit_events.audit_events_action_check:LOCAL_DB_QUERY_FAILED:constraint \"audit_events_action_check\" for relation \"audit_events\" already exists",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.audit_events.audit_events_action_check:LOCAL_DB_QUERY_FAILED:constraint \"audit_events_action_check\" for relation \"audit_events\" already exists",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.audit_events.audit_events_action_check:LOCAL_DB_QUERY_FAILED:constraint \"audit_events_action_check\" for relation \"audit_events\" already exists",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:constraint:public.audit_events.audit_events_action_check:LOCAL_DB_QUERY_FAILED:constraint \"audit_events_action_check\" for relation \"audit_events\" already exists"
+  ],
+  "executionReportIds": [
+    "report_f51ae5d8-8bf9-4bac-a5ad-8199176f425d"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "94c57575da359ddc850d3a218d72d82562ce5258c613528bb10c2f469dd61d7e"
+}

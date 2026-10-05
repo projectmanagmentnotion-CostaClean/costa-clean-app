@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-40",
+  "commandHash": "84d0934a526a963ccdcf05f8adf1fb591f19a8c6aceb83ea61f5df70a1bbea4e",
+  "runId": "ar_c0e75c2c-67d1-4dd8-80d3-0f5c1d493052",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_c0e75c2c-67d1-4dd8-80d3-0f5c1d493052"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:storage_policy:storage.Internal staff delete client profile media",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:storage_policy:storage.Internal staff delete client profile media",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:storage_policy:storage.Internal staff delete client profile media",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:storage_policy:storage.Internal staff delete client profile media",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:storage_policy:storage.Internal staff delete client profile media"
+  ],
+  "executionReportIds": [
+    "report_373e91fb-c7bc-45de-b67e-f1ea52e5c598"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "75a7a4e7f5432750d4a68d798ab226de742ab05c656f48b52a7a429cf9b16f76"
+}

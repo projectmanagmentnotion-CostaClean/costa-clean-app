@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-70",
+  "commandHash": "0c12993731808923f3673922bfee0ead5cf0ae05ee28a9bad81fdc8be0188aac",
+  "runId": "ar_b13ca714-d470-47cd-90fb-5fcab3a0c398",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_b13ca714-d470-47cd-90fb-5fcab3a0c398"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=147:preservedChanged=0:unexpected=112",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=147:preservedChanged=0:unexpected=112",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=147:preservedChanged=0:unexpected=112",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=147:preservedChanged=0:unexpected=112",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=147:preservedChanged=0:unexpected=112"
+  ],
+  "executionReportIds": [
+    "report_c0f8fb2c-f6e8-4e4e-9f83-047c06bd0e53"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "34aad822299db68c3e485c9e2893083b3e3fa3b0bd430dc69c2d510a68e52531"
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-44",
+  "commandHash": "15ab2fc72a21167f3812a2c356351b2ca54b7b90f3dc1c0e203b0533d7442017",
+  "runId": "ar_015b0e50-5139-4cf8-9100-0402d70c4e99",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_015b0e50-5139-4cf8-9100-0402d70c4e99"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:relation \"public.client_service_requests\" does not exist"
+  ],
+  "executionReportIds": [
+    "report_08df65a1-595a-4cf6-bd58-18d1275dc799"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "ebe4e56459d9fe641b04c7045aacf96757860b943af5350f6b4841aefe264491"
+}

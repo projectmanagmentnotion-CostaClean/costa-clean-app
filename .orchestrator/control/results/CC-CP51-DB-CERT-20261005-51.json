@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-51",
+  "commandHash": "5b13daa965cafbe8658db78bc563f374d27587224f551f3cefd207e262f87d6e",
+  "runId": "ar_cfe2ed48-b447-4953-8882-636be96f5405",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_cfe2ed48-b447-4953-8882-636be96f5405"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.is_verified_portal_user(p_user_id uuid):LOCAL_DB_QUERY_FAILED:column u.email_confirmed_at does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.is_verified_portal_user(p_user_id uuid):LOCAL_DB_QUERY_FAILED:column u.email_confirmed_at does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.is_verified_portal_user(p_user_id uuid):LOCAL_DB_QUERY_FAILED:column u.email_confirmed_at does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:function:portal_private.is_verified_portal_user(p_user_id uuid):LOCAL_DB_QUERY_FAILED:column u.email_confirmed_at does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:function:portal_private.is_verified_portal_user(p_user_id uuid):LOCAL_DB_QUERY_FAILED:column u.email_confirmed_at does not exist"
+  ],
+  "executionReportIds": [
+    "report_ff288e79-0f90-49b7-b187-e5ecd2331d6c"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "2c8d1e4cc2f4596a726d6ee991210df6f21c5cf00e1bdecbf90b729859eb4122"
+}

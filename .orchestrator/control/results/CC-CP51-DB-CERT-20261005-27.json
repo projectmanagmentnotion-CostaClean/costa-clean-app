@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-27",
+  "commandHash": "bdf70de58e8cf49637c58d5205bc1a0f4d799ff3e5fd4187dfffc0cbae351d0f",
+  "runId": "ar_0d11b7d2-4c46-4a69-b2c4-f61f70d4b373",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_0d11b7d2-4c46-4a69-b2c4-f61f70d4b373"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_DEDICATED_SERVER_UNEXPECTED_WORKLOAD",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_DEDICATED_SERVER_UNEXPECTED_WORKLOAD",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_DEDICATED_SERVER_UNEXPECTED_WORKLOAD",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_DEDICATED_SERVER_UNEXPECTED_WORKLOAD",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_DEDICATED_SERVER_UNEXPECTED_WORKLOAD"
+  ],
+  "executionReportIds": [
+    "report_40e1a23b-f65b-4a4b-84bd-e1fd367b1d49"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "88b9183b3ac8ef5b8224a176de913feb62a25a4ab7701cde5b6e95d6ec063715"
+}

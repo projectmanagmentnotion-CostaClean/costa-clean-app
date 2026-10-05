@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-56",
+  "commandHash": "54f605a51263ddeff1cf2811b58442ccf4b40618a8e9bf3832152b311333b16b",
+  "runId": "ar_336e280e-28af-47a5-8b9b-f3a95dca0728",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_336e280e-28af-47a5-8b9b-f3a95dca0728"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:index:public.jobs_v2_public_reference_uidx:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.jobs_v2_public_reference_uidx:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.jobs_v2_public_reference_uidx:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:index:public.jobs_v2_public_reference_uidx:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:index:public.jobs_v2_public_reference_uidx:LOCAL_DB_QUERY_FAILED:column \"public_reference\" does not exist"
+  ],
+  "executionReportIds": [
+    "report_5d54bf2b-1ea6-4a33-b6ad-08f27aa2056b"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "2f369c0e526bfa5a0d06ced916c88f11d4396f27ec4bfe719409a1a862a95e2e"
+}

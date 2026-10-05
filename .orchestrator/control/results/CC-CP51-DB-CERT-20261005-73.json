@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-73",
+  "commandHash": "98073e594f24a47de46d9d4e73e8407292dfa182ca3ca31286c27a91debec2fe",
+  "runId": "ar_c25e3fb4-d4fc-4398-83af-c50ac3edb714",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_c25e3fb4-d4fc-4398-83af-c50ac3edb714"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=0:preservedChanged=0:unexpected=0:targetGrantMissing=0:targetGrantDifferent=0:unexpectedGrants=56",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=0:preservedChanged=0:unexpected=0:targetGrantMissing=0:targetGrantDifferent=0:unexpectedGrants=56",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=0:preservedChanged=0:unexpected=0:targetGrantMissing=0:targetGrantDifferent=0:unexpectedGrants=56",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=0:preservedChanged=0:unexpected=0:targetGrantMissing=0:targetGrantDifferent=0:unexpectedGrants=56",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "CANDIDATE_EFFECTIVE_CONTRACT_MISMATCH:targetMissing=0:targetDifferent=0:preservedMissing=0:preservedChanged=0:unexpected=0:targetGrantMissing=0:targetGrantDifferent=0:unexpectedGrants=56"
+  ],
+  "executionReportIds": [
+    "report_57dd7255-4924-4f39-bbdc-2fa6de477cf5"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "3f9be1da1caed68c02b6a4df58075fbb9100a8c5433ef4b73897260326dc09ea"
+}

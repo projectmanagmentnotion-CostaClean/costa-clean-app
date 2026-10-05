@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-67",
+  "commandHash": "640e2de92babec0faa730dae4f2637801442a4d6f4efee850e86f10588a3825c",
+  "runId": "ar_d0c10387-0e86-4d5e-b483-17087dc1ac7c",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_d0c10387-0e86-4d5e-b483-17087dc1ac7c"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TYPE_UNSUPPORTED:table:public.client_portal_applications:timestamp with time zone",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TYPE_UNSUPPORTED:table:public.client_portal_applications:timestamp with time zone",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TYPE_UNSUPPORTED:table:public.client_portal_applications:timestamp with time zone",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TYPE_UNSUPPORTED:table:public.client_portal_applications:timestamp with time zone",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TYPE_UNSUPPORTED:table:public.client_portal_applications:timestamp with time zone"
+  ],
+  "executionReportIds": [
+    "report_5e70c9fc-9eea-4ad3-8f60-d276ef72b8a2"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "7069b9b45051189e8e4c3656f74aac800def253ca05c4cbe1fe44570548cd509"
+}

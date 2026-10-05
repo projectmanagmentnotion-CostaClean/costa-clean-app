@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-38",
+  "commandHash": "0688c5197ca163835190d75670114027bf265d84af774db4bd4611725713ce0e",
+  "runId": "ar_b9e40562-3e88-4888-a201-56b78b751f80",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_b9e40562-3e88-4888-a201-56b78b751f80"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_IDENTIFIER_INVALID:policy:public:Internal staff insert:Internal staff insert",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_IDENTIFIER_INVALID:policy:public:Internal staff insert:Internal staff insert",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_IDENTIFIER_INVALID:policy:public:Internal staff insert:Internal staff insert",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_IDENTIFIER_INVALID:policy:public:Internal staff insert:Internal staff insert",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_IDENTIFIER_INVALID:policy:public:Internal staff insert:Internal staff insert"
+  ],
+  "executionReportIds": [
+    "report_d46cbcd4-dbd3-48d0-bc19-b5022cb63d08"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "73aa77a709eb0f09e4dadb2cab51e6e2047c6b12b800279aac99349949bc19d3"
+}

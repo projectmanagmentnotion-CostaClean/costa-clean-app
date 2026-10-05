@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-66",
+  "commandHash": "7894894f7182c717e0a16e88724fe69102a916916a3600a0a6b326e8282a6620",
+  "runId": "ar_94d61364-c1c1-4164-b3fa-dd7b5ea42a16",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_94d61364-c1c1-4164-b3fa-dd7b5ea42a16"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_PRECONDITION_FAILED:column:public.client_portal_applications.approved_client_id",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_PRECONDITION_FAILED:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_PRECONDITION_FAILED:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_PRECONDITION_FAILED:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_PRECONDITION_FAILED:column:public.client_portal_applications.approved_client_id"
+  ],
+  "executionReportIds": [
+    "report_1e86fb06-be6b-4f94-a490-62888eee6dc1"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "3f9453ecaeb9d6f778da2385e9e5749070d7d8cf56fe79b71717100f4cc1ee56"
+}

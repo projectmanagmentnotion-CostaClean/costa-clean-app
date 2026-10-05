@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-64",
+  "commandHash": "ddc388580f8cb0617fac147a7e54e065dac28fdad198639331da11187f3ad16b",
+  "runId": "ar_c5138fbd-f4ee-4212-8207-1b4cf396baef",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_c5138fbd-f4ee-4212-8207-1b4cf396baef"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "baseline introspection",
+      "status": "FAIL",
+      "passed": false,
+      "output": "local certification incomplete",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local DB contract reviewers",
+    "status": "FAIL",
+    "passed": false,
+    "output": "local certification incomplete",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local DB contract reviewers",
+    "status": "FAIL",
+    "passed": false,
+    "output": "local certification incomplete",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "candidate migration apply",
+    "status": "FAIL",
+    "passed": false,
+    "output": "local certification incomplete",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_CERTIFICATION_GATE_NOT_REACHED"
+  ],
+  "executionReportIds": [
+    "report_075e207f-166e-4649-aaf2-943f116f6961"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "5dc5a20cb24173f188e2e0d5af03210c46cd12d31b5736041985ea80ef3b9ba7"
+}

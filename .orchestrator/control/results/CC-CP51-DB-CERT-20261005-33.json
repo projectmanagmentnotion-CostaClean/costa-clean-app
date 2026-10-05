@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-33",
+  "commandHash": "821fd6dfc3dc518a0ee9955e4f0e424032204a8db09530ceb7ff40e1dab6aeea",
+  "runId": "ar_7d16669f-b56c-4cfc-83ea-bf3a70d300b4",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_7d16669f-b56c-4cfc-83ea-bf3a70d300b4"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:column:public.client_portal_applications.approved_client_id",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:column:public.client_portal_applications.approved_client_id",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:column:public.client_portal_applications.approved_client_id"
+  ],
+  "executionReportIds": [
+    "report_2bc8a42e-fd1f-419d-a22b-b82034e586c4"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "8a44838fd7d632fd63f570a84c13164f28b939582428873a1673fcde58d4d566"
+}

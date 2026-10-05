@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-48",
+  "commandHash": "a271dcbdab3fbd83b261328edd11749d5448fe6c701083c952fdd6f344b30405",
+  "runId": "ar_2e2fa37b-324e-445f-9ba4-dd6316275ed4",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_2e2fa37b-324e-445f-9ba4-dd6316275ed4"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_QUERY_FAILED:constraint:public.client_portal_audit_events.client_portal_audit_events_membership_id_fkey:LOCAL_DB_QUERY_FAILED:there is no unique constraint matching given keys for referenced table \"client_portal_memberships\"",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.client_portal_audit_events.client_portal_audit_events_membership_id_fkey:LOCAL_DB_QUERY_FAILED:there is no unique constraint matching given keys for referenced table \"client_portal_memberships\"",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.client_portal_audit_events.client_portal_audit_events_membership_id_fkey:LOCAL_DB_QUERY_FAILED:there is no unique constraint matching given keys for referenced table \"client_portal_memberships\"",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_QUERY_FAILED:constraint:public.client_portal_audit_events.client_portal_audit_events_membership_id_fkey:LOCAL_DB_QUERY_FAILED:there is no unique constraint matching given keys for referenced table \"client_portal_memberships\"",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_QUERY_FAILED:constraint:public.client_portal_audit_events.client_portal_audit_events_membership_id_fkey:LOCAL_DB_QUERY_FAILED:there is no unique constraint matching given keys for referenced table \"client_portal_memberships\""
+  ],
+  "executionReportIds": [
+    "report_16c1af2c-c1b3-476d-8a67-9f27f5784ea6"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "fbfb110f582390b39094ab48487bc14e7147ad900d1c3d0b2a82a2baa184d17c"
+}

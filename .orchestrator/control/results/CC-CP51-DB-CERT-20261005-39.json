@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-39",
+  "commandHash": "4a13e15722d61b2fcf8a30080dacf9508a6158ba1eabc55616394e87bf75e989",
+  "runId": "ar_17b29c1a-647a-44a3-a751-b0c6b9e9c7ac",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_17b29c1a-647a-44a3-a751-b0c6b9e9c7ac"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table_grant:app_private.data_hygiene_actions:supabase_admin:DELETE",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table_grant:app_private.data_hygiene_actions:supabase_admin:DELETE",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table_grant:app_private.data_hygiene_actions:supabase_admin:DELETE",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:table_grant:app_private.data_hygiene_actions:supabase_admin:DELETE",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:table_grant:app_private.data_hygiene_actions:supabase_admin:DELETE"
+  ],
+  "executionReportIds": [
+    "report_dddf8a81-7ae5-423f-b7d5-c229d7a34499"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "438947a1129245d6daa5c73a72d919360a836d4df7d8e72c5f97fb6140e3bd33"
+}

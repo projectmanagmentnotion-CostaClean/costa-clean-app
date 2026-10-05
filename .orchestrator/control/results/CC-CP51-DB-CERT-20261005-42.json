@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-42",
+  "commandHash": "2fdf1e11e6aa7e0fbb5e02af53b31032b525b7dcb02890122281f3ef200cb79a",
+  "runId": "ar_76bb83ee-6827-4f5b-935a-dfbf76971f06",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_76bb83ee-6827-4f5b-935a-dfbf76971f06"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_DEPENDENCY_CYCLE",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_DEPENDENCY_CYCLE",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_DEPENDENCY_CYCLE",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_DEPENDENCY_CYCLE",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_DEPENDENCY_CYCLE"
+  ],
+  "executionReportIds": [
+    "report_24390d64-a6cc-494d-8cb8-2786f156885e"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "9c77d9a2ecb58989049f7d067fa58bc2d72208a373b00ca01c96154936412c75"
+}

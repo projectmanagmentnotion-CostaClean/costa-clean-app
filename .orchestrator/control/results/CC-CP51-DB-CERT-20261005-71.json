@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-71",
+  "commandHash": "9586e9971b797f658e5b918c3b3922a6b832ffec8769e1da800911c1fb99e8f7",
+  "runId": "ar_0812f0c5-bd34-469c-a728-c6cba2938f33",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_0812f0c5-bd34-469c-a728-c6cba2938f33"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_POSTCONDITION_FAILED:after:table_grant:app_private.data_hygiene_actions:postgres:DELETE",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_POSTCONDITION_FAILED:after:table_grant:app_private.data_hygiene_actions:postgres:DELETE",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_POSTCONDITION_FAILED:after:table_grant:app_private.data_hygiene_actions:postgres:DELETE",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_POSTCONDITION_FAILED:after:table_grant:app_private.data_hygiene_actions:postgres:DELETE",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_POSTCONDITION_FAILED:after:table_grant:app_private.data_hygiene_actions:postgres:DELETE"
+  ],
+  "executionReportIds": [
+    "report_9d047fba-970a-455a-ae50-9e6b4b018766"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "5fcc39933176a562c0a7a8c870c9b773947ba06436cda95d5f2cfb7abe752272"
+}

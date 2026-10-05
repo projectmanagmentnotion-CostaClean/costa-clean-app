@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-75",
+  "commandHash": "9d195c52a8cd08b3c493e54740305e7874aae94a6d88938c57b26d5c0826d041",
+  "runId": "ar_02be663b-82f1-4fab-92f8-57653c8514f0",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_02be663b-82f1-4fab-92f8-57653c8514f0"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_CRASH_RECOVERY_AMBIGUOUS:reconcile-8ac6148497e46544",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CRASH_RECOVERY_AMBIGUOUS:reconcile-8ac6148497e46544",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CRASH_RECOVERY_AMBIGUOUS:reconcile-8ac6148497e46544",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CRASH_RECOVERY_AMBIGUOUS:reconcile-8ac6148497e46544",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_CRASH_RECOVERY_AMBIGUOUS:reconcile-8ac6148497e46544"
+  ],
+  "executionReportIds": [
+    "report_53b74ae0-f2bd-47f9-ad53-d303fd13e787"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "482a1b87ec45cd32d792320286c269f7c5cd7f29d42f240f28dd1a2833fd602c"
+}

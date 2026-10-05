@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-35",
+  "commandHash": "29562662ad643c4ce2b379a0e099d9a8b05053986b8fa93207a4f2f7fd9732be",
+  "runId": "ar_f1ac8e20-9383-4334-aecd-7f6c4cad6b6a",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_f1ac8e20-9383-4334-aecd-7f6c4cad6b6a"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:trigger:public.client_portal_memberships.client_portal_membership_no_relink",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:trigger:public.client_portal_memberships.client_portal_membership_no_relink",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:trigger:public.client_portal_memberships.client_portal_membership_no_relink",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "RECONCILIATION_TARGET_DEFINITION_MISSING:trigger:public.client_portal_memberships.client_portal_membership_no_relink",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "RECONCILIATION_TARGET_DEFINITION_MISSING:trigger:public.client_portal_memberships.client_portal_membership_no_relink"
+  ],
+  "executionReportIds": [
+    "report_816c7b39-327e-44e5-8bbf-d82e15606e29"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "8015db7f4c5462caef869361f7e75b6103ec09783f7fea28b4e2fca2f73e3bb2"
+}

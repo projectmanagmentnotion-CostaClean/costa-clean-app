@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { jsPDF } from 'jspdf'
 import { InvoiceDocumentA4 } from './InvoiceDocumentA4'
+import { addCanvasToA4Pdf } from '../documents/documentPdfPagination'
 import {
   collectInvoicePdfSemanticBlocks,
   createInvoicePdfPageRanges,
@@ -160,17 +161,21 @@ export async function renderInvoiceDocumentPdf(invoice: InvoiceListItem): Promis
       orientation: 'portrait',
       unit: 'mm',
     })
-    pageRanges.forEach((range, index) => {
-      addCanvasRangeToPdf(
-        pdf,
-        canvas,
-        range.start,
-        range.end,
-        pageHeightCss,
-        CAPTURE_SCALE,
-        index === 0,
-      )
-    })
+    if (semanticBlocks.length === 0) {
+      addCanvasToA4Pdf(canvas, pdf)
+    } else {
+      pageRanges.forEach((range, index) => {
+        addCanvasRangeToPdf(
+          pdf,
+          canvas,
+          range.start,
+          range.end,
+          pageHeightCss,
+          CAPTURE_SCALE,
+          index === 0,
+        )
+      })
+    }
 
     return new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' })
   } finally {

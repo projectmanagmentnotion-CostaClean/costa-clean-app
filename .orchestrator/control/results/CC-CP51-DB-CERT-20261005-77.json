@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "projectId": "costa-clean-app",
+  "commandId": "CC-CP51-DB-CERT-20261005-77",
+  "commandHash": "684900f8142598ff319beae31028320ff1b62fc2287561f9541a9c3bc05d1ab5",
+  "runId": "ar_110677a5-4fcc-424c-a566-1e065e647ad4",
+  "status": "BLOCKED",
+  "baselineHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "finalHead": "698c069f28bc07258744e4a9710f4d96af1bd804",
+  "tasksExecuted": [
+    "local-db-certification-ar_110677a5-4fcc-424c-a566-1e065e647ad4"
+  ],
+  "filesChanged": [],
+  "tests": [
+    {
+      "command": "local postgres certification",
+      "status": "FAIL",
+      "passed": false,
+      "output": "LOCAL_DB_CANDIDATE_REBUILD_BASELINE_MISMATCH",
+      "exitCode": 1
+    }
+  ],
+  "lint": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CANDIDATE_REBUILD_BASELINE_MISMATCH",
+    "exitCode": 1
+  },
+  "typecheck": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CANDIDATE_REBUILD_BASELINE_MISMATCH",
+    "exitCode": 1
+  },
+  "build": {
+    "command": "local postgres certification",
+    "status": "FAIL",
+    "passed": false,
+    "output": "LOCAL_DB_CANDIDATE_REBUILD_BASELINE_MISMATCH",
+    "exitCode": 1
+  },
+  "approvals": [],
+  "blockers": [
+    "LOCAL_DB_CANDIDATE_REBUILD_BASELINE_MISMATCH"
+  ],
+  "executionReportIds": [
+    "report_35951aac-9589-4a1d-9449-e60c21e40d7a"
+  ],
+  "factMatrixHashes": [],
+  "remainingWork": [],
+  "strategicProposalIds": [],
+  "resultHash": "8f0383e649bc76d8546a2731e01f1097ed52ed2b0ebbf76e30695b84b2f306ba"
+}

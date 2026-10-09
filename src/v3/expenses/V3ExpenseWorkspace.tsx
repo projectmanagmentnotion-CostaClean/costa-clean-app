@@ -1,7 +1,6 @@
 import { useState, type ChangeEvent } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatExpenseLabel } from '../../app/relationshipLabels'
-import { analyzeExpenseFiscalIntelligence, saveExpenseFiscalIntelligenceResult } from '../../features/expenses/fiscalIntelligenceApi'
 import { createExpenseReceiptSignedUrl, deleteExpenseReceipt, validateExpenseReceipt } from '../../features/expenses/expenseAttachmentsApi'
 import { updateExpense, updateExpenseAttachment } from '../../features/expenses/expenseApi'
 import { replaceExpenseReceipt } from '../../features/expenses/expenseReceiptWorkflow'
@@ -48,7 +47,21 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
 
   async function openDocument() {
     if (!expense.receipt_file_path) return
-    await run(async () => { const url = await createExpenseReceiptSignedUrl(expense.receipt_file_path!); window.open(url, '_blank', 'noopener,noreferrer') }, 'Documento abierto.')
+    const popup = window.open('about:blank', '_blank')
+    if (!popup) {
+      setError('El navegador bloqueó la ventana del documento. Permite las ventanas emergentes e inténtalo de nuevo.')
+      return
+    }
+    popup.opener = null
+    await run(async () => {
+      try {
+        const url = await createExpenseReceiptSignedUrl(expense.receipt_file_path!)
+        popup.location.href = url
+      } catch (cause) {
+        popup.close()
+        throw cause
+      }
+    }, 'Documento abierto.')
   }
 
   async function removeDocument() {
@@ -59,10 +72,6 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
   async function confirmRemoveDocument() {
     setRemoveConfirmOpen(false)
     await run(async () => { await deleteExpenseReceipt(expense.receipt_file_path!); await updateExpenseAttachment(expense.id, null) }, 'Documento eliminado.')
-  }
-
-  async function analyze() {
-    await run(async () => { const response = await analyzeExpenseFiscalIntelligence(expense); await saveExpenseFiscalIntelligenceResult(expense.id, response) }, 'Estimación fiscal asistida actualizada.')
   }
 
   async function markReviewed() {
@@ -118,7 +127,6 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
           <V3SecondaryAction onClick={() => document.getElementById(`v3-expense-file-${expense.id}`)?.click()} disabled={busy}>Sustituir documento</V3SecondaryAction>
           <V3SecondaryAction onClick={() => void removeDocument()} disabled={busy}>Eliminar documento</V3SecondaryAction>
         </> : <V3SecondaryAction onClick={() => document.getElementById(`v3-expense-file-${expense.id}`)?.click()} disabled={busy}>Añadir documento</V3SecondaryAction>}
-        <V3SecondaryAction onClick={() => void analyze()} disabled={busy}>{expense.ai_fiscal_classification ? 'Actualizar estimación asistida' : 'Analizar estimación asistida'}</V3SecondaryAction>
       </div>
       {expense.ai_fiscal_classification ? <div className="v3-assistive-note"><strong>Estimación fiscal asistida</strong><p>{getExpenseAiFiscalClassificationLabel(expense.ai_fiscal_classification)} · {expense.ai_fiscal_reasoning ?? 'Sin razonamiento registrado.'}</p><small>No es una certificación fiscal ni sustituye revisión profesional.</small></div> : null}
     </V3DetailSection>

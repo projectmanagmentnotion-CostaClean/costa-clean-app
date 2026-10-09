@@ -23,6 +23,7 @@ import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '..
 import type { ExpenseModuleFilter } from '../app/moduleFilters'
 import { V3ExpensesPage } from '../v3/expenses/V3ExpensesPage'
 import { V3ExpenseFormFlow } from '../v3/expenses/V3ExpenseFormFlow'
+import { V3ExpenseCaptureEntry } from '../v3/expenses/V3ExpenseCaptureEntry'
 
 interface ExpensesPageProps {
   expenses: ExpenseListItem[]
@@ -61,6 +62,7 @@ export function ExpensesPage({
 }: ExpensesPageProps) {
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showCapture, setShowCapture] = useState(false)
   const [showEditFlow, setShowEditFlow] = useState(false)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
@@ -192,7 +194,8 @@ export function ExpensesPage({
 
   if (v3Mode) {
     return <>
-      <V3ExpensesPage expenses={expenses} allExpenses={allExpenses} error={error} initialExpenseId={initialExpenseId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreateExpense={() => setShowCreateForm(true)} onRefresh={onExpenseCreated} onEditExpense={(expense) => { setSelectedExpenseId(expense.id); setShowEditFlow(true) }} onCreateSimilarExpense={(expense) => { setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense)); setShowCreateForm(true) }} onOpenExpenseDeepLink={(expenseId) => onOpenExpenseDeepLink?.(expenseId)} onBackToExpenseList={() => onBackToExpenseList?.()} />
+      {showCapture ? <V3ExpenseCaptureEntry expenses={allExpenses} onRefresh={onExpenseCreated} onComplete={() => setShowCapture(false)} onManual={() => { setShowCapture(false); setShowCreateForm(true) }} onCancel={() => setShowCapture(false)} /> : null}
+      {!showCapture ? <V3ExpensesPage expenses={expenses} allExpenses={allExpenses} error={error} initialExpenseId={initialExpenseId} activeFilter={activeFilter} activeFilterLabel={activeFilterLabel} onCreateExpense={() => setShowCreateForm(true)} onCaptureExpense={() => setShowCapture(true)} onRefresh={onExpenseCreated} onEditExpense={(expense) => { setSelectedExpenseId(expense.id); setShowEditFlow(true) }} onCreateSimilarExpense={(expense) => { setCreatePrefill(buildExpenseCreatePrefillFromExpense(expense)); setShowCreateForm(true) }} onOpenExpenseDeepLink={(expenseId) => onOpenExpenseDeepLink?.(expenseId)} onBackToExpenseList={() => onBackToExpenseList?.()} /> : null}
       {showCreateForm ? <V3ExpenseFormFlow mode="create" expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={handleExpenseCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false) })} /> : null}
       {showEditFlow && selectedExpense ? <V3ExpenseFormFlow mode="edit" expense={selectedExpense} expenses={allExpenses} onDirtyChange={setHasCreateFormDirty} onRefresh={onExpenseCreated} onCompleted={async () => { setHasCreateFormDirty(false); setShowEditFlow(false) }} onCancel={() => runGuarded(() => { setHasCreateFormDirty(false); setShowEditFlow(false) })} /> : null}
     </>
@@ -267,6 +270,7 @@ export function ExpensesPage({
           }}
         >
           <ExpenseCreateFlow
+            key={createPrefill?.request_id ?? 'new-expense'}
             expenses={allExpenses}
             quotes={quotes}
             invoices={invoices}

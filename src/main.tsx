@@ -1,24 +1,16 @@
 import { clearVitePreloadRecovery, installVitePreloadRecovery } from './runtime/vitePreloadRecovery'
-import { resolveApplicationSurface } from './portal/applicationSurface'
 
 installVitePreloadRecovery()
 
-const isV3Surface = new URLSearchParams(window.location.search).get('v3') === '1'
-document.documentElement.dataset.appSurface = isV3Surface ? 'v3' : 'legacy'
+// The clean release candidate is intentionally scoped to the authenticated
+// internal CRM surface; no portal bootstrap belongs in this entrypoint.
+document.documentElement.dataset.appSurface = 'v3'
 
 async function bootstrapApplication() {
   const rootElement = document.getElementById('root')
 
   if (!rootElement) {
     throw new Error('No se encontró el punto de montaje de la aplicación.')
-  }
-
-  const surface = resolveApplicationSurface(window.location.pathname)
-
-  if (surface === 'portal') {
-    const { bootstrapPortal } = await import('./portal/bootstrapPortal')
-    await bootstrapPortal(rootElement)
-    return
   }
 
   const { bootstrapCrm } = await import('./bootstrapCrm')

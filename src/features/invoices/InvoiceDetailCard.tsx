@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState, type FormEvent } 
 import { businessRules } from '../../app/businessRules'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { getStatusLabel } from '../../app/displayText'
-import { formatClientLabel, formatJobLabel } from '../../app/relationshipLabels'
+import { formatClientLabel, formatJobLabel, formatPropertyLabel, formatQuoteLabel } from '../../app/relationshipLabels'
 import { getStatusOptionLabel, invoiceManualStatusOptions } from '../../app/statusOptions'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ActionFlowOverlay } from '../../components/ActionFlowOverlay'
@@ -40,6 +40,7 @@ import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } fr
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { resolveInvoiceServiceReference } from './invoiceServiceReference'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -205,11 +206,7 @@ function getInvoiceInternalReference(invoice: InvoiceListItem): string {
 }
 
 function getInvoiceServiceReference(invoice: InvoiceListItem): string {
-  return invoice.service_reference
-    ?? invoice.service_description
-    ?? invoice.job_display_code
-    ?? invoice.job_id
-    ?? 'Factura creada desde presupuesto aceptado'
+  return resolveInvoiceServiceReference(invoice, 'Factura creada desde presupuesto aceptado')
 }
 
 function buildVisibleInvoiceNotes(): string {
@@ -375,50 +372,9 @@ export function InvoiceDetailCard({
   )
 
   useEffect(() => {
-    if (isDirtyRef.current || hasPaymentFormDirtyRef.current) return
-    if (!invoice) {
-      setIsEditing(false)
-      setSaveError(null)
-      setSuccessMessage(null)
-      setPaymentActionMode(null)
-      setIsDirty(false)
-      setHasPaymentFormDirty(false)
-      setForm({
-        job_id: '',
-        client_id: '',
-        issue_date: '',
-        status: 'draft',
-        notes: '',
-      })
-      setLines([createBlankLine()])
-      return
-    }
-
-    setIsEditing(false)
-    setSaveError(null)
-    setSuccessMessage(null)
-    setPaymentActionMode(null)
-    setIsDirty(false)
-    setHasPaymentFormDirty(false)
-    setForm({
-      job_id: invoice.job_id ?? '',
-      client_id: invoice.client_id,
-      issue_date: invoice.issue_date,
-      status: invoice.status,
-      notes: invoice.notes ?? '',
-    })
-    setLines(getFormLinesFromInvoice(invoice))
-  }, [invoice])
-
-  useEffect(() => {
     onUnsavedChange?.(isDirty || hasPaymentFormDirty)
     return () => onUnsavedChange?.(false)
   }, [hasPaymentFormDirty, isDirty, onUnsavedChange])
-
-  useEffect(() => {
-    if (!invoice || !majorEditMode) return
-    setIsEditing(true)
-  }, [invoice, majorEditMode])
 
   function updateField<K extends keyof EditFormState>(field: K, value: EditFormState[K]) {
     setIsDirty(true)
@@ -777,6 +733,7 @@ export function InvoiceDetailCard({
           quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
           client_id: form.client_id,
           property_id: invoice.property_id ?? null,
+          service_reference_override: invoice.service_reference_override ?? null,
           issue_date: form.issue_date,
           status: form.status,
           subtotal: subtotalValue,
@@ -1081,6 +1038,53 @@ export function InvoiceDetailCard({
                 <small>{paymentSummary ? buildInvoicePaymentMeta(paymentSummary) : 'Sin cobros'}</small>
               </div>
             </div>
+          ) : null}
+
+          {!isEditing ? (
+            <section className="cc-detail-panel__relations" aria-label="Relaciones de la factura">
+              <div className="cc-detail-panel__relations-header">
+                <span className="cc-detail-panel__eyebrow">Relaciones</span>
+                <span className="cc-detail-panel__relations-caption">Contexto operativo vinculado</span>
+              </div>
+              <div className="cc-detail-panel__relations-list">
+                <div className="cc-detail-panel__relation-row">
+                  <span>Cliente</span>
+                  <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenClientWorkspace(invoice.client_id)}>
+                    {formatClientLabel(invoice)}
+                  </button>
+                </div>
+                {invoice.property_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Inmueble</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenPropertyWorkspace(invoice.property_id!)}>
+                      {formatPropertyLabel({ id: invoice.property_id, display_code: invoice.property_display_code, name: invoice.property_name, city: invoice.property_address_line })}
+                    </button>
+                  </div>
+                ) : null}
+                {invoice.quote_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Presupuesto</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenQuoteDetail(invoice.quote_id!)}>
+                      {formatQuoteLabel(quotes.find((quote) => quote.id === invoice.quote_id) ?? { id: invoice.quote_id, display_code: invoice.quote_display_code })}
+                    </button>
+                  </div>
+                ) : null}
+                {invoice.job_id ? (
+                  <div className="cc-detail-panel__relation-row">
+                    <span>Servicio</span>
+                    <button type="button" className="cc-detail-panel__relation-link" onClick={() => onOpenJobWorkspace(invoice.job_id!)}>
+                      {formatJobLabel({ id: invoice.job_id, display_code: invoice.job_display_code, billing_concept: invoice.billing_concept, property_name: invoice.property_name, property_display_code: invoice.property_display_code })}
+                    </button>
+                  </div>
+                ) : null}
+                <div className="cc-detail-panel__relation-row">
+                  <span>Cobros</span>
+                  <button type="button" className="cc-detail-panel__relation-link" onClick={() => onViewPayments(invoice.id)}>
+                    {paymentSummary ? `${paymentSummary.paymentCount} · ${formatCurrency(paymentSummary.paidAmount)}` : '0 · 0,00 €'}
+                  </button>
+                </div>
+              </div>
+            </section>
           ) : null}
 
           {!isEditing ? (

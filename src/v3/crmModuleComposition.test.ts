@@ -19,15 +19,16 @@ const property = { id: 'property-1', display_code: 'PROP-0001', client_id: 'clie
 const propertyPageProps = { properties: [property], clients: [client], jobs: [], quotes: [], invoices: [], payments: [], error: null, onRefresh: async () => undefined, onOpenClient: () => undefined, onOpenClients: () => undefined, onOpenJob: () => undefined, onOpenQuote: () => undefined, onOpenInvoice: () => undefined, onOpenPayment: () => undefined, onCreateJob: () => undefined, onCreateQuote: () => undefined, onCreateInvoice: () => undefined }
 
 describe('V3-10C3 module composition contracts', () => {
-  it('puts real Home attention work before the overview block', () => {
+  it('keeps real Home attention work inside the executive dashboard composition', () => {
     expect(home.indexOf('<V3HomePriorityQueue')).toBeGreaterThan(-1)
-    expect(home.indexOf('<V3HomePriorityQueue')).toBeLessThan(home.indexOf('className="v3-home-overview"'))
+    expect(home.indexOf('<V3KpiGroup')).toBeGreaterThan(-1)
+    expect(home.indexOf('<V3KpiGroup')).toBeLessThan(home.indexOf('<V3HomePriorityQueue'))
   })
 
-  it('keeps CRM search before KPI summaries and one primary client create action', () => {
+  it('keeps CRM search before KPI summaries and Leads KPI summary before its search', () => {
     expect(clients.indexOf('className="v3-crm-search"')).toBeLessThan(clients.indexOf('<V3KpiGroup>'))
     expect(clients).not.toContain('<V3SecondaryAction onClick={() => setIsFilterOpen(true)}>Filtros</V3SecondaryAction>')
-    expect(leads.indexOf('className="v3-leads-controls"')).toBeLessThan(leads.indexOf('<V3KpiGroup>'))
+    expect(leads.indexOf('<V3KpiGroup className="v3-leads-kpi-summary"')).toBeLessThan(leads.indexOf('className="v3-leads-controls"'))
   })
 
   it('keeps relationship rows human-readable and gives CRM rows semantic styling hooks', () => {

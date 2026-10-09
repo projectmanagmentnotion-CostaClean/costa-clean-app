@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
-const migration = readFileSync(new URL('../../../supabase/migrations/20261001213000_n55_confirm_expense_capture_concurrency.sql', import.meta.url), 'utf8').toLowerCase()
+const migration = readFileSync(new URL('../../../supabase/migrations/20261001213000_n55_confirm_expense_capture_concurrency.sql', import.meta.url), 'utf8').replace(/\r\n?/gu, '\n').toLowerCase()
 
 describe('N5.5 confirmation concurrency correction contract', () => {
   it('locks the owned session before the idempotency re-check', () => {

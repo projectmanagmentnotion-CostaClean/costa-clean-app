@@ -1,0 +1,45 @@
+name: Costa Clean V3 Release Validation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [release/costa-clean-v3-integrated-20261009]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: costa-clean-v3-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-build:
+    name: Lint / TypeScript / Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  unit-tests:
+    name: Full unit / integration suite (no production credentials)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CI: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test -- --reporter=default

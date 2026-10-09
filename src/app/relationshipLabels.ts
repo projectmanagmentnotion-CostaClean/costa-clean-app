@@ -155,6 +155,7 @@ export function formatInvoiceLabel(invoice: {
   client_name?: NullableText
   client_display_code?: NullableText
   client_id?: NullableText
+  service_reference_override?: NullableText
   service_description?: NullableText
   service_reference?: NullableText
   property_name?: NullableText
@@ -164,6 +165,7 @@ export function formatInvoiceLabel(invoice: {
   const number = toUserFacingReference(invoice.invoice_number)
   const descriptor = truncateDescriptor(
     invoice.client_name
+      ?? invoice.service_reference_override
       ?? invoice.service_description
       ?? invoice.property_name
       ?? invoice.service_reference

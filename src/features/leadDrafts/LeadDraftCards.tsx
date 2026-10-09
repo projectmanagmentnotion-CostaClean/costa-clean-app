@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { FeedbackDialog, type FeedbackDialogTone } from '../../components/FeedbackDialog'
@@ -90,11 +90,6 @@ export function LeadDraftCards({
   const [actionStatus, setActionStatus] = useState<ActionStatus | null>(null)
   const [isActionRunning, setIsActionRunning] = useState(false)
   const [confirmedAction, setConfirmedAction] = useState<ConfirmedAction | null>(null)
-
-  useEffect(() => {
-    setDraftOverride(null)
-    setActionStatus(null)
-  }, [leadDraft?.id])
 
   const activeDraft = draftOverride ?? leadDraft
   const pricing = activeDraft ? getDraftPricing(activeDraft) : null

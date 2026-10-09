@@ -162,4 +162,35 @@ describe('buildClosingSummary', () => {
     expect(summary.period.startDate).toBe('2026-02-01')
     expect(summary.period.endDate).toBe('2026-02-28')
   })
+
+  it('asigna los cobros a la cohorte de la factura, no al mes del pago', () => {
+    const summary = buildClosingSummary({
+      selection: {
+        mode: 'quarter',
+        year: 2026,
+        month: 1,
+        quarter: 2,
+        startDate: '',
+        endDate: '',
+      },
+      invoices: [
+        createInvoice({ id: 'q2-invoice', issue_date: '2026-06-30', total: 100 }),
+        createInvoice({ id: 'q3-invoice', issue_date: '2026-07-01', total: 80 }),
+      ],
+      payments: [
+        createPayment({ id: 'q2-paid-in-q3', invoice_id: 'q2-invoice', payment_date: '2026-07-18', amount: 100 }),
+        createPayment({ id: 'q3-paid-in-q4', invoice_id: 'q3-invoice', payment_date: '2026-10-02', amount: 80 }),
+      ],
+      expenses: [],
+      quotes: [],
+      jobs: [],
+      quarterlySummaryByPeriod: new Map(),
+      annualSummaryByYear: new Map(),
+    })
+
+    expect(summary.invoicedTotal).toBe(100)
+    expect(summary.collectedTotal).toBe(100)
+    expect(summary.paymentCount).toBe(1)
+    expect(summary.pendingInvoiceCount).toBe(0)
+  })
 })

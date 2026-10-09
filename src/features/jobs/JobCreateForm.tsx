@@ -139,7 +139,6 @@ export function JobCreateForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [showClientCreate, setShowClientCreate] = useState(false)
   const [showPropertyCreate, setShowPropertyCreate] = useState(false)
   const [showQuoteCreate, setShowQuoteCreate] = useState(false)
@@ -191,35 +190,12 @@ export function JobCreateForm({
   const originSummary = getOriginSummary(prefill, Boolean(form.quote_id))
   const billingSubtotal = useMemo(() => calculateBillingSubtotal(billingLines), [billingLines])
 
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) {
-      return
-    }
-
-    setForm(applyPrefillToForm(prefill))
-    setSubmitError(null)
-    setSuccessMessage(null)
-    setCreatedJob(null)
-    setIsDirty(false)
-    setBillingLines(buildInitialBillingLines(prefill))
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [lastAppliedPrefillId, prefill])
-
-  useEffect(() => {
-    if (!selectedQuote) return
-
-    setForm((current) => ({
-      ...current,
-      client_id: selectedQuote.client_id ?? current.client_id,
-      property_id: selectedQuote.property_id ?? current.property_id,
-      notes: current.notes.trim() ? current.notes : selectedQuote.notes?.trim() ?? '',
-    }))
-
-    setBillingLines(getBillingDraftLinesFromQuote(selectedQuote))
-  }, [selectedQuote])
-
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setIsDirty(true)
+    if (field === 'quote_id') {
+      const nextQuote = quotes.find((quote) => quote.id === value) ?? null
+      if (nextQuote) setBillingLines(getBillingDraftLinesFromQuote(nextQuote))
+    }
     setForm((current) => {
       const next = {
         ...current,
@@ -233,6 +209,15 @@ export function JobCreateForm({
 
       if (field === 'property_id') {
         next.quote_id = ''
+      }
+
+      if (field === 'quote_id') {
+        const selected = quotes.find((quote) => quote.id === value)
+        if (selected) {
+          next.client_id = selected.client_id ?? next.client_id
+          next.property_id = selected.property_id ?? next.property_id
+          next.notes = current.notes.trim() ? current.notes : selected.notes?.trim() ?? ''
+        }
       }
 
       return next

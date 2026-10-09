@@ -448,6 +448,7 @@ export function QuotesPage({
           initialQuoteId={initialQuoteId}
           onCreateQuote={() => setShowCreateForm(true)}
           onDownloadQuote={downloadQuoteDocument}
+          onOpenDocument={openQuoteDocument}
           onShareQuote={shareQuoteDocument}
           onConvertQuote={convertQuoteDocument}
           onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setMajorEditQuote(quote); setShowMajorEdit(true) }}

@@ -438,6 +438,7 @@ export function AppNav({
             className={`cc-mobile-shell-header__sync cc-mobile-shell-header__sync--${syncStatus}`}
             aria-live="polite"
             aria-atomic="true"
+            aria-label={getSyncStatusLabel(syncStatus)}
             title={getSyncStatusLabel(syncStatus)}
           >
             <span className="cc-mobile-shell-header__sync-dot" aria-hidden="true" />
@@ -631,6 +632,7 @@ export function AppNav({
                   className={`cc-shell-nav__sync cc-shell-nav__sync--${syncStatus}`}
                   aria-live="polite"
                   aria-atomic="true"
+                  aria-label={getSyncStatusLabel(syncStatus)}
                   title={getSyncStatusLabel(syncStatus)}
                 >
                   <span className="cc-shell-nav__sync-dot" aria-hidden="true" />

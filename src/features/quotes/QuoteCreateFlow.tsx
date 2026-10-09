@@ -136,30 +136,12 @@ export function QuoteCreateFlow({
   const [isDirty, setIsDirty] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findQuoteDuplicateGroups>>([])
-  const [lastAppliedPrefillId, setLastAppliedPrefillId] = useState<string | null>(prefill?.request_id ?? null)
   const [successState, setSuccessState] = useState<QuoteCreateSuccessState | null>(null)
 
   useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
-
-  useEffect(() => {
-    if (!prefill || prefill.request_id === lastAppliedPrefillId) return
-
-    setForm({
-      client_id: prefill.client_id || contextClientId || '',
-      property_id: prefill.property_id || contextPropertyId || '',
-      status: 'draft',
-      notes: prefill.notes,
-    })
-    setLines(createInitialLines(prefill))
-    setCurrentStep(stepIndexById.client)
-    setSubmitError(null)
-    setIsDirty(false)
-    setSuccessState(null)
-    setLastAppliedPrefillId(prefill.request_id)
-  }, [contextClientId, contextPropertyId, lastAppliedPrefillId, prefill])
 
   const availableProperties = useMemo(() => {
     if (!form.client_id) return []

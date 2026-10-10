@@ -1,0 +1,27 @@
+name: Fast delivery (L1/L2)
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - id: risk
+        run: node scripts/release/classify-change-risk.mjs --base "${{ github.event.pull_request.base.sha }}" --github-output "$GITHUB_OUTPUT"
+      - if: steps.risk.outputs.level != 'L3'
+        run: node scripts/release/run-fast-delivery.mjs --base "${{ github.event.pull_request.base.sha }}"
+      - if: steps.risk.outputs.level == 'L3'
+        run: echo "L3 changes are excluded from Fast Delivery and require the Critical Release workflow."

@@ -5,6 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { classifyChangeSet, collectChanges } from './classify-change-risk.mjs'
 import { fastDeliveryPlan } from './fast-delivery-plan.mjs'
+import { resolveLocalToolInvocation } from './local-tool-invocation.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const baseIndex = process.argv.indexOf('--base')
@@ -16,7 +17,8 @@ if (classification.level === 'L3') throw new Error('L3_CHANGE_BLOCKED_FROM_FAST_
 if (classification.level === 'NO_CHANGES') throw new Error('NO_CHANGES_TO_VALIDATE')
 
 function run(command, args) {
-  const result = spawnSync(command, args, { cwd: root, stdio: 'inherit', windowsHide: true })
+  const invocation = resolveLocalToolInvocation(command, args)
+  const result = spawnSync(invocation.command, invocation.args, { cwd: root, stdio: 'inherit', windowsHide: true })
   if (result.error || result.status !== 0) throw new Error(`FAST_GATE_FAILED:${command}:${args[0]}`)
 }
 

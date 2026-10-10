@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest'
+import path from 'node:path'
 import { classifyChangeSet } from './classify-change-risk.mjs'
 import { fastDeliveryPlan } from './fast-delivery-plan.mjs'
+import { resolveLocalToolInvocation } from './local-tool-invocation.mjs'
 
 describe('fast delivery gate selection', () => {
+  it('invokes npm through node on Windows instead of relying on npm.cmd shell resolution', () => {
+    expect(resolveLocalToolInvocation('npm', ['run', 'lint'], {
+      platform: 'win32',
+      execPath: process.execPath,
+      npmExecPath: '',
+    })).toEqual({
+      command: process.execPath,
+      args: [path.join(path.dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'), 'run', 'lint'],
+    })
+  })
+
   it('keeps a reversible CSS-only visual change in L1 and runs only L1 gates', () => {
     const change = { path: 'src/styles/release-smoke.css', diff: '+.release-smoke {\n+  color: #123456;\n+}' }
     const classification = classifyChangeSet([change])

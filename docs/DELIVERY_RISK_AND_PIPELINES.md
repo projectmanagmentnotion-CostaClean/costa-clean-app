@@ -4,7 +4,7 @@ This policy separates quick, independently releasable work from changes that can
 
 ## Risk classification
 
-- **L1 — visual:** CSS/assets/docs and strictly markup-only edits under `src/components/` or `src/ui/`. Run lint, production build, and any related tests.
+- **L1 — visual:** vetted presentation-only CSS declarations, raster/font/media assets, and non-release documentation. JSX/TSX is conservatively L2 because class names and markup can be consumed by runtime logic; prove dependencies before considering any narrower policy.
 - **L2 — functional:** business logic and other code not confidently limited to presentation or critical infrastructure. Run lint, build, and related tests; if no related test can be identified, run the complete test suite.
 - **L3 — critical:** migrations, RLS/ACL, auth, payments/billing, database/storage/Edge, secrets, dependency manifests, Vercel config, API/data paths, CI workflows, or uncertain high-impact changes. Highest risk in a mixed diff wins. L3 is rejected by the Fast Delivery runner.
 

@@ -10,7 +10,6 @@ const VISUAL_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico',
   '.woff', '.woff2', '.ttf', '.otf', '.mp4', '.webm',
 ])
-const PRESENTATION_LINE = /^\s*<\/?(?:span|strong|em|b|i|small|mark|div|section|p|h[1-6]|li|ul|ol)\s+className=(?:"[^"<>]*"|'[^'<>]*')\s*\/?>\s*$/u
 const SAFE_CSS_PROPERTIES = new Set([
   'color', 'background-color', 'border-color', 'border-radius', 'border-style', 'border-width',
   'font-family', 'font-size', 'font-style', 'font-weight', 'letter-spacing', 'line-height',
@@ -41,10 +40,6 @@ function getChangedLines(diff) {
     .map((line) => line.slice(1))
 }
 
-function isVisualComponentPatch(changedLines) {
-  return changedLines.length > 0 && changedLines.every((line) => PRESENTATION_LINE.test(line))
-}
-
 function classifyFile(filePath, diff) {
   const file = normalizePath(filePath)
   const ext = path.posix.extname(file).toLowerCase()
@@ -57,13 +52,6 @@ function classifyFile(filePath, diff) {
   }
   if (VISUAL_EXTENSIONS.has(ext) || /^docs\//iu.test(file) && ext === '.md') {
     return { level: 'L1', reason: `presentation-or-documentation:${file}` }
-  }
-  if (/\.(?:tsx|jsx)$/iu.test(file) && /^src\/(?:components|ui)\//iu.test(file)) {
-    const lines = getChangedLines(diff)
-    if (lines.every((line) => !/(?:\bonClick\b|\bonSubmit\b|\bonChange\b|\btype\s*=|\brequired\b|\bdisabled\b|\btabIndex\b)/iu.test(line))
-      && isVisualComponentPatch(lines) && !CRITICAL_DIFF.test(lines.join('\n'))) {
-      return { level: 'L1', reason: `presentation-only-component-diff:${file}` }
-    }
   }
   if (CRITICAL_DIFF.test(diff)) return { level: 'L3', reason: `critical-diff-content:${file}` }
   return { level: 'L2', reason: `functional-or-unclassified-code:${file}` }

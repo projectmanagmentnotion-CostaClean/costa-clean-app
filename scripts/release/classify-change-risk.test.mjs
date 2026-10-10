@@ -12,8 +12,8 @@ describe('delivery change-risk classifier', () => {
     expect(result.fastDeliveryEligible).toBe(true)
   })
 
-  it('admits only markup-only component edits to L1', () => {
-    const visual = classifyChangeSet([{
+  it('escalates every JSX change because markup may have runtime dependencies', () => {
+    const markup = classifyChangeSet([{
       path: 'src/components/ui/Badge.tsx',
       diff: '+<span className="badge badge--quiet" />',
     }])
@@ -21,7 +21,7 @@ describe('delivery change-risk classifier', () => {
       path: 'src/components/ui/Badge.tsx',
       diff: '+onClick={() => saveRecord()}',
     }])
-    expect(visual.level).toBe('L1')
+    expect(markup.level).toBe('L2')
     expect(behavior.level).toBe('L2')
     expect(classifyChangeSet([{
       path: 'src/components/ui/Badge.tsx',

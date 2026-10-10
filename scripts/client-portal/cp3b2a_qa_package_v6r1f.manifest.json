@@ -1,0 +1,47 @@
+{
+  "version": 6,
+  "revision": "V6R1F",
+  "gate": "CP-3B.2A.6R.1F-INTEGRITY",
+  "status": "LOCAL_INTEGRITY_REVISION_NOT_EXECUTION_AUTHORIZATION",
+  "supersedes": "V6R1E_INTEGRITY_CHECK_ONLY",
+  "frozenArtifactsPreserved": [
+    "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
+    "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json"
+  ],
+  "frozenPackagePaths": [
+    "scripts/client-portal/cp3b2a_qa_package_v6.manifest.json",
+    "scripts/client-portal/cp3b2aCanonicalJsonV6.mjs",
+    "scripts/client-portal/cp3b2a_qa_matrix_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_concurrency_v6.mjs",
+    "scripts/client-portal/cp3b2a_qa_capability_map_v6.json",
+    "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
+    "scripts/client-portal/run-cp3b2a6-local-proof.mjs",
+    "scripts/client-portal/cp3b2aQaApplicationV6.test.mjs",
+    "scripts/client-portal/cp3b2a_qa_precheck_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_postcheck_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_rollback_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_fixture_setup_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_fixture_cleanup_v6.sql",
+    "scripts/client-portal/cp3b2a_qa_digest_v6.sql",
+    "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
+    "docs/client-portal/CP3B2A6_REPRODUCIBLE_REBASELINE.md",
+    "docs/client-portal/CP3B2A_EXACT_QA_AUTHORIZATION_V6.md",
+    "docs/client-portal/CP3B2A6R1_FINAL_REAL_ADAPTER.md",
+    "supabase/migrations/20260728160000_portal_reviewed_change_contract.sql",
+    "scripts/client-portal/cp2b_command_launcher_v3.mjs",
+    "scripts/client-portal/cp2b_postgres_transport_v5.mjs",
+    "scripts/client-portal/cp2b_qa_auth_fixtures_v2.mjs"
+  ],
+  "integrity": {
+    "metadataBatching": "single HEAD + single index + single staged-diff + single cat-file batch",
+    "rawByteIdentity": "Git blob ID computed from bytes read via checked file descriptor",
+    "stagePolicy": "repeat exact file check immediately before every file-backed stage",
+    "pathPolicy": "NUL-safe Git outputs; reject traversal, symlink/reparse, and resolved paths outside repo",
+    "authorization": "exact caller-supplied immutable commit SHA; never implies DB execution authorization"
+  },
+  "artifacts": [
+    { "path": "scripts/client-portal/cp3b2aV6R1FGitIntegrity.mjs", "kind": "mjs", "sha256": "bed8625cef0ac9e1569c923af3bab9237e329b962a51fc4be3c43e6054deb2e4" },
+    { "path": "scripts/client-portal/run-cp3b2a-qa-v6r1f-integrity.mjs", "kind": "mjs", "sha256": "df6952b40e9e157f8e50a1e074880c1fa878fe0473afaea1a5187a9278531d54" },
+    { "path": "scripts/client-portal/cp3b2aV6R1FGitIntegrity.test.mjs", "kind": "mjs-test", "sha256": "35c8b73ed58c42266eab02d5ac30bd13afa636f0f7b03150decdf6b6c09ed45f" }
+  ]
+}

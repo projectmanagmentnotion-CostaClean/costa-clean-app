@@ -28,7 +28,7 @@ node scripts/release/classify-change-risk.mjs --base <base-sha>
 node scripts/release/run-fast-delivery.mjs --base <base-sha>
 ```
 
-For L1 it selects related test files when present (or reports none for pure assets/docs); L2 always runs the full suite so shared-code effects cannot evade test selection. Only the one exact, unchanged SHA-base CP3B timeout may be reported as a pre-existing exception for unrelated L2 changes. L3 is refused. A Vercel Preview may be prepared only by the repository's separately configured Git integration; this workflow itself has read-only GitHub permissions and no deployment or Production credentials.
+For L1 it selects related test files when present (or reports none for pure assets/docs); L2 always runs the full suite so shared-code effects cannot evade test selection. Only the one exact, unchanged SHA-base CP3B timeout may be reported as a pre-existing exception for unrelated L2 changes. L3 is refused. `READY_FOR_L1_LOCAL` means the classifier and local lint/build/related tests passed; it does not imply remote branch protection, required checks, Preview availability, or deployment permission (`READY_FOR_L1_REMOTE`). A Vercel Preview may be prepared only by the repository's separately configured Git integration; this workflow itself has read-only GitHub permissions and no deployment or Production credentials.
 
 ## B. Critical Release (L3)
 

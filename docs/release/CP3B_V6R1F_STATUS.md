@@ -1,19 +1,25 @@
-# CP-3B V6R1F status (base 4dd3530)
+# CP-3B V6R1F integrity revision
 
-## Reproduced blocker
+## Implemented scope
 
-`CP-3B.2A.6R.1E final real PostgreSQL adapter revalidates the capability map immediately before consuming it` exceeds its declared Vitest timeout of 5 seconds. It took 6.27 seconds isolated and 6.49 seconds during the full suite. Full suite on the base: 1,138 passed, 4 skipped, 1 failed (before the two new release-policy tests were added).
+V6R1F is a separately versioned, read-only package-integrity adapter. It does not alter the frozen V6R1E runner or its manifest, grant execution authorization, connect to a database, or apply migrations. Run it with an explicit commit:
 
-The hot path begins in `preflightV6` at `verifyPackageManifestV6`, which rechecks the entire protected package. `assertPackageWorkingTreeIntegrityV6` performs synchronous Git/index/worktree probes per artifact (`ls-files`, staged diff, authorized blob lookup, and raw worktree hashing); the many child-process startups dominate this small test's runtime. The timeout is not proven to be a production runtime defect, but it makes the verification suite unreliable and must remain visible.
+```powershell
+node scripts/client-portal/run-cp3b2a-qa-v6r1f-integrity.mjs --commit <full-commit-sha>
+```
 
-## Safe V6R1F engineering direction
+The adapter verifies the complete frozen V6R1E package plus the V6R1F manifest and implementation. It batches Git metadata into five processes for the whole package (exact HEAD, object format, staged-path set, index metadata, and `cat-file --batch-check`) rather than launching several synchronous Git children for every artifact. It then hashes raw working-tree bytes and checks each path component for symlinks/reparse points, resolved-path containment, and file identity before/after reading. `verifyStageV6R1F` repeats a fresh exact-commit check immediately before an individual file-backed stage; a cached package snapshot is not treated as a stage lease.
 
-Create a separate revision and manifest; leave V6R1E files and hashes untouched. Batch metadata/blob probes for the immutable package snapshot, while retaining a fresh integrity check of each file immediately before each file-backed stage is consumed. Keep NUL-safe paths, no-follow/reparse protections, clean-index checks, exact HEAD binding, and all existing negative tests. A one-time cached snapshot alone is insufficient because it could create a TOCTOU gap.
+The manifest pins SHA-256 for the new V6R1F code and test files. The adapter also binds all checked bytes to the caller-supplied immutable commit. It is not an independent trust root: an operator must supply the commit from a trusted source.
 
-V6R1F has **not** been implemented or certified in this delivery branch: changing the frozen runner or its package metadata would invalidate the current contract; a complete new revision requires regenerated package/canonical hashes and focused security tests. No timeout was enlarged and no test was disabled.
+## Frozen runner limitation
 
-## 2026-10-11 stress run
+V6R1E and its package manifest remain byte-for-byte unchanged. Its exported `preflightV6` always calls its own serial `verifyPackageManifestV6` before it accepts injected stage-verification dependencies. Therefore V6R1F's optimized verifier cannot transparently replace that first check without modifying the frozen runner contract. The new adapter is implemented and executable, but it is not represented as an integrated database-execution replacement; CP3B's existing V6R1E timeout remains a visible suite failure until a reviewed, separately authorized runner integration is made.
 
-After adding the delivery policy changes, a complete `npm test` run took 205.28 seconds and reported 1,147 passed, 4 skipped, 2 failed. Both failures were timeout failures in the frozen `cp3b2aV6RealAdapter.test.mjs`: `keeps read-only plan and preflight usable without execution authorization` (15 s) and `revalidates the capability map immediately before consuming it` (5 s). This is a failure, not a stable PASS; the new L2 baseline policy intentionally exempts only the single previously pinned case, so it rejects this run. The additional timeout must be reproduced and explained before the baseline policy can be widened.
+## Why prior work stopped at NOT_IMPLEMENTED
 
-Independent read-only review confirmed V6R1F remains unimplemented. Do not call this a CP3B optimization or mark the full suite stable. Safe completion requires a separately versioned runner/manifest, a reduced synchronous Git-process count, preserved immediate per-stage byte/index/HEAD checks, negative TOCTOU tests, and repeated full-suite PASS runs without suppressing the original failures.
+The previous status documented an implementation direction but created no V6R1F runtime module or test. Work stopped to avoid changing the frozen V6R1E runner/manifest, but did not proceed to the separately versioned adapter explicitly requested. This revision closes that implementation gap for the integrity layer while preserving the frozen package.
+
+## Regressions and remaining validation
+
+Focused tests exercise clean package hashing, staged changes, worktree divergence, moved HEAD, path traversal, per-stage revalidation, and an external Windows junction/POSIX symlink fixture. Full-suite results are reported separately; the frozen V6R1E timeout is not suppressed or lengthened by this revision.

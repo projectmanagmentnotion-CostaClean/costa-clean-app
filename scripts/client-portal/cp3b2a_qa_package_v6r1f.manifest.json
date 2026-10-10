@@ -41,7 +41,7 @@
   },
   "artifacts": [
     { "path": "scripts/client-portal/cp3b2aV6R1FGitIntegrity.mjs", "kind": "mjs", "sha256": "bed8625cef0ac9e1569c923af3bab9237e329b962a51fc4be3c43e6054deb2e4" },
-    { "path": "scripts/client-portal/run-cp3b2a-qa-v6r1f-integrity.mjs", "kind": "mjs", "sha256": "df6952b40e9e157f8e50a1e074880c1fa878fe0473afaea1a5187a9278531d54" },
+    { "path": "scripts/client-portal/run-cp3b2a-qa-v6r1f-integrity.mjs", "kind": "mjs", "sha256": "09cf05960ac8150918cdd53bb7ce05f15b443575a3c8612180400dc2d059019b" },
     { "path": "scripts/client-portal/cp3b2aV6R1FGitIntegrity.test.mjs", "kind": "mjs-test", "sha256": "35c8b73ed58c42266eab02d5ac30bd13afa636f0f7b03150decdf6b6c09ed45f" }
   ]
 }

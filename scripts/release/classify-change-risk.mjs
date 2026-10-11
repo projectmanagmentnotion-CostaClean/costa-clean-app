@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
-const CRITICAL_PATH = /(?:^|\/)(?:supabase\/|\.github\/workflows\/|docs\/release\/|scripts\/release\/|data\/|api\/)|(?:^|\/)(?:\.env(?:\.|$)|package\.json$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|vercel\.json$)|(?:auth|security|rls|acl|secret|billing|invoice|payment|stripe|database|storage|edge|migration|schema)/iu
+const CRITICAL_PATH = /(?:^|\/)(?:supabase\/|\.github\/|docs\/release\/|scripts\/release\/|data\/|api\/)|(?:^|\/)(?:\.env(?:\.|$)|package\.json$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|vercel\.json$)|(?:auth|security|rls|acl|secret|billing|invoice|payment|stripe|database|storage|edge|migration|schema)/iu
 const CRITICAL_DIFF = /\b(?:grant|revoke)\s+|\b(?:create|alter|drop)\s+(?:policy|role|table|function|schema|trigger|type|extension|publication|subscription)|\b(?:row\s+level\s+security|security\s+definer|service_role|auth\.users|auth\.uid|supabase\.functions|supabase\.storage|payment|billing|invoice|stripe|secret|migration|schema)\b/iu
 const VISUAL_EXTENSIONS = new Set([
   '.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico',

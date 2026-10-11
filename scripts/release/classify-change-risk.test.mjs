@@ -58,6 +58,7 @@ describe('delivery change-risk classifier', () => {
       'supabase/migrations/20261010000000_change.sql',
       'supabase/functions/normalize/index.ts',
       '.github/workflows/release.yml',
+      '.github/CODEOWNERS',
       'package-lock.json',
       'src/data/client.ts',
     ]) {

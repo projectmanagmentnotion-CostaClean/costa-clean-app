@@ -1,0 +1,5 @@
+# Verified repository owner account; require a human reviewer distinct from the PR author in branch protection.
+/.github/CODEOWNERS @projectmanagmentnotion-CostaClean
+/.github/workflows/ @projectmanagmentnotion-CostaClean
+/scripts/release/ @projectmanagmentnotion-CostaClean
+/docs/release/ @projectmanagmentnotion-CostaClean

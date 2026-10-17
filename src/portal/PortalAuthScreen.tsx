@@ -49,7 +49,7 @@ export function PortalAuthScreen({
     <main ref={screenRef} className="portal-auth">
       <PortalMotionSurface stateKey={route}>
         <section className="portal-auth__panel" aria-labelledby="portal-auth-title">
-          <PortalBrand />
+          <PortalBrand variant="auth" />
           {route === 'login' ? (
             <LoginForm lifecycle={lifecycle} onNavigate={onNavigate} notice={notice} />
           ) : route === 'recover' ? (

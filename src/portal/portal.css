@@ -725,10 +725,13 @@ input {
 }
 
 .portal-auth {
+  position: relative;
+  isolation: isolate;
   display: grid;
   min-height: 100vh;
   min-height: 100dvh;
   align-items: center;
+  justify-items: center;
   padding:
     max(22px, env(safe-area-inset-top))
     max(16px, env(safe-area-inset-right))
@@ -737,6 +740,19 @@ input {
   background:
     radial-gradient(circle at 82% 12%, rgb(13 114 133 / 14%), transparent 32%),
     linear-gradient(160deg, #f8fcfc 0%, #edf5f7 100%);
+}
+
+.portal-auth::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background-image: url("/branding/logo-costa-clean.svg");
+  background-repeat: no-repeat;
+  background-position: 82% 18%;
+  background-size: min(64vw, 30rem);
+  opacity: 0.055;
+  pointer-events: none;
 }
 
 .portal-root--preview .portal-auth {
@@ -763,6 +779,10 @@ input {
   color: var(--portal-ink);
   font-size: clamp(1.85rem, 8vw, 2.5rem);
   letter-spacing: -0.04em;
+}
+
+.portal-auth__content h1:focus-visible {
+  outline: none;
 }
 
 .portal-auth__intro {
@@ -1381,6 +1401,48 @@ input {
   box-shadow: 0 24px 64px rgb(11 25 36 / 10%);
 }
 
+.portal-root .portal-auth::before {
+  background-position: 88% 14%;
+  background-size: min(42vw, 24rem) auto;
+  filter: blur(4px);
+  mask-image: radial-gradient(ellipse at center, #000 18%, transparent 72%);
+  opacity: 0.055;
+}
+
+.portal-root .portal-auth__panel {
+  width: min(100%, 32rem);
+  justify-self: center;
+  margin-inline: auto;
+}
+
+.portal-root .portal-auth .portal-brand {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.portal-root .portal-auth .portal-brand__logo {
+  width: clamp(124px, 22vw, 156px);
+  height: auto;
+  aspect-ratio: 429.77 / 308.34;
+  object-fit: contain;
+}
+
+.portal-root .portal-auth .portal-brand__surface {
+  color: var(--portal-ink);
+  font-size: 0.82rem;
+  font-weight: 780;
+  letter-spacing: 0.07em;
+}
+
+.portal-root .portal-auth__content {
+  margin-top: 24px;
+}
+
 .portal-root .portal-button {
   border-radius: 8px;
   background: #00AEF0;
@@ -1705,9 +1767,12 @@ input {
 }
 
 @media (max-height: 620px), (orientation: landscape) and (max-height: 520px) {
-  .portal-auth,
   .portal-access {
     align-items: start;
+  }
+
+  .portal-auth {
+    align-items: center;
   }
 
   .portal-auth__panel,
@@ -2004,12 +2069,13 @@ input {
   bottom: 24px;
   z-index: 24;
   display: inline-flex;
-  min-width: 48px;
-  min-height: 48px;
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 10px 13px;
+  padding: 0;
   border: 1px solid #075F3D;
   border-radius: 999px;
   color: #fff;
@@ -2021,8 +2087,8 @@ input {
 }
 
 .portal-whatsapp-action svg {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   flex: 0 0 auto;
 }
 
@@ -2066,15 +2132,13 @@ input {
 
   .portal-root .portal-whatsapp-action {
     width: 52px;
+    height: 52px;
     right: 14px;
     bottom: calc(72px + env(safe-area-inset-bottom) + 16px);
     min-width: 52px;
-    padding: 10px;
+    min-height: 52px;
+    padding: 0;
     border-radius: 50%;
-  }
-
-  .portal-root .portal-whatsapp-action span {
-    display: none;
   }
 
   .portal-root .portal-main {
@@ -2092,7 +2156,28 @@ input {
     height: 19px;
   }
 
-  .portal-root .portal-whatsapp-action span {
-    display: none;
-  }
+}
+
+/* Use the owner's blue original mark at a more confident size on portal auth. */
+.portal-root .portal-auth .portal-brand--auth { gap: 2px; }
+.portal-root .portal-auth .portal-brand--auth .portal-brand__logo {
+  width: clamp(168px, 20vw, 224px);
+  height: auto;
+  aspect-ratio: 5952 / 4380;
+  object-fit: contain;
+}
+.portal-root .portal-auth .portal-brand--auth .portal-brand__name {
+  color: var(--portal-brand);
+  font-family: 'Epilogue', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 760;
+  letter-spacing: -.035em;
+  line-height: 1.1;
+}
+
+/* Center the sign-in card on wide screens and keep a soft branded backdrop. */
+.portal-root .portal-auth::before {
+  background-position: 50% 50%;
+  background-size: min(34vw, 28rem) auto;
+  opacity: 0.07;
 }

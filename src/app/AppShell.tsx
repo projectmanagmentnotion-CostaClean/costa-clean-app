@@ -1308,6 +1308,7 @@ export function AppShell({
                   quotes={quotes}
                   invoices={invoicesWithCodes}
                   payments={paymentsWithCodes}
+                  expenses={expenses}
                   error={jobError}
                   onJobCreated={refreshOperations}
                   onOpenClientWorkspace={handleOpenClientWorkspace}

@@ -1,0 +1,323 @@
+name: CP51F production backup restore
+
+on:
+  push:
+    tags:
+      - 'cp51f-run-*'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: cp51f-production-backup-restore
+  cancel-in-progress: false
+
+jobs:
+  backup-restore:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact tagged commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Arming and recipient gate
+        env:
+          CP51F_EXECUTION_ARMED: ${{ vars.CP51F_EXECUTION_ARMED }}
+          CP51F_EXPECTED_EXECUTION_SHA: ${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}
+          CP51F_EXPECTED_EXECUTION_TAG: ${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$GITHUB_REPOSITORY" == 'projectmanagmentnotion-CostaClean/costa-clean-app' ]] || { echo 'CP51F_ARMING_GATE=FAIL repository'; exit 1; }
+          [[ "$GITHUB_EVENT_NAME" == push && "$GITHUB_REF_TYPE" == tag ]] || { echo 'CP51F_ARMING_GATE=FAIL event'; exit 1; }
+          [[ "$GITHUB_REF" == "refs/tags/$CP51F_EXPECTED_EXECUTION_TAG" ]] || { echo 'CP51F_ARMING_GATE=FAIL exact tag'; exit 1; }
+          [[ "$GITHUB_REF_NAME" == "$CP51F_EXPECTED_EXECUTION_TAG" ]] || { echo 'CP51F_ARMING_GATE=FAIL tag name'; exit 1; }
+          [[ "$CP51F_EXPECTED_EXECUTION_TAG" =~ ^cp51f-run-[0-9a-f]{32}$ ]] || { echo 'CP51F_ARMING_GATE=FAIL tag nonce'; exit 1; }
+          [[ "$GITHUB_RUN_ATTEMPT" == 1 ]] || { echo 'CP51F_ARMING_GATE=FAIL run attempt'; exit 1; }
+          [[ "$(jq -r '.created // false' "$GITHUB_EVENT_PATH")" == true ]] || { echo 'CP51F_ARMING_GATE=FAIL tag creation'; exit 1; }
+          [[ "$(jq -r '.deleted // false' "$GITHUB_EVENT_PATH")" == false ]] || { echo 'CP51F_ARMING_GATE=FAIL deleted tag'; exit 1; }
+          [[ "$(jq -r '.forced // false' "$GITHUB_EVENT_PATH")" == false ]] || { echo 'CP51F_ARMING_GATE=FAIL forced update'; exit 1; }
+          [[ "$CP51F_EXECUTION_ARMED" == YES ]] || { echo 'CP51F_ARMING_GATE=FAIL armed'; exit 1; }
+          [[ -n "$CP51F_EXPECTED_EXECUTION_SHA" && "$GITHUB_SHA" == "$CP51F_EXPECTED_EXECUTION_SHA" ]] || { echo 'CP51F_ARMING_GATE=FAIL expected sha'; exit 1; }
+          [[ "$CP51F_BACKUP_AGE_RECIPIENT" =~ ^age1[0-9a-z]+$ ]] || { echo 'CP51F_ARMING_GATE=FAIL age recipient'; exit 1; }
+          reserved_name="cp51f-auth-reserved-$CP51F_EXPECTED_EXECUTION_TAG"
+          consumed_name="cp51f-auth-consumed-$CP51F_EXPECTED_EXECUTION_TAG"
+          existing_reserved_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$reserved_name&per_page=100" --jq '.total_count // 0')"
+          existing_consumed_count="$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?name=$consumed_name&per_page=100" --jq '.total_count // 0')"
+          [[ "$existing_reserved_count" == 0 && "$existing_consumed_count" == 0 ]] || { echo 'STOP_ONE_SHOT_AUTHORIZATION_ALREADY_RESERVED_OR_CONSUMED'; exit 1; }
+          echo 'CP51F_ONE_SHOT_GATE=PASS'
+
+      - name: Previous run history guard
+        env:
+          CP51F_EXPECTED_EXECUTION_SHA: ${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}
+          CP51F_EXPECTED_EXECUTION_TAG: ${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -Eeuo pipefail
+          if ! matching_previous_runs="$(gh api --paginate --slurp \
+            "repos/$GITHUB_REPOSITORY/actions/workflows/cp51f-production-backup-restore.yml/runs?per_page=100" \
+            | jq -er --arg expected_tag "$CP51F_EXPECTED_EXECUTION_TAG" \
+                    --arg expected_sha "$CP51F_EXPECTED_EXECUTION_SHA" \
+                    --arg current_run_id "$GITHUB_RUN_ID" '
+              def valid_page:
+                if type != "object" then false
+                elif (has("workflow_runs") | not) then false
+                else (.workflow_runs | type) == "array"
+                end;
+              def valid_run:
+                if type != "object" then false
+                elif (has("id") | not) then false
+                elif (has("head_branch") | not) then false
+                elif (has("head_sha") | not) then false
+                elif (has("event") | not) then false
+                else ((.id | type) == "number" and
+                      (.head_branch | type) == "string" and
+                      (.head_sha | type) == "string" and
+                      (.event | type) == "string")
+                end;
+              if type != "array" then
+                error("invalid history page set")
+              elif length == 0 then
+                error("empty history page set")
+              elif any(.[]; (valid_page | not)) then
+                error("invalid history page")
+              elif any(.[].workflow_runs[]; (valid_run | not)) then
+                error("invalid workflow run record")
+              else
+                ([.[].workflow_runs[] |
+                  select(.head_branch == $expected_tag and
+                         .head_sha == $expected_sha and
+                         .event == "push" and
+                         ((.id | tostring) != $current_run_id))] | length)
+              end
+            ')"; then
+            echo 'STOP_ONE_SHOT_HISTORY_GUARD_INVALID'
+            exit 1
+          fi
+          [[ "$matching_previous_runs" =~ ^[0-9]+$ ]] || { echo 'STOP_ONE_SHOT_HISTORY_GUARD_INVALID'; exit 1; }
+          [[ "$matching_previous_runs" == 0 ]] || { echo 'STOP_ONE_SHOT_PREVIOUS_RUN_EXISTS'; exit 1; }
+          echo 'CP51F_PREVIOUS_RUN_GUARD=PASS'
+
+      - name: Prepare reservation marker
+        run: |
+          set -Eeuo pipefail
+          reservation_dir="$RUNNER_TEMP/cp51f-auth-reserved"
+          mkdir -p -- "$reservation_dir"
+          jq -n \
+            --arg expected_tag "${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}" \
+            --arg expected_sha "${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg reserved_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{expected_tag:$expected_tag, expected_sha:$expected_sha, run_id:$run_id, reserved_utc:$reserved_utc}' \
+            >"$reservation_dir/authorization.json"
+          chmod 600 "$reservation_dir/authorization.json"
+
+      - name: Upload reservation marker
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-auth-reserved-${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          path: ${{ runner.temp }}/cp51f-auth-reserved/authorization.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Install PostgreSQL 17 bootstrap
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-bootstrap-postgres17.sh
+
+      - name: Verify PostgreSQL 17 executor
+        run: |
+          set -Eeuo pipefail
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
+          for tool in pg_dump pg_dumpall psql initdb pg_ctl; do
+            command -v "$tool" >/dev/null
+            "$tool" --version | grep -Eq ' 17([.]|$)'
+          done
+          echo 'CP51F_POSTGRES_17=PASS'
+
+      - name: Run local backup preflight
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-local-preflight
+          CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-local-preflight-status.json
+          PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
+          PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+          PSQL_BIN: /usr/lib/postgresql/17/bin/psql
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-production-backup-setup.sh --local-preflight
+
+      - name: Verify temporary PAT presence
+        env:
+          CP51F_TEMP_PAT_PRESENT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT != '' }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$CP51F_TEMP_PAT_PRESENT" == true ]] || { echo 'TEMP_PAT_SECRET_PRESENCE=FAIL'; exit 1; }
+          echo 'TEMP_PAT_SECRET_PRESENCE=PASS'
+
+      - name: Resolve authoritative Session Pooler
+        env:
+          SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          response_file="$(mktemp "$RUNNER_TEMP/cp51f-pooler-response.XXXXXX")"
+          curl_error_file="$(mktemp "$RUNNER_TEMP/cp51f-pooler-curl-error.XXXXXX")"
+          cleanup_pooler_resolution() {
+            rm -f -- "$response_file" "$curl_error_file"
+          }
+          trap cleanup_pooler_resolution EXIT
+          chmod 600 "$response_file" "$curl_error_file"
+
+          [[ -n "$SUPABASE_CP51F_TEMP_PAT" && "$SUPABASE_CP51F_TEMP_PAT" != *$'\n'* && "$SUPABASE_CP51F_TEMP_PAT" != *$'\r'* && "$SUPABASE_CP51F_TEMP_PAT" != *'"'* && "$SUPABASE_CP51F_TEMP_PAT" != *'\'* ]] || {
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          }
+          curl_rc=0
+          http_code="$(printf 'header = "Authorization: Bearer %s"\n' "$SUPABASE_CP51F_TEMP_PAT" |
+            curl --config - --request GET --silent --show-error --max-time 30 --retry 0 \
+              --output "$response_file" --write-out '%{http_code}' \
+              'https://api.supabase.com/v1/projects/wfxnwfcdjainpojhbdri/config/database/pooler' \
+              2>"$curl_error_file")" || curl_rc=$?
+          if [[ "$curl_rc" -ne 0 || "$http_code" != 200 ]]; then
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          fi
+
+          if ! resolved_host="$(bash scripts/cp51f-resolve-pooler-host.sh "$response_file" 2>/dev/null)"; then
+            echo 'CP51F_POOLER_RESOLUTION=FAIL'
+            exit 1
+          fi
+          rm -f -- "$response_file" "$curl_error_file"
+          trap - EXIT
+          echo 'CP51F_POOLER_RESOLUTION=PASS'
+          echo 'CP51F_POOLER_SOURCE=MANAGEMENT_API_PRIMARY_CONNECTION_STRING'
+          echo 'CP51F_POOLER_MODE=SESSION'
+          echo "CP51F_POOLER_HOST=$resolved_host"
+
+      - name: Prepare consumed authorization marker
+        run: |
+          set -Eeuo pipefail
+          marker_dir="$RUNNER_TEMP/cp51f-auth-consumed"
+          mkdir -p -- "$marker_dir"
+          jq -n \
+            --arg expected_tag "${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}" \
+            --arg expected_sha "${{ vars.CP51F_EXPECTED_EXECUTION_SHA }}" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg consumed_utc "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{expected_tag:$expected_tag, expected_sha:$expected_sha, run_id:$run_id, consumed_utc:$consumed_utc}' \
+            >"$marker_dir/authorization.json"
+          chmod 600 "$marker_dir/authorization.json"
+
+      - name: Upload consumed authorization marker
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-auth-consumed-${{ vars.CP51F_EXPECTED_EXECUTION_TAG }}
+          path: ${{ runner.temp }}/cp51f-auth-consumed/authorization.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Run certified production backup runner
+        env:
+          SUPABASE_CP51F_TEMP_PAT: ${{ secrets.SUPABASE_CP51F_TEMP_PAT }}
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_STATUS_FILE: ${{ runner.temp }}/cp51f-runner-status.json
+          PG_DUMP_BIN: /usr/lib/postgresql/17/bin/pg_dump
+          PG_DUMPALL_BIN: /usr/lib/postgresql/17/bin/pg_dumpall
+          PSQL_BIN: /usr/lib/postgresql/17/bin/psql
+        run: |
+          set -Eeuo pipefail
+          if ! bash scripts/cp51f-production-backup-setup.sh >"$RUNNER_TEMP/cp51f-runner.log" 2>&1; then
+            if [[ -s "$CP51F_STATUS_FILE" ]] && jq -e '(.result == "FAIL") and (.stage | type == "string") and (.code | type == "string") and (.stage | test("^[A-Z_]+$")) and (.code | test("^[A-Z_]+$"))' "$CP51F_STATUS_FILE" >/dev/null 2>&1; then
+              echo "CP51F_RUNNER_RESULT=$(jq -r '.result' "$CP51F_STATUS_FILE")"
+              echo "CP51F_RUNNER_STAGE=$(jq -r '.stage' "$CP51F_STATUS_FILE")"
+              echo "CP51F_RUNNER_CODE=$(jq -r '.code' "$CP51F_STATUS_FILE")"
+            else
+              echo 'CP51F_RUNNER_RESULT=FAIL'
+              echo 'CP51F_RUNNER_STAGE=UNKNOWN'
+              echo 'CP51F_RUNNER_CODE=UNCLASSIFIED_FAILURE'
+            fi
+            exit 1
+          fi
+          jq -e '.result == "PASS" and .stage == "COMPLETE" and .code == "AWAITING_PAT_REVOCATION"' "$CP51F_STATUS_FILE" >/dev/null
+          jq -e '.setup_result == "AWAITING_PAT_REVOCATION" and .jit_poststate_matches_prestate == true' "$CP51F_PRIVATE_SECURE_PATH/manifest.json" >/dev/null
+          echo 'CP51F_CERTIFIED_RUNNER=PASS'
+
+      - name: Create durable encrypted raw backup
+        id: raw_backup
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -Eeuo pipefail
+          raw_plaintext="$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz"
+          raw_encrypted="$raw_plaintext.age"
+          tar -czf "$raw_plaintext" -C "$CP51F_PRIVATE_SECURE_PATH" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json
+          age -r "$CP51F_BACKUP_AGE_RECIPIENT" -o "$raw_encrypted" "$raw_plaintext"
+          [[ -s "$raw_encrypted" ]]
+          raw_sha256="$(sha256sum "$raw_encrypted" | awk '{print $1}')"
+          rm -f -- "$raw_plaintext"
+          echo "raw_artifact_sha256=$raw_sha256" >>"$GITHUB_OUTPUT"
+          echo 'CP51F_DURABLE_ENCRYPTED_BACKUP=PASS'
+
+      - name: Upload durable encrypted raw backup
+        id: raw_upload
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-production-backup-raw-${{ github.run_id }}
+          path: ${{ runner.temp }}/cp51f-production-backup-raw-${{ github.run_id }}.tar.gz.age
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Confirm durable raw backup evidence
+        env:
+          RAW_ARTIFACT_ID: ${{ steps.raw_upload.outputs.artifact-id }}
+          RAW_ARTIFACT_DIGEST: ${{ steps.raw_upload.outputs.artifact-digest }}
+          RAW_ARTIFACT_SHA256: ${{ steps.raw_backup.outputs.raw_artifact_sha256 }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$RAW_ARTIFACT_ID" =~ ^[0-9]+$ ]]
+          [[ "$RAW_ARTIFACT_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          [[ "$RAW_ARTIFACT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          echo 'CP51F_RAW_BACKUP_ARTIFACT_ID_PRESENT=YES'
+          echo 'CP51F_RAW_BACKUP_ARTIFACT_SHA256_PRESENT=YES'
+
+      - name: Restore verify and encrypt backup
+        env:
+          CP51F_PRIVATE_SECURE_PATH: ${{ runner.temp }}/cp51f-private
+          CP51F_RESTORE_ROOT: ${{ runner.temp }}/cp51f-restore
+          PG_BIN_DIR: /usr/lib/postgresql/17/bin
+          CP51F_BACKUP_AGE_RECIPIENT: ${{ vars.CP51F_BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -Eeuo pipefail
+          bash scripts/cp51f-restore-verify.sh
+          jq -e '.restore_result == "PASS"' "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json" >/dev/null
+          [[ "$(jq -r '.cp43_migration_ledger_state // empty' "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json")" == ABSENT ]] || { echo 'STOP_PRE_RELEASE_MIGRATION_STATE_CHANGED'; exit 1; }
+          plaintext="$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz"
+          encrypted="$plaintext.age"
+          tar -czf "$plaintext" -C "$CP51F_PRIVATE_SECURE_PATH" roles.sql schema.sql data.sql history_schema.sql history_data.sql manifest.json restore-verification.json
+          age -r "$CP51F_BACKUP_AGE_RECIPIENT" -o "$encrypted" "$plaintext"
+          [[ -s "$encrypted" ]]
+          rm -f -- "$plaintext"
+          rm -f -- "$CP51F_PRIVATE_SECURE_PATH"/*.sql "$CP51F_PRIVATE_SECURE_PATH/manifest.json" "$CP51F_PRIVATE_SECURE_PATH/restore-verification.json"
+          echo 'CP51F_BACKUP_RESTORE_VERIFIED_AWAITING_PAT_REVOCATION'
+
+      - name: Upload encrypted artifact only
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cp51f-encrypted-production-backup-${{ github.run_id }}
+          path: ${{ runner.temp }}/cp51f-backup-${{ github.run_id }}.tar.gz.age
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Cleanup ephemeral executor
+        if: always()
+        run: |
+          set -Eeuo pipefail
+          rm -rf -- "$RUNNER_TEMP/cp51f-auth-reserved" "$RUNNER_TEMP/cp51f-auth-consumed" "$RUNNER_TEMP/cp51f-private" "$RUNNER_TEMP/cp51f-local-preflight" "$RUNNER_TEMP/cp51f-restore" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-backup-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz" "$RUNNER_TEMP/cp51f-production-backup-raw-$GITHUB_RUN_ID.tar.gz.age" "$RUNNER_TEMP/cp51f-runner.log"
+          rm -f -- "$RUNNER_TEMP/cp51f-runner-status.json" "$RUNNER_TEMP/cp51f-local-preflight-status.json"
+          rm -f -- "$RUNNER_TEMP/.pgpass" "$RUNNER_TEMP/cp51f-private/.pgpass"

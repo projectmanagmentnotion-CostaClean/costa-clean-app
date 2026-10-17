@@ -44,6 +44,7 @@ import type { QuoteListItem } from '../features/quotes/types'
 import type { RecurringInvoicePlanListItem } from '../features/recurringInvoices/types'
 import type { PublicQuoteReviewRecord } from '../features/publicQuoteReview/types'
 import { getSupabaseClient } from '../lib/supabase'
+import { handleRealtimeSubscriptionStatus } from './realtimeSubscription'
 
 const foregroundRefreshStaleTimeMs = 30_000
 const realtimeRefreshDelayMs = 900
@@ -484,7 +485,13 @@ export function useAppData(currentView: AppView) {
       })
     }
 
-    void channel.subscribe()
+    void channel.subscribe((status) => {
+      handleRealtimeSubscriptionStatus(status, () => {
+        const activeViewDomains = getDomainsForView(currentView)
+        const domainsToRefresh = filterDomainsByLoadedState(activeViewDomains, loadedDomainSet.current)
+        void refreshDomains(domainsToRefresh.length > 0 ? domainsToRefresh : activeViewDomains)
+      })
+    })
 
     return () => {
       if (pendingRealtimeRefreshRef.current !== null) {
@@ -495,7 +502,7 @@ export function useAppData(currentView: AppView) {
 
       void client.removeChannel(channel)
     }
-  }, [pushIntakeRealtimeNotification, scheduleRealtimeRefresh])
+  }, [currentView, pushIntakeRealtimeNotification, refreshDomains, scheduleRealtimeRefresh])
 
   return {
     isCurrentViewDataLoading,

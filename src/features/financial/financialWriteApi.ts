@@ -517,6 +517,60 @@ export async function savePaymentAndRefreshInvoice(payment: JsonRecord): Promise
   })
 }
 
+export interface AtomicFinancialOperationInput {
+  job: JsonPayload
+  jobLines: JsonPayload[]
+  invoice: JsonPayload
+  invoiceLines: JsonPayload[]
+  payment?: JsonRecord | null
+  idempotencyKey: string
+}
+
+export interface AtomicFinancialOperationResult {
+  idempotency_key: string
+  job_id: string
+  invoice_id: string
+  payment_id: string | null
+  payment_created: boolean
+  financial_status: string
+}
+
+export async function createAtomicFinancialOperation(
+  input: AtomicFinancialOperationInput,
+): Promise<AtomicFinancialOperationResult> {
+  if (!input.idempotencyKey.trim()) {
+    throw new Error('La operación financiera necesita una clave de idempotencia.')
+  }
+
+  const result = await callFinancialRpcForResult<AtomicFinancialOperationResult | null>(
+    'create_atomic_financial_operation',
+    {
+      p_job: input.job,
+      p_job_lines: input.jobLines,
+      p_invoice: input.invoice,
+      p_invoice_lines: input.invoiceLines,
+      p_payment: input.payment ?? null,
+      p_idempotency_key: input.idempotencyKey,
+    },
+    'No se pudo completar la operación financiera atómica.',
+  )
+
+  if (!result || result.idempotency_key !== input.idempotencyKey || !result.job_id || !result.invoice_id) {
+    throw new Error('Supabase no devolvió un resultado autoritativo para la operación financiera.')
+  }
+
+  await recordAuditEvent({
+    entityType: 'invoice',
+    entityId: result.invoice_id,
+    action: 'upsert',
+    changedFields: ['job_id', 'invoice_id', 'payment_id', 'financial_status'],
+    newValues: { ...result },
+    metadata: { idempotency_key: result.idempotency_key, payment_created: result.payment_created },
+  })
+
+  return result
+}
+
 export interface TransferSettlementRpcResult {
   payment_id: string | null
   invoice_id: string

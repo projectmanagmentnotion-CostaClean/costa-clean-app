@@ -3,16 +3,17 @@ import fsp from 'node:fs/promises'
 import path from 'node:path'
 import { chromium } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
+import { verifyInternalStaffAuthorization } from './qaInternalStaffAuth.mjs'
+import { parseQaPrivateEnv, requireQaAuthCredentials } from './qaPrivateEnv.mjs'
 
 const rootDir = process.cwd()
 const appUrl = process.env.QA_APP_URL?.trim() || 'http://127.0.0.1:5173/'
-const qaEnv = Object.fromEntries(fs.readFileSync('.env.qa.local', 'utf8').split(/\r?\n/u).flatMap((line) => {
-  const match = line.match(/^([A-Z0-9_]+)=(.*)$/u)
-  return match ? [[match[1], match[2]]] : []
-}))
-const email = process.env.COSTACLEAN_QA_AUTH_EMAIL
-const password = process.env.COSTACLEAN_QA_AUTH_PASSWORD
-if (!email || !password) throw new Error('QA_AUTH_INPUT_MISSING')
+const qaEnv = parseQaPrivateEnv(fs.readFileSync('.env.qa.local', 'utf8'))
+const { email, password } = requireQaAuthCredentials({
+  processEnv: process.env,
+  qaEnv,
+  preferPrivateFile: process.env.QA_AUTH_PREFER_PRIVATE_FILE === '1',
+})
 if (!qaEnv.VITE_SUPABASE_URL || !qaEnv.VITE_SUPABASE_ANON_KEY) throw new Error('QA_PUBLIC_CONFIG_MISSING')
 
 const viewports = [
@@ -35,14 +36,8 @@ async function authenticateQa() {
   })
   const { data: authData, error: authError } = await client.auth.signInWithPassword({ email, password })
   if (authError || !authData.session || !authData.user) throw new Error(`QA_AUTH_FAILED ${authError?.message || 'missing_session'}`)
-  const { data: membership, error: membershipError } = await client
-    .from('internal_staff_memberships')
-    .select('role,status')
-    .eq('user_id', authData.user.id)
-    .eq('role', 'admin')
-    .eq('status', 'active')
-    .maybeSingle()
-  if (membershipError || !membership) throw new Error(`QA_MEMBERSHIP_FAILED ${membershipError?.message || 'missing_admin_active'}`)
+  const authorization = await verifyInternalStaffAuthorization(client)
+  if (!authorization.authorized) throw new Error('QA_MEMBERSHIP_FAILED')
   return { session: authData.session, userId: authData.user.id }
 }
 

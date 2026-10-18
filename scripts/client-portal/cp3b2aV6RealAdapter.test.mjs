@@ -105,7 +105,7 @@ describe('CP-3B.2A.6R.1E final real PostgreSQL adapter', () => {
     expect(readOnly.gitState.head).toBe(AUTHORIZED_COMMIT)
   })
 
-  it('revalidates the capability map immediately before consuming it', { timeout: 15_000 }, () => {
+  it('revalidates the capability map immediately before consuming it', () => {
     const seen = []
     const expectedError = new Error('V6_CAPABILITY_MAP_TOCTOU')
     expect(() => preflightV6(environment(), {

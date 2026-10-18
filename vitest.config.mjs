@@ -6,8 +6,9 @@ export default defineConfig({
     // Several QA contract tests intentionally launch isolated Git/Node/CLI
     // processes. Running those files concurrently on Windows makes the
     // frozen package proof exceed Vitest's per-test budget; serialize files
-    // while keeping each test's assertions and default timeout unchanged.
+    // and allow up to 15 seconds for each process-backed contract assertion.
     fileParallelism: false,
+    testTimeout: 15_000,
     include: [
       'api/**/*.test.js',
       'src/**/*.test.ts',

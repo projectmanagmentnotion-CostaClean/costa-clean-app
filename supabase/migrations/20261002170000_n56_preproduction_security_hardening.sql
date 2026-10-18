@@ -1,5 +1,14 @@
 begin;
 
+-- These legacy SECURITY DEFINER helpers are maintenance/trigger internals, not
+-- Data API endpoints. The invoice batch embeds a fixed identity and writes
+-- business records, so only its owner may invoke it directly. Trigger
+-- execution does not require callers to hold EXECUTE on the trigger function.
+revoke all on function public.debug_run_authorized_invoice_batch() from public, anon, authenticated, service_role;
+revoke all on function public.run_authorized_invoice_batch() from public, anon, authenticated, service_role;
+revoke all on function public.n21_assert_existing_job_quote_compatibility() from public, anon, authenticated, service_role;
+revoke all on function public.rls_auto_enable() from public, anon, authenticated, service_role;
+
 -- Keep direct Product access internal-staff-only while preserving the existing
 -- authenticated client workflow and the server-side service-role boundary.
 drop policy if exists "Allow authenticated insert expenses" on public.expenses;

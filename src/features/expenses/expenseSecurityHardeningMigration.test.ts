@@ -11,6 +11,20 @@ function isSafeExpenseReceiptPath(path: string): boolean {
 }
 
 describe('N5.6 pre-production security hardening migration', () => {
+  it('removes API roles from legacy SECURITY DEFINER batch and trigger helpers', () => {
+    for (const signature of [
+      'debug_run_authorized_invoice_batch()',
+      'run_authorized_invoice_batch()',
+      'n21_assert_existing_job_quote_compatibility()',
+      'rls_auto_enable()',
+    ]) {
+      expect(migration).toContain(
+        `revoke all on function public.${signature} from public, anon, authenticated, service_role`,
+      )
+    }
+    expect(migration).toContain('execution does not require callers to hold EXECUTE')
+  })
+
   it('preserves Supabase-managed Storage table ACL while closing broad receipts policies', () => {
     expect(migration).toContain('revoke all on table public.expenses from public, anon')
     expect(migration).toContain('revoke all on table public.expense_capture_sessions from public, anon')

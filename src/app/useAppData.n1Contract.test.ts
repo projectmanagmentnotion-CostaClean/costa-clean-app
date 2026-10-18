@@ -15,7 +15,13 @@ describe('N1 refresh architecture source contract', () => {
 
   it('keeps reconnect handling on canonical refresh and does not introduce a parallel path', () => {
     expect(source).toContain("window.addEventListener('online', handleOnline)")
-    expect(source).toContain('void refreshDomains(getDomainsForView(currentView))')
+    expect(source).toContain('void refreshDomains(missingDomains)')
+    expect(source).toContain('filterDomainsByStaleness(')
+    expect(source).toContain('lastSuccessfulRefreshAtRef.current')
+    expect(source).toContain('pendingRefreshPromisesRef.current')
+    expect(source).toContain('Promise.all(existingRefreshes).then(retryStaleJoined)')
+    expect(source).toContain('const requestedDomains = mergeDomains(domainsToRefresh, pendingStaleDomains)')
+    expect(source).toContain('const handleOnline = () => {\n      requestForegroundRefresh()')
     expect(source).toContain("window.addEventListener('offline', handleOffline)")
   })
 

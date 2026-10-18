@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AppView } from './navigation'
 import type { SyncStatus } from './syncStatus'
 import {
+  filterDomainsByStaleness,
   getDomainsForScope,
   getDomainsForView,
   mergeDomains,
@@ -114,8 +115,8 @@ export function useAppData(currentView: AppView) {
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
   const [intakeRealtimeNotifications, setIntakeRealtimeNotifications] = useState<IntakeRealtimeNotification[]>([])
   const [loadedDomains, setLoadedDomains] = useState<AppDataDomain[]>([])
-  const lastRefreshAtRef = useRef(0)
-  const refreshQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const lastSuccessfulRefreshAtRef = useRef<Map<AppDataDomain, number>>(new Map())
+  const pendingRefreshPromisesRef = useRef<Map<AppDataDomain, Promise<void>>>(new Map())
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
   const seenIntakeRealtimeNotificationIdsRef = useRef<Set<string>>(new Set())
@@ -285,26 +286,58 @@ export function useAppData(currentView: AppView) {
   }, [])
 
   const runRefresh = useCallback((domains: AppDataDomain[]) => {
-    const domainsToRefresh = mergeDomains([], domains)
-    if (domainsToRefresh.length === 0) return Promise.resolve()
+    const scheduleRefresh = (requestedDomains: AppDataDomain[], retriesRemaining: number): Promise<void> => {
+      const existingDomains = requestedDomains.filter((domain) => pendingRefreshPromisesRef.current.has(domain))
+      const existingRefreshes = existingDomains
+        .map((domain) => pendingRefreshPromisesRef.current.get(domain))
+        .filter((refresh): refresh is Promise<void> => refresh !== undefined)
+      const domainsToRefresh = requestedDomains.filter((domain) => !pendingRefreshPromisesRef.current.has(domain))
 
-    const executeRefresh = async () => {
-      if (!isBrowserOnline()) {
-        setSyncStatus('offline')
-        return
+      const retryStaleJoined = (): Promise<void> => {
+        if (retriesRemaining === 0 || existingDomains.length === 0) return Promise.resolve()
+        const staleJoinedDomains = filterDomainsByStaleness(
+          existingDomains,
+          lastSuccessfulRefreshAtRef.current,
+          new Set(pendingRefreshPromisesRef.current.keys()),
+          Date.now(),
+          foregroundRefreshStaleTimeMs,
+        )
+        return staleJoinedDomains.length > 0
+          ? scheduleRefresh(staleJoinedDomains, retriesRemaining - 1)
+          : Promise.resolve()
       }
 
-      setSyncStatus('syncing')
-      const loadResults = await Promise.all(domainsToRefresh.map(async (domain) => ({ domain, succeeded: await domainLoaders[domain]() })))
-      const succeededDomains = loadResults.filter((result) => result.succeeded).map((result) => result.domain)
-      markDomainsLoaded(succeededDomains)
-      lastRefreshAtRef.current = Date.now()
-      setSyncStatus(succeededDomains.length === domainsToRefresh.length ? 'fresh' : 'error')
+      if (domainsToRefresh.length === 0) {
+        return Promise.all(existingRefreshes).then(retryStaleJoined).then(() => undefined)
+      }
+
+      const executeRefresh = async (): Promise<void> => {
+        try {
+          if (!isBrowserOnline()) {
+            setSyncStatus('offline')
+            return
+          }
+
+          setSyncStatus('syncing')
+          const loadResults = await Promise.all(domainsToRefresh.map(async (domain) => ({ domain, succeeded: await domainLoaders[domain]() })))
+          const succeededDomains = loadResults.filter((result) => result.succeeded).map((result) => result.domain)
+          const refreshedAt = Date.now()
+          markDomainsLoaded(succeededDomains)
+          for (const domain of succeededDomains) lastSuccessfulRefreshAtRef.current.set(domain, refreshedAt)
+          setSyncStatus(succeededDomains.length === domainsToRefresh.length ? 'fresh' : 'error')
+        } catch {
+          setSyncStatus('error')
+        } finally {
+          for (const domain of domainsToRefresh) pendingRefreshPromisesRef.current.delete(domain)
+        }
+      }
+
+      const refreshPromise = Promise.resolve().then(executeRefresh)
+      for (const domain of domainsToRefresh) pendingRefreshPromisesRef.current.set(domain, refreshPromise)
+      return Promise.all([...existingRefreshes, refreshPromise]).then(retryStaleJoined).then(() => undefined)
     }
 
-    const queuedRefresh = refreshQueueRef.current.then(executeRefresh, executeRefresh)
-    refreshQueueRef.current = queuedRefresh.catch(() => undefined)
-    return queuedRefresh
+    return scheduleRefresh(mergeDomains([], domains), 1)
   }, [
     domainLoaders,
     markDomainsLoaded,
@@ -359,13 +392,14 @@ export function useAppData(currentView: AppView) {
     let isMounted = true
     const requiredDomains = getDomainsForView(currentView)
     const missingDomains = requiredDomains.filter((domain) => !loadedDomainSet.current.has(domain))
+
     setIsCurrentViewDataLoading(missingDomains.length > 0)
 
-    void refreshDomains(requiredDomains).finally(() => {
+    void refreshDomains(missingDomains).finally(() => {
       if (isMounted) {
         setIsCurrentViewDataLoading(false)
       }
-    })
+    }).catch(() => undefined)
 
     return () => {
       isMounted = false
@@ -378,11 +412,22 @@ export function useAppData(currentView: AppView) {
       return
     }
 
-    if (Date.now() - lastRefreshAtRef.current < foregroundRefreshStaleTimeMs) {
-      return
-    }
-
-    void refreshDomains(getDomainsForView(currentView))
+    const now = Date.now()
+    const activeViewDomains = getDomainsForView(currentView)
+    const pendingStaleDomains = activeViewDomains.filter((domain) => {
+      if (!pendingRefreshPromisesRef.current.has(domain)) return false
+      const refreshedAt = lastSuccessfulRefreshAtRef.current.get(domain)
+      return refreshedAt === undefined || now - refreshedAt >= foregroundRefreshStaleTimeMs
+    })
+    const domainsToRefresh = filterDomainsByStaleness(
+      activeViewDomains,
+      lastSuccessfulRefreshAtRef.current,
+      new Set(pendingRefreshPromisesRef.current.keys()),
+      now,
+      foregroundRefreshStaleTimeMs,
+    )
+    const requestedDomains = mergeDomains(domainsToRefresh, pendingStaleDomains)
+    if (requestedDomains.length > 0) void refreshDomains(requestedDomains).catch(() => undefined)
   }, [currentView, refreshDomains])
 
   useEffect(() => {
@@ -393,7 +438,7 @@ export function useAppData(currentView: AppView) {
     }
 
     const handleOnline = () => {
-      void refreshDomains(getDomainsForView(currentView))
+      requestForegroundRefresh()
     }
 
     const handleOffline = () => {

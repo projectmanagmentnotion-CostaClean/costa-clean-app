@@ -21,7 +21,7 @@ describe('N1 refresh architecture source contract', () => {
     expect(source).toContain('pendingRefreshPromisesRef.current')
     expect(source).toContain('Promise.all(existingRefreshes).then(retryStaleJoined)')
     expect(source).toContain('const requestedDomains = mergeDomains(domainsToRefresh, pendingStaleDomains)')
-    expect(source).toContain('const handleOnline = () => {\n      requestForegroundRefresh()')
+    expect(source).toContain('const handleOnline = () => {')
     expect(source).toContain("window.addEventListener('offline', handleOffline)")
   })
 

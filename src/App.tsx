@@ -9,9 +9,6 @@ import { AuthPage } from './features/auth/AuthPage'
 import { createLogoutFlow } from './features/auth/logoutFlow'
 import { clearStoredSupabaseSession, getSupabaseClient } from './lib/supabase'
 import { isRecoverableAuthBootstrapError } from './lib/authBootstrap'
-import { isPublicGymManualQuizPath, isPublicQuoteRequestPath } from './app/publicStandaloneRoutes'
-import { PublicGymManualQuizPage } from './pages/PublicGymManualQuizPage'
-import { PublicQuoteRequestPage } from './pages/PublicQuoteRequestPage'
 import { DevStepFlowPreviewPage } from './pages/DevStepFlowPreviewPage'
 import { ToastProvider } from './shared/toasts/ToastProvider'
 import { useV3FeatureFlag } from './v3/navigation/useV3FeatureFlag'
@@ -20,9 +17,6 @@ import { brandAssets } from './v3/brand/brandAssets'
 
 function App() {
   const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
-  const isPublicQuoteRequestStandalone = isPublicQuoteRequestPath(pathname)
-  const isPublicGymManualQuizStandalone = isPublicGymManualQuizPath(pathname)
-  const isPublicStandalonePath = isPublicQuoteRequestStandalone || isPublicGymManualQuizStandalone
   const isDevStepFlowPreview = import.meta.env.DEV && pathname === '/dev/step-flow-preview'
   const isV3Surface = useV3FeatureFlag()
   const showBuildInfo = shouldShowBuildInfo()
@@ -81,7 +75,7 @@ function App() {
     let authCleanup: (() => void) | undefined
 
     async function bootstrapAuth() {
-      if (isPublicStandalonePath || isDevStepFlowPreview) {
+      if (isDevStepFlowPreview) {
         if (isMounted) {
           setIsBooting(false)
         }
@@ -164,7 +158,7 @@ function App() {
         authCleanup()
       }
     }
-  }, [isDevStepFlowPreview, isPublicStandalonePath])
+  }, [isDevStepFlowPreview])
 
   function renderWithBuildInfo(content: ReactNode) {
     return (
@@ -173,14 +167,6 @@ function App() {
         {showBuildInfo ? <BuildInfoBadge /> : null}
       </ToastProvider>
     )
-  }
-
-  if (isPublicQuoteRequestStandalone) {
-    return renderWithBuildInfo(<PublicQuoteRequestPage />)
-  }
-
-  if (isPublicGymManualQuizStandalone) {
-    return renderWithBuildInfo(<PublicGymManualQuizPage />)
   }
 
   if (isDevStepFlowPreview) {

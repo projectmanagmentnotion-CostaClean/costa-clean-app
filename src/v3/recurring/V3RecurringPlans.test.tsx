@@ -26,7 +26,7 @@ const plan = {
   frequency: 'monthly' as const,
   status: 'active' as const,
   default_invoice_status: 'draft' as const,
-  next_issue_date: '2026-10-01',
+  next_issue_date: '2099-10-01',
   last_issued_at: null,
   tax_rate: 0.21,
   notes: null,

@@ -10,6 +10,8 @@ describe('V3 global presentation', () => {
     expect(html).toContain('role="status"')
     expect(html).toContain('aria-busy="true"')
     expect(html).toContain('v3-global-state')
+    expect(html).toContain('v3-brand-lockup')
+    expect(html).toContain('Costa Clean')
     expect(html).not.toContain('cc-boot-screen')
     expect(html).not.toContain('auth-card')
     expect(html).not.toMatch(/[\u2600-\u27bf]/u)

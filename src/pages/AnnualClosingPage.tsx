@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { DeferredContentFallback } from '../components/DeferredContentFallback'
 import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLabel } from '../app/displayFormat'
 import type { AppView } from '../app/navigation'
@@ -28,6 +28,7 @@ import type { PaymentListItem } from '../features/payments/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuoteListItem } from '../features/quotes/types'
 import type { AnnualClosingIncidence, AnnualClosingRecord, AnnualClosingSummary } from '../features/annualClosing/types'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../features/closing/fiscalPeriodNotes'
 
 type AnnualClosingWorkspace = 'operations' | 'manager_pack' | 'dossier' | 'export_folder' | 'internal_study' | 'ai_summary'
 
@@ -132,7 +133,7 @@ export function AnnualClosingPage({
   onSaveClosing,
 }: AnnualClosingPageProps) {
   const [selectedYear, setSelectedYear] = useState(defaultFiscalYear)
-  const [notes, setNotes] = useState('')
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -148,15 +149,13 @@ export function AnnualClosingPage({
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
 
-  useEffect(() => {
-    setSelectedYear(defaultFiscalYear)
-  }, [defaultFiscalYear])
-
   const summary = summaryByYear.get(selectedYear)
   const closing = useMemo(
     () => closings.find((item) => item.fiscal_year === selectedYear) ?? null,
     [closings, selectedYear],
   )
+  const notePeriodKey = String(selectedYear)
+  const notes = readFiscalPeriodNote(noteDraft, notePeriodKey, closing?.notes)
   const yearInvoices = useMemo(
     () => invoices.filter((invoice) => matchesDateYear(invoice.issue_date, selectedYear)),
     [invoices, selectedYear],
@@ -169,21 +168,6 @@ export function AnnualClosingPage({
     () => expenses.filter((expense) => matchesExpenseYear(expense, selectedYear)),
     [expenses, selectedYear],
   )
-
-  useEffect(() => {
-    setNotes(closing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setDocumentActionError(null)
-    setExportResult(null)
-    setExportError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-
-    if (!closing && workspace !== 'operations' && workspace !== 'internal_study') {
-      setWorkspace('operations')
-    }
-  }, [closing, selectedYear, workspace])
 
   const yearPaymentsTotal = useMemo(
     () => yearPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
@@ -792,7 +776,7 @@ export function AnnualClosingPage({
               <span>Notas de cierre anual</span>
               <textarea
                 value={notes}
-                onChange={(event) => setNotes(event.target.value)}
+                onChange={(event) => setNoteDraft(writeFiscalPeriodNote(notePeriodKey, event.target.value))}
                 placeholder="Observaciones breves del cierre anual, incidencias o contexto operativo."
               />
             </label>
@@ -1676,9 +1660,6 @@ export function AnnualClosingPage({
     </section>
   )
 }
-
-
-
 
 
 

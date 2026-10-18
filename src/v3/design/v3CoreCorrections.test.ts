@@ -20,7 +20,7 @@ describe('V3 core correction contracts', () => {
     const ghostRule = css.match(/\.v3-action--ghost \{[^}]+\}/u)?.[0] ?? ''
 
     expect(contactRule).toContain('min-height: var(--v3-touch-min)')
-    expect(ghostRule).toContain('min-height: var(--v3-touch-min)')
+    expect(ghostRule).toContain('min-height: var(--v3-control-height-compact)')
   })
 
   it('keeps compact operational filter tabs at the certified 44px minimum width', () => {

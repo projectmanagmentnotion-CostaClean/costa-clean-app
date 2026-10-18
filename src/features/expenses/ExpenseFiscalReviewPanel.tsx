@@ -1,8 +1,3 @@
-import { useState } from 'react'
-import {
-  analyzeExpenseFiscalIntelligence,
-  saveExpenseFiscalIntelligenceResult,
-} from './fiscalIntelligenceApi'
 import {
   getExpenseAiFiscalClassificationLabel,
   getExpenseDocumentSupportStatusLabel,
@@ -13,7 +8,6 @@ import {
 
 interface ExpenseFiscalReviewPanelProps {
   expense: ExpenseListItem
-  onExpenseUpdated: () => Promise<void>
 }
 
 function formatCurrency(value: number | null | undefined): string {
@@ -44,33 +38,7 @@ function formatConfidence(value: number | null | undefined): string {
 
 export function ExpenseFiscalReviewPanel({
   expense,
-  onExpenseUpdated,
 }: ExpenseFiscalReviewPanelProps) {
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
-  const [fiscalAssistiveNotice, setFiscalAssistiveNotice] = useState<string | null>(null)
-
-  async function handleAnalyze() {
-    setSaveError(null)
-    setSuccessMessage(null)
-    setIsAnalyzing(true)
-
-    try {
-      const response = await analyzeExpenseFiscalIntelligence(expense)
-      await saveExpenseFiscalIntelligenceResult(expense.id, response)
-      setFiscalAssistiveNotice(response.result.assistive_notice)
-      await onExpenseUpdated()
-      setSuccessMessage('Estimacion fiscal actualizada correctamente.')
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error desconocido generando la estimacion fiscal.'
-      setSaveError(message)
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }
-
   return (
     <section className="data-section cc-expense-surface cc-expense-surface--fiscal">
       <div className="section-header page-header-actions">
@@ -79,14 +47,6 @@ export function ExpenseFiscalReviewPanel({
           <p>Separa estado manual, lectura asistida y riesgo sin competir con la edicion principal.</p>
         </div>
 
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => void handleAnalyze()}
-          disabled={isAnalyzing}
-        >
-          {isAnalyzing ? 'Analizando...' : expense.ai_fiscal_classification ? 'Actualizar estimacion' : 'Analizar fiscalmente'}
-        </button>
       </div>
 
       <div className="cc-expense-surface__grid">
@@ -114,20 +74,6 @@ export function ExpenseFiscalReviewPanel({
           <small>Impacta la lectura fiscal y la deducibilidad del IVA.</small>
         </article>
       </div>
-
-      {saveError ? (
-        <div className="cc-alert cc-alert--error">
-          <strong>No se pudo completar la operacion</strong>
-          <p>{saveError}</p>
-        </div>
-      ) : null}
-
-      {successMessage ? (
-        <div className="cc-alert cc-alert--success">
-          <strong>Operacion correcta</strong>
-          <p>{successMessage}</p>
-        </div>
-      ) : null}
 
       {expense.ai_fiscal_classification ? (
         <>
@@ -211,8 +157,7 @@ export function ExpenseFiscalReviewPanel({
             <div className="cc-alert cc-alert--warning">
               <strong>Estimacion asistida</strong>
               <p>
-                {fiscalAssistiveNotice ??
-                  'Estimacion orientativa basada en datos estructurados del gasto. No sustituye la revision de una gestoria ni constituye asesoramiento fiscal.'}
+                Estimacion orientativa basada en datos estructurados del gasto. No sustituye la revision de una gestoria ni constituye asesoramiento fiscal.
               </p>
             </div>
           </section>
@@ -220,7 +165,7 @@ export function ExpenseFiscalReviewPanel({
       ) : (
         <div className="empty-state">
           <strong>Sin estimacion fiscal asistida</strong>
-          <p>Usa Analizar fiscalmente para generar una lectura prudente sin mezclarla con la edicion del gasto.</p>
+          <p>La lectura asistida heredada está retirada. Usa Smart Expense cuando la captura y extracción estén habilitadas.</p>
         </div>
       )}
     </section>

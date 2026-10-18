@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AppView } from './navigation'
 import type { SyncStatus } from './syncStatus'
 import {
-  filterDomainsByLoadedState,
+  filterDomainsByStaleness,
   getDomainsForScope,
   getDomainsForView,
   mergeDomains,
@@ -115,19 +115,20 @@ export function useAppData(currentView: AppView) {
   const [annualClosingError, setAnnualClosingError] = useState<string | null>(null)
   const [intakeRealtimeNotifications, setIntakeRealtimeNotifications] = useState<IntakeRealtimeNotification[]>([])
   const [loadedDomains, setLoadedDomains] = useState<AppDataDomain[]>([])
-  const lastRefreshAtRef = useRef(0)
-  const isRefreshingRef = useRef(false)
+  const lastSuccessfulRefreshAtRef = useRef<Map<AppDataDomain, number>>(new Map())
+  const pendingRefreshPromisesRef = useRef<Map<AppDataDomain, Promise<void>>>(new Map())
   const pendingRealtimeRefreshRef = useRef<number | null>(null)
   const pendingRealtimeScopeRef = useRef<RefreshScope | null>(null)
-  const pendingDomainRefreshRef = useRef<AppDataDomain[]>([])
   const seenIntakeRealtimeNotificationIdsRef = useRef<Set<string>>(new Set())
 
   const loadLeads = useCallback(async () => {
     try {
       setLeadError(null)
       setLeads(await listLeads())
+      return true
     } catch (err) {
       setLeadError(getErrorMessage(err, 'Error desconocido cargando leads.'))
+      return false
     }
   }, [])
 
@@ -135,8 +136,10 @@ export function useAppData(currentView: AppView) {
     try {
       setLeadDraftError(null)
       setLeadDrafts(await listLeadDrafts())
+      return true
     } catch (err) {
       setLeadDraftError(getErrorMessage(err, 'Error desconocido cargando borradores de intake.'))
+      return false
     }
   }, [])
 
@@ -144,8 +147,10 @@ export function useAppData(currentView: AppView) {
     try {
       setClientError(null)
       setClients(await listClients())
+      return true
     } catch (err) {
       setClientError(getErrorMessage(err, 'Error desconocido cargando clients.'))
+      return false
     }
   }, [])
 
@@ -153,8 +158,10 @@ export function useAppData(currentView: AppView) {
     try {
       setPropertyError(null)
       setProperties(await listProperties())
+      return true
     } catch (err) {
       setPropertyError(getErrorMessage(err, 'Error desconocido cargando properties.'))
+      return false
     }
   }, [])
 
@@ -162,8 +169,10 @@ export function useAppData(currentView: AppView) {
     try {
       setQuoteError(null)
       setQuotes(await listQuotes())
+      return true
     } catch (err) {
       setQuoteError(getErrorMessage(err, 'Error desconocido cargando quotes.'))
+      return false
     }
   }, [])
 
@@ -171,8 +180,10 @@ export function useAppData(currentView: AppView) {
     try {
       setJobError(null)
       setJobs(await listJobs())
+      return true
     } catch (err) {
       setJobError(getErrorMessage(err, 'Error desconocido cargando jobs.'))
+      return false
     }
   }, [])
 
@@ -180,8 +191,10 @@ export function useAppData(currentView: AppView) {
     try {
       setInvoiceError(null)
       setInvoices(await listInvoices())
+      return true
     } catch (err) {
       setInvoiceError(getErrorMessage(err, 'Error desconocido cargando invoices.'))
+      return false
     }
   }, [])
 
@@ -189,8 +202,10 @@ export function useAppData(currentView: AppView) {
     try {
       setExpenseError(null)
       setExpenses(await listExpenses())
+      return true
     } catch (err) {
       setExpenseError(getErrorMessage(err, 'Error desconocido cargando expenses.'))
+      return false
     }
   }, [])
 
@@ -198,8 +213,10 @@ export function useAppData(currentView: AppView) {
     try {
       setPaymentError(null)
       setPayments(await listPayments())
+      return true
     } catch (err) {
       setPaymentError(getErrorMessage(err, 'Error desconocido cargando payments.'))
+      return false
     }
   }, [])
 
@@ -207,8 +224,10 @@ export function useAppData(currentView: AppView) {
     try {
       setRecurringInvoicePlanError(null)
       setRecurringInvoicePlans(await listRecurringInvoicePlans())
+      return true
     } catch (err) {
       setRecurringInvoicePlanError(getErrorMessage(err, 'Error desconocido cargando automatizaciones recurrentes.'))
+      return false
     }
   }, [])
 
@@ -216,8 +235,10 @@ export function useAppData(currentView: AppView) {
     try {
       setQuarterlyClosingError(null)
       setQuarterlyClosings(await listQuarterlyClosings())
+      return true
     } catch (err) {
       setQuarterlyClosingError(getErrorMessage(err, 'Error desconocido cargando cierres trimestrales.'))
+      return false
     }
   }, [])
 
@@ -225,12 +246,14 @@ export function useAppData(currentView: AppView) {
     try {
       setAnnualClosingError(null)
       setAnnualClosings(await listAnnualClosings())
+      return true
     } catch (err) {
       setAnnualClosingError(getErrorMessage(err, 'Error desconocido cargando cierres anuales.'))
+      return false
     }
   }, [])
 
-  const domainLoaders = useMemo<Record<AppDataDomain, () => Promise<void>>>(() => ({
+  const domainLoaders = useMemo<Record<AppDataDomain, () => Promise<boolean>>>(() => ({
     leads: loadLeads,
     leadDrafts: loadLeadDrafts,
     clients: loadClients,
@@ -262,37 +285,59 @@ export function useAppData(currentView: AppView) {
     setLoadedDomains((current) => mergeDomains(current, domains))
   }, [])
 
-  const runRefresh = useCallback(async (domains: AppDataDomain[]) => {
-    const domainsToRefresh = mergeDomains([], domains)
-    if (domainsToRefresh.length === 0) return
+  const runRefresh = useCallback((domains: AppDataDomain[]) => {
+    const scheduleRefresh = (requestedDomains: AppDataDomain[], retriesRemaining: number): Promise<void> => {
+      const existingDomains = requestedDomains.filter((domain) => pendingRefreshPromisesRef.current.has(domain))
+      const existingRefreshes = existingDomains
+        .map((domain) => pendingRefreshPromisesRef.current.get(domain))
+        .filter((refresh): refresh is Promise<void> => refresh !== undefined)
+      const domainsToRefresh = requestedDomains.filter((domain) => !pendingRefreshPromisesRef.current.has(domain))
 
-    if (!isBrowserOnline()) {
-      setSyncStatus('offline')
-      return
-    }
-
-    if (isRefreshingRef.current) {
-      pendingDomainRefreshRef.current = mergeDomains(pendingDomainRefreshRef.current, domainsToRefresh)
-      return
-    }
-
-    isRefreshingRef.current = true
-    setSyncStatus('syncing')
-
-    try {
-      await Promise.all(domainsToRefresh.map((domain) => domainLoaders[domain]()))
-      markDomainsLoaded(domainsToRefresh)
-      lastRefreshAtRef.current = Date.now()
-      setSyncStatus('fresh')
-    } finally {
-      isRefreshingRef.current = false
-
-      if (pendingDomainRefreshRef.current.length > 0) {
-        const queuedDomains = pendingDomainRefreshRef.current
-        pendingDomainRefreshRef.current = []
-        void runRefresh(queuedDomains)
+      const retryStaleJoined = (): Promise<void> => {
+        if (retriesRemaining === 0 || existingDomains.length === 0) return Promise.resolve()
+        const staleJoinedDomains = filterDomainsByStaleness(
+          existingDomains,
+          lastSuccessfulRefreshAtRef.current,
+          new Set(pendingRefreshPromisesRef.current.keys()),
+          Date.now(),
+          foregroundRefreshStaleTimeMs,
+        )
+        return staleJoinedDomains.length > 0
+          ? scheduleRefresh(staleJoinedDomains, retriesRemaining - 1)
+          : Promise.resolve()
       }
+
+      if (domainsToRefresh.length === 0) {
+        return Promise.all(existingRefreshes).then(retryStaleJoined).then(() => undefined)
+      }
+
+      const executeRefresh = async (): Promise<void> => {
+        try {
+          if (!isBrowserOnline()) {
+            setSyncStatus('offline')
+            return
+          }
+
+          setSyncStatus('syncing')
+          const loadResults = await Promise.all(domainsToRefresh.map(async (domain) => ({ domain, succeeded: await domainLoaders[domain]() })))
+          const succeededDomains = loadResults.filter((result) => result.succeeded).map((result) => result.domain)
+          const refreshedAt = Date.now()
+          markDomainsLoaded(succeededDomains)
+          for (const domain of succeededDomains) lastSuccessfulRefreshAtRef.current.set(domain, refreshedAt)
+          setSyncStatus(succeededDomains.length === domainsToRefresh.length ? 'fresh' : 'error')
+        } catch {
+          setSyncStatus('error')
+        } finally {
+          for (const domain of domainsToRefresh) pendingRefreshPromisesRef.current.delete(domain)
+        }
+      }
+
+      const refreshPromise = Promise.resolve().then(executeRefresh)
+      for (const domain of domainsToRefresh) pendingRefreshPromisesRef.current.set(domain, refreshPromise)
+      return Promise.all([...existingRefreshes, refreshPromise]).then(retryStaleJoined).then(() => undefined)
     }
+
+    return scheduleRefresh(mergeDomains([], domains), 1)
   }, [
     domainLoaders,
     markDomainsLoaded,
@@ -348,20 +393,13 @@ export function useAppData(currentView: AppView) {
     const requiredDomains = getDomainsForView(currentView)
     const missingDomains = requiredDomains.filter((domain) => !loadedDomainSet.current.has(domain))
 
-    if (missingDomains.length === 0) {
-      setIsCurrentViewDataLoading(false)
-      return () => {
-        isMounted = false
-      }
-    }
-
-    setIsCurrentViewDataLoading(true)
+    setIsCurrentViewDataLoading(missingDomains.length > 0)
 
     void refreshDomains(missingDomains).finally(() => {
       if (isMounted) {
         setIsCurrentViewDataLoading(false)
       }
-    })
+    }).catch(() => undefined)
 
     return () => {
       isMounted = false
@@ -374,13 +412,22 @@ export function useAppData(currentView: AppView) {
       return
     }
 
-    if (Date.now() - lastRefreshAtRef.current < foregroundRefreshStaleTimeMs) {
-      return
-    }
-
+    const now = Date.now()
     const activeViewDomains = getDomainsForView(currentView)
-    const domainsToRefresh = filterDomainsByLoadedState(activeViewDomains, loadedDomainSet.current)
-    void refreshDomains(domainsToRefresh.length > 0 ? domainsToRefresh : activeViewDomains)
+    const pendingStaleDomains = activeViewDomains.filter((domain) => {
+      if (!pendingRefreshPromisesRef.current.has(domain)) return false
+      const refreshedAt = lastSuccessfulRefreshAtRef.current.get(domain)
+      return refreshedAt === undefined || now - refreshedAt >= foregroundRefreshStaleTimeMs
+    })
+    const domainsToRefresh = filterDomainsByStaleness(
+      activeViewDomains,
+      lastSuccessfulRefreshAtRef.current,
+      new Set(pendingRefreshPromisesRef.current.keys()),
+      now,
+      foregroundRefreshStaleTimeMs,
+    )
+    const requestedDomains = mergeDomains(domainsToRefresh, pendingStaleDomains)
+    if (requestedDomains.length > 0) void refreshDomains(requestedDomains).catch(() => undefined)
   }, [currentView, refreshDomains])
 
   useEffect(() => {
@@ -391,9 +438,7 @@ export function useAppData(currentView: AppView) {
     }
 
     const handleOnline = () => {
-      const activeViewDomains = getDomainsForView(currentView)
-      const domainsToRefresh = filterDomainsByLoadedState(activeViewDomains, loadedDomainSet.current)
-      void refreshDomains(domainsToRefresh.length > 0 ? domainsToRefresh : activeViewDomains)
+      requestForegroundRefresh()
     }
 
     const handleOffline = () => {
@@ -415,12 +460,18 @@ export function useAppData(currentView: AppView) {
     }
   }, [currentView, refreshDomains, requestForegroundRefresh])
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === 'visible') requestForegroundRefresh()
+    }, 60_000)
+
+    return () => window.clearInterval(intervalId)
+  }, [requestForegroundRefresh])
+
   const runScopedRefresh = useCallback((scope: RefreshScope) => {
     const scopeDomains = getDomainsForScope(scope)
     const activeViewDomains = new Set(getDomainsForView(currentView))
-    const loadedScopeDomains = scope === 'all'
-      ? scopeDomains.filter((domain) => loadedDomainSet.current.has(domain))
-      : scopeDomains.filter((domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain))
+    const loadedScopeDomains = scopeDomains.filter((domain) => loadedDomainSet.current.has(domain) || activeViewDomains.has(domain))
 
     void refreshDomains(loadedScopeDomains)
   }, [currentView, refreshDomains])

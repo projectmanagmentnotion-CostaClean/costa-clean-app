@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { normalizeClientFiscalData } from './clientFiscalData'
 import { updateClientFiscalData } from './clientWriteApi'
 import type { ClientListItem } from './types'
@@ -26,15 +26,6 @@ export function ClientBillingDetailsInlineForm({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
-
-  useEffect(() => {
-    setForm({
-      tax_id: client.tax_id ?? '',
-      billing_address: client.billing_address ?? '',
-    })
-    setError(null)
-    setSuccessMessage(null)
-  }, [client.billing_address, client.id, client.tax_id])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setSuccessMessage(null)

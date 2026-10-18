@@ -9,6 +9,7 @@ import {
   getExpenseDocumentSupportStatusLabel,
   type ExpenseListItem,
 } from '../expenses/types'
+import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
@@ -96,17 +97,13 @@ export function buildFiscalPeriodExportData(input: {
 }): FiscalPeriodExportData {
   const period = resolveFiscalPeriod(input.selection)
   const invoices = input.invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
-  const payments = input.payments.filter((payment) => isDateWithinFiscalPeriod(payment.payment_date, period))
+  const invoicePaymentCohort = buildInvoicePaymentCohort(input.payments, invoices)
+  const payments = invoicePaymentCohort.payments
   const expenses = input.expenses.filter((expense) => isDateWithinFiscalPeriod(expense.expense_date, period))
   const quotes = filterRelevantQuotes(input.quotes, period)
 
-  const invoicePaidById = new Map<string, number>()
-  for (const payment of input.payments) {
-    invoicePaidById.set(payment.invoice_id, (invoicePaidById.get(payment.invoice_id) ?? 0) + Number(payment.amount || 0))
-  }
-
   const pendingInvoices = invoices.filter((invoice) => {
-    const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
+    const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
     return Math.max(Number(invoice.total || 0) - paidAmount, 0) > 0.009
   })
 
@@ -219,7 +216,7 @@ export function buildFiscalPeriodExportData(input: {
       invoiced_total: roundMoney(invoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0)),
       collected_total: roundMoney(payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)),
       outstanding_total: roundMoney(pendingInvoices.reduce((sum, invoice) => {
-        const paidAmount = invoice.paid_amount ?? invoicePaidById.get(invoice.id) ?? 0
+        const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
         return sum + Math.max(Number(invoice.total || 0) - paidAmount, 0)
       }, 0)),
       expenses_total: roundMoney(expenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0)),
@@ -263,8 +260,8 @@ export function buildFiscalPeriodIncidences(data: FiscalPeriodExportData) {
     },
     {
       id: 'period_payments',
-      label: 'Cobros registrados del periodo',
-      detail: `${data.payments.length} cobro(s) incluidos en el paquete.`,
+      label: 'Cobros de facturas del periodo',
+      detail: `${data.payments.length} cobro(s) vinculados a facturas emitidas en el periodo.`,
       count: data.payments.length,
       tone: 'neutral' as const,
     },

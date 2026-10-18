@@ -118,13 +118,6 @@ export function ExpenseEditFlow({
   const [pendingDuplicateGroups, setPendingDuplicateGroups] = useState<ReturnType<typeof findExpenseDuplicateGroups>>([])
 
   useEffect(() => {
-    setForm(buildFormState(expense))
-    setCurrentStep(0)
-    setError(null)
-    setIsDirty(false)
-  }, [expense])
-
-  useEffect(() => {
     onDirtyChange?.(isDirty)
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
@@ -383,6 +376,7 @@ export function ExpenseEditFlow({
 
             <div className="form-field form-field-full">
               <ExpenseSupportFieldset
+                key={expense?.id ?? 'new-expense'}
                 expense={expense}
                 documentType={form.document_type}
                 documentSupportStatus={form.document_support_status}

@@ -44,6 +44,7 @@ describe('V3 dedicated invoice tree', () => {
     expect(workspace).toContain('Líneas')
     expect(workspace).toContain('Cobros')
     expect(workspace).toContain('Documento')
+    expect(workspace).toContain('Vista previa de factura')
   })
 
   it('keeps the invoice amount hierarchy and transfer confirmation tied to the existing outstanding value', () => {

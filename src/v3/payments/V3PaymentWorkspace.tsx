@@ -3,6 +3,7 @@ import { formatCurrency, formatDateEs, getPaymentMethodLabel } from '../../app/d
 import { formatClientLabel, formatInvoiceLabel, formatPaymentLabel } from '../../app/relationshipLabels'
 import { findPaymentDuplicateGroups } from '../../features/duplicates/duplicateEngine'
 import { savePaymentAndRefreshInvoice } from '../../features/financial/financialWriteApi'
+import { getPaymentAmountError } from '../../features/payments/paymentAmount'
 import type { ClientListItem } from '../../features/clients/types'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
@@ -44,8 +45,10 @@ export function V3PaymentWorkspace(props: V3PaymentWorkspaceProps) {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const amount = parseAmount(form.amount)
-    if (!form.payment_date || !Number.isFinite(amount) || amount <= 0) {
-      setError('Indica una fecha y un importe válido mayor que cero.')
+    const maximumAllowed = Number(props.invoice?.outstanding_amount ?? props.invoice?.total ?? 0) + Number(payment.amount ?? 0)
+    const amountError = getPaymentAmountError(amount, maximumAllowed)
+    if (!form.payment_date || amountError) {
+      setError(!form.payment_date ? 'Indica una fecha y un importe válido mayor que cero.' : amountError)
       return
     }
     const candidate: PaymentListItem = { ...payment, payment_date: form.payment_date, amount: Number(amount.toFixed(2)), payment_method: form.payment_method || null, notes: form.notes.trim() || null }

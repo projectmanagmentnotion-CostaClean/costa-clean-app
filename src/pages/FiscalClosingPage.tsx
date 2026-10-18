@@ -1,4 +1,4 @@
-﻿import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { ActionFlowOverlay } from '../components/ActionFlowOverlay'
 import { ActionChecklist, type ActionChecklistItem } from '../components/ActionChecklist'
 import { CollapsibleDetailSection } from '../components/CollapsibleDetailSection'
@@ -40,6 +40,7 @@ import type { ClientListItem } from '../features/clients/types'
 import type { PropertyListItem } from '../features/properties/types'
 import type { QuarterlyClosingRecord, QuarterlyClosingSummary } from '../features/quarterlyClosing/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { readFiscalPeriodNote, writeFiscalPeriodNote, type FiscalPeriodNoteDraft } from '../features/closing/fiscalPeriodNotes'
 
 interface FiscalClosingPageProps {
   availableYears: number[]
@@ -148,7 +149,7 @@ export function FiscalClosingPage({
   onSaveAnnualClosing,
 }: FiscalClosingPageProps) {
   const [selection, setSelection] = useState<FiscalPeriodSelection>(initialSelection)
-  const [notes, setNotes] = useState('')
+  const [noteDraft, setNoteDraft] = useState<FiscalPeriodNoteDraft | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -157,10 +158,6 @@ export function FiscalClosingPage({
   const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false)
   const [aiSummaryResult, setAiSummaryResult] = useState<ClosingIntelligenceResponse | null>(null)
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null)
-
-  useEffect(() => {
-    setSelection(initialSelection)
-  }, [initialSelection])
 
   const summary = useMemo(() => buildClosingSummary({
     selection,
@@ -190,14 +187,12 @@ export function FiscalClosingPage({
     [annualClosings, summary.fiscalYear, summary.snapshotMode],
   )
   const persistedClosing = quarterlyClosing ?? annualClosing
-
-  useEffect(() => {
-    setNotes(persistedClosing?.notes ?? '')
-    setSaveMessage(null)
-    setSaveError(null)
-    setAiSummaryResult(null)
-    setAiSummaryError(null)
-  }, [persistedClosing, selection])
+  const notePeriodKey = summary.snapshotMode === 'quarterly' && summary.fiscalQuarter
+    ? `${summary.fiscalYear}-Q${summary.fiscalQuarter}`
+    : summary.snapshotMode === 'annual'
+      ? String(summary.fiscalYear)
+      : `${selection.mode}-${selection.year}-${selection.month ?? ''}-${selection.quarter ?? ''}-${selection.startDate ?? ''}`
+  const notes = readFiscalPeriodNote(noteDraft, notePeriodKey, persistedClosing?.notes)
 
   const statusCard = useMemo(() => {
     if (!summary.snapshotMode) {
@@ -830,7 +825,7 @@ export function FiscalClosingPage({
             className="cc-notes-textarea"
             rows={4}
             value={notes}
-            onChange={(event) => setNotes(event.target.value)}
+            onChange={(event) => setNoteDraft(writeFiscalPeriodNote(notePeriodKey, event.target.value))}
             placeholder={summary.snapshotMode ? 'Notas del snapshot fiscal...' : 'Notas internas del cierre...'}
           />
           <div className="cc-action-group">
@@ -1182,7 +1177,4 @@ export function FiscalClosingPage({
     </section>
   )
 }
-
-
-
 

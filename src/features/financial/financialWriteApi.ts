@@ -490,6 +490,42 @@ export async function saveInvoiceWithLines(
   return savedInvoice
 }
 
+export type InvoiceBusinessServiceOrigin = 'AUTO_CREATE' | 'EXISTING_JOB' | 'FROM_QUOTE'
+
+export interface SaveInvoiceBusinessGraphRequest {
+  operationKey: string
+  serviceOrigin: InvoiceBusinessServiceOrigin
+  serviceDate: string
+  invoice: JsonRecord
+  lines: JsonRecord[]
+}
+
+export interface SaveInvoiceBusinessGraphResult {
+  invoice_id: string
+  job_id: string
+  quote_id: string | null
+  service_origin: InvoiceBusinessServiceOrigin
+  operation_key: string
+}
+
+export async function saveInvoiceBusinessGraph(
+  request: SaveInvoiceBusinessGraphRequest,
+): Promise<SaveInvoiceBusinessGraphResult> {
+  return callFinancialRpcForResult<SaveInvoiceBusinessGraphResult>(
+    'save_invoice_business_graph',
+    {
+      p_request: {
+        operation_key: request.operationKey,
+        service_origin: request.serviceOrigin,
+        service_date: request.serviceDate,
+        invoice: request.invoice,
+        lines: request.lines,
+      },
+    },
+    'No se pudo guardar el grafo de factura y servicio.',
+  )
+}
+
 export const __financialWriteApiTestUtils = {
   assertSavedInvoiceNumberingMatchesExpectation,
   isMissingSaveInvoiceResultRpcError,
@@ -529,8 +565,15 @@ export interface TransferSettlementRpcResult {
 
 export async function settleInvoiceByTransfer(invoiceId: string): Promise<TransferSettlementRpcResult> {
   const result = await callFinancialRpcForResult<TransferSettlementRpcResult>(
-    'settle_invoice_by_transfer',
-    { p_invoice_id: invoiceId },
+    'settle_invoice_business',
+    {
+      p_request: {
+        invoice_id: invoiceId,
+        payment_method: 'transfer',
+        payment_date: new Date().toISOString().slice(0, 10),
+        operation_key: `SETTLE-${invoiceId}-${crypto.randomUUID()}`,
+      },
+    },
     'No se pudo registrar el cobro por transferencia.',
   )
 
@@ -667,6 +710,9 @@ export async function updateInvoiceStatus(
   invoiceId: string,
   status: string,
 ): Promise<void> {
+  if (status === 'paid' || status === 'partially_paid') {
+    throw new Error('El estado de cobro solo puede cambiar mediante el flujo de settlement.')
+  }
   await callFinancialRpc(
     'update_invoice_status',
     { p_invoice_id: invoiceId, p_status: status },

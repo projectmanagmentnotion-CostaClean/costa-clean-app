@@ -1,4 +1,5 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRef } from 'react'
 import { AppNav } from './AppNav'
 import '../features/shell/shell-dashboard.css'
 import '../features/shell/shell-dashboard-polish.css'
@@ -23,6 +24,7 @@ import {
   applyJobFilter,
   applyPaymentFilter,
   applyQuoteFilter,
+  clearDetailFilterForView,
   emptyModuleFilterState,
   getExpenseFilterLabel,
   getInvoiceFilterLabel,
@@ -215,6 +217,17 @@ export function AppShell({
       })()
       : null,
   }))
+  const previousModuleViewRef = useRef(currentView)
+
+  useEffect(() => {
+    const previousView = previousModuleViewRef.current
+    previousModuleViewRef.current = currentView
+    if (previousView === currentView) return
+
+    if (previousView === 'invoices' || previousView === 'quotes' || previousView === 'payments') {
+      setModuleFilters((current) => clearDetailFilterForView(current, previousView))
+    }
+  }, [currentView])
   const [quarterlyClosingFocus, setQuarterlyClosingFocus] = useState<{ fiscalYear: number; fiscalQuarter: number } | null>(null)
   const [jobCreatePrefill, setJobCreatePrefill] = useState<ReturnType<typeof buildJobCreatePrefillFromQuote> | null>(null)
   const [invoiceCreatePrefill, setInvoiceCreatePrefill] = useState<ReturnType<typeof buildInvoiceCreatePrefillFromJob> | null>(null)
@@ -1249,7 +1262,7 @@ export function AppShell({
               {currentView === 'alerts' ? (
                 v3Enabled ? <V3AlertsPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} /> : <AlertsCenterPage alerts={automationAlerts} decisions={alertDecisions} onOpenAlert={handleOpenAutomationAlert} onMarkRead={handleMarkAlertRead} onAcknowledge={handleAcknowledgeAlert} onDismiss={handleDismissAlert} onReopen={handleReopenAlert} />
               ) : currentView === 'fiscal_closing' || currentView === 'annual_closing' || currentView === 'quarterly_closing' ? (
-                v3Enabled ? <V3ClosingPage
+                v3Enabled ? <V3ClosingPage key={`${currentView}-${fiscalClosingInitialSelection.mode}-${fiscalClosingInitialSelection.year}-${fiscalClosingInitialSelection.month ?? ''}-${fiscalClosingInitialSelection.quarter ?? ''}-${fiscalClosingInitialSelection.startDate ?? ''}`}
                   availableYears={fiscalClosingAvailableYears}
                   initialSelection={fiscalClosingInitialSelection}
                   quarterlySummaryByPeriod={quarterlyClosingSummaryByPeriod}
@@ -1289,12 +1302,17 @@ export function AppShell({
               ) : currentView === 'dashboard' ? (
                 v3Enabled ? (
                   <V3HomePage
-                    metrics={dashboardMetrics}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    expenses={expenses}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
                     alerts={visibleAutomationAlerts}
                     operationalIncidents={operationalIncidents}
                     onRunKpiAction={handleDashboardKpiAction}
                     onOpenAlert={handleOpenAutomationAlert}
                     onRunOperationalAction={handleRunOperationalAction}
+                    onOpenAllAlerts={() => navigateToView('alerts')}
                   />
                 ) : (
                   <HomePage

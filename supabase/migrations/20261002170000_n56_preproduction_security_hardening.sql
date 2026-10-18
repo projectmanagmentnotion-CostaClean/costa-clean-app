@@ -95,14 +95,14 @@ using (
 );
 
 -- Browser-facing capture operations are authenticated and owner-checked.
-revoke all on function public.create_expense_capture_session(text, text) from public, anon;
-revoke all on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) from public, anon;
-revoke all on function public.cancel_expense_capture_session(uuid) from public, anon;
-revoke all on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) from public, anon;
-grant execute on function public.create_expense_capture_session(text, text) to authenticated, service_role;
-grant execute on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) to authenticated, service_role;
-grant execute on function public.cancel_expense_capture_session(uuid) to authenticated, service_role;
-grant execute on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) to authenticated, service_role;
+revoke all on function public.create_expense_capture_session(text, text) from public, anon, service_role;
+revoke all on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) from public, anon, service_role;
+revoke all on function public.cancel_expense_capture_session(uuid) from public, anon, service_role;
+revoke all on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) from public, anon, service_role;
+grant execute on function public.create_expense_capture_session(text, text) to authenticated;
+grant execute on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) to authenticated;
+grant execute on function public.cancel_expense_capture_session(uuid) to authenticated;
+grant execute on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) to authenticated;
 
 -- Extraction/normalization runtime helpers are server-side only.
 revoke all on function public.n52_claim_extraction(uuid) from public, anon, authenticated;

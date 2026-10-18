@@ -43,8 +43,19 @@ describe('N5.6 pre-production security hardening migration', () => {
     expect(migration).toContain("bucket_id = 'expense-receipts'")
     expect(migration).toContain("name like 'expenses/%'")
     expect(migration).toContain('app_private.is_active_internal_staff((select auth.uid()))')
-    expect(migration).toContain('grant execute on function public.confirm_expense_capture')
-    expect(migration).toContain('to authenticated, service_role')
+    for (const signature of [
+      'create_expense_capture_session(text, text)',
+      'attach_expense_capture_document(uuid, text, text, text, bigint, text, integer)',
+      'cancel_expense_capture_session(uuid)',
+      'confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb)',
+    ]) {
+      expect(migration).toContain(`revoke all on function public.${signature} from public, anon, service_role`)
+      const grants = migration.split(/\r?\n/u).filter((line) =>
+        line.trimStart().toLowerCase().startsWith(`grant execute on function public.${signature}`.toLowerCase()))
+      expect(grants).toHaveLength(1)
+      expect(grants[0]).toMatch(/to authenticated;$/iu)
+      expect(grants[0]).not.toMatch(/\bservice_role\b/iu)
+    }
   })
 
   it('keeps expenses internal-staff-only and capture helpers server-side', () => {

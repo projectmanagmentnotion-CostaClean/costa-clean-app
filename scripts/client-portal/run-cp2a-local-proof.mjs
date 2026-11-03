@@ -31,7 +31,7 @@ const reportPath = path.join(
 )
 
 const baselineOrder = [
-  '20260721_qa_baseline_schema.sql',
+  '../qa/bootstrap/20260721_qa_baseline_schema.sql',
   '20260707_fix_same_number_invoice_update_gap.sql',
   '20260721_rls_clients_properties_jobs_write_fix.sql',
   '20260722_close_anon_read_policies_qa_verified.sql',

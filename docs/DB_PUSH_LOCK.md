@@ -1,62 +1,38 @@
 # Supabase DB Push Lock
 
-## Estado vigente tras repairs metadata-only en QA y produccion
+**Estado: BLOQUEADO.** Este lock es preventivo y sigue vigente para QA y Production. No ejecutar `supabase db push`, `supabase migration repair`, `apply_migration`, ni SQL de escritura sobre `supabase_migrations` hasta que exista autorización exacta y un preflight de cero SQL inesperado.
 
-QA y produccion registran ahora exactamente las tres incrementales canonicas; la baseline QA-only sigue excluida. El lock permanece activo porque esas tres entradas no reconstruyen la historia legacy, los nombres fisicos `20260721` siguen siendo ambiguos, la baseline permanece dentro del directorio y no existe un gate CLI revisado que demuestre cero SQL pendiente. Metadata reconciliada no equivale a `db push` seguro. Evidencia: [PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md](PRODUCTION_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+## Estado observado (2026-11-03, solo lectura)
 
-## Estado historico tras el gate QA metadata-only
+| Entorno | Proyecto | Entradas | Primera versión | Última versión |
+|---|---|---:|---|---|
+| Production | `wfxnwfcdjainpojhbdri` | 28 | `20260707120336` | `20260924100831` (`20260924100000_n4_lock_recurring_table_acl`) |
+| QA | `kpvvydthlxupjjqqdpxy` | 99 | `20260707120336` | `20261002135207` (`n56_preproduction_security_hardening`) |
 
-QA oficial ya contiene exactamente las tres incrementales canonicas bajo `supabase_migrations`; la baseline QA-only sigue excluida. Produccion continua sin historial reconciliado y no existe un plan revisado de `db push` con cero SQL para la cadena completa. Por ello este lock sigue activo sin excepciones. Esta actualizacion prevalece sobre las descripciones historicas inferiores. Evidencia: [QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md](QA_MIGRATION_METADATA_REPAIR_GATE_20260722.md).
+La relación `supabase_migrations.schema_migrations` existe en ambos proyectos. La consulta de ledger devuelve 28/99 entradas, respectivamente. Esto prevalece sobre las afirmaciones históricas de este documento que indicaban cero tablas o tres versiones. La observación es una fotografía de esa fecha, no un permiso para cambiar el ledger.
 
-## Estado
+## Baseline QA: fuera del historial incremental
 
-`db push` está bloqueado. QA y producción no contienen el schema `supabase_migrations` y, por tanto, no registran ninguna de las migraciones que ya están materialmente aplicadas.
+`supabase/qa/bootstrap/20260721_qa_baseline_schema.sql` es un artefacto de bootstrap QA-only, aplicado históricamente por `psql`, sin entrada correspondiente en ninguno de los dos ledgers observados. Se retiró de `supabase/migrations` para que Supabase CLI no lo trate como migración incremental. El SHA-256 conservado es `57B4DD8AE3A772394D77A44D6D0CBA81CD0BCE933120B152B97465F080799386`.
 
-Comandos prohibidos hasta un gate separado:
+La baseline **no** se usa para Production ni para reconstruir la plataforma Supabase completa: es un dump público de esquema, omite datos, estado de secuencias, auth/storage gestionados, grants y owners. El nombre de archivo con versión corta de 8 dígitos también colisionaba con `20260721_rls_clients_properties_jobs_write.sql`; el artefacto QA ya no participa en ese espacio de versiones.
 
-- `npx supabase db push`
-- `supabase db push`
-- `supabase migration repair`
-- INSERT/UPDATE/DELETE manual sobre tablas de historial de migraciones
-- cualquier wrapper que marque versiones como aplicadas
+Los harnesses de PostgreSQL local que necesitan el baseline ahora lo resuelven desde `supabase/qa/bootstrap`. El cambio de ruta no cambia los bytes SQL ni crea una entrada de ledger.
 
-## Protección local
+## Conciliación actual de PR #28 / P0
 
-Los scripts siguientes fallan siempre de forma intencional:
+- PR #28 contiene 18 migraciones. Cinco coinciden por hash MD5 de sentencias con entradas de Production bajo versiones/nombres diferentes. QA tiene los objetos materiales correspondientes, pero sus hashes de sentencias difieren para esos cinco; no se les declara equivalentes en QA.
+- Las otras 13 migraciones de PR #28 no están en el ledger Production. QA contiene implementaciones relacionadas de 12 contratos bajo versiones o contenido distinto; una migración final de hardening no consta en QA.
+- El orden de compatibilidad local, una vez aprobada la conciliación, es: V3 pendiente en orden cronológico hasta N55, después N56, luego `expense_product_grant_hardening` y por último P0. P0 no se debe ejecutar antes de N56/grant hardening porque N56 redefine las políticas de `expenses`.
+- Manifiesto detallado y verificador estático: `docs/SUPABASE_V3_P0_MIGRATION_RECONCILIATION.md`, `supabase/qa/bootstrap/v3-p0-release-manifest.json` y `scripts/ops/validate-v3-production-migration-preflight.mjs`.
 
-```text
-npm run db:push
-npm run supabase:db:push
-```
+## Condiciones antes de desbloquear cualquier operación
 
-La protección npm no puede interceptar un `npx supabase db push` escrito directamente. Esa operación sigue prohibida por [CODEX_WORKFLOW.md](CODEX_WORKFLOW.md), [APP_QUALITY_GATES.md](APP_QUALITY_GATES.md) y este lock.
+1. Resolver, con SQL fuente/ledger y catálogo efectivo, cada diferencia de contenido o versión; no reparar versiones basándose solo en nombres.
+2. Reconstruir el preestado real en un PostgreSQL/Supabase descartable con equivalencia suficiente, sin copiar datos de clientes.
+3. Obtener evidencia de backup con datos y probar una restauración en destino aislado; verificar Storage por separado.
+4. Ejecutar validación SQL de migraciones en orden, políticas/RLS/ACL/RPC y compatibilidad de P0 contra el estado reconstruido.
+5. Revisar el plan del CLI y confirmar cero SQL pendiente no revisado. Mantener bloqueados los wrappers y los comandos directos hasta un gate aprobado.
+6. Obtener autorización explícita independiente antes de cualquier escritura remota, reparación del ledger, migración, merge o despliegue de Production.
 
-## Motivo
-
-- Hay cuatro archivos en `supabase/migrations`, pero QA y producción registran cero versiones.
-- Dos archivos usan el mismo prefijo/version `20260721`.
-- `20260721_qa_baseline_schema.sql` es una baseline exclusiva de QA y no debe ejecutarse en producción.
-- Las migraciones ya aplicadas por `psql` podrían reejecutarse; la baseline contiene creación no idempotente de objetos ya existentes.
-- Marcar versiones como aplicadas cambia metadata de base de datos y requiere autorización explícita separada.
-
-## Condición para desbloquear
-
-No se elimina este lock hasta que un sprint autorizado:
-
-1. defina versiones únicas y una separación segura entre baseline QA/bootstrap e incrementales productivas;
-2. capture backups privados de metadata/schema;
-3. pruebe la reconciliación en un entorno desechable;
-4. repare el historial de QA y producción con autorización explícita;
-5. demuestre que el plan de `db push` resultante contiene cero SQL pendiente inesperado;
-6. pase revisión de seguridad y gates completos.
-
-El manifiesto ya propone aliases lógicos únicos, pero no los activa ni resuelve el historial remoto. La estrategia vigente mantiene temporalmente los archivos en su ubicación para no cambiar su identidad antes del proof; la baseline QA-only queda clasificada como `never-push` y fuera de cualquier historial incremental.
-
-El proof desechable de este gate no se ejecutó: las únicas configuraciones locales apuntan a QA oficial y producción, ambos destinos prohibidos. El lock no se relaja hasta disponer de un tercer destino descartable, demostrar bootstrap/repair/plan de cero SQL y recibir autorizaciones separadas para metadata QA y producción.
-
-Informes vigentes:
-
-- [SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md](SUPABASE_MIGRATION_HISTORY_RECONCILIATION_20260722.md)
-- [SUPABASE_MIGRATION_MANIFEST_20260722.md](SUPABASE_MIGRATION_MANIFEST_20260722.md)
-- [SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md](SUPABASE_MIGRATION_REPAIR_PLAN_20260722.md)
-- [SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md](SUPABASE_DISPOSABLE_REPAIR_PROOF_20260722.md)
+Este lock no se relaja por éxito de build, por igualdad de un hash aislado ni por estado `READY` de Preview.

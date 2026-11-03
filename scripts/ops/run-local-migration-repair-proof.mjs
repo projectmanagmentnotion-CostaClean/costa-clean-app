@@ -132,7 +132,9 @@ function verifyManifest() {
     'utf8',
   )
   for (const artifact of artifacts) {
-    const filePath = path.join(migrationsDir, artifact.file)
+    const filePath = artifact.kind === 'baseline'
+      ? path.join(repoRoot, 'supabase', 'qa', 'bootstrap', artifact.file)
+      : path.join(migrationsDir, artifact.file)
     if (!existsSync(filePath)) fail(`Manifest artifact missing: ${artifact.file}`)
     const actual = sha256(filePath)
     if (actual !== artifact.sha256) {
@@ -263,7 +265,7 @@ async function main() {
     `)
 
     const baseline = artifacts.find(({ kind }) => kind === 'baseline')
-    applyFile(pg.psql, port, path.join(migrationsDir, baseline.file))
+    applyFile(pg.psql, port, path.join(repoRoot, 'supabase', 'qa', 'bootstrap', baseline.file))
     result.applied.push(`${baseline.alias} ${baseline.file} (${baseline.flag}, outside metadata)`)
     assertEqual(query(pg.psql, port, "select count(*) from pg_tables where schemaname='public'"), '17', 'Baseline public table count')
 

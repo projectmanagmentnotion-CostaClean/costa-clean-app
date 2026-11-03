@@ -1,0 +1,92 @@
+{
+  "format": 1,
+  "purpose": "Read-only reconciliation and local static preflight; not a Supabase CLI manifest and never permission to apply, repair, merge, or deploy",
+  "observedAt": "2026-11-03",
+  "projects": {
+    "production": {
+      "ref": "wfxnwfcdjainpojhbdri",
+      "ledgerCount": 28,
+      "lastVersion": "20260924100831"
+    },
+    "qa": {
+      "ref": "kpvvydthlxupjjqqdpxy",
+      "ledgerCount": 99,
+      "lastVersion": "20261002135207"
+    }
+  },
+  "sourceRefs": {
+    "v3": "origin/release/costa-clean-v3-integrated-20261009",
+    "v3Head": "6c2d5f265744fa9c4f9f0d81b0d6e8d8fbb1fe61",
+    "p0": "origin/codex/p0-expenses-rls",
+    "p0Head": "8b1984bb22107b4e4c127a505ca6e4c966abca78"
+  },
+  "qaBootstrap": {
+    "path": "supabase/qa/bootstrap/20260721_qa_baseline_schema.sql",
+    "sha256": "57B4DD8AE3A772394D77A44D6D0CBA81CD0BCE933120B152B97465F080799386",
+    "incremental": false,
+    "productionAllowed": false,
+    "limitations": [
+      "public-schema-only; excludes managed Auth and Storage platform state",
+      "no customer rows or sequence state",
+      "owners and ACLs excluded",
+      "not a faithful reconstruction of current Production or current QA"
+    ]
+  },
+  "productionOrder": [
+    "20260922104759_n11a_app_internal_staff_authorization.sql",
+    "20260922111338_n11_transactional_data_hygiene_adapter.sql",
+    "20260922113953_n11b_role_scoped_authorization_and_literal_hygiene_prefixes.sql",
+    "20260922115842_n11c_testable_internal_staff_role_predicates.sql",
+    "20260922200501_n21_atomic_business_graph.sql",
+    "20260924140000_n51_smart_expense_capture.sql",
+    "20260928150000_n52_document_extraction_foundation.sql",
+    "20260928194500_n52_runtime_r2_guards.sql",
+    "20260928195000_n52_runtime_r2_owner_param.sql",
+    "20260929120000_n52_runtime_r21_contract_parity.sql",
+    "20260929140000_n52_runtime_r22_idempotency_scope.sql",
+    "20260930095656_n53_expense_capture_normalization_runtime.sql",
+    "20261001170000_n55_confirm_expense_capture.sql",
+    "20261001213000_n55_confirm_expense_capture_concurrency.sql",
+    "20261002080214_n55_openai_provider_contract.sql",
+    "20261002150000_invoice_service_reference_override.sql",
+    "20261002170000_n56_preproduction_security_hardening.sql",
+    "20261002173000_expense_product_grant_hardening.sql",
+    "20261102120000_p0_expense_access_and_rpc_hardening.sql"
+  ],
+  "migrations": [
+    {"file":"20260922104759_n11a_app_internal_staff_authorization.sql","sourceStatementsMd5":"657520dbc43d1aa1bad44768cc55d513","production":{"version":"20260923123442","name":"n11a_app_internal_staff_authorization","md5":"657520dbc43d1aa1bad44768cc55d513","status":"exact_statement_match"},"qa":{"version":"20260922104759","name":"n11a_app_internal_staff_authorization","md5":"6604113a1a36e0f774947bf49389f8dd","status":"same_version_different_statements"},"objects":"internal_staff_memberships; app_private active/write/financial role helpers; authenticated write guards","dependencies":"auth.users/auth.uid; PostgreSQL roles","action":"Do not replay in Production; resolve QA same-version SQL divergence before any QA CLI operation."},
+    {"file":"20260922111338_n11_transactional_data_hygiene_adapter.sql","sourceStatementsMd5":"f35630c7e826e3ec284cb64bdd2e7ac3","production":{"version":"20260923123444","name":"n11_transactional_data_hygiene_adapter","md5":"f35630c7e826e3ec284cb64bdd2e7ac3","status":"exact_statement_match"},"qa":{"version":"20260922111338","name":"n11_transactional_data_hygiene_adapter","md5":"c16d27153080ebbaa6bdffde8072988f","status":"same_version_different_statements"},"objects":"app_private.data_hygiene_runs/actions; QA-only plan/apply functions","dependencies":"N11A membership and app_private; quotes/properties/jobs/invoices relations","action":"Do not replay in Production; resolve QA same-version SQL divergence."},
+    {"file":"20260922113953_n11b_role_scoped_authorization_and_literal_hygiene_prefixes.sql","sourceStatementsMd5":"b00d1f7e3389dba293509d87e0784c92","production":{"version":"20260923123447","name":"n11b_role_scoped_authorization_and_literal_hygiene_prefixes","md5":"b00d1f7e3389dba293509d87e0784c92","status":"exact_statement_match"},"qa":{"version":"20260922113953","name":"n11b_role_scoped_authorization_and_literal_hygiene_prefixes","md5":"2a0190a81dcbc0c9a88eaadb8f907b54","status":"same_version_different_statements"},"objects":"role-scoped staff write predicates and literal hygiene fixture guards","dependencies":"N11A membership/functions; N11 hygiene adapter","action":"Do not replay in Production; reconcile QA source/ledger divergence."},
+    {"file":"20260922115842_n11c_testable_internal_staff_role_predicates.sql","sourceStatementsMd5":"31d171a1baddd97b7972014e7c83e485","production":{"version":"20260923123448","name":"n11c_testable_internal_staff_role_predicates","md5":"31d171a1baddd97b7972014e7c83e485","status":"exact_statement_match"},"qa":{"version":"20260922115842","name":"n11c_testable_internal_staff_role_predicates","md5":"e43424ad44f27bba8bd5074bbb1ef0f6","status":"same_version_different_statements"},"objects":"testable internal role and financial role predicates","dependencies":"N11A/N11B functions","action":"Do not replay in Production; reconcile QA source/ledger divergence."},
+    {"file":"20260922200501_n21_atomic_business_graph.sql","sourceStatementsMd5":"33a7fba2000a7b64c1c3f04785e57828","production":{"version":"20260923123454","name":"n21_atomic_business_graph","md5":"33a7fba2000a7b64c1c3f04785e57828","status":"exact_statement_match"},"qa":{"version":"20260922200826","name":"n21_atomic_business_graph","md5":"1d8fdf1ba9f9eea0164d2f5c2d361f9f","status":"different_version_and_statements"},"objects":"invoice_business_operations/settlement_operations; save_invoice_business_graph and settle_invoice_business RPCs","dependencies":"jobs/invoices; N11 staff authorization; required constraints/indexes","action":"Do not replay in Production; QA operation objects exist but exact SQL equivalence is unverified."},
+    {"file":"20260924140000_n51_smart_expense_capture.sql","sourceStatementsMd5":"6816b89a682c449e2567a4c6e91599f9","production":{"status":"not_recorded"},"qa":{"version":"20260924161238","name":"n51_smart_expense_capture","md5":"cd7974d54dc991852de146a755fbb8a3","status":"same_name_different_statements"},"objects":"expense_capture_sessions/documents; authenticated capture RPCs; Storage policies","dependencies":"expenses; internal staff helpers; Storage schema/bucket","action":"Pending in Production; QA tables exist, but do not replay there until SQL and effective grants/policies are reconciled."},
+    {"file":"20260928150000_n52_document_extraction_foundation.sql","sourceStatementsMd5":"ab825247351e7071c5fe9f717bb536b6","production":{"status":"not_recorded"},"qa":{"version":"20260928173312","name":"n52_document_extraction_foundation","md5":"9456e0cd34b39732031f0d39e4652642","status":"same_name_different_statements"},"objects":"expense_capture_extractions table and owner-read RLS","dependencies":"N51 sessions/documents; auth/internal staff; service_role grants","action":"Pending in Production; QA implementation exists with different SQL hash; compare catalog and contract before skipping."},
+    {"file":"20260928194500_n52_runtime_r2_guards.sql","sourceStatementsMd5":"45b3fff5c12501be55b275e57434f388","production":{"status":"not_recorded"},"qa":{"version":"20260928174318","name":"n52_runtime_r2_guards","md5":"4305789645f778b5462cbda635ce2e88","status":"same_name_different_statements"},"objects":"N52 extraction authorization and prepare/claim RPCs","dependencies":"N52 extraction table; internal staff helper; service_role","action":"Pending in Production; QA implementation differs; contract and function body review required."},
+    {"file":"20260928195000_n52_runtime_r2_owner_param.sql","sourceStatementsMd5":"c5b3a72d07d54a0b383eb0d3c350b320","production":{"status":"not_recorded"},"qa":{"version":"20260928174410","name":"n52_runtime_r2_owner_param","md5":"53fd15ce350474f91f68c1157d764925","status":"same_name_different_statements"},"objects":"N52 prepare extraction RPC signature with explicit owner","dependencies":"N52 R2 guard; downstream callers","action":"Pending in Production; verify exact signature/callers before apply or skip."},
+    {"file":"20260929120000_n52_runtime_r21_contract_parity.sql","sourceStatementsMd5":"c7baf35138bf9c25ee863cf040f3ef6f","production":{"status":"not_recorded"},"qa":{"version":"20260928233352","name":"n52_runtime_r21_contract_parity","md5":"5791a34c945c90e81394827287db3292","status":"same_name_different_statements"},"objects":"N52 runtime contract parity for prepare extraction","dependencies":"N52 owner-param signature; current callers/service role","action":"Pending in Production; inspect function body and effective ACL before deciding."},
+    {"file":"20260929140000_n52_runtime_r22_idempotency_scope.sql","sourceStatementsMd5":"265b421aa52857b46fd15275ce85e4e6","production":{"status":"not_recorded"},"qa":{"version":"20260929112354","name":"n52_scope_extraction_idempotency_to_capture_document","md5":"8c5a2af5be44837964d673de5ba6ec32","status":"related_name_different_statements"},"objects":"N52 idempotency scope / capture-document association","dependencies":"N52 extraction/documents; idempotency key contract","action":"Pending in Production; QA has related migration but exact contract equivalence is unverified."},
+    {"file":"20260930095656_n53_expense_capture_normalization_runtime.sql","sourceStatementsMd5":"408aed8e88e4d0fc28292aacd2e1a28d","production":{"status":"not_recorded"},"qa":{"version":"20260930104548","name":"20260930095656_n53_expense_capture_normalization_runtime","md5":"bc686f3b073288f5978e174b1cfde142","status":"same_migration_alias_different_statements"},"objects":"expense_capture_normalizations; N53 claim/finalize RPCs","dependencies":"N52 extraction state; extensions.pgcrypto; service_role","action":"Pending in Production; QA table exists but exact SQL/content and grants need reconciliation."},
+    {"file":"20261001170000_n55_confirm_expense_capture.sql","sourceStatementsMd5":"baef33b7ff1d5a60b4c16d49fbdf0da9","production":{"status":"not_recorded"},"qa":{"version":"20261001150521","name":"n55_confirm_expense_capture","md5":"52d7bb7e20ff4b72bb064d0baa5afd7c","status":"same_name_different_statements"},"objects":"expense_capture_confirmations; confirm_expense_capture RPC","dependencies":"N51-N53 capture graph; expenses/invoices; internal staff roles","action":"Pending in Production; QA contract exists but must compare function definition and effects."},
+    {"file":"20261001213000_n55_confirm_expense_capture_concurrency.sql","sourceStatementsMd5":"c8a0af6644a2f32dc0c9ce18ca5651b6","production":{"status":"not_recorded"},"qa":{"version":"20261001193451","name":"n55_confirm_expense_capture_concurrency","md5":"a9a86b0f6bf06199e95dc0849e529389","status":"same_name_different_statements"},"objects":"concurrency-safe confirm_expense_capture behavior","dependencies":"N55 confirmation RPC; uniqueness/locking invariants","action":"Pending in Production; requires race/concurrency proof on an isolated reconstruction."},
+    {"file":"20261002080214_n55_openai_provider_contract.sql","sourceStatementsMd5":"a1f0bafb37debd57875d4366c7640d57","production":{"status":"not_recorded"},"qa":{"version":"20261002095036","name":"n55_openai_provider_contract","md5":"8eaee72d858138f68e85d6ad3b36a186","status":"same_name_different_statements"},"objects":"N52 provider/runtime RPC contract and service-role boundary","dependencies":"N52/N53 runtime; provider configuration and service_role","action":"Pending in Production; no secret values inspected; validate call contract and ACL in isolation."},
+    {"file":"20261002150000_invoice_service_reference_override.sql","sourceStatementsMd5":"1c1b04e16d71fcca3166cdc13391a893","production":{"status":"not_recorded"},"qa":{"version":"20261002130305","name":"invoice_service_reference_override","md5":"6e6239d837091f92edd4884455429425","status":"same_name_different_statements"},"objects":"invoices.service_reference_override; save_invoice_with_lines contract","dependencies":"existing invoices schema; invoice RPC callers","action":"Pending in Production; compare invoice callers and SQL constraints before apply."},
+    {"file":"20261002170000_n56_preproduction_security_hardening.sql","sourceStatementsMd5":"dad8402266c024ea6e66e6498511ddd5","production":{"status":"not_recorded"},"qa":{"version":"20261002135207","name":"n56_preproduction_security_hardening","md5":"50edcf6c57d56bdbdc81c4f54a8796f5","status":"same_name_different_statements"},"objects":"expense RLS; Storage expense-receipts policies; capture RPC ACL; revoke legacy SECURITY DEFINER RPCs","dependencies":"N51/N52/N53/N55 objects; internal staff helpers; Storage bucket/policies","action":"Apply only after the V3 capture functions/contracts are reconciled; then apply grant hardening and P0."},
+    {"file":"20261002173000_expense_product_grant_hardening.sql","sourceStatementsMd5":"0630d186d0dc3225074f8fe0ff6eb764","production":{"status":"not_recorded"},"qa":{"status":"not_recorded"},"objects":"expenses public/anon grants only","dependencies":"N56; public.expenses","action":"Pending in both ledgers; apply after N56. Current P0 must then follow to revoke authenticated DELETE/TRUNCATE/etc and preserve internal financial access."}
+  ],
+  "p0": {
+    "file": "supabase/migrations/20261102120000_p0_expense_access_and_rpc_hardening.sql",
+    "sha256": "7106CB1AF75D4DD731A5CEE3731B963174B2C8EA2918C0D0B87ABCD616F207B1",
+    "qaMatrix": "supabase/qa/p0_expenses_security_matrix.sql",
+    "requiredAfter": ["20261002170000_n56_preproduction_security_hardening.sql", "20261002173000_expense_product_grant_hardening.sql"],
+    "qaEvidence": "Owner-certified isolated QA execution and rollback; do not repeat here.",
+    "productionStatus": "not_applied"
+  },
+  "backup": {
+    "scheduledPhysicalBackupsObserved": 6,
+    "latestObservedUtc": "2026-11-03T03:29:25Z",
+    "databaseRestoreTest": "not_verified",
+    "pitr": "not_enabled",
+    "storageObjectsIncludedInDatabaseBackup": false
+  },
+  "applyAllowed": false
+}

@@ -151,6 +151,19 @@ describe('CRM Production public intake boundary', () => {
     expect(calls).toBe(0)
   })
 
+  it('rejects missing required processing consent before any Supabase request', async () => {
+    setupEnvironment()
+    globalThis.fetch = vi.fn()
+    const request = signedRequest({
+      normalizedInput: { ...signedRequest().body.normalizedInput, consentQuoteProcessing: false },
+      consents: { privacyNoticeAccepted: false, marketingContactOptIn: false, analytics: false, advertising: false },
+    })
+    const response = createResponse()
+    await handler({ method: 'POST', headers: request.headers, body: request.body }, response)
+    expect(response.statusCode).toBe(400)
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+  })
+
   it('treats a replayed submission id as a duplicate without CRM writes', async () => {
     setupEnvironment()
     const readPaths = []

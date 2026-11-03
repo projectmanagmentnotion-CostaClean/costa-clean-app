@@ -1,0 +1,12 @@
+{
+  "candidateSha": "",
+  "gates": {
+    "dataBackupRestore": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "rollback": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "runtimeAclRls": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "authenticatedPreview": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "edgeRuntime": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "independentSecurityReview": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" },
+    "humanReleaseApproval": { "status": "NOT_RUN", "candidateSha": "", "evidence": "" }
+  }
+}

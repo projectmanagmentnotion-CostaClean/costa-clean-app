@@ -1,0 +1,12 @@
+{
+  "baseSha": "4dd3530a126dba31d401e64176cdd59f20dc7372",
+  "allowedFailures": [
+    {
+      "fullName": "CP-3B.2A.6R.1E final real PostgreSQL adapter revalidates the capability map immediately before consuming it",
+      "testPath": "scripts/client-portal/cp3b2aV6RealAdapter.test.mjs",
+      "testGitBlob": "62018783eab1b6483d9d8a6c322a5ad6a22eab52",
+      "runnerPath": "scripts/client-portal/run-cp3b2a-qa-v6.mjs",
+      "runnerGitBlob": "f248d9f11528f640cb1208973417ef1f018e0d3c"
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 import { createHash, createHmac } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import handler from './public-quote-request.js'
+import handler from './public-web-quote-request.js'
 
 const saved = {
   secret: process.env.COSTA_PUBLIC_WEB_INTAKE_SECRET,

@@ -27,14 +27,19 @@ stage='preflight'
 cleanup() {
   local rc=$?
   if [[ -n "$active_project" ]]; then
-    if ! (cd "$active_project" && supabase stop --no-backup >"$cli_log_dir/stop.log" 2>&1); then
+    local cleanup_project_id="${active_project##*/}"
+    if [[ -n "$(docker ps -aq --filter "name=$cleanup_project_id" 2>/dev/null || true)" ]]; then
+      if ! (cd "$active_project" && supabase stop --no-backup >"$cli_log_dir/stop.log" 2>&1); then
+        printf 'CI_SQL_CLEANUP=FAIL\n'
+        [[ "$rc" -ne 0 ]] || rc=1
+      fi
+    fi
+  fi
+  if [[ -n "$active_network" ]] && docker network inspect "$active_network" >/dev/null 2>&1; then
+    if ! docker network rm "$active_network" >/dev/null 2>&1; then
       printf 'CI_SQL_CLEANUP=FAIL\n'
       [[ "$rc" -ne 0 ]] || rc=1
     fi
-  fi
-  if [[ -n "$active_network" ]] && ! docker network rm "$active_network" >/dev/null 2>&1; then
-    printf 'CI_SQL_CLEANUP=FAIL\n'
-    [[ "$rc" -ne 0 ]] || rc=1
   fi
   rm -rf -- "$tmp_root" "$cli_log_dir"
   if [[ "$rc" -ne 0 ]]; then
@@ -54,6 +59,50 @@ fail() {
 }
 
 sha256_file() { sha256sum "$1" | awk '{print toupper($1)}'; }
+
+classify_stack_error() {
+  local log_file="$1"
+  if grep -Eiq 'port is already allocated|address already in use|failed to bind|cannot assign requested address' "$log_file"; then
+    printf 'port_binding_conflict'
+  elif grep -Eiq 'cannot connect to the docker daemon|error during connect|docker daemon.*unavailable' "$log_file"; then
+    printf 'docker_daemon_unavailable'
+  elif grep -Eiq 'no such network|network .*not found|failed to create.*network|failed to join.*network|network.*not found' "$log_file"; then
+    printf 'docker_network_error'
+  elif grep -Eiq 'pull access denied|manifest unknown|failed to pull|failed to resolve reference|TLS handshake timeout|i/o timeout|connection refused' "$log_file"; then
+    printf 'image_or_registry_connectivity'
+  elif grep -Eiq 'health.?check.*(fail|timeout|unhealthy)|unhealthy|timed out waiting' "$log_file"; then
+    printf 'container_health_check'
+  elif grep -Eiq 'unknown flag|unknown shorthand|requires.*argument|invalid.*config|failed to parse' "$log_file"; then
+    printf 'cli_or_config_error'
+  else
+    printf 'unclassified_stack_start_error'
+  fi
+}
+
+report_stack_diagnostics() {
+  local project_id="$1" network_name="$2" log_file="$3" exit_code="$4"
+  local cli_version docker_version network_state container_states
+
+  cli_version="$(supabase --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 || true)"
+  docker_version="$(docker version --format '{{.Server.Version}}' 2>/dev/null || true)"
+  network_state="$(docker network inspect --format '{{.Name}}|driver={{.Driver}}|internal={{.Internal}}|host_bind={{index .Options "com.docker.network.bridge.host_binding_ipv4"}}' "$network_name" 2>/dev/null || true)"
+  container_states="$(docker ps -a --filter "name=$project_id" --format '{{.Names}}|state={{.State}}|status={{.Status}}' 2>/dev/null || true)"
+
+  printf 'CI_SQL_DIAGNOSTICS_BEGIN\n'
+  printf 'SUPABASE_CLI_VERSION=%s\n' "${cli_version:-unavailable}"
+  printf 'DOCKER_SERVER_VERSION=%s\n' "${docker_version:-unavailable}"
+  printf 'SUPABASE_START_EXIT_CODE=%s\n' "$exit_code"
+  printf 'SUPABASE_START_ERROR_CLASS=%s\n' "$(classify_stack_error "$log_file")"
+  printf 'DOCKER_NETWORK=%s\n' "${network_state:-unavailable}"
+  if [[ -n "$container_states" ]]; then
+    while IFS= read -r container_state; do
+      printf 'CONTAINER=%s\n' "$container_state"
+    done <<<"$container_states"
+  else
+    printf 'CONTAINERS=none-found-for-project\n'
+  fi
+  printf 'CI_SQL_DIAGNOSTICS_END\n'
+}
 
 [[ -f "$manifest" && -f "$baseline" && -f "$transition_sql" ]] || fail 'required-local-artifacts'
 [[ "$(sha256_file "$baseline")" == "$BASELINE_SHA256" ]] || fail 'baseline-hash'
@@ -95,8 +144,17 @@ setup_project() {
   cp "$workspace/supabase/config.toml" "$active_project/supabase/config.toml"
   sed -i "s/^project_id = .*/project_id = \"$project_id\"/" "$active_project/supabase/config.toml"
   active_network="${project_id}-isolated"
-  docker network create --internal "$active_network" >/dev/null
-  (cd "$active_project" && supabase start --network-id "$active_network" -x studio,imgproxy,edge-runtime,logflare,vector,postgres-meta,supavisor >"$cli_log_dir/$project_id-start.log" 2>&1) || fail "$project_id-stack-start"
+  if ! docker network create --internal --opt 'com.docker.network.bridge.host_binding_ipv4=127.0.0.1' "$active_network" >"$cli_log_dir/$project_id-network-create.log" 2>&1; then
+    report_stack_diagnostics "$project_id" "$active_network" "$cli_log_dir/$project_id-network-create.log" 1
+    fail "$project_id-network-create"
+  fi
+  local start_log="$cli_log_dir/$project_id-start.log"
+  local start_exit=0
+  (cd "$active_project" && supabase start --network-id "$active_network" -x studio,imgproxy,edge-runtime,logflare,vector,postgres-meta,supavisor >"$start_log" 2>&1) || start_exit=$?
+  if [[ "$start_exit" -ne 0 ]]; then
+    report_stack_diagnostics "$project_id" "$active_network" "$start_log" "$start_exit"
+    fail "$project_id-stack-start"
+  fi
   db_container="$(docker ps --filter "name=supabase_db_${project_id}" --format '{{.Names}}' | head -n 1)"
   [[ -n "$db_container" ]] || fail "$project_id-postgres-container"
   printf 'LOCAL_SUPABASE_STACK=%s\n' "$project_id"

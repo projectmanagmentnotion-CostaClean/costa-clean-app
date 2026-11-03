@@ -1,11 +1,17 @@
 # P0 + V3 GitHub Actions SQL proof
 
 This workflow runs only on GitHub's disposable `ubuntu-latest` runner. It
-starts the official Supabase local stack on a Docker network marked `--internal`,
+starts the official Supabase local stack on a Docker bridge network marked
+`--internal`, with published ports bound to `127.0.0.1`,
 with no remote Supabase URL, access token, project link, or repository secret.
 It never connects to QA or Production. No SQL, users, or files are exported as
-artifacts; logs are reduced to stage/result labels and temporary files are
+artifacts; raw logs remain in a private temporary directory only during the
+job, while failures print a bounded error class, CLI/engine versions, network
+flags, and container names/states without raw output. Temporary files are
 removed when the job exits.
+The root `vercel.json` disables Git deployments only for this validation
+branch, preventing this branch's push from creating another Vercel Preview;
+other branches, including `main`, are not covered by this exception.
 
 The runner replays the exact Git SQL available at the pinned `main`, V3 PR #28,
 and P0 PR #30 commits. The QA bootstrap is loaded as a one-time local starting

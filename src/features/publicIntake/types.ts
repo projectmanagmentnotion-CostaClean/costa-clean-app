@@ -1,6 +1,6 @@
 export type PublicIntakeSource = 'public_quote_form' | 'public_quote_request' | 'google_forms_csv' | 'google_form_import'
 
-export type PreferredQuoteChannel = 'email' | 'whatsapp' | 'phone' | 'unknown'
+export type PreferredQuoteChannel = 'email' | 'whatsapp' | 'phone' | 'both' | 'unknown'
 
 export interface QuoteRequestNormalizedInput {
   submittedAt: string | null

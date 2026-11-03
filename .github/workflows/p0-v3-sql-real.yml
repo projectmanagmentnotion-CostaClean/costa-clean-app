@@ -1,0 +1,40 @@
+name: P0 and V3 isolated SQL validation
+
+on:
+  push:
+    branches:
+      - codex/gha-p0-v3-sql-validation
+    paths:
+      - .github/workflows/p0-v3-sql-real.yml
+      - scripts/ci/run-p0-v3-sql-validation.sh
+      - supabase/qa/ci/**
+      - supabase/qa/bootstrap/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: p0-v3-sql-validation-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  isolated-supabase-sql:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Install pinned official Supabase CLI
+        uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13
+        with:
+          version: 2.109.1
+
+      - name: Run isolated synthetic SQL scenarios
+        shell: bash
+        run: bash scripts/ci/run-p0-v3-sql-validation.sh

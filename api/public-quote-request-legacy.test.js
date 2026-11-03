@@ -94,4 +94,13 @@ describe('existing CRM public quote route compatibility', () => {
     expect(origins.every((origin) => origin === 'https://synthetic-crm.supabase.invalid')).toBe(true)
     expect(globalThis.fetch.mock.calls.some(([, options]) => ['POST', 'PATCH'].includes(options?.method))).toBe(true)
   })
+
+  it('never downgrades a request carrying Web authentication headers to the legacy path', async () => {
+    process.env.COSTA_PUBLIC_WEB_INTAKE_ENABLED = 'false'
+    globalThis.fetch = vi.fn()
+    const res = response()
+    await handler({ method: 'POST', headers: { 'x-costa-environment': 'production' }, body: {} }, res)
+    expect(res.statusCode).toBe(503)
+    expect(globalThis.fetch).not.toHaveBeenCalled()
+  })
 })

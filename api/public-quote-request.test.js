@@ -1,6 +1,6 @@
 import { createHash, createHmac } from 'node:crypto'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import handler from './public-web-quote-request.js'
+import handler from './public-quote-request.js'
 
 const saved = {
   secret: process.env.COSTA_PUBLIC_WEB_INTAKE_SECRET,
@@ -139,7 +139,9 @@ describe('CRM Production public intake boundary', () => {
     globalThis.fetch = vi.fn(async () => { calls += 1; return Response.json([]) })
     const request = signedRequest()
     const unsigned = createResponse()
-    await handler({ method: 'POST', headers: {}, body: request.body }, unsigned)
+    // The Web endpoint always sends its environment marker, even when the rest
+    // of the signature headers are absent. Keep the legacy CRM form unsigned.
+    await handler({ method: 'POST', headers: { 'x-costa-environment': 'production' }, body: request.body }, unsigned)
     const qa = createResponse()
     await handler({ method: 'POST', headers: { ...request.headers, 'x-costa-environment': 'qa' }, body: request.body }, qa)
     process.env.SUPABASE_URL = 'https://kpvvydthlxupjjqqdpxy.supabase.co'

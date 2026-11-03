@@ -137,6 +137,13 @@ function sanitizeInvoicePayloadForWrite(invoice: JsonPayload): JsonRecord {
   return invoiceRecord
 }
 
+function normalizeInvoiceLineSortOrders(lines: JsonPayload[]): JsonRecord[] {
+  return lines.map((line, index) => ({
+    ...(line as JsonRecord),
+    sort_order: index + 1,
+  }))
+}
+
 function normalizeNumericValue(value: unknown): number {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : Number.NaN
@@ -448,13 +455,14 @@ export async function saveInvoiceWithLines(
   issue_date: string
 }> {
   const invoiceRecord = sanitizeInvoicePayloadForWrite(invoice)
+  const orderedLines = normalizeInvoiceLineSortOrders(lines)
   const client = getClientOrThrow()
   let savedInvoice: SavedInvoiceReadback
 
   try {
     const savedInvoiceResult = await callFinancialRpcForResult<SavedInvoiceReadback | SavedInvoiceReadback[] | null>(
       SAVE_INVOICE_WITH_RESULT_RPC,
-      { p_invoice: invoiceRecord, p_lines: lines },
+      { p_invoice: invoiceRecord, p_lines: orderedLines },
       'No se pudo guardar la factura y sus lineas.',
     )
     savedInvoice = normalizeSavedInvoiceRows(savedInvoiceResult)
@@ -466,7 +474,7 @@ export async function saveInvoiceWithLines(
 
     await callFinancialRpc(
       'save_invoice_with_lines',
-      { p_invoice: invoiceRecord, p_lines: lines },
+      { p_invoice: invoiceRecord, p_lines: orderedLines },
       'No se pudo guardar la factura y sus lineas.',
     )
     savedInvoice = await readSavedInvoiceWithRetries(client, String(invoiceRecord.id ?? ''))
@@ -492,6 +500,7 @@ export async function saveInvoiceWithLines(
 
 export const __financialWriteApiTestUtils = {
   assertSavedInvoiceNumberingMatchesExpectation,
+  normalizeInvoiceLineSortOrders,
   isMissingSaveInvoiceResultRpcError,
   normalizeSavedInvoiceRows,
   normalizeSavedQuoteRows,

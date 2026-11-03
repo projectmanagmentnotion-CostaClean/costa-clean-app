@@ -164,4 +164,16 @@ describe('financialWriteApi test utils', () => {
     expect('invoice_number' in sanitized).toBe(false)
     expect('display_code' in sanitized).toBe(false)
   })
+
+  it('normalizes invoice line sort orders to a positive sequence starting at 1', () => {
+    const ordered = __financialWriteApiTestUtils.normalizeInvoiceLineSortOrders([
+      { id: 'line-1', sort_order: 0, concept: 'Servicio mensual' },
+      { id: 'line-2', sort_order: -1, concept: 'Servicio extra' },
+    ])
+
+    expect(ordered).toEqual([
+      { id: 'line-1', sort_order: 1, concept: 'Servicio mensual' },
+      { id: 'line-2', sort_order: 2, concept: 'Servicio extra' },
+    ])
+  })
 })

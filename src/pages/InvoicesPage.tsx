@@ -390,15 +390,27 @@ export function InvoicesPage({
         refreshInvoices: onInvoiceCreated,
       })
       if (result.created_payment) {
-        toast.success('Factura marcada como pagada', 'Se registró el cobro pendiente.')
+        const statusLabel = result.financial_status === 'paid' ? 'Factura totalmente cobrada' : 'Cobro parcial registrado'
+        toast.success('Cobro registrado', `${statusLabel}. Pendiente actualizado: ${formatCurrency(result.outstanding_after)}.`)
       } else {
-        toast.info('Factura ya estaba pagada', 'El estado financiero se ha vuelto a sincronizar.')
+        toast.info('Factura ya estaba cubierta', 'El estado financiero se ha vuelto a sincronizar sin crear otro cobro.')
       }
     } catch (error) {
       toast.error('No se pudo registrar el cobro', error instanceof Error ? error.message : 'Error desconocido.')
     } finally {
       settlementGuardRef.current.end(targetInvoice.id)
       setSettlingInvoiceIds((current) => current.filter((invoiceId) => invoiceId !== targetInvoice.id))
+    }
+  }
+
+  async function issueInvoiceFromDetail(targetInvoice: InvoiceListItem) {
+    if (targetInvoice.status !== 'draft') return
+    try {
+      await updateInvoiceStatus(targetInvoice.id, 'issued')
+      await onInvoiceCreated()
+      toast.success('Factura emitida', 'La numeración fiscal se ha asignado mediante el flujo canónico.')
+    } catch (error) {
+      toast.error('No se pudo emitir la factura', error instanceof Error ? error.message : 'Error desconocido.')
     }
   }
 
@@ -569,6 +581,9 @@ export function InvoicesPage({
           invoices={invoices}
           allInvoices={allInvoices}
           clients={clients}
+          properties={properties}
+          jobs={jobs}
+          quotes={quotes}
           payments={payments}
           error={error}
           initialInvoiceId={selectedInvoiceId}
@@ -578,9 +593,14 @@ export function InvoicesPage({
           isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
           onOpenDocument={openInvoiceDocument}
           onViewPayments={onViewPayments}
+          onOpenClientWorkspace={onOpenClientWorkspace}
+          onOpenPropertyWorkspace={onOpenPropertyWorkspace}
+          onOpenJobWorkspace={onOpenJobWorkspace}
+          onOpenQuoteDetail={onOpenQuoteDetail}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
           onEditInvoice={() => setShowMajorEdit(true)}
+          onIssueInvoice={issueInvoiceFromDetail}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
           onBulkDownload={bulkDownloadInvoicesV3}

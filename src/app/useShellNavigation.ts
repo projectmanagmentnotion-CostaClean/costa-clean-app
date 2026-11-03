@@ -38,6 +38,33 @@ function writeViewToLocation(view: AppView, replace = false) {
   window.history.pushState({ view }, '', url)
 }
 
+const entityDeepLinkByView: Partial<Record<AppView, string[]>> = {
+  leads: ['lead'],
+  clients: ['client', 'tab'],
+  properties: ['property', 'tab'],
+  quotes: ['quote'],
+  jobs: ['job'],
+  invoices: ['invoice'],
+  payments: ['payment'],
+  expenses: ['expense'],
+}
+
+export function clearModuleEntityDeepLink(view: AppView, href: string): string {
+  const url = new URL(href)
+  for (const key of entityDeepLinkByView[view] ?? []) {
+    url.searchParams.delete(key)
+  }
+  return url.toString()
+}
+
+function clearCurrentModuleEntityDeepLink(view: AppView) {
+  if (typeof window === 'undefined') return
+  const nextHref = clearModuleEntityDeepLink(view, window.location.href)
+  if (nextHref !== window.location.href) {
+    window.history.replaceState(window.history.state, '', nextHref)
+  }
+}
+
 export function useShellNavigation() {
   const [currentView, setCurrentView] = useState<AppView>(() => readViewFromLocation())
   const [unsavedChangesContext, setUnsavedChangesContext] = useState<string | null>(null)
@@ -57,6 +84,8 @@ export function useShellNavigation() {
     setCurrentView((currentView) => {
       if (view === currentView) return currentView
 
+      clearCurrentModuleEntityDeepLink(currentView)
+
       if (!options?.replace) {
         viewBackStackRef.current = [...viewBackStackRef.current, currentView].slice(-8)
       }
@@ -71,7 +100,13 @@ export function useShellNavigation() {
     if (typeof window === 'undefined') return undefined
 
     const handlePopState = () => {
-      setCurrentView(readViewFromLocation())
+      const nextView = readViewFromLocation()
+      setCurrentView((previousView) => {
+        if (previousView !== nextView) {
+          clearCurrentModuleEntityDeepLink(previousView)
+        }
+        return nextView
+      })
       setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
     }
 
@@ -124,6 +159,8 @@ export function useShellNavigation() {
 
     runWithNavigationGuard(() => {
       viewBackStackRef.current.pop()
+      clearCurrentModuleEntityDeepLink(currentView)
+      writeViewToLocation(previousView, true)
       setCurrentView(previousView)
       setNavigationBackTarget(viewBackStackRef.current.at(-1) ?? null)
     }, {

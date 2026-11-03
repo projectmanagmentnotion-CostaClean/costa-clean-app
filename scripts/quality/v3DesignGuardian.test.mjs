@@ -34,6 +34,7 @@ const v3TreeFiles = [
   'src/v3/alerts/V3AlertsPage.tsx',
   'src/v3/closing/V3ClosingPage.tsx',
   'src/v3/properties/V3PropertiesPage.tsx',
+  'src/v3/properties/V3PropertyWriteFlow.tsx',
   'src/v3/properties/V3PropertyRow.tsx',
   'src/v3/properties/V3PropertyWorkspace.tsx',
   'src/v3/selection/V3SelectionPrimitives.tsx',

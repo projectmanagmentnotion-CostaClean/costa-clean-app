@@ -26,8 +26,21 @@ function getRestConfig() {
   return { supabaseUrl, supabaseAnonKey }
 }
 
-interface FetchSupabaseRestListOptions {
+export interface FetchSupabaseRestListOptions {
   accessToken?: string | null
+  range?: { from: number; to: number }
+}
+
+const restListPageSize = 500
+
+function stabilizeRestListOrder(path: string): string {
+  const url = new URL(path, 'https://rest.invalid')
+  const selectedColumns = url.searchParams.get('select')?.split(',').map((column) => column.trim()) ?? []
+  const order = url.searchParams.get('order')
+  if (!order || !selectedColumns.includes('id') || /(?:^|,)\s*id\.(?:asc|desc)(?:,|$)/i.test(order)) return path
+
+  url.searchParams.set('order', `${order},id.asc`)
+  return `${url.pathname.slice(1)}${url.search}`
 }
 
 interface AuthenticatedReadContextInput {
@@ -42,7 +55,7 @@ export interface AuthenticatedReadContext {
   accessToken: string
 }
 
-interface AuthenticatedReadDependencies {
+export interface AuthenticatedReadDependencies {
   getContext: () => Promise<AuthenticatedReadContext>
   fetch: typeof fetch
 }
@@ -101,6 +114,10 @@ export async function fetchSupabaseRestListDetailed<T>(
     headers: {
       apikey: context.supabaseAnonKey,
       Authorization: `Bearer ${context.accessToken}`,
+      ...(options.range ? {
+        'Range-Unit': 'items',
+        Range: `${options.range.from}-${options.range.to}`,
+      } : {}),
     },
   })
 
@@ -135,7 +152,39 @@ export async function fetchSupabaseRestListDetailed<T>(
 export async function fetchSupabaseRestList<T>(
   path: string,
   options: FetchSupabaseRestListOptions = {},
+  dependencies: AuthenticatedReadDependencies = {
+    getContext: getAuthenticatedReadContext,
+    fetch: (input, init) => fetch(input, init),
+  },
 ): Promise<T[]> {
-  const { rows } = await fetchSupabaseRestListDetailed<T>(path, options)
-  return rows
+  const rows: T[] = []
+  const seenIds = new Set<string>()
+  const stablePath = stabilizeRestListOrder(path)
+  let from = 0
+  let previousPageFingerprint: string | null = null
+
+  while (true) {
+    const page = await fetchSupabaseRestListDetailed<T>(stablePath, {
+      ...options,
+      range: { from, to: from + restListPageSize - 1 },
+    }, dependencies)
+    const pageFingerprint = JSON.stringify(page.rows)
+    if (page.rows.length === restListPageSize && pageFingerprint === previousPageFingerprint) {
+      throw new Error(`La paginación REST no avanzó al cargar ${path}.`)
+    }
+
+    for (const row of page.rows) {
+      const id = row && typeof row === 'object' ? (row as { id?: unknown }).id : undefined
+      if (typeof id === 'string') {
+        if (seenIds.has(id)) continue
+        seenIds.add(id)
+      }
+      rows.push(row)
+    }
+
+    if (page.rows.length < restListPageSize) return rows
+
+    previousPageFingerprint = pageFingerprint
+    from += restListPageSize
+  }
 }

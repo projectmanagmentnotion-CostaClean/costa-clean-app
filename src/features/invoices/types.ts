@@ -41,6 +41,7 @@ export interface InvoiceListItem {
   updated_at?: string | null
 
   service_reference?: string | null
+  service_reference_override?: string | null
   service_description?: string | null
   billing_concept?: string | null
   billing_quantity?: number | null

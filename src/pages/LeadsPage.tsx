@@ -271,6 +271,7 @@ export function LeadsPage({
 
         <div className="cc-master-layout__detail">
           <LeadDetailCard
+            key={selectedLead?.id ?? 'no-lead'}
             lead={selectedLead}
             leadDraft={selectedLeadDraft}
             alreadyConverted={selectedLeadAlreadyConverted}

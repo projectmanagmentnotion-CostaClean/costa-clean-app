@@ -310,6 +310,7 @@ export function PaymentsPage({
 
         <div className="cc-master-layout__detail">
           <PaymentDetailCard
+            key={selectedPayment?.id ?? 'no-payment'}
             payment={selectedPayment}
             payments={payments}
             invoices={invoices}

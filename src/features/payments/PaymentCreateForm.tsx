@@ -3,6 +3,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextualCreateSection } from '../../components/ContextualCreateSection'
 import type { ClientListItem } from '../clients/types'
 import { savePaymentAndRefreshInvoice } from '../financial/financialWriteApi'
+import { getPaymentAmountError } from './paymentAmount'
 import { InvoiceCreateFlow } from '../invoices/InvoiceCreateFlow'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
@@ -135,33 +136,11 @@ export function PaymentCreateForm({
     return () => onDirtyChange?.(false)
   }, [isDirty, onDirtyChange])
 
-  useEffect(() => {
-    setForm(buildInitialState({
-      prefillInvoiceId: prefillInvoiceId ?? getPreferredInvoiceId(availableInvoices),
-      prefillAmount,
-      prefillPaymentMethod,
-      prefillNotes,
-    }))
-    setIsDirty(false)
-  }, [availableInvoices, prefillAmount, prefillInvoiceId, prefillNotes, prefillPaymentMethod])
 
   const selectedInvoice = useMemo(
     () => invoices.find((invoice) => invoice.id === form.invoice_id) ?? null,
     [form.invoice_id, invoices],
   )
-
-  useEffect(() => {
-    if (!selectedInvoice || prefillAmount) return
-
-    setForm((current) => {
-      if (current.amount.trim()) return current
-
-      return {
-        ...current,
-        amount: formatMoneyInput(Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total)),
-      }
-    })
-  }, [prefillAmount, selectedInvoice])
 
   function updateField<K extends keyof FormState>(field: K, value: FormState[K]) {
     setIsDirty(true)
@@ -208,14 +187,9 @@ export function PaymentCreateForm({
       }
 
       const amount = parseDecimalInput(form.amount)
-
-      if (Number.isNaN(amount)) {
-        setSubmitError('El importe debe ser un numero valido.')
-        return
-      }
-
-      if (amount <= 0) {
-        setSubmitError('El importe del cobro debe ser mayor que cero.')
+      const amountError = getPaymentAmountError(amount, Number(selectedInvoice.outstanding_amount ?? selectedInvoice.total))
+      if (amountError) {
+        setSubmitError(amountError)
         return
       }
 

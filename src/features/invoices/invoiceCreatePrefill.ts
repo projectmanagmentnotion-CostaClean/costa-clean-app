@@ -3,6 +3,8 @@ import { getJobBillingLines } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
 import { simplifyLineConcept } from '../quotes/lineConcepts'
 import type { ClientListItem } from '../clients/types'
+import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
+import type { QuoteListItem } from '../quotes/types'
 
 export interface InvoiceCreatePrefillLine {
   concept: string
@@ -75,6 +77,27 @@ export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreat
     notes: buildInvoiceNotes(job),
     lines: billingLines,
     title: job.display_code ?? job.id,
+  }
+}
+
+export function buildInvoiceCreatePrefillFromQuote(quote: QuoteListItem): InvoiceCreatePrefill | null {
+  if (!quote.id || !quote.client_id) return null
+
+  return {
+    request_id: createPrefillId(),
+    origin_kind: 'quote',
+    job_id: '',
+    quote_id: quote.id,
+    client_id: quote.client_id,
+    property_id: quote.property_id ?? '',
+    notes: quote.notes?.trim() ?? '',
+    lines: getBillingDraftLinesFromQuote(quote).map((line) => ({
+      concept: line.concept,
+      quantity: line.quantity,
+      unit: line.unit,
+      unit_price: line.unit_price,
+    })),
+    title: quote.display_code ?? quote.id,
   }
 }
 

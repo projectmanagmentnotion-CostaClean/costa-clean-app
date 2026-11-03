@@ -226,6 +226,22 @@ export const emptyModuleFilterState: ModuleFilterState = {
   payments: null,
 }
 
+export function clearDetailFilterForView(
+  filters: ModuleFilterState,
+  view: 'invoices' | 'quotes' | 'payments',
+): ModuleFilterState {
+  if (view === 'invoices' && typeof filters.invoices === 'object' && filters.invoices?.type === 'invoice') {
+    return { ...filters, invoices: null }
+  }
+  if (view === 'quotes' && typeof filters.quotes === 'object' && filters.quotes?.type === 'quote') {
+    return { ...filters, quotes: null }
+  }
+  if (view === 'payments' && typeof filters.payments === 'object' && filters.payments?.type === 'invoice') {
+    return { ...filters, payments: null }
+  }
+  return filters
+}
+
 export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): string | null {
   if (filter === 'pending') return 'Pendientes de cobro'
   if (filter === 'partially_paid') return 'Facturas parcialmente cobradas'

@@ -13,6 +13,22 @@ describe('V3 global visual system contracts', () => {
     expect(tokens).toContain('--v3-color-success:')
     expect(tokens).toContain('--v3-color-warning:')
     expect(tokens).toContain('--v3-color-danger:')
+    for (const role of [
+      '--v3-color-canvas:',
+      '--v3-color-primary-surface:',
+      '--v3-color-secondary-surface:',
+      '--v3-color-elevated-surface:',
+      '--v3-color-information:',
+      '--v3-color-financial:',
+      '--v3-color-financial-soft:',
+      '--v3-color-attention:',
+      '--v3-color-interactive-accent:',
+      '--v3-color-nav-surface:',
+      '--v3-color-header-surface:',
+      '--v3-color-canvas-surface:',
+      '--v3-chart-invoiced:',
+      '--v3-chart-collected:',
+    ]) expect(tokens).toContain(role)
   })
 
   it('defines semantic typography, rhythm, elevation and geometry roles', () => {
@@ -42,5 +58,13 @@ describe('V3 global visual system contracts', () => {
     expect(v3Css).not.toMatch(/#[0-9a-f]{3,8}\b/iu)
     expect(v3Css).not.toMatch(/rgba?\(/iu)
     expect(v3Css).not.toMatch(/hsla?\(/iu)
+  })
+
+  it('governs brand identity, scrollbars and full viewport surfaces centrally', () => {
+    expect(v3Css).toContain('[data-brand-lockup="CostaClean"]')
+    expect(v3Css).toContain('scrollbar-width: none')
+    expect(v3Css).toContain('min-height: 100dvh')
+    expect(v3Css).toContain('var(--v3-color-nav-surface)')
+    expect(v3Css).toContain('var(--v3-color-header-surface)')
   })
 })

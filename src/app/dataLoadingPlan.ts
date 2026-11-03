@@ -62,3 +62,17 @@ export function filterDomainsByLoadedState(
 ): AppDataDomain[] {
   return [...domains].filter((domain) => loadedDomains.has(domain))
 }
+
+export function filterDomainsByStaleness(
+  domains: Iterable<AppDataDomain>,
+  lastSuccessfulRefreshAt: ReadonlyMap<AppDataDomain, number>,
+  inFlightDomains: ReadonlySet<AppDataDomain>,
+  now: number,
+  staleTimeMs: number,
+): AppDataDomain[] {
+  return [...domains].filter((domain) => {
+    if (inFlightDomains.has(domain)) return false
+    const refreshedAt = lastSuccessfulRefreshAt.get(domain)
+    return refreshedAt === undefined || now - refreshedAt >= staleTimeMs
+  })
+}

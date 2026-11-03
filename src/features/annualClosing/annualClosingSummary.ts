@@ -124,7 +124,7 @@ export function buildAnnualClosingSummary(
       {
         id: 'payment_year_all',
         label: 'Cobros registrados del año',
-        detail: 'Cobros con fecha dentro del ejercicio seleccionado.',
+        detail: 'Cobros vinculados a facturas emitidas en el ejercicio seleccionado.',
         count: paymentCount,
         tone: 'neutral',
         view: 'payments',

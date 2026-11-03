@@ -81,6 +81,7 @@ export function normalizeBoolean(value) {
 
 export function normalizeChannel(value) {
   const text = normalizeText(value)?.toLocaleLowerCase('es-ES') || ''
+  if (['both', 'ambos', 'whatsapp y email', 'email y whatsapp'].includes(text)) return 'both'
   if (['email', 'whatsapp', 'phone'].includes(text)) return text
   if (text.includes('whatsapp') || text.includes('wasap')) return 'whatsapp'
   if (text.includes('correo') || text.includes('email') || text.includes('e-mail')) return 'email'

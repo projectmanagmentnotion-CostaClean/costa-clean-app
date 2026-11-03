@@ -8,18 +8,18 @@ import {
   validateInput,
 } from '../src/features/publicIntake/intakePipeline.mjs'
 import {
-  getClientIp,
   isHoneypotTriggered,
   registerIpAttempt,
   validateSubmissionTiming,
 } from './_lib/requestProtection.js'
+import { isProductionSupabaseUrl, PUBLIC_WEB_INTAKE_MAX_BODY_BYTES, verifyPublicWebIntake } from './_lib/publicWebIntakeAuth.js'
 
 function getSupabaseServerConfig() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL
+  const supabaseUrl = process.env.SUPABASE_URL
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !serviceRoleKey) {
-    throw new Error('Faltan SUPABASE_URL/VITE_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno del servidor.')
+  if (!isProductionSupabaseUrl(supabaseUrl || '') || !serviceRoleKey) {
+    throw new Error('El destino productivo de captación no está configurado.')
   }
 
   return { supabaseUrl, serviceRoleKey }
@@ -100,6 +100,36 @@ async function createOrUpdateLead(input, normalizedPhone, intakeSubmissionId, pr
   return { lead, matchedExistingLead: false }
 }
 
+async function findSubmissionByIdempotencyKey(submissionId) {
+  const matches = await supabaseRequest(
+    `intake_submissions?select=id,status,lead_draft_id,lead_id&external_source_key=eq.${encodeURIComponent(`public_quote_form:${submissionId}`)}&limit=1`,
+  )
+  return Array.isArray(matches) ? matches[0] || null : null
+}
+
+async function claimIntakeSubmission(submissionId, row) {
+  try {
+    return { claimed: true, submission: await insertRow('intake_submissions', {
+      ...row,
+      external_source_key: `public_quote_form:${submissionId}`,
+    }) }
+  } catch (error) {
+    // The existing partial unique index on external_source_key is the database
+    // serialization point for concurrent retries. Re-read after a conflict or
+    // ambiguous transport error before deciding whether the request may proceed.
+    const existing = await findSubmissionByIdempotencyKey(submissionId)
+    if (existing) return { claimed: false, submission: existing }
+    throw error
+  }
+}
+
+function respondForExistingSubmission(res, submission) {
+  if (submission.status === 'converted' && submission.lead_draft_id) {
+    return res.status(200).json({ ok: true, message: 'La solicitud ya se había recibido.' })
+  }
+  return res.status(409).json({ error: 'La solicitud ya está pendiente de revisión.' })
+}
+
 async function hasRecentDuplicateSubmission(input) {
   const tenMinutesAgoIso = new Date(Date.now() - 10 * 60 * 1000).toISOString()
   const checks = []
@@ -134,8 +164,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed.' })
   }
 
+  if (process.env.COSTA_PUBLIC_WEB_INTAKE_ENABLED !== 'true') {
+    return res.status(503).json({ error: 'El servicio de captación no está disponible.' })
+  }
+
   try {
     const rawBody = req.body && typeof req.body === 'object' ? req.body : {}
+    const contentLength = Number(req.headers['content-length'] || 0)
+    if (contentLength > PUBLIC_WEB_INTAKE_MAX_BODY_BYTES || Buffer.byteLength(JSON.stringify(rawBody), 'utf8') > PUBLIC_WEB_INTAKE_MAX_BODY_BYTES) {
+      return res.status(413).json({ error: 'Solicitud demasiado grande.' })
+    }
+    const signedRequest = verifyPublicWebIntake(rawBody, process.env.COSTA_PUBLIC_WEB_INTAKE_SECRET, req.headers)
+    if (!signedRequest.ok) {
+      return res.status(signedRequest.status).json({ error: signedRequest.status === 503 ? 'El servicio de captación no está configurado.' : 'Solicitud no válida.' })
+    }
+    if (!isProductionSupabaseUrl(process.env.SUPABASE_URL || '') || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return res.status(503).json({ error: 'El servicio de captación no está configurado.' })
+    }
+    if (rawBody.source !== 'public_quote_form' || rawBody.normalizedInput?.consentQuoteProcessing !== true || rawBody.consents?.privacyNoticeAccepted !== true) {
+      return res.status(400).json({ error: 'La solicitud contiene campos incompletos.' })
+    }
     if (isHoneypotTriggered(rawBody)) {
       return res.status(400).json({ error: 'Solicitud invalida.' })
     }
@@ -148,8 +196,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: timingValidation.error })
     }
 
-    const clientIp = getClientIp(req)
-    if (!registerIpAttempt(clientIp)) {
+    if (!registerIpAttempt(signedRequest.clientKey)) {
       return res.status(429).json({
         error: 'Has enviado demasiadas solicitudes en poco tiempo. Espera unos minutos e intentalo de nuevo.',
       })
@@ -165,6 +212,9 @@ export default async function handler(req, res) {
       })
     }
 
+    const existingSubmission = await findSubmissionByIdempotencyKey(signedRequest.submissionId)
+    if (existingSubmission) return respondForExistingSubmission(res, existingSubmission)
+
     if (await hasRecentDuplicateSubmission(normalizedInput)) {
       return res.status(429).json({
         error: 'Ya hemos recibido una solicitud reciente con estos datos. Espera unos minutos antes de reenviarla.',
@@ -172,7 +222,7 @@ export default async function handler(req, res) {
     }
 
     const pricing = calculatePricing(normalizedInput)
-    const intakeSubmission = await insertRow('intake_submissions', {
+    const claim = await claimIntakeSubmission(signedRequest.submissionId, {
       source: 'public_quote_form',
       status: 'reviewing',
       submitted_at: normalizedInput.submittedAt,
@@ -181,6 +231,8 @@ export default async function handler(req, res) {
       source_field_map: nativeQuoteRequestFieldMap,
       pricing_breakdown: pricing,
     })
+    if (!claim.claimed) return respondForExistingSubmission(res, claim.submission)
+    const intakeSubmission = claim.submission
 
     const { lead, matchedExistingLead } = await createOrUpdateLead(
       normalizedInput,
@@ -227,9 +279,9 @@ export default async function handler(req, res) {
       matchedExistingLead,
       pricing,
     })
-  } catch (error) {
+  } catch {
     return res.status(500).json({
-      error: error instanceof Error ? error.message : 'No se pudo procesar la solicitud.',
+      error: 'No se pudo procesar la solicitud.',
     })
   }
 }

@@ -4,6 +4,7 @@ import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLa
 import type { AppView } from '../app/navigation'
 import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
 import { ClosingDocumentDialogs } from '../features/closing/ClosingDocumentDialogs'
+import { buildInvoicePaymentCohort } from '../features/closing/invoicePaymentCohort'
 import '../features/ui/compactListStyles'
 import type { ClientListItem } from '../features/clients/types'
 import {
@@ -191,8 +192,8 @@ export function QuarterlyClosingPage({
     [invoices, selectedQuarter, selectedYear],
   )
   const quarterPayments = useMemo(
-    () => payments.filter((payment) => matchesDateQuarter(payment.payment_date, selectedYear, selectedQuarter)),
-    [payments, selectedQuarter, selectedYear],
+    () => buildInvoicePaymentCohort(payments, quarterInvoices).payments,
+    [payments, quarterInvoices],
   )
   const quarterExpenses = useMemo(
     () => expenses.filter((expense) => matchesExpenseQuarter(expense, selectedYear, selectedQuarter)),
@@ -906,7 +907,7 @@ export function QuarterlyClosingPage({
               <span className="cc-dashboard-panel__label">Resumen de cobros</span>
               <strong className="cc-dashboard-panel__value">{quarterPayments.length}</strong>
               <p className="cc-dashboard-panel__text">Importe cobrado del trimestre: {formatCurrency(quarterPaymentsTotal)}</p>
-              <p className="cc-dashboard-panel__text">Cobros registrados con fecha del trimestre.</p>
+              <p className="cc-dashboard-panel__text">Cobros vinculados a facturas emitidas en el trimestre, aunque se registren después.</p>
             </article>
 
             <article className="cc-quarterly-persistence__card">
@@ -1303,7 +1304,7 @@ export function QuarterlyClosingPage({
               </article>
               <article className="cc-export-folder-item">
                 <strong>{externalAccountingSectionPaths.payments}</strong>
-                <p>{`${quarterPayments.length} cobro(s) con fecha, factura vinculada, importe y metodo.`}</p>
+                <p>{`${quarterPayments.length} cobro(s) vinculados a facturas emitidas en el trimestre, con fecha, importe y método.`}</p>
               </article>
               <article className="cc-export-folder-item">
                 <strong>{externalAccountingSectionPaths.expenses}</strong>

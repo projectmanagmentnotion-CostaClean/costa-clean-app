@@ -4,6 +4,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { getSupabaseClient } from '../../lib/supabase'
 import { getSupabasePublicEnv } from '../../lib/supabaseEnv'
 import { updateInvoiceStatus } from '../financial/financialWriteApi'
+import { V3ConfirmSheet, V3PrimaryAction } from '../../v3/components/V3Primitives'
 import type { InvoiceListItem } from './types'
 import {
   getInvoiceIssueConfirmationDescription,
@@ -14,6 +15,7 @@ import {
 interface InvoiceIssueActionProps {
   invoice: InvoiceListItem | null
   onInvoiceUpdated: () => Promise<void>
+  presentation?: 'legacy' | 'v3'
 }
 
 function createInvoiceIssueDependencies(): InvoiceIssueDependencies {
@@ -47,7 +49,7 @@ function createInvoiceIssueDependencies(): InvoiceIssueDependencies {
   }
 }
 
-export function InvoiceIssueAction({ invoice, onInvoiceUpdated }: InvoiceIssueActionProps) {
+export function InvoiceIssueAction({ invoice, onInvoiceUpdated, presentation = 'legacy' }: InvoiceIssueActionProps) {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [isIssuing, setIsIssuing] = useState(false)
   const [resultMessage, setResultMessage] = useState<string | null>(null)
@@ -58,6 +60,7 @@ export function InvoiceIssueAction({ invoice, onInvoiceUpdated }: InvoiceIssueAc
 
   const clientLabel = invoice.client_name ?? invoice.client_label ?? invoice.client_id
   const { supabaseUrl } = getSupabasePublicEnv()
+  const isV3Presentation = presentation === 'v3'
 
   async function confirmIssue() {
     if (!invoice || isIssuing || isOutcomeUncertain) return
@@ -96,45 +99,55 @@ export function InvoiceIssueAction({ invoice, onInvoiceUpdated }: InvoiceIssueAc
     }
   }
 
+  const openConfirmation = () => {
+    setErrorMessage(null)
+    setIsConfirmOpen(true)
+  }
+  const confirmationDescription = `${getInvoiceIssueConfirmationDescription(supabaseUrl)} Cliente: ${clientLabel}. Total: ${formatCurrency(invoice.total)}.`
+
   return (
-    <div className="cc-invoice-issue-action">
-      <div className="form-actions cc-invoice-detail-card__action-row">
-        <button
-          type="button"
-          className="primary-button"
-          onClick={() => {
-            setErrorMessage(null)
-            setIsConfirmOpen(true)
-          }}
-          disabled={isIssuing || isOutcomeUncertain || invoice.invoice_number !== null}
-        >
+    <>
+      {isV3Presentation ? (
+        <V3PrimaryAction onClick={openConfirmation} disabled={isIssuing || isOutcomeUncertain || invoice.invoice_number !== null}>
           Emitir factura
-        </button>
-      </div>
+        </V3PrimaryAction>
+      ) : (
+        <div className="cc-invoice-issue-action">
+          <div className="form-actions cc-invoice-detail-card__action-row">
+            <button type="button" className="primary-button" onClick={openConfirmation} disabled={isIssuing || isOutcomeUncertain || invoice.invoice_number !== null}>
+              Emitir factura
+            </button>
+          </div>
+        </div>
+      )}
       {resultMessage ? <p role="status">{resultMessage}</p> : null}
       {errorMessage ? <p role="alert">{errorMessage}</p> : null}
       {isOutcomeUncertain ? <p>No repitas la emisión. Recarga la ficha y confirma el estado y número fiscal en Production.</p> : null}
-      <ConfirmDialog
-        isOpen={isConfirmOpen}
-        title="Confirmar emisión fiscal"
-        description={(
-          <div>
-            <p>{getInvoiceIssueConfirmationDescription(supabaseUrl)}</p>
-            <dl>
-              <dt>Cliente</dt><dd>{clientLabel}</dd>
-              <dt>ID</dt><dd>{invoice.id}</dd>
-              <dt>Base</dt><dd>{formatCurrency(invoice.subtotal)}</dd>
-              <dt>IVA</dt><dd>{formatCurrency(invoice.tax_amount)}</dd>
-              <dt>Total</dt><dd>{formatCurrency(invoice.total)}</dd>
-            </dl>
-          </div>
-        )}
-        confirmLabel="Emitir factura"
-        tone="warning"
-        isBusy={isIssuing}
-        onCancel={() => setIsConfirmOpen(false)}
-        onConfirm={() => void confirmIssue()}
-      />
-    </div>
+      {isV3Presentation ? (
+        isConfirmOpen ? <V3ConfirmSheet title="Confirmar emisión fiscal" description={confirmationDescription} confirmLabel="Emitir factura" busy={isIssuing} onCancel={() => setIsConfirmOpen(false)} onConfirm={() => void confirmIssue()} /> : null
+      ) : (
+        <ConfirmDialog
+          isOpen={isConfirmOpen}
+          title="Confirmar emisión fiscal"
+          description={(
+            <div>
+              <p>{getInvoiceIssueConfirmationDescription(supabaseUrl)}</p>
+              <dl>
+                <dt>Cliente</dt><dd>{clientLabel}</dd>
+                <dt>ID</dt><dd>{invoice.id}</dd>
+                <dt>Base</dt><dd>{formatCurrency(invoice.subtotal)}</dd>
+                <dt>IVA</dt><dd>{formatCurrency(invoice.tax_amount)}</dd>
+                <dt>Total</dt><dd>{formatCurrency(invoice.total)}</dd>
+              </dl>
+            </div>
+          )}
+          confirmLabel="Emitir factura"
+          tone="warning"
+          isBusy={isIssuing}
+          onCancel={() => setIsConfirmOpen(false)}
+          onConfirm={() => void confirmIssue()}
+        />
+      )}
+    </>
   )
 }

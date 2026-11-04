@@ -579,6 +579,7 @@ export function InvoicesPage({
           isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
           onOpenDocument={openInvoiceDocument}
           onViewPayments={onViewPayments}
+          onInvoiceUpdated={onInvoiceCreated}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
           onEditInvoice={() => setShowMajorEdit(true)}

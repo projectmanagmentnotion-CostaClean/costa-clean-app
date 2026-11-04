@@ -14,7 +14,7 @@ function createInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListIte
 function renderPage(invoices: InvoiceListItem[], initialInvoiceId?: string) {
   return renderToStaticMarkup(createElement(V3InvoicesPage, {
     invoices, allInvoices: invoices, clients: [], payments: [], error: null, initialInvoiceId,
-    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
+    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onInvoiceUpdated: async () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
   }))
 }
 
@@ -44,6 +44,21 @@ describe('V3 dedicated invoice tree', () => {
     expect(workspace).toContain('Líneas')
     expect(workspace).toContain('Cobros')
     expect(workspace).toContain('Documento')
+  })
+
+  it('offers the existing guarded issue flow for draft invoices in the default V3 workspace', () => {
+    const draft = createInvoice({ status: 'draft', invoice_number: null, payment_status: 'pending' })
+    const workspace = renderPage([draft], draft.id)
+
+    expect(workspace).toContain('Emitir factura')
+    expect(workspace).not.toContain('Registrar cobro')
+  })
+
+  it('keeps the issue action absent for already issued invoices', () => {
+    const workspace = renderPage([createInvoice()], 'invoice-1')
+
+    expect(workspace).not.toContain('Emitir factura')
+    expect(workspace).toContain('Registrar cobro')
   })
 
   it('keeps the invoice amount hierarchy and transfer confirmation tied to the existing outstanding value', () => {

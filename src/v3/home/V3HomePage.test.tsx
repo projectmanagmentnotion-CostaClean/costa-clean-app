@@ -1,41 +1,54 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import type { InvoiceListItem } from '../../features/invoices/types'
 import { V3HomePage } from './V3HomePage'
 
-function renderHome(metrics: { invoicedThisMonthTotal: number; outstandingReceivablesTotal: number; openQuotesCount: number; completedJobsWithoutInvoiceCount: number }) {
+function renderHome(invoices: InvoiceListItem[] = []) {
   return renderToStaticMarkup(createElement(V3HomePage, {
-    metrics,
+    invoices,
+    payments: [],
+    expenses: [],
+    jobs: [],
+    quotes: [],
     alerts: [],
     operationalIncidents: [],
     onRunKpiAction: () => undefined,
     onOpenAlert: () => undefined,
     onRunOperationalAction: () => undefined,
+    onOpenAllAlerts: () => undefined,
   }))
 }
 
-describe('V3HomePage visual density', () => {
-  it('omits empty secondary metrics while retaining nonzero operational metrics', () => {
-    const html = renderHome({
-      invoicedThisMonthTotal: 100,
-      outstandingReceivablesTotal: 0,
-      openQuotesCount: 2,
-      completedJobsWithoutInvoiceCount: 0,
-    })
+const invoice: InvoiceListItem = {
+  id: 'invoice-september',
+  display_code: 'INV-2026-001',
+  invoice_number: '2026-001',
+  job_id: null,
+  client_id: 'synthetic-client',
+  issue_date: '2026-09-18',
+  status: 'issued',
+  subtotal: 100,
+  tax_amount: 21,
+  total: 121,
+}
 
-    expect(html).not.toContain('Pendiente de cobro')
-    expect(html).toContain('Presupuestos abiertos')
-    expect(html).not.toContain('Servicios sin facturar')
+describe('V3HomePage visual density', () => {
+  it('renders executive indicators and omits the operational block when it has no values', () => {
+    const html = renderHome([invoice])
+
+    expect(html).toContain('Resumen ejecutivo')
+    expect(html).toContain('Facturado')
+    expect(html).toContain('Evolución del negocio')
+    expect(html).not.toContain('Operativa del periodo')
   })
 
-  it('omits the secondary metrics block when all values are zero', () => {
-    const html = renderHome({
-      invoicedThisMonthTotal: 0,
-      outstandingReceivablesTotal: 0,
-      openQuotesCount: 0,
-      completedJobsWithoutInvoiceCount: 0,
-    })
+  it('renders the current period selector and hides empty priority actions', () => {
+    const html = renderHome()
 
+    expect(html).toContain('Periodo del dashboard')
+    expect(html).toContain('Estado actual')
+    expect(html).toContain('Sin asuntos prioritarios ahora.')
     expect(html).not.toContain('Métricas secundarias')
   })
 })

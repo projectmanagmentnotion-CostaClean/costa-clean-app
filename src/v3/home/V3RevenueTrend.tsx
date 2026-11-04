@@ -1,0 +1,29 @@
+import type { DashboardTrendPoint } from './executiveDashboardModel'
+
+function linePoints(values: number[], max: number): string {
+  return values.map((value, index) => `${24 + index * 92},${174 - (value / max) * 142}`).join(' ')
+}
+
+export function V3RevenueTrend({ points }: { points: DashboardTrendPoint[] }) {
+  const max = Math.max(...points.flatMap((point) => [point.invoiced, point.collected, point.expenses]), 1)
+  const summary = points.map((point) => `${point.label}: facturado ${point.invoiced} euros, cobrado ${point.collected} euros, gastos ${point.expenses} euros`).join('; ')
+
+  return <div className="v3-dashboard-trend">
+    <svg className="v3-dashboard-trend__chart" viewBox="0 0 520 210" role="img" aria-labelledby="v3-dashboard-trend-title v3-dashboard-trend-description" preserveAspectRatio="none">
+      <title id="v3-dashboard-trend-title">Tendencia de facturación, cobros y gastos</title>
+      <desc id="v3-dashboard-trend-description">{summary || 'Sin datos históricos suficientes.'}</desc>
+      <line x1="24" y1="174" x2="484" y2="174" stroke="currentColor" opacity=".25" />
+      <line x1="24" y1="103" x2="484" y2="103" stroke="currentColor" opacity=".12" />
+      <line x1="24" y1="32" x2="484" y2="32" stroke="currentColor" opacity=".12" />
+      <polyline className="v3-dashboard-trend__line v3-dashboard-trend__line--invoiced" points={linePoints(points.map((point) => point.invoiced), max)} fill="none" />
+      <polyline className="v3-dashboard-trend__line v3-dashboard-trend__line--collected" points={linePoints(points.map((point) => point.collected), max)} fill="none" />
+      <polyline className="v3-dashboard-trend__line v3-dashboard-trend__line--expenses" points={linePoints(points.map((point) => point.expenses), max)} fill="none" />
+      {points.map((point, index) => <text key={point.key} x={24 + index * 92} y="198" textAnchor="middle" fill="currentColor" fontSize="10">{point.label}</text>)}
+    </svg>
+    <div className="v3-dashboard-trend__legend" aria-hidden="true">
+      <span><i className="v3-dashboard-trend__swatch v3-dashboard-trend__swatch--invoiced" />Facturado</span>
+      <span><i className="v3-dashboard-trend__swatch v3-dashboard-trend__swatch--collected" />Cobrado</span>
+      <span><i className="v3-dashboard-trend__swatch v3-dashboard-trend__swatch--expenses" />Gastos</span>
+    </div>
+  </div>
+}

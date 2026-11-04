@@ -84,7 +84,7 @@ export function V3HomePage({ invoices, payments, expenses, jobs, quotes, alerts,
     <div className="v3-home-overview">
       <V3KpiGroup>
         <V3Kpi label="Facturado" value={format(model.invoiced)} hint={growthText(model.growth.invoiced)} onClick={canOpenCurrentMonthLists ? () => onRunKpiAction('invoiced_this_month') : undefined} />
-        <V3Kpi label="Cobrado" value={format(model.collected)} hint={`${growthText(model.growth.collected)} · facturas del periodo`} onClick={canOpenCurrentMonthLists ? () => onRunKpiAction('collected_this_month') : undefined} />
+        <V3Kpi label="Cobrado" value={format(model.collected)} hint={`${growthText(model.growth.collected)} · facturas del periodo`} />
         <V3Kpi label="Pendiente de cobro" value={format(model.outstanding)} hint="Facturas emitidas en el periodo" />
         <V3Kpi label="Gastos" value={format(model.expenses)} hint={growthText(model.growth.expenses)} onClick={canOpenCurrentMonthLists ? () => onRunKpiAction('expenses_this_month') : undefined} />
         <V3Kpi label="Resultado estimado" value={format(model.estimatedResult)} hint="Facturado − gastos" />

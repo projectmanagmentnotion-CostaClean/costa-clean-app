@@ -51,4 +51,17 @@ describe('V3HomePage visual density', () => {
     expect(html).toContain('Sin asuntos prioritarios ahora.')
     expect(html).not.toContain('Métricas secundarias')
   })
+
+  it('does not route invoice-cohort collections to the payment-date filter', () => {
+    const now = new Date()
+    const currentMonthInvoice = {
+      ...invoice,
+      id: 'invoice-current-month',
+      issue_date: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10),
+    }
+    const html = renderHome([currentMonthInvoice])
+
+    expect(html).toContain('aria-label="Facturado:')
+    expect(html).not.toContain('aria-label="Cobrado:')
+  })
 })

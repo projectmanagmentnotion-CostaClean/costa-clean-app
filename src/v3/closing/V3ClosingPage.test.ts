@@ -79,6 +79,22 @@ describe('V3ClosingPage', () => {
     expect(html).not.toContain(technicalId)
   })
 
+  it('hydrates the internal note from the selected persisted period', () => {
+    const html = renderClosingPage({
+      quarterlyClosings: [{
+        id: 'snapshot-q1',
+        fiscal_year: 2026,
+        fiscal_quarter: 1,
+        status: 'prepared',
+        closed_at: null,
+        notes: 'Contexto de Q1',
+        snapshot_json: null,
+      }],
+    })
+
+    expect(html).toContain('Contexto de Q1</textarea>')
+  })
+
   it('does not present an issues snapshot as successful', () => {
     const html = renderClosingPage({
       quarterlyClosings: [{

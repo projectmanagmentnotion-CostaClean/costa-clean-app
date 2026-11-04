@@ -21,6 +21,7 @@ import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceN
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { buildInvoiceCorrectionPrefill, buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceIssueAction } from '../features/invoices/InvoiceIssueAction'
 import { getInvoiceCorrectionCase } from '../features/invoices/invoiceCorrectionCases'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import {
@@ -913,7 +914,9 @@ export function InvoicesPage({
           </div>
 
           <div className="cc-master-layout__detail">
+            <InvoiceIssueAction key={selectedInvoiceKey ?? 'no-selected-invoice'} invoice={detailInvoice} onInvoiceUpdated={onInvoiceCreated} />
             <InvoiceDetailCard
+              key={selectedInvoiceKey ?? 'no-selected-invoice'}
               invoice={detailInvoice}
               clients={clients}
               jobs={jobs}

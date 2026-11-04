@@ -27,6 +27,28 @@ function renderClosingPage(overrides: Record<string, unknown> = {}) {
 }
 
 describe('V3ClosingPage', () => {
+  it('shows a separate invoiced base, VAT and gross breakdown without changing calculations', () => {
+    const html = renderClosingPage({
+      invoices: [{
+        id: 'synthetic-invoice-001',
+        display_code: null,
+        invoice_number: null,
+        job_id: null,
+        client_id: 'synthetic-client-001',
+        issue_date: '2026-02-01',
+        status: 'draft',
+        subtotal: 100,
+        tax_amount: 21,
+        total: 121,
+      }],
+    })
+
+    expect(html).toContain('aria-label="Desglose de facturación"')
+    expect(html).toContain('Base imponible')
+    expect(html).toContain('21,00')
+    expect(html).toContain('Total facturado')
+  })
+
   it('separates calculated values, snapshot state and assistive output', () => {
     const html = renderClosingPage()
 

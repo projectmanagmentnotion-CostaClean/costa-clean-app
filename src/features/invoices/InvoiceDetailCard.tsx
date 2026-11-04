@@ -40,6 +40,7 @@ import { canBackfillInvoiceFiscalSnapshot, hasCompleteInvoiceFiscalSnapshot } fr
 import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
+import { canSaveInvoiceEditor } from './invoiceEditorIdentity'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -302,6 +303,7 @@ export function InvoiceDetailCard({
     notes: '',
   })
   const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
+  const [hydratedInvoiceId, setHydratedInvoiceId] = useState<string | null>(null)
 
   useEffect(() => {
     isDirtyRef.current = isDirty
@@ -391,6 +393,7 @@ export function InvoiceDetailCard({
         notes: '',
       })
       setLines([createBlankLine()])
+      setHydratedInvoiceId(null)
       return
     }
 
@@ -408,6 +411,7 @@ export function InvoiceDetailCard({
       notes: invoice.notes ?? '',
     })
     setLines(getFormLinesFromInvoice(invoice))
+    setHydratedInvoiceId(invoice.id)
   }, [invoice])
 
   useEffect(() => {
@@ -701,6 +705,11 @@ export function InvoiceDetailCard({
 
   async function saveInvoiceEdits() {
     if (!invoice) return
+
+    if (!canSaveInvoiceEditor(invoice.id, hydratedInvoiceId)) {
+      setSaveError('No se puede guardar: los datos del editor no corresponden a la factura seleccionada. Cierra y vuelve a abrir la factura.')
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)

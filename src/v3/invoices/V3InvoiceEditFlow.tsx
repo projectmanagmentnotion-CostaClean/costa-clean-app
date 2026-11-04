@@ -1,7 +1,7 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { businessRules } from '../../app/businessRules'
 import { saveInvoiceWithLines } from '../../features/financial/financialWriteApi'
-import { canSaveIssuedInvoiceCorrection } from '../../features/invoices/invoiceEditorIdentity'
+import { canKeepInvoiceFiscalNumber, canSaveIssuedInvoiceCorrection } from '../../features/invoices/invoiceEditorIdentity'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import {
   buildBillingLinePayloads,
@@ -80,6 +80,10 @@ export function V3InvoiceEditFlow({ invoice, onRefreshData, onCompleted, onCance
     }
     if (!canSaveIssuedInvoiceCorrection(invoice.status, internalCorrectionConfirmed)) {
       setError('Confirma que la factura emitida no se ha enviado y puede corregirse internamente.')
+      return
+    }
+    if (invoice.status === 'issued' && !canKeepInvoiceFiscalNumber(invoice.invoice_number, issueDate)) {
+      setError('La fecha de una corrección interna debe permanecer en el ejercicio de su número fiscal. Para otro ejercicio, prepara una factura rectificativa.')
       return
     }
     if (total + 0.009 < paid) {

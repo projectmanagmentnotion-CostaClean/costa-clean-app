@@ -130,6 +130,7 @@ export function V3InvoicesPage({
     return (
       <>
         <V3InvoiceWorkspace
+          key={selectedInvoice.id}
           invoice={selectedInvoice}
           payments={payments}
           clients={clients}

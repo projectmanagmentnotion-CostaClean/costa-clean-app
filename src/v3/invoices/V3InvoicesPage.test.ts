@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { V3InvoicesPage } from './V3InvoicesPage'
+import { V3InvoiceEditFlow } from './V3InvoiceEditFlow'
 import { getInvoiceFinancialFacts, getInvoiceSettlementDescription } from './invoicePresentation'
 import type { InvoiceListItem } from '../../features/invoices/types'
 
@@ -15,6 +16,15 @@ function renderPage(invoices: InvoiceListItem[], initialInvoiceId?: string) {
   return renderToStaticMarkup(createElement(V3InvoicesPage, {
     invoices, allInvoices: invoices, clients: [], payments: [], error: null, initialInvoiceId,
     onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onInvoiceUpdated: async () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
+  }))
+}
+
+function renderEditFlow(invoice: InvoiceListItem) {
+  return renderToStaticMarkup(createElement(V3InvoiceEditFlow, {
+    invoice,
+    onRefreshData: async () => {},
+    onCompleted: () => {},
+    onCancel: () => {},
   }))
 }
 
@@ -59,6 +69,15 @@ describe('V3 dedicated invoice tree', () => {
 
     expect(workspace).not.toContain('Emitir factura')
     expect(workspace).toContain('Registrar cobro')
+  })
+
+  it('requires an internal-correction attestation in the issued invoice editor', () => {
+    const issuedEditor = renderEditFlow(createInvoice())
+    const draftEditor = renderEditFlow(createInvoice({ status: 'draft', invoice_number: null }))
+
+    expect(issuedEditor).toContain('Factura emitida en revisión')
+    expect(issuedEditor).toContain('Confirmo que esta factura no se ha enviado')
+    expect(draftEditor).not.toContain('Confirmo que esta factura no se ha enviado')
   })
 
   it('keeps the invoice amount hierarchy and transfer confirmation tied to the existing outstanding value', () => {

@@ -5,3 +5,8 @@ export function canSaveInvoiceEditor(
 ): boolean {
   return Boolean(invoiceId && hydratedInvoiceId && invoiceId === hydratedInvoiceId)
 }
+
+/** Issued invoices need an explicit internal-correction attestation before a rewrite. */
+export function canSaveIssuedInvoiceCorrection(status: string, internalCorrectionConfirmed: boolean): boolean {
+  return status !== 'issued' || internalCorrectionConfirmed
+}

@@ -590,7 +590,7 @@ export function InvoicesPage({
           onBulkSettle={bulkSettleInvoicesV3}
         />
         {isCreateFormVisible ? <V3InvoiceCreateFlow clients={clients} properties={properties} jobs={jobs} quotes={quotes} invoices={allInvoices} prefillClientId={effectiveCreatePrefill?.client_id} prefillJobId={effectiveCreatePrefill?.job_id} prefillQuoteId={effectiveCreatePrefill?.quote_id} onRefreshData={onInvoiceCreated} onCompleted={handleInvoiceCreated} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} /> : null}
-        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
+        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow key={detailInvoice.id} invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
       </>
     )
   }

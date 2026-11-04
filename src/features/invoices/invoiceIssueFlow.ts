@@ -88,7 +88,7 @@ export async function issueSelectedInvoice(
 
   const current = await dependencies.readInvoice(selected.id)
   if (!current || !matchesSelectedInvoice(selected, current)) {
-    throw new Error('La factura seleccionada ya no coincide con Production (ID, cliente, estado o importes). No se ha emitido.')
+    throw new Error('La factura seleccionada ya no coincide con el entorno configurado (ID, cliente, estado o importes). No se ha emitido.')
   }
 
   let rpcError: unknown = null
@@ -103,11 +103,11 @@ export async function issueSelectedInvoice(
     persisted = await dependencies.readInvoice(current.id)
   } catch (error) {
     const detail = error instanceof Error ? ` ${error.message}` : ''
-    throw new Error(`Production no confirma la emisión ni su número fiscal. No vuelvas a intentarlo sin releer la factura.${detail}`)
+    throw new Error(`El entorno configurado no confirma la emisión ni su número fiscal. No vuelvas a intentarlo sin releer la factura.${detail}`)
   }
   if (!persisted || persisted.id !== selected.id || persisted.status !== 'issued' || !persisted.invoice_number) {
     if (rpcError instanceof Error) throw rpcError
-    throw new Error('Production no confirma la emisión y el número fiscal. No vuelvas a intentarlo sin releer la factura.')
+    throw new Error('El entorno configurado no confirma la emisión y el número fiscal. No vuelvas a intentarlo sin releer la factura.')
   }
 
   let matchingNumbers: string[]
@@ -115,10 +115,10 @@ export async function issueSelectedInvoice(
     matchingNumbers = await dependencies.findInvoicesWithNumber(persisted.invoice_number)
   } catch (error) {
     const detail = error instanceof Error ? ` ${error.message}` : ''
-    throw new Error(`La factura está emitida, pero Production no confirmó la unicidad del número fiscal. No repitas la emisión.${detail}`)
+    throw new Error(`La factura está emitida, pero el entorno configurado no confirmó la unicidad del número fiscal. No repitas la emisión.${detail}`)
   }
   if (matchingNumbers.length !== 1 || matchingNumbers[0] !== persisted.id) {
-    throw new Error(`Production asignó ${persisted.invoice_number}, pero la unicidad no pudo verificarse. Detén nuevas emisiones y revisa el estado.`)
+    throw new Error(`El entorno configurado asignó ${persisted.invoice_number}, pero la unicidad no pudo verificarse. Detén nuevas emisiones y revisa el estado.`)
   }
 
   return {

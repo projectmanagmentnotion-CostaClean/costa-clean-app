@@ -50,17 +50,17 @@ describe('official invoice issue flow', () => {
     expect(result.invoice.invoice_number).toBe('2026-082')
   })
 
-  it('blocks when Production returns a different invoice ID', async () => {
+  it('blocks when the configured environment returns a different invoice ID', async () => {
     const deps = dependencies(snapshot({ id: 'INVOICE-HOTEL' }))
 
-    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con Production')
+    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con el entorno configurado')
     expect(deps.issueInvoice).not.toHaveBeenCalled()
   })
 
-  it('blocks when Production amounts differ from the selected invoice', async () => {
+  it('blocks when the configured environment amounts differ from the selected invoice', async () => {
     const deps = dependencies(snapshot({ total: 4424.97 }))
 
-    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con Production')
+    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con el entorno configurado')
     expect(deps.issueInvoice).not.toHaveBeenCalled()
   })
 
@@ -75,11 +75,11 @@ describe('official invoice issue flow', () => {
   it('never issues a record that is no longer a draft or already has a number', async () => {
     const deps = dependencies(snapshot({ status: 'issued', invoice_number: '2026-070' }))
 
-    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con Production')
+    await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no coincide con el entorno configurado')
     expect(deps.issueInvoice).not.toHaveBeenCalled()
   })
 
-  it('blocks if the authenticated RPC reports an authorization failure and Production remains a draft', async () => {
+  it('blocks if the authenticated RPC reports an authorization failure and the configured environment remains a draft', async () => {
     const deps = dependencies(snapshot(), {
       issueInvoice: vi.fn().mockRejectedValue(new Error('not authorized for internal financial write')),
     })
@@ -87,7 +87,7 @@ describe('official invoice issue flow', () => {
     await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('not authorized for internal financial write')
   })
 
-  it('does not claim success unless Production readback shows issued status and a unique fiscal number', async () => {
+  it('does not claim success unless readback shows issued status and a unique fiscal number', async () => {
     const deps = dependencies(snapshot())
 
     await expect(issueSelectedInvoice(selected, deps)).rejects.toThrow('no confirma la emisión')

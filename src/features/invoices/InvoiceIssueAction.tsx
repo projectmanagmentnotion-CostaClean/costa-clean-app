@@ -34,7 +34,7 @@ function createInvoiceIssueDependencies(): InvoiceIssueDependencies {
         .select('id,client_id,status,subtotal,tax_amount,total,invoice_number')
         .eq('id', invoiceId)
         .maybeSingle()
-      if (readError) throw new Error(readError.message || 'No se pudo contrastar la factura con Production.')
+      if (readError) throw new Error(readError.message || 'No se pudo contrastar la factura con el entorno configurado.')
       return data
     },
     issueInvoice: (invoiceId) => updateInvoiceStatus(invoiceId, 'issued'),
@@ -77,14 +77,14 @@ export function InvoiceIssueAction({ invoice, onInvoiceUpdated, presentation = '
       try {
         await onInvoiceUpdated()
       } catch {
-        setErrorMessage(`Production confirma la emisión ${result.invoice.invoice_number}, pero no se pudo actualizar la lista. Recarga la ficha y no repitas la emisión.`)
+        setErrorMessage(`El entorno configurado confirma la emisión ${result.invoice.invoice_number}, pero no se pudo actualizar la lista. Recarga la ficha y no repitas la emisión.`)
         setIsOutcomeUncertain(true)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'No se pudo verificar la emisión.'
       setErrorMessage(message)
       setIsOutcomeUncertain(
-        message.includes('Production no confirma')
+        message.includes('El entorno configurado no confirma')
         || message.includes('no confirmó la unicidad')
         || message.includes('unicidad no pudo verificarse'),
       )
@@ -122,7 +122,7 @@ export function InvoiceIssueAction({ invoice, onInvoiceUpdated, presentation = '
       )}
       {resultMessage ? <p role="status">{resultMessage}</p> : null}
       {errorMessage ? <p role="alert">{errorMessage}</p> : null}
-      {isOutcomeUncertain ? <p>No repitas la emisión. Recarga la ficha y confirma el estado y número fiscal en Production.</p> : null}
+      {isOutcomeUncertain ? <p>No repitas la emisión. Recarga la ficha y confirma el estado y número fiscal en el entorno configurado.</p> : null}
       {isV3Presentation ? (
         isConfirmOpen ? <V3ConfirmSheet title="Confirmar emisión fiscal" description={confirmationDescription} confirmLabel="Emitir factura" busy={isIssuing} onCancel={() => setIsConfirmOpen(false)} onConfirm={() => void confirmIssue()} /> : null
       ) : (

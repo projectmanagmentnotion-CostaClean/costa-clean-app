@@ -30,4 +30,10 @@ describe('V3 core correction contracts', () => {
     expect(filterTabRule).toContain('min-width: var(--v3-touch-min)')
     expect(filterTabRule).toContain('flex: 0 0 auto')
   })
+
+  it('keeps invoice status pills compact when the invoice description is long', () => {
+    const invoiceSideRule = css.match(/(?:^|\n)\.v3-invoice-row__side \{[^}]+\}/u)?.[0] ?? ''
+
+    expect(invoiceSideRule).toContain('align-content: start')
+  })
 })

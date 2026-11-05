@@ -56,6 +56,14 @@ describe('V3 dedicated invoice tree', () => {
     expect(workspace).toContain('Documento')
   })
 
+  it('keeps a long client name visible beside the concise invoice reference in the list', () => {
+    const clientName = 'Cliente Sintético QA — Nombre de prueba deliberadamente largo para validar la fila de factura'
+    const html = renderPage([createInvoice({ client_name: clientName })])
+
+    expect(html).toContain('<strong>2026-052</strong>')
+    expect(html).toContain(`<span>FAC-2026-052 - ${clientName}</span>`)
+  })
+
   it('offers the existing guarded issue flow for draft invoices in the default V3 workspace', () => {
     const draft = createInvoice({ status: 'draft', invoice_number: null, payment_status: 'pending' })
     const workspace = renderPage([draft], draft.id)

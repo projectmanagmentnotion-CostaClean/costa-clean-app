@@ -47,6 +47,10 @@ function invoiceLabel(invoice: InvoiceListItem): string {
   return formatInvoiceLabel(invoice)
 }
 
+function invoiceReferenceLabel(invoice: InvoiceListItem): string {
+  return invoice.invoice_number?.trim() || invoice.display_code?.trim() || 'Factura sin referencia'
+}
+
 function invoiceSummary(invoice: InvoiceListItem): string {
   return invoice.service_description?.trim() || invoice.billing_concept?.trim() || invoice.service_reference?.trim() || 'Factura de servicios'
 }
@@ -205,7 +209,7 @@ function V3InvoiceRow({ invoice, selectionMode, selected, onToggleSelect, isSett
   return (
       <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir ${invoiceLabel(invoice)}`}>
       {selectionMode ? <V3SelectionControl checked={selected} label={`Seleccionar ${invoiceLabel(invoice)}`} onChange={onToggleSelect} /> : null}
-      <div className="v3-invoice-row__main"><strong>{invoiceLabel(invoice)}</strong><span>{formatClientLabel(invoice)}</span><small>{formatDateEs(invoice.issue_date)} · {invoiceSummary(invoice)}</small></div>
+      <div className="v3-invoice-row__main"><strong>{invoiceReferenceLabel(invoice)}</strong><span>{formatClientLabel(invoice)}</span><small>{formatDateEs(invoice.issue_date)} · {invoiceSummary(invoice)}</small></div>
       <div className="v3-invoice-row__side"><strong>{formatCurrency(facts.total)}</strong><small>Cobrado {formatCurrency(facts.paid)} · Pendiente {formatCurrency(facts.outstanding)}</small><V3Status label={getInvoiceDisplayStatusLabel(invoice, facts.status)} tone={getStatusTone(facts.status)} /></div>
       {!selectionMode ? <div className="v3-invoice-row__actions"><V3SecondaryAction onClick={(event) => { event.stopPropagation(); onDownload() }}>Descargar PDF</V3SecondaryAction>{facts.settlementAllowed ? <V3PrimaryAction onClick={(event) => { event.stopPropagation(); onRequestSettlement() }} disabled={isSettling}>{isSettling ? 'Registrando…' : 'Registrar cobro'}</V3PrimaryAction> : null}</div> : null}
     </V3EntityListItem>

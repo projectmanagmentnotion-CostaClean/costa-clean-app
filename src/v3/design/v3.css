@@ -663,7 +663,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
 .v3-filter-trigger { align-items: center; background: var(--v3-color-surface); border: 1px solid var(--v3-color-border); border-radius: var(--v3-radius-md); color: var(--v3-color-text-primary); cursor: pointer; display: inline-flex; font: inherit; gap: var(--v3-space-2); justify-content: center; min-height: var(--v3-touch-preferred); padding: 0 var(--v3-space-4); }
 .v3-filter-trigger:focus-visible { box-shadow: var(--v3-focus-ring); outline: 0; }
 .v3-filter-tabs { border-bottom: 1px solid var(--v3-color-border); display: flex; gap: var(--v3-space-4); overflow-x: auto; }
-.v3-filter-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--v3-color-text-secondary); cursor: pointer; font: inherit; font-size: var(--v3-font-size-sm); min-height: var(--v3-touch-preferred); min-width: var(--v3-touch-min); padding: 0 var(--v3-space-1); white-space: nowrap; }
+.v3-filter-tabs button { background: transparent; border: 0; border-bottom: 2px solid transparent; color: var(--v3-color-text-secondary); cursor: pointer; flex: 0 0 auto; font: inherit; font-size: var(--v3-font-size-sm); min-height: var(--v3-touch-preferred); min-width: var(--v3-touch-min); padding: 0 var(--v3-space-1); white-space: nowrap; }
 .v3-filter-tabs button.is-active { border-bottom-color: var(--v3-color-accent); color: var(--v3-color-accent-strong); font-weight: 700; }
 .v3-entity-list { display: grid; }
 .v3-entity-list-item { border-bottom: var(--v3-border-width) solid var(--v3-color-border-subtle); }

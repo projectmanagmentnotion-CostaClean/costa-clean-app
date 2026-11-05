@@ -28,5 +28,6 @@ describe('V3 core correction contracts', () => {
 
     expect(filterTabRule).toContain('min-height: var(--v3-touch-preferred)')
     expect(filterTabRule).toContain('min-width: var(--v3-touch-min)')
+    expect(filterTabRule).toContain('flex: 0 0 auto')
   })
 })

@@ -27,7 +27,7 @@ interface V3InvoicesPageProps {
   onOpenDocument: (invoice: InvoiceListItem) => void
   onViewPayments: (invoiceId: string) => void
   onInvoiceUpdated: () => Promise<void>
-  onEditInvoice?: () => void
+  onEditInvoice?: (invoice: InvoiceListItem) => void
   onOpenInvoiceDeepLink: (invoiceId: string) => void
   onBackToInvoiceList: () => void
   activeFilter?: InvoiceModuleFilter | null
@@ -145,7 +145,7 @@ export function V3InvoicesPage({
           onOpenDocument={onOpenDocument}
           onViewPayments={onViewPayments}
           onInvoiceUpdated={onInvoiceUpdated}
-          onEditInvoice={onEditInvoice}
+          onEditInvoice={() => onEditInvoice(selectedInvoice)}
         />
         {settlementTarget ? <V3InvoiceSettlementConfirm invoice={settlementTarget} busy={isInvoiceSettling(settlementTarget.id)} onCancel={() => setSettlementTarget(null)} onConfirm={() => { const target = settlementTarget; setSettlementTarget(null); onSettleInvoice(target) }} /> : null}
       </>
@@ -212,7 +212,7 @@ function V3InvoiceRow({ invoice, selectionMode, selected, onToggleSelect, isSett
   )
 }
 
-function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onRequestSettlement, isInvoiceSettling, onOpenDocument, onViewPayments, onEditInvoice, onInvoiceUpdated }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onRequestSettlement: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onEditInvoice: () => void; onInvoiceUpdated: () => Promise<void> }) {
+function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvoice, onRequestSettlement, isInvoiceSettling, onOpenDocument, onViewPayments, onEditInvoice, onInvoiceUpdated }: { invoice: InvoiceListItem; payments: PaymentListItem[]; clients: ClientListItem[]; onBack: () => void; onDownloadInvoice: (invoice: InvoiceListItem) => void; onRequestSettlement: (invoice: InvoiceListItem) => void; isInvoiceSettling: boolean; onOpenDocument: (invoice: InvoiceListItem) => void; onViewPayments: (invoiceId: string) => void; onEditInvoice: (invoice: InvoiceListItem) => void; onInvoiceUpdated: () => Promise<void> }) {
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false)
   const invoicePayments = payments.filter((payment) => payment.invoice_id === invoice.id)
   const client = clients.find((item) => item.id === invoice.client_id)
@@ -232,7 +232,7 @@ function V3InvoiceWorkspace({ invoice, payments, clients, onBack, onDownloadInvo
       <V3Section label="Cobros" action={<V3SecondaryAction onClick={() => onViewPayments(invoice.id)}>Ver cobros</V3SecondaryAction>}><p className="v3-section-copy">{invoicePayments.length > 0 ? `${invoicePayments.length} cobro(s) registrado(s).` : 'Sin cobros registrados.'}</p></V3Section>
       <V3Section label="Documento"><p className="v3-section-copy">Puedes consultar el documento o descargar el PDF emitido desde las acciones principales.</p></V3Section>
       {invoice.updated_at ? <V3Section label="Historial"><p className="v3-section-copy">Última actualización: {formatDateEs(invoice.updated_at)}</p></V3Section> : null}
-      {isMoreActionsOpen ? <V3BottomSheet title="Más acciones de la factura" onClose={() => setIsMoreActionsOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onEditInvoice() }}>Editar factura</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onOpenDocument(invoice) }}>Ver documento</V3SecondaryAction></div></V3BottomSheet> : null}
+      {isMoreActionsOpen ? <V3BottomSheet title="Más acciones de la factura" onClose={() => setIsMoreActionsOpen(false)}><div className="v3-bottom-sheet__content"><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onEditInvoice(invoice) }}>Editar factura</V3SecondaryAction><V3SecondaryAction onClick={() => { setIsMoreActionsOpen(false); onOpenDocument(invoice) }}>Ver documento</V3SecondaryAction></div></V3BottomSheet> : null}
     </V3Page>
   )
 }

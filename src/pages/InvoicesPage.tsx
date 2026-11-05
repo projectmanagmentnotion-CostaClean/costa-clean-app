@@ -582,7 +582,10 @@ export function InvoicesPage({
           onInvoiceUpdated={onInvoiceCreated}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
-          onEditInvoice={() => setShowMajorEdit(true)}
+          onEditInvoice={(invoice) => {
+            setSelectedInvoiceId(invoice.id)
+            setShowMajorEdit(true)
+          }}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
           onBulkDownload={bulkDownloadInvoicesV3}

@@ -157,8 +157,13 @@ begin
   perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'INSERT'), 'anon_insert_grant_revoked');
   perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'UPDATE'), 'anon_update_grant_revoked');
   perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'DELETE'), 'anon_delete_grant_revoked');
+  perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'TRUNCATE'), 'anon_truncate_grant_revoked');
+  perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'REFERENCES'), 'anon_references_grant_revoked');
+  perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'TRIGGER'), 'anon_trigger_grant_revoked');
+  perform pg_temp.p0_assert(not has_table_privilege('anon', 'public.expenses', 'MAINTAIN'), 'anon_maintain_grant_revoked');
   perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.expenses', 'DELETE'), 'authenticated_delete_not_granted');
   perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.expenses', 'TRUNCATE'), 'authenticated_truncate_not_granted');
+  perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.expenses', 'MAINTAIN'), 'authenticated_maintain_not_granted');
   perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.expenses', 'REFERENCES'), 'authenticated_references_not_granted');
   perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.expenses', 'TRIGGER'), 'authenticated_trigger_not_granted');
   perform pg_temp.p0_assert(not has_table_privilege('authenticated', 'public.internal_staff_memberships', 'SELECT'), 'authenticated_membership_select_not_granted');
@@ -169,6 +174,10 @@ begin
   perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'INSERT'), 'service_role_insert_granted');
   perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'UPDATE'), 'service_role_update_granted');
   perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'DELETE'), 'service_role_delete_granted');
+  perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'TRUNCATE'), 'service_role_truncate_preserved');
+  perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'REFERENCES'), 'service_role_references_preserved');
+  perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'TRIGGER'), 'service_role_trigger_preserved');
+  perform pg_temp.p0_assert(has_table_privilege('service_role', 'public.expenses', 'MAINTAIN'), 'service_role_maintain_preserved');
   perform pg_temp.p0_assert(not has_function_privilege('authenticated', 'app_private.internal_staff_role_can_write_financially(text)', 'EXECUTE'), 'authenticated_internal_predicate_exec_not_granted');
   perform pg_temp.p0_assert(not has_function_privilege('anon', 'app_private.internal_staff_role_can_write_financially(text)', 'EXECUTE'), 'anon_internal_predicate_exec_not_granted');
   select count(*) into expense_policy_count

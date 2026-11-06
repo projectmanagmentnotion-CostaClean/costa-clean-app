@@ -78,8 +78,10 @@ grant execute on function public.expense_staff_access(boolean)
 
 revoke all on table public.expenses from public, anon;
 -- Authenticated expense users may read/create/update through the scoped RLS
--- policies, but must never delete, truncate, create foreign keys, or triggers.
-revoke delete, truncate, references, trigger on table public.expenses from authenticated;
+-- policies, but must never delete, truncate, maintain, create foreign keys, or
+-- triggers. MAINTAIN is a PostgreSQL 17 table privilege and is not protected by
+-- row-level security.
+revoke delete, truncate, maintain, references, trigger on table public.expenses from authenticated;
 -- Keep the trusted server-side role functional after narrowing browser grants.
 grant select, insert, update, delete on table public.expenses to service_role;
 

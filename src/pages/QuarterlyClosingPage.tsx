@@ -4,6 +4,7 @@ import { formatCurrency, formatDateEs, getDisplayStatusLabel, getPaymentMethodLa
 import type { AppView } from '../app/navigation'
 import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
 import { ClosingDocumentDialogs } from '../features/closing/ClosingDocumentDialogs'
+import { buildInvoicePaymentCohort } from '../features/closing/invoicePaymentCohort'
 import '../features/ui/compactListStyles'
 import type { ClientListItem } from '../features/clients/types'
 import {
@@ -189,7 +190,7 @@ export function QuarterlyClosingPage({
     [invoices, selectedQuarter, selectedYear],
   )
   const quarterPayments = useMemo(
-    () => payments.filter((payment) => quarterInvoices.some((invoice) => invoice.id === payment.invoice_id)),
+    () => buildInvoicePaymentCohort(payments, quarterInvoices).payments,
     [payments, quarterInvoices],
   )
   const quarterExpenses = useMemo(
@@ -1288,7 +1289,7 @@ export function QuarterlyClosingPage({
               </article>
               <article className="cc-export-folder-item">
                 <strong>{externalAccountingSectionPaths.payments}</strong>
-                <p>{`${quarterPayments.length} cobro(s) con fecha, factura vinculada, importe y metodo.`}</p>
+                <p>{`${quarterPayments.length} cobro(s) vinculados a facturas emitidas en el trimestre, con fecha, importe y método.`}</p>
               </article>
               <article className="cc-export-folder-item">
                 <strong>{externalAccountingSectionPaths.expenses}</strong>

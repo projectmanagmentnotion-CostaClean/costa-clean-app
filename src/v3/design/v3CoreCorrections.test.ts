@@ -28,5 +28,46 @@ describe('V3 core correction contracts', () => {
 
     expect(filterTabRule).toContain('min-height: var(--v3-touch-preferred)')
     expect(filterTabRule).toContain('min-width: var(--v3-touch-min)')
+    expect(filterTabRule).toContain('flex: 0 0 auto')
+  })
+
+  it('keeps invoice status pills compact when the invoice description is long', () => {
+    const invoiceSideRule = css.match(/(?:^|\n)\.v3-invoice-row__side \{[^}]+\}/u)?.[0] ?? ''
+
+    expect(invoiceSideRule).toContain('align-content: start')
+  })
+
+  it('wraps long invoice and payment text inside their grid columns', () => {
+    const invoiceMainRule = css.match(/\.v3-invoice-row__main,\s*\.v3-payment-row__main\s*\{[^}]+\}/u)?.[0] ?? ''
+    const wrappedTextRule = css.match(/\.v3-invoice-row__main span,\s*\.v3-invoice-row__main small,\s*\.v3-payment-row__main span,\s*\.v3-payment-row__main small\s*\{[^}]+\}/u)?.[0] ?? ''
+
+    expect(invoiceMainRule).toContain('min-width: 0')
+    expect(wrappedTextRule).toContain('overflow-wrap: anywhere')
+  })
+
+  it('keeps the Leads KPI mobile override after its four-column desktop rule', () => {
+    const desktopRule = css.indexOf('.v3-leads-kpi-summary .v3-kpi strong')
+    const narrowMediaStart = css.indexOf('@media (max-width: 360px)')
+    const mobileRuleStart = css.lastIndexOf('.v3-leads-kpi-summary .v3-kpi-group', narrowMediaStart)
+    const mobileRuleEnd = css.indexOf('}', mobileRuleStart)
+    const mobileRule = css.slice(mobileRuleStart, mobileRuleEnd)
+
+    expect(mobileRuleStart).toBeGreaterThan(desktopRule)
+    expect(mobileRule).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
+  })
+
+  it('stacks dense Leads, invoice, and payment content at narrow phone widths', () => {
+    const narrowRuleStart = css.lastIndexOf('@media (max-width: 360px)')
+    const mobileRuleStart = css.lastIndexOf('@media (max-width: 640px)')
+    const narrowRule = css.slice(narrowRuleStart)
+
+    expect(narrowRuleStart).toBeGreaterThan(-1)
+    expect(narrowRuleStart).toBeGreaterThan(mobileRuleStart)
+    expect(narrowRule).toContain('.v3-leads-kpi-summary .v3-kpi-group')
+    expect(narrowRule).toContain('grid-template-columns: minmax(0, 1fr)')
+    expect(narrowRule).toContain('.v3-invoice-row__side')
+    expect(narrowRule).toContain('.v3-payment-row__side')
+    expect(narrowRule).toContain('grid-column: 1 / -1')
+    expect(narrowRule).toContain('overflow-wrap: anywhere')
   })
 })

@@ -7,17 +7,13 @@ export interface LeadKpiCounts {
   quoted: number
 }
 
-function isCurrentLead(lead: LeadListItem): boolean {
-  return !lead.archived_at
-}
-
 export function buildLeadKpiCounts(leads: LeadListItem[]): LeadKpiCounts {
-  const currentLeads = leads.filter(isCurrentLead)
+  const activeLeads = leads.filter((lead) => !lead.archived_at)
 
   return {
-    active: currentLeads.filter((lead) => !['won', 'lost'].includes(lead.status)).length,
-    new: currentLeads.filter((lead) => lead.status === 'new').length,
-    contacted: currentLeads.filter((lead) => lead.status === 'contacted').length,
-    quoted: currentLeads.filter((lead) => lead.status === 'quoted').length,
+    active: activeLeads.filter((lead) => !['won', 'lost'].includes(lead.status)).length,
+    new: activeLeads.filter((lead) => lead.status === 'new').length,
+    contacted: activeLeads.filter((lead) => lead.status === 'contacted').length,
+    quoted: activeLeads.filter((lead) => lead.status === 'quoted').length,
   }
 }

@@ -9,11 +9,11 @@ import {
   isDateWithinFiscalPeriod,
   type ResolvedFiscalPeriod,
 } from './fiscalPeriods'
-import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
 import type { InvoiceListItem } from '../invoices/types'
 import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
+import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
 
 export type ClosingReadinessStatus =
   | 'ready'

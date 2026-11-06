@@ -9,10 +9,10 @@ import {
   getExpenseDocumentSupportStatusLabel,
   type ExpenseListItem,
 } from '../expenses/types'
-import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
+import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
 
 export interface FiscalPeriodExportMetrics {
   invoice_count: number

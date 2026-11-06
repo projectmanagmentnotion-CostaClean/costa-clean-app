@@ -52,10 +52,12 @@ export function V3PageTitle({ eyebrow, title, description, action }: { eyebrow?:
   )
 }
 
-export function V3Kpi({ label, value, hint, onClick, tone = 'financial' }: { label: string; value: string; hint?: string; onClick?: () => void; tone?: 'financial' | 'primary' | 'accent' | 'information' }) {
+export function V3Kpi({ label, value, hint, onClick, tone }: { label: string; value: string; hint?: string; onClick?: () => void; tone?: 'primary' | 'accent' | 'information' | 'financial' }) {
+  const className = `v3-kpi${onClick ? ' v3-kpi--interactive' : ''}${tone ? ` v3-kpi--tone-${tone}` : ''}`
   const content = <><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</>
-  const className = `v3-kpi v3-card v3-card--financial v3-kpi--tone-${tone}${onClick ? ' v3-kpi--interactive' : ''}`
-  return onClick ? <button type="button" className={className} onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button> : <article className={className}>{content}</article>
+  return onClick
+    ? <button type="button" className={className} onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button>
+    : <article className={className}>{content}</article>
 }
 
 export function V3KpiGroup({ children, variant = 'default', className = '' }: { children: ReactNode; variant?: 'default' | 'supporting'; className?: string }) {
@@ -77,9 +79,11 @@ export function V3TabStrip({ options, activeValue, onChange, label }: { options:
   const tablistRef = useRef<HTMLDivElement>(null)
   const moveFocus = (index: number) => {
     const nextIndex = Math.max(0, Math.min(options.length - 1, index))
-    onChange(options[nextIndex].value)
+    const nextOption = options[nextIndex]
+    if (!nextOption) return
+    onChange(nextOption.value)
     window.requestAnimationFrame(() => {
-      tablistRef.current?.querySelector<HTMLButtonElement>(`[role="tab"][data-tab-value="${CSS.escape(options[nextIndex].value)}"]`)?.focus()
+      tablistRef.current?.querySelector<HTMLButtonElement>(`[role="tab"][data-tab-value="${CSS.escape(nextOption.value)}"]`)?.focus()
     })
   }
 
@@ -107,11 +111,11 @@ export function V3ActionGroup({ children, className = '' }: { children: ReactNod
 }
 
 export function V3DetailSection({ title, children }: { title: string; children: ReactNode }) {
-  return <section className="v3-detail-section v3-card"><h2>{title}</h2>{children}</section>
+  return <section className="v3-detail-section"><h2>{title}</h2>{children}</section>
 }
 
 export function V3Section({ label, action, children }: { label: string; action?: ReactNode; children: ReactNode }) {
-  return <section className="v3-section v3-card"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
+  return <section className="v3-section"><div className="v3-section__header"><h2>{label}</h2>{action ? <div>{action}</div> : null}</div>{children}</section>
 }
 
 export function V3EntityList({ children, label }: { children: ReactNode; label: string }) {
@@ -231,7 +235,7 @@ export function V3Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 }
 
 export function V3Summary({ children }: { children: ReactNode }) {
-  return <div className="v3-summary v3-card v3-card--subtle">{children}</div>
+  return <div className="v3-summary">{children}</div>
 }
 
 export function V3StickyActionBar({ children }: { children: ReactNode }) {

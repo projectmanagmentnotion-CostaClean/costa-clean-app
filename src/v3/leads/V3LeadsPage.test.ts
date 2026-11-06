@@ -13,6 +13,7 @@ describe('V3LeadsPage', () => {
     expect(html).toContain('v3-leads-kpi-summary')
     expect(html).toContain('Activos')
     expect(html).toContain('Contactados')
+    expect(html).toContain('Presupuestados')
     expect(html).toContain('tone-accent')
     expect(html).toContain('1 visibles')
     expect(html).not.toContain('LeadDetailCard')

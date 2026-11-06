@@ -25,14 +25,34 @@ describe('buildFiscalPeriodExportData', () => {
           tax_amount: 21,
           total: 121,
         },
+        {
+          id: 'inv-outside',
+          display_code: 'INV-OUTSIDE',
+          invoice_number: '2026-099',
+          job_id: null,
+          client_id: 'client-2',
+          issue_date: '2026-10-20',
+          status: 'sent',
+          subtotal: 100,
+          tax_amount: 21,
+          total: 121,
+        },
       ],
       payments: [
         {
           id: 'pay-1',
           display_code: 'PAY-1',
           invoice_id: 'inv-1',
-          payment_date: '2026-02-01',
+          payment_date: '2026-05-01',
           amount: 121,
+          payment_method: 'transfer',
+        },
+        {
+          id: 'pay-outside',
+          display_code: 'PAY-OUTSIDE',
+          invoice_id: 'inv-outside',
+          payment_date: '2026-02-01',
+          amount: 80,
           payment_method: 'transfer',
         },
       ],
@@ -102,6 +122,8 @@ describe('buildFiscalPeriodExportData', () => {
 
     expect(result.metrics.invoice_count).toBe(1)
     expect(result.metrics.payment_count).toBe(1)
+    expect(result.metrics.collected_total).toBe(121)
+    expect(result.payments.map((payment) => payment.id)).toEqual(['pay-1'])
     expect(result.metrics.expense_count).toBe(1)
     expect(result.metrics.quote_count).toBe(1)
     expect(result.metrics.output_vat_total).toBe(21)

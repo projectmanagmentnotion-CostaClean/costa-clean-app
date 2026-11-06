@@ -41,6 +41,7 @@ import type { InvoiceCreatePrefill } from './invoiceCreatePrefill'
 import { buildInvoiceNumber, buildInvoiceNumberingAudit, getInvoiceIssueYear } from './invoiceNumbering'
 import { withInvoiceWriteTrace } from './invoiceWriteTrace'
 import { resolveInvoiceServiceReference } from './invoiceServiceReference'
+import { canSaveInvoiceEditor } from './invoiceEditorIdentity'
 
 const LazyPaymentCreateFlow = lazy(async () => ({
   default: (await import('../payments/PaymentCreateFlow')).PaymentCreateFlow,
@@ -299,6 +300,7 @@ export function InvoiceDetailCard({
     notes: '',
   })
   const [lines, setLines] = useState<LineFormState[]>([createBlankLine()])
+  const [hydratedInvoiceId, setHydratedInvoiceId] = useState<string | null>(null)
 
   useEffect(() => {
     isDirtyRef.current = isDirty
@@ -370,6 +372,44 @@ export function InvoiceDetailCard({
     }),
     [form.status, numberingAudit, pricingMetadataWithFiscalSnapshot],
   )
+
+  useEffect(() => {
+    if (isDirtyRef.current || hasPaymentFormDirtyRef.current) return
+    if (!invoice) {
+      setIsEditing(false)
+      setSaveError(null)
+      setSuccessMessage(null)
+      setPaymentActionMode(null)
+      setIsDirty(false)
+      setHasPaymentFormDirty(false)
+      setForm({
+        job_id: '',
+        client_id: '',
+        issue_date: '',
+        status: 'draft',
+        notes: '',
+      })
+      setLines([createBlankLine()])
+      setHydratedInvoiceId(null)
+      return
+    }
+
+    setIsEditing(false)
+    setSaveError(null)
+    setSuccessMessage(null)
+    setPaymentActionMode(null)
+    setIsDirty(false)
+    setHasPaymentFormDirty(false)
+    setForm({
+      job_id: invoice.job_id ?? '',
+      client_id: invoice.client_id,
+      issue_date: invoice.issue_date,
+      status: invoice.status,
+      notes: invoice.notes ?? '',
+    })
+    setLines(getFormLinesFromInvoice(invoice))
+    setHydratedInvoiceId(invoice.id)
+  }, [invoice])
 
   useEffect(() => {
     onUnsavedChange?.(isDirty || hasPaymentFormDirty)
@@ -657,6 +697,11 @@ export function InvoiceDetailCard({
 
   async function saveInvoiceEdits() {
     if (!invoice) return
+
+    if (!canSaveInvoiceEditor(invoice.id, hydratedInvoiceId)) {
+      setSaveError('No se puede guardar: los datos del editor no corresponden a la factura seleccionada. Cierra y vuelve a abrir la factura.')
+      return
+    }
 
     setSaveError(null)
     setSuccessMessage(null)

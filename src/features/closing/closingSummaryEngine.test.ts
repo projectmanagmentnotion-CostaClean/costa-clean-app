@@ -163,23 +163,23 @@ describe('buildClosingSummary', () => {
     expect(summary.period.endDate).toBe('2026-02-28')
   })
 
-  it('asigna los cobros a la cohorte de la factura, no al mes del pago', () => {
+  it('agrupa cobros por las facturas emitidas en el periodo, no por fecha de pago', () => {
     const summary = buildClosingSummary({
       selection: {
         mode: 'quarter',
         year: 2026,
         month: 1,
-        quarter: 2,
+        quarter: 1,
         startDate: '',
         endDate: '',
       },
       invoices: [
-        createInvoice({ id: 'q2-invoice', issue_date: '2026-06-30', total: 100 }),
-        createInvoice({ id: 'q3-invoice', issue_date: '2026-07-01', total: 80 }),
+        createInvoice({ total: 121 }),
+        createInvoice({ id: 'inv-outside', issue_date: '2026-10-10', total: 500 }),
       ],
       payments: [
-        createPayment({ id: 'q2-paid-in-q3', invoice_id: 'q2-invoice', payment_date: '2026-07-18', amount: 100 }),
-        createPayment({ id: 'q3-paid-in-q4', invoice_id: 'q3-invoice', payment_date: '2026-10-02', amount: 80 }),
+        createPayment({ payment_date: '2026-05-10', amount: 50 }),
+        createPayment({ id: 'pay-outside', invoice_id: 'inv-outside', payment_date: '2026-02-10', amount: 400 }),
       ],
       expenses: [],
       quotes: [],
@@ -188,9 +188,12 @@ describe('buildClosingSummary', () => {
       annualSummaryByYear: new Map(),
     })
 
-    expect(summary.invoicedTotal).toBe(100)
-    expect(summary.collectedTotal).toBe(100)
+    expect(summary.invoiceCount).toBe(1)
     expect(summary.paymentCount).toBe(1)
-    expect(summary.pendingInvoiceCount).toBe(0)
+    expect(summary.collectedTotal).toBe(50)
+    expect(summary.outstandingTotal).toBe(71)
+    expect(summary.payments.map((payment) => payment.id)).toEqual(['pay-1'])
+    expect(summary.incidences.find((incidence) => incidence.id === 'period_payments_all')?.detail)
+      .toContain('aunque se registren después')
   })
 })

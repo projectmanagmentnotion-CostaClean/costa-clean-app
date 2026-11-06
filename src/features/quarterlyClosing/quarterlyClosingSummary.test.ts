@@ -1,39 +1,63 @@
 import { describe, expect, it } from 'vitest'
 import { buildQuarterlyClosingSummary } from './quarterlyClosingSummary'
-import type { InvoiceListItem } from '../invoices/types'
-import type { PaymentListItem } from '../payments/types'
 
-const invoice: InvoiceListItem = {
-  id: 'invoice-q2',
-  display_code: 'INV-Q2',
-  invoice_number: '2026-001',
-  job_id: null,
-  client_id: 'client-1',
-  issue_date: '2026-06-30',
-  status: 'issued',
-  subtotal: 826.45,
-  tax_amount: 173.55,
-  total: 1000,
-}
+describe('buildQuarterlyClosingSummary', () => {
+  it('asocia cobros a la cohorte de facturas por fecha de emisión', () => {
+    const summary = buildQuarterlyClosingSummary(
+      [
+        {
+          id: 'invoice-q1',
+          display_code: 'INV-Q1',
+          invoice_number: '2026-001',
+          job_id: null,
+          client_id: 'client-1',
+          issue_date: '2026-02-01',
+          status: 'issued',
+          subtotal: 100,
+          tax_amount: 21,
+          total: 121,
+        },
+        {
+          id: 'invoice-q4',
+          display_code: 'INV-Q4',
+          invoice_number: '2026-099',
+          job_id: null,
+          client_id: 'client-2',
+          issue_date: '2026-10-01',
+          status: 'issued',
+          subtotal: 100,
+          tax_amount: 21,
+          total: 121,
+        },
+      ],
+      [
+        {
+          id: 'payment-q2',
+          display_code: 'PAY-Q2',
+          invoice_id: 'invoice-q1',
+          payment_date: '2026-05-01',
+          amount: 121,
+          payment_method: 'transfer',
+        },
+        {
+          id: 'payment-q1-other-invoice',
+          display_code: 'PAY-Q1-OTHER',
+          invoice_id: 'invoice-q4',
+          payment_date: '2026-02-01',
+          amount: 80,
+          payment_method: 'transfer',
+        },
+      ],
+      [],
+      2026,
+      1,
+    )
 
-const payment: PaymentListItem = {
-  id: 'payment-q3',
-  display_code: 'PAY-Q3',
-  invoice_id: invoice.id,
-  payment_date: '2026-07-18',
-  amount: 1000,
-  payment_method: 'transfer',
-}
-
-describe('buildQuarterlyClosingSummary invoice cohort semantics', () => {
-  it('keeps a later payment in the invoice issue-date quarter', () => {
-    const q2 = buildQuarterlyClosingSummary([invoice], [payment], [], 2026, 2)
-    const q3 = buildQuarterlyClosingSummary([invoice], [payment], [], 2026, 3)
-
-    expect(q2.invoicedTotal).toBe(1000)
-    expect(q2.collectedTotal).toBe(1000)
-    expect(q2.outstandingTotal).toBe(0)
-    expect(q3.invoicedTotal).toBe(0)
-    expect(q3.collectedTotal).toBe(0)
+    expect(summary.invoiceCount).toBe(1)
+    expect(summary.paymentCount).toBe(1)
+    expect(summary.collectedTotal).toBe(121)
+    expect(summary.outstandingTotal).toBe(0)
+    expect(summary.incidences.find((incidence) => incidence.id === 'payment_quarter_all')?.detail)
+      .toContain('facturas emitidas en el trimestre')
   })
 })

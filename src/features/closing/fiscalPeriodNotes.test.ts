@@ -2,19 +2,19 @@ import { describe, expect, it } from 'vitest'
 import { readFiscalPeriodNote, writeFiscalPeriodNote } from './fiscalPeriodNotes'
 
 describe('fiscal period note contract', () => {
-  it('switches between persisted notes without leaking the previous period', () => {
-    const draftA = writeFiscalPeriodNote('2026-Q1', 'Nota A editada')
+  it('switches between persisted notes without leaking a draft into another period', () => {
+    const draft = writeFiscalPeriodNote('2026-Q1', 'Nota Q1 editada')
 
-    expect(readFiscalPeriodNote(draftA, '2026-Q1', 'Nota A')).toBe('Nota A editada')
-    expect(readFiscalPeriodNote(draftA, '2026-Q2', 'Nota B')).toBe('Nota B')
-    expect(readFiscalPeriodNote(draftA, '2026-Q1', 'Nota A')).toBe('Nota A editada')
+    expect(readFiscalPeriodNote(draft, '2026-Q1', 'Nota Q1')).toBe('Nota Q1 editada')
+    expect(readFiscalPeriodNote(draft, '2026-Q2', 'Nota Q2')).toBe('Nota Q2')
+    expect(readFiscalPeriodNote(draft, '2026-Q1', 'Nota Q1')).toBe('Nota Q1 editada')
   })
 
-  it('preserves an empty persisted period and isolates subsequent edits', () => {
-    const draftB = writeFiscalPeriodNote('2026', 'Nota B')
+  it('preserves empty persisted notes and scopes annual drafts to their year', () => {
+    const draft = writeFiscalPeriodNote('2026', 'Nota anual')
 
     expect(readFiscalPeriodNote(null, '2026', '')).toBe('')
-    expect(readFiscalPeriodNote(draftB, '2026', '')).toBe('Nota B')
-    expect(readFiscalPeriodNote(draftB, '2025', 'Nota 2025')).toBe('Nota 2025')
+    expect(readFiscalPeriodNote(draft, '2026', '')).toBe('Nota anual')
+    expect(readFiscalPeriodNote(draft, '2025', 'Nota anterior')).toBe('Nota anterior')
   })
 })

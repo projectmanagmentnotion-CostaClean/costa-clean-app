@@ -1,0 +1,119 @@
+begin;
+
+-- These legacy SECURITY DEFINER helpers are maintenance/trigger internals, not
+-- Data API endpoints. The invoice batch embeds a fixed identity and writes
+-- business records, so only its owner may invoke it directly. Trigger
+-- execution does not require callers to hold EXECUTE on the trigger function.
+revoke all on function public.debug_run_authorized_invoice_batch() from public, anon, authenticated, service_role;
+revoke all on function public.run_authorized_invoice_batch() from public, anon, authenticated, service_role;
+revoke all on function public.n21_assert_existing_job_quote_compatibility() from public, anon, authenticated, service_role;
+revoke all on function public.rls_auto_enable() from public, anon, authenticated, service_role;
+
+-- Keep direct Product access internal-staff-only while preserving the existing
+-- authenticated client workflow and the server-side service-role boundary.
+drop policy if exists "Allow authenticated insert expenses" on public.expenses;
+drop policy if exists "Allow authenticated select expenses" on public.expenses;
+drop policy if exists "Allow authenticated update expenses" on public.expenses;
+drop policy if exists "Internal staff insert" on public.expenses;
+drop policy if exists "Internal staff read" on public.expenses;
+drop policy if exists "Internal staff update" on public.expenses;
+
+create policy "Internal staff insert" on public.expenses
+  for insert to authenticated
+  with check (app_private.is_active_internal_staff((select auth.uid())));
+
+create policy "Internal staff read" on public.expenses
+  for select to authenticated
+  using (app_private.is_active_internal_staff((select auth.uid())));
+
+create policy "Internal staff update" on public.expenses
+  for update to authenticated
+  using (app_private.is_active_internal_staff((select auth.uid())))
+  with check (app_private.is_active_internal_staff((select auth.uid())));
+
+-- Keep the private expense tables unavailable to anonymous callers while
+-- preserving authenticated and service-role workflows.
+revoke all on table public.expenses from public, anon;
+revoke all on table public.expense_capture_sessions from public, anon;
+revoke all on table public.expense_capture_documents from public, anon;
+revoke all on table public.expense_capture_extractions from public, anon;
+revoke all on table public.expense_capture_normalizations from public, anon;
+revoke all on table public.expense_capture_confirmations from public, anon;
+
+-- Supabase owns storage.objects. Preserve its platform-managed table grants;
+-- close the legacy permissive receipt policies at the RLS layer instead.
+drop policy if exists "Allow authenticated read expense receipts" on storage.objects;
+drop policy if exists "Allow authenticated upload expense receipts" on storage.objects;
+drop policy if exists "Allow authenticated update expense receipts" on storage.objects;
+drop policy if exists "Allow authenticated delete expense receipts" on storage.objects;
+
+-- Staff may read and remove historical paths. Reject parent-directory segments.
+drop policy if exists "Internal staff read expense receipts" on storage.objects;
+create policy "Internal staff read expense receipts"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'expense-receipts'
+  and app_private.is_active_internal_staff((select auth.uid()))
+  and name like 'expenses/%'
+  and name !~ '(^|/)[.][.]($|/)'
+);
+
+drop policy if exists "Internal staff upload expense receipts" on storage.objects;
+create policy "Internal staff upload expense receipts"
+on storage.objects for insert to authenticated
+with check (
+  bucket_id = 'expense-receipts'
+  and app_private.is_active_internal_staff((select auth.uid()))
+  and name ~ '^expenses/[^/]+/[A-Za-z0-9][A-Za-z0-9_.-]*$'
+  and name !~ '(^|/)[.][.]($|/)'
+);
+
+drop policy if exists "Internal staff update expense receipts" on storage.objects;
+create policy "Internal staff update expense receipts"
+on storage.objects for update to authenticated
+using (
+  bucket_id = 'expense-receipts'
+  and app_private.is_active_internal_staff((select auth.uid()))
+  and name like 'expenses/%'
+  and name !~ '(^|/)[.][.]($|/)'
+)
+with check (
+  bucket_id = 'expense-receipts'
+  and app_private.is_active_internal_staff((select auth.uid()))
+  and name ~ '^expenses/[^/]+/[A-Za-z0-9][A-Za-z0-9_.-]*$'
+  and name !~ '(^|/)[.][.]($|/)'
+);
+
+drop policy if exists "Internal staff delete expense receipts" on storage.objects;
+create policy "Internal staff delete expense receipts"
+on storage.objects for delete to authenticated
+using (
+  bucket_id = 'expense-receipts'
+  and app_private.is_active_internal_staff((select auth.uid()))
+  and name like 'expenses/%'
+  and name !~ '(^|/)[.][.]($|/)'
+);
+
+-- Browser-facing capture operations are authenticated and owner-checked.
+revoke all on function public.create_expense_capture_session(text, text) from public, anon, service_role;
+revoke all on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) from public, anon, service_role;
+revoke all on function public.cancel_expense_capture_session(uuid) from public, anon, service_role;
+revoke all on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) from public, anon, service_role;
+grant execute on function public.create_expense_capture_session(text, text) to authenticated;
+grant execute on function public.attach_expense_capture_document(uuid, text, text, text, bigint, text, integer) to authenticated;
+grant execute on function public.cancel_expense_capture_session(uuid) to authenticated;
+grant execute on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) to authenticated;
+
+-- Extraction/normalization runtime helpers are server-side only.
+revoke all on function public.n52_claim_extraction(uuid) from public, anon, authenticated;
+revoke all on function public.n52_prepare_extraction(uuid, uuid, text, integer, text, text) from public, anon, authenticated;
+revoke all on function public.n53_claim_normalization(uuid, uuid, integer, text, text, text) from public, anon, authenticated;
+revoke all on function public.n53_finalize_normalization_failure(uuid, uuid, integer, text, text, text) from public, anon, authenticated;
+revoke all on function public.n53_finalize_normalization_success(uuid, uuid, integer, text, text, jsonb, text, text) from public, anon, authenticated;
+grant execute on function public.n52_claim_extraction(uuid) to service_role;
+grant execute on function public.n52_prepare_extraction(uuid, uuid, text, integer, text, text) to service_role;
+grant execute on function public.n53_claim_normalization(uuid, uuid, integer, text, text, text) to service_role;
+grant execute on function public.n53_finalize_normalization_failure(uuid, uuid, integer, text, text, text) to service_role;
+grant execute on function public.n53_finalize_normalization_success(uuid, uuid, integer, text, text, jsonb, text, text) to service_role;
+
+commit;

@@ -1,0 +1,59 @@
+import { describe, expect, it } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { canonicalSerialize, buildNormalizationIdentity, NORMALIZER_IMPLEMENTATION_VERSION } from '../../../supabase/functions/_shared/n53Normalization.ts'
+import { isNormalizationRuntimeReady } from '../../../supabase/functions/expense-document-normalization/runtimeGuards.ts'
+
+const migration = readFileSync(new URL('../../../supabase/migrations/20260930095656_n53_expense_capture_normalization_runtime.sql', import.meta.url), 'utf8').toLowerCase()
+
+describe('N5.3 server runtime local contract', () => {
+  it('sorts object keys but preserves array order', () => {
+    expect(canonicalSerialize({ b: 2, a: 1, lines: [{ rate: '10' }, { rate: '21' }] })).toBe('{"a":1,"b":2,"lines":[{"rate":"10"},{"rate":"21"}]}')
+    expect(canonicalSerialize({ lines: [{ rate: '21' }, { rate: '10' }] })).not.toBe(canonicalSerialize({ lines: [{ rate: '10' }, { rate: '21' }] }))
+  })
+
+  it('derives stable identities from the authoritative proposal and version', async () => {
+    const proposal = { schemaVersion: 1, vatLines: [{ rate: '10' }, { rate: '21' }], missing: null }
+    const first = await buildNormalizationIdentity('11111111-1111-4111-8111-111111111111', proposal as never, 1)
+    const second = await buildNormalizationIdentity('11111111-1111-4111-8111-111111111111', proposal as never, 1)
+    expect(first).toEqual(second)
+    expect(first.inputHash).toMatch(/^[0-9a-f]{64}$/u)
+    expect(first.normalizationKey).toMatch(/^[0-9a-f]{64}$/u)
+    expect(NORMALIZER_IMPLEMENTATION_VERSION).toBe('n5.3-normalizer-v1')
+  })
+
+  it('binds the migration to trusted identity, partial uniqueness and terminal states', () => {
+    expect(migration).toContain('p_authenticated_user_id uuid')
+    expect(migration).toContain('for update')
+    expect(migration).toContain("where status in ('processing', 'succeeded')")
+    expect(migration).toContain('normalization_stale_attempt')
+    expect(migration).toContain("extensions.digest(convert_to(p_normalization_key || '|' || v_attempt::text, 'utf8'), 'sha256')")
+    expect(migration).toContain('grant execute on function public.n53_claim_normalization')
+    expect(migration).toContain('revoke all on public.expense_capture_normalizations from public, anon, authenticated, service_role')
+    expect(migration).not.toContain("status in ('pending'")
+    expect(migration).toContain('normalization_id uuid')
+    expect(migration).toMatch(/returns table \(normalization_id uuid, extraction_id uuid, attempt_number integer, status text, schema_version integer/iu)
+    expect(migration).toMatch(/grant select on public\.expense_capture_normalizations to service_role/iu)
+    expect(migration).not.toMatch(/grant select, insert, update on public\.expense_capture_normalizations to service_role/iu)
+    expect(migration).toContain('force row level security')
+  })
+
+  it('keeps the Edge entrypoint client-minimal and financially isolated', () => {
+    const edge = readFileSync(new URL('../../../supabase/functions/expense-document-normalization/index.ts', import.meta.url), 'utf8')
+    const orchestration = readFileSync(new URL('../../../supabase/functions/expense-document-normalization/orchestration.ts', import.meta.url), 'utf8')
+    const runtime = `${edge}\n${orchestration}`
+    expect(edge).toContain('extractionId')
+    expect(runtime).toContain('p_authenticated_user_id')
+    expect(runtime).toContain('requireActiveStaff')
+    expect(runtime).toContain('normalizeExpenseProposal')
+    expect(runtime).not.toMatch(/create_expense|createExpense|insert.*expenses|insert.*invoices|insert.*payments/iu)
+  })
+
+  it('accepts only the certified QA or exact Production runtime boundary', () => {
+    expect(isNormalizationRuntimeReady('', 'qa-runtime', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://wfxnwfcdjainpojhbdri.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'wrong-mode', 'publishable', 'service')).toBe(false)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'qa-runtime', 'publishable', 'service')).toBe(true)
+    expect(isNormalizationRuntimeReady('https://wfxnwfcdjainpojhbdri.supabase.co', 'production', 'publishable', 'service')).toBe(true)
+    expect(isNormalizationRuntimeReady('https://kpvvydthlxupjjqqdpxy.supabase.co', 'production', 'publishable', 'service')).toBe(false)
+  })
+})

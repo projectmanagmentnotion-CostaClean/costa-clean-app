@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import type { AlertDecision } from '../../features/alerts/alertDecisionApi'
 import { getAlertActionLabel, getAlertBucket, getAlertBucketMeta, getAlertImpactCopy, getAlertRoutingLabel, type AlertBucket } from '../../features/automation/alertPresentation'
 import type { AutomationAlertItem } from '../../features/automation/types'
-import { V3BottomSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Kpi, V3KpiGroup, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction } from '../components/V3Primitives'
+import { V3BottomSheet, V3DetailSection, V3EmptyState, V3EntityList, V3EntityListItem, V3EntityStatus, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction } from '../components/V3Primitives'
+import { useV3ListWindow } from '../components/useV3ListWindow'
 
 interface V3AlertsPageProps {
   alerts: AutomationAlertItem[]
@@ -49,9 +50,11 @@ export function V3AlertsPage(props: V3AlertsPageProps) {
   const critical = pending.filter(({ alert }) => alert.severity === 'critical')
   const reviewed = states.filter(({ status }) => status === 'resolved' || status === 'dismissed')
   const visible = filter === 'pending' ? pending : filter === 'critical' ? critical : filter === 'reviewed' ? reviewed : states
+  const listWindow = useV3ListWindow(visible, { resetKey: filter })
+  const visiblePage = listWindow.pageItems
   const visibleByPriority = priorityOrder.map((bucket) => ({
     bucket,
-    items: visible.filter(({ alert }) => getAlertBucket(alert) === bucket),
+    items: visiblePage.filter(({ alert }) => getAlertBucket(alert) === bucket),
   })).filter(({ items }) => items.length > 0)
 
   function renderAlertRow({ alert, status, isRead }: (typeof states)[number]) {
@@ -99,7 +102,7 @@ export function V3AlertsPage(props: V3AlertsPageProps) {
     <div className="v3-module-controls" role="tablist" aria-label="Filtrar alertas">
       {([['pending', 'Pendientes'], ['critical', 'Críticas'], ['reviewed', 'Revisadas'], ['all', 'Todas']] as const).map(([value, label]) => <V3SecondaryAction key={value} onClick={() => setFilter(value)} ariaPressed={filter === value}>{label}</V3SecondaryAction>)}
     </div>
-    {visible.length === 0 ? <V3EmptyState title="Sin alertas en este filtro" description={filter === 'reviewed' ? 'Las alertas resueltas o descartadas aparecerán aquí cuando existan.' : 'No hay decisiones operativas que mostrar ahora.'} /> : <div className="v3-alert-groups">{visibleByPriority.map(({ bucket, items }) => renderAlertGroup(bucket, items))}</div>}
+    {visible.length === 0 ? <V3ListWorkspace label="Alertas" {...listWindow} onPageChange={listWindow.setPage}><V3EmptyState title="Sin alertas en este filtro" description={filter === 'reviewed' ? 'Las alertas resueltas o descartadas aparecerán aquí cuando existan.' : 'No hay decisiones operativas que mostrar ahora.'} /></V3ListWorkspace> : <V3ListWorkspace label="Alertas" {...listWindow} onPageChange={listWindow.setPage}><div className="v3-alert-groups">{visibleByPriority.map(({ bucket, items }) => renderAlertGroup(bucket, items))}</div></V3ListWorkspace>}
     {selected && selectedStatus ? <V3BottomSheet title={selected.title} onClose={() => setSelected(null)}>
       <div className="v3-alert-sheet__status"><V3EntityStatus context="Prioridad" label={priorityLabel(selected)} tone={selected.severity === 'critical' ? 'danger' : selected.severity === 'warning' ? 'warning' : 'neutral'} /><V3EntityStatus context="Estado" label={lifecycleLabel(selectedStatus, selectedRead)} tone={selectedStatus === 'resolved' ? 'success' : selectedStatus === 'dismissed' ? 'neutral' : 'warning'} /></div>
       <V3DetailSection title="Qué requiere atención"><p className="v3-section-copy">{selected.detail}</p><p className="v3-section-copy">{getAlertImpactCopy(selected)}</p>{selected.ageContext ? <p className="v3-section-copy">{selected.ageContext}</p> : null}{selected.contextLabel ? <p className="v3-section-copy">{selected.contextLabel}</p> : null}</V3DetailSection>

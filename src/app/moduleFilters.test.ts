@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyExpenseFilter, applyInvoiceFilter, applyPaymentFilter } from './moduleFilters'
+import { applyExpenseFilter, applyInvoiceFilter, applyPaymentFilter, clearDetailFilterForView, emptyModuleFilterState } from './moduleFilters'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
 import type { PaymentListItem } from '../features/payments/types'
@@ -126,5 +126,21 @@ describe('module period filters', () => {
 
     expect(expenses).toHaveLength(1)
     expect(expenses[0]?.id).toBe('exp-1')
+  })
+
+  it('clears only the departed module detail filter and preserves safe list filters', () => {
+    const filters = {
+      ...emptyModuleFilterState,
+      invoices: { type: 'invoice' as const, invoiceId: 'inv-1', invoiceLabel: 'INV-1' },
+      quotes: 'open' as const,
+      expenses: 'pending_review' as const,
+    }
+
+    const reset = clearDetailFilterForView(filters, 'invoices')
+
+    expect(reset.invoices).toBeNull()
+    expect(reset.quotes).toBe('open')
+    expect(reset.expenses).toBe('pending_review')
+    expect(clearDetailFilterForView(reset, 'invoices')).toBe(reset)
   })
 })

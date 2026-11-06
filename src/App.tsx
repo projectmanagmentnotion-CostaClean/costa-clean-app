@@ -175,16 +175,16 @@ function App() {
     )
   }
 
+  if (isDevStepFlowPreview) {
+    return renderWithBuildInfo(<DevStepFlowPreviewPage />)
+  }
+
   if (isPublicQuoteRequestStandalone) {
     return renderWithBuildInfo(<PublicQuoteRequestPage />)
   }
 
   if (isPublicGymManualQuizStandalone) {
     return renderWithBuildInfo(<PublicGymManualQuizPage />)
-  }
-
-  if (isDevStepFlowPreview) {
-    return renderWithBuildInfo(<DevStepFlowPreviewPage />)
   }
 
   if (isBooting) {

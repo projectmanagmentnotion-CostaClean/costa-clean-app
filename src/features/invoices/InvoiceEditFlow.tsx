@@ -474,6 +474,7 @@ export function InvoiceEditFlow({
           quote_id: invoice.quote_id ?? selectedJob?.quote_id ?? null,
           client_id: form.client_id,
           property_id: invoice.property_id ?? null,
+          service_reference_override: invoice.service_reference_override ?? null,
           issue_date: form.issue_date,
           status: resolvedSaveStatus,
           subtotal: subtotalValue,

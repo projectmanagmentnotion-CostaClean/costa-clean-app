@@ -16,6 +16,7 @@ import {
   type FiscalPeriodSelection,
   type ResolvedFiscalPeriod,
 } from './fiscalPeriods'
+import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
 
 export type ClosingIncidenceTone = 'neutral' | 'warning' | 'danger'
 export type ClosingIncidenceView = 'invoices' | 'payments' | 'expenses'
@@ -168,7 +169,7 @@ function buildIncidences(summary: {
     {
       id: 'period_payments_all',
       label: 'Cobros registrados',
-      detail: `Cobros con fecha dentro de ${periodLabel}.`,
+      detail: `Cobros vinculados a facturas emitidas en ${periodLabel}, aunque se registren después.`,
       count: summary.paymentCount,
       tone: 'neutral',
       view: 'payments',
@@ -246,7 +247,8 @@ export function buildClosingSummary({
 }: BuildClosingSummaryInput): ClosingSummary {
   const period = resolveFiscalPeriod(selection)
   const periodInvoices = invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
-  const periodPayments = payments.filter((payment) => isDateWithinFiscalPeriod(payment.payment_date, period))
+  const invoicePaymentCohort = buildInvoicePaymentCohort(payments, periodInvoices)
+  const periodPayments = invoicePaymentCohort.payments
   const periodExpenses = expenses.filter((expense) => isExpenseWithinPeriod(expense, period))
   const periodQuotes = quotes.filter((quote) => isDateWithinFiscalPeriod(quote.created_at ?? null, period))
   const periodJobs = jobs.filter((job) => isDateWithinFiscalPeriod(job.scheduled_date, period))
@@ -284,29 +286,30 @@ export function buildClosingSummary({
 
   const baseSummary = quarterSummary ?? annualSummary
 
-  const invoiceCount = baseSummary?.invoiceCount ?? periodInvoices.length
-  const paymentCount = baseSummary?.paymentCount ?? periodPayments.length
-  const expenseCount = baseSummary?.expenseCount ?? periodExpenses.length
-  const closureExpenseCount = baseSummary?.closureExpenseCount ?? closureExpenses.length
-  const missingSupportCount = baseSummary?.missingSupportCount ?? missingSupportExpenses.length
-  const pendingReviewCount = baseSummary?.pendingReviewCount ?? pendingReviewExpenses.length
-  const riskCount = baseSummary?.riskCount ?? riskExpenses.length
-  const fiscalReviewCount = baseSummary?.fiscalReviewCount ?? deterministic.expenseFiscalSummary.needsReviewCount
-  const fiscalRiskCount = baseSummary?.fiscalRiskCount ?? deterministic.expenseFiscalSummary.mediumHighRiskCount
-  const missingValidVatInvoiceCount = baseSummary?.missingValidVatInvoiceCount ?? deterministic.expenseFiscalSummary.missingValidVatInvoiceCount
-  const pendingInvoiceCount = baseSummary?.pendingInvoiceCount ?? pendingInvoices.length
-  const unresolvedIncidenceCount = baseSummary?.unresolvedIncidenceCount
-    ?? (missingSupportCount + pendingReviewCount + riskCount + missingValidVatInvoiceCount + pendingInvoiceCount)
-  const invoicedTotal = baseSummary?.invoicedTotal ?? Number(periodInvoices.reduce((sum, invoice) => sum + Number(invoice.total || 0), 0).toFixed(2))
-  const collectedTotal = baseSummary?.collectedTotal ?? Number(periodPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0).toFixed(2))
-  const outstandingTotal = baseSummary?.outstandingTotal ?? deterministic.summary.totalOutstanding
-  const expensesTotal = baseSummary?.expensesTotal ?? Number(periodExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0).toFixed(2))
-  const outputVatTotal = baseSummary?.outputVatTotal ?? vatSummary.outputVatTotal
-  const estimatedDeductibleBase = baseSummary?.estimatedDeductibleBase ?? vatSummary.estimatedDeductibleBase
-  const estimatedDeductibleVat = baseSummary?.estimatedDeductibleVat ?? vatSummary.estimatedDeductibleVat
-  const totalVatSupported = baseSummary?.totalVatSupported ?? vatSummary.supportedVatTotal
-  const estimatedNetVatPayable = baseSummary?.estimatedNetVatPayable ?? vatSummary.estimatedNetVatPayable
-  const readiness = baseSummary?.readiness ?? (unresolvedIncidenceCount > 0 ? 'issues' : 'ready')
+  // Persisted snapshots are historical context only. Live source collections
+  // remain authoritative after refetches and realtime invalidation.
+  const invoiceCount = periodInvoices.length
+  const paymentCount = periodPayments.length
+  const expenseCount = periodExpenses.length
+  const closureExpenseCount = closureExpenses.length
+  const missingSupportCount = missingSupportExpenses.length
+  const pendingReviewCount = pendingReviewExpenses.length
+  const riskCount = riskExpenses.length
+  const fiscalReviewCount = deterministic.expenseFiscalSummary.needsReviewCount
+  const fiscalRiskCount = deterministic.expenseFiscalSummary.mediumHighRiskCount
+  const missingValidVatInvoiceCount = deterministic.expenseFiscalSummary.missingValidVatInvoiceCount
+  const pendingInvoiceCount = pendingInvoices.length
+  const unresolvedIncidenceCount = missingSupportCount + pendingReviewCount + riskCount + missingValidVatInvoiceCount + pendingInvoiceCount
+  const invoicedTotal = deterministic.summary.totalInvoiced
+  const collectedTotal = deterministic.summary.totalCollected
+  const outstandingTotal = deterministic.summary.totalOutstanding
+  const expensesTotal = deterministic.summary.totalExpenses
+  const outputVatTotal = vatSummary.outputVatTotal
+  const estimatedDeductibleBase = vatSummary.estimatedDeductibleBase
+  const estimatedDeductibleVat = vatSummary.estimatedDeductibleVat
+  const totalVatSupported = vatSummary.supportedVatTotal
+  const estimatedNetVatPayable = vatSummary.estimatedNetVatPayable
+  const readiness = unresolvedIncidenceCount > 0 ? 'issues' : 'ready'
   const readinessLevel = getClosingReadinessLevel({
     missingSupportCount,
     missingValidVatInvoiceCount,

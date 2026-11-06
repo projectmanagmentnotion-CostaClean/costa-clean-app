@@ -23,5 +23,8 @@ describe('V3QuotesPage', () => {
     expect(html).toContain('Se creará una factura real vinculada')
     expect(html).toContain('Más acciones')
     expect(html).not.toContain('PDF real generado con el renderer actual')
+    expect(html).toContain('Vista previa de presupuesto')
+    expect(html).toContain('Abrir documento')
+    expect(html).toContain('cc-invoice-a4--quote')
   })
 })

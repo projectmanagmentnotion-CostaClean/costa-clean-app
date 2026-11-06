@@ -1,6 +1,7 @@
 import { getAlertActionLabel } from '../../features/automation/alertPresentation'
 import type { AutomationAlertItem } from '../../features/automation/types'
 import type { OperationalIncident, OperationalSeverity } from '../../features/dashboard/operationalControl'
+import type { DashboardKpiActionId } from '../../features/dashboard/kpiActions'
 
 export interface V3HomePriority {
   id: string
@@ -11,6 +12,15 @@ export interface V3HomePriority {
   actionLabel: string
   alert?: AutomationAlertItem
   incident?: OperationalIncident
+  kpiAction?: DashboardKpiActionId
+}
+
+export function buildV3HomePeriodPriorities({ periodLabel, outstanding, completedUnbilledJobs, expensesWithoutSupport }: { periodLabel: string; outstanding: number; completedUnbilledJobs: number; expensesWithoutSupport: number }): V3HomePriority[] {
+  const priorities: V3HomePriority[] = []
+  if (outstanding > 0.009) priorities.push({ id: 'period-outstanding', severity: 'critical', label: 'Saldo pendiente del periodo', value: formatPriorityValue(1, outstanding), detail: `Facturas emitidas en ${periodLabel}.`, actionLabel: 'Ver facturas', kpiAction: 'outstanding_invoices' })
+  if (completedUnbilledJobs > 0) priorities.push({ id: 'period-unbilled-jobs', severity: 'warning', label: 'Servicios completados sin factura', value: String(completedUnbilledJobs), detail: `Servicios completados en ${periodLabel}.`, actionLabel: 'Crear factura', kpiAction: 'completed_jobs_without_invoice' })
+  if (expensesWithoutSupport > 0) priorities.push({ id: 'period-expenses-support', severity: 'warning', label: 'Gastos sin soporte', value: String(expensesWithoutSupport), detail: `Gastos registrados en ${periodLabel}.`, actionLabel: 'Revisar gastos', kpiAction: 'expenses_without_receipt' })
+  return priorities
 }
 
 function domainForAlert(alert: AutomationAlertItem): string {

@@ -59,11 +59,12 @@ export function parseInvoiceFiscalSequence(invoiceNumber: string | null | undefi
   return Number.isInteger(value) && value > 0 ? value : null
 }
 
-export function parseInvoiceDisplaySequence(displayCode: string | null | undefined): number | null {
+export function parseInvoiceDisplaySequence(displayCode: string | null | undefined, year?: number | null): number | null {
   if (!displayCode) return null
-  const match = displayCode.trim().match(/^INV-(\d+)$/i)
+  const match = displayCode.trim().match(/^INV-(?:(\d{4})-)?(\d+)$/i)
   if (!match) return null
-  const value = Number(match[1])
+  if (year && match[1] && Number(match[1]) !== year) return null
+  const value = Number(match[2])
   return Number.isInteger(value) && value > 0 ? value : null
 }
 
@@ -71,8 +72,8 @@ export function buildInvoiceNumber(year: number, sequence: number): string {
   return `${year}-${String(sequence).padStart(3, '0')}`
 }
 
-export function buildInvoiceDisplayCode(sequence: number): string {
-  return `INV-${String(sequence).padStart(4, '0')}`
+export function buildInvoiceDisplayCode(year: number, sequence: number): string {
+  return `INV-${year}-${String(sequence).padStart(3, '0')}`
 }
 
 export function getInvoiceIssueYear(issueDate: string | null | undefined): number | null {
@@ -89,7 +90,7 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
     .map((invoice) => ({
       invoice,
       fiscalSequence: parseInvoiceFiscalSequence(invoice.invoice_number, year) as number,
-      displaySequence: parseInvoiceDisplaySequence(invoice.display_code),
+      displaySequence: parseInvoiceDisplaySequence(invoice.display_code, year),
     }))
     .sort((left, right) => left.fiscalSequence - right.fiscalSequence)
 
@@ -143,7 +144,7 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
     .map(toIssueEntry)
 
   const outOfSyncEntries = fiscalInvoices
-    .filter((entry) => entry.displaySequence !== null && entry.displaySequence !== entry.fiscalSequence)
+    .filter((entry) => entry.displaySequence === null || entry.displaySequence !== entry.fiscalSequence)
     .map((entry) => toIssueEntry(entry.invoice))
 
   return {
@@ -154,7 +155,7 @@ export function buildInvoiceNumberingAudit(invoices: InvoiceListItem[], year: nu
     hasBlockingGaps,
     nextSuggestedSequence,
     nextSuggestedInvoiceNumber: buildInvoiceNumber(year, nextSuggestedSequence),
-    nextSuggestedDisplayCode: buildInvoiceDisplayCode(nextSuggestedSequence),
+    nextSuggestedDisplayCode: buildInvoiceDisplayCode(year, nextSuggestedSequence),
     gaps,
     duplicateInvoiceNumbers: [...duplicateInvoiceNumbers].sort(),
     duplicateDisplayCodes: [...duplicateDisplayCodes].sort(),

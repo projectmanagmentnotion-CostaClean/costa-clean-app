@@ -54,4 +54,17 @@ describe('V3 core correction contracts', () => {
     expect(mobileRuleStart).toBeGreaterThan(desktopRule)
     expect(mobileRule).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
   })
+
+  it('stacks dense Leads, invoice, and payment content at narrow phone widths', () => {
+    const narrowRuleStart = css.lastIndexOf('@media (max-width: 360px)')
+    const narrowRule = css.slice(narrowRuleStart)
+
+    expect(narrowRuleStart).toBeGreaterThan(-1)
+    expect(narrowRule).toContain('.v3-leads-kpi-summary .v3-kpi-group')
+    expect(narrowRule).toContain('grid-template-columns: minmax(0, 1fr)')
+    expect(narrowRule).toContain('.v3-invoice-row__side')
+    expect(narrowRule).toContain('.v3-payment-row__side')
+    expect(narrowRule).toContain('grid-column: 1 / -1')
+    expect(narrowRule).toContain('overflow-wrap: anywhere')
+  })
 })

@@ -1,4 +1,4 @@
-import { useMemo, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react'
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react'
 import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/displayFormat'
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
@@ -21,6 +21,8 @@ import { deliverPdfFile } from '../../features/documents/documentFileDelivery'
 import { V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EntityStatus, V3Field, V3Input, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction, V3Select, V3StickyActionBar, V3Textarea } from '../components/V3Primitives'
 import { canCreateInvoiceFromJob } from '../../features/jobs/jobInvoiceEligibility'
 import { buildJobWorkReportPdfFile, buildJobWorkReportPdfFileName } from './jobWorkReport'
+import { V3StepFlow } from '../stepflow/V3StepFlow'
+import { validateJobEditStep } from './jobEditValidation'
 
 const STATUS_OPTIONS = [['pending', 'Pendiente'], ['scheduled', 'Programado'], ['in_progress', 'En curso'], ['completed', 'Realizado'], ['cancelled', 'Cancelado']] as const
 type JobEditState = { scheduled_date: string; status: string; notes: string; line: BillingLineFormState }
@@ -29,17 +31,8 @@ function toDraftLine(job: JobListItem, line: ReturnType<typeof getJobBillingLine
   return { local_id: line.id ?? `JOB-LINE-${job.id}`, concept: line.concept, quantity: formatQuantityInput(line.quantity), unit: line.unit, unit_price: formatMoneyInput(line.unit_price) }
 }
 
-function JobEditSheet({ edit, setEdit, busy, onSubmit, onClose }: { edit: JobEditState; setEdit: Dispatch<SetStateAction<JobEditState>>; busy: boolean; onSubmit: (event: FormEvent<HTMLFormElement>) => void; onClose: () => void }) {
-  return <V3BottomSheet title="Editar servicio" onClose={onClose}><form className="v3-form" onSubmit={onSubmit}>
-    <V3Field label="Fecha"><V3Input type="date" value={edit.scheduled_date} onChange={(event) => setEdit((current) => ({ ...current, scheduled_date: event.target.value }))} required /></V3Field>
-    <V3Field label="Estado"><V3Select value={edit.status} onChange={(event) => setEdit((current) => ({ ...current, status: event.target.value }))}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</V3Select></V3Field>
-    <V3Field label="Concepto"><V3Input value={edit.line.concept} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, concept: event.target.value } }))} required /></V3Field>
-    <V3Field label="Cantidad"><V3Input inputMode="decimal" value={edit.line.quantity} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, quantity: event.target.value } }))} required /></V3Field>
-    <V3Field label="Unidad"><V3Input value={edit.line.unit} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit: event.target.value } }))} required /></V3Field>
-    <V3Field label="Precio unitario"><V3Input inputMode="decimal" value={edit.line.unit_price} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit_price: event.target.value } }))} required /></V3Field>
-    <V3Field label="Notas"><V3Textarea value={edit.notes} onChange={(event) => setEdit((current) => ({ ...current, notes: event.target.value }))} /></V3Field>
-    <V3PrimaryAction type="submit" disabled={busy}>Guardar cambios</V3PrimaryAction>
-  </form></V3BottomSheet>
+function JobEditSheet({ edit, setEdit, busy, error, onSubmit, onClose }: { edit: JobEditState; setEdit: Dispatch<SetStateAction<JobEditState>>; busy: boolean; error: string | null; onSubmit: () => void | Promise<void>; onClose: () => void }) {
+  return <V3StepFlow title="Editar servicio" onCancel={onClose} onComplete={onSubmit} validateStep={(stepIndex) => validateJobEditStep(stepIndex, edit)} error={error} busy={busy} completeLabel="Guardar cambios" steps={[{ id: 'schedule', title: 'Agenda', content: <><V3Field label="Fecha"><V3Input type="date" value={edit.scheduled_date} onChange={(event) => setEdit((current) => ({ ...current, scheduled_date: event.target.value }))} autoFocus /></V3Field><V3Field label="Estado"><V3Select value={edit.status} onChange={(event) => setEdit((current) => ({ ...current, status: event.target.value }))}>{STATUS_OPTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</V3Select></V3Field></> }, { id: 'billing', title: 'Precio', content: <><V3Field label="Concepto"><V3Input value={edit.line.concept} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, concept: event.target.value } }))} /></V3Field><V3Field label="Cantidad"><V3Input inputMode="decimal" value={edit.line.quantity} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, quantity: event.target.value } }))} /></V3Field><V3Field label="Unidad"><V3Input value={edit.line.unit} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit: event.target.value } }))} /></V3Field><V3Field label="Precio unitario"><V3Input inputMode="decimal" value={edit.line.unit_price} onChange={(event) => setEdit((current) => ({ ...current, line: { ...current.line, unit_price: event.target.value } }))} /></V3Field></> }, { id: 'review', title: 'Notas y revisión', content: <V3Field label="Notas"><V3Textarea value={edit.notes} onChange={(event) => setEdit((current) => ({ ...current, notes: event.target.value }))} /></V3Field> }]} />
 }
 
 interface V3JobWorkspaceProps { job: JobListItem; clients: ClientListItem[]; properties: PropertyListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; payments: PaymentListItem[]; onBack: () => void; onRefresh: () => Promise<void>; onOpenClient: (id: string) => void; onOpenProperty: (id: string) => void; onOpenQuote: (id: string) => void; onOpenInvoice: (id: string) => void; onCreateInvoice: () => void }
@@ -59,6 +52,7 @@ export function V3JobWorkspace(props: V3JobWorkspaceProps) {
   const [moreOpen, setMoreOpen] = useState(false)
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
   const [reportBusy, setReportBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [reportMessage, setReportMessage] = useState<string | null>(null)
@@ -69,13 +63,13 @@ export function V3JobWorkspace(props: V3JobWorkspaceProps) {
   const primaryActionContext = invoiceEligible ? 'Servicio realizado sin factura relacionada. Puedes preparar una factura desde este servicio.' : invoice ? 'Ya existe una factura relacionada. Ábrela para revisar su estado y sus cobros.' : 'El servicio todavía no está listo para facturar. Revisa su fecha, estado o detalle operativo.'
 
   async function refresh() { await props.onRefresh(); setEditOpen(false); setMessage('Servicio actualizado.') }
-  async function saveEdits(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  async function saveEdits() {
+    setEditError(null)
     if (edit.status === 'cancelled' && job.status !== 'cancelled') { setCancelConfirmOpen(true); return }
     await persistEdits()
   }
   async function persistEdits() {
-    setBusy(true); setMessage(null)
+    setBusy(true); setMessage(null); setEditError(null)
     try {
       const linePayloads = buildBillingLinePayloads([edit.line], (value) => value.trim())
       if (!linePayloads) throw new Error('Completa concepto, cantidad y precio unitario.')
@@ -86,7 +80,7 @@ export function V3JobWorkspace(props: V3JobWorkspaceProps) {
         await readSingleAuthenticatedWriteRow(response, 'No se pudo actualizar el estado del servicio.')
       }
       await refresh()
-    } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo guardar el servicio.') } finally { setBusy(false) }
+    } catch (error) { const errorMessage = error instanceof Error ? error.message : 'No se pudo guardar el servicio.'; setMessage(errorMessage); setEditError(errorMessage) } finally { setBusy(false) }
   }
   async function archiveJob() {
     setBusy(true); setMessage(null)
@@ -112,12 +106,12 @@ export function V3JobWorkspace(props: V3JobWorkspaceProps) {
     {message ? <p className="v3-inline-message" role="status">{message}</p> : null}
     <V3StickyActionBar><V3PrimaryAction disabled={busy} onClick={handlePrimaryAction}>{primaryActionLabel}</V3PrimaryAction><V3SecondaryAction disabled={busy} onClick={() => setEditOpen(true)}>Editar</V3SecondaryAction><V3SecondaryAction disabled={busy} onClick={() => setMoreOpen(true)}>Más</V3SecondaryAction></V3StickyActionBar>
     <V3DetailSection title="Próximo paso"><p className="v3-section-copy">{primaryActionContext}</p></V3DetailSection>
-    <V3DetailSection title="Situación"><div className="v3-summary"><div><span>Estado</span><strong>{operational.label}</strong></div><div><span>Facturación</span><strong>{invoice ? paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Facturada' : 'Sin facturar'}</strong></div><div><span>Importe</span><strong>{invoice ? formatCurrency(invoice.total) : 'Pendiente de factura'}</strong></div></div></V3DetailSection>
+    <V3DetailSection title="Situación"><div className="v3-summary"><div><span>Estado</span><V3EntityStatus label={operational.label} tone={operational.state === 'completed' ? 'success' : operational.state === 'cancelled' ? 'danger' : operational.state === 'review' ? 'warning' : 'neutral'} /></div><div><span>Facturación</span><V3EntityStatus label={invoice ? paymentSummary ? getInvoiceFinancialStatusLabel(paymentSummary.financialStatus) : 'Facturada' : 'Sin facturar'} tone={invoice && paymentSummary?.financialStatus === 'paid' ? 'success' : invoice ? 'warning' : 'neutral'} /></div><div><span>Importe</span><strong>{invoice ? formatCurrency(invoice.total) : 'Pendiente de factura'}</strong></div></div></V3DetailSection>
     <V3DetailSection title="Operativa"><p>{getServiceTypeLabel(job.service_type)} · {getJobBillingDisplayConcept(job)}</p>{job.notes?.trim() ? <p>{job.notes.trim()}</p> : <p>Sin notas operativas.</p>}</V3DetailSection>
     <V3DetailSection title="Relaciones"><div className="v3-related-links"><button type="button" onClick={() => props.onOpenClient(job.client_id)}>{client ? formatClientLabel(client) : job.client_name ?? 'Cliente'}</button><button type="button" onClick={() => props.onOpenProperty(job.property_id)}>{property ? formatPropertyLabel(property) : job.property_name ?? 'Inmueble'}</button>{quote ? <button type="button" onClick={() => props.onOpenQuote(quote.id)}>{formatQuoteLabel(quote)}</button> : <span>Sin presupuesto relacionado</span>}{invoice ? <button type="button" onClick={() => props.onOpenInvoice(invoice.id)}>{formatInvoiceLabel(invoice)}</button> : <span>Sin factura relacionada</span>}</div></V3DetailSection>
     <V3DetailSection title="Parte de trabajo"><p className="v3-section-copy">Resumen operativo del servicio. No certifica ejecución, firma ni geolocalización.</p><div className="v3-document-actions"><V3PrimaryAction disabled={reportBusy} onClick={() => void downloadReport()}>{reportBusy ? 'Generando parte…' : 'Descargar PDF'}</V3PrimaryAction><V3SecondaryAction disabled={reportBusy} onClick={() => void shareReport()}>Compartir parte</V3SecondaryAction></div>{reportMessage ? <p className="v3-inline-message" role="status">{reportMessage}</p> : null}</V3DetailSection>
     <V3DetailSection title="Actividad"><div className="v3-timeline">{timeline.map((item) => <div key={item.id}><strong>{item.title}</strong><span>{formatDateEs(item.date)} · {item.detail}</span></div>)}</div></V3DetailSection>
-    {editOpen ? <JobEditSheet edit={edit} setEdit={setEdit} busy={busy} onSubmit={(event) => void saveEdits(event)} onClose={() => setEditOpen(false)} /> : null}
+    {editOpen ? <JobEditSheet edit={edit} setEdit={setEdit} busy={busy} error={editError} onSubmit={saveEdits} onClose={() => setEditOpen(false)} /> : null}
     {moreOpen ? <V3BottomSheet title="Más acciones" onClose={() => setMoreOpen(false)}><div className="v3-form"><V3SecondaryAction disabled={busy} onClick={() => void archiveJob()}>Archivar servicio</V3SecondaryAction></div></V3BottomSheet> : null}
     {cancelConfirmOpen ? <V3ConfirmSheet title="Cancelar servicio" description="El servicio pasará a estado cancelado y dejará de estar operativo." confirmLabel="Confirmar cancelación" onCancel={() => setCancelConfirmOpen(false)} onConfirm={() => { setCancelConfirmOpen(false); void persistEdits() }} /> : null}
   </V3Page>

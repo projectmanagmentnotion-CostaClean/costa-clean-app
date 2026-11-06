@@ -27,6 +27,28 @@ function renderClosingPage(overrides: Record<string, unknown> = {}) {
 }
 
 describe('V3ClosingPage', () => {
+  it('shows a separate invoiced base, VAT and gross breakdown without changing calculations', () => {
+    const html = renderClosingPage({
+      invoices: [{
+        id: 'synthetic-invoice-001',
+        display_code: null,
+        invoice_number: null,
+        job_id: null,
+        client_id: 'synthetic-client-001',
+        issue_date: '2026-02-01',
+        status: 'draft',
+        subtotal: 100,
+        tax_amount: 21,
+        total: 121,
+      }],
+    })
+
+    expect(html).toContain('aria-label="Desglose de facturación"')
+    expect(html).toContain('Base imponible')
+    expect(html).toContain('21,00')
+    expect(html).toContain('Total facturado')
+  })
+
   it('separates calculated values, snapshot state and assistive output', () => {
     const html = renderClosingPage()
 
@@ -57,6 +79,22 @@ describe('V3ClosingPage', () => {
     expect(html).not.toContain(technicalId)
   })
 
+  it('hydrates the internal note from the selected persisted period', () => {
+    const html = renderClosingPage({
+      quarterlyClosings: [{
+        id: 'snapshot-q1',
+        fiscal_year: 2026,
+        fiscal_quarter: 1,
+        status: 'prepared',
+        closed_at: null,
+        notes: 'Contexto de Q1',
+        snapshot_json: null,
+      }],
+    })
+
+    expect(html).toContain('Contexto de Q1</textarea>')
+  })
+
   it('does not present an issues snapshot as successful', () => {
     const html = renderClosingPage({
       quarterlyClosings: [{
@@ -71,8 +109,8 @@ describe('V3ClosingPage', () => {
     })
 
     expect(html).toContain('Snapshot con incidencias')
-    expect(html).toContain('<span class="v3-status v3-status--warning" aria-label="Snapshot: Snapshot con incidencias"')
-    expect(html).not.toContain('<span class="v3-status v3-status--success" aria-label="Snapshot: Snapshot con incidencias"')
+    expect(html).toContain('<span class="v3-closing-status-item__label">Snapshot</span><span class="v3-status v3-status--warning"><span class="v3-status__label">Snapshot con incidencias</span></span>')
+    expect(html).not.toContain('<span class="v3-closing-status-item__label">Snapshot</span><span class="v3-status v3-status--success"><span class="v3-status__label">Snapshot con incidencias</span></span>')
   })
 
   it('keeps period-specific actions disabled when the period cannot persist a snapshot', () => {

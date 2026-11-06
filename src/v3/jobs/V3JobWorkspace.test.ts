@@ -25,6 +25,8 @@ describe('V3JobWorkspace C5.2 composition', () => {
     expect(html).toContain('Parte de trabajo')
     expect(html).toContain('Descargar PDF')
     expect(html).toContain('Compartir parte')
+    expect(html).toContain('<div><span>Estado</span><span class="v3-status v3-status--success"><span class="v3-status__label">Realizado</span></span></div>')
+    expect(html).toContain('<div><span>Facturación</span><span class="v3-status v3-status--neutral"><span class="v3-status__label">Sin facturar</span></span></div>')
     expect(html).not.toContain(job.id)
   })
 })

@@ -8,6 +8,7 @@ import { buildFiscalVatSummary } from '../closing/fiscalVatSummary'
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
+import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
 
 function parseDate(dateValue: string): Date | null {
   if (!dateValue) return null
@@ -40,9 +41,8 @@ export function buildQuarterlyClosingSummary(
   const quarterInvoices = invoices.filter((invoice) =>
     matchesDateQuarter(invoice.issue_date, fiscalYear, fiscalQuarter),
   )
-  const quarterPayments = payments.filter((payment) =>
-    matchesDateQuarter(payment.payment_date, fiscalYear, fiscalQuarter),
-  )
+  const invoicePaymentCohort = buildInvoicePaymentCohort(payments, quarterInvoices)
+  const quarterPayments = invoicePaymentCohort.payments
   const quarterExpenses = expenses.filter((expense) =>
     matchesExpenseQuarter(expense, fiscalYear, fiscalQuarter),
   )
@@ -61,15 +61,9 @@ export function buildQuarterlyClosingSummary(
   const fiscalSummary = buildExpenseFiscalSummary(quarterClosureExpenses)
   const vatSummary = buildFiscalVatSummary(quarterInvoices, quarterClosureExpenses)
 
-  const paidAmountByInvoiceId = new Map<string, number>()
-  for (const payment of payments) {
-    const currentPaid = paidAmountByInvoiceId.get(payment.invoice_id) ?? 0
-    paidAmountByInvoiceId.set(payment.invoice_id, currentPaid + Number(payment.amount || 0))
-  }
-
   const pendingQuarterInvoices = quarterInvoices.filter((invoice) => {
     const invoiceTotal = Number(invoice.total || 0)
-    const paidAmount = paidAmountByInvoiceId.get(invoice.id) ?? 0
+    const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
     return Math.max(invoiceTotal - paidAmount, 0) > 0.009
   })
 
@@ -97,7 +91,7 @@ export function buildQuarterlyClosingSummary(
     collectedTotal: quarterPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
     outstandingTotal: pendingQuarterInvoices.reduce((sum, invoice) => {
       const invoiceTotal = Number(invoice.total || 0)
-      const paidAmount = paidAmountByInvoiceId.get(invoice.id) ?? 0
+      const paidAmount = invoice.paid_amount ?? invoicePaymentCohort.paidAmountByInvoiceId.get(invoice.id) ?? 0
       return sum + Math.max(invoiceTotal - paidAmount, 0)
     }, 0),
     expensesTotal: quarterExpenses.reduce((sum, expense) => sum + Number(expense.total || 0), 0),
@@ -129,7 +123,7 @@ export function buildQuarterlyClosingSummary(
       {
         id: 'payment_quarter_all',
         label: 'Cobros registrados',
-        detail: 'Movimientos cobrados dentro del trimestre.',
+        detail: 'Cobros vinculados a facturas emitidas en el trimestre.',
         count: quarterPayments.length,
         tone: 'neutral',
         view: 'payments',

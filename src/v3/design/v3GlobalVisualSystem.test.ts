@@ -38,6 +38,13 @@ describe('V3 global visual system contracts', () => {
     expect(v3Css).toContain('min-height: var(--v3-touch-min)')
   })
 
+  it('preserves status words and stacks the Cierres header at tablet widths', () => {
+    expect(v3Css).toContain('overflow-wrap: normal')
+    expect(v3Css).toContain('word-break: normal')
+    expect(v3Css).toContain('@media (max-width: 820px)')
+    expect(v3Css).toContain('.v3-closing-section-heading { align-items: stretch; flex-direction: column; }')
+  })
+
   it('keeps global V3 CSS free of raw color literals', () => {
     expect(v3Css).not.toMatch(/#[0-9a-f]{3,8}\b/iu)
     expect(v3Css).not.toMatch(/rgba?\(/iu)

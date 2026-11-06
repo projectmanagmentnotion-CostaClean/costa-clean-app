@@ -52,8 +52,12 @@ export function V3PageTitle({ eyebrow, title, description, action }: { eyebrow?:
   )
 }
 
-export function V3Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return <article className="v3-kpi"><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</article>
+export function V3Kpi({ label, value, hint, onClick, tone }: { label: string; value: string; hint?: string; onClick?: () => void; tone?: 'primary' | 'accent' | 'information' | 'financial' }) {
+  const className = `v3-kpi${onClick ? ' v3-kpi--interactive' : ''}${tone ? ` v3-kpi--tone-${tone}` : ''}`
+  const content = <><span>{label}</span><strong>{value}</strong>{hint ? <small>{hint}</small> : null}</>
+  return onClick
+    ? <button type="button" className={className} onClick={onClick} aria-label={`${label}: ${value}`}>{content}</button>
+    : <article className={className}>{content}</article>
 }
 
 export function V3KpiGroup({ children, variant = 'default' }: { children: ReactNode; variant?: 'default' | 'supporting' }) {
@@ -61,7 +65,7 @@ export function V3KpiGroup({ children, variant = 'default' }: { children: ReactN
 }
 
 export function V3EntityStatus({ label, tone = 'neutral', context }: { label: string; tone?: 'neutral' | 'success' | 'warning' | 'danger'; context?: string }) {
-  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}{label}</span>
+  return <span className={`v3-status v3-status--${tone}`} aria-label={context ? `${context}: ${label}` : undefined}>{context ? <span className="v3-status__context">{context}</span> : null}<span className="v3-status__label">{label}</span></span>
 }
 
 export const V3Status = V3EntityStatus

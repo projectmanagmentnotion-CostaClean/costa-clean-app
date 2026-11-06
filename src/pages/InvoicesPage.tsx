@@ -21,6 +21,7 @@ import type { ClientWorkspaceTab } from '../features/clients/useClientWorkspaceN
 import type { InvoiceCreatePrefill } from '../features/invoices/invoiceCreatePrefill'
 import { buildInvoiceCorrectionPrefill, buildInvoiceCreatePrefillFromInvoice } from '../features/invoices/invoiceDuplicatePrefill'
 import { InvoiceDetailCard } from '../features/invoices/InvoiceDetailCard'
+import { InvoiceIssueAction } from '../features/invoices/InvoiceIssueAction'
 import { getInvoiceCorrectionCase } from '../features/invoices/invoiceCorrectionCases'
 import { InvoiceEditFlow } from '../features/invoices/InvoiceEditFlow'
 import {
@@ -578,9 +579,13 @@ export function InvoicesPage({
           isInvoiceSettling={(invoiceId) => settlingInvoiceIds.includes(invoiceId)}
           onOpenDocument={openInvoiceDocument}
           onViewPayments={onViewPayments}
+          onInvoiceUpdated={onInvoiceCreated}
           onOpenInvoiceDeepLink={(invoiceId) => onOpenInvoiceDeepLink?.(invoiceId)}
           onBackToInvoiceList={() => onBackToInvoiceList?.()}
-          onEditInvoice={() => setShowMajorEdit(true)}
+          onEditInvoice={(invoice) => {
+            setSelectedInvoiceId(invoice.id)
+            setShowMajorEdit(true)
+          }}
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
           onBulkDownload={bulkDownloadInvoicesV3}
@@ -588,7 +593,7 @@ export function InvoicesPage({
           onBulkSettle={bulkSettleInvoicesV3}
         />
         {isCreateFormVisible ? <V3InvoiceCreateFlow clients={clients} properties={properties} jobs={jobs} quotes={quotes} invoices={allInvoices} prefillClientId={effectiveCreatePrefill?.client_id} prefillJobId={effectiveCreatePrefill?.job_id} prefillQuoteId={effectiveCreatePrefill?.quote_id} onRefreshData={onInvoiceCreated} onCompleted={handleInvoiceCreated} onCancel={() => { setShowCreateForm(false); setLocalCreatePrefill(null); onPrefillConsumed() }} /> : null}
-        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
+        {v3Mode && showMajorEdit && detailInvoice ? <V3InvoiceEditFlow key={detailInvoice.id} invoice={detailInvoice} onRefreshData={onInvoiceCreated} onCompleted={() => setShowMajorEdit(false)} onCancel={() => setShowMajorEdit(false)} /> : null}
       </>
     )
   }
@@ -913,7 +918,9 @@ export function InvoicesPage({
           </div>
 
           <div className="cc-master-layout__detail">
+            <InvoiceIssueAction key={selectedInvoiceKey ?? 'no-selected-invoice'} invoice={detailInvoice} onInvoiceUpdated={onInvoiceCreated} />
             <InvoiceDetailCard
+              key={selectedInvoiceKey ?? 'no-selected-invoice'}
               invoice={detailInvoice}
               clients={clients}
               jobs={jobs}

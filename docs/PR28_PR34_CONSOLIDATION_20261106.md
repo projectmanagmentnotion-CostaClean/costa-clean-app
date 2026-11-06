@@ -11,6 +11,19 @@ was changed.
   against its reported base, and 267 touched paths relative to current main.
 - Frontend recovery: `origin/codex/recovery-ui-functionality-2026-11-04` at
   `e911a79222339ef16ae1abe700e45a39ff61d1d8`; 20 commits and 54 paths.
+- The 13 paths unique to frontend recovery are all present in the candidate:
+  `scripts/invoices/v3InvoiceEditCallback.test.mjs`,
+  `src/features/closingExports/fiscalPeriodExport.test.ts`,
+  `src/features/invoices/InvoiceIssueAction.test.ts`,
+  `src/features/invoices/InvoiceIssueAction.tsx`,
+  `src/features/invoices/invoiceEditorIdentity.test.ts`,
+  `src/features/invoices/invoiceEditorIdentity.ts`,
+  `src/features/invoices/invoiceIssueFlow.test.ts`,
+  `src/features/invoices/invoiceIssueFlow.ts`,
+  `src/v3/home/V3HomePage.test.tsx`, `src/v3/jobs/V3JobWorkspace.test.ts`,
+  `src/v3/jobs/jobEditValidation.test.ts`,
+  `src/v3/jobs/jobEditValidation.ts`, and
+  `src/v3/stepflow/V3StepFlow.test.tsx`.
 - Financial compatibility source: `codex/p0-v3-n56-compatibility` at
   `e9c0ec4131cc03d5a4104874f1669b547df2d746`.
 - Current remote `main` was read with `git ls-remote` and still matched the base
@@ -131,3 +144,7 @@ combined candidate. The old screenshot RC's PASS is historical evidence only.
 - `git diff --check`: passed.
 - No browser QA, synthetic persistence, SQL execution, push, merge to `main`,
   or deployment was performed for the consolidated candidate.
+- The existing authenticated visual runner is read-only for its route/viewport
+  pass, but this worktree has no `.env.qa.local` nor `.auth` QA profile; its
+  environment guard therefore cannot establish a safe QA target or session.
+  The runner was not started against Production or shared real-data profiles.

@@ -1023,6 +1023,8 @@ html[data-app-surface="v3"] .cc-scroll-top {
 }
 
 @media (max-width: 360px) {
+  /* The page heading repeats this context; hide the duplicate when the brand and label collide. */
+  .v3-top-bar__context { display: none; }
   .v3-top-bar__screen-label { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .v3-leads-kpi-summary .v3-kpi-group {
     grid-template-columns: minmax(0, 1fr);

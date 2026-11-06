@@ -16,6 +16,7 @@ describe('R5.5 global visual governance', () => {
     expect(presentation).toContain('<V3BrandLockup />')
     expect(css).toContain('@media (max-width: 360px)')
     expect(css).toContain('.v3-top-bar__screen-label { max-width: 30vw;')
+    expect(css).toMatch(/@media \(max-width: 360px\)[\s\S]*?\.v3-top-bar__context\s*\{\s*display:\s*none;/u)
   })
 
   it('governs semantic nav/header/canvas surfaces and hidden scrollbars', () => {

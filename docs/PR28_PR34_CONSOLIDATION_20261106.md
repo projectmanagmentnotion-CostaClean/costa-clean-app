@@ -142,8 +142,21 @@ combined candidate. The old screenshot RC's PASS is historical evidence only.
 - `npm run lint`: passed.
 - `npm run build` (includes `tsc -b`): passed.
 - `git diff --check`: passed.
-- No browser QA, synthetic persistence, SQL execution, push, merge to `main`,
-  or deployment was performed for the consolidated candidate.
+- Follow-up local synthetic Playwright QA (candidate plus the local header
+  collision correction): 24/24 screens loaded across Leads, Invoices, Payments,
+  Expenses, Services and Closings at 320x568, 390x844, 768x1024 and 1440x900.
+  It used a synthetic session and empty API responses served only by Playwright;
+  external origins were blocked, non-read methods were denied, and no writes,
+  page errors, console errors or horizontal overflow were observed. Screenshots
+  are in the private temporary directory
+  `%TEMP%\costa-clean-fc7faef-fixed-visual-zLBvW2`.
+- The run reproduced a 320px collision between the top-bar brand and its
+  duplicate screen label. The local correction hides only that redundant label
+  at widths up to 360px; the screen heading remains visible. The correction has
+  not been pushed, so the remote Preview still represents the uncorrected SHA.
+- Authenticated remote browser QA, populated-data visuals, persistence,
+  synthetic SQL execution, push, merge to `main`, and deployment remain
+  unverified/not performed for this follow-up.
 - The existing authenticated visual runner is read-only for its route/viewport
   pass, but this worktree has no `.env.qa.local` nor `.auth` QA profile; its
   environment guard therefore cannot establish a safe QA target or session.

@@ -1,0 +1,48 @@
+{
+  "format": 1,
+  "purpose": "QA-only ordered reconstruction; descriptive and fail-closed, never a Supabase CLI migration manifest",
+  "productionProjectRef": "wfxnwfcdjainpojhbdri",
+  "productionLedgerLastVersion": "20260924100831",
+  "baseline": {
+    "path": "supabase/migrations/20260721_qa_baseline_schema.sql",
+    "kind": "schema-only-bootstrap-never-incremental",
+    "sourceCommit": "a9977eafa6e4873a5d3aae64c0bd4dc64c5cece2",
+    "sha256": "57B4DD8AE3A772394D77A44D6D0CBA81CD0BCE933120B152B97465F080799386",
+    "knownLimitation": "Public-only pg_dump; excludes auth/storage platform objects, grants/owners, rows and sequence state; reviewed manifest hash differs from this checkout."
+  },
+  "productionSourceCommit": "03469d93ac90999ee4f35690f473bef48299b3b7",
+  "pr28Commit": "6c2d5f265744fa9c4f9f0d81b0d6e8d8fbb1fe61",
+  "equivalentMigrations": [
+    { "prFile": "20260922104759_n11a_app_internal_staff_authorization.sql", "productionVersion": "20260923123442", "fingerprint": "657520dbc43d1aa1bad44768cc55d513" },
+    { "prFile": "20260922111338_n11_transactional_data_hygiene_adapter.sql", "productionVersion": "20260923123444", "fingerprint": "f35630c7e826e3ec284cb64bdd2e7ac3" },
+    { "prFile": "20260922113953_n11b_role_scoped_authorization_and_literal_hygiene_prefixes.sql", "productionVersion": "20260923123447", "fingerprint": "b00d1f7e3389dba293509d87e0784c92" },
+    { "prFile": "20260922115842_n11c_testable_internal_staff_role_predicates.sql", "productionVersion": "20260923123448", "fingerprint": "31d171a1baddd97b7972014e7c83e485" },
+    { "prFile": "20260922200501_n21_atomic_business_graph.sql", "productionVersion": "20260923123454", "fingerprint": "33a7fba2000a7b64c1c3f04785e57828" }
+  ],
+  "pendingMigrations": [
+    "20260924140000_n51_smart_expense_capture.sql",
+    "20260928150000_n52_document_extraction_foundation.sql",
+    "20260928194500_n52_runtime_r2_guards.sql",
+    "20260928195000_n52_runtime_r2_owner_param.sql",
+    "20260929120000_n52_runtime_r21_contract_parity.sql",
+    "20260929140000_n52_runtime_r22_idempotency_scope.sql",
+    "20260930095656_n53_expense_capture_normalization_runtime.sql",
+    "20261001170000_n55_confirm_expense_capture.sql",
+    "20261001213000_n55_confirm_expense_capture_concurrency.sql",
+    "20261002080214_n55_openai_provider_contract.sql",
+    "20261002150000_invoice_service_reference_override.sql",
+    "20261002170000_n56_preproduction_security_hardening.sql",
+    "20261002173000_expense_product_grant_hardening.sql"
+  ],
+  "postN56P0": "supabase/migrations/20261102120000_p0_expense_access_and_rpc_hardening.sql",
+  "p0Test": "supabase/qa/p0_expenses_security_matrix.sql",
+  "requiredPlatformPrestate": ["roles anon/authenticated/service_role", "auth schema and auth.uid()", "auth.users", "extensions used by schema", "Storage schema/tables/policies if validating Storage parity"],
+  "applyAllowed": false,
+  "blockers": [
+    "The baseline is public-only and demonstrably stale relative to Production/V3 catalog state.",
+    "The baseline file SHA-256 does not match the reviewed July 2026 manifest; resolve source provenance before replay.",
+    "The 03469d93 lineage removes several main migrations; it is not a complete parent snapshot for this baseline.",
+    "Production schema metadata is not a row-free schema dump and cannot establish exact definitions, grants or ownership needed for faithful replay.",
+    "The live Production catalog has no expense_capture_* tables yet; V3 table contracts therefore remain unverified against a real QA schema."
+  ]
+}

@@ -873,30 +873,6 @@ html[data-app-surface="v3"] .cc-scroll-top {
   }
 }
 
-@media (max-width: 360px) {
-  .v3-leads-kpi-summary .v3-kpi-group {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .v3-invoice-row__main,
-  .v3-invoice-row__side,
-  .v3-payment-row__main,
-  .v3-payment-row__side {
-    grid-column: 1 / -1;
-    min-width: 0;
-  }
-
-  .v3-invoice-row__side,
-  .v3-payment-row__side {
-    justify-items: start;
-    text-align: left;
-  }
-
-  .v3-invoice-row__side small,
-  .v3-payment-row__side small {
-    overflow-wrap: anywhere;
-  }
-}
 .v3-selection-bar { align-items: center; background: var(--v3-color-surface-elevated); border: var(--v3-border-width) solid var(--v3-color-border-subtle); border-radius: var(--v3-radius-lg); bottom: var(--v3-bottom-nav-clearance); box-shadow: var(--v3-shadow-lg); display: flex; flex-wrap: wrap; gap: var(--v3-space-2); justify-content: flex-end; left: var(--v3-space-4); padding: var(--v3-space-3); position: fixed; right: var(--v3-space-4); z-index: var(--v3-z-dock); }
 .v3-selection-bar > span { color: var(--v3-color-text-primary); font-weight: 700; margin-right: auto; }
 .v3-selection-control { align-items: center; display: inline-flex; justify-content: center; min-height: var(--v3-touch-preferred); min-width: var(--v3-touch-preferred); }
@@ -985,6 +961,7 @@ html[data-app-surface="v3"] .cc-scroll-top {
     left: calc(var(--v3-nav-rail-width) + var(--v3-space-4));
   }
 }
+
 /* Keep long business identifiers inside the shared mobile row/card layout. */
 .v3-invoice-row__main,
 .v3-payment-row__main {
@@ -1012,6 +989,31 @@ html[data-app-surface="v3"] .cc-scroll-top {
 
   .v3-leads-kpi-summary .v3-kpi span,
   .v3-leads-kpi-summary .v3-kpi small {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 360px) {
+  .v3-leads-kpi-summary .v3-kpi-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .v3-invoice-row__main,
+  .v3-invoice-row__side,
+  .v3-payment-row__main,
+  .v3-payment-row__side {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
+
+  .v3-invoice-row__side,
+  .v3-payment-row__side {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .v3-invoice-row__side small,
+  .v3-payment-row__side small {
     overflow-wrap: anywhere;
   }
 }

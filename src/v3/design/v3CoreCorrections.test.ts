@@ -47,7 +47,8 @@ describe('V3 core correction contracts', () => {
 
   it('keeps the Leads KPI mobile override after its four-column desktop rule', () => {
     const desktopRule = css.indexOf('.v3-leads-kpi-summary .v3-kpi strong')
-    const mobileRuleStart = css.lastIndexOf('.v3-leads-kpi-summary .v3-kpi-group')
+    const narrowMediaStart = css.indexOf('@media (max-width: 360px)')
+    const mobileRuleStart = css.lastIndexOf('.v3-leads-kpi-summary .v3-kpi-group', narrowMediaStart)
     const mobileRuleEnd = css.indexOf('}', mobileRuleStart)
     const mobileRule = css.slice(mobileRuleStart, mobileRuleEnd)
 
@@ -57,9 +58,11 @@ describe('V3 core correction contracts', () => {
 
   it('stacks dense Leads, invoice, and payment content at narrow phone widths', () => {
     const narrowRuleStart = css.lastIndexOf('@media (max-width: 360px)')
+    const mobileRuleStart = css.lastIndexOf('@media (max-width: 640px)')
     const narrowRule = css.slice(narrowRuleStart)
 
     expect(narrowRuleStart).toBeGreaterThan(-1)
+    expect(narrowRuleStart).toBeGreaterThan(mobileRuleStart)
     expect(narrowRule).toContain('.v3-leads-kpi-summary .v3-kpi-group')
     expect(narrowRule).toContain('grid-template-columns: minmax(0, 1fr)')
     expect(narrowRule).toContain('.v3-invoice-row__side')

@@ -31,6 +31,31 @@ rolled back; that transaction is recorded below.
   Production expense/RPC exposure unchanged. It is independent of P0, not a
   substitute for P0.
 
+### Historical screenshot corrections and current coverage
+
+- The historical source is branch `codex/post-v3-screenshot-corrections` at
+  `c113da87eb3afb4cc55e0668f0500e67e55f8919`, with product RC
+  `2d81aff8893fbc89ab041c38e9e657e632aec38a`. Its closeout records the 36-item
+  correction list, 20/20 screenshot review, responsive checks, and a
+  Production release on 2026-09-28. Those records prove that historical
+  release only; the RC commit is not an ancestor of PR #34.
+- PR #34's changed-file list provides current source coverage for Home,
+  invoice edit/issue/detail, closing calculations/exports, expense-row status,
+  job workspace validation, lead KPIs, shared V3 visual primitives, and
+  StepFlow. Its tests cover several invoice, closing, Home, expense-row, jobs,
+  leads, recurring-plan, and StepFlow contracts. This is source/test evidence,
+  not a new 20-screenshot visual signoff.
+- The PR #34 file set has 42 paths in common with PR #28. PR #28 alone contains
+  215 of its 257 changed paths, including V3 payments, alerts, clients, quotes,
+  properties, and expense create/edit/capture files not changed by PR #34.
+  These are still represented in PR #28's Draft; their exact status against the
+  36 historical items is not mapped by the existing closeout artifacts.
+- No current evidence maps every one of the 36 requirements to a PR #34 change
+  and verification. Authenticated Preview visual QA for the current candidate
+  also remains unverified; the browser automation stopped before a reliable
+  URL could be identified. Therefore the historical fixes not demonstrably
+  represented in PR #34 are `UNACCOUNTED/UNVERIFIED`, not proven missing.
+
 ## SEGURIDAD P0 — PR #30 plus local P0 candidate
 
 - Remote PR: `https://github.com/projectmanagmentnotion-CostaClean/costa-clean-app/pull/30`

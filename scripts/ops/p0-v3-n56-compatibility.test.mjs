@@ -12,6 +12,7 @@ const guardSql = read(guardPath)
 const n56Sql = read(n56Path)
 const grantSql = read(grantPath)
 const reconcileSql = read(reconcilePath)
+const releaseManifest = JSON.parse(read('docs/evidence/v3-p0-applied-release-manifest-20261109.json'))
 
 const normalizeSql = (value) => value.replace(/\s+/g, ' ').trim().toLowerCase()
 const functionBody = (sql) => {
@@ -21,6 +22,16 @@ const functionBody = (sql) => {
 }
 
 describe('P0/N56 SQL compatibility', () => {
+  it('keeps the release allowlist separate from QA bootstrap and already-applied P0', () => {
+    expect(releaseManifest.productionEquivalentDoNotReplay).toHaveLength(5)
+    expect(releaseManifest.candidatePendingV3Order).toHaveLength(13)
+    expect(releaseManifest.candidatePendingV3Order).not.toContain(releaseManifest.p0Handling.file)
+    expect(releaseManifest.p0Handling.action).toContain('do-not-replay')
+    expect(releaseManifest.compatibility.preN56BridgeRequiredWhenP0AlreadyApplied).toBe(true)
+    expect(releaseManifest.excludedFromIncrementalMigrations.qaBaseline).toBe('20260721_qa_baseline_schema.sql')
+    expect(releaseManifest.applyAllowed).toBe(false)
+  })
+
   it('keeps financial guards through a P0-first N56 replacement', () => {
     expect(guardPath < n56Path).toBe(true)
     expect(guardSql).toMatch(/as restrictive for insert to authenticated/i)
@@ -32,6 +43,8 @@ describe('P0/N56 SQL compatibility', () => {
     expect(guardSql).toMatch(/financial_role_contract is null[\s\S]*?array\['owner','admin','finance'\]/i)
     expect(guardSql).toContain("regexp_replace(lower(financial_role_contract), '\\s+', '', 'g')")
     expect(n56Sql).not.toMatch(/drop policy[^;]*P0 financial guard/i)
+    expect(n56Sql).toMatch(/create policy "Internal staff insert"[\s\S]*?with check \(\(select public\.expense_staff_access\(true\)\)\)/i)
+    expect(n56Sql).toMatch(/create policy "Internal staff update"[\s\S]*?using \(\(select public\.expense_staff_access\(true\)\)\)[\s\S]*?with check \(\(select public\.expense_staff_access\(true\)\)\)/i)
     expect(guardSql).not.toMatch(/storage\./i)
   })
 

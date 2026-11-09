@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "purpose": "Local release-order candidate; not executable authorization and not a Supabase CLI migration manifest",
+  "snapshotDate": "2026-11-09",
+  "production": {
+    "projectRef": "wfxnwfcdjainpojhbdri",
+    "p0Version": "20261102120000",
+    "p0Status": "reported-applied-in-current-task-context; ledger not re-read in this work block",
+    "priorVerifiedLedgerSnapshot": {
+      "date": "2026-11-03",
+      "count": 28,
+      "lastVersion": "20260924100831"
+    }
+  },
+  "v3Source": {
+    "pullRequest": 28,
+    "head": "6c2d5f265744fa9c4f9f0d81b0d6e8d8fbb1fe61",
+    "sourceMigrationCount": 18
+  },
+  "productionEquivalentDoNotReplay": [
+    { "file": "20260922104759_n11a_app_internal_staff_authorization.sql", "productionVersion": "20260923123442", "evidence": "exact stored-statement MD5 match in the 2026-11-03 reconciliation snapshot" },
+    { "file": "20260922111338_n11_transactional_data_hygiene_adapter.sql", "productionVersion": "20260923123444", "evidence": "exact stored-statement MD5 match in the 2026-11-03 reconciliation snapshot" },
+    { "file": "20260922113953_n11b_role_scoped_authorization_and_literal_hygiene_prefixes.sql", "productionVersion": "20260923123447", "evidence": "exact stored-statement MD5 match in the 2026-11-03 reconciliation snapshot" },
+    { "file": "20260922115842_n11c_testable_internal_staff_role_predicates.sql", "productionVersion": "20260923123448", "evidence": "exact stored-statement MD5 match in the 2026-11-03 reconciliation snapshot" },
+    { "file": "20260922200501_n21_atomic_business_graph.sql", "productionVersion": "20260923123454", "evidence": "exact stored-statement MD5 match in the 2026-11-03 reconciliation snapshot" }
+  ],
+  "candidatePendingV3Order": [
+    "20260924140000_n51_smart_expense_capture.sql",
+    "20260928150000_n52_document_extraction_foundation.sql",
+    "20260928194500_n52_runtime_r2_guards.sql",
+    "20260928195000_n52_runtime_r2_owner_param.sql",
+    "20260929120000_n52_runtime_r21_contract_parity.sql",
+    "20260929140000_n52_runtime_r22_idempotency_scope.sql",
+    "20260930095656_n53_expense_capture_normalization_runtime.sql",
+    "20261001170000_n55_confirm_expense_capture.sql",
+    "20261001213000_n55_confirm_expense_capture_concurrency.sql",
+    "20261002080214_n55_openai_provider_contract.sql",
+    "20261002150000_invoice_service_reference_override.sql",
+    "20261002170000_n56_preproduction_security_hardening.sql",
+    "20261002173000_expense_product_grant_hardening.sql"
+  ],
+  "p0Handling": {
+    "file": "20261102120000_p0_expense_access_and_rpc_hardening.sql",
+    "action": "do-not-replay-if-current-Production-prestate-is-confirmed",
+    "scope": "P0 privileges, helper function, restrictive policies, and four legacy RPC revocations remain the protected postcondition"
+  },
+  "compatibility": {
+    "n55CreateNewRequires": ["active membership", "owner", "admin", "finance"],
+    "n56InsertUpdatePredicate": "public.expense_staff_access(true)",
+    "requiredOrderAroundN56": [
+      "verify P0 helper/policies/grants/RPC ACL prestate",
+      "N56",
+      "expense product grant hardening",
+      "P0/N56 financial policy reconciliation transaction"
+    ],
+    "preN56BridgeRequiredWhenP0AlreadyApplied": true,
+    "reason": "the bridge uses distinct restrictive policy names; P0's permissive policies are not sufficient because N56 drops/recreates them. The bridge preflight still must verify the exact role helper and reject duplicate bridge policies."
+  },
+  "excludedFromIncrementalMigrations": {
+    "qaBaseline": "20260721_qa_baseline_schema.sql",
+    "reason": "QA-only bootstrap, public-schema-only, non-production and not a current Production prestate"
+  },
+  "blockingEvidence": [
+    "Current Production ledger after P0 was not re-read in this work block.",
+    "The 2026-11-03 catalog snapshot is incomplete and does not prove a full Production prestate.",
+    "A standard db push has not been shown to safely skip five remapped equivalent migrations and apply older unregistered versions after P0.",
+    "A database and Storage restore rehearsal remains unverified."
+  ],
+  "applyAllowed": false
+}

@@ -24,4 +24,16 @@ describe('N5.5 confirmation concurrency correction contract', () => {
     expect(migration).toContain("grant execute on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) to authenticated")
     expect(migration).not.toContain('grant execute on function public.confirm_expense_capture(uuid, uuid, uuid, uuid, text, text, uuid, jsonb) to service_role')
   })
+
+  it('fails closed for nonfinancial CREATE_NEW callers before the expense insert', () => {
+    const gate = migration.indexOf("p_duplicate_decision = 'create_new' and not exists")
+    const expenseInsert = migration.indexOf('insert into public.expenses')
+    expect(gate).toBeGreaterThan(migration.indexOf('n55_confirmation_staff_required'))
+    expect(gate).toBeLessThan(expenseInsert)
+    expect(migration).toContain('membership.user_id = p_authenticated_user_id')
+    expect(migration).toContain("membership.status = 'active'")
+    expect(migration).toContain('membership.revoked_at is null')
+    expect(migration).toContain('app_private.internal_staff_role_can_write_financially(membership.role)')
+    expect(migration).toContain("raise exception 'n55_financial_staff_required' using errcode = '42501'")
+  })
 })

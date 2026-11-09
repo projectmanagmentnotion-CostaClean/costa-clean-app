@@ -29,6 +29,18 @@ begin
      or not app_private.is_active_internal_staff(p_authenticated_user_id) then
     raise exception 'n55_confirmation_staff_required' using errcode = '42501';
   end if;
+  -- This SECURITY DEFINER RPC can bypass table RLS. Keep CREATE_NEW aligned
+  -- with the P0 financial role contract before any idempotent return or write.
+  if p_duplicate_decision = 'CREATE_NEW' and not exists (
+    select 1
+      from public.internal_staff_memberships as membership
+     where membership.user_id = p_authenticated_user_id
+       and membership.status = 'active'
+       and membership.revoked_at is null
+       and app_private.internal_staff_role_can_write_financially(membership.role)
+  ) then
+    raise exception 'n55_financial_staff_required' using errcode = '42501';
+  end if;
   if p_idempotency_key is null or char_length(trim(p_idempotency_key)) < 8 then
     raise exception 'n55_confirmation_idempotency_required' using errcode = '22023';
   end if;

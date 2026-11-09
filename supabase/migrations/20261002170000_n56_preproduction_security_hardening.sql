@@ -20,7 +20,7 @@ drop policy if exists "Internal staff update" on public.expenses;
 
 create policy "Internal staff insert" on public.expenses
   for insert to authenticated
-  with check (app_private.is_active_internal_staff((select auth.uid())));
+  with check ((select public.expense_staff_access(true)));
 
 create policy "Internal staff read" on public.expenses
   for select to authenticated
@@ -28,8 +28,8 @@ create policy "Internal staff read" on public.expenses
 
 create policy "Internal staff update" on public.expenses
   for update to authenticated
-  using (app_private.is_active_internal_staff((select auth.uid())))
-  with check (app_private.is_active_internal_staff((select auth.uid())));
+  using ((select public.expense_staff_access(true)))
+  with check ((select public.expense_staff_access(true)));
 
 -- Keep the private expense tables unavailable to anonymous callers while
 -- preserving authenticated and service-role workflows.

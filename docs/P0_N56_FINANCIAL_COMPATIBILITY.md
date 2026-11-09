@@ -1,91 +1,84 @@
-# P0 / N56 financial-policy compatibility
+# P0 / V3 N55-N56 compatibility
 
-Status: local preparation only. No remote SQL, ledger, PR, or deployment was
-changed by this compatibility work.
+Status: isolated local candidate only. No remote project, ledger, PR, or
+deployment was modified. PR #28 and PR #30 remain untouched.
 
-## Why the bridge exists
+## Security corrections in this candidate
 
-The original N56 migration drops and recreates `Internal staff insert` and
-`Internal staff update` with an active-internal-staff predicate. That is broader
-than the certified P0 financial contract (`owner`, `admin`, and `finance`). If
-N56 runs after P0, it replaces P0's narrow policies. If it runs before P0, its
-wide policy is present until P0 runs. The new bridge avoids either interval in
-the expense-table write boundary without changing the original N56, grant
-hardening, or P0 SQL files.
+- Both N55 `confirm_expense_capture` definitions now require an active
+  `owner`, `admin`, or `finance` membership before `CREATE_NEW`. The check is
+  before idempotency reuse and before any expense insert because the RPC is
+  `SECURITY DEFINER` and can bypass the table RLS boundary. `USE_EXISTING`
+  remains available to active internal staff and does not write to `expenses`.
+- N56 insert/update policies now call the certified
+  `public.expense_staff_access(true)` predicate. That predicate is created by
+  the pre-N56 bridge on a fresh V3-first chain, or already exists when P0 has
+  been applied. N56 fails closed if the function is missing. Its read policy
+  and Storage policies are unchanged.
+- The P0 expense grants and privileged RPC revocations are not changed here.
+  The certified P0 migration is treated as already applied in the current
+  Production state and must not be replayed to release V3.
 
-## Prepared order
+## Valid application paths
 
-1. Apply pending V3 migrations whose exact Production equivalence is not proven,
-   in their reviewed dependency order. The five Production-equivalent source
-   files remain excluded from replay; their ledger aliases still need a
-   separately approved migration-history mechanism.
-2. Apply
-   `20261002165959_p0_expense_financial_guard_before_n56.sql` immediately before
-   N56. It checks the expected table, membership columns, helper, RLS and role
-   preconditions; revokes anonymous/destructive expense grants while preserving
-   authenticated read/create/update and service-role CRUD; and installs two
-   restrictive financial-write policies. It also revokes the four named legacy
-   SECURITY DEFINER RPCs if present.
-3. Apply the original N56 SQL unchanged, then original grant hardening unchanged.
-   N56's permissive policies cannot override the restrictive bridge.
-4. Apply
-   `20261002173001_p0_expense_financial_guard_reconcile.sql`. In one transaction
-   it requires the exact five-policy guarded prestate, rewrites N56's insert and
-   update predicates to the P0 financial predicate, then removes the bridge.
-   Any drift raises an exception and rolls back the transaction.
-5. Apply the original certified P0 migration unchanged. Its existing cleanup
-   removes/recreates the three expected policies and its prestate assertion
-   rejects unknown policy residue.
+### Current Production path (P0 already applied)
 
-Storage objects, policies, grants, and buckets are not touched by either
-compatibility migration. N56's existing Storage behavior remains a separate
-release contract and still requires pre/post verification.
+1. Resolve the five proven Production-equivalent ledger entries without
+   replaying their SQL; the 13 other PR #28 entries remain pending according
+   to the reconciled manifest. This release still requires an explicit curated
+   migration mechanism because normal `db push` behavior with the older
+   unregistered versions has not been proven safe.
+2. Apply pending V3 migrations through N55 and the invoice override in their
+   reviewed dependency order. N55 `CREATE_NEW` is finance-role-gated.
+3. Before N56, require catalog evidence that the existing P0 helper, effective
+   grants, RLS, and four RPC revocations match the certified P0 contract. If
+   any check differs, stop and roll back.
+4. Apply the pre-N56 bridge. Its two `P0 financial guard` policies have names
+   distinct from P0's `Internal staff insert/update` policies, so it can run
+   after P0 when its exact preconditions pass. It adds a restrictive financial
+   boundary and does not re-run the P0 migration.
+5. Apply this candidate's N56, then grant hardening. The bridge protects the
+   write boundary while N56 replaces the P0 permissive policies; this candidate
+   also makes N56's insert/update predicates financial-only. Authenticated
+   DELETE/TRUNCATE/other destructive privileges remain revoked.
+6. Apply the N56/P0 reconciliation transaction. It verifies the five-policy
+   prestate, sets N56 insert/update to the same financial helper, and removes
+   the bridge in one transaction. Verify the exact three-policy result, ACL,
+   RPC grants, and unchanged Storage contracts.
+7. Do not apply the P0 migration again. It is already registered/applied in
+   the stated Production prestate.
 
-## Release-order limits
+The bridge fails closed if its own policy names already exist or the certified
+role helper differs. This makes both P0-applied and fresh V3-first routes use
+the same checked N56 boundary without mutating the original PR #28/#30 files.
 
-The P0-only PR is a viable priority release candidate because its branch is
-independent of the 257-file V3 PR. That does not make either remote apply
-authorized or ready: `DB_PUSH_LOCK.md` still blocks database writes, Production
-restore has not been rehearsed, and the CLI cannot infer the five remapped
-equivalences from names or statement hashes alone.
+### Fresh V3-first test path (no P0 prestate)
 
-Until either the P0-only change or the pre-N56 guard is applied, Production
-remains in its observed prestate; the guard does not retroactively protect the
-earlier V3 migrations. This is why the independent P0 release is the shortest
-security-priority path, subject to its own backup and production gates.
+Apply the exact Production-equivalent first five SQL files only to construct a
+fresh synthetic local state, then the 13 pending V3 files. Apply the bridge,
+N56, grant hardening, and reconciliation in that order, followed by the
+unchanged certified P0 migration. This is a separate test ordering and does
+not describe the current Production ledger.
 
-After P0 is in Production, V3's older, unregistered versions require an
-explicit include-all/curated application path. A standard `db push` is not
-certified to skip the five equivalent files safely. No workaround may rewrite
-the ledger or replay those files without an approved exact mapping. The
-pre-N56 guard is compatible with P0 already being present: it remains
-restrictive when N56 replaces its permissive policies, and the reconciliation
-migration independently narrows the N56 policies before removing the guard.
+## Gates and limits
 
-The V3-first alternative is also secure for `public.expenses` only when the
-guard immediately precedes N56 and the reconciliation runs before P0. No
-representative PostgreSQL/Supabase database was available in this work block,
-so SQL behavior, transaction rollback, role matrix, and RPC effects remain
-unverified locally. Static tests do not certify SQL execution.
+The recorded Production ledger has 28 entries ending at `20260924100831` in
+the last catalog snapshot. Five source migrations have exact stored-statement
+hash matches at remapped versions; the remaining 13 are absent. The QA-only
+baseline is public-schema-only and excludes managed Auth/Storage state,
+ownership, ACLs, rows, and sequence state. It is not a faithful current
+Production prestate. Therefore a test built from that baseline alone cannot
+certify the full Production release.
 
-## Required pre-Production gates
+The local compatibility tests must exercise real PostgreSQL RLS/ACL behavior
+with synthetic roles. Static tests only verify source contracts. Storage is
+unchanged by the financial guard and reconciliation; its policies, grants,
+and required buckets need a separate pre/post comparison. No SQL execution
+result is called Production-equivalent without a representative reconstructed
+prestate.
 
-- Exact Production identity, complete ordered SQL allowlist, migration-history
-  mapping for the five equivalent files, and a zero-unexpected-SQL release
-  preflight.
-- A fresh physical database backup and successful isolated restore rehearsal;
-  separately protect/restore required Storage object bytes and verify checksums.
-- Execute both migration order paths on a representative isolated clone with
-  synthetic identities for anon, authenticated without membership, operator,
-  readonly, owner, admin, finance, and service_role. Verify SELECT/INSERT/UPDATE/
-  DELETE/TRUNCATE/REFERENCES/TRIGGER/EXECUTE, RLS, transaction rollback, RPC
-  callers, and unchanged Storage policy/grant fingerprints.
-- Production authorization for the exact migration hashes, reviewed apply
-  order, backup/restore evidence, release window, and postchecks. Merge and
-  Production deployment approvals remain separate.
-
-Rollback must not blindly restore broad expense grants/policies. If a postcheck
-fails, stop new app traffic affecting expense writes, preserve the restrictive
-policy boundary, and use an owner-reviewed forward repair. Restoring database
-and Storage backups is a separately authorized incident action because it may
-replace newer business data.
+Before any Production operation, resolve the five migration-history mappings,
+produce a complete reviewed migration allowlist, rehearse database and
+independent Storage restoration on an isolated target, and capture pre/post
+RLS, grants, RPC, and Storage metadata. No remote action is authorized by this
+document.

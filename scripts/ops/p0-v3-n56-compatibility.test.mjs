@@ -23,6 +23,8 @@ const functionBody = (sql) => {
 
 describe('P0/N56 SQL compatibility', () => {
   it('keeps the release allowlist separate from QA bootstrap and already-applied P0', () => {
+    expect(releaseManifest.production.currentOwnerProvidedState.ledgerCount).toBe(29)
+    expect(releaseManifest.production.currentOwnerProvidedState.p0VersionApplied).toBe('20261102120000')
     expect(releaseManifest.productionEquivalentDoNotReplay).toHaveLength(5)
     expect(releaseManifest.candidatePendingV3Order).toHaveLength(13)
     expect(releaseManifest.candidatePendingV3Order).not.toContain(releaseManifest.p0Handling.file)

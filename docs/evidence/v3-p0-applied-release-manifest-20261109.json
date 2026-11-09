@@ -5,7 +5,12 @@
   "production": {
     "projectRef": "wfxnwfcdjainpojhbdri",
     "p0Version": "20261102120000",
-    "p0Status": "reported-applied-in-current-task-context; ledger not re-read in this work block",
+    "p0Status": "owner-provided-applied-and-verified; not independently re-read during local validation",
+    "currentOwnerProvidedState": {
+      "ledgerCount": 29,
+      "p0VersionApplied": "20261102120000",
+      "evidenceProvenance": "current task instruction; no remote query performed by this local-only work block"
+    },
     "priorVerifiedLedgerSnapshot": {
       "date": "2026-11-03",
       "count": 28,

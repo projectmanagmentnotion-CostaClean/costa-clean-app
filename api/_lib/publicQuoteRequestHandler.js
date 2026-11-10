@@ -39,14 +39,20 @@ export function createPublicQuoteRequestHandler(mode = 'legacy') {
 
   async function supabaseRequest(path, options = {}) {
     const { supabaseUrl, serviceRoleKey } = getSupabaseServerConfig(mode)
+    const headers = {
+      apikey: serviceRoleKey,
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    }
+    if (serviceRoleKey.startsWith('sb_secret_')) {
+      delete headers.Authorization
+    } else {
+      headers.Authorization = `Bearer ${serviceRoleKey}`
+    }
+
     const response = await fetch(`${supabaseUrl}/rest/v1/${path}`, {
       ...options,
-      headers: {
-        apikey: serviceRoleKey,
-        Authorization: `Bearer ${serviceRoleKey}`,
-        'Content-Type': 'application/json',
-        ...(options.headers || {}),
-      },
+      headers,
     })
 
     const text = await response.text()

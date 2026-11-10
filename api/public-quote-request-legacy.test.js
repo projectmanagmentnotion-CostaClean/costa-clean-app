@@ -92,6 +92,7 @@ describe('existing CRM public quote route compatibility', () => {
     expect(res.body).toMatchObject({ ok: true })
     expect(origins.length).toBeGreaterThan(0)
     expect(origins.every((origin) => origin === 'https://synthetic-crm.supabase.invalid')).toBe(true)
+    expect(globalThis.fetch.mock.calls.every(([, options]) => options.headers.apikey === 'synthetic-only-mock-key' && options.headers.Authorization === 'Bearer synthetic-only-mock-key')).toBe(true)
     expect(globalThis.fetch.mock.calls.some(([, options]) => ['POST', 'PATCH'].includes(options?.method))).toBe(true)
   })
 

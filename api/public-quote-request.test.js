@@ -70,11 +70,11 @@ function createResponse() {
   }
 }
 
-function setupEnvironment() {
+function setupEnvironment(serviceRoleKey = 'synthetic-service-role-placeholder-for-mocked-test') {
   process.env.COSTA_PUBLIC_WEB_INTAKE_ENABLED = 'true'
   process.env.COSTA_PUBLIC_WEB_INTAKE_SECRET = secret
   process.env.SUPABASE_URL = 'https://wfxnwfcdjainpojhbdri.supabase.co'
-  process.env.SUPABASE_SERVICE_ROLE_KEY = 'synthetic-service-role-placeholder-for-mocked-test'
+  process.env.SUPABASE_SERVICE_ROLE_KEY = serviceRoleKey
   delete process.env.VITE_SUPABASE_URL
 }
 
@@ -108,7 +108,7 @@ describe('CRM Production public intake boundary', () => {
   })
 
   it('accepts a signed synthetic request through mocked CRM writes only', async () => {
-    setupEnvironment()
+    setupEnvironment('sb_secret_synthetic-test-key')
     const writes = []
     globalThis.fetch = vi.fn(async (url, options = {}) => {
       const target = new URL(url)
@@ -131,6 +131,7 @@ describe('CRM Production public intake boundary', () => {
     expect(writes.map(({ method, pathname }) => [method, pathname])).toEqual([
       ['POST', '/rest/v1/intake_submissions'], ['POST', '/rest/v1/leads'], ['POST', '/rest/v1/lead_drafts'], ['PATCH', '/rest/v1/intake_submissions'],
     ])
+    expect(globalThis.fetch.mock.calls.every(([, options]) => options.headers.apikey === 'sb_secret_synthetic-test-key' && !('Authorization' in options.headers))).toBe(true)
   })
 
   it('rejects missing signatures, QA signatures, and Production URL misconfiguration before writes', async () => {

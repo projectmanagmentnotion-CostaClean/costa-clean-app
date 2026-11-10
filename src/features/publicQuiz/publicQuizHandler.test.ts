@@ -19,15 +19,17 @@ const validPayload = {
 function setup(rpcResponse: Response = Response.json({
   ok: true,
   result: { score: 20, percentage: 100, passed: true, totalQuestions: 20, incorrectQuestionIds: [] },
-})) {
+}), envOverrides: Record<string, string> = {}) {
   const fetchCalls: Array<[string, RequestInit]> = []
   const logCalls: Array<{ event: string; status: number }> = []
+  const values: Record<string, string> = {
+    SUPABASE_URL: 'https://kpvvydthlxupjjqqdpxy.supabase.co',
+    SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGci.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c3ludGhldGlj',
+    PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough-for-qa',
+    ...envOverrides,
+  }
   const handler = createPublicQuizHandler({
-    env: (name) => ({
-      SUPABASE_URL: 'https://kpvvydthlxupjjqqdpxy.supabase.co',
-      SUPABASE_SERVICE_ROLE_KEY: 'private-test-placeholder',
-      PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough-for-qa',
-    })[name],
+    env: (name) => values[name],
     fetch: async (input, init) => { fetchCalls.push([input, init]); return rpcResponse },
     now: () => now,
     log: (event) => logCalls.push(event),
@@ -60,6 +62,17 @@ describe('public quiz Edge handler', () => {
     expect(/^[0-9a-f]{64}$/u.test(rpcBody.p_nonce_hash)).toBe(true)
     expect(JSON.stringify(logCalls).includes('203.0.113.7')).toBe(false)
     expect(JSON.stringify(logCalls).includes('QA Synthetic Worker')).toBe(false)
+  })
+
+  it('uses a modern secret key only in apikey for privileged REST calls', async () => {
+    const { handler, fetchCalls } = setup(undefined, {
+      SUPABASE_SECRET_KEY: 'sb_secret_synthetic_only',
+    })
+    const response = await handler(request())
+    expect(response.status).toBe(200)
+    const headers = fetchCalls[0]?.[1].headers as Record<string, string>
+    expect(headers.apikey).toBe('sb_secret_synthetic_only')
+    expect(headers.Authorization).toBeUndefined()
   })
 
   const invalidCases: Array<[string, Request, number]> = [
@@ -99,7 +112,7 @@ describe('public quiz Edge handler', () => {
     const handler = createPublicQuizHandler({
       env: (name) => ({
         SUPABASE_URL: 'https://wfxnwfcdjainpojhbdri.supabase.co',
-        SUPABASE_SERVICE_ROLE_KEY: 'private-test-placeholder',
+        SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGci.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c3ludGhldGlj',
         PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough-for-qa',
       })[name],
       fetch: async (input, init) => {
@@ -122,7 +135,7 @@ describe('public quiz Edge handler', () => {
     const handler = createPublicQuizHandler({
       env: (name) => ({
         SUPABASE_URL: 'https://unknown-project.supabase.co',
-        SUPABASE_SERVICE_ROLE_KEY: 'private-test-placeholder',
+        SUPABASE_SERVICE_ROLE_KEY: 'eyJhbGci.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.c3ludGhldGlj',
         PUBLIC_QUIZ_FINGERPRINT_PEPPER: 'pepper-test-placeholder-that-is-long-enough',
       })[name],
       fetch: async (input, init) => { fetchCalls.push([input, init]); return Response.json({ ok: true }) },

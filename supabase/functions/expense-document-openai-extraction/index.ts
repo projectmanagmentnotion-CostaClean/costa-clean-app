@@ -3,6 +3,7 @@ import { preflight } from './cors.ts'
 import { buildFreshSuccessResponse, buildReusedSuccessResponse, jsonResponse } from '../expense-document-extraction/responseContract.ts'
 import { OPENAI_DEFAULT_MODEL, OPENAI_MAX_ATTEMPTS_PER_DOCUMENT, OPENAI_MAX_DOCUMENT_BYTES, OPENAI_PROVIDER, OPENAI_PROVIDER_VERSION, requestOpenAiExtraction, type OpenAiExtractionFailureCode } from '../_shared/openaiExpenseExtraction.ts'
 import { validateServerProposal } from '../expense-document-extraction/proposalValidation.ts'
+import { resolveSupabaseServiceApiKey } from '../_shared/supabaseServiceApiKey.ts'
 
 const SCHEMA_VERSION = 1
 const BUCKET = 'expense-receipts'
@@ -58,7 +59,8 @@ Deno.serve(async (request: Request) => {
 
   const url = Deno.env.get('SUPABASE_URL') ?? ''
   const publishableKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const serviceCredential = resolveSupabaseServiceApiKey((name) => Deno.env.get(name))
+  const serviceRoleKey = serviceCredential?.value ?? ''
   const apiKey = Deno.env.get('OPENAI_API_KEY') ?? ''
   if (!url || !publishableKey || !serviceRoleKey || !apiKey) return json({ ...safeError('EXTRACTION_RUNTIME_NOT_CONFIGURED', 'La extracción OpenAI no está configurada.', null) }, 503)
 

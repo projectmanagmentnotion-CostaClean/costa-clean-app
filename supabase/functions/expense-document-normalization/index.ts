@@ -4,6 +4,7 @@ import { readClaimRow, readExtractionRow, readFinalizeFailureRow, readFinalizeSu
 import { handleNormalizationRequest, type N53Services } from './orchestration.ts'
 import { isNormalizationRuntimeReady, SERVER_RUNTIME_ENV } from './runtimeGuards.ts'
 import { safeError } from './responseContract.ts'
+import { resolveSupabaseServiceApiKey } from '../_shared/supabaseServiceApiKey.ts'
 
 Deno.serve(async (request: Request) => {
   const preflightResponse = preflight(request)
@@ -11,7 +12,8 @@ Deno.serve(async (request: Request) => {
   const token = request.headers.get('Authorization')?.replace(/^Bearer\s+/iu, '')
   const url = Deno.env.get('SUPABASE_URL') ?? ''
   const publishableKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_PUBLISHABLE_KEY') ?? ''
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const serviceCredential = resolveSupabaseServiceApiKey((name) => Deno.env.get(name))
+  const serviceRoleKey = serviceCredential?.value ?? ''
   const runtimeMode = Deno.env.get(SERVER_RUNTIME_ENV) ?? ''
   if (!token) return safeError('AUTH_REQUIRED', 'Autenticación requerida.', 401, CORS_HEADERS)
   if (!isNormalizationRuntimeReady(url, runtimeMode, publishableKey, serviceRoleKey)) return safeError('NORMALIZATION_RUNTIME_NOT_CONFIGURED', 'La normalización no está configurada.', 503, CORS_HEADERS)

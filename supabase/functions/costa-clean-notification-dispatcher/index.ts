@@ -1,6 +1,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.99.2'
 import webpush from 'npm:web-push@3.6.7'
 import { dispatchClaimedReminders } from '../_shared/notificationDispatcher.mjs'
+import { resolveSupabaseServiceApiKey } from '../_shared/supabaseServiceApiKey.ts'
 
 const runtime = globalThis as typeof globalThis & {
   Deno?: { env: { get(name: string): string | undefined }; serve(handler: (request: Request) => Response | Promise<Response>): void }
@@ -30,7 +31,9 @@ function requiredEnv(name: string) {
 }
 
 async function dispatch() {
-  const supabase = createClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_SERVICE_ROLE_KEY'))
+  const serviceCredential = resolveSupabaseServiceApiKey((name) => runtime.Deno?.env.get(name))
+  if (!serviceCredential) throw new Error('SUPABASE_SERVICE_KEY_MISSING')
+  const supabase = createClient(requiredEnv('SUPABASE_URL'), serviceCredential.value)
   webpush.setVapidDetails(
     requiredEnv('COSTA_CLEAN_VAPID_SUBJECT'),
     requiredEnv('COSTA_CLEAN_VAPID_PUBLIC_KEY'),

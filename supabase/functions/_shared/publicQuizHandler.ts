@@ -4,6 +4,7 @@ import {
   type PublicQuizResponse,
   validatePublicQuizRequest,
 } from './publicQuizContract.ts'
+import { resolveSupabaseServiceApiKey, supabaseServiceApiHeaders } from './supabaseServiceApiKey.ts'
 
 const AUTHORIZED_PROJECT_REFS = new Set([
   'kpvvydthlxupjjqqdpxy',
@@ -56,7 +57,7 @@ export function createPublicQuizHandler(dependencies: PublicQuizHandlerDependenc
     if (!payload) return errorResponse(400, 'invalid_request', 'Solicitud no válida.')
 
     const supabaseUrl = dependencies.env('SUPABASE_URL')?.trim()
-    const serviceKey = dependencies.env('SUPABASE_SERVICE_ROLE_KEY')?.trim()
+    const serviceKey = resolveSupabaseServiceApiKey(dependencies.env)
     const pepper = dependencies.env('PUBLIC_QUIZ_FINGERPRINT_PEPPER')?.trim()
     const projectRef = readProjectRef(supabaseUrl)
     const clientIp = readTrustedClientIp(request.headers)
@@ -76,9 +77,7 @@ export function createPublicQuizHandler(dependencies: PublicQuizHandlerDependenc
         {
           method: 'POST',
           headers: {
-            apikey: serviceKey,
-            Authorization: `Bearer ${serviceKey}`,
-            'Content-Type': 'application/json',
+            ...supabaseServiceApiHeaders(serviceKey, 'application/json'),
           },
           body: JSON.stringify({
             p_request: payload,

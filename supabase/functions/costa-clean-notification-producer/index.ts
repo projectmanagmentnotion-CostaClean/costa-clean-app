@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.99.2'
 import { buildProducerConditions, isAuthorizedProducerToken, produceReminders } from '../_shared/notificationProducers.mjs'
+import { resolveSupabaseServiceApiKey } from '../_shared/supabaseServiceApiKey.ts'
 
 const runtime = globalThis as typeof globalThis & { Deno?: { env: { get(name: string): string | undefined }; serve(handler: (request: Request) => Response | Promise<Response>): void } }
 if (!runtime.Deno) throw new Error('Supabase Edge runtime is unavailable.')
@@ -12,7 +13,9 @@ function requiredEnv(name: string) { const value = env(name); if (!value) throw 
 async function rows(supabase: ReturnType<typeof createClient>, table: string, select: string) { const { data, error } = await supabase.from(table).select(select); if (error) throw error; return data ?? [] }
 
 async function produce() {
-  const supabase = createClient(requiredEnv('SUPABASE_URL'), requiredEnv('SUPABASE_SERVICE_ROLE_KEY'))
+  const serviceCredential = resolveSupabaseServiceApiKey((name) => runtime.Deno?.env.get(name))
+  if (!serviceCredential) throw new Error('SUPABASE_SERVICE_KEY_MISSING')
+  const supabase = createClient(requiredEnv('SUPABASE_URL'), serviceCredential.value)
   const [invoices, payments, expenses, jobs, quotes, memberships, decisions] = await Promise.all([
     rows(supabase, 'invoices', 'id,job_id,issue_date,status,total,archived_at,deleted_at,cancelled_at'),
     rows(supabase, 'payments', 'invoice_id,amount,archived_at,deleted_at,cancelled_at'),

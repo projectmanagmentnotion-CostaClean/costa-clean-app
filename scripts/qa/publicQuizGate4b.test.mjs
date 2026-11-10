@@ -25,4 +25,10 @@ describe('Gate 4B source guardrails', () => {
     expect(edgeSource).not.toMatch(/log\([^\n]*(clientIp|payload|serviceKey|pepper|requestNonce)/u)
     expect(edgeSource).not.toMatch(/user-agent/iu)
   })
+
+  it('resolves server keys through the shared secret-aware API-key path', () => {
+    expect(edgeSource).toContain('resolveSupabaseServiceApiKey')
+    expect(edgeSource).toContain('supabaseServiceApiHeaders')
+    expect(edgeSource).not.toContain('Authorization: `Bearer ${serviceKey}`')
+  })
 })

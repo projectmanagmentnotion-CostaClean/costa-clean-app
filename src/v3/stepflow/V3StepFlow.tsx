@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { V3PrimaryAction, V3SecondaryAction } from '../components/V3Primitives'
+import { getVisibleStepValidationError, type StepValidationErrorSnapshot } from './stepFlowValidation'
 
 export interface V3StepDefinition {
   id: string
@@ -14,18 +15,21 @@ interface Props {
   onCancel: () => void
   onComplete: () => void | Promise<void>
   validateStep?: (stepIndex: number) => string | null
+  validationRevision?: string
   error?: string | null
   busy?: boolean
   completeLabel: string
 }
 
-export function V3StepFlow({ title, steps, onCancel, onComplete, validateStep, error, busy = false, completeLabel }: Props) {
+export function V3StepFlow({ title, steps, onCancel, onComplete, validateStep, validationRevision, error, busy = false, completeLabel }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [stepError, setStepError] = useState<string | null>(null)
+  const [stepError, setStepError] = useState<StepValidationErrorSnapshot | null>(null)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const current = steps[currentIndex] ?? steps[0]
   const isLast = currentIndex === steps.length - 1
   const progress = steps.length > 1 ? ((currentIndex + 1) / steps.length) * 100 : 100
+
+  const visibleStepError = getVisibleStepValidationError(stepError, validationRevision)
 
   useEffect(() => {
     headingRef.current?.focus()
@@ -34,7 +38,7 @@ export function V3StepFlow({ title, steps, onCancel, onComplete, validateStep, e
   function next() {
     const validationError = validateStep?.(currentIndex) ?? null
     if (validationError) {
-      setStepError(validationError)
+      setStepError({ message: validationError, revision: validationRevision })
       return
     }
     setStepError(null)
@@ -65,7 +69,7 @@ export function V3StepFlow({ title, steps, onCancel, onComplete, validateStep, e
       <main className="v3-step-flow__body" aria-live="polite">
         <div className="v3-step-flow__step-heading"><h2 ref={headingRef} tabIndex={-1}>{current.title}</h2>{current.description ? <p>{current.description}</p> : null}</div>
         <div className="v3-step-flow__step-body">{current.content}</div>
-        {stepError || error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{stepError ?? error}</p> : null}
+        {visibleStepError || error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{visibleStepError ?? error}</p> : null}
       </main>
       <footer className="v3-step-flow__actions">
         {currentIndex > 0 ? <V3SecondaryAction onClick={back} disabled={busy}>Atrás</V3SecondaryAction> : <span />}

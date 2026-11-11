@@ -2,8 +2,16 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { V3StepFlow } from './V3StepFlow'
+import { getVisibleStepValidationError } from './stepFlowValidation'
 
 describe('V3StepFlow', () => {
+  it('hides a previous step error once the validated form values change', () => {
+    const error = { message: 'Indica la fecha del servicio.', revision: '2026-11-10' }
+
+    expect(getVisibleStepValidationError(error, '2026-11-10')).toBe(error.message)
+    expect(getVisibleStepValidationError(error, '2026-11-11')).toBeNull()
+  })
+
   it('renders only the active step with progress and navigation', () => {
     const html = renderToStaticMarkup(createElement(V3StepFlow, {
       title: 'Editar servicio',

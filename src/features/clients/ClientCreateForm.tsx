@@ -5,6 +5,7 @@ import { DSSmartLocationFields } from '../../design-system/components'
 import { findClientDuplicateGroups } from '../duplicates/duplicateEngine'
 import { DuplicateReviewOverlay } from '../duplicates/DuplicateReviewOverlay'
 import { createClientRecord } from './clientWriteApi'
+import { createClientDraftId } from './clientDraftId'
 import type { ClientListItem } from './types'
 import './client-create-form.css'
 
@@ -67,6 +68,7 @@ export function ClientCreateForm({
   onOpenExistingClient,
 }: ClientCreateFormProps) {
   const [form, setForm] = useState<FormState>(initialFormState)
+  const [draftClientId] = useState(() => createClientDraftId())
   const [billingAddressLine, setBillingAddressLine] = useState('')
   const [billingLocation, setBillingLocation] = useState<BillingLocationDraft>(initialBillingLocationDraft)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -107,7 +109,7 @@ export function ClientCreateForm({
     try {
       if (!skipDuplicateReview) {
         const duplicateGroups = findClientDuplicateGroups({
-          id: 'CLIENT-DRAFT',
+          id: draftClientId,
           full_name: form.full_name.trim(),
           phone: form.phone.trim() || null,
           email: form.email.trim() || null,

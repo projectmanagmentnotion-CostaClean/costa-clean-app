@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { findClientDuplicateGroups } from '../../features/duplicates/duplicateEngine'
 import { createClientRecord, updateClientRecord } from '../../features/clients/clientWriteApi'
+import { createClientDraftId } from '../../features/clients/clientDraftId'
 import type { ClientListItem } from '../../features/clients/types'
 import { V3DuplicateReviewSheet } from '../components/V3DuplicateReviewSheet'
 import { V3ConfirmSheet, V3Field, V3Input, V3Textarea } from '../components/V3Primitives'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function V3ClientWriteFlow({ existingClients, client = null, onSaved, onCancel, onOpenExisting }: Props) {
+  const [draftClientId] = useState(() => createClientDraftId(client?.id))
   const [form, setForm] = useState<FormState>(client ? { full_name: client.full_name, phone: client.phone ?? '', email: client.email ?? '', tax_id: client.tax_id ?? '', billing_address: client.billing_address ?? '' } : emptyForm)
   const [busy, setBusy] = useState(false)
   const [dirty, setDirty] = useState(false)
@@ -28,7 +30,7 @@ export function V3ClientWriteFlow({ existingClients, client = null, onSaved, onC
   const close = () => { if (dirty) setConfirmClose(true); else onCancel() }
   async function submit(skipReview = false) {
     setError(null)
-    const draft = { id: client?.id ?? 'CLIENT-DRAFT', full_name: form.full_name.trim(), phone: form.phone.trim() || null, email: form.email.trim() || null, tax_id: form.tax_id.trim() || null, billing_address: form.billing_address.trim() || null, status: client?.status ?? 'active', source_lead_id: client?.source_lead_id ?? null }
+    const draft = { id: draftClientId, full_name: form.full_name.trim(), phone: form.phone.trim() || null, email: form.email.trim() || null, tax_id: form.tax_id.trim() || null, billing_address: form.billing_address.trim() || null, status: client?.status ?? 'active', source_lead_id: client?.source_lead_id ?? null }
     if (!skipReview) {
       const groups = findClientDuplicateGroups(draft, existingClients.filter((item) => item.id !== client?.id))
       if (groups.length) { setDuplicates(groups); return }

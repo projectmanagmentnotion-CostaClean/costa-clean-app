@@ -5,6 +5,7 @@ export const operationalWriteRpcPaths = Object.freeze({
   updateProperty: 'rpc/update_property',
   reassignProperty: 'rpc/reassign_property_client_authenticated',
   updateJobStatus: 'rpc/update_job_status',
+  archiveJob: 'rpc/archive_job',
   saveJobWithLines: 'rpc/save_job_with_lines',
   createLead: 'rpc/create_lead',
   updateLead: 'rpc/update_lead',

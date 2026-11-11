@@ -3,7 +3,7 @@ import { formatCurrency, formatDateEs, getServiceTypeLabel } from '../../app/dis
 import { formatClientLabel, formatPropertyLabel, formatQuoteLabel, formatInvoiceLabel } from '../../app/relationshipLabels'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { operationalWriteRpcPaths } from '../../lib/operationalWriteRpc'
-import { patchLifecycleEntity } from '../../shared/lifecycle/lifecycleApi'
+import { archiveJobWithRpc } from '../../features/jobs/jobArchiveApi'
 import { buildInvoicePaymentSummary, getInvoiceFinancialStatusLabel } from '../../features/invoices/paymentState'
 import { buildJobTimelineItems } from '../../features/relationships/timeline'
 import { getJobBillingLines, getJobBillingDisplayConcept } from '../../features/jobs/jobBilling'
@@ -84,7 +84,7 @@ export function V3JobWorkspace(props: V3JobWorkspaceProps) {
   }
   async function archiveJob() {
     setBusy(true); setMessage(null)
-    try { await patchLifecycleEntity('jobs', job.id, { archived_at: new Date().toISOString() }); await refresh() } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo archivar el servicio.') } finally { setBusy(false); setMoreOpen(false) }
+    try { await archiveJobWithRpc(job.id); await refresh() } catch (error) { setMessage(error instanceof Error ? error.message : 'No se pudo archivar el servicio.') } finally { setBusy(false); setMoreOpen(false) }
   }
   async function downloadReport() {
     setReportBusy(true); setReportMessage('Generando parte en PDF…')

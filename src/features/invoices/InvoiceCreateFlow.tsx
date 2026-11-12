@@ -26,6 +26,7 @@ import { InvoiceNumberingMismatchError, saveInvoiceWithLines } from '../financia
 import { JobCreateFlow } from '../jobs/JobCreateFlow'
 import { getJobBillingDisplayConcept } from '../jobs/jobBilling'
 import type { JobListItem } from '../jobs/types'
+import { isJobAvailableForInvoiceLink } from './invoiceJobEligibility'
 import { buildClientPropertyOptions, mergePropertyOptions, pruneSyncedPropertyOptions } from '../properties/propertyOptionSync'
 import { PropertyCreateFlow } from '../properties/PropertyCreateFlow'
 import type { PropertyListItem } from '../properties/types'
@@ -230,10 +231,7 @@ export function InvoiceCreateFlow({
   }, [properties, syncedProperties, form.client_id])
 
   const availableJobs = useMemo(() => jobs.filter((job) => {
-    if (form.client_id && job.client_id !== form.client_id) return false
-    if (form.property_id && job.property_id !== form.property_id) return false
-    if ((job as JobListItem & { invoice_id?: string | null }).invoice_id) return false
-    return true
+    return isJobAvailableForInvoiceLink(job, form.client_id, form.property_id)
   }), [jobs, form.client_id, form.property_id])
 
   const availableQuotes = useMemo(() => quotes.filter((quote) => {
@@ -445,6 +443,9 @@ export function InvoiceCreateFlow({
   function getStepError(stepIndex: number): string | null {
     if (stepIndex === 0) {
       if (form.origin_mode === 'job' && !form.job_id) return 'Selecciona un servicio para seguir la ruta principal.'
+      if (form.origin_mode === 'job' && (!selectedJob || !isJobAvailableForInvoiceLink(selectedJob, form.client_id, form.property_id))) {
+        return 'El servicio indicado no está disponible para vincular.'
+      }
       if (form.origin_mode === 'quote' && !form.quote_id) return 'Selecciona un presupuesto aceptado para facturar desde presupuesto.'
       return null
     }

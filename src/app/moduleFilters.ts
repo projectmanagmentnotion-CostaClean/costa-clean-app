@@ -448,6 +448,14 @@ export function applyJobFilter(jobs: JobListItem[], filter: JobModuleFilter | nu
   return visibleJobs
 }
 
+export function selectJobsForJobPage(
+  jobs: JobListItem[],
+  moduleFilteredJobs: JobListItem[],
+  v3Mode: boolean,
+): JobListItem[] {
+  return v3Mode ? jobs : moduleFilteredJobs
+}
+
 export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseModuleFilter | null): ExpenseListItem[] {
   const visibleExpenses = expenses.filter((expense) => !isArchivedEntity(expense) && !isDeletedEntity(expense))
   if (filter === 'missing_receipt') {

@@ -10,6 +10,7 @@ import type { QuoteListItem } from '../../features/quotes/types'
 import { V3EntityList, V3Kpi, V3KpiGroup, V3ListWorkspace, V3Page, V3PageTitle, V3PrimaryAction, V3Search, V3SecondaryAction, V3TabStrip } from '../components/V3Primitives'
 import { useV3ListWindow } from '../components/useV3ListWindow'
 import { readJobDeepLink, writeJobDeepLink } from './jobDeepLink'
+import { filterJobsForArchiveTab } from './jobArchiveFilter'
 import { V3JobRow } from './V3JobRow'
 import { V3JobWorkspace } from './V3JobWorkspace'
 import { RecurringServicePlans } from '../../features/jobs/RecurringServicePlans'
@@ -33,9 +34,7 @@ export function V3JobsPage(props: V3JobsPageProps) {
   const invoiceByJob = useMemo(() => new Map(props.invoices.filter((invoice) => invoice.job_id).map((invoice) => [invoice.job_id as string, invoice])), [props.invoices])
   const visibleJobs = useMemo(() => {
     const query = search.trim().toLocaleLowerCase()
-    return props.jobs.filter((job) => {
-      const archived = Boolean(job.archived_at || job.deleted_at)
-      if (filter === 'archived' ? !archived : archived) return false
+    return filterJobsForArchiveTab(props.jobs, filter === 'archived').filter((job) => {
       if (filter === 'today' && (job.scheduled_date !== today || job.status === 'cancelled')) return false
       if (filter === 'upcoming' && !(job.scheduled_date > today && job.status !== 'completed' && job.status !== 'cancelled')) return false
       if (filter === 'completed' && job.status !== 'completed') return false

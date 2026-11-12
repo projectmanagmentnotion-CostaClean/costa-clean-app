@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { V3JobsPage } from './V3JobsPage'
+import { filterJobsForArchiveTab } from './jobArchiveFilter'
 
 const today = new Date().toISOString().slice(0, 10)
 const job = {
@@ -39,5 +40,18 @@ describe('V3JobsPage C5.2 composition', () => {
     expect(html).toContain('Código, concepto, cliente o inmueble')
     expect(html).toContain('Resumen de agenda')
     expect(html.indexOf('Código, concepto, cliente o inmueble')).toBeLessThan(html.lastIndexOf('Hoy'))
+  })
+
+  it('moves a job from the active tab to Archived when its archive timestamp appears', () => {
+    const activeJob = { ...job, archived_at: null }
+    const archivedJob = { ...job, id: 'job-2', archived_at: '2026-11-12T12:00:00Z' }
+    const jobs = [activeJob, archivedJob]
+
+    expect(filterJobsForArchiveTab(jobs, false).map((item) => item.id)).toEqual(['job-1'])
+    expect(filterJobsForArchiveTab(jobs, true).map((item) => item.id)).toEqual(['job-2'])
+
+    const transitionedJob = { ...activeJob, archived_at: '2026-11-12T13:00:00Z' }
+    expect(filterJobsForArchiveTab([transitionedJob], false)).toEqual([])
+    expect(filterJobsForArchiveTab([transitionedJob], true)).toEqual([transitionedJob])
   })
 })

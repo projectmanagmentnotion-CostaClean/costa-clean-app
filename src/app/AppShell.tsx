@@ -22,6 +22,7 @@ import {
   applyExpenseFilter,
   applyInvoiceFilter,
   applyJobFilter,
+  selectJobsForJobPage,
   applyPaymentFilter,
   applyQuoteFilter,
   clearDetailFilterForView,
@@ -1444,7 +1445,7 @@ export function AppShell({
                 />
               ) : currentView === 'jobs' ? (
                 <JobsPage
-                  jobs={filteredJobs}
+                  jobs={selectJobsForJobPage(jobsWithCodes, filteredJobs, v3Enabled)}
                   clients={clientsWithContext}
                   properties={properties}
                   quotes={quotes}

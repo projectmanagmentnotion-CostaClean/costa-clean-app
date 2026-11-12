@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { applyExpenseFilter, applyInvoiceFilter, applyPaymentFilter, clearDetailFilterForView, emptyModuleFilterState } from './moduleFilters'
+import { applyExpenseFilter, applyInvoiceFilter, applyJobFilter, applyPaymentFilter, clearDetailFilterForView, emptyModuleFilterState, selectJobsForJobPage } from './moduleFilters'
 import type { ExpenseListItem } from '../features/expenses/types'
 import type { InvoiceListItem } from '../features/invoices/types'
+import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 
 function createInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListItem {
@@ -82,6 +83,22 @@ function createExpense(overrides: Partial<ExpenseListItem> = {}): ExpenseListIte
   }
 }
 
+function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
+  return {
+    id: 'job-1',
+    display_code: 'SRV-0001',
+    client_id: 'client-1',
+    property_id: 'property-1',
+    quote_id: null,
+    scheduled_date: '2026-11-12',
+    status: 'scheduled',
+    service_type: 'standard_cleaning',
+    archived_at: null,
+    deleted_at: null,
+    ...overrides,
+  }
+}
+
 describe('module period filters', () => {
   const period = {
     mode: 'custom' as const,
@@ -142,5 +159,23 @@ describe('module period filters', () => {
     expect(reset.quotes).toBe('open')
     expect(reset.expenses).toBe('pending_review')
     expect(clearDetailFilterForView(reset, 'invoices')).toBe(reset)
+  })
+})
+
+describe('jobs list source selection', () => {
+  it('keeps archived jobs available to V3 tabs while preserving legacy filtering through archive transitions', () => {
+    const activeJob = createJob()
+    const archivedJob = createJob({ id: 'job-2', archived_at: '2026-11-11T10:00:00Z' })
+    const jobs = [activeJob, archivedJob]
+    const legacyFilteredJobs = applyJobFilter(jobs, null)
+
+    expect(legacyFilteredJobs.map((item) => item.id)).toEqual(['job-1'])
+    expect(selectJobsForJobPage(jobs, legacyFilteredJobs, false)).toEqual(legacyFilteredJobs)
+    expect(selectJobsForJobPage(jobs, legacyFilteredJobs, true)).toEqual(jobs)
+
+    const transitionedJob = { ...activeJob, archived_at: '2026-11-12T12:00:00Z' }
+    const afterArchive = [transitionedJob, archivedJob]
+    expect(applyJobFilter(afterArchive, null).map((item) => item.id)).toEqual([])
+    expect(selectJobsForJobPage(afterArchive, applyJobFilter(afterArchive, null), true)).toEqual(afterArchive)
   })
 })

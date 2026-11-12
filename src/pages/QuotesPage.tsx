@@ -32,13 +32,14 @@ import { BulkSelectionToolbar } from '../components/BulkSelectionToolbar'
 import { ConfirmDialog } from '../components/ConfirmDialog'
 import { patchLifecycleEntity } from '../shared/lifecycle/lifecycleApi'
 import { updateQuoteStatus } from '../features/financial/financialWriteApi'
+import { acceptQuoteOnly } from '../features/quotes/quoteAcceptanceWorkflow'
 import { compactVisibleItems, hasMeaningfulAmount, hasMeaningfulCount } from '../shared/ui/visibilityRules'
 import { useToast } from '../shared/toasts/useToast'
-import { canConvertQuoteToInvoice, convertQuoteToInvoice } from '../features/quotes/quoteConversion'
 import { shareDocument } from '../v3/documents/shareDocument'
 import { V3QuotesPage } from '../v3/quotes/V3QuotesPage'
 import { V3QuoteCreateFlow } from '../v3/quotes/V3QuoteCreateFlow'
 import { V3QuoteEditFlow } from '../v3/quotes/V3QuoteEditFlow'
+import { V3InvoiceCreateFlow } from '../v3/invoices/V3InvoiceCreateFlow'
 import type { QuoteModuleFilter } from '../app/moduleFilters'
 
 const LazyQuoteCreateFlow = lazy(async () => ({
@@ -108,6 +109,7 @@ export function QuotesPage({
   const [showDocumentScreen, setShowDocumentScreen] = useState(false)
   const [showMajorEdit, setShowMajorEdit] = useState(false)
   const [majorEditQuote, setMajorEditQuote] = useState<QuoteListItem | null>(null)
+  const [draftInvoiceQuote, setDraftInvoiceQuote] = useState<QuoteListItem | null>(null)
   const [hasCreateFormDirty, setHasCreateFormDirty] = useState(false)
   const [hasUnsavedDetailChanges, setHasUnsavedDetailChanges] = useState(false)
   const [hasMajorEditDirty, setHasMajorEditDirty] = useState(false)
@@ -320,18 +322,24 @@ export function QuotesPage({
     }
   }
 
-  async function convertQuoteDocument(targetQuote: QuoteListItem): Promise<string | null> {
-    if (!canConvertQuoteToInvoice(targetQuote, invoices)) return null
+  async function acceptQuoteDocument(targetQuote: QuoteListItem): Promise<void> {
+    if (targetQuote.status === 'accepted' || targetQuote.archived_at || targetQuote.deleted_at) return
     try {
-      const invoiceId = await convertQuoteToInvoice(targetQuote)
+      await acceptQuoteOnly(targetQuote)
       await onQuoteCreated()
-      await onInvoicesChanged?.()
-      toast.success('Factura creada', 'La factura real vinculada al presupuesto está lista.')
-      return invoiceId
+      toast.success('Presupuesto aceptado', 'No se ha creado ni emitido ninguna factura.')
     } catch (error) {
-      toast.error('No se pudo convertir el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
-      return null
+      toast.error('No se pudo aceptar el presupuesto', error instanceof Error ? error.message : 'Error desconocido.')
     }
+  }
+
+  function openDraftInvoiceFromQuote(targetQuote: QuoteListItem) {
+    if (targetQuote.status !== 'accepted' || targetQuote.archived_at || targetQuote.deleted_at) return
+    if (invoices.some((invoice) => invoice.quote_id === targetQuote.id && invoice.status !== 'cancelled' && !invoice.cancelled_at)) {
+      toast.warning('Ya existe una factura vinculada', 'Revisa la factura existente antes de crear otra.')
+      return
+    }
+    setDraftInvoiceQuote(targetQuote)
   }
 
   function toggleSelectionMode() {
@@ -450,7 +458,8 @@ export function QuotesPage({
           onDownloadQuote={downloadQuoteDocument}
           onOpenDocument={openQuoteDocument}
           onShareQuote={shareQuoteDocument}
-          onConvertQuote={convertQuoteDocument}
+          onAcceptQuote={acceptQuoteDocument}
+          onCreateDraftInvoice={openDraftInvoiceFromQuote}
           onEditQuote={(quote) => { setSelectedQuoteId(quote.id); setMajorEditQuote(quote); setShowMajorEdit(true) }}
           onBulkDownload={bulkDownloadQuotesV3}
           onBulkExportCsv={bulkExportQuotesV3}
@@ -469,6 +478,25 @@ export function QuotesPage({
           activeFilter={activeFilter}
           activeFilterLabel={activeFilterLabel}
         />
+        {draftInvoiceQuote ? <V3InvoiceCreateFlow
+          key={`draft-invoice-from-quote-${draftInvoiceQuote.id}`}
+          clients={clients}
+          properties={properties}
+          jobs={jobs}
+          quotes={allQuotes}
+          invoices={invoices}
+          prefillClientId={draftInvoiceQuote.client_id ?? ''}
+          prefillPropertyId={draftInvoiceQuote.property_id ?? ''}
+          prefillQuoteId={draftInvoiceQuote.id}
+          draftOnly
+          requireExistingJob
+          onRefreshData={async () => { await onQuoteCreated(); await onInvoicesChanged?.() }}
+          onCompleted={() => {
+            setDraftInvoiceQuote(null)
+            toast.success('Factura borrador creada', 'No se emitió ni consumió numeración fiscal.')
+          }}
+          onCancel={() => setDraftInvoiceQuote(null)}
+        /> : null}
         {createVisible ? <V3QuoteCreateFlow clients={clients} properties={properties} quotes={allQuotes} prefillClientId={createPrefill?.client_id} prefillPropertyId={createPrefill?.property_id} onDirtyChange={setHasCreateFormDirty} onRefreshData={onQuoteCreated} onCompleted={handleQuoteCreated} onCancel={() => runGuarded(() => { setShowCreateForm(false); setCreatePrefill(null); setHasCreateFormDirty(false); onInitialCreatePrefillConsumed?.() })} /> : null}
         {showMajorEdit && (majorEditQuote ?? selectedQuote) ? <V3QuoteEditFlow quote={majorEditQuote ?? selectedQuote!} onDirtyChange={setHasMajorEditDirty} onRefreshData={onQuoteCreated} onCompleted={() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) }} onCancel={() => runGuarded(() => { setHasMajorEditDirty(false); setMajorEditQuote(null); setShowMajorEdit(false) })} /> : null}
       </>

@@ -11,3 +11,13 @@ export function isJobAvailableForInvoiceLink(
   if (job.invoice_id || job.deleted_at || job.archived_at || job.cancelled_at) return false
   return job.status !== 'cancelled' && job.status !== 'completed'
 }
+
+export function isJobAvailableForQuoteInvoiceLink(
+  job: JobListItem,
+  quoteId: string | null | undefined,
+  clientId?: string | null,
+  propertyId?: string | null,
+): boolean {
+  return isJobAvailableForInvoiceLink(job, clientId, propertyId)
+    && (!job.quote_id || job.quote_id === quoteId)
+}

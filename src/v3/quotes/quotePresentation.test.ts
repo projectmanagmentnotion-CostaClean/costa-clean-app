@@ -8,11 +8,18 @@ describe('quote presentation', () => {
     expect(getQuoteFinancialFacts(quote)).toEqual({ subtotal: 100, tax: 21, total: 121 })
   })
 
-  it('describes acceptance and conversion before any workflow is requested', () => {
+  it('exposes acceptance without invoice creation for an unaccepted quote', () => {
     const presentation = getQuoteConversionPresentation(quote, [])
     expect(presentation.available).toBe(true)
-    expect(presentation.actionLabel).toBe('Aceptar y crear factura')
-    expect(presentation.description).toContain('factura real vinculada')
+    expect(presentation.actionLabel).toBe('Aceptar presupuesto')
+    expect(presentation.description).toContain('No se creará ni emitirá ninguna factura')
+  })
+
+  it('offers a draft-only invoice flow after acceptance', () => {
+    const presentation = getQuoteConversionPresentation({ ...quote, status: 'accepted' }, [])
+    expect(presentation.available).toBe(true)
+    expect(presentation.actionLabel).toBe('Crear factura borrador')
+    expect(presentation.description).toContain('No se emitirá ni se asignará número fiscal')
   })
 
   it('explains an existing invoice instead of offering a duplicate conversion', () => {

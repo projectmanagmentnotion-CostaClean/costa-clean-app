@@ -7,24 +7,33 @@ const quote = { id: 'quote-1', display_code: 'PRES-0001', client_id: 'client-1',
 
 describe('V3QuotesPage', () => {
   it('renders a flat quote row with real document actions', () => {
-    const html = renderToStaticMarkup(createElement(V3QuotesPage, { quotes: [quote], allQuotes: [quote], clients: [{ id: 'client-1', display_code: 'CLI-0001', full_name: 'Elena Vázquez', phone: null, email: null, tax_id: null, billing_address: null, status: 'active', source_lead_id: null }], properties: [], jobs: [], invoices: [], error: null, onCreateQuote: () => undefined, onDownloadQuote: () => undefined, onShareQuote: async () => undefined, onConvertQuote: async () => null, onOpenClientWorkspace: () => undefined, onOpenPropertyWorkspace: () => undefined, onOpenJobWorkspace: () => undefined, onOpenInvoiceDetail: () => undefined, onOpenQuoteDeepLink: () => undefined, onBackToQuoteList: () => undefined }))
+    const html = renderToStaticMarkup(createElement(V3QuotesPage, { quotes: [quote], allQuotes: [quote], clients: [{ id: 'client-1', display_code: 'CLI-0001', full_name: 'Elena Vázquez', phone: null, email: null, tax_id: null, billing_address: null, status: 'active', source_lead_id: null }], properties: [], jobs: [], invoices: [], error: null, onCreateQuote: () => undefined, onDownloadQuote: () => undefined, onShareQuote: async () => undefined, onAcceptQuote: async () => undefined, onCreateDraftInvoice: () => undefined, onOpenClientWorkspace: () => undefined, onOpenPropertyWorkspace: () => undefined, onOpenJobWorkspace: () => undefined, onOpenInvoiceDetail: () => undefined, onOpenQuoteDeepLink: () => undefined, onBackToQuoteList: () => undefined }))
     expect(html).toContain('PRES-0001')
     expect(html).toContain('Descargar PDF')
-    expect(html).toContain('Crear factura vinculada')
+    expect(html).toContain('Crear factura borrador')
+    expect(html).not.toContain('Aceptar y crear factura')
     expect(html).not.toContain('OperationalListItem')
   })
 
   it('gives the workspace a readable financial hierarchy and guarded conversion explanation', () => {
-    const html = renderToStaticMarkup(createElement(V3QuotesPage, { quotes: [quote], allQuotes: [quote], clients: [{ id: 'client-1', display_code: 'CLI-0001', full_name: 'Elena Vázquez', phone: null, email: null, tax_id: null, billing_address: null, status: 'active', source_lead_id: null }], properties: [], jobs: [], invoices: [], error: null, initialQuoteId: quote.id, onCreateQuote: () => undefined, onDownloadQuote: () => undefined, onShareQuote: async () => undefined, onConvertQuote: async () => null, onOpenClientWorkspace: () => undefined, onOpenPropertyWorkspace: () => undefined, onOpenJobWorkspace: () => undefined, onOpenInvoiceDetail: () => undefined, onOpenQuoteDeepLink: () => undefined, onBackToQuoteList: () => undefined }))
+    const html = renderToStaticMarkup(createElement(V3QuotesPage, { quotes: [quote], allQuotes: [quote], clients: [{ id: 'client-1', display_code: 'CLI-0001', full_name: 'Elena Vázquez', phone: null, email: null, tax_id: null, billing_address: null, status: 'active', source_lead_id: null }], properties: [], jobs: [], invoices: [], error: null, initialQuoteId: quote.id, onCreateQuote: () => undefined, onDownloadQuote: () => undefined, onShareQuote: async () => undefined, onAcceptQuote: async () => undefined, onCreateDraftInvoice: () => undefined, onOpenClientWorkspace: () => undefined, onOpenPropertyWorkspace: () => undefined, onOpenJobWorkspace: () => undefined, onOpenInvoiceDetail: () => undefined, onOpenQuoteDeepLink: () => undefined, onBackToQuoteList: () => undefined }))
     expect(html).toContain('Resumen financiero')
     expect(html).toContain('Base')
     expect(html).toContain('IVA')
     expect(html).toContain('Total')
-    expect(html).toContain('Se creará una factura real vinculada')
+    expect(html).toContain('Se abrirá el flujo para crear una factura en borrador')
     expect(html).toContain('Más acciones')
     expect(html).not.toContain('PDF real generado con el renderer actual')
     expect(html).toContain('Vista previa de presupuesto')
     expect(html).toContain('Abrir documento')
     expect(html).toContain('cc-invoice-a4--quote')
+  })
+
+  it('presents acceptance as a separate action before creating a draft invoice', () => {
+    const sentQuote = { ...quote, status: 'sent' }
+    const html = renderToStaticMarkup(createElement(V3QuotesPage, { quotes: [sentQuote], allQuotes: [sentQuote], clients: [{ id: 'client-1', display_code: 'CLI-0001', full_name: 'Elena Vázquez', phone: null, email: null, tax_id: null, billing_address: null, status: 'active', source_lead_id: null }], properties: [], jobs: [], invoices: [], error: null, onCreateQuote: () => undefined, onDownloadQuote: () => undefined, onShareQuote: async () => undefined, onAcceptQuote: async () => undefined, onCreateDraftInvoice: () => undefined, onOpenClientWorkspace: () => undefined, onOpenPropertyWorkspace: () => undefined, onOpenJobWorkspace: () => undefined, onOpenInvoiceDetail: () => undefined, onOpenQuoteDeepLink: () => undefined, onBackToQuoteList: () => undefined }))
+    expect(html).toContain('Aceptar presupuesto')
+    expect(html).not.toContain('Crear factura borrador')
+    expect(html).not.toContain('factura real vinculada')
   })
 })

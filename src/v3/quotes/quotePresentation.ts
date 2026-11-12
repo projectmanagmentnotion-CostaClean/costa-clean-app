@@ -29,15 +29,15 @@ function hasLinkedInvoice(quote: QuoteListItem, invoices: InvoiceListItem[]) {
 
 export function getQuoteConversionPresentation(quote: QuoteListItem, invoices: InvoiceListItem[]): QuoteConversionPresentation {
   const alreadyAccepted = quote.status === 'accepted'
-  const actionLabel = alreadyAccepted ? 'Crear factura vinculada' : 'Aceptar y crear factura'
+  const actionLabel = alreadyAccepted ? 'Crear factura borrador' : 'Aceptar presupuesto'
 
   if (canConvertQuoteToInvoice(quote, invoices)) {
     return {
       available: true,
       actionLabel,
       description: alreadyAccepted
-        ? 'Se creará una factura real vinculada a este presupuesto con sus líneas e importes actuales. No se realizará ningún cambio hasta confirmar.'
-        : 'Se aceptará este presupuesto y se creará una factura real vinculada con sus líneas e importes actuales. No se realizará ningún cambio hasta confirmar.',
+        ? 'Se abrirá el flujo para crear una factura en borrador vinculada a este presupuesto. No se emitirá ni se asignará número fiscal.'
+        : 'Se aceptará este presupuesto y se confirmará el cliente si hace falta. No se creará ni emitirá ninguna factura.',
       unavailableMessage: null,
     }
   }

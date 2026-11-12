@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { JobListItem } from '../jobs/types'
-import { isJobAvailableForInvoiceLink } from './invoiceJobEligibility'
+import { isJobAvailableForInvoiceLink, isJobAvailableForQuoteInvoiceLink } from './invoiceJobEligibility'
 
 function createJob(overrides: Partial<JobListItem> = {}): JobListItem {
   return {
@@ -37,5 +37,16 @@ describe('isJobAvailableForInvoiceLink', () => {
 
     expect(isJobAvailableForInvoiceLink(job, 'client-2', 'property-1')).toBe(false)
     expect(isJobAvailableForInvoiceLink(job, 'client-1', 'property-2')).toBe(false)
+  })
+})
+
+describe('isJobAvailableForQuoteInvoiceLink', () => {
+  it('allows an active job linked to the same quote or no quote', () => {
+    expect(isJobAvailableForQuoteInvoiceLink(createJob(), 'quote-1', 'client-1', 'property-1')).toBe(true)
+    expect(isJobAvailableForQuoteInvoiceLink(createJob({ quote_id: 'quote-1' }), 'quote-1', 'client-1', 'property-1')).toBe(true)
+  })
+
+  it('rejects an active job that belongs to another quote', () => {
+    expect(isJobAvailableForQuoteInvoiceLink(createJob({ quote_id: 'quote-2' }), 'quote-1', 'client-1', 'property-1')).toBe(false)
   })
 })

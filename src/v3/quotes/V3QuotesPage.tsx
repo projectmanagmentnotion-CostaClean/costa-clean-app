@@ -35,7 +35,8 @@ interface V3QuotesPageProps {
   onDownloadQuote: (quote: QuoteListItem) => Promise<unknown> | unknown
   onOpenDocument?: (quote: QuoteListItem) => void
   onShareQuote: (quote: QuoteListItem) => Promise<unknown>
-  onConvertQuote: (quote: QuoteListItem) => Promise<string | null>
+  onAcceptQuote: (quote: QuoteListItem) => Promise<void>
+  onCreateDraftInvoice: (quote: QuoteListItem) => void
   onEditQuote?: (quote: QuoteListItem) => void
   onOpenClientWorkspace: (clientId: string) => void
   onOpenPropertyWorkspace: (propertyId: string) => void
@@ -141,20 +142,28 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
     window.requestAnimationFrame(() => window.scrollTo({ top: listScrollYRef.current, behavior: 'auto' }))
   }
 
-  async function convertQuote(quote: QuoteListItem) {
+  async function acceptQuote(quote: QuoteListItem) {
     if (busyQuoteId || !getQuoteConversionPresentation(quote, props.invoices).available) return
     setBusyQuoteId(quote.id)
     try {
-      const invoiceId = await props.onConvertQuote(quote)
-      if (invoiceId) props.onOpenInvoiceDetail(invoiceId)
+      await props.onAcceptQuote(quote)
     } finally {
       setBusyQuoteId(null)
     }
   }
 
+  function requestQuoteAction(quote: QuoteListItem) {
+    if (!getQuoteConversionPresentation(quote, props.invoices).available) return
+    if (quote.status === 'accepted') {
+      props.onCreateDraftInvoice(quote)
+      return
+    }
+    setConversionTarget(quote)
+  }
+
   if (selectedQuote) return <>
-    <V3QuoteWorkspace quote={selectedQuote} clients={props.clients} properties={props.properties} jobs={props.jobs} invoices={props.invoices} busy={busyQuoteId === selectedQuote.id} onBack={closeQuote} onDownload={() => props.onDownloadQuote(selectedQuote)} onShare={() => props.onShareQuote(selectedQuote)} onOpenDocument={() => props.onOpenDocument?.(selectedQuote)} onRequestConversion={setConversionTarget} onEdit={() => props.onEditQuote?.(selectedQuote)} onOpenClientWorkspace={props.onOpenClientWorkspace} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
-    {conversionTarget ? <V3QuoteConversionConfirm quote={conversionTarget} invoices={props.invoices} busy={busyQuoteId === conversionTarget.id} onCancel={() => setConversionTarget(null)} onConfirm={() => { const target = conversionTarget; setConversionTarget(null); void convertQuote(target) }} /> : null}
+    <V3QuoteWorkspace quote={selectedQuote} clients={props.clients} properties={props.properties} jobs={props.jobs} invoices={props.invoices} busy={busyQuoteId === selectedQuote.id} onBack={closeQuote} onDownload={() => props.onDownloadQuote(selectedQuote)} onShare={() => props.onShareQuote(selectedQuote)} onOpenDocument={() => props.onOpenDocument?.(selectedQuote)} onRequestAction={requestQuoteAction} onEdit={() => props.onEditQuote?.(selectedQuote)} onOpenClientWorkspace={props.onOpenClientWorkspace} onOpenPropertyWorkspace={props.onOpenPropertyWorkspace} onOpenJobWorkspace={props.onOpenJobWorkspace} onOpenInvoiceDetail={props.onOpenInvoiceDetail} />
+    {conversionTarget ? <V3QuoteAcceptanceConfirm busy={busyQuoteId === conversionTarget.id} onCancel={() => setConversionTarget(null)} onConfirm={() => { const target = conversionTarget; setConversionTarget(null); void acceptQuote(target) }} /> : null}
   </>
 
   return <V3Page className="v3-quotes-page v3-finance-page">
@@ -166,24 +175,24 @@ export function V3QuotesPage(props: V3QuotesPageProps) {
     <V3ListWorkspace label="Presupuestos" {...listWindow} onPageChange={listWindow.setPage}>
       {props.error ? <V3ErrorState title="Error cargando presupuestos" description={props.error} /> : null}
       {!props.error && visibleQuotes.length === 0 ? <V3EmptyState title="Sin presupuestos visibles" description="Ajusta la búsqueda o el estado para continuar." /> : null}
-      <V3EntityList label="Presupuestos">{listWindow.pageItems.map((quote) => <V3QuoteRow key={quote.id} quote={quote} clients={props.clients} invoices={props.invoices} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(quote.id)} onToggleSelect={() => selection.toggle(quote.id)} onOpen={() => selection.isSelectionMode ? selection.toggle(quote.id) : openQuote(quote.id)} onDownload={() => props.onDownloadQuote(quote)} onRequestConversion={() => setConversionTarget(quote)} isBusy={busyQuoteId === quote.id} />)}</V3EntityList>
+      <V3EntityList label="Presupuestos">{listWindow.pageItems.map((quote) => <V3QuoteRow key={quote.id} quote={quote} clients={props.clients} invoices={props.invoices} selectionMode={selection.isSelectionMode} selected={selection.selectedIds.includes(quote.id)} onToggleSelect={() => selection.toggle(quote.id)} onOpen={() => selection.isSelectionMode ? selection.toggle(quote.id) : openQuote(quote.id)} onDownload={() => props.onDownloadQuote(quote)} onRequestAction={() => requestQuoteAction(quote)} isBusy={busyQuoteId === quote.id} />)}</V3EntityList>
     </V3ListWorkspace>
     {selection.isSelectionMode ? <V3SelectionBar selectedCount={selection.selectedCount} visibleSelectedCount={selection.visibleSelectedCount} visibleCount={visibleQuotes.length} allVisibleSelected={selection.allVisibleSelected} onSelectVisible={selection.selectVisible} onActions={() => setSelectionSheet(true)} onCancel={selection.exit} /> : null}
     {selectionSheet ? <V3SelectionActionSheet onClose={() => setSelectionSheet(false)}><V3SecondaryAction onClick={() => { setSelectionSheet(false); void props.onBulkDownload?.(selectedQuotes).then(() => setSelectionResult(`${selectedQuotes.length} presupuesto(s) preparados en ZIP.`)) }} disabled={selectedQuotes.length === 0}>Descargar PDFs</V3SecondaryAction><V3PrimaryAction onClick={() => { setSelectionSheet(false); props.onBulkExportCsv?.(selectedQuotes); setSelectionResult(`${selectedQuotes.length} presupuesto(s) exportados.`) }} disabled={selectedQuotes.length === 0}>Exportar CSV</V3PrimaryAction></V3SelectionActionSheet> : null}
     {selectionResult ? <V3SelectionResultSheet message={selectionResult} onClose={() => { setSelectionResult(null); selection.exit() }} /> : null}
-    {conversionTarget ? <V3QuoteConversionConfirm quote={conversionTarget} invoices={props.invoices} busy={busyQuoteId === conversionTarget.id} onCancel={() => setConversionTarget(null)} onConfirm={() => { const target = conversionTarget; setConversionTarget(null); void convertQuote(target) }} /> : null}
+    {conversionTarget ? <V3QuoteAcceptanceConfirm busy={busyQuoteId === conversionTarget.id} onCancel={() => setConversionTarget(null)} onConfirm={() => { const target = conversionTarget; setConversionTarget(null); void acceptQuote(target) }} /> : null}
     {showDuplicateReview && props.duplicateGroups?.length ? <V3DuplicateReviewSheet title="Revisión de presupuestos duplicados" description="Revisa coincidencias antes de crear o convertir otro presupuesto." groups={props.duplicateGroups} reviewStateByGroupId={props.reviewStateByGroupId} onMarkReviewed={props.onMarkDuplicateReviewed ?? (() => undefined)} onIgnoreGroup={props.onIgnoreDuplicateGroup ?? (() => undefined)} onReopenGroup={props.onReopenDuplicateGroup ?? (() => undefined)} onClose={() => setShowDuplicateReview(false)} onOpenRecord={(quoteId) => { setShowDuplicateReview(false); props.onOpenDuplicateRecord?.(quoteId) }} /> : null}
   </V3Page>
 }
 
-function V3QuoteRow({ quote, clients, invoices, selectionMode, selected, onToggleSelect, onOpen, onDownload, onRequestConversion, isBusy }: { quote: QuoteListItem; clients: ClientListItem[]; invoices: InvoiceListItem[]; selectionMode: boolean; selected: boolean; onToggleSelect: () => void; onOpen: () => void; onDownload: () => void; onRequestConversion: () => void; isBusy: boolean }) {
+function V3QuoteRow({ quote, clients, invoices, selectionMode, selected, onToggleSelect, onOpen, onDownload, onRequestAction, isBusy }: { quote: QuoteListItem; clients: ClientListItem[]; invoices: InvoiceListItem[]; selectionMode: boolean; selected: boolean; onToggleSelect: () => void; onOpen: () => void; onDownload: () => void; onRequestAction: () => void; isBusy: boolean }) {
   const label = formatQuoteLabel({ ...quote, client_name: clients.find((client) => client.id === quote.client_id)?.full_name ?? null })
   const facts = getQuoteFinancialFacts(quote)
   const conversion = getQuoteConversionPresentation(quote, invoices)
-  return <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir presupuesto ${label}`}>{selectionMode ? <V3SelectionControl checked={selected} label={`Seleccionar ${label}`} onChange={onToggleSelect} /> : null}<div className="v3-quote-row__main"><strong>{label}</strong><span>{formatClientLabel(quote)} · {quote.notes?.trim() || 'Presupuesto de servicios'}</span><small>{quote.created_at ? formatDateEs(quote.created_at) : 'Fecha no disponible'}</small></div><div className="v3-quote-row__side"><strong>{formatCurrency(facts.total)}</strong><small>Base {formatCurrency(facts.subtotal)} · IVA {formatCurrency(facts.tax)}</small><V3Status label={getStatusLabel(quote.status)} tone={statusTone(quote.status)} /></div>{!selectionMode ? <div className="v3-quote-row__actions"><V3SecondaryAction onClick={(event) => { event.stopPropagation(); onDownload() }} ariaLabel={`Descargar presupuesto ${label}`}>Descargar PDF</V3SecondaryAction>{conversion.available ? <V3PrimaryAction onClick={(event) => { event.stopPropagation(); onRequestConversion() }} disabled={isBusy} ariaLabel={`${conversion.actionLabel} para ${label}`}>{isBusy ? 'Convirtiendo…' : conversion.actionLabel}</V3PrimaryAction> : null}</div> : null}</V3EntityListItem>
+  return <V3EntityListItem onClick={onOpen} ariaLabel={`Abrir presupuesto ${label}`}>{selectionMode ? <V3SelectionControl checked={selected} label={`Seleccionar ${label}`} onChange={onToggleSelect} /> : null}<div className="v3-quote-row__main"><strong>{label}</strong><span>{formatClientLabel(quote)} · {quote.notes?.trim() || 'Presupuesto de servicios'}</span><small>{quote.created_at ? formatDateEs(quote.created_at) : 'Fecha no disponible'}</small></div><div className="v3-quote-row__side"><strong>{formatCurrency(facts.total)}</strong><small>Base {formatCurrency(facts.subtotal)} · IVA {formatCurrency(facts.tax)}</small><V3Status label={getStatusLabel(quote.status)} tone={statusTone(quote.status)} /></div>{!selectionMode ? <div className="v3-quote-row__actions"><V3SecondaryAction onClick={(event) => { event.stopPropagation(); onDownload() }} ariaLabel={`Descargar presupuesto ${label}`}>Descargar PDF</V3SecondaryAction>{conversion.available ? <V3PrimaryAction onClick={(event) => { event.stopPropagation(); onRequestAction() }} disabled={isBusy} ariaLabel={`${conversion.actionLabel} para ${label}`}>{isBusy ? 'Actualizando…' : conversion.actionLabel}</V3PrimaryAction> : null}</div> : null}</V3EntityListItem>
 }
 
-function V3QuoteWorkspace({ quote, clients, properties, jobs, invoices, busy, onBack, onDownload, onShare, onOpenDocument, onRequestConversion, onEdit, onOpenClientWorkspace, onOpenPropertyWorkspace, onOpenJobWorkspace, onOpenInvoiceDetail }: { quote: QuoteListItem; clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; invoices: InvoiceListItem[]; busy: boolean; onBack: () => void; onDownload: () => void; onShare: () => void; onOpenDocument: () => void; onRequestConversion: (quote: QuoteListItem) => void; onEdit: () => void; onOpenClientWorkspace: (id: string) => void; onOpenPropertyWorkspace: (id: string) => void; onOpenJobWorkspace: (id: string) => void; onOpenInvoiceDetail: (id: string) => void }) {
+function V3QuoteWorkspace({ quote, clients, properties, jobs, invoices, busy, onBack, onDownload, onShare, onOpenDocument, onRequestAction, onEdit, onOpenClientWorkspace, onOpenPropertyWorkspace, onOpenJobWorkspace, onOpenInvoiceDetail }: { quote: QuoteListItem; clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; invoices: InvoiceListItem[]; busy: boolean; onBack: () => void; onDownload: () => void; onShare: () => void; onOpenDocument: () => void; onRequestAction: (quote: QuoteListItem) => void; onEdit: () => void; onOpenClientWorkspace: (id: string) => void; onOpenPropertyWorkspace: (id: string) => void; onOpenJobWorkspace: (id: string) => void; onOpenInvoiceDetail: (id: string) => void }) {
   const [isMoreActionsOpen, setIsMoreActionsOpen] = useState(false)
   const client = clients.find((item) => item.id === quote.client_id)
   const property = properties.find((item) => item.id === quote.property_id)
@@ -193,7 +202,7 @@ function V3QuoteWorkspace({ quote, clients, properties, jobs, invoices, busy, on
   const quoteLabel = formatQuoteLabel(quote)
   const facts = getQuoteFinancialFacts(quote)
   const conversion = getQuoteConversionPresentation(quote, invoices)
-  return <V3Page className="v3-quote-workspace"><button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Presupuestos</button><V3PageTitle eyebrow="Presupuesto" title={quoteLabel} description={`${client?.full_name ?? formatClientLabel(quote)} · ${quote.created_at ? formatDateEs(quote.created_at) : 'Fecha no disponible'}`} /><div className="v3-quote-workspace__status"><V3Status label={getStatusLabel(quote.status)} tone={statusTone(quote.status)} /></div><dl className="v3-quote-financial-summary" aria-label="Resumen financiero"><div><dt>Base</dt><dd>{formatCurrency(facts.subtotal)}</dd></div><div><dt>IVA</dt><dd>{formatCurrency(facts.tax)}</dd></div><div><dt>Total</dt><dd>{formatCurrency(facts.total)}</dd></div></dl><p className="v3-quote-conversion-status">{conversion.available ? conversion.description : conversion.unavailableMessage}</p><V3ActionGroup className="v3-finance-action-group">{conversion.available ? <V3PrimaryAction onClick={() => onRequestConversion(quote)} disabled={busy} ariaLabel={`${conversion.actionLabel} para ${quoteLabel}`}>{busy ? 'Convirtiendo…' : conversion.actionLabel}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onDownload} ariaLabel={`Descargar presupuesto ${quoteLabel}`}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
+  return <V3Page className="v3-quote-workspace"><button type="button" className="v3-workspace-back" onClick={onBack}><V3Icon name="back" /> Presupuestos</button><V3PageTitle eyebrow="Presupuesto" title={quoteLabel} description={`${client?.full_name ?? formatClientLabel(quote)} · ${quote.created_at ? formatDateEs(quote.created_at) : 'Fecha no disponible'}`} /><div className="v3-quote-workspace__status"><V3Status label={getStatusLabel(quote.status)} tone={statusTone(quote.status)} /></div><dl className="v3-quote-financial-summary" aria-label="Resumen financiero"><div><dt>Base</dt><dd>{formatCurrency(facts.subtotal)}</dd></div><div><dt>IVA</dt><dd>{formatCurrency(facts.tax)}</dd></div><div><dt>Total</dt><dd>{formatCurrency(facts.total)}</dd></div></dl><p className="v3-quote-conversion-status">{conversion.available ? conversion.description : conversion.unavailableMessage}</p><V3ActionGroup className="v3-finance-action-group">{conversion.available ? <V3PrimaryAction onClick={() => onRequestAction(quote)} disabled={busy} ariaLabel={`${conversion.actionLabel} para ${quoteLabel}`}>{busy ? 'Actualizando…' : conversion.actionLabel}</V3PrimaryAction> : null}<V3SecondaryAction onClick={onDownload} ariaLabel={`Descargar presupuesto ${quoteLabel}`}>Descargar PDF</V3SecondaryAction><V3SecondaryAction onClick={() => setIsMoreActionsOpen(true)}>Más acciones</V3SecondaryAction></V3ActionGroup>
     <V3Section label="Resumen"><dl className="v3-facts"><div><dt>Cliente</dt><dd>{client ? <button type="button" className="v3-inline-link" onClick={() => onOpenClientWorkspace(client.id)}>{client.full_name}</button> : formatClientLabel(quote)}</dd></div><div><dt>Inmueble</dt><dd>{property ? <button type="button" className="v3-inline-link" onClick={() => onOpenPropertyWorkspace(property.id)}>{property.name}</button> : 'Sin inmueble'}</dd></div></dl></V3Section>
     <V3Section label="Líneas"><div className="v3-line-list">{lines.length > 0 ? lines.map((line) => <div className="v3-line-row" key={line.id}><span>{line.concept}<small>{line.quantity} {line.unit ?? 'servicio'} · {formatCurrency(line.unit_price)}</small></span><strong>{formatCurrency(line.line_subtotal)}</strong></div>) : <p className="v3-section-copy">No hay líneas disponibles.</p>}</div></V3Section>
     <V3Section label="Origen / relaciones"><div className="v3-related-links">{job ? <button type="button" className="v3-inline-link" onClick={() => onOpenJobWorkspace(job.id)}>Servicio {formatJobLabel(job)}</button> : <span className="v3-section-copy">Sin servicio asociado.</span>}{invoice ? <button type="button" className="v3-inline-link" onClick={() => onOpenInvoiceDetail(invoice.id)}>Factura {formatInvoiceLabel(invoice)}</button> : <span className="v3-section-copy">Sin factura vinculada.</span>}</div></V3Section>
@@ -201,7 +210,6 @@ function V3QuoteWorkspace({ quote, clients, properties, jobs, invoices, busy, on
   </V3Page>
 }
 
-function V3QuoteConversionConfirm({ quote, invoices, busy, onCancel, onConfirm }: { quote: QuoteListItem; invoices: InvoiceListItem[]; busy: boolean; onCancel: () => void; onConfirm: () => void }) {
-  const conversion = getQuoteConversionPresentation(quote, invoices)
-  return <V3ConfirmSheet title={conversion.actionLabel} description={conversion.description} confirmLabel={conversion.actionLabel} busy={busy} onCancel={onCancel} onConfirm={onConfirm} />
+function V3QuoteAcceptanceConfirm({ busy, onCancel, onConfirm }: { busy: boolean; onCancel: () => void; onConfirm: () => void }) {
+  return <V3ConfirmSheet title="Aceptar presupuesto" description="Se aceptará este presupuesto y se confirmará el cliente si hace falta. No se creará ni emitirá ninguna factura." confirmLabel="Aceptar presupuesto" busy={busy} onCancel={onCancel} onConfirm={onConfirm} />
 }

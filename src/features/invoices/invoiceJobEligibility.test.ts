@@ -32,6 +32,18 @@ describe('isJobAvailableForInvoiceLink', () => {
     expect(isJobAvailableForInvoiceLink(createJob(overrides), 'client-1', 'property-1')).toBe(false)
   })
 
+  it('rejects a service linked to a non-cancelled invoice even when jobs omit invoice_id', () => {
+    expect(isJobAvailableForInvoiceLink(createJob(), 'client-1', 'property-1', [
+      { job_id: 'job-1', status: 'draft', archived_at: null, deleted_at: null, cancelled_at: null },
+    ])).toBe(false)
+  })
+
+  it('allows a service whose only linked invoice was cancelled', () => {
+    expect(isJobAvailableForInvoiceLink(createJob(), 'client-1', 'property-1', [
+      { job_id: 'job-1', status: 'cancelled', archived_at: null, deleted_at: null, cancelled_at: null },
+    ])).toBe(true)
+  })
+
   it('rejects a service belonging to another client or property', () => {
     const job = createJob()
 
@@ -48,5 +60,11 @@ describe('isJobAvailableForQuoteInvoiceLink', () => {
 
   it('rejects an active job that belongs to another quote', () => {
     expect(isJobAvailableForQuoteInvoiceLink(createJob({ quote_id: 'quote-2' }), 'quote-1', 'client-1', 'property-1')).toBe(false)
+  })
+
+  it('rejects a quote-compatible job that already has an active invoice', () => {
+    expect(isJobAvailableForQuoteInvoiceLink(createJob({ quote_id: 'quote-1' }), 'quote-1', 'client-1', 'property-1', [
+      { job_id: 'job-1', status: 'draft', archived_at: null, deleted_at: null, cancelled_at: null },
+    ])).toBe(false)
   })
 })

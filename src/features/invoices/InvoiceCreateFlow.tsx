@@ -231,8 +231,8 @@ export function InvoiceCreateFlow({
   }, [properties, syncedProperties, form.client_id])
 
   const availableJobs = useMemo(() => jobs.filter((job) => {
-    return isJobAvailableForInvoiceLink(job, form.client_id, form.property_id)
-  }), [jobs, form.client_id, form.property_id])
+    return isJobAvailableForInvoiceLink(job, form.client_id, form.property_id, invoices)
+  }), [jobs, invoices, form.client_id, form.property_id])
 
   const availableQuotes = useMemo(() => quotes.filter((quote) => {
     if (form.client_id && quote.client_id !== form.client_id) return false
@@ -443,7 +443,7 @@ export function InvoiceCreateFlow({
   function getStepError(stepIndex: number): string | null {
     if (stepIndex === 0) {
       if (form.origin_mode === 'job' && !form.job_id) return 'Selecciona un servicio para seguir la ruta principal.'
-      if (form.origin_mode === 'job' && (!selectedJob || !isJobAvailableForInvoiceLink(selectedJob, form.client_id, form.property_id))) {
+      if (form.origin_mode === 'job' && (!selectedJob || !isJobAvailableForInvoiceLink(selectedJob, form.client_id, form.property_id, invoices))) {
         return 'El servicio indicado no está disponible para vincular.'
       }
       if (form.origin_mode === 'quote' && !form.quote_id) return 'Selecciona un presupuesto aceptado para facturar desde presupuesto.'

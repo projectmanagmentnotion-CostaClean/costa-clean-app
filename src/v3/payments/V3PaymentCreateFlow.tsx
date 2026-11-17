@@ -5,6 +5,7 @@ import { getPaymentAmountError } from '../../features/payments/paymentAmount'
 import type { ClientListItem } from '../../features/clients/types'
 import type { InvoiceListItem } from '../../features/invoices/types'
 import type { PaymentListItem } from '../../features/payments/types'
+import { invoiceDisplayCode } from '../finance/selectorDisplayCodes'
 import { V3Field, V3Input, V3Select, V3Textarea } from '../components/V3Primitives'
 import { V3StepFlow } from '../stepflow/V3StepFlow'
 
@@ -27,15 +28,6 @@ function todayLocalDate() {
 function decimal(value: string) {
   const parsed = Number(value.trim().replace(',', '.'))
   return Number.isFinite(parsed) ? parsed : Number.NaN
-}
-
-function invoiceDisplayCode(displayCode: string | null | undefined, invoiceNumber: string | null | undefined) {
-  const visibleCode = displayCode?.trim() ?? ''
-  const visibleNumber = invoiceNumber?.trim() ?? ''
-  const isUuid = (value: string) => /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu.test(value)
-  if (visibleCode && !isUuid(visibleCode)) return visibleCode
-  if (visibleNumber && !isUuid(visibleNumber)) return visibleNumber
-  return 'Factura sin referencia'
 }
 
 export function V3PaymentCreateFlow({ invoices, clients, payments, onRefreshData, onCompleted, onCancel, onOpenExistingPayment, onDirtyChange }: Props) {

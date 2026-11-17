@@ -10,12 +10,12 @@ import type { QuoteListItem } from '../../features/quotes/types'
 import { buildBillingLinePayloads, calculateBillingSubtotal, createBlankBillingLine, createLocalId, formatMoneyInput, formatQuantityInput, roundMoney, type BillingLineFormState } from '../../features/shared/billingLineDrafts'
 import { getBillingDraftLinesFromQuote } from '../../features/shared/quoteBillingDrafts'
 import { isJobAvailableForQuoteInvoiceLink } from '../../features/invoices/invoiceJobEligibility'
+import { relatedDisplayCode } from '../finance/selectorDisplayCodes'
 import { V3Field, V3Input, V3Select, V3Textarea } from '../components/V3Primitives'
 import { V3StepFlow } from '../stepflow/V3StepFlow'
 
 interface Props { clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; onRefreshData: () => Promise<void>; onCompleted: () => Promise<void> | void; onCancel: () => void; onOpenExistingInvoice?: (id: string) => void; prefillClientId?: string; prefillPropertyId?: string; prefillJobId?: string; prefillQuoteId?: string; draftOnly?: boolean; requireExistingJob?: boolean }
 function today() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` }
-function relatedDisplayCode(value: string | null | undefined, fallback: string) { const normalized = value?.trim() ?? ''; return normalized && !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu.test(normalized) ? normalized : fallback }
 const originLabels: Record<InvoiceBusinessServiceOrigin, string> = { AUTO_CREATE: 'Crear servicio automáticamente', EXISTING_JOB: 'Vincular servicio existente', FROM_QUOTE: 'Desde presupuesto' }
 
 function linesFromQuote(quoteId: string, quotes: QuoteListItem[]): BillingLineFormState[] {

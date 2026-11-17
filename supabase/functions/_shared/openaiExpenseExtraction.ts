@@ -25,7 +25,10 @@ export type OpenAiExtractionFailureCode =
   | 'INVALID_PROVIDER_RESPONSE'
 
 export type OpenAiProposalDiagnosticCode =
-  | 'schema'
+  | 'schema_object'
+  | 'schema_keys'
+  | 'schema_version'
+  | 'schema_document_type'
   | 'document_type'
   | 'supplier'
   | 'invoice'
@@ -180,7 +183,10 @@ function containsInjection(value: unknown): boolean {
 }
 
 export function validateOpenAiProposal(input: unknown): { ok: true; proposal: JsonRecord } | { ok: false; reason: OpenAiProposalDiagnosticCode } {
-  if (!isRecord(input) || !hasExactKeys(input, ['schemaVersion', 'documentType', 'supplier', 'invoice', 'amounts', 'vatLines', 'payment', 'confidence']) || input.schemaVersion !== 1 || !isField(input.documentType)) return { ok: false, reason: 'schema' }
+  if (!isRecord(input)) return { ok: false, reason: 'schema_object' }
+  if (!hasExactKeys(input, ['schemaVersion', 'documentType', 'supplier', 'invoice', 'amounts', 'vatLines', 'payment', 'confidence'])) return { ok: false, reason: 'schema_keys' }
+  if (input.schemaVersion !== 1) return { ok: false, reason: 'schema_version' }
+  if (!isField(input.documentType)) return { ok: false, reason: 'schema_document_type' }
   if (input.documentType.value !== null && !['INVOICE', 'RECEIPT', 'CREDIT_NOTE', 'OTHER', 'UNKNOWN'].includes(String(input.documentType.value))) return { ok: false, reason: 'document_type' }
   if (!fields(input.supplier, ['rawName', 'legalNameCandidate', 'commercialNameCandidate', 'taxId', 'normalizedTaxIdCandidate', 'vatId', 'address', 'postalCode', 'city', 'country', 'phone', 'email', 'website'])) return { ok: false, reason: 'supplier' }
   if (!fields(input.invoice, ['number', 'issueDate', 'dueDate', 'currency'])) return { ok: false, reason: 'invoice' }

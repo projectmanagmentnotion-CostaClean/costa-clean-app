@@ -77,6 +77,9 @@ describe('N5.5 OpenAI Smart Expense adapter', () => {
   })
 
   it.each([
+    ['schema keys mismatch', 'schema_keys', (proposal: ReturnType<typeof validProposal>) => { delete (proposal as Partial<typeof proposal>).confidence }],
+    ['schema version mismatch', 'schema_version', (proposal: ReturnType<typeof validProposal>) => { proposal.schemaVersion = 2 }],
+    ['malformed document type field', 'schema_document_type', (proposal: ReturnType<typeof validProposal>) => { proposal.documentType = { value: 'INVOICE' } as ReturnType<typeof field> }],
     ['invalid tax id', 'invalid_tax_id', (proposal: ReturnType<typeof validProposal>) => { proposal.supplier.taxId = field('12345670Z') }],
     ['inconsistent totals', 'inconsistent_totals', (proposal: ReturnType<typeof validProposal>) => { proposal.amounts.gross = field('130.00') }],
     ['inconsistent VAT totals', 'inconsistent_vat_tax', (proposal: ReturnType<typeof validProposal>) => { proposal.amounts = { net: field('100.00'), tax: field('22.00'), gross: field('122.00'), discount: field(null), withholding: field(null) } }],
@@ -91,6 +94,10 @@ describe('N5.5 OpenAI Smart Expense adapter', () => {
     expect(validateOpenAiProposal(proposal)).toEqual({ ok: false, reason: diagnosticCode })
   })
 
+  it('reports a non-object schema root separately', () => {
+    expect(validateOpenAiProposal(null)).toEqual({ ok: false, reason: 'schema_object' })
+  })
+
   it.each([
     [401, 'EXTRACTION_PROVIDER_UNAVAILABLE'], [403, 'EXTRACTION_PROVIDER_UNAVAILABLE'], [429, 'EXTRACTION_RATE_LIMITED'], [500, 'EXTRACTION_PROVIDER_UNAVAILABLE'],
   ])('maps provider status %s to a safe error', async (status, errorCode) => {
@@ -101,7 +108,7 @@ describe('N5.5 OpenAI Smart Expense adapter', () => {
 
   it('fails closed for malformed, refused, unreadable, oversized, and timed-out inputs without retrying', async () => {
     const malformed = await requestOpenAiExtraction({ apiKey: 'server-only-test-key', document, fetchImpl: vi.fn().mockResolvedValue(responseFor({ schemaVersion: 1 })) })
-    expect(malformed).toMatchObject({ ok: false, errorCode: 'INVALID_PROVIDER_RESPONSE', diagnosticCode: 'schema' })
+    expect(malformed).toMatchObject({ ok: false, errorCode: 'INVALID_PROVIDER_RESPONSE', diagnosticCode: 'schema_keys' })
     expect(JSON.stringify(malformed)).not.toContain('server-only-test-key')
     const refusal = await requestOpenAiExtraction({ apiKey: 'server-only-test-key', document, fetchImpl: vi.fn().mockResolvedValue(new Response(JSON.stringify({ output: [{ content: [{ type: 'refusal', refusal: 'blocked' }] }] }), { status: 200 })) })
     expect(refusal).toMatchObject({ ok: false, errorCode: 'EXTRACTION_REFUSED' })

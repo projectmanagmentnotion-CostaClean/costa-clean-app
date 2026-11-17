@@ -179,6 +179,7 @@ do $role_matrix$
 declare
   actor record;
   object_row record;
+  foreign_capture record;
   affected_count bigint;
   visible_count bigint;
   run_id text := current_setting('app.storage_guard.run_id');
@@ -193,6 +194,23 @@ begin
     execute 'set local role authenticated';
     perform set_config('request.jwt.claim.sub', actor.user_id::text, true);
     perform set_config('request.jwt.claims', jsonb_build_object('sub', actor.user_id, 'role', 'authenticated')::text, true);
+
+    -- Capture documents are private to the session owner, even between active
+    -- internal staff. Test the Storage metadata boundary with another actor's
+    -- synthetic object before exercising each actor's own fixtures.
+    for foreign_capture in
+      select f.object_id, f.actor
+      from storage_guard_fixture as f
+      where f.kind = 'capture'
+        and f.actor <> actor.actor
+    loop
+      execute format('select count(*) from storage.objects where id = %L::uuid', foreign_capture.object_id)
+        into visible_count;
+      perform pg_temp.storage_guard_assert(
+        visible_count = 0,
+        actor.actor || '_cannot_read_capture_from_' || foreign_capture.actor
+      );
+    end loop;
 
     if actor.actor in ('owner', 'admin', 'operator', 'finance') then
       for object_row in select f.object_id, f.kind, f.path from storage_guard_fixture as f where f.actor = actor.actor loop

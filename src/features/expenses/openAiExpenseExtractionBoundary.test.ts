@@ -31,6 +31,13 @@ describe('N5.5 OpenAI security boundary', () => {
     expect(edgeSource).toContain('requestOpenAiExtraction')
   })
 
+  it('logs only an allowlisted validation category and keeps it out of the response contract', () => {
+    expect(edgeSource).toContain("console.warn('expense_extraction_validation_rejected', result.diagnosticCode)")
+    expect(edgeSource).toContain("safeError(result.errorCode, result.errorMessageSafe, null)")
+    expect(edgeSource).not.toContain('safeError(result.errorCode, result.errorMessageSafe, result.diagnosticCode')
+    expect(edgeSource).not.toContain('console.warn(\'expense_extraction_validation_rejected\', output.text')
+  })
+
   it('keeps the provider migration forward-only and version-gated', () => {
     expect(migrationSource).toContain("p_provider not in ('fixture', 'openai')")
     expect(migrationSource).toContain("p_provider_version <> 'n55-openai-responses-v1'")

@@ -24,9 +24,27 @@ export type OpenAiExtractionFailureCode =
   | 'EXTRACTION_REFUSED'
   | 'INVALID_PROVIDER_RESPONSE'
 
+export type OpenAiProposalDiagnosticCode =
+  | 'schema'
+  | 'document_type'
+  | 'supplier'
+  | 'invoice'
+  | 'payment'
+  | 'amounts'
+  | 'vat_lines'
+  | 'confidence'
+  | 'untrusted_document_instruction'
+  | 'invalid_tax_id'
+  | 'inconsistent_totals'
+  | 'inconsistent_vat_line'
+  | 'inconsistent_vat_base'
+  | 'inconsistent_vat_tax'
+
 export type OpenAiExtractionResult =
   | { ok: true; proposal: JsonRecord; model: string }
-  | { ok: false; errorCode: OpenAiExtractionFailureCode; errorMessageSafe: string; statusCode?: number }
+  | { ok: false; errorCode: OpenAiExtractionFailureCode; errorMessageSafe: string; statusCode?: number; diagnosticCode?: OpenAiProposalDiagnosticCode }
+
+type OpenAiExtractionFailureResult = Extract<OpenAiExtractionResult, { ok: false }>
 
 const SUPPORTED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'image/webp'])
 const SPANISH_TAX_ID_PATTERN = /^(?:[ABCDEFGHJNPQRSUVW]\d{7}[0-9A-J]|[XYZ]\d{7}[A-Z]|\d{8}[A-Z])$/u
@@ -99,7 +117,7 @@ const SYSTEM_PROMPT = [
   'Use decimal strings for amounts. Preserve multiple VAT lines when visible. Do not force totals to reconcile; report the observed values so local validation can reject inconsistencies.',
 ].join(' ')
 
-const safeFailure = (errorCode: OpenAiExtractionFailureCode, errorMessageSafe: string, statusCode?: number): OpenAiExtractionResult => ({ ok: false, errorCode, errorMessageSafe, statusCode })
+const safeFailure = (errorCode: OpenAiExtractionFailureCode, errorMessageSafe: string, statusCode?: number): OpenAiExtractionFailureResult => ({ ok: false, errorCode, errorMessageSafe, statusCode })
 
 const isRecord = (value: unknown): value is JsonRecord => Boolean(value && typeof value === 'object' && !Array.isArray(value))
 const isConfidence = (value: unknown) => value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1)
@@ -161,7 +179,7 @@ function containsInjection(value: unknown): boolean {
   return false
 }
 
-export function validateOpenAiProposal(input: unknown): { ok: true; proposal: JsonRecord } | { ok: false; reason: string } {
+export function validateOpenAiProposal(input: unknown): { ok: true; proposal: JsonRecord } | { ok: false; reason: OpenAiProposalDiagnosticCode } {
   if (!isRecord(input) || !hasExactKeys(input, ['schemaVersion', 'documentType', 'supplier', 'invoice', 'amounts', 'vatLines', 'payment', 'confidence']) || input.schemaVersion !== 1 || !isField(input.documentType)) return { ok: false, reason: 'schema' }
   if (input.documentType.value !== null && !['INVOICE', 'RECEIPT', 'CREDIT_NOTE', 'OTHER', 'UNKNOWN'].includes(String(input.documentType.value))) return { ok: false, reason: 'document_type' }
   if (!fields(input.supplier, ['rawName', 'legalNameCandidate', 'commercialNameCandidate', 'taxId', 'normalizedTaxIdCandidate', 'vatId', 'address', 'postalCode', 'city', 'country', 'phone', 'email', 'website'])) return { ok: false, reason: 'supplier' }
@@ -263,7 +281,7 @@ export async function requestOpenAiExtraction({
     let proposal: unknown
     try { proposal = JSON.parse(output.text) } catch { return safeFailure('INVALID_PROVIDER_RESPONSE', 'La respuesta OpenAI no contiene JSON válido.', 422) }
     const checked = validateOpenAiProposal(proposal)
-    if (!checked.ok) return safeFailure('INVALID_PROVIDER_RESPONSE', 'La propuesta OpenAI no supera la validación local.', 422)
+    if (!checked.ok) return { ...safeFailure('INVALID_PROVIDER_RESPONSE', 'La propuesta OpenAI no supera la validación local.', 422), diagnosticCode: checked.reason }
     return { ok: true, proposal: checked.proposal, model }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return safeFailure('EXTRACTION_TIMEOUT', 'La extracción OpenAI agotó el tiempo permitido.', 504)

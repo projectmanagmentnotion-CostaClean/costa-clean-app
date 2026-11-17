@@ -122,6 +122,7 @@ Deno.serve(async (request: Request) => {
   const model = Deno.env.get('OPENAI_EXPENSE_EXTRACTION_MODEL') || OPENAI_DEFAULT_MODEL
   const result = await requestOpenAiExtraction({ apiKey, model, document: { filename: canonicalFilename(row.original_filename), mimeType: row.mime_type, sizeBytes: bytes.byteLength, base64: toBase64(bytes) } })
   if (!result.ok) {
+    if (result.diagnosticCode) console.warn('expense_extraction_validation_rejected', result.diagnosticCode)
     await markFailure(adminClient, row.extraction_id, userId, result.errorCode, result.errorMessageSafe, model)
     return json({ ...safeError(result.errorCode, result.errorMessageSafe, null), extractionId: row.extraction_id, attempt: row.attempt }, safeFailureStatus(result.errorCode))
   }

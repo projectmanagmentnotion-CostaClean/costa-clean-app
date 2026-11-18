@@ -52,10 +52,17 @@ describe('N5.2 synthetic extraction request', () => {
   })
 
   it('fails closed for production-like or lookalike QA hosts before touching services', async () => {
-    const deps = services()
-    const response = await handleExtractionRequest(request(), deps.service, 'https://kpvvydthlxupjjqqdpxy.supabase.co.attacker.invalid', 'qa-fixture')
-    expect(response.status).toBe(503)
-    expect(deps.finalizeSuccess).not.toHaveBeenCalled()
+    for (const supabaseUrl of [
+      'https://kpvvydthlxupjjqqdpxy.supabase.co.attacker.invalid',
+      'https://wfxnwfcdjainpojhbdri.supabase.co',
+    ]) {
+      const deps = services()
+      const prepare = vi.spyOn(deps.service, 'prepare')
+      const response = await handleExtractionRequest(request(), deps.service, supabaseUrl, 'qa-fixture')
+      expect(response.status).toBe(503)
+      expect(prepare).not.toHaveBeenCalled()
+      expect(deps.finalizeSuccess).not.toHaveBeenCalled()
+    }
   })
 
   it('rejects arbitrary uploads without parsing or persisting a proposal', async () => {

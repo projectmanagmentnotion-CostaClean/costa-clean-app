@@ -27,6 +27,11 @@ describe('N5.1 capture entry contract', () => {
     expect(source).toContain('Confirmo que he revisado la propuesta y quiero guardarla')
     expect(source).toContain('reviewedProposal.reconciliation.status !== \'MATCH\'')
     expect(source).toContain('iframe src={previewUrl}')
+    expect(source).toContain('onClick={() => void replaceDocument()}')
+    expect(source).toContain("void handleFile('upload', selected, true)")
+    expect(source).toContain('function clearCaptureState()')
+    expect(source).toContain("setCategory('otros'); setDescription(''); setPaymentMethod('other'); setNotes('')")
+    expect(source).toContain('setCategory(\'otros\'); setDescription(\'\'); setPaymentMethod(\'other\'); setNotes(\'\')')
     expect(source).toContain('buildConfirmedExpensePayload')
     expect(source).toContain('confirmExpenseCapture')
     expect(source).toContain('Confirmo que he revisado la propuesta y quiero guardarla')
@@ -40,5 +45,17 @@ describe('N5.1 capture entry contract', () => {
     expect(source).toContain('capture="environment"')
     expect(source).toContain('application/pdf,image/jpeg,image/png,image/webp')
     expect(source).toContain('role="alert"')
+  })
+
+  it('validates replacement files before cancelling the previous capture and resets review state', () => {
+    expect(source.indexOf('const validationError = validateExpenseCaptureFile(nextFile)')).toBeLessThan(source.indexOf('if (replaceCurrent && session)'))
+    expect(source).toContain("void handleFile('upload', selected, true)")
+    expect(source).toContain('function replaceDocument() {\n    uploadInputRef.current?.click()')
+    expect(source).toContain("setCategory('otros'); setDescription(''); setPaymentMethod('other'); setNotes(''); setConfirmed(false); setDuplicateDecision('CREATE_NEW')")
+  })
+
+  it('reports a successful save separately from a failed list refresh', () => {
+    expect(source).toContain("setConfirmationResult(result)")
+    expect(source).toContain('El gasto se guardó, pero no se pudo actualizar la lista. Recarga la vista.')
   })
 })

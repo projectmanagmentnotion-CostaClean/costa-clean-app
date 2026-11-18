@@ -47,6 +47,9 @@ describe('expense receipt preview', () => {
     expect(html).toContain('<iframe')
     expect(html).toContain('title="Vista previa del justificante PDF"')
     expect(html).toContain('referrerPolicy="no-referrer"')
+    expect(html).toContain('Abrir PDF en una pestaña nueva')
+    expect(html).toContain('target="_blank"')
+    expect(html).toContain('rel="noreferrer"')
     expect(html).not.toContain('download=')
   })
 

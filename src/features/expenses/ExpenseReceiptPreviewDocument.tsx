@@ -6,7 +6,7 @@ interface ExpenseReceiptPreviewDocumentProps {
 
 export function ExpenseReceiptPreviewDocument({ kind, url, onError }: ExpenseReceiptPreviewDocumentProps) {
   if (kind === 'pdf') {
-    return (
+    return <>
       <iframe
         className="cc-expense-receipt-preview__document"
         src={url}
@@ -14,7 +14,10 @@ export function ExpenseReceiptPreviewDocument({ kind, url, onError }: ExpenseRec
         referrerPolicy="no-referrer"
         onError={onError}
       />
-    )
+      <a href={url} target="_blank" rel="noreferrer">
+        Abrir PDF en una pestaña nueva
+      </a>
+    </>
   }
 
   return (

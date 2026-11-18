@@ -105,7 +105,9 @@ describe('V3ExpenseReceiptPreview', () => {
     expect(pdf).toContain('aria-modal="true"')
     expect(pdf).toContain('title="Vista previa del justificante PDF"')
     expect(pdf).toContain('src="https://storage.test/signed"')
-    expect(pdf).not.toContain('target="_blank"')
+    expect(pdf).toContain('Abrir PDF en una pestaña nueva')
+    expect(pdf).toContain('target="_blank"')
+    expect(pdf).toContain('rel="noreferrer"')
 
     const image = renderPreview({ expenseId: 'expense-test-id', filePath: 'receipt.png', kind: 'image', url: 'https://storage.test/signed-image', expired: false, loading: false, error: null })
     expect(image).toContain('alt="Vista previa del justificante"')

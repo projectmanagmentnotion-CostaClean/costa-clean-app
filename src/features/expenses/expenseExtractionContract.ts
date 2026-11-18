@@ -4,7 +4,7 @@ export type ExtractionStatus = 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED'
 export type KnownExtractionProviderId = 'fixture' | 'google-document-ai' | 'azure-document-intelligence' | 'openai'
 export type ExtractionProviderId = KnownExtractionProviderId | (string & {})
 export type ExtractionDocumentType = 'INVOICE' | 'RECEIPT' | 'CREDIT_NOTE' | 'OTHER' | 'UNKNOWN'
-export type ExtractionSource = 'document' | 'provider' | 'missing'
+export type ExtractionSource = 'document' | 'provider' | 'reviewer' | 'missing'
 export type DecimalString = `${number}`
 
 export interface ExtractionEvidence {
@@ -167,7 +167,7 @@ export function isExtractedField(value: unknown): value is ExtractedField<unknow
     && (field.value === null || typeof field.value === 'string')
     && (field.rawValue === null || typeof field.rawValue === 'string')
     && (field.confidence === null || isConfidence(field.confidence))
-    && ['document', 'provider', 'missing'].includes(String(field.source))
+    && ['document', 'provider', 'reviewer', 'missing'].includes(String(field.source))
     && (field.source !== 'missing' || (field.value === null && field.rawValue === null && field.confidence === null))
     && (field.evidence === undefined || isEvidence(field.evidence))
 }

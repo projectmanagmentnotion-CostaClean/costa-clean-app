@@ -56,6 +56,10 @@ describe('N5.2 QA Edge runtime R2.1 contract parity', () => {
     expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co`, 'qa-fixture')).toBe(true)
     expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co`, '')).toBe(false)
     expect(isQaFixtureRuntimeConfigured('https://wfxnwfcdjainpojhbdri.supabase.co', 'qa-fixture')).toBe(false)
+    expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co.attacker.invalid`, 'qa-fixture')).toBe(false)
+    expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co.evil`, 'qa-fixture')).toBe(false)
+    expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co/path`, 'qa-fixture')).toBe(false)
+    expect(isQaFixtureRuntimeConfigured(`https://${QA_PROJECT_REF}.supabase.co?project=prod`, 'qa-fixture')).toBe(false)
   })
 
   it('keeps fresh and reused successful responses in the canonical shape', () => {

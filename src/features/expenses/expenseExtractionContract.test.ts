@@ -17,6 +17,12 @@ describe('N5.2 extraction contract', () => {
     expect(validateExtractionProposal(validProposal).ok).toBe(true)
   })
 
+  it('accepts reviewer provenance for edited values without treating empty edits as extracted', () => {
+    const edited = { ...validProposal, documentType: { ...validProposal.documentType, source: 'reviewer' } }
+    expect(validateExtractionProposal(edited).ok).toBe(true)
+    expect(validateExtractionProposal({ ...edited, documentType: { ...edited.documentType, source: 'missing', value: null, rawValue: null, confidence: null } }).ok).toBe(true)
+  })
+
   it('rejects malformed provider payloads and floating-point money', () => {
     const result = validateExtractionProposal({ ...validProposal, schemaVersion: 2, amounts: { ...validProposal.amounts, gross: { ...createMissingField(), value: 121.2, source: 'provider' } } })
     expect(result).toEqual({ ok: false, errors: ['unsupported schemaVersion', 'amounts.gross must use a decimal string'] })

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { normalizeTaxId } from './expenseNormalizationTaxId'
 
 const pdf = readFileSync(new URL('./fixtures/smart-expense-synthetic-invoice.pdf', import.meta.url))
 const png = readFileSync(new URL('./fixtures/smart-expense-synthetic-invoice.png', import.meta.url))
@@ -35,7 +36,7 @@ describe('synthetic Smart Expense invoice documents', () => {
       'FACTURA SINTETICA - SOLO PRUEBAS',
       'DOCUMENTO FICTICIO - NO VALIDO PARA CONTABILIDAD',
       'Proveedor Ficticio Norte S.L.',
-      'NIF FICTICIO (NO VALIDO): B00000000',
+      'NIF FICTICIO (NO VALIDO): B00000002',
       'SYN-PDF-2026-001',
       '12/11/2026',
       'Consumibles de limpieza sinteticos',
@@ -46,6 +47,7 @@ describe('synthetic Smart Expense invoice documents', () => {
 
     expect(Math.round(100 * 0.21 * 100) / 100).toBe(21)
     expect(Math.round((100 + 21) * 100) / 100).toBe(121)
+    expect(normalizeTaxId('B00000002').status).toBe('INVALID')
   })
 
   it('contains a readable PNG invoice with visible and embedded synthetic fields', () => {
@@ -66,5 +68,6 @@ describe('synthetic Smart Expense invoice documents', () => {
 
     expect(Math.round(80 * 0.21 * 100) / 100).toBe(16.8)
     expect(Math.round((80 + 16.8) * 100) / 100).toBe(96.8)
+    expect(normalizeTaxId('B00000001').status).toBe('INVALID')
   })
 })

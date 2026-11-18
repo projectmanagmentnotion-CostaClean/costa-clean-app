@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createMissingField, validateExtractionProposal } from './expenseExtractionContract'
+import { createMissingField, diagnoseExtractionProposal, validateExtractionProposal } from './expenseExtractionContract'
 
 const validProposal = {
   schemaVersion: 1,
@@ -30,5 +30,14 @@ describe('N5.2 extraction contract', () => {
     expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { value: 'Supplier' } } })).toMatchObject({ ok: false })
     expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { ...validProposal.supplier.rawName, evidence: { page: 1, boundingBox: { x: 0, y: 0, width: Number.NaN, height: 10 } } } } })).toMatchObject({ ok: false })
     expect(validateExtractionProposal({ ...validProposal, supplier: { ...validProposal.supplier, rawName: { ...validProposal.supplier.rawName, evidence: { page: 1, boundingBox: { x: 0, y: 0, width: -1, height: 10 } } } } })).toMatchObject({ ok: false })
+  })
+
+  it('returns safe, value-free diagnostics for the extraction schema subrules', () => {
+    expect(diagnoseExtractionProposal(null).failureCodes).toEqual(['INVALID_OBJECT'])
+    expect(diagnoseExtractionProposal({ schemaVersion: 1 }).failureCodes).toContain('MISSING_KEYS')
+    expect(diagnoseExtractionProposal({ ...validProposal, schemaVersion: 99 }).failureCodes).toEqual(['UNSUPPORTED_SCHEMA_VERSION'])
+    expect(diagnoseExtractionProposal({ ...validProposal, documentType: { ...validProposal.documentType, value: 'BANK_TOKEN_SECRET' } }).failureCodes).toEqual(['INVALID_DOCUMENT_TYPE'])
+    expect(diagnoseExtractionProposal(validProposal)).toEqual({ ok: true, failureCodes: [] })
+    expect(JSON.stringify(diagnoseExtractionProposal({ ...validProposal, documentType: { ...validProposal.documentType, value: 'PRIVATE_DOCUMENT_TEXT' } }))).not.toContain('PRIVATE_DOCUMENT_TEXT')
   })
 })

@@ -213,3 +213,50 @@ export function validateExtractionProposal(input: unknown): { ok: true; proposal
   if (errors.length) return { ok: false, errors }
   return { ok: true, proposal: input as ExtractionProposal }
 }
+
+export type ExtractionSchemaFailureCode =
+  | 'INVALID_OBJECT'
+  | 'MISSING_KEYS'
+  | 'UNSUPPORTED_SCHEMA_VERSION'
+  | 'INVALID_DOCUMENT_TYPE'
+  | 'INVALID_FIELD_CONTRACT'
+
+export interface ExtractionSchemaDiagnostic {
+  ok: boolean
+  failureCodes: ExtractionSchemaFailureCode[]
+}
+
+const requiredProposalKeys = ['supplier', 'invoice', 'amounts', 'vatLines', 'payment', 'confidence'] as const
+const validDocumentTypes = ['INVOICE', 'RECEIPT', 'CREDIT_NOTE', 'OTHER', 'UNKNOWN'] as const
+
+/** Returns allowlisted schema failure codes only; it never echoes payload values or provider text. */
+export function diagnoseExtractionProposal(input: unknown): ExtractionSchemaDiagnostic {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return { ok: false, failureCodes: ['INVALID_OBJECT'] }
+  }
+
+  const proposal = input as Record<string, unknown>
+  const failureCodes: ExtractionSchemaFailureCode[] = []
+
+  if (requiredProposalKeys.some((key) => !Object.prototype.hasOwnProperty.call(proposal, key))) {
+    failureCodes.push('MISSING_KEYS')
+  }
+  if (proposal.schemaVersion !== EXPENSE_EXTRACTION_SCHEMA_VERSION) {
+    failureCodes.push('UNSUPPORTED_SCHEMA_VERSION')
+  }
+
+  const documentType = proposal.documentType
+  if (
+    !isExtractedField(documentType)
+    || (documentType.value !== null && !validDocumentTypes.includes(String(documentType.value) as typeof validDocumentTypes[number]))
+  ) {
+    failureCodes.push('INVALID_DOCUMENT_TYPE')
+  }
+
+  const validation = validateExtractionProposal(input)
+  const diagnosedSchemaErrors = new Set(['unsupported schemaVersion', 'documentType must use an allowed value'])
+  if (!validation.ok && validation.errors.some((error) => !diagnosedSchemaErrors.has(error))) {
+    failureCodes.push('INVALID_FIELD_CONTRACT')
+  }
+  return { ok: failureCodes.length === 0, failureCodes }
+}

@@ -31,4 +31,16 @@ describe('N5.5 provider-independent Smart Expense integration', () => {
       expect(result.ok).toBe(false)
     })
   })
+
+  it('keeps fiscal reconciliation fail-closed before human confirmation', async () => {
+    const extraction = await createFixtureExtractionProvider().extractDocument({ captureDocumentId: 'document-fiscal', captureSessionId: 'session-fiscal', originalFilename: 'fixture-fiscal.png', mimeType: 'image/png', sizeBytes: 100, sha256: 'c'.repeat(64) })
+    expect(extraction.ok).toBe(true)
+    if (!extraction.ok) return
+
+    const proposal = structuredClone(extraction.proposal)
+    proposal.amounts.gross = { ...proposal.amounts.gross, value: '999.00', rawValue: '999,00 EUR' }
+    const normalized = normalizeExpenseProposal(proposal)
+    expect(normalized.reviewStatus).toBe('BLOCKED')
+    expect(buildConfirmedExpensePayload(normalized, { confirmed: true, supplierCandidate: null, duplicateDecision: 'CREATE_NEW', duplicateCandidate: null, category: 'materiales', description: 'Propuesta de prueba', paymentMethod: 'card' })).toMatchObject({ ok: false })
+  })
 })

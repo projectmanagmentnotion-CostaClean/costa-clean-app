@@ -1,0 +1,64 @@
+%PDF-1.4
+%‚„œ”ABCDEFGHIJKLMN
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 660 >>
+stream
+BT
+/F1 18 Tf
+1 0 0 1 52 785 Tm
+(FACTURA SINTETICA - SOLO PRUEBAS) Tj
+/F1 12 Tf
+1 0 0 1 52 731 Tm
+(DOCUMENTO FICTICIO - NO VALIDO PARA CONTABILIDAD) Tj
+/F1 12 Tf
+1 0 0 1 52 677 Tm
+(Proveedor: Proveedor Ficticio Norte S.L.) Tj
+/F1 12 Tf
+1 0 0 1 52 623 Tm
+(NIF FICTICIO \(NO VALIDO\): B00000000) Tj
+/F1 12 Tf
+1 0 0 1 52 569 Tm
+(Numero de factura: SYN-PDF-2026-001) Tj
+/F1 12 Tf
+1 0 0 1 52 515 Tm
+(Fecha: 12/11/2026) Tj
+/F1 12 Tf
+1 0 0 1 52 461 Tm
+(Concepto: Consumibles de limpieza sinteticos) Tj
+/F1 12 Tf
+1 0 0 1 52 407 Tm
+(Base imponible: 100.00 EUR) Tj
+/F1 12 Tf
+1 0 0 1 52 353 Tm
+(IVA 21%: 21.00 EUR) Tj
+/F1 14 Tf
+1 0 0 1 52 299 Tm
+(TOTAL: 121.00 EUR) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 6
+0000000000 65535 f
+0000000029 00000 n
+0000000078 00000 n
+0000000135 00000 n
+0000000261 00000 n
+0000000971 00000 n
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1068
+%%EOF

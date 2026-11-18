@@ -1,11 +1,14 @@
-import { useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { formatCurrency, formatDateEs } from '../../app/displayFormat'
 import { formatExpenseLabel } from '../../app/relationshipLabels'
 import { createExpenseReceiptSignedUrl, deleteExpenseReceipt, validateExpenseReceipt } from '../../features/expenses/expenseAttachmentsApi'
+import { ExpenseReceiptPreviewDocument } from '../../features/expenses/ExpenseReceiptPreviewDocument'
+import { EXPENSE_RECEIPT_PREVIEW_URL_TTL_SECONDS, getExpenseReceiptPreviewKind, type ExpenseReceiptPreviewKind } from '../../features/expenses/expenseReceiptPreview'
+import '../../features/expenses/expense-support-fieldset.css'
 import { updateExpense, updateExpenseAttachment } from '../../features/expenses/expenseApi'
 import { replaceExpenseReceipt } from '../../features/expenses/expenseReceiptWorkflow'
 import { getExpenseAiFiscalClassificationLabel, getExpenseCategoryLabel, getExpenseDocumentSupportStatusLabel, getExpenseDocumentTypeLabel, getExpenseFiscalReviewStatusLabel, getExpenseFiscalRiskLevelLabel, getExpensePaymentMethodLabel, getExpensePaymentStatusLabel, type ExpenseListItem } from '../../features/expenses/types'
-import { V3ActionGroup, V3ConfirmSheet, V3DetailSection, V3EntityStatus, V3Icon, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction } from '../components/V3Primitives'
+import { V3ActionGroup, V3BottomSheet, V3ConfirmSheet, V3DetailSection, V3EntityStatus, V3Icon, V3Page, V3PageTitle, V3PrimaryAction, V3SecondaryAction } from '../components/V3Primitives'
 
 interface V3ExpenseWorkspaceProps {
   expense: ExpenseListItem
@@ -25,11 +28,80 @@ function expenseInput(expense: ExpenseListItem) {
   return { expense_date: expense.expense_date, accounting_date: expense.accounting_date, due_date: expense.due_date, supplier_name: expense.supplier_name, supplier_tax_id: expense.supplier_tax_id, category: expense.category, subcategory: expense.subcategory, description: expense.description, document_type: expense.document_type, reference_number: expense.reference_number, payment_method: expense.payment_method, payment_status: expense.payment_status, currency: expense.currency, subtotal: expense.subtotal, tax_rate: expense.tax_rate, tax_amount: expense.tax_amount, total: expense.total, is_deductible: expense.is_deductible, deductible_percentage: expense.deductible_percentage, affects_quarterly_closure: expense.affects_quarterly_closure, affects_annual_closure: expense.affects_annual_closure, receipt_file_url: expense.receipt_file_url, receipt_file_path: expense.receipt_file_path, attachment_count: expense.attachment_count, document_support_status: expense.document_support_status, fiscal_review_status: expense.fiscal_review_status, fiscal_risk_level: expense.fiscal_risk_level, manager_note: expense.manager_note, notes: expense.notes }
 }
 
+export interface ReceiptPreviewState {
+  expenseId: string
+  filePath: string
+  kind: ExpenseReceiptPreviewKind
+  url: string | null
+  expired: boolean
+  loading: boolean
+  error: string | null
+}
+
+export function V3ExpenseReceiptPreview({ preview, onClose, onRenew, onDocumentError }: {
+  preview: ReceiptPreviewState
+  onClose: () => void
+  onRenew: () => void
+  onDocumentError: () => void
+}) {
+  return <V3BottomSheet title="Vista previa del justificante" variant="workspace" onClose={onClose}>
+    <div className="cc-expense-receipt-preview__viewport" aria-live="polite" aria-busy={preview.loading}>
+      <p>El acceso al documento es privado y temporal.</p>
+      {preview.loading ? <p role="status">Preparando vista previa…</p> : null}
+      {preview.error ? <p className="v3-inline-message v3-inline-message--error" role="alert">{preview.error}</p> : null}
+      {preview.expired ? <p role="status">El enlace privado ha caducado.</p> : null}
+      {!preview.loading && !preview.error && !preview.expired && preview.url ? <ExpenseReceiptPreviewDocument kind={preview.kind} url={preview.url} onError={onDocumentError} /> : null}
+      {!preview.loading && (preview.expired || preview.error) ? <V3PrimaryAction onClick={onRenew}>Renovar acceso</V3PrimaryAction> : null}
+    </div>
+  </V3BottomSheet>
+}
+
 export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreateSimilar }: V3ExpenseWorkspaceProps) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [removeConfirmOpen, setRemoveConfirmOpen] = useState(false)
+  const [receiptPreview, setReceiptPreview] = useState<ReceiptPreviewState | null>(null)
+  const previewRequestId = useRef(0)
+  const previewExpiryTimer = useRef<number | null>(null)
+
+  function clearPreviewExpiryTimer() {
+    if (previewExpiryTimer.current !== null) {
+      window.clearTimeout(previewExpiryTimer.current)
+      previewExpiryTimer.current = null
+    }
+  }
+
+  function closeDocumentPreview() {
+    previewRequestId.current += 1
+    clearPreviewExpiryTimer()
+    setReceiptPreview(null)
+  }
+
+  async function loadDocumentPreview(filePath: string, kind: ExpenseReceiptPreviewKind) {
+    const requestId = ++previewRequestId.current
+    clearPreviewExpiryTimer()
+    setReceiptPreview({ expenseId: expense.id, filePath, kind, url: null, expired: false, loading: true, error: null })
+    try {
+      const url = await createExpenseReceiptSignedUrl(filePath, EXPENSE_RECEIPT_PREVIEW_URL_TTL_SECONDS)
+      if (requestId !== previewRequestId.current) return
+      setReceiptPreview({ expenseId: expense.id, filePath, kind, url, expired: false, loading: false, error: null })
+      previewExpiryTimer.current = window.setTimeout(() => {
+        setReceiptPreview((current) => current ? { ...current, url: null, expired: true } : current)
+        previewExpiryTimer.current = null
+      }, EXPENSE_RECEIPT_PREVIEW_URL_TTL_SECONDS * 1000)
+    } catch {
+      if (requestId !== previewRequestId.current) return
+      setReceiptPreview({ expenseId: expense.id, filePath, kind, url: null, expired: false, loading: false, error: 'No se pudo acceder al documento. Puede que ya no esté disponible; inténtalo de nuevo.' })
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      previewRequestId.current += 1
+      clearPreviewExpiryTimer()
+    }
+  }, [expense.id, expense.receipt_file_path])
 
   async function run(action: () => Promise<void>, success: string) {
     setBusy(true); setMessage(null); setError(null)
@@ -47,21 +119,14 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
 
   async function openDocument() {
     if (!expense.receipt_file_path) return
-    const popup = window.open('about:blank', '_blank')
-    if (!popup) {
-      setError('El navegador bloqueó la ventana del documento. Permite las ventanas emergentes e inténtalo de nuevo.')
+    const kind = getExpenseReceiptPreviewKind(expense.receipt_file_path)
+    if (!kind) {
+      setError('Este tipo de documento no admite vista previa.')
       return
     }
-    popup.opener = null
-    await run(async () => {
-      try {
-        const url = await createExpenseReceiptSignedUrl(expense.receipt_file_path!)
-        popup.location.href = url
-      } catch (cause) {
-        popup.close()
-        throw cause
-      }
-    }, 'Documento abierto.')
+    setError(null)
+    setMessage(null)
+    await loadDocumentPreview(expense.receipt_file_path, kind)
   }
 
   async function removeDocument() {
@@ -132,5 +197,6 @@ export function V3ExpenseWorkspace({ expense, onBack, onRefresh, onEdit, onCreat
     </V3DetailSection>
     <V3DetailSection title="Notas"><p className="v3-section-copy">{expense.notes ?? expense.manager_note ?? 'Sin notas registradas.'}</p></V3DetailSection>
     {removeConfirmOpen ? <V3ConfirmSheet title="Eliminar documento" description="Se quitará el documento adjunto de este gasto." confirmLabel="Eliminar documento" busy={busy} onCancel={() => setRemoveConfirmOpen(false)} onConfirm={() => void confirmRemoveDocument()} /> : null}
+    {receiptPreview?.expenseId === expense.id && receiptPreview.filePath === expense.receipt_file_path ? <V3ExpenseReceiptPreview preview={receiptPreview} onClose={closeDocumentPreview} onRenew={() => void loadDocumentPreview(expense.receipt_file_path!, receiptPreview.kind)} onDocumentError={() => setReceiptPreview((current) => current ? { ...current, url: null, error: 'No se pudo mostrar el documento. Puede que el enlace haya caducado.' } : current)} /> : null}
   </V3Page>
 }

@@ -2,7 +2,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { ExpenseListItem } from '../../features/expenses/types'
-import { V3ExpenseWorkspace } from './V3ExpenseWorkspace'
+import { V3ExpenseReceiptPreview, V3ExpenseWorkspace, type ReceiptPreviewState } from './V3ExpenseWorkspace'
 
 const expense: ExpenseListItem = {
   id: 'expense-test-id',
@@ -81,6 +81,7 @@ describe('V3ExpenseWorkspace', () => {
     expect(html).toContain('Sustituir documento')
     expect(html).toContain('Eliminar documento')
     expect(html).toContain('Documento y revisión')
+    expect(html).not.toContain('Vista previa del justificante')
   })
 
   it('keeps the programmatic file picker out of the keyboard path', () => {
@@ -88,5 +89,38 @@ describe('V3ExpenseWorkspace', () => {
     expect(html).toContain('type="file"')
     expect(html).toContain('tabindex="-1"')
     expect(html).toContain('aria-hidden="true"')
+  })
+})
+
+describe('V3ExpenseReceiptPreview', () => {
+  const actions = { onClose: () => undefined, onRenew: () => undefined, onDocumentError: () => undefined }
+
+  function renderPreview(preview: ReceiptPreviewState) {
+    return renderToStaticMarkup(createElement(V3ExpenseReceiptPreview, { preview, ...actions }))
+  }
+
+  it('renders private PDF and image documents inside an accessible in-app dialog', () => {
+    const pdf = renderPreview({ expenseId: 'expense-test-id', filePath: 'receipt.pdf', kind: 'pdf', url: 'https://storage.test/signed', expired: false, loading: false, error: null })
+    expect(pdf).toContain('role="dialog"')
+    expect(pdf).toContain('aria-modal="true"')
+    expect(pdf).toContain('title="Vista previa del justificante PDF"')
+    expect(pdf).toContain('src="https://storage.test/signed"')
+    expect(pdf).not.toContain('target="_blank"')
+
+    const image = renderPreview({ expenseId: 'expense-test-id', filePath: 'receipt.png', kind: 'image', url: 'https://storage.test/signed-image', expired: false, loading: false, error: null })
+    expect(image).toContain('alt="Vista previa del justificante"')
+    expect(image).toContain('src="https://storage.test/signed-image"')
+  })
+
+  it('keeps an expired or failed private link out of the viewer and exposes renewal', () => {
+    const expired = renderPreview({ expenseId: 'expense-test-id', filePath: 'receipt.pdf', kind: 'pdf', url: null, expired: true, loading: false, error: null })
+    expect(expired).toContain('El enlace privado ha caducado.')
+    expect(expired).toContain('Renovar acceso')
+    expect(expired).not.toContain('<iframe')
+
+    const failed = renderPreview({ expenseId: 'expense-test-id', filePath: 'receipt.pdf', kind: 'pdf', url: null, expired: false, loading: false, error: 'No se pudo acceder al documento.' })
+    expect(failed).toContain('role="alert"')
+    expect(failed).toContain('Renovar acceso')
+    expect(failed).not.toContain('<iframe')
   })
 })

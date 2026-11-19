@@ -33,7 +33,22 @@ export function isExactQaSupabaseUrl(value) {
 }
 
 export async function loadAuthoritativeQaEnv(rootDir = process.cwd()) {
-  const env = parseDotEnv(await fs.readFile(path.join(rootDir, '.env.qa.local'), 'utf8'))
+  let fileEnv = {}
+  try {
+    fileEnv = parseDotEnv(await fs.readFile(path.join(rootDir, '.env.qa.local'), 'utf8'))
+  } catch (error) {
+    if (error?.code !== 'ENOENT') throw error
+  }
+
+  const env = {}
+  for (const name of [
+    'VITE_SUPABASE_URL',
+    'VITE_SUPABASE_ANON_KEY',
+    'COSTACLEAN_QA_AUTH_EMAIL',
+    'COSTACLEAN_QA_AUTH_PASSWORD',
+  ]) {
+    env[name] = process.env[name] || fileEnv[name]
+  }
   if (!isExactQaSupabaseUrl(env.VITE_SUPABASE_URL) || env.VITE_SUPABASE_URL.includes(PRODUCTION_PROJECT_REF)) {
     throw new Error('Diagnostic requires the authoritative QA project.')
   }
@@ -45,6 +60,49 @@ export async function loadAuthoritativeQaEnv(rootDir = process.cwd()) {
 
 function isRecord(value) {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function extractedValue(field) {
+  if (field === null || field === undefined) return null
+  if (!isRecord(field)) return field
+  return field.value ?? field.normalizedValue ?? field.rawValue ?? null
+}
+
+function matchesText(field, expected, { contains = false } = {}) {
+  const value = extractedValue(field)
+  if (typeof value !== 'string') return false
+  return contains
+    ? value.toLocaleLowerCase('es').includes(expected.toLocaleLowerCase('es'))
+    : value.trim().toLocaleUpperCase('es') === expected.toLocaleUpperCase('es')
+}
+
+function matchesAmount(field, expected) {
+  const value = extractedValue(field)
+  if (typeof value !== 'string' && typeof value !== 'number') return false
+  const numeric = Number(String(value).trim().replace(',', '.').replace(/[^0-9.-]/gu, ''))
+  return Number.isFinite(numeric) && Math.abs(numeric - expected) < 0.005
+}
+
+export function verifySyntheticInvoiceProposal(proposal) {
+  const p = isRecord(proposal) ? proposal : {}
+  const supplier = isRecord(p.supplier) ? p.supplier : {}
+  const invoice = isRecord(p.invoice) ? p.invoice : {}
+  const amounts = isRecord(p.amounts) ? p.amounts : {}
+  const vat = Array.isArray(p.vatLines) && isRecord(p.vatLines[0]) ? p.vatLines[0] : {}
+  return {
+    schemaVersion: p.schemaVersion === 1,
+    documentType: matchesText(p.documentType, 'INVOICE'),
+    supplierName: matchesText(supplier.rawName, 'Proveedor Ficticio Norte S.L.', { contains: true }),
+    fictitiousTaxId: matchesText(supplier.taxId, 'B00000002'),
+    invoiceNumber: matchesText(invoice.number, 'SYN-PDF-2026-001'),
+    issueDate: matchesText(invoice.issueDate, '2026-11-12'),
+    base100: matchesAmount(amounts.net, 100),
+    vat21: matchesAmount(amounts.tax, 21),
+    total121: matchesAmount(amounts.gross, 121),
+    vatRate21: matchesAmount(vat.rate, 21),
+    vatBase100: matchesAmount(vat.base, 100),
+    vatAmount21: matchesAmount(vat.tax, 21),
+  }
 }
 
 function typeOf(value) {

@@ -1,4 +1,6 @@
 import crypto from 'node:crypto'
+import { readFile } from 'node:fs/promises'
+import path from 'node:path'
 import { createClient } from '@supabase/supabase-js'
 import {
   assertNoDiagnosticSecrets,
@@ -7,12 +9,14 @@ import {
   PRODUCTION_PROJECT_REF,
   QA_PROJECT_REF,
   sanitizeProposal,
+  verifySyntheticInvoiceProposal,
   writeDiagnosticReport,
 } from './expenseNormalizationDiagnostic.mjs'
 
 const rootDir = process.cwd()
 const FUNCTION_NAME = 'expense-document-openai-extraction'
 const BUCKET = 'expense-receipts'
+const SYNTHETIC_PDF = 'src/features/expenses/fixtures/smart-expense-synthetic-invoice.pdf'
 
 function isRecord(value) {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
@@ -47,45 +51,6 @@ function safeProviderBody(body) {
   return safe
 }
 
-function createSyntheticPdf() {
-  const lines = [
-    'FACTURA DE PRUEBA QA',
-    'Proveedor Ficticio QA',
-    'Servicio de limpieza',
-    'Numero QA-007',
-    'Fecha 2026-10-02',
-    'Base imponible 10.00 EUR',
-    'IVA 21% 2.10 EUR',
-    'Total 12.10 EUR',
-  ]
-  const content = [
-    'BT',
-    '/F1 16 Tf',
-    '72 720 Td',
-    ...lines.flatMap((line, index) => [index === 0 ? `(${line}) Tj` : `0 -${index === 1 ? 28 : 22} Td (${line}) Tj`]),
-    'ET',
-    '',
-  ].join('\n')
-  const objects = [
-    '<< /Type /Catalog /Pages 2 0 R >>',
-    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
-    `<< /Length ${Buffer.byteLength(content, 'ascii')} >>\nstream\n${content}endstream`,
-    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
-  ]
-  let pdf = '%PDF-1.4\n'
-  const offsets = [0]
-  for (let index = 0; index < objects.length; index += 1) {
-    offsets.push(Buffer.byteLength(pdf, 'ascii'))
-    pdf += `${index + 1} 0 obj\n${objects[index]}\nendobj\n`
-  }
-  const xrefOffset = Buffer.byteLength(pdf, 'ascii')
-  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`
-  pdf += offsets.slice(1).map((offset) => `${String(offset).padStart(10, '0')} 00000 n `).join('\n')
-  pdf += `\ntrailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`
-  return Buffer.from(pdf, 'ascii')
-}
-
 function safeError(error) {
   return error instanceof Error ? error.message.slice(0, 240) : 'unknown-error'
 }
@@ -101,10 +66,14 @@ const summary = {
   normalizationId: null,
   reportPath: null,
 }
+let client = null
+let storagePath = null
+let diagnosticReport = null
+let failure = null
 
 try {
   const env = await loadAuthoritativeQaEnv(rootDir)
-  const client = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
+  client = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY, { auth: { persistSession: false, autoRefreshToken: false } })
   const auth = await client.auth.signInWithPassword({ email: env.COSTACLEAN_QA_AUTH_EMAIL, password: env.COSTACLEAN_QA_AUTH_PASSWORD })
   if (auth.error || !auth.data.session) throw new Error('QA authentication failed.')
   const accessToken = auth.data.session.access_token
@@ -114,9 +83,10 @@ try {
   if (sessionResult.error || !isRecord(sessionResult.data) || typeof sessionResult.data.id !== 'string') throw new Error('QA capture session creation failed.')
   summary.sessionId = sessionResult.data.id
 
-  const pdf = createSyntheticPdf()
+  const pdf = await readFile(path.join(rootDir, SYNTHETIC_PDF))
+  if (!pdf.subarray(0, 8).toString('ascii').startsWith('%PDF-1.')) throw new Error('Synthetic PDF fixture is invalid.')
   const sha256 = crypto.createHash('sha256').update(pdf).digest('hex')
-  const storagePath = `captures/${summary.sessionId}/${sha256}.pdf`
+  storagePath = `captures/${summary.sessionId}/${sha256}.pdf`
   const upload = await client.storage.from(BUCKET).upload(storagePath, new Blob([pdf], { type: 'application/pdf' }), { cacheControl: '3600', upsert: true, contentType: 'application/pdf' })
   if (upload.error) throw new Error('QA document upload failed.')
   const documentResult = await client.rpc('attach_expense_capture_document', {
@@ -140,6 +110,8 @@ try {
   summary.openAiCallsThisGate = 1
   const providerBody = await providerResponse.json().catch(() => null)
   const providerEvidence = { status: providerResponse.status, headers: safeHeaders(providerResponse), body: safeProviderBody(providerBody) }
+  summary.extractionChecks = verifySyntheticInvoiceProposal(providerBody?.proposal)
+  summary.extractionChecksPass = Object.values(summary.extractionChecks).every(Boolean)
   if (isRecord(providerBody) && typeof providerBody.extractionId === 'string') summary.extractionId = providerBody.extractionId
   if (!summary.extractionId) {
     const extractionLookup = await client.from('expense_capture_extractions').select('id').eq('capture_document_id', summary.documentId).order('attempt', { ascending: false }).limit(1).maybeSingle()
@@ -148,9 +120,9 @@ try {
   }
 
   const diagnostic = await buildDiagnosticReport({ rootDir, extractionId: summary.extractionId, invokeNormalization: true })
-  const combinedReport = { ...diagnostic, provider: providerEvidence, providerRequestCount: summary.providerRequestCount }
-  assertNoDiagnosticSecrets(combinedReport)
-  summary.reportPath = await writeDiagnosticReport(combinedReport, rootDir)
+  diagnosticReport = { ...diagnostic, provider: providerEvidence, providerRequestCount: summary.providerRequestCount }
+  assertNoDiagnosticSecrets(diagnosticReport)
+  summary.reportPath = await writeDiagnosticReport(diagnosticReport, rootDir)
   const normalizationRows = Array.isArray(diagnostic.normalizationRowsAfter) ? diagnostic.normalizationRowsAfter : []
   summary.normalizationId = normalizationRows.at(-1)?.id ?? null
   summary.provider = providerEvidence
@@ -158,7 +130,37 @@ try {
   summary.normalizationRowsAfter = normalizationRows
   console.log(JSON.stringify(summary, null, 2))
 } catch (error) {
-  summary.error = safeError(error)
+  failure = safeError(error)
+} finally {
+  const cleanup = { storageObjectRemoved: null, captureSessionCancelled: null, auditRetained: true }
+  if (client && summary.sessionId) {
+    if (storagePath) {
+      try {
+        const removal = await client.storage.from(BUCKET).remove([storagePath])
+        cleanup.storageObjectRemoved = !removal.error
+      } catch {
+        cleanup.storageObjectRemoved = false
+      }
+    }
+    try {
+      const cancellation = await client.rpc('cancel_expense_capture_session', { p_capture_session_id: summary.sessionId })
+      cleanup.captureSessionCancelled = !cancellation.error && cancellation.data?.status === 'CANCELLED'
+    } catch {
+      cleanup.captureSessionCancelled = false
+    }
+  }
+  summary.cleanup = cleanup
+  if (diagnosticReport) {
+    diagnosticReport.cleanup = cleanup
+    try {
+      summary.reportPath = await writeDiagnosticReport(diagnosticReport, rootDir)
+    } catch {
+      failure ??= 'Sanitized diagnostic report could not be finalized.'
+    }
+  }
+  if (failure) {
+    summary.error = failure
+    process.exitCode = 1
+  }
   console.log(JSON.stringify(summary, null, 2))
-  process.exitCode = 1
 }

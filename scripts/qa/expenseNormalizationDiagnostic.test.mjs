@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { assertNoDiagnosticSecrets, QA_SUPABASE_ORIGIN, isExactQaSupabaseUrl, loadAuthoritativeQaEnv, sanitizeProposal, safeResponseBody, sha256Json } from './expenseNormalizationDiagnostic.mjs'
+import { assertNoDiagnosticSecrets, QA_SUPABASE_ORIGIN, isExactQaSupabaseUrl, loadAuthoritativeQaEnv, sanitizeProposal, safeResponseBody, sha256Json, verifySyntheticInvoiceProposal } from './expenseNormalizationDiagnostic.mjs'
 
 describe('expense normalization diagnostic retention', () => {
   it('keeps only structural proposal evidence and a stable hash', () => {
@@ -40,5 +40,42 @@ describe('expense normalization diagnostic retention', () => {
     expect(isExactQaSupabaseUrl('http://kpvvydthlxupjjqqdpxy.supabase.co')).toBe(false)
     expect(isExactQaSupabaseUrl('https://wfxnwfcdjainpojhbdri.supabase.co')).toBe(false)
     await expect(loadAuthoritativeQaEnv('C:/path/that/does/not/exist')).rejects.toThrow()
+  })
+
+  it('loads only required QA settings from process environment when no local file exists', async () => {
+    const names = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY', 'COSTACLEAN_QA_AUTH_EMAIL', 'COSTACLEAN_QA_AUTH_PASSWORD']
+    const environmentNames = [...names, 'SUPABASE_SERVICE_ROLE_KEY']
+    const previous = Object.fromEntries(environmentNames.map((name) => [name, process.env[name]]))
+    try {
+      process.env.VITE_SUPABASE_URL = QA_SUPABASE_ORIGIN
+      process.env.VITE_SUPABASE_ANON_KEY = 'synthetic-public-key'
+      process.env.COSTACLEAN_QA_AUTH_EMAIL = 'qa@example.invalid'
+      process.env.COSTACLEAN_QA_AUTH_PASSWORD = 'synthetic-password'
+      process.env.SUPABASE_SERVICE_ROLE_KEY = 'must-not-be-returned'
+      const env = await loadAuthoritativeQaEnv('C:/path/that/does/not/exist')
+      expect(env).toMatchObject({ VITE_SUPABASE_URL: QA_SUPABASE_ORIGIN, VITE_SUPABASE_ANON_KEY: 'synthetic-public-key' })
+      expect(Object.keys(env).sort()).toEqual(names.sort())
+    } finally {
+      for (const name of names) {
+        if (previous[name] === undefined) delete process.env[name]
+        else process.env[name] = previous[name]
+      }
+      if (previous.SUPABASE_SERVICE_ROLE_KEY === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY
+      else process.env.SUPABASE_SERVICE_ROLE_KEY = previous.SUPABASE_SERVICE_ROLE_KEY
+    }
+  })
+
+  it('checks only booleans for the known synthetic invoice fields', () => {
+    const field = (value) => ({ value, normalizedValue: value, rawValue: String(value), confidence: 0.9 })
+    const proposal = {
+      schemaVersion: 1,
+      documentType: field('INVOICE'),
+      supplier: { rawName: field('Proveedor Ficticio Norte S.L.'), taxId: field('B00000002') },
+      invoice: { number: field('SYN-PDF-2026-001'), issueDate: field('2026-11-12') },
+      amounts: { net: field('100.00'), tax: field('21.00'), gross: field('121.00') },
+      vatLines: [{ rate: field('21'), base: field('100.00'), tax: field('21.00') }],
+    }
+    expect(Object.values(verifySyntheticInvoiceProposal(proposal)).every(Boolean)).toBe(true)
+    expect(Object.values(verifySyntheticInvoiceProposal({})).every(Boolean)).toBe(false)
   })
 })

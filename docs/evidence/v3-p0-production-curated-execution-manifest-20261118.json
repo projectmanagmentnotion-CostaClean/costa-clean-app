@@ -1,0 +1,303 @@
+{
+  "format": 1,
+  "purpose": "Hash-pinned local release preparation; not execution authorization",
+  "createdAt": "2026-11-18",
+  "repository": "projectmanagmentnotion-CostaClean/costa-clean-app",
+  "candidateHead": "dafaba0b1c330a0e60998169da369865c87c9e5e",
+  "previewHead": "4951e37c38798eb35209ed970c9dbc34c58aff21",
+  "productionProjectRef": "wfxnwfcdjainpojhbdri",
+  "productionLedgerReadOnlyObserved": {
+    "entryCount": 29,
+    "lastReadOnlyVerificationAt": "2026-11-18",
+    "verificationSource": "Supabase MCP list_migrations (read-only)",
+    "versions": [
+      "20260707120336",
+      "20260721183811",
+      "20260722114751",
+      "20260903104334",
+      "20260903113426",
+      "20260903113514",
+      "20260903113611",
+      "20260903121016",
+      "20260903122136",
+      "20260904153021",
+      "20260904153132",
+      "20260915075825",
+      "20260923123411",
+      "20260923123426",
+      "20260923123442",
+      "20260923123444",
+      "20260923123447",
+      "20260923123448",
+      "20260923123449",
+      "20260923123451",
+      "20260923123452",
+      "20260923123454",
+      "20260923123455",
+      "20260924083037",
+      "20260924083039",
+      "20260924083041",
+      "20260924083043",
+      "20260924100831",
+      "20261102120000"
+    ],
+    "p0Version": "20261102120000",
+    "p0AlreadyApplied": true
+  },
+  "execution": {
+    "applyAllowed": false,
+    "executorValidated": false,
+    "strategy": "Do not run db push from the full repository. A candidate future method is a temporary Supabase workdir whose supabase/migrations contains exactly orderedFiles; invoke the official CLI with --include-all only after a read-only dry-run lists exactly those filenames in the expected order. This selection behavior is not yet validated against Production; no execution authorization is granted.",
+    "orderedFiles": [
+      {
+        "order": 1,
+        "file": "supabase/migrations/20260924140000_n51_smart_expense_capture.sql",
+        "sha256": "D7852A51A862133C3C957506F99F0CCAE8C9CEC6458CB5D60289291857FAAC04"
+      },
+      {
+        "order": 2,
+        "file": "supabase/migrations/20260928150000_n52_document_extraction_foundation.sql",
+        "sha256": "F918960BA908AACC45955AD4F85C32809C209885135531AB693BAEAB72A5039F"
+      },
+      {
+        "order": 3,
+        "file": "supabase/migrations/20260928194500_n52_runtime_r2_guards.sql",
+        "sha256": "5DA51E5AA256EDBB4C76EE40D0D809571EB5FC6BC5506C7A732B17D538F2C1C5"
+      },
+      {
+        "order": 4,
+        "file": "supabase/migrations/20260928195000_n52_runtime_r2_owner_param.sql",
+        "sha256": "655895DC1AF7DA4E60BEC594B4AE0FFBB7300FD637826EBBDEA2AA12A91BBF44"
+      },
+      {
+        "order": 5,
+        "file": "supabase/migrations/20260929120000_n52_runtime_r21_contract_parity.sql",
+        "sha256": "8FA2B0980665FD297A55284568CCDFC15AC78E8C0D27A5816202E5AC958D8F91"
+      },
+      {
+        "order": 6,
+        "file": "supabase/migrations/20260929140000_n52_runtime_r22_idempotency_scope.sql",
+        "sha256": "B6606691C0AD7B82428F279332FEFE1D6A81535A95CD4835E7D1D8F2D5C7E7A4"
+      },
+      {
+        "order": 7,
+        "file": "supabase/migrations/20260930095656_n53_expense_capture_normalization_runtime.sql",
+        "sha256": "6ECF054A8E5E7EC4229195243834C0D0DD55CD00610279C1587704A3CC5218C2"
+      },
+      {
+        "order": 8,
+        "file": "supabase/migrations/20261001170000_n55_confirm_expense_capture.sql",
+        "sha256": "FA35C3D344547F8E927CE7C79A0739DED21FFD59A038D3217E0FA6F2B7969F46"
+      },
+      {
+        "order": 9,
+        "file": "supabase/migrations/20261001213000_n55_confirm_expense_capture_concurrency.sql",
+        "sha256": "E9BF540E92B36503791807440E35789A3AAB15DA3E869E427C1C73AA1035345D"
+      },
+      {
+        "order": 10,
+        "file": "supabase/migrations/20261002080214_n55_openai_provider_contract.sql",
+        "sha256": "D2035C004D5B99920235127633D53FD6C2C0BC88F7A4AA9EBA797EB4B5E877EA"
+      },
+      {
+        "order": 11,
+        "file": "supabase/migrations/20261002150000_invoice_service_reference_override.sql",
+        "sha256": "D803FC0493465DBF1F6E37530C6459ABDA78FB30A3B81CD8E1F14C593FB5F6E4"
+      },
+      {
+        "order": 12,
+        "file": "supabase/migrations/20261002165959_p0_expense_financial_guard_before_n56.sql",
+        "sha256": "72AAF2E487530803764E2247BB08D9F61F875653003945B60C393EEEB9AE8E71"
+      },
+      {
+        "order": 13,
+        "file": "supabase/migrations/20261002170000_n56_preproduction_security_hardening.sql",
+        "sha256": "4FFFFD55DBD1EE7B222A80145C81C4AC36C0C7EE41744D0229AA5A59492E3FB7"
+      },
+      {
+        "order": 14,
+        "file": "supabase/migrations/20261002173000_expense_product_grant_hardening.sql",
+        "sha256": "D1DE6917766D384DEF820C0206B49357AE72D49974709E4EC4944770FC28EE9B"
+      },
+      {
+        "order": 15,
+        "file": "supabase/migrations/20261002173001_p0_expense_financial_guard_reconcile.sql",
+        "sha256": "80E1E4BA35CA330B2A2A358F5F35A2D822FA681E5E70A3F8DB2B4812683A6BA5"
+      }
+    ]
+  },
+  "historicalEquivalences": [
+    {
+      "source": "20260922104759_n11a_app_internal_staff_authorization.sql",
+      "productionVersion": "20260923123442",
+      "replay": false
+    },
+    {
+      "source": "20260922111338_n11_transactional_data_hygiene_adapter.sql",
+      "productionVersion": "20260923123444",
+      "replay": false
+    },
+    {
+      "source": "20260922113953_n11b_role_scoped_authorization_and_literal_hygiene_prefixes.sql",
+      "productionVersion": "20260923123447",
+      "replay": false
+    },
+    {
+      "source": "20260922115842_n11c_testable_internal_staff_role_predicates.sql",
+      "productionVersion": "20260923123448",
+      "replay": false
+    },
+    {
+      "source": "20260922200501_n21_atomic_business_graph.sql",
+      "productionVersion": "20260923123454",
+      "replay": false
+    }
+  ],
+  "excluded": [
+    "20261102120000_p0_expense_access_and_rpc_hardening.sql (already applied; do not replay)",
+    "20260721_qa_baseline_schema.sql (QA-only bootstrap)",
+    "20260721_rls_clients_properties_jobs_write_fix.sql (duplicate 20260721 prefix / history mapped elsewhere)",
+    "20261111214439_archive_job_internal_staff.sql (not in approved 13-version V3 set; separate reconciliation required)",
+    "20261117121106_storage_expense_readonly_write_guard.sql (not in approved 13-version V3 set; separate Storage review required)",
+    "Every other local migration not listed under execution."
+  ],
+  "preconditions": [
+    "Before each migration, verify target project ref, full 29-entry ledger, and expected prior step marker.",
+    "Verify P0 helper, effective table grants, RLS/policies, and four privileged RPC ACLs before bridge/N56.",
+    "Before any apply, qualify how the exact executor handles explicit transaction-control statements and migration-history recording. Fourteen of the 15 curated SQL files contain explicit BEGIN/COMMIT; do not assume a later history-write or connection failure rolls back work already committed by an embedded COMMIT.",
+    "If a migration fails after an embedded COMMIT or the connection outcome is ambiguous, stop without retry; inspect ledger and effective catalog read-only and require a separately reviewed recovery decision.",
+    "Do not proceed with broader writes unless finance-only expense insert/update and anon denial remain true."
+  ],
+  "postconditions": [
+    "Confirm expected capture tables/RPC and owner/ACL state after each relevant migration.",
+    "After N56 and reconciliation, assert finance roles retain allowed write paths; non-financial authenticated and anon cannot write expenses.",
+    "Compare Storage bucket inventory and policy behavior before/after; no new buckets or permission expansion.",
+    "Verify P0 privileged RPC anon/authenticated execute remains revoked and P0 is still represented once in ledger."
+  ],
+  "rollback": {
+    "beforeWrites": "Capture a fresh, verified DB and independent Storage restore point; retain encrypted originals.",
+    "failure": "Stop immediately. A transaction rollback is not sufficient evidence of reversal for files containing explicit COMMIT; after an ambiguous or post-COMMIT failure, do not retry or apply compensating SQL. Compare ledger and catalog read-only, then require an independently reviewed recovery procedure.",
+    "recovery": "If a committed step needs reversal, use an independently reviewed rollback/restore procedure and separate owner authorization.",
+    "productionRestoreRehearsal": "Local encrypted DB restore was reported PASS; Storage ciphertext and 61-object recovery were reported PASS. Complete Auth/platform and business-integrity rehearsal remains unverified."
+  },
+  "transactionControlAudit": {
+    "curatedFiles": 15,
+    "filesWithExplicitBeginAndCommit": 14,
+    "filesWithoutExplicitBeginAndCommit": 1,
+    "risk": "The Supabase CLI normally applies a migration transactionally, but embedded COMMIT can end that transaction before migration-history recording is acknowledged. Atomic SQL-plus-ledger behavior is not demonstrated for this curated set.",
+    "runtimeQualification": {
+      "status": "BLOCKED_BY_AUTO_REVIEW",
+      "executionStarted": false,
+      "effects": "none; the temporary probe directory was confirmed absent",
+      "attempt": "A synthetic local PostgreSQL probe using only 127.0.0.1 and no Costa Clean SQL was rejected before PowerShell started. No alternate invocation was attempted."
+    },
+    "productionApplyGate": "Before any Production apply, either qualify the exact pinned CLI behavior on a disposable representative database using a controlled post-COMMIT failure, or prepare and re-certify a reviewed migration set without embedded transaction control. No source SQL was changed by this preparation.",
+    "references": [
+      "https://supabase.com/docs/guides/local-development/cli-workflows",
+      "https://github.com/supabase/cli/issues/5047",
+      "https://github.com/orgs/supabase/discussions/52753"
+    ]
+  },
+  "storageEvidence": {
+    "existingEvidence": "61 encrypted Storage objects integrity and local recovery reported PASS.",
+    "pending": [
+      "effective signed-URL expiration",
+      "cross-user object isolation"
+    ]
+  },
+  "knownBlockers": [
+    "Full Production structural catalog snapshot remains incomplete.",
+    "Standard Supabase CLI push has not been proven to apply only this curated sequence in the presence of older absent versions and remapped equivalents.",
+    "Fourteen curated migrations contain explicit BEGIN/COMMIT; exact CLI migration-history atomicity and rollback behavior remains unqualified.",
+    "The curated db push --dry-run selection is unvalidated: the direct attempt exited with a network-class error and the session-pooler attempt exited 1 with an uncaptured CLI message. The sanitizer did not parse version-only output, so the exact pending set is unknown.",
+    "This document has no execution authorization; no Production migration may be run from it."
+  ],
+  "permissionAndOwnershipChanges": {
+    "ownerPostgresFunctions": [
+      "create_expense_capture_session",
+      "attach_expense_capture_document",
+      "cancel_expense_capture_session",
+      "require_n52_active_internal_staff",
+      "n52_prepare_extraction",
+      "n52_claim_extraction",
+      "n53_claim_normalization",
+      "n53_finalize_normalization_success",
+      "n53_finalize_normalization_failure",
+      "confirm_expense_capture",
+      "expense_staff_access"
+    ],
+    "workerRpcGrant": "n52_claim_extraction, n52_prepare_extraction, n53_claim_normalization, n53_finalize_normalization_success/failure execute granted only to service_role after revoking public/anon/authenticated",
+    "authenticatedRpcGrant": "create/attach/cancel capture session and confirm_expense_capture execute granted to authenticated after revoking public/anon (N56 also revokes service_role on these capture RPCs)",
+    "tableRls": "N51 enables and forces RLS on sessions/documents; N52 on extractions; N53 on normalizations; N55 on confirmations. Authenticated receives owner-scoped SELECT only; service_role gets worker CRUD where specified.",
+    "expenseGrants": "P0 bridge and grant hardening revoke public/anon on expenses; bridge removes authenticated DELETE/TRUNCATE/REFERENCES/TRIGGER and grants service_role CRUD; bridge policies restrict financial insert/update. N56 replaces expense policies; final reconcile keeps finance-only insert/update and drops bridge policies in same transaction.",
+    "privilegedLegacyRpc": "N56 revokes execute from public/anon/authenticated/service_role on debug_run_authorized_invoice_batch, run_authorized_invoice_batch, n21_assert_existing_job_quote_compatibility, rls_auto_enable.",
+    "storage": "N51 creates four scoped capture object policies. N56 replaces the four current authenticated expense-receipt policies with internal-staff policies. Compare exact effective Storage path constraints before/after; no Storage write expansion is authorized.",
+    "invoiceRpc": "invoice_service_reference_override alters the invoice contract and grants save_invoice_with_lines(jsonb,jsonb) to authenticated; verify its exact ACL and compatibility before execution.",
+    "caveat": "This is a static source review, not runtime verification of effective grants or owners on a representative restored database."
+  },
+  "cliSelectionAssessment": {
+    "cliVersion": "2.109.1",
+    "flagsObserved": [
+      "--include-all: include all migrations not found on remote history",
+      "--dry-run: print migrations that would be applied; no execution",
+      "no per-file/per-version allowlist flag exposed by db push --help"
+    ],
+    "officialReference": "https://supabase.com/docs/reference/cli/supabase-db-push",
+    "decision": "The default command pushes local migrations not recorded remotely; because this repository has many absent local versions, old remapped equivalents, a QA-only baseline and duplicate prefixes, do not run linked db push. --include-all is explicitly broader, not selective.",
+    "dryRunUsedAgainstProduction": true
+  },
+  "proposedDryRunGate": {
+    "validated": false,
+    "attemptedAt": "2026-11-18",
+    "latestExecutionObservation": {
+      "date": "2026-11-18",
+      "commandMode": "READ_ONLY_DRY_RUN",
+      "toolResult": "OUTPUT_TRUNCATED_BEFORE_RESULT",
+      "processAtRecheck": "NOT_RUNNING",
+      "retainedOutput": "NOT_FOUND",
+      "exitCode": "UNRECOVERABLE",
+      "exactSelection": "UNVERIFIED",
+      "migrationApplied": false,
+      "automaticRetry": false
+    },
+    "lastAttempt": {
+      "cliVersion": "2.109.1",
+      "commandMode": "--include-all --dry-run --linked",
+      "preflight": "PASS: 15 curated migrations matched pinned SHA-256 values; minimal config contained no secret settings",
+      "cliExitCode": 1,
+      "migrationFilenamesDetected": 0,
+      "versionOnlyMigrationOutputParsed": false,
+      "exactSelection": "UNVERIFIED",
+      "failureClass": "NETWORK",
+      "attemptedWorkdir": "C:\\Users\\USUARIO\\AppData\\Local\\CostaCleanCuratedMigrationDryRun-20261118\\34a61f18792143c2b8f438a5c6b4811a",
+      "connectivityProbe": {
+        "supabaseApiDns": "PASS",
+        "supabaseApiTcp443": "PASS",
+        "linkedDirectDatabaseDns": "FAIL",
+        "linkedDirectDatabaseTcp5432": "NOT_TESTED",
+        "sessionPoolerDns": "PASS",
+        "sessionPoolerTcp5432": "PASS",
+        "interpretation": "The direct database hostname did not resolve from this execution environment while the regional session pooler and Supabase API endpoints were reachable. This is consistent with the CLI's network-class failure, but the exact CLI destination was not captured; root cause is not proven. No authenticated database request was made by this connectivity probe."
+      },
+      "failureDetail": "The sanitized runner retained only the network error class; no exact underlying message was retained. It searched for full filenames but did not parse version-only output, so exact selection remains unverified. The command used --dry-run; no migration was applied."
+    },
+    "sessionPoolerAttempt": {
+      "transport": "Supabase IPv4 session pooler, port 5432",
+      "credentialSource": "Exact matching pgpass.conf entry; value used only in process memory and not printed or stored by this run",
+      "readOnlyConnectivityCheck": "psql SELECT 1 returned PASS",
+      "dryRunCliVersion": "2.109.1",
+      "dryRunExitCode": 1,
+      "migrationFilenamesDetected": 0,
+      "versionOnlyMigrationOutputParsed": false,
+      "exactSelection": "UNVERIFIED",
+      "failureClass": "OTHER",
+      "failureDetail": "The sanitized runner did not retain the underlying CLI message. It searched for full filenames but did not parse version-only output, so exact selection remains unverified. The command used --dry-run; no migration was applied. No repeat was attempted.",
+      "interpretation": "The pooler and credentials work with psql, but the curated CLI dry-run remains unvalidated. The failure cannot now be attributed to raw network reachability or database-password validity; command/runtime-specific cause is unknown."
+    },
+    "workspace": "temporary Supabase project with config.toml, exactly the 15 hash-pinned SQL files, and a newly written .temp/project-ref containing only the authorized Production project ref; no credentials, unrelated migrations, QA baseline, or copied session files",
+    "commandShape": "supabase --workdir <curated-workdir> db push --include-all --dry-run --linked",
+    "precondition": "Owner-authorized read-only preflight confirms linked project ref wfxnwfcdjainpojhbdri and current ledger snapshot",
+    "passCondition": "dry-run output exactly equals all 15 orderedFiles, no extras/missing, and hash verification still passes",
+    "stop": "If the CLI rejects older versions, lists any additional migration, asks for an unexpected mutation, or the ledger differs, stop before any apply."
+  }
+}

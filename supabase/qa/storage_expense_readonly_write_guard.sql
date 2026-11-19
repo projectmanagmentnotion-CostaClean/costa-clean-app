@@ -116,7 +116,23 @@ do $policy_guard$
 declare
   write_policy_count integer;
   unguarded_policy_count integer;
+  legacy_expense_write_policy_count integer;
 begin
+  select count(*) into legacy_expense_write_policy_count
+  from pg_policies
+  where schemaname = 'storage'
+    and tablename = 'objects'
+    and policyname in (
+      'Allow authenticated upload expense receipts',
+      'Allow authenticated update expense receipts',
+      'Allow authenticated delete expense receipts'
+    )
+    and cmd in ('INSERT', 'UPDATE', 'DELETE');
+  perform pg_temp.storage_guard_assert(
+    legacy_expense_write_policy_count = 0,
+    'legacy_bucket_wide_expense_write_policies_removed'
+  );
+
   select count(*) into write_policy_count
   from pg_policies
   where schemaname = 'storage'
@@ -240,6 +256,10 @@ begin
           '{"mimetype":"image/png","size":2}', object_row.object_id);
         get diagnostics affected_count = row_count;
         perform pg_temp.storage_guard_assert(affected_count = 1, actor.actor || '_' || object_row.kind || '_update_allowed');
+
+        execute format('delete from storage.objects where id = %L::uuid', object_row.object_id);
+        get diagnostics affected_count = row_count;
+        perform pg_temp.storage_guard_assert(affected_count = 1, actor.actor || '_' || object_row.kind || '_delete_allowed');
       end loop;
     else
       for object_row in select f.object_id, f.kind, f.path from storage_guard_fixture as f where f.actor = actor.actor loop
@@ -274,6 +294,10 @@ begin
           ),
           actor.actor || '_' || object_row.kind || '_insert_denied'
         );
+
+        execute format('delete from storage.objects where id = %L::uuid', object_row.object_id);
+        get diagnostics affected_count = row_count;
+        perform pg_temp.storage_guard_assert(affected_count = 0, actor.actor || '_' || object_row.kind || '_delete_denied');
       end loop;
     end if;
 
@@ -298,6 +322,15 @@ begin
     'insert into storage.objects (bucket_id,name,metadata) values (''expense-receipts'',''expenses/anon-denied/file.png'', ''{"mimetype":"image/png","size":1}''::jsonb)',
     'anon_storage_insert_denied'
   );
+  begin
+    execute 'delete from storage.objects where id = (select object_id from storage_guard_fixture where actor = ''owner'' and kind = ''expense'')';
+    get diagnostics affected_count = row_count;
+    perform pg_temp.storage_guard_assert(affected_count = 0, 'anon_storage_delete_denied');
+  exception when insufficient_privilege then
+    -- A missing table privilege is also a valid denial; otherwise RLS must
+    -- prevent anon from deleting the synthetic expense object.
+    null;
+  end;
   execute 'reset role';
 end;
 $role_matrix$;

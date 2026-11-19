@@ -68,6 +68,14 @@ using (
 -- Expense receipt policies are permissive and therefore OR together. Replace
 -- every write policy on expense-receipts, including N51 capture paths, while
 -- keeping each existing path, owner and session condition intact.
+-- Production currently also has these legacy bucket-wide authenticated write
+-- policies. They must be removed because PostgreSQL ORs permissive policies;
+-- leaving them would bypass the staff-writer checks below. Keep the matching
+-- read policy untouched (shared internal read remains accepted technical debt).
+drop policy if exists "Allow authenticated upload expense receipts" on storage.objects;
+drop policy if exists "Allow authenticated update expense receipts" on storage.objects;
+drop policy if exists "Allow authenticated delete expense receipts" on storage.objects;
+
 drop policy if exists "Internal staff upload expense receipts" on storage.objects;
 create policy "Internal staff upload expense receipts" on storage.objects
 for insert to authenticated

@@ -117,6 +117,7 @@ declare
   write_policy_count integer;
   unguarded_policy_count integer;
   legacy_expense_write_policy_count integer;
+  anonymous_write_policy_count integer;
 begin
   select count(*) into legacy_expense_write_policy_count
   from pg_policies
@@ -165,6 +166,14 @@ begin
     and (coalesce(qual, '') || coalesce(with_check, '')) not like '%is_current_internal_staff_writer%';
   perform pg_temp.storage_guard_assert(unguarded_policy_count = 0, 'all_expense_write_policies_check_writer_role');
 
+  select count(*) into anonymous_write_policy_count
+  from pg_policies
+  where schemaname = 'storage'
+    and tablename = 'objects'
+    and cmd in ('INSERT', 'UPDATE', 'DELETE')
+    and roles && array['anon', 'public']::name[];
+  perform pg_temp.storage_guard_assert(anonymous_write_policy_count = 0, 'no_anonymous_storage_write_policies');
+
   perform pg_temp.storage_guard_assert(
     exists (select 1 from pg_policies where schemaname = 'storage' and tablename = 'objects'
       and policyname = 'Internal staff read expense receipts' and cmd = 'SELECT'),
@@ -187,6 +196,10 @@ begin
   perform pg_temp.storage_guard_assert(
     not has_function_privilege('anon', 'app_private.is_current_internal_staff_writer()', 'EXECUTE'),
     'anon_cannot_execute_current_actor_guard'
+  );
+  perform pg_temp.storage_guard_assert(
+    has_function_privilege('postgres', 'app_private.require_internal_staff_write()', 'EXECUTE'),
+    'guard_definer_can_execute_internal_write_contract'
   );
 end;
 $policy_guard$;
@@ -257,9 +270,10 @@ begin
         get diagnostics affected_count = row_count;
         perform pg_temp.storage_guard_assert(affected_count = 1, actor.actor || '_' || object_row.kind || '_update_allowed');
 
-        execute format('delete from storage.objects where id = %L::uuid', object_row.object_id);
-        get diagnostics affected_count = row_count;
-        perform pg_temp.storage_guard_assert(affected_count = 1, actor.actor || '_' || object_row.kind || '_delete_allowed');
+        -- Supabase's protect_delete trigger fires before RLS filtering for
+        -- direct SQL, even for rows hidden from anon. SQL cannot prove the
+        -- Storage API delete path, so retain the catalog check and report it
+        -- explicitly as not tested below.
       end loop;
     else
       for object_row in select f.object_id, f.kind, f.path from storage_guard_fixture as f where f.actor = actor.actor loop
@@ -295,9 +309,6 @@ begin
           actor.actor || '_' || object_row.kind || '_insert_denied'
         );
 
-        execute format('delete from storage.objects where id = %L::uuid', object_row.object_id);
-        get diagnostics affected_count = row_count;
-        perform pg_temp.storage_guard_assert(affected_count = 0, actor.actor || '_' || object_row.kind || '_delete_denied');
       end loop;
     end if;
 
@@ -322,18 +333,10 @@ begin
     'insert into storage.objects (bucket_id,name,metadata) values (''expense-receipts'',''expenses/anon-denied/file.png'', ''{"mimetype":"image/png","size":1}''::jsonb)',
     'anon_storage_insert_denied'
   );
-  begin
-    execute 'delete from storage.objects where id = (select object_id from storage_guard_fixture where actor = ''owner'' and kind = ''expense'')';
-    get diagnostics affected_count = row_count;
-    perform pg_temp.storage_guard_assert(affected_count = 0, 'anon_storage_delete_denied');
-  exception when insufficient_privilege then
-    -- A missing table privilege is also a valid denial; otherwise RLS must
-    -- prevent anon from deleting the synthetic expense object.
-    null;
-  end;
   execute 'reset role';
 end;
 $role_matrix$;
 
+select 'STORAGE_DELETE_API_PATH=NOT_TESTED_SQL_TRIGGER_PRECEDES_RLS' as result;
 select 'STORAGE_RLS_MATRIX=PASS' as result;
 rollback;

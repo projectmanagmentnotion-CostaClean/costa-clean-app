@@ -1,5 +1,10 @@
 begin;
 
+-- The guard below runs as postgres, while the existing role contract is owned
+-- by supabase_admin and is not executable by postgres after its public revoke.
+-- Grant only this internal dependency to the guard's definer role.
+grant execute on function app_private.require_internal_staff_write() to postgres;
+
 -- The existing role contract defines write-capable internal staff. Keep that
 -- single source of truth and expose only the current actor's boolean decision
 -- to RLS; callers cannot probe another user's membership.

@@ -91,7 +91,39 @@ describe('N5.5 OpenAI Smart Expense adapter', () => {
   ])('rejects %s with a fixed diagnostic category', (_label, diagnosticCode, mutate) => {
     const proposal = validProposal()
     mutate(proposal)
-    expect(validateOpenAiProposal(proposal)).toEqual({ ok: false, reason: diagnosticCode })
+    expect(validateOpenAiProposal(proposal)).toMatchObject({ ok: false, reason: diagnosticCode })
+  })
+
+  it.each([
+    ['non-object supplier', 'supplier_object', (proposal: ReturnType<typeof validProposal>) => { (proposal as unknown as { supplier: unknown }).supplier = null }],
+    ['supplier keys mismatch', 'supplier_keys', (proposal: ReturnType<typeof validProposal>) => { delete (proposal.supplier as Partial<typeof proposal.supplier>).website }],
+    ['field object shape', 'supplier_rawName_object', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier as Record<string, unknown>).rawName = null }],
+    ['field keys', 'supplier_rawName_keys', (proposal: ReturnType<typeof validProposal>) => { delete (proposal.supplier.rawName as Partial<typeof proposal.supplier.rawName>).evidence }],
+    ['field value type', 'supplier_rawName_value', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).value = 123 }],
+    ['field raw value type', 'supplier_rawName_raw_value', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).rawValue = 123 }],
+    ['field confidence range', 'supplier_rawName_confidence', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).confidence = 2 }],
+    ['field source enum', 'supplier_rawName_source', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).source = 'unknown' }],
+    ['missing value consistency', 'supplier_country_missing_consistency', (proposal: ReturnType<typeof validProposal>) => { proposal.supplier.country = { ...field(null), value: 'ES', rawValue: 'ES', confidence: 1 } }],
+    ['evidence object shape', 'supplier_rawName_evidence_object', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).evidence = null }],
+    ['evidence keys', 'supplier_rawName_evidence_keys', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).evidence = { page: 1, text: 'Costa Clean', extra: true } }],
+    ['evidence page type', 'supplier_rawName_evidence_page', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).evidence = { page: 'one', text: 'Costa Clean' } }],
+    ['evidence text type', 'supplier_rawName_evidence_text', (proposal: ReturnType<typeof validProposal>) => { (proposal.supplier.rawName as Record<string, unknown>).evidence = { page: 1, text: 42 } }],
+    ['missing source evidence consistency', 'supplier_country_missing_evidence', (proposal: ReturnType<typeof validProposal>) => { proposal.supplier.country = { ...field(null), evidence: { page: 1, text: 'ES' } } }],
+    ['document evidence requirement', 'supplier_rawName_document_evidence', (proposal: ReturnType<typeof validProposal>) => { proposal.supplier.rawName = { ...field('Costa Clean'), evidence: { page: null, text: null } } }],
+  ])('reports a safe supplier detail code for %s', (_label, detailCode, mutate) => {
+    const proposal = validProposal()
+    mutate(proposal)
+    expect(validateOpenAiProposal(proposal)).toEqual({ ok: false, reason: 'supplier', detailCode })
+  })
+
+  it('keeps supplier diagnostics allowlisted in the provider failure result', async () => {
+    const proposal = validProposal()
+    ;(proposal.supplier.rawName as Record<string, unknown>).evidence = { page: 'private-text', text: 'private-supplier-content' }
+    const result = await requestOpenAiExtraction({ apiKey: 'server-only-test-key', document, fetchImpl: vi.fn().mockResolvedValue(responseFor(proposal)) })
+    expect(result).toMatchObject({ ok: false, errorCode: 'INVALID_PROVIDER_RESPONSE', diagnosticCode: 'supplier', diagnosticDetailCode: 'supplier_rawName_evidence_page' })
+    expect(JSON.stringify(result)).not.toContain('private-text')
+    expect(JSON.stringify(result)).not.toContain('private-supplier-content')
+    expect(JSON.stringify(result)).not.toContain('server-only-test-key')
   })
 
   it('reports a non-object schema root separately', () => {

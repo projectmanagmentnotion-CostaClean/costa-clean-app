@@ -32,7 +32,7 @@ describe('N5.5 OpenAI security boundary', () => {
   })
 
   it('logs only an allowlisted validation category and keeps it out of the response contract', () => {
-    expect(edgeSource).toContain("console.warn('expense_extraction_validation_rejected', result.diagnosticCode)")
+    expect(edgeSource).toContain("console.warn('expense_extraction_validation_rejected', result.diagnosticCode, result.diagnosticDetailCode ?? 'none')")
     expect(edgeSource).toContain("safeError(result.errorCode, result.errorMessageSafe, null)")
     expect(edgeSource).not.toContain('safeError(result.errorCode, result.errorMessageSafe, result.diagnosticCode')
     expect(edgeSource).not.toContain('console.warn(\'expense_extraction_validation_rejected\', output.text')

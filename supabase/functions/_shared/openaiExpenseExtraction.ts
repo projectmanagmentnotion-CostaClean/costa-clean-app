@@ -43,9 +43,14 @@ export type OpenAiProposalDiagnosticCode =
   | 'inconsistent_vat_base'
   | 'inconsistent_vat_tax'
 
+const SUPPLIER_FIELDS = ['rawName', 'legalNameCandidate', 'commercialNameCandidate', 'taxId', 'normalizedTaxIdCandidate', 'vatId', 'address', 'postalCode', 'city', 'country', 'phone', 'email', 'website'] as const
+type SupplierFieldName = typeof SUPPLIER_FIELDS[number]
+type SupplierFieldFailureRule = 'object' | 'keys' | 'value' | 'raw_value' | 'confidence' | 'source' | 'missing_consistency' | 'evidence_object' | 'evidence_keys' | 'evidence_page' | 'evidence_text' | 'missing_evidence' | 'document_evidence'
+export type OpenAiSupplierDiagnosticDetailCode = 'supplier_object' | 'supplier_keys' | `supplier_${SupplierFieldName}_${SupplierFieldFailureRule}`
+
 export type OpenAiExtractionResult =
   | { ok: true; proposal: JsonRecord; model: string }
-  | { ok: false; errorCode: OpenAiExtractionFailureCode; errorMessageSafe: string; statusCode?: number; diagnosticCode?: OpenAiProposalDiagnosticCode }
+  | { ok: false; errorCode: OpenAiExtractionFailureCode; errorMessageSafe: string; statusCode?: number; diagnosticCode?: OpenAiProposalDiagnosticCode; diagnosticDetailCode?: OpenAiSupplierDiagnosticDetailCode }
 
 type OpenAiExtractionFailureResult = Extract<OpenAiExtractionResult, { ok: false }>
 
@@ -130,20 +135,27 @@ const hasExactKeys = (value: JsonRecord, keys: string[]) => {
   return actual.length === keys.length && actual.every((key, index) => key === [...keys].sort()[index])
 }
 
-function isField(value: unknown): value is JsonRecord {
-  if (!isRecord(value) || !hasExactKeys(value, ['value', 'rawValue', 'confidence', 'source', 'evidence'])) return false
-  if (value.value !== null && typeof value.value !== 'string') return false
-  if (value.rawValue !== null && typeof value.rawValue !== 'string') return false
-  if (!isConfidence(value.confidence) || !['document', 'missing'].includes(String(value.source))) return false
-  if (value.source === 'missing' && (value.value !== null || value.rawValue !== null || value.confidence !== null)) return false
-  if (!isRecord(value.evidence) || !hasExactKeys(value.evidence, ['page', 'text'])) return false
+function fieldFailureRule(value: unknown): SupplierFieldFailureRule | null {
+  if (!isRecord(value)) return 'object'
+  if (!hasExactKeys(value, ['value', 'rawValue', 'confidence', 'source', 'evidence'])) return 'keys'
+  if (value.value !== null && typeof value.value !== 'string') return 'value'
+  if (value.rawValue !== null && typeof value.rawValue !== 'string') return 'raw_value'
+  if (!isConfidence(value.confidence)) return 'confidence'
+  if (!['document', 'missing'].includes(String(value.source))) return 'source'
+  if (value.source === 'missing' && (value.value !== null || value.rawValue !== null || value.confidence !== null)) return 'missing_consistency'
+  if (!isRecord(value.evidence)) return 'evidence_object'
+  if (!hasExactKeys(value.evidence, ['page', 'text'])) return 'evidence_keys'
   const page = value.evidence.page
   const text = value.evidence.text
-  if (page !== null && (typeof page !== 'number' || !Number.isInteger(page) || page < 1)) return false
-  if (text !== null && typeof text !== 'string') return false
-  if (value.source === 'missing' && (page !== null || text !== null)) return false
-  if (value.source === 'document' && value.value !== null && page === null && text === null) return false
-  return true
+  if (page !== null && (typeof page !== 'number' || !Number.isInteger(page) || page < 1)) return 'evidence_page'
+  if (text !== null && typeof text !== 'string') return 'evidence_text'
+  if (value.source === 'missing' && (page !== null || text !== null)) return 'missing_evidence'
+  if (value.source === 'document' && value.value !== null && page === null && text === null) return 'document_evidence'
+  return null
+}
+
+function isField(value: unknown): value is JsonRecord {
+  return fieldFailureRule(value) === null
 }
 
 function fields(parent: unknown, keys: string[]) {
@@ -182,13 +194,18 @@ function containsInjection(value: unknown): boolean {
   return false
 }
 
-export function validateOpenAiProposal(input: unknown): { ok: true; proposal: JsonRecord } | { ok: false; reason: OpenAiProposalDiagnosticCode } {
+export function validateOpenAiProposal(input: unknown): { ok: true; proposal: JsonRecord } | { ok: false; reason: OpenAiProposalDiagnosticCode; detailCode?: OpenAiSupplierDiagnosticDetailCode } {
   if (!isRecord(input)) return { ok: false, reason: 'schema_object' }
   if (!hasExactKeys(input, ['schemaVersion', 'documentType', 'supplier', 'invoice', 'amounts', 'vatLines', 'payment', 'confidence'])) return { ok: false, reason: 'schema_keys' }
   if (input.schemaVersion !== 1) return { ok: false, reason: 'schema_version' }
   if (!isField(input.documentType)) return { ok: false, reason: 'schema_document_type' }
   if (input.documentType.value !== null && !['INVOICE', 'RECEIPT', 'CREDIT_NOTE', 'OTHER', 'UNKNOWN'].includes(String(input.documentType.value))) return { ok: false, reason: 'document_type' }
-  if (!fields(input.supplier, ['rawName', 'legalNameCandidate', 'commercialNameCandidate', 'taxId', 'normalizedTaxIdCandidate', 'vatId', 'address', 'postalCode', 'city', 'country', 'phone', 'email', 'website'])) return { ok: false, reason: 'supplier' }
+  if (!isRecord(input.supplier)) return { ok: false, reason: 'supplier', detailCode: 'supplier_object' }
+  if (!hasExactKeys(input.supplier, [...SUPPLIER_FIELDS])) return { ok: false, reason: 'supplier', detailCode: 'supplier_keys' }
+  for (const key of SUPPLIER_FIELDS) {
+    const failureRule = fieldFailureRule(input.supplier[key])
+    if (failureRule) return { ok: false, reason: 'supplier', detailCode: `supplier_${key}_${failureRule}` as OpenAiSupplierDiagnosticDetailCode }
+  }
   if (!fields(input.invoice, ['number', 'issueDate', 'dueDate', 'currency'])) return { ok: false, reason: 'invoice' }
   if (!isRecord(input.payment) || !hasExactKeys(input.payment, ['method']) || !isField(input.payment.method)) return { ok: false, reason: 'payment' }
   const amounts = isRecord(input.amounts) ? input.amounts : null
@@ -287,7 +304,7 @@ export async function requestOpenAiExtraction({
     let proposal: unknown
     try { proposal = JSON.parse(output.text) } catch { return safeFailure('INVALID_PROVIDER_RESPONSE', 'La respuesta OpenAI no contiene JSON válido.', 422) }
     const checked = validateOpenAiProposal(proposal)
-    if (!checked.ok) return { ...safeFailure('INVALID_PROVIDER_RESPONSE', 'La propuesta OpenAI no supera la validación local.', 422), diagnosticCode: checked.reason }
+    if (!checked.ok) return { ...safeFailure('INVALID_PROVIDER_RESPONSE', 'La propuesta OpenAI no supera la validación local.', 422), diagnosticCode: checked.reason, ...(checked.detailCode ? { diagnosticDetailCode: checked.detailCode } : {}) }
     return { ok: true, proposal: checked.proposal, model }
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') return safeFailure('EXTRACTION_TIMEOUT', 'La extracción OpenAI agotó el tiempo permitido.', 504)

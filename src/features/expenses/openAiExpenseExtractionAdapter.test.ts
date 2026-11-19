@@ -36,6 +36,10 @@ function responseFor(proposal: unknown) {
 }
 
 const document = { filename: 'invoice.png', mimeType: 'image/png', sizeBytes: 100, base64: 'aGVsbG8=' }
+const supplierFieldNames = [
+  'rawName', 'legalNameCandidate', 'commercialNameCandidate', 'taxId', 'normalizedTaxIdCandidate',
+  'vatId', 'address', 'postalCode', 'city', 'country', 'phone', 'email', 'website',
+] as const
 
 describe('N5.5 OpenAI Smart Expense adapter', () => {
   it('builds a server-only Responses request with strict schema and image evidence', () => {
@@ -123,6 +127,42 @@ describe('N5.5 OpenAI Smart Expense adapter', () => {
     expect(result).toMatchObject({ ok: false, errorCode: 'INVALID_PROVIDER_RESPONSE', diagnosticCode: 'supplier', diagnosticDetailCode: 'supplier_rawName_evidence_page' })
     expect(JSON.stringify(result)).not.toContain('private-text')
     expect(JSON.stringify(result)).not.toContain('private-supplier-content')
+    expect(JSON.stringify(result)).not.toContain('server-only-test-key')
+  })
+
+  it.each(supplierFieldNames)('accepts valid simulated provider evidence for supplier.%s', async (supplierField) => {
+    const proposal = validProposal()
+    const fetchImpl = vi.fn().mockResolvedValue(responseFor(proposal))
+
+    const result = await requestOpenAiExtraction({ apiKey: 'server-only-test-key', document, fetchImpl })
+
+    expect(result).toMatchObject({ ok: true })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    if (!result.ok) return
+    const returnedSupplier = (result.proposal as { supplier: Record<string, unknown> }).supplier
+    const returnedField = returnedSupplier[supplierField] as { source: string; evidence: { page: number | null; text: string | null } }
+    expect(returnedField).toBeDefined()
+    if (returnedField.source === 'document') expect(returnedField.evidence).toMatchObject({ page: 1, text: expect.any(String) })
+    else expect(returnedField).toMatchObject({ source: 'missing', evidence: { page: null, text: null } })
+  })
+
+  it.each(supplierFieldNames)('classifies malformed simulated provider evidence for supplier.%s without echoing content', async (supplierField) => {
+    const proposal = validProposal()
+    const privateMarker = `private-${supplierField}-fixture`
+    ;(proposal.supplier[supplierField] as Record<string, unknown>).evidence = { page: privateMarker, text: 'synthetic-private-evidence' }
+    const fetchImpl = vi.fn().mockResolvedValue(responseFor(proposal))
+
+    const result = await requestOpenAiExtraction({ apiKey: 'server-only-test-key', document, fetchImpl })
+
+    expect(result).toMatchObject({
+      ok: false,
+      errorCode: 'INVALID_PROVIDER_RESPONSE',
+      diagnosticCode: 'supplier',
+      diagnosticDetailCode: `supplier_${supplierField}_evidence_page`,
+    })
+    expect(fetchImpl).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(result)).not.toContain(privateMarker)
+    expect(JSON.stringify(result)).not.toContain('synthetic-private-evidence')
     expect(JSON.stringify(result)).not.toContain('server-only-test-key')
   })
 

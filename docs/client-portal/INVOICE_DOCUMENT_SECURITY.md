@@ -7,7 +7,9 @@ Scope: design only; no PDFs published and no storage changed
 
 The CRM renders `InvoiceDocumentA4` in the browser and opens a print window. “Guardar PDF” invokes the browser print dialog; the repository does not currently generate or store canonical invoice PDFs.
 
-The only defined storage bucket in source is private `expense-receipts`, whose authenticated policies are workspace-wide and are not suitable for customer invoice delivery.
+The only defined storage bucket in source is private `expense-receipts`, whose authenticated policies are workspace-wide and are not suitable for customer invoice delivery. The current internal-staff read policy lets any active internal-staff membership, including `readonly`, share read access to stored expense receipts. This is a legacy access rule, not evidence that the requested role matrix is satisfied. The current `public.expenses` schema has no creator or assignee field, so it cannot safely distinguish an operator's own/assigned receipt; a storage path or filename is not ownership proof. Do not claim read isolation for `owner`/`admin`, `finance`, `operator`, or `readonly` until an authoritative assignment/ownership contract and a corresponding policy are implemented and tested. The existing write guard is a separate control and does not narrow this SELECT policy.
+
+The expense editor's integrated PDF preview obtains a short-lived signed URL and embeds it in an iframe; the separate “Abrir PDF en una pestaña nueva” link is only a browser fallback. An iframe `onError` cannot reliably detect a PDF viewer that loads a response but renders a blank surface. Dynamic signed-URL expiry, role-based access, and PDF rendering in authenticated QA remain untested in this local review.
 
 ## Target model
 
@@ -65,6 +67,7 @@ If signed URLs expose an unacceptable provider path, use an authenticated Edge s
 
 ## Storage policies
 
+- These requirements describe the future `client-invoice-documents` bucket. They do not change the existing `expense-receipts` bucket or its separate workspace-wide internal-staff read policy.
 - `public = false`.
 - zero anon SELECT/INSERT/UPDATE/DELETE;
 - zero broad authenticated object policies;

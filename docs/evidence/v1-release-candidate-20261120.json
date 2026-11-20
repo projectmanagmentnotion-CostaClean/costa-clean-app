@@ -3,7 +3,7 @@
   "purpose": "Local hash-pinned release candidate preparation; not execution authorization.",
   "createdAt": "2026-11-20",
   "repository": "projectmanagmentnotion-CostaClean/costa-clean-app",
-  "candidateHead": "deb83e7d41ccd3b5e4fd13efe323b9c07571617e",
+  "candidateHead": "e8afd78b8523f5c5a78691eb8670b8f4424ee205",
   "previewHead": "b859d9c7b8dfbf35ea6eeb00aca05e0ceb50cae5",
   "productionProjectRef": "wfxnwfcdjainpojhbdri",
   "productionLedgerReadOnlyObserved": {
@@ -137,7 +137,7 @@
       {
         "order": 18,
         "file": "supabase/migrations/20261120120000_role_scoped_expense_receipt_access.sql",
-        "sha256": "E83882C983E215AFFC889F4F80CF34A7C6ED09A728F3A7E2DBE39237FF822CDC"
+        "sha256": "1B53DF0DDA81FBD2161ACB177F8C80617B2F5480120DB45F0B91AA9E745157CC"
       }
     ]
   },
@@ -249,7 +249,7 @@
     "tableRls": "N51 enables and forces RLS on sessions/documents; N52 on extractions; N53 on normalizations; N55 on confirmations. Authenticated receives owner-scoped SELECT only; service_role gets worker CRUD where specified.",
     "expenseGrants": "P0 bridge and grant hardening revoke public/anon on expenses; bridge removes authenticated DELETE/TRUNCATE/REFERENCES/TRIGGER and grants service_role CRUD; bridge policies restrict financial insert/update. N56 replaces expense policies; final reconcile keeps finance-only insert/update and drops bridge policies in same transaction.",
     "privilegedLegacyRpc": "N56 revokes execute from public/anon/authenticated/service_role on debug_run_authorized_invoice_batch, run_authorized_invoice_batch, n21_assert_existing_job_quote_compatibility, rls_auto_enable.",
-    "storage": "N51 capture paths remain session-owner scoped. N56 internal-staff policy is replaced by role-scoped authorization: owner/admin/finance can access workspace expense receipts under the current global-membership single-workspace model; operator can read only own N55 CREATE_NEW or explicitly assigned expense receipts; readonly and nonmembers are denied. Operator write/delete is denied to preserve financial P0. Owner/Admin assignment/revocation/list RPCs operate on explicit expense_receipt_assignments; path segment is only a lookup key and grants no access by itself. The new SQL and pgTAP remain unexecuted on representative Supabase; Storage API DELETE is NOT_TESTED.",
+    "storage": "N51 capture paths remain session-owner scoped. N56 internal-staff policy is replaced by role-scoped authorization: owner/admin/finance can access workspace expense receipts under the current global-membership single-workspace model; operator can read only an owned active N51 staging capture and can read finalized expense receipts only when explicitly assigned; readonly and nonmembers are denied. Operator write/delete is denied to preserve financial P0. N55/P0 restrict CREATE_NEW to financial roles, so a CREATE_NEW confirmation is not proof of operator ownership. Owner/Admin assignment/revocation/list RPCs operate on explicit expense_receipt_assignments; path segment is only a lookup key and grants no access by itself. The new SQL and pgTAP remain unexecuted on representative Supabase; Storage API DELETE is NOT_TESTED.",
     "invoiceRpc": "invoice_service_reference_override alters the invoice contract and grants save_invoice_with_lines(jsonb,jsonb) to authenticated; verify its exact ACL and compatibility before execution.",
     "caveat": "This is a static source review, not runtime verification of effective grants or owners on a representative restored database."
   },
@@ -329,7 +329,7 @@
     "fiveHistoricalEquivalencesReplay": false,
     "qaBaselineIncremental": false,
     "sourceCandidateHead": "8eabb29536fc0a457876160c9bc38e695cd3140a",
-    "integratedCandidateHeadAtManifestCreation": "deb83e7d41ccd3b5e4fd13efe323b9c07571617e",
+    "integratedCandidateHeadAtManifestCreation": "e8afd78b8523f5c5a78691eb8670b8f4424ee205",
     "lastPreviewHead": "b859d9c7b8dfbf35ea6eeb00aca05e0ceb50cae5",
     "sha256Algorithm": "SHA-256",
     "exactCliSelection": "UNVERIFIED",
@@ -348,12 +348,12 @@
     },
     {
       "file": "supabase/migrations/20261120120000_role_scoped_expense_receipt_access.sql",
-      "sha256": "E83882C983E215AFFC889F4F80CF34A7C6ED09A728F3A7E2DBE39237FF822CDC",
+      "sha256": "1B53DF0DDA81FBD2161ACB177F8C80617B2F5480120DB45F0B91AA9E745157CC",
       "status": "hash-pinned local migration; not applied"
     },
     {
       "file": "supabase/tests/expense_receipt_access_v1_test.sql",
-      "sha256": "482F302E61579E732C57757D68191AF4BE5160F45844E0D000E21C8F3B0B32CF",
+      "sha256": "8A061664AD0E5002DD23884C7482164BB9AABD8B28CCDDF6072C6E90F80D3DAF",
       "status": "31 synthetic pgTAP assertions; not executed"
     },
     {
@@ -363,7 +363,7 @@
     },
     {
       "file": "src/features/expenses/expenseReceiptAccessMigration.test.ts",
-      "sha256": "8D26AC6C343572031EB93F3F78D9B635835DD87D1E29DC28FA03D0A4C9842CED",
+      "sha256": "DC2F6CD2653F1191D1E63D6CB43946F310B2F9058165B582F3809E2050E93D95",
       "status": "local migration static contract tests"
     },
     {
@@ -382,7 +382,7 @@
     "The prior Production ledger evidence remains a read-only snapshot from 2026-11-18; no fresh ledger query was made.",
     "Exact CLI selection of the 18 ordered files is unverified; do not apply.",
     "A representative accessible prestate and exact pinned CLI runtime are not verified.",
-    "The role-scoped receipt migration and its pgTAP assertions have not been executed on a representative Supabase runtime; Storage API DELETE remains NOT_TESTED.",
+    "The role-scoped receipt migration and its pgTAP assertions have not been executed on a representative Supabase runtime; Storage API DELETE remains NOT_TESTED. Operator finalized-receipt access now requires explicit assignment because N55/P0 restrict CREATE_NEW to financial roles.",
     "Owner/Admin receipt assignment API exists, but the assignment UI has no approved Stitch reference and is not implemented.",
     "Smart Expense real-provider diagnostic detail is unavailable; no new provider call is authorized.",
     "PDF iframe black-screen cause and visual result remain unverified in authenticated Chrome.",

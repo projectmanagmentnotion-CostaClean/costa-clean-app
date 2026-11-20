@@ -385,6 +385,20 @@
     "The role-scoped receipt migration and its pgTAP assertions have not been executed on a representative Supabase runtime; Storage API DELETE remains NOT_TESTED.",
     "Owner/Admin receipt assignment API exists, but the assignment UI has no approved Stitch reference and is not implemented.",
     "Smart Expense real-provider diagnostic detail is unavailable; no new provider call is authorized.",
-    "PDF iframe black-screen cause and visual result remain unverified in authenticated Chrome."
-  ]
+    "PDF iframe black-screen cause and visual result remain unverified in authenticated Chrome.",
+    "The verified READY Preview is still b859d9c7b8dfbf35ea6eeb00aca05e0ceb50cae5, not the current candidate; no new Preview was authorized."
+  ],
+  "existingPreviewVerification": {
+    "observedAt": "2026-11-20T11:03:30Z",
+    "deploymentId": "dpl_4b1WGQHKQXQ4FZzeRm76gfLJyGPK",
+    "url": "https://costa-clean-67blt5m5k.vercel.app",
+    "projectId": "prj_SjR3KtjAoBMhP5foigsyCEmxHojh",
+    "state": "READY",
+    "target": null,
+    "source": "git",
+    "branch": "codex/final-release-candidate-local-20261117",
+    "commitSha": "b859d9c7b8dfbf35ea6eeb00aca05e0ceb50cae5",
+    "matchesCurrentCandidate": false,
+    "visualInspection": "NOT_VERIFIED"
+  }
 }

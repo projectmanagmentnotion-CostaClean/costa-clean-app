@@ -31,8 +31,18 @@ describe('N5.5 OpenAI security boundary', () => {
     expect(edgeSource).toContain('requestOpenAiExtraction')
   })
 
-  it('logs only an allowlisted validation category and keeps it out of the response contract', () => {
-    expect(edgeSource).toContain("console.warn('expense_extraction_validation_rejected', result.diagnosticCode, result.diagnosticDetailCode ?? 'none')")
+  it('logs a structured allowlisted validation category with correlation id and keeps it out of the response contract', () => {
+    const logBlock = edgeSource.match(/console\.warn\(JSON\.stringify\(\{([\s\S]*?)\}\)\)/)?.[1] ?? ''
+    expect(logBlock).toContain("event: 'expense_extraction_validation_rejected'")
+    expect(logBlock).toContain('extraction_id: row.extraction_id')
+    expect(logBlock).toContain('diagnostic_code: result.diagnosticCode')
+    expect(logBlock).toContain('diagnostic_detail_code: result.diagnosticDetailCode ?? null')
+    expect(logBlock).not.toContain('result.proposal')
+    expect(logBlock).not.toContain('file.arrayBuffer')
+    expect(logBlock).not.toContain('apiKey')
+    expect(logBlock).not.toContain('row.created_by')
+    expect(logBlock).not.toContain('row.storage_path')
+    expect(logBlock).not.toContain('row.original_filename')
     expect(edgeSource).toContain("safeError(result.errorCode, result.errorMessageSafe, null)")
     expect(edgeSource).not.toContain('safeError(result.errorCode, result.errorMessageSafe, result.diagnosticCode')
     expect(edgeSource).not.toContain('console.warn(\'expense_extraction_validation_rejected\', output.text')

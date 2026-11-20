@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 const migration = readFileSync(new URL('../../../supabase/migrations/20261120120000_role_scoped_expense_receipt_access.sql', import.meta.url), 'utf8').toLowerCase()
+const n55Migration = readFileSync(new URL('../../../supabase/migrations/20261001170000_n55_confirm_expense_capture.sql', import.meta.url), 'utf8').toLowerCase()
 
 describe('role-scoped expense receipt access migration', () => {
   it('creates an explicit expense-to-operator relation with no client table access', () => {
@@ -19,7 +20,11 @@ describe('role-scoped expense receipt access migration', () => {
     expect(migration).toContain("if v_role <> 'operator' then\n    return false")
     expect(migration).toContain('expense.receipt_file_path = p_object_name')
     expect(migration).toContain('from public.expense_receipt_assignments as assignment')
-    expect(migration).toContain("confirmation.duplicate_decision = 'create_new'")
+    expect(migration).not.toContain('expense_capture_confirmations')
+    expect(migration).toContain('finalized')
+    expect(migration).toContain('capture_session.created_by = v_user_id')
+    expect(n55Migration).toContain("p_duplicate_decision = 'create_new' and not exists")
+    expect(n55Migration).toContain('internal_staff_role_can_write_financially')
     expect(migration).toContain("membership.status = 'active'")
     expect(migration).toContain('membership.revoked_at is null')
     expect(migration).toMatch(/a folder segment is only a\s+-- lookup key; it never establishes ownership or authorization on its own/u)

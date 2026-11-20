@@ -36,23 +36,17 @@ values
 insert into public.expense_receipt_assignments (expense_id, user_id, granted_by)
 values ('22222222-2222-4222-8222-222222222202', '11111111-1111-4111-8111-111111111105', '11111111-1111-4111-8111-111111111101');
 
--- Represent an N55 CREATE_NEW owner relation without executing any capture RPC.
+-- Represent an operator-owned N51 staging capture. N55 CREATE_NEW is reserved
+-- for financial roles by P0, so it cannot prove operator ownership.
 insert into public.expense_capture_sessions (id, created_by, source, idempotency_key)
 values ('33333333-3333-4333-8333-333333333301', '11111111-1111-4111-8111-111111111104', 'upload', 'receipt-test-own-session');
-insert into public.expense_capture_documents (id, capture_session_id, storage_path, original_filename, mime_type, file_size_bytes, sha256)
-values ('33333333-3333-4333-8333-333333333302', '33333333-3333-4333-8333-333333333301', 'captures/33333333-3333-4333-8333-333333333301/test.png', 'test.png', 'image/png', 1, repeat('a', 64));
-insert into public.expense_capture_extractions (id, capture_document_id, capture_session_id, schema_version, attempt, status, provider, provider_version, idempotency_key, proposal, created_by)
-values ('33333333-3333-4333-8333-333333333303', '33333333-3333-4333-8333-333333333302', '33333333-3333-4333-8333-333333333301', 1, 1, 'SUCCEEDED', 'fixture', '1', 'receipt-test-extraction', '{}'::jsonb, '11111111-1111-4111-8111-111111111104');
-insert into public.expense_capture_normalizations (id, extraction_id, schema_version, normalizer_version, normalization_key, attempt_number, attempt_key, status, input_hash, normalized_proposal, output_hash, review_status, reconciliation_status, completed_at)
-values ('33333333-3333-4333-8333-333333333304', '33333333-3333-4333-8333-333333333303', 1, 'test', repeat('b', 64), 1, repeat('c', 64), 'SUCCEEDED', repeat('d', 64), '{}'::jsonb, repeat('e', 64), 'READY_FOR_REVIEW', 'MATCH', now());
-insert into public.expense_capture_confirmations (id, capture_session_id, capture_document_id, normalization_id, created_by, idempotency_key, duplicate_decision, expense_id, payload)
-values ('33333333-3333-4333-8333-333333333305', '33333333-3333-4333-8333-333333333301', '33333333-3333-4333-8333-333333333302', '33333333-3333-4333-8333-333333333304', '11111111-1111-4111-8111-111111111104', 'receipt-test-confirmation', 'CREATE_NEW', '22222222-2222-4222-8222-222222222201', '{}'::jsonb);
 
 insert into storage.objects (bucket_id, name, metadata)
 values
   ('expense-receipts', 'expenses/22222222-2222-4222-8222-222222222201/owner.png', '{"mimetype":"image/png","size":1}'::jsonb),
   ('expense-receipts', 'expenses/22222222-2222-4222-8222-222222222202/assigned.png', '{"mimetype":"image/png","size":1}'::jsonb),
-  ('expense-receipts', 'expenses/22222222-2222-4222-8222-222222222203/unassigned.png', '{"mimetype":"image/png","size":1}'::jsonb);
+  ('expense-receipts', 'expenses/22222222-2222-4222-8222-222222222203/unassigned.png', '{"mimetype":"image/png","size":1}'::jsonb),
+  ('expense-receipts', 'captures/33333333-3333-4333-8333-333333333301/staged.png', '{"mimetype":"image/png","size":1}'::jsonb);
 
 select ok((select relrowsecurity from pg_class where oid = 'public.expense_receipt_assignments'::regclass), 'assignment table has RLS enabled');
 select ok((select relforcerowsecurity from pg_class where oid = 'public.expense_receipt_assignments'::regclass), 'assignment table forces RLS');
@@ -89,8 +83,8 @@ reset role;
 select set_config('request.jwt.claim.sub', '11111111-1111-4111-8111-111111111104', true);
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-4111-8111-111111111104","role":"authenticated"}', true);
 set local role authenticated;
-select is((select count(*)::integer from storage.objects where bucket_id = 'expense-receipts'), 1, 'operator reads only N55-created receipt');
-select ok(not app_private.can_access_expense_receipt_object('expenses/22222222-2222-4222-8222-222222222201/owner.png', true), 'operator cannot delete even its own financial receipt');
+select is((select count(*)::integer from storage.objects where bucket_id = 'expense-receipts'), 1, 'operator reads only own active N51 staging capture');
+select ok(not app_private.can_access_expense_receipt_object('expenses/22222222-2222-4222-8222-222222222201/owner.png', false), 'operator cannot treat an unrelated expense receipt as owned');
 select ok(not app_private.can_access_expense_receipt_object('expenses/22222222-2222-4222-8222-222222222202/new.png', true), 'operator cannot infer access from an unassigned expense path');
 select throws_ok($$insert into storage.objects (bucket_id, name, metadata) values ('expense-receipts', 'expenses/22222222-2222-4222-8222-222222222201/operator-new.png', '{"mimetype":"image/png","size":1}'::jsonb)$$, '42501', null, 'operator cannot upload or overwrite financial expense receipts');
 reset role;

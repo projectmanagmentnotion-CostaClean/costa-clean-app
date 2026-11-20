@@ -8,7 +8,6 @@ do $preflight$
 begin
   if to_regclass('public.expenses') is null
      or to_regclass('public.internal_staff_memberships') is null
-     or to_regclass('public.expense_capture_confirmations') is null
      or to_regclass('public.expense_capture_sessions') is null
      or to_regclass('storage.objects') is null
      or to_regprocedure('auth.uid()') is null
@@ -134,24 +133,7 @@ begin
         return true;
       end if;
 
-      return v_role = 'operator' and exists (
-        select 1
-          from public.expenses as expense
-         where expense.receipt_file_path = p_object_name
-           and (
-             exists (
-               select 1 from public.expense_receipt_assignments as assignment
-                where assignment.expense_id = expense.id
-                  and assignment.user_id = v_user_id
-             )
-             or exists (
-               select 1 from public.expense_capture_confirmations as confirmation
-                where confirmation.expense_id = expense.id
-                  and confirmation.created_by = v_user_id
-                  and confirmation.duplicate_decision = 'CREATE_NEW'
-             )
-           )
-      );
+      return false;
     exception when invalid_text_representation then
       return false;
     end;
@@ -186,8 +168,10 @@ begin
     return false;
   end if;
 
-  -- Operators can review their own/assigned receipts. The expense row is a
-  -- finance-controlled record, so Storage mutation remains Owner/Admin/Finance.
+  -- Operators can read their own N51 staging captures above, but finalized
+  -- expense receipts require explicit assignment. N55/P0 restrict CREATE_NEW
+  -- to financial roles, so that confirmation is not operator ownership.
+  -- Expense Storage mutation remains Owner/Admin/Finance.
   if p_write then
     return false;
   end if;
@@ -205,12 +189,6 @@ begin
       from public.expense_receipt_assignments as assignment
      where assignment.expense_id = v_expense_id
        and assignment.user_id = v_user_id
-  ) or exists (
-    select 1
-      from public.expense_capture_confirmations as confirmation
-     where confirmation.expense_id = v_expense_id
-       and confirmation.created_by = v_user_id
-       and confirmation.duplicate_decision = 'CREATE_NEW'
   );
 end;
 $function$;

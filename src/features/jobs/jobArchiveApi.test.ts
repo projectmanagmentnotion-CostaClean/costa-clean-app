@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { fetchAuthenticatedSupabaseWrite, readSingleAuthenticatedWriteRow } from '../../lib/authenticatedSupabaseWrite'
 import { archiveJobWithRpc } from './jobArchiveApi'
+
+const archiveJobMigration = readFileSync(join(process.cwd(), 'supabase/migrations/20261111214439_archive_job_internal_staff.sql'), 'utf8')
 
 vi.mock('../../lib/authenticatedSupabaseWrite', () => ({
   fetchAuthenticatedSupabaseWrite: vi.fn(),
@@ -33,5 +37,16 @@ describe('archiveJobWithRpc', () => {
 
     await expect(archiveJobWithRpc('synthetic-job-01')).rejects.toThrow('RPC denied')
     expect(readSingleAuthenticatedWriteRow).not.toHaveBeenCalled()
+  })
+})
+
+describe('archive_job migration access contract', () => {
+  it('fails closed through the internal write guard and grants RPC execution only to authenticated', () => {
+    expect(archiveJobMigration).toMatch(/create\s+or\s+replace\s+function\s+public\.archive_job\(p_job_id\s+text\)/i)
+    expect(archiveJobMigration).toMatch(/security\s+definer\s+set\s+search_path\s*=\s*''/i)
+    expect(archiveJobMigration).toContain('perform app_private.require_internal_staff_write()')
+    expect(archiveJobMigration).toMatch(/revoke\s+all\s+on\s+function\s+public\.archive_job\(text\)\s+from\s+public,\s*anon,\s*authenticated,\s*service_role/i)
+    expect(archiveJobMigration).toMatch(/grant\s+execute\s+on\s+function\s+public\.archive_job\(text\)\s+to\s+authenticated/i)
+    expect(archiveJobMigration).not.toMatch(/grant\s+execute\s+on\s+function\s+public\.archive_job\(text\)\s+to\s+(?:public|anon|service_role)/i)
   })
 })

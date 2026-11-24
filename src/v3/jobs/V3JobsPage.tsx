@@ -29,6 +29,15 @@ export function V3JobsPage(props: V3JobsPageProps) {
   const [search, setSearch] = useState('')
   const listScrollYRef = useRef(0)
   const invoiceByJob = useMemo(() => new Map(props.invoices.filter((invoice) => invoice.job_id).map((invoice) => [invoice.job_id as string, invoice])), [props.invoices])
+  const paymentsByInvoice = useMemo(() => {
+    const grouped = new Map<string, PaymentListItem[]>()
+    for (const payment of props.payments) {
+      const invoicePayments = grouped.get(payment.invoice_id) ?? []
+      invoicePayments.push(payment)
+      grouped.set(payment.invoice_id, invoicePayments)
+    }
+    return grouped
+  }, [props.payments])
   const visibleJobs = useMemo(() => {
     const query = search.trim().toLocaleLowerCase()
     return props.jobs.filter((job) => {
@@ -67,7 +76,10 @@ export function V3JobsPage(props: V3JobsPageProps) {
     {props.duplicateCount ? <div className="v3-jobs-secondary-action"><V3SecondaryAction onClick={props.onReviewDuplicates}>Revisar duplicados ({props.duplicateCount})</V3SecondaryAction></div> : null}
     {props.error ? <div className="v3-state v3-state--error" role="alert"><strong>Error cargando servicios</strong><p>{props.error}</p></div> : null}
     {!props.error && !visibleJobs.length ? <div className="v3-state"><strong>Sin servicios visibles</strong><p>Ajusta la búsqueda o el filtro para continuar.</p></div> : null}
-    <V3EntityList label="Servicios">{visibleJobs.map((job) => <V3JobRow key={job.id} job={job} invoice={invoiceByJob.get(job.id) ?? null} today={today} onOpen={() => openJob(job.id)} />)}</V3EntityList>
+    <V3EntityList label="Servicios">{visibleJobs.map((job) => {
+      const invoice = invoiceByJob.get(job.id) ?? null
+      return <V3JobRow key={job.id} job={job} invoice={invoice} payments={invoice ? paymentsByInvoice.get(invoice.id) ?? [] : []} today={today} onOpen={() => openJob(job.id)} />
+    })}</V3EntityList>
     <section className="v3-jobs-overview" aria-label="Resumen de agenda">
       <V3KpiGroup variant="supporting"><V3Kpi label="Hoy" value={String(todayCount)} hint={formatDateEs(today)} /><V3Kpi label="Próximos" value={String(upcomingCount)} hint="Servicios activos" /><V3Kpi label="Completados" value={String(completedCount)} hint="Estado real" /></V3KpiGroup>
     </section>

@@ -176,4 +176,33 @@ describe('entity creation prefills', () => {
     expect(invoicePrefill?.lines?.[1]).toMatchObject({ concept: 'Cristales' })
     expect(invoicePrefill?.lines?.[2]).toMatchObject({ concept: 'Sabanas/toallas' })
   })
+
+  it('preserves Job notes and property when the Job came from an accepted quote', () => {
+    const prefill = buildInvoiceCreatePrefillFromJob({
+      id: 'job-from-quote',
+      display_code: 'JOB-QUOTE-1',
+      client_id: 'client-1',
+      property_id: 'property-1',
+      quote_id: 'quote-1',
+      scheduled_date: '2026-11-24',
+      status: 'completed',
+      service_type: 'standard_cleaning',
+      billing_concept: 'Limpieza general',
+      billing_quantity: 2,
+      billing_unit: 'hora',
+      billing_unit_price: 50,
+      billing_lines: [{ concept: 'Limpieza general', quantity: 2, unit: 'hora', unit_price: 50, line_subtotal: 100 }],
+      notes: 'Acceso por la puerta lateral; revisar ventanas.',
+    })
+
+    expect(prefill).toMatchObject({
+      job_id: 'job-from-quote',
+      quote_id: 'quote-1',
+      client_id: 'client-1',
+      property_id: 'property-1',
+      notes: expect.stringContaining('Acceso por la puerta lateral; revisar ventanas.'),
+      lines: [{ concept: 'Limpieza general', quantity: '2.00', unit: 'hora', unit_price: '50.00' }],
+    })
+    expect(prefill?.notes).toContain('Condiciones economicas aplicadas segun presupuesto aceptado.')
+  })
 })

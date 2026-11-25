@@ -49,13 +49,16 @@ function buildBillingLines(job: JobListItem): InvoiceCreatePrefillLine[] {
 }
 
 function buildInvoiceNotes(job: JobListItem): string {
-  if (!job.quote_id) return job.notes?.trim() ?? ''
+  const jobNotes = job.notes?.trim() ?? ''
+  if (!job.quote_id) return jobNotes
 
-  return [
+  const quoteTerms = [
     'Servicio realizado segun presupuesto aprobado.',
     'Condiciones economicas aplicadas segun presupuesto aceptado.',
     'Precios sin IVA.',
   ].join('\n')
+
+  return jobNotes ? `${jobNotes}\n\n${quoteTerms}` : quoteTerms
 }
 
 export function buildInvoiceCreatePrefillFromJob(job: JobListItem): InvoiceCreatePrefill | null {

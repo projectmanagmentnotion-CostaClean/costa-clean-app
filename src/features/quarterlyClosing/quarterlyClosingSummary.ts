@@ -9,6 +9,7 @@ import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuarterlyClosingSnapshot, QuarterlyClosingSummary } from './types'
 import { buildInvoicePaymentCohort } from '../closing/invoicePaymentCohort'
+import { FISCAL_SEMESTER_EMITTED_STATUSES, type FiscalSemesterEmittedStatus } from '../closing/fiscalSemesterAudit'
 
 function parseDate(dateValue: string): Date | null {
   if (!dateValue) return null
@@ -39,7 +40,11 @@ export function buildQuarterlyClosingSummary(
   fiscalQuarter: number,
 ): QuarterlyClosingSummary {
   const quarterInvoices = invoices.filter((invoice) =>
-    matchesDateQuarter(invoice.issue_date, fiscalYear, fiscalQuarter),
+    matchesDateQuarter(invoice.issue_date, fiscalYear, fiscalQuarter) &&
+    FISCAL_SEMESTER_EMITTED_STATUSES.includes(invoice.status as FiscalSemesterEmittedStatus) &&
+    !invoice.cancelled_at &&
+    !invoice.archived_at &&
+    !invoice.deleted_at,
   )
   const invoicePaymentCohort = buildInvoicePaymentCohort(payments, quarterInvoices)
   const quarterPayments = invoicePaymentCohort.payments

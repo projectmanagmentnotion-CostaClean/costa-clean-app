@@ -10,6 +10,70 @@ verified for this change: `public.expenses(id, receipt_file_path)`,
 `storage.objects` with RLS enabled. The migration has not been applied to QA or
 Production.
 
+## Live catalog evidence (2026-11-26)
+
+Production's four bucket-only policies were confirmed by read-only catalog
+queries. `public.expense_staff_access(boolean)` resolves the authenticated
+identity with `auth.uid()`, requires an active, non-revoked row in
+`public.internal_staff_memberships`, and delegates financial writes to
+`app_private.internal_staff_role_can_write_financially(text)`, which allows
+`owner`, `admin`, and `finance`. Both functions use an empty search path;
+the membership table has RLS forced on. The migration uses this existing
+contract and does not depend on the pending V3 tables.
+
+The same read-only preflight counted 61 `expense-receipts` objects: 54 match
+an expense's current receipt pointer and 7 are unlinked. Fifty-two use the
+canonical UUID expense-folder shape; 9 use other `expenses/` shapes, including
+7 linked noncanonical paths. The V1 client builds new paths as
+`expenses/<expense UUID>/<ISO timestamp>-<sanitized filename>`, and its
+replacement flow deletes the old current pointer before uploading the new
+file. The migration therefore preserves reads of any exact current pointer
+for active staff, and financial-role deletion of the exact current pointer;
+unlinked objects remain inaccessible. No object names or file data were
+retrieved for this inventory.
+
+QA's previously observed N51 `captures/<session-id>/...` policies and
+`public.expense_capture_sessions` contract are not part of Production's
+prestate. This Production-focused migration intentionally has no N51 capture
+branch. Do not apply it to QA: it would intersect with restrictive guards and
+deny the separate capture namespace until a separately tested compatibility
+migration is approved. No remote migration has been applied.
+
+## Backup readiness (2026-11-26)
+
+The authenticated Production dashboard listed physical daily database backups,
+including one dated 2026-11-26 03:32:56 UTC and earlier daily entries. This
+confirms a recent scheduled backup exists, but does not prove that this newest
+backup has been restored successfully. Supabase states on the page that these
+database backups do not include Storage objects.
+
+The private local vault contains an encrypted database archive and manifest
+from 2026-11-13. Its local restore was previously verified, but it is older
+than the current daily backup. The same vault contains an independently
+encrypted Storage archive whose 61 objects were previously recovered and
+integrity-checked; the archive is also from 2026-11-13. The current catalog
+count is 61, but object identity against that older archive has not been
+verified. Two `.partial` database-export files also remain in the vault and
+are not valid backups. No local files were opened or removed in this check.
+
+Before any Production application, inspect the current scheduled-backup entry
+and its restore availability without selecting Restore. To verify recoverability
+of that exact point in time, use the official Restore to New Project flow only
+after separate approval of the new-project cost and data-clone risks; restore
+to an isolated project, validate the database schema and migration ledger,
+and verify Storage independently from an encrypted object archive and its
+manifest. Do not treat database backup availability as Storage recovery.
+
+## Remaining test artifact
+
+The existing release note reports four skipped tests but does not enumerate
+their names. The configured Vitest suite contains three `skipIf` cases for
+live QA PostgreSQL checks. The conditional Playwright skip in
+`tests/e2e/v3-release.spec.mjs` is outside the Vitest include patterns and
+cannot be attributed as the fourth. The fourth skip remains unverified until
+the original detailed reporter output is available; do not rerun the full
+suite solely to identify it.
+
 It does not change buckets, object data, expense rows, Auth users, Storage
 configuration, or other bucket policies. Its transaction and pre/postchecks
 make a failed run roll back as one unit.
@@ -65,6 +129,9 @@ This validates PostgreSQL RLS/policy behavior with a representative synthetic
 contract; it is not a Supabase Storage API test and does not exercise the
 Supabase `storage.protect_delete()` trigger or signed-URL service.
 
+The synthetic fixture models only the verified Production authorization
+contract. It is not a QA N51 fixture and must not be treated as one.
+
 ## Controlled remote application (requires separate owner authorization)
 
 Do not apply until the exact new migration version is reconciled against the
@@ -84,9 +151,11 @@ approved. Never use `db push` for this release.
    RLS remains enabled; and the helper is `SECURITY DEFINER`, has an empty
    search path, is owned by `postgres`, and is executable only by `anon` and
    `authenticated` (not `PUBLIC`).
-5. Through the Storage API, test synthetic uploads, signed reads, upsert and
-   delete with owner/finance, then verify operator, readonly, anon, and
-   non-member denials. Use QA first under a separately authorized change.
+5. The Production migration itself has no Storage-object writes. Use the
+   existing local synthetic RLS evidence for positive/negative role behavior;
+   run any end-to-end Storage API writes only in an isolated QA-compatible
+   environment with separate approval. Do not apply this migration directly
+   to QA while its N51 capture policies are present.
 
 ## Recovery
 

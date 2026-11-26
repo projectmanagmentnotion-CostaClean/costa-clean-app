@@ -2,6 +2,63 @@ import { describe, expect, it } from 'vitest'
 import { buildFiscalPeriodExportData, buildFiscalPeriodIncidences } from './fiscalPeriodExport'
 
 describe('buildFiscalPeriodExportData', () => {
+  it('solo exporta facturacion emitida y excluye borradores, anuladas, archivadas y eliminadas', () => {
+    const invoice = (overrides: Partial<{
+      id: string
+      status: string
+      total: number
+      subtotal: number
+      tax_amount: number
+      cancelled_at: string | null
+      archived_at: string | null
+      deleted_at: string | null
+    }>) => ({
+      id: 'invoice',
+      display_code: null,
+      invoice_number: null,
+      job_id: null,
+      client_id: 'client-1',
+      issue_date: '2026-10-15',
+      status: 'issued',
+      subtotal: 37,
+      tax_amount: 7.77,
+      total: 44.77,
+      ...overrides,
+    })
+    const invoices = [
+      invoice({ id: 'issued-1', total: 50, subtotal: 41.32, tax_amount: 8.68 }),
+      invoice({ id: 'issued-2', status: 'sent', total: 44.77, subtotal: 37, tax_amount: 7.77 }),
+      invoice({ id: 'issued-3', status: 'paid', total: 39.54, subtotal: 32.68, tax_amount: 6.86 }),
+      invoice({ id: 'draft-1', status: 'draft', total: 7, subtotal: 5.79, tax_amount: 1.21 }),
+      invoice({ id: 'draft-2', status: 'draft', total: 6.31, subtotal: 5.22, tax_amount: 1.09 }),
+      invoice({ id: 'cancelled', cancelled_at: '2026-10-16T10:00:00Z' }),
+      invoice({ id: 'archived', archived_at: '2026-10-16T10:00:00Z' }),
+      invoice({ id: 'deleted', deleted_at: '2026-10-16T10:00:00Z' }),
+    ]
+
+    const result = buildFiscalPeriodExportData({
+      selection: {
+        mode: 'quarter',
+        year: 2026,
+        month: 10,
+        quarter: 4,
+        startDate: '',
+        endDate: '',
+      },
+      invoices,
+      payments: [],
+      expenses: [],
+      quotes: [],
+    })
+
+    expect(result.invoices.map(({ id }) => id)).toEqual(['issued-1', 'issued-2', 'issued-3'])
+    expect(result.metrics.invoice_count).toBe(3)
+    expect(result.metrics.invoiced_total).toBe(134.31)
+    expect(result.metrics.output_vat_total).toBe(23.31)
+    expect(result.packGroups.find(({ id }) => id === 'fiscal_invoices')?.count).toBe(3)
+    expect(result.metrics.pending_invoice_count).toBe(3)
+  })
+
   it('calcula totales y IVA estimado para un trimestre', () => {
     const result = buildFiscalPeriodExportData({
       selection: {

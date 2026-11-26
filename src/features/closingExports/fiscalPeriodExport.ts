@@ -1,4 +1,5 @@
 import { buildFiscalVatSummary } from '../closing/fiscalVatSummary'
+import { isFiscalInvoiceIncluded } from '../closing/fiscalInvoiceEligibility'
 import {
   isDateWithinFiscalPeriod,
   resolveFiscalPeriod,
@@ -96,7 +97,9 @@ export function buildFiscalPeriodExportData(input: {
   quotes: QuoteListItem[]
 }): FiscalPeriodExportData {
   const period = resolveFiscalPeriod(input.selection)
-  const invoices = input.invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
+  const invoices = input.invoices.filter(
+    (invoice) => isFiscalInvoiceIncluded(invoice) && isDateWithinFiscalPeriod(invoice.issue_date, period),
+  )
   const invoicePaymentCohort = buildInvoicePaymentCohort(input.payments, invoices)
   const payments = invoicePaymentCohort.payments
   const expenses = input.expenses.filter((expense) => isDateWithinFiscalPeriod(expense.expense_date, period))

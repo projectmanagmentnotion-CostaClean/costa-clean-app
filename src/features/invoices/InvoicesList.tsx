@@ -27,6 +27,7 @@ interface InvoicesListProps {
   onDownloadDocument: (invoice: InvoiceListItem) => void
   onSettleInvoice: (invoice: InvoiceListItem) => void
   isInvoiceSettling?: (invoiceId: string) => boolean
+  fiscalIssuedFocus?: boolean
   onStateChange?: (state: {
     visibleCount: number
     totalCount: number
@@ -49,9 +50,13 @@ export function InvoicesList({
   onDownloadDocument,
   onSettleInvoice,
   isInvoiceSettling = () => false,
+  fiscalIssuedFocus = false,
   onStateChange,
 }: InvoicesListProps) {
-  const defaultPreferences = useMemo(() => createDefaultPreferences('issue_date', 'desc', { status: 'pending' }), [])
+  const defaultPreferences = useMemo(
+    () => createDefaultPreferences('issue_date', 'desc', { status: fiscalIssuedFocus ? 'all' : 'pending' }),
+    [fiscalIssuedFocus],
+  )
   const [preferences, setPreferences] = useState<ListPreferences>(defaultPreferences)
   const onStateChangeRef = useRef(onStateChange)
 
@@ -134,7 +139,8 @@ export function InvoicesList({
       />
 
       <ListToolbar
-        storageKey="costaclean-list-preferences-invoices"
+        key={fiscalIssuedFocus ? 'fiscal-issued' : 'operational'}
+        storageKey={fiscalIssuedFocus ? 'costaclean-list-preferences-invoices-fiscal' : 'costaclean-list-preferences-invoices'}
         searchLabel="Buscar factura"
         searchPlaceholder="Numero, codigo interno, servicio, cliente, estado o importe"
         resultCount={filteredInvoices.length}

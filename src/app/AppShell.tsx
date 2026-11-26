@@ -736,7 +736,7 @@ export function AppShell({
       if (view === 'invoices') {
         return {
           ...current,
-          invoices: { type: 'period', period, scope: scope === 'pending' ? 'pending' : 'all' },
+          invoices: { type: 'period', period, scope: scope === 'pending' ? 'pending' : 'issued' },
         }
       }
 
@@ -1477,6 +1477,7 @@ export function AppShell({
                   initialInvoiceId={readInvoiceDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
                   onOpenInvoiceDeepLink={(invoiceId) => writeInvoiceDeepLink(invoiceId)}
                   onBackToInvoiceList={() => writeInvoiceDeepLink(null, true)}
+                  fiscalIssuedFocus={Boolean(moduleFilters.invoices && typeof moduleFilters.invoices === 'object' && moduleFilters.invoices.type === 'period' && moduleFilters.invoices.scope === 'issued')}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
                   activeFilter={invoiceFilter}
                   onClearFilter={() => clearModuleFilter('invoices')}

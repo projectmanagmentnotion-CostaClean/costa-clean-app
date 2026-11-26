@@ -1,5 +1,6 @@
 import { automationRuleThresholds } from '../features/automation/ruleConfig'
 import { isDateWithinFiscalPeriod, type ResolvedFiscalPeriod } from '../features/closing/fiscalPeriods'
+import { isFiscalInvoiceIncluded } from '../features/closing/fiscalInvoiceEligibility'
 import {
   hasMediumHighFiscalRisk,
   hasValidVatInvoiceSupport,
@@ -37,7 +38,7 @@ export type InvoiceModuleFilter =
   | {
       type: 'period'
       period: ResolvedFiscalPeriod
-      scope: 'all' | 'pending'
+      scope: 'all' | 'pending' | 'issued'
     }
 
 export type QuoteModuleFilter =
@@ -237,6 +238,7 @@ export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): strin
   if (filter?.type === 'year' && filter.scope === 'all') return `Facturas de ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'year' && filter.scope === 'pending') return `Pendiente de cobro de ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'period' && filter.scope === 'all') return `Facturas de ${filter.period.label}`
+  if (filter?.type === 'period' && filter.scope === 'issued') return `Facturas emitidas de ${filter.period.label}`
   if (filter?.type === 'period' && filter.scope === 'pending') return `Pendiente de cobro de ${filter.period.label}`
   return null
 }
@@ -354,6 +356,10 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
     const periodInvoices = visibleInvoices.filter((invoice) =>
       isDateWithinFiscalPeriod(invoice.issue_date, filter.period),
     )
+
+    if (filter.scope === 'issued') {
+      return periodInvoices.filter(isFiscalInvoiceIncluded)
+    }
 
     if (filter.scope === 'pending') {
       return periodInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))

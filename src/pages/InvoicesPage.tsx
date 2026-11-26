@@ -74,6 +74,7 @@ interface InvoicesPageProps {
   onOpenQuoteDetail: (quoteId: string) => void
   createPrefill: InvoiceCreatePrefill | null
   onPrefillConsumed: () => void
+  fiscalIssuedFocus?: boolean
   activeFilterLabel: string | null
   activeFilter?: InvoiceModuleFilter | null
   onClearFilter: () => void
@@ -103,6 +104,7 @@ export function InvoicesPage({
   onOpenQuoteDetail,
   createPrefill,
   onPrefillConsumed,
+  fiscalIssuedFocus = false,
   activeFilterLabel,
   activeFilter = null,
   onClearFilter,
@@ -889,6 +891,7 @@ export function InvoicesPage({
           <div className="cc-master-layout__list">
             <InvoicesList
               invoices={invoices}
+              fiscalIssuedFocus={fiscalIssuedFocus}
               error={error}
               selectedInvoiceId={selectedInvoiceKey}
               selectedInvoiceIds={selectedInvoiceIds}

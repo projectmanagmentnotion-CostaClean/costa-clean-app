@@ -25,12 +25,12 @@ The same read-only preflight counted 61 `expense-receipts` objects: 54 match
 an expense's current receipt pointer and 7 are unlinked. Fifty-two use the
 canonical UUID expense-folder shape; 9 use other `expenses/` shapes, including
 7 linked noncanonical paths. The V1 client builds new paths as
-`expenses/<expense UUID>/<ISO timestamp>-<sanitized filename>`, and its
-replacement flow deletes the old current pointer before uploading the new
-file. The migration therefore preserves reads of any exact current pointer
-for active staff, and financial-role deletion of the exact current pointer;
-unlinked objects remain inaccessible. No object names or file data were
-retrieved for this inventory.
+`expenses/<expense UUID>/<ISO timestamp>-<sanitized filename>`. Receipt
+replacement uploads the new file, persists the new pointer, then attempts to
+remove the previous object. The migration therefore preserves reads of any
+exact current pointer for active staff, and financial-role deletion of the
+exact current pointer; unlinked objects remain inaccessible. No object names
+or file data were retrieved for this inventory.
 
 QA's previously observed N51 `captures/<session-id>/...` policies and
 `public.expense_capture_sessions` contract are not part of Production's
@@ -100,20 +100,21 @@ make a failed run roll back as one unit.
 - There is no uploader/member identifier in the current expense/path contract;
   this migration cannot enforce per-user ownership. `service_role` bypasses
   RLS by design and is not changed by this migration.
-- V1 replacement deletes the old file while it is still the current
-  `receipt_file_path`, so its historical noncanonical paths remain deletable.
-  The inspected V3 replacement flow updates the pointer before deleting the
-  previous file. That sequence cannot delete a historical noncanonical path
-  after the pointer moves; the V3 flow must be changed or explicitly reconciled
-  before V3 release. Do not broaden access to compensate.
+- Replacement updates the pointer before deleting the previous file, so the
+  previous object can be removed after the pointer moves only when it follows
+  the canonical existing-expense path. A noncanonical historical path becomes
+  inaccessible after pointer movement and may remain as an unlinked object;
+  the UI reports cleanup separately from the successful replacement. Do not
+  broaden Storage access to compensate.
 
 ## Local synthetic validation
 
-The validated test used PostgreSQL 17.10 initialized as a temporary local
-cluster, bound only to `127.0.0.1:55439`, with synthetic users, memberships,
-expenses, Storage rows, and the four known broad policies. The cluster was
-stopped and its temporary data directory removed after the run. To repeat from
-the repository root on a machine with PostgreSQL 17 binaries:
+The validated test uses PostgreSQL 17 initialized as a temporary local
+cluster, bound only to `127.0.0.1` on an ephemeral port, with synthetic users,
+memberships, expenses, Storage rows, and the four known broad policies. On
+2026-11-26, both the P0 policy matrix and replacement cases passed; the cluster
+was stopped and its temporary data directory removed. To repeat from the
+repository root on a machine with PostgreSQL 17 binaries:
 
 1. Start a disposable cluster using `initdb` with a temporary data directory,
    trust authentication, and no external listener. Do not use an existing
@@ -125,9 +126,17 @@ the repository root on a machine with PostgreSQL 17 binaries:
    `psql -X -h 127.0.0.1 -p <port> -U postgres -d postgres -v ON_ERROR_STOP=1 -f supabase/qa/expense_receipt_p0_security.sql`.
 5. Stop the exact temporary cluster and remove only its temporary directory.
 
-This validates PostgreSQL RLS/policy behavior with a representative synthetic
-contract; it is not a Supabase Storage API test and does not exercise the
-Supabase `storage.protect_delete()` trigger or signed-URL service.
+The local prestate is Production-equivalent for this migration and intentionally
+does not include QA N51 capture policies or `expense_capture_sessions`. It
+validates PostgreSQL RLS/policy behavior with synthetic identities and data; it
+is not a Supabase Storage API test and does not exercise the Supabase
+`storage.protect_delete()` trigger or signed-URL service. QA does not need this
+Production-only migration; do not apply it there to obtain this evidence.
+
+The role matrix includes owner, finance, admin, operator, readonly,
+authenticated non-member and anon. Replacement checks prove that canonical
+historical objects can be cleaned after pointer movement and that noncanonical
+historical objects become inaccessible rather than bypassing the P0 guard.
 
 The synthetic fixture models only the verified Production authorization
 contract. It is not a QA N51 fixture and must not be treated as one.

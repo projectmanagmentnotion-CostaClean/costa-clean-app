@@ -23,10 +23,6 @@ begin
       and name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-01T10-00-00-000Z-synthetic.pdf';
   get diagnostics v_count = row_count;
   if v_count <> 1 then raise exception 'owner UPDATE denied'; end if;
-  delete from storage.objects where bucket_id = 'expense-receipts'
-    and name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-01T10-00-00-000Z-synthetic.pdf';
-  get diagnostics v_count = row_count;
-  if v_count <> 1 then raise exception 'owner DELETE denied'; end if;
   if (select count(*) from storage.objects where bucket_id = 'expense-receipts'
       and name like '%stale-financial.pdf') <> 1 then
     raise exception 'financial staff cannot read canonical historical receipt';
@@ -37,6 +33,69 @@ end
 $test$;
 reset role;
 \echo STORAGE_P0_OWNER=PASS
+
+-- A V1 replacement uploads the new canonical object and persists its pointer
+-- before deleting the old object. Canonical history remains cleanable.
+reset role;
+update public.expenses
+set receipt_file_path = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-25T12-00-00-000Z-owner.pdf'
+where id = '10000000-0000-0000-0000-000000000001';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $test$
+declare v_count integer;
+begin
+  select count(*) into v_count from storage.objects
+  where name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-25T12-00-00-000Z-owner.pdf';
+  if v_count <> 1 then raise exception 'owner cannot read replacement receipt'; end if;
+  delete from storage.objects
+  where name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-01T10-00-00-000Z-synthetic.pdf';
+  get diagnostics v_count = row_count;
+  if v_count <> 1 then raise exception 'owner cannot clean canonical historical receipt'; end if;
+end
+$test$;
+reset role;
+\echo STORAGE_P0_REPLACEMENT_CANONICAL=PASS
+
+-- A legacy noncanonical path stays readable/deletable only while it is the
+-- current pointer. After replacement it must fail closed instead of broadening
+-- the Storage policy; the client reports cleanup separately from replacement.
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $test$
+declare v_count integer;
+begin
+  select count(*) into v_count from storage.objects where name = 'legacy/synthetic-linked.pdf';
+  if v_count <> 1 then raise exception 'owner cannot read current legacy receipt'; end if;
+end
+$test$;
+reset role;
+insert into storage.objects (bucket_id, name) values
+  ('expense-receipts', 'expenses/10000000-0000-0000-0000-000000000002/2026-11-26T12-01-00-000Z-new.pdf');
+update public.expenses
+set receipt_file_path = 'expenses/10000000-0000-0000-0000-000000000002/2026-11-26T12-01-00-000Z-new.pdf'
+where id = '10000000-0000-0000-0000-000000000002';
+set role authenticated;
+select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000001', false);
+do $test$
+declare v_count integer;
+begin
+  select count(*) into v_count from storage.objects where name = 'legacy/synthetic-linked.pdf';
+  if v_count <> 0 then raise exception 'moved legacy receipt remained visible'; end if;
+  delete from storage.objects where name = 'legacy/synthetic-linked.pdf';
+  get diagnostics v_count = row_count;
+  if v_count <> 0 then raise exception 'moved legacy receipt was unexpectedly deletable'; end if;
+end
+$test$;
+reset role;
+do $test$
+begin
+  if not exists (select 1 from storage.objects where name = 'legacy/synthetic-linked.pdf') then
+    raise exception 'legacy object fixture was unexpectedly removed';
+  end if;
+end
+$test$;
+\echo STORAGE_P0_REPLACEMENT_LEGACY_LOCKDOWN=PASS
 
 -- Finance retains the same financial storage operations.
 set role authenticated;
@@ -90,7 +149,9 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000003
 do $test$
 declare v_count integer;
 begin
-  select count(*) into v_count from storage.objects where bucket_id = 'expense-receipts';
+  select count(*) into v_count from storage.objects
+  where bucket_id = 'expense-receipts'
+    and name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-25T12-00-00-000Z-owner.pdf';
   if v_count <> 1 then raise exception 'operator linked SELECT contract failed'; end if;
   begin
     insert into storage.objects (bucket_id, name) values
@@ -116,7 +177,9 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-000000000004
 do $test$
 declare v_count integer;
 begin
-  select count(*) into v_count from storage.objects where bucket_id = 'expense-receipts';
+  select count(*) into v_count from storage.objects
+  where bucket_id = 'expense-receipts'
+    and name = 'expenses/10000000-0000-0000-0000-000000000001/2026-11-25T12-00-00-000Z-owner.pdf';
   if v_count <> 1 then raise exception 'readonly linked SELECT contract failed'; end if;
   begin
     insert into storage.objects (bucket_id, name) values

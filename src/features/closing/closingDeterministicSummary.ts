@@ -14,6 +14,7 @@ import type { JobListItem } from '../jobs/types'
 import type { PaymentListItem } from '../payments/types'
 import type { QuoteListItem } from '../quotes/types'
 import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
+import { isFiscalInvoiceIncluded } from './fiscalInvoiceEligibility'
 
 export type ClosingReadinessStatus =
   | 'ready'
@@ -163,7 +164,9 @@ export function buildClosingDeterministicSummary({
   jobs,
   hasPersistedSnapshot,
 }: BuildClosingDeterministicSummaryInput): ClosingDeterministicResult {
-  const periodInvoices = invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
+  const periodInvoices = invoices.filter((invoice) =>
+    isFiscalInvoiceIncluded(invoice) && isDateWithinFiscalPeriod(invoice.issue_date, period),
+  )
   const invoicePaymentCohort = buildInvoicePaymentCohort(payments, periodInvoices)
   const periodPayments = invoicePaymentCohort.payments
   const periodExpenses = expenses.filter((expense) => isExpenseWithinPeriod(expense, period))

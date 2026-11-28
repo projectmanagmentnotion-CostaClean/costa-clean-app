@@ -1,5 +1,6 @@
 import type { InvoiceListItem } from '../invoices/types'
 import type { PaymentListItem } from '../payments/types'
+import { isFiscalInvoiceIncluded } from './fiscalInvoiceEligibility'
 
 export interface InvoicePaymentCohort {
   payments: PaymentListItem[]
@@ -14,11 +15,11 @@ export function buildInvoicePaymentCohort(
   payments: PaymentListItem[],
   periodInvoices: InvoiceListItem[],
 ): InvoicePaymentCohort {
-  const invoiceIds = new Set(periodInvoices.map((invoice) => invoice.id))
+  const invoiceIds = new Set(periodInvoices.filter(isFiscalInvoiceIncluded).map((invoice) => invoice.id))
   const cohortPayments = payments.filter((payment) => invoiceIds.has(payment.invoice_id))
   const paidAmountByInvoiceId = new Map<string, number>()
 
-  for (const payment of payments) {
+  for (const payment of cohortPayments) {
     paidAmountByInvoiceId.set(
       payment.invoice_id,
       (paidAmountByInvoiceId.get(payment.invoice_id) ?? 0) + Number(payment.amount || 0),

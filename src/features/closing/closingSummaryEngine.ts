@@ -17,6 +17,7 @@ import {
   type ResolvedFiscalPeriod,
 } from './fiscalPeriods'
 import { buildInvoicePaymentCohort } from './invoicePaymentCohort'
+import { isFiscalInvoiceIncluded } from './fiscalInvoiceEligibility'
 
 export type ClosingIncidenceTone = 'neutral' | 'warning' | 'danger'
 export type ClosingIncidenceView = 'invoices' | 'payments' | 'expenses'
@@ -246,7 +247,9 @@ export function buildClosingSummary({
   annualSummaryByYear,
 }: BuildClosingSummaryInput): ClosingSummary {
   const period = resolveFiscalPeriod(selection)
-  const periodInvoices = invoices.filter((invoice) => isDateWithinFiscalPeriod(invoice.issue_date, period))
+  const periodInvoices = invoices.filter((invoice) =>
+    isFiscalInvoiceIncluded(invoice) && isDateWithinFiscalPeriod(invoice.issue_date, period),
+  )
   const invoicePaymentCohort = buildInvoicePaymentCohort(payments, periodInvoices)
   const periodPayments = invoicePaymentCohort.payments
   const periodExpenses = expenses.filter((expense) => isExpenseWithinPeriod(expense, period))

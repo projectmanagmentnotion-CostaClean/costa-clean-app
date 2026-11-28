@@ -5,6 +5,7 @@ import type { AppView } from '../app/navigation'
 import { ClosingAiSummarySection } from '../features/closing/ClosingAiSummarySection'
 import { ClosingDocumentDialogs } from '../features/closing/ClosingDocumentDialogs'
 import { buildInvoicePaymentCohort } from '../features/closing/invoicePaymentCohort'
+import { isFiscalInvoiceIncluded } from '../features/closing/fiscalInvoiceEligibility'
 import '../features/ui/compactListStyles'
 import type { ClientListItem } from '../features/clients/types'
 import {
@@ -188,7 +189,9 @@ export function QuarterlyClosingPage({
   )
 
   const quarterInvoices = useMemo(
-    () => invoices.filter((invoice) => matchesDateQuarter(invoice.issue_date, selectedYear, selectedQuarter)),
+    () => invoices.filter((invoice) =>
+      isFiscalInvoiceIncluded(invoice) && matchesDateQuarter(invoice.issue_date, selectedYear, selectedQuarter),
+    ),
     [invoices, selectedQuarter, selectedYear],
   )
   const quarterPayments = useMemo(

@@ -196,4 +196,42 @@ describe('buildClosingSummary', () => {
     expect(summary.incidences.find((incidence) => incidence.id === 'period_payments_all')?.detail)
       .toContain('aunque se registren después')
   })
+
+  it('excluye borradores del cierre T4 y no atribuye su cobro historico', () => {
+    const issuedInvoices = [
+      createInvoice({ id: 'issued-1', issue_date: '2026-10-01', status: 'issued', subtotal: 50, tax_amount: 10.5, total: 60.5 }),
+      createInvoice({ id: 'issued-2', issue_date: '2026-11-01', status: 'paid', subtotal: 40, tax_amount: 8.4, total: 48.4 }),
+      createInvoice({ id: 'issued-3', issue_date: '2026-12-01', status: 'sent', subtotal: 21, tax_amount: 4.41, total: 25.41 }),
+      createInvoice({ id: 'draft-1', issue_date: '2026-11-12', status: 'draft', subtotal: 11, tax_amount: 2.31, total: 13.31 }),
+    ]
+    const paymentRecords = [
+      createPayment({ id: 'payment-1', invoice_id: 'issued-1', amount: 60.5 }),
+      createPayment({ id: 'payment-2', invoice_id: 'issued-2', amount: 48.4 }),
+      createPayment({ id: 'payment-3', invoice_id: 'issued-3', amount: 25.41 }),
+      createPayment({ id: 'draft-payment-1', invoice_id: 'draft-1', payment_date: '2026-11-12', amount: 1 }),
+    ]
+
+    const summary = buildClosingSummary({
+      selection: { mode: 'quarter', year: 2026, month: 10, quarter: 4, startDate: '', endDate: '' },
+      invoices: issuedInvoices,
+      payments: paymentRecords,
+      expenses: [],
+      quotes: [],
+      jobs: [],
+      quarterlySummaryByPeriod: new Map(),
+      annualSummaryByYear: new Map(),
+    })
+
+    expect(summary.invoices.map((invoice) => invoice.id)).toEqual(['issued-1', 'issued-2', 'issued-3'])
+    expect(summary.invoiceCount).toBe(3)
+    expect(summary.deterministicSummary.sourceCounts.invoices).toBe(3)
+    expect(summary.invoicedTotal).toBe(134.31)
+    expect(summary.outputVatTotal).toBe(23.31)
+    expect(summary.deterministicSummary.totalInvoiced).toBe(134.31)
+    expect(summary.collectedTotal).toBe(134.31)
+    expect(summary.paymentCount).toBe(3)
+    expect(summary.payments.map((payment) => payment.id)).toEqual(['payment-1', 'payment-2', 'payment-3'])
+    expect(paymentRecords).toHaveLength(4)
+    expect(paymentRecords.find((payment) => payment.id === 'draft-payment-1')?.amount).toBe(1)
+  })
 })

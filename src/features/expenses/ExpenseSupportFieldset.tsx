@@ -4,8 +4,8 @@ import { updateExpenseAttachment } from './expenseApi'
 import {
   createExpenseReceiptSignedUrl,
   deleteExpenseReceipt,
-  uploadExpenseReceipt,
 } from './expenseAttachmentsApi'
+import { replaceExpenseReceipt } from './expenseReceiptWorkflow'
 import {
   getExpenseDocumentSupportStatusLabel,
   getExpenseDocumentTypeLabel,
@@ -110,16 +110,16 @@ export function ExpenseSupportFieldset({
     setSuccessMessage(null)
   }, [expense?.id, pendingFile])
 
-  async function handlePersistedUpload(file: File) {
-    if (!expense || !onExpenseUpdated) return
+  async function handlePersistedUpload(file: File): Promise<'not-needed' | 'removed' | 'failed'> {
+    if (!expense || !onExpenseUpdated) return 'not-needed'
 
-    if (expense.receipt_file_path) {
-      await deleteExpenseReceipt(expense.receipt_file_path)
-    }
-
-    const { filePath } = await uploadExpenseReceipt(expense.id, file)
-    await updateExpenseAttachment(expense.id, filePath)
+    const result = await replaceExpenseReceipt(
+      expense.id,
+      file,
+      expense.receipt_file_path,
+    )
     await onExpenseUpdated()
+    return result.previousReceiptCleanup
   }
 
   async function handleReceiptSelected(event: ChangeEvent<HTMLInputElement>) {
@@ -134,8 +134,10 @@ export function ExpenseSupportFieldset({
 
       if (isPersistedMode) {
         setIsUploadingReceipt(true)
-        await handlePersistedUpload(file)
-        setSuccessMessage('Documento actualizado correctamente.')
+        const cleanup = await handlePersistedUpload(file)
+        setSuccessMessage(cleanup === 'failed'
+          ? 'Documento actualizado. No se pudo eliminar el soporte anterior; sigue sin acceso y requiere revisión.'
+          : 'Documento actualizado correctamente.')
       } else {
         onPendingFileChange?.(file)
         if (documentSupportStatus === 'missing') {

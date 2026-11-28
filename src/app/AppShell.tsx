@@ -631,8 +631,8 @@ export function AppShell({
   )
 
   const filteredPayments = useMemo(
-    () => applyPaymentFilter(paymentsWithCodes, paymentFilter),
-    [paymentsWithCodes, paymentFilter],
+    () => applyPaymentFilter(paymentsWithCodes, paymentFilter, invoicesWithCodes),
+    [invoicesWithCodes, paymentsWithCodes, paymentFilter],
   )
 
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
@@ -736,14 +736,14 @@ export function AppShell({
       if (view === 'invoices') {
         return {
           ...current,
-          invoices: { type: 'period', period, scope: scope === 'pending' ? 'pending' : 'all' },
+          invoices: { type: 'period', period, scope: scope === 'pending' ? 'pending' : 'issued' },
         }
       }
 
       if (view === 'payments') {
         return {
           ...current,
-          payments: { type: 'period', period, scope: 'all' },
+          payments: { type: 'period', period, scope: 'fiscal' },
         }
       }
 
@@ -1289,12 +1289,17 @@ export function AppShell({
               ) : currentView === 'dashboard' ? (
                 v3Enabled ? (
                   <V3HomePage
-                    metrics={dashboardMetrics}
+                    invoices={invoicesWithCodes}
+                    payments={paymentsWithCodes}
+                    expenses={expenses}
+                    jobs={jobsWithCodes}
+                    quotes={quotesWithCodes}
                     alerts={visibleAutomationAlerts}
                     operationalIncidents={operationalIncidents}
                     onRunKpiAction={handleDashboardKpiAction}
                     onOpenAlert={handleOpenAutomationAlert}
                     onRunOperationalAction={handleRunOperationalAction}
+                    onOpenAllAlerts={() => navigateToView('alerts')}
                   />
                 ) : (
                   <HomePage
@@ -1472,6 +1477,7 @@ export function AppShell({
                   initialInvoiceId={readInvoiceDeepLink(typeof window !== 'undefined' ? window.location.search : '')}
                   onOpenInvoiceDeepLink={(invoiceId) => writeInvoiceDeepLink(invoiceId)}
                   onBackToInvoiceList={() => writeInvoiceDeepLink(null, true)}
+                  fiscalIssuedFocus={Boolean(moduleFilters.invoices && typeof moduleFilters.invoices === 'object' && moduleFilters.invoices.type === 'period' && moduleFilters.invoices.scope === 'issued')}
                   activeFilterLabel={getInvoiceFilterLabel(moduleFilters.invoices)}
                   activeFilter={invoiceFilter}
                   onClearFilter={() => clearModuleFilter('invoices')}

@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { V3RecurringPlanWorkspace, V3RecurringPlansSection } from './V3RecurringPlans'
 
 const client = {
@@ -36,6 +36,15 @@ const plan = {
 }
 
 describe('V3RecurringPlansSection', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-01T12:00:00.000Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('renders the native recurring plan entry without legacy flow markers', () => {
     const html = renderToStaticMarkup(createElement(V3RecurringPlansSection, {
       client,

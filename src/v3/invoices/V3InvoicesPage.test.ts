@@ -2,6 +2,7 @@ import { createElement } from 'react'
 import { describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { V3InvoicesPage } from './V3InvoicesPage'
+import { V3InvoiceEditFlow } from './V3InvoiceEditFlow'
 import { getInvoiceFinancialFacts, getInvoiceSettlementDescription } from './invoicePresentation'
 import type { InvoiceListItem } from '../../features/invoices/types'
 
@@ -14,7 +15,16 @@ function createInvoice(overrides: Partial<InvoiceListItem> = {}): InvoiceListIte
 function renderPage(invoices: InvoiceListItem[], initialInvoiceId?: string) {
   return renderToStaticMarkup(createElement(V3InvoicesPage, {
     invoices, allInvoices: invoices, clients: [], payments: [], error: null, initialInvoiceId,
-    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
+    onCreateInvoice: () => {}, onDownloadInvoice: () => {}, onSettleInvoice: () => {}, isInvoiceSettling: () => false, onOpenDocument: () => {}, onViewPayments: () => {}, onInvoiceUpdated: async () => {}, onOpenInvoiceDeepLink: () => {}, onBackToInvoiceList: () => {},
+  }))
+}
+
+function renderEditFlow(invoice: InvoiceListItem) {
+  return renderToStaticMarkup(createElement(V3InvoiceEditFlow, {
+    invoice,
+    onRefreshData: async () => {},
+    onCompleted: () => {},
+    onCancel: () => {},
   }))
 }
 
@@ -44,6 +54,38 @@ describe('V3 dedicated invoice tree', () => {
     expect(workspace).toContain('Líneas')
     expect(workspace).toContain('Cobros')
     expect(workspace).toContain('Documento')
+  })
+
+  it('keeps a long client name visible beside the concise invoice reference in the list', () => {
+    const clientName = 'Cliente Sintético QA — Nombre de prueba deliberadamente largo para validar la fila de factura'
+    const html = renderPage([createInvoice({ client_name: clientName })])
+
+    expect(html).toContain('<strong>2026-052</strong>')
+    expect(html).toContain(`<span>FAC-2026-052 - ${clientName}</span>`)
+  })
+
+  it('offers the existing guarded issue flow for draft invoices in the default V3 workspace', () => {
+    const draft = createInvoice({ status: 'draft', invoice_number: null, payment_status: 'pending' })
+    const workspace = renderPage([draft], draft.id)
+
+    expect(workspace).toContain('Emitir factura')
+    expect(workspace).not.toContain('Registrar cobro')
+  })
+
+  it('keeps the issue action absent for already issued invoices', () => {
+    const workspace = renderPage([createInvoice()], 'invoice-1')
+
+    expect(workspace).not.toContain('Emitir factura')
+    expect(workspace).toContain('Registrar cobro')
+  })
+
+  it('requires an internal-correction attestation in the issued invoice editor', () => {
+    const issuedEditor = renderEditFlow(createInvoice())
+    const draftEditor = renderEditFlow(createInvoice({ status: 'draft', invoice_number: null }))
+
+    expect(issuedEditor).toContain('Factura emitida en revisión')
+    expect(issuedEditor).toContain('Confirmo que esta factura no se ha enviado')
+    expect(draftEditor).not.toContain('Confirmo que esta factura no se ha enviado')
   })
 
   it('keeps the invoice amount hierarchy and transfer confirmation tied to the existing outstanding value', () => {

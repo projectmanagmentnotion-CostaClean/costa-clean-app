@@ -18,6 +18,7 @@ describe('V3JobRow', () => {
         service_type: 'Limpieza',
       },
       invoice: null,
+      payments: [],
       today: '2026-09-16',
       onOpen: () => undefined,
     }))

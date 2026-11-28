@@ -1,5 +1,6 @@
 import { automationRuleThresholds } from '../features/automation/ruleConfig'
 import { isDateWithinFiscalPeriod, type ResolvedFiscalPeriod } from '../features/closing/fiscalPeriods'
+import { isFiscalInvoiceIncluded } from '../features/closing/fiscalInvoiceEligibility'
 import {
   hasMediumHighFiscalRisk,
   hasValidVatInvoiceSupport,
@@ -11,6 +12,7 @@ import type { InvoiceListItem } from '../features/invoices/types'
 import type { JobListItem } from '../features/jobs/types'
 import type { PaymentListItem } from '../features/payments/types'
 import type { QuoteListItem } from '../features/quotes/types'
+import { buildInvoicePaymentCohort } from '../features/closing/invoicePaymentCohort'
 import { isArchivedEntity, isCancelledEntity, isDeletedEntity } from '../shared/lifecycle/entityLifecycle'
 
 export type InvoiceModuleFilter =
@@ -37,7 +39,7 @@ export type InvoiceModuleFilter =
   | {
       type: 'period'
       period: ResolvedFiscalPeriod
-      scope: 'all' | 'pending'
+      scope: 'all' | 'pending' | 'issued'
     }
 
 export type QuoteModuleFilter =
@@ -109,7 +111,7 @@ export type PaymentModuleFilter =
   | {
       type: 'period'
       period: ResolvedFiscalPeriod
-      scope: 'all'
+      scope: 'all' | 'fiscal'
     }
 
 function getMonthKey(dateValue: string): string | null {
@@ -237,6 +239,7 @@ export function getInvoiceFilterLabel(filter: InvoiceModuleFilter | null): strin
   if (filter?.type === 'year' && filter.scope === 'all') return `Facturas de ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'year' && filter.scope === 'pending') return `Pendiente de cobro de ${getYearLabel(filter.fiscalYear)}`
   if (filter?.type === 'period' && filter.scope === 'all') return `Facturas de ${filter.period.label}`
+  if (filter?.type === 'period' && filter.scope === 'issued') return `Facturas emitidas de ${filter.period.label}`
   if (filter?.type === 'period' && filter.scope === 'pending') return `Pendiente de cobro de ${filter.period.label}`
   return null
 }
@@ -299,6 +302,7 @@ export function getPaymentFilterLabel(filter: PaymentModuleFilter | null): strin
   if (filter?.type === 'invoice') return `Cobros de ${filter.invoiceLabel}`
   if (filter?.type === 'quarter') return `Cobros de ${getQuarterLabel(filter.fiscalYear, filter.fiscalQuarter)}`
   if (filter?.type === 'year') return `Cobros de ${getYearLabel(filter.fiscalYear)}`
+  if (filter?.type === 'period' && filter.scope === 'fiscal') return `Cobros fiscales de ${filter.period.label}`
   if (filter?.type === 'period') return `Cobros de ${filter.period.label}`
   return null
 }
@@ -354,6 +358,10 @@ export function applyInvoiceFilter(invoices: InvoiceListItem[], filter: InvoiceM
     const periodInvoices = visibleInvoices.filter((invoice) =>
       isDateWithinFiscalPeriod(invoice.issue_date, filter.period),
     )
+
+    if (filter.scope === 'issued') {
+      return periodInvoices.filter(isFiscalInvoiceIncluded)
+    }
 
     if (filter.scope === 'pending') {
       return periodInvoices.filter((invoice) => (invoice.outstanding_amount ?? Number(invoice.total || 0)) > 0.009 && !isCancelledEntity(invoice))
@@ -571,7 +579,11 @@ export function applyExpenseFilter(expenses: ExpenseListItem[], filter: ExpenseM
   return visibleExpenses
 }
 
-export function applyPaymentFilter(payments: PaymentListItem[], filter: PaymentModuleFilter | null): PaymentListItem[] {
+export function applyPaymentFilter(
+  payments: PaymentListItem[],
+  filter: PaymentModuleFilter | null,
+  invoices: InvoiceListItem[] = [],
+): PaymentListItem[] {
   if (filter === 'current_month') {
     const currentMonthKey = getCurrentMonthKey()
     return payments.filter((payment) => getMonthKey(payment.payment_date) === currentMonthKey)
@@ -594,6 +606,13 @@ export function applyPaymentFilter(payments: PaymentListItem[], filter: PaymentM
   }
 
   if (filter?.type === 'period') {
+    if (filter.scope === 'fiscal') {
+      const periodInvoices = invoices.filter((invoice) =>
+        isDateWithinFiscalPeriod(invoice.issue_date, filter.period),
+      )
+      return buildInvoicePaymentCohort(payments, periodInvoices).payments
+    }
+
     return payments.filter((payment) =>
       isDateWithinFiscalPeriod(payment.payment_date, filter.period),
     )

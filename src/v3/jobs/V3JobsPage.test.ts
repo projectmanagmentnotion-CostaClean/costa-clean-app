@@ -40,4 +40,37 @@ describe('V3JobsPage C5.2 composition', () => {
     expect(html).toContain('Resumen de agenda')
     expect(html.indexOf('Código, concepto, cliente o inmueble')).toBeLessThan(html.lastIndexOf('Hoy'))
   })
+
+  it('uses the related invoice payments to show a collected job in the list', () => {
+    const html = renderToStaticMarkup(createElement(V3JobsPage, {
+      ...baseProps,
+      invoices: [{
+        id: 'invoice-1', display_code: 'FAC-0001', invoice_number: 'FAC-0001', job_id: 'job-1',
+        client_id: 'client-1', issue_date: today, status: 'issued', subtotal: 100, tax_amount: 21, total: 121,
+      }],
+      payments: [{
+        id: 'payment-1', display_code: 'COB-0001', invoice_id: 'invoice-1', payment_date: today,
+        amount: 121, payment_method: 'transfer',
+      }],
+    }))
+
+    expect(html).toContain('aria-label="Facturación: Cobrado"')
+    expect(html).not.toContain('aria-label="Facturación: Pendiente de cobro"')
+  })
+
+  it('shows a partial balance when related invoice payments do not settle the total', () => {
+    const html = renderToStaticMarkup(createElement(V3JobsPage, {
+      ...baseProps,
+      invoices: [{
+        id: 'invoice-1', display_code: 'FAC-0001', invoice_number: 'FAC-0001', job_id: 'job-1',
+        client_id: 'client-1', issue_date: today, status: 'issued', subtotal: 100, tax_amount: 21, total: 121,
+      }],
+      payments: [{
+        id: 'payment-1', display_code: 'COB-0001', invoice_id: 'invoice-1', payment_date: today,
+        amount: 50, payment_method: 'transfer',
+      }],
+    }))
+
+    expect(html).toContain('aria-label="Facturación: Pendiente de cobro"')
+  })
 })

@@ -19,6 +19,8 @@ describe('V3EntityStatus', () => {
 
     expect(html).toContain('Facturación')
     expect(html).toContain('Pendiente de cobro')
+    expect(html).toContain('class="v3-status__context"')
+    expect(html).toContain('class="v3-status__label"')
     expect(html).toContain('aria-label="Facturación: Pendiente de cobro"')
   })
 })

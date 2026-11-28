@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { businessRules } from '../../app/businessRules'
 import type { ClientListItem } from '../../features/clients/types'
 import { findInvoiceDuplicateGroups } from '../../features/duplicates/duplicateEngine'
+import type { InvoiceCreatePrefill } from '../../features/invoices/invoiceCreatePrefill'
 import { saveInvoiceWithLines } from '../../features/financial/financialWriteApi'
 import type { JobListItem } from '../../features/jobs/types'
 import { buildBillingLinePayloads, calculateBillingSubtotal, createBlankBillingLine, createLocalId, formatMoneyInput, formatQuantityInput, roundMoney, type BillingLineFormState } from '../../features/shared/billingLineDrafts'
@@ -10,20 +11,22 @@ import type { PropertyListItem } from '../../features/properties/types'
 import type { QuoteListItem } from '../../features/quotes/types'
 import { V3BottomSheet, V3Field, V3Input, V3PrimaryAction, V3SecondaryAction, V3Select, V3Textarea } from '../components/V3Primitives'
 
-interface Props { clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; onRefreshData: () => Promise<void>; onCompleted: () => Promise<void> | void; onCancel: () => void; onOpenExistingInvoice?: (id: string) => void; prefillClientId?: string; prefillJobId?: string; prefillQuoteId?: string }
+interface Props { clients: ClientListItem[]; properties: PropertyListItem[]; jobs: JobListItem[]; quotes: QuoteListItem[]; invoices: InvoiceListItem[]; onRefreshData: () => Promise<void>; onCompleted: () => Promise<void> | void; onCancel: () => void; onOpenExistingInvoice?: (id: string) => void; prefill?: InvoiceCreatePrefill | null; prefillClientId?: string; prefillJobId?: string; prefillQuoteId?: string }
 function today() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}` }
 function relatedDisplayCode(value: string | null | undefined, fallback: string) {
   const normalized = value?.trim() ?? ''
   return normalized && !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/iu.test(normalized) ? normalized : fallback
 }
-export function V3InvoiceCreateFlow({ clients, properties, jobs, quotes, invoices, onRefreshData, onCompleted, onCancel, onOpenExistingInvoice, prefillClientId = '', prefillJobId = '', prefillQuoteId = '' }: Props) {
-  const [clientId, setClientId] = useState(prefillClientId)
-  const [propertyId, setPropertyId] = useState('')
-  const [jobId, setJobId] = useState(prefillJobId)
-  const [quoteId, setQuoteId] = useState(prefillQuoteId)
+export function V3InvoiceCreateFlow({ clients, properties, jobs, quotes, invoices, onRefreshData, onCompleted, onCancel, onOpenExistingInvoice, prefill, prefillClientId = '', prefillJobId = '', prefillQuoteId = '' }: Props) {
+  const [clientId, setClientId] = useState(prefill?.client_id ?? prefillClientId)
+  const [propertyId, setPropertyId] = useState(prefill?.property_id ?? '')
+  const [jobId, setJobId] = useState(prefill?.job_id ?? prefillJobId)
+  const [quoteId, setQuoteId] = useState(prefill?.quote_id ?? prefillQuoteId)
   const [issueDate, setIssueDate] = useState(today())
-  const [notes, setNotes] = useState('')
-  const [lines, setLines] = useState<BillingLineFormState[]>([createBlankBillingLine()])
+  const [notes, setNotes] = useState(prefill?.notes ?? '')
+  const [lines, setLines] = useState<BillingLineFormState[]>(() => prefill?.lines.length
+    ? prefill.lines.map((line) => createBlankBillingLine(line))
+    : [createBlankBillingLine()])
   const [status, setStatus] = useState('draft')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)

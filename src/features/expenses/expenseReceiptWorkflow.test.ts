@@ -14,9 +14,10 @@ function deps(overrides: Partial<ReceiptWorkflowDeps> = {}): ReceiptWorkflowDeps
 describe('replaceExpenseReceipt', () => {
   it('adds without deleting when there is no old object', async () => {
     const d = deps()
-    await replaceExpenseReceipt('expense-1', file, null, d)
+    const result = await replaceExpenseReceipt('expense-1', file, null, d)
     expect(d.update).toHaveBeenCalledWith('expense-1', 'new/path.png')
     expect(d.remove).not.toHaveBeenCalled()
+    expect(result).toEqual({ filePath: 'new/path.png', previousReceiptCleanup: 'not-needed' })
   })
 
   it('persists the new pointer before deleting the old object', async () => {
@@ -25,8 +26,9 @@ describe('replaceExpenseReceipt', () => {
       update: vi.fn(async () => { order.push('update') }),
       remove: vi.fn(async () => { order.push('remove') }),
     })
-    await replaceExpenseReceipt('expense-1', file, 'old/path.png', d)
+    const result = await replaceExpenseReceipt('expense-1', file, 'old/path.png', d)
     expect(order).toEqual(['update', 'remove'])
+    expect(result).toEqual({ filePath: 'new/path.png', previousReceiptCleanup: 'removed' })
   })
 
   it('cleans up the new object when pointer persistence fails', async () => {
@@ -35,9 +37,11 @@ describe('replaceExpenseReceipt', () => {
     expect(d.remove).toHaveBeenCalledWith('new/path.png')
   })
 
-  it('keeps the new pointer and surfaces old-object cleanup failure', async () => {
+  it('keeps the new pointer and reports denied cleanup of the old object', async () => {
     const d = deps({ remove: vi.fn(async (path: string) => { if (path === 'old/path.png') throw new Error('old cleanup failed') }) })
-    await expect(replaceExpenseReceipt('expense-1', file, 'old/path.png', d)).rejects.toThrow('old cleanup failed')
+    const result = await replaceExpenseReceipt('expense-1', file, 'old/path.png', d)
     expect(d.update).toHaveBeenCalledWith('expense-1', 'new/path.png')
+    expect(d.remove).toHaveBeenCalledWith('old/path.png')
+    expect(result).toEqual({ filePath: 'new/path.png', previousReceiptCleanup: 'failed' })
   })
 })

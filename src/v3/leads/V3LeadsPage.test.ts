@@ -10,6 +10,8 @@ describe('V3LeadsPage', () => {
     const html = renderToStaticMarkup(createElement(V3LeadsPage, { leads: [lead], leadDrafts: [], clients: [], quotes: [], error: null, onCreateLead: () => undefined, onRefresh: async () => undefined, onOpenQuote: () => undefined, onOpenClient: () => undefined, onOpenLeadDeepLink: () => undefined, onBackToLeadList: () => undefined }))
     expect(html).toContain('Carlos Montero')
     expect(html).toContain('Nuevos')
+    expect(html).toContain('Contactados')
+    expect(html).toContain('Presupuestados')
     expect(html).not.toContain('LeadDetailCard')
   })
 })

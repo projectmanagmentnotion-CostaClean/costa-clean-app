@@ -47,6 +47,7 @@ describe('invoice settlement contract', () => {
     ['zero-outstanding invoice', createInvoice({ outstanding_amount: 0.009 })],
     ['cancelled invoice', createInvoice({ status: 'cancelled', outstanding_amount: 121 })],
     ['draft invoice', createInvoice({ status: 'draft', outstanding_amount: 121 })],
+    ['issued invoice missing lifecycle guards', createInvoice({ status: 'issued', cancelled_at: '2026-09-07T10:00:00.000Z' })],
     ['paid-status invoice', createInvoice({ status: 'paid', outstanding_amount: 121 })],
     ['archived invoice', createInvoice({ archived_at: '2026-09-07T10:00:00.000Z' })],
     ['deleted invoice', createInvoice({ deleted_at: '2026-09-07T10:00:00.000Z' })],

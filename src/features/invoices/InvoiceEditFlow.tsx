@@ -38,6 +38,7 @@ import {
   type BillingLineFormState,
 } from '../shared/billingLineDrafts'
 import { getBillingDraftLinesFromQuote } from '../shared/quoteBillingDrafts'
+import { canKeepInvoiceFiscalNumber } from './invoiceEditorIdentity'
 import {
   buildInvoicePaymentMeta,
   buildInvoicePaymentSummary,
@@ -379,6 +380,10 @@ export function InvoiceEditFlow({
 
     if (stepIndex === 0 && isIssuedInvoice && !internalCorrectionConfirmed) {
       return 'Confirma la correccion interna antes de guardar una factura emitida con el mismo numero.'
+    }
+
+    if (stepIndex === 0 && isSameNumberInternalCorrection && !canKeepInvoiceFiscalNumber(invoice.invoice_number, form.issue_date)) {
+      return 'La fecha de una correccion interna debe permanecer en el ejercicio de su numero fiscal. Para otro ejercicio, prepara una factura rectificativa.'
     }
 
     if (stepIndex === 0 && requiresNewEmissionValidation && numberingAudit.hasBlockingGaps) {

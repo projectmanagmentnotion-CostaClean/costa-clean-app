@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { findPaymentDuplicateGroups } from '../../features/duplicates/duplicateEngine'
+import { canSettleInvoiceByTransfer } from '../../features/invoices/invoiceSettlement'
 import { savePaymentAndRefreshInvoice } from '../../features/financial/financialWriteApi'
 import type { ClientListItem } from '../../features/clients/types'
 import type { InvoiceListItem } from '../../features/invoices/types'
@@ -38,7 +39,7 @@ function invoiceDisplayCode(displayCode: string | null | undefined, invoiceNumbe
 
 export function V3PaymentCreateFlow({ invoices, clients, payments, onRefreshData, onCompleted, onCancel, onOpenExistingPayment, onDirtyChange }: Props) {
   const availableInvoices = useMemo(() => invoices
-    .filter((invoice) => Number(invoice.outstanding_amount ?? invoice.total) > 0.009)
+    .filter(canSettleInvoiceByTransfer)
     .map((invoice) => ({ ...invoice, display_code: invoiceDisplayCode(invoice.display_code, invoice.invoice_number) })), [invoices])
   const [invoiceId, setInvoiceId] = useState(availableInvoices[0]?.id ?? '')
   const [paymentDate, setPaymentDate] = useState(todayLocalDate())

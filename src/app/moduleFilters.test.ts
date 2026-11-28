@@ -141,6 +141,31 @@ describe('module period filters', () => {
     expect(getInvoiceFilterLabel(filter)).toBe('Facturas emitidas de T4 2026')
   })
 
+  it('al abrir cobros desde cierre incluye solo pagos de facturas fiscales del periodo', () => {
+    const fiscalPeriod = {
+      mode: 'quarter' as const,
+      year: 2026,
+      quarter: 4,
+      startDate: '2026-10-01',
+      endDate: '2026-12-31',
+      label: 'T4 2026',
+      folderLabel: '2026_T4',
+    }
+    const filter = { type: 'period' as const, period: fiscalPeriod, scope: 'fiscal' as const }
+    const invoices = [
+      createInvoice({ id: 'issued', issue_date: '2026-11-02', status: 'issued' }),
+      createInvoice({ id: 'draft', issue_date: '2026-11-03', status: 'draft' }),
+      createInvoice({ id: 'outside', issue_date: '2027-01-01', status: 'issued' }),
+    ]
+    const payments = [
+      createPayment({ id: 'issued-payment', invoice_id: 'issued', payment_date: '2027-01-05' }),
+      createPayment({ id: 'draft-payment', invoice_id: 'draft', amount: 1 }),
+      createPayment({ id: 'outside-payment', invoice_id: 'outside' }),
+    ]
+
+    expect(applyPaymentFilter(payments, filter, invoices).map(({ id }) => id)).toEqual(['issued-payment'])
+  })
+
   it('filtra incidencias de gastos por periodo resuelto', () => {
     const expenses = applyExpenseFilter([
       createExpense(),

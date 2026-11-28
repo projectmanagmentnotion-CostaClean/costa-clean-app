@@ -631,8 +631,8 @@ export function AppShell({
   )
 
   const filteredPayments = useMemo(
-    () => applyPaymentFilter(paymentsWithCodes, paymentFilter),
-    [paymentsWithCodes, paymentFilter],
+    () => applyPaymentFilter(paymentsWithCodes, paymentFilter, invoicesWithCodes),
+    [invoicesWithCodes, paymentsWithCodes, paymentFilter],
   )
 
   const handleDashboardKpiAction = useCallback((actionId: DashboardKpiActionId) => {
@@ -743,7 +743,7 @@ export function AppShell({
       if (view === 'payments') {
         return {
           ...current,
-          payments: { type: 'period', period, scope: 'all' },
+          payments: { type: 'period', period, scope: 'fiscal' },
         }
       }
 
